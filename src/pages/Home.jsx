@@ -12,7 +12,9 @@ function Home() {
                 <Botao> <img src="/icons/plus-icon.svg" alt="Mais" /> Criar Nova edição</Botao>
             </Link>
             <section className="w-full py-10 flex flex-col justify-center a">
-                <ButtonCard texto="Interclasse 2026" status="Em andamento" />
+                <ButtonCard estrutura="complexo" nome="Gustavo" modalidade="Basquete"  />
+                <ButtonCard estrutura="complexo" nome="Gustavo" modalidade="Basquete" tipoComplexo="pontos"  />
+                <ButtonCard texto="Interclasse 2026" status="Em andamento"/>
                 <ButtonCard texto="Interclasse 2025" status="Finalizado" />
                 <ButtonCard texto="Interclasse 2024" status="Finalizado" />
                 <ButtonCard texto="Interclasse - Volta as Aulas" status="Finalizado" />
