@@ -2,6 +2,7 @@ import BannerGlobal from "../components/BannerGlobal/BannerGlobal"
 import NavBar from "../components/NavBar/NavBar"
 import ButtonCard from '../components/ButtonCard/ButtonCard'
 import { useEffect } from "react"
+import DadosJson from "../assets/json/dados_db.json"
 
 function Alunos(){
     useEffect(()=>{

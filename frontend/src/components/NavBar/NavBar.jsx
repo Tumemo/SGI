@@ -15,7 +15,9 @@ function NavBar(){
                     </Link>
                 </li>
                 <li>
-                    <img src="/icons/trophy-icon.svg" alt="Ranking" />
+                    <Link to={"/Ranking"}>
+                        <img src="/icons/trophy-icon.svg" alt="Ranking" />
+                    </Link>
                 </li>
                 <li>
                     <Link to={"/"}>

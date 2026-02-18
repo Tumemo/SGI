@@ -9,6 +9,7 @@ import Interclasse from './pages/Interclasse'
 import Modalidades from './pages/Modalidades'
 import Arrecadacao from './pages/Arrecadacao'
 import Regulamento from './pages/Regulamento'
+import Ranking from './pages/Ranking'
 
 
 function App() {
@@ -26,6 +27,7 @@ function App() {
           <Route path='/Modalidades' element={<Modalidades />} />
           <Route path='/Arrecadacao' element={<Arrecadacao />}/>
           <Route path='/Regulamento' element={<Regulamento />}/>
+          <Route path='/Ranking' element={<Ranking />}/>
         </Routes> 
       </BrowserRouter>
     </>

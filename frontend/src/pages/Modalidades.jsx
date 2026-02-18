@@ -3,6 +3,7 @@ import NavBar from "../components/NavBar/NavBar"
 import ButtonCard from '../components/ButtonCard/ButtonCard'
 import TextTop from "../components/TextTop/TextTop"
 import { useEffect } from "react"
+import DadosJson from "../assets/json/dados_db.json"
 
 function Modalidades(){
     useEffect(()=>{
@@ -13,9 +14,11 @@ function Modalidades(){
         <>
             <BannerGlobal titulo="Modalidades"/>
             <TextTop textTop="Escolha uma modalidade para editar"/>
-            <ButtonCard icon="/icons/basquete-icon.svg" texto="Basquete" seta="true" invert="false"/>
-            <ButtonCard icon="/icons/trophy-icon.svg" texto="Corrida" seta="true" invert="true"/>
-            <ButtonCard icon="/icons/bola-icon.svg" texto="Futsal" seta="true" invert="false"/>
+
+            {DadosJson.modalidades.map(modalidade =>
+                <ButtonCard icon={modalidade.icone} titulo={modalidade.nome} invert={modalidade.invert}/>
+
+            )}
             <NavBar />
         </>
     )

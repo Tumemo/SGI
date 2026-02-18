@@ -1,0 +1,46 @@
+{
+  "edicoes": [
+    {
+      "id": 1,
+      "titulo": "Interclasse 2026",
+      "status": "Em andamento",
+      "finalizado": false
+    },
+    {
+      "id": 2,
+      "titulo": "Interclasse 2025",
+      "status": "Finalizado",
+      "finalizado": true
+    },
+    {
+      "id": 3,
+      "titulo": "Interclasse 2024",
+      "status": "Finalizado",
+      "finalizado": true
+    },
+    {
+      "id": 4,
+      "titulo": "Interclasse - Volta às aulas",
+      "status": "Finalizado",
+      "finalizado": true
+    }
+  ],
+  "ranking": [
+    { "id": 1, "posicao": 1, "sala": "Sala A", "pontos": 120, "progresso": 100 },
+    { "id": 2, "posicao": 2, "sala": "Sala B", "pontos": 115, "progresso": 90 },
+    { "id": 3, "posicao": 3, "sala": "Sala C", "pontos": 110, "progresso": 80 },
+    { "id": 4, "posicao": 4, "sala": "Sala D", "pontos": 90, "progresso": 70 },
+    { "id": 5, "posicao": 5, "sala": "Sala E", "pontos": 84, "progresso": 65 }
+  ],
+  "modalidades": [
+    { "id": 1, "nome": "Basquete", "icone": "/icons/basquete-icon.svg","invert":"false" },
+    { "id": 2, "nome": "Corrida", "icone": "/icons/trophy-icon.svg","invert":"true" },
+    { "id": 3, "nome": "Futsal", "icone": "/icons/bola-icon.svg", "invert":"false" }
+  ],
+  "menuInterclasse": [
+    { "id": 1, "label": "Modalidades", "rota": "/Modalidades" },
+    { "id": 2, "label": "Arrecadação", "rota": "/Arrecadacao" },
+    { "id": 3, "label": "Regulamento", "rota": "/Regulamento" },
+    { "id": 4, "label": "Turmas", "rota": "/Turmas" }
+  ]
+}

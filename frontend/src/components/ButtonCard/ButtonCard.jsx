@@ -43,7 +43,6 @@ function ButtonCard(props){
                             <select className=" bg-transparent pr-8 py-1 text-gray-400 outline-none">
                                 <option>Penalizar</option>
                             </select>
-                            <img src="/icons/seta-icon.svg" className="absolute right-0 top-1/2 -translate-y-1/2 w-3 rotate-90" alt="" />
                             {/* ========================================= */}
                         </div>
                     )}
@@ -58,10 +57,10 @@ function ButtonCard(props){
                     <img className={`${props.invert == 'true' ? 'invert' : ''}`} src={props.icon} alt={props.alt} />
                 </div>
                 <div>
-                    <h2 className="text-lg font-bold">{props.texto}</h2>
+                    <h2 className="text-lg font-semibold">{props.titulo}</h2>
                     <p className={`${temStatus ? 'block' : 'hidden'} text-gray-400 text-sm`}>({props.status})</p>
                 </div>
-                <div className={`${statusEdicao || props.seta ? 'block' : 'hidden'} `}>
+                <div>
                     <img src="/icons/seta-icon.svg" alt="Seta" />
                 </div>
             </div>
