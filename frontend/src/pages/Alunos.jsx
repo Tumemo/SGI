@@ -1,8 +1,13 @@
 import BannerGlobal from "../components/BannerGlobal/BannerGlobal"
 import NavBar from "../components/NavBar/NavBar"
 import ButtonCard from '../components/ButtonCard/ButtonCard'
+import { useEffect } from "react"
 
 function Alunos(){
+    useEffect(()=>{
+        document.title = "SGM - Alunos"
+    },[])
+
     return(
         <>
         <BannerGlobal titulo="Alunos"/>

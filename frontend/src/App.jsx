@@ -8,6 +8,8 @@ import Turmas from './pages/Turmas'
 import Alunos from './pages/Alunos'
 import Interclasse from './pages/Interclasse'
 import Modalidades from './pages/Modalidades'
+import Arrecadacao from './pages/Arrecadacao'
+import Regulamento from './pages/Regulamento'
 
 
 function App() {
@@ -19,11 +21,12 @@ function App() {
           <Route path='/' element={<Login />} />
           <Route path='/Home' element={<Home />} /> 
           <Route path='/NovaEdicao' element={<NovaEdicao />} />
-          <Route path='/Edicao' element={<Edicao />}/>
           <Route path='/Turmas' element={<Turmas />} />
           <Route path='/Alunos' element={<Alunos />} />
           <Route path='/Interclasse' element={<Interclasse />} />
           <Route path='/Modalidades' element={<Modalidades />} />
+          <Route path='/Arrecadacao' element={<Arrecadacao />}/>
+          <Route path='/Regulamento' element={<Regulamento />}/>
         </Routes> 
       </BrowserRouter>
     </>

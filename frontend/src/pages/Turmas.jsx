@@ -2,9 +2,14 @@ import { Link } from "react-router-dom"
 import BannerGlobal from "../components/BannerGlobal/BannerGlobal"
 import ButtonCard from "../components/ButtonCard/ButtonCard"
 import NavBar from "../components/NavBar/NavBar"
+import { useEffect } from "react"
 
 
 function Turmas(){
+
+    useEffect(()=>{
+        document.title = "SGM - Turmas"
+    },[])
     return(
         <>
         <BannerGlobal titulo="Turmas"/>

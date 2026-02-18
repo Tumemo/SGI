@@ -3,8 +3,13 @@ import BannerGlobal from "../components/BannerGlobal/BannerGlobal"
 import Botao from "../components/Botao/Botao"
 import NavBar from "../components/NavBar/NavBar"
 import ButtonCard from "../components/ButtonCard/ButtonCard"
+import { useEffect } from "react"
 
 function Home() {
+
+    useEffect(()=>{
+        document.title = "SGM - Home"
+    },[])
     return (
         < >
             <BannerGlobal />

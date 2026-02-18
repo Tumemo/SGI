@@ -1,7 +1,12 @@
+import { useEffect } from "react"
 import BannerLogin from "../components/BannerLogin/BannerLogin"
 import Formulario from "../components/Formulario/Formulario"
 
 function Login(){
+
+    useEffect(()=>{
+        document.title = "SGM - Login"
+    },[])
     return(
         <>
             <BannerLogin />
