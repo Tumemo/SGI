@@ -1,0 +1,88 @@
+{
+  "interclasses": [
+    {
+      "id": "int-2026",
+      "ano": 2026,
+      "titulo": "Interclasse 2026 - Edição Atual",
+      "status": "em_andamento",
+      "turmas": [
+        { "id": "t-3a", "nome": "3º A", "cor": "#FF0000", "mascote": "Leão", "pontos_gerais": 120 },
+        { "id": "t-3b", "nome": "3º B", "cor": "#0000FF", "mascote": "Tubarão", "pontos_gerais": 95 },
+        { "id": "t-2a", "nome": "2º A", "cor": "#00FF00", "mascote": "Águia", "pontos_gerais": 110 }
+      ],
+      "modalidades": [
+        { "id": "mod-fut", "nome": "Futsal", "categoria": "Masculino", "tipo": "Coletivo" },
+        { "id": "mod-vol", "nome": "Vôlei", "categoria": "Misto", "tipo": "Coletivo" },
+        { "id": "mod-ten", "nome": "Tênis de Mesa", "categoria": "Livre", "tipo": "Individual" }
+      ],
+      "arrecadacao": {
+        "meta_global": 5000,
+        "itens_aceitos": ["Alimentos Não Perecíveis", "Roupas", "Tampinhas"],
+        "ranking_arrecadacao": [
+          { "turma_id": "t-2a", "nome": "2º A", "quantidade_itens": 350, "pontos_gerados": 50 },
+          { "turma_id": "t-3a", "nome": "3º A", "quantidade_itens": 280, "pontos_gerados": 40 },
+          { "turma_id": "t-3b", "nome": "3º B", "quantidade_itens": 150, "pontos_gerados": 20 }
+        ]
+      },
+      "regulamentos": [
+        {
+          "id": "reg-1",
+          "titulo": "Regras Gerais",
+          "descricao": "Todos os alunos devem apresentar a carteirinha para jogar. Atrasos maiores que 10 minutos geram W.O."
+        },
+        {
+          "id": "reg-2",
+          "titulo": "Pontuação",
+          "descricao": "Vitória: 3 pontos. Empate: 1 ponto. Derrota: 0 pontos. Arrecadação conta no quadro geral."
+        }
+      ],
+      "agenda": [
+        {
+          "id": "ag-1",
+          "data": "2026-03-15",
+          "horario": "08:00",
+          "modalidade_id": "mod-fut",
+          "turma_a_id": "t-3a",
+          "turma_b_id": "t-3b",
+          "local": "Quadra Principal",
+          "status": "finalizado",
+          "placar": { "turma_a": 3, "turma_b": 1 }
+        },
+        {
+          "id": "ag-2",
+          "data": "2026-03-15",
+          "horario": "09:30",
+          "modalidade_id": "mod-vol",
+          "turma_a_id": "t-2a",
+          "turma_b_id": "t-3a",
+          "local": "Quadra Secundária",
+          "status": "agendado",
+          "placar": null
+        },
+        {
+          "id": "ag-3",
+          "data": "2026-03-16",
+          "horario": "10:00",
+          "modalidade_id": "mod-ten",
+          "turma_a_id": "t-3b",
+          "turma_b_id": "t-2a",
+          "local": "Pátio",
+          "status": "agendado",
+          "placar": null
+        }
+      ]
+    },
+    {
+      "id": "int-2025",
+      "ano": 2025,
+      "titulo": "Interclasse 2025",
+      "status": "finalizado",
+      "ranking_final": [
+        { "posicao": 1, "turma_id": "t-3a", "nome": "3º A", "pontos": 450, "cor": "#FF0000" },
+        { "posicao": 2, "turma_id": "t-3b", "nome": "3º B", "pontos": 420, "cor": "#0000FF" },
+        { "posicao": 3, "turma_id": "t-2a", "nome": "2º A", "pontos": 310, "cor": "#00FF00" },
+        { "posicao": 4, "turma_id": "t-1a", "nome": "1º A", "pontos": 150, "cor": "#FFFF00" }
+      ]
+    }
+  ]
+}

@@ -16,9 +16,9 @@ function App() {
         <Route path="/" element={<Login />}/>
         <Route path="/Home" element={<Home />}/>
         <Route path='/NovaEdicao' element={<NovaEdicao />}/>
-        <Route path='/Edicao' element={<Edicao />} />
+        <Route path='/Edicao/:id' element={<Edicao />} />
         <Route path='/Turmas' element={<Turmas />}/>
-        <Route path='/Ranking' element={<Ranking />}/>
+        <Route path='/Ranking/:id' element={<Ranking />}/>
       </Routes>
     </BrowserRouter>
      

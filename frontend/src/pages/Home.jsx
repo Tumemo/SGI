@@ -4,6 +4,7 @@ import NavBar from "../Componentes/NavBar/NavBar"
 import CardInfo from "../Componentes/CardInfo/CardInfo"
 import { Link } from "react-router-dom"
 import Button from "../Componentes/Button/Button"
+import DadosJson from "../Componentes/json/DadosDB.json"
 
 function Home(){
     useEffect(()=>{
@@ -19,11 +20,28 @@ function Home(){
                             <img src="/icons/plus-icon.svg" alt="Icone de Mais" /> Criar Nova Edição
                         </Button>
                     </Link>
-                    <Link to={"/Edicao"} className="w-full">
+                    {DadosJson.interclasses.map((item) => (
+                        <Link 
+                            key={item.id}
+                            to={item.status === "finalizado" ? `/ranking/${item.titulo}` : `/edicao/${item.titulo}`}
+                            
+                        >
+                            <CardInfo 
+                                titulo={item.titulo}
+                                status={item.status}
+                        />
+                        </Link>
+                    )
+                    )}
+
+                    
+                    {/* N mechi no codigo antigo, deixei tudo comentado */}
+
+                    {/* <Link to={"/Edicao"} className="w-full">
                         <CardInfo titulo="Interclasse 2026" status="Em Andamento"/>
                     </Link>
                     <CardInfo titulo="Interclasse 2025" status="Finalizado"/>
-                    <CardInfo titulo="Interclasse 2024" status="Finalizado"/>
+                    <CardInfo titulo="Interclasse 2024" status="Finalizado"/> */}
                 </div>
             </main>
             <NavBar />
