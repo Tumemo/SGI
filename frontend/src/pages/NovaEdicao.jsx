@@ -6,7 +6,7 @@ import Button from "../Componentes/Button/Button"
 function NovaEdicao(){
     useEffect(()=>{
         document.title = "SGM - Nova Edição"
-    })
+    },[])
     return(
         <>
             <BannerGlobal titulo="Nova Edição" voltar="/Home"/>

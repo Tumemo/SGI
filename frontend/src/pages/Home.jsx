@@ -4,7 +4,7 @@ import NavBar from "../Componentes/NavBar/NavBar"
 import CardInfo from "../Componentes/CardInfo/CardInfo"
 import { Link } from "react-router-dom"
 import Button from "../Componentes/Button/Button"
-import DadosJson from "../Componentes/json/DadosDB.json"
+import DadosJson from "../assets/json/DadosDB.json"
 
 function Home(){
     useEffect(()=>{
@@ -24,7 +24,7 @@ function Home(){
                         <Link 
                             key={item.id}
                             to={item.status === "finalizado" ? `/ranking/${item.titulo}` : `/edicao/${item.titulo}`}
-                            
+                            className="w-full"
                         >
                             <CardInfo 
                                 titulo={item.titulo}

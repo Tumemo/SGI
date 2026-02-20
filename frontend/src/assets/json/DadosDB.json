@@ -3,8 +3,8 @@
     {
       "id": "int-2026",
       "ano": 2026,
-      "titulo": "Interclasse 2026 - Edição Atual",
-      "status": "em_andamento",
+      "titulo": "Interclasse 2026",
+      "status": "Em Andamento",
       "turmas": [
         { "id": "t-3a", "nome": "3º A", "cor": "#FF0000", "mascote": "Leão", "pontos_gerais": 120 },
         { "id": "t-3b", "nome": "3º B", "cor": "#0000FF", "mascote": "Tubarão", "pontos_gerais": 95 },
@@ -76,7 +76,7 @@
       "id": "int-2025",
       "ano": 2025,
       "titulo": "Interclasse 2025",
-      "status": "finalizado",
+      "status": "Finalizado",
       "ranking_final": [
         { "posicao": 1, "turma_id": "t-3a", "nome": "3º A", "pontos": 450, "cor": "#FF0000" },
         { "posicao": 2, "turma_id": "t-3b", "nome": "3º B", "pontos": 420, "cor": "#0000FF" },
