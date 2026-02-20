@@ -11,7 +11,7 @@ function CardAluno(props) {
 
             <div className="flex  items-center">
 
-                {props.aberto === 'pontos' ? (
+                {props.aberto === 'true' ? (
 
                     <div className="flex flex-col gap-2 w-full">
                         <div className="flex justify-between w-full">

@@ -5,7 +5,7 @@ function CardInfo(props){
     const iconeTrofeu = props.icon && props.icon === "/icons/trophy-icon.svg"
     const iconePessoa = props.icon && props.icon === "/icons/group-icon.svg"
     return(
-        <div className="w-full shadow-md p-5 flex justify-between items-center mb-3">
+        <div className={`${props.status === "Finalizado" ? 'bg-gray-200' : ''} w-full shadow-md p-5 flex justify-between items-center mb-3`}>
             {temIcone && (
                 <div>
                     <img className={`${iconeTrofeu ? 'invert' : ''} ${iconePessoa ? 'w-8' : ''}`} src={props.icon} alt={props.alt} />

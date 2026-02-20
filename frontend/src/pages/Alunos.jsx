@@ -13,7 +13,8 @@ function Alunos(){
         
             <BannerGlobal titulo="Alunos" voltar="/Turmas" />
 
-            <CardAluno modalidade="Futsal" nome="Neymar"/>
+            <CardAluno modalidade="Futsal" nome="Neymar" aberto="true"/>
+            <CardAluno modalidade="Basquete" nome="Lebron"/>
             <NavBar />
         
         </>
