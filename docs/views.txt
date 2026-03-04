@@ -1,7 +1,7 @@
-Edições de interclasse
-Modalidades da Edição
-Arrecadação da turma de cada edição ou da edição
-Regulamento de cada edição
-Turmas de cada edição
+Edições de interclasse - nome e ano
+Modalidades da Edição - nome
+Arrecadação da turma de cada edição ou da edição - 
+Regulamento de cada edição - 
+Turmas de cada edição 
 Agenda de cada edição(dia e horários dos jogos)
 Turmas da escola
