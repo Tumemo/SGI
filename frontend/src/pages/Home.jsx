@@ -23,7 +23,7 @@ function Home(){
                     {DadosJson.interclasses.map((item) => (
                         <Link 
                             key={item.id}
-                            to={item.status === "finalizado" ? `/ranking/${item.titulo}` : `/edicao/${item.titulo}`}
+                            to={item.status === "Finalizado" ? `/ranking/${item.titulo}` : `/edicao/${item.titulo}`}
                             className="w-full"
                         >
                             <CardInfo 

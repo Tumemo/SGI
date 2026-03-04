@@ -22,7 +22,7 @@ function App() {
         <Route path='/Edicao/:id' element={<Edicao />} />
         <Route path='/Turmas' element={<Turmas />}/>
         <Route path='/Alunos' element={<Alunos/>} />
-        <Route path='/Ranking/:id' element={<Ranking />}/>
+        <Route path='/Ranking/:titulo' element={<Ranking />}/>
       </Routes>
     </BrowserRouter>
      

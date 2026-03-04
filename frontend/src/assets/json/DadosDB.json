@@ -83,6 +83,18 @@
         { "posicao": 3, "turma_id": "t-2a", "nome": "2º A", "pontos": 310, "cor": "#00FF00" },
         { "posicao": 4, "turma_id": "t-1a", "nome": "1º A", "pontos": 150, "cor": "#FFFF00" }
       ]
+    },
+    {
+      "id": "int-2024",
+      "ano": 2024,
+      "titulo": "Interclasse 2024",
+      "status": "Finalizado",
+      "ranking_final": [
+        { "posicao": 1, "turma_id": "t-1a", "nome": "1º A", "pontos": 500, "cor": "#FF0000" },
+        { "posicao": 2, "turma_id": "t-2a", "nome": "2º B", "pontos": 400, "cor": "#0000FF" },
+        { "posicao": 3, "turma_id": "t-4a", "nome": "4º A", "pontos": 300, "cor": "#00FF00" },
+        { "posicao": 4, "turma_id": "t-3a", "nome": "3º A", "pontos": 120, "cor": "#FFFF00" }
+      ]
     }
   ]
 }
