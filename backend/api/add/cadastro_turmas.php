@@ -2,29 +2,31 @@
 session_start();
 require_once "../../config/db.php";
 header("Content-Type: application/json");
-$data = json_decode(file_get_contents("php://input"), true);
 
-if (!isset($data['nome'], $data['turno'], $data['cat'], $data['nome_fantasia'])) {
+$data_json = json_decode(file_get_contents("php://input"), true);
+
+if (!isset($data_json['nome'], $data_json['turno'], $data_json['cat'], $data_json['nome_fantasia'])) {
     echo json_encode(["success" => false, "message" => "Dados incompletos"]);
     exit;
 }
 
-$nome = $data["nome"];
-$turno = $data["turno"];
-$cat = $data["cat"];
-$nome_fantasia = $data["nome_fantasia"];
+$nome = $data_json["nome"];
+$turno = $data_json["turno"];
+$cat = $data_json["cat"];
+$nome_fantasia = $data_json["nome_fantasia"];
+$interclase_id = isset($data_json["id_interclasse"]) ? $data_json["id_interclasse"] : null;
 
-$sql = "INSERT INTO turmas (nome_turma, turno_turma, cat_turma, nome_fantasia_turma) VALUES ('$nome', '$turno', '$cat', '$nome_fantasia')";
 
-$stmt = $conn->prepare($sql);
+$sql = "INSERT INTO turmas (nome_turma, turno_turma, cat_turma, nome_fantasia_turma, interclasses_id_interclasse) 
+        VALUES ('$nome', '$turno', '$cat', '$nome_fantasia', '$interclase_id')";
 
-$stmt = $conn->prepare($sql);
+$res = $conn->query($sql);
 
-if ($stmt->execute()) {
+if ($res) {
     echo json_encode(["success" => true, "message" => "Turma cadastrada com sucesso"]);
 } else {
-    echo json_encode(["success" => false,"message" => "Erro ao cadastrar turma"]);
+    echo json_encode(["success" => false, "message" => "Erro ao cadastrar turma: " . $conn->error]);
 }
 
-$stmt->close();
 $conn->close();
+?>

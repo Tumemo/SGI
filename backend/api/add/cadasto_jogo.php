@@ -1,31 +1,33 @@
 <?php
 require_once "../../config/db.php";
 header("Content-Type: application/json");
-$data = json_decode(file_get_contents("php://input"), true);
 
-if( !isset($data['user_id'])  ||  !isset($data['nome_jogo']) ||  !isset($data['data_jogo']) ) {
-    echo json_encode([ "success" => false,  "message" => "Parâmetros insuficientes."]);
+$json = json_decode(file_get_contents("php://input"));
+
+// Validando os campos obrigatórios conforme a imagem
+if (!isset($json->nome_jogo, $json->status_jogo, $json->modalidades_id_modalidade, $json->locais_id_local)) {
+    echo json_encode(["success" => false, "message" => "Dados incompletos"]);
     exit;
 }
-$nome = trim($data['nome_jogo']);
-$data_jogo = $data['data_jogo'];
-$inicio = $data['inicio_jogo'] ?? null;
-$fim = $data['fim_jogo'] ?? null;
-$status = $data['status_jogo'] ?? 'Agendado';
-$modalidae = (int) $data['modalidade_jogo'];
-$local = (int) $data['local_jogo'];
 
+$nome = $json->nome_jogo;
+$data_hoje = date('Y-m-d'); 
+$inicio = date('H:i:s');
+// Note o nome da coluna conforme a imagem: terminno_jogo (com dois 'n')
+$termino = "00:00:00"; 
+$status = $json->status_jogo;
+$modalidade = (int) $json->modalidades_id_modalidade;
+$local = (int) $json->locais_id_local;
 
-$sql = "INSERT INTO jogos (jogos.nome_jogo, jogos.data_jogo, jogos.inicio_jogo,jogos.status_jogo, jogos.modalidades_id_modalidade, jogos.locais_id_local)
- VALUES ('$nome', '$data_jogo', '$inicio', '$status', $modalidae, $local)";
+// SQL ajustado com os nomes exatos da imagem
+$sql = "INSERT INTO jogos (nome_jogo, data_jogo, inicio_jogo, terminno_jogo, status_jogo, modalidades_id_modalidade, locais_id_local) 
+        VALUES ('$nome', '$data_hoje', '$inicio', '$termino', '$status', '$modalidade', '$local')";
 
 $res = $conn->query($sql);
 
-if($res){
-    echo json_encode([ "success" => true, "message" => "jogo inserido com sucesso."
-    ]);
-}else{
-    echo json_encode(["success" => false, "message" => "Erro ao inserir o jogo.","error" => $conn->error
-    ]);
+if ($res) {
+    echo json_encode(["success" => true, "message" => "Cadastro de jogo realizado com sucesso!"]);
+} else {
+    echo json_encode(["success" => false, "error" => $conn->error]);
 }
- 
+?>
