@@ -1,62 +1,45 @@
 <?php
-    $title = "Nova Edição";
-    $textTop = "Nova Edição";
-    require_once '../components/header.php';
+$titulo = "Nova Edição";
+$textTop = "Nova Edição";
+require_once '../components/header.php';
 ?>
 
-<main class=" px-4 mt-4">
-    <input type="text" name="nome" id="nome" placeholder="Nome" class="form-control mb-3">
-    <div class="p-3 bg-white shadow rounded border">
-        <div class="input-group mb-3">
-            <input type="text" class="form-control" placeholder="Recipient’s username" aria-label="Recipient’s username" aria-describedby="basic-addon2">
-            <span class="input-group-text text-white" id="basic-addon2" style="background-color: #e30613;">Adicionar</span>
-        </div>
+<main class="px-4 mt-4 h-100">
 
-        <div>
-
-            <div class=" shadow-sm">
-
-
-                <div class=" border rounded justify-content-between mb-3 px-3 align-items-center py-2 input-group flex">
-                    1ºano EM 
-                    <div class="flex">
-                        <input type="file" id="upload-1" class="d-none">
-                        <label for="upload" class="btn btn-secondary border-0 px-4 py-2 opacity-75" style="background-color: #ccc; color: #555;">
-                            Enviar o arquivo +
-                        </label>
-                    </div>
-                </div>
-
-
-                <div class=" border rounded justify-content-between mb-3 px-3 align-items-center py-2 input-group flex">
-                    1ºano EM 
-                    <div class="flex">
-                        <input type="file" id="upload-1" class="d-none">
-                        <label for="upload" class="btn btn-secondary border-0 px-4 py-2 opacity-75" style="background-color: #ccc; color: #555;">
-                            Enviar o arquivo +
-                        </label>
-                    </div>
-                </div>
-
-
-                <div class=" border rounded justify-content-between mb-3 px-3 align-items-center py-2 input-group flex">
-                    1ºano EM 
-                    <div class="flex">
-                        <input type="file" id="upload-1" class="d-none">
-                        <label for="upload" class="btn btn-secondary border-0 px-4 py-2 opacity-75" style="background-color: #ccc; color: #555;">
-                            Enviar o arquivo +
-                        </label>
-                    </div>
-                </div>
-
-
+    <!-- card de visualização das modalidades -->
+    <a href="./novaEdicao_modalidades.php" class="text-decoration-none text-black">
+        <div class="d-flex justify-content-between align-items-center shadow-sm p-3 w-100 mb-3 bg-white rounded">
+            <div>
+                <h2 class="fs-3">Modalidades</h2>
+                <h3 class="fs-6 text-body-tertiary">(Queimada, Futebol, Quatro base, Vôlei, Just dance)</h3>
             </div>
         </div>
-    </div>
-    <a href="" class="btn text-white px-5 mt-4" style="background-color: #e30613;">Continuar</a>
+    </a>
+
+    <!-- card de vizualização das turmas -->
+    <a href="./novaEdicao_turmas.php" class="text-decoration-none text-black">
+        <div class="d-flex justify-content-between align-items-center shadow-sm p-3 w-100 mb-3 bg-white rounded">
+            <div>
+                <h2 class="fs-3">Turmas</h2>
+                <h3 class="fs-6 text-body-tertiary">(1° ano EM, 2° ano EM, 3° ano EM, 9° ano, 8° ano, 7° ano)</h3>
+            </div>
+        </div>
+    </a>
+
+    <!-- card de vizualização dos regulamentos -->
+    <a href="./novaEdicao_regulamento.php" class="text-decoration-none text-black">
+        <div class="d-flex justify-content-between align-items-center shadow-sm p-3 w-100 mb-3 bg-white rounded">
+            <div>
+                <h2 class="fs-3">Regulamento</h2>
+                <h3 class="fs-6 text-body-tertiary">(1° ano EM, 2° ano EM, 3° ano EM, 9° ano, 8° ano, 7° ano)</h3>
+            </div>
+        </div>
+    </a>
+
+    <a href="#" class="btn text-white px-5 m-auto mt-5 position-relative bottom-0 start-50 translate-middle" style="background-color: #e30613;">Continuar</a>
+
 </main>
 
-    
-<?php 
-    require_once '../components/navbar.php';
+<?php
+require_once '../components/navbar.php';
 ?>
