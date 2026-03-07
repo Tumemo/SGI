@@ -3,13 +3,13 @@ session_start();
 require_once "../../config/db.php";
 header("Content-Type: application/json");
 
-if (!isset($_SESSION['user_id'])) {
-    echo json_encode([
-        "success" => false,
-        "message" => "Usuário não autenticado."
-    ]);
-    exit;
-}
+// if (!isset($_SESSION['user_id'])) {
+//     echo json_encode([
+//         "success" => false,
+//         "message" => "Usuário não autenticado."
+//     ]);
+//     exit;
+// }
 
 $sql = "SELECT nome_local, disponivel_local, carga_local FROM locais";
 $res = $conn->query($sql);
