@@ -3,36 +3,28 @@ session_start();
 require_once "../../config/db.php";
 header("Content-Type: application/json");
 
-$id_interclasse = isset($_GET['id_interclasse']) ? $_GET['id_interclasse'] : null;
+$id_jogo = isset($_GET['id_jogo']) ? $_GET['id_jogo'] : null;
 
-if ($id_interclasse) {
-    $sql = "SELECT 
-                turmas.nome_turma, 
-                SUM(pontuacoes.valor_pontuacao) AS total_pontos
-            FROM pontuacoes
-            INNER JOIN usuarios ON pontuacoes.usuarios_id_usuario = usuarios.id_usuario
-            INNER JOIN turmas ON usuarios.turmas_id_turma = turmas.id_turma
-            WHERE turmas.interclasses_id_interclasse = $id_interclasse
-            GROUP BY turmas.id_turma
-            ORDER BY total_pontos DESC";
+if ($id_jogo) {
+    $sql = "SELECT pontuacoes.id_pontuacao, pontuacoes.nome_pontuacao, pontuacoes.valor_pontuacao, jogos.nome_jogo, usuarios.nome_usuario AS registrado_por 
+    FROM pontuacoes 
+    INNER JOIN jogos ON jogos.id_jogo = pontuacoes.jogos_id_jogo 
+    INNER JOIN usuarios ON usuarios.id_usuario = pontuacoes.usuarios_id_usuario 
+    WHERE pontuacoes.jogos_id_jogo = $id_jogo";
 } else {
-    $sql = "SELECT 
-                turmas.nome_turma, 
-                SUM(pontuacoes.valor_pontuacao) AS total_pontos
-            FROM pontuacoes
-            INNER JOIN usuarios ON pontuacoes.usuarios_id_usuario = usuarios.id_usuario
-            INNER JOIN turmas ON usuarios.turmas_id_turma = turmas.id_turma
-            GROUP BY turmas.id_turma
-            ORDER BY total_pontos DESC";
+    $sql = "SELECT pontuacoes.id_pontuacao, pontuacoes.nome_pontuacao, pontuacoes.valor_pontuacao, jogos.nome_jogo, usuarios.nome_usuario AS registrado_por 
+    FROM pontuacoes 
+    INNER JOIN jogos ON jogos.id_jogo = pontuacoes.jogos_id_jogo 
+    INNER JOIN usuarios ON usuarios.id_usuario = pontuacoes.usuarios_id_usuario";
 }
 
 $res = $conn->query($sql);
-$ranking = [];
+$pontuacoes = [];
 
 if($res){
     while($row = $res->fetch_assoc()){
-        $ranking[] = $row;
+        $pontuacoes[] = $row;
     }
 }
 
-echo json_encode($ranking);
+echo json_encode($pontuacoes);
