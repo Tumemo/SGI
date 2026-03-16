@@ -29,7 +29,7 @@ require_once '../components/header.php';
 <!-- <script>
     async function listarModalidades() {
         try {
-            const url = await fetch('http://localhost/SGI/api/view/modalidades.php');
+            const url = await fetch('../../../api/view/modalidades.php');
             const res = await url.json();
             const obj = document.getElementById('listModalidades');
 

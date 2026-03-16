@@ -50,7 +50,7 @@ require_once '../components/header.php';
 <!-- <script>
     async function listarInterclasses() {
         try {
-            const url = await fetch('http://localhost/SGI/api/view/interclasse.php');
+            const url = await fetch('../../../api/view/interclasse.php');
             const res = await url.json();
             const obj = document.getElementById('listInter');
 
