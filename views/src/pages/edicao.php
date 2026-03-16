@@ -14,10 +14,10 @@ require_once '../components/header.php';
                 <img src="../../public/icons/arrow.svg" alt="icone seta">
             </div>
         </a>
-        <a href="./arrecadacao.php">
-            <div class="d-flex  ps-4 justify-content-between align-items-center shadow p-3 mb-3">
+        <a href="./arrecadacoes.php" class="text-decoration-none text-black">
+            <div class="d-flex ps-4 justify-content-between align-items-center shadow p-3 mb-3">
                 <i class="bi bi-basket fs-2"></i>
-                <h2 class="m-0">Arrecadação</h2>
+                <h2 class="m-0">Arrecadações</h2>
                 <img src="../../public/icons/arrow.svg" alt="icone seta">
             </div>
         </a>
