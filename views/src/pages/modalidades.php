@@ -7,19 +7,26 @@ require_once '../components/header.php';
 <main>
     <h5 class="fs-6 text-secondary mb-3 text-center mt-3">Escolha uma modalidade para editar</h5>
     <section class="px-4 mt-3 text-center" id="listModalidades">
-        <!-- <a href="./modalidades.php" class="text-decoration-none text-black">
+        <a href="./modalidades.php" class="text-decoration-none text-black">
             <div class="d-flex ps-4 justify-content-between align-items-center shadow p-3 mb-3">
                 <i class="bi bi-trophy fs-2"></i>
                 <h2 class="m-0">Modalidades</h2>
                 <img src="../../public/icons/arrow.svg" alt="icone seta">
             </div>
-        </a> -->
+        </a>
+        <a href="./modalidades.php" class="text-decoration-none text-black">
+            <div class="d-flex ps-4 justify-content-between align-items-center shadow p-3 mb-3">
+                <i class="bi bi-trophy fs-2"></i>
+                <h2 class="m-0">Modalidades</h2>
+                <img src="../../public/icons/arrow.svg" alt="icone seta">
+            </div>
+        </a>
 
     </section>
 </main>
 
 
-<script>
+<!-- <script>
     async function listarModalidades() {
         try {
             const url = await fetch('../../../api/view/modalidades.php');
@@ -45,7 +52,7 @@ require_once '../components/header.php';
     }
 
     listarModalidades();
-</script>
+</script> -->
 <?php
 require_once '../components/navbar.php';
 ?>

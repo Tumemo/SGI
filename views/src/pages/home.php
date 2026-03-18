@@ -14,7 +14,7 @@ require_once '../components/header.php';
         <!-- ===================================================================== -->
 
 
-        <!--<a href="./edicao.php" class="text-decoration-none text-black">
+        <a href="./edicao.php" class="text-decoration-none text-black">
              <div class="d-flex justify-content-between align-items-center shadow p-3 w-100 mb-3">
                 <div>
                     <h2 class="fs-2">Interclasse 2026</h2>
@@ -42,12 +42,12 @@ require_once '../components/header.php';
             <div>
                 <img src="../../public/icons/arrow.svg" alt="icone de seta">
             </div>
-        </div> -->
+        </div>
     </section>
 </main>
 
 
-<script>
+<!-- <script>
     async function listarInterclasses() {
         try {
             const url = await fetch('../../../api/view/interclasse.php');
@@ -76,7 +76,7 @@ require_once '../components/header.php';
     }
 
     listarInterclasses()
-</script>
+</script> -->
 
 <?php
 require_once '../components/navbar.php'
