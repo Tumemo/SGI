@@ -6,7 +6,7 @@ $method = $_SERVER['REQUEST_METHOD'];
 switch ($method) {
     case 'GET':
         $id = isset($_GET['id_interclasse']) ? $_GET['id_interclasse'] : null;
-
+// teste asdad
         if ($id) {
             $sql = "SELECT interclasses.id_interclasse, interclasses.nome_interclasse, interclasses.ano_interclasse 
     FROM interclasses 
