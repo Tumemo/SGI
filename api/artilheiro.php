@@ -55,8 +55,38 @@ switch ($method) {
         break;
 
     case 'POST':
+        $data = json_decode(file_get_contents("php://input"));
+
+        if (!isset($data->usuarios_id_usuario) || !isset($data->jogos_id_jogo) || !isset($data->num_gol)) {
+            http_response_code(400);
+            echo json_encode([
+                "success" => false,
+                "message" => "Dados incompletos. É necessário enviar usuarios_id_usuario, jogos_id_jogo e num_gol."
+            ]);
+            break;
+        }
+
         
+        $id_usuario = intval($data->usuarios_id_usuario);
+        $id_jogo = intval($data->jogos_id_jogo);
+        $num_gol = intval($data->num_gol);
+
+       
+        $sql = "INSERT INTO artilheiros (usuarios_id_usuario, jogos_id_jogo, num_gol) VALUES ($id_usuario, $id_jogo, $num_gol)";
+
+        $res = $conn->query($sql);
+        if($res == TRUE){
+            http_response_code(200); // Internal Server Error
+            echo json_encode([
+                "success" => true,
+                "message" => "Dados cadastrado com sucesso"
+            ]);
+        } else {
+            http_response_code(500); // Internal Server Error
+            echo json_encode([
+                "success" => false,
+                "message" => "Erro na preparação da query: " . $conn->error
+            ]);
+        }
         break;
 }
-
-$conn->close();

@@ -34,7 +34,7 @@ switch ($method) {
     INNER JOIN locais ON locais.id_local = jogos.locais_id_local";
         }
 
-        $res = $conn->query($sql);
+        $res = $conn->query($sql);  
         $jogos = [];
 
         if ($res) {
@@ -47,37 +47,42 @@ switch ($method) {
         break;
 
     case 'POST':
+        $data = json_decode(file_get_contents("php://input"));
 
-        $json = json_decode(file_get_contents("php://input"));
-
-        // Validando os campos obrigatórios conforme a imagem
-        if (!isset($json->nome_jogo, $json->status_jogo, $json->modalidades_id_modalidade, $json->locais_id_local)) {
-            echo json_encode(["success" => false, "message" => "Dados incompletos"]);
-            exit;
+        if (!isset($data->titulo_ocorrecia) || !isset($data->descricao_ocorrecia) || !isset($data->data_ocorrecia) || !isset($data->hora_ocorrecia) || !isset($data->usuarios_id_usuario)) {
+            http_response_code(400);
+            echo json_encode([
+                "success" => false,
+                "message" => "Os campos titulo_ocorrecia, descricao_ocorrecia, data_ocorrecia, hora_ocorrecia e usuarios_id_usuario son obrigatorios."
+            ]);
+            break;
         }
 
-        $nome = $json->nome_jogo;
-        $data_hoje = date('Y-m-d');
-        $inicio = date('H:i:s');
-        // Note o nome da coluna conforme a imagem: terminno_jogo (com dois 'n')
-        $termino = "00:00:00";
-        $status = $json->status_jogo;
-        $modalidade = (int) $json->modalidades_id_modalidade;
-        $local = (int) $json->locais_id_local;
+        $titulo_ocorrecia = "'" . $conn->real_escape_string($data->titulo_ocorrecia) . "'";
+        $descricao_ocorrecia = "'" . $conn->real_escape_string($data->descricao_ocorrecia) . "'";
+        $data_ocorrecia = "'" . $conn->real_escape_string($data->data_ocorrecia) . "'";
+        $hora_ocorrecia = "'" . $conn->real_escape_string($data->hora_ocorrecia) . "'";
 
-        // SQL ajustado com os nomes exatos da imagem
-        $sql = "INSERT INTO jogos (nome_jogo, data_jogo, inicio_jogo, terminno_jogo, status_jogo, modalidades_id_modalidade, locais_id_local) 
-        VALUES ('$nome', '$data_hoje', '$inicio', '$termino', '$status', '$modalidade', '$local')";
+        $id_usuario = intval($data->usuarios_id_usuario);
+        $penalidade = isset($data->penalidade) ? intval($data->penalidade) : 0;
 
-        $res = $conn->query($sql);
+        $sql = "INSERT INTO ocorrencias (titulo_ocorrecia, descricao_ocorrecia, data_ocorrecia, hora_ocorrecia, usuarios_id_usuario, penalidade) 
+                VALUES ($titulo_ocorrecia, $descricao_ocorrecia, $data_ocorrecia, $hora_ocorrecia, $id_usuario, $penalidade)";
 
-        if ($res) {
-            echo json_encode(["success" => true, "message" => "Cadastro de jogo realizado com sucesso!"]);
+        if ($conn->query($sql) === TRUE) {
+            http_response_code(200);
+            echo json_encode([
+                "success" => true,
+                "message" => "Ocorrencia rexistrada con éxito"
+            ]);
         } else {
-            echo json_encode(["success" => false, "error" => $conn->error]);
+            http_response_code(500);
+            echo json_encode([
+                "success" => false,
+                "message" => "Erro na execución da query: " . $conn->error
+            ]);
         }
         break;
-
     case 'PUT':
         break;
 

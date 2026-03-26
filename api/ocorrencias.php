@@ -33,28 +33,42 @@ switch ($method) {
         break;
 
     case 'POST':
-        $data = json_decode(file_get_contents("php://input"), true);
+        $data = json_decode(file_get_contents("php://input"));
 
-        $titulo = trim($data['titulo_ocorrecia']);
-        $descricao = trim($data['descricao_ocorrecia']);
-        $data_ocorrencia = trim($data['data_ocorrecia']);
-        $hora = trim($data['hora_ocorrecia']);
-        $usuario = (int) $data['usuarios_id_usuario'];
-        $penalidade = (int) $data['penalidade'];
+        if (!isset($data->titulo_ocorrecia) || !isset($data->descricao_ocorrecia) || !isset($data->data_ocorrecia) || !isset($data->hora_ocorrecia) || !isset($data->usuarios_id_usuario)) {
+            http_response_code(400);
+            echo json_encode([
+                "success" => false,
+                "message" => "Os campos titulo_ocorrecia, descricao_ocorrecia, data_ocorrecia, hora_ocorrecia e usuarios_id_usuario son obrigatorios."
+            ]);
+            break;
+        }
 
+        $titulo_ocorrecia = "'" . $conn->real_escape_string($data->titulo_ocorrecia) . "'";
+        $descricao_ocorrecia = "'" . $conn->real_escape_string($data->descricao_ocorrecia) . "'";
+        $data_ocorrecia = "'" . $conn->real_escape_string($data->data_ocorrecia) . "'";
+        $hora_ocorrecia = "'" . $conn->real_escape_string($data->hora_ocorrecia) . "'";
 
-        $sql = "INSERT INTO ocorrencias (ocorrencias.titulo_ocorrecia, ocorrencias.descricao_ocorrecia, ocorrencias.data_ocorrecia,
-                         ocorrencias.hora_ocorrecia, ocorrencias.usuarios_id_usuario, ocorrencias.penalidade) VALUES ('$titulo', '$descricao', '$data_ocorrencia', '$hora', $usuario, $penalidade)";
+        $id_usuario = intval($data->usuarios_id_usuario);
+        $penalidade = isset($data->penalidade) ? intval($data->penalidade) : 0;
 
-        $res = $conn->query($sql);
+        $sql = "INSERT INTO ocorrencias (titulo_ocorrecia, descricao_ocorrecia, data_ocorrecia, hora_ocorrecia, usuarios_id_usuario, penalidade) 
+                VALUES ($titulo_ocorrecia, $descricao_ocorrecia, $data_ocorrecia, $hora_ocorrecia, $id_usuario, $penalidade)";
 
-        if ($res === TRUE) {
-            echo json_encode(["message" => "Ocorrência cadastrada com sucesso!"]);
+        if ($conn->query($sql) === TRUE) {
+            http_response_code(200);
+            echo json_encode([
+                "success" => true,
+                "message" => "Ocorrencia rexistrada con éxito"
+            ]);
         } else {
-            echo json_encode(["message" => "Erro ao cadastrar ocorrência: " . $conn->error]);
+            http_response_code(500);
+            echo json_encode([
+                "success" => false,
+                "message" => "Erro na execución da query: " . $conn->error
+            ]);
         }
         break;
-
     case 'PUT':
         break;
 

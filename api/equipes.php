@@ -45,25 +45,35 @@ switch ($method) {
         break;
 
     case 'POST':
-        $data = json_decode(file_get_contents("php://input"), true);
+        $data = json_decode(file_get_contents("php://input"));
 
-        if (!$data) {
-            echo json_encode(["success" => false, "message" => "Nenhum JSON recebido"]);
-            exit;
+        if (!isset($data->modalidades_id_modalidade) || !isset($data->usuarios_id_usuario1) || !isset($data->turmas_id_turma)) {
+            http_response_code(400);
+            echo json_encode([
+                "success" => false,
+                "message" => "Os campos modalidades_id_modalidade, usuarios_id_usuario1 e turmas_id_turma são obrigatórios."
+            ]);
+            break;
         }
 
-        $modalidade = (int) $data["modalidade_id_modalidade"];
-        $usuario = (int) $data["usuarios_id_usuario1"];
+        $id_modalidade = intval($data->modalidades_id_modalidade);
+        $id_usuario = intval($data->usuarios_id_usuario1);
+        $id_turma = intval($data->turmas_id_turma);
 
-        $sql = "INSERT INTO equipes(modalidade_id_modalidade, usuarios_id_usuario) 
-        VALUES('$modalidade', '$usuario')";
+        $sql = "INSERT INTO equipes (modalidades_id_modalidade, usuarios_id_usuario1, turmas_id_turma) VALUES ($id_modalidade, $id_usuario, $id_turma)";
 
-        $res = $conn->query($sql);
-
-        if ($res) {
-            echo json_encode(["success" => true]);
+        if ($conn->query($sql) === TRUE) {
+            http_response_code(200);
+            echo json_encode([
+                "success" => true,
+                "message" => "Equipa cadastrada com sucesso"
+            ]);
         } else {
-            echo json_encode(["success" => false, "error" => $conn->error]);
+            http_response_code(500);
+            echo json_encode([
+                "success" => false,
+                "message" => "Erro na execução da query: " . $conn->error
+            ]);
         }
         break;
 
