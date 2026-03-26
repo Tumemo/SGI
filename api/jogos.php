@@ -34,7 +34,7 @@ switch ($method) {
     INNER JOIN locais ON locais.id_local = jogos.locais_id_local";
         }
 
-        $res = $conn->query($sql);
+        $res = $conn->query($sql);  
         $jogos = [];
 
         if ($res) {
