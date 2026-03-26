@@ -1,80 +1,70 @@
 <?php
-require_once '../config/db.php';
-header('Content-Type: application/json');
-$method = $_SERVER['REQUEST_METHOD'];
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
 
+require_once '../config/db.php';
+header('Content-Type: text/html; charset=utf-8');
+
+echo 'ola';
 $acao = isset($_GET['acao']) ? $_GET['acao'] : null;
 
-switch ($method) {
-    case 'GET':
-        // Lógica de listagem se necessário
-        break;
+if ($acao === 'cadastrar_competidores') {
+    $caminho_json = __DIR__ . '/json_turmas/3EM A.json';
+    $id_turma = 7; // Confirmado pelo seu diagnóstico
+    
+    $alunos = json_decode(file_get_contents($caminho_json), true);
+    $sucessos = 0;
+    $erros = [];
 
-    case 'POST':
-        if ($acao == 'cadastrar_competidores') {
-            $pasta_json = 'json_turmas/';
-            $arquivos = glob($pasta_json . "*.json");
-            $total_importado = 0;
+    // Verifique se os nomes das colunas abaixo estão EXATAMENTE iguais ao seu banco
+    $sql = "INSERT INTO usuarios (
+        sigla_usuario, 
+        matricula_usuario, 
+        nome_usuario, 
+        senha_usuario, 
+        foto_ususario, 
+        nivel_usuario, 
+        competidor_usuario, 
+        mesario_usuario, 
+        genero_usuario, 
+        data_nasc_usuario, 
+        turmas_id_turma
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
-            if (count($arquivos) > 0) {
-                foreach ($arquivos as $arquivo_caminho) {
-                    $conteudo = file_get_contents($arquivo_caminho);
-                    $lista_alunos = json_decode($conteudo, true);
+    $stmt = $conn->prepare($sql);
 
-                    if (!empty($lista_alunos)) {
-                        // Preparamos a query uma única vez fora do loop de alunos para performance
-                        $sql = "INSERT INTO usuarios (
-                                    matricula_usuario, 
-                                    nome_usuario, 
-                                    senha_usuario, 
-                                    nivel_usuario, 
-                                    competidor_usuario, 
-                                    mesario_usuario, 
-                                    data_nasc_usuario,
-                                    turmas_id_turma
-                                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+    foreach ($alunos as $aluno) {
+        // Tratamento de data: 06/01/2009 -> 2009-01-06
+        $d = explode('/', $aluno['data_nascimento']);
+        $data_f = $d[2] . '-' . $d[1] . '-' . $d[0];
 
-                        if ($stmt = $conn->prepare($sql)) {
-                            foreach ($lista_alunos as $aluno) {
-                                // Trata a data
-                                $dateObj = DateTime::createFromFormat('d/m/Y', $aluno['data_nascimento']);
-                                $data_sql = $dateObj ? $dateObj->format('Y-m-d') : null;
+        $sigla = 'RM';
+        $foto = 'default.jpg';
+        $nivel = '0';
+        $comp = '1';
+        $mes = '0';
 
-                                // Valores padrão para os campos ENUM e Turma
-                                $senha = '';
-                                $nivel = '0';
-                                $competidor = '1';
-                                $mesario = '0';
+        $stmt->bind_param(
+            "ssssssssssi",
+            $sigla, $aluno['rm'], $aluno['nome'], $data_f,
+            $foto, $nivel, $comp, $mes,
+            $aluno['genero'], $data_f, $id_turma
+        );
 
-                                // "sssssssi" -> 7 strings e 1 inteiro (i) para a turma
-                                $stmt->bind_param(
-                                    "sssssssi", 
-                                    $aluno['rm'], 
-                                    $aluno['nome'], 
-                                    $senha, 
-                                    $nivel, 
-                                    $competidor, 
-                                    $mesario, 
-                                    $data_sql, 
-                                    $id_turma
-                                );
-
-                                if ($stmt->execute()) {
-                                    $total_importado++;
-                                }
-                            }
-                            $stmt->close();
-                        }
-                    }
-                }
-                echo json_encode(["status" => "sucesso", "mensagem" => "Importação concluída. $total_importado alunos cadastrados."]);
-            } else {
-                echo json_encode(["status" => "erro", "mensagem" => "Nenhum arquivo JSON encontrado."]);
-            }
+        if ($stmt->execute()) {
+            $sucessos++;
+        } else {
+            $erros[] = "Erro no aluno " . $aluno['nome'] . ": " . $stmt->error;
         }
-        break;
+    }
 
-    case 'PUT':
-    case 'PATCH':
-        break;
+    echo "<h2>Resultado da Importação</h2>";
+    echo "✅ Sucessos: $sucessos <br>";
+    if (count($erros) > 0) {
+        echo "❌ Erros detectados:<br><ul>";
+        foreach ($erros as $erro) echo "<li>$erro</li>";
+        echo "</ul>";
+    }
 }
+?>
