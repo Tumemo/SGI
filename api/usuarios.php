@@ -5,7 +5,7 @@ error_reporting(E_ALL);
 
 require_once '../config/db.php';
 header('Content-Type: text/html; charset=utf-8');
-
+// atualiza
 echo 'ola';
 $acao = isset($_GET['acao']) ? $_GET['acao'] : null;
 
