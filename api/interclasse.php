@@ -6,7 +6,7 @@ $method = $_SERVER['REQUEST_METHOD'];
 switch ($method) {
     case 'GET':
         $id = isset($_GET['id_interclasse']) ? $_GET['id_interclasse'] : null;
-// teste asdad
+        // teste asdad
         if ($id) {
             $sql = "SELECT interclasses.id_interclasse, interclasses.nome_interclasse, interclasses.ano_interclasse 
     FROM interclasses 
@@ -28,30 +28,37 @@ switch ($method) {
         echo json_encode($interclasse);
         break;
 
-    case "POST":
-        $data_json = json_decode(file_get_contents("php://input"), true);
+    case 'POST':
+        $data = json_decode(file_get_contents("php://input"));
 
-        // Verificamos se o campo existe dentro do array
-        if (!isset($data_json['nome_interclasse'])) {
-            echo json_encode(["success" => false, "message" => "Nenhum JSON recebido"]);
-            exit;
+        if (!isset($data->nome_interclasse) || !isset($data->ano_interclasse)) {
+            http_response_code(400);
+            echo json_encode([
+                "success" => false,
+                "message" => "Os campos nome_interclasse e ano_interclasse são obrigatórios."
+            ]);
+            break;
         }
 
-        $nome = $data_json['nome_interclasse'];
-        $ano = date('Y-m-d H:i:s');
+        $nome_interclasse = "'" . $conn->real_escape_string($data->nome_interclasse) . "'";
+        $ano_interclasse = "'" . $conn->real_escape_string($data->ano_interclasse) . "'";
 
-        // Usei $nome e $ano para evitar confusão com a variável do JSON
-        $sql = "INSERT INTO interclasses(nome_interclasse, ano_interclasse) 
-        VALUES('$nome', '$ano')";
+        $sql = "INSERT INTO interclasses (nome_interclasse, ano_interclasse) VALUES ($nome_interclasse, $ano_interclasse)";
 
-        $res = $conn->query($sql);
-
-        if ($res) {
-            echo json_encode(["success" => true, "message" => "Cadastro de interclasse realizado com sucesso!"]);
+        if ($conn->query($sql) === TRUE) {
+            http_response_code(200);
+            echo json_encode([
+                "success" => true,
+                "message" => "Interclasse cadastrado com sucesso"
+            ]);
         } else {
-            echo json_encode(["success" => false, "error" => $conn->error]);
+            http_response_code(500);
+            echo json_encode([
+                "success" => false,
+                "message" => "Erro na execução da query: " . $conn->error
+            ]);
         }
+        break;
 
     case 'PUT':
-        
 }

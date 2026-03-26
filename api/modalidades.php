@@ -31,58 +31,40 @@ switch ($method) {
         break;
 
     case 'POST':
-        $data = json_decode(file_get_contents("php://input"), true);
+        $data = json_decode(file_get_contents("php://input"));
 
-        if (
-            !isset($data['nome_modalidade'])  ||
-            $data['nome_modalidade'] === null ||
-            !isset($data['genero_modalidade']) ||
-            !isset($data['categoria_modalidade']) ||
-            !isset($data['max_inscrito_modalidade']) ||
-            !isset($data['tipo_modalidade']) ||
-            $data['tipo_modalidade'] === null
-        ) {
+        if (!isset($data->nome_modalidade) || !isset($data->genero_modalidade) || !isset($data->tipos_modalidades_id_tipo_modalidade)) {
+            http_response_code(400);
             echo json_encode([
                 "success" => false,
-                "message" => "Parâmetros insuficientes."
+                "message" => "Os campos nome_modalidade, genero_modalidade e tipos_modalidades_id_tipo_modalidade são obrigatórios."
             ]);
-            exit;
+            break;
         }
 
-        $nome = trim($data['nome_modalidade']);
-        $genero = $data['genero_modalidade'];
-        $categoria = $data['categoria_modalidade'];
-        $max_inscritos = (int) $data['max_inscrito_modalidade'];
-        $tipo = (int) $data['tipo_modalidade'];
+        $nome_modalidade = "'" . $conn->real_escape_string($data->nome_modalidade) . "'";
+        $genero_modalidade = "'" . $conn->real_escape_string($data->genero_modalidade) . "'";
+        $id_tipo_modalidade = intval($data->tipos_modalidades_id_tipo_modalidade);
 
-        if ($genero != "FEM" && $genero != "MASC" && $genero != "MISTO") {
-            echo json_encode(["success" => false, "message" => "Gênero inválido"]);
-            exit;
-        }
+        $categoria_modalidade = isset($data->categoria_modalidade) ? "'" . $conn->real_escape_string($data->categoria_modalidade) . "'" : "NULL";
+        $max_inscrito_modalidade = isset($data->max_inscrito_modalidade) ? intval($data->max_inscrito_modalidade) : "NULL";
 
+        $sql = "INSERT INTO modalidades (nome_modalidade, genero_modalidade, categoria_modalidade, max_inscrito_modalidade, tipos_modalidades_id_tipo_modalidade) 
+                VALUES ($nome_modalidade, $genero_modalidade, $categoria_modalidade, $max_inscrito_modalidade, $id_tipo_modalidade)";
 
-        $sql = "INSERT INTO modalidades 
-(nome_modalidade, genero_modalidade, categoria_modalidade, 
-max_inscrito_modalidade, tipos_modalidades_id_tipo_modalidade) 
-VALUES 
-('$nome', '$genero', '$categoria', $max_inscritos, $tipo)";
-
-
-        $res = $conn->query($sql);
-
-        if ($res) {
+        if ($conn->query($sql) === TRUE) {
+            http_response_code(200);
             echo json_encode([
                 "success" => true,
-                "message" => "Modalidade inserido com sucesso."
+                "message" => "Modalidade cadastrada com sucesso"
             ]);
         } else {
+            http_response_code(500);
             echo json_encode([
                 "success" => false,
-                "message" => "Erro ao inserir.",
-                "error" => $conn->error
+                "message" => "Erro na execução da query: " . $conn->error
             ]);
         }
-
         break;
 
     case 'PUT':

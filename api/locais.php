@@ -32,35 +32,45 @@ switch ($method) {
         ]);
         break;
 
-    case "POST":
-        if (!isset($data['user_id']) ||  !isset($data['local_nome']) ||  !isset($data['capacidade_local'])) {
-            echo json_encode(["success" => false,  "message" => "Parâmetros insuficientes."]);
-            exit;
-        }
+    case 'POST':
+        $data = json_decode(file_get_contents("php://input"));
 
-        $nome_local = $data['local_nome'];
-        $disponivel_local = 1;
-        $capacidade_local = $data['capacidade_local'];
-
-        $sql = "INSERT INTO locais (nome_local, disponivel_local, carga_local) 
-        VALUES ('$nome_local', $disponivel_local, $capacidade_local)";
-
-        $res = $conn->query($sql);
-
-        if ($res) {
-            echo json_encode([
-                "success" => true,
-                "message" => "Local inserido com sucesso.",
-                "insert_id" => $conn->insert_id
-            ]);
-        } else {
+        
+        if (!isset($data->nome_local)) {
+            http_response_code(400);
             echo json_encode([
                 "success" => false,
-                "message" => "Erro ao inserir.",
-                "error" => $conn->error
+                "message" => "Dados incompletos. É necessário enviar pelo menos o nome_local."
+            ]);
+            break;
+        }
+
+      
+        $nome_local = "'" . $conn->real_escape_string($data->nome_local) . "'";
+
+        $disponivel_local = isset($data->disponivel_local) ? "'" . $conn->real_escape_string($data->disponivel_local) . "'" : "'1'";
+
+       
+        $carga_local = isset($data->carga_local) ? intval($data->carga_local) : "NULL";
+
+        
+        $sql = "INSERT INTO locais (nome_local, disponivel_local, carga_local) VALUES ($nome_local, $disponivel_local, $carga_local)";
+
+       
+        $res = $conn->query($sql);
+
+        if ($res === TRUE) {
+            http_response_code(200); 
+            echo json_encode([
+                "success" => true,
+                "message" => "Local cadastrado com sucesso"
+            ]);
+        } else {
+            http_response_code(500); 
+            echo json_encode([
+                "success" => false,
+                "message" => "Erro na execução da query: " . $conn->error
             ]);
         }
         break;
-    
-    
 }

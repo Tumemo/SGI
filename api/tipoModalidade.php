@@ -29,29 +29,35 @@ switch ($method) {
         echo json_encode($tipo);
         break;
 
+    
     case 'POST':
-        $data = json_decode(file_get_contents("php://input"), true);
+        $data = json_decode(file_get_contents("php://input"));
 
-
-        if (!isset($data['nome_pontuacao'], $data['pontuacao'], $data['jogos_id_jogo'], $data['usuarios_id_usuario'])) {
-            echo json_encode(["success" => false, "message" => "Dados incompletos ou JSON inválido"]);
-            exit;
+        if (!isset($data->nome_tipo_modalidade)) {
+            http_response_code(400);
+            echo json_encode([
+                "success" => false,
+                "message" => "O campo nome_tipo_modalidade é obrigatório."
+            ]);
+            break;
         }
-        $nome = $data["nome_pontuacao"];
-        $pontuacao = (int) $data["pontuacao"];
-        $jogo = (int) $data["jogos_id_jogo"];
-        $usuario = (int) $data["usuarios_id_usuario"];
 
-        $sql = "INSERT INTO pontuacoes(nome_pontuacao, valor_pontuacao, jogos_id_jogo, usuarios_id_usuario) 
-        VALUES('$nome', '$pontuacao', '$jogo', '$usuario')";
+        $nome_tipo_modalidade = "'" . $conn->real_escape_string($data->nome_tipo_modalidade) . "'";
 
-        $res = $conn->query($sql);
+        $sql = "INSERT INTO tipos_modalidades (nome_tipo_modalidade) VALUES ($nome_tipo_modalidade)";
 
-        if ($res) {
-            echo json_encode(["success" => true, "message" => "Cadastro de pontuação realizado com sucesso!"]);
+        if ($conn->query($sql) === TRUE) {
+            http_response_code(200);
+            echo json_encode([
+                "success" => true,
+                "message" => "Tipo de modalidade cadastrado com sucesso"
+            ]);
         } else {
-
-            echo json_encode(["success" => false, "error" => $conn->error]);
+            http_response_code(500);
+            echo json_encode([
+                "success" => false,
+                "message" => "Erro na execução da query: " . $conn->error
+            ]);
         }
         break;
 
