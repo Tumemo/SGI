@@ -5,6 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="./node_modules/bootstrap/dist/css/bootstrap.min.css">
     <title>SGI - Login</title>
+    <style>
+        .form-control:focus{
+            box-shadow: 0px 0px 10px 2px red;
+        }
+    </style>
 </head>
 <body>
     <main>
