@@ -1,28 +1,24 @@
 <?php
-$titulo = "Turmas";
-$textTop = "Turmas";
+$titulo = "Categorias";
+$textTop = "Categorias";
 $btnVoltar = true;
 require_once '../componentes/header.php';
 ?>
 
 <main>
-    <p class="text-secondary text-center my-3">Editar detalhes turmas</p>
-    <a href="./edicao_alunos.php" class="text-decoration-none text-black">
+    <p class="text-secondary text-center my-3">Editar detalhes interclasse</p>
+    <a href="./edicao_turmas.php" class="text-decoration-none text-black">
         <div class="d-flex m-auto justify-content-between align-items-center shadow py-3 px-4 mb-3" style="width: 80%;">
-            <h2 class="m-0 fs-3">1 º ano EM</h2>
+            <i class="bi bi-trophy fs-1"></i>
+            <h2 class="m-0 fs-3">Categoria I</h2>
             <picture>
                 <img src="../../public/icons/arrow-right.svg" alt="Seta para direita">
             </picture>
         </div>
     </a>
     <div class="d-flex m-auto justify-content-between align-items-center shadow py-3 px-4 mb-3" style="width: 80%;">
-        <h2 class="m-0 fs-3">2 º ano EM</h2>
-        <picture>
-            <img src="../../public/icons/arrow-right.svg" alt="Seta para direita">
-        </picture>
-    </div>
-    <div class="d-flex m-auto justify-content-between align-items-center shadow py-3 px-4 mb-3" style="width: 80%;">
-        <h2 class="m-0 fs-3">3 º ano EM</h2>
+        <i class="bi bi-basket fs-1"></i>
+        <h2 class="m-0 fs-3">Categoria II</h2>
         <picture>
             <img src="../../public/icons/arrow-right.svg" alt="Seta para direita">
         </picture>

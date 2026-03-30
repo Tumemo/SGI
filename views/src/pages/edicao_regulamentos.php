@@ -69,10 +69,7 @@ require_once '../componentes/header.php';
             </li>
         </ul>
     </div>
-    <section class="d-flex gap-2">
-        <button class="btn btn-dark">Pular</button>
-        <button class="btn btn-danger">Confirmar</button>
-    </section>
+    
 </main>
 
 <?php 

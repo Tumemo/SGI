@@ -6,10 +6,10 @@ require_once '../componentes/header.php';
 ?>
 
 <main>
-    <div class="m-auto" style="width: 80%;">
+    <div class="m-auto" style="width: 90%;">
         <a href="./novaEdicao.php" class="btn btn-danger d-flex gap-2 mt-3" style="width: max-content;"><i class="bi bi-plus-circle"></i>Criar Nova Edição</a>
     </div>
-    <div id="caixaListar"></div>
+    <div id="caixaListar" class="pb-5 mb-2"></div>
 
 
     <!-- Dado estatico caso nescessario -->
@@ -39,9 +39,9 @@ require_once '../componentes/header.php';
             listar.innerHTML = res.data.map((item) =>
             `
             <a href="./edicao.php" class="text-decoration-none text-dark">
-                <div class="m-auto shadow d-flex justify-content-between align-content-center px-3 py-3 rounded-3 my-3" style="width: 80%;" ${item.id_interclasse}>
+                <div class="m-auto shadow d-flex justify-content-between align-content-center px-3 py-3 rounded-3 my-3" style="width: 90%;" ${item.id_interclasse}>
                         <div>
-                            <h2 class="m-0">${item.nome_interclasse}</h2>
+                            <h2 class="m-0 fs-3">${item.nome_interclasse}</h2>
                             <p class="text-secondary m-0">${item.ano_interclasse}</p>
                         </div>
                         <img src="../../public/icons/arrow-right.svg" alt="icone de seta">

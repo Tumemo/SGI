@@ -9,11 +9,19 @@
 }
 
 nav{
-    background-color: var(--vermelho);
+    background-color: var(--vermelho) !important;
+}
+.btn-danger,.bg-danger{
+    background-color: var(--vermelho) !important;
+}
+.text-danger{
+    background-color: var(--vermelho) !important;
+}
+.form-control{
+    animation:  1s;
 }
 
-
-
 .form-control:focus {
-    box-shadow: 0px 0px 10px 2px red;
+    box-shadow: 0px 0px 7px red;
+    border: none;
 }

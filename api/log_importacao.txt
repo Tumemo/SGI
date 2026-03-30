@@ -572,3 +572,763 @@ LVA (RM 2854)
 [27/03/2026 19:27:18] SUCESSO - Inserido: THAUAN MATEUS DE SOUZA RAMOS (RM 2824)
 [27/03/2026 19:27:18] SUCESSO - Inserido: YASMIN GABRIÉLLI DA COME SILVA (RM 3308)
 [27/03/2026 19:27:18] --- FIM DA IMPORTAÇÃO ---
+[30/03/2026 21:33:09] --- INICIANDO NOVA IMPORTAÇÃO ---
+[30/03/2026 21:33:09] ERRO - ALEX BRESSANIN JUNIOR (RM 2879): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - ANA JÚLIA MARTINS BORGES (RM 2861): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - ANA JÚLIA MILLER BENONI (RM 2870): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - ANNA LUIZA DA SILVA RIBEIRO (RM 3395): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - ANTONIO FRANCO PARANGABA (RM 2866): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - ANTONY ALVES ESTEVAM DE SOUZA (RM 3360): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - BEATRIZ PALOPOLI GERMANO (RM 2867): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - BIANCA ALVES VIEIRA (RM 3000): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - BIANCA COLNAGO BLAZECH (RM 2852): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - CAUÃ DE GOES MALACRIDA (RM 3354): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - EDUARDO YANAI OTSUKA (RM 3077): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - FELIPE RODRIGUES RAMPASSO (RM 3066): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - GABRIEL DAXTER CALIFANI HONORATO E SILVA (RM 2881): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - GABRIELLE HELOISA CORREA VIANA (RM 2865): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - GUSTAVO DA COSTA BRITO (RM 3145): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - ISADORA MOTA OMURA FELIX (RM 3215): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - JOÃO PEDRO SHINOZUKA AZEVEDO (RM 2877): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - JOÃO PEDRO SILVA BRAZ PAIÃO (RM 2892): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - JÚLIA FERNANDES VENTURA (RM 2874): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - KAUÃ RODRIGUES DE SOUSA SANTOS (RM 2864): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - KAUÊ NASCIMENTO BROCA (RM 2863): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - LARA ARANDA CANTALUPE (RM 3005): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - LARA BELTRAME ZARA (RM 3252): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - LARA DE SOUZA VIEIRA (RM 2875): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - MARIA FERNANDA PACHEGA GARRIDO (RM 2872): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - MIGUEL BERTONCELO GUARNIER DA SILVA (RM 2854): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - PAULO DE SOUZA MORARI (RM 3406): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - RAISSA HELENA SANTOS (RM 3074): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - SAMUEL VICTOR SANTOS CAETANO (RM 2878): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - STHEFANY LAVINI CHAGAS DOS SANTOS (RM 2869): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - VICTOR HUGO FERREIRA VIANI (RM 2858): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - YASMIM VITÓRIA DA SILVA BRASI (RM 3319): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - ALICE FERNANDA DOS SANTOS (RM 3263): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - ANA CLARA DO AMARAL JUSTI (RM 2810): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - BRAIEN BERNARDINO DELANHESE GALVÃO (RM 3356): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - BRENO MOURA BIANCHINI (RM 2833): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - CLARA TAUANE MORAES DOURADO (RM 2416): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - ELOISA FLORENCE LIMA (RM 3206): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - ENRICO ANTONIO RODRIGUES (RM 2834): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - GABRIELA PISSININ MENOSSI (RM 2838): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - GEOVANA EDUARDA SOUSA DE OLIVEIRA (RM 2817): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - GUSTAVO SANTOS VIEIRA (RM 2814): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - HENRY SALVADOR TRINDADE MONTOYA NETO (RM 3401): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - HUGO FRANCISCO DA SILVA (RM 3002): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - HYTALLO GABRIEL RUFFO FLORES (RM 2835): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - KAIKY GONÇALVES DA SILVA (RM 2826): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - KAIO GABRIEL ALVES FIGUEREDO (RM 2813): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - KAUÊ ALVES RUFINO (RM 2829): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - KAYKY TEÓFILO DE SOUZA CASTRIANI (RM 2830): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - LANNA LIVIA FERNANDES ANDRADE (RM 2844): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - LARA WADA OGUIDO (RM 2851): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - LUIZ GUSTAVO PEREIRA DE SOUZA (RM 3052): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - LUMA CHRISTOFOLE MASSARANDUBA (RM 2825): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - MURILO BERALDO CORRAL FERNANDES (RM 2827): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - NATÁLIA CAROLINE BOSISIO (RM 2832): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - NICOLAS HENRIQUE MENDES OLIVEIRA (RM 2815): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - PIETRO EDUARDO COELHO DALBEM (RM 2820): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - RAFAEL ANTONIO MANTOVANI (RM 3148): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - RYAN RODRIGO DOS SANTOS CLEMENTE DA SILVA (RM 2836): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - RYAN RODRIGUES RANGEL (RM 2818): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - THAINÁ VITÓRIA DA SILVA PONTES (RM 2823): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - THAUAN MATEUS DE SOUZA RAMOS (RM 2824): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - YASMIN GABRIÉLLI DA COME SILVA (RM 3308): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - ALEX BRESSANIN JUNIOR (RM 2879): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - ANA JÚLIA MARTINS BORGES (RM 2861): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - ANA JÚLIA MILLER BENONI (RM 2870): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - ANNA LUIZA DA SILVA RIBEIRO (RM 3395): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - ANTONIO FRANCO PARANGABA (RM 2866): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - ANTONY ALVES ESTEVAM DE SOUZA (RM 3360): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - BEATRIZ PALOPOLI GERMANO (RM 2867): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - BIANCA ALVES VIEIRA (RM 3000): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - BIANCA COLNAGO BLAZECH (RM 2852): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - CAUÃ DE GOES MALACRIDA (RM 3354): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - EDUARDO YANAI OTSUKA (RM 3077): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - FELIPE RODRIGUES RAMPASSO (RM 3066): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - GABRIEL DAXTER CALIFANI HONORATO E SILVA (RM 2881): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - GABRIELLE HELOISA CORREA VIANA (RM 2865): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - GUSTAVO DA COSTA BRITO (RM 3145): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - ISADORA MOTA OMURA FELIX (RM 3215): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - JOÃO PEDRO SHINOZUKA AZEVEDO (RM 2877): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - JOÃO PEDRO SILVA BRAZ PAIÃO (RM 2892): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - JÚLIA FERNANDES VENTURA (RM 2874): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - KAUÃ RODRIGUES DE SOUSA SANTOS (RM 2864): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - KAUÊ NASCIMENTO BROCA (RM 2863): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - LARA ARANDA CANTALUPE (RM 3005): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - LARA BELTRAME ZARA (RM 3252): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - LARA DE SOUZA VIEIRA (RM 2875): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - MARIA FERNANDA PACHEGA GARRIDO (RM 2872): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - MIGUEL BERTONCELO GUARNIER DA SILVA (RM 2854): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - PAULO DE SOUZA MORARI (RM 3406): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - RAISSA HELENA SANTOS (RM 3074): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - SAMUEL VICTOR SANTOS CAETANO (RM 2878): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - STHEFANY LAVINI CHAGAS DOS SANTOS (RM 2869): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - VICTOR HUGO FERREIRA VIANI (RM 2858): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - YASMIM VITÓRIA DA SILVA BRASI (RM 3319): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - ALICE FERNANDA DOS SANTOS (RM 3263): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - ANA CLARA DO AMARAL JUSTI (RM 2810): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - BRAIEN BERNARDINO DELANHESE GALVÃO (RM 3356): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - BRENO MOURA BIANCHINI (RM 2833): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - CLARA TAUANE MORAES DOURADO (RM 2416): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - ELOISA FLORENCE LIMA (RM 3206): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - ENRICO ANTONIO RODRIGUES (RM 2834): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - GABRIELA PISSININ MENOSSI (RM 2838): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - GEOVANA EDUARDA SOUSA DE OLIVEIRA (RM 2817): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - GUSTAVO SANTOS VIEIRA (RM 2814): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - HENRY SALVADOR TRINDADE MONTOYA NETO (RM 3401): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - HUGO FRANCISCO DA SILVA (RM 3002): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - HYTALLO GABRIEL RUFFO FLORES (RM 2835): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - KAIKY GONÇALVES DA SILVA (RM 2826): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - KAIO GABRIEL ALVES FIGUEREDO (RM 2813): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - KAUÊ ALVES RUFINO (RM 2829): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - KAYKY TEÓFILO DE SOUZA CASTRIANI (RM 2830): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - LANNA LIVIA FERNANDES ANDRADE (RM 2844): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - LARA WADA OGUIDO (RM 2851): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - LUIZ GUSTAVO PEREIRA DE SOUZA (RM 3052): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - LUMA CHRISTOFOLE MASSARANDUBA (RM 2825): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - MURILO BERALDO CORRAL FERNANDES (RM 2827): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - NATÁLIA CAROLINE BOSISIO (RM 2832): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - NICOLAS HENRIQUE MENDES OLIVEIRA (RM 2815): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - PIETRO EDUARDO COELHO DALBEM (RM 2820): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - RAFAEL ANTONIO MANTOVANI (RM 3148): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - RYAN RODRIGO DOS SANTOS CLEMENTE DA SILVA (RM 2836): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - RYAN RODRIGUES RANGEL (RM 2818): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - THAINÁ VITÓRIA DA SILVA PONTES (RM 2823): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - THAUAN MATEUS DE SOUZA RAMOS (RM 2824): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - YASMIN GABRIÉLLI DA COME SILVA (RM 3308): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - ALEX BRESSANIN JUNIOR (RM 2879): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - ANA JÚLIA MARTINS BORGES (RM 2861): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - ANA JÚLIA MILLER BENONI (RM 2870): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - ANNA LUIZA DA SILVA RIBEIRO (RM 3395): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - ANTONIO FRANCO PARANGABA (RM 2866): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - ANTONY ALVES ESTEVAM DE SOUZA (RM 3360): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - BEATRIZ PALOPOLI GERMANO (RM 2867): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - BIANCA ALVES VIEIRA (RM 3000): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - BIANCA COLNAGO BLAZECH (RM 2852): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - CAUÃ DE GOES MALACRIDA (RM 3354): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - EDUARDO YANAI OTSUKA (RM 3077): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - FELIPE RODRIGUES RAMPASSO (RM 3066): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - GABRIEL DAXTER CALIFANI HONORATO E SILVA (RM 2881): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - GABRIELLE HELOISA CORREA VIANA (RM 2865): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - GUSTAVO DA COSTA BRITO (RM 3145): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - ISADORA MOTA OMURA FELIX (RM 3215): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - JOÃO PEDRO SHINOZUKA AZEVEDO (RM 2877): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - JOÃO PEDRO SILVA BRAZ PAIÃO (RM 2892): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - JÚLIA FERNANDES VENTURA (RM 2874): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - KAUÃ RODRIGUES DE SOUSA SANTOS (RM 2864): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - KAUÊ NASCIMENTO BROCA (RM 2863): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - LARA ARANDA CANTALUPE (RM 3005): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - LARA BELTRAME ZARA (RM 3252): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - LARA DE SOUZA VIEIRA (RM 2875): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - MARIA FERNANDA PACHEGA GARRIDO (RM 2872): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - MIGUEL BERTONCELO GUARNIER DA SILVA (RM 2854): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - PAULO DE SOUZA MORARI (RM 3406): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - RAISSA HELENA SANTOS (RM 3074): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - SAMUEL VICTOR SANTOS CAETANO (RM 2878): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - STHEFANY LAVINI CHAGAS DOS SANTOS (RM 2869): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - VICTOR HUGO FERREIRA VIANI (RM 2858): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - YASMIM VITÓRIA DA SILVA BRASI (RM 3319): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - ALICE FERNANDA DOS SANTOS (RM 3263): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - ANA CLARA DO AMARAL JUSTI (RM 2810): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - BRAIEN BERNARDINO DELANHESE GALVÃO (RM 3356): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - BRENO MOURA BIANCHINI (RM 2833): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - CLARA TAUANE MORAES DOURADO (RM 2416): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - ELOISA FLORENCE LIMA (RM 3206): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - ENRICO ANTONIO RODRIGUES (RM 2834): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - GABRIELA PISSININ MENOSSI (RM 2838): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - GEOVANA EDUARDA SOUSA DE OLIVEIRA (RM 2817): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - GUSTAVO SANTOS VIEIRA (RM 2814): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - HENRY SALVADOR TRINDADE MONTOYA NETO (RM 3401): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - HUGO FRANCISCO DA SILVA (RM 3002): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - HYTALLO GABRIEL RUFFO FLORES (RM 2835): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - KAIKY GONÇALVES DA SILVA (RM 2826): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - KAIO GABRIEL ALVES FIGUEREDO (RM 2813): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - KAUÊ ALVES RUFINO (RM 2829): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - KAYKY TEÓFILO DE SOUZA CASTRIANI (RM 2830): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - LANNA LIVIA FERNANDES ANDRADE (RM 2844): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - LARA WADA OGUIDO (RM 2851): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - LUIZ GUSTAVO PEREIRA DE SOUZA (RM 3052): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - LUMA CHRISTOFOLE MASSARANDUBA (RM 2825): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - MURILO BERALDO CORRAL FERNANDES (RM 2827): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - NATÁLIA CAROLINE BOSISIO (RM 2832): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - NICOLAS HENRIQUE MENDES OLIVEIRA (RM 2815): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - PIETRO EDUARDO COELHO DALBEM (RM 2820): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - RAFAEL ANTONIO MANTOVANI (RM 3148): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - RYAN RODRIGO DOS SANTOS CLEMENTE DA SILVA (RM 2836): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - RYAN RODRIGUES RANGEL (RM 2818): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - THAINÁ VITÓRIA DA SILVA PONTES (RM 2823): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - THAUAN MATEUS DE SOUZA RAMOS (RM 2824): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - YASMIN GABRIÉLLI DA COME SILVA (RM 3308): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - ALEX BRESSANIN JUNIOR (RM 2879): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - ANA JÚLIA MARTINS BORGES (RM 2861): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - ANA JÚLIA MILLER BENONI (RM 2870): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - ANNA LUIZA DA SILVA RIBEIRO (RM 3395): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - ANTONIO FRANCO PARANGABA (RM 2866): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - ANTONY ALVES ESTEVAM DE SOUZA (RM 3360): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - BEATRIZ PALOPOLI GERMANO (RM 2867): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - BIANCA ALVES VIEIRA (RM 3000): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - BIANCA COLNAGO BLAZECH (RM 2852): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - CAUÃ DE GOES MALACRIDA (RM 3354): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - EDUARDO YANAI OTSUKA (RM 3077): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - FELIPE RODRIGUES RAMPASSO (RM 3066): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - GABRIEL DAXTER CALIFANI HONORATO E SILVA (RM 2881): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - GABRIELLE HELOISA CORREA VIANA (RM 2865): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - GUSTAVO DA COSTA BRITO (RM 3145): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - ISADORA MOTA OMURA FELIX (RM 3215): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - JOÃO PEDRO SHINOZUKA AZEVEDO (RM 2877): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - JOÃO PEDRO SILVA BRAZ PAIÃO (RM 2892): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - JÚLIA FERNANDES VENTURA (RM 2874): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - KAUÃ RODRIGUES DE SOUSA SANTOS (RM 2864): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - KAUÊ NASCIMENTO BROCA (RM 2863): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - LARA ARANDA CANTALUPE (RM 3005): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - LARA BELTRAME ZARA (RM 3252): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - LARA DE SOUZA VIEIRA (RM 2875): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - MARIA FERNANDA PACHEGA GARRIDO (RM 2872): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - MIGUEL BERTONCELO GUARNIER DA SILVA (RM 2854): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - PAULO DE SOUZA MORARI (RM 3406): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - RAISSA HELENA SANTOS (RM 3074): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - SAMUEL VICTOR SANTOS CAETANO (RM 2878): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - STHEFANY LAVINI CHAGAS DOS SANTOS (RM 2869): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - VICTOR HUGO FERREIRA VIANI (RM 2858): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - YASMIM VITÓRIA DA SILVA BRASI (RM 3319): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - ALICE FERNANDA DOS SANTOS (RM 3263): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - ANA CLARA DO AMARAL JUSTI (RM 2810): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - BRAIEN BERNARDINO DELANHESE GALVÃO (RM 3356): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - BRENO MOURA BIANCHINI (RM 2833): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - CLARA TAUANE MORAES DOURADO (RM 2416): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - ELOISA FLORENCE LIMA (RM 3206): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - ENRICO ANTONIO RODRIGUES (RM 2834): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - GABRIELA PISSININ MENOSSI (RM 2838): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - GEOVANA EDUARDA SOUSA DE OLIVEIRA (RM 2817): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - GUSTAVO SANTOS VIEIRA (RM 2814): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - HENRY SALVADOR TRINDADE MONTOYA NETO (RM 3401): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - HUGO FRANCISCO DA SILVA (RM 3002): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - HYTALLO GABRIEL RUFFO FLORES (RM 2835): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - KAIKY GONÇALVES DA SILVA (RM 2826): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - KAIO GABRIEL ALVES FIGUEREDO (RM 2813): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - KAUÊ ALVES RUFINO (RM 2829): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - KAYKY TEÓFILO DE SOUZA CASTRIANI (RM 2830): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - LANNA LIVIA FERNANDES ANDRADE (RM 2844): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - LARA WADA OGUIDO (RM 2851): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - LUIZ GUSTAVO PEREIRA DE SOUZA (RM 3052): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - LUMA CHRISTOFOLE MASSARANDUBA (RM 2825): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - MURILO BERALDO CORRAL FERNANDES (RM 2827): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - NATÁLIA CAROLINE BOSISIO (RM 2832): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - NICOLAS HENRIQUE MENDES OLIVEIRA (RM 2815): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - PIETRO EDUARDO COELHO DALBEM (RM 2820): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - RAFAEL ANTONIO MANTOVANI (RM 3148): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - RYAN RODRIGO DOS SANTOS CLEMENTE DA SILVA (RM 2836): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - RYAN RODRIGUES RANGEL (RM 2818): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - THAINÁ VITÓRIA DA SILVA PONTES (RM 2823): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - THAUAN MATEUS DE SOUZA RAMOS (RM 2824): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - YASMIN GABRIÉLLI DA COME SILVA (RM 3308): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - ALEX BRESSANIN JUNIOR (RM 2879): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - ANA JÚLIA MARTINS BORGES (RM 2861): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - ANA JÚLIA MILLER BENONI (RM 2870): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - ANNA LUIZA DA SILVA RIBEIRO (RM 3395): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - ANTONIO FRANCO PARANGABA (RM 2866): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - ANTONY ALVES ESTEVAM DE SOUZA (RM 3360): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - BEATRIZ PALOPOLI GERMANO (RM 2867): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - BIANCA ALVES VIEIRA (RM 3000): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - BIANCA COLNAGO BLAZECH (RM 2852): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - CAUÃ DE GOES MALACRIDA (RM 3354): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - EDUARDO YANAI OTSUKA (RM 3077): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - FELIPE RODRIGUES RAMPASSO (RM 3066): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - GABRIEL DAXTER CALIFANI HONORATO E SILVA (RM 2881): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - GABRIELLE HELOISA CORREA VIANA (RM 2865): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - GUSTAVO DA COSTA BRITO (RM 3145): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - ISADORA MOTA OMURA FELIX (RM 3215): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - JOÃO PEDRO SHINOZUKA AZEVEDO (RM 2877): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - JOÃO PEDRO SILVA BRAZ PAIÃO (RM 2892): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - JÚLIA FERNANDES VENTURA (RM 2874): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - KAUÃ RODRIGUES DE SOUSA SANTOS (RM 2864): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - KAUÊ NASCIMENTO BROCA (RM 2863): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - LARA ARANDA CANTALUPE (RM 3005): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - LARA BELTRAME ZARA (RM 3252): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - LARA DE SOUZA VIEIRA (RM 2875): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - MARIA FERNANDA PACHEGA GARRIDO (RM 2872): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - MIGUEL BERTONCELO GUARNIER DA SILVA (RM 2854): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - PAULO DE SOUZA MORARI (RM 3406): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - RAISSA HELENA SANTOS (RM 3074): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - SAMUEL VICTOR SANTOS CAETANO (RM 2878): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - STHEFANY LAVINI CHAGAS DOS SANTOS (RM 2869): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - VICTOR HUGO FERREIRA VIANI (RM 2858): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - YASMIM VITÓRIA DA SILVA BRASI (RM 3319): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - ALICE FERNANDA DOS SANTOS (RM 3263): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - ANA CLARA DO AMARAL JUSTI (RM 2810): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - BRAIEN BERNARDINO DELANHESE GALVÃO (RM 3356): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - BRENO MOURA BIANCHINI (RM 2833): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - CLARA TAUANE MORAES DOURADO (RM 2416): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - ELOISA FLORENCE LIMA (RM 3206): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - ENRICO ANTONIO RODRIGUES (RM 2834): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - GABRIELA PISSININ MENOSSI (RM 2838): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - GEOVANA EDUARDA SOUSA DE OLIVEIRA (RM 2817): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - GUSTAVO SANTOS VIEIRA (RM 2814): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - HENRY SALVADOR TRINDADE MONTOYA NETO (RM 3401): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - HUGO FRANCISCO DA SILVA (RM 3002): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - HYTALLO GABRIEL RUFFO FLORES (RM 2835): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - KAIKY GONÇALVES DA SILVA (RM 2826): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - KAIO GABRIEL ALVES FIGUEREDO (RM 2813): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - KAUÊ ALVES RUFINO (RM 2829): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - KAYKY TEÓFILO DE SOUZA CASTRIANI (RM 2830): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - LANNA LIVIA FERNANDES ANDRADE (RM 2844): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - LARA WADA OGUIDO (RM 2851): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - LUIZ GUSTAVO PEREIRA DE SOUZA (RM 3052): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - LUMA CHRISTOFOLE MASSARANDUBA (RM 2825): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - MURILO BERALDO CORRAL FERNANDES (RM 2827): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - NATÁLIA CAROLINE BOSISIO (RM 2832): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - NICOLAS HENRIQUE MENDES OLIVEIRA (RM 2815): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - PIETRO EDUARDO COELHO DALBEM (RM 2820): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - RAFAEL ANTONIO MANTOVANI (RM 3148): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - RYAN RODRIGO DOS SANTOS CLEMENTE DA SILVA (RM 2836): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - RYAN RODRIGUES RANGEL (RM 2818): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - THAINÁ VITÓRIA DA SILVA PONTES (RM 2823): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - THAUAN MATEUS DE SOUZA RAMOS (RM 2824): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - YASMIN GABRIÉLLI DA COME SILVA (RM 3308): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - ALEX BRESSANIN JUNIOR (RM 2879): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - ANA JÚLIA MARTINS BORGES (RM 2861): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - ANA JÚLIA MILLER BENONI (RM 2870): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - ANNA LUIZA DA SILVA RIBEIRO (RM 3395): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - ANTONIO FRANCO PARANGABA (RM 2866): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - ANTONY ALVES ESTEVAM DE SOUZA (RM 3360): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - BEATRIZ PALOPOLI GERMANO (RM 2867): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - BIANCA ALVES VIEIRA (RM 3000): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - BIANCA COLNAGO BLAZECH (RM 2852): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - CAUÃ DE GOES MALACRIDA (RM 3354): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - EDUARDO YANAI OTSUKA (RM 3077): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - FELIPE RODRIGUES RAMPASSO (RM 3066): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - GABRIEL DAXTER CALIFANI HONORATO E SILVA (RM 2881): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - GABRIELLE HELOISA CORREA VIANA (RM 2865): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - GUSTAVO DA COSTA BRITO (RM 3145): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - ISADORA MOTA OMURA FELIX (RM 3215): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - JOÃO PEDRO SHINOZUKA AZEVEDO (RM 2877): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - JOÃO PEDRO SILVA BRAZ PAIÃO (RM 2892): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - JÚLIA FERNANDES VENTURA (RM 2874): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - KAUÃ RODRIGUES DE SOUSA SANTOS (RM 2864): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - KAUÊ NASCIMENTO BROCA (RM 2863): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - LARA ARANDA CANTALUPE (RM 3005): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - LARA BELTRAME ZARA (RM 3252): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - LARA DE SOUZA VIEIRA (RM 2875): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - MARIA FERNANDA PACHEGA GARRIDO (RM 2872): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - MIGUEL BERTONCELO GUARNIER DA SILVA (RM 2854): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - PAULO DE SOUZA MORARI (RM 3406): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - RAISSA HELENA SANTOS (RM 3074): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - SAMUEL VICTOR SANTOS CAETANO (RM 2878): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - STHEFANY LAVINI CHAGAS DOS SANTOS (RM 2869): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - VICTOR HUGO FERREIRA VIANI (RM 2858): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - YASMIM VITÓRIA DA SILVA BRASI (RM 3319): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - ALICE FERNANDA DOS SANTOS (RM 3263): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - ANA CLARA DO AMARAL JUSTI (RM 2810): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - BRAIEN BERNARDINO DELANHESE GALVÃO (RM 3356): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - BRENO MOURA BIANCHINI (RM 2833): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - CLARA TAUANE MORAES DOURADO (RM 2416): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - ELOISA FLORENCE LIMA (RM 3206): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - ENRICO ANTONIO RODRIGUES (RM 2834): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - GABRIELA PISSININ MENOSSI (RM 2838): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - GEOVANA EDUARDA SOUSA DE OLIVEIRA (RM 2817): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - GUSTAVO SANTOS VIEIRA (RM 2814): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - HENRY SALVADOR TRINDADE MONTOYA NETO (RM 3401): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - HUGO FRANCISCO DA SILVA (RM 3002): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - HYTALLO GABRIEL RUFFO FLORES (RM 2835): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - KAIKY GONÇALVES DA SILVA (RM 2826): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - KAIO GABRIEL ALVES FIGUEREDO (RM 2813): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - KAUÊ ALVES RUFINO (RM 2829): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - KAYKY TEÓFILO DE SOUZA CASTRIANI (RM 2830): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - LANNA LIVIA FERNANDES ANDRADE (RM 2844): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - LARA WADA OGUIDO (RM 2851): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - LUIZ GUSTAVO PEREIRA DE SOUZA (RM 3052): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - LUMA CHRISTOFOLE MASSARANDUBA (RM 2825): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - MURILO BERALDO CORRAL FERNANDES (RM 2827): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - NATÁLIA CAROLINE BOSISIO (RM 2832): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - NICOLAS HENRIQUE MENDES OLIVEIRA (RM 2815): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - PIETRO EDUARDO COELHO DALBEM (RM 2820): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - RAFAEL ANTONIO MANTOVANI (RM 3148): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - RYAN RODRIGO DOS SANTOS CLEMENTE DA SILVA (RM 2836): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - RYAN RODRIGUES RANGEL (RM 2818): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - THAINÁ VITÓRIA DA SILVA PONTES (RM 2823): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - THAUAN MATEUS DE SOUZA RAMOS (RM 2824): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:09] ERRO - YASMIN GABRIÉLLI DA COME SILVA (RM 3308): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:09] --- FIM DA IMPORTAÇÃO ---
+[30/03/2026 21:33:34] --- INICIANDO NOVA IMPORTAÇÃO ---
+[30/03/2026 21:33:34] ERRO - ALEX BRESSANIN JUNIOR (RM 2879): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - ANA JÚLIA MARTINS BORGES (RM 2861): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - ANA JÚLIA MILLER BENONI (RM 2870): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - ANNA LUIZA DA SILVA RIBEIRO (RM 3395): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - ANTONIO FRANCO PARANGABA (RM 2866): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - ANTONY ALVES ESTEVAM DE SOUZA (RM 3360): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - BEATRIZ PALOPOLI GERMANO (RM 2867): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - BIANCA ALVES VIEIRA (RM 3000): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - BIANCA COLNAGO BLAZECH (RM 2852): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - CAUÃ DE GOES MALACRIDA (RM 3354): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - EDUARDO YANAI OTSUKA (RM 3077): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - FELIPE RODRIGUES RAMPASSO (RM 3066): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - GABRIEL DAXTER CALIFANI HONORATO E SILVA (RM 2881): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - GABRIELLE HELOISA CORREA VIANA (RM 2865): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - GUSTAVO DA COSTA BRITO (RM 3145): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - ISADORA MOTA OMURA FELIX (RM 3215): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - JOÃO PEDRO SHINOZUKA AZEVEDO (RM 2877): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - JOÃO PEDRO SILVA BRAZ PAIÃO (RM 2892): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - JÚLIA FERNANDES VENTURA (RM 2874): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - KAUÃ RODRIGUES DE SOUSA SANTOS (RM 2864): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - KAUÊ NASCIMENTO BROCA (RM 2863): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - LARA ARANDA CANTALUPE (RM 3005): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - LARA BELTRAME ZARA (RM 3252): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - LARA DE SOUZA VIEIRA (RM 2875): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - MARIA FERNANDA PACHEGA GARRIDO (RM 2872): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - MIGUEL BERTONCELO GUARNIER DA SILVA (RM 2854): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - PAULO DE SOUZA MORARI (RM 3406): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - RAISSA HELENA SANTOS (RM 3074): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - SAMUEL VICTOR SANTOS CAETANO (RM 2878): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - STHEFANY LAVINI CHAGAS DOS SANTOS (RM 2869): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - VICTOR HUGO FERREIRA VIANI (RM 2858): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - YASMIM VITÓRIA DA SILVA BRASI (RM 3319): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - ALICE FERNANDA DOS SANTOS (RM 3263): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - ANA CLARA DO AMARAL JUSTI (RM 2810): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - BRAIEN BERNARDINO DELANHESE GALVÃO (RM 3356): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - BRENO MOURA BIANCHINI (RM 2833): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - CLARA TAUANE MORAES DOURADO (RM 2416): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - ELOISA FLORENCE LIMA (RM 3206): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - ENRICO ANTONIO RODRIGUES (RM 2834): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - GABRIELA PISSININ MENOSSI (RM 2838): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - GEOVANA EDUARDA SOUSA DE OLIVEIRA (RM 2817): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - GUSTAVO SANTOS VIEIRA (RM 2814): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - HENRY SALVADOR TRINDADE MONTOYA NETO (RM 3401): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - HUGO FRANCISCO DA SILVA (RM 3002): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - HYTALLO GABRIEL RUFFO FLORES (RM 2835): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - KAIKY GONÇALVES DA SILVA (RM 2826): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - KAIO GABRIEL ALVES FIGUEREDO (RM 2813): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - KAUÊ ALVES RUFINO (RM 2829): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - KAYKY TEÓFILO DE SOUZA CASTRIANI (RM 2830): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - LANNA LIVIA FERNANDES ANDRADE (RM 2844): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - LARA WADA OGUIDO (RM 2851): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - LUIZ GUSTAVO PEREIRA DE SOUZA (RM 3052): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - LUMA CHRISTOFOLE MASSARANDUBA (RM 2825): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - MURILO BERALDO CORRAL FERNANDES (RM 2827): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - NATÁLIA CAROLINE BOSISIO (RM 2832): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - NICOLAS HENRIQUE MENDES OLIVEIRA (RM 2815): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - PIETRO EDUARDO COELHO DALBEM (RM 2820): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - RAFAEL ANTONIO MANTOVANI (RM 3148): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - RYAN RODRIGO DOS SANTOS CLEMENTE DA SILVA (RM 2836): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - RYAN RODRIGUES RANGEL (RM 2818): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - THAINÁ VITÓRIA DA SILVA PONTES (RM 2823): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - THAUAN MATEUS DE SOUZA RAMOS (RM 2824): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - YASMIN GABRIÉLLI DA COME SILVA (RM 3308): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - ALEX BRESSANIN JUNIOR (RM 2879): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - ANA JÚLIA MARTINS BORGES (RM 2861): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - ANA JÚLIA MILLER BENONI (RM 2870): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - ANNA LUIZA DA SILVA RIBEIRO (RM 3395): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - ANTONIO FRANCO PARANGABA (RM 2866): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - ANTONY ALVES ESTEVAM DE SOUZA (RM 3360): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - BEATRIZ PALOPOLI GERMANO (RM 2867): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - BIANCA ALVES VIEIRA (RM 3000): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - BIANCA COLNAGO BLAZECH (RM 2852): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - CAUÃ DE GOES MALACRIDA (RM 3354): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - EDUARDO YANAI OTSUKA (RM 3077): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - FELIPE RODRIGUES RAMPASSO (RM 3066): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - GABRIEL DAXTER CALIFANI HONORATO E SILVA (RM 2881): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - GABRIELLE HELOISA CORREA VIANA (RM 2865): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - GUSTAVO DA COSTA BRITO (RM 3145): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - ISADORA MOTA OMURA FELIX (RM 3215): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - JOÃO PEDRO SHINOZUKA AZEVEDO (RM 2877): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - JOÃO PEDRO SILVA BRAZ PAIÃO (RM 2892): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - JÚLIA FERNANDES VENTURA (RM 2874): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - KAUÃ RODRIGUES DE SOUSA SANTOS (RM 2864): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - KAUÊ NASCIMENTO BROCA (RM 2863): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - LARA ARANDA CANTALUPE (RM 3005): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - LARA BELTRAME ZARA (RM 3252): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - LARA DE SOUZA VIEIRA (RM 2875): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - MARIA FERNANDA PACHEGA GARRIDO (RM 2872): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - MIGUEL BERTONCELO GUARNIER DA SILVA (RM 2854): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - PAULO DE SOUZA MORARI (RM 3406): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - RAISSA HELENA SANTOS (RM 3074): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - SAMUEL VICTOR SANTOS CAETANO (RM 2878): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - STHEFANY LAVINI CHAGAS DOS SANTOS (RM 2869): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - VICTOR HUGO FERREIRA VIANI (RM 2858): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - YASMIM VITÓRIA DA SILVA BRASI (RM 3319): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - ALICE FERNANDA DOS SANTOS (RM 3263): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - ANA CLARA DO AMARAL JUSTI (RM 2810): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - BRAIEN BERNARDINO DELANHESE GALVÃO (RM 3356): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - BRENO MOURA BIANCHINI (RM 2833): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - CLARA TAUANE MORAES DOURADO (RM 2416): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - ELOISA FLORENCE LIMA (RM 3206): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - ENRICO ANTONIO RODRIGUES (RM 2834): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - GABRIELA PISSININ MENOSSI (RM 2838): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - GEOVANA EDUARDA SOUSA DE OLIVEIRA (RM 2817): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - GUSTAVO SANTOS VIEIRA (RM 2814): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - HENRY SALVADOR TRINDADE MONTOYA NETO (RM 3401): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - HUGO FRANCISCO DA SILVA (RM 3002): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - HYTALLO GABRIEL RUFFO FLORES (RM 2835): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - KAIKY GONÇALVES DA SILVA (RM 2826): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - KAIO GABRIEL ALVES FIGUEREDO (RM 2813): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - KAUÊ ALVES RUFINO (RM 2829): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - KAYKY TEÓFILO DE SOUZA CASTRIANI (RM 2830): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - LANNA LIVIA FERNANDES ANDRADE (RM 2844): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - LARA WADA OGUIDO (RM 2851): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - LUIZ GUSTAVO PEREIRA DE SOUZA (RM 3052): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - LUMA CHRISTOFOLE MASSARANDUBA (RM 2825): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - MURILO BERALDO CORRAL FERNANDES (RM 2827): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - NATÁLIA CAROLINE BOSISIO (RM 2832): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - NICOLAS HENRIQUE MENDES OLIVEIRA (RM 2815): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - PIETRO EDUARDO COELHO DALBEM (RM 2820): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - RAFAEL ANTONIO MANTOVANI (RM 3148): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - RYAN RODRIGO DOS SANTOS CLEMENTE DA SILVA (RM 2836): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - RYAN RODRIGUES RANGEL (RM 2818): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - THAINÁ VITÓRIA DA SILVA PONTES (RM 2823): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - THAUAN MATEUS DE SOUZA RAMOS (RM 2824): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - YASMIN GABRIÉLLI DA COME SILVA (RM 3308): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - ALEX BRESSANIN JUNIOR (RM 2879): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - ANA JÚLIA MARTINS BORGES (RM 2861): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - ANA JÚLIA MILLER BENONI (RM 2870): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - ANNA LUIZA DA SILVA RIBEIRO (RM 3395): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - ANTONIO FRANCO PARANGABA (RM 2866): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - ANTONY ALVES ESTEVAM DE SOUZA (RM 3360): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - BEATRIZ PALOPOLI GERMANO (RM 2867): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - BIANCA ALVES VIEIRA (RM 3000): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - BIANCA COLNAGO BLAZECH (RM 2852): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - CAUÃ DE GOES MALACRIDA (RM 3354): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - EDUARDO YANAI OTSUKA (RM 3077): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - FELIPE RODRIGUES RAMPASSO (RM 3066): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - GABRIEL DAXTER CALIFANI HONORATO E SILVA (RM 2881): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - GABRIELLE HELOISA CORREA VIANA (RM 2865): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - GUSTAVO DA COSTA BRITO (RM 3145): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - ISADORA MOTA OMURA FELIX (RM 3215): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - JOÃO PEDRO SHINOZUKA AZEVEDO (RM 2877): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - JOÃO PEDRO SILVA BRAZ PAIÃO (RM 2892): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - JÚLIA FERNANDES VENTURA (RM 2874): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - KAUÃ RODRIGUES DE SOUSA SANTOS (RM 2864): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - KAUÊ NASCIMENTO BROCA (RM 2863): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - LARA ARANDA CANTALUPE (RM 3005): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - LARA BELTRAME ZARA (RM 3252): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - LARA DE SOUZA VIEIRA (RM 2875): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - MARIA FERNANDA PACHEGA GARRIDO (RM 2872): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - MIGUEL BERTONCELO GUARNIER DA SILVA (RM 2854): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - PAULO DE SOUZA MORARI (RM 3406): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - RAISSA HELENA SANTOS (RM 3074): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - SAMUEL VICTOR SANTOS CAETANO (RM 2878): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - STHEFANY LAVINI CHAGAS DOS SANTOS (RM 2869): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - VICTOR HUGO FERREIRA VIANI (RM 2858): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - YASMIM VITÓRIA DA SILVA BRASI (RM 3319): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - ALICE FERNANDA DOS SANTOS (RM 3263): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - ANA CLARA DO AMARAL JUSTI (RM 2810): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - BRAIEN BERNARDINO DELANHESE GALVÃO (RM 3356): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - BRENO MOURA BIANCHINI (RM 2833): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - CLARA TAUANE MORAES DOURADO (RM 2416): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - ELOISA FLORENCE LIMA (RM 3206): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - ENRICO ANTONIO RODRIGUES (RM 2834): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - GABRIELA PISSININ MENOSSI (RM 2838): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - GEOVANA EDUARDA SOUSA DE OLIVEIRA (RM 2817): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - GUSTAVO SANTOS VIEIRA (RM 2814): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - HENRY SALVADOR TRINDADE MONTOYA NETO (RM 3401): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - HUGO FRANCISCO DA SILVA (RM 3002): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - HYTALLO GABRIEL RUFFO FLORES (RM 2835): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - KAIKY GONÇALVES DA SILVA (RM 2826): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - KAIO GABRIEL ALVES FIGUEREDO (RM 2813): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - KAUÊ ALVES RUFINO (RM 2829): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - KAYKY TEÓFILO DE SOUZA CASTRIANI (RM 2830): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - LANNA LIVIA FERNANDES ANDRADE (RM 2844): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - LARA WADA OGUIDO (RM 2851): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - LUIZ GUSTAVO PEREIRA DE SOUZA (RM 3052): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - LUMA CHRISTOFOLE MASSARANDUBA (RM 2825): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - MURILO BERALDO CORRAL FERNANDES (RM 2827): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - NATÁLIA CAROLINE BOSISIO (RM 2832): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - NICOLAS HENRIQUE MENDES OLIVEIRA (RM 2815): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - PIETRO EDUARDO COELHO DALBEM (RM 2820): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - RAFAEL ANTONIO MANTOVANI (RM 3148): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - RYAN RODRIGO DOS SANTOS CLEMENTE DA SILVA (RM 2836): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - RYAN RODRIGUES RANGEL (RM 2818): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - THAINÁ VITÓRIA DA SILVA PONTES (RM 2823): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - THAUAN MATEUS DE SOUZA RAMOS (RM 2824): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - YASMIN GABRIÉLLI DA COME SILVA (RM 3308): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - ALEX BRESSANIN JUNIOR (RM 2879): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - ANA JÚLIA MARTINS BORGES (RM 2861): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - ANA JÚLIA MILLER BENONI (RM 2870): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - ANNA LUIZA DA SILVA RIBEIRO (RM 3395): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - ANTONIO FRANCO PARANGABA (RM 2866): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - ANTONY ALVES ESTEVAM DE SOUZA (RM 3360): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - BEATRIZ PALOPOLI GERMANO (RM 2867): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - BIANCA ALVES VIEIRA (RM 3000): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - BIANCA COLNAGO BLAZECH (RM 2852): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - CAUÃ DE GOES MALACRIDA (RM 3354): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - EDUARDO YANAI OTSUKA (RM 3077): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - FELIPE RODRIGUES RAMPASSO (RM 3066): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - GABRIEL DAXTER CALIFANI HONORATO E SILVA (RM 2881): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - GABRIELLE HELOISA CORREA VIANA (RM 2865): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - GUSTAVO DA COSTA BRITO (RM 3145): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - ISADORA MOTA OMURA FELIX (RM 3215): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - JOÃO PEDRO SHINOZUKA AZEVEDO (RM 2877): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - JOÃO PEDRO SILVA BRAZ PAIÃO (RM 2892): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - JÚLIA FERNANDES VENTURA (RM 2874): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - KAUÃ RODRIGUES DE SOUSA SANTOS (RM 2864): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - KAUÊ NASCIMENTO BROCA (RM 2863): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - LARA ARANDA CANTALUPE (RM 3005): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - LARA BELTRAME ZARA (RM 3252): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - LARA DE SOUZA VIEIRA (RM 2875): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - MARIA FERNANDA PACHEGA GARRIDO (RM 2872): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - MIGUEL BERTONCELO GUARNIER DA SILVA (RM 2854): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - PAULO DE SOUZA MORARI (RM 3406): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - RAISSA HELENA SANTOS (RM 3074): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - SAMUEL VICTOR SANTOS CAETANO (RM 2878): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - STHEFANY LAVINI CHAGAS DOS SANTOS (RM 2869): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - VICTOR HUGO FERREIRA VIANI (RM 2858): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - YASMIM VITÓRIA DA SILVA BRASI (RM 3319): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - ALICE FERNANDA DOS SANTOS (RM 3263): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - ANA CLARA DO AMARAL JUSTI (RM 2810): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - BRAIEN BERNARDINO DELANHESE GALVÃO (RM 3356): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - BRENO MOURA BIANCHINI (RM 2833): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - CLARA TAUANE MORAES DOURADO (RM 2416): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - ELOISA FLORENCE LIMA (RM 3206): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - ENRICO ANTONIO RODRIGUES (RM 2834): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - GABRIELA PISSININ MENOSSI (RM 2838): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - GEOVANA EDUARDA SOUSA DE OLIVEIRA (RM 2817): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - GUSTAVO SANTOS VIEIRA (RM 2814): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - HENRY SALVADOR TRINDADE MONTOYA NETO (RM 3401): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - HUGO FRANCISCO DA SILVA (RM 3002): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - HYTALLO GABRIEL RUFFO FLORES (RM 2835): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - KAIKY GONÇALVES DA SILVA (RM 2826): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - KAIO GABRIEL ALVES FIGUEREDO (RM 2813): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - KAUÊ ALVES RUFINO (RM 2829): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - KAYKY TEÓFILO DE SOUZA CASTRIANI (RM 2830): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - LANNA LIVIA FERNANDES ANDRADE (RM 2844): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - LARA WADA OGUIDO (RM 2851): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - LUIZ GUSTAVO PEREIRA DE SOUZA (RM 3052): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - LUMA CHRISTOFOLE MASSARANDUBA (RM 2825): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - MURILO BERALDO CORRAL FERNANDES (RM 2827): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - NATÁLIA CAROLINE BOSISIO (RM 2832): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - NICOLAS HENRIQUE MENDES OLIVEIRA (RM 2815): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - PIETRO EDUARDO COELHO DALBEM (RM 2820): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - RAFAEL ANTONIO MANTOVANI (RM 3148): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - RYAN RODRIGO DOS SANTOS CLEMENTE DA SILVA (RM 2836): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - RYAN RODRIGUES RANGEL (RM 2818): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - THAINÁ VITÓRIA DA SILVA PONTES (RM 2823): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - THAUAN MATEUS DE SOUZA RAMOS (RM 2824): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - YASMIN GABRIÉLLI DA COME SILVA (RM 3308): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - ALEX BRESSANIN JUNIOR (RM 2879): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - ANA JÚLIA MARTINS BORGES (RM 2861): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - ANA JÚLIA MILLER BENONI (RM 2870): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - ANNA LUIZA DA SILVA RIBEIRO (RM 3395): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - ANTONIO FRANCO PARANGABA (RM 2866): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - ANTONY ALVES ESTEVAM DE SOUZA (RM 3360): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - BEATRIZ PALOPOLI GERMANO (RM 2867): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - BIANCA ALVES VIEIRA (RM 3000): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - BIANCA COLNAGO BLAZECH (RM 2852): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - CAUÃ DE GOES MALACRIDA (RM 3354): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - EDUARDO YANAI OTSUKA (RM 3077): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - FELIPE RODRIGUES RAMPASSO (RM 3066): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - GABRIEL DAXTER CALIFANI HONORATO E SILVA (RM 2881): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - GABRIELLE HELOISA CORREA VIANA (RM 2865): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - GUSTAVO DA COSTA BRITO (RM 3145): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - ISADORA MOTA OMURA FELIX (RM 3215): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - JOÃO PEDRO SHINOZUKA AZEVEDO (RM 2877): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - JOÃO PEDRO SILVA BRAZ PAIÃO (RM 2892): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - JÚLIA FERNANDES VENTURA (RM 2874): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - KAUÃ RODRIGUES DE SOUSA SANTOS (RM 2864): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - KAUÊ NASCIMENTO BROCA (RM 2863): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - LARA ARANDA CANTALUPE (RM 3005): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - LARA BELTRAME ZARA (RM 3252): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - LARA DE SOUZA VIEIRA (RM 2875): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - MARIA FERNANDA PACHEGA GARRIDO (RM 2872): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - MIGUEL BERTONCELO GUARNIER DA SILVA (RM 2854): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - PAULO DE SOUZA MORARI (RM 3406): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - RAISSA HELENA SANTOS (RM 3074): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - SAMUEL VICTOR SANTOS CAETANO (RM 2878): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - STHEFANY LAVINI CHAGAS DOS SANTOS (RM 2869): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - VICTOR HUGO FERREIRA VIANI (RM 2858): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - YASMIM VITÓRIA DA SILVA BRASI (RM 3319): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - ALICE FERNANDA DOS SANTOS (RM 3263): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - ANA CLARA DO AMARAL JUSTI (RM 2810): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - BRAIEN BERNARDINO DELANHESE GALVÃO (RM 3356): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - BRENO MOURA BIANCHINI (RM 2833): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - CLARA TAUANE MORAES DOURADO (RM 2416): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - ELOISA FLORENCE LIMA (RM 3206): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - ENRICO ANTONIO RODRIGUES (RM 2834): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - GABRIELA PISSININ MENOSSI (RM 2838): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - GEOVANA EDUARDA SOUSA DE OLIVEIRA (RM 2817): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - GUSTAVO SANTOS VIEIRA (RM 2814): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - HENRY SALVADOR TRINDADE MONTOYA NETO (RM 3401): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - HUGO FRANCISCO DA SILVA (RM 3002): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - HYTALLO GABRIEL RUFFO FLORES (RM 2835): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - KAIKY GONÇALVES DA SILVA (RM 2826): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - KAIO GABRIEL ALVES FIGUEREDO (RM 2813): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - KAUÊ ALVES RUFINO (RM 2829): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - KAYKY TEÓFILO DE SOUZA CASTRIANI (RM 2830): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - LANNA LIVIA FERNANDES ANDRADE (RM 2844): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - LARA WADA OGUIDO (RM 2851): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - LUIZ GUSTAVO PEREIRA DE SOUZA (RM 3052): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - LUMA CHRISTOFOLE MASSARANDUBA (RM 2825): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - MURILO BERALDO CORRAL FERNANDES (RM 2827): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - NATÁLIA CAROLINE BOSISIO (RM 2832): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - NICOLAS HENRIQUE MENDES OLIVEIRA (RM 2815): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - PIETRO EDUARDO COELHO DALBEM (RM 2820): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - RAFAEL ANTONIO MANTOVANI (RM 3148): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - RYAN RODRIGO DOS SANTOS CLEMENTE DA SILVA (RM 2836): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - RYAN RODRIGUES RANGEL (RM 2818): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - THAINÁ VITÓRIA DA SILVA PONTES (RM 2823): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - THAUAN MATEUS DE SOUZA RAMOS (RM 2824): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - YASMIN GABRIÉLLI DA COME SILVA (RM 3308): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - ALEX BRESSANIN JUNIOR (RM 2879): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - ANA JÚLIA MARTINS BORGES (RM 2861): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - ANA JÚLIA MILLER BENONI (RM 2870): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - ANNA LUIZA DA SILVA RIBEIRO (RM 3395): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - ANTONIO FRANCO PARANGABA (RM 2866): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - ANTONY ALVES ESTEVAM DE SOUZA (RM 3360): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - BEATRIZ PALOPOLI GERMANO (RM 2867): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - BIANCA ALVES VIEIRA (RM 3000): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - BIANCA COLNAGO BLAZECH (RM 2852): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - CAUÃ DE GOES MALACRIDA (RM 3354): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - EDUARDO YANAI OTSUKA (RM 3077): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - FELIPE RODRIGUES RAMPASSO (RM 3066): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - GABRIEL DAXTER CALIFANI HONORATO E SILVA (RM 2881): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - GABRIELLE HELOISA CORREA VIANA (RM 2865): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - GUSTAVO DA COSTA BRITO (RM 3145): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - ISADORA MOTA OMURA FELIX (RM 3215): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - JOÃO PEDRO SHINOZUKA AZEVEDO (RM 2877): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - JOÃO PEDRO SILVA BRAZ PAIÃO (RM 2892): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - JÚLIA FERNANDES VENTURA (RM 2874): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - KAUÃ RODRIGUES DE SOUSA SANTOS (RM 2864): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - KAUÊ NASCIMENTO BROCA (RM 2863): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - LARA ARANDA CANTALUPE (RM 3005): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - LARA BELTRAME ZARA (RM 3252): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - LARA DE SOUZA VIEIRA (RM 2875): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - MARIA FERNANDA PACHEGA GARRIDO (RM 2872): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - MIGUEL BERTONCELO GUARNIER DA SILVA (RM 2854): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - PAULO DE SOUZA MORARI (RM 3406): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - RAISSA HELENA SANTOS (RM 3074): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - SAMUEL VICTOR SANTOS CAETANO (RM 2878): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - STHEFANY LAVINI CHAGAS DOS SANTOS (RM 2869): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - VICTOR HUGO FERREIRA VIANI (RM 2858): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - YASMIM VITÓRIA DA SILVA BRASI (RM 3319): Turma '2EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - ALICE FERNANDA DOS SANTOS (RM 3263): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - ANA CLARA DO AMARAL JUSTI (RM 2810): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - BRAIEN BERNARDINO DELANHESE GALVÃO (RM 3356): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - BRENO MOURA BIANCHINI (RM 2833): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - CLARA TAUANE MORAES DOURADO (RM 2416): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - ELOISA FLORENCE LIMA (RM 3206): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - ENRICO ANTONIO RODRIGUES (RM 2834): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - GABRIELA PISSININ MENOSSI (RM 2838): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - GEOVANA EDUARDA SOUSA DE OLIVEIRA (RM 2817): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - GUSTAVO SANTOS VIEIRA (RM 2814): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - HENRY SALVADOR TRINDADE MONTOYA NETO (RM 3401): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - HUGO FRANCISCO DA SILVA (RM 3002): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - HYTALLO GABRIEL RUFFO FLORES (RM 2835): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - KAIKY GONÇALVES DA SILVA (RM 2826): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - KAIO GABRIEL ALVES FIGUEREDO (RM 2813): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - KAUÊ ALVES RUFINO (RM 2829): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - KAYKY TEÓFILO DE SOUZA CASTRIANI (RM 2830): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - LANNA LIVIA FERNANDES ANDRADE (RM 2844): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - LARA WADA OGUIDO (RM 2851): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - LUIZ GUSTAVO PEREIRA DE SOUZA (RM 3052): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - LUMA CHRISTOFOLE MASSARANDUBA (RM 2825): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - MURILO BERALDO CORRAL FERNANDES (RM 2827): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - NATÁLIA CAROLINE BOSISIO (RM 2832): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - NICOLAS HENRIQUE MENDES OLIVEIRA (RM 2815): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - PIETRO EDUARDO COELHO DALBEM (RM 2820): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - RAFAEL ANTONIO MANTOVANI (RM 3148): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - RYAN RODRIGO DOS SANTOS CLEMENTE DA SILVA (RM 2836): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - RYAN RODRIGUES RANGEL (RM 2818): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - THAINÁ VITÓRIA DA SILVA PONTES (RM 2823): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - THAUAN MATEUS DE SOUZA RAMOS (RM 2824): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:34] ERRO - YASMIN GABRIÉLLI DA COME SILVA (RM 3308): Turma '3EMA' não encontrada no banco.
+[30/03/2026 21:33:34] --- FIM DA IMPORTAÇÃO ---

@@ -1762,5 +1762,887 @@
         "rm": "3.308",
         "genero": "FEM",
         "turma": "3EMA"
+    },
+    {
+        "nome": "ALEX BRESSANIN JUNIOR",
+        "data_nascimento": "07/03/2010",
+        "rm": "2.879",
+        "genero": "MASC",
+        "turma": "2EMA"
+    },
+    {
+        "nome": "ANA JÚLIA MARTINS BORGES",
+        "data_nascimento": "16/08/2009",
+        "rm": "2.861",
+        "genero": "FEM",
+        "turma": "2EMA"
+    },
+    {
+        "nome": "ANA JÚLIA MILLER BENONI",
+        "data_nascimento": "27/07/2009",
+        "rm": "2.870",
+        "genero": "FEM",
+        "turma": "2EMA"
+    },
+    {
+        "nome": "ANNA LUIZA DA SILVA RIBEIRO",
+        "data_nascimento": "05/10/2009",
+        "rm": "3.395",
+        "genero": "FEM",
+        "turma": "2EMA"
+    },
+    {
+        "nome": "ANTONIO FRANCO PARANGABA",
+        "data_nascimento": "11/04/2010",
+        "rm": "2.866",
+        "genero": "MASC",
+        "turma": "2EMA"
+    },
+    {
+        "nome": "ANTONY ALVES ESTEVAM DE SOUZA",
+        "data_nascimento": "14/10/2009",
+        "rm": "3.360",
+        "genero": "MASC",
+        "turma": "2EMA"
+    },
+    {
+        "nome": "BEATRIZ PALOPOLI GERMANO",
+        "data_nascimento": "13/07/2009",
+        "rm": "2.867",
+        "genero": "FEM",
+        "turma": "2EMA"
+    },
+    {
+        "nome": "BIANCA ALVES VIEIRA",
+        "data_nascimento": "04/06/2009",
+        "rm": "3.000",
+        "genero": "FEM",
+        "turma": "2EMA"
+    },
+    {
+        "nome": "BIANCA COLNAGO BLAZECH",
+        "data_nascimento": "07/07/2009",
+        "rm": "2.852",
+        "genero": "FEM",
+        "turma": "2EMA"
+    },
+    {
+        "nome": "CAUÃ DE GOES MALACRIDA",
+        "data_nascimento": "05/11/2009",
+        "rm": "3.354",
+        "genero": "MASC",
+        "turma": "2EMA"
+    },
+    {
+        "nome": "EDUARDO YANAI OTSUKA",
+        "data_nascimento": "14/02/2010",
+        "rm": "3.077",
+        "genero": "MASC",
+        "turma": "2EMA"
+    },
+    {
+        "nome": "FELIPE RODRIGUES RAMPASSO",
+        "data_nascimento": "18/06/2009",
+        "rm": "3.066",
+        "genero": "MASC",
+        "turma": "2EMA"
+    },
+    {
+        "nome": "GABRIEL DAXTER CALIFANI HONORATO E SILVA",
+        "data_nascimento": "03/11/2009",
+        "rm": "2.881",
+        "genero": "MASC",
+        "turma": "2EMA"
+    },
+    {
+        "nome": "GABRIELLE HELOISA CORREA VIANA",
+        "data_nascimento": "02/10/2009",
+        "rm": "2.865",
+        "genero": "FEM",
+        "turma": "2EMA"
+    },
+    {
+        "nome": "GUSTAVO DA COSTA BRITO",
+        "data_nascimento": "12/05/2009",
+        "rm": "3.145",
+        "genero": "MASC",
+        "turma": "2EMA"
+    },
+    {
+        "nome": "ISADORA MOTA OMURA FELIX",
+        "data_nascimento": "12/05/2010",
+        "rm": "3.215",
+        "genero": "FEM",
+        "turma": "2EMA"
+    },
+    {
+        "nome": "JOÃO PEDRO SHINOZUKA AZEVEDO",
+        "data_nascimento": "29/05/2010",
+        "rm": "2.877",
+        "genero": "MASC",
+        "turma": "2EMA"
+    },
+    {
+        "nome": "JOÃO PEDRO SILVA BRAZ PAIÃO",
+        "data_nascimento": "01/12/2009",
+        "rm": "2.892",
+        "genero": "MASC",
+        "turma": "2EMA"
+    },
+    {
+        "nome": "JÚLIA FERNANDES VENTURA",
+        "data_nascimento": "08/02/2010",
+        "rm": "2.874",
+        "genero": "FEM",
+        "turma": "2EMA"
+    },
+    {
+        "nome": "KAUÃ RODRIGUES DE SOUSA SANTOS",
+        "data_nascimento": "19/06/2009",
+        "rm": "2.864",
+        "genero": "MASC",
+        "turma": "2EMA"
+    },
+    {
+        "nome": "KAUÊ NASCIMENTO BROCA",
+        "data_nascimento": "29/06/2009",
+        "rm": "2.863",
+        "genero": "MASC",
+        "turma": "2EMA"
+    },
+    {
+        "nome": "LARA ARANDA CANTALUPE",
+        "data_nascimento": "18/04/2009",
+        "rm": "3.005",
+        "genero": "FEM",
+        "turma": "2EMA"
+    },
+    {
+        "nome": "LARA BELTRAME ZARA",
+        "data_nascimento": "19/08/2009",
+        "rm": "3.252",
+        "genero": "FEM",
+        "turma": "2EMA"
+    },
+    {
+        "nome": "LARA DE SOUZA VIEIRA",
+        "data_nascimento": "08/10/2009",
+        "rm": "2.875",
+        "genero": "FEM",
+        "turma": "2EMA"
+    },
+    {
+        "nome": "MARIA FERNANDA PACHEGA GARRIDO",
+        "data_nascimento": "17/05/2010",
+        "rm": "2.872",
+        "genero": "FEM",
+        "turma": "2EMA"
+    },
+    {
+        "nome": "MIGUEL BERTONCELO GUARNIER DA SILVA",
+        "data_nascimento": "23/05/2010",
+        "rm": "2.854",
+        "genero": "MASC",
+        "turma": "2EMA"
+    },
+    {
+        "nome": "PAULO DE SOUZA MORARI",
+        "data_nascimento": "22/07/2009",
+        "rm": "3.406",
+        "genero": "MASC",
+        "turma": "2EMA"
+    },
+    {
+        "nome": "RAISSA HELENA SANTOS",
+        "data_nascimento": "25/01/2010",
+        "rm": "3.074",
+        "genero": "FEM",
+        "turma": "2EMA"
+    },
+    {
+        "nome": "SAMUEL VICTOR SANTOS CAETANO",
+        "data_nascimento": "19/11/2009",
+        "rm": "2.878",
+        "genero": "MASC",
+        "turma": "2EMA"
+    },
+    {
+        "nome": "STHEFANY LAVINI CHAGAS DOS SANTOS",
+        "data_nascimento": "05/02/2010",
+        "rm": "2.869",
+        "genero": "FEM",
+        "turma": "2EMA"
+    },
+    {
+        "nome": "VICTOR HUGO FERREIRA VIANI",
+        "data_nascimento": "31/08/2009",
+        "rm": "2.858",
+        "genero": "MASC",
+        "turma": "2EMA"
+    },
+    {
+        "nome": "YASMIM VITÓRIA DA SILVA BRASI",
+        "data_nascimento": "01/09/2009",
+        "rm": "3.319",
+        "genero": "FEM",
+        "turma": "2EMA"
+    },
+    {
+        "nome": "ALICE FERNANDA DOS SANTOS",
+        "data_nascimento": "06/01/2009",
+        "rm": "3.263",
+        "genero": "FEM",
+        "turma": "3EMA"
+    },
+    {
+        "nome": "ANA CLARA DO AMARAL JUSTI",
+        "data_nascimento": "03/04/2009",
+        "rm": "2.810",
+        "genero": "FEM",
+        "turma": "3EMA"
+    },
+    {
+        "nome": "BRAIEN BERNARDINO DELANHESE GALVÃO",
+        "data_nascimento": "03/04/2008",
+        "rm": "3.356",
+        "genero": "MASC",
+        "turma": "3EMA"
+    },
+    {
+        "nome": "BRENO MOURA BIANCHINI",
+        "data_nascimento": "09/12/2008",
+        "rm": "2.833",
+        "genero": "MASC",
+        "turma": "3EMA"
+    },
+    {
+        "nome": "CLARA TAUANE MORAES DOURADO",
+        "data_nascimento": "26/01/2007",
+        "rm": "2.416",
+        "genero": "FEM",
+        "turma": "3EMA"
+    },
+    {
+        "nome": "ELOISA FLORENCE LIMA",
+        "data_nascimento": "15/06/2009",
+        "rm": "3.206",
+        "genero": "FEM",
+        "turma": "3EMA"
+    },
+    {
+        "nome": "ENRICO ANTONIO RODRIGUES",
+        "data_nascimento": "02/09/2008",
+        "rm": "2.834",
+        "genero": "MASC",
+        "turma": "3EMA"
+    },
+    {
+        "nome": "GABRIELA PISSININ MENOSSI",
+        "data_nascimento": "20/01/2009",
+        "rm": "2.838",
+        "genero": "FEM",
+        "turma": "3EMA"
+    },
+    {
+        "nome": "GEOVANA EDUARDA SOUSA DE OLIVEIRA",
+        "data_nascimento": "21/09/2008",
+        "rm": "2.817",
+        "genero": "FEM",
+        "turma": "3EMA"
+    },
+    {
+        "nome": "GUSTAVO SANTOS VIEIRA",
+        "data_nascimento": "27/03/2009",
+        "rm": "2.814",
+        "genero": "MASC",
+        "turma": "3EMA"
+    },
+    {
+        "nome": "HENRY SALVADOR TRINDADE MONTOYA NETO",
+        "data_nascimento": "17/01/2009",
+        "rm": "3.401",
+        "genero": "MASC",
+        "turma": "3EMA"
+    },
+    {
+        "nome": "HUGO FRANCISCO DA SILVA",
+        "data_nascimento": "23/06/2008",
+        "rm": "3.002",
+        "genero": "MASC",
+        "turma": "3EMA"
+    },
+    {
+        "nome": "HYTALLO GABRIEL RUFFO FLORES",
+        "data_nascimento": "17/03/2009",
+        "rm": "2.835",
+        "genero": "MASC",
+        "turma": "3EMA"
+    },
+    {
+        "nome": "KAIKY GONÇALVES DA SILVA",
+        "data_nascimento": "06/08/2008",
+        "rm": "2.826",
+        "genero": "MASC",
+        "turma": "3EMA"
+    },
+    {
+        "nome": "KAIO GABRIEL ALVES FIGUEREDO",
+        "data_nascimento": "25/08/2008",
+        "rm": "2.813",
+        "genero": "MASC",
+        "turma": "3EMA"
+    },
+    {
+        "nome": "KAUÊ ALVES RUFINO",
+        "data_nascimento": "11/10/2008",
+        "rm": "2.829",
+        "genero": "MASC",
+        "turma": "3EMA"
+    },
+    {
+        "nome": "KAYKY TEÓFILO DE SOUZA CASTRIANI",
+        "data_nascimento": "10/03/2009",
+        "rm": "2.830",
+        "genero": "MASC",
+        "turma": "3EMA"
+    },
+    {
+        "nome": "LANNA LIVIA FERNANDES ANDRADE",
+        "data_nascimento": "31/10/2008",
+        "rm": "2.844",
+        "genero": "FEM",
+        "turma": "3EMA"
+    },
+    {
+        "nome": "LARA WADA OGUIDO",
+        "data_nascimento": "26/03/2009",
+        "rm": "2.851",
+        "genero": "FEM",
+        "turma": "3EMA"
+    },
+    {
+        "nome": "LUIZ GUSTAVO PEREIRA DE SOUZA",
+        "data_nascimento": "15/10/2008",
+        "rm": "3.052",
+        "genero": "MASC",
+        "turma": "3EMA"
+    },
+    {
+        "nome": "LUMA CHRISTOFOLE MASSARANDUBA",
+        "data_nascimento": "30/10/2008",
+        "rm": "2.825",
+        "genero": "FEM",
+        "turma": "3EMA"
+    },
+    {
+        "nome": "MURILO BERALDO CORRAL FERNANDES",
+        "data_nascimento": "31/03/2009",
+        "rm": "2.827",
+        "genero": "MASC",
+        "turma": "3EMA"
+    },
+    {
+        "nome": "NATÁLIA CAROLINE BOSISIO",
+        "data_nascimento": "13/11/2008",
+        "rm": "2.832",
+        "genero": "FEM",
+        "turma": "3EMA"
+    },
+    {
+        "nome": "NICOLAS HENRIQUE MENDES OLIVEIRA",
+        "data_nascimento": "21/11/2008",
+        "rm": "2.815",
+        "genero": "MASC",
+        "turma": "3EMA"
+    },
+    {
+        "nome": "PIETRO EDUARDO COELHO DALBEM",
+        "data_nascimento": "04/03/2009",
+        "rm": "2.820",
+        "genero": "MASC",
+        "turma": "3EMA"
+    },
+    {
+        "nome": "RAFAEL ANTONIO MANTOVANI",
+        "data_nascimento": "13/06/2008",
+        "rm": "3.148",
+        "genero": "MASC",
+        "turma": "3EMA"
+    },
+    {
+        "nome": "RYAN RODRIGO DOS SANTOS CLEMENTE DA SILVA",
+        "data_nascimento": "25/03/2009",
+        "rm": "2.836",
+        "genero": "MASC",
+        "turma": "3EMA"
+    },
+    {
+        "nome": "RYAN RODRIGUES RANGEL",
+        "data_nascimento": "29/12/2008",
+        "rm": "2.818",
+        "genero": "MASC",
+        "turma": "3EMA"
+    },
+    {
+        "nome": "THAINÁ VITÓRIA DA SILVA PONTES",
+        "data_nascimento": "07/01/2009",
+        "rm": "2.823",
+        "genero": "FEM",
+        "turma": "3EMA"
+    },
+    {
+        "nome": "THAUAN MATEUS DE SOUZA RAMOS",
+        "data_nascimento": "24/07/2008",
+        "rm": "2.824",
+        "genero": "MASC",
+        "turma": "3EMA"
+    },
+    {
+        "nome": "YASMIN GABRIÉLLI DA COME SILVA",
+        "data_nascimento": "14/06/2008",
+        "rm": "3.308",
+        "genero": "FEM",
+        "turma": "3EMA"
+    },
+    {
+        "nome": "ALEX BRESSANIN JUNIOR",
+        "data_nascimento": "07/03/2010",
+        "rm": "2.879",
+        "genero": "MASC",
+        "turma": "2EMA"
+    },
+    {
+        "nome": "ANA JÚLIA MARTINS BORGES",
+        "data_nascimento": "16/08/2009",
+        "rm": "2.861",
+        "genero": "FEM",
+        "turma": "2EMA"
+    },
+    {
+        "nome": "ANA JÚLIA MILLER BENONI",
+        "data_nascimento": "27/07/2009",
+        "rm": "2.870",
+        "genero": "FEM",
+        "turma": "2EMA"
+    },
+    {
+        "nome": "ANNA LUIZA DA SILVA RIBEIRO",
+        "data_nascimento": "05/10/2009",
+        "rm": "3.395",
+        "genero": "FEM",
+        "turma": "2EMA"
+    },
+    {
+        "nome": "ANTONIO FRANCO PARANGABA",
+        "data_nascimento": "11/04/2010",
+        "rm": "2.866",
+        "genero": "MASC",
+        "turma": "2EMA"
+    },
+    {
+        "nome": "ANTONY ALVES ESTEVAM DE SOUZA",
+        "data_nascimento": "14/10/2009",
+        "rm": "3.360",
+        "genero": "MASC",
+        "turma": "2EMA"
+    },
+    {
+        "nome": "BEATRIZ PALOPOLI GERMANO",
+        "data_nascimento": "13/07/2009",
+        "rm": "2.867",
+        "genero": "FEM",
+        "turma": "2EMA"
+    },
+    {
+        "nome": "BIANCA ALVES VIEIRA",
+        "data_nascimento": "04/06/2009",
+        "rm": "3.000",
+        "genero": "FEM",
+        "turma": "2EMA"
+    },
+    {
+        "nome": "BIANCA COLNAGO BLAZECH",
+        "data_nascimento": "07/07/2009",
+        "rm": "2.852",
+        "genero": "FEM",
+        "turma": "2EMA"
+    },
+    {
+        "nome": "CAUÃ DE GOES MALACRIDA",
+        "data_nascimento": "05/11/2009",
+        "rm": "3.354",
+        "genero": "MASC",
+        "turma": "2EMA"
+    },
+    {
+        "nome": "EDUARDO YANAI OTSUKA",
+        "data_nascimento": "14/02/2010",
+        "rm": "3.077",
+        "genero": "MASC",
+        "turma": "2EMA"
+    },
+    {
+        "nome": "FELIPE RODRIGUES RAMPASSO",
+        "data_nascimento": "18/06/2009",
+        "rm": "3.066",
+        "genero": "MASC",
+        "turma": "2EMA"
+    },
+    {
+        "nome": "GABRIEL DAXTER CALIFANI HONORATO E SILVA",
+        "data_nascimento": "03/11/2009",
+        "rm": "2.881",
+        "genero": "MASC",
+        "turma": "2EMA"
+    },
+    {
+        "nome": "GABRIELLE HELOISA CORREA VIANA",
+        "data_nascimento": "02/10/2009",
+        "rm": "2.865",
+        "genero": "FEM",
+        "turma": "2EMA"
+    },
+    {
+        "nome": "GUSTAVO DA COSTA BRITO",
+        "data_nascimento": "12/05/2009",
+        "rm": "3.145",
+        "genero": "MASC",
+        "turma": "2EMA"
+    },
+    {
+        "nome": "ISADORA MOTA OMURA FELIX",
+        "data_nascimento": "12/05/2010",
+        "rm": "3.215",
+        "genero": "FEM",
+        "turma": "2EMA"
+    },
+    {
+        "nome": "JOÃO PEDRO SHINOZUKA AZEVEDO",
+        "data_nascimento": "29/05/2010",
+        "rm": "2.877",
+        "genero": "MASC",
+        "turma": "2EMA"
+    },
+    {
+        "nome": "JOÃO PEDRO SILVA BRAZ PAIÃO",
+        "data_nascimento": "01/12/2009",
+        "rm": "2.892",
+        "genero": "MASC",
+        "turma": "2EMA"
+    },
+    {
+        "nome": "JÚLIA FERNANDES VENTURA",
+        "data_nascimento": "08/02/2010",
+        "rm": "2.874",
+        "genero": "FEM",
+        "turma": "2EMA"
+    },
+    {
+        "nome": "KAUÃ RODRIGUES DE SOUSA SANTOS",
+        "data_nascimento": "19/06/2009",
+        "rm": "2.864",
+        "genero": "MASC",
+        "turma": "2EMA"
+    },
+    {
+        "nome": "KAUÊ NASCIMENTO BROCA",
+        "data_nascimento": "29/06/2009",
+        "rm": "2.863",
+        "genero": "MASC",
+        "turma": "2EMA"
+    },
+    {
+        "nome": "LARA ARANDA CANTALUPE",
+        "data_nascimento": "18/04/2009",
+        "rm": "3.005",
+        "genero": "FEM",
+        "turma": "2EMA"
+    },
+    {
+        "nome": "LARA BELTRAME ZARA",
+        "data_nascimento": "19/08/2009",
+        "rm": "3.252",
+        "genero": "FEM",
+        "turma": "2EMA"
+    },
+    {
+        "nome": "LARA DE SOUZA VIEIRA",
+        "data_nascimento": "08/10/2009",
+        "rm": "2.875",
+        "genero": "FEM",
+        "turma": "2EMA"
+    },
+    {
+        "nome": "MARIA FERNANDA PACHEGA GARRIDO",
+        "data_nascimento": "17/05/2010",
+        "rm": "2.872",
+        "genero": "FEM",
+        "turma": "2EMA"
+    },
+    {
+        "nome": "MIGUEL BERTONCELO GUARNIER DA SILVA",
+        "data_nascimento": "23/05/2010",
+        "rm": "2.854",
+        "genero": "MASC",
+        "turma": "2EMA"
+    },
+    {
+        "nome": "PAULO DE SOUZA MORARI",
+        "data_nascimento": "22/07/2009",
+        "rm": "3.406",
+        "genero": "MASC",
+        "turma": "2EMA"
+    },
+    {
+        "nome": "RAISSA HELENA SANTOS",
+        "data_nascimento": "25/01/2010",
+        "rm": "3.074",
+        "genero": "FEM",
+        "turma": "2EMA"
+    },
+    {
+        "nome": "SAMUEL VICTOR SANTOS CAETANO",
+        "data_nascimento": "19/11/2009",
+        "rm": "2.878",
+        "genero": "MASC",
+        "turma": "2EMA"
+    },
+    {
+        "nome": "STHEFANY LAVINI CHAGAS DOS SANTOS",
+        "data_nascimento": "05/02/2010",
+        "rm": "2.869",
+        "genero": "FEM",
+        "turma": "2EMA"
+    },
+    {
+        "nome": "VICTOR HUGO FERREIRA VIANI",
+        "data_nascimento": "31/08/2009",
+        "rm": "2.858",
+        "genero": "MASC",
+        "turma": "2EMA"
+    },
+    {
+        "nome": "YASMIM VITÓRIA DA SILVA BRASI",
+        "data_nascimento": "01/09/2009",
+        "rm": "3.319",
+        "genero": "FEM",
+        "turma": "2EMA"
+    },
+    {
+        "nome": "ALICE FERNANDA DOS SANTOS",
+        "data_nascimento": "06/01/2009",
+        "rm": "3.263",
+        "genero": "FEM",
+        "turma": "3EMA"
+    },
+    {
+        "nome": "ANA CLARA DO AMARAL JUSTI",
+        "data_nascimento": "03/04/2009",
+        "rm": "2.810",
+        "genero": "FEM",
+        "turma": "3EMA"
+    },
+    {
+        "nome": "BRAIEN BERNARDINO DELANHESE GALVÃO",
+        "data_nascimento": "03/04/2008",
+        "rm": "3.356",
+        "genero": "MASC",
+        "turma": "3EMA"
+    },
+    {
+        "nome": "BRENO MOURA BIANCHINI",
+        "data_nascimento": "09/12/2008",
+        "rm": "2.833",
+        "genero": "MASC",
+        "turma": "3EMA"
+    },
+    {
+        "nome": "CLARA TAUANE MORAES DOURADO",
+        "data_nascimento": "26/01/2007",
+        "rm": "2.416",
+        "genero": "FEM",
+        "turma": "3EMA"
+    },
+    {
+        "nome": "ELOISA FLORENCE LIMA",
+        "data_nascimento": "15/06/2009",
+        "rm": "3.206",
+        "genero": "FEM",
+        "turma": "3EMA"
+    },
+    {
+        "nome": "ENRICO ANTONIO RODRIGUES",
+        "data_nascimento": "02/09/2008",
+        "rm": "2.834",
+        "genero": "MASC",
+        "turma": "3EMA"
+    },
+    {
+        "nome": "GABRIELA PISSININ MENOSSI",
+        "data_nascimento": "20/01/2009",
+        "rm": "2.838",
+        "genero": "FEM",
+        "turma": "3EMA"
+    },
+    {
+        "nome": "GEOVANA EDUARDA SOUSA DE OLIVEIRA",
+        "data_nascimento": "21/09/2008",
+        "rm": "2.817",
+        "genero": "FEM",
+        "turma": "3EMA"
+    },
+    {
+        "nome": "GUSTAVO SANTOS VIEIRA",
+        "data_nascimento": "27/03/2009",
+        "rm": "2.814",
+        "genero": "MASC",
+        "turma": "3EMA"
+    },
+    {
+        "nome": "HENRY SALVADOR TRINDADE MONTOYA NETO",
+        "data_nascimento": "17/01/2009",
+        "rm": "3.401",
+        "genero": "MASC",
+        "turma": "3EMA"
+    },
+    {
+        "nome": "HUGO FRANCISCO DA SILVA",
+        "data_nascimento": "23/06/2008",
+        "rm": "3.002",
+        "genero": "MASC",
+        "turma": "3EMA"
+    },
+    {
+        "nome": "HYTALLO GABRIEL RUFFO FLORES",
+        "data_nascimento": "17/03/2009",
+        "rm": "2.835",
+        "genero": "MASC",
+        "turma": "3EMA"
+    },
+    {
+        "nome": "KAIKY GONÇALVES DA SILVA",
+        "data_nascimento": "06/08/2008",
+        "rm": "2.826",
+        "genero": "MASC",
+        "turma": "3EMA"
+    },
+    {
+        "nome": "KAIO GABRIEL ALVES FIGUEREDO",
+        "data_nascimento": "25/08/2008",
+        "rm": "2.813",
+        "genero": "MASC",
+        "turma": "3EMA"
+    },
+    {
+        "nome": "KAUÊ ALVES RUFINO",
+        "data_nascimento": "11/10/2008",
+        "rm": "2.829",
+        "genero": "MASC",
+        "turma": "3EMA"
+    },
+    {
+        "nome": "KAYKY TEÓFILO DE SOUZA CASTRIANI",
+        "data_nascimento": "10/03/2009",
+        "rm": "2.830",
+        "genero": "MASC",
+        "turma": "3EMA"
+    },
+    {
+        "nome": "LANNA LIVIA FERNANDES ANDRADE",
+        "data_nascimento": "31/10/2008",
+        "rm": "2.844",
+        "genero": "FEM",
+        "turma": "3EMA"
+    },
+    {
+        "nome": "LARA WADA OGUIDO",
+        "data_nascimento": "26/03/2009",
+        "rm": "2.851",
+        "genero": "FEM",
+        "turma": "3EMA"
+    },
+    {
+        "nome": "LUIZ GUSTAVO PEREIRA DE SOUZA",
+        "data_nascimento": "15/10/2008",
+        "rm": "3.052",
+        "genero": "MASC",
+        "turma": "3EMA"
+    },
+    {
+        "nome": "LUMA CHRISTOFOLE MASSARANDUBA",
+        "data_nascimento": "30/10/2008",
+        "rm": "2.825",
+        "genero": "FEM",
+        "turma": "3EMA"
+    },
+    {
+        "nome": "MURILO BERALDO CORRAL FERNANDES",
+        "data_nascimento": "31/03/2009",
+        "rm": "2.827",
+        "genero": "MASC",
+        "turma": "3EMA"
+    },
+    {
+        "nome": "NATÁLIA CAROLINE BOSISIO",
+        "data_nascimento": "13/11/2008",
+        "rm": "2.832",
+        "genero": "FEM",
+        "turma": "3EMA"
+    },
+    {
+        "nome": "NICOLAS HENRIQUE MENDES OLIVEIRA",
+        "data_nascimento": "21/11/2008",
+        "rm": "2.815",
+        "genero": "MASC",
+        "turma": "3EMA"
+    },
+    {
+        "nome": "PIETRO EDUARDO COELHO DALBEM",
+        "data_nascimento": "04/03/2009",
+        "rm": "2.820",
+        "genero": "MASC",
+        "turma": "3EMA"
+    },
+    {
+        "nome": "RAFAEL ANTONIO MANTOVANI",
+        "data_nascimento": "13/06/2008",
+        "rm": "3.148",
+        "genero": "MASC",
+        "turma": "3EMA"
+    },
+    {
+        "nome": "RYAN RODRIGO DOS SANTOS CLEMENTE DA SILVA",
+        "data_nascimento": "25/03/2009",
+        "rm": "2.836",
+        "genero": "MASC",
+        "turma": "3EMA"
+    },
+    {
+        "nome": "RYAN RODRIGUES RANGEL",
+        "data_nascimento": "29/12/2008",
+        "rm": "2.818",
+        "genero": "MASC",
+        "turma": "3EMA"
+    },
+    {
+        "nome": "THAINÁ VITÓRIA DA SILVA PONTES",
+        "data_nascimento": "07/01/2009",
+        "rm": "2.823",
+        "genero": "FEM",
+        "turma": "3EMA"
+    },
+    {
+        "nome": "THAUAN MATEUS DE SOUZA RAMOS",
+        "data_nascimento": "24/07/2008",
+        "rm": "2.824",
+        "genero": "MASC",
+        "turma": "3EMA"
+    },
+    {
+        "nome": "YASMIN GABRIÉLLI DA COME SILVA",
+        "data_nascimento": "14/06/2008",
+        "rm": "3.308",
+        "genero": "FEM",
+        "turma": "3EMA"
     }
 ]

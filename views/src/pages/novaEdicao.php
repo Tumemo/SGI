@@ -7,23 +7,21 @@ require_once '../componentes/header.php';
 
 
 <main>
-    <section class="m-auto d-flex flex-column gap-3 mt-5" style="width: 90%;">
-        <input type="text" class="form-control" placeholder="Nome">
-        <section class="shadow rounded">
-            <div class="input-group my-3 m-auto" style="width: 90%;">
-                <input type="text" placeholder="Nome da nova turma (ex: 1º ano)" class="form-control" style="font-size: 0.7rem;">
-                <button class="btn btn-danger">Adicionar</button>
+    <section class="m-auto mt-4 shadow px-3 pb-5 pt-3 rounded" style="width: 80%;">
+        <h2 class="fs-4">Insira o nome da sua nova edição:</h2>
+        <form>
+            <div>
+                <input type="text" class="form-control">
             </div>
-         <section class="my-3">
-                <div class="bg-body-secondary rounded m-auto px-4 py-1 mb-3" style="width: 90%;">
-                    <h2 class="m-0 fs-6 py-1">1º Ano EM</h2>
-                </div>
-                <div class="bg-body-secondary rounded m-auto px-4 py-1 mb-3" style="width: 90%;">
-                    <h2 class="m-0 fs-6 py-1">2º Ano EM</h2>
-                </div>
-            </section>
-        </section>
-        <a href="./novaEdicao_modalidades.php" class="btn btn-danger m-auto" style="width: max-content;">Continuar</a>
+            <div>
+                <label for="ano" class="form-label fs-3">Ano</label>
+                <input type="text" class="form-control">
+            </div>
+            <div class="d-flex justify-content-center gap-2 mt-4">
+                <button class="btn btn-outline-danger">Cancelar</button>
+                <a href="./novaEdicao_modalidades.php" class="btn btn-danger">Criar</a>
+            </div>
+        </form>
     </section>
 </main>
 
