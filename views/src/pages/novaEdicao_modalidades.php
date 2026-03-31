@@ -7,21 +7,20 @@ require_once '../componentes/header.php';
 
 ?>
 
-<main>
+<main class="mb-5 pb-1 position-relative">
     <section class="m-auto d-flex flex-column gap-3 mt-5" style="width: 90%;">
         <section class="shadow rounded">
             <div class="input-group my-3 m-auto" style="width: 90%;">
                 <input type="text" placeholder="Nome da nova modalidades" class="form-control" style="font-size: 0.7rem;">
                 <button class="btn btn-danger">Adicionar</button>
             </div>
-         <section class="my-3">
-                <div class="bg-secondary-subtle rounded m-auto px-4 py-1 mb-3" style="width: 90%;">
-                    <h2 class="m-0 fs-6">Futsal</h2>
-                </div>
+         <section class="my-3 m-auto" style="width: 90%;">
+                <h2 class="bg-secondary-subtle mb-2 fs-6 p-2 w-100 rounded m-auto">Futsal</h2>
+                <h2 class="bg-secondary-subtle mb-2 fs-6 p-2 w-100 rounded m-auto">Basquete</h2>
             </section>
         </section>
-        <a href="./regulamentos.php" class="btn btn-danger m-auto" style="width: max-content;">Continuar</a>
     </section>
+    <a href="./regulamentos.php" class="btn btn-danger position-absolute position-fixed translate-middle" style="width: max-content;  top: 87%; left: 50%; z-index: 10; cursor: pointer;">Continuar</a>
 </main>
 
 <?php 

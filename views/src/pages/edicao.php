@@ -9,7 +9,7 @@ require_once '../componentes/header.php';
     <p class="text-center mt-3 text-secondary">Editar detalhes o interclasse</p>
     <section>
         <a href="./edicao_modalidades.php" class="text-decoration-none text-black">
-            <div class="d-flex m-auto justify-content-between align-items-center shadow py-3 px-4 mb-3" style="width: 80%;">
+            <div class="d-flex m-auto justify-content-between align-items-center shadow py-3 px-4 mb-3 border border-1" style="width: 80%;">
                 <i class="bi bi-trophy fs-2"></i>
                 <h2 class="m-0 fs-3">Modalidades</h2>
                 <picture>
@@ -18,7 +18,7 @@ require_once '../componentes/header.php';
             </div>
         </a>
         <a href="./edicao_arrecadacao.php" class="text-decoration-none text-black">
-            <div class="d-flex m-auto justify-content-between align-items-center shadow py-3 px-4 mb-3" style="width: 80%;">
+            <div class="d-flex m-auto justify-content-between align-items-center shadow py-3 px-4 mb-3 border border-1" style="width: 80%;">
                 <i class="bi bi-basket fs-2"></i>
                 <h2 class="m-0 fs-3">Arrecadação</h2>
                 <picture>
@@ -27,7 +27,7 @@ require_once '../componentes/header.php';
             </div>
         </a>
         <a href="./edicao_regulamentos.php" class="text-decoration-none text-black">
-            <div class="d-flex m-auto justify-content-between align-items-center shadow py-3 px-4 mb-3" style="width: 80%;">
+            <div class="d-flex m-auto justify-content-between align-items-center shadow py-3 px-4 mb-3 border border-1" style="width: 80%;">
                 <i class="bi bi-journal-bookmark fs-2"></i>
                 <h2 class="m-0 fs-3">Regulamento</h2>
                 <picture>
@@ -36,7 +36,7 @@ require_once '../componentes/header.php';
             </div>
         </a>
         <a href="./edicao_categorias.php" class="text-decoration-none text-black">
-            <div class="d-flex m-auto justify-content-between align-items-center shadow py-3 px-4 mb-3" style="width: 80%;">
+            <div class="d-flex m-auto justify-content-between align-items-center shadow py-3 px-4 mb-3 border border-1" style="width: 80%;">
                 <i class="bi bi-person fs-2"></i>
                 <h2 class="m-0 fs-3">Categorias</h2>
                 <picture>
@@ -45,7 +45,7 @@ require_once '../componentes/header.php';
             </div>
         </a>
         <a href="./edicao_agenda.php" class="text-decoration-none text-black">
-            <div class="d-flex m-auto justify-content-between align-items-center shadow py-3 px-4 mb-3" style="width: 80%;">
+            <div class="d-flex m-auto justify-content-between align-items-center shadow py-3 px-4 mb-3 border border-1" style="width: 80%;">
                 <i class="bi bi-calendar fs-2"></i>
                 <h2 class="m-0 fs-3">Agenda</h2>
                 <picture>

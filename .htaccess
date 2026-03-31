@@ -1,2 +1,2 @@
-RewriteEngine off
+RewriteEngine on
 RewriteRule ^(api|config|vendor|uploads|docs) - [F,L]

@@ -39,7 +39,7 @@ require_once '../componentes/header.php';
             listar.innerHTML = res.data.map((item) =>
             `
             <a href="./edicao.php" class="text-decoration-none text-dark">
-                <div class="m-auto shadow d-flex justify-content-between align-content-center px-3 py-3 rounded-3 my-3" style="width: 90%;" ${item.id_interclasse}>
+                <div class="m-auto shadow d-flex justify-content-between align-content-center px-3 py-3 rounded-3 my-3 border border-1  " style="width: 90%;" ${item.id_interclasse}>
                         <div>
                             <h2 class="m-0 fs-3">${item.nome_interclasse}</h2>
                             <p class="text-secondary m-0">${item.ano_interclasse}</p>
@@ -53,7 +53,7 @@ require_once '../componentes/header.php';
 
         } catch (error) {
             console.log(error)
-            listar.innerHTML = `<p class="text-container">Erro!! ${error}</p>`
+            listar.innerHTML = `<p class="mt-3 text-center text-danger fs-3">Erro ao ver interclasses!!</p>`
         }
     }
     listarInterclasses()
