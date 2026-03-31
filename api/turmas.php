@@ -32,7 +32,7 @@ switch ($method) {
         }
 
         $res = $conn->query($sql);
-        $turmas = [];
+        $turmas = [];   
 
         if ($res) {
             while ($row = $res->fetch_assoc()) {

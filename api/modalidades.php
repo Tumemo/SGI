@@ -5,17 +5,35 @@ $method = $_SERVER['REQUEST_METHOD'];
 
 switch ($method) {
     case 'GET':
-        $id = isset($_GET['id_modalidade']) ? $_GET['id_modalidade'] : null;
+        $id = isset($_GET['id_modalidade']) ? intval($_GET['id_modalidade']) : null;
+        $ano = isset($_GET['ano']) ? intval($_GET['ano']) : null;
 
+        // Base da Query com nomes de tabelas completos
+        $sql = "SELECT DISTINCT 
+                    modalidades.id_modalidade, 
+                    modalidades.nome_modalidade, 
+                    modalidades.categoria_modalidade, 
+                    modalidades.max_inscrito_modalidade, 
+                    tipos_modalidades.nome_tipo_modalidade 
+                FROM modalidades
+                INNER JOIN tipos_modalidades ON tipos_modalidades.id_tipo_modalidade = modalidades.tipos_modalidades_id_tipo_modalidade";
+
+        // Se houver filtro por ano, faz a junção com a tabela de jogos usando o nome completo
+        if ($ano) {
+            $sql .= " INNER JOIN jogos ON jogos.modalidades_id_modalidade = modalidades.id_modalidade";
+        }
+
+        // Construção dinâmica do WHERE sem apelidos
+        $conditions = [];
         if ($id) {
-            $sql = "SELECT modalidades.id_modalidade, modalidades.nome_modalidade, modalidades.categoria_modalidade, modalidades.max_inscrito_modalidade, modalidades.tipos_modalidades_id_tipo_modalidade, tipos_modalidades.nome_tipo_modalidade 
-    FROM modalidades 
-    INNER JOIN tipos_modalidades ON tipos_modalidades.id_tipo_modalidade = modalidades.tipos_modalidades_id_tipo_modalidade 
-    WHERE modalidades.id_modalidade = $id";
-        } else {
-            $sql = "SELECT modalidades.id_modalidade, modalidades.nome_modalidade, modalidades.categoria_modalidade, modalidades.max_inscrito_modalidade, modalidades.tipos_modalidades_id_tipo_modalidade, tipos_modalidades.nome_tipo_modalidade 
-    FROM modalidades 
-    INNER JOIN tipos_modalidades ON tipos_modalidades.id_tipo_modalidade = modalidades.tipos_modalidades_id_tipo_modalidade";
+            $conditions[] = "modalidades.id_modalidade = $id";
+        }
+        if ($ano) {
+            $conditions[] = "YEAR(jogos.data_jogo) = $ano";
+        }
+
+        if (count($conditions) > 0) {
+            $sql .= " WHERE " . implode(' AND ', $conditions);
         }
 
         $res = $conn->query($sql);

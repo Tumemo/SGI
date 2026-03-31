@@ -5,30 +5,39 @@ $method = $_SERVER['REQUEST_METHOD'];
 
 switch ($method) {
     case 'GET':
+        $id = isset($_GET['id_equipe']) ? intval($_GET['id_equipe']) : null;
+        $id_turma = isset($_GET['turmas_id_turma']) ? intval($_GET['turmas_id_turma']) : null;
+        $ano = isset($_GET['ano']) ? intval($_GET['ano']) : null;
 
-        $id = isset($_GET['id_equipe']) ? $_GET['id_equipe'] : null;
-        $id_turma = isset($_GET['turmas_id_turma']) ? $_GET['turmas_id_turma'] : null;
+        // Base da Query com todos os JOINs necessários
+        $sql = "SELECT 
+                    equipes.id_equipe, 
+                    modalidades.nome_modalidade, 
+                    usuarios.nome_usuario AS representante, 
+                    turmas.nome_turma,
+                    interclasses.nome_interclasse
+                FROM equipes 
+                INNER JOIN modalidades ON modalidades.id_modalidade = equipes.modalidades_id_modalidade 
+                INNER JOIN usuarios ON usuarios.id_usuario = equipes.usuarios_id_usuario1 
+                INNER JOIN turmas ON turmas.id_turma = equipes.turmas_id_turma
+                INNER JOIN interclasses ON interclasses.id_interclasse = turmas.interclasses_id_interclasse";
+
+        // Array para armazenar as condições do WHERE
+        $conditions = [];
 
         if ($id) {
-            $sql = "SELECT equipes.id_equipe, modalidades.nome_modalidade, usuarios.nome_usuario AS representante, turmas.nome_turma 
-    FROM equipes 
-    INNER JOIN modalidades ON modalidades.id_modalidade = equipes.modalidades_id_modalidade 
-    INNER JOIN usuarios ON usuarios.id_usuario = equipes.usuarios_id_usuario1 
-    INNER JOIN turmas ON turmas.id_turma = equipes.turmas_id_turma 
-    WHERE equipes.id_equipe = $id";
-        } elseif ($id_turma) {
-            $sql = "SELECT equipes.id_equipe, modalidades.nome_modalidade, usuarios.nome_usuario AS representante, turmas.nome_turma 
-    FROM equipes 
-    INNER JOIN modalidades ON modalidades.id_modalidade = equipes.modalidades_id_modalidade 
-    INNER JOIN usuarios ON usuarios.id_usuario = equipes.usuarios_id_usuario1 
-    INNER JOIN turmas ON turmas.id_turma = equipes.turmas_id_turma 
-    WHERE equipes.turmas_id_turma = $id_turma";
-        } else {
-            $sql = "SELECT equipes.id_equipe, modalidades.nome_modalidade, usuarios.nome_usuario AS representante, turmas.nome_turma 
-    FROM equipes 
-    INNER JOIN modalidades ON modalidades.id_modalidade = equipes.modalidades_id_modalidade 
-    INNER JOIN usuarios ON usuarios.id_usuario = equipes.usuarios_id_usuario1 
-    INNER JOIN turmas ON turmas.id_turma = equipes.turmas_id_turma";
+            $conditions[] = "equipes.id_equipe = $id";
+        }
+        if ($id_turma) {
+            $conditions[] = "equipes.turmas_id_turma = $id_turma";
+        }
+        if ($ano) {
+            $conditions[] = "YEAR(interclasses.ano_interclasse) = $ano";
+        }
+
+        // Se houver condições, adiciona o WHERE na query
+        if (count($conditions) > 0) {
+            $sql .= " WHERE " . implode(' AND ', $conditions);
         }
 
         $res = $conn->query($sql);
@@ -41,8 +50,7 @@ switch ($method) {
         }
 
         echo json_encode($equipes);
-
-        break;
+        break;  
 
     case 'POST':
         $data = json_decode(file_get_contents("php://input"));

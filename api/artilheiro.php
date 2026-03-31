@@ -6,52 +6,39 @@ $method = $_SERVER['REQUEST_METHOD'];
 
 switch ($method) {
     case 'GET':
-        // Filtros opcionais via URL
-        $id_artilheiro = isset($_GET['id_artilheiro']) ? intval($_GET['id_artilheiro']) : null;
-        $id_jogo = isset($_GET['id_jogo']) ? intval($_GET['id_jogo']) : null;
-        $id_usuario = isset($_GET['id_usuario']) ? intval($_GET['id_usuario']) : null;
+        $ano = isset($_GET['ano']) ? intval($_GET['ano']) : date('Y');
+        $id_modalidade = isset($_GET['id_modalidade']) ? intval($_GET['id_modalidade']) : null;
 
-        // Query base com JOINs para trazer nomes em vez de apenas IDs
+        // Query com nomes completos das tabelas
         $sql = "SELECT 
-                    a.id_artilheiro, 
-                    a.num_gol, 
-                    u.nome_usuario, 
-                    u.matricula_usuario,
-                    j.nome_jogo, 
-                    j.data_jogo
-                FROM artilheiros a
-                INNER JOIN usuarios u ON a.usuarios_id_usuario = u.id_usuario
-                INNER JOIN jogos j ON a.jogos_id_jogo = j.id_jogo";
+                    usuarios.nome_usuario, 
+                    SUM(artilheiros.num_gol) AS total_gols, 
+                    modalidades.nome_modalidade
+                FROM artilheiros
+                INNER JOIN usuarios ON artilheiros.usuarios_id_usuario = usuarios.id_usuario
+                INNER JOIN jogos ON artilheiros.jogos_id_jogo = jogos.id_jogo
+                INNER JOIN modalidades ON jogos.modalidades_id_modalidade = modalidades.id_modalidade
+                WHERE YEAR(jogos.data_jogo) = ?";
 
-        // Aplicação de filtros
-        $conditions = [];
-        if ($id_artilheiro) {
-            $conditions[] = "a.id_artilheiro = $id_artilheiro";
-        }
-        if ($id_jogo) {
-            $conditions[] = "a.jogos_id_jogo = $id_jogo";
-        }
-        if ($id_usuario) {
-            $conditions[] = "a.usuarios_id_usuario = $id_usuario";
+        if ($id_modalidade) {
+            $sql .= " AND modalidades.id_modalidade = ?";
         }
 
-        if (count($conditions) > 0) {
-            $sql .= " WHERE " . implode(' AND ', $conditions);
-        }
+        $sql .= " GROUP BY usuarios.id_usuario, modalidades.id_modalidade ORDER BY total_gols DESC";
 
-        $sql .= " ORDER BY a.num_gol DESC";
-
-        $res = $conn->query($sql);
-        $artilheiros = [];
-
-        if ($res) {
-            while ($row = $res->fetch_assoc()) {
-                $artilheiros[] = $row;
-            }
-            echo json_encode($artilheiros);
+        $stmt = $conn->prepare($sql);
+        
+        if ($id_modalidade) {
+            $stmt->bind_param("ii", $ano, $id_modalidade);
         } else {
-            echo json_encode(["success" => false, "message" => "Erro na consulta: " . $conn->error]);
+            $stmt->bind_param("i", $ano);
         }
+
+        $stmt->execute();
+        $res = $stmt->get_result();
+        $artilharia = $res->fetch_all(MYSQLI_ASSOC);
+
+        echo json_encode($artilharia);
         break;
 
     case 'POST':
@@ -59,33 +46,30 @@ switch ($method) {
 
         if (!isset($data->usuarios_id_usuario) || !isset($data->jogos_id_jogo) || !isset($data->num_gol)) {
             http_response_code(400);
-            echo json_encode([
-                "success" => false,
-                "message" => "Dados incompletos. É necessário enviar usuarios_id_usuario, jogos_id_jogo e num_gol."
-            ]);
+            echo json_encode(["success" => false, "message" => "Dados incompletos."]);
             break;
         }
 
-        
         $id_usuario = intval($data->usuarios_id_usuario);
         $id_jogo = intval($data->jogos_id_jogo);
         $num_gol = intval($data->num_gol);
 
-       
-        $sql = "INSERT INTO artilheiros (usuarios_id_usuario, jogos_id_jogo, num_gol) VALUES ($id_usuario, $id_jogo, $num_gol)";
+        // Volta para o INSERT simples que você tinha
+        $sql = "INSERT INTO artilheiros (usuarios_id_usuario, jogos_id_jogo, num_gol) VALUES (?, ?, ?)";
 
-        $res = $conn->query($sql);
-        if($res == TRUE){
-            http_response_code(200); // Internal Server Error
+        $stmt = $conn->prepare($sql);
+        $stmt->bind_param("iii", $id_usuario, $id_jogo, $num_gol);
+
+        if ($stmt->execute()) {
             echo json_encode([
                 "success" => true,
-                "message" => "Dados cadastrado com sucesso"
+                "message" => "Dados cadastrados com sucesso"
             ]);
         } else {
-            http_response_code(500); // Internal Server Error
+            http_response_code(500);
             echo json_encode([
-                "success" => false,
-                "message" => "Erro na preparação da query: " . $conn->error
+                "success" => false, 
+                "message" => "Erro ao cadastrar: " . $conn->error
             ]);
         }
         break;
