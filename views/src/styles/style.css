@@ -15,7 +15,7 @@ nav{
     background-color: var(--vermelho) !important;
 }
 .text-danger{
-    background-color: var(--vermelho) !important;
+    color: var(--vermelho) !important;
 }
 .form-control{
     animation:  1s;
