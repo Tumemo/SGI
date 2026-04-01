@@ -12,15 +12,23 @@ if (!is_dir($pasta_destino)) {
     mkdir($pasta_destino, 0777, true);
 }
 
-// 1. Carrega os alunos já existentes e guarda a contagem inicial
+// 1. Carrega os alunos já existentes
 $todos_os_alunos = [];
 if (file_exists($arquivo_final)) {
     $conteudo_atual = file_get_contents($arquivo_final);
     $todos_os_alunos = json_decode($conteudo_atual, true) ?? [];
 }
 
-$quantidade_inicial = count($todos_os_alunos); // <-- Guarda quantos já existiam
+// Criamos um mapa (indexado pelo RM) para busca instantânea e evitar duplicados
+// Isso transforma o RM na "chave" do array, garantindo unicidade absoluta.
+$alunos_por_rm = [];
+foreach ($todos_os_alunos as $aluno) {
+    if (isset($aluno['rm'])) {
+        $alunos_por_rm[$aluno['rm']] = $aluno;
+    }
+}
 
+$quantidade_inicial = count($alunos_por_rm); 
 $arquivos_pdf = glob($pasta_pdf . "*.pdf");
 
 if (count($arquivos_pdf) > 0) {
@@ -43,6 +51,9 @@ if (count($arquivos_pdf) > 0) {
                     preg_match('/(\d+\.\d+)/', $linha_limpa, $m_rm);
                     $rm = $m_rm[1] ?? "";
 
+                    // Pula se o RM não for encontrado na linha
+                    if (empty($rm)) continue;
+
                     $genero = "MASC"; 
                     if (!empty($data_nasc)) {
                         $posicao_data = strpos($linha_limpa, $data_nasc);
@@ -56,9 +67,11 @@ if (count($arquivos_pdf) > 0) {
                     $nome_final = trim($partes[0]);
                     $nome_final = preg_replace('/\s*[A-Z]{2}$/', '', $nome_final);
 
-                    if (!empty($nome_final) && !empty($data_nasc)) {
-                        $todos_os_alunos[] = [
-                            'nome'            => mb_strtoupper($nome_final, 'UTF-8'),
+                    // VERIFICAÇÃO POR RM:
+                    // Se o RM não existe no nosso mapa, adicionamos o novo aluno
+                    if (!isset($alunos_por_rm[$rm])) {
+                        $alunos_por_rm[$rm] = [
+                            'nome'            => $nome_final,
                             'data_nascimento' => $data_nasc,
                             'rm'              => $rm,
                             'genero'          => $genero,
@@ -74,17 +87,18 @@ if (count($arquivos_pdf) > 0) {
         }
     }
 
-    // 2. Cálculos Finais
-    $total_final = count($todos_os_alunos);
-    $novos_adicionados = $total_final - $quantidade_inicial; // <-- Quantos entraram agora
+    // Convertemos o mapa de volta para um array simples (lista) para salvar o JSON
+    $lista_final = array_values($alunos_por_rm);
+    $total_final = count($lista_final);
+    $novos_adicionados = $total_final - $quantidade_inicial;
 
-    $jsonFinal = json_encode($todos_os_alunos, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+    $jsonFinal = json_encode($lista_final, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
     file_put_contents($arquivo_final, $jsonFinal);
 
     echo "<hr>";
     echo "🚀 <b>Processamento Concluído!</b><br>";
-    echo "📥 Alunos lidos dos novos PDFs: <b>$novos_adicionados</b><br>";
-    echo "📊 Total acumulado no arquivo JSON: <b>$total_final</b>";
+    echo "📥 Novos alunos únicos adicionados: <b>$novos_adicionados</b><br>";
+    echo "📊 Total de alunos únicos no sistema: <b>$total_final</b>";
 
 } else {
     echo "⚠️ Nenhum PDF novo encontrado em $pasta_pdf";
