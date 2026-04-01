@@ -1,34 +1,56 @@
 <?php
 require_once '../config/db.php';
 header('Content-Type: application/json');
+
+// Headers CORS
+header('Access-Control-Allow-Origin: *');
+header('Access-Control-Allow-Methods: GET, POST, OPTIONS'); // PUT removido pois a pontuação agora é relacional
+header('Access-Control-Allow-Headers: Content-Type');
+
 $method = $_SERVER['REQUEST_METHOD'];
+
+// Lida com requisições preflight do CORS
+if ($method === 'OPTIONS') {
+    http_response_code(200);
+    exit();
+}
 
 $acao = isset($_GET['acao']) ? $_GET['acao'] : null;
 
 switch ($method) {
     case 'GET':
-
-
-        $id = isset($_GET['id_turma']) ? $_GET['id_turma'] : null;
-        $id_interclasse = isset($_GET['id_interclasse']) ? $_GET['id_interclasse'] : null;
+        // Segurança: forçar os IDs a serem inteiros
+        $id = isset($_GET['id_turma']) ? intval($_GET['id_turma']) : null;
+        $id_interclasse = isset($_GET['id_interclasse']) ? intval($_GET['id_interclasse']) : null;
+        $categoria = isset($_GET['categoria']) ? intval($_GET['categoria']) : null;
         $ver_ranking = isset($_GET['ranking']) ? true : false;
 
-        // Base da Query com todas as colunas necessárias, incluindo a nova 'pontos_turma'
-        $sql = "SELECT turmas.id_turma, turmas.nome_turma, turmas.turno_turma, turmas.cat_turma, 
-               turmas.nome_fantasia_turma, turmas.pontuacao_turma, interclasses.nome_interclasse 
-        FROM turmas 
-        INNER JOIN interclasses ON interclasses.id_interclasse = turmas.interclasses_id_interclasse";
+        // A coluna 'pontuacao_turma' foi removida do SELECT, pois a pontuação agora vem de outras tabelas
+        $sql = "SELECT turmas.id_turma, turmas.nome_turma, turmas.turno_turma, 
+                       turmas.nome_fantasia_turma, interclasses.nome_interclasse 
+                FROM turmas 
+                INNER JOIN interclasses ON interclasses.id_interclasse = turmas.interclasses_id_interclasse";
 
-        // Mantendo as opções de filtro anteriores
+        // Lógica para construir a query dinamicamente
+        $condicoes = [];
         if ($id) {
-            $sql .= " WHERE turmas.id_turma = $id";
-        } elseif ($id_interclasse) {
-            $sql .= " WHERE turmas.interclasses_id_interclasse = $id_interclasse";
+            $condicoes[] = "turmas.id_turma = $id";
+        }
+        if ($id_interclasse) {
+            $condicoes[] = "turmas.interclasses_id_interclasse = $id_interclasse";
+        }
+        if ($categoria) {
+            $condicoes[] = "turmas.categorias_id_categoria = $categoria";
         }
 
-        // Adicionando a nova opção de ordenação por ranking (maior pontuação primeiro)
+        if (count($condicoes) > 0) {
+            $sql .= " WHERE " . implode(" AND ", $condicoes);
+        }
+
         if ($ver_ranking) {
-            $sql .= " ORDER BY turmas.pontuacao_turma DESC";
+            // TODO: Como a pontuação não fica mais na tabela turmas, o ranking precisará ser 
+            // calculado agrupando/somando (SUM) os valores das tabelas `partidas` e `pontuacoes`.
+            // Para não quebrar a API, a ordenação simples foi temporariamente inibida aqui.
         }
 
         $res = $conn->query($sql);
@@ -60,18 +82,18 @@ switch ($method) {
 
         $nome_turma = "'" . $conn->real_escape_string($data->nome_turma) . "'";
         $turno_turma = isset($data->turno_turma) ? "'" . $conn->real_escape_string($data->turno_turma) . "'" : "NULL";
-        $cat_turma = isset($data->cat_turma) ? "'" . $conn->real_escape_string($data->cat_turma) . "'" : "NULL";
         $nome_fantasia_turma = isset($data->nome_fantasia_turma) ? "'" . $conn->real_escape_string($data->nome_fantasia_turma) . "'" : "NULL";
-        $pontuacao_turma = isset($data->pontuacao_turma) ? intval($data->pontuacao_turma) : 0;
 
-        $sql = "INSERT INTO turmas (interclasses_id_interclasse, nome_turma, turno_turma, cat_turma, nome_fantasia_turma, pontuacao_turma, categorias_id_categoria) 
-                VALUES ($id_interclasse, $nome_turma, $turno_turma, $cat_turma, $nome_fantasia_turma, $pontuacao_turma, $id_categoria)";
+        // A coluna 'pontuacao_turma' foi removida do INSERT
+        $sql = "INSERT INTO turmas (interclasses_id_interclasse, nome_turma, turno_turma, nome_fantasia_turma, categorias_id_categoria) 
+                VALUES ($id_interclasse, $nome_turma, $turno_turma, $nome_fantasia_turma, $id_categoria)";
 
         if ($conn->query($sql) === TRUE) {
-            http_response_code(200);
+            http_response_code(201); 
             echo json_encode([
                 "success" => true,
-                "message" => "Turma cadastrada com sucesso"
+                "message" => "Turma cadastrada com sucesso",
+                "id_turma" => $conn->insert_id 
             ]);
         } else {
             http_response_code(500);
@@ -82,38 +104,9 @@ switch ($method) {
         }
         break;
 
-    case 'PUT':
-        if ($acao == 'pontuacao') {
-            $data = json_decode(file_get_contents('php://input'));
-
-            $id_turma = isset($data->id_turma) ? $data->id_turma : null;
-            $pontos_ganhos = isset($data->pontos) ? intval($data->pontos) : 0;
-
-            if (!$id_turma) {
-                echo json_encode([
-                    "success" => false,
-                    "message" => "ID da turma não informado."
-                ]);
-                exit;
-            }
-
-            $sql = "UPDATE turmas SET pontuacao_turma = pontuacao_turma + $pontos_ganhos WHERE id_turma = $id_turma";
-
-            if ($conn->query($sql)) {
-                echo json_encode([
-                    "success" => true,
-                    "message" => "Pontuação da turma atualizada com sucesso!",
-                    "pontos_adicionados" => $pontos_ganhos
-                ]);
-            } else {
-                echo json_encode([
-                    "success" => false,
-                    "message" => "Erro ao atualizar: " . $conn->error
-                ]);
-            }
-        }
-        break;
-
-    case 'PATCH':
+    default:
+        // O método PUT foi removido deste arquivo.
+        http_response_code(405); 
+        echo json_encode(["success" => false, "message" => "Método HTTP não permitido."]);
         break;
 }
