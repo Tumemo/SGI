@@ -19,6 +19,6 @@
         echo "";
     }
     ?>
-    <img src="../../public/images/banner-global.png" alt="Imagens de alunos do SESI" class=" w-100">
-    <h1 class="position-absolute top-50 start-50 translate-middle text-white"><?php echo $textTop ?></h1>
+    <img src="../../public/images/banner-global.png" alt="Imagens de alunos do SESI" class="w-100">
+    <h1 class="position-absolute top-50 start-50 translate-middle text-white w-100 text-center"><?php echo $textTop ?></h1>
 </header>

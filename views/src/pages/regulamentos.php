@@ -70,8 +70,7 @@ require_once '../componentes/header.php';
         </ul>
     </div>
     <section class="d-flex gap-2">
-        <button class="btn btn-dark">Pular</button>
-        <button class="btn btn-danger">Confirmar</button>
+        <a href="./edicao_resumo.php" class="btn btn-danger">Confirmar</a>
     </section>
 </main>
 

@@ -1,4 +1,4 @@
-<nav class="fixed-bottom py-2">
+<nav class="order-last fixed-bottom py-2 order-lg-first">
     <ul class="nav justify-content-around fs-1">
         <li><a href="../pages/home.php" class="text-white"><i class="bi bi-house"></i></a></li>
         <li><a href="../pages/turmas.php" class="text-white"><i class="bi bi-person"></i></a></li>

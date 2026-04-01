@@ -69,7 +69,9 @@ require_once '../componentes/header.php';
             </li>
         </ul>
     </div>
-    
+    <section class="d-flex gap-4 mt-3">
+        <a href="./edicao_resumo.php" class="btn btn-danger">Continuar</a>
+   </section>
 </main>
 
 <?php 
