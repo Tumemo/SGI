@@ -1,148 +1,127 @@
 <?php
-// Exibição de erros (Apenas para ambiente de desenvolvimento)
 ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
 
 require_once '../config/db.php';
-header('Content-Type: text/html; charset=utf-8');
 
-// --- CONFIGURAÇÕES DE ARQUIVOS ---
-$caminho_json = 'json_turmas/info_alunos.json';
-$arquivo_log = 'log_importacao.txt'; // O log será salvo na mesma pasta deste script
+header('Content-Type: application/json; charset=utf-8');
 
-// Função para gravar os logs no arquivo .txt
-function registrarLog($mensagem, $arquivo) {
-    $dataHora = date('d/m/Y H:i:s');
-    // Adiciona a mensagem ao final do arquivo (FILE_APPEND)
-    file_put_contents($arquivo, "[$dataHora] $mensagem" . PHP_EOL, FILE_APPEND);
-}
+$input_raw = file_get_contents('php://input');
+$input_data = json_decode($input_raw, true);
 
-registrarLog("--- INICIANDO NOVA IMPORTAÇÃO ---", $arquivo_log);
+$metodo = $_SERVER['REQUEST_METHOD'];
+$acao = $input_data['acao'] ?? $_REQUEST['acao'] ?? ''; 
 
-if (!file_exists($caminho_json)) {
-    $msg = "Erro Crítico: O arquivo $caminho_json não existe.";
-    registrarLog($msg, $arquivo_log);
-    die("❌ <b>$msg</b>");
-}
-
-$conteudo_json = file_get_contents($caminho_json);
-$alunos = json_decode($conteudo_json, true);
-
-if (json_last_error() !== JSON_ERROR_NONE) {
-    $msg = "Erro ao ler o JSON: " . json_last_error_msg();
-    registrarLog($msg, $arquivo_log);
-    die("⚠️ <b>$msg</b>");
-}
-
-if (empty($alunos)) {
-    registrarLog("Arquivo JSON vazio.", $arquivo_log);
-    die("⚠️ O arquivo JSON está vazio.");
-}
-
-$lista_sucessos = [];
-$lista_ignorados = [];
-$lista_erros = [];
-$cache_turmas = [];
-
-// Usando INSERT IGNORE para não travar o script se o aluno já existir
-$sql_ins = "INSERT IGNORE INTO usuarios (
-    sigla_usuario, matricula_usuario, nome_usuario, senha_usuario, 
-    foto_ususario, nivel_usuario, competidor_usuario, mesario_usuario, 
-    genero_usuario, data_nasc_usuario, turmas_id_turma
-) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
-$stmt_ins = $conn->prepare($sql_ins);
-
-$stmt_t = $conn->prepare("SELECT id_turma FROM turmas WHERE nome_turma = ?");
-
-echo "<h2>🚀 Relatório de Importação</h2>";
-
-foreach ($alunos as $aluno) {
-    $nome_aluno = trim($aluno['nome'] ?? 'Desconhecido');
-    $nome_turma = trim($aluno['turma'] ?? '');
+// Função auxiliar para cadastrar os competidores do JSON local
+function importarCompetidores($conn) {
+    $caminho_json = 'json_turmas/info_alunos.json';
     
-    $rm_bruto = $aluno['rm'] ?? '';
-    $rm_limpo = preg_replace('/[^0-9]/', '', $rm_bruto);
-    
-    $data_nasc_bruta = $aluno['data_nascimento'] ?? '';
-    $d = explode('/', $data_nasc_bruta);
-    $data_f = (count($d) === 3) ? "{$d[2]}-{$d[1]}-{$d[0]}" : null;
-    
-    $genero_bruto = $aluno['genero'] ?? 'Outro';
-    $genero_raw = strtoupper(substr($genero_bruto, 0, 1));
-    $genero = ($genero_raw === 'M') ? 'MASC' : 'FEM';
-
-    // Busca de Turma com Cache
-    if (!isset($cache_turmas[$nome_turma])) {
-        $stmt_t->bind_param("s", $nome_turma);
-        $stmt_t->execute();
-        $res_t = $stmt_t->get_result();
-        $dados_turma = $res_t->fetch_assoc();
-        $cache_turmas[$nome_turma] = $dados_turma['id_turma'] ?? null;
+    if (!file_exists($caminho_json)) {
+        return ["status" => "erro", "mensagem" => "Arquivo JSON de alunos não encontrado"];
     }
 
-    $id_turma_atual = $cache_turmas[$nome_turma];
-
-    if (!$id_turma_atual) {
-        $msg = "Turma '$nome_turma' não encontrada no banco.";
-        $lista_erros[] = "❌ <b>$nome_aluno</b>: $msg";
-        registrarLog("ERRO - $nome_aluno (RM $rm_limpo): $msg", $arquivo_log);
-        continue;
-    }
-
-    // Hash da senha
-    $senha_hash = password_hash($rm_limpo, PASSWORD_DEFAULT);
-
-    // Padrões
-    $sigla = 'RM';
-    $foto = 'default.jpg';
-    $nivel = '0';
-    $comp = '1';
-    $mes = '0';
-
-    $stmt_ins->bind_param(
-        "ssssssssssi",
-        $sigla, $rm_limpo, $nome_aluno, $senha_hash, 
-        $foto, $nivel, $comp, $mes, $genero, $data_f, $id_turma_atual
-    );
-
-    // Executa e verifica o que aconteceu de fato
-    if ($stmt_ins->execute()) {
-        if ($stmt_ins->affected_rows > 0) {
-            // Linha inserida no banco
-            $lista_sucessos[] = "✅ <b>$nome_aluno</b>";
-            registrarLog("SUCESSO - Inserido: $nome_aluno (RM $rm_limpo)", $arquivo_log);
-        } else {
-            // Comando executou, mas afetou 0 linhas (INSERT IGNORE pulou porque já existia)
-            $lista_ignorados[] = "⏭️ <b>$nome_aluno</b> (RM: $rm_limpo)";
-            registrarLog("IGNORADO - Já existe: $nome_aluno (RM $rm_limpo)", $arquivo_log);
+    $alunos = json_decode(file_get_contents($caminho_json), true);
+    $sucessos = 0; $ignorados = 0; $erros = 0; 
+    $lista_nomes_cadastrados = [];
+    $cache_turmas = [];
+    
+    $stmt_ins = $conn->prepare("INSERT IGNORE INTO usuarios (sigla_usuario, matricula_usuario, nome_usuario, senha_usuario, foto_ususario, nivel_usuario, competidor_usuario, mesario_usuario, genero_usuario, data_nasc_usuario, turmas_id_turma) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+    $stmt_t = $conn->prepare("SELECT id_turma FROM turmas WHERE nome_turma = ?");
+    
+    foreach ($alunos as $aluno) {
+        $nome_usuario = trim($aluno['nome'] ?? '');
+        $nome_turma = trim($aluno['turma'] ?? '');
+        $matricula_usuario = preg_replace('/[^0-9.]/', '', $aluno['rm'] ?? '');
+        
+        $d = explode('/', $aluno['data_nascimento'] ?? '');
+        $data_nasc_usuario = (count($d) === 3) ? "{$d[2]}-{$d[1]}-{$d[0]}" : null;
+        $genero_usuario = (strtoupper($aluno['genero'] ?? '') === 'FEM') ? 'FEM' : 'MASC';
+        
+        if (!isset($cache_turmas[$nome_turma])) {
+            $stmt_t->bind_param("s", $nome_turma);
+            $stmt_t->execute();
+            $row = $stmt_t->get_result()->fetch_assoc();
+            $cache_turmas[$nome_turma] = $row['id_turma'] ?? null;
         }
-    } else {
-        // Erro real do MySQL (ex: campo faltando, tipo de dado errado, etc)
-        $erro_banco = $stmt_ins->error;
-        $lista_erros[] = "⚠️ <b>$nome_aluno</b>: Erro -> $erro_banco";
-        registrarLog("ERRO MYSQL - $nome_aluno (RM $rm_limpo): $erro_banco", $arquivo_log);
+        
+        $turmas_id_turma = $cache_turmas[$nome_turma];
+        if (!$turmas_id_turma) { $erros++; continue; }
+        
+        $senha_usuario = password_hash($matricula_usuario, PASSWORD_DEFAULT);
+        $sigla_usuario = 'RM'; $foto_ususario = 'default.jpg'; $nivel_usuario = '0'; $competidor_usuario = '1'; $mesario_usuario = '0';
+        
+        $stmt_ins->bind_param("ssssssssssi", $sigla_usuario, $matricula_usuario, $nome_usuario, $senha_usuario, $foto_ususario, $nivel_usuario, $competidor_usuario, $mesario_usuario, $genero_usuario, $data_nasc_usuario, $turmas_id_turma);
+        
+        if ($stmt_ins->execute()) { 
+            if ($stmt_ins->affected_rows > 0) {
+                $sucessos++;
+                $lista_nomes_cadastrados[] = $nome_usuario;
+            } else { $ignorados++; }
+        } else { $erros++; }
     }
+    $stmt_ins->close(); $stmt_t->close();
+    
+    return [
+        "status" => "sucesso", 
+        "quantidade_novos" => $sucessos, 
+        "quantidade_ignorados" => $ignorados, 
+        "quantidade_erros" => $erros,
+        "alunos_inseridos" => $lista_nomes_cadastrados
+    ];
 }
 
-$stmt_ins->close();
-$stmt_t->close();
+switch($metodo) {
+    case 'GET':
+        if ($acao == 'listar_competidores') {
+            $sql = "SELECT id_usuario, nome_usuario, matricula_usuario, genero_usuario, turmas_id_turma FROM usuarios WHERE nivel_usuario = '0'";
+            $res = $conn->query($sql);
+            echo json_encode(["status" => "sucesso", "usuarios" => $res->fetch_all(MYSQLI_ASSOC)]);
+        } 
+        else if ($acao == 'cadastrar_competidores') {
+            // PERMITE CADASTRAR VIA NAVEGADOR PARA TESTE
+            echo json_encode(importarCompetidores($conn));
+        }
+        else if ($acao == 'listar_admins') {
+            $sql = "SELECT id_usuario, nome_usuario, matricula_usuario FROM usuarios WHERE nivel_usuario = '2'";
+            echo json_encode(["status" => "sucesso", "usuarios" => $conn->query($sql)->fetch_all(MYSQLI_ASSOC)]);
+        }
+        else {
+            echo json_encode(["status" => "erro", "mensagem" => "Ação GET inválida"]);
+        }
+        break;
+
+    case 'POST':
+        if($acao == 'cadastrar_competidores') {
+            echo json_encode(importarCompetidores($conn));
+        } 
+        else if ($acao == 'cadastrar_admin') {
+            $nome_usuario = trim($input_data['nome_usuario'] ?? '');
+            $matricula_usuario = trim($input_data['matricula_usuario'] ?? '');
+            $senha_crua = $input_data['senha_usuario'] ?? '';
+            
+            $nivel_usuario = $input_data['nivel_usuario'] ?? '2'; 
+            $competidor_usuario = $input_data['competidor_usuario'] ?? '0'; 
+            $mesario_usuario = $input_data['mesario_usuario'] ?? '0';
+            $foto_ususario = 'admin.jpg';
+            
+            if (!empty($nome_usuario) && !empty($matricula_usuario) && !empty($senha_crua)) {
+                $senha_usuario = password_hash($senha_crua, PASSWORD_DEFAULT);
+                $stmt_prof = $conn->prepare("INSERT INTO usuarios (nome_usuario, matricula_usuario, senha_usuario, nivel_usuario, competidor_usuario, mesario_usuario, foto_ususario) VALUES (?, ?, ?, ?, ?, ?, ?)");
+                $stmt_prof->bind_param("sssssss", $nome_usuario, $matricula_usuario, $senha_usuario, $nivel_usuario, $competidor_usuario, $mesario_usuario, $foto_ususario);
+                
+                if ($stmt_prof->execute()) { 
+                    echo json_encode(["status" => "sucesso", "mensagem" => "OK", "nome" => $nome_usuario]); 
+                } else { 
+                    echo json_encode(["status" => "erro", "mensagem" => $stmt_prof->error]); 
+                }
+                $stmt_prof->close();
+            } else {
+                echo json_encode(["status" => "erro", "mensagem" => "Dados incompletos"]);
+            }
+        }
+        break;
+}
+
 $conn->close();
-
-registrarLog("--- FIM DA IMPORTAÇÃO ---", $arquivo_log);
-
-// --- EXIBIÇÃO NA TELA ---
-echo "<h3>📊 Resumo da Execução: " . count($alunos) . " alunos lidos</h3>";
-echo "<p style='color: green; font-weight: bold;'>✅ Novos Inseridos: " . count($lista_sucessos) . "</p>";
-echo "<p style='color: #b8860b; font-weight: bold;'>⏭️ Já Existiam (Ignorados): " . count($lista_ignorados) . "</p>";
-echo "<p style='color: red; font-weight: bold;'>❌ Falhas Reais: " . count($lista_erros) . "</p>";
-
-echo "<hr><p><i>Um relatório completo foi salvo no arquivo <b>$arquivo_log</b> na mesma pasta deste script.</i></p>";
-
-if (!empty($lista_erros)) {
-    echo "<h4 style='color: red;'>Erros detalhados:</h4><ul style='color: #666;'><li>" . implode("</li><li>", $lista_erros) . "</li></ul>";
-}
-if (!empty($lista_ignorados)) {
-    echo "<h4 style='color: #b8860b;'>Alunos Ignorados (Já no banco):</h4><ul style='color: #666;'><li>" . implode("</li><li>", $lista_ignorados) . "</li></ul>";
-}
 ?>
