@@ -3,9 +3,9 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Tempo de geração: 01/04/2026 às 16:39
+-- Tempo de geração: 02/04/2026 às 19:13
 -- Versão do servidor: 10.4.32-MariaDB
--- Versão do PHP: 8.2.12
+-- Versão do PHP: 8.0.30
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 START TRANSACTION;
@@ -343,6 +343,7 @@ ALTER TABLE `turmas`
 --
 ALTER TABLE `usuarios`
   ADD PRIMARY KEY (`id_usuario`),
+  ADD UNIQUE KEY `matricula_usuario_UNIQUE` (`matricula_usuario`),
   ADD KEY `fk_usuarios_turmas1_idx` (`turmas_id_turma`);
 
 --

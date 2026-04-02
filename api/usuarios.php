@@ -48,7 +48,16 @@ function importarCompetidores($conn) {
         $turmas_id_turma = $cache_turmas[$nome_turma];
         if (!$turmas_id_turma) { $erros++; continue; }
         
-        $senha_usuario = password_hash($matricula_usuario, PASSWORD_DEFAULT);
+        // Supondo que $data_nasc_usuario seja "2000-12-30"
+        $partes = explode('-', $data_nasc_usuario); 
+
+        // $partes[0] = "2000" (Ano)
+        // $partes[1] = "12"   (Mês)
+        // $partes[2] = "30"   (Dia)
+
+        $senha_limpa = $partes[2] . $partes[1] . $partes[0]; // Resultado: "30122000"
+
+        $senha_usuario = password_hash($senha_limpa, PASSWORD_DEFAULT);
         $sigla_usuario = 'RM'; $foto_ususario = 'default.jpg'; $nivel_usuario = '0'; $competidor_usuario = '1'; $mesario_usuario = '0';
         
         $stmt_ins->bind_param("ssssssssssi", $sigla_usuario, $matricula_usuario, $nome_usuario, $senha_usuario, $foto_ususario, $nivel_usuario, $competidor_usuario, $mesario_usuario, $genero_usuario, $data_nasc_usuario, $turmas_id_turma);
@@ -120,7 +129,10 @@ switch($metodo) {
                 echo json_encode(["status" => "erro", "mensagem" => "Dados incompletos"]);
             }
         }
+
         break;
+
+    
 }
 
 $conn->close();
