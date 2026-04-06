@@ -5,7 +5,7 @@ $btnVoltar = true;
 require_once '../componentes/header.php';
 ?>
 
-<main class="mt-4 d-flex justify-content-center align-items-center flex-column mb-5 pb-4">
+<main class="mt-4 d-flex justify-content-center align-items-center flex-column position-relative" style="margin-bottom: 120px;">
     <a href="./edicao_modalidades.php" class="text-decoration-none text-dark">
         <div class="m-auto shadow d-flex justify-content-between align-content-center px-3 py-3 rounded-3 border border-1  " style="width: 90%;">
             <div>
@@ -24,7 +24,7 @@ require_once '../componentes/header.php';
         </div>
     </a>
 
-    <section class="d-flex gap-4 mt-3">
+    <section class="d-flex gap-4 mt-3 position-absolute position-fixed translate-middle" style="width: max-content;  top: 85%; left: 50%; z-index: 10; cursor: pointer;">
         <a href="./edicao_regulamentos.php" class="btn btn-dark">Voltar</a>
         <button class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#exampleModal">Adicionar categoria</button>
    </section>
@@ -37,7 +37,6 @@ require_once '../componentes/header.php';
 
 
 <!-- modal (adicionar categoria) -->
-
 <div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
@@ -49,7 +48,7 @@ require_once '../componentes/header.php';
                 <form>
                     <div class="mb-3">
                         <label for="exampleInputEmail1" class="form-label">Insira o nome da categoria:</label>
-                        <input type="email" class="form-control" id="exampleInputEmail1" aria-describedby="emailHelp" placeholder="Futebol" require>
+                        <input type="email" class="form-control" id="exampleInputEmail1" aria-describedby="emailHelp" placeholder="Ensino Médio" require>
                     </div>
                     
                     <div class=" d-flex justify-content-center gap-4 mb-0">

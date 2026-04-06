@@ -5,7 +5,7 @@ $btnVoltar = true;
 require_once '../componentes/header.php';
 ?>
 
-<main class="mt-4 d-flex justify-content-center align-items-center flex-column gap-4 mb-5 pb-4">
+<main class="mt-4 d-flex justify-content-center align-items-center flex-column gap-4 position-relative" style="margin-bottom: 120px;">
     <div class="card shadow" style="width: 20rem;">
         <div class="card-header">
             Pontuação por colocação
@@ -69,7 +69,7 @@ require_once '../componentes/header.php';
             </li>
         </ul>
     </div>
-    <section class="d-flex gap-2">
+    <section class="d-flex gap-2 position-absolute position-fixed translate-middle" style="width: max-content;  top: 87%; left: 50%; z-index: 10; cursor: pointer;">
         <a href="./edicao_resumo.php" class="btn btn-danger">Confirmar</a>
     </section>
 </main>
