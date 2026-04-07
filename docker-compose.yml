@@ -1,0 +1,33 @@
+services:
+  backend_sgi:
+    image: php:8.2-apache
+    ports:
+      - "8081:80"
+    volumes:
+      - .:/var/www/html
+    depends_on:
+      - sgi
+    command: sh -c "a2enmod rewrite && docker-php-ext-install mysqli && apache2-foreground"
+
+  sgi:
+    image: mysql:8.0
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: sgi
+    ports:
+      - "3306:3306"
+    volumes:
+      - db_data:/var/lib/mysql
+
+  phpmyadmin:
+    image: phpmyadmin:latest
+    ports:
+      - "8082:80"
+    environment:
+      PMA_HOST: sgi
+    depends_on:
+      - sgi
+
+volumes:
+  db_data:
