@@ -3,16 +3,14 @@ $titulo = "Home";
 $textTop = "";
 $btnVoltar = false;
 require_once '../componentes/header.php';
+require_once '../componentes/navbar.php';
 ?>
 
-<main>
+<!-- main mobile -->
+<main class=" d-md-none">
     <button class="mx-4 btn btn-danger d-flex gap-2 mt-3" data-bs-toggle="modal" data-bs-target="#exampleModal">
         <i class="bi bi-plus-circle"></i>Criar Nova Edição
     </button>
-
-    <!-- <div class="m-auto" style="width: 90%;">
-        <a href="./novaEdicao.php" class="btn btn-danger d-flex gap-2 mt-3" style="width: max-content;"><i class="bi bi-plus-circle"></i>Criar Nova Edição</a>
-    </div> -->
     <div id="caixaListar" class="pb-5 mb-2"></div>
 
 
@@ -29,6 +27,57 @@ require_once '../componentes/header.php';
     </div> -->
 </main>
 
+
+
+<!-- main desktop -->
+<main class="d-none d-md-flex">
+
+    <!-- conteudo do home -->
+    <section class="mt-4 container">
+
+        <h1 class="fs-2">Edições do interclasse</h1>
+
+        <button class=" btn btn-outline-danger d-flex gap-2 mt-3" data-bs-toggle="modal" data-bs-target="#exampleModal">
+            <i class="bi bi-plus-circle"></i>Criar Nova Edição
+        </button>
+
+        <!-- table -->
+        <div>
+            <!-- thead -->
+            <div class="row mt-4 bg-danger rounded-3 shadow text-white py-3 fs-4">
+                <div class="col-4">Edição interclasse</div>
+                <div class="col-4 text-center">Ano</div>
+                <div class="col-4 text-center">Status</div>
+            </div>
+
+            <!-- tbody -->
+            <div class="mt-2">
+                <div class="row bg-white shadow rounded-3 py-3 fs-5 mt-2">
+                    <div class="col-4">Interclasse</div>
+                    <div class="col-4 text-center">2026</div>
+                    <div class="col-4 text-center"><span class="bg-danger rounded-3 text-white px-5 py-1">Ativo</span></div>
+                </div>
+                <div class="row bg-white shadow rounded-3 py-3 fs-5 mt-2">
+                    <div class="col-4">Interclasse</div>
+                    <div class="col-4 text-center">2026</div>
+                    <div class="col-4 text-center"><span class="bg-danger rounded-3 text-white px-5 py-1">Ativo</span></div>
+                </div>
+                <div class="row bg-white shadow rounded-3 py-3 fs-5 mt-2">
+                    <div class="col-4">Interclasse</div>
+                    <div class="col-4 text-center">2026</div>
+                    <div class="col-4 text-center"><span class="bg-danger rounded-3 text-white px-5 py-1">Ativo</span></div>
+                </div>
+                
+            </div>
+        </div>
+
+    </section>
+</main>
+
+
+
+<!-- script da pagina -->
+
 <script>
     async function listarInterclasses() {
         const listar = document.getElementById('caixaListar')
@@ -40,16 +89,16 @@ require_once '../componentes/header.php';
             }
 
             listar.innerHTML = res.data.map((item) =>
-            `
+                `
             <a href="./edicao.php" class="text-decoration-none text-dark">
                 <div class="m-auto shadow d-flex justify-content-between align-content-center px-3 py-3 rounded-3 my-3 border border-1  " style="width: 90%;" ${item.id_interclasse}>
-                        <div>
-                            <h2 class="m-0 fs-3">${item.nome_interclasse}</h2>
-                            <p class="text-secondary m-0">${item.ano_interclasse}</p>
-                        </div>
-                        <img src="../../public/icons/arrow-right.svg" alt="icone de seta">
-                        </div>
-                        </a>
+                    <div>
+                        <h2 class="m-0 fs-3">${item.nome_interclasse}</h2>
+                        <p class="text-secondary m-0">${item.ano_interclasse}</p>
+                    </div>
+                    <img src="../../public/icons/arrow-right.svg" alt="icone de seta">
+                </div>
+            </a>
             `
             ).join('')
 
@@ -74,19 +123,19 @@ require_once '../componentes/header.php';
             </div>
             <div class="modal-body">
                 <h2 class="fs-6">Insira o nome da sua nova edição:</h2>
-        <form>
-            <div>
-                <input type="text" class="form-control" placeholder="Ex: interclasse 2026" id="nomeNovaEdicao">
-            </div>
-            <div class="mt-4">
-                <label for="ano" class="form-label fs-6">Ano</label>
-                <input type="text" for="ano" class="form-control" placeholder="Ex: 2026" id="anoNovaEdicao">
-            </div>
-            <div class="d-flex justify-content-center gap-2 mt-5 pt-5">
-                <a href="./home.php" class="btn btn-outline-danger">Cancelar</a>
-                <a href="./novaEdicao_modalidades.php" class="btn btn-danger" id="criarNovaEdicao">Criar</a>
-            </div>
-        </form>
+                <form>
+                    <div>
+                        <input type="text" class="form-control" placeholder="Ex: interclasse 2026" id="nomeNovaEdicao">
+                    </div>
+                    <div class="mt-4">
+                        <label for="ano" class="form-label fs-6">Ano</label>
+                        <input type="text" for="ano" class="form-control" placeholder="Ex: 2026" id="anoNovaEdicao">
+                    </div>
+                    <div class="d-flex justify-content-center gap-2 mt-5 pt-5">
+                        <a href="./home.php" class="btn btn-outline-danger">Cancelar</a>
+                        <a href="./novaEdicao_modalidades.php" class="btn btn-danger" id="criarNovaEdicao">Criar</a>
+                    </div>
+                </form>
             </div>
             <div class="modal-footer border border-0">
             </div>
@@ -107,5 +156,5 @@ require_once '../componentes/header.php';
 </script>
 
 <?php
-require_once '../componentes/navbar.php';
+require_once '../componentes/footer.php';
 ?>

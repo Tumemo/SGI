@@ -12,9 +12,6 @@
     --vermelho: #e30613;
 }
 
-nav{
-    background-color: var(--vermelho) !important;
-}
 .btn-danger,.bg-danger{
     background-color: var(--vermelho) !important;
 }
