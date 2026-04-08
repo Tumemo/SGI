@@ -1,76 +1,68 @@
 <?php
 require_once '../config/db.php';
+require_once 'filtros.php';
 header('Content-Type: application/json');
+
 $method = $_SERVER['REQUEST_METHOD'];
 
 switch ($method) {
     case 'GET':
-        $sql = "SELECT nome_local, disponivel_local, carga_local FROM locais";
-        $res = $conn->query($sql);
+        $filtro = aplicarFiltrosLocais();
 
-        if (!$res) {
-            echo json_encode([
-                "success" => false,
-                "message" => "Erro ao buscar locais.",
-                "error" => $conn->error
-            ]);
-            exit;
+        $sql = "SELECT id_local, nome_local, disponivel_local, carga_local FROM locais WHERE 1=1" . $filtro['sql'];
+        $sql .= " ORDER BY nome_local ASC";
+
+        $stmt = $conn->prepare($sql);
+
+        if (!empty($filtro['params'])) {
+            $stmt->bind_param($filtro['types'], ...$filtro['params']);
         }
 
-        $results = [];
-
-        while ($row = $res->fetch_assoc()) {
-            $results[] = $row;
-        }
+        $stmt->execute();
+        $res = $stmt->get_result();
+        $dados = $res->fetch_all(MYSQLI_ASSOC);
 
         echo json_encode([
             "success" => true,
-            "message" => count($results) > 0
-                ? "Locais exibidos com sucesso."
-                : "Nenhum local encontrado.",
-            "data" => $results
+            "data" => $dados
         ]);
         break;
 
     case 'POST':
         $data = json_decode(file_get_contents("php://input"));
 
-        
         if (!isset($data->nome_local)) {
             http_response_code(400);
-            echo json_encode([
-                "success" => false,
-                "message" => "Dados incompletos. É necessário enviar pelo menos o nome_local."
-            ]);
+            echo json_encode(["success" => false, "message" => "O nome do local é obrigatório."]);
             break;
         }
 
-      
-        $nome_local = "'" . $conn->real_escape_string($data->nome_local) . "'";
+        $disponivel = $data->disponivel_local ?? '1';
+        $carga = isset($data->carga_local) ? intval($data->carga_local) : null;
 
-        $disponivel_local = isset($data->disponivel_local) ? "'" . $conn->real_escape_string($data->disponivel_local) . "'" : "'1'";
+        $sql = "INSERT INTO locais (nome_local, disponivel_local, carga_local) VALUES (?, ?, ?)";
+        $stmt = $conn->prepare($sql);
 
-       
-        $carga_local = isset($data->carga_local) ? intval($data->carga_local) : "NULL";
+        $stmt->bind_param("ssi", $data->nome_local, $disponivel, $carga);
 
-        
-        $sql = "INSERT INTO locais (nome_local, disponivel_local, carga_local) VALUES ($nome_local, $disponivel_local, $carga_local)";
-
-       
-        $res = $conn->query($sql);
-
-        if ($res === TRUE) {
-            http_response_code(200); 
+        if ($stmt->execute()) {
+            http_response_code(201);
             echo json_encode([
                 "success" => true,
-                "message" => "Local cadastrado com sucesso"
+                "message" => "Local cadastrado com sucesso!",
+                "id_local" => $conn->insert_id
             ]);
         } else {
-            http_response_code(500); 
-            echo json_encode([
-                "success" => false,
-                "message" => "Erro na execução da query: " . $conn->error
-            ]);
+            http_response_code(500);
+            echo json_encode(["success" => false, "message" => $conn->error]);
         }
+        break;
+
+    case 'PUT':
+        break;
+
+    default:
+        http_response_code(405);
+        echo json_encode(["message" => "Método não permitido"]);
         break;
 }

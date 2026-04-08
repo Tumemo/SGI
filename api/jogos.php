@@ -1,18 +1,14 @@
 <?php
 require_once '../config/db.php';
+require_once 'filtros.php';
 header('Content-Type: application/json');
 
 $method = $_SERVER['REQUEST_METHOD'];
 
 switch ($method) {
     case 'GET':
-        // 1. Captura de filtros
-        $id = isset($_GET['id_jogo']) ? intval($_GET['id_jogo']) : null;
-        $id_modalidade = isset($_GET['modalidades_id_modalidade']) ? intval($_GET['modalidades_id_modalidade']) : null;
-        $id_local = isset($_GET['locais_id_local']) ? intval($_GET['locais_id_local']) : null;
-        $data = isset($_GET['data']) ? $_GET['data'] : null;
+        $filtro = aplicarFiltrosJogos();
 
-        // 2. SQL Base (Único para todos os casos)
         $sql = "SELECT 
                     jogos.id_jogo, 
                     jogos.nome_jogo, 
@@ -21,47 +17,19 @@ switch ($method) {
                     jogos.terminno_jogo, 
                     jogos.status_jogo, 
                     modalidades.nome_modalidade, 
-                    locais.nome_local 
+                    locais.nome_local,
+                    categorias.nome_categoria
                 FROM jogos 
                 INNER JOIN modalidades ON modalidades.id_modalidade = jogos.modalidades_id_modalidade 
-                INNER JOIN locais ON locais.id_local = jogos.locais_id_local";
-
-        // 3. Construção dinâmica do WHERE
-        $conditions = [];
-        $params = [];
-        $types = "";
-
-        if ($id) {
-            $conditions[] = "jogos.id_jogo = ?";
-            $params[] = $id;
-            $types .= "i";
-        }
-        if ($id_modalidade) {
-            $conditions[] = "jogos.modalidades_id_modalidade = ?";
-            $params[] = $id_modalidade;
-            $types .= "i";
-        }
-        if ($id_local) {
-            $conditions[] = "jogos.locais_id_local = ?";
-            $params[] = $id_local;
-            $types .= "i";
-        }
-        if ($data) {
-            $conditions[] = "jogos.data_jogo = ?";
-            $params[] = $data;
-            $types .= "s";
-        }
-
-        if (count($conditions) > 0) {
-            $sql .= " WHERE " . implode(' AND ', $conditions);
-        }
+                INNER JOIN locais ON locais.id_local = jogos.locais_id_local
+                INNER JOIN categorias ON categorias.id_categoria = modalidades.categorias_id_categoria
+                WHERE 1=1" . $filtro['sql'];
 
         $sql .= " ORDER BY jogos.data_jogo ASC, jogos.inicio_jogo ASC";
 
-        // 4. Execução Segura
         $stmt = $conn->prepare($sql);
-        if (count($params) > 0) {
-            $stmt->bind_param($types, ...$params);
+        if (!empty($filtro['params'])) {
+            $stmt->bind_param($filtro['types'], ...$filtro['params']);
         }
 
         $stmt->execute();
@@ -70,33 +38,57 @@ switch ($method) {
         break;
 
     case 'POST':
-        // Aqui deve ser o cadastro do JOGO, não da ocorrência!
         $data = json_decode(file_get_contents("php://input"));
 
         if (!isset($data->nome_jogo, $data->data_jogo, $data->modalidades_id_modalidade, $data->locais_id_local)) {
             http_response_code(400);
-            echo json_encode(["success" => false, "message" => "Dados do jogo incompletos."]);
+            echo json_encode(["success" => false, "message" => "Dados incompletos."]);
             break;
         }
 
+        $inicio = $data->inicio_jogo ?? '00:00:00';
+        $termino = $data->terminno_jogo ?? '00:00:00';
+        $status = $data->status_jogo ?? 'Agendado';
+
         $sql = "INSERT INTO jogos (nome_jogo, data_jogo, inicio_jogo, terminno_jogo, modalidades_id_modalidade, locais_id_local, status_jogo) 
-                VALUES (?, ?, ?, ?, ?, ?, 'Agendado')";
-        
+                VALUES (?, ?, ?, ?, ?, ?, ?)";
+
         $stmt = $conn->prepare($sql);
-        $stmt->bind_param("ssssii", 
-            $data->nome_jogo, 
-            $data->data_jogo, 
-            $data->inicio_jogo, 
-            $data->terminno_jogo, 
-            $data->modalidades_id_modalidade, 
-            $data->locais_id_local
+        $stmt->bind_param("ssssiis",
+            $data->nome_jogo,
+            $data->data_jogo,
+            $inicio,
+            $termino,
+            $data->modalidades_id_modalidade,
+            $data->locais_id_local,
+            $status
         );
 
-        if ($stmt->execute()) {
-            echo json_encode(["success" => true, "message" => "Jogo agendado com sucesso!"]);
-        } else {
-            http_response_code(500);
-            echo json_encode(["success" => false, "message" => $conn->error]);
+        try {
+            if ($stmt->execute()) {
+                http_response_code(201);
+                echo json_encode([
+                    "success" => true,
+                    "message" => "Jogo cadastrado com sucesso!",
+                    "id" => $conn->insert_id
+                ]);
+            }
+        } catch (mysqli_sql_exception $e) {
+            http_response_code(400); // Bad Request
+            echo json_encode([
+                "success" => false,
+                "message" => "Erro de integridade: Verifique se o ID da Modalidade ou do Local existem.",
+                "detalhes" => $e->getMessage()
+            ]);
         }
+        break;
+
+    case 'PUT':
+        // Lógica de update aqui
+        break;
+
+    default:
+        http_response_code(405);
+        echo json_encode(["message" => "Metodo não permitido"]);
         break;
 }

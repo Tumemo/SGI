@@ -1,37 +1,38 @@
 <?php
 require_once '../config/db.php';
+require_once 'filtros.php';
+
 header('Content-Type: application/json');
 
 $method = $_SERVER['REQUEST_METHOD'];
 
 switch ($method) {
     case 'GET':
-        $ano = isset($_GET['ano']) ? intval($_GET['ano']) : date('Y');
-        $id_modalidade = isset($_GET['id_modalidade']) ? intval($_GET['id_modalidade']) : null;
 
-        // Query com nomes completos das tabelas
+        $filtro = aplicarFiltrosArtilharia();
+
         $sql = "SELECT 
                     usuarios.nome_usuario, 
                     SUM(artilheiros.num_gol) AS total_gols, 
-                    modalidades.nome_modalidade
+                    modalidades.nome_modalidade,
+                    turmas.nome_turma,
+                    turmas.nome_fantasia_turma
                 FROM artilheiros
                 INNER JOIN usuarios ON artilheiros.usuarios_id_usuario = usuarios.id_usuario
+                INNER JOIN turmas ON usuarios.turmas_id_turma = turmas.id_turma
                 INNER JOIN jogos ON artilheiros.jogos_id_jogo = jogos.id_jogo
                 INNER JOIN modalidades ON jogos.modalidades_id_modalidade = modalidades.id_modalidade
-                WHERE YEAR(jogos.data_jogo) = ?";
+                INNER JOIN categorias ON modalidades.categorias_id_categoria = categorias.id_categoria
+                WHERE 1=1" . $filtro['sql'];
 
-        if ($id_modalidade) {
-            $sql .= " AND modalidades.id_modalidade = ?";
-        }
-
-        $sql .= " GROUP BY usuarios.id_usuario, modalidades.id_modalidade ORDER BY total_gols DESC";
+        $sql .= " GROUP BY usuarios.id_usuario, modalidades.id_modalidade 
+                  ORDER BY total_gols DESC";
 
         $stmt = $conn->prepare($sql);
-        
-        if ($id_modalidade) {
-            $stmt->bind_param("ii", $ano, $id_modalidade);
-        } else {
-            $stmt->bind_param("i", $ano);
+
+        // Aplica os parâmetros se existirem
+        if (!empty($filtro['params'])) {
+            $stmt->bind_param($filtro['types'], ...$filtro['params']);
         }
 
         $stmt->execute();
@@ -44,33 +45,26 @@ switch ($method) {
     case 'POST':
         $data = json_decode(file_get_contents("php://input"));
 
-        if (!isset($data->usuarios_id_usuario) || !isset($data->jogos_id_jogo) || !isset($data->num_gol)) {
+        if (!isset($data->usuarios_id_usuario, $data->jogos_id_jogo, $data->num_gol)) {
             http_response_code(400);
             echo json_encode(["success" => false, "message" => "Dados incompletos."]);
             break;
         }
 
-        $id_usuario = intval($data->usuarios_id_usuario);
-        $id_jogo = intval($data->jogos_id_jogo);
-        $num_gol = intval($data->num_gol);
-
-        // Volta para o INSERT simples que você tinha
         $sql = "INSERT INTO artilheiros (usuarios_id_usuario, jogos_id_jogo, num_gol) VALUES (?, ?, ?)";
-
         $stmt = $conn->prepare($sql);
-        $stmt->bind_param("iii", $id_usuario, $id_jogo, $num_gol);
+        $stmt->bind_param("iii", $data->usuarios_id_usuario, $data->jogos_id_jogo, $data->num_gol);
 
         if ($stmt->execute()) {
-            echo json_encode([
-                "success" => true,
-                "message" => "Dados cadastrados com sucesso"
-            ]);
+            echo json_encode(["success" => true, "message" => "Gols registrados com sucesso!"]);
         } else {
             http_response_code(500);
-            echo json_encode([
-                "success" => false, 
-                "message" => "Erro ao cadastrar: " . $conn->error
-            ]);
+            echo json_encode(["success" => false, "message" => "Erro ao salvar: " . $conn->error]);
         }
+        break;
+
+    default:
+        http_response_code(405);
+        echo json_encode(["message" => "Método não suportado."]);
         break;
 }

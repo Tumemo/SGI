@@ -1,101 +1,98 @@
 <?php
 require_once '../config/db.php';
+require_once 'filtros.php';
 header('Content-Type: application/json');
+
 $method = $_SERVER['REQUEST_METHOD'];
 
-// Função para "instalar" (fazer upload) do PDF no servidor
-function uploadRegulamento($file)
-{
-    $diretorioDestino = "../uploads/regulamentos/"; // Pasta onde ficarão os PDFs
+function uploadRegulamento($file) {
+    $diretorioDestino = "../uploads/regulamentos/";
+    if (!is_dir($diretorioDestino)) mkdir($diretorioDestino, 0777, true);
 
-    if (!is_dir($diretorioDestino)) {
-        mkdir($diretorioDestino, 0777, true);
-    }
-
-    $extensao = pathinfo($file['name'], PATHINFO_EXTENSION);
-
-    if (strtolower($extensao) !== 'pdf') {
-        return ["success" => false, "message" => "O arquivo deve ser um PDF."];
-    }
+    $extensao = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
+    if ($extensao !== 'pdf') return ["success" => false, "message" => "O arquivo deve ser um PDF."];
+    if ($file['error'] !== UPLOAD_ERR_OK) return ["success" => false, "message" => "Erro no upload do arquivo."];
 
     $novoNome = "reg_" . uniqid() . "." . $extensao;
     $caminhoCompleto = $diretorioDestino . $novoNome;
 
-    if (move_uploaded_file($file['tmp_name'], $caminhoCompleto)) {
-        return ["success" => true, "nome_arquivo" => $novoNome];
-    }
-
-    return ["success" => false, "message" => "Falha ao salvar o arquivo no servidor."];
+    return move_uploaded_file($file['tmp_name'], $caminhoCompleto)
+        ? ["success" => true, "nome_arquivo" => $novoNome]
+        : ["success" => false, "message" => "Falha ao salvar o arquivo."];
 }
 
 switch ($method) {
     case 'GET':
-        $id = isset($_GET['id_interclasse']) ? intval($_GET['id_interclasse']) : null;
-        $querRegulamento = isset($_GET['regulamento']) ? $_GET['regulamento'] : null;
+        $filtro = aplicarFiltrosInterclasse();
+        $querRegulamento = isset($_GET['regulamento']) && $_GET['regulamento'] === 'true';
 
-        if ($id && $querRegulamento === 'true') {
-            $sql = "SELECT regulamento_interclasse FROM interclasses WHERE id_interclasse = $id";
-        } elseif ($id) {
+        $colunas = $querRegulamento ? "id_interclasse, nome_interclasse, ano_interclasse, regulamento_interclasse" : "id_interclasse, nome_interclasse, ano_interclasse";
 
-            // $sql = "SELECT id_interclasse, nome_interclasse, ano_interclasse, regulamento_interclasse FROM interclasses WHERE id_interclasse = $id";
-            $sql = "SELECT id_interclasse, nome_interclasse, ano_interclasse FROM interclasses WHERE id_interclasse = $id";
-        } else {
-            // Caso 3: Não passou ID, traz todos da tabela
-            // $sql = "SELECT id_interclasse, nome_interclasse, ano_interclasse,  regulamento_interclasse  FROM interclasses";
+        $sql = "SELECT $colunas FROM interclasses WHERE 1=1" . $filtro['sql'];
+        $sql .= " ORDER BY ano_interclasse DESC";
 
-            $sql = "SELECT id_interclasse, nome_interclasse, ano_interclasse FROM interclasses";
+        $stmt = $conn->prepare($sql);
+        if (!empty($filtro['params'])) {
+            $stmt->bind_param($filtro['types'], ...$filtro['params']);
         }
 
-        $res = $conn->query($sql);
-        $interclasses = [];
-
-        if ($res) {
-            while ($row = $res->fetch_assoc()) {
-                $interclasses[] = $row;
-            }
-        }
-        echo json_encode($interclasses);
+        $stmt->execute();
+        echo json_encode($stmt->get_result()->fetch_all(MYSQLI_ASSOC));
         break;
 
     case 'POST':
-        // Quando enviamos arquivos, usamos $_POST e $_FILES
-        $nome = isset($_POST['nome_interclasse']) ? $_POST['nome_interclasse'] : null;
-        $ano = isset($_POST['ano_interclasse']) ? $_POST['ano_interclasse'] : null;
-        $arquivo = isset($_FILES['pdf_regulamento']) ? $_FILES['pdf_regulamento'] : null;
+        // Agora o POST volta a ler JSON para criar o registro básico
+        $data = json_decode(file_get_contents("php://input"));
 
-        if (!$nome || !$ano || !$arquivo) {
+        if (!isset($data->nome_interclasse) || !isset($data->ano_interclasse)) {
             http_response_code(400);
-            echo json_encode(["success" => false, "message" => "Nome, ano e arquivo PDF são obrigatórios."]);
+            echo json_encode(["success" => false, "message" => "Nome e Ano são obrigatórios."]);
             break;
         }
 
-        // Tenta salvar o arquivo físico
+        $sql = "INSERT INTO interclasses (nome_interclasse, ano_interclasse) VALUES (?, ?)";
+        $stmt = $conn->prepare($sql);
+        $stmt->bind_param("ss", $data->nome_interclasse, $data->ano_interclasse);
+
+        if ($stmt->execute()) {
+            http_response_code(201);
+            echo json_encode(["success" => true, "message" => "Interclasse criado! Use o PUT para adicionar o regulamento.", "id" => $conn->insert_id]);
+        } else {
+            http_response_code(500);
+            echo json_encode(["success" => false, "message" => $conn->error]);
+        }
+        break;
+
+    case 'PUT':
+        /* Nota importante: O PHP tem dificuldades em ler $_FILES com o método PUT puro.
+           Para facilitar o teste no Postman, vamos usar o POST com um parâmetro de ID na URL.
+           Ou manter como PUT mas enviar como form-data.
+        */
+        $id = isset($_GET['id']) ? intval($_GET['id']) : null;
+        $arquivo = $_FILES['pdf_regulamento'] ?? null;
+
+        if (!$id || !$arquivo) {
+            http_response_code(400);
+            echo json_encode(["success" => false, "message" => "ID do interclasse e o arquivo PDF são obrigatórios."]);
+            break;
+        }
+
         $resultadoUpload = uploadRegulamento($arquivo);
 
         if ($resultadoUpload['success']) {
-            $nomeArquivoParaBanco = $resultadoUpload['nome_arquivo'];
+            $sql = "UPDATE interclasses SET regulamento_interclasse = ? WHERE id_interclasse = ?";
+            $stmt = $conn->prepare($sql);
+            $stmt->bind_param("si", $resultadoUpload['nome_arquivo'], $id);
 
-            // Proteção contra SQL Injection
-            $nome_sql = $conn->real_escape_string($nome);
-            $ano_sql = $conn->real_escape_string($ano);
-            $pdf_sql = $conn->real_escape_string($nomeArquivoParaBanco);
-
-            $sql = "INSERT INTO interclasses (nome_interclasse, ano_interclasse, regulamento_interclasse) 
-                    VALUES ('$nome_sql', '$ano_sql', '$pdf_sql')";
-
-            if ($conn->query($sql) === TRUE) {
-                echo json_encode(["success" => true, "message" => "Interclasse cadastrado e PDF instalado com sucesso!"]);
+            if ($stmt->execute()) {
+                echo json_encode(["success" => true, "message" => "Regulamento adicionado com sucesso!"]);
             } else {
                 http_response_code(500);
-                echo json_encode(["success" => false, "message" => "Erro ao gravar no banco: " . $conn->error]);
+                echo json_encode(["success" => false, "message" => "Erro ao atualizar banco: " . $conn->error]);
             }
         } else {
             http_response_code(400);
             echo json_encode($resultadoUpload);
         }
-        break;
-
-    case 'PUT':
-
         break;
 }
