@@ -13,7 +13,7 @@
         <li><a href="home.php" class="text-white"><i class="bi bi-house"></i></a></li>
         <li><a href="ranking.php" class="text-white"><i class="bi bi-trophy"></i></a></li>
         <li><a href="turmas.php" class="text-white"><i class="bi bi-person"></i></a></li>
-        <li><a href="edicao_arrecada.php" class="text-white"><i class="bi bi-basket"></i></a></li>
+        <li><a href="edicao_arrecadacao.php" class="text-white"><i class="bi bi-basket"></i></a></li>
         <li><a href="edicao_regulamentos.php" class="text-white"><i class="bi bi-journal-bookmark"></i></a></li>
         <li class="mt-auto mb-4"><a href="../../index.php" class="text-white"><i class="bi bi-arrow-bar-right"></i></a></li>
     </ul>

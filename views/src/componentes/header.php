@@ -20,8 +20,9 @@
     }
     ?>
     <!-- header mobile -->
-    <section class="d-md-none">
-        <img src="../../public/images/banner-global.png" alt="Imagens de alunos do SESI" class="w-100">
+    <section class="d-md-none" style="height: 120px;">
+        <a href="perfil.php"><span class="position-absolute m-4 translate-middle text-white fs-2" style="z-index: 10; top: 3%; right: -20px;" id="btnVoltar"><i class="bi bi-person-gear"></i></span></a>
+        <img src="../../public/images/banner-global.png" alt="Imagens de alunos do SESI" class="w-100 object-fit-cover" style="height: 100%;">
         <h1 class="position-absolute top-50 start-50 translate-middle text-white w-100 text-center"><?php echo $textTop ?></h1>
     </section>
 
