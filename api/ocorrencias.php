@@ -38,8 +38,8 @@ switch ($method) {
     case 'POST':
         $data = json_decode(file_get_contents("php://input"));
 
-        // Validação de campos obrigatórios
-        if (!isset($data->titulo_ocorrecia, $data->descricao_ocorrecia, $data->data_ocorrecia, $data->hora_ocorrecia, $data->usuarios_id_usuario)) {
+        // Removido a hora_ocorrecia da validação pois ela não existe no seu banco
+        if (!isset($data->titulo_ocorrecia, $data->descricao_ocorrecia, $data->data_ocorrecia, $data->usuarios_id_usuario)) {
             http_response_code(400);
             echo json_encode(["success" => false, "message" => "Dados incompletos."]);
             break;
@@ -47,15 +47,17 @@ switch ($method) {
 
         $penalidade = isset($data->penalidade) ? intval($data->penalidade) : 0;
 
-        $sql = "INSERT INTO ocorrencias (titulo_ocorrecia, descricao_ocorrecia, data_ocorrecia, hora_ocorrecia, usuarios_id_usuario, penalidade) 
-                VALUES (?, ?, ?, ?, ?, ?)";
+        // SQL ajustado para bater com a imagem (removido hora_ocorrecia)
+        $sql = "INSERT INTO ocorrencias (titulo_ocorrecia, descricao_ocorrecia, data_ocorrecia, usuarios_id_usuario, penalidade) 
+                VALUES (?, ?, ?, ?, ?)";
 
         $stmt = $conn->prepare($sql);
-        $stmt->bind_param("ssssii",
+
+        // "sssii" -> titulo(s), descricao(s), data(s), usuario(i), penalidade(i)
+        $stmt->bind_param("sssii",
             $data->titulo_ocorrecia,
             $data->descricao_ocorrecia,
-            $data->data_ocorrecia,
-            $data->hora_ocorrecia,
+            $data->data_ocorrecia, // Formato esperado: "YYYY-MM-DD HH:MM:SS"
             $data->usuarios_id_usuario,
             $penalidade
         );

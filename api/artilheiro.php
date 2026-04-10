@@ -63,6 +63,27 @@ switch ($method) {
         }
         break;
 
+    case 'PUT':
+        $data = json_decode(file_get_contents("php://input"));
+
+        if (!isset($data->usuarios_id_usuario, $data->jogos_id_jogo, $data->num_gol)) {
+            http_response_code(400);
+            echo json_encode(["success" => false, "message" => "Dados incompletos."]);
+            break;
+        }
+
+        $sql = "UPDATE artilheiros SET num_gol = ? WHERE usuarios_id_usuario = ? AND jogos_id_jogo = ?";
+        $stmt = $conn->prepare($sql);
+        $stmt->bind_param("iii", $data->num_gol, $data->usuarios_id_usuario, $data->jogos_id_jogo);
+
+        if ($stmt->execute()) {
+            echo json_encode(["success" => true, "message" => "Artilharia atualizada!"]);
+        } else {
+            http_response_code(500);
+            echo json_encode(["success" => false, "message" => $conn->error]);
+        }
+        break;
+
     default:
         http_response_code(405);
         echo json_encode(["message" => "Método não suportado."]);
