@@ -26,7 +26,7 @@ require_once '../componentes/header.php';
 
     <section class="d-flex gap-4 mt-3 position-absolute position-fixed translate-middle" style="width: max-content;  top: 85%; left: 50%; z-index: 10; cursor: pointer;">
         <a href="./edicao_regulamentos.php" class="btn btn-dark">Voltar</a>
-        <button class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#exampleModal">Adicionar categoria</button>
+        <button class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#adicionarCategoria">Adicionar categoria</button>
    </section>
 </main>
 
@@ -37,7 +37,7 @@ require_once '../componentes/header.php';
 
 
 <!-- modal (adicionar categoria) -->
-<div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+<div class="modal fade" id="adicionarCategoria" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header border border-0">

@@ -2,6 +2,7 @@
 $titulo = "Modalidades";
 $textTop = "Modalidades";
 $btnVoltar = true;
+require_once '../componentes/navbar.php';
 require_once '../componentes/header.php';
 ?>
 

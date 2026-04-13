@@ -2,6 +2,7 @@
 $titulo = "Turmas";
 $textTop = "Turmas";
 $btnVoltar = true;
+require_once '../componentes/navbar.php';
 require_once '../componentes/header.php';
 ?>
 

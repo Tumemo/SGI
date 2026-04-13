@@ -2,8 +2,8 @@
 $titulo = "Home";
 $textTop = "";
 $btnVoltar = false;
-require_once '../componentes/header.php';
 require_once '../componentes/navbar.php';
+require_once '../componentes/header.php';
 ?>
 
 <!-- main mobile -->
@@ -44,7 +44,7 @@ require_once '../componentes/navbar.php';
         <!-- table -->
         <div>
             <!-- thead -->
-            <div class="row mt-4 bg-danger rounded-3 shadow text-white py-3 fs-4">
+            <div class="row mt-4 bg-danger rounded-3 shadow text-white py-3 fs-4 1875rem">
                 <div class="col-4">Edição interclasse</div>
                 <div class="col-4 text-center">Ano</div>
                 <div class="col-4 text-center">Status</div>

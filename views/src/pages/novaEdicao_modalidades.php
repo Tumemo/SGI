@@ -10,10 +10,10 @@ require_once '../componentes/header.php';
 <main class=" position-relative" style="margin-bottom: 120px;">
     <section class="m-auto d-flex flex-column gap-3 mt-5" style="width: 90%;">
         <section class="shadow rounded">
-            <div class="input-group my-3 m-auto" style="width: 90%;">
+            <form class="input-group my-3 m-auto" style="width: 90%;">
                 <input type="text" placeholder="Nome da nova modalidades" class="form-control" style="font-size: 0.7rem;">
-                <button class="btn btn-danger">Adicionar</button>
-            </div>
+                <button type="submit" class="btn btn-danger">Adicionar</button>
+            </form>
          <section class="my-3 m-auto" style="width: 90%;">
                 <h2 class="bg-secondary-subtle mb-2 fs-6 p-2 w-100 rounded m-auto">Futsal</h2>
                 <h2 class="bg-secondary-subtle mb-2 fs-6 p-2 w-100 rounded m-auto">Basquete</h2>
