@@ -59,7 +59,25 @@ switch ($method) {
         break;
 
     case 'PUT':
-        break;
+        $data = json_decode(file_get_contents("php://input"));
+
+        if (!isset($data->id_local, $data->nome_local)) {
+            http_response_code(400);
+            echo json_encode(["success" => false, "message" => "ID e nome são obrigatórios."]);
+            break;
+        }
+
+        $sql = "UPDATE locais SET nome_local = ? WHERE id_local = ?";
+        $stmt = $conn->prepare($sql);
+        $stmt->bind_param("si", $data->nome_local, $data->id_local);
+
+        if ($stmt->execute()) {
+            echo json_encode(["success" => true, "message" => "Local atualizado com sucesso!"]);
+        } else {
+            http_response_code(500);
+            echo json_encode(["success" => false, "message" => $conn->error]);
+        }
+        break;;
 
     default:
         http_response_code(405);

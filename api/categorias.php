@@ -57,17 +57,43 @@ switch ($method) {
         break;
 
     case 'PUT':
-
         $data = json_decode(file_get_contents("php://input"));
-        if (isset($data->id_categoria, $data->nome_categoria)) {
-            $sql = "UPDATE categorias SET nome_categoria = ? WHERE id_categoria = ?";
-            $stmt = $conn->prepare($sql);
-            $stmt->bind_param("si", $data->nome_categoria, $data->id_categoria);
-            $stmt->execute();
-            echo json_encode(["success" => true]);
+
+        if (!isset($data->id_categoria)) {
+            http_response_code(400);
+            echo json_encode(["success" => false, "message" => "O ID da categoria é obrigatório."]);
+            break;
+        }
+
+        $campos = [];
+        $params = [];
+        $types = "";
+
+        if (isset($data->nome_categoria)) {
+            $campos[] = "nome_categoria = ?";
+            $params[] = $data->nome_categoria;
+            $types .= "s";
+        }
+
+        if (empty($campos)) {
+            echo json_encode(["success" => false, "message" => "Nenhum campo enviado para atualização."]);
+            break;
+        }
+
+        $sql = "UPDATE categorias SET " . implode(", ", $campos) . " WHERE id_categoria = ?";
+        $params[] = $data->id_categoria;
+        $types .= "i";
+
+        $stmt = $conn->prepare($sql);
+        $stmt->bind_param($types, ...$params);
+
+        if ($stmt->execute()) {
+            echo json_encode(["success" => true, "message" => "Categoria atualizada com sucesso!"]);
+        } else {
+            http_response_code(500);
+            echo json_encode(["success" => false, "message" => $conn->error]);
         }
         break;
-
     default:
         http_response_code(405);
         echo json_encode(["message" => "Método não permitido"]);

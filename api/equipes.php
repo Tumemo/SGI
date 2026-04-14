@@ -40,7 +40,6 @@ switch ($method) {
     case 'POST':
         $data = json_decode(file_get_contents("php://input"));
 
-        // CORREÇÃO: Adicionado o "1" no final da variável usuario
         if (!isset($data->modalidades_id_modalidade, $data->usuarios_id_usuario1, $data->turmas_id_turma)) {
             http_response_code(400);
             echo json_encode([
@@ -53,7 +52,6 @@ switch ($method) {
         $sql = "INSERT INTO equipes (modalidades_id_modalidade, usuarios_id_usuario1, turmas_id_turma) VALUES (?, ?, ?)";
         $stmt = $conn->prepare($sql);
 
-        // Aqui já estava correto, agora a validação acima bate com esta linha
         $stmt->bind_param("iii", $data->modalidades_id_modalidade, $data->usuarios_id_usuario1, $data->turmas_id_turma);
 
         if ($stmt->execute()) {
@@ -69,9 +67,53 @@ switch ($method) {
             ]);
         }
         break;
+case 'PUT':
+        $data = json_decode(file_get_contents("php://input"));
 
-    case 'PUT':
+        if (!isset($data->id_equipe)) {
+            http_response_code(400);
+            echo json_encode(["success" => false, "message" => "O ID da equipe é obrigatório."]);
+            break;
+        }
 
+        $campos = [];
+        $params = [];
+        $types = "";
+
+        if (isset($data->modalidades_id_modalidade)) {
+            $campos[] = "modalidades_id_modalidade = ?";
+            $params[] = $data->modalidades_id_modalidade;
+            $types .= "i";
+        }
+        if (isset($data->usuarios_id_usuario1)) {
+            $campos[] = "usuarios_id_usuario1 = ?";
+            $params[] = $data->usuarios_id_usuario1;
+            $types .= "i";
+        }
+        if (isset($data->turmas_id_turma)) {
+            $campos[] = "turmas_id_turma = ?";
+            $params[] = $data->turmas_id_turma;
+            $types .= "i";
+        }
+
+        if (empty($campos)) {
+            echo json_encode(["success" => false, "message" => "Nenhum campo enviado para atualização."]);
+            break;
+        }
+
+        $sql = "UPDATE equipes SET " . implode(", ", $campos) . " WHERE id_equipe = ?";
+        $params[] = $data->id_equipe;
+        $types .= "i";
+
+        $stmt = $conn->prepare($sql);
+        $stmt->bind_param($types, ...$params);
+
+        if ($stmt->execute()) {
+            echo json_encode(["success" => true, "message" => "Equipe atualizada com sucesso!"]);
+        } else {
+            http_response_code(500);
+            echo json_encode(["success" => false, "message" => $conn->error]);
+        }
         break;
 
     default:

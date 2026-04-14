@@ -8,7 +8,6 @@ switch ($method) {
     case 'GET':
         $filtro = aplicarFiltrosOcorrencias();
 
-        // SQL Base com INNER JOIN para saber quem é o usuário
         $sql = "SELECT 
                     ocorrencias.id_ocorrecia, 
                     ocorrencias.titulo_ocorrecia, 
@@ -38,7 +37,6 @@ switch ($method) {
     case 'POST':
         $data = json_decode(file_get_contents("php://input"));
 
-        // Removido a hora_ocorrecia da validação pois ela não existe no seu banco
         if (!isset($data->titulo_ocorrecia, $data->descricao_ocorrecia, $data->data_ocorrecia, $data->usuarios_id_usuario)) {
             http_response_code(400);
             echo json_encode(["success" => false, "message" => "Dados incompletos."]);
@@ -47,17 +45,16 @@ switch ($method) {
 
         $penalidade = isset($data->penalidade) ? intval($data->penalidade) : 0;
 
-        // SQL ajustado para bater com a imagem (removido hora_ocorrecia)
         $sql = "INSERT INTO ocorrencias (titulo_ocorrecia, descricao_ocorrecia, data_ocorrecia, usuarios_id_usuario, penalidade) 
                 VALUES (?, ?, ?, ?, ?)";
 
         $stmt = $conn->prepare($sql);
 
-        // "sssii" -> titulo(s), descricao(s), data(s), usuario(i), penalidade(i)
-        $stmt->bind_param("sssii",
+        $stmt->bind_param(
+            "sssii",
             $data->titulo_ocorrecia,
             $data->descricao_ocorrecia,
-            $data->data_ocorrecia, // Formato esperado: "YYYY-MM-DD HH:MM:SS"
+            $data->data_ocorrecia,
             $data->usuarios_id_usuario,
             $penalidade
         );
@@ -71,14 +68,24 @@ switch ($method) {
         }
         break;
 
-    case 'DELETE':
-        // Adicionando um DELETE básico para poder remover erros de digitação
-        $id = isset($_GET['id']) ? intval($_GET['id']) : null;
-        if ($id) {
-            $stmt = $conn->prepare("DELETE FROM ocorrencias WHERE id_ocorrecia = ?");
-            $stmt->bind_param("i", $id);
-            $stmt->execute();
-            echo json_encode(["success" => true]);
+    case 'PUT':
+        $data = json_decode(file_get_contents("php://input"));
+
+        if (!isset($data->id_ocorrecia, $data->titulo_ocorrecia, $data->descricao_ocorrecia, $data->penalidade)) {
+            http_response_code(400);
+            echo json_encode(["success" => false, "message" => "Dados incompletos."]);
+            break;
+        }
+
+        $sql = "UPDATE ocorrencias SET titulo_ocorrecia = ?, descricao_ocorrecia = ?, penalidade = ? WHERE id_ocorrecia = ?";
+        $stmt = $conn->prepare($sql);
+        $stmt->bind_param("ssii", $data->titulo_ocorrecia, $data->descricao_ocorrecia, $data->penalidade, $data->id_ocorrecia);
+
+        if ($stmt->execute()) {
+            echo json_encode(["success" => true, "message" => "Ocorrência atualizada!"]);
+        } else {
+            http_response_code(500);
+            echo json_encode(["success" => false, "message" => $conn->error]);
         }
         break;
 }

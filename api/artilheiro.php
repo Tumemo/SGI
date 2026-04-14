@@ -30,7 +30,6 @@ switch ($method) {
 
         $stmt = $conn->prepare($sql);
 
-        // Aplica os parâmetros se existirem
         if (!empty($filtro['params'])) {
             $stmt->bind_param($filtro['types'], ...$filtro['params']);
         }

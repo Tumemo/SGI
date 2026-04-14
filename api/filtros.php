@@ -1,6 +1,8 @@
 <?php
 // eu criei falando que ia facilitar, n sei c me arrependo desta decisão
 
+// 14/04/2026 TUDO APROVADO, está criação é incrivel
+
 function aplicarFiltrosArtilharia() {
     $sqlExtras = "";
     $types = "";

@@ -81,6 +81,65 @@ switch ($method) {
         }
         break;
 
+    case 'PUT':
+        $data = json_decode(file_get_contents("php://input"));
+
+        if (!isset($data->id_turma)) {
+            http_response_code(400);
+            echo json_encode(["success" => false, "message" => "O ID da turma é obrigatório."]);
+            break;
+        }
+
+        $campos = [];
+        $params = [];
+        $types = "";
+
+        if (isset($data->interclasses_id_interclasse)) {
+            $campos[] = "interclasses_id_interclasse = ?";
+            $params[] = $data->interclasses_id_interclasse;
+            $types .= "i";
+        }
+        if (isset($data->nome_turma)) {
+            $campos[] = "nome_turma = ?";
+            $params[] = $data->nome_turma;
+            $types .= "s";
+        }
+        if (isset($data->turno_turma)) {
+            $campos[] = "turno_turma = ?";
+            $params[] = $data->turno_turma;
+            $types .= "s";
+        }
+        if (isset($data->nome_fantasia_turma)) {
+            $campos[] = "nome_fantasia_turma = ?";
+            $params[] = $data->nome_fantasia_turma;
+            $types .= "s";
+        }
+        if (isset($data->categorias_id_categoria)) {
+            $campos[] = "categorias_id_categoria = ?";
+            $params[] = $data->categorias_id_categoria;
+            $types .= "i";
+        }
+
+        if (empty($campos)) {
+            echo json_encode(["success" => false, "message" => "Nenhum campo enviado para atualização."]);
+            break;
+        }
+
+        $sql = "UPDATE turmas SET " . implode(", ", $campos) . " WHERE id_turma = ?";
+        $params[] = $data->id_turma;
+        $types .= "i";
+
+        $stmt = $conn->prepare($sql);
+        $stmt->bind_param($types, ...$params);
+
+        if ($stmt->execute()) {
+            echo json_encode(["success" => true, "message" => "Turma atualizada com sucesso!"]);
+        } else {
+            http_response_code(500);
+            echo json_encode(["success" => false, "message" => $conn->error]);
+        }
+        break;
+
     default:
         http_response_code(405);
         echo json_encode(["message" => "Método não permitido"]);
