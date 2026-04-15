@@ -30,7 +30,7 @@ require_once '../componentes/header.php';
 
 
 <!-- main desktop -->
-<main style="margin-left: 80px; background-color: #f2f2f2;">
+<main style="margin-left: 80px; background-color: #f2f2f2;" class="d-none d-md-block">
     <div class="container-fluid bg-white p-5">
         <div class="row">
             
@@ -88,5 +88,5 @@ require_once '../componentes/header.php';
 
 <?php
 
-require_once '../componentes/navbar.php';
+require_once '../componentes/footer.php';
 ?>

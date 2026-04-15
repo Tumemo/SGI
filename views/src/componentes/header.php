@@ -33,4 +33,3 @@
         <img src="../../public/images/banner-global-desktop-frente.png" alt="sombra da imagem de alunos do SESI" class="position-absolute top-0 start-0 w-100 h-100 object-fit-cover">
     </section>
 </header>
-<body>

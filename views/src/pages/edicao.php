@@ -54,9 +54,18 @@ require_once '../componentes/header.php';
                 </picture>
             </div>
         </a>
+        <a href="./colaboradores.php" class="text-decoration-none text-black">
+            <div class="d-flex m-auto justify-content-between align-items-center shadow py-3 px-4 mb-3 border border-1" style="width: 90%;">
+                <i class="bi bi-people fs-2"></i>
+                <h2 class="m-0 fs-3">Colaboradores</h2>
+                <picture>
+                    <img src="../../public/icons/arrow-right.svg" alt="Seta para direita">
+                </picture>
+            </div>
+        </a>
     </section>
 </main>
 <?php 
 
-require_once '../componentes/navbar.php';
+require_once '../componentes/footer.php';
 ?>

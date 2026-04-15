@@ -2,7 +2,7 @@
 <nav class="d-md-none order-last fixed-bottom py-2 order-lg-first bg-danger">
     <ul class="nav justify-content-around fs-1">
         <li><a href="../pages/home.php" class="text-white"><i class="bi bi-house"></i></a></li>
-        <li><a href="../pages/turmas.php" class="text-white"><i class="bi bi-person"></i></a></li>
+        <li><a href="../pages/turmas.php" class="text-white"><i class="bi bi-people"></i></a></li>
         <li><a href="../pages/ranking.php" class="text-white"><i class="bi bi-trophy"></i></a></li>
         <li><a href="../../index.php" class="text-white"><i class="bi bi-arrow-bar-right"></i></a></li>
     </ul>

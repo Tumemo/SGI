@@ -132,5 +132,5 @@ require_once '../componentes/header.php';
 </main>
 
 <?php
-require_once '../componentes/navbar.php';
+require_once '../componentes/footer.php';
 ?>

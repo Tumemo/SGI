@@ -8,7 +8,7 @@ require_once '../componentes/header.php';
 
 <!-- main mobile -->
 <main class=" d-md-none">
-    <button class="mx-4 btn btn-danger d-flex gap-2 mt-3" data-bs-toggle="modal" data-bs-target="#exampleModal">
+    <button class="mx-4 btn btn-danger d-flex gap-2 mt-3 align-items-center" data-bs-toggle="modal" data-bs-target="#exampleModal">
         <i class="bi bi-plus-circle"></i>Criar Nova Edição
     </button>
     <div id="caixaListar" class="pb-5 mb-2"></div>
@@ -123,17 +123,18 @@ require_once '../componentes/header.php';
             </div>
             <div class="modal-body">
                 <h2 class="fs-6">Insira o nome da sua nova edição:</h2>
-                <form>
+                <form id="formulario">
                     <div>
                         <input type="text" class="form-control" placeholder="Ex: interclasse 2026" id="nomeNovaEdicao">
                     </div>
                     <div class="mt-4">
                         <label for="ano" class="form-label fs-6">Ano</label>
-                        <input type="text" for="ano" class="form-control" placeholder="Ex: 2026" id="anoNovaEdicao">
+                        <input type="text" for="ano" class="form-control" placeholder="Ex: 2026" id="anoNovaEdicao" value="2026">
                     </div>
                     <div class="d-flex justify-content-center gap-2 mt-5 pt-5">
                         <a href="./home.php" class="btn btn-outline-danger">Cancelar</a>
-                        <a href="./novaEdicao_modalidades.php" class="btn btn-danger" id="criarNovaEdicao">Criar</a>
+                        <!-- <a href="./novaEdicao_modalidades.php" class="btn btn-danger" id="criarNovaEdicao">Criar</a> -->
+                        <button type="submit" class="btn btn-danger" id="criarNovaEdicao">Criar</button>
                     </div>
                 </form>
             </div>
@@ -144,15 +145,25 @@ require_once '../componentes/header.php';
 </div>
 
 <script>
-    // const btnCriar = document.getElementById("criarNovaEdicao")
+    let data = new Date()
+    let dia = data.getDate()
+    let mes = data.getMonth() + 1
+    let ano = data.getFullYear()
+    let dataFormatada = `${ano}-${mes}-${dia}`
+    const nomeNovaEdicao = document.getElementById("nomeNovaEdicao")
+    const formulario = document.getElementById("formulario")
+    formulario.addEventListener("submit",async (evento)=>{
+        evento.preventDefault()
+        if(nomeNovaEdicao.value !== "" && anoNovaEdicao.value !== "")
+        await axios.post("../../../api/interclasse.php",{
+            nome_interclasse: nomeNovaEdicao.value.trim(),
+            ano_interclasse: dataFormatada,
+            pdf_regulamento: "caminho.pdf"
+        })
+        .then(res => console.log(res))
+        .catch(error => console.log(error))
+    })
 
-    // btnCriar.addEventListener('click', SalvarDados)
-    // function SalvarDados(){
-    //     localStorage.setItem("nomeNovaEdicao", document.getElementById("nomeNovaEdicao").value)
-    //     localStorage.setItem("anoNovaEdicao", document.getElementById("anoNovaEdicao").value)
-    //     console.log(localStorage.getItem("nomeNovaEdicao"))
-    //     console.log(localStorage.getItem("anoNovaEdicao"))
-    // }
 </script>
 
 <?php

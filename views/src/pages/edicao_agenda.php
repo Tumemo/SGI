@@ -262,5 +262,5 @@ require_once '../componentes/header.php';
 </script>
 
 <?php
-require_once '../componentes/navbar.php';
+require_once '../componentes/footer.php';
 ?>
