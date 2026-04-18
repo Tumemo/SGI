@@ -31,7 +31,7 @@ require_once '../componentes/header.php';
 
 <!-- main desktop -->
 <main style="margin-left: 80px; background-color: #f2f2f2;" class="d-none d-md-block">
-    <div class="container-fluid bg-white p-5">
+    <div class="container-fluid bg-white p-5 pb-0">
         <div class="row">
             
             <div class="col-lg-3 ps-4">

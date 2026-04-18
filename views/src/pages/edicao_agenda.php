@@ -6,7 +6,7 @@ require_once '../componentes/navbar.php';
 require_once '../componentes/header.php';
 ?>
 
-<main class="bg-light min-vh-100 d-md-none p-3" style="padding-top: 5rem;">
+<main class="bg-light  d-md-none p-3" style="padding-top: 5rem;">
     <div class="card border-0 shadow-sm rounded-4 mx-auto mb-4" style="max-width: 450px;">
         <div class="card-body p-4">
             

@@ -38,7 +38,7 @@ require_once '../componentes/header.php';
                     <button class="accordion-button collapsed bg-white p-3 shadow-none" type="button" data-bs-toggle="collapse" data-bs-target="#collapseUm" aria-expanded="false" aria-controls="collapseUm">
                         <div>
                             <h6 class="mb-0 fw-bold text-dark">Gilmara Beraldo</h6>
-                            <small class="text-muted" style="font-size: 0.8rem;">Administradora, mesária</small>
+                            <small class="text-muted" style="font-size: 0.9rem;">Administradora, mesária</small>
                         </div>
                     </button>
                 </h2>

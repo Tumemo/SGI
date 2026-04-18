@@ -6,7 +6,9 @@ require_once '../componentes/navbar.php';
 require_once '../componentes/header.php';
 ?>
 
-<main class="position-relative" style="margin-bottom: 120px;">
+
+<!-- main mobile -->
+<main class="position-relative d-md-none" style="margin-bottom: 120px;">
     <p class="text-secondary text-center my-3" style="font-size: 14px;">Selecione uma categoria para adicionar turmas</p>
     <button data-bs-toggle="modal" data-bs-target="#criarTurma" class="bg-white d-flex m-auto justify-content-between align-items-center shadow py-3 px-4 mb-3 border border-1" style="width: 90%;">
         <i class="bi bi-trophy fs-1"></i>
@@ -23,6 +25,7 @@ require_once '../componentes/header.php';
             <img src="../../public/icons/arrow-right.svg" alt="Seta para direita">
         </picture>
     </button>
+
     <section class="d-flex gap-4 mt-3 position-absolute position-fixed translate-middle" style="width: max-content;  top: 85%; left: 50%; z-index: 10; cursor: pointer;">
         <button data-bs-toggle="modal" data-bs-target="#exampleModal" class="btn btn-outline-danger">Adicionar Categoria</button>
         <a href="./home.php" class="btn btn-danger">Continuar</a>
@@ -32,8 +35,83 @@ require_once '../componentes/header.php';
 
 
 
-<!-- modal criar nova turma -->
 
+
+<!-- main desktop -->
+<main class="bg-light flex-grow-1 p-4 p-md-5 d-none d-md-block container" style="padding-top: 2rem;">
+
+    <div class="container-fluid px-0">
+
+        <div class="mb-5">
+            <button class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0" style="background-color: #ed1c24; border-radius: 6px;">
+                <i class="bi bi-arrow-left-circle fs-5"></i> Interclasse 2026
+            </button>
+
+            <h4 class="fw-bold d-flex align-items-center gap-2 text-dark mb-0">
+                <i class="bi bi-bookmark fs-5"></i> Categorias
+            </h4>
+        </div>
+
+        <div class="row g-4">
+
+            <div class="col-12 col-md-6 col-lg-5 col-xl-4">
+                <div class="card border-0 shadow-sm h-100 p-4" style="border-radius: 12px;">
+                    <div class="card-body p-0 d-flex flex-column">
+
+                        <h4 class="fw-bold text-dark mb-4 pb-2">Categoria I</h4>
+
+                        <div class="d-flex gap-3 mb-4">
+                            <div class="rounded-3 p-2 px-3 flex-fill border border-light-subtle shadow-sm" style="background-color: #f8f9fc;">
+                                <div class="text-dark fw-medium mb-1" style="font-size: 0.65rem;">EQUIPES</div>
+                                <div class="fs-5 text-dark">5</div>
+                            </div>
+
+                            <div class="rounded-3 p-2 px-3 flex-fill border border-light-subtle shadow-sm" style="background-color: #f8f9fc;">
+                                <div class="text-dark fw-medium mb-1" style="font-size: 0.65rem;">PARTIDAS</div>
+                                <div class="fs-5 text-dark">18</div>
+                            </div>
+                        </div>
+
+                        <button class="btn btn-danger w-100 fw-semibold text-uppercase mt-auto border-0" style="background-color: #ed1c24; border-radius: 6px; font-size: 0.8rem; padding: 0.75rem;">
+                            Ver detalhes <i class="bi bi-arrow-right"></i>
+                        </button>
+
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-12 col-md-6 col-lg-5 col-xl-4">
+                <div class="card border-0 shadow-sm h-100 p-4" style="border-radius: 12px;">
+                    <div class="card-body p-0 d-flex flex-column">
+
+                        <h4 class="fw-bold text-dark mb-4 pb-2">Categoria II</h4>
+
+                        <div class="d-flex gap-3 mb-4">
+                            <div class="rounded-3 p-2 px-3 flex-fill border border-light-subtle shadow-sm" style="background-color: #f8f9fc;">
+                                <div class="text-dark fw-medium mb-1" style="font-size: 0.65rem;">EQUIPES</div>
+                                <div class="fs-5 text-dark">7</div>
+                            </div>
+
+                            <div class="rounded-3 p-2 px-3 flex-fill border border-light-subtle shadow-sm" style="background-color: #f8f9fc;">
+                                <div class="text-dark fw-medium mb-1" style="font-size: 0.65rem;">PARTIDAS</div>
+                                <div class="fs-5 text-dark">10</div>
+                            </div>
+                        </div>
+
+                        <button class="btn btn-danger w-100 fw-semibold text-uppercase mt-auto border-0" style="background-color: #ed1c24; border-radius: 6px; font-size: 0.8rem; padding: 0.75rem;">
+                            Ver detalhes <i class="bi bi-arrow-right"></i>
+                        </button>
+
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</main>
+
+
+<!-- modal criar nova turma -->
 <div class="modal fade" id="criarTurma" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">

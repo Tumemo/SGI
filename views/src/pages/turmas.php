@@ -44,8 +44,12 @@ require_once '../componentes/header.php';
 </main>
 
 
+
+
+
+
 <!-- main desktop-->
-<main style="margin-left: 80px; padding: 40px;">
+<main class="d-none d-md-flex flex-column" style="margin-left: 80px; padding: 40px;">
 
     <button type="button" class="btn btn-danger d-flex align-items-center mb-4 border-0 shadow-sm" style="border-radius: 4px; padding: 8px 15px;">
         <i class="bi bi-arrow-left-circle-fill me-2"></i>

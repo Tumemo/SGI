@@ -16,7 +16,7 @@ require_once '../componentes/header.php';
 
     <!-- Dado estatico caso nescessario -->
 
-    <!-- <div class="m-auto shadow d-flex justify-content-between align-content-center px-3 py-3 rounded-3 my-3" style="width: 80%;">
+    <div class="m-auto shadow d-flex justify-content-between align-content-center px-3 py-3 rounded-3 my-3" style="width: 80%;">
         <a href="./edicao.php" class="text-decoration-none text-dark">
             <div>
                 <h2 class="m-0">Interclasse ???</h2>
@@ -24,7 +24,7 @@ require_once '../componentes/header.php';
             </div>
         </a>
         <img src="../../public/icons/arrow-right.svg" alt="icone de seta">
-    </div> -->
+    </div>
 </main>
 
 
@@ -133,8 +133,8 @@ require_once '../componentes/header.php';
                     </div>
                     <div class="d-flex justify-content-center gap-2 mt-5 pt-5">
                         <a href="./home.php" class="btn btn-outline-danger">Cancelar</a>
-                        <!-- <a href="./novaEdicao_modalidades.php" class="btn btn-danger" id="criarNovaEdicao">Criar</a> -->
-                        <button type="submit" class="btn btn-danger" id="criarNovaEdicao">Criar</button>
+                        <a href="./novaEdicao_modalidades.php" class="btn btn-danger" id="criarNovaEdicao">Criar</a>
+                        <!-- <button type="submit" class="btn btn-danger" id="criarNovaEdicao">Criar</button> -->
                     </div>
                 </form>
             </div>
