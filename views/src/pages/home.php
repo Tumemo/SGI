@@ -67,7 +67,7 @@ require_once '../componentes/header.php';
                     <div class="col-4 text-center">2026</div>
                     <div class="col-4 text-center"><span class="bg-danger rounded-3 text-white px-5 py-1">Ativo</span></div>
                 </div>
-                
+
             </div>
         </div>
 
@@ -76,9 +76,43 @@ require_once '../componentes/header.php';
 
 
 
+<!-- modal criar nova edição  -->
+<div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header border border-0">
+                <h1 class="modal-title fs-5 text-danger" id="exampleModalLabel">Criar nova Edição</h1>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <h2 class="fs-6">Insira o nome da sua nova edição:</h2>
+                <form id="formulario" onsubmit="criarInterclasse(event)">
+                    <div>
+                        <input type="text" class="form-control" placeholder="Ex: interclasse 2026" id="nomeNovaEdicao">
+                    </div>
+                    <div class="mt-4">
+                        <label for="ano" class="form-label fs-6">Ano</label>
+                        <input type="text" for="ano" class="form-control" placeholder="Ex: 2026" id="anoNovaEdicao" value="2026">
+                    </div>
+                    <div class="d-flex justify-content-center gap-2 mt-5 pt-5">
+                        <a href="./home.php" class="btn btn-outline-danger">Cancelar</a>
+                        <a href="./novaEdicao_modalidades.php" class="btn btn-danger" id="criarNovaEdicao">Criar</a>
+                        <!-- <button type="submit" class="btn btn-danger" id="criarNovaEdicao">Criar</button> -->
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer border border-0">
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
 <!-- script da pagina -->
 
 <script>
+    // listar os interclasses
     async function listarInterclasses() {
         const listar = document.getElementById('caixaListar')
         try {
@@ -109,42 +143,9 @@ require_once '../componentes/header.php';
         }
     }
     listarInterclasses()
-</script>
 
 
-
-<!-- modal criar nova edição  -->
-<div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header border border-0">
-                <h1 class="modal-title fs-5 text-danger" id="exampleModalLabel">Criar nova Edição</h1>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <h2 class="fs-6">Insira o nome da sua nova edição:</h2>
-                <form id="formulario">
-                    <div>
-                        <input type="text" class="form-control" placeholder="Ex: interclasse 2026" id="nomeNovaEdicao">
-                    </div>
-                    <div class="mt-4">
-                        <label for="ano" class="form-label fs-6">Ano</label>
-                        <input type="text" for="ano" class="form-control" placeholder="Ex: 2026" id="anoNovaEdicao" value="2026">
-                    </div>
-                    <div class="d-flex justify-content-center gap-2 mt-5 pt-5">
-                        <a href="./home.php" class="btn btn-outline-danger">Cancelar</a>
-                        <a href="./novaEdicao_modalidades.php" class="btn btn-danger" id="criarNovaEdicao">Criar</a>
-                        <!-- <button type="submit" class="btn btn-danger" id="criarNovaEdicao">Criar</button> -->
-                    </div>
-                </form>
-            </div>
-            <div class="modal-footer border border-0">
-            </div>
-        </div>
-    </div>
-</div>
-
-<script>
+    // mostrar a data 
     let data = new Date()
     let dia = data.getDate()
     let mes = data.getMonth() + 1
@@ -152,18 +153,56 @@ require_once '../componentes/header.php';
     let dataFormatada = `${ano}-${mes}-${dia}`
     const nomeNovaEdicao = document.getElementById("nomeNovaEdicao")
     const formulario = document.getElementById("formulario")
-    formulario.addEventListener("submit",async (evento)=>{
+    formulario.addEventListener("submit", async (evento) => {
         evento.preventDefault()
-        if(nomeNovaEdicao.value !== "" && anoNovaEdicao.value !== "")
-        await axios.post("../../../api/interclasse.php",{
-            nome_interclasse: nomeNovaEdicao.value.trim(),
-            ano_interclasse: dataFormatada,
-            pdf_regulamento: "caminho.pdf"
-        })
-        .then(res => console.log(res))
-        .catch(error => console.log(error))
+        if (nomeNovaEdicao.value !== "" && anoNovaEdicao.value !== "")
+            await axios.post("../../../api/interclasse.php", {
+                nome_interclasse: nomeNovaEdicao.value.trim(),
+                ano_interclasse: dataFormatada,
+                pdf_regulamento: "caminho.pdf"
+            })
+            .then(res => console.log(res))
+            .catch(error => console.log(error))
     })
 
+
+    // criar o interclasse
+    async function criarInterclasse(event) {
+
+        if (event) event.preventDefault();
+
+        const caixaMensagem = document.getElementById('caixaMensagem');
+
+        const nomeInput = document.getElementById('nomeNovaEdicao').value;
+        const anoInput = document.getElementById('anoNovaEdicao').value;
+
+        const novoInterclasse = {
+            nome_interclasse: nomeInput,
+            ano_interclasse: anoInput
+        };
+
+        try {
+            // 3. Fazer a requisição POST enviando o objeto
+            // O Axios já converte para JSON automaticamente
+            const res = await axios.post("../../../api/interclasse.php", novoInterclasse);
+
+            // 4. Feedback visual de SUCESSO usando o seu padrão de classes
+            caixaMensagem.innerHTML = `<p class="mt-3 text-center text-success fs-3">Interclasse criado com sucesso!</p>`;
+
+            // Opcional: Atualizar a lista na mesma hora chamando sua função de listagem
+            listarInterclasses();
+
+            // Opcional: Limpar os inputs após criar
+            document.getElementById('nomeNovaEdicao').value = '';
+            document.getElementById('anoNovaEdicao').value = '';
+
+        } catch (error) {
+            console.log(error);
+
+            // Feedback visual de ERRO usando o seu padrão
+            caixaMensagem.innerHTML = `<p class="mt-3 text-center text-danger fs-3">Erro ao criar interclasse!!</p>`;
+        }
+    }
 </script>
 
 <?php

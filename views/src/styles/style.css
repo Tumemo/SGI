@@ -14,6 +14,10 @@ body, main{
     --vermelho: #e30613;
 }
 
+.btn-outline-danger:hover{
+    background-color: var(--vermelho) !important;
+    color: white !important;
+}
 .btn-danger,.bg-danger{
     background-color: var(--vermelho) !important;
 }
