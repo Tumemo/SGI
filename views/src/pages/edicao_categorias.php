@@ -40,7 +40,7 @@ require_once '../componentes/header.php';
 <!-- main desktop -->
 <main class="bg-light flex-grow-1 p-4 p-md-5 d-none d-md-block container" style="padding-top: 2rem;">
 
-    <div class="container-fluid px-0">
+    <div class="container-fluid px-0 position-relative">
 
         <div class="mb-5">
             <button class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0" style="background-color: #ed1c24; border-radius: 6px;">
@@ -54,7 +54,7 @@ require_once '../componentes/header.php';
 
         <div class="row g-4">
 
-            <div class="col-12 col-md-6 col-lg-5 col-xl-4">
+            <div class="col-12 col-md-6 col-lg-5 col-xl-4" data-bs-toggle="modal" data-bs-target="#criarTurma" style="cursor: pointer;">
                 <div class="card border-0 shadow-sm h-100 p-4" style="border-radius: 12px;">
                     <div class="card-body p-0 d-flex flex-column">
 
@@ -80,7 +80,7 @@ require_once '../componentes/header.php';
                 </div>
             </div>
 
-            <div class="col-12 col-md-6 col-lg-5 col-xl-4">
+            <div class="col-12 col-md-6 col-lg-5 col-xl-4" data-bs-toggle="modal" data-bs-target="#criarTurma" style="cursor: pointer;">
                 <div class="card border-0 shadow-sm h-100 p-4" style="border-radius: 12px;">
                     <div class="card-body p-0 d-flex flex-column">
 
@@ -107,6 +107,9 @@ require_once '../componentes/header.php';
             </div>
 
         </div>
+        <button class="border border-none bg-danger rounded-circle p-3 fs-2 d-flex align-items-center justify-content-center position-fixed position-absolute" style="height: 60px; width: 60px; top: 90%; left: 95%; z-index: 10; cursor: pointer;" data-bs-toggle="modal" data-bs-target="#exampleModal">
+            <i class="bi bi-plus text-white" style="font-size: 1.4em;"></i>
+        </button>
     </div>
 </main>
 

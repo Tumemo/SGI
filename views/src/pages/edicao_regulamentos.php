@@ -78,12 +78,12 @@ require_once '../componentes/header.php';
 
 
 <!-- main desktop -->
-<main class="bg-light flex-grow-1 p-4 p-md-5 d-none d-md-block" style="padding-top: 2rem;">
+<main class="bg-light flex-grow-1 p-4 p-md-5 d-none d-md-block" style="padding-top: 2rem; padding-bottom: 120px; position: relative;">
 
-    <div class="container-fluid px-0" style="max-width: 1100px;">
+    <div class="container-fluid px-0" style="max-width: 80%;">
 
         <div class="mb-5">
-            <button class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0" style="border-radius: 6px;">
+            <button class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 shadow-sm" style="border-radius: 6px;">
                 <i class="bi bi-arrow-left-circle fs-5"></i> Interclasse 2026
             </button>
 
@@ -93,7 +93,6 @@ require_once '../componentes/header.php';
         </div>
 
         <div class="row g-4 mb-5">
-
             <div class="col-12 col-md-6 col-lg-3">
                 <div class="bg-white border-0 shadow-sm rounded-3 p-4 position-relative d-flex flex-column h-100" style="border-bottom: 6px solid #e2b714 !important;">
                     <div class="d-flex justify-content-between align-items-center mb-4">
@@ -160,22 +159,22 @@ require_once '../componentes/header.php';
                     </div>
                 </div>
             </div>
-
         </div>
+    </div>
 
-        <div class="d-flex justify-content-end align-items-center mt-5 gap-3">
+    <div class="d-none d-md-block fixed-bottom" style="background: linear-gradient(to top, #f8f9fa 70%, rgba(248, 249, 250, 0) 100%); padding: 30px 0;">
+        <div class="container-fluid d-flex justify-content-end align-items-center gap-3" style="max-width: 80%;">
             <a href="./novaEdicao_modalidades.php" class="text-decoration-none">
-                <button class="btn btn-outline-danger bg-white fw-semibold rounded-3 px-4 py-2">
+                <button class="btn btn-outline-danger bg-white fw-semibold rounded-3 px-4 py-2 shadow-sm">
                     Voltar
                 </button>
             </a>
             <a href="./edicao_resumo.php" class="text-decoration-none">
-                <button class="btn btn-danger fw-semibold rounded-3 px-4 py-2">
+                <button class="btn btn-danger fw-semibold rounded-3 px-4 py-2 shadow-sm">
                     Continuar
                 </button>
             </a>
         </div>
-
     </div>
 </main>
 

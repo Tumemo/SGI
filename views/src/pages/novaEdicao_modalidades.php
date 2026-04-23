@@ -29,7 +29,7 @@ require_once '../componentes/header.php';
 <!-- main desktop -->
 <main class="bg-light flex-grow-1 p-4 p-md-5 d-none d-md-block" style="padding-top: 2rem;">
 
-    <div class="container-fluid px-0" style="max-width: 1000px;">
+    <div class="container-fluid px-0" style="max-width: 80%;">
 
         <div class="mb-4">
             <button class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0" style="background-color: #ed1c24; border-radius: 6px;">

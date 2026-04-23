@@ -38,9 +38,9 @@ require_once '../componentes/header.php';
 
 
 <!-- main desktop -->
-<main class="bg-light flex-grow-1 p-4 p-md-5 d-none d-md-block" style="padding-top: 2rem;">
+<main class="bg-light flex-grow-1 p-4 p-md-5 d-none d-md-block" style="padding-top: 2rem; padding-bottom: 120px;">
 
-    <div class="container-fluid px-0" style="max-width: 1000px;">
+    <div class="container-fluid px-0" style="max-width: 80%;">
 
         <div class="mb-5">
             <button class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold px-3 py-2 border-0 shadow-sm" style="border-radius: 6px;">
@@ -49,7 +49,6 @@ require_once '../componentes/header.php';
         </div>
 
         <div class="d-flex flex-column gap-3 mb-5">
-
             <div class="bg-white border-0 shadow-sm rounded-2 p-4" style="cursor: pointer; transition: 0.2s ease;" onmouseover="this.classList.add('shadow')" onmouseout="this.classList.remove('shadow')">
                 <h6 class="text-dark fw-medium mb-1">Modalidades</h6>
                 <span class="text-secondary" style="font-size: 0.95rem;">
@@ -63,18 +62,21 @@ require_once '../componentes/header.php';
                     (1º lugar 10 pontos, 2º lugar 8 pontos, 3º lugar 5 pontos, arrecadação 5 pontos)
                 </span>
             </div>
+            
+            </div>
+    </div>
 
-        </div>
-
-        <div class="d-flex justify-content-end align-items-center mt-5 gap-3">
-            <button class="btn btn-outline-danger bg-white fw-semibold rounded-3 px-4 py-2">
-                Voltar
-            </button>
-            <button class="btn btn-danger fw-semibold rounded-3 px-4 py-2" data-bs-toggle="modal" data-bs-target="#adicionarCategoria">
+    <div class="d-none d-md-block fixed-bottom" style="background: linear-gradient(to top, rgba(248,249,250,1) 70%, rgba(248,249,250,0) 100%); padding: 30px 0;">
+        <div class="container-fluid d-flex justify-content-end align-items-center gap-3" style="max-width: 80%;">
+            <a href="edicao_regulamentos.php" class="text-decoration-none">
+                <button class="btn btn-outline-danger bg-white fw-semibold rounded-3 px-4 py-2 shadow-sm">
+                    Voltar
+                </button>
+            </a>
+            <button class="btn btn-danger fw-semibold rounded-3 px-4 py-2 shadow-sm" data-bs-toggle="modal" data-bs-target="#adicionarCategoria">
                 Adicionar categoria
             </button>
         </div>
-
     </div>
 </main>
 

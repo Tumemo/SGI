@@ -86,18 +86,21 @@ require_once '../componentes/header.php';
             </div>
             <div class="modal-body">
                 <h2 class="fs-6">Insira o nome da sua nova edição:</h2>
-                <form id="formulario" onsubmit="criarInterclasse(event)">
+                <form id="formulario">
                     <div>
-                        <input type="text" class="form-control" placeholder="Ex: interclasse 2026" id="nomeNovaEdicao">
+                        <input type="text" class="form-control" placeholder="Ex: interclasse 2026" id="nomeNovaEdicao" required>
                     </div>
                     <div class="mt-4">
-                        <label for="ano" class="form-label fs-6">Ano</label>
-                        <input type="text" for="ano" class="form-control" placeholder="Ex: 2026" id="anoNovaEdicao" value="2026">
+                        <label for="anoNovaEdicao" class="form-label fs-6">Ano</label>
+                        <input type="number" class="form-control" placeholder="Ex: 2026" id="anoNovaEdicao" value="2026" required>
                     </div>
+
+                    <div id="caixaMensagem"></div>
+
                     <div class="d-flex justify-content-center gap-2 mt-5 pt-5">
-                        <a href="./home.php" class="btn btn-outline-danger">Cancelar</a>
+                        <button type="button" class="btn btn-outline-danger" data-bs-dismiss="modal">Cancelar</button>
+                        <!-- <button type="submit" class="btn btn-danger" id="btnCriar">Criar</button> -->
                         <a href="./novaEdicao_modalidades.php" class="btn btn-danger" id="criarNovaEdicao">Criar</a>
-                        <!-- <button type="submit" class="btn btn-danger" id="criarNovaEdicao">Criar</button> -->
                     </div>
                 </form>
             </div>
@@ -112,97 +115,84 @@ require_once '../componentes/header.php';
 <!-- script da pagina -->
 
 <script>
-    // listar os interclasses
+    // 1. Função para Listar (Mantive sua lógica, apenas limpei)
     async function listarInterclasses() {
-        const listar = document.getElementById('caixaListar')
+        const listar = document.getElementById('caixaListar');
         try {
-            const res = await axios.get("../../../api/interclasse.php")
-            if (res.length === 0) {
-                listar.innerHTML = `<p class="text-container">Nenhum interclasse encontrado</p>`
+            const res = await axios.get("../../../api/interclasse.php");
+            if (!res.data || res.data.length === 0) {
+                listar.innerHTML = `<p class="text-center">Nenhum interclasse encontrado</p>`;
                 return;
             }
 
-            listar.innerHTML = res.data.map((item) =>
-                `
-            <a href="./edicao.php" class="text-decoration-none text-dark">
-                <div class="m-auto shadow d-flex justify-content-between align-content-center px-3 py-3 rounded-3 my-3 border border-1  " style="width: 90%;" ${item.id_interclasse}>
-                    <div>
-                        <h2 class="m-0 fs-3">${item.nome_interclasse}</h2>
-                        <p class="text-secondary m-0">${item.ano_interclasse}</p>
+            listar.innerHTML = res.data.map((item) => `
+                <a href="./edicao.php?id=${item.id_interclasse}" class="text-decoration-none text-dark">
+                    <div class="m-auto shadow d-flex justify-content-between align-content-center px-3 py-3 rounded-3 my-3 border border-1" style="width: 90%;">
+                        <div>
+                            <h2 class="m-0 fs-3">${item.nome_interclasse}</h2>
+                            <p class="text-secondary m-0">${item.ano_interclasse}</p>
+                        </div>
+                        <img src="../../public/icons/arrow-right.svg" alt="icone de seta">
                     </div>
-                    <img src="../../public/icons/arrow-right.svg" alt="icone de seta">
-                </div>
-            </a>
-            `
-            ).join('')
-
-
+                </a>
+            `).join('');
         } catch (error) {
-            console.log(error)
-            listar.innerHTML = `<p class="mt-3 text-center text-danger fs-3">Erro ao ver interclasses!!</p>`
+            console.error(error);
+            listar.innerHTML = `<p class="mt-3 text-center text-danger">Erro ao carregar dados!</p>`;
         }
     }
-    listarInterclasses()
 
+    // 2. Lógica para Criar Novo Interclasse
+    const formulario = document.getElementById("formulario");
+    const caixaMensagem = document.getElementById('caixaMensagem');
 
-    // mostrar a data 
-    let data = new Date()
-    let dia = data.getDate()
-    let mes = data.getMonth() + 1
-    let ano = data.getFullYear()
-    let dataFormatada = `${ano}-${mes}-${dia}`
-    const nomeNovaEdicao = document.getElementById("nomeNovaEdicao")
-    const formulario = document.getElementById("formulario")
-    formulario.addEventListener("submit", async (evento) => {
-        evento.preventDefault()
-        if (nomeNovaEdicao.value !== "" && anoNovaEdicao.value !== "")
-            await axios.post("../../../api/interclasse.php", {
-                nome_interclasse: nomeNovaEdicao.value.trim(),
-                ano_interclasse: dataFormatada,
-                pdf_regulamento: "caminho.pdf"
-            })
-            .then(res => console.log(res))
-            .catch(error => console.log(error))
-    })
+    formulario.addEventListener("submit", async (event) => {
+        event.preventDefault(); // Impede a página de recarregar
 
+        const nome = document.getElementById('nomeNovaEdicao').value;
+        const ano = document.getElementById('anoNovaEdicao').value;
 
-    // criar o interclasse
-    async function criarInterclasse(event) {
-
-        if (event) event.preventDefault();
-
-        const caixaMensagem = document.getElementById('caixaMensagem');
-
-        const nomeInput = document.getElementById('nomeNovaEdicao').value;
-        const anoInput = document.getElementById('anoNovaEdicao').value;
-
+        // Monta o objeto conforme sua API espera (JSON)
         const novoInterclasse = {
-            nome_interclasse: nomeInput,
-            ano_interclasse: anoInput
+            nome_interclasse: nome.trim(),
+            ano_interclasse: ano
         };
 
         try {
-            // 3. Fazer a requisição POST enviando o objeto
-            // O Axios já converte para JSON automaticamente
+            // Desativa o botão para evitar cliques duplos
+            document.getElementById('btnCriar').disabled = true;
+
             const res = await axios.post("../../../api/interclasse.php", novoInterclasse);
 
-            // 4. Feedback visual de SUCESSO usando o seu padrão de classes
-            caixaMensagem.innerHTML = `<p class="mt-3 text-center text-success fs-3">Interclasse criado com sucesso!</p>`;
+            if (res.data.success) {
+                caixaMensagem.innerHTML = `<p class="text-success text-center mt-2">Criado com sucesso!</p>`;
 
-            // Opcional: Atualizar a lista na mesma hora chamando sua função de listagem
-            listarInterclasses();
+                // Limpa o formulário
+                formulario.reset();
 
-            // Opcional: Limpar os inputs após criar
-            document.getElementById('nomeNovaEdicao').value = '';
-            document.getElementById('anoNovaEdicao').value = '';
+                // Atualiza a lista automaticamente
+                listarInterclasses();
 
+                // Opcional: Fecha o modal após 1.5 segundos
+                setTimeout(() => {
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('exampleModal'));
+                    modal.hide();
+                    caixaMensagem.innerHTML = '';
+                }, 1500);
+
+            } else {
+                throw new Error(res.data.message || "Erro desconhecido");
+            }
         } catch (error) {
-            console.log(error);
-
-            // Feedback visual de ERRO usando o seu padrão
-            caixaMensagem.innerHTML = `<p class="mt-3 text-center text-danger fs-3">Erro ao criar interclasse!!</p>`;
+            console.error("ERRO DETALHADO:", error.response ? error.response.data : error.message);
+            caixaMensagem.innerHTML = `<p class="text-danger text-center mt-2">Erro: ${error.response?.data?.message || error.message}</p>`;
+        } finally {
+            document.getElementById('btnCriar').disabled = false;
         }
-    }
+    });
+
+    // Inicia a listagem ao carregar a página
+    window.onload = listarInterclasses;
 </script>
 
 <?php
