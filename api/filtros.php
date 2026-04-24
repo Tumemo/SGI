@@ -217,6 +217,12 @@ function aplicarFiltrosCategorias() {
         $params[] = intval($_GET['id_categoria']);
     }
 
+    if(!empty($_GET['id_interclasse'])) {
+        $sqlExtras .= " AND interclasses_id_interclasse = ?";
+        $types .= "i";
+        $params[] = intval($_GET['id_interclasse']);
+    }
+
     if (!empty($_GET['busca'])) {
         $sqlExtras .= " AND nome_categoria LIKE ?";
         $types .= "s";

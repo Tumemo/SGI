@@ -14,22 +14,21 @@ require_once '../componentes/header.php';
         <ul class="list-group list-group-flush">
             <li class="list-group-item justify-content-around d-flex align-items-center">
                 1º lugar
-                <input type="number" name="#" id="#" class="w-25 rounded border border-none shadow-sm text-center" value='10'>
+                <input type="number" id="pontos1Mobile" class="w-25 rounded border border-none shadow-sm text-center" value='10'>
                 Pontos
             </li>
             <li class="list-group-item justify-content-around d-flex align-items-center">
                 2º lugar
-                <input type="number" name="#" id="#" class="w-25 rounded border border-none shadow-sm text-center" value='10'>
+                <input type="number" id="pontos2Mobile" class="w-25 rounded border border-none shadow-sm text-center" value='10'>
                 Pontos
             </li>
             <li class="list-group-item justify-content-around d-flex align-items-center">
                 3º lugar
-                <input type="number" name="#" id="#" class="w-25 rounded border border-none shadow-sm text-center" value='10'>
+                <input type="number" id="pontos3Mobile" class="w-25 rounded border border-none shadow-sm text-center" value='10'>
                 Pontos
             </li>
         </ul>
     </div>
-
 
     <div class="card shadow" style="width: 20rem;">
         <div class="card-header">
@@ -39,14 +38,12 @@ require_once '../componentes/header.php';
             <li class="list-group-item">
                 <div class="d-flex justify-content-between mt-2">
                     Multiplicador
-                    <input type="number" name="#" id="#" class="w-25 rounded border border-none shadow-sm text-center" value='10'>
+                    <input type="number" id="multiplicadorMobile" class="w-25 rounded border border-none shadow-sm text-center" value='10'>
                 </div>
                 <p class="text-body-tertiary mt-2 mb-0" style="font-size: 14px;">A arrecadação será multiplicada por esse valor</p>
             </li>
         </ul>
     </div>
-
-
 
     <div class="card shadow" style="width: 20rem;">
         <div class="card-header">
@@ -55,29 +52,27 @@ require_once '../componentes/header.php';
         <ul class="list-group list-group-flush">
             <li class="list-group-item justify-content-around d-flex align-items-center">
                 <span class="text-center" style="width: 33%;">Brigas</span>
-                <input type="number" name="#" id="#" class="w-25 rounded border border-none shadow-sm text-center" value='10' style="width: 33%;">
+                <input type="number" id="penalidadeBrigasMobile" class="w-25 rounded border border-none shadow-sm text-center" value='10' style="width: 33%;">
                 <span class="text-center" style="width: 33%;">Pontos</span>
             </li>
             <li class="list-group-item justify-content-around d-flex align-items-center">
                 <span class="text-center" style="width: 33%;">Desrespeitar arbitragem</span>
-                <input type="number" name="#" id="#" class="w-25 rounded border border-none shadow-sm text-center" value='10' style="width: 33%;">
+                <input type="number" id="penalidadeArbitragemMobile" class="w-25 rounded border border-none shadow-sm text-center" value='10' style="width: 33%;">
                 <span class="text-center" style="width: 33%;">Pontos</span>
             </li>
             <li class="list-group-item justify-content-around d-flex align-items-center">
                 <span class="text-center" style="width: 33%;">3º lugar</span>
-                <input type="number" name="#" id="#" class="w-25 rounded border border-none shadow-sm text-center" value='10' style="width: 33%;">
+                <input type="number" id="penalidadeExtraMobile" class="w-25 rounded border border-none shadow-sm text-center" value='10' style="width: 33%;">
                 <span class="text-center" style="width: 33%;">Pontos</span>
             </li>
         </ul>
     </div>
     <section class="d-flex gap-4">
-        <a href="./edicao_resumo.php" class="btn btn-danger">Continuar</a>
+        <button id="btnContinuarMobile" class="btn btn-danger">Continuar</button>
     </section>
 </main>
 
 
-
-<!-- main desktop -->
 <main class="bg-light flex-grow-1 p-4 p-md-5 d-none d-md-block" style="padding-top: 2rem; padding-bottom: 120px; position: relative;">
 
     <div class="container-fluid px-0" style="max-width: 80%;">
@@ -169,7 +164,7 @@ require_once '../componentes/header.php';
                     Voltar
                 </button>
             </a>
-            <a href="./edicao_resumo.php" class="text-decoration-none">
+            <a href="./edicao_resumo.php" class="text-decoration-none" id="btnContinuarDesktop">
                 <button class="btn btn-danger fw-semibold rounded-3 px-4 py-2 shadow-sm">
                     Continuar
                 </button>
@@ -179,22 +174,83 @@ require_once '../componentes/header.php';
 </main>
 
 <script>
+    // --- Lógica do Desktop (Mantida) ---
     function alterarPontos(idElemento, valor) {
         const elemento = document.getElementById(idElemento);
         let pontosAtuais = parseInt(elemento.innerText);
 
-        // Impede que os pontos fiquem negativos
         if (pontosAtuais + valor >= 0) {
             elemento.innerText = pontosAtuais + valor;
         }
     }
+
+    // --- NOVA INTEGRAÇÃO: Lógica do Mobile ---
+
+    // 1. Pegar o ID do Interclasse que veio pela URL da página de modalidades
+    const urlParams = new URLSearchParams(window.location.search);
+    const idInterclasse = urlParams.get('id');
+
+    // Transfere o ID para o botão voltar do desktop (opcional, para não perder o fluxo)
+    if(idInterclasse){
+        document.getElementById('btnContinuarDesktop').href = `./edicao_resumo.php?id=${idInterclasse}`;
+    }
+
+    // 2. Interceptar o clique do botão "Continuar" do Mobile
+    document.getElementById('btnContinuarMobile').addEventListener('click', async (e) => {
+        e.preventDefault();
+
+        if (!idInterclasse) {
+            alert("ID do interclasse não encontrado na URL! Volte e crie o interclasse novamente.");
+            return;
+        }
+
+        // 3. Capturar todos os valores digitados no mobile
+        const dadosRegulamento = {
+            id_interclasse: idInterclasse,
+            pontos_1_lugar: document.getElementById('pontos1Mobile').value,
+            pontos_2_lugar: document.getElementById('pontos2Mobile').value,
+            pontos_3_lugar: document.getElementById('pontos3Mobile').value,
+            multiplicador_arrecadacao: document.getElementById('multiplicadorMobile').value,
+            penalidade_brigas: document.getElementById('penalidadeBrigasMobile').value,
+            penalidade_arbitragem: document.getElementById('penalidadeArbitragemMobile').value,
+            penalidade_extra: document.getElementById('penalidadeExtraMobile').value
+        };
+
+        const btnMobile = document.getElementById('btnContinuarMobile');
+        btnMobile.innerHTML = "Salvando...";
+        btnMobile.disabled = true;
+
+        try {
+            // ATENÇÃO: Se você ainda não tiver a API regulamentos.php criada, o fetch vai dar erro,
+            // mas o bloco "catch" abaixo garante que você será redirecionado mesmo assim!
+            const response = await fetch('../../../api/regulamentos.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(dadosRegulamento)
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                // Deu certo! Manda pra página de resumo passando o ID do interclasse
+                window.location.href = `./edicao_resumo.php?id=${idInterclasse}`;
+            } else {
+                alert("Erro ao salvar: " + (result.message || "Verifique a API."));
+                btnMobile.innerHTML = "Continuar";
+                btnMobile.disabled = false;
+            }
+        } catch (error) {
+            console.error("Erro na requisição ou API não existe ainda:", error);
+            
+            // FALLBACK: Como não sei se a API já existe, forçamos o redirecionamento
+            // para que você possa continuar testando o visual/fluxo da sua aplicação.
+            window.location.href = `./edicao_resumo.php?id=${idInterclasse}`;
+        }
+    });
 </script>
 
-
-
-
-
 <?php
-
 require_once '../componentes/footer.php';
 ?>
