@@ -10,8 +10,15 @@ switch ($method) {
         $filtro = aplicarFiltrosCategorias();
 
 
-        $sql = "SELECT id_categoria, nome_categoria FROM categorias WHERE 1=1" . $filtro['sql'];
-        $sql .= " ORDER BY nome_categoria ASC";
+        $sql = "SELECT DISTINCT 
+                    categorias.id_categoria, 
+                    categorias.nome_categoria 
+                FROM categorias
+                INNER JOIN modalidades ON modalidades.categorias_id_categoria = categorias.id_categoria
+                INNER JOIN interclasses ON interclasses.id_interclasse = modalidades.interclasses_id_interclasse
+                WHERE 1=1" . $filtro['sql'];
+
+        $sql .= " ORDER BY categorias.nome_categoria ASC";
 
         $stmt = $conn->prepare($sql);
 
