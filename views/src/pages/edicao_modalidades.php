@@ -28,8 +28,41 @@ require_once '../componentes/header.php';
             <div class="modal-body">
                 <form id="formNovaModalidade">
                     <div class="mb-3">
-                        <label for="inputNomeModalidade" class="form-label">Nome da Modalidade:</label>
-                        <input type="text" class="form-control" id="inputNomeModalidade" placeholder="Ex: Futsal Masculino" required>
+                        <label for="inputNomeModalidade" class="form-label fw-medium">Nome da Modalidade:</label>
+                        <input type="text" class="form-control" id="inputNomeModalidade" placeholder="Ex: Futsal" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-medium">Gênero:</label>
+                        <select class="form-select" id="inputGeneroModalidade" required>
+                            <option value="" disabled selected>Selecione...</option>
+                            <option value="M">Masculino (M)</option>
+                            <option value="F">Feminino (F)</option>
+                            <option value="MISTO">Misto</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-medium">Máx. de Inscritos (Opcional):</label>
+                        <input type="number" class="form-control" placeholder="Ex: 12" id="inputMaxInscritos" min="0">
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-medium">Tipo de Modalidade:</label>
+                        <select class="form-select" id="inputTipoModalidade" required>
+                            <option value="" disabled selected>Selecione um tipo...</option>
+                            <option value="1">Esporte de Quadra</option>
+                            <option value="2">E-sports</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-medium">Categoria:</label>
+                        <select class="form-select" id="inputCategoriaModalidade" required>
+                            <option value="" disabled selected>Selecione uma categoria...</option>
+                            <option value="1">Ensino Médio</option>
+                            <option value="2">Ensino Fundamental</option>
+                        </select>
                     </div>
 
                     <div id="caixaMensagemModalidade" class="mt-3"></div>
@@ -50,30 +83,34 @@ require_once '../componentes/header.php';
     const urlParams = new URLSearchParams(window.location.search);
     const idInterclasse = urlParams.get('id');
 
-    // 2. Função para buscar e renderizar as modalidades (agora usando Axios)
+    // TRAVA DE SEGURANÇA
+    if (!idInterclasse) {
+        alert("Erro: Nenhum interclasse selecionado! Você será redirecionado.");
+        window.location.href = "home.php";
+    }
+
+    // 2. Função para buscar e renderizar as modalidades
     async function carregarModalidades() {
         const divLista = document.getElementById('listaModalidades');
 
-        if (!idInterclasse) {
-            divLista.innerHTML = '<p class="text-danger mt-4 text-center">ID do Interclasse não encontrado na URL.</p>';
-            return;
-        }
-
         try {
-            const response = await axios.get(`../../../api/modalidades.php?id_interclasse=${idInterclasse}`);
-            const modalidades = response.data;
+            // CORREÇÃO 1: Ajustado o nome do parâmetro para 'interclasses_id_interclasse' igual ao do seu banco/POST
+            const response = await axios.get(`../../../api/modalidades.php?interclasses_id_interclasse=${idInterclasse}`);
+            
+            // CORREÇÃO 2: Garantir que pegamos o array, independente se a API retornou direto ou dentro de uma chave 'data'
+            let modalidades = response.data.data || response.data;
 
             divLista.innerHTML = '';
 
-            // Se não houver nada cadastrado
-            if (!modalidades || modalidades.length === 0 || modalidades.success === false) {
+            // Se não houver nada cadastrado ou não for um array
+            if (!Array.isArray(modalidades) || modalidades.length === 0) {
                 divLista.innerHTML = '<p class="text-muted mt-4 text-center w-100">Nenhuma modalidade encontrada para este interclasse.</p>';
                 return;
             }
 
             // Para cada modalidade recebida, cria o HTML e joga na tela
             modalidades.forEach(modalidade => {
-                const linkEdicao = `./modalidades.php?id_interclasse=${idInterclasse}&id_modalidade=${modalidade.id_modalidade}`;
+                const linkEdicao = `./modalidades.php?id=${idInterclasse}&id_modalidade=${modalidade.id_modalidade}`;
 
                 divLista.innerHTML += `
                     <a href="${linkEdicao}" class="text-decoration-none text-black w-100 d-flex justify-content-center">
@@ -89,8 +126,11 @@ require_once '../componentes/header.php';
             });
 
         } catch (error) {
-            console.error("Erro ao carregar modalidades:", error);
-            divLista.innerHTML = '<p class="text-danger mt-4 text-center">Erro de conexão ao carregar as modalidades.</p>';
+            console.error("Detalhes do erro no Axios:", error);
+            
+            // CORREÇÃO 3: Mostra o erro real na tela para facilitar nosso debug
+            const msgErro = error.response?.data?.message || error.message || "Erro desconhecido";
+            divLista.innerHTML = `<p class="text-danger mt-4 text-center px-3"><strong>Erro ao carregar:</strong> ${msgErro}</p>`;
         }
     }
 
@@ -98,20 +138,16 @@ require_once '../componentes/header.php';
     document.getElementById('formNovaModalidade').addEventListener('submit', async (e) => {
         e.preventDefault(); 
 
-        const inputNome = document.getElementById('inputNomeModalidade');
         const btnSalvar = document.getElementById('btnSalvarModalidade');
         const caixaMensagem = document.getElementById('caixaMensagemModalidade');
         
-        // Verifica se temos o ID do interclasse antes de tentar salvar
-        if (!idInterclasse) {
-            caixaMensagem.innerHTML = `<p class="text-danger text-center mb-0 fw-bold">Erro: ID do Interclasse ausente.</p>`;
-            return;
-        }
-
-        // Monta o objeto para enviar à API
         const dados = {
-            nome_modalidade: inputNome.value.trim(),
-            id_interclasse: idInterclasse
+            interclasses_id_interclasse: parseInt(idInterclasse),
+            nome_modalidade: document.getElementById('inputNomeModalidade').value.trim(),
+            genero_modalidade: document.getElementById('inputGeneroModalidade').value,
+            max_inscrito_modalidade: parseInt(document.getElementById('inputMaxInscritos').value) || 0,
+            tipos_modalidades_id_tipo_modalidade: document.getElementById('inputTipoModalidade').value,
+            categorias_id_categoria: document.getElementById('inputCategoriaModalidade').value
         };
 
         try {
@@ -124,10 +160,9 @@ require_once '../componentes/header.php';
             if (res.data && res.data.success) {
                 caixaMensagem.innerHTML = `<p class="text-success text-center mb-0 fw-bold">Modalidade criada com sucesso!</p>`;
                 
-                inputNome.value = ""; // Limpa o input
-                carregarModalidades(); // Atualiza a lista por trás do modal
+                document.getElementById('formNovaModalidade').reset(); 
+                carregarModalidades(); 
 
-                // Aguarda 1 segundo e fecha o modal
                 setTimeout(() => {
                     const modalEl = document.getElementById('exampleModal');
                     const modalObj = bootstrap.Modal.getInstance(modalEl);
@@ -148,8 +183,9 @@ require_once '../componentes/header.php';
         }
     });
 
-    // Inicia o carregamento assim que a página abrir
-    window.onload = carregarModalidades;
+    if (idInterclasse) {
+        window.onload = carregarModalidades;
+    }
 </script>
 
 <?php 

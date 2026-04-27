@@ -6,6 +6,7 @@ require_once '../componentes/navbar.php';
 require_once '../componentes/header.php';
 ?>
 
+<!-- main mobile -->
 <main class="position-relative d-md-none" style="margin-bottom: 120px;">
     <p class="text-secondary text-center my-3" style="font-size: 14px;">Selecione uma categoria para adicionar turmas</p>
     
@@ -15,11 +16,12 @@ require_once '../componentes/header.php';
 
     <section class="d-flex gap-4 mt-3 position-fixed translate-middle" style="width: max-content; top: 85%; left: 50%; z-index: 10; cursor: pointer;">
         <button data-bs-toggle="modal" data-bs-target="#modalCriarCategoria" class="btn btn-outline-danger">Adicionar Categoria</button>
-        <a href="./home.php" id="btnContinuarMobile" class="btn btn-danger">Continuar</a>
+        <a href="#" id="btnContinuarMobile" class="btn btn-danger">Continuar</a>
     </section>
 </main>
 
-<main class="bg-light flex-grow-1 p-4 p-md-5 d-none d-md-block container" style="padding-top: 2rem; padding-bottom: 100px;">
+<!-- main desktop -->
+<main class="bg-light flex-grow-1 p-4 p-md-5 d-none d-md-block container" style="padding-top: 2rem; padding-bottom: 120px;">
     <div class="container-fluid px-0 position-relative">
         <div class="mb-5">
             <button class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0" style="background-color: #ed1c24; border-radius: 6px;" onclick="window.history.back()">
@@ -35,17 +37,21 @@ require_once '../componentes/header.php';
             <p class="text-muted">(Carregando categorias...)</p>
         </div>
 
-        <button class="border border-0 bg-danger shadow rounded-circle p-3 fs-2 d-flex align-items-center justify-content-center position-fixed" style="height: 60px; width: 60px; bottom: 40px; right: 5%; z-index: 10; cursor: pointer;" data-bs-toggle="modal" data-bs-target="#modalCriarCategoria">
-            <i class="bi bi-plus text-white" style="font-size: 1.4em;"></i>
-        </button>
-        
-        <div class="d-flex justify-content-end mt-5">
-             <a href="./home.php" id="btnContinuarDesktop" class="btn btn-danger px-5 py-2 fw-bold rounded-3 shadow-sm">Continuar</a>
+        <div class="position-fixed d-flex flex-row gap-3" style="bottom: 40px; right: 5%; z-index: 1050;">
+            
+            <button type="button" class="btn bg-white fw-semibold rounded-3 px-4 py-2 d-flex align-items-center justify-content-center gap-2 shadow-lg" style="color: #ed1c24; border: 2px solid #ed1c24;" data-bs-toggle="modal" data-bs-target="#modalCriarCategoria">
+                <i class="bi bi-plus-circle"></i> Adicionar
+            </button>
+            
+            <a href="#" id="btnContinuarDesktop" class="btn fw-semibold rounded-3 px-5 py-2 text-white text-decoration-none shadow-lg d-flex align-items-center justify-content-center" style="background-color: #ed1c24; border: 2px solid #ed1c24;">
+                Continuar
+            </a>
+            
         </div>
     </div>
 </main>
 
-
+<!-- modal de adicionar nova turma -->
 <div class="modal fade" id="criarTurma" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
@@ -77,7 +83,7 @@ require_once '../componentes/header.php';
     </div>
 </div>
 
-
+<!-- modal de criar nova categoria -->
 <div class="modal fade" id="modalCriarCategoria" tabindex="-1" aria-labelledby="modalNovaCategoriaLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
@@ -102,13 +108,17 @@ require_once '../componentes/header.php';
 </div>
 
 <script>
-    // Repassa o ID do Interclasse na URL para o botão de "Continuar"
+    // 1. TRAVA DE SEGURANÇA: Captura e valida o ID do Interclasse
     const urlParams = new URLSearchParams(window.location.search);
     const idInterclasse = urlParams.get('id');
 
-    if (idInterclasse) {
-        document.getElementById('btnContinuarMobile').href = `./home.php?id=${idInterclasse}`;
-        document.getElementById('btnContinuarDesktop').href = `./home.php?id=${idInterclasse}`;
+    if (!idInterclasse) {
+        alert("Erro: Nenhum interclasse selecionado! Você será redirecionado.");
+        window.location.href = "home.php"; // Redireciona de volta para a tela inicial
+    } else {
+        // Se existir, repassa o ID para os botões de continuar
+        document.getElementById('btnContinuarMobile').href = `./edicao_turmas.php?id=${idInterclasse}`;
+        document.getElementById('btnContinuarDesktop').href = `./edicao_turmas.php?id=${idInterclasse}`;
     }
 
     // Função para buscar e renderizar as categorias
@@ -117,10 +127,16 @@ require_once '../componentes/header.php';
         const divDesktop = document.getElementById('listaCategoriasDesktop');
 
         try {
-            const response = await fetch('../../../api/categorias.php');
+            // Buscando os dados na API passando o ID do interclasse na URL
+            const response = await fetch(`../../../api/categorias.php?interclasses_id_interclasse=${idInterclasse}`);
+            
+            // Verifica se a requisição não deu erro no servidor antes de converter
+            if (!response.ok) {
+                throw new Error(`Erro na API: ${response.status}`);
+            }
+
             const categorias = await response.json();
 
-            // Limpa o conteúdo de "Carregando..."
             divMobile.innerHTML = '';
             divDesktop.innerHTML = '';
 
@@ -131,10 +147,7 @@ require_once '../componentes/header.php';
                 return;
             }
 
-            // Para cada categoria recebida da API, criamos o HTML
             categorias.forEach(categoria => {
-                
-                // 1. Injetar HTML no Mobile
                 divMobile.innerHTML += `
                     <button data-bs-toggle="modal" data-bs-target="#criarTurma" class="bg-white d-flex m-auto justify-content-between align-items-center shadow-sm py-3 px-4 mb-3 border border-1 rounded-3" style="width: 90%;">
                         <i class="bi bi-trophy fs-1 text-danger"></i>
@@ -145,13 +158,11 @@ require_once '../componentes/header.php';
                     </button>
                 `;
 
-                // 2. Injetar HTML no Desktop
                 divDesktop.innerHTML += `
                     <div class="col-12 col-md-6 col-lg-5 col-xl-4">
-                        <div class="card border-0 shadow-sm h-100 p-4" style="border-radius: 12px; cursor: pointer;" data-bs-toggle="modal" data-bs-target="#criarTurma">
+                        <div class="card border-0 shadow-sm h-100 p-4" style="border-radius: 12px;">
                             <div class="card-body p-0 d-flex flex-column">
                                 <h4 class="fw-bold text-dark mb-4 pb-2 text-truncate" title="${categoria.nome_categoria}">${categoria.nome_categoria}</h4>
-                                
                                 <div class="d-flex gap-3 mb-4">
                                     <div class="rounded-3 p-2 px-3 flex-fill border border-light-subtle shadow-sm" style="background-color: #f8f9fc;">
                                         <div class="text-dark fw-medium mb-1" style="font-size: 0.65rem;">EQUIPES</div>
@@ -162,9 +173,8 @@ require_once '../componentes/header.php';
                                         <div class="fs-5 text-dark">0</div>
                                     </div>
                                 </div>
-
                                 <button class="btn btn-danger w-100 fw-semibold text-uppercase mt-auto border-0" style="background-color: #ed1c24; border-radius: 6px; font-size: 0.8rem; padding: 0.75rem;">
-                                    Adicionar turmas <i class="bi bi-arrow-right"></i>
+                                    VER DETALHES <i class="bi bi-arrow-right"></i>
                                 </button>
                             </div>
                         </div>
@@ -174,19 +184,21 @@ require_once '../componentes/header.php';
 
         } catch (error) {
             console.error("Erro ao carregar categorias:", error);
-            divMobile.innerHTML = '<p class="text-danger mt-4">Erro ao carregar categorias.</p>';
+            divMobile.innerHTML = '<p class="text-danger mt-4 text-center">Erro ao carregar categorias.</p>';
             divDesktop.innerHTML = '<p class="text-danger mt-4">Erro ao carregar categorias.</p>';
         }
     }
 
     // Lógica para enviar Nova Categoria para a API
     document.getElementById('formNovaCategoria').addEventListener('submit', async (e) => {
-        e.preventDefault(); // Impede a página de recarregar
+        e.preventDefault();
 
         const inputNome = document.getElementById('inputNomeCategoriaNova');
         const btnSalvar = document.getElementById('btnSalvarCategoria');
         
+        // Injetando o id_interclasse no payload
         const dados = {
+            interclasses_id_interclasse: parseInt(idInterclasse),
             nome_categoria: inputNome.value.trim()
         };
 
@@ -204,31 +216,29 @@ require_once '../componentes/header.php';
 
             const result = await response.json();
 
-            if (result.success) {
-                // Limpa o campo
+            if (response.ok && result.success) {
                 inputNome.value = "";
                 
-                // Fecha o modal do Bootstrap via JS
+                // Fechando o modal corretamente no Bootstrap 5
                 const modalEl = document.getElementById('modalCriarCategoria');
-                const modalObj = bootstrap.Modal.getInstance(modalEl);
+                const modalObj = bootstrap.Modal.getOrCreateInstance(modalEl);
                 modalObj.hide();
 
-                // Recarrega a lista de categorias na tela
+                // Recarrega a tela para exibir a categoria recém-criada
                 carregarCategorias();
             } else {
-                alert("Erro: " + result.message);
+                alert("Erro: " + (result.message || "Não foi possível criar a categoria."));
             }
         } catch (error) {
             console.error("Erro ao criar categoria:", error);
             alert("Erro de conexão com o servidor ao criar categoria.");
         } finally {
-            // Reativa o botão independentemente do resultado
             btnSalvar.disabled = false;
             btnSalvar.innerHTML = "Criar";
         }
     });
 
-    // Função de apoio para o modal de turmas mostrar o nome do arquivo selecionado
+    // Função de exibição do nome do arquivo (mantida do seu código original)
     function mostrarNomeArquivo() {
         const inputUpload = document.getElementById('arquivoUpload');
         const displayNome = document.getElementById('nomeArquivo');
@@ -239,8 +249,10 @@ require_once '../componentes/header.php';
         }
     }
 
-    // Carrega as categorias assim que a página abrir
-    window.onload = carregarCategorias;
+    // Inicia somente se tiver o ID
+    if (idInterclasse) {
+        window.onload = carregarCategorias;
+    }
 </script>
 
 <?php

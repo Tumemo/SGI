@@ -6,6 +6,7 @@ require_once '../componentes/navbar.php';
 require_once '../componentes/header.php';
 ?>
 
+<!-- main mobile -->
 <main class=" d-md-none">
     <button class="mx-4 btn btn-danger d-flex gap-2 mt-3 align-items-center" data-bs-toggle="modal" data-bs-target="#exampleModal">
         <i class="bi bi-plus-circle"></i>Criar Nova Edição
@@ -15,13 +16,13 @@ require_once '../componentes/header.php';
     </div>
 </main>
 
-
+<!-- main desktop -->
 <main class="d-none d-md-flex" style="margin-bottom: 120px;">
     <section class="mt-4 container">
 
         <h1 class="fs-2">Edições do interclasse</h1>
 
-        <button class="btn btn-outline-danger d-flex gap-2 mt-3 mb-4" data-bs-toggle="modal" data-bs-target="#exampleModal">
+        <button class="btn btn-outline-danger d-flex gap-2 mt-3 mb-4 align-items-center" data-bs-toggle="modal" data-bs-target="#exampleModal">
             <i class="bi bi-plus-circle"></i>Criar Nova Edição
         </button>
 
@@ -173,7 +174,7 @@ require_once '../componentes/header.php';
                 listarInterclasses();
 
                 setTimeout(() => {
-                    window.location.href = `./novaEdicao_modalidades.php?id=${idCriado}`;
+                    window.location.href = `./edicao_categorias.php?id=${idCriado}`;
                 }, 800); // Dei um tempo ligeiramente maior para o usuário ler o "Criado com sucesso!"
             } else {
                 throw new Error(res.data ? res.data.message : "Erro interno no servidor ao salvar.");

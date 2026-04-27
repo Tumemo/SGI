@@ -12,6 +12,7 @@
 <body>
     <header class="position-relative">
         <img src="../../../public/images/banner-global.png" alt="Imagens de alunos do SESI" class="w-100">
+        <a href="./aluno_perfil.php"><span class="position-absolute m-4 translate-middle text-white fs-2" style="z-index: 10; top: 3%; right: -20px;" id="btnVoltar"><i class="bi bi-person-gear"></i></span></a>
     </header>
     <main  class="m-auto" style="width: 90%;">
         <h3 class="text-secondary fs-6 text-center my-4">Inscreva-se ou visualize os resultados</h3>
@@ -41,10 +42,10 @@
             </div>
         </section>
     </main>
-    <nav class="order-last fixed-bottom py-2 order-lg-first">
+    <nav class="order-last fixed-bottom py-2 order-lg-first bg-danger">
         <ul class="nav justify-content-around fs-1">
-            <li><a href="./aluno_home.php" class="text-white"><i class="bi bi-house"></i></a></li>
-            <li><a href="./aluno_editar.php" class="text-white"><i class="bi bi-person"></i></a></li>
+            <li><a href="./aluno_home_inscrito.php" class="text-white"><i class="bi bi-house"></i></a></li>
+            <li><a href="./aluno_editar_inscricao.php" class="text-white"><i class="bi bi-person"></i></a></li>
             <li><a href="./aluno_ranking.php" class="text-white"><i class="bi bi-trophy"></i></a></li>
             <li><a href="./aluno_login.php" class="text-white"><i class="bi bi-arrow-bar-right"></i></a></li>
         </ul>
