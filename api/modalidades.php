@@ -22,13 +22,20 @@ switch ($method) {
                     modalidades.nome_modalidade, 
                     modalidades.genero_modalidade,
                     modalidades.max_inscrito_modalidade, 
+                    modalidades.status_modalidade,
                     modalidades.categorias_id_categoria,
                     tipos_modalidades.nome_tipo_modalidade,
                     tipos_modalidades.id_tipo_modalidade,
-                    categorias.nome_categoria
-                FROM modalidades
-                INNER JOIN tipos_modalidades ON tipos_modalidades.id_tipo_modalidade = modalidades.tipos_modalidades_id_tipo_modalidade
-                INNER JOIN categorias ON categorias.id_categoria = modalidades.categorias_id_categoria";
+                    categorias.nome_categoria,
+                    modalidades.interclasses_id_interclasse,
+                    interclasses.nome_interclasse 
+                    FROM modalidades
+                    INNER JOIN tipos_modalidades 
+                    ON tipos_modalidades.id_tipo_modalidade = modalidades.tipos_modalidades_id_tipo_modalidade
+                    INNER JOIN categorias 
+                    ON categorias.id_categoria = modalidades.categorias_id_categoria
+                    INNER JOIN interclasses 
+                    ON interclasses.id_interclasse = modalidades.interclasses_id_interclasse";
 
         if (isset($_GET['ano'])) {
             $sql .= " INNER JOIN jogos ON jogos.modalidades_id_modalidade = modalidades.id_modalidade";
@@ -49,7 +56,7 @@ switch ($method) {
     case 'POST':
         $data = json_decode(file_get_contents("php://input"));
 
-        if (!isset($data->nome_modalidade, $data->genero_modalidade, $data->tipos_modalidades_id_tipo_modalidade, $data->categorias_id_categoria)) {
+        if (!isset($data->nome_modalidade, $data->genero_modalidade, $data->tipos_modalidades_id_tipo_modalidade, $data->status_modalidade, $data->categorias_id_categoria)) {
             http_response_code(400);
             echo json_encode(["success" => false, "message" => "Dados incompletos."]);
             break;
@@ -58,14 +65,15 @@ switch ($method) {
         $genero = strtoupper(trim($data->genero_modalidade));
         $max_inscritos = $data->max_inscrito_modalidade ?? 0;
 
-        $sql = "INSERT INTO modalidades (nome_modalidade, genero_modalidade, max_inscrito_modalidade, tipos_modalidades_id_tipo_modalidade, categorias_id_categoria) 
-                VALUES (?, ?, ?, ?, ?)";
+        $sql = "INSERT INTO modalidades (nome_modalidade, genero_modalidade, max_inscrito_modalidade, tipos_modalidades_id_tipo_modalidade, status_modalidade, categorias_id_categoria) 
+                VALUES (?, ?, ?, ?, ?, ?)";
 
         $stmt = $conn->prepare($sql);
-        $stmt->bind_param("ssiii",
+        $stmt->bind_param("ssiiii",
             $data->nome_modalidade,
-            $genero,
-            $max_inscritos,
+            $data->$genero_modalidade,
+            $data->$max_inscritos,
+            $data->status_modalidade,
             $data->tipos_modalidades_id_tipo_modalidade,
             $data->categorias_id_categoria
         );
