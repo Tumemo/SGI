@@ -77,7 +77,58 @@ switch ($method) {
         break;
 
     case 'PUT':
-        // Pode ser usado para trocar uma equipe de uma partida antes do jogo começar
+        case 'PUT':
+        $data = json_decode(file_get_contents("php://input"));
+
+        if (!isset($data->id_partida)) {
+            http_response_code(400);
+            echo json_encode(["success" => false, "message" => "O ID da partida é obrigatório."]);
+            break;
+        }
+
+        $campos = [];
+        $params = [];
+        $types = "";
+
+        if (isset($data->jogos_id_jogo)) {
+            $campos[] = "jogos_id_jogo = ?";
+            $params[] = $data->jogos_id_jogo;
+            $types .= "i";
+        }
+        if (isset($data->equipes_id_equipe)) {
+            $campos[] = "equipes_id_equipe = ?";
+            $params[] = $data->equipes_id_equipe;
+            $types .= "i";
+        }
+        if (isset($data->resultado_partida)) {
+            $campos[] = "resultado_partida = ?";
+            $params[] = $data->resultado_partida;
+            $types .= "i";
+        }
+        if (isset($data->status_pardida)) {
+            $campos[] = "status_pardida = ?";
+            $params[] = $data->status_pardida;
+            $types .= "s";
+        }
+
+        if (empty($campos)) {
+            echo json_encode(["success" => false, "message" => "Nenhum dado enviado para atualização."]);
+            break;
+        }
+
+        $sql = "UPDATE partidas SET " . implode(", ", $campos) . " WHERE id_partida = ?";
+        $params[] = $data->id_partida;
+        $types .= "i";
+
+        $stmt = $conn->prepare($sql);
+        $stmt->bind_param($types, ...$params);
+
+        if ($stmt->execute()) {
+            echo json_encode(["success" => true, "message" => "Partida atualizada com sucesso!"]);
+        } else {
+            http_response_code(500);
+            echo json_encode(["success" => false, "message" => $conn->error]);
+        }
         break;
 
     default:

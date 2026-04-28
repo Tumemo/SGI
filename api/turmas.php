@@ -119,6 +119,11 @@ switch ($method) {
             $params[] = $data->categorias_id_categoria;
             $types .= "i";
         }
+        if (isset($data->status_turma)){
+            $campos[] = "status_turma = ?";
+            $params[] = $data->status_turma;
+            $types .= "s";
+        }
 
         if (empty($campos)) {
             echo json_encode(["success" => false, "message" => "Nenhum campo enviado para atualização."]);

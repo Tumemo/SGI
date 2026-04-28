@@ -84,7 +84,73 @@ switch ($method) {
         break;
 
     case 'PUT':
-        // Lógica de update aqui
+        case 'PUT':
+        $data = json_decode(file_get_contents("php://input"));
+
+        if (!isset($data->id_jogo)) {
+            http_response_code(400);
+            echo json_encode(["success" => false, "message" => "O ID do jogo é obrigatório."]);
+            break;
+        }
+
+        $campos = [];
+        $params = [];
+        $types = "";
+
+        if (isset($data->nome_jogo)) {
+            $campos[] = "nome_jogo = ?";
+            $params[] = $data->nome_jogo;
+            $types .= "s";
+        }
+        if (isset($data->data_jogo)) {
+            $campos[] = "data_jogo = ?";
+            $params[] = $data->data_jogo;
+            $types .= "s";
+        }
+        if (isset($data->inicio_jogo)) {
+            $campos[] = "inicio_jogo = ?";
+            $params[] = $data->inicio_jogo;
+            $types .= "s";
+        }
+        if (isset($data->termino_jogo)) {
+            $campos[] = "termino_jogo = ?";
+            $params[] = $data->termino_jogo;
+            $types .= "s";
+        }
+        if (isset($data->status_jogo)) {
+            $campos[] = "status_jogo = ?";
+            $params[] = $data->status_jogo;
+            $types .= "s";
+        }
+        if (isset($data->modalidades_id_modalidade)) {
+            $campos[] = "modalidades_id_modalidade = ?";
+            $params[] = $data->modalidades_id_modalidade;
+            $types .= "i";
+        }
+        if (isset($data->locais_id_local)) {
+            $campos[] = "locais_id_local = ?";
+            $params[] = $data->locais_id_local;
+            $types .= "i";
+        }
+
+        if (empty($campos)) {
+            echo json_encode(["success" => false, "message" => "Nenhum dado enviado para atualização."]);
+            break;
+        }
+
+        $sql = "UPDATE jogos SET " . implode(", ", $campos) . " WHERE id_jogo = ?";
+        $params[] = $data->id_jogo;
+        $types .= "i";
+
+        $stmt = $conn->prepare($sql);
+        $stmt->bind_param($types, ...$params);
+
+        if ($stmt->execute()) {
+            echo json_encode(["success" => true, "message" => "Jogo atualizado com sucesso!"]);
+        } else {
+            http_response_code(500);
+            echo json_encode(["success" => false, "message" => $conn->error]);
+        }
         break;
 
     default:
