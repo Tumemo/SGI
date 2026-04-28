@@ -7,67 +7,83 @@ $method = $_SERVER['REQUEST_METHOD'];
 
 switch ($method) {
     case 'GET':
-
         $filtro = aplicarFiltrosEquipes();
-
         $sql = "SELECT 
                     equipes.id_equipe, 
+                    equipes.status_equipe,
                     modalidades.nome_modalidade, 
-                    usuarios.nome_usuario AS representante, 
                     turmas.nome_turma,
-                    turmas.nome_fantasia_turma,
                     interclasses.nome_interclasse
                 FROM equipes 
                 INNER JOIN modalidades ON modalidades.id_modalidade = equipes.modalidades_id_modalidade 
-                INNER JOIN usuarios ON usuarios.id_usuario = equipes.usuarios_id_usuario1 
                 INNER JOIN turmas ON turmas.id_turma = equipes.turmas_id_turma
                 INNER JOIN interclasses ON interclasses.id_interclasse = turmas.interclasses_id_interclasse
                 WHERE 1=1" . $filtro['sql'];
 
         $stmt = $conn->prepare($sql);
-
         if (!empty($filtro['params'])) {
             $stmt->bind_param($filtro['types'], ...$filtro['params']);
         }
-
         $stmt->execute();
         $res = $stmt->get_result();
-        $equipes = $res->fetch_all(MYSQLI_ASSOC);
-
-        echo json_encode($equipes);
+        echo json_encode($res->fetch_all(MYSQLI_ASSOC));
         break;
 
     case 'POST':
         $data = json_decode(file_get_contents("php://input"));
 
-        if (!isset($data->modalidades_id_modalidade, $data->usuarios_id_usuario1, $data->turmas_id_turma)) {
-            http_response_code(400);
-            echo json_encode([
-                "success" => false,
-                "message" => "Dados incompletos para cadastro de equipe."
-            ]);
-            break;
-        }
+        // Pegamos a ação enviada pelo Front-end (ex: 'criar_equipe' ou 'adicionar_usuarios')
+        $acao = $data->acao ?? '';
 
-        $sql = "INSERT INTO equipes (modalidades_id_modalidade, usuarios_id_usuario1, turmas_id_turma) VALUES (?, ?, ?)";
-        $stmt = $conn->prepare($sql);
+        if ($acao === 'criar_equipe') {
+            if (!isset($data->modalidades_id_modalidade, $data->turmas_id_turma)) {
+                http_response_code(400);
+                echo json_encode(["success" => false, "message" => "Dados incompletos para criar equipa."]);
+                break;
+            }
 
-        $stmt->bind_param("iii", $data->modalidades_id_modalidade, $data->usuarios_id_usuario1, $data->turmas_id_turma);
+            $sql = "INSERT INTO equipes (modalidades_id_modalidade, turmas_id_turma, status_equipe) VALUES (?, ?, '1')";
+            $stmt = $conn->prepare($sql);
+            $stmt->bind_param("ii", $data->modalidades_id_modalidade, $data->turmas_id_turma);
 
-        if ($stmt->execute()) {
-            echo json_encode([
-                "success" => true,
-                "message" => "Equipe cadastrada com sucesso!"
-            ]);
+            if ($stmt->execute()) {
+                echo json_encode(["success" => true, "message" => "Equipa criada!", "id_equipe" => $conn->insert_id]);
+            } else {
+                echo json_encode(["success" => false, "message" => $conn->error]);
+            }
+        } elseif ($acao === 'adicionar_usuarios') {
+            // Lógica para vincular usuários à equipe (equipes_has_usuarios)
+            if (!isset($data->id_equipe, $data->usuarios)) {
+                http_response_code(400);
+                echo json_encode(["success" => false, "message" => "ID da equipa e lista de utilizadores são obrigatórios."]);
+                break;
+            }
+
+            // $data->usuarios deve ser um array de IDs: [1, 5, 10]
+            $id_equipe = $data->id_equipe;
+            $erro = false;
+
+            foreach ($data->usuarios as $id_usuario) {
+                $sql = "INSERT IGNORE INTO equipes_has_usuarios (equipes_id_equipe, usuarios_id_usuario) VALUES (?, ?)";
+                $stmt = $conn->prepare($sql);
+                $stmt->bind_param("ii", $id_equipe, $id_usuario);
+                if (!$stmt->execute()) {
+                    $erro = true;
+                }
+            }
+
+            if (!$erro) {
+                echo json_encode(["success" => true, "message" => "Utilizadores adicionados à equipa com sucesso!"]);
+            } else {
+                echo json_encode(["success" => false, "message" => "Ocorreu um erro ao adicionar alguns utilizadores."]);
+            }
         } else {
-            http_response_code(500);
-            echo json_encode([
-                "success" => false,
-                "message" => "Erro ao cadastrar: " . $conn->error
-            ]);
+            http_response_code(400);
+            echo json_encode(["success" => false, "message" => "Ação não definida ou inválida."]);
         }
         break;
-case 'PUT':
+
+    case 'PUT':
         $data = json_decode(file_get_contents("php://input"));
 
         if (!isset($data->id_equipe)) {
@@ -95,10 +111,10 @@ case 'PUT':
             $params[] = $data->turmas_id_turma;
             $types .= "i";
         }
-        if(isset($data->status_equipe)){
+        if (isset($data->status_equipe)) {
             $campos[] = "status_equipe = ?";
             $params[] = $data->status_equipe;
-            $types .= "s";   
+            $types .= "s";
         }
 
         if (empty($campos)) {
