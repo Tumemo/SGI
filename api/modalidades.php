@@ -71,8 +71,8 @@ switch ($method) {
         $stmt = $conn->prepare($sql);
         $stmt->bind_param("ssiiii",
             $data->nome_modalidade,
-            $data->$genero_modalidade,
-            $data->$max_inscritos,
+            $data->genero_modalidade,
+            $max_inscritos,
             $data->status_modalidade,
             $data->tipos_modalidades_id_tipo_modalidade,
             $data->categorias_id_categoria
@@ -86,6 +86,90 @@ switch ($method) {
         } catch (mysqli_sql_exception $e) {
             http_response_code(400);
             echo json_encode(["success" => false, "message" => "Erro de integridade (verifique IDs de categoria/tipo): " . $e->getMessage()]);
+        }
+        break;
+
+    case 'PUT':
+        case 'PUT':
+        $data = json_decode(file_get_contents("php://input"));
+
+        // O ID da modalidade é obrigatório para a atualização
+        if (!isset($data->id_modalidade)) {
+            http_response_code(400);
+            echo json_encode(["success" => false, "message" => "O ID da modalidade é obrigatório."]);
+            break;
+        }
+
+        $campos = [];
+        $params = [];
+        $types = "";
+
+        // Verificação dinâmica de cada campo do seu SQL
+        if (isset($data->nome_modalidade)) {
+            $campos[] = "nome_modalidade = ?";
+            $params[] = $data->nome_modalidade;
+            $types .= "s";
+        }
+
+        if (isset($data->genero_modalidade)) {
+            $campos[] = "genero_modalidade = ?";
+            $params[] = $data->genero_modalidade;
+            $types .= "s";
+        }
+
+        if (isset($data->max_inscrito_modalidade)) {
+            $campos[] = "max_inscrito_modalidade = ?";
+            $params[] = $data->max_inscrito_modalidade;
+            $types .= "i";
+        }
+
+        if (isset($data->status_modalidade)) {
+            $campos[] = "status_modalidade = ?";
+            $params[] = $data->status_modalidade;
+            $types .= "s"; 
+        }
+
+        if (isset($data->tipos_modalidades_id_tipo_modalidade)) {
+            $campos[] = "tipos_modalidades_id_tipo_modalidade = ?";
+            $params[] = $data->tipos_modalidades_id_tipo_modalidade;
+            $types .= "i";
+        }
+
+        if (isset($data->categorias_id_categoria)) {
+            $campos[] = "categorias_id_categoria = ?";
+            $params[] = $data->categorias_id_categoria;
+            $types .= "i";
+        }
+
+        if (isset($data->interclasses_id_interclasse)) {
+            $campos[] = "interclasses_id_interclasse = ?";
+            $params[] = $data->interclasses_id_interclasse;
+            $types .= "i";
+        }
+
+        // Verifica se houve alguma alteração enviada
+        if (empty($campos)) {
+            echo json_encode(["success" => false, "message" => "Nenhum dado fornecido para atualização."]);
+            break;
+        }
+
+        // Monta a Query SQL
+        $sql = "UPDATE modalidades SET " . implode(", ", $campos) . " WHERE id_modalidade = ?";
+        
+        // Adiciona o ID para o WHERE
+        $params[] = $data->id_modalidade;
+        $types .= "i";
+
+        $stmt = $conn->prepare($sql);
+        
+        // Descompacta os parâmetros
+        $stmt->bind_param($types, ...$params);
+
+        if ($stmt->execute()) {
+            echo json_encode(["success" => true, "message" => "Modalidade atualizada com sucesso!"]);
+        } else {
+            http_response_code(500);
+            echo json_encode(["success" => false, "message" => "Erro no banco: " . $conn->error]);
         }
         break;
 

@@ -95,6 +95,11 @@ case 'PUT':
             $params[] = $data->turmas_id_turma;
             $types .= "i";
         }
+        if(isset($data->status_equipe)){
+            $campos[] = "status_equipe = ?";
+            $params[] = $data->status_equipe;
+            $types .= "s";   
+        }
 
         if (empty($campos)) {
             echo json_encode(["success" => false, "message" => "Nenhum campo enviado para atualização."]);

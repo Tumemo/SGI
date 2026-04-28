@@ -57,24 +57,50 @@ switch ($method) {
             ]);
         }
         break;
-    case 'PUT':
+case 'PUT':
         $data = json_decode(file_get_contents("php://input"));
 
-        if (!isset($data->id_tipo_modalidade, $data->nome_tipo_modalidade)) {
+        if (!isset($data->id_tipo_modalidade)) {
             http_response_code(400);
-            echo json_encode(["success" => false, "message" => "ID e Nome são obrigatórios."]);
+            echo json_encode(["success" => false, "message" => "O ID do tipo de modalidade é obrigatório."]);
             break;
         }
 
-        $sql = "UPDATE tipos_modalidades SET nome_tipo_modalidade = ? WHERE id_tipo_modalidade = ?";
+        $campos = [];
+        $params = [];
+        $types = "";
+
+        if (isset($data->nome_tipo_modalidade)) {
+            $campos[] = "nome_tipo_modalidade = ?";
+            $params[] = $data->nome_tipo_modalidade;
+            $types .= "s"; 
+        }
+        
+        if (isset($data->status_tipo_modalidade)) {
+            $campos[] = "status_tipo_modalidade = ?";
+            $params[] = $data->status_tipo_modalidade;
+            $types .= "s"; 
+        }
+
+        if (empty($campos)) {
+            echo json_encode(["success" => false, "message" => "Nenhum dado enviado para atualização."]);
+            break;
+        }
+
+        $sql = "UPDATE tipos_modalidades SET " . implode(", ", $campos) . " WHERE id_tipo_modalidade = ?";
+        
+        $params[] = $data->id_tipo_modalidade;
+        $types .= "i"; 
+
         $stmt = $conn->prepare($sql);
-        $stmt->bind_param("si", $data->nome_tipo_modalidade, $data->id_tipo_modalidade);
+        
+        $stmt->bind_param($types, ...$params);
 
         if ($stmt->execute()) {
             echo json_encode(["success" => true, "message" => "Tipo de modalidade atualizado com sucesso!"]);
         } else {
             http_response_code(500);
-            echo json_encode(["success" => false, "message" => $conn->error]);
+            echo json_encode(["success" => false, "message" => "Erro ao atualizar: " . $conn->error]);
         }
         break;
     default:

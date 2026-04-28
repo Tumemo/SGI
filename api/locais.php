@@ -58,26 +58,60 @@ switch ($method) {
         }
         break;
 
-    case 'PUT':
-        $data = json_decode(file_get_contents("php://input"));
+case 'PUT':
+    $data = json_decode(file_get_contents("php://input"));
 
-        if (!isset($data->id_local, $data->nome_local)) {
-            http_response_code(400);
-            echo json_encode(["success" => false, "message" => "ID e nome são obrigatórios."]);
-            break;
-        }
+    if (!isset($data->id_local)) {
+        http_response_code(400);
+        echo json_encode(["success" => false, "message" => "O ID do local é obrigatório."]);
+        break;
+    }
 
-        $sql = "UPDATE locais SET nome_local = ? WHERE id_local = ?";
-        $stmt = $conn->prepare($sql);
-        $stmt->bind_param("si", $data->nome_local, $data->id_local);
+    $campos = [];
+    $params = [];
+    $types = "";
+    if (isset($data->nome_local)) {
+        $campos[] = "nome_local = ?";
+        $params[] = $data->nome_local;
+        $types .= "s"; 
+    }
+    if (isset($data->status_local)) {
+        $campos[] = "status_local = ?";
+        $params[] = $data->status_local;
+        $types .= "s";
+    }
+    if (isset($data->disponivel_local)) {
+        $campos[] = "disponivel_local = ?";
+        $params[] = $data->disponivel_local;
+        $types .= "i";
+    }
 
-        if ($stmt->execute()) {
-            echo json_encode(["success" => true, "message" => "Local atualizado com sucesso!"]);
-        } else {
-            http_response_code(500);
-            echo json_encode(["success" => false, "message" => $conn->error]);
-        }
-        break;;
+
+    if (empty($campos)) {
+        http_response_code(400);
+        echo json_encode(["success" => false, "message" => "Nenhum campo enviado para atualização."]);
+        break;
+    }
+
+    // Monta a SQL dinamicamente
+    $sql = "UPDATE locais SET " . implode(", ", $campos) . " WHERE id_local = ?";
+    
+    // Adiciona o ID ao final dos parâmetros e tipos
+    $params[] = $data->id_local;
+    $types .= "i"; // 'i' para integer
+
+    $stmt = $conn->prepare($sql);
+    
+    // O operador '...' (splat operator) desempacota o array de parâmetros
+    $stmt->bind_param($types, ...$params);
+
+    if ($stmt->execute()) {
+        echo json_encode(["success" => true, "message" => "Local atualizado com sucesso!"]);
+    } else {
+        http_response_code(500);
+        echo json_encode(["success" => false, "message" => "Erro ao atualizar: " . $conn->error]);
+    }
+    break;
 
     default:
         http_response_code(405);

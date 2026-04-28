@@ -69,23 +69,64 @@ switch ($method) {
         break;
 
     case 'PUT':
+case 'PUT':
         $data = json_decode(file_get_contents("php://input"));
 
-        if (!isset($data->id_ocorrecia, $data->titulo_ocorrecia, $data->descricao_ocorrecia, $data->penalidade)) {
+        // Apenas o ID é estritamente obrigatório para localizar o registro
+        if (!isset($data->id_ocorrecia)) {
             http_response_code(400);
-            echo json_encode(["success" => false, "message" => "Dados incompletos."]);
+            echo json_encode(["success" => false, "message" => "O ID da ocorrência é obrigatório."]);
             break;
         }
 
-        $sql = "UPDATE ocorrencias SET titulo_ocorrecia = ?, descricao_ocorrecia = ?, penalidade = ? WHERE id_ocorrecia = ?";
+        $campos = [];
+        $params = [];
+        $types = "";
+
+        // Verificação dinâmica de cada campo
+        if (isset($data->titulo_ocorrecia)) {
+            $campos[] = "titulo_ocorrecia = ?";
+            $params[] = $data->titulo_ocorrecia;
+            $types .= "s"; // string
+        }
+
+        if (isset($data->descricao_ocorrecia)) {
+            $campos[] = "descricao_ocorrecia = ?";
+            $params[] = $data->descricao_ocorrecia;
+            $types .= "s"; 
+        }
+        if (isset($data->status_ocorrecia)) {
+            $campos[] = "status_ocorrecia = ?";
+            $params[] = $data->status_ocorrecia;
+            $types .= "s"; 
+        }
+
+        if (isset($data->penalidade)) {
+            $campos[] = "penalidade = ?";
+            $params[] = $data->penalidade;
+            $types .= "i"; 
+        }
+
+        if (empty($campos)) {
+            echo json_encode(["success" => false, "message" => "Nenhum dado fornecido para atualização."]);
+            break;
+        }
+
+        $sql = "UPDATE ocorrencias SET " . implode(", ", $campos) . " WHERE id_ocorrecia = ?";
+        
+
+        $params[] = $data->id_ocorrecia;
+        $types .= "i";
+
         $stmt = $conn->prepare($sql);
-        $stmt->bind_param("ssii", $data->titulo_ocorrecia, $data->descricao_ocorrecia, $data->penalidade, $data->id_ocorrecia);
+    
+        $stmt->bind_param($types, ...$params);
 
         if ($stmt->execute()) {
-            echo json_encode(["success" => true, "message" => "Ocorrência atualizada!"]);
+            echo json_encode(["success" => true, "message" => "Ocorrência atualizada com sucesso!"]);
         } else {
             http_response_code(500);
-            echo json_encode(["success" => false, "message" => $conn->error]);
+            echo json_encode(["success" => false, "message" => "Erro ao atualizar: " . $conn->error]);
         }
         break;
 }

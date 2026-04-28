@@ -30,12 +30,9 @@ switch ($method) {
         break;
 
     case 'POST':
-    case 'PUT':
         $id = $_GET['id'] ?? null;
 
         if ($id) {
-            // Se for PUT, o PHP não preenche $_POST automaticamente. 
-            // Para testes rápidos, usamos $_REQUEST ou garantimos o envio via POST no Postman.
             $dados = ($method === 'PUT') ? $_GET : $_POST; 
             
             $campos = [];
@@ -60,6 +57,12 @@ switch ($method) {
                     $types .= "s";
                 }
             }
+            if (isset($_POST['status_interclasse'])) {
+                $campos[] = "status_interclasse = ?";
+                $params[] = $_POST['status_interclasse'];
+                $types .= "s";
+            }
+            
 
             if (empty($campos)) {
                 echo json_encode(["success" => false, "message" => "Dica: Use o método POST no Postman para enviar form-data corretamente."]);
