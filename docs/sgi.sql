@@ -1,319 +1,525 @@
--- MySQL Workbench Forward Engineering
+-- phpMyAdmin SQL Dump
+-- version 5.2.1
+-- https://www.phpmyadmin.net/
+--
+-- Host: 127.0.0.1
+-- Tempo de geração: 28/04/2026 às 20:16
+-- Versão do servidor: 10.4.32-MariaDB
+-- Versão do PHP: 8.2.12
 
-SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0;
-SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0;
-SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION';
-
--- -----------------------------------------------------
--- Schema sgi
--- -----------------------------------------------------
-CREATE SCHEMA IF NOT EXISTS `sgi` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci ;
-USE `sgi` ;
-
--- -----------------------------------------------------
--- Table `sgi`.`locais`
--- -----------------------------------------------------
-CREATE TABLE IF NOT EXISTS `sgi`.`locais` (
-  `id_local` INT NOT NULL AUTO_INCREMENT,
-  `nome_local` VARCHAR(45) NOT NULL,
-  `disponivel_local` ENUM('0', '1') NOT NULL DEFAULT '1',
-  `carga_local` INT NULL DEFAULT NULL,
-  `status_local` ENUM('1', '0') NOT NULL,
-  PRIMARY KEY (`id_local`))
-ENGINE = InnoDB
-AUTO_INCREMENT = 4
-DEFAULT CHARACTER SET = utf8mb3;
+SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
+START TRANSACTION;
+SET time_zone = "+00:00";
 
 
--- -----------------------------------------------------
--- Table `sgi`.`categorias`
--- -----------------------------------------------------
-CREATE TABLE IF NOT EXISTS `sgi`.`categorias` (
-  `id_categoria` INT NOT NULL AUTO_INCREMENT,
-  `nome_categoria` VARCHAR(45) NULL DEFAULT NULL,
-  `status_categoria` ENUM('1', '0') NOT NULL,
-  PRIMARY KEY (`id_categoria`))
-ENGINE = InnoDB
-AUTO_INCREMENT = 4
-DEFAULT CHARACTER SET = utf8mb4
-COLLATE = utf8mb4_0900_ai_ci;
+/*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
+/*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
+/*!40101 SET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION */;
+/*!40101 SET NAMES utf8mb4 */;
 
+--
+-- Banco de dados: `sgi`
+--
 
--- -----------------------------------------------------
--- Table `sgi`.`tipos_modalidades`
--- -----------------------------------------------------
-CREATE TABLE IF NOT EXISTS `sgi`.`tipos_modalidades` (
-  `id_tipo_modalidade` INT NOT NULL AUTO_INCREMENT,
-  `nome_tipo_modalidade` VARCHAR(45) NOT NULL,
-  `status_tipo_modalidade` ENUM('1', '0') NOT NULL,
-  PRIMARY KEY (`id_tipo_modalidade`))
-ENGINE = InnoDB
-AUTO_INCREMENT = 5
-DEFAULT CHARACTER SET = utf8mb3;
+-- --------------------------------------------------------
 
+--
+-- Estrutura para tabela `artilheiros`
+--
 
--- -----------------------------------------------------
--- Table `sgi`.`interclasses`
--- -----------------------------------------------------
-CREATE TABLE IF NOT EXISTS `sgi`.`interclasses` (
-  `id_interclasse` INT NOT NULL AUTO_INCREMENT,
-  `nome_interclasse` VARCHAR(45) NULL DEFAULT NULL,
-  `ano_interclasse` DATETIME NULL DEFAULT NULL,
-  `regulamento_interclasse` VARCHAR(255) NULL DEFAULT NULL,
-  `status_interclasse` ENUM('1', '0') NOT NULL,
-  PRIMARY KEY (`id_interclasse`))
-ENGINE = InnoDB
-AUTO_INCREMENT = 4
-DEFAULT CHARACTER SET = utf8mb4
-COLLATE = utf8mb4_0900_ai_ci;
+CREATE TABLE `artilheiros` (
+  `id_artilheiro` int(11) NOT NULL,
+  `usuarios_id_usuario` int(11) NOT NULL,
+  `jogos_id_jogo` int(11) NOT NULL,
+  `num_gol` int(11) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci;
 
+-- --------------------------------------------------------
 
--- -----------------------------------------------------
--- Table `sgi`.`modalidades`
--- -----------------------------------------------------
-CREATE TABLE IF NOT EXISTS `sgi`.`modalidades` (
-  `id_modalidade` INT NOT NULL AUTO_INCREMENT,
-  `nome_modalidade` VARCHAR(45) NOT NULL,
-  `genero_modalidade` ENUM('FEM', 'MASC', 'MISTO') NOT NULL,
-  `max_inscrito_modalidade` INT NULL DEFAULT NULL,
-  `status_modalidade` ENUM('1', '0') NOT NULL,
-  `tipos_modalidades_id_tipo_modalidade` INT NOT NULL,
-  `categorias_id_categoria` INT NOT NULL,
-  `interclasses_id_interclasse` INT NOT NULL,
-  PRIMARY KEY (`id_modalidade`),
-  INDEX `fk_modalidades_tipos_modalidades1_idx` (`tipos_modalidades_id_tipo_modalidade` ASC),
-  INDEX `fk_modalidades_categorias1_idx` (`categorias_id_categoria` ASC),
-  INDEX `fk_modalidades_interclasses1_idx` (`interclasses_id_interclasse` ASC),
-  CONSTRAINT `fk_modalidades_categorias1`
-    FOREIGN KEY (`categorias_id_categoria`)
-    REFERENCES `sgi`.`categorias` (`id_categoria`),
-  CONSTRAINT `fk_modalidades_tipos_modalidades1`
-    FOREIGN KEY (`tipos_modalidades_id_tipo_modalidade`)
-    REFERENCES `sgi`.`tipos_modalidades` (`id_tipo_modalidade`),
-  CONSTRAINT `fk_modalidades_interclasses1`
-    FOREIGN KEY (`interclasses_id_interclasse`)
-    REFERENCES `sgi`.`interclasses` (`id_interclasse`)
-    ON DELETE NO ACTION
-    ON UPDATE NO ACTION)
-ENGINE = InnoDB
-AUTO_INCREMENT = 4
-DEFAULT CHARACTER SET = utf8mb3;
+--
+-- Estrutura para tabela `categorias`
+--
 
+CREATE TABLE `categorias` (
+  `id_categoria` int(11) NOT NULL,
+  `nome_categoria` varchar(45) DEFAULT NULL,
+  `status_categoria` enum('1','0') NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
--- -----------------------------------------------------
--- Table `sgi`.`jogos`
--- -----------------------------------------------------
-CREATE TABLE IF NOT EXISTS `sgi`.`jogos` (
-  `id_jogo` INT NOT NULL AUTO_INCREMENT,
-  `nome_jogo` VARCHAR(45) NOT NULL,
-  `data_jogo` DATE NOT NULL,
-  `inicio_jogo` TIME NOT NULL,
-  `termino_jogo` TIME NULL DEFAULT NULL,
-  `status_jogo` ENUM('Agendado', 'Iniciado', 'Pausado', 'Concluido') NOT NULL,
-  `modalidades_id_modalidade` INT NOT NULL,
-  `locais_id_local` INT NOT NULL,
-  PRIMARY KEY (`id_jogo`),
-  INDEX `fk_jogos_modalidades1_idx` (`modalidades_id_modalidade` ASC),
-  INDEX `fk_jogos_locais1_idx` (`locais_id_local` ASC),
-  CONSTRAINT `fk_jogos_locais1`
-    FOREIGN KEY (`locais_id_local`)
-    REFERENCES `sgi`.`locais` (`id_local`),
-  CONSTRAINT `fk_jogos_modalidades1`
-    FOREIGN KEY (`modalidades_id_modalidade`)
-    REFERENCES `sgi`.`modalidades` (`id_modalidade`))
-ENGINE = InnoDB
-AUTO_INCREMENT = 4
-DEFAULT CHARACTER SET = utf8mb3;
+-- --------------------------------------------------------
 
+--
+-- Estrutura para tabela `equipes`
+--
 
--- -----------------------------------------------------
--- Table `sgi`.`turmas`
--- -----------------------------------------------------
-CREATE TABLE IF NOT EXISTS `sgi`.`turmas` (
-  `id_turma` INT NOT NULL AUTO_INCREMENT,
-  `interclasses_id_interclasse` INT NOT NULL,
-  `nome_turma` VARCHAR(45) NULL DEFAULT NULL,
-  `turno_turma` ENUM('manha', 'tarde', 'noite', 'integral') NULL DEFAULT NULL,
-  `nome_fantasia_turma` VARCHAR(45) NULL DEFAULT NULL,
-  `status_turma` ENUM('1', '0') NULL DEFAULT NULL,
-  `categorias_id_categoria` INT NOT NULL,
-  PRIMARY KEY (`id_turma`),
-  INDEX `fk_turmas_interclasses1_idx` (`interclasses_id_interclasse` ASC),
-  INDEX `fk_turmas_categorias1_idx` (`categorias_id_categoria` ASC),
-  CONSTRAINT `fk_turmas_categorias1`
-    FOREIGN KEY (`categorias_id_categoria`)
-    REFERENCES `sgi`.`categorias` (`id_categoria`),
-  CONSTRAINT `fk_turmas_interclasses1`
-    FOREIGN KEY (`interclasses_id_interclasse`)
-    REFERENCES `sgi`.`interclasses` (`id_interclasse`))
-ENGINE = InnoDB
-AUTO_INCREMENT = 4
-DEFAULT CHARACTER SET = utf8mb4
-COLLATE = utf8mb4_0900_ai_ci;
+CREATE TABLE `equipes` (
+  `id_equipe` int(11) NOT NULL,
+  `status_equipe` enum('1','0') NOT NULL,
+  `modalidades_id_modalidade` int(11) NOT NULL,
+  `turmas_id_turma` int(11) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci;
 
+-- --------------------------------------------------------
 
--- -----------------------------------------------------
--- Table `sgi`.`usuarios`
--- -----------------------------------------------------
-CREATE TABLE IF NOT EXISTS `sgi`.`usuarios` (
-  `id_usuario` INT NOT NULL AUTO_INCREMENT,
-  `sigla_usuario` ENUM('RM', 'SS', 'SN') NULL DEFAULT NULL,
-  `matricula_usuario` VARCHAR(20) NOT NULL,
-  `nome_usuario` VARCHAR(45) NOT NULL,
-  `senha_usuario` VARCHAR(200) NOT NULL,
-  `nivel_usuario` ENUM('0', '1', '2') NOT NULL DEFAULT '0',
-  `competidor_usuario` ENUM('0', '1') NOT NULL DEFAULT '0',
-  `mesario_usuario` ENUM('0', '1') NOT NULL DEFAULT '0',
-  `genero_usuario` ENUM('FEM', 'MASC') NOT NULL,
-  `data_nasc_usuario` DATE NOT NULL,
-  `foto_usuario` VARCHAR(255) NOT NULL,
-  `status_usuario` ENUM('0', '1') NOT NULL,
-  `turmas_id_turma` INT NOT NULL,
-  PRIMARY KEY (`id_usuario`),
-  UNIQUE INDEX `matricula_usuario_UNIQUE` (`matricula_usuario` ASC),
-  INDEX `fk_usuarios_turmas1_idx` (`turmas_id_turma` ASC),
-  CONSTRAINT `fk_usuarios_turmas1`
-    FOREIGN KEY (`turmas_id_turma`)
-    REFERENCES `sgi`.`turmas` (`id_turma`))
-ENGINE = InnoDB
-AUTO_INCREMENT = 4
-DEFAULT CHARACTER SET = utf8mb3;
+--
+-- Estrutura para tabela `equipes_has_usuarios`
+--
 
+CREATE TABLE `equipes_has_usuarios` (
+  `equipes_id_equipe` int(11) NOT NULL,
+  `usuarios_id_usuario` int(11) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci;
 
--- -----------------------------------------------------
--- Table `sgi`.`artilheiros`
--- -----------------------------------------------------
-CREATE TABLE IF NOT EXISTS `sgi`.`artilheiros` (
-  `id_artilheiro` INT NOT NULL AUTO_INCREMENT,
-  `usuarios_id_usuario` INT NOT NULL,
-  `jogos_id_jogo` INT NOT NULL,
-  `num_gol` INT NOT NULL,
-  PRIMARY KEY (`id_artilheiro`),
-  INDEX `fk_usuarios_has_jogos_jogos1_idx` (`jogos_id_jogo` ASC),
-  INDEX `fk_usuarios_has_jogos_usuarios1_idx` (`usuarios_id_usuario` ASC),
-  CONSTRAINT `fk_usuarios_has_jogos_jogos1`
-    FOREIGN KEY (`jogos_id_jogo`)
-    REFERENCES `sgi`.`jogos` (`id_jogo`),
-  CONSTRAINT `fk_usuarios_has_jogos_usuarios1`
-    FOREIGN KEY (`usuarios_id_usuario`)
-    REFERENCES `sgi`.`usuarios` (`id_usuario`))
-ENGINE = InnoDB
-DEFAULT CHARACTER SET = utf8mb3;
+-- --------------------------------------------------------
 
+--
+-- Estrutura para tabela `interclasses`
+--
 
--- -----------------------------------------------------
--- Table `sgi`.`equipes`
--- -----------------------------------------------------
-CREATE TABLE IF NOT EXISTS `sgi`.`equipes` (
-  `id_equipe` INT NOT NULL AUTO_INCREMENT,
-  `status_equipe` ENUM('1', '0') NOT NULL,
-  `modalidades_id_modalidade` INT NOT NULL,
-  `usuarios_id_usuario1` INT NOT NULL,
-  `turmas_id_turma` INT NOT NULL,
-  PRIMARY KEY (`id_equipe`),
-  INDEX `fk_equipes_modalidades1_idx` (`modalidades_id_modalidade` ASC),
-  INDEX `fk_equipes_usuarios1_idx` (`usuarios_id_usuario1` ASC),
-  INDEX `fk_equipes_turmas1_idx` (`turmas_id_turma` ASC),
-  CONSTRAINT `fk_equipes_modalidades1`
-    FOREIGN KEY (`modalidades_id_modalidade`)
-    REFERENCES `sgi`.`modalidades` (`id_modalidade`),
-  CONSTRAINT `fk_equipes_turmas1`
-    FOREIGN KEY (`turmas_id_turma`)
-    REFERENCES `sgi`.`turmas` (`id_turma`),
-  CONSTRAINT `fk_equipes_usuarios1`
-    FOREIGN KEY (`usuarios_id_usuario1`)
-    REFERENCES `sgi`.`usuarios` (`id_usuario`))
-ENGINE = InnoDB
-AUTO_INCREMENT = 2
-DEFAULT CHARACTER SET = utf8mb3;
+CREATE TABLE `interclasses` (
+  `id_interclasse` int(11) NOT NULL,
+  `nome_interclasse` varchar(45) DEFAULT NULL,
+  `ano_interclasse` datetime DEFAULT NULL,
+  `regulamento_interclasse` varchar(255) DEFAULT NULL,
+  `status_interclasse` enum('1','0') NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+-- --------------------------------------------------------
 
--- -----------------------------------------------------
--- Table `sgi`.`ocorrencias`
--- -----------------------------------------------------
-CREATE TABLE IF NOT EXISTS `sgi`.`ocorrencias` (
-  `id_ocorrecia` INT NOT NULL AUTO_INCREMENT,
-  `titulo_ocorrecia` VARCHAR(45) NOT NULL,
-  `descricao_ocorrecia` LONGTEXT NOT NULL,
-  `data_ocorrecia` DATETIME NOT NULL,
-  `penalidade` INT NULL DEFAULT '0',
-  `status_ocorrencia` ENUM('1', '0') NOT NULL,
-  `usuarios_id_usuario` INT NOT NULL,
-  PRIMARY KEY (`id_ocorrecia`),
-  INDEX `fk_ocorrencias_usuarios1_idx` (`usuarios_id_usuario` ASC),
-  CONSTRAINT `fk_ocorrencias_usuarios1`
-    FOREIGN KEY (`usuarios_id_usuario`)
-    REFERENCES `sgi`.`usuarios` (`id_usuario`))
-ENGINE = InnoDB
-AUTO_INCREMENT = 2
-DEFAULT CHARACTER SET = utf8mb3;
+--
+-- Estrutura para tabela `jogos`
+--
 
+CREATE TABLE `jogos` (
+  `id_jogo` int(11) NOT NULL,
+  `nome_jogo` varchar(45) NOT NULL,
+  `data_jogo` date NOT NULL,
+  `inicio_jogo` time NOT NULL,
+  `termino_jogo` time DEFAULT NULL,
+  `status_jogo` enum('Agendado','Iniciado','Pausado','Concluido') NOT NULL,
+  `modalidades_id_modalidade` int(11) NOT NULL,
+  `locais_id_local` int(11) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci;
 
--- -----------------------------------------------------
--- Table `sgi`.`partidas`
--- -----------------------------------------------------
-CREATE TABLE IF NOT EXISTS `sgi`.`partidas` (
-  `id_partida` INT NOT NULL AUTO_INCREMENT,
-  `jogos_id_jogo` INT NOT NULL,
-  `equipes_id_equipe` INT NOT NULL,
-  `resultado_partida` INT NOT NULL DEFAULT '0',
-  `status_pardida` ENUM('1', '0') NOT NULL,
-  PRIMARY KEY (`id_partida`),
-  INDEX `fk_jogos_has_equipes_equipes1_idx` (`equipes_id_equipe` ASC),
-  INDEX `fk_jogos_has_equipes_jogos1_idx` (`jogos_id_jogo` ASC),
-  CONSTRAINT `fk_jogos_has_equipes_equipes1`
-    FOREIGN KEY (`equipes_id_equipe`)
-    REFERENCES `sgi`.`equipes` (`id_equipe`),
-  CONSTRAINT `fk_jogos_has_equipes_jogos1`
-    FOREIGN KEY (`jogos_id_jogo`)
-    REFERENCES `sgi`.`jogos` (`id_jogo`))
-ENGINE = InnoDB
-DEFAULT CHARACTER SET = utf8mb3;
+-- --------------------------------------------------------
 
+--
+-- Estrutura para tabela `locais`
+--
 
--- -----------------------------------------------------
--- Table `sgi`.`pontuacoes`
--- -----------------------------------------------------
-CREATE TABLE IF NOT EXISTS `sgi`.`pontuacoes` (
-  `id_pontuacao` INT NOT NULL AUTO_INCREMENT,
-  `nome_pontuacao` VARCHAR(45) NULL DEFAULT NULL,
-  `valor_pontuacao` INT NULL DEFAULT NULL,
-  `jogos_id_jogo` INT NULL DEFAULT NULL,
-  `usuarios_id_usuario` INT NULL DEFAULT NULL,
-  PRIMARY KEY (`id_pontuacao`),
-  INDEX `fk_pontuacoes_jogos1_idx` (`jogos_id_jogo` ASC),
-  INDEX `fk_pontuacoes_usuarios1_idx` (`usuarios_id_usuario` ASC),
-  CONSTRAINT `fk_pontuacoes_jogos1`
-    FOREIGN KEY (`jogos_id_jogo`)
-    REFERENCES `sgi`.`jogos` (`id_jogo`),
-  CONSTRAINT `fk_pontuacoes_usuarios1`
-    FOREIGN KEY (`usuarios_id_usuario`)
-    REFERENCES `sgi`.`usuarios` (`id_usuario`))
-ENGINE = InnoDB
-DEFAULT CHARACTER SET = utf8mb3;
+CREATE TABLE `locais` (
+  `id_local` int(11) NOT NULL,
+  `nome_local` varchar(45) NOT NULL,
+  `disponivel_local` enum('0','1') NOT NULL DEFAULT '1',
+  `carga_local` int(11) DEFAULT NULL,
+  `status_local` enum('1','0') NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci;
 
+-- --------------------------------------------------------
 
--- -----------------------------------------------------
--- Table `sgi`.`usuarios_has_interclasses`
--- -----------------------------------------------------
-CREATE TABLE IF NOT EXISTS `sgi`.`usuarios_has_interclasses` (
-  `usuarios_id_usuario` INT NOT NULL,
-  `interclasses_id_interclasse` INT NOT NULL,
-  `dt_hr_aceita` DATETIME NULL DEFAULT NULL,
-  `aceito_termo` ENUM('sim', 'não') NULL DEFAULT 'não',
-  `status_termo` VARCHAR(45) NOT NULL,
-  INDEX `fk_usuarios_has_interclasses_interclasses1_idx` (`interclasses_id_interclasse` ASC),
-  INDEX `fk_usuarios_has_interclasses_usuarios1_idx` (`usuarios_id_usuario` ASC),
-  CONSTRAINT `fk_usuarios_has_interclasses_interclasses1`
-    FOREIGN KEY (`interclasses_id_interclasse`)
-    REFERENCES `sgi`.`interclasses` (`id_interclasse`),
-  CONSTRAINT `fk_usuarios_has_interclasses_usuarios1`
-    FOREIGN KEY (`usuarios_id_usuario`)
-    REFERENCES `sgi`.`usuarios` (`id_usuario`))
-ENGINE = InnoDB
-DEFAULT CHARACTER SET = utf8mb3;
+--
+-- Estrutura para tabela `modalidades`
+--
 
+CREATE TABLE `modalidades` (
+  `id_modalidade` int(11) NOT NULL,
+  `nome_modalidade` varchar(45) NOT NULL,
+  `genero_modalidade` enum('FEM','MASC','MISTO') NOT NULL,
+  `max_inscrito_modalidade` int(11) DEFAULT NULL,
+  `status_modalidade` enum('1','0') NOT NULL,
+  `tipos_modalidades_id_tipo_modalidade` int(11) NOT NULL,
+  `categorias_id_categoria` int(11) NOT NULL,
+  `interclasses_id_interclasse` int(11) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci;
 
-SET SQL_MODE=@OLD_SQL_MODE;
-SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS;
-SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS;
+-- --------------------------------------------------------
+
+--
+-- Estrutura para tabela `ocorrencias`
+--
+
+CREATE TABLE `ocorrencias` (
+  `id_ocorrecia` int(11) NOT NULL,
+  `titulo_ocorrecia` varchar(45) NOT NULL,
+  `descricao_ocorrecia` longtext NOT NULL,
+  `data_ocorrecia` datetime NOT NULL,
+  `penalidade` int(11) DEFAULT 0,
+  `status_ocorrencia` enum('1','0') NOT NULL,
+  `usuarios_id_usuario` int(11) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Estrutura para tabela `partidas`
+--
+
+CREATE TABLE `partidas` (
+  `id_partida` int(11) NOT NULL,
+  `jogos_id_jogo` int(11) NOT NULL,
+  `equipes_id_equipe` int(11) NOT NULL,
+  `resultado_partida` int(11) NOT NULL DEFAULT 0,
+  `status_pardida` enum('1','0') NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Estrutura para tabela `pontuacoes`
+--
+
+CREATE TABLE `pontuacoes` (
+  `id_pontuacao` int(11) NOT NULL,
+  `nome_pontuacao` varchar(45) DEFAULT NULL,
+  `valor_pontuacao` int(11) DEFAULT NULL,
+  `jogos_id_jogo` int(11) DEFAULT NULL,
+  `usuarios_id_usuario` int(11) DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Estrutura para tabela `tipos_modalidades`
+--
+
+CREATE TABLE `tipos_modalidades` (
+  `id_tipo_modalidade` int(11) NOT NULL,
+  `nome_tipo_modalidade` varchar(45) NOT NULL,
+  `status_tipo_modalidade` enum('1','0') NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Estrutura para tabela `turmas`
+--
+
+CREATE TABLE `turmas` (
+  `id_turma` int(11) NOT NULL,
+  `interclasses_id_interclasse` int(11) NOT NULL,
+  `nome_turma` varchar(45) DEFAULT NULL,
+  `turno_turma` enum('manha','tarde','noite','integral') DEFAULT NULL,
+  `nome_fantasia_turma` varchar(45) DEFAULT NULL,
+  `status_turma` enum('1','0') DEFAULT NULL,
+  `categorias_id_categoria` int(11) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Estrutura para tabela `usuarios`
+--
+
+CREATE TABLE `usuarios` (
+  `id_usuario` int(11) NOT NULL,
+  `sigla_usuario` enum('RM','SS','SN') DEFAULT NULL,
+  `matricula_usuario` varchar(20) NOT NULL,
+  `nome_usuario` varchar(45) NOT NULL,
+  `senha_usuario` varchar(200) NOT NULL,
+  `nivel_usuario` enum('0','1','2') NOT NULL DEFAULT '0',
+  `competidor_usuario` enum('0','1') NOT NULL DEFAULT '0',
+  `mesario_usuario` enum('0','1') NOT NULL DEFAULT '0',
+  `genero_usuario` enum('FEM','MASC') NOT NULL,
+  `data_nasc_usuario` date NOT NULL,
+  `foto_usuario` varchar(255) NOT NULL,
+  `status_usuario` enum('0','1') NOT NULL,
+  `turmas_id_turma` int(11) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Estrutura para tabela `usuarios_has_interclasses`
+--
+
+CREATE TABLE `usuarios_has_interclasses` (
+  `usuarios_id_usuario` int(11) NOT NULL,
+  `interclasses_id_interclasse` int(11) NOT NULL,
+  `dt_hr_aceita` datetime DEFAULT NULL,
+  `aceito_termo` enum('sim','não') DEFAULT 'não',
+  `status_termo` varchar(45) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci;
+
+--
+-- Índices para tabelas despejadas
+--
+
+--
+-- Índices de tabela `artilheiros`
+--
+ALTER TABLE `artilheiros`
+  ADD PRIMARY KEY (`id_artilheiro`),
+  ADD KEY `fk_usuarios_has_jogos_jogos1_idx` (`jogos_id_jogo`),
+  ADD KEY `fk_usuarios_has_jogos_usuarios1_idx` (`usuarios_id_usuario`);
+
+--
+-- Índices de tabela `categorias`
+--
+ALTER TABLE `categorias`
+  ADD PRIMARY KEY (`id_categoria`);
+
+--
+-- Índices de tabela `equipes`
+--
+ALTER TABLE `equipes`
+  ADD PRIMARY KEY (`id_equipe`),
+  ADD KEY `fk_equipes_modalidades1_idx` (`modalidades_id_modalidade`),
+  ADD KEY `fk_equipes_turmas1_idx` (`turmas_id_turma`);
+
+--
+-- Índices de tabela `equipes_has_usuarios`
+--
+ALTER TABLE `equipes_has_usuarios`
+  ADD PRIMARY KEY (`equipes_id_equipe`,`usuarios_id_usuario`),
+  ADD KEY `fk_equipes_has_usuarios_usuarios1_idx` (`usuarios_id_usuario`),
+  ADD KEY `fk_equipes_has_usuarios_equipes1_idx` (`equipes_id_equipe`);
+
+--
+-- Índices de tabela `interclasses`
+--
+ALTER TABLE `interclasses`
+  ADD PRIMARY KEY (`id_interclasse`);
+
+--
+-- Índices de tabela `jogos`
+--
+ALTER TABLE `jogos`
+  ADD PRIMARY KEY (`id_jogo`),
+  ADD KEY `fk_jogos_modalidades1_idx` (`modalidades_id_modalidade`),
+  ADD KEY `fk_jogos_locais1_idx` (`locais_id_local`);
+
+--
+-- Índices de tabela `locais`
+--
+ALTER TABLE `locais`
+  ADD PRIMARY KEY (`id_local`);
+
+--
+-- Índices de tabela `modalidades`
+--
+ALTER TABLE `modalidades`
+  ADD PRIMARY KEY (`id_modalidade`),
+  ADD KEY `fk_modalidades_tipos_modalidades1_idx` (`tipos_modalidades_id_tipo_modalidade`),
+  ADD KEY `fk_modalidades_categorias1_idx` (`categorias_id_categoria`),
+  ADD KEY `fk_modalidades_interclasses1_idx` (`interclasses_id_interclasse`);
+
+--
+-- Índices de tabela `ocorrencias`
+--
+ALTER TABLE `ocorrencias`
+  ADD PRIMARY KEY (`id_ocorrecia`),
+  ADD KEY `fk_ocorrencias_usuarios1_idx` (`usuarios_id_usuario`);
+
+--
+-- Índices de tabela `partidas`
+--
+ALTER TABLE `partidas`
+  ADD PRIMARY KEY (`id_partida`),
+  ADD KEY `fk_jogos_has_equipes_equipes1_idx` (`equipes_id_equipe`),
+  ADD KEY `fk_jogos_has_equipes_jogos1_idx` (`jogos_id_jogo`);
+
+--
+-- Índices de tabela `pontuacoes`
+--
+ALTER TABLE `pontuacoes`
+  ADD PRIMARY KEY (`id_pontuacao`),
+  ADD KEY `fk_pontuacoes_jogos1_idx` (`jogos_id_jogo`),
+  ADD KEY `fk_pontuacoes_usuarios1_idx` (`usuarios_id_usuario`);
+
+--
+-- Índices de tabela `tipos_modalidades`
+--
+ALTER TABLE `tipos_modalidades`
+  ADD PRIMARY KEY (`id_tipo_modalidade`);
+
+--
+-- Índices de tabela `turmas`
+--
+ALTER TABLE `turmas`
+  ADD PRIMARY KEY (`id_turma`),
+  ADD KEY `fk_turmas_interclasses1_idx` (`interclasses_id_interclasse`),
+  ADD KEY `fk_turmas_categorias1_idx` (`categorias_id_categoria`);
+
+--
+-- Índices de tabela `usuarios`
+--
+ALTER TABLE `usuarios`
+  ADD PRIMARY KEY (`id_usuario`),
+  ADD UNIQUE KEY `matricula_usuario_UNIQUE` (`matricula_usuario`),
+  ADD UNIQUE KEY `nome_usuario` (`nome_usuario`),
+  ADD UNIQUE KEY `senha_usuario` (`senha_usuario`),
+  ADD KEY `fk_usuarios_turmas1_idx` (`turmas_id_turma`);
+
+--
+-- Índices de tabela `usuarios_has_interclasses`
+--
+ALTER TABLE `usuarios_has_interclasses`
+  ADD KEY `fk_usuarios_has_interclasses_interclasses1_idx` (`interclasses_id_interclasse`),
+  ADD KEY `fk_usuarios_has_interclasses_usuarios1_idx` (`usuarios_id_usuario`);
+
+--
+-- AUTO_INCREMENT para tabelas despejadas
+--
+
+--
+-- AUTO_INCREMENT de tabela `artilheiros`
+--
+ALTER TABLE `artilheiros`
+  MODIFY `id_artilheiro` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT de tabela `categorias`
+--
+ALTER TABLE `categorias`
+  MODIFY `id_categoria` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+
+--
+-- AUTO_INCREMENT de tabela `equipes`
+--
+ALTER TABLE `equipes`
+  MODIFY `id_equipe` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+
+--
+-- AUTO_INCREMENT de tabela `interclasses`
+--
+ALTER TABLE `interclasses`
+  MODIFY `id_interclasse` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+
+--
+-- AUTO_INCREMENT de tabela `jogos`
+--
+ALTER TABLE `jogos`
+  MODIFY `id_jogo` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+
+--
+-- AUTO_INCREMENT de tabela `locais`
+--
+ALTER TABLE `locais`
+  MODIFY `id_local` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+
+--
+-- AUTO_INCREMENT de tabela `modalidades`
+--
+ALTER TABLE `modalidades`
+  MODIFY `id_modalidade` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+
+--
+-- AUTO_INCREMENT de tabela `ocorrencias`
+--
+ALTER TABLE `ocorrencias`
+  MODIFY `id_ocorrecia` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+
+--
+-- AUTO_INCREMENT de tabela `partidas`
+--
+ALTER TABLE `partidas`
+  MODIFY `id_partida` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT de tabela `pontuacoes`
+--
+ALTER TABLE `pontuacoes`
+  MODIFY `id_pontuacao` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT de tabela `tipos_modalidades`
+--
+ALTER TABLE `tipos_modalidades`
+  MODIFY `id_tipo_modalidade` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+
+--
+-- AUTO_INCREMENT de tabela `turmas`
+--
+ALTER TABLE `turmas`
+  MODIFY `id_turma` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+
+--
+-- AUTO_INCREMENT de tabela `usuarios`
+--
+ALTER TABLE `usuarios`
+  MODIFY `id_usuario` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+
+--
+-- Restrições para tabelas despejadas
+--
+
+--
+-- Restrições para tabelas `artilheiros`
+--
+ALTER TABLE `artilheiros`
+  ADD CONSTRAINT `fk_usuarios_has_jogos_jogos1` FOREIGN KEY (`jogos_id_jogo`) REFERENCES `jogos` (`id_jogo`),
+  ADD CONSTRAINT `fk_usuarios_has_jogos_usuarios1` FOREIGN KEY (`usuarios_id_usuario`) REFERENCES `usuarios` (`id_usuario`);
+
+--
+-- Restrições para tabelas `equipes`
+--
+ALTER TABLE `equipes`
+  ADD CONSTRAINT `fk_equipes_modalidades1` FOREIGN KEY (`modalidades_id_modalidade`) REFERENCES `modalidades` (`id_modalidade`),
+  ADD CONSTRAINT `fk_equipes_turmas1` FOREIGN KEY (`turmas_id_turma`) REFERENCES `turmas` (`id_turma`);
+
+--
+-- Restrições para tabelas `equipes_has_usuarios`
+--
+ALTER TABLE `equipes_has_usuarios`
+  ADD CONSTRAINT `fk_equipes_has_usuarios_equipes1` FOREIGN KEY (`equipes_id_equipe`) REFERENCES `equipes` (`id_equipe`) ON DELETE NO ACTION ON UPDATE NO ACTION,
+  ADD CONSTRAINT `fk_equipes_has_usuarios_usuarios1` FOREIGN KEY (`usuarios_id_usuario`) REFERENCES `usuarios` (`id_usuario`) ON DELETE NO ACTION ON UPDATE NO ACTION;
+
+--
+-- Restrições para tabelas `jogos`
+--
+ALTER TABLE `jogos`
+  ADD CONSTRAINT `fk_jogos_locais1` FOREIGN KEY (`locais_id_local`) REFERENCES `locais` (`id_local`),
+  ADD CONSTRAINT `fk_jogos_modalidades1` FOREIGN KEY (`modalidades_id_modalidade`) REFERENCES `modalidades` (`id_modalidade`);
+
+--
+-- Restrições para tabelas `modalidades`
+--
+ALTER TABLE `modalidades`
+  ADD CONSTRAINT `fk_modalidades_categorias1` FOREIGN KEY (`categorias_id_categoria`) REFERENCES `categorias` (`id_categoria`),
+  ADD CONSTRAINT `fk_modalidades_interclasses1` FOREIGN KEY (`interclasses_id_interclasse`) REFERENCES `interclasses` (`id_interclasse`) ON DELETE NO ACTION ON UPDATE NO ACTION,
+  ADD CONSTRAINT `fk_modalidades_tipos_modalidades1` FOREIGN KEY (`tipos_modalidades_id_tipo_modalidade`) REFERENCES `tipos_modalidades` (`id_tipo_modalidade`);
+
+--
+-- Restrições para tabelas `ocorrencias`
+--
+ALTER TABLE `ocorrencias`
+  ADD CONSTRAINT `fk_ocorrencias_usuarios1` FOREIGN KEY (`usuarios_id_usuario`) REFERENCES `usuarios` (`id_usuario`);
+
+--
+-- Restrições para tabelas `partidas`
+--
+ALTER TABLE `partidas`
+  ADD CONSTRAINT `fk_jogos_has_equipes_equipes1` FOREIGN KEY (`equipes_id_equipe`) REFERENCES `equipes` (`id_equipe`),
+  ADD CONSTRAINT `fk_jogos_has_equipes_jogos1` FOREIGN KEY (`jogos_id_jogo`) REFERENCES `jogos` (`id_jogo`);
+
+--
+-- Restrições para tabelas `pontuacoes`
+--
+ALTER TABLE `pontuacoes`
+  ADD CONSTRAINT `fk_pontuacoes_jogos1` FOREIGN KEY (`jogos_id_jogo`) REFERENCES `jogos` (`id_jogo`),
+  ADD CONSTRAINT `fk_pontuacoes_usuarios1` FOREIGN KEY (`usuarios_id_usuario`) REFERENCES `usuarios` (`id_usuario`);
+
+--
+-- Restrições para tabelas `turmas`
+--
+ALTER TABLE `turmas`
+  ADD CONSTRAINT `fk_turmas_categorias1` FOREIGN KEY (`categorias_id_categoria`) REFERENCES `categorias` (`id_categoria`),
+  ADD CONSTRAINT `fk_turmas_interclasses1` FOREIGN KEY (`interclasses_id_interclasse`) REFERENCES `interclasses` (`id_interclasse`);
+
+--
+-- Restrições para tabelas `usuarios`
+--
+ALTER TABLE `usuarios`
+  ADD CONSTRAINT `fk_usuarios_turmas1` FOREIGN KEY (`turmas_id_turma`) REFERENCES `turmas` (`id_turma`);
+
+--
+-- Restrições para tabelas `usuarios_has_interclasses`
+--
+ALTER TABLE `usuarios_has_interclasses`
+  ADD CONSTRAINT `fk_usuarios_has_interclasses_interclasses1` FOREIGN KEY (`interclasses_id_interclasse`) REFERENCES `interclasses` (`id_interclasse`),
+  ADD CONSTRAINT `fk_usuarios_has_interclasses_usuarios1` FOREIGN KEY (`usuarios_id_usuario`) REFERENCES `usuarios` (`id_usuario`);
+COMMIT;
+
+/*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
+/*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
+/*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;

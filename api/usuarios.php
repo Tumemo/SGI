@@ -177,9 +177,40 @@ switch($metodo) {
 }
     
     case "PUT":
+        if (date('d/m') == '01/01') {
+            $anoAtual = date('Y');
         
+            $sql = "UPDATE usuarios 
+                    SET matricula_usuario = ($anoAtual * 1000000) + matricula_usuario,
+                        nome_usuario = CONCAT(nome_usuario, ' (Encerrado ', $anoAtual, ')'),
+                        senha_usuario = CONCAT(senha_usuario, '_old_', $anoAtual),
+                        status_usuario = 0 
+                    WHERE status_usuario = 1";
+            
+            $stmt = $conn->prepare($sql);
+            
+            if ($stmt->execute()) {
+                echo json_encode([
+                    "status" => "sucesso",
+                    "mensagem" => "Sucesso"
+                ]);
+            } else {
+                echo json_encode([
+                    "status" => "erro",
+                    "mensagem" => "Erro"
+                ]);
+            }
+        } else {
+            echo json_encode([
+                "status" => "erro", 
+                "mensagem" => "Operacao permitida apenas em 01/01"
+            ]);
+        }
+        break;
 
-    
+    default:
+        echo json_encode(["status" => "erro", "mensagem" => "Metodo nao suportado"]);
+        break;
 }
 
 $conn->close();

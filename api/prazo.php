@@ -1,24 +1,31 @@
 <?php
-if (date('d/m') == '25/02') {
+if (date('d/m') == '01/01') {
 
-    $pasta = __DIR__ . '/../../docs/lista_alunos/';
+    $pasta_json = __DIR__ . '/json_turmas/'; 
+    $pasta_alunos = __DIR__ . '/../../docs/lista_alunos/';
 
-    if (is_dir($pasta)) {
-
-        $arquivos = scandir($pasta);
+    if (is_dir($pasta_alunos)) {
+        $arquivos = array_diff(scandir($pasta_alunos), array('.', '..'));
 
         foreach ($arquivos as $arquivo) {
-
-            if ($arquivo != "." && $arquivo != "..") {
-
-                $caminhoCompleto = $pasta . $arquivo;
-
-                if (is_file($caminhoCompleto)) {
-                    unlink($caminhoCompleto);
-                }
+            $caminhoCompleto = $pasta_alunos . $arquivo;
+            if (is_file($caminhoCompleto)) {
+                unlink($caminhoCompleto);
             }
         }
-        echo "Succuess";
+    }
+
+    if (is_dir($pasta_json)) {
+        $itens = array_diff(scandir($pasta_json), array('.', '..'));
+
+        foreach ($itens as $item) {
+            $caminhoItem = $pasta_json . $item;
+            is_dir($caminhoItem) ? rmdir($caminhoItem) : unlink($caminhoItem);
+        }
+        
+        if (rmdir($pasta_json)) {
+            echo "Success";
+        }
     }
 }
 ?>
