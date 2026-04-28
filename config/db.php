@@ -1,7 +1,7 @@
 <?php
 $host = "sgi";
 $user = "root";
-$pass = "root";
+$pass = "";
 $db = "sgi";
 
 $conn = new mysqli($host, $user, $pass, $db);
