@@ -7,32 +7,34 @@ require_once '../config/db.php';
 
 header('Content-Type: application/json; charset=utf-8');
 
+// Captura dados JSON (usado para ações que não enviam arquivos)
 $input_raw = file_get_contents('php://input');
 $input_data = json_decode($input_raw, true);
 
 $metodo = $_SERVER['REQUEST_METHOD'];
-$acao = $input_data['acao'] ?? $_REQUEST['acao'] ?? ''; 
 
-// Função auxiliar para cadastrar os competidores do JSON local
+// Se for um FormData (cadastro com foto), os dados estarão em $_POST
+$acao = $_POST['acao'] ?? $input_data['acao'] ?? $_REQUEST['acao'] ?? ''; 
+
 function importarCompetidores($conn) {
     $caminho_json = 'json_turmas/info_alunos.json';
     
     if (!file_exists($caminho_json)) {
-        return ["status" => "erro", "mensagem" => "Arquivo JSON de alunos não encontrado"];
+        return ["status" => "erro", "mensagem" => "Arquivo JSON não encontrado"];
     }
 
     $alunos = json_decode(file_get_contents($caminho_json), true);
     $sucessos = 0; $ignorados = 0; $erros = 0; 
-    $lista_nomes_cadastrados = [];
     $cache_turmas = [];
     
-    $stmt_ins = $conn->prepare("INSERT IGNORE INTO usuarios (sigla_usuario, matricula_usuario, nome_usuario, senha_usuario, foto_ususario, nivel_usuario, competidor_usuario, mesario_usuario, genero_usuario, data_nasc_usuario, status_usuario, turmas_id_turma) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+    $sql = "INSERT IGNORE INTO usuarios (sigla_usuario, matricula_usuario, nome_usuario, senha_usuario, foto_usuario, nivel_usuario, competidor_usuario, mesario_usuario, genero_usuario, data_nasc_usuario, status_usuario, turmas_id_turma) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+    $stmt_ins = $conn->prepare($sql);
     $stmt_t = $conn->prepare("SELECT id_turma FROM turmas WHERE nome_turma = ?");
     
     foreach ($alunos as $aluno) {
         $nome_usuario = trim($aluno['nome'] ?? '');
         $nome_turma = trim($aluno['turma'] ?? '');
-        $matricula_usuario = preg_replace('/[^0-9.]/', '', $aluno['rm'] ?? '');
+        $matricula_usuario = preg_replace('/[^0-9]/', '', $aluno['rm'] ?? '');
         
         $d = explode('/', $aluno['data_nascimento'] ?? '');
         $data_nasc_usuario = (count($d) === 3) ? "{$d[2]}-{$d[1]}-{$d[0]}" : null;
@@ -45,61 +47,30 @@ function importarCompetidores($conn) {
             $cache_turmas[$nome_turma] = $row['id_turma'] ?? null;
         }
         
-        $turmas_id_turma = $cache_turmas[$nome_turma];
-        if (!$turmas_id_turma) { $erros++; continue; }
+        $id_turma = $cache_turmas[$nome_turma];
+        if (!$id_turma) { $erros++; continue; }
         
-        // Supondo que $data_nasc_usuario seja "2000-12-30"
         $partes = explode('-', $data_nasc_usuario); 
-
-        // $partes[0] = "2000" (Ano)
-        // $partes[1] = "12"   (Mês)
-        // $partes[2] = "30"   (Dia)
-
-        $senha_limpa = $partes[2] . $partes[1] . $partes[0]; // Resultado: "30122000"
-
-        $senha_usuario = password_hash($senha_limpa, PASSWORD_DEFAULT);
-        $sigla_usuario = 'RM'; $foto_ususario = 'default.jpg'; $nivel_usuario = '0'; $competidor_usuario = '1'; $mesario_usuario = '0'; $status_usuario = '1';
+        $senha_limpa = $partes[2] . $partes[1] . $partes[0];
+        $senha_hash = password_hash($senha_limpa, PASSWORD_DEFAULT);
         
-        $stmt_ins->bind_param("ssssssssssii", $sigla_usuario, $matricula_usuario, $nome_usuario, $senha_usuario, $foto_ususario, $nivel_usuario, $competidor_usuario, $mesario_usuario, $genero_usuario, $data_nasc_usuario, $status_usuario, $turmas_id_turma);
+        $sigla = 'RM'; $foto = 'default.jpg'; $nivel = '0'; $comp = '1'; $mes = '0'; $status = '1';
+        
+        $stmt_ins->bind_param("ssssssssssii", $sigla, $matricula_usuario, $nome_usuario, $senha_hash, $foto, $nivel, $comp, $mes, $genero_usuario, $data_nasc_usuario, $status, $id_turma);
         
         if ($stmt_ins->execute()) { 
-            if ($stmt_ins->affected_rows > 0) {
-                $sucessos++;
-                $lista_nomes_cadastrados[] = $nome_usuario;
-            } else { $ignorados++; }
+            $stmt_ins->affected_rows > 0 ? $sucessos++ : $ignorados++;
         } else { $erros++; }
     }
-    $stmt_ins->close(); $stmt_t->close();
-    
-    return [
-        "status" => "sucesso", 
-        "quantidade_novos" => $sucessos, 
-        "quantidade_ignorados" => $ignorados, 
-        "quantidade_erros" => $erros,
-        "alunos_inseridos" => $lista_nomes_cadastrados
-    ];
+    return ["status" => "sucesso", "novos" => $sucessos, "erros" => $erros];
 }
 
 switch($metodo) {
     case 'GET':
         if ($acao == 'listar_competidores') {
-            $sql = "SELECT id_usuario, nome_usuario, matricula_usuario, genero_usuario, turmas_id_turma 
-            FROM usuarios 
-            WHERE nivel_usuario = '0' AND status_usuario = '1'";            
-            $res = $conn->query($sql);
-            echo json_encode(["status" => "sucesso", "usuarios" => $res->fetch_all(MYSQLI_ASSOC)]);
-        } 
-        else if ($acao == 'cadastrar_competidores') {
-            // PERMITE CADASTRAR VIA NAVEGADOR PARA TESTE
-            echo json_encode(importarCompetidores($conn));
-        }
-        else if ($acao == 'listar_admins') {
-            $sql = "SELECT id_usuario, nome_usuario, matricula_usuario FROM usuarios WHERE nivel_usuario = '2'";
+            $sql = "SELECT id_usuario, nome_usuario, matricula_usuario, genero_usuario FROM usuarios WHERE status_usuario = '1'";            
             echo json_encode(["status" => "sucesso", "usuarios" => $conn->query($sql)->fetch_all(MYSQLI_ASSOC)]);
-        }
-        else {
-            echo json_encode(["status" => "erro", "mensagem" => "Ação GET inválida"]);
-        }
+        } 
         break;
 
     case 'POST':
@@ -107,111 +78,59 @@ switch($metodo) {
             echo json_encode(importarCompetidores($conn));
         } 
         else if ($acao == 'cadastrar_usuario') {
-    $nome_usuario = trim($input_data['nome_usuario'] ?? '');
-    $matricula_usuario = trim($input_data['matricula_usuario'] ?? '');
-    $senha_crua = $input_data['senha_usuario'] ?? '';
-    $data_nascimento = trim($input_data['data_nasc_usuario'] ?? ''); // Campo obrigatório agora
-    
-    // Nível binário: 1 para Admin (Professora), 0 para o resto
-    $nivel_usuario = ($input_data['is_admin_clicado'] == '1') ? '1' : '0'; 
-    
-    // Define se o usuário pode operar placares (Mesário)
-    $mesario_usuario = ($nivel_usuario == '1') ? '1' : ($input_data['is_mesario_clicado'] ?? '0');
-    
-    // Flag de competidor: Alunos (nível 0) são competidores por padrão
-    $competidor_usuario = ($nivel_usuario == '1') ? '0' : '1'; 
+            // Se vier de FormData usa $_POST, se vier de JSON usa $input_data
+            $dados = !empty($_POST) ? $_POST : $input_data;
+            
+            $nome = trim($dados['nome_usuario'] ?? '');
+            $matricula = trim($dados['matricula_usuario'] ?? '');
+            $senha_crua = $dados['senha_usuario'] ?? '';
+            $data_nasc = trim($dados['data_nasc_usuario'] ?? '');
+            $nivel = ($dados['is_admin_clicado'] == '1') ? '1' : '0';
+            $mesario = ($nivel == '1') ? '1' : ($dados['is_mesario_clicado'] ?? '0');
+            $competidor = ($nivel == '1') ? '0' : '1';
+            $sigla = ($competidor == '0') ? 'SS' : ($dados['sigla_usuario'] ?? 'RM');
+            
+            $nome_foto_banco = 'default.jpg';
 
-    // REGRA NOVA: Se NÃO for competidor, a sigla é obrigatoriamente "SS"
-    // Se for competidor, você pode pegar do input ou deixar vazio
-    $sigla_usuario = ($competidor_usuario == '0') ? 'SS' : ($input_data['sigla_usuario'] ?? '');
-    
-    // Status 1 = Ativo, 0 = Inativo
-    $status_usuario = '1'; 
+            // Lógica de Upload de Foto
+            if (isset($_FILES['foto']) && $_FILES['foto']['error'] === UPLOAD_ERR_OK) {
+                $ext = pathinfo($_FILES['foto']['name'], PATHINFO_EXTENSION);
+                $nome_foto_banco = "user_" . $matricula . "_" . time() . "." . $ext;
+                $destino = "../uploads/fotosUsuarios/" . $nome_foto_banco;
+                move_uploaded_file($_FILES['foto']['tmp_name'], $destino);
+            }
 
-    // Validação: Agora verificamos também se a data de nascimento foi enviada
-    if (!empty($nome_usuario) && !empty($matricula_usuario) && !empty($senha_crua) && !empty($data_nascimento)) {
-        
-        $senha_hash = password_hash($senha_crua, PASSWORD_DEFAULT);
-        
-        // Query atualizada com data_nasc_usuario e sigla_usuario
-        $sql = "INSERT INTO usuarios (
-                    nome_usuario, 
-                    matricula_usuario, 
-                    senha_usuario, 
-                    nivel_usuario, 
-                    competidor_usuario, 
-                    mesario_usuario, 
-                    status_usuario, 
-                    data_nasc_usuario, 
-                    sigla_usuario
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
-        
-        $stmt_prof = $conn->prepare($sql);
-        
-        // Agora são 9 parâmetros (sssssssss)
-        $stmt_prof->bind_param("sssssssss", 
-            $nome_usuario, 
-            $matricula_usuario, 
-            $senha_hash, 
-            $nivel_usuario, 
-            $competidor_usuario, 
-            $mesario_usuario, 
-            $status_usuario,
-            $data_nascimento,
-            $sigla_usuario
-        );
-        
-        if ($stmt_prof->execute()) { 
-            echo json_encode([
-                "status" => "sucesso", 
-                "mensagem" => "Usuário cadastrado com sucesso!", 
-                "nome" => $nome_usuario
-            ]); 
-        } else { 
-            echo json_encode(["status" => "erro", "mensagem" => "Erro no banco: " . $stmt_prof->error]); 
+            if (!empty($nome) && !empty($matricula) && !empty($senha_crua)) {
+                $senha_hash = password_hash($senha_crua, PASSWORD_DEFAULT);
+                $status = '1';
+
+                $sql = "INSERT INTO usuarios (nome_usuario, matricula_usuario, senha_usuario, nivel_usuario, competidor_usuario, mesario_usuario, foto_usuario, status_usuario, data_nasc_usuario, sigla_usuario) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                
+                $stmt = $conn->prepare($sql);
+                $stmt->bind_param("ssssssssss", $nome, $matricula, $senha_hash, $nivel, $competidor, $mesario, $nome_foto_banco, $status, $data_nasc, $sigla);
+                
+                if ($stmt->execute()) {
+                    echo json_encode(["status" => "sucesso", "mensagem" => "Usuário cadastrado!"]);
+                } else {
+                    echo json_encode(["status" => "erro", "mensagem" => $stmt->error]);
+                }
+            } else {
+                echo json_encode(["status" => "erro", "mensagem" => "Campos incompletos"]);
+            }
         }
-        $stmt_prof->close();
-    } else {
-        echo json_encode(["status" => "erro", "mensagem" => "Preencha todos os campos (Nome, Matrícula, Senha e Data de Nascimento)"]);
-    }
-}
-    
+        break;
+
     case "PUT":
         if (date('d/m') == '01/01') {
-            $anoAtual = date('Y');
-        
-            $sql = "UPDATE usuarios 
-                    SET matricula_usuario = ($anoAtual * 1000000) + matricula_usuario,
-                        nome_usuario = CONCAT(nome_usuario, ' (Encerrado ', $anoAtual, ')'),
-                        senha_usuario = CONCAT(senha_usuario, '_old_', $anoAtual),
-                        status_usuario = 0 
-                    WHERE status_usuario = 1";
-            
-            $stmt = $conn->prepare($sql);
-            
-            if ($stmt->execute()) {
-                echo json_encode([
-                    "status" => "sucesso",
-                    "mensagem" => "Sucesso"
-                ]);
-            } else {
-                echo json_encode([
-                    "status" => "erro",
-                    "mensagem" => "Erro"
-                ]);
+            $ano = date('Y');
+            $sql = "UPDATE usuarios SET matricula_usuario = ($ano * 1000000) + matricula_usuario, nome_usuario = CONCAT(nome_usuario, ' (', $ano, ')'), senha_usuario = CONCAT(senha_usuario, '_old'), status_usuario = 0 WHERE status_usuario = 1";
+            if ($conn->query($sql)) {
+                echo json_encode(["status" => "sucesso", "mensagem" => "Reset concluído"]);
             }
         } else {
-            echo json_encode([
-                "status" => "erro", 
-                "mensagem" => "Operacao permitida apenas em 01/01"
-            ]);
+            echo json_encode(["status" => "erro", "mensagem" => "Apenas em 01/01"]);
         }
         break;
-
-    default:
-        echo json_encode(["status" => "erro", "mensagem" => "Metodo nao suportado"]);
-        break;
 }
-
 $conn->close();
 ?>

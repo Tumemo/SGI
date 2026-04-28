@@ -1,5 +1,5 @@
 <?php
-$host = "sgi";
+$host = "localhost ";
 $user = "root";
 $pass = "";
 $db = "sgi";
