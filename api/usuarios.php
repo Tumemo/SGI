@@ -50,8 +50,7 @@ function importarCompetidores($conn) {
         $id_turma = $cache_turmas[$nome_turma];
         if (!$id_turma) { $erros++; continue; }
         
-        $partes = explode('-', $data_nasc_usuario); 
-        $senha_limpa = $partes[2] . $partes[1] . $partes[0];
+        $senha_limpa = $matricula_usuario;
         $senha_hash = password_hash($senha_limpa, PASSWORD_DEFAULT);
         
         $sigla = 'RM'; $foto = 'default.jpg'; $nivel = '0'; $comp = '1'; $mes = '0'; $status = '1';

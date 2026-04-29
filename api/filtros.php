@@ -49,7 +49,7 @@ function aplicarFiltrosArtilharia() {
         'params' => $params
     ];
 }
-
+// teste
 function aplicarFiltrosEquipes() {
     $sqlExtras = "";
     $types = "";

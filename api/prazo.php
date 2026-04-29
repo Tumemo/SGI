@@ -1,5 +1,5 @@
 <?php
-if (date('d/m') == '01/01') {
+if (date('d/m') == '29/04') {
 
     $pasta_json = __DIR__ . '/json_turmas/'; 
     $pasta_alunos = __DIR__ . '/../../docs/lista_alunos/';

@@ -99,7 +99,7 @@ require_once '../componentes/header.php';
 
                 // Montar HTML Mobile
                 htmlMobile += `
-                    <a href="./edicao.php?id=${item.id_interclasse}" class="text-decoration-none text-dark">
+                    <a href="./dashboard.php?id=${item.id_interclasse}" class="text-decoration-none text-dark">
                         <div class="m-auto shadow d-flex justify-content-between align-content-center px-3 py-3 rounded-3 my-3 border border-1" style="width: 90%;">
                             <div>
                                 <h2 class="m-0 fs-4">${item.nome_interclasse}</h2>
@@ -116,7 +116,7 @@ require_once '../componentes/header.php';
                          style="cursor: pointer; transition: background-color 0.2s ease;" 
                          onmouseover="this.style.backgroundColor='#f8f9fa'" 
                          onmouseout="this.style.backgroundColor='#ffffff'"
-                         onclick="window.location.href='./edicao.php?id=${item.id_interclasse}'">
+                         onclick="window.location.href='./dashboard.php?id=${item.id_interclasse}'">
                         
                         <div class="col-4 fw-semibold text-dark text-truncate">${item.nome_interclasse}</div>
                         <div class="col-4 text-center text-secondary">${anoStr}</div>

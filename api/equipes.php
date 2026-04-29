@@ -29,57 +29,64 @@ switch ($method) {
         echo json_encode($res->fetch_all(MYSQLI_ASSOC));
         break;
 
-    case 'POST':
+ case 'POST':
         $data = json_decode(file_get_contents("php://input"));
-
-        // Pegamos a ação enviada pelo Front-end (ex: 'criar_equipe' ou 'adicionar_usuarios')
         $acao = $data->acao ?? '';
 
         if ($acao === 'criar_equipe') {
             if (!isset($data->modalidades_id_modalidade, $data->turmas_id_turma)) {
                 http_response_code(400);
-                echo json_encode(["success" => false, "message" => "Dados incompletos para criar equipa."]);
+                echo json_encode(["success" => false, "message" => "Dados incompletos: modalidade e turma são obrigatórios."]);
                 break;
             }
 
-            $sql = "INSERT INTO equipes (modalidades_id_modalidade, turmas_id_turma, status_equipe) VALUES (?, ?, '1')";
+            $modalidade = $data->modalidades_id_modalidade;
+            $turma = $data->turmas_id_turma;
+            $status = isset($data->status_equipe) ? (string)$data->status_equipe : '1';
+
+            $sql = "INSERT INTO equipes (modalidades_id_modalidade, turmas_id_turma, status_equipe) VALUES (?, ?, ?)";
             $stmt = $conn->prepare($sql);
-            $stmt->bind_param("ii", $data->modalidades_id_modalidade, $data->turmas_id_turma);
+            $stmt->bind_param("iis", $modalidade, $turma, $status);
 
             if ($stmt->execute()) {
-                echo json_encode(["success" => true, "message" => "Equipa criada!", "id_equipe" => $conn->insert_id]);
+                echo json_encode([
+                    "success" => true, 
+                    "message" => "Equipe criada com sucesso!", 
+                    "id_equipe" => $conn->insert_id
+                ]);
             } else {
-                echo json_encode(["success" => false, "message" => $conn->error]);
+                echo json_encode(["success" => false, "message" => "Erro ao inserir: " . $conn->error]);
             }
+
         } elseif ($acao === 'adicionar_usuarios') {
-            // Lógica para vincular usuários à equipe (equipes_has_usuarios)
-            if (!isset($data->id_equipe, $data->usuarios)) {
+            if (!isset($data->id_equipe, $data->usuarios) || !is_array($data->usuarios)) {
                 http_response_code(400);
-                echo json_encode(["success" => false, "message" => "ID da equipa e lista de utilizadores são obrigatórios."]);
+                echo json_encode(["success" => false, "message" => "ID da equipe e lista de IDs de usuários são obrigatórios."]);
                 break;
             }
 
-            // $data->usuarios deve ser um array de IDs: [1, 5, 10]
             $id_equipe = $data->id_equipe;
-            $erro = false;
+            $usuarios = $data->usuarios;
+            $sucesso = true;
+            $sql = "INSERT IGNORE INTO equipes_has_usuarios (equipes_id_equipe, usuarios_id_usuario) VALUES (?, ?)";
+            $stmt = $conn->prepare($sql);
 
-            foreach ($data->usuarios as $id_usuario) {
-                $sql = "INSERT IGNORE INTO equipes_has_usuarios (equipes_id_equipe, usuarios_id_usuario) VALUES (?, ?)";
-                $stmt = $conn->prepare($sql);
+            foreach ($usuarios as $id_usuario) {
                 $stmt->bind_param("ii", $id_equipe, $id_usuario);
                 if (!$stmt->execute()) {
-                    $erro = true;
+                    $sucesso = false;
                 }
             }
 
-            if (!$erro) {
-                echo json_encode(["success" => true, "message" => "Utilizadores adicionados à equipa com sucesso!"]);
+            if ($sucesso) {
+                echo json_encode(["success" => true, "message" => "Usuários vinculados à equipe com sucesso!"]);
             } else {
-                echo json_encode(["success" => false, "message" => "Ocorreu um erro ao adicionar alguns utilizadores."]);
+                echo json_encode(["success" => false, "message" => "Houve erro ao vincular alguns usuários."]);
             }
+
         } else {
             http_response_code(400);
-            echo json_encode(["success" => false, "message" => "Ação não definida ou inválida."]);
+            echo json_encode(["success" => false, "message" => "Ação inválida ou não informada."]);
         }
         break;
 

@@ -56,7 +56,7 @@ switch ($method) {
     case 'POST':
         $data = json_decode(file_get_contents("php://input"));
 
-        if (!isset($data->nome_modalidade, $data->genero_modalidade, $data->tipos_modalidades_id_tipo_modalidade, $data->status_modalidade, $data->categorias_id_categoria)) {
+        if (!isset($data->nome_modalidade, $data->genero_modalidade, $data->tipos_modalidades_id_tipo_modalidade,  $data->categorias_id_categoria)) {
             http_response_code(400);
             echo json_encode(["success" => false, "message" => "Dados incompletos."]);
             break;
@@ -65,17 +65,21 @@ switch ($method) {
         $genero = strtoupper(trim($data->genero_modalidade));
         $max_inscritos = $data->max_inscrito_modalidade ?? 0;
 
-        $sql = "INSERT INTO modalidades (nome_modalidade, genero_modalidade, max_inscrito_modalidade, tipos_modalidades_id_tipo_modalidade, status_modalidade, categorias_id_categoria) 
-                VALUES (?, ?, ?, ?, ?, ?)";
+        $sql = "INSERT INTO modalidades (nome_modalidade, genero_modalidade, max_inscrito_modalidade, tipos_modalidades_id_tipo_modalidade, status_modalidade, categorias_id_categoria, interclasses_id_interclasse) 
+                VALUES (?, ?, ?, ?, ?, ?, ?)";
+
+                $status = $data->status_modalidade ?? '1'; 
 
         $stmt = $conn->prepare($sql);
-        $stmt->bind_param("ssiiii",
+
+        $stmt->bind_param("ssiisii", 
             $data->nome_modalidade,
-            $data->genero_modalidade,
+            $genero,
             $max_inscritos,
-            $data->status_modalidade,
             $data->tipos_modalidades_id_tipo_modalidade,
-            $data->categorias_id_categoria
+            $status, 
+            $data->categorias_id_categoria,
+            $data->interclasses_id_interclasse
         );
 
         try {
@@ -90,7 +94,7 @@ switch ($method) {
         break;
 
     case 'PUT':
-        case 'PUT':
+        
         $data = json_decode(file_get_contents("php://input"));
 
         // O ID da modalidade é obrigatório para a atualização

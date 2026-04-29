@@ -38,9 +38,11 @@ switch ($method) {
             break;
         }
 
-        $sql = "INSERT INTO tipos_modalidades (nome_tipo_modalidade) VALUES (?)";
+        $sql = "INSERT INTO tipos_modalidades (nome_tipo_modalidade, status_tipo_modalidade) VALUES (?, ?)";
+        $satus = $data->status_tipo_modalidade ?? 1;
+
         $stmt = $conn->prepare($sql);
-        $stmt->bind_param("s", $data->nome_tipo_modalidade);
+        $stmt->bind_param("si", $data->nome_tipo_modalidade, $satus );
 
         if ($stmt->execute()) {
             http_response_code(201); // Created
