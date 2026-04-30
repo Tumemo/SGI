@@ -6,7 +6,6 @@ $method = $_SERVER['REQUEST_METHOD'];
 
 switch ($method) {
     case 'GET':
-        // Retorna o chaveamento existente de uma modalidade
         $id_modalidade = isset($_GET['id_modalidade']) ? intval($_GET['id_modalidade']) : null;
 
         if (!$id_modalidade) {
@@ -20,6 +19,7 @@ switch ($method) {
                     j.nome_jogo, 
                     j.status_jogo,
                     p.id_partida,
+                    p.resultado_partida,
                     e.id_equipe,
                     t.nome_turma,
                     t.nome_fantasia_turma
@@ -49,28 +49,34 @@ switch ($method) {
             $jogos[$id_jogo]['equipes'][] = [
                 "id_equipe" => $row['id_equipe'],
                 "nome_turma" => $row['nome_turma'],
-                "nome_fantasia" => $row['nome_fantasia_turma']
+                "nome_fantasia" => $row['nome_fantasia_turma'],
+                "gols" => $row['resultado_partida']
             ];
         }
 
         echo json_encode(array_values($jogos));
         break;
 
-    case 'POST':
-        // Gera um novo chaveamento aleatório
+ case 'POST':
         $data = json_decode(file_get_contents("php://input"));
         $id_modalidade = isset($data->id_modalidade) ? intval($data->id_modalidade) : null;
 
         if (!$id_modalidade) {
             http_response_code(400);
-            echo json_encode(["success" => false, "message" => "Informe o ID da modalidade para gerar o chaveamento."]);
+            echo json_encode(["success" => false, "message" => "Informe o ID da modalidade."]);
             break;
         }
 
         $conn->begin_transaction();
 
         try {
-            // 1. Buscar equipes da modalidade
+            // Verifica se já existe chaveamento para não duplicar
+            $check = $conn->query("SELECT id_jogo FROM jogos WHERE modalidades_id_modalidade = $id_modalidade LIMIT 1");
+            if ($check->num_rows > 0) {
+                throw new Exception("O chaveamento desta modalidade já foi gerado.");
+            }
+
+            // Busca equipes ativas
             $sqlEquipes = "SELECT id_equipe FROM equipes WHERE modalidades_id_modalidade = ? AND status_equipe = '1'";
             $stmtE = $conn->prepare($sqlEquipes);
             $stmtE->bind_param("i", $id_modalidade);
@@ -78,29 +84,30 @@ switch ($method) {
             $resEquipes = $stmtE->get_result()->fetch_all(MYSQLI_ASSOC);
 
             if (count($resEquipes) < 2) {
-                throw new Exception("Não há equipes suficientes (mínimo 2) para gerar um chaveamento.");
+                throw new Exception("Equipes insuficientes (mínimo 2).");
             }
 
-            // 2. Embaralhar equipes
             shuffle($resEquipes);
 
-            // 3. Buscar um local padrão (Obrigatório no seu SQL)
-            $resLocal = $conn->query("SELECT id_local FROM locais WHERE status_local = '1' LIMIT 1");
+            // --- SOLUÇÃO PARA O ERRO DE FOREIGN KEY ---
+            // Buscamos o ID do local diretamente da sua tabela locais
+            $resLocal = $conn->query("SELECT id_local FROM locais LIMIT 1");
             $local = $resLocal->fetch_assoc();
-            $id_local = $local ? $local['id_local'] : 1;
+            
+            // Se a tabela estiver vazia, retornamos erro em vez de tentar usar ID 1
+            if (!$local) {
+                throw new Exception("Erro Crítico: Não há locais cadastrados na tabela 'locais'.");
+            }
+            $id_local = $local['id_local']; // No seu caso, o PHP vai pegar o valor 4
 
             $confrontosCriados = 0;
 
-            // 4. Criar jogos e partidas (Pares)
             for ($i = 0; $i < count($resEquipes); $i += 2) {
-                // Se for ímpar, a última equipe sobra (Lógica de "Bye")
-                if (!isset($resEquipes[$i + 1])) {
-                    break; 
-                }
+                if (!isset($resEquipes[$i + 1])) break; 
 
-                $nome_jogo = "Confronto " . ($confrontosCriados + 1);
+                $nome_jogo = "Oitavas de Final - Jogo " . ($confrontosCriados + 1);
                 
-                // Inserir Jogo
+                // Inserindo o jogo com o id_local validado
                 $sqlNovoJogo = "INSERT INTO jogos (nome_jogo, data_jogo, inicio_jogo, status_jogo, modalidades_id_modalidade, locais_id_local) 
                                 VALUES (?, CURDATE(), '08:00:00', 'Agendado', ?, ?)";
                 $stmtJ = $conn->prepare($sqlNovoJogo);
@@ -108,15 +115,12 @@ switch ($method) {
                 $stmtJ->execute();
                 $id_jogo = $conn->insert_id;
 
-                // Inserir Partidas (Vínculo das 2 equipes)
                 $sqlPartida = "INSERT INTO partidas (jogos_id_jogo, equipes_id_equipe, resultado_partida, status_pardida) VALUES (?, ?, 0, '1')";
                 $stmtP = $conn->prepare($sqlPartida);
                 
-                // Equipe A
                 $stmtP->bind_param("ii", $id_jogo, $resEquipes[$i]['id_equipe']);
                 $stmtP->execute();
                 
-                // Equipe B
                 $stmtP->bind_param("ii", $id_jogo, $resEquipes[$i + 1]['id_equipe']);
                 $stmtP->execute();
 
@@ -124,15 +128,10 @@ switch ($method) {
             }
 
             $conn->commit();
-            echo json_encode([
-                "success" => true, 
-                "message" => "Chaveamento gerado com sucesso!", 
-                "jogos_criados" => $confrontosCriados
-            ]);
+            echo json_encode(["success" => true, "message" => "Chaveamento gerado!", "jogos_criados" => $confrontosCriados]);
 
         } catch (Exception $e) {
             $conn->rollback();
-            http_response_code(500);
             echo json_encode(["success" => false, "message" => $e->getMessage()]);
         }
         break;

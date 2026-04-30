@@ -56,16 +56,17 @@ switch ($method) {
         $turno = $data->turno_turma ?? null;
         $fantasia = $data->nome_fantasia_turma ?? null;
 
-        $sql = "INSERT INTO turmas (interclasses_id_interclasse, categorias_id_categoria, nome_turma, turno_turma, nome_fantasia_turma) 
-                VALUES (?, ?, ?, ?, ?)";
+        $sql = "INSERT INTO turmas (interclasses_id_interclasse, categorias_id_categoria, nome_turma, turno_turma, nome_fantasia_turma, status_turma) 
+                VALUES (?, ?, ?, ?, ?, ?)";
 
         $stmt = $conn->prepare($sql);
-        $stmt->bind_param("iisss",
+        $stmt->bind_param("iissss",
             $data->interclasses_id_interclasse,
             $data->categorias_id_categoria,
             $data->nome_turma,
             $turno,
-            $fantasia
+            $fantasia,
+            $data->status_turma
         );
 
         if ($stmt->execute()) {
