@@ -27,11 +27,90 @@ body, main{
 .text-danger{
     color: var(--vermelho) !important;
 }
-.form-control{
+.form-control, .form-select{
     animation:  1s;
 }
 
-.form-control:focus {
+.form-control:focus, .form-select:focus {
     box-shadow: 0px 0px 7px red;
     border: none;
+}
+
+
+
+/* ===================== dashboard.php =========================== */
+/* Estilos específicos para os Cards do Menu Principal (desktop) */
+
+.dash-card {
+    background-color: #ffffff;
+    border-radius: 24px;
+    position: relative;
+    padding: 30px 25px 25px 25px;
+    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.06);
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    text-decoration: none;
+    transition: transform 0.2s ease-in-out, box-shadow 0.2s;
+}
+
+.dash-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+}
+
+.dash-card-red-corner {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100px;
+    height: 100px;
+    background: linear-gradient(135deg, #ed1c24 50%, transparent 50%);
+    border-top-left-radius: 24px;
+    z-index: 1;
+}
+
+.dash-card-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 15px;
+    position: relative;
+    z-index: 2;
+}
+
+/* O círculo branco do ícone sobrepondo a forma vermelha */
+.dash-card-icon {
+    width: 65px;
+    height: 65px;
+    background: #ffffff;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    box-shadow: 0 10px 10px rgba(0, 0, 0, 0.1);
+    margin-top: -15px;
+    margin-left: -5px;
+}
+
+.dash-card-icon i {
+    font-size: 1.8rem;
+    color: #111;
+}
+
+.dash-card-title {
+    font-weight: 900;
+    color: #000;
+    font-size: 1.15rem;
+    margin-bottom: 0;
+    margin-left: 15px;
+    margin-top: -10px;
+}
+
+.dash-card-text {
+    color: #4a4a4a;
+    font-size: 0.95rem;
+    line-height: 1.5;
+    position: relative;
+    z-index: 2;
+    margin-bottom: 0;
 }

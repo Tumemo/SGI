@@ -7,7 +7,7 @@ require_once '../componentes/header.php';
 ?>
 
 <main class="mt-4 d-flex justify-content-center align-items-center flex-column position-relative d-md-none" style="margin-bottom: 120px;">
-    <a href="./novaEdicao_modalidades.php" id="linkEditarModalidadesMobile" class="text-decoration-none text-dark w-100 d-flex justify-content-center">
+    <a href="./edicao_modalidades.php" id="linkEditarModalidadesMobile" class="text-decoration-none text-dark w-100 d-flex justify-content-center">
         <div class="shadow-sm d-flex justify-content-between align-content-center px-3 py-3 rounded-3 border border-1" style="width: 90%; min-height: 90px;">
             <div class="w-100 overflow-hidden">
                 <h2 class="m-0 fs-5">Modalidades</h2>
@@ -65,45 +65,20 @@ require_once '../componentes/header.php';
 
     <div class="d-none d-md-block fixed-bottom" style="background: linear-gradient(to top, rgba(248,249,250,1) 70%, rgba(248,249,250,0) 100%); padding: 30px 0;">
         <div class="container-fluid d-flex justify-content-end align-items-center gap-3" style="max-width: 80%;">
-            <a href="./edicao_regulamentos.php" id="btnVoltarDesktop" class="text-decoration-none">
+            <a href="./edicao_pontuacao.php" id="btnVoltarDesktop" class="text-decoration-none">
                 <button class="btn btn-outline-danger bg-white fw-semibold rounded-3 px-4 py-2 shadow-sm">
                     Voltar
                 </button>
             </a>
-            <button class="btn btn-danger fw-semibold rounded-3 px-4 py-2 shadow-sm" data-bs-toggle="modal" data-bs-target="#adicionarCategoria">
-                Adicionar categoria
-            </button>
+            <a href="./home.php" class="text-decoration-none">
+                <button class="btn btn-danger fw-semibold rounded-3 px-4 py-2 shadow-sm">
+                    Criar interclasse
+                </button>
+            </a>
         </div>
     </div>
 </main>
 
-
-<div class="modal fade" id="adicionarCategoria" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header border border-0">
-                <h1 class="modal-title fs-5 text-danger" id="exampleModalLabel">Criar nova Categoria</h1>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            
-            <form id="formNovaCategoria">
-                <div class="modal-body">
-                    <div class="mb-5">
-                        <label for="inputNomeCategoria" class="form-label">Insira o nome da categoria:</label>
-                        <input type="text" class="form-control" id="inputNomeCategoria" placeholder="EX: Ensino Médio" required>
-                    </div>
-
-                    <div class="d-flex justify-content-center gap-4 mb-0">
-                        <button type="button" class="btn btn-outline-danger" data-bs-dismiss="modal">Cancelar</button>
-                        <button type="submit" class="btn btn-danger" id="btnCriarCategoria">Criar</button>
-                    </div>
-                </div>
-            </form>
-            
-            <div class="mb-1 border border-0"></div>
-        </div>
-    </div>
-</div>
 
 
 <script>
@@ -167,49 +142,6 @@ require_once '../componentes/header.php';
             document.getElementById('resumoRegulamentosDesktop').innerText = textoPadrao;
         }
     }
-
-    // Modal Nova Categoria
-    document.getElementById('formNovaCategoria').addEventListener('submit', async (e) => {
-        e.preventDefault();
-
-        if (!idInterclasse) {
-            alert("Erro: ID do interclasse não encontrado!");
-            return;
-        }
-
-        const inputNome = document.getElementById('inputNomeCategoria').value;
-        const btnCriar = document.getElementById('btnCriarCategoria');
-        
-        btnCriar.disabled = true;
-        btnCriar.innerHTML = "Criando...";
-
-        const dadosCategoria = {
-            id_interclasse: idInterclasse,
-            nome_categoria: inputNome.trim()
-        };
-
-        try {
-            const response = await fetch('../../../api/categorias.php', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(dadosCategoria)
-            });
-
-            const result = await response.json();
-
-            if (result.success) {
-                window.location.href = `./edicao_categorias.php?id=${idInterclasse}`;
-            } else {
-                alert("Erro ao criar categoria: " + (result.message || "Tente novamente."));
-                btnCriar.disabled = false;
-                btnCriar.innerHTML = "Criar";
-            }
-        } catch (error) {
-            console.error("Erro na requisição:", error);
-            alert("Aviso: Conexão com API falhou, mas redirecionando para testes de layout.");
-            window.location.href = `./edicao_categorias.php?id=${idInterclasse}`;
-        }
-    });
 
     window.onload = carregarResumos;
 </script>

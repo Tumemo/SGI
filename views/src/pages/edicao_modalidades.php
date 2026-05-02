@@ -118,7 +118,7 @@ require_once '../componentes/header.php';
     } else {
         // Redirecionamento para o próximo passo no Desktop
         const btnCont = document.getElementById('btnContinuarDesktop');
-        if(btnCont) btnCont.href = `./categorias.php?id=${idInterclasse}`;
+        // if (btnCont) btnCont.href = `./categorias.php?id=${idInterclasse}`;
     }
 
     // 1. FUNÇÃO: Listar as modalidades já existentes (Cards)

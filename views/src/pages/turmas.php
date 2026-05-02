@@ -87,9 +87,11 @@ require_once '../componentes/header.php';
                 </div>
 
                 <div class="mt-auto">
-                    <button type="button" class="btn btn-danger w-100 fw-bold shadow-sm d-flex justify-content-center align-items-center gap-1" style="font-size: 0.85rem; padding: 12px; border-radius: 6px;">
-                        VER DETALHES <i class="bi bi-arrow-right"></i>
-                    </button>
+                    <a href="./modalidades_alunos.php" class="text-decoration-none">
+                        <button type="button" class="btn btn-danger w-100 fw-bold shadow-sm d-flex justify-content-center align-items-center gap-1" style="font-size: 0.85rem; padding: 12px; border-radius: 6px;">
+                            VER DETALHES <i class="bi bi-arrow-right"></i>
+                        </button>
+                    </a>
                 </div>
 
             </div>
@@ -119,9 +121,11 @@ require_once '../componentes/header.php';
                 </div>
 
                 <div class="mt-auto">
-                    <button type="button" class="btn btn-danger w-100 fw-bold shadow-sm d-flex justify-content-center align-items-center gap-1" style="font-size: 0.85rem; padding: 12px; border-radius: 6px;">
-                        VER DETALHES <i class="bi bi-arrow-right"></i>
-                    </button>
+                    <a href="./modalidades_alunos.php" class="text-decoration-none">
+                        <button type="button" class="btn btn-danger w-100 fw-bold shadow-sm d-flex justify-content-center align-items-center gap-1" style="font-size: 0.85rem; padding: 12px; border-radius: 6px;">
+                            VER DETALHES <i class="bi bi-arrow-right"></i>
+                        </button>
+                    </a>
                 </div>
 
             </div>
