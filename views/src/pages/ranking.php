@@ -46,7 +46,7 @@ require_once '../componentes/header.php';
         </section>
 </main>
 
-<main class="d-none d-md-block" style="margin-left: 80px; background-color: #f2f2f2;">
+<main class="d-none d-md-block main-desktop-layout">
     <div class="container-fluid bg-white p-5 d-flex" style="min-height: calc(100vh - 220px);">
 
         <div class="ps-4 mb-5" style="min-width: 300px;">

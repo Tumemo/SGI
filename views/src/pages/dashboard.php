@@ -75,7 +75,7 @@ require_once '../componentes/header.php';
 
 
 <!-- main desktop -->
-<main class="flex-grow-1 d-none d-md-block container">
+<main class="d-none d-md-block main-desktop-layout">
     <div class="container-fluid px-0">
 
         <div class="row g-4 mt-2">

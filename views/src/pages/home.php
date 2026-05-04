@@ -17,7 +17,7 @@ require_once '../componentes/header.php';
 </main>
 
 <!-- main desktop -->
-<main class="d-none d-md-flex" style="margin-bottom: 120px;">
+<main class="d-none d-md-flex main-desktop-layout">
     <section class="mt-4 container">
 
         <h1 class="fs-2">Edições do interclasse</h1>

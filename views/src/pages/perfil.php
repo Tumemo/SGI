@@ -30,7 +30,7 @@ require_once '../componentes/header.php';
 
 
 <!-- main desktop -->
-<main style="margin-left: 80px; background-color: #f2f2f2;" class="d-none d-md-block">
+<main class="d-none d-md-block main-desktop-layout">
     <div class="container-fluid bg-white p-5 pb-0">
         <div class="row">
             

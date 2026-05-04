@@ -73,7 +73,7 @@ require_once '../componentes/header.php';
 </main>
 
 
-<main class="bg-light flex-grow-1 p-4 p-md-5 d-none d-md-block" style="padding-top: 2rem; padding-bottom: 120px; position: relative;">
+<main class="d-none d-md-block main-desktop-layout">
 
     <div class="container-fluid px-0" style="max-width: 80%;">
 

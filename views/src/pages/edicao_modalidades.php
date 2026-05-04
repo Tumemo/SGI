@@ -21,9 +21,9 @@ require_once '../componentes/header.php';
 
 
 <!-- main desktop -->
-<main class="container d-none d-md-block">
+<main class="d-none d-md-block main-desktop-layout">
 
-    <div style="border-radius: 12px; padding: 40px;">
+    <div style="border-radius: 12px;">
 
         <div class="mb-5">
             <button class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 shadow-sm" style="background-color: #ed1c24; border-radius: 6px;" onclick="window.history.back()">

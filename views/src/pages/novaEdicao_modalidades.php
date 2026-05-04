@@ -20,7 +20,7 @@ require_once '../componentes/header.php';
     <a href="./edicao_regulamentos.php" id="btnContinuarMobile" class="btn btn-danger position-absolute position-fixed translate-middle" style="width: max-content;  top: 87%; left: 50%; z-index: 10; cursor: pointer;">Continuar</a>
 </main>
 
-<main class="bg-light flex-grow-1 p-4 p-md-5 d-none d-md-block">
+<main class="d-none d-md-block main-desktop-layout">
     <div class="container-fluid px-0" style="max-width: 90%;">
         
         <div class="mb-5">

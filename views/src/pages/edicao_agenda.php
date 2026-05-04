@@ -9,12 +9,12 @@ require_once '../componentes/header.php';
 <main class="bg-light  d-md-none p-3" style="padding-top: 5rem;">
     <div class="card border-0 shadow-sm rounded-4 mx-auto mb-4" style="max-width: 450px;">
         <div class="card-body p-4">
-            
+
             <div class="d-flex justify-content-between align-items-center mb-4">
                 <button id="btn-prev-mobile" class="btn btn-link text-dark p-0 text-decoration-none">
                     <i class="bi bi-chevron-left" style="font-size: 1.2rem;"></i>
                 </button>
-                
+
                 <div class="d-flex gap-2">
                     <select id="select-mes" class="form-select form-select-sm border-0 bg-light fw-bold text-center" style="border-radius: 8px; cursor: pointer; padding-right: 1.8rem; box-shadow: none;">
                         <option value="0">Jan</option>
@@ -30,9 +30,9 @@ require_once '../componentes/header.php';
                         <option value="10">Nov</option>
                         <option value="11">Dez</option>
                     </select>
-                    
+
                     <select id="select-ano" class="form-select form-select-sm border-0 bg-light fw-bold text-center" style="border-radius: 8px; cursor: pointer; padding-right: 1.8rem; box-shadow: none;">
-                        </select>
+                    </select>
                 </div>
 
                 <button id="btn-next-mobile" class="btn btn-link text-dark p-0 text-decoration-none">
@@ -47,17 +47,54 @@ require_once '../componentes/header.php';
             </div>
 
             <div id="calendario-grade-mobile" class="d-flex flex-wrap text-center">
-                </div>
-            
+            </div>
+
         </div>
     </div>
 
     <div id="lista-eventos-mobile" class="d-flex flex-column gap-3 mx-auto" style="max-width: 450px;">
+        <div class="card bg-white border-0 shadow-sm rounded-3 p-3 position-relative w-100 mb-3">
+            <i class="bi bi-record-circle text-danger position-absolute top-0 end-0 m-3 fs-5"></i>
+            <div class="card-body p-0">
+                <h5 class="fw-bold text-dark mb-1">${evento.titulo}</h5>
+                <p class="text-muted mb-1" style="font-size: 0.8rem;">${diaNum}, ${diaSem}</p>
+                <p class="text-muted mb-0" style="font-size: 0.8rem;">${evento.hora_inicio} - ${evento.hora_fim}</p>
+            </div>
+            <i class="bi bi-alarm text-muted position-absolute bottom-0 end-0 m-3" style="font-size: 1rem;"></i>
         </div>
+        <div class="card bg-white border-0 shadow-sm rounded-3 p-3 position-relative w-100 mb-3">
+            <i class="bi bi-record-circle text-danger position-absolute top-0 end-0 m-3 fs-5"></i>
+            <div class="card-body p-0">
+                <h5 class="fw-bold text-dark mb-1">${evento.titulo}</h5>
+                <p class="text-muted mb-1" style="font-size: 0.8rem;">${diaNum}, ${diaSem}</p>
+                <p class="text-muted mb-0" style="font-size: 0.8rem;">${evento.hora_inicio} - ${evento.hora_fim}</p>
+            </div>
+            <i class="bi bi-alarm text-muted position-absolute bottom-0 end-0 m-3" style="font-size: 1rem;"></i>
+        </div>
+        <div class="card bg-white border-0 shadow-sm rounded-3 p-3 position-relative w-100 mb-3">
+            <i class="bi bi-record-circle text-danger position-absolute top-0 end-0 m-3 fs-5"></i>
+            <div class="card-body p-0">
+                <h5 class="fw-bold text-dark mb-1">${evento.titulo}</h5>
+                <p class="text-muted mb-1" style="font-size: 0.8rem;">${diaNum}, ${diaSem}</p>
+                <p class="text-muted mb-0" style="font-size: 0.8rem;">${evento.hora_inicio} - ${evento.hora_fim}</p>
+            </div>
+            <i class="bi bi-alarm text-muted position-absolute bottom-0 end-0 m-3" style="font-size: 1rem;"></i>
+        </div>
+        <div class="card bg-white border-0 shadow-sm rounded-3 p-3 position-relative w-100 mb-3">
+            <i class="bi bi-record-circle text-danger position-absolute top-0 end-0 m-3 fs-5"></i>
+            <div class="card-body p-0">
+                <h5 class="fw-bold text-dark mb-1">${evento.titulo}</h5>
+                <p class="text-muted mb-1" style="font-size: 0.8rem;">${diaNum}, ${diaSem}</p>
+                <p class="text-muted mb-0" style="font-size: 0.8rem;">${evento.hora_inicio} - ${evento.hora_fim}</p>
+            </div>
+            <i class="bi bi-alarm text-muted position-absolute bottom-0 end-0 m-3" style="font-size: 1rem;"></i>
+        </div>
+    </div>
 </main>
 
 
-<main class="d-none d-md-block min-vh-100" style="margin-left: 80px; background-color: #f2f2f2; padding: 40px;">
+<!-- main desktop -->
+<main class="d-none d-md-block main-desktop-layout">
 
     <button type="button" class="btn btn-danger d-flex align-items-center mb-4 border-0 shadow-sm" style="border-radius: 4px; padding: 8px 15px;">
         <i class="bi bi-arrow-left-circle-fill me-2"></i>
@@ -70,8 +107,22 @@ require_once '../componentes/header.php';
                 <i class="bi bi-calendar3"></i> Agenda
             </h2>
 
-            <div id="lista-eventos" class="d-flex flex-column gap-3">
+            <!-- card q mostra o dia do jogo e os bagui (apagar depois) -->
+            <div class="card bg-white border-0 shadow-sm rounded-3 p-3 position-relative w-100 mb-3">
+                <a href="jogos.php" class=" text-decoration-none">
+                    <i class="bi bi-record-circle text-danger position-absolute top-0 end-0 m-3 fs-5"></i>
+                </a>
+                <div class="card-body p-0">
+                    <h5 class="fw-bold text-dark mb-1">Queimada</h5>
+                    <p class="text-muted mb-1" style="font-size: 0.8rem;">27/03</p>
+                    <p class="text-muted mb-0" style="font-size: 0.8rem;">Não iniciado ainda</p>
                 </div>
+                <i class="bi bi-alarm text-muted position-absolute bottom-0 end-0 m-3" style="font-size: 1rem;"></i>
+            </div>
+            <!-- ============================================================================ -->
+
+            <div id="lista-eventos" class="d-flex flex-column gap-3">
+            </div>
         </div>
 
         <div class="col-lg-6 d-flex justify-content-center align-items-start mt-5 mt-lg-0">
@@ -90,7 +141,7 @@ require_once '../componentes/header.php';
                     </div>
 
                     <div id="calendario-grade" class="d-flex flex-wrap text-center">
-                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -141,7 +192,7 @@ require_once '../componentes/header.php';
     function atualizarTelas() {
         gerarCalendarioVisual(); // Desktop
         gerarCalendarioMobile(); // Mobile
-        atualizarSelects();      // Ajusta dropdowns
+        atualizarSelects(); // Ajusta dropdowns
     }
 
     function inicializarAnos() {
@@ -160,7 +211,7 @@ require_once '../componentes/header.php';
     function gerarCalendarioVisual() {
         const mesNavegacao = dataNavegacao.getMonth();
         const anoNavegacao = dataNavegacao.getFullYear();
-        const hojeReal = new Date(); 
+        const hojeReal = new Date();
 
         const nomesMeses = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
         document.getElementById('calendario-mes').innerText = nomesMeses[mesNavegacao] + ' ' + anoNavegacao;
@@ -205,7 +256,7 @@ require_once '../componentes/header.php';
         for (let dia = 1; dia <= diasNoMes; dia++) {
             const isHoje = (dia === hojeReal.getDate() && mesNavegacao === hojeReal.getMonth() && anoNavegacao === hojeReal.getFullYear());
             const classeHoje = isHoje ? 'bg-dark text-white rounded-circle' : 'text-dark';
-            
+
             grade.innerHTML += `
             <div class="d-flex align-items-center justify-content-center" style="width: 14%; height: 40px; margin-bottom: 5px;">
                 <span class="${classeHoje} d-flex align-items-center justify-content-center fw-bold" style="width: 35px; height: 35px; font-size: 0.95rem;">
@@ -236,8 +287,12 @@ require_once '../componentes/header.php';
 
             eventos.forEach(evento => {
                 const dataObj = new Date(evento.data_evento + 'T00:00:00');
-                const diaNum = dataObj.toLocaleDateString('pt-BR', { day: '2-digit' });
-                const diaSem = dataObj.toLocaleDateString('pt-BR', { weekday: 'long' });
+                const diaNum = dataObj.toLocaleDateString('pt-BR', {
+                    day: '2-digit'
+                });
+                const diaSem = dataObj.toLocaleDateString('pt-BR', {
+                    weekday: 'long'
+                });
 
                 const cardHtml = `
                 <div class="card bg-white border-0 shadow-sm rounded-3 p-3 position-relative w-100 mb-3">

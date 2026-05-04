@@ -33,7 +33,7 @@ require_once '../componentes/header.php';
 
 </main>
 
-<main class="bg-light flex-grow-1 p-4 p-md-5 d-none d-md-block container" style="padding-top: 2rem;">
+<main class="d-none d-md-block main-desktop-layout">
     <div class="container-fluid px-0">
         
         <div class="row g-4 mx-0">

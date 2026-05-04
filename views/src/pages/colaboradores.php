@@ -7,7 +7,7 @@ require_once '../componentes/header.php';
 ?>
 
 
-<main class="bg-light min-vh-100 p-3" style="padding-top: 2rem;">
+<main class="d-none d-md-block main-desktop-layout">
 
     <style>
         .accordion-button:not(.collapsed) {
