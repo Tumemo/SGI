@@ -150,7 +150,7 @@ require_once '../componentes/header.php';
             categorias.forEach(categoria => {
                 divMobile.innerHTML += `
                     <button data-bs-toggle="modal" data-bs-target="#criarTurma" class="bg-white d-flex m-auto justify-content-between align-items-center shadow-sm py-3 px-4 mb-3 border border-1 rounded-3" style="width: 90%;">
-                        <i class="bi bi-trophy fs-1 text-danger"></i>
+                        <i class="bi bi-trophy fs-1"></i>
                         <h2 class="m-0 fs-5 text-truncate px-3 w-100 text-start">${categoria.nome_categoria}</h2>
                         <picture>
                             <img src="../../public/icons/arrow-right.svg" alt="Seta para direita">

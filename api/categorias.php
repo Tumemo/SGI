@@ -10,11 +10,12 @@ switch ($method) {
         $filtro = aplicarFiltrosCategorias();
 
 
-        $sql = "SELECT DISTINCT categorias.id_categoria, categorias.nome_categoria
-                FROM categorias
-                LEFT JOIN modalidades ON modalidades.categorias_id_categoria = categorias.id_categoria
-                LEFT JOIN interclasses ON interclasses.id_interclasse = modalidades.interclasses_id_interclasse
-                WHERE 1=1" . $filtro['sql'];
+        $sql = "SELECT 
+                    c.id_categoria, 
+                    c.nome_categoria, 
+                    i.nome_interclasse -- Aqui buscamos o nome da tabela interclasses
+                FROM categorias c
+                INNER JOIN interclasses i ON c.interclasses_id_interclasse = i.id_interclasse; WHERE 1=1" . $filtro['sql'];
 
         // $sql = "SELECT * from categorias";
         $sql .= " ORDER BY categorias.nome_categoria ASC";
@@ -42,9 +43,9 @@ switch ($method) {
             break;
         }
 
-        $sql = "INSERT INTO categorias (nome_categoria, status_categoria) VALUES (?, ?)";
+        $sql = "INSERT INTO categorias (nome_categoria, status_categoria, interclasses_id_interclasse) VALUES (?, ?, ?)";
         $stmt = $conn->prepare($sql);
-        $stmt->bind_param("si", $data->nome_categoria, $data->status_categoria);
+        $stmt->bind_param("sis", $data->nome_categoria, $data->status_categoria, $data->interclasses_id_interclasse);
 
         if ($stmt->execute()) {
             http_response_code(201);

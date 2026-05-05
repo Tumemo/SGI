@@ -88,6 +88,87 @@ require_once '../componentes/header.php';
 </main>
 
 
+<main class="d-block d-md-none main-mobile-layout">
+
+    <style>
+        .accordion-button:not(.collapsed) {
+            background-color: #fff !important;
+            color: #212529 !important;
+            box-shadow: none !important;
+        }
+
+        .accordion-button:focus {
+            box-shadow: none !important;
+        }
+
+        .accordion-button::after {
+            background-size: 1rem;
+        }
+    </style>
+
+    <div class="mx-auto" style="max-width: 450px;">
+
+        <button class="btn btn-danger mb-4 px-3 py-2 fw-bold d-flex align-items-center gap-2 border-0" style="border-radius: 8px;" data-bs-toggle="modal" data-bs-target="#AdicionarColaboradorModal">
+            <i class="bi bi-plus-circle"></i> Adicionar
+        </button>
+
+        <div class="accordion d-flex flex-column gap-3" id="accordionColaboradores">
+
+            <div class="accordion-item border-0 shadow-sm rounded-3 overflow-hidden">
+                <h2 class="accordion-header" id="headingUm">
+                    <button class="accordion-button collapsed bg-white p-3 shadow-none" type="button" data-bs-toggle="collapse" data-bs-target="#collapseUm" aria-expanded="false" aria-controls="collapseUm">
+                        <div>
+                            <h6 class="mb-0 fw-bold text-dark">Gilmara Beraldo</h6>
+                            <small class="text-muted" style="font-size: 0.9rem;">Administradora, mesária</small>
+                        </div>
+                    </button>
+                </h2>
+                <div id="collapseUm" class="accordion-collapse collapse" aria-labelledby="headingUm" data-bs-parent="#accordionColaboradores">
+                    <div class="accordion-body pt-0 bg-white position-relative">
+                        <div class="form-check mb-2">
+                            <input class="form-check-input bg-dark border-dark shadow-none" type="checkbox" id="checkAdmin1" checked>
+                            <label class="form-check-label text-muted" for="checkAdmin1" style="font-size: 0.9rem;">Administrador</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input bg-dark border-dark shadow-none" type="checkbox" id="checkMesario1" checked>
+                            <label class="form-check-label text-muted" for="checkMesario1" style="font-size: 0.9rem;">Mesário</label>
+                        </div>
+
+                        <i class="bi bi-trash text-dark position-absolute bottom-0 end-0 m-3 fs-5" style="cursor: pointer;"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="accordion-item border-0 shadow-sm rounded-3 overflow-hidden">
+                <h2 class="accordion-header" id="headingDois">
+                    <button class="accordion-button collapsed bg-white p-3 shadow-none" type="button" data-bs-toggle="collapse" data-bs-target="#collapseDois" aria-expanded="false" aria-controls="collapseDois">
+                        <div>
+                            <h6 class="mb-0 fw-bold text-dark">Gabriel Godoy</h6>
+                            <small class="text-muted" style="font-size: 0.8rem;">Administrador, mesário</small>
+                        </div>
+                    </button>
+                </h2>
+                <div id="collapseDois" class="accordion-collapse collapse" aria-labelledby="headingDois" data-bs-parent="#accordionColaboradores">
+                    <div class="accordion-body pt-0 bg-white position-relative">
+                        <div class="form-check mb-2">
+                            <input class="form-check-input bg-dark border-dark shadow-none" type="checkbox" id="checkAdmin2" checked>
+                            <label class="form-check-label text-muted" for="checkAdmin2" style="font-size: 0.9rem;">Administrador</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input bg-dark border-dark shadow-none" type="checkbox" id="checkMesario2" checked>
+                            <label class="form-check-label text-muted" for="checkMesario2" style="font-size: 0.9rem;">Mesário</label>
+                        </div>
+
+                        <i class="bi bi-trash text-dark position-absolute bottom-0 end-0 m-3 fs-5" style="cursor: pointer;"></i>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</main>
+
+
 
 
 

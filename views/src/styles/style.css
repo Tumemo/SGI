@@ -129,7 +129,9 @@ body, main{
     flex-direction: column;
 }
 
-
+.main-mobile-layout {
+    padding: 20px !important;
+}
 
 /* pagina jogoa.php */
 body {

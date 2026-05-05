@@ -17,51 +17,85 @@ $metodo = $_SERVER['REQUEST_METHOD'];
 $acao = $_POST['acao'] ?? $input_data['acao'] ?? $_REQUEST['acao'] ?? ''; 
 
 function importarCompetidores($conn) {
+    // --- PASSO 1: Descobrir qual é o Interclasse Ativo ---
+    // Ajuste o nome da coluna conforme o seu banco (ex: status_interclasse ou ativo)
+    $sql_ativo = "SELECT id_interclasse FROM interclasses WHERE status_interclasse = '1' LIMIT 1";
+    $res_ativo = $conn->query($sql_ativo);
+    $interclasse = $res_ativo->fetch_assoc();
+
+    if (!$interclasse) {
+        return [
+            "status" => "erro", 
+            "mensagem" => "Não existe nenhum Interclasse ativo. Crie uma nova edição antes de importar os alunos."
+        ];
+    }
+
+    $id_interclasse_ativa = $interclasse['id_interclasse'];
+
+    // --- PASSO 2: Carregar o JSON ---
     $caminho_json = 'json_turmas/info_alunos.json';
-    
     if (!file_exists($caminho_json)) {
-        return ["status" => "erro", "mensagem" => "Arquivo JSON não encontrado"];
+        return ["status" => "erro", "mensagem" => "Arquivo JSON não encontrado."];
     }
 
     $alunos = json_decode(file_get_contents($caminho_json), true);
-    $sucessos = 0; $ignorados = 0; $erros = 0; 
+    $sucessos = 0; $erros_detalhados = [];
     $cache_turmas = [];
-    
-    $sql = "INSERT IGNORE INTO usuarios (sigla_usuario, matricula_usuario, nome_usuario, senha_usuario, foto_usuario, nivel_usuario, competidor_usuario, mesario_usuario, genero_usuario, data_nasc_usuario, status_usuario, turmas_id_turma) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
-    $stmt_ins = $conn->prepare($sql);
-    $stmt_t = $conn->prepare("SELECT id_turma FROM turmas WHERE nome_turma = ?");
-    
+
+    // --- PASSO 3: Processar Alunos e Turmas ---
     foreach ($alunos as $aluno) {
-        $nome_usuario = trim($aluno['nome'] ?? '');
         $nome_turma = trim($aluno['turma'] ?? '');
-        $matricula_usuario = preg_replace('/[^0-9]/', '', $aluno['rm'] ?? '');
-        
-        $d = explode('/', $aluno['data_nascimento'] ?? '');
-        $data_nasc_usuario = (count($d) === 3) ? "{$d[2]}-{$d[1]}-{$d[0]}" : null;
-        $genero_usuario = (strtoupper($aluno['genero'] ?? '') === 'FEM') ? 'FEM' : 'MASC';
-        
+        if (empty($nome_turma)) continue;
+
+        // Lógica de Turma (RF02)
         if (!isset($cache_turmas[$nome_turma])) {
-            $stmt_t->bind_param("s", $nome_turma);
+            // Procuramos se a turma já existe vinculada a ESTE interclasse ativo
+            $stmt_t = $conn->prepare("SELECT id_turma FROM turmas WHERE nome_turma = ? AND interclasses_id_interclasse = ?");
+            $stmt_t->bind_param("si", $nome_turma, $id_interclasse_ativa);
             $stmt_t->execute();
-            $row = $stmt_t->get_result()->fetch_assoc();
-            $cache_turmas[$nome_turma] = $row['id_turma'] ?? null;
+            $res_t = $stmt_t->get_result()->fetch_assoc();
+
+            if ($res_t) {
+                $cache_turmas[$nome_turma] = $res_t['id_turma'];
+            } else {
+                // Se não existe, cria a turma vinculando ao ID que encontramos no Passo 1
+                $ins_t = $conn->prepare("INSERT INTO turmas (nome_turma, interclasses_id_interclasse) VALUES (?, ?)");
+                $ins_t->bind_param("si", $nome_turma, $id_interclasse_ativa);
+                $ins_t->execute();
+                $cache_turmas[$nome_turma] = $conn->insert_id;
+            }
         }
-        
+
         $id_turma = $cache_turmas[$nome_turma];
-        if (!$id_turma) { $erros++; continue; }
         
-        $senha_limpa = $matricula_usuario;
-        $senha_hash = password_hash($senha_limpa, PASSWORD_DEFAULT);
+        // --- Inserção do Aluno (conforme o seu SQL anterior) ---
+        $rm = preg_replace('/[^0-9]/', '', $aluno['rm'] ?? '');
+        $nome = trim($aluno['nome'] ?? '');
+        $senha = password_hash($rm, PASSWORD_DEFAULT);
+        $genero = (isset($aluno['genero']) && strtoupper($aluno['genero']) == 'FEM') ? 'FEM' : 'MASC';
+        $data_nasc = (isset($aluno['data_nascimento'])) ? implode("-", array_reverse(explode("/", $aluno['data_nascimento']))) : date('Y-m-d');
+
+        $sql_user = "INSERT INTO usuarios (sigla_usuario, matricula_usuario, nome_usuario, senha_usuario, nivel_usuario, competidor_usuario, mesario_usuario, genero_usuario, data_nasc_usuario, foto_usuario, status_usuario, turmas_id_turma) 
+                     VALUES ('RM', ?, ?, ?, '0', '1', '0', ?, ?, 'default.jpg', '1', ?)";
         
-        $sigla = 'RM'; $foto = 'default.jpg'; $nivel = '0'; $comp = '1'; $mes = '0'; $status = '1';
-        
-        $stmt_ins->bind_param("ssssssssssii", $sigla, $matricula_usuario, $nome_usuario, $senha_hash, $foto, $nivel, $comp, $mes, $genero_usuario, $data_nasc_usuario, $status, $id_turma);
-        
-        if ($stmt_ins->execute()) { 
-            $stmt_ins->affected_rows > 0 ? $sucessos++ : $ignorados++;
-        } else { $erros++; }
+        $stmt_u = $conn->prepare($sql_user);
+        $stmt_u->bind_param("sssssi", $rm, $nome, $senha, $genero, $data_nasc, $id_turma);
+
+        if ($stmt_u->execute()) {
+            $sucessos++;
+        } else {
+            if ($conn->errno != 1062) { // Ignora se for apenas RM duplicado
+                $erros_detalhados[] = "Erro no RM $rm: " . $stmt_u->error;
+            }
+        }
     }
-    return ["status" => "sucesso", "novos" => $sucessos, "erros" => $erros];
+
+    return [
+        "status" => "sucesso", 
+        "interclasse_vinculado" => $id_interclasse_ativa,
+        "cadastrados" => $sucessos,
+        "erros" => $erros_detalhados
+    ];
 }
 
 switch($metodo) {

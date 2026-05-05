@@ -83,4 +83,12 @@
 4. Testar e iterar com base em feedback.
 
 Para análise de designs (ex.: Figma), compartilhe um link público ou descreva as telas. Posso sugerir ajustes baseados nos requisitos.</content>
+
+
+Front end
+Listar interclasses funcionando
+Criar interclasse funcionando
+Criar turma funcionando
+Listar turmas funcionando
+
 <parameter name="filePath">vsls:/docs/status_implementacao_sgi.md
