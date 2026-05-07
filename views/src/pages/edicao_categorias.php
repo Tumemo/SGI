@@ -60,7 +60,7 @@ require_once '../componentes/header.php';
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <form>
+                <form action="../../../docs/lista_alunos/" method="POST" enctype="multipart/form-data">
                     <div class="mb-3">
                         <label for="inputNomeTurma" class="form-label">Nome da turma:</label>
                         <input type="text" class="form-control" id="inputNomeTurma" placeholder="Turma A" required>
@@ -199,7 +199,8 @@ require_once '../componentes/header.php';
         // Injetando o id_interclasse no payload
         const dados = {
             interclasses_id_interclasse: parseInt(idInterclasse),
-            nome_categoria: inputNome.value.trim()
+            nome_categoria: inputNome.value.trim(),
+            status_categoria: 1 //Definido como ativo por padrao
         };
 
         btnSalvar.disabled = true;
