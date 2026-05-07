@@ -44,29 +44,32 @@ function importarCompetidores($conn) {
 
     // --- PASSO 3: Processar Alunos e Turmas ---
     foreach ($alunos as $aluno) {
-        $nome_turma = trim($aluno['turma'] ?? '');
-        if (empty($nome_turma)) continue;
+        // Dentro do foreach ($alunos as $aluno)
+        $nome_turma_json = trim($aluno['turma'] ?? '');
 
-        // Lógica de Turma (RF02)
-        if (!isset($cache_turmas[$nome_turma])) {
-            // Procuramos se a turma já existe vinculada a ESTE interclasse ativo
-            $stmt_t = $conn->prepare("SELECT id_turma FROM turmas WHERE nome_turma = ? AND interclasses_id_interclasse = ?");
-            $stmt_t->bind_param("si", $nome_turma, $id_interclasse_ativa);
+        if (!isset($cache_turmas[$nome_turma_json])) {
+            // 1. Busca a turma apenas pelo nome para evitar duplicados
+            $stmt_t = $conn->prepare("SELECT id_turma FROM turmas WHERE nome_turma = ?");
+            $stmt_t->bind_param("s", $nome_turma_json);
             $stmt_t->execute();
             $res_t = $stmt_t->get_result()->fetch_assoc();
 
             if ($res_t) {
-                $cache_turmas[$nome_turma] = $res_t['id_turma'];
+                $id_turma = $res_t['id_turma'];
+                // 2. RF02: Garante que a turma existente aponte para o Interclasse ATIVO
+                $upd_t = $conn->prepare("UPDATE turmas SET interclasses_id_interclasse = ? WHERE id_turma = ?");
+                $upd_t->bind_param("ii", $id_interclasse_ativa, $id_turma);
+                $upd_t->execute();
+                $cache_turmas[$nome_turma_json] = $id_turma;
             } else {
-                // Se não existe, cria a turma vinculando ao ID que encontramos no Passo 1
-                $ins_t = $conn->prepare("INSERT INTO turmas (nome_turma, interclasses_id_interclasse) VALUES (?, ?)");
-                $ins_t->bind_param("si", $nome_turma, $id_interclasse_ativa);
+                // 3. Se não existe mesmo, cria do zero
+                $ins_t = $conn->prepare("INSERT INTO turmas (nome_turma, interclasses_id_interclasse, status_turma) VALUES (?, ?, '1')");
+                $ins_t->bind_param("si", $nome_turma_json, $id_interclasse_ativa);
                 $ins_t->execute();
-                $cache_turmas[$nome_turma] = $conn->insert_id;
+                $cache_turmas[$nome_turma_json] = $conn->insert_id;
             }
         }
-
-        $id_turma = $cache_turmas[$nome_turma];
+        $id_turma_final = $cache_turmas[$nome_turma_json];
         
         // --- Inserção do Aluno (conforme o seu SQL anterior) ---
         $rm = preg_replace('/[^0-9]/', '', $aluno['rm'] ?? '');
@@ -165,5 +168,5 @@ switch($metodo) {
         }
         break;
 }
-$conn->close();
+// $conn->close();
 ?>

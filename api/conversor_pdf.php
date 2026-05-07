@@ -1,5 +1,8 @@
 <?php
+// 1. Inclusões essenciais para a automação
 require_once '../vendor/autoload.php';
+require_once '../config/db.php'; // Necessário para a variável $conn
+require_once 'usuarios.php';    // Arquivo que contém a função importarCompetidores
 
 use Smalot\PdfParser\Parser;
 
@@ -12,15 +15,12 @@ if (!is_dir($pasta_destino)) {
     mkdir($pasta_destino, 0777, true);
 }
 
-// 1. Carrega os alunos já existentes
 $todos_os_alunos = [];
 if (file_exists($arquivo_final)) {
     $conteudo_atual = file_get_contents($arquivo_final);
     $todos_os_alunos = json_decode($conteudo_atual, true) ?? [];
 }
 
-// Criamos um mapa (indexado pelo RM) para busca instantânea e evitar duplicados
-// Isso transforma o RM na "chave" do array, garantindo unicidade absoluta.
 $alunos_por_rm = [];
 foreach ($todos_os_alunos as $aluno) {
     if (isset($aluno['rm'])) {
@@ -51,7 +51,6 @@ if (count($arquivos_pdf) > 0) {
                     preg_match('/(\d+\.\d+)/', $linha_limpa, $m_rm);
                     $rm = $m_rm[1] ?? "";
 
-                    // Pula se o RM não for encontrado na linha
                     if (empty($rm)) continue;
 
                     $genero = "MASC"; 
@@ -67,8 +66,6 @@ if (count($arquivos_pdf) > 0) {
                     $nome_final = trim($partes[0]);
                     $nome_final = preg_replace('/\s*[A-Z]{2}$/', '', $nome_final);
 
-                    // VERIFICAÇÃO POR RM:
-                    // Se o RM não existe no nosso mapa, adicionamos o novo aluno
                     if (!isset($alunos_por_rm[$rm])) {
                         $alunos_por_rm[$rm] = [
                             'nome'            => $nome_final,
@@ -87,7 +84,6 @@ if (count($arquivos_pdf) > 0) {
         }
     }
 
-    // Convertemos o mapa de volta para um array simples (lista) para salvar o JSON
     $lista_final = array_values($alunos_por_rm);
     $total_final = count($lista_final);
     $novos_adicionados = $total_final - $quantidade_inicial;
@@ -96,9 +92,18 @@ if (count($arquivos_pdf) > 0) {
     file_put_contents($arquivo_final, $jsonFinal);
 
     echo "<hr>";
-    echo "🚀 <b>Processamento Concluído!</b><br>";
-    echo "📥 Novos alunos únicos adicionados: <b>$novos_adicionados</b><br>";
-    echo "📊 Total de alunos únicos no sistema: <b>$total_final</b>";
+    echo "🚀 <b>JSON gerado com sucesso!</b><br>";
+
+    // --- O GATILHO DA AUTOMAÇÃO ---
+    // Aqui chamamos a função que você já tem no usuarios.php
+    $resultadoBD = importarCompetidores($conn);
+
+    if ($resultadoBD['status'] === 'sucesso') {
+        echo "🗄️ <b>Banco de Dados:</b> Sincronização automática concluída!<br>";
+        echo "📥 Registros inseridos/verificados: <b>" . $resultadoBD['cadastrados'] . "</b>";
+    } else {
+        echo "❌ <b>Banco de Dados:</b> Falha na integração: " . $resultadoBD['mensagem'];
+    }
 
 } else {
     echo "⚠️ Nenhum PDF novo encontrado em $pasta_pdf";

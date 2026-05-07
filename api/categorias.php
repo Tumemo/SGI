@@ -15,7 +15,7 @@ switch ($method) {
                     c.nome_categoria, 
                     i.nome_interclasse -- Aqui buscamos o nome da tabela interclasses
                 FROM categorias c
-                INNER JOIN interclasses i ON c.interclasses_id_interclasse = i.id_interclasse; WHERE 1=1" . $filtro['sql'];
+                INNER JOIN interclasses i ON c.interclasses_id_interclasse = i.id_interclasse WHERE 1=1;" . $filtro['sql'];
 
         // $sql = "SELECT * from categorias";
         $sql .= " ORDER BY categorias.nome_categoria ASC";
