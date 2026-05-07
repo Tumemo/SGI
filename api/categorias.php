@@ -9,16 +9,17 @@ switch ($method) {
     case 'GET':
         $filtro = aplicarFiltrosCategorias();
 
-
+        // REMOVIDO o ";" que estava após o WHERE 1=1
         $sql = "SELECT 
                     c.id_categoria, 
                     c.nome_categoria, 
-                    i.nome_interclasse -- Aqui buscamos o nome da tabela interclasses
+                    i.nome_interclasse 
                 FROM categorias c
-                INNER JOIN interclasses i ON c.interclasses_id_interclasse = i.id_interclasse WHERE 1=1;" . $filtro['sql'];
+                INNER JOIN interclasses i ON c.interclasses_id_interclasse = i.id_interclasse 
+                WHERE 1=1 " . $filtro['sql'];
 
-        // $sql = "SELECT * from categorias";
-        $sql .= " ORDER BY categorias.nome_categoria ASC";
+        // Adicionado um espaço antes do ORDER BY para evitar que cole no texto anterior
+        $sql .= " ORDER BY c.nome_categoria ASC";
 
         $stmt = $conn->prepare($sql);
 

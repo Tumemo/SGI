@@ -7,87 +7,83 @@ require_once '../config/db.php';
 
 header('Content-Type: application/json; charset=utf-8');
 
-// Captura dados JSON (usado para ações que não enviam arquivos)
 $input_raw = file_get_contents('php://input');
 $input_data = json_decode($input_raw, true);
-
 $metodo = $_SERVER['REQUEST_METHOD'];
-
-// Se for um FormData (cadastro com foto), os dados estarão em $_POST
 $acao = $_POST['acao'] ?? $input_data['acao'] ?? $_REQUEST['acao'] ?? ''; 
 
 function importarCompetidores($conn) {
-    // --- PASSO 1: Descobrir qual é o Interclasse Ativo ---
-    // Ajuste o nome da coluna conforme o seu banco (ex: status_interclasse ou ativo)
+    // 1. Descobrir qual é o Interclasse Ativo
     $sql_ativo = "SELECT id_interclasse FROM interclasses WHERE status_interclasse = '1' LIMIT 1";
     $res_ativo = $conn->query($sql_ativo);
     $interclasse = $res_ativo->fetch_assoc();
 
     if (!$interclasse) {
-        return [
-            "status" => "erro", 
-            "mensagem" => "Não existe nenhum Interclasse ativo. Crie uma nova edição antes de importar os alunos."
-        ];
+        return ["status" => "erro", "mensagem" => "Não existe nenhum Interclasse ativo."];
     }
 
     $id_interclasse_ativa = $interclasse['id_interclasse'];
 
-    // --- PASSO 2: Carregar o JSON ---
+    // 2. Carregar o JSON gerado pelo conversor
     $caminho_json = 'json_turmas/info_alunos.json';
     if (!file_exists($caminho_json)) {
         return ["status" => "erro", "mensagem" => "Arquivo JSON não encontrado."];
     }
 
     $alunos = json_decode(file_get_contents($caminho_json), true);
-    $sucessos = 0; $erros_detalhados = [];
+    $sucessos = 0; 
+    $erros_detalhados = [];
     $cache_turmas = [];
 
-    // --- PASSO 3: Processar Alunos e Turmas ---
+    // 3. Processar Alunos e Turmas
     foreach ($alunos as $aluno) {
-        // Dentro do foreach ($alunos as $aluno)
         $nome_turma_json = trim($aluno['turma'] ?? '');
 
         if (!isset($cache_turmas[$nome_turma_json])) {
-            // 1. Busca a turma apenas pelo nome para evitar duplicados
             $stmt_t = $conn->prepare("SELECT id_turma FROM turmas WHERE nome_turma = ?");
             $stmt_t->bind_param("s", $nome_turma_json);
             $stmt_t->execute();
             $res_t = $stmt_t->get_result()->fetch_assoc();
 
             if ($res_t) {
-                $id_turma = $res_t['id_turma'];
-                // 2. RF02: Garante que a turma existente aponte para o Interclasse ATIVO
+                $id_turma_final = $res_t['id_turma'];
+                // Atualiza o vínculo com o interclasse atual (RF02)
                 $upd_t = $conn->prepare("UPDATE turmas SET interclasses_id_interclasse = ? WHERE id_turma = ?");
-                $upd_t->bind_param("ii", $id_interclasse_ativa, $id_turma);
+                $upd_t->bind_param("ii", $id_interclasse_ativa, $id_turma_final);
                 $upd_t->execute();
-                $cache_turmas[$nome_turma_json] = $id_turma;
+                $cache_turmas[$nome_turma_json] = $id_turma_final;
             } else {
-                // 3. Se não existe mesmo, cria do zero
-                $ins_t = $conn->prepare("INSERT INTO turmas (nome_turma, interclasses_id_interclasse, status_turma) VALUES (?, ?, '1')");
-                $ins_t->bind_param("si", $nome_turma_json, $id_interclasse_ativa);
+                // CORREÇÃO: Inserindo a categoria padrão (ID 4) para evitar erro de Foreign Key
+                $id_categoria_padrao = 4; 
+                $ins_t = $conn->prepare("INSERT INTO turmas (nome_turma, interclasses_id_interclasse, status_turma, categorias_id_categoria, turno_turma) VALUES (?, ?, '1', ?, 'Integral')");
+                $ins_t->bind_param("sii", $nome_turma_json, $id_interclasse_ativa, $id_categoria_padrao);
                 $ins_t->execute();
-                $cache_turmas[$nome_turma_json] = $conn->insert_id;
+                $id_turma_final = $conn->insert_id;
+                $cache_turmas[$nome_turma_json] = $id_turma_final;
             }
+        } else {
+            $id_turma_final = $cache_turmas[$nome_turma_json];
         }
-        $id_turma_final = $cache_turmas[$nome_turma_json];
         
-        // --- Inserção do Aluno (conforme o seu SQL anterior) ---
+        // 4. Inserção do Aluno
         $rm = preg_replace('/[^0-9]/', '', $aluno['rm'] ?? '');
         $nome = trim($aluno['nome'] ?? '');
         $senha = password_hash($rm, PASSWORD_DEFAULT);
         $genero = (isset($aluno['genero']) && strtoupper($aluno['genero']) == 'FEM') ? 'FEM' : 'MASC';
-        $data_nasc = (isset($aluno['data_nascimento'])) ? implode("-", array_reverse(explode("/", $aluno['data_nascimento']))) : date('Y-m-d');
+        $data_nasc = (isset($aluno['data_nascimento']) && !empty($aluno['data_nascimento'])) 
+                     ? implode("-", array_reverse(explode("/", $aluno['data_nascimento']))) 
+                     : date('Y-m-d');
 
         $sql_user = "INSERT INTO usuarios (sigla_usuario, matricula_usuario, nome_usuario, senha_usuario, nivel_usuario, competidor_usuario, mesario_usuario, genero_usuario, data_nasc_usuario, foto_usuario, status_usuario, turmas_id_turma) 
                      VALUES ('RM', ?, ?, ?, '0', '1', '0', ?, ?, 'default.jpg', '1', ?)";
         
         $stmt_u = $conn->prepare($sql_user);
-        $stmt_u->bind_param("sssssi", $rm, $nome, $senha, $genero, $data_nasc, $id_turma);
+        $stmt_u->bind_param("sssssi", $rm, $nome, $senha, $genero, $data_nasc, $id_turma_final);
 
         if ($stmt_u->execute()) {
             $sucessos++;
         } else {
-            if ($conn->errno != 1062) { // Ignora se for apenas RM duplicado
+            if ($conn->errno != 1062) { 
                 $erros_detalhados[] = "Erro no RM $rm: " . $stmt_u->error;
             }
         }
