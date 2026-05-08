@@ -77,6 +77,10 @@ require_once '../componentes/header.php';
 <!-- main desktop -->
 <main class="d-none d-md-block main-desktop-layout">
     <div class="container-fluid px-0">
+        <div id="avisoFinalizacaoInterclasse" class="d-none alert alert-warning d-flex justify-content-between align-items-center mb-4">
+            <span>Esta edição ainda não foi finalizada. Conclua as etapas para ativá-la.</span>
+            <a id="linkConcluirInterclasse" class="btn btn-sm btn-danger" href="#">Concluir criação</a>
+        </div>
 
         <div class="row g-4 mt-2">
 
@@ -171,15 +175,23 @@ require_once '../componentes/header.php';
             idInterclasse = ativo?.id_interclasse || null;
         }
         if (!idInterclasse) return;
+        const dadosInterclasse = await window.SGIInterclasse.getInterclasseById(idInterclasse);
+        const aviso = document.getElementById('avisoFinalizacaoInterclasse');
+        if (dadosInterclasse && String(dadosInterclasse.status_interclasse) !== '1') {
+            aviso.classList.remove('d-none');
+            document.getElementById('linkConcluirInterclasse').href = `./edicao_resumo.php?id=${idInterclasse}`;
+        } else {
+            aviso.classList.add('d-none');
+        }
 
         document.querySelectorAll('#linkModalidades').forEach(link => {
-            link.href = `./edicao_modalidades.php?id=${idInterclasse}`;
+            link.href = `./edicao_modalidades.php?id=${idInterclasse}&modo=view`;
         });
         document.querySelectorAll('#linkPontuacoes').forEach(link => {
             link.href = `./edicao_pontuacao.php?id=${idInterclasse}&modo=view`;
         });
         document.querySelectorAll('#linkArrecadacoes').forEach(link => {
-            link.href = `./edicao_arrecadacao.php?id=${idInterclasse}`;
+            link.href = `./edicao_arrecadacao.php?id=${idInterclasse}&modo=view`;
         });
         document.querySelectorAll('#linkRegulamentos').forEach(link => {
             link.href = `./edicao_pontuacao.php?id=${idInterclasse}&modo=view`;
@@ -188,10 +200,10 @@ require_once '../componentes/header.php';
             link.href = `./edicao_categorias.php?id=${idInterclasse}&modo=view`;
         });
         document.querySelectorAll('#linkAgenda').forEach(link => {
-            link.href = `./edicao_agenda.php?id=${idInterclasse}`;
+            link.href = `./edicao_agenda.php?id=${idInterclasse}&modo=view`;
         });
         document.querySelectorAll('#linkColaboradores').forEach(link => {
-            link.href = `./colaboradores.php?id=${idInterclasse}`;
+            link.href = `./colaboradores.php?id=${idInterclasse}&modo=view`;
         });
     }
 

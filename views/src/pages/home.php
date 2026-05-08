@@ -97,6 +97,7 @@ require_once '../componentes/header.php';
         if (!response.ok || !data.success) {
             throw new Error(data.message || 'Não foi possível atualizar o status.');
         }
+        await window.SGIInterclasse.refreshNavigation();
         return data;
     }
 
@@ -134,8 +135,9 @@ require_once '../componentes/header.php';
             let htmlMobile = '';
             let htmlDesktop = '';
 
-            estadoInterclasses.lista = res.data;
-            res.data.forEach((item) => {
+            const listaOrdenada = [...res.data].sort((a, b) => Number(b.id_interclasse) - Number(a.id_interclasse));
+            estadoInterclasses.lista = listaOrdenada;
+            listaOrdenada.forEach((item) => {
                 const anoStr = anoInterclasse(item);
                 const ativo = statusAtivo(item);
                 const statusBadge = ativo
@@ -247,6 +249,7 @@ require_once '../componentes/header.php';
                 caixaMensagem.innerHTML = `<p class="text-success text-center mt-3 mb-0 fw-bold">Criado com sucesso!</p>`;
                 const idCriado = res.data.id;
                 await atualizarStatusInterclasse(idCriado, false);
+                await window.SGIInterclasse.refreshNavigation();
 
                 formulario.reset();
                 listarInterclasses();

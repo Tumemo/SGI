@@ -16,6 +16,9 @@ require_once '../componentes/header.php';
             <li class="list-group-item text-center text-muted">(Carregando...)</li>
         </ul>
     </div>
+    <div class="container mt-3">
+        <a href="#" id="btnContinuarArrecadacaoMobile" class="btn btn-danger w-100 d-none">Continuar</a>
+    </div>
 </main>
 
 
@@ -34,6 +37,7 @@ require_once '../componentes/header.php';
                 <h4 class="fw-bold text-dark mb-0">Arrecadações</h4>
 
                 <div class="d-flex justify-content-end gap-3 mt-4">
+                    <a href="#" id="btnContinuarArrecadacaoDesktop" class="btn btn-danger d-none">Continuar</a>
                     <button class="btn bg-white fw-semibold rounded-3 px-4 py-2" style="color: #ed1c24; border: 1px solid #ed1c24;">
                         Cancelar
                     </button>
@@ -57,6 +61,9 @@ require_once '../componentes/footer.php';
 ?>
 <script>
     const storagePrefix = 'sgi_arrecadacao_';
+    const paramsArrecadacao = new URLSearchParams(window.location.search);
+    const idInterclasseArrecadacao = paramsArrecadacao.get('id');
+    const modoArrecadacao = paramsArrecadacao.get('modo');
 
     function getPontosLocal(idTurma) {
         return Number(localStorage.getItem(`${storagePrefix}${idTurma}`) || 0);
@@ -92,7 +99,9 @@ require_once '../componentes/footer.php';
         const listaDesktop = document.getElementById('listaArrecadacaoDesktop');
 
         try {
-            const ativo = await window.SGIInterclasse.getActiveInterclasse();
+            const ativo = idInterclasseArrecadacao
+                ? await window.SGIInterclasse.getInterclasseById(idInterclasseArrecadacao)
+                : await window.SGIInterclasse.getActiveInterclasse();
             if (!ativo) {
                 listaMobile.innerHTML = '<li class="list-group-item text-center text-muted">Nenhum interclasse ativo.</li>';
                 listaDesktop.innerHTML = '<p class="text-center text-muted">Nenhum interclasse ativo.</p>';
@@ -102,6 +111,12 @@ require_once '../componentes/footer.php';
             document.getElementById('nomeInterclasseArrecadacao').innerText = ativo.nome_interclasse;
             document.getElementById('btnVoltarArrecadacao').href = `./dashboard.php?id=${ativo.id_interclasse}`;
             window.SGIInterclasse.updatePageTitle(ativo.nome_interclasse);
+            if (modoArrecadacao === 'view') {
+                document.getElementById('btnContinuarArrecadacaoMobile').classList.remove('d-none');
+                document.getElementById('btnContinuarArrecadacaoDesktop').classList.remove('d-none');
+                document.getElementById('btnContinuarArrecadacaoMobile').href = `./dashboard.php?id=${ativo.id_interclasse}`;
+                document.getElementById('btnContinuarArrecadacaoDesktop').href = `./dashboard.php?id=${ativo.id_interclasse}`;
+            }
 
             const res = await fetch(`../../../api/turmas.php?id_interclasse=${ativo.id_interclasse}`);
             const turmas = await res.json();

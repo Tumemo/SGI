@@ -19,7 +19,7 @@ require_once '../componentes/header.php';
     <a href="./edicao_pontuacao.php" id="linkEditarRegulamentosMobile" class="text-decoration-none text-dark w-100 d-flex justify-content-center mt-3">
         <div class="shadow-sm d-flex justify-content-between align-content-center px-3 py-3 rounded-3 border border-1" style="width: 90%; min-height: 90px;">
             <div class="w-100 overflow-hidden">
-                <h2 class="m-0 fs-5">Regulamentos</h2>
+                <h2 class="m-0 fs-5">Pontuação</h2>
                 <p class="text-secondary m-0 mt-1 text-truncate" id="resumoRegulamentosMobile" style="font-size: 14px;">(Carregando...)</p>
             </div>
         </div>
@@ -61,7 +61,7 @@ require_once '../componentes/header.php';
         </div>
 
         <div class="d-flex flex-column gap-3 mb-5">
-            <a href="./novaEdicao_modalidades.php" id="linkEditarModalidadesDesktop" class="text-decoration-none">
+            <a href="./edicao_modalidades.php" id="linkEditarModalidadesDesktop" class="text-decoration-none">
                 <div class="bg-white border-0 shadow-sm rounded-2 p-4 d-flex flex-column justify-content-center" style="cursor: pointer; transition: 0.2s ease; min-height: 100px;" onmouseover="this.classList.add('shadow')" onmouseout="this.classList.remove('shadow')">
                     <h6 class="text-dark fw-medium mb-1">Modalidades</h6>
                     <span class="text-secondary text-truncate" id="resumoModalidadesDesktop" style="font-size: 0.95rem;">
@@ -139,8 +139,8 @@ require_once '../componentes/header.php';
         document.getElementById('btnVoltarDesktop').href = `./edicao_pontuacao.php?id=${idInterclasse}`;
         document.getElementById('btnVoltarResumoTopo').href = `./edicao_pontuacao.php?id=${idInterclasse}`;
 
-        document.getElementById('linkEditarModalidadesMobile').href = `./novaEdicao_modalidades.php?id=${idInterclasse}`;
-        document.getElementById('linkEditarModalidadesDesktop').href = `./novaEdicao_modalidades.php?id=${idInterclasse}`;
+        document.getElementById('linkEditarModalidadesMobile').href = `./edicao_modalidades.php?id=${idInterclasse}`;
+        document.getElementById('linkEditarModalidadesDesktop').href = `./edicao_modalidades.php?id=${idInterclasse}`;
 
         document.getElementById('linkEditarRegulamentosMobile').href = `./edicao_pontuacao.php?id=${idInterclasse}`;
         document.getElementById('linkEditarRegulamentosDesktop').href = `./edicao_pontuacao.php?id=${idInterclasse}`;
@@ -252,6 +252,7 @@ require_once '../componentes/header.php';
         } catch (error) {
             console.error(error);
         } finally {
+            await window.SGIInterclasse.refreshNavigation();
             window.location.href = `./dashboard.php?id=${idInterclasse}`;
         }
     });

@@ -14,7 +14,8 @@ require_once '../componentes/header.php';
         <p class="text-muted small mt-3">(Carregando categorias...)</p>
     </div>
 
-    <section class="d-flex gap-4 mt-3 position-fixed translate-middle" style="width: max-content; top: 85%; left: 50%; z-index: 10; cursor: pointer;">
+    <section class="d-flex gap-3 mt-3 position-fixed translate-middle" style="width: max-content; top: 85%; left: 50%; z-index: 10; cursor: pointer;">
+        <button id="btnAdicionarTurmaMobile" data-bs-toggle="modal" data-bs-target="#criarTurma" class="btn btn-outline-danger" disabled>Adicionar Turma</button>
         <button data-bs-toggle="modal" data-bs-target="#modalCriarCategoria" class="btn btn-outline-danger">Adicionar Categoria</button>
         <a href="#" id="btnContinuarMobile" class="btn btn-danger">Continuar</a>
     </section>
@@ -38,6 +39,9 @@ require_once '../componentes/header.php';
         </div>
 
         <div class="position-fixed d-flex flex-row gap-3" style="bottom: 40px; right: 5%; z-index: 1050;">
+            <button type="button" id="btnAdicionarTurmaDesktop" class="btn bg-white fw-semibold rounded-3 px-4 py-2 d-flex align-items-center justify-content-center gap-2 shadow-lg" style="color: #ed1c24; border: 2px solid #ed1c24;" data-bs-toggle="modal" data-bs-target="#criarTurma" disabled>
+                <i class="bi bi-mortarboard"></i> Adicionar Turma
+            </button>
             
             <button type="button" class="btn bg-white fw-semibold rounded-3 px-4 py-2 d-flex align-items-center justify-content-center gap-2 shadow-lg" style="color: #ed1c24; border: 2px solid #ed1c24;" data-bs-toggle="modal" data-bs-target="#modalCriarCategoria">
                 <i class="bi bi-plus-circle"></i> Adicionar
@@ -60,22 +64,23 @@ require_once '../componentes/header.php';
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <form action="../../../docs/lista_alunos/" method="POST" enctype="multipart/form-data">
+                <form id="formNovaTurmaCategoria">
                     <div class="mb-3">
                         <label for="inputNomeTurma" class="form-label">Nome da turma:</label>
-                        <input type="text" class="form-control" id="inputNomeTurma" placeholder="Turma A" required>
+                        <input type="text" class="form-control" id="inputNomeTurma" placeholder="Ex: 1º Médio A" required>
                     </div>
                     <div class="mb-3 d-flex align-items-center gap-2 flex-column">
-                        <input type="file" id="arquivoUpload" class="d-none" onchange="mostrarNomeArquivo()">
+                        <input type="file" id="arquivoUpload" class="d-none" accept=".pdf" onchange="mostrarNomeArquivo()">
                         <p class="text-center" style="font-size: 13px;">Adicione aqui o pdf dos alunos da turma criada</p>
                         <label for="arquivoUpload" class="btn btn-light border rounded-circle p-3" style="cursor:pointer;">
                             <i class="bi bi-upload fs-4"></i>
                         </label>
                         <span id="nomeArquivo" class="text-muted mt-2"></span>
                     </div>
+                    <div id="msgNovaTurmaCategoria" class="text-center mb-2"></div>
                     <div class="d-flex justify-content-center gap-4 mt-4">
                         <button type="button" class="btn btn-outline-danger" data-bs-dismiss="modal">Cancelar</button>
-                        <button type="submit" class="btn btn-danger">Criar</button>
+                        <button type="submit" class="btn btn-danger" id="btnCriarTurmaCategoria">Criar e enviar</button>
                     </div>
                 </form>
             </div>
@@ -108,14 +113,41 @@ require_once '../componentes/header.php';
 </div>
 
 <script>
-    // 1. TRAVA DE SEGURANÇA: Captura e valida o ID do Interclasse
     const urlParams = new URLSearchParams(window.location.search);
     const idInterclasse = urlParams.get('id');
     const modo = urlParams.get('modo') || 'create';
+    let categoriaSelecionada = null;
+
+    function atualizarAcoesCategoria() {
+        const btnTurmaMobile = document.getElementById('btnAdicionarTurmaMobile');
+        const btnTurmaDesktop = document.getElementById('btnAdicionarTurmaDesktop');
+        if (btnTurmaMobile) btnTurmaMobile.disabled = !categoriaSelecionada;
+        if (btnTurmaDesktop) btnTurmaDesktop.disabled = !categoriaSelecionada;
+
+        const rota = modo === 'view' ? './dashboard.php' : './edicao_modalidades.php';
+        const sufixoCategoria = categoriaSelecionada ? `&id_categoria=${categoriaSelecionada}` : '';
+        document.getElementById('btnContinuarMobile').href = `${rota}?id=${idInterclasse}${sufixoCategoria}${modo !== 'view' ? '&modo=create' : ''}`;
+        document.getElementById('btnContinuarDesktop').href = `${rota}?id=${idInterclasse}${sufixoCategoria}${modo !== 'view' ? '&modo=create' : ''}`;
+    }
+
+    function selecionarCategoria(idCategoria, botao) {
+        categoriaSelecionada = Number(idCategoria);
+        document.querySelectorAll('.categoria-item').forEach((el) => {
+            el.classList.remove('bg-danger', 'text-white', 'border-danger');
+            const titulo = el.querySelector('h2, h4');
+            if (titulo) titulo.classList.remove('text-white');
+        });
+        botao.classList.add('bg-danger', 'text-white', 'border-danger');
+        const titulo = botao.querySelector('h2, h4');
+        if (titulo) titulo.classList.add('text-white');
+        atualizarAcoesCategoria();
+    }
 
     if (!idInterclasse) {
-        alert("Erro: Nenhum interclasse selecionado! Você será redirecionado.");
-        window.location.href = "home.php"; // Redireciona de volta para a tela inicial
+        document.getElementById('listaCategoriasMobile').innerHTML = '<p class="text-muted mt-4 text-center w-100">Nenhum interclasse selecionado.</p>';
+        document.getElementById('listaCategoriasDesktop').innerHTML = '<p class="text-muted mt-4 text-center w-100">Nenhum interclasse selecionado.</p>';
+        document.getElementById('btnContinuarMobile').href = './dashboard.php';
+        document.getElementById('btnContinuarDesktop').href = './dashboard.php';
     } else {
         window.SGIInterclasse.getInterclasseById(idInterclasse).then((dados) => {
             if (dados?.nome_interclasse) {
@@ -123,56 +155,40 @@ require_once '../componentes/header.php';
                 window.SGIInterclasse.updatePageTitle(dados.nome_interclasse);
             }
         }).catch(console.error);
-        // Se existir, repassa o ID para os botões de continuar
-        if (modo === 'view') {
-            document.getElementById('btnContinuarMobile').href = `./turmas.php?id=${idInterclasse}`;
-            document.getElementById('btnContinuarDesktop').href = `./turmas.php?id=${idInterclasse}`;
-        } else {
-            document.getElementById('btnContinuarMobile').href = `./edicao_turmas.php?id=${idInterclasse}`;
-            document.getElementById('btnContinuarDesktop').href = `./edicao_turmas.php?id=${idInterclasse}`;
-        }
+        atualizarAcoesCategoria();
     }
 
-    // Função para buscar e renderizar as categorias
     async function carregarCategorias() {
         const divMobile = document.getElementById('listaCategoriasMobile');
         const divDesktop = document.getElementById('listaCategoriasDesktop');
 
         try {
-            // Buscando os dados na API passando o ID do interclasse na URL
             const response = await fetch(`../../../api/categorias.php?id_interclasse=${idInterclasse}`);
-            
-            // Verifica se a requisição não deu erro no servidor antes de converter
-            if (!response.ok) {
-                throw new Error(`Erro na API: ${response.status}`);
-            }
-
+            if (!response.ok) throw new Error(`Erro na API: ${response.status}`);
             const categorias = await response.json();
 
             divMobile.innerHTML = '';
             divDesktop.innerHTML = '';
 
-            if (categorias.length === 0) {
+            if (!categorias.length) {
                 const msgVazia = '<p class="text-muted mt-4 text-center w-100">Nenhuma categoria cadastrada ainda.</p>';
                 divMobile.innerHTML = msgVazia;
                 divDesktop.innerHTML = msgVazia;
                 return;
             }
 
-            categorias.forEach(categoria => {
+            categorias.forEach((categoria, idx) => {
                 divMobile.innerHTML += `
-                    <button data-bs-toggle="modal" data-bs-target="#criarTurma" class="bg-white d-flex m-auto justify-content-between align-items-center shadow-sm py-3 px-4 mb-3 border border-1 rounded-3" style="width: 90%;">
-                        <i class="bi bi-trophy fs-1"></i>
+                    <button type="button" class="categoria-item bg-white d-flex m-auto justify-content-between align-items-center shadow-sm py-3 px-4 mb-3 border border-1 rounded-3" style="width: 90%;" data-id="${categoria.id_categoria}">
+                        <i class="bi bi-trophy fs-3"></i>
                         <h2 class="m-0 fs-5 text-truncate px-3 w-100 text-start">${categoria.nome_categoria}</h2>
-                        <picture>
-                            <img src="../../public/icons/arrow-right.svg" alt="Seta para direita">
-                        </picture>
+                        <picture><img src="../../public/icons/arrow-right.svg" alt="Seta para direita"></picture>
                     </button>
                 `;
 
                 divDesktop.innerHTML += `
                     <div class="col-12 col-md-6 col-lg-5 col-xl-4">
-                        <div class="card border-0 shadow-sm h-100 p-4" style="border-radius: 12px;">
+                        <div class="categoria-item card border-0 shadow-sm h-100 p-4" style="border-radius: 12px; cursor: pointer;" data-id="${categoria.id_categoria}">
                             <div class="card-body p-0 d-flex flex-column">
                                 <h4 class="fw-bold text-dark mb-4 pb-2 text-truncate" title="${categoria.nome_categoria}">${categoria.nome_categoria}</h4>
                                 <div class="d-flex gap-3 mb-4">
@@ -185,15 +201,23 @@ require_once '../componentes/header.php';
                                         <div class="fs-5 text-dark">0</div>
                                     </div>
                                 </div>
-                                <a class="btn btn-danger w-100 fw-semibold text-uppercase mt-auto border-0" style="background-color: #ed1c24; border-radius: 6px; font-size: 0.8rem; padding: 0.75rem;" href="${modo === 'view' ? `./turmas.php?id=${idInterclasse}&id_categoria=${categoria.id_categoria}` : `./edicao_turmas.php?id=${idInterclasse}&id_categoria=${categoria.id_categoria}`}">
+                                <a class="btn btn-danger w-100 fw-semibold text-uppercase mt-auto border-0" style="background-color: #ed1c24; border-radius: 6px; font-size: 0.8rem; padding: 0.75rem;" href="./edicao_turmas.php?id=${idInterclasse}&id_categoria=${categoria.id_categoria}">
                                     VER DETALHES <i class="bi bi-arrow-right"></i>
                                 </a>
                             </div>
                         </div>
                     </div>
                 `;
+
+                if (idx === 0) categoriaSelecionada = Number(categoria.id_categoria);
             });
 
+            document.querySelectorAll('.categoria-item').forEach((btn) => {
+                btn.addEventListener('click', () => selecionarCategoria(btn.dataset.id, btn));
+            });
+
+            const primeira = document.querySelector('.categoria-item');
+            if (primeira) selecionarCategoria(primeira.dataset.id, primeira);
         } catch (error) {
             console.error("Erro ao carregar categorias:", error);
             divMobile.innerHTML = '<p class="text-danger mt-4 text-center">Erro ao carregar categorias.</p>';
@@ -251,7 +275,64 @@ require_once '../componentes/header.php';
         }
     });
 
-    // Função de exibição do nome do arquivo (mantida do seu código original)
+    document.getElementById('formNovaTurmaCategoria').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        if (!categoriaSelecionada) {
+            alert("Selecione uma categoria antes de criar a turma.");
+            return;
+        }
+
+        const btn = document.getElementById('btnCriarTurmaCategoria');
+        const msg = document.getElementById('msgNovaTurmaCategoria');
+        const nomeTurma = document.getElementById('inputNomeTurma').value.trim();
+        const pdf = document.getElementById('arquivoUpload').files?.[0];
+
+        try {
+            btn.disabled = true;
+            btn.innerText = "Criando...";
+            msg.innerHTML = '';
+
+            const payloadTurma = {
+                interclasses_id_interclasse: Number(idInterclasse),
+                categorias_id_categoria: Number(categoriaSelecionada),
+                nome_turma: nomeTurma,
+                status_turma: "1"
+            };
+
+            const resTurma = await fetch('../../../api/turmas.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payloadTurma)
+            });
+            const turmaCriada = await resTurma.json();
+            if (!resTurma.ok || !turmaCriada.success) {
+                throw new Error(turmaCriada.message || 'Falha ao criar turma.');
+            }
+
+            if (pdf) {
+                const formData = new FormData();
+                formData.append('pdf', pdf);
+                formData.append('nome_turma', nomeTurma);
+                await fetch('./upload_turma_pdf.php', { method: 'POST', body: formData });
+            }
+
+            msg.innerHTML = '<p class="text-success fw-bold mb-0">Turma criada com sucesso!</p>';
+            document.getElementById('inputNomeTurma').value = '';
+            document.getElementById('arquivoUpload').value = '';
+            document.getElementById('nomeArquivo').innerText = '';
+
+            setTimeout(() => {
+                bootstrap.Modal.getOrCreateInstance(document.getElementById('criarTurma')).hide();
+                msg.innerHTML = '';
+            }, 900);
+        } catch (error) {
+            msg.innerHTML = `<p class="text-danger fw-bold mb-0">${error.message || 'Erro ao criar turma.'}</p>`;
+        } finally {
+            btn.disabled = false;
+            btn.innerText = "Criar e enviar";
+        }
+    });
+
     function mostrarNomeArquivo() {
         const inputUpload = document.getElementById('arquivoUpload');
         const displayNome = document.getElementById('nomeArquivo');
@@ -262,7 +343,6 @@ require_once '../componentes/header.php';
         }
     }
 
-    // Inicia somente se tiver o ID
     if (idInterclasse) {
         window.onload = carregarCategorias;
     }

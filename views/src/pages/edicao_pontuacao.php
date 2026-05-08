@@ -78,7 +78,7 @@ require_once '../componentes/header.php';
     <div class="container-fluid px-0" style="max-width: 80%;">
 
         <div class="mb-5">
-            <a href="./novaEdicao_modalidades.php" class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 shadow-sm text-decoration-none" style="border-radius: 6px;" id="btnVoltarPontuacao">
+            <a href="./edicao_modalidades.php" class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 shadow-sm text-decoration-none" style="border-radius: 6px;" id="btnVoltarPontuacao">
                 <i class="bi bi-arrow-left-circle fs-5"></i> <span id="nomeInterclassePontuacao">Interclasse</span>
             </a>
 
@@ -159,7 +159,7 @@ require_once '../componentes/header.php';
 
     <div class="d-none d-md-block fixed-bottom" style="background: linear-gradient(to top, #f8f9fa 70%, rgba(248, 249, 250, 0) 100%); padding: 30px 0;">
         <div class="container-fluid d-flex justify-content-end align-items-center gap-3" style="max-width: 80%;">
-            <a href="./novaEdicao_modalidades.php" class="text-decoration-none">
+            <a href="./edicao_modalidades.php" class="text-decoration-none" id="btnVoltarPontuacaoRodape">
                 <button class="btn btn-outline-danger bg-white fw-semibold rounded-3 px-4 py-2 shadow-sm">
                     Voltar
                 </button>
@@ -196,9 +196,11 @@ require_once '../componentes/header.php';
         if (modo === 'view') {
             document.getElementById('btnContinuarDesktop').href = `./dashboard.php?id=${idInterclasse}`;
             document.getElementById('btnVoltarPontuacao').href = `./dashboard.php?id=${idInterclasse}`;
+            document.getElementById('btnVoltarPontuacao').classList.add('d-none');
+            document.getElementById('btnVoltarPontuacaoRodape')?.classList.add('d-none');
         } else {
             document.getElementById('btnContinuarDesktop').href = `./edicao_resumo.php?id=${idInterclasse}`;
-            document.getElementById('btnVoltarPontuacao').href = `./novaEdicao_modalidades.php?id=${idInterclasse}`;
+            document.getElementById('btnVoltarPontuacao').href = `./edicao_modalidades.php?id=${idInterclasse}`;
         }
         window.SGIInterclasse.getInterclasseById(idInterclasse).then((dados) => {
             if (dados?.nome_interclasse) {

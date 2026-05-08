@@ -63,11 +63,16 @@ require_once '../componentes/header.php';
         </a>
     </div>
     <div id="lista-eventos-mobile" class="d-flex flex-column gap-3 mx-auto" style="max-width: 450px;"></div>
+    <a href="#" id="btnContinuarAgendaMobile" class="btn btn-danger w-100 mt-2 d-none">Continuar</a>
 </main>
 
 
 <!-- main desktop -->
 <main class="d-none d-md-block main-desktop-layout">
+
+    <div class="d-flex justify-content-end mb-3">
+        <a href="#" id="btnContinuarAgendaDesktop" class="btn btn-danger d-none">Continuar</a>
+    </div>
 
     <a href="./home.php" data-back-link="true" class="btn btn-danger d-inline-flex align-items-center mb-4 border-0 shadow-sm text-decoration-none" style="border-radius: 4px; padding: 8px 15px;" id="btnVoltarAgendaDesk">
         <i class="bi bi-arrow-left-circle-fill me-2"></i>
@@ -124,6 +129,9 @@ require_once '../componentes/header.php';
 <script>
     // Memória central do calendário
     let dataNavegacao = new Date();
+    const params = new URLSearchParams(window.location.search);
+    const idInterclasseAgenda = params.get('id');
+    const modoAgenda = params.get('modo');
 
     document.addEventListener('DOMContentLoaded', function() {
         window.SGIInterclasse.getActiveInterclasse().then((ativo) => {
@@ -132,6 +140,14 @@ require_once '../componentes/header.php';
             document.getElementById('btnVoltarAgendaDesk').href = `./dashboard.php?id=${ativo.id_interclasse}`;
             window.SGIInterclasse.updatePageTitle(ativo.nome_interclasse);
         }).catch(console.error);
+        if (modoAgenda === 'view' && idInterclasseAgenda) {
+            const btnMob = document.getElementById('btnContinuarAgendaMobile');
+            btnMob.classList.remove('d-none');
+            btnMob.href = `./dashboard.php?id=${idInterclasseAgenda}`;
+            const btnDesk = document.getElementById('btnContinuarAgendaDesktop');
+            btnDesk.classList.remove('d-none');
+            btnDesk.href = `./dashboard.php?id=${idInterclasseAgenda}`;
+        }
         inicializarAnos();
         atualizarTelas(); // Desenha tanto mobile quanto desktop
         carregarAgenda(); // Busca os eventos do banco para as duas telas

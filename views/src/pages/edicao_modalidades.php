@@ -8,15 +8,17 @@ require_once '../componentes/header.php';
 
 <!-- main mobile -->
 <main class="position-relative d-md-none" style="margin-bottom: 120px;">
-    <p class="text-center mt-3 text-secondary">Escolha uma modalidade para editar</p>
+    <p class="text-center mt-3 text-secondary">Escolha uma modalidade para continuar</p>
 
     <section id="listaModalidadesMobile" class="d-flex flex-column align-items-center w-100 mt-4">
         <p class="text-muted small">(Carregando modalidades...)</p>
     </section>
 
-    <button class="border border-none bg-danger rounded-circle p-3 fs-2 d-flex align-items-center justify-content-center position-fixed" style="height: 60px; width: 60px; bottom: 40px; right: 5%; z-index: 10; cursor: pointer; top: 80%;" data-bs-toggle="modal" data-bs-target="#exampleModal">
-        <i class="bi bi-plus text-white" style="font-size: 1.4em;"></i>
-    </button>
+    <div class="position-fixed d-flex gap-2" style="bottom: 92px; right: 16px; z-index: 20;">
+        <a href="#" class="btn btn-outline-danger disabled" id="btnEditarModalidadeMobile" aria-disabled="true">Editar</a>
+        <button class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#exampleModal">Adicionar</button>
+        <a href="#" class="btn btn-danger disabled" id="btnContinuarMobile" aria-disabled="true">Continuar</a>
+    </div>
 </main>
 
 
@@ -42,6 +44,9 @@ require_once '../componentes/header.php';
     </div>
 
     <div class="position-fixed d-flex flex-row align-items-center gap-4 py-3 px-5" style="bottom: 0; right: 0; z-index: 1050; background: transparent;">
+        <a href="#" id="btnEditarModalidadeDesktop" class="btn bg-white fw-bold px-4 py-2 text-decoration-none disabled" style="color: #ed1c24; border: 2px solid #ed1c24; border-radius: 8px;" aria-disabled="true">
+            Editar modalidade
+        </a>
 
         <span class="text-muted small fw-medium">Não tem a modalidade que você quer?</span>
 
@@ -49,7 +54,7 @@ require_once '../componentes/header.php';
             <i class="bi bi-plus-circle"></i> Adicionar
         </button>
 
-        <a href="./edicao_pontuacao.php" id="btnContinuarDesktop" class="btn fw-bold px-5 py-2 text-white text-decoration-none shadow-sm d-flex align-items-center justify-content-center" style="background-color: #ed1c24; border-radius: 8px;">
+        <a href="#" id="btnContinuarDesktop" class="btn fw-bold px-5 py-2 text-white text-decoration-none shadow-sm d-flex align-items-center justify-content-center disabled" style="background-color: #ed1c24; border-radius: 8px;" aria-disabled="true">
             Continuar
         </a>
 
@@ -110,7 +115,9 @@ require_once '../componentes/header.php';
 <script>
     const urlParams = new URLSearchParams(window.location.search);
     let idInterclasse = urlParams.get('id');
-    const modo = urlParams.get('modo');
+    const idCategoria = urlParams.get('id_categoria');
+    const modo = urlParams.get('modo') || 'create';
+    let modalidadeSelecionada = null;
 
     // TRAVA DE SEGURANÇA e Configuração do Botão "Continuar"
     async function resolverInterclasse() {
@@ -127,13 +134,36 @@ require_once '../componentes/header.php';
         document.getElementById('nomeInterclasseModalidades').innerText = dados?.nome_interclasse || 'Interclasse';
         document.getElementById('btnVoltarModalidades').href = `./dashboard.php?id=${idInterclasse}`;
         window.SGIInterclasse.updatePageTitle(dados?.nome_interclasse);
-        const btnCont = document.getElementById('btnContinuarDesktop');
-        if (modo === 'view') {
-            btnCont.href = `./dashboard.php?id=${idInterclasse}`;
-        } else {
-            btnCont.href = `./edicao_pontuacao.php?id=${idInterclasse}&modo=create`;
-        }
+        atualizarBotaoContinuar();
         return idInterclasse;
+    }
+
+    function atualizarBotaoContinuar() {
+        const botaoDesktop = document.getElementById('btnContinuarDesktop');
+        const botaoMobile = document.getElementById('btnContinuarMobile');
+        const botaoEditarDesktop = document.getElementById('btnEditarModalidadeDesktop');
+        const botaoEditarMobile = document.getElementById('btnEditarModalidadeMobile');
+        const destino = modo === 'view'
+            ? `./dashboard.php?id=${idInterclasse}`
+            : `./edicao_pontuacao.php?id=${idInterclasse}&modo=create${modalidadeSelecionada ? `&id_modalidade=${modalidadeSelecionada}` : ''}`;
+        [botaoDesktop, botaoMobile].forEach((botao) => {
+            if (!botao) return;
+            botao.href = destino;
+            const disabled = !modalidadeSelecionada && modo !== 'view';
+            botao.classList.toggle('disabled', disabled);
+            botao.setAttribute('aria-disabled', disabled ? 'true' : 'false');
+        });
+
+        const destinoEdicaoModalidade = modalidadeSelecionada
+            ? `./modalidade_detalhes.php?id=${idInterclasse}&id_modalidade=${modalidadeSelecionada}`
+            : '#';
+        [botaoEditarDesktop, botaoEditarMobile].forEach((botao) => {
+            if (!botao) return;
+            botao.href = destinoEdicaoModalidade;
+            const disabled = !modalidadeSelecionada;
+            botao.classList.toggle('disabled', disabled);
+            botao.setAttribute('aria-disabled', disabled ? 'true' : 'false');
+        });
     }
 
     // 1. FUNÇÃO: Listar as modalidades já existentes (Cards)
@@ -142,8 +172,11 @@ require_once '../componentes/header.php';
         const divDesktop = document.getElementById('listaModalidadesDesktop');
 
         try {
-            const response = await axios.get(`../../../api/modalidades.php?id_interclasse=${idInterclasse}`);
+            const filtroCategoria = idCategoria ? `&id_categoria=${idCategoria}` : '';
+            const response = await axios.get(`../../../api/modalidades.php?x=1${filtroCategoria}`);
             let modalidades = response.data.data || response.data;
+            if (!Array.isArray(modalidades)) modalidades = [];
+            modalidades = modalidades.filter((item) => String(item.interclasses_id_interclasse) === String(idInterclasse));
 
             if (divMobile) divMobile.innerHTML = '';
             if (divDesktop) divDesktop.innerHTML = '';
@@ -155,37 +188,64 @@ require_once '../componentes/header.php';
                 return;
             }
 
-            modalidades.forEach(modalidade => {
-                const linkEdicao = `./modalidades.php?id=${idInterclasse}&id_modalidade=${modalidade.id_modalidade}`;
+            modalidades.forEach((modalidade, index) => {
+                const categoriaTexto = modalidade.nome_categoria ? `<small class="text-muted d-block">${modalidade.nome_categoria}</small>` : '';
+                const destinoDetalhes = `./modalidade_detalhes.php?id=${idInterclasse}&id_modalidade=${modalidade.id_modalidade}`;
 
                 // Render Mobile
                 if (divMobile) {
                     divMobile.innerHTML += `
-                        <a href="${linkEdicao}" class="text-decoration-none text-black w-100 d-flex justify-content-center">
-                            <div class="bg-white d-flex justify-content-between align-items-center shadow py-3 px-4 mb-3 border border-1 rounded-3" style="width: 90%;">
-                                <i class="bi bi-trophy fs-2"></i>
-                                <h2 class="m-0 fs-4 text-truncate px-3 w-100 text-start">${modalidade.nome_modalidade}</h2>
-                                <img src="../../public/icons/arrow-right.svg" alt="Seta">
+                        <button type="button" class="modalidade-opcao bg-white d-flex justify-content-between align-items-center shadow py-3 px-4 mb-3 border border-1 rounded-3 w-100" style="max-width: 90%;" data-id="${modalidade.id_modalidade}" data-detalhes="${destinoDetalhes}">
+                            <i class="bi bi-trophy fs-4"></i>
+                            <div class="text-start px-3 w-100">
+                                <h2 class="m-0 fs-5 text-truncate">${modalidade.nome_modalidade}</h2>
+                                ${categoriaTexto}
                             </div>
-                        </a>`;
+                            <i class="bi bi-check-circle-fill text-danger d-none"></i>
+                        </button>`;
                 }
 
                 // Render Desktop
                 if (divDesktop) {
                     divDesktop.innerHTML += `
                         <div class="col-12 col-md-6 col-lg-4">
-                            <a href="${linkEdicao}" class="text-decoration-none text-dark">
-                                <div class="card border border-light-subtle shadow-sm h-100 py-4 px-4 d-flex flex-row align-items-center justify-content-between transition-hover" style="border-radius: 10px;">
-                                    <div class="d-flex align-items-center gap-3">
-                                        <i class="bi bi-trophy fs-4 text-dark"></i>
+                            <button type="button" class="modalidade-opcao card border border-light-subtle shadow-sm h-100 py-4 px-4 d-flex flex-row align-items-center justify-content-between transition-hover w-100 text-start bg-white" style="border-radius: 10px;" data-id="${modalidade.id_modalidade}" data-detalhes="${destinoDetalhes}">
+                                <div class="d-flex align-items-center gap-3">
+                                    <i class="bi bi-trophy fs-4 text-dark"></i>
+                                    <div>
                                         <h5 class="m-0 fw-bold fs-6">${modalidade.nome_modalidade}</h5>
+                                        ${categoriaTexto}
                                     </div>
-                                    <i class="bi bi-chevron-right text-secondary"></i>
                                 </div>
-                            </a>
+                                <i class="bi bi-check-circle-fill text-danger d-none"></i>
+                            </button>
                         </div>`;
                 }
+
+                if (index === 0) modalidadeSelecionada = Number(modalidade.id_modalidade);
             });
+
+            document.querySelectorAll('.modalidade-opcao').forEach((botao) => {
+                botao.addEventListener('click', () => {
+                    if (modo === 'view') {
+                        window.location.href = botao.dataset.detalhes;
+                        return;
+                    }
+                    modalidadeSelecionada = Number(botao.dataset.id);
+                    document.querySelectorAll('.modalidade-opcao').forEach((btn) => {
+                        btn.classList.remove('border-danger');
+                        const icone = btn.querySelector('.bi-check-circle-fill');
+                        if (icone) icone.classList.add('d-none');
+                    });
+                    botao.classList.add('border-danger');
+                    const iconeAtivo = botao.querySelector('.bi-check-circle-fill');
+                    if (iconeAtivo) iconeAtivo.classList.remove('d-none');
+                    atualizarBotaoContinuar();
+                });
+            });
+
+            const primeira = document.querySelector('.modalidade-opcao');
+            if (primeira && modo !== 'view') primeira.click();
         } catch (error) {
             console.error("Erro ao carregar lista:", error);
         }
@@ -220,8 +280,9 @@ require_once '../componentes/header.php';
             const categorias = response.data;
 
             selectCat.innerHTML = '<option value="" disabled selected>Selecione uma categoria...</option>';
-            categorias.forEach(cat => {
-                selectCat.innerHTML += `<option value="${cat.id_categoria}">${cat.nome_categoria}</option>`;
+            categorias.forEach((cat) => {
+                const selected = idCategoria && String(idCategoria) === String(cat.id_categoria) ? 'selected' : '';
+                selectCat.innerHTML += `<option value="${cat.id_categoria}" ${selected}>${cat.nome_categoria}</option>`;
             });
         } catch (error) {
             console.error("Erro ao carregar categorias:", error);
@@ -252,6 +313,7 @@ require_once '../componentes/header.php';
             if (res.data.success) {
                 caixaMensagem.innerHTML = `<p class="text-success text-center fw-bold">Criada com sucesso!</p>`;
                 document.getElementById('formNovaModalidade').reset();
+                modalidadeSelecionada = Number(res.data.id);
                 carregarModalidades();
                 setTimeout(() => {
                     bootstrap.Modal.getInstance(document.getElementById('exampleModal')).hide();
@@ -276,6 +338,7 @@ require_once '../componentes/header.php';
             carregarTiposModalidades(),
             carregarCategoriasModalidades()
         ]);
+        atualizarBotaoContinuar();
     };
 </script>
 

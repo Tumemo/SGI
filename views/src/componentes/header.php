@@ -48,6 +48,9 @@
 
         const sortByMostRecent = (lista) => {
             return [...lista].sort((a, b) => {
+                const idA = Number(a.id_interclasse) || 0;
+                const idB = Number(b.id_interclasse) || 0;
+                if (idB !== idA) return idB - idA;
                 const da = new Date(a.ano_interclasse || '1900-01-01').getTime();
                 const db = new Date(b.ano_interclasse || '1900-01-01').getTime();
                 return db - da;
@@ -94,7 +97,9 @@
             document.querySelectorAll('[data-back-link="true"]').forEach((el) => {
                 el.addEventListener('click', (event) => {
                     event.preventDefault();
-                    if (window.history.length > 1) {
+                    const ref = document.referrer ? new URL(document.referrer) : null;
+                    const cameFromSameOrigin = ref && ref.origin === window.location.origin;
+                    if (window.history.length > 1 && cameFromSameOrigin) {
                         window.history.back();
                     } else {
                         window.location.href = fallbackPath;
@@ -108,18 +113,29 @@
             const id = ativo?.id_interclasse;
             document.querySelectorAll('[data-active-link]').forEach((link) => {
                 const key = link.getAttribute('data-active-link');
-                if (!id) {
-                    link.href = '#';
+                const semInterclasse = !id;
+                const permitirSemInterclasse = key === 'home';
+                const href = id ? buildLinkTo(key, id) : (endpoints[key] || endpoints.home);
+                link.href = href;
+                if (semInterclasse && !permitirSemInterclasse) {
                     link.classList.add('disabled');
                     link.style.pointerEvents = 'none';
                     link.style.opacity = '0.45';
                     return;
                 }
-                link.href = buildLinkTo(key, id);
                 link.classList.remove('disabled');
                 link.style.pointerEvents = '';
                 link.style.opacity = '';
             });
+        };
+
+        const invalidateCache = () => {
+            cache = null;
+        };
+
+        const refreshNavigation = async () => {
+            invalidateCache();
+            await applyActiveNavbarLinks();
         };
 
         const updatePageTitle = (nomeInterclasse) => {
@@ -136,6 +152,8 @@
             buildLinkTo,
             setupBackLinks,
             applyActiveNavbarLinks,
+            invalidateCache,
+            refreshNavigation,
             updatePageTitle
         };
     })();
