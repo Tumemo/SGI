@@ -17,16 +17,16 @@ require_once '../componentes/header.php';
             </section>
         </section>
     </section>
-    <a href="./edicao_regulamentos.php" id="btnContinuarMobile" class="btn btn-danger position-absolute position-fixed translate-middle" style="width: max-content;  top: 87%; left: 50%; z-index: 10; cursor: pointer;">Continuar</a>
+    <a href="./edicao_pontuacao.php" id="btnContinuarMobile" class="btn btn-danger position-absolute position-fixed translate-middle" style="width: max-content;  top: 87%; left: 50%; z-index: 10; cursor: pointer;">Continuar</a>
 </main>
 
 <main class="d-none d-md-block main-desktop-layout">
     <div class="container-fluid px-0" style="max-width: 90%;">
         
         <div class="mb-5">
-            <button class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0" style="background-color: #ed1c24; border-radius: 6px;" onclick="window.history.back()">
-                <i class="bi bi-arrow-left-circle fs-5"></i> Interclasse 2026
-            </button>
+            <a class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none" style="background-color: #ed1c24; border-radius: 6px;" id="btnVoltarNovaModalidade" href="./dashboard.php">
+                <i class="bi bi-arrow-left-circle fs-5"></i> <span id="nomeInterclasseNovaModalidade">Interclasse</span>
+            </a>
             <h5 class="fw-bold text-dark mb-0 d-flex align-items-center gap-2 mt-2">
                 <i class="bi bi-trophy fs-5"></i> Modalidades
             </h5>
@@ -76,8 +76,8 @@ require_once '../componentes/header.php';
                         <label class="text-dark mb-1 fw-medium" style="font-size: 0.95rem;">Gênero:</label>
                         <select class="form-select form-select-lg shadow-sm rounded-3 text-secondary" style="font-size: 0.95rem; border: 1px solid #dee2e6;" id="inputGeneroModalidade" required>
                             <option value="" disabled selected>Selecione...</option>
-                            <option value="M">Masculino (M)</option>
-                            <option value="F">Feminino (F)</option>
+                            <option value="MASC">Masculino (M)</option>
+                            <option value="FEM">Feminino (F)</option>
                             <option value="MISTO">Misto</option>
                         </select>
                     </div>
@@ -125,23 +125,34 @@ require_once '../componentes/header.php';
 <script>
     // 1. Pegar o ID do Interclasse que veio pela URL
     const urlParams = new URLSearchParams(window.location.search);
-    const idInterclasse = urlParams.get('id');
+    let idInterclasse = urlParams.get('id');
 
     // 2. Repassar o ID para a página de Regulamentos
-    if (idInterclasse) {
+    async function resolverInterclasse() {
+        if (!idInterclasse) {
+            const ativo = await window.SGIInterclasse.getActiveInterclasse();
+            idInterclasse = ativo?.id_interclasse || null;
+        }
+        if (!idInterclasse) return;
         const btnMob = document.getElementById('btnContinuarMobile');
-        const btnDesk = document.getElementById('btnContinuarDesktop');
-        if (btnMob) btnMob.href = `./edicao_regulamentos.php?id=${idInterclasse}`;
-        if (btnDesk) btnDesk.href = `./edicao_regulamentos.php?id=${idInterclasse}`;
+        const btnDesk = document.getElementById('btnContinuar');
+        if (btnMob) btnMob.href = `./edicao_pontuacao.php?id=${idInterclasse}`;
+        if (btnDesk) btnDesk.href = `./edicao_pontuacao.php?id=${idInterclasse}`;
+        const dados = await window.SGIInterclasse.getInterclasseById(idInterclasse);
+        if (dados?.nome_interclasse) {
+            document.getElementById('nomeInterclasseNovaModalidade').innerText = dados.nome_interclasse;
+            document.getElementById('btnVoltarNovaModalidade').href = `./dashboard.php?id=${idInterclasse}`;
+            window.SGIInterclasse.updatePageTitle(dados.nome_interclasse);
+        }
     }
 
     // 3. Função para listar as modalidades
     async function ListarModalidades() {
         try {
-            const response = await fetch('../../../api/modalidades.php');
+            const response = await fetch(`../../../api/modalidades.php?id_interclasse=${idInterclasse}`);
             const data = await response.json();
 
-            const containerDesktop = document.getElementById('listarModalidadesDesktop');
+            const containerDesktop = document.getElementById('listaModalidades');
             const containerMobile = document.getElementById('listarModalidadesMobile');
 
             if(containerDesktop) containerDesktop.innerHTML = '';
@@ -219,6 +230,7 @@ require_once '../componentes/header.php';
             
             // Monta o objeto com os dados exatos exigidos pela API
             const dadosModalidade = {
+                interclasses_id_interclasse: parseInt(idInterclasse),
                 nome_modalidade: document.getElementById('inputNomeModalidade').value,
                 genero_modalidade: document.getElementById('inputGeneroModalidade').value,
                 max_inscrito_modalidade: parseInt(document.getElementById('inputMaxInscritos').value) || 0,
@@ -265,7 +277,10 @@ require_once '../componentes/header.php';
     }
 
     // Inicia a listagem
-    window.onload = ListarModalidades;
+    window.onload = async () => {
+        await resolverInterclasse();
+        await ListarModalidades();
+    };
 </script>
 
 <?php

@@ -26,9 +26,9 @@ require_once '../componentes/header.php';
     <div style="border-radius: 12px;">
 
         <div class="mb-5">
-            <button class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 shadow-sm" style="background-color: #ed1c24; border-radius: 6px;" onclick="window.history.back()">
-                <i class="bi bi-arrow-left-circle fs-5"></i> Interclasse 2026
-            </button>
+            <a class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 shadow-sm text-decoration-none" style="background-color: #ed1c24; border-radius: 6px;" id="btnVoltarModalidades" href="./dashboard.php">
+                <i class="bi bi-arrow-left-circle fs-5"></i> <span id="nomeInterclasseModalidades">Interclasse</span>
+            </a>
 
             <h4 class="fw-bold d-flex align-items-center gap-2 text-dark mb-0 fs-5">
                 <i class="bi bi-trophy fs-4 text-dark"></i> Modalidades
@@ -109,16 +109,31 @@ require_once '../componentes/header.php';
 <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
 <script>
     const urlParams = new URLSearchParams(window.location.search);
-    const idInterclasse = urlParams.get('id');
+    let idInterclasse = urlParams.get('id');
+    const modo = urlParams.get('modo');
 
     // TRAVA DE SEGURANÇA e Configuração do Botão "Continuar"
-    if (!idInterclasse) {
-        alert("Erro: Nenhum interclasse selecionado! Você será redirecionado.");
-        window.location.href = "home.php";
-    } else {
-        // Redirecionamento para o próximo passo no Desktop
+    async function resolverInterclasse() {
+        if (!idInterclasse) {
+            const ativo = await window.SGIInterclasse.getActiveInterclasse();
+            idInterclasse = ativo?.id_interclasse || null;
+        }
+        if (!idInterclasse) {
+            alert("Nenhum interclasse ativo encontrado.");
+            window.location.href = "home.php";
+            return null;
+        }
+        const dados = await window.SGIInterclasse.getInterclasseById(idInterclasse);
+        document.getElementById('nomeInterclasseModalidades').innerText = dados?.nome_interclasse || 'Interclasse';
+        document.getElementById('btnVoltarModalidades').href = `./dashboard.php?id=${idInterclasse}`;
+        window.SGIInterclasse.updatePageTitle(dados?.nome_interclasse);
         const btnCont = document.getElementById('btnContinuarDesktop');
-        // if (btnCont) btnCont.href = `./categorias.php?id=${idInterclasse}`;
+        if (modo === 'view') {
+            btnCont.href = `./dashboard.php?id=${idInterclasse}`;
+        } else {
+            btnCont.href = `./edicao_pontuacao.php?id=${idInterclasse}&modo=create`;
+        }
+        return idInterclasse;
     }
 
     // 1. FUNÇÃO: Listar as modalidades já existentes (Cards)
@@ -127,7 +142,7 @@ require_once '../componentes/header.php';
         const divDesktop = document.getElementById('listaModalidadesDesktop');
 
         try {
-            const response = await axios.get(`../../../api/modalidades.php?interclasses_id_interclasse=${idInterclasse}`);
+            const response = await axios.get(`../../../api/modalidades.php?id_interclasse=${idInterclasse}`);
             let modalidades = response.data.data || response.data;
 
             if (divMobile) divMobile.innerHTML = '';
@@ -201,7 +216,7 @@ require_once '../componentes/header.php';
         if (!selectCat) return;
 
         try {
-            const response = await axios.get('../../../api/categorias.php');
+            const response = await axios.get(`../../../api/categorias.php?id_interclasse=${idInterclasse}`);
             const categorias = response.data;
 
             selectCat.innerHTML = '<option value="" disabled selected>Selecione uma categoria...</option>';
@@ -253,6 +268,8 @@ require_once '../componentes/header.php';
 
     // 5. INICIALIZAÇÃO: Onde a mágica acontece
     window.onload = async () => {
+        const idOk = await resolverInterclasse();
+        if (!idOk) return;
         // Executa todas as buscas ao mesmo tempo
         await Promise.all([
             carregarModalidades(),

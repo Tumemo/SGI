@@ -24,9 +24,9 @@ require_once '../componentes/header.php';
 <main class="d-none d-md-block main-desktop-layout">
     <div class="container-fluid px-0 position-relative">
         <div class="mb-5">
-            <button class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0" style="background-color: #ed1c24; border-radius: 6px;" onclick="window.history.back()">
-                <i class="bi bi-arrow-left-circle fs-5"></i> Interclasse 2026
-            </button>
+            <a href="./home.php" class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none" style="background-color: #ed1c24; border-radius: 6px;" data-back-link="true">
+                <i class="bi bi-arrow-left-circle fs-5"></i> <span id="nomeInterclasseCategoria">Interclasse</span>
+            </a>
 
             <h4 class="fw-bold d-flex align-items-center gap-2 text-dark mb-0">
                 <i class="bi bi-bookmark fs-5"></i> Categorias
@@ -111,14 +111,26 @@ require_once '../componentes/header.php';
     // 1. TRAVA DE SEGURANÇA: Captura e valida o ID do Interclasse
     const urlParams = new URLSearchParams(window.location.search);
     const idInterclasse = urlParams.get('id');
+    const modo = urlParams.get('modo') || 'create';
 
     if (!idInterclasse) {
         alert("Erro: Nenhum interclasse selecionado! Você será redirecionado.");
         window.location.href = "home.php"; // Redireciona de volta para a tela inicial
     } else {
+        window.SGIInterclasse.getInterclasseById(idInterclasse).then((dados) => {
+            if (dados?.nome_interclasse) {
+                document.getElementById('nomeInterclasseCategoria').innerText = dados.nome_interclasse;
+                window.SGIInterclasse.updatePageTitle(dados.nome_interclasse);
+            }
+        }).catch(console.error);
         // Se existir, repassa o ID para os botões de continuar
-        document.getElementById('btnContinuarMobile').href = `./edicao_turmas.php?id=${idInterclasse}`;
-        document.getElementById('btnContinuarDesktop').href = `./edicao_turmas.php?id=${idInterclasse}`;
+        if (modo === 'view') {
+            document.getElementById('btnContinuarMobile').href = `./turmas.php?id=${idInterclasse}`;
+            document.getElementById('btnContinuarDesktop').href = `./turmas.php?id=${idInterclasse}`;
+        } else {
+            document.getElementById('btnContinuarMobile').href = `./edicao_turmas.php?id=${idInterclasse}`;
+            document.getElementById('btnContinuarDesktop').href = `./edicao_turmas.php?id=${idInterclasse}`;
+        }
     }
 
     // Função para buscar e renderizar as categorias
@@ -128,7 +140,7 @@ require_once '../componentes/header.php';
 
         try {
             // Buscando os dados na API passando o ID do interclasse na URL
-            const response = await fetch(`../../../api/categorias.php?interclasses_id_interclasse=${idInterclasse}`);
+            const response = await fetch(`../../../api/categorias.php?id_interclasse=${idInterclasse}`);
             
             // Verifica se a requisição não deu erro no servidor antes de converter
             if (!response.ok) {
@@ -173,9 +185,9 @@ require_once '../componentes/header.php';
                                         <div class="fs-5 text-dark">0</div>
                                     </div>
                                 </div>
-                                <button class="btn btn-danger w-100 fw-semibold text-uppercase mt-auto border-0" style="background-color: #ed1c24; border-radius: 6px; font-size: 0.8rem; padding: 0.75rem;">
+                                <a class="btn btn-danger w-100 fw-semibold text-uppercase mt-auto border-0" style="background-color: #ed1c24; border-radius: 6px; font-size: 0.8rem; padding: 0.75rem;" href="${modo === 'view' ? `./turmas.php?id=${idInterclasse}&id_categoria=${categoria.id_categoria}` : `./edicao_turmas.php?id=${idInterclasse}&id_categoria=${categoria.id_categoria}`}">
                                     VER DETALHES <i class="bi bi-arrow-right"></i>
-                                </button>
+                                </a>
                             </div>
                         </div>
                     </div>

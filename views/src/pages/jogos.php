@@ -1,16 +1,20 @@
-<?php
-$btnVoltar = true;
-$titulo = "Jogos";
-$textTop = "Jogos";
-require_once '../componentes/navbar.php';
-require_once '../componentes/header.php';
-?>
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SGI - Placar</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="../styles/style.css">
+</head>
+<body>
 
 <main class="container py-4">
     <div class="d-flex flex-column align-items-start gap-3">
-        <a href="#" class="badge-interclasse">
+        <a href="./edicao_agenda.php" class="badge-interclasse" data-back-link="true">
             <i class="bi bi-arrow-left-circle-fill"></i>
-            Interclasse 2026
+            Voltar
         </a>
         <div class="d-flex align-items-center gap-2 text-secondary fw-bold">
             <i class="bi bi-record-circle"></i>
@@ -72,6 +76,16 @@ require_once '../componentes/header.php';
     </div>
 </main>
 
-<?php
-require_once '../componentes/footer.php';
-?>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    document.querySelector('[data-back-link="true"]')?.addEventListener('click', (event) => {
+        event.preventDefault();
+        if (window.history.length > 1) {
+            window.history.back();
+        } else {
+            window.location.href = './edicao_agenda.php';
+        }
+    });
+</script>
+</body>
+</html>

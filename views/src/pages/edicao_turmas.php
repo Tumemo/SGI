@@ -110,6 +110,7 @@ require_once '../componentes/header.php';
     // 1. TRAVA DE SEGURANÇA: Captura e valida o ID do Interclasse
     const urlParams = new URLSearchParams(window.location.search);
     const idInterclasse = urlParams.get('id');
+    const idCategoriaUrl = urlParams.get('id_categoria');
 
     if (!idInterclasse) {
         alert("Erro: Nenhum interclasse selecionado! Você será redirecionado.");
@@ -129,7 +130,7 @@ require_once '../componentes/header.php';
     // 2. Carregar Categorias
     async function carregarCategorias() {
         try {
-            const response = await fetch('../../../api/categorias.php');
+            const response = await fetch(`../../../api/categorias.php?id_interclasse=${idInterclasse}`);
             const categorias = await response.json();
             const container = document.getElementById('listaCategorias');
             container.innerHTML = '';
@@ -154,6 +155,9 @@ require_once '../componentes/header.php';
                     };
 
                     container.appendChild(btn);
+                    if (idCategoriaUrl && String(idCategoriaUrl) === String(cat.id_categoria)) {
+                        btn.click();
+                    }
                 });
             } else {
                 container.innerHTML = '<p class="text-muted p-3 text-center mb-0">Nenhuma categoria encontrada.</p>';
@@ -166,7 +170,7 @@ require_once '../componentes/header.php';
     // 3. Carregar Turmas 
     async function carregarTurmas(idCategoria) {
         try {
-            const response = await fetch(`../../../api/turmas.php?categorias_id_categoria=${idCategoria}`);
+            const response = await fetch(`../../../api/turmas.php?id_categoria=${idCategoria}&id_interclasse=${idInterclasse}`);
             const turmas = await response.json();
             todasTurmasAtuais = turmas; 
             renderizarTurmas(turmas);
@@ -183,9 +187,12 @@ require_once '../componentes/header.php';
         if (turmas && turmas.length > 0) {
             turmas.forEach(turma => {
                 container.innerHTML += `
-                    <div class="bg-white rounded-3 shadow-sm p-4 d-flex align-items-center justify-content-between">
-                        <span class="fw-bold text-dark fs-5">${turma.nome_turma}</span>
-                    </div>
+                    <a href="./equipes.php?id=${idInterclasse}&id_categoria=${categoriaSelecionadaId || ''}&id_turma=${turma.id_turma}" class="text-decoration-none">
+                        <div class="bg-white rounded-3 shadow-sm p-4 d-flex align-items-center justify-content-between">
+                            <span class="fw-bold text-dark fs-5">${turma.nome_turma}</span>
+                            <i class="bi bi-chevron-right text-muted"></i>
+                        </div>
+                    </a>
                 `;
             });
         } else {
@@ -226,7 +233,8 @@ require_once '../componentes/header.php';
         const dadosTurma = {
             interclasses_id_interclasse: parseInt(idInterclasse),
             categorias_id_categoria: categoriaSelecionadaId,
-            nome_turma: inputNome.value
+            nome_turma: inputNome.value.trim(),
+            status_turma: "1"
         };
 
         try {

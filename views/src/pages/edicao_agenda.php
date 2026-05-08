@@ -52,54 +52,27 @@ require_once '../componentes/header.php';
         </div>
     </div>
 
-    <div id="lista-eventos-mobile" class="d-flex flex-column gap-3 mx-auto" style="max-width: 450px;">
-        <div class="card bg-white border-0 shadow-sm rounded-3 p-3 position-relative w-100 mb-3">
-            <i class="bi bi-record-circle text-danger position-absolute top-0 end-0 m-3 fs-5"></i>
-            <div class="card-body p-0">
-                <h5 class="fw-bold text-dark mb-1">${evento.titulo}</h5>
-                <p class="text-muted mb-1" style="font-size: 0.8rem;">${diaNum}, ${diaSem}</p>
-                <p class="text-muted mb-0" style="font-size: 0.8rem;">${evento.hora_inicio} - ${evento.hora_fim}</p>
-            </div>
-            <i class="bi bi-alarm text-muted position-absolute bottom-0 end-0 m-3" style="font-size: 1rem;"></i>
-        </div>
-        <div class="card bg-white border-0 shadow-sm rounded-3 p-3 position-relative w-100 mb-3">
-            <i class="bi bi-record-circle text-danger position-absolute top-0 end-0 m-3 fs-5"></i>
-            <div class="card-body p-0">
-                <h5 class="fw-bold text-dark mb-1">${evento.titulo}</h5>
-                <p class="text-muted mb-1" style="font-size: 0.8rem;">${diaNum}, ${diaSem}</p>
-                <p class="text-muted mb-0" style="font-size: 0.8rem;">${evento.hora_inicio} - ${evento.hora_fim}</p>
-            </div>
-            <i class="bi bi-alarm text-muted position-absolute bottom-0 end-0 m-3" style="font-size: 1rem;"></i>
-        </div>
-        <div class="card bg-white border-0 shadow-sm rounded-3 p-3 position-relative w-100 mb-3">
-            <i class="bi bi-record-circle text-danger position-absolute top-0 end-0 m-3 fs-5"></i>
-            <div class="card-body p-0">
-                <h5 class="fw-bold text-dark mb-1">${evento.titulo}</h5>
-                <p class="text-muted mb-1" style="font-size: 0.8rem;">${diaNum}, ${diaSem}</p>
-                <p class="text-muted mb-0" style="font-size: 0.8rem;">${evento.hora_inicio} - ${evento.hora_fim}</p>
-            </div>
-            <i class="bi bi-alarm text-muted position-absolute bottom-0 end-0 m-3" style="font-size: 1rem;"></i>
-        </div>
-        <div class="card bg-white border-0 shadow-sm rounded-3 p-3 position-relative w-100 mb-3">
-            <i class="bi bi-record-circle text-danger position-absolute top-0 end-0 m-3 fs-5"></i>
-            <div class="card-body p-0">
-                <h5 class="fw-bold text-dark mb-1">${evento.titulo}</h5>
-                <p class="text-muted mb-1" style="font-size: 0.8rem;">${diaNum}, ${diaSem}</p>
-                <p class="text-muted mb-0" style="font-size: 0.8rem;">${evento.hora_inicio} - ${evento.hora_fim}</p>
-            </div>
-            <i class="bi bi-alarm text-muted position-absolute bottom-0 end-0 m-3" style="font-size: 1rem;"></i>
-        </div>
+    <div class="d-flex justify-content-center mb-3">
+        <a
+            href="https://calendar.google.com"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="btn btn-outline-danger btn-sm"
+        >
+            Abrir no Google Calendar
+        </a>
     </div>
+    <div id="lista-eventos-mobile" class="d-flex flex-column gap-3 mx-auto" style="max-width: 450px;"></div>
 </main>
 
 
 <!-- main desktop -->
 <main class="d-none d-md-block main-desktop-layout">
 
-    <button type="button" class="btn btn-danger d-flex align-items-center mb-4 border-0 shadow-sm" style="border-radius: 4px; padding: 8px 15px;">
+    <a href="./home.php" data-back-link="true" class="btn btn-danger d-inline-flex align-items-center mb-4 border-0 shadow-sm text-decoration-none" style="border-radius: 4px; padding: 8px 15px;" id="btnVoltarAgendaDesk">
         <i class="bi bi-arrow-left-circle-fill me-2"></i>
-        <span class="fw-bold" style="font-size: 0.9rem;">Interclasse 2026</span>
-    </button>
+        <span class="fw-bold" style="font-size: 0.9rem;" id="nomeInterclasseAgenda">Interclasse</span>
+    </a>
 
     <div class="row">
         <div class="col-lg-6 pe-lg-5">
@@ -153,6 +126,12 @@ require_once '../componentes/header.php';
     let dataNavegacao = new Date();
 
     document.addEventListener('DOMContentLoaded', function() {
+        window.SGIInterclasse.getActiveInterclasse().then((ativo) => {
+            if (!ativo) return;
+            document.getElementById('nomeInterclasseAgenda').innerText = ativo.nome_interclasse;
+            document.getElementById('btnVoltarAgendaDesk').href = `./dashboard.php?id=${ativo.id_interclasse}`;
+            window.SGIInterclasse.updatePageTitle(ativo.nome_interclasse);
+        }).catch(console.error);
         inicializarAnos();
         atualizarTelas(); // Desenha tanto mobile quanto desktop
         carregarAgenda(); // Busca os eventos do banco para as duas telas
@@ -266,53 +245,43 @@ require_once '../componentes/header.php';
         }
     }
 
-    async function carregarAgenda() {
+    function carregarAgenda() {
         const containerDesk = document.getElementById('lista-eventos');
         const containerMob = document.getElementById('lista-eventos-mobile');
+        const eventos = [
+            { titulo: "Queimada", data_evento: "2026-09-12", hora_inicio: "11:00", hora_fim: "11:40" },
+            { titulo: "Futsal", data_evento: "2026-09-15", hora_inicio: "09:30", hora_fim: "10:20" }
+        ];
 
-        try {
-            const response = await fetch('api_agenda.php');
-            if (!response.ok) throw new Error();
+        containerDesk.innerHTML = '';
+        containerMob.innerHTML = '';
 
-            const eventos = await response.json();
-            containerDesk.innerHTML = '';
-            containerMob.innerHTML = '';
-
-            if (eventos.length === 0) {
-                const msgVazia = '<p class="text-muted text-center w-100">Nenhum evento para este mês.</p>';
-                containerDesk.innerHTML = msgVazia;
-                containerMob.innerHTML = msgVazia;
-                return;
-            }
-
-            eventos.forEach(evento => {
-                const dataObj = new Date(evento.data_evento + 'T00:00:00');
-                const diaNum = dataObj.toLocaleDateString('pt-BR', {
-                    day: '2-digit'
-                });
-                const diaSem = dataObj.toLocaleDateString('pt-BR', {
-                    weekday: 'long'
-                });
-
-                const cardHtml = `
-                <div class="card bg-white border-0 shadow-sm rounded-3 p-3 position-relative w-100 mb-3">
-                    <i class="bi bi-record-circle text-danger position-absolute top-0 end-0 m-3 fs-5"></i>
-                    <div class="card-body p-0">
-                        <h5 class="fw-bold text-dark mb-1">${evento.titulo}</h5>
-                        <p class="text-muted mb-1" style="font-size: 0.8rem;">${diaNum}, ${diaSem}</p>
-                        <p class="text-muted mb-0" style="font-size: 0.8rem;">${evento.hora_inicio} - ${evento.hora_fim}</p>
-                    </div>
-                    <i class="bi bi-alarm text-muted position-absolute bottom-0 end-0 m-3" style="font-size: 1rem;"></i>
-                </div>`;
-
-                containerDesk.innerHTML += cardHtml;
-                containerMob.innerHTML += cardHtml;
-            });
-        } catch (e) {
-            const erroMsg = '<p class="text-muted text-center w-100">Ainda não há jogos marcados.</p>';
-            containerDesk.innerHTML = erroMsg;
-            containerMob.innerHTML = erroMsg;
+        if (eventos.length === 0) {
+            const msgVazia = '<p class="text-muted text-center w-100">Nenhum evento para este mês.</p>';
+            containerDesk.innerHTML = msgVazia;
+            containerMob.innerHTML = msgVazia;
+            return;
         }
+
+        eventos.forEach(evento => {
+            const dataObj = new Date(evento.data_evento + 'T00:00:00');
+            const diaNum = dataObj.toLocaleDateString('pt-BR', { day: '2-digit' });
+            const diaSem = dataObj.toLocaleDateString('pt-BR', { weekday: 'long' });
+
+            const cardHtml = `
+            <div class="card bg-white border-0 shadow-sm rounded-3 p-3 position-relative w-100 mb-3">
+                <i class="bi bi-record-circle text-danger position-absolute top-0 end-0 m-3 fs-5"></i>
+                <div class="card-body p-0">
+                    <h5 class="fw-bold text-dark mb-1">${evento.titulo}</h5>
+                    <p class="text-muted mb-1" style="font-size: 0.8rem;">${diaNum}, ${diaSem}</p>
+                    <p class="text-muted mb-0" style="font-size: 0.8rem;">${evento.hora_inicio} - ${evento.hora_fim}</p>
+                </div>
+                <i class="bi bi-alarm text-muted position-absolute bottom-0 end-0 m-3" style="font-size: 1rem;"></i>
+            </div>`;
+
+            containerDesk.innerHTML += cardHtml;
+            containerMob.innerHTML += cardHtml;
+        });
     }
 </script>
 

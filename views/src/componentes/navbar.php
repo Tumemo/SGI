@@ -1,9 +1,9 @@
 <!-- navbar mobile -->
 <nav class="d-md-none order-last fixed-bottom py-2 order-lg-first bg-danger">
     <ul class="nav justify-content-around fs-1">
-        <li><a href="../pages/home.php" class="text-white"><i class="bi bi-house"></i></a></li>
-        <li><a href="../pages/turmas.php" class="text-white"><i class="bi bi-people"></i></a></li>
-        <li><a href="../pages/ranking.php" class="text-white"><i class="bi bi-trophy"></i></a></li>
+        <li><a href="../pages/home.php" class="text-white" data-active-link="home"><i class="bi bi-house"></i></a></li>
+        <li><a href="../pages/turmas.php" class="text-white" data-active-link="turmas"><i class="bi bi-people"></i></a></li>
+        <li><a href="../pages/ranking.php" class="text-white" data-active-link="ranking"><i class="bi bi-trophy"></i></a></li>
         <li><a href="../../index.php" class="text-white"><i class="bi bi-arrow-bar-right"></i></a></li>
     </ul>
 </nav>
@@ -20,43 +20,43 @@
         </li>
 
         <li>
-            <a href="home.php" class="text-white">
+            <a href="home.php" class="text-white" data-active-link="home">
                 <i class="bi bi-house"></i>
             </a>
         </li>
 
         <li>
-            <a href="edicao_categorias.php" class="text-white">
+            <a href="edicao_categorias.php" class="text-white" data-active-link="categorias">
                 <i class="bi bi-bookmark"></i>
             </a>
         </li>
 
         <li>
-            <a href="ranking.php" class="text-white">
+            <a href="ranking.php" class="text-white" data-active-link="ranking">
                 <i class="bi bi-trophy"></i>
             </a>
         </li>
 
         <li>
-            <a href="edicao_agenda.php" class="text-white">
+            <a href="edicao_agenda.php" class="text-white" data-active-link="agenda">
                 <i class="bi bi-calendar3"></i>
             </a>
         </li>
 
         <li>
-            <a href="turmas.php" class="text-white">
+            <a href="turmas.php" class="text-white" data-active-link="turmas">
                 <i class="bi bi-people"></i>
             </a>
         </li>
 
         <li>
-            <a href="edicao_arrecadacao.php" class="text-white">
+            <a href="edicao_arrecadacao.php" class="text-white" data-active-link="arrecadacao">
                 <i class="bi bi-basket"></i>
             </a>
         </li>
 
         <li>
-            <a href="#" class="text-white">
+            <a href="edicao_pontuacao.php" class="text-white" data-active-link="pontuacoes">
                 <i class="bi bi-award"></i>
             </a>
         </li>

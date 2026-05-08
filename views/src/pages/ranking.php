@@ -50,10 +50,10 @@ require_once '../componentes/header.php';
     <div class="container-fluid bg-white p-5 d-flex" style="min-height: calc(100vh - 220px);">
 
         <div class="ps-4 mb-5" style="min-width: 300px;">
-            <div class="d-inline-flex align-items-center bg-danger text-white px-3 py-2 rounded-1 mb-3 shadow-sm" style="cursor: pointer; font-size: 0.9rem;" onclick="window.history.back()">
+            <a href="./home.php" class="d-inline-flex align-items-center bg-danger text-white px-3 py-2 rounded-1 mb-3 shadow-sm text-decoration-none" style="font-size: 0.9rem;" data-back-link="true">
                 <i class="bi bi-arrow-left-circle-fill me-2"></i>
                 <span class="fw-bold" id="nomeInterclasseDesktop">Interclasse Ativo</span>
-            </div>
+            </a>
             <h1 class="fw-bold text-dark mt-2">Ranking</h1>
 
             <div id="botoesCategoriasDesktop" class="d-flex flex-wrap gap-2 mt-4 mb-5">
@@ -81,9 +81,41 @@ require_once '../componentes/header.php';
         msgDesktop.innerHTML = '<p class="text-center text-muted">Carregando ranking...</p>';
 
         try {
-            // Rota da sua API
-            const res = await axios.get('../../../api/ranking.php');
-            const data = res.data;
+            const interclasseAtivo = await window.SGIInterclasse.getActiveInterclasse();
+            if (!interclasseAtivo) {
+                throw new Error('Nenhum interclasse ativo');
+            }
+
+            const [categoriasRes, turmasRes] = await Promise.all([
+                fetch(`../../../api/categorias.php?id_interclasse=${interclasseAtivo.id_interclasse}`),
+                fetch(`../../../api/turmas.php?id_interclasse=${interclasseAtivo.id_interclasse}`)
+            ]);
+
+            const categorias = await categoriasRes.json();
+            const turmas = await turmasRes.json();
+            const turmasPorCategoria = new Map();
+
+            (turmas || []).forEach((turma) => {
+                const idCategoria = Number(turma.id_categoria || turma.categorias_id_categoria);
+                if (!turmasPorCategoria.has(idCategoria)) turmasPorCategoria.set(idCategoria, []);
+                turmasPorCategoria.get(idCategoria).push({
+                    nome: turma.nome_turma,
+                    pontos: Number(turma.pontos || 0)
+                });
+            });
+
+            const data = {
+                em_andamento: true,
+                nome_interclasse: interclasseAtivo.nome_interclasse,
+                categorias: (categorias || []).map((cat) => ({
+                    id_categoria: Number(cat.id_categoria),
+                    nome_categoria: cat.nome_categoria,
+                    turmas: (turmasPorCategoria.get(Number(cat.id_categoria)) || []).sort((a, b) => {
+                        if (b.pontos !== a.pontos) return b.pontos - a.pontos;
+                        return a.nome.localeCompare(b.nome);
+                    })
+                }))
+            };
 
             msgMobile.innerHTML = '';
             msgDesktop.innerHTML = '';
@@ -106,6 +138,7 @@ require_once '../componentes/header.php';
             // Atualiza o nome do interclasse no botão do desktop
             if(data.nome_interclasse) {
                 document.getElementById('nomeInterclasseDesktop').innerText = data.nome_interclasse;
+                window.SGIInterclasse.updatePageTitle(data.nome_interclasse);
             }
 
             dadosCategorias = data.categorias;

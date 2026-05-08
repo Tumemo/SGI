@@ -31,7 +31,7 @@ require_once '../componentes/header.php';
             </div>
         </a>
 
-        <a href="./edicao_regulamentos.php" id="linkRegulamentos" class="text-decoration-none text-black">
+        <a href="./edicao_pontuacao.php" id="linkRegulamentos" class="text-decoration-none text-black">
             <div class="d-flex m-auto justify-content-between align-items-center shadow py-3 px-4 mb-3 border border-1 rounded-3" style="width: 90%;">
                 <i class="bi bi-award fs-2"></i>
                 <h2 class="m-0 fs-3 w-100 px-3">Pontuações</h2>
@@ -94,7 +94,7 @@ require_once '../componentes/header.php';
             </div>
 
             <div class="col-12 col-md-6 col-lg-4">
-                <a href="pontuacoes.php" id="linkPontuacoes" class="dash-card">
+                <a href="edicao_pontuacao.php" id="linkPontuacoes" class="dash-card">
                     <div class="dash-card-red-corner"></div>
                     <div class="dash-card-header">
                         <div class="dash-card-icon">
@@ -107,7 +107,7 @@ require_once '../componentes/header.php';
             </div>
 
             <div class="col-12 col-md-6 col-lg-4">
-                <a href="agenda.php" id="linkAgenda" class="dash-card">
+                <a href="edicao_agenda.php" id="linkAgenda" class="dash-card">
                     <div class="dash-card-red-corner"></div>
                     <div class="dash-card-header">
                         <div class="dash-card-icon">
@@ -120,7 +120,7 @@ require_once '../componentes/header.php';
             </div>
 
             <div class="col-12 col-md-6 col-lg-4">
-                <a href="arrecadacoes.php" id="linkArrecadacoes" class="dash-card">
+                <a href="edicao_arrecadacao.php" id="linkArrecadacoes" class="dash-card">
                     <div class="dash-card-red-corner"></div>
                     <div class="dash-card-header">
                         <div class="dash-card-icon">
@@ -133,7 +133,7 @@ require_once '../componentes/header.php';
             </div>
 
             <div class="col-12 col-md-6 col-lg-4">
-                <a href="categorias.php" id="linkCategorias" class="dash-card">
+                <a href="edicao_categorias.php" id="linkCategorias" class="dash-card">
                     <div class="dash-card-red-corner"></div>
                     <div class="dash-card-header">
                         <div class="dash-card-icon">
@@ -163,26 +163,29 @@ require_once '../componentes/header.php';
 </main>
 
 <script>
-    // 1. Pegar o ID da URL atual (Ex: edicao.php?id=5)
-    const urlParams = new URLSearchParams(window.location.search);
-    const idInterclasse = urlParams.get('id');
+    async function configurarLinksDashboard() {
+        const urlParams = new URLSearchParams(window.location.search);
+        let idInterclasse = urlParams.get('id');
+        if (!idInterclasse) {
+            const ativo = await window.SGIInterclasse.getActiveInterclasse();
+            idInterclasse = ativo?.id_interclasse || null;
+        }
+        if (!idInterclasse) return;
 
-    // 2. Se o ID existir, atualizamos todos os links para repassar esse ID
-    if (idInterclasse) {
         document.querySelectorAll('#linkModalidades').forEach(link => {
             link.href = `./edicao_modalidades.php?id=${idInterclasse}`;
         });
         document.querySelectorAll('#linkPontuacoes').forEach(link => {
-            link.href = `./edicao_pontuacao.php?id=${idInterclasse}`;
+            link.href = `./edicao_pontuacao.php?id=${idInterclasse}&modo=view`;
         });
         document.querySelectorAll('#linkArrecadacoes').forEach(link => {
             link.href = `./edicao_arrecadacao.php?id=${idInterclasse}`;
         });
         document.querySelectorAll('#linkRegulamentos').forEach(link => {
-            link.href = `./edicao_regulamentos.php?id=${idInterclasse}`;
+            link.href = `./edicao_pontuacao.php?id=${idInterclasse}&modo=view`;
         });
         document.querySelectorAll('#linkCategorias').forEach(link => {
-            link.href = `./edicao_categorias.php?id=${idInterclasse}`;
+            link.href = `./edicao_categorias.php?id=${idInterclasse}&modo=view`;
         });
         document.querySelectorAll('#linkAgenda').forEach(link => {
             link.href = `./edicao_agenda.php?id=${idInterclasse}`;
@@ -190,10 +193,11 @@ require_once '../componentes/header.php';
         document.querySelectorAll('#linkColaboradores').forEach(link => {
             link.href = `./colaboradores.php?id=${idInterclasse}`;
         });
-    } else {
-        // Alerta opcional de segurança caso a página seja acessada sem ID
-        console.warn("Aviso: ID do interclasse não encontrado na URL.");
     }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        configurarLinksDashboard().catch(console.error);
+    });
 </script>
 
 <?php

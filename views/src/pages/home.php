@@ -74,13 +74,54 @@ require_once '../componentes/header.php';
 
 <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
 <script>
+    const estadoInterclasses = {
+        lista: []
+    };
+
+    function anoInterclasse(item) {
+        return item.ano_interclasse ? item.ano_interclasse.split('-')[0] : "N/A";
+    }
+
+    function statusAtivo(item) {
+        return String(item.status_interclasse) === '1';
+    }
+
+    async function atualizarStatusInterclasse(idInterclasse, ativo) {
+        const body = new FormData();
+        body.append('status_interclasse', ativo ? '1' : '0');
+        const response = await fetch(`../../../api/interclasse.php?id=${idInterclasse}`, {
+            method: 'POST',
+            body
+        });
+        const data = await response.json();
+        if (!response.ok || !data.success) {
+            throw new Error(data.message || 'Não foi possível atualizar o status.');
+        }
+        return data;
+    }
+
+    async function ativarComExclusividade(idParaAtivar) {
+        const ativos = estadoInterclasses.lista.filter(item => statusAtivo(item));
+
+        for (const interclasse of ativos) {
+            if (String(interclasse.id_interclasse) !== String(idParaAtivar)) {
+                await atualizarStatusInterclasse(interclasse.id_interclasse, false);
+            }
+        }
+        await atualizarStatusInterclasse(idParaAtivar, true);
+    }
+
+    function cardClassStatus(ativo) {
+        return ativo ? '' : 'opacity-75';
+    }
+
     // 1. Função para Listar (Mobile e Desktop)
     async function listarInterclasses() {
         const listarMobile = document.getElementById('caixaListar');
         const listarDesktop = document.getElementById('listaDesktop');
         
         try {
-            const res = await axios.get("../../../api/interclasse.php");
+            const res = await axios.get("../../../api/interclasse.php?regulamento=true");
             
             if (!res.data || res.data.length === 0) {
                 const msgVazia = `<p class="text-center text-muted mt-5">Nenhum interclasse encontrado</p>`;
@@ -93,17 +134,25 @@ require_once '../componentes/header.php';
             let htmlMobile = '';
             let htmlDesktop = '';
 
+            estadoInterclasses.lista = res.data;
             res.data.forEach((item) => {
-                // Pegar apenas o ano da data (Ex: "2026-05-12" vira "2026")
-                const anoStr = item.ano_interclasse ? item.ano_interclasse.split('-')[0] : "N/A";
+                const anoStr = anoInterclasse(item);
+                const ativo = statusAtivo(item);
+                const statusBadge = ativo
+                    ? '<span class="bg-danger rounded-3 text-white px-3 py-1" style="font-size: 0.82rem;">Ativo</span>'
+                    : '<span class="bg-secondary rounded-3 text-white px-3 py-1" style="font-size: 0.82rem;">Inativo</span>';
 
                 // Montar HTML Mobile
                 htmlMobile += `
                     <a href="./dashboard.php?id=${item.id_interclasse}" class="text-decoration-none text-dark">
-                        <div class="m-auto shadow d-flex justify-content-between align-content-center px-3 py-3 rounded-3 my-3 border border-1" style="width: 90%;">
+                        <div class="m-auto shadow d-flex justify-content-between align-content-center px-3 py-3 rounded-3 my-3 border border-1 ${cardClassStatus(ativo)}" style="width: 90%;">
                             <div>
                                 <h2 class="m-0 fs-4">${item.nome_interclasse}</h2>
                                 <p class="text-secondary m-0">${anoStr}</p>
+                                <label class="form-check form-switch mt-2 mb-0">
+                                  <input class="form-check-input status-switch" type="checkbox" data-id="${item.id_interclasse}" ${ativo ? 'checked' : ''}>
+                                  <span class="small text-muted">Interclasse ativo</span>
+                                </label>
                             </div>
                             <img src="../../public/icons/arrow-right.svg" alt="icone de seta">
                         </div>
@@ -112,7 +161,7 @@ require_once '../componentes/header.php';
 
                 // Montar HTML Desktop (com onclick para redirecionar enviando o ID)
                 htmlDesktop += `
-                    <div class="row bg-white shadow rounded-3 py-3 fs-5 mt-3 align-items-center px-2 border border-1" 
+                    <div class="row bg-white shadow rounded-3 py-3 fs-5 mt-3 align-items-center px-2 border border-1 ${cardClassStatus(ativo)}" 
                          style="cursor: pointer; transition: background-color 0.2s ease;" 
                          onmouseover="this.style.backgroundColor='#f8f9fa'" 
                          onmouseout="this.style.backgroundColor='#ffffff'"
@@ -121,7 +170,10 @@ require_once '../componentes/header.php';
                         <div class="col-4 fw-semibold text-dark text-truncate">${item.nome_interclasse}</div>
                         <div class="col-4 text-center text-secondary">${anoStr}</div>
                         <div class="col-4 text-center">
-                            <span class="bg-danger rounded-3 text-white px-4 py-1" style="font-size: 0.9rem;">Ativo</span>
+                            ${statusBadge}
+                            <div class="form-check form-switch d-flex justify-content-center mt-2">
+                                <input class="form-check-input status-switch" type="checkbox" data-id="${item.id_interclasse}" ${ativo ? 'checked' : ''}>
+                            </div>
                         </div>
                     </div>
                 `;
@@ -130,6 +182,7 @@ require_once '../componentes/header.php';
             // Injetar na tela
             listarMobile.innerHTML = htmlMobile;
             listarDesktop.innerHTML = htmlDesktop;
+            registrarEventosStatus();
 
         } catch (error) {
             console.error(error);
@@ -137,6 +190,30 @@ require_once '../componentes/header.php';
             listarMobile.innerHTML = msgErro;
             listarDesktop.innerHTML = msgErro;
         }
+    }
+
+    function registrarEventosStatus() {
+        document.querySelectorAll('.status-switch').forEach((input) => {
+            input.addEventListener('click', (event) => event.stopPropagation());
+            input.addEventListener('change', async (event) => {
+                const id = event.target.getAttribute('data-id');
+                const checked = event.target.checked;
+                event.target.disabled = true;
+                try {
+                    if (checked) {
+                        await ativarComExclusividade(id);
+                    } else {
+                        await atualizarStatusInterclasse(id, false);
+                    }
+                    await listarInterclasses();
+                } catch (error) {
+                    alert(error.message || 'Erro ao atualizar status do interclasse.');
+                    await listarInterclasses();
+                } finally {
+                    event.target.disabled = false;
+                }
+            });
+        });
     }
 
     // 2. Lógica para Criar Novo Interclasse
@@ -169,6 +246,7 @@ require_once '../componentes/header.php';
             if (res.data && res.data.success) {
                 caixaMensagem.innerHTML = `<p class="text-success text-center mt-3 mb-0 fw-bold">Criado com sucesso!</p>`;
                 const idCriado = res.data.id;
+                await atualizarStatusInterclasse(idCriado, false);
 
                 formulario.reset();
                 listarInterclasses();
@@ -192,6 +270,17 @@ require_once '../componentes/header.php';
     // Inicia a listagem ao carregar a página
     window.onload = listarInterclasses;
 </script>
+
+<style>
+    .status-switch.form-check-input:checked {
+        background-color: #ed1c24;
+        border-color: #ed1c24;
+    }
+    .status-switch.form-check-input:focus {
+        border-color: #ed1c24;
+        box-shadow: 0 0 0 0.2rem rgba(237, 28, 36, 0.25);
+    }
+</style>
 
 <?php
 require_once '../componentes/footer.php';

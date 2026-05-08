@@ -78,9 +78,9 @@ require_once '../componentes/header.php';
     <div class="container-fluid px-0" style="max-width: 80%;">
 
         <div class="mb-5">
-            <button class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 shadow-sm" style="border-radius: 6px;">
-                <i class="bi bi-arrow-left-circle fs-5"></i> Interclasse 2026
-            </button>
+            <a href="./novaEdicao_modalidades.php" class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 shadow-sm text-decoration-none" style="border-radius: 6px;" id="btnVoltarPontuacao">
+                <i class="bi bi-arrow-left-circle fs-5"></i> <span id="nomeInterclassePontuacao">Interclasse</span>
+            </a>
 
             <h5 class="fw-bold text-dark mb-0 d-flex align-items-center gap-2">
                 <i class="bi bi-trophy fs-5"></i> Pontuações
@@ -184,15 +184,60 @@ require_once '../componentes/header.php';
         }
     }
 
-    // --- NOVA INTEGRAÇÃO: Lógica do Mobile ---
+    // --- Lógica do Mobile ---
 
     // 1. Pegar o ID do Interclasse que veio pela URL da página de modalidades
     const urlParams = new URLSearchParams(window.location.search);
     const idInterclasse = urlParams.get('id');
+    const modo = urlParams.get('modo') || 'create';
 
     // Transfere o ID para o botão voltar do desktop (opcional, para não perder o fluxo)
     if(idInterclasse){
-        document.getElementById('btnContinuarDesktop').href = `./edicao_resumo.php?id=${idInterclasse}`;
+        if (modo === 'view') {
+            document.getElementById('btnContinuarDesktop').href = `./dashboard.php?id=${idInterclasse}`;
+            document.getElementById('btnVoltarPontuacao').href = `./dashboard.php?id=${idInterclasse}`;
+        } else {
+            document.getElementById('btnContinuarDesktop').href = `./edicao_resumo.php?id=${idInterclasse}`;
+            document.getElementById('btnVoltarPontuacao').href = `./novaEdicao_modalidades.php?id=${idInterclasse}`;
+        }
+        window.SGIInterclasse.getInterclasseById(idInterclasse).then((dados) => {
+            if (dados?.nome_interclasse) {
+                document.getElementById('nomeInterclassePontuacao').innerText = dados.nome_interclasse;
+                window.SGIInterclasse.updatePageTitle(dados.nome_interclasse);
+            }
+        }).catch(console.error);
+    }
+
+    function salvarPontuacaoLocal() {
+        if (!idInterclasse) return;
+        const dados = {
+            p1: Number(document.getElementById('pontos-1')?.innerText || document.getElementById('pontos1Mobile')?.value || 10),
+            p2: Number(document.getElementById('pontos-2')?.innerText || document.getElementById('pontos2Mobile')?.value || 8),
+            p3: Number(document.getElementById('pontos-3')?.innerText || document.getElementById('pontos3Mobile')?.value || 5),
+            arr: Number(document.getElementById('pontos-arr')?.innerText || document.getElementById('multiplicadorMobile')?.value || 2),
+            pb: Number(document.getElementById('penalidadeBrigasMobile')?.value || 0),
+            pa: Number(document.getElementById('penalidadeArbitragemMobile')?.value || 0),
+            pe: Number(document.getElementById('penalidadeExtraMobile')?.value || 0)
+        };
+        localStorage.setItem(`sgi_pontuacao_${idInterclasse}`, JSON.stringify(dados));
+    }
+
+    function carregarPontuacaoLocal() {
+        if (!idInterclasse) return;
+        const salvo = localStorage.getItem(`sgi_pontuacao_${idInterclasse}`);
+        if (!salvo) return;
+        const dados = JSON.parse(salvo);
+        if (document.getElementById('pontos-1')) document.getElementById('pontos-1').innerText = dados.p1 ?? 10;
+        if (document.getElementById('pontos-2')) document.getElementById('pontos-2').innerText = dados.p2 ?? 8;
+        if (document.getElementById('pontos-3')) document.getElementById('pontos-3').innerText = dados.p3 ?? 5;
+        if (document.getElementById('pontos-arr')) document.getElementById('pontos-arr').innerText = dados.arr ?? 2;
+        if (document.getElementById('pontos1Mobile')) document.getElementById('pontos1Mobile').value = dados.p1 ?? 10;
+        if (document.getElementById('pontos2Mobile')) document.getElementById('pontos2Mobile').value = dados.p2 ?? 8;
+        if (document.getElementById('pontos3Mobile')) document.getElementById('pontos3Mobile').value = dados.p3 ?? 5;
+        if (document.getElementById('multiplicadorMobile')) document.getElementById('multiplicadorMobile').value = dados.arr ?? 2;
+        if (document.getElementById('penalidadeBrigasMobile')) document.getElementById('penalidadeBrigasMobile').value = dados.pb ?? 0;
+        if (document.getElementById('penalidadeArbitragemMobile')) document.getElementById('penalidadeArbitragemMobile').value = dados.pa ?? 0;
+        if (document.getElementById('penalidadeExtraMobile')) document.getElementById('penalidadeExtraMobile').value = dados.pe ?? 0;
     }
 
     // 2. Interceptar o clique do botão "Continuar" do Mobile
@@ -204,7 +249,7 @@ require_once '../componentes/header.php';
             return;
         }
 
-        // 3. Capturar todos os valores digitados no mobile
+        // Captura dos valores mantida para futura integração
         const dadosRegulamento = {
             id_interclasse: idInterclasse,
             pontos_1_lugar: document.getElementById('pontos1Mobile').value,
@@ -220,35 +265,16 @@ require_once '../componentes/header.php';
         btnMobile.innerHTML = "Salvando...";
         btnMobile.disabled = true;
 
-        try {
-            // ATENÇÃO: Se você ainda não tiver a API regulamentos.php criada, o fetch vai dar erro,
-            // mas o bloco "catch" abaixo garante que você será redirecionado mesmo assim!
-            const response = await fetch('../../../api/regulamentos.php', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(dadosRegulamento)
-            });
-
-            const result = await response.json();
-
-            if (result.success) {
-                // Deu certo! Manda pra página de resumo passando o ID do interclasse
-                window.location.href = `./edicao_resumo.php?id=${idInterclasse}`;
-            } else {
-                alert("Erro ao salvar: " + (result.message || "Verifique a API."));
-                btnMobile.innerHTML = "Continuar";
-                btnMobile.disabled = false;
-            }
-        } catch (error) {
-            console.error("Erro na requisição ou API não existe ainda:", error);
-            
-            // FALLBACK: Como não sei se a API já existe, forçamos o redirecionamento
-            // para que você possa continuar testando o visual/fluxo da sua aplicação.
-            window.location.href = `./edicao_resumo.php?id=${idInterclasse}`;
-        }
+        // Sem integração de API aqui por enquanto (conforme fluxo atual do projeto)
+        console.info("Dados de pontuação prontos para envio futuro:", dadosRegulamento);
+        salvarPontuacaoLocal();
+        window.location.href = modo === 'view'
+            ? `./dashboard.php?id=${idInterclasse}`
+            : `./edicao_resumo.php?id=${idInterclasse}`;
     });
+
+    document.getElementById('btnContinuarDesktop')?.addEventListener('click', salvarPontuacaoLocal);
+    carregarPontuacaoLocal();
 </script>
 
 <?php
