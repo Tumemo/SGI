@@ -179,7 +179,7 @@ CREATE TABLE IF NOT EXISTS `sgi`.`usuarios` (
   `data_nasc_usuario` DATE NOT NULL,
   `foto_usuario` VARCHAR(255) NOT NULL,
   `status_usuario` ENUM('0', '1') NOT NULL,
-  `turmas_id_turma` INT(11) NOT NULL,
+  `turmas_id_turma` INT(11) NULL,
   PRIMARY KEY (`id_usuario`),
   UNIQUE INDEX `matricula_usuario_UNIQUE` (`matricula_usuario` ASC) ,
   UNIQUE INDEX `nome_usuario` (`nome_usuario` ASC) ,
