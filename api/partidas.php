@@ -1,5 +1,6 @@
 <?php
 require_once '../config/db.php';
+require_once __DIR__ . '/includes/mata_mata_engine.php';
 require_once 'filtros.php';
 header('Content-Type: application/json');
 
@@ -59,13 +60,24 @@ switch ($method) {
             $stmt1->bind_param("ii", $data->resultado_final, $data->id_partida);
             $stmt1->execute();
 
-            // 2. Opcional: Atualiza o status do jogo para 'Finalizado'
-            // Buscamos o ID do jogo através da partida
-            $sqlStatus = "UPDATE jogos SET status_jogo = 'Finalizado' 
-                          WHERE id_jogo = (SELECT jogos_id_jogo FROM partidas WHERE id_partida = ? LIMIT 1)";
+            // 2. Status do jogo (ENUM do schema: Concluido)
+            $sqlJogo = 'SELECT jogos_id_jogo FROM partidas WHERE id_partida = ? LIMIT 1';
+            $stJ = $conn->prepare($sqlJogo);
+            $stJ->bind_param('i', $data->id_partida);
+            $stJ->execute();
+            $rowJ = $stJ->get_result()->fetch_assoc();
+            $stJ->close();
+            $idJogoPart = (int) ($rowJ['jogos_id_jogo'] ?? 0);
+
+            $sqlStatus = "UPDATE jogos SET status_jogo = 'Concluido' WHERE id_jogo = ?";
             $stmt2 = $conn->prepare($sqlStatus);
-            $stmt2->bind_param("i", $data->id_partida);
+            $stmt2->bind_param('i', $idJogoPart);
             $stmt2->execute();
+            $stmt2->close();
+
+            if ($idJogoPart > 0) {
+                sgi_chaveamento_processar_avanco($conn, $idJogoPart);
+            }
 
             $conn->commit();
             echo json_encode(["success" => true, "message" => "Resultado salvo e jogo finalizado!"]);
