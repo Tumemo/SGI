@@ -6,6 +6,13 @@ require_once '../componentes/navbar.php';
 require_once '../componentes/header.php';
 ?>
 
+<style>
+    .categoria-item--selected {
+        border: 2px solid #ed1c24 !important;
+        box-shadow: 0 0.25rem 0.75rem rgba(237, 28, 36, 0.12) !important;
+    }
+</style>
+
 <!-- main mobile -->
 <main class="position-relative d-md-none" style="margin-bottom: 120px;">
     <p class="text-secondary text-center my-3" style="font-size: 14px;">Selecione uma categoria para adicionar turmas</p>
@@ -14,8 +21,10 @@ require_once '../componentes/header.php';
         <p class="text-muted small mt-3">(Carregando categorias...)</p>
     </div>
 
-    <section class="d-flex gap-3 mt-3 position-fixed translate-middle" style="width: max-content; top: 85%; left: 50%; z-index: 10; cursor: pointer;">
-        <button id="btnAdicionarTurmaMobile" data-bs-toggle="modal" data-bs-target="#criarTurma" class="btn btn-outline-danger" disabled>Adicionar Turma</button>
+    <section class="d-flex gap-3 mt-3 position-fixed translate-middle flex-wrap justify-content-center" style="width: max-content; max-width: 96vw; top: 85%; left: 50%; z-index: 10;">
+        <div id="wrapBtnTurmaMobile" class="d-none">
+            <button type="button" id="btnAdicionarTurmaMobile" data-bs-toggle="modal" data-bs-target="#criarTurma" class="btn btn-outline-danger" disabled>Adicionar Turma</button>
+        </div>
         <button data-bs-toggle="modal" data-bs-target="#modalCriarCategoria" class="btn btn-outline-danger">Adicionar Categoria</button>
         <a href="#" id="btnContinuarMobile" class="btn btn-danger">Continuar</a>
     </section>
@@ -39,9 +48,11 @@ require_once '../componentes/header.php';
         </div>
 
         <div class="position-fixed d-flex flex-row gap-3" style="bottom: 40px; right: 5%; z-index: 1050;">
-            <button type="button" id="btnAdicionarTurmaDesktop" class="btn bg-white fw-semibold rounded-3 px-4 py-2 d-flex align-items-center justify-content-center gap-2 shadow-lg" style="color: #ed1c24; border: 2px solid #ed1c24;" data-bs-toggle="modal" data-bs-target="#criarTurma" disabled>
-                <i class="bi bi-mortarboard"></i> Adicionar Turma
-            </button>
+            <div id="wrapBtnTurmaDesktop" class="d-none">
+                <button type="button" id="btnAdicionarTurmaDesktop" class="btn bg-white fw-semibold rounded-3 px-4 py-2 d-flex align-items-center justify-content-center gap-2 shadow-lg" style="color: #ed1c24; border: 2px solid #ed1c24;" data-bs-toggle="modal" data-bs-target="#criarTurma" disabled>
+                    <i class="bi bi-mortarboard"></i> Adicionar Turma
+                </button>
+            </div>
             
             <button type="button" class="btn bg-white fw-semibold rounded-3 px-4 py-2 d-flex align-items-center justify-content-center gap-2 shadow-lg" style="color: #ed1c24; border: 2px solid #ed1c24;" data-bs-toggle="modal" data-bs-target="#modalCriarCategoria">
                 <i class="bi bi-plus-circle"></i> Adicionar
@@ -121,6 +132,11 @@ require_once '../componentes/header.php';
     function atualizarAcoesCategoria() {
         const btnTurmaMobile = document.getElementById('btnAdicionarTurmaMobile');
         const btnTurmaDesktop = document.getElementById('btnAdicionarTurmaDesktop');
+        const wrapMob = document.getElementById('wrapBtnTurmaMobile');
+        const wrapDesk = document.getElementById('wrapBtnTurmaDesktop');
+        const temSel = Boolean(categoriaSelecionada);
+        if (wrapMob) wrapMob.classList.toggle('d-none', !temSel);
+        if (wrapDesk) wrapDesk.classList.toggle('d-none', !temSel);
         if (btnTurmaMobile) btnTurmaMobile.disabled = !categoriaSelecionada;
         if (btnTurmaDesktop) btnTurmaDesktop.disabled = !categoriaSelecionada;
 
@@ -130,16 +146,12 @@ require_once '../componentes/header.php';
         document.getElementById('btnContinuarDesktop').href = `${rota}?id=${idInterclasse}${sufixoCategoria}${modo !== 'view' ? '&modo=create' : ''}`;
     }
 
-    function selecionarCategoria(idCategoria, botao) {
+    function selecionarCategoria(idCategoria, el) {
         categoriaSelecionada = Number(idCategoria);
-        document.querySelectorAll('.categoria-item').forEach((el) => {
-            el.classList.remove('bg-danger', 'text-white', 'border-danger');
-            const titulo = el.querySelector('h2, h4');
-            if (titulo) titulo.classList.remove('text-white');
+        document.querySelectorAll('.categoria-item').forEach((item) => {
+            item.classList.remove('categoria-item--selected');
         });
-        botao.classList.add('bg-danger', 'text-white', 'border-danger');
-        const titulo = botao.querySelector('h2, h4');
-        if (titulo) titulo.classList.add('text-white');
+        el.classList.add('categoria-item--selected');
         atualizarAcoesCategoria();
     }
 
@@ -177,7 +189,7 @@ require_once '../componentes/header.php';
                 return;
             }
 
-            categorias.forEach((categoria, idx) => {
+            categorias.forEach((categoria) => {
                 divMobile.innerHTML += `
                     <button type="button" class="categoria-item bg-white d-flex m-auto justify-content-between align-items-center shadow-sm py-3 px-4 mb-3 border border-1 rounded-3" style="width: 90%;" data-id="${categoria.id_categoria}">
                         <i class="bi bi-trophy fs-3"></i>
@@ -209,15 +221,17 @@ require_once '../componentes/header.php';
                     </div>
                 `;
 
-                if (idx === 0) categoriaSelecionada = Number(categoria.id_categoria);
             });
 
             document.querySelectorAll('.categoria-item').forEach((btn) => {
-                btn.addEventListener('click', () => selecionarCategoria(btn.dataset.id, btn));
+                btn.addEventListener('click', (ev) => {
+                    if (ev.target.closest('a[href]')) return;
+                    ev.preventDefault();
+                    selecionarCategoria(btn.dataset.id, btn);
+                });
             });
-
-            const primeira = document.querySelector('.categoria-item');
-            if (primeira) selecionarCategoria(primeira.dataset.id, primeira);
+            categoriaSelecionada = null;
+            atualizarAcoesCategoria();
         } catch (error) {
             console.error("Erro ao carregar categorias:", error);
             divMobile.innerHTML = '<p class="text-danger mt-4 text-center">Erro ao carregar categorias.</p>';

@@ -14,7 +14,7 @@ switch ($method) {
                     jogos.nome_jogo, 
                     jogos.data_jogo, 
                     jogos.inicio_jogo, 
-                    jogos.terminno_jogo, 
+                    jogos.termino_jogo, 
                     jogos.status_jogo, 
                     modalidades.nome_modalidade, 
                     locais.nome_local,
@@ -47,10 +47,10 @@ switch ($method) {
         }
 
         $inicio = $data->inicio_jogo ?? '00:00:00';
-        $termino = $data->terminno_jogo ?? '00:00:00';
+        $termino = $data->termino_jogo ?? $data->terminno_jogo ?? '00:00:00';
         $status = $data->status_jogo ?? 'Agendado';
 
-        $sql = "INSERT INTO jogos (nome_jogo, data_jogo, inicio_jogo, terminno_jogo, modalidades_id_modalidade, locais_id_local, status_jogo) 
+        $sql = "INSERT INTO jogos (nome_jogo, data_jogo, inicio_jogo, termino_jogo, modalidades_id_modalidade, locais_id_local, status_jogo) 
                 VALUES (?, ?, ?, ?, ?, ?, ?)";
 
         $stmt = $conn->prepare($sql);

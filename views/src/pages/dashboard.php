@@ -51,6 +51,16 @@ require_once '../componentes/header.php';
             </div>
         </a>
 
+        <a href="./edicao_locais.php" id="linkLocais" class="text-decoration-none text-black">
+            <div class="d-flex m-auto justify-content-between align-items-center shadow py-3 px-4 mb-3 border border-1 rounded-3" style="width: 90%;">
+                <i class="bi bi-geo-alt fs-2"></i>
+                <h2 class="m-0 fs-3 w-100 px-3">Locais</h2>
+                <picture>
+                    <img src="../../public/icons/arrow-right.svg" alt="Seta para direita">
+                </picture>
+            </div>
+        </a>
+
         <a href="./edicao_agenda.php" id="linkAgenda" class="text-decoration-none text-black">
             <div class="d-flex m-auto justify-content-between align-items-center shadow py-3 px-4 mb-3 border border-1 rounded-3" style="width: 90%;">
                 <i class="bi bi-calendar fs-2"></i>
@@ -107,6 +117,19 @@ require_once '../componentes/header.php';
                         <h5 class="dash-card-title">PONTUAÇÕES</h5>
                     </div>
                     <p class="dash-card-text">Saiba o que estamos arrecadando este ano, os pontos de entrega e como a sua doação faz a diferença.</p>
+                </a>
+            </div>
+
+            <div class="col-12 col-md-6 col-lg-4">
+                <a href="edicao_locais.php" id="linkLocais" class="dash-card">
+                    <div class="dash-card-red-corner"></div>
+                    <div class="dash-card-header">
+                        <div class="dash-card-icon">
+                            <i class="bi bi-geo-alt"></i>
+                        </div>
+                        <h5 class="dash-card-title">LOCAIS</h5>
+                    </div>
+                    <p class="dash-card-text">Cadastre quadras, ginásios e demais espaços usados nos jogos antes de montar a agenda.</p>
                 </a>
             </div>
 
@@ -198,6 +221,9 @@ require_once '../componentes/header.php';
         });
         document.querySelectorAll('#linkCategorias').forEach(link => {
             link.href = `./edicao_categorias.php?id=${idInterclasse}&modo=view`;
+        });
+        document.querySelectorAll('#linkLocais').forEach(link => {
+            link.href = `./edicao_locais.php?id=${idInterclasse}`;
         });
         document.querySelectorAll('#linkAgenda').forEach(link => {
             link.href = `./edicao_agenda.php?id=${idInterclasse}&modo=view`;

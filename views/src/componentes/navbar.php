@@ -9,7 +9,7 @@
 </nav>
 
 <!-- navbar desktop -->
-<nav class="d-none d-lg-flex flex-column position-fixed vh-100 start-0 shadow-lg bg-danger"
+<nav class="d-none d-md-flex flex-column position-fixed vh-100 start-0 shadow-lg bg-danger"
     style="width: 80px; z-index: 1040;">
 
     <ul class="nav flex-column align-items-center justify-content-around h-100 py-4 gap-4 fs-3">

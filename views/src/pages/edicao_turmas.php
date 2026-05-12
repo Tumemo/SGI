@@ -90,6 +90,14 @@ require_once '../componentes/header.php';
                             <label class="text-dark mb-1 fw-medium" style="font-size: 0.95rem;">Nome da turma:</label>
                             <input type="text" class="form-control form-control-lg shadow-sm rounded-3 text-secondary" placeholder="Ex: 9º Ano A" style="font-size: 0.95rem; border: 1px solid #dee2e6;" id="inputNomeTurma" required>
                         </div>
+                        <div class="mb-3 d-flex flex-column align-items-center gap-2">
+                            <input type="file" id="arquivoPdfTurma" class="d-none" accept=".pdf" onchange="mostrarNomePdfTurma()">
+                            <p class="text-center text-muted mb-0" style="font-size: 13px;">Envie o PDF da lista de alunos (opcional)</p>
+                            <label for="arquivoPdfTurma" class="btn btn-light border rounded-circle p-3 mb-0" style="cursor:pointer;">
+                                <i class="bi bi-upload fs-4"></i>
+                            </label>
+                            <span id="nomePdfTurma" class="text-muted small"></span>
+                        </div>
                         <div id="msgTurma" class="mt-2 text-center"></div>
                     </div>
                     <div class="modal-footer border-0 pt-0 pb-3 justify-content-end gap-2">
@@ -250,8 +258,20 @@ require_once '../componentes/header.php';
 
             if (response.ok && result.success) {
                 msg.innerHTML = `<p class="text-success fw-bold mt-2 mb-0">Turma Adicionada!</p>`;
+                const nomeTurma = inputNome.value.trim();
                 inputNome.value = '';
-                
+                const pdf = document.getElementById('arquivoPdfTurma').files?.[0];
+                if (pdf) {
+                    const formData = new FormData();
+                    formData.append('pdf', pdf);
+                    formData.append('nome_turma', nomeTurma);
+                    try {
+                        await fetch('./upload_turma_pdf.php', { method: 'POST', body: formData });
+                    } catch (_) { /* upload opcional */ }
+                }
+                document.getElementById('arquivoPdfTurma').value = '';
+                document.getElementById('nomePdfTurma').textContent = '';
+
                 carregarTurmas(categoriaSelecionadaId);
 
                 setTimeout(() => {
@@ -274,6 +294,16 @@ require_once '../componentes/header.php';
     // Inicia a tela somente se tiver o ID
     if (idInterclasse) {
         window.onload = carregarCategorias;
+    }
+
+    function mostrarNomePdfTurma() {
+        const inp = document.getElementById('arquivoPdfTurma');
+        const out = document.getElementById('nomePdfTurma');
+        if (inp.files && inp.files.length > 0) {
+            out.textContent = inp.files[0].name;
+        } else {
+            out.textContent = '';
+        }
     }
 </script>
 

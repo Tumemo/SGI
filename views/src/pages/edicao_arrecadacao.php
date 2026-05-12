@@ -16,8 +16,10 @@ require_once '../componentes/header.php';
             <li class="list-group-item text-center text-muted">(Carregando...)</li>
         </ul>
     </div>
-    <div class="container mt-3">
-        <a href="#" id="btnContinuarArrecadacaoMobile" class="btn btn-danger w-100 d-none">Continuar</a>
+    <div class="container mt-3 mb-5 pb-4">
+        <div id="barraContinuarArrecadacaoMobile" class="d-none">
+            <a href="#" id="btnContinuarArrecadacaoMobile" class="btn btn-danger w-100 fw-semibold rounded-3 py-2 shadow-sm">Continuar</a>
+        </div>
     </div>
 </main>
 
@@ -33,27 +35,27 @@ require_once '../componentes/header.php';
                 <i class="bi bi-arrow-left-circle fs-5"></i> <span id="nomeInterclasseArrecadacao">Interclasse</span>
             </a>
 
-            <div class="d-flex justify-content-Between aligni-items-center align-items-center">
-                <h4 class="fw-bold text-dark mb-0">Arrecadações</h4>
-
-                <div class="d-flex justify-content-end gap-3 mt-4">
-                    <a href="#" id="btnContinuarArrecadacaoDesktop" class="btn btn-danger d-none">Continuar</a>
-                    <button class="btn bg-white fw-semibold rounded-3 px-4 py-2" style="color: #ed1c24; border: 1px solid #ed1c24;">
-                        Cancelar
-                    </button>
-                    <button class="btn fw-semibold rounded-3 px-4 py-2 text-white" style="background-color: #ed1c24; border: 1px solid #ed1c24;">
-                        Salvar
-                    </button>
-                </div>
+            <h4 class="fw-bold text-dark mb-0">Arrecadações</h4>
+            <div class="d-flex flex-wrap gap-2 mt-3">
+                <button type="button" class="btn bg-white fw-semibold rounded-3 px-4 py-2" style="color: #ed1c24; border: 1px solid #ed1c24;">
+                    Cancelar
+                </button>
+                <button type="button" class="btn fw-semibold rounded-3 px-4 py-2 text-white" style="background-color: #ed1c24; border: 1px solid #ed1c24;">
+                    Salvar
+                </button>
             </div>
         </div>
 
         <div class="row g-4 mb-5" id="listaArrecadacaoDesktop"></div>
 
-
-
     </div>
 </main>
+
+<div id="barraContinuarArrecadacaoDesktop" class="d-none d-md-block fixed-bottom" style="background: linear-gradient(to top, #f8f9fa 70%, rgba(248, 249, 250, 0) 100%); padding: 24px 0; z-index: 1020;">
+    <div class="container-fluid d-flex justify-content-end align-items-center" style="max-width: 1000px; margin-left: auto; margin-right: auto;">
+        <a href="#" id="btnContinuarArrecadacaoDesktop" class="btn btn-danger fw-semibold rounded-3 px-4 py-2 shadow-sm text-decoration-none d-none">Continuar</a>
+    </div>
+</div>
 
 <?php
 
@@ -112,10 +114,12 @@ require_once '../componentes/footer.php';
             document.getElementById('btnVoltarArrecadacao').href = `./dashboard.php?id=${ativo.id_interclasse}`;
             window.SGIInterclasse.updatePageTitle(ativo.nome_interclasse);
             if (modoArrecadacao === 'view') {
-                document.getElementById('btnContinuarArrecadacaoMobile').classList.remove('d-none');
-                document.getElementById('btnContinuarArrecadacaoDesktop').classList.remove('d-none');
+                document.getElementById('barraContinuarArrecadacaoMobile').classList.remove('d-none');
                 document.getElementById('btnContinuarArrecadacaoMobile').href = `./dashboard.php?id=${ativo.id_interclasse}`;
-                document.getElementById('btnContinuarArrecadacaoDesktop').href = `./dashboard.php?id=${ativo.id_interclasse}`;
+                const btnDesk = document.getElementById('btnContinuarArrecadacaoDesktop');
+                btnDesk.classList.remove('d-none');
+                btnDesk.href = `./dashboard.php?id=${ativo.id_interclasse}`;
+                document.getElementById('barraContinuarArrecadacaoDesktop').classList.remove('d-none');
             }
 
             const res = await fetch(`../../../api/turmas.php?id_interclasse=${ativo.id_interclasse}`);
