@@ -237,7 +237,6 @@ require_once '../componentes/header.php';
         const inputNome = document.getElementById('inputNomeTurma');
         const msg = document.getElementById('msgTurma');
 
-        // Já estava correto: usando a variável convertida lá de cima
         const dadosTurma = {
             interclasses_id_interclasse: parseInt(idInterclasse),
             categorias_id_categoria: categoriaSelecionadaId,
@@ -247,6 +246,7 @@ require_once '../componentes/header.php';
 
         try {
             btnSalvar.disabled = true;
+            msg.innerHTML = "Salvando turma...";
 
             const response = await fetch('../../../api/turmas.php', {
                 method: 'POST',
@@ -257,18 +257,31 @@ require_once '../componentes/header.php';
             const result = await response.json();
 
             if (response.ok && result.success) {
-                msg.innerHTML = `<p class="text-success fw-bold mt-2 mb-0">Turma Adicionada!</p>`;
                 const nomeTurma = inputNome.value.trim();
-                inputNome.value = '';
                 const pdf = document.getElementById('arquivoPdfTurma').files?.[0];
+                
                 if (pdf) {
+                    msg.innerHTML = `<p class="text-info fw-bold mt-2 mb-0">Enviando e processando PDF, aguarde...</p>`;
                     const formData = new FormData();
                     formData.append('pdf', pdf);
                     formData.append('nome_turma', nomeTurma);
                     try {
+                        // 1. Faz o upload físico do arquivo para a pasta correta
                         await fetch('./upload_turma_pdf.php', { method: 'POST', body: formData });
-                    } catch (_) { /* upload opcional */ }
+                        
+                        // 2. CHAMA O CONVERSOR. Como o conversor lê a pasta automaticamente, não precisa enviar dados para ele
+                        await fetch('./conversor_pdf.php');
+                        
+                        msg.innerHTML = `<p class="text-success fw-bold mt-2 mb-0">Turma e Alunos processados!</p>`;
+                    } catch (err) { 
+                        console.error("Erro na leitura/upload do PDF", err);
+                        msg.innerHTML = `<p class="text-warning fw-bold mt-2 mb-0">Turma criada, mas falha no PDF.</p>`;
+                    }
+                } else {
+                    msg.innerHTML = `<p class="text-success fw-bold mt-2 mb-0">Turma Adicionada!</p>`;
                 }
+
+                inputNome.value = '';
                 document.getElementById('arquivoPdfTurma').value = '';
                 document.getElementById('nomePdfTurma').textContent = '';
 
@@ -279,13 +292,15 @@ require_once '../componentes/header.php';
                     const modal = bootstrap.Modal.getInstance(modalEl);
                     modal.hide();
                     msg.innerHTML = '';
-                }, 1000);
+                }, 1500);
             } else {
                 alert("Erro ao criar turma: " + (result.message || "Erro desconhecido."));
+                msg.innerHTML = "";
             }
         } catch (error) {
             console.error("Erro na requisição:", error);
             alert("Erro de conexão.");
+            msg.innerHTML = "";
         } finally {
             btnSalvar.disabled = false;
         }

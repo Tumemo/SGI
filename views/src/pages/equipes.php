@@ -19,7 +19,10 @@ require_once '../componentes/header.php';
     <div class="container-fluid px-0">
         <div class="d-flex justify-content-between align-items-center mb-4">
             <h4 class="fw-bold mb-0">Equipes da turma</h4>
-            <button class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#modalCriarEquipe">Adicionar equipe</button>
+            <div>
+                <button class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#modalCriarAlunos">Adicionar alunos</button>
+                <button class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#modalCriarEquipe">Adicionar equipe</button>
+            </div>
         </div>
         <div class="row g-3" id="listaEquipesDesktop">
             <p class="text-center text-muted">(Carregando equipes...)</p>
@@ -27,6 +30,7 @@ require_once '../componentes/header.php';
     </div>
 </main>
 
+<!-- modal adicionar equipe -->
 <div class="modal fade" id="modalCriarEquipe" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
@@ -51,8 +55,34 @@ require_once '../componentes/header.php';
     </div>
 </div>
 
+<!-- modal adicionar alunos -->
+<div class="modal fade" id="modalCriarAlunos" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header border-0">
+                <h5 class="modal-title text-danger">Adicionar alunos</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="formAdicionarAlunos">
+                    <label for="selectEquipeAlunos" class="form-label">Selecione a equipe</label>
+                    <select id="selectEquipeAlunos" class="form-select mb-3" required>
+                        <option value="" selected disabled>Carregando equipes...</option>
+                    </select>
+                    <div id="msgAdicionarAlunos" class="text-center mb-2"></div>
+                    <div class="d-flex justify-content-end gap-2">
+                        <button type="button" class="btn btn-outline-danger" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-danger">Continuar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
     let modalidadesDisponiveis = [];
+    let equipesDisponiveis = [];
 
     async function carregarModalidadesParaEquipe(idInterclasse, idCategoria) {
         const select = document.getElementById('selectModalidadeEquipe');
@@ -103,8 +133,13 @@ require_once '../componentes/header.php';
             if (!Array.isArray(equipes) || equipes.length === 0) {
                 listaMobile.innerHTML = '<p class="text-center text-muted mt-4">Nenhuma equipe nesta turma.</p>';
                 listaDesktop.innerHTML = '<p class="text-center text-muted mt-4">Nenhuma equipe nesta turma.</p>';
+                equipesDisponiveis = [];
+                atualizarSelectEquipe();
                 return;
             }
+
+            equipesDisponiveis = equipes;
+            atualizarSelectEquipe();
 
             listaMobile.innerHTML = equipes.map((equipe) => `
                 <div class="bg-white rounded-3 shadow-sm p-3 mb-3 d-flex justify-content-between">
@@ -131,6 +166,39 @@ require_once '../componentes/header.php';
             listaDesktop.innerHTML = '<p class="text-center text-danger mt-4">Erro ao carregar equipes.</p>';
         }
     }
+
+    function atualizarSelectEquipe() {
+        const select = document.getElementById('selectEquipeAlunos');
+        if (!select) return;
+        if (!Array.isArray(equipesDisponiveis) || equipesDisponiveis.length === 0) {
+            select.innerHTML = '<option value="" selected disabled>Nenhuma equipe disponível</option>';
+            select.disabled = true;
+            return;
+        }
+        select.disabled = false;
+        select.innerHTML = '<option value="" selected disabled>Selecione a equipe</option>';
+        equipesDisponiveis.forEach((equipe) => {
+            const nomeEquipe = equipe.nome_modalidade || `Equipe #${equipe.id_equipe}`;
+            select.innerHTML += `<option value="${equipe.id_equipe}">${nomeEquipe}</option>`;
+        });
+    }
+
+    document.getElementById('formAdicionarAlunos').addEventListener('submit', (event) => {
+        event.preventDefault();
+        const urlParams = new URLSearchParams(window.location.search);
+        const idInterclasse = urlParams.get('id');
+        const idTurma = urlParams.get('id_turma');
+        const idEquipe = document.getElementById('selectEquipeAlunos').value;
+        const msg = document.getElementById('msgAdicionarAlunos');
+        msg.innerHTML = '';
+
+        if (!idEquipe) {
+            msg.innerHTML = '<p class="text-danger fw-bold mb-0">Selecione uma equipe para continuar.</p>';
+            return;
+        }
+
+        window.location.href = `./equipe_alunos.php?id=${idInterclasse}&id_turma=${idTurma}&id_equipe=${idEquipe}`;
+    });
 
     document.getElementById('formCriarEquipe').addEventListener('submit', async (event) => {
         event.preventDefault();

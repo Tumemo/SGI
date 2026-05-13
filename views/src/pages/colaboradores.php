@@ -84,10 +84,7 @@ require_once '../componentes/header.php';
     function obterColaboradores() {
         const raw = localStorage.getItem(STORAGE_KEY_COLABORADORES);
         if (raw) return JSON.parse(raw);
-        const seed = [
-            { id: `c_${Date.now()}_1`, nome: 'Gilmara Beraldo', matricula: '0001', admin: true, mesario: true },
-            { id: `c_${Date.now()}_2`, nome: 'Gabriel Godoy', matricula: '0002', admin: true, mesario: true }
-        ];
+        
         localStorage.setItem(STORAGE_KEY_COLABORADORES, JSON.stringify(seed));
         return seed;
     }

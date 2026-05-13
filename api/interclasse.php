@@ -91,7 +91,93 @@ switch ($method) {
             $stmt = $conn->prepare($sql);
             $stmt->bind_param("ss", $data->nome_interclasse, $data->ano_interclasse);
             if ($stmt->execute()) {
-                echo json_encode(["success" => true, "id" => $conn->insert_id]);
+                $new_interclass_id = $conn->insert_id;
+
+                $conn->begin_transaction();
+
+                // Cria categorias I e II para este interclasse, se ainda não existirem
+                $categoria_i_id = null;
+                $categoria_ii_id = null;
+                $categoria_select = $conn->prepare("SELECT id_categoria, nome_categoria FROM categorias WHERE interclasses_id_interclasse = ? AND nome_categoria IN ('Categoria I', 'Categoria II')");
+                $categoria_select->bind_param("i", $new_interclass_id);
+                $categoria_select->execute();
+                $categoria_select->bind_result($categoria_id_temp, $categoria_nome_temp);
+                while ($categoria_select->fetch()) {
+                    if ($categoria_nome_temp === 'Categoria I') {
+                        $categoria_i_id = $categoria_id_temp;
+                    } elseif ($categoria_nome_temp === 'Categoria II') {
+                        $categoria_ii_id = $categoria_id_temp;
+                    }
+                }
+                $categoria_select->close();
+                if (!$categoria_i_id) {
+                    $categoria_insert = $conn->prepare("INSERT INTO categorias (nome_categoria, status_categoria, interclasses_id_interclasse) VALUES ('Categoria I', '1', ?)");
+                    $categoria_insert->bind_param("i", $new_interclass_id);
+                    if (!$categoria_insert->execute()) {
+                        $conn->rollback();
+                        echo json_encode(["success" => false, "message" => "Falha ao criar Categoria I: " . $conn->error]);
+                        break;
+                    }
+                    $categoria_i_id = $conn->insert_id;
+                }
+                if (!$categoria_ii_id) {
+                    $categoria_insert = $conn->prepare("INSERT INTO categorias (nome_categoria, status_categoria, interclasses_id_interclasse) VALUES ('Categoria II', '1', ?)");
+                    $categoria_insert->bind_param("i", $new_interclass_id);
+                    if (!$categoria_insert->execute()) {
+                        $conn->rollback();
+                        echo json_encode(["success" => false, "message" => "Falha ao criar Categoria II: " . $conn->error]);
+                        break;
+                    }
+                    $categoria_ii_id = $conn->insert_id;
+                }
+
+                // Verifica tipo de modalidade existente
+                $tipo_modalidade_id = null;
+                $tipo_select = $conn->query("SELECT id_tipo_modalidade FROM tipos_modalidades ORDER BY id_tipo_modalidade LIMIT 1");
+                if ($tipo_select && $tipo_select->num_rows > 0) {
+                    $row = $tipo_select->fetch_assoc();
+                    $tipo_modalidade_id = $row['id_tipo_modalidade'];
+                } else {
+                    $conn->rollback();
+                    echo json_encode(["success" => false, "message" => "Não há tipo de modalidade cadastrado para usar como padrão."]);
+                    break;
+                }
+
+                $turmas_sql = "INSERT INTO turmas 
+                (nome_turma, turno_turma, status_turma, interclasses_id_interclasse, categorias_id_categoria) 
+                VALUES 
+                ('6EF', 'manha', '1', $new_interclass_id, $categoria_i_id),
+                ('7EF', 'manha', '1', $new_interclass_id, $categoria_i_id),
+                ('8EF', 'manha', '1', $new_interclass_id, $categoria_i_id),
+                ('9EF', 'manha', '1', $new_interclass_id, $categoria_ii_id),
+                ('1EMA', 'manha', '1', $new_interclass_id, $categoria_ii_id),
+                ('2EMA', 'manha', '1', $new_interclass_id, $categoria_ii_id),
+                ('3EMA', 'manha', '1', $new_interclass_id, $categoria_ii_id)";
+                if (!$conn->query($turmas_sql)) {
+                    $conn->rollback();
+                    echo json_encode(["success" => false, "message" => "Falha ao inserir turmas: " . $conn->error]);
+                    break;
+                }
+
+                $modalidades_sql = "INSERT INTO modalidades 
+                (nome_modalidade, genero_modalidade, max_inscrito_modalidade, status_modalidade, tipos_modalidades_id_tipo_modalidade, categorias_id_categoria, interclasses_id_interclasse) 
+                VALUES 
+                ('Futsal', 'MISTO', 12, '1', $tipo_modalidade_id, $categoria_i_id, $new_interclass_id),
+                ('Queimada', 'MISTO', 15, '1', $tipo_modalidade_id, $categoria_i_id, $new_interclass_id),
+                ('Volei', 'MISTO', 10, '1', $tipo_modalidade_id, $categoria_i_id, $new_interclass_id),
+                ('Corrida', 'MISTO', 1, '1', $tipo_modalidade_id, $categoria_i_id, $new_interclass_id),
+                ('Futsal', 'MISTO', 12, '1', $tipo_modalidade_id, $categoria_ii_id, $new_interclass_id),
+                ('Queimada', 'MISTO', 15, '1', $tipo_modalidade_id, $categoria_ii_id, $new_interclass_id),
+                ('Volei', 'MISTO', 10, '1', $tipo_modalidade_id, $categoria_ii_id, $new_interclass_id),
+                ('Corrida', 'MISTO', 1, '1', $tipo_modalidade_id, $categoria_ii_id, $new_interclass_id)";
+                if (!$conn->query($modalidades_sql)) {
+                    $conn->rollback();
+                    echo json_encode(["success" => false, "message" => "Falha ao inserir modalidades: " . $conn->error]);
+                    break;
+                }
+
+                $conn->commit();
+                echo json_encode(["success" => true, "id" => $new_interclass_id]);
             }
         }
         break;
