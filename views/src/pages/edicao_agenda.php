@@ -148,11 +148,25 @@ require_once '../componentes/header.php';
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
             </div>
             <div class="modal-body pt-2">
-                <p class="text-muted small mb-3">Obrigatório: nome, data, modalidade e local. Horários opcionais. Cadastre locais em <a href="#" id="nj_linkLocais" class="fw-semibold text-danger">Locais do interclasse</a> antes de criar jogos.</p>
+                <p class="text-muted small mb-3">Obrigatório: modalidade, equipes, data e local. Horários opcionais. Cadastre locais em <a href="#" id="nj_linkLocais" class="fw-semibold text-danger">Locais do interclasse</a> antes de criar jogos.</p>
                 <form id="formNovoJogo" class="row g-3">
                     <div class="col-md-6">
-                        <label class="form-label small fw-bold" for="nj_nome">Nome do jogo</label>
-                        <input type="text" class="form-control" id="nj_nome" name="nome_jogo" maxlength="45" required placeholder="Ex.: Futsal — Turma A x B">
+                        <label class="form-label small fw-bold" for="nj_modalidade">Modalidade</label>
+                        <select class="form-select" id="nj_modalidade" required>
+                            <option value="">Carregando…</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label small fw-bold" for="nj_equipe_a">Equipe A</label>
+                        <select class="form-select" id="nj_equipe_a" required disabled>
+                            <option value="">Selecione uma modalidade primeiro</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label small fw-bold" for="nj_equipe_b">Equipe B</label>
+                        <select class="form-select" id="nj_equipe_b" required disabled>
+                            <option value="">Selecione uma modalidade primeiro</option>
+                        </select>
                     </div>
                     <div class="col-md-6">
                         <label class="form-label small fw-bold" for="nj_data">Data</label>
@@ -165,12 +179,6 @@ require_once '../componentes/header.php';
                     <div class="col-md-6">
                         <label class="form-label small fw-bold" for="nj_fim">Término</label>
                         <input type="time" class="form-control" id="nj_fim" name="terminno_jogo" value="09:00">
-                    </div>
-                    <div class="col-md-6">
-                        <label class="form-label small fw-bold" for="nj_modalidade">Modalidade</label>
-                        <select class="form-select" id="nj_modalidade" required>
-                            <option value="">Carregando…</option>
-                        </select>
                     </div>
                     <div class="col-md-6">
                         <label class="form-label small fw-bold" for="nj_local">Local</label>
@@ -488,6 +496,30 @@ require_once '../componentes/header.php';
         });
     }
 
+    async function preencherSelectEquipes(modalidadeId) {
+        const selA = document.getElementById('nj_equipe_a');
+        const selB = document.getElementById('nj_equipe_b');
+        if (!modalidadeId) {
+            selA.innerHTML = '<option value="">Selecione uma modalidade primeiro</option>';
+            selB.innerHTML = '<option value="">Selecione uma modalidade primeiro</option>';
+            selA.disabled = true;
+            selB.disabled = true;
+            return;
+        }
+        const res = await fetch(`${API}equipes.php?id_modalidade=${encodeURIComponent(modalidadeId)}`);
+        const data = await res.json();
+        const lista = Array.isArray(data) ? data : [];
+        selA.innerHTML = '<option value="">Selecione…</option>';
+        selB.innerHTML = '<option value="">Selecione…</option>';
+        lista.forEach((eq) => {
+            const nome = eq.nome_turma || `Equipe ${eq.id_equipe}`;
+            selA.innerHTML += `<option value="${eq.id_equipe}">${escapeHtml(nome)}</option>`;
+            selB.innerHTML += `<option value="${eq.id_equipe}">${escapeHtml(nome)}</option>`;
+        });
+        selA.disabled = false;
+        selB.disabled = false;
+    }
+
     document.addEventListener('DOMContentLoaded', async function() {
         try {
             interclasseAtual = await getInterclasseParaAgenda();
@@ -555,8 +587,14 @@ require_once '../componentes/header.php';
         modalEl.addEventListener('show.bs.modal', () => {
             preencherSelectModalidades().catch(console.error);
             preencherSelectLocais().catch(console.error);
+            preencherSelectEquipes('').catch(console.error);
             const hoje = hojeISO();
             document.getElementById('nj_data').value = hoje;
+        });
+
+        document.getElementById('nj_modalidade').addEventListener('change', (e) => {
+            const modalidadeId = e.target.value;
+            preencherSelectEquipes(modalidadeId).catch(console.error);
         });
 
         document.getElementById('formNovoJogo').addEventListener('submit', async (e) => {
@@ -565,15 +603,22 @@ require_once '../componentes/header.php';
                 alert('Não há interclasse ativo para vincular o jogo.');
                 return;
             }
+            const equipeA = document.getElementById('nj_equipe_a').value;
+            const equipeB = document.getElementById('nj_equipe_b').value;
+            if (equipeA === equipeB) {
+                alert('Selecione equipes diferentes.');
+                return;
+            }
             const inicio = document.getElementById('nj_inicio').value;
             const fim = document.getElementById('nj_fim').value;
             const body = {
-                nome_jogo: document.getElementById('nj_nome').value.trim(),
                 data_jogo: document.getElementById('nj_data').value,
                 inicio_jogo: inicio ? (inicio.length === 5 ? `${inicio}:00` : inicio) : '00:00:00',
                 terminno_jogo: fim ? (fim.length === 5 ? `${fim}:00` : fim) : '00:00:00',
                 modalidades_id_modalidade: parseInt(document.getElementById('nj_modalidade').value, 10),
-                locais_id_local: parseInt(document.getElementById('nj_local').value, 10)
+                locais_id_local: parseInt(document.getElementById('nj_local').value, 10),
+                equipe_a: parseInt(equipeA, 10),
+                equipe_b: parseInt(equipeB, 10)
             };
             const btn = document.getElementById('nj_submit');
             btn.disabled = true;

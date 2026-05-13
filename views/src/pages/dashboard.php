@@ -185,6 +185,19 @@ require_once '../componentes/header.php';
                 </a>
             </div>
 
+            <div class="col-12 col-md-6 col-lg-4">
+                <a href="turmas.php" id="linkTurmas" class="dash-card">
+                    <div class="dash-card-red-corner"></div>
+                    <div class="dash-card-header">
+                        <div class="dash-card-icon">
+                            <i class="bi bi-backpack"></i>
+                        </div>
+                        <h5 class="dash-card-title">TURMAS</h5>
+                    </div>
+                    <p class="dash-card-text">Gerencie as turmas participantes do interclasse, incluindo alunos e configurações.</p>
+                </a>
+            </div>
+
         </div>
     </div>
 </main>

@@ -45,7 +45,7 @@
 
         <li>
             <a href="turmas.php" class="text-white" data-active-link="turmas">
-                <i class="bi bi-people"></i>
+                <i class="bi bi-backpack"></i>
             </a>
         </li>
 
