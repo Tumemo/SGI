@@ -72,26 +72,19 @@ require_once '../componentes/header.php';
         </div>
     </div>
 
-    <div class="d-flex justify-content-center mb-3">
-        <a
-            href="https://calendar.google.com"
-            target="_blank"
-            rel="noopener noreferrer"
-            class="btn btn-outline-danger btn-sm"
-        >
-            Abrir no Google Calendar
-        </a>
-    </div>
-    <div id="lista-eventos-mobile" class="d-flex flex-column gap-3 mx-auto" style="max-width: 450px;"></div>
-    <div id="barraContinuarAgendaMobile" class="d-none position-fixed start-0 end-0 bottom-0 p-3 bg-light border-top shadow-sm" style="z-index: 1030; padding-bottom: calc(0.75rem + env(safe-area-inset-bottom, 0px)) !important;">
-        <a href="#" id="btnContinuarAgendaMobile" class="btn btn-danger w-100 fw-semibold rounded-3 py-2 shadow-sm text-decoration-none d-flex align-items-center justify-content-center">Continuar</a>
-    </div>
-</main>
+        <div class="d-flex justify-content-center mb-3">
+            <a
+                href="https://calendar.google.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="btn btn-outline-danger btn-sm"
+            >
+                Abrir no Google Calendar
+            </a>
+        </div>
+    </main>
 
-
-<!-- main desktop -->
 <main class="d-none d-md-block main-desktop-layout" style="padding-bottom: 5rem;">
-
     <a href="./home.php" data-back-link="true" class="btn btn-danger d-inline-flex align-items-center mb-4 border-0 shadow-sm text-decoration-none" style="border-radius: 4px; padding: 8px 15px;" id="btnVoltarAgendaDesk">
         <i class="bi bi-arrow-left-circle-fill me-2"></i>
         <span class="fw-bold" style="font-size: 0.9rem;" id="nomeInterclasseAgenda">Interclasse</span>
@@ -132,7 +125,7 @@ require_once '../componentes/header.php';
 
 <div id="barraContinuarAgendaDesktop" class="d-none d-md-block fixed-bottom" style="background: linear-gradient(to top, #f8f9fa 70%, rgba(248, 249, 250, 0) 100%); padding: 24px 0; z-index: 1020;">
     <div class="container-fluid d-flex justify-content-end align-items-center" style="max-width: 80%; margin-left: auto; margin-right: 0;">
-        <a href="#" id="btnContinuarAgendaDesktop" class="btn btn-danger fw-semibold rounded-3 px-4 py-2 shadow-sm text-decoration-none d-flex align-items-center justify-content-center">Continuar</a>
+        <!-- Botão Continuar removido -->
     </div>
 </div>
 
@@ -151,9 +144,19 @@ require_once '../componentes/header.php';
                 <p class="text-muted small mb-3">Obrigatório: modalidade, equipes, data e local. Horários opcionais. Cadastre locais em <a href="#" id="nj_linkLocais" class="fw-semibold text-danger">Locais do interclasse</a> antes de criar jogos.</p>
                 <form id="formNovoJogo" class="row g-3">
                     <div class="col-md-6">
-                        <label class="form-label small fw-bold" for="nj_modalidade">Modalidade</label>
-                        <select class="form-select" id="nj_modalidade" required>
+                        <label class="form-label small fw-bold" for="nj_categoria">Categoria</label>
+                        <select class="form-select" id="nj_categoria" required>
                             <option value="">Carregando…</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label small fw-bold" for="nj_nome">Nome do jogo</label>
+                        <input type="text" class="form-control" id="nj_nome" name="nome_jogo" maxlength="45" readonly placeholder="Será gerado automaticamente">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label small fw-bold" for="nj_modalidade">Modalidade</label>
+                        <select class="form-select" id="nj_modalidade" required disabled>
+                            <option value="">Selecione uma categoria primeiro</option>
                         </select>
                     </div>
                     <div class="col-md-6">
@@ -467,21 +470,57 @@ require_once '../componentes/header.php';
         }
     }
 
-    async function preencherSelectModalidades() {
-        const sel = document.getElementById('nj_modalidade');
+    async function preencherSelectCategorias() {
+        const sel = document.getElementById('nj_categoria');
         if (!interclasseAtual) {
             sel.innerHTML = '<option value="">Sem interclasse</option>';
+            sel.disabled = true;
             return;
         }
-        const res = await fetch(`${API}modalidades.php`);
+        const res = await fetch(`${API}categorias.php?id_interclasse=${encodeURIComponent(interclasseAtual.id_interclasse)}`);
         const data = await res.json();
-        const lista = (Array.isArray(data) ? data : []).filter(
-            (m) => String(m.interclasses_id_interclasse) === String(interclasseAtual.id_interclasse)
-        );
+        const lista = Array.isArray(data) ? data : [];
+        sel.innerHTML = '<option value="">Selecione…</option>';
+        lista.forEach((c) => {
+            sel.innerHTML += `<option value="${c.id_categoria}">${escapeHtml(c.nome_categoria)}</option>`;
+        });
+        sel.disabled = false;
+    }
+
+    async function preencherSelectModalidadesPorCategoria(categoriaId) {
+        const sel = document.getElementById('nj_modalidade');
+        if (!categoriaId) {
+            sel.innerHTML = '<option value="">Selecione uma categoria primeiro</option>';
+            sel.disabled = true;
+            return;
+        }
+        const res = await fetch(`${API}modalidades.php?id_categoria=${encodeURIComponent(categoriaId)}`);
+        const data = await res.json();
+        const lista = Array.isArray(data) ? data : [];
         sel.innerHTML = '<option value="">Selecione…</option>';
         lista.forEach((m) => {
-            sel.innerHTML += `<option value="${m.id_modalidade}">${escapeHtml(m.nome_modalidade)} (${escapeHtml(m.nome_categoria || '')})</option>`;
+            sel.innerHTML += `<option value="${m.id_modalidade}">${escapeHtml(m.nome_modalidade)}</option>`;
         });
+        sel.disabled = false;
+    }
+
+    function gerarNomeJogo() {
+        const categoriaSel = document.getElementById('nj_categoria');
+        const modalidadeSel = document.getElementById('nj_modalidade');
+        const equipeASel = document.getElementById('nj_equipe_a');
+        const equipeBSel = document.getElementById('nj_equipe_b');
+        const nomeInput = document.getElementById('nj_nome');
+
+        const categoria = categoriaSel.options[categoriaSel.selectedIndex]?.text || '';
+        const modalidade = modalidadeSel.options[modalidadeSel.selectedIndex]?.text || '';
+        const equipeA = equipeASel.options[equipeASel.selectedIndex]?.text || '';
+        const equipeB = equipeBSel.options[equipeBSel.selectedIndex]?.text || '';
+
+        if (categoria && modalidade && equipeA && equipeB) {
+            nomeInput.value = `${categoria} - ${modalidade}: ${equipeA} x ${equipeB}`;
+        } else {
+            nomeInput.value = '';
+        }
     }
 
     async function preencherSelectLocais() {
@@ -534,13 +573,7 @@ require_once '../componentes/header.php';
 
         if (modoAgenda === 'view' && idInterclasseAgenda) {
             const hrefDash = `./dashboard.php?id=${idInterclasseAgenda}`;
-            const btnMob = document.getElementById('btnContinuarAgendaMobile');
-            btnMob.href = hrefDash;
-            document.getElementById('barraContinuarAgendaMobile').classList.remove('d-none');
-            const btnDesk = document.getElementById('btnContinuarAgendaDesktop');
-            btnDesk.href = hrefDash;
-            btnDesk.classList.remove('d-none');
-            document.getElementById('barraContinuarAgendaDesktop').classList.remove('d-none');
+            // Removido: mostrar botão Continuar
         }
 
         inicializarAnos();
@@ -585,17 +618,30 @@ require_once '../componentes/header.php';
 
         const modalEl = document.getElementById('modalNovoJogo');
         modalEl.addEventListener('show.bs.modal', () => {
-            preencherSelectModalidades().catch(console.error);
+            preencherSelectCategorias().catch(console.error);
             preencherSelectLocais().catch(console.error);
+            preencherSelectModalidadesPorCategoria('').catch(console.error);
             preencherSelectEquipes('').catch(console.error);
+            gerarNomeJogo();
             const hoje = hojeISO();
             document.getElementById('nj_data').value = hoje;
+        });
+
+        document.getElementById('nj_categoria').addEventListener('change', (e) => {
+            const categoriaId = e.target.value;
+            preencherSelectModalidadesPorCategoria(categoriaId).catch(console.error);
+            preencherSelectEquipes('').catch(console.error);
+            gerarNomeJogo();
         });
 
         document.getElementById('nj_modalidade').addEventListener('change', (e) => {
             const modalidadeId = e.target.value;
             preencherSelectEquipes(modalidadeId).catch(console.error);
+            gerarNomeJogo();
         });
+
+        document.getElementById('nj_equipe_a').addEventListener('change', gerarNomeJogo);
+        document.getElementById('nj_equipe_b').addEventListener('change', gerarNomeJogo);
 
         document.getElementById('formNovoJogo').addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -612,15 +658,21 @@ require_once '../componentes/header.php';
             const inicio = document.getElementById('nj_inicio').value;
             const fim = document.getElementById('nj_fim').value;
             const body = {
+                nome_jogo: document.getElementById('nj_nome').value.trim(),
                 data_jogo: document.getElementById('nj_data').value,
                 inicio_jogo: inicio ? (inicio.length === 5 ? `${inicio}:00` : inicio) : '00:00:00',
                 terminno_jogo: fim ? (fim.length === 5 ? `${fim}:00` : fim) : '00:00:00',
                 modalidades_id_modalidade: parseInt(document.getElementById('nj_modalidade').value, 10),
                 locais_id_local: parseInt(document.getElementById('nj_local').value, 10),
-                equipe_a: parseInt(equipeA, 10),
-                equipe_b: parseInt(equipeB, 10)
+                // equipes são apenas para gerar o nome do jogo no frontend;
+                // o backend atual não salva equipes diretamente aqui.
             };
             const btn = document.getElementById('nj_submit');
+            if (!body.nome_jogo) {
+                alert('Selecione categoria, modalidade e equipes para gerar o nome do jogo.');
+                btn.disabled = false;
+                return;
+            }
             btn.disabled = true;
             try {
                 const r = await fetch(`${API}jogos.php`, {

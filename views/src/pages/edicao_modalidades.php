@@ -188,41 +188,59 @@ require_once '../componentes/header.php';
                 return;
             }
 
-            modalidades.forEach((modalidade, index) => {
-                const categoriaTexto = modalidade.nome_categoria ? `<small class="text-muted d-block">${modalidade.nome_categoria}</small>` : '';
-                const destinoDetalhes = `./modalidade_detalhes.php?id=${idInterclasse}&id_modalidade=${modalidade.id_modalidade}`;
-
-                // Render Mobile
-                if (divMobile) {
-                    divMobile.innerHTML += `
-                        <button type="button" class="modalidade-opcao bg-white d-flex justify-content-between align-items-center shadow py-3 px-4 mb-3 border border-1 rounded-3 w-100" style="max-width: 90%;" data-id="${modalidade.id_modalidade}" data-detalhes="${destinoDetalhes}">
-                            <i class="bi bi-trophy fs-4"></i>
-                            <div class="text-start px-3 w-100">
-                                <h2 class="m-0 fs-5 text-truncate">${modalidade.nome_modalidade}</h2>
-                                ${categoriaTexto}
-                            </div>
-                            <i class="bi bi-check-circle-fill text-danger d-none"></i>
-                        </button>`;
+            // Agrupar modalidades por categoria
+            const modalidadesPorCategoria = {};
+            modalidades.forEach((modalidade) => {
+                const categoria = modalidade.nome_categoria || 'Sem Categoria';
+                if (!modalidadesPorCategoria[categoria]) {
+                    modalidadesPorCategoria[categoria] = [];
                 }
+                modalidadesPorCategoria[categoria].push(modalidade);
+            });
 
-                // Render Desktop
-                if (divDesktop) {
-                    divDesktop.innerHTML += `
-                        <div class="col-12 col-md-6 col-lg-4">
-                            <button type="button" class="modalidade-opcao card border border-light-subtle shadow-sm h-100 py-4 px-4 d-flex flex-row align-items-center justify-content-between transition-hover w-100 text-start bg-white" style="border-radius: 10px;" data-id="${modalidade.id_modalidade}" data-detalhes="${destinoDetalhes}">
-                                <div class="d-flex align-items-center gap-3">
-                                    <i class="bi bi-trophy fs-4 text-dark"></i>
-                                    <div>
-                                        <h5 class="m-0 fw-bold fs-6">${modalidade.nome_modalidade}</h5>
-                                        ${categoriaTexto}
-                                    </div>
+            Object.keys(modalidadesPorCategoria).forEach((categoria, catIndex) => {
+                const mods = modalidadesPorCategoria[categoria];
+
+                // Mobile: Seção por categoria
+                if (divMobile) {
+                    divMobile.innerHTML += `<h5 class="mt-4 mb-3 text-muted">${categoria}</h5>`;
+                    mods.forEach((modalidade) => {
+                        const destinoDetalhes = `./modalidade_detalhes.php?id=${idInterclasse}&id_modalidade=${modalidade.id_modalidade}`;
+
+                        divMobile.innerHTML += `
+                            <button type="button" class="modalidade-opcao bg-white d-flex justify-content-between align-items-center shadow py-3 px-4 mb-3 border border-1 rounded-3 w-100" style="max-width: 90%;" data-id="${modalidade.id_modalidade}" data-detalhes="${destinoDetalhes}">
+                                <i class="bi bi-trophy fs-4"></i>
+                                <div class="text-start px-3 w-100">
+                                    <h2 class="m-0 fs-5 text-truncate">${modalidade.nome_modalidade}</h2>
                                 </div>
                                 <i class="bi bi-check-circle-fill text-danger d-none"></i>
-                            </button>
-                        </div>`;
+                            </button>`;
+                    });
                 }
 
-                if (index === 0) modalidadeSelecionada = Number(modalidade.id_modalidade);
+                // Desktop: Seção por categoria
+                if (divDesktop) {
+                    divDesktop.innerHTML += `<h4 class="mt-4 mb-3 text-muted">${categoria}</h4><div class="row g-4">`;
+                    mods.forEach((modalidade) => {
+                        const destinoDetalhes = `./modalidade_detalhes.php?id=${idInterclasse}&id_modalidade=${modalidade.id_modalidade}`;
+
+                        divDesktop.innerHTML += `
+                            <div class="col-12 col-md-6 col-lg-4">
+                                <button type="button" class="modalidade-opcao card border border-light-subtle shadow-sm h-100 py-4 px-4 d-flex flex-row align-items-center justify-content-between transition-hover w-100 text-start bg-white" style="border-radius: 10px;" data-id="${modalidade.id_modalidade}" data-detalhes="${destinoDetalhes}">
+                                    <div class="d-flex align-items-center gap-3">
+                                        <i class="bi bi-trophy fs-4 text-dark"></i>
+                                        <div>
+                                            <h5 class="m-0 fw-bold fs-6">${modalidade.nome_modalidade}</h5>
+                                        </div>
+                                    </div>
+                                    <i class="bi bi-check-circle-fill text-danger d-none"></i>
+                                </button>
+                            </div>`;
+                    });
+                    divDesktop.innerHTML += '</div>';
+                }
+
+                if (catIndex === 0 && mods.length > 0) modalidadeSelecionada = Number(mods[0].id_modalidade);
             });
 
             document.querySelectorAll('.modalidade-opcao').forEach((botao) => {

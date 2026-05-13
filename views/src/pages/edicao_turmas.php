@@ -90,6 +90,19 @@ require_once '../componentes/header.php';
                             <label class="text-dark mb-1 fw-medium" style="font-size: 0.95rem;">Nome da turma:</label>
                             <input type="text" class="form-control form-control-lg shadow-sm rounded-3 text-secondary" placeholder="Ex: 9º Ano A" style="font-size: 0.95rem; border: 1px solid #dee2e6;" id="inputNomeTurma" required>
                         </div>
+                        <div class="mb-3">
+                            <label class="text-dark mb-1 fw-medium" style="font-size: 0.95rem;">Nome fantasia:</label>
+                            <input type="text" class="form-control form-control-lg shadow-sm rounded-3 text-secondary" placeholder="Ex: Turma dos Campeões" style="font-size: 0.95rem; border: 1px solid #dee2e6;" id="inputNomeFantasiaTurma">
+                        </div>
+                        <div class="mb-3">
+                            <label class="text-dark mb-1 fw-medium" style="font-size: 0.95rem;">Turno:</label>
+                            <select class="form-select form-select-lg shadow-sm rounded-3 text-secondary" style="font-size: 0.95rem; border: 1px solid #dee2e6;" id="inputTurnoTurma">
+                                <option value="">Selecione o turno</option>
+                                <option value="Manhã">Manhã</option>
+                                <option value="Tarde">Tarde</option>
+                                <option value="Noite">Noite</option>
+                            </select>
+                        </div>
                         <div class="mb-3 d-flex flex-column align-items-center gap-2">
                             <input type="file" id="arquivoPdfTurma" class="d-none" accept=".pdf" onchange="mostrarNomePdfTurma()">
                             <p class="text-center text-muted mb-0" style="font-size: 13px;">Envie o PDF da lista de alunos (opcional)</p>
@@ -175,6 +188,11 @@ require_once '../componentes/header.php';
         }
     }
 
+    // Carregar categorias no select do modal
+    async function carregarCategoriasSelect() {
+        // Removido, pois categoria é automática
+    }
+
     // 3. Carregar Turmas 
     async function carregarTurmas(idCategoria) {
         try {
@@ -235,12 +253,17 @@ require_once '../componentes/header.php';
 
         const btnSalvar = document.getElementById('btnSalvarTurma');
         const inputNome = document.getElementById('inputNomeTurma');
+        const inputNomeFantasia = document.getElementById('inputNomeFantasiaTurma');
+        const inputTurno = document.getElementById('inputTurnoTurma');
+        const inputCategoria = document.getElementById('inputCategoriaTurma');
         const msg = document.getElementById('msgTurma');
 
         const dadosTurma = {
             interclasses_id_interclasse: parseInt(idInterclasse),
-            categorias_id_categoria: categoriaSelecionadaId,
+            categorias_id_categoria: parseInt(inputCategoria.value),
             nome_turma: inputNome.value.trim(),
+            nome_fantasia_turma: inputNomeFantasia.value.trim(),
+            turno_turma: inputTurno.value,
             status_turma: "1"
         };
 
@@ -282,6 +305,9 @@ require_once '../componentes/header.php';
                 }
 
                 inputNome.value = '';
+                document.getElementById('inputNomeFantasiaTurma').value = '';
+                document.getElementById('inputTurnoTurma').value = '';
+                document.getElementById('inputCategoriaTurma').value = '';
                 document.getElementById('arquivoPdfTurma').value = '';
                 document.getElementById('nomePdfTurma').textContent = '';
 

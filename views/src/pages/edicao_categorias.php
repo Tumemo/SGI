@@ -80,6 +80,19 @@ require_once '../componentes/header.php';
                         <label for="inputNomeTurma" class="form-label">Nome da turma:</label>
                         <input type="text" class="form-control" id="inputNomeTurma" placeholder="Ex: 1º Médio A" required>
                     </div>
+                    <div class="mb-3">
+                        <label for="inputNomeFantasiaTurma" class="form-label">Nome fantasia:</label>
+                        <input type="text" class="form-control" id="inputNomeFantasiaTurma" placeholder="Ex: Turma dos Campeões">
+                    </div>
+                    <div class="mb-3">
+                        <label for="inputTurnoTurma" class="form-label">Turno:</label>
+                        <select class="form-select" id="inputTurnoTurma">
+                            <option value="">Selecione o turno</option>
+                            <option value="Manhã">Manhã</option>
+                            <option value="Tarde">Tarde</option>
+                            <option value="Noite">Noite</option>
+                        </select>
+                    </div>
                     <div class="mb-3 d-flex align-items-center gap-2 flex-column">
                         <input type="file" id="arquivoUpload" class="d-none" accept=".pdf" onchange="mostrarNomeArquivo()">
                         <p class="text-center" style="font-size: 13px;">Adicione aqui o pdf dos alunos da turma criada</p>
@@ -299,6 +312,8 @@ require_once '../componentes/header.php';
         const btn = document.getElementById('btnCriarTurmaCategoria');
         const msg = document.getElementById('msgNovaTurmaCategoria');
         const nomeTurma = document.getElementById('inputNomeTurma').value.trim();
+        const nomeFantasia = document.getElementById('inputNomeFantasiaTurma').value.trim();
+        const turno = document.getElementById('inputTurnoTurma').value;
         const pdf = document.getElementById('arquivoUpload').files?.[0];
 
         try {
@@ -310,6 +325,8 @@ require_once '../componentes/header.php';
                 interclasses_id_interclasse: Number(idInterclasse),
                 categorias_id_categoria: Number(categoriaSelecionada),
                 nome_turma: nomeTurma,
+                nome_fantasia_turma: nomeFantasia,
+                turno_turma: turno,
                 status_turma: "1"
             };
 
@@ -332,6 +349,8 @@ require_once '../componentes/header.php';
 
             msg.innerHTML = '<p class="text-success fw-bold mb-0">Turma criada com sucesso!</p>';
             document.getElementById('inputNomeTurma').value = '';
+            document.getElementById('inputNomeFantasiaTurma').value = '';
+            document.getElementById('inputTurnoTurma').value = '';
             document.getElementById('arquivoUpload').value = '';
             document.getElementById('nomeArquivo').innerText = '';
 

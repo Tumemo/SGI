@@ -36,7 +36,7 @@ body, main{
 }
 
 .form-control:focus, .form-select:focus {
-    box-shadow: 0px 0px 7px red;
+    /* box-shadow: 0px 0px 7px red; */
     border: none;
 }
 

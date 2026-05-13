@@ -60,10 +60,29 @@ require_once '../componentes/header.php';
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <form>
+                <form id="formNovaTurma">
                     <div class="mb-3">
-                        <label for="exampleInputEmail1" class="form-label">Nome da turma:</label>
-                        <input type="email" class="form-control" id="exampleInputEmail1" aria-describedby="emailHelp" placeholder="Turma A" require>
+                        <label for="nomeTurma" class="form-label">Nome da turma:</label>
+                        <input type="text" class="form-control" id="nomeTurma" placeholder="Turma A" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="nomeFantasia" class="form-label">Nome fantasia:</label>
+                        <input type="text" class="form-control" id="nomeFantasia" placeholder="Ex: Lobos">
+                    </div>
+                    <div class="mb-3">
+                        <label for="turnoTurma" class="form-label">Turno:</label>
+                        <select class="form-select" id="turnoTurma">
+                            <option value="">Selecione...</option>
+                            <option value="Manhã">Manhã</option>
+                            <option value="Tarde">Tarde</option>
+                            <option value="Noite">Noite</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="categoriaTurma" class="form-label">Categoria:</label>
+                        <select class="form-select" id="categoriaTurma" required>
+                            <option value="">Carregando...</option>
+                        </select>
                     </div>
                     <div class="mb-3 d-flex align-items-center gap-2 flex-column">
                         <input type="file" id="arquivoUpload" class="d-none" onchange="mostrarNomeArquivo()">
@@ -98,6 +117,66 @@ require_once '../componentes/header.php';
             span.textContent = "Nenhum arquivo selecionado";
         }
     }
+
+    async function carregarCategoriasModal() {
+        try {
+            const interclasseAtivo = await window.SGIInterclasse.getActiveInterclasse();
+            if (!interclasseAtivo) return;
+
+            const res = await fetch(`../../../api/categorias.php?id_interclasse=${interclasseAtivo.id_interclasse}`);
+            const categorias = await res.json();
+            const sel = document.getElementById('categoriaTurma');
+            sel.innerHTML = '<option value="">Selecione...</option>';
+            (categorias || []).forEach(cat => {
+                sel.innerHTML += `<option value="${cat.id_categoria}">${cat.nome_categoria}</option>`;
+            });
+        } catch (error) {
+            console.error('Erro ao carregar categorias:', error);
+        }
+    }
+
+    document.getElementById('exampleModal').addEventListener('show.bs.modal', () => {
+        carregarCategoriasModal();
+    });
+
+    document.getElementById('formNovaTurma').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        try {
+            const interclasseAtivo = await window.SGIInterclasse.getActiveInterclasse();
+            if (!interclasseAtivo) {
+                alert('Nenhum interclasse ativo.');
+                return;
+            }
+
+            const body = {
+                interclasses_id_interclasse: interclasseAtivo.id_interclasse,
+                categorias_id_categoria: document.getElementById('categoriaTurma').value,
+                nome_turma: document.getElementById('nomeTurma').value.trim(),
+                nome_fantasia_turma: document.getElementById('nomeFantasia').value.trim() || null,
+                turno_turma: document.getElementById('turnoTurma').value || null,
+                status_turma: '1'
+            };
+
+            const res = await fetch('../../../api/turmas.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body)
+            });
+
+            const data = await res.json();
+            if (data.success) {
+                alert('Turma criada com sucesso!');
+                bootstrap.Modal.getInstance(document.getElementById('exampleModal')).hide();
+                document.getElementById('formNovaTurma').reset();
+                carregarTurmasAtivas();
+            } else {
+                alert('Erro: ' + data.message);
+            }
+        } catch (error) {
+            console.error(error);
+            alert('Erro ao criar turma.');
+        }
+    });
 </script>
 
 <script>
