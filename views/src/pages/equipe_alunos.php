@@ -32,15 +32,17 @@ require_once '../componentes/header.php';
 
 <script>
     let alunos = [];
+    let alunosNaEquipe = [];
 
     function cardAluno(aluno, mobile = false) {
+        const estaNaEquipe = alunosNaEquipe.some(a => a.id_usuario === aluno.id_usuario);
         return `
             <label class="bg-white rounded-3 shadow-sm p-3 mb-2 d-flex justify-content-between align-items-center aluno-item">
                 <div>
                     <strong>${aluno.nome_usuario}</strong>
                     <div class="text-muted small">${aluno.matricula_usuario}</div>
                 </div>
-                <input class="form-check-input aluno-check" type="checkbox" value="${aluno.id_usuario}">
+                <input class="form-check-input aluno-check" type="checkbox" value="${aluno.id_usuario}" ${estaNaEquipe ? 'checked' : ''}>
             </label>
         `;
     }
@@ -73,11 +75,17 @@ require_once '../componentes/header.php';
         document.getElementById('btnVoltarEquipesDesktop').href = `./equipes.php?id=${idInterclasse}&id_turma=${idTurma}`;
 
         try {
-            const res = await fetch('../../../api/usuarios.php?acao=listar_competidores');
+            // Carregar alunos que já estão na equipe
+            const resEquipe = await fetch(`../../../api/equipes.php?id_equipe=${idEquipe}`);
+            alunosNaEquipe = await resEquipe.json();
+            
+            // Carregar alunos da turma
+            const res = await fetch(`../../../api/usuarios.php?acao=listar_por_turma&id_turma=${idTurma}`);
             const data = await res.json();
             alunos = data.usuarios || [];
             renderizar(alunos);
         } catch (error) {
+            console.error(error);
             document.getElementById('listaAlunosMobile').innerHTML = '<p class="text-danger text-center">Erro ao carregar alunos.</p>';
             document.getElementById('listaAlunosDesktop').innerHTML = '<p class="text-danger text-center">Erro ao carregar alunos.</p>';
         }

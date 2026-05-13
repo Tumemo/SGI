@@ -24,7 +24,14 @@ if ($ext !== 'pdf') {
 $nomeSeguro = preg_replace('/[^a-zA-Z0-9 _-]/', '', $nomeTurma);
 $nomeSeguro = preg_replace('/\s+/', ' ', $nomeSeguro);
 $nomeArquivo = trim($nomeSeguro) . '.pdf';
-$destino = dirname(__DIR__, 3) . DIRECTORY_SEPARATOR . 'docs' . DIRECTORY_SEPARATOR . 'lista_alunos' . DIRECTORY_SEPARATOR . $nomeArquivo;
+$pastaRaiz = dirname(__FILE__, 4); // Vai até vsls:/
+$destino = $pastaRaiz . DIRECTORY_SEPARATOR . 'docs' . DIRECTORY_SEPARATOR . 'lista_alunos' . DIRECTORY_SEPARATOR . $nomeArquivo;
+
+// Criar diretório se não existir
+$pastaDestino = dirname($destino);
+if (!is_dir($pastaDestino)) {
+    mkdir($pastaDestino, 0777, true);
+}
 
 if (!move_uploaded_file($_FILES['pdf']['tmp_name'], $destino)) {
     http_response_code(500);
@@ -33,7 +40,7 @@ if (!move_uploaded_file($_FILES['pdf']['tmp_name'], $destino)) {
 }
 
 ob_start();
-include dirname(__DIR__, 3) . DIRECTORY_SEPARATOR . 'api' . DIRECTORY_SEPARATOR . 'conversor_pdf.php';
+include $pastaRaiz . DIRECTORY_SEPARATOR . 'api' . DIRECTORY_SEPARATOR . 'conversor_pdf.php';
 $saidaConversor = trim(ob_get_clean() ?? '');
 
 echo json_encode([

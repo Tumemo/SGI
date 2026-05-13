@@ -1,340 +1,190 @@
 <?php
-$titulo = "Ranking";
-$textTop = "Ranking";
+$titulo = "Ranking Geral";
+$textTop = "Ranking de Turmas";
 $btnVoltar = true;
 require_once '../componentes/navbar.php';
 require_once '../componentes/header.php';
 ?>
 
 <style>
-    /* Estilos para manter o design igual à imagem do 4º lugar em diante */
-    .btn-categoria {
-        transition: all 0.2s;
+    /* Estilização dos Cards e Barras */
+    .btn-categoria { transition: all 0.2s; border-radius: 20px !important; min-width: 120px; }
+    .btn-categoria.ativo { 
+        background-color: #ed1c24 !important; 
+        color: white !important; 
+        border-color: #ed1c24 !important;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
     }
-    .btn-categoria.ativo {
-        background-color: #e5e7eb !important;
-        border-color: #9ca3af !important;
-        font-weight: bold;
-        color: #000 !important;
-    }
-    .card-ranking-2 {
-        border: 2px solid #0ea5e9 !important;
-    }
-    .barra-fundo { 
-        background-color: #e5e7eb; 
-        height: 6px; 
-        border-radius: 4px; 
-        overflow: hidden; 
-        margin-top: 8px; 
-    }
-    .barra-progresso { 
-        background-color: #ef4444; 
-        height: 100%; 
-    }
+    .card-turma { transition: transform 0.2s; border-left: 5px solid #dee2e6; }
+    .card-turma:hover { transform: translateY(-3px); }
+    .posicao-1 { border-left-color: #FFD700 !important; } /* Ouro */
+    .posicao-2 { border-left-color: #C0C0C0 !important; } /* Prata */
+    .posicao-3 { border-left-color: #CD7F32 !important; } /* Bronze */
+    
+    .barra-fundo { background-color: #f0f0f0; height: 8px; border-radius: 10px; overflow: hidden; }
+    .barra-progresso { background-color: #ed1c24; height: 100%; transition: width 0.8s ease; }
+    
+    .badge-pontos { background-color: #f8f9fa; color: #333; border: 1px solid #ddd; }
 </style>
 
-<main class="m-auto d-md-none" style="width: 90%; margin-bottom: 120px;">
-    
-    <div id="mensagemMobile" class="mt-4"></div>
-
-    <section class="mt-3">
-        <div id="botoesCategoriasMobile" class="d-flex flex-wrap gap-2">
-            </div>
-    </section>
-
-    <section class="mt-4" id="listaRankingMobile">
-        </section>
+<main class="container d-md-none py-4" style="margin-bottom: 100px;">
+    <div id="msgMob"></div>
+    <div id="filtrosMob" class="d-flex overflow-auto gap-2 pb-3 mb-4">
+        </div>
+    <div id="listaMob"></div>
 </main>
 
-<main class="d-none d-md-block main-desktop-layout">
-    <div class="container-fluid bg-white p-5 d-flex" style="min-height: calc(100vh - 220px);">
-
-        <div class="ps-4 mb-5" style="min-width: 300px;">
-            <a href="./home.php" class="d-inline-flex align-items-center bg-danger text-white px-3 py-2 rounded-1 mb-3 shadow-sm text-decoration-none" style="font-size: 0.9rem;" data-back-link="true">
-                <i class="bi bi-arrow-left-circle-fill me-2"></i>
-                <span class="fw-bold" id="nomeInterclasseDesktop">Interclasse Ativo</span>
-            </a>
-            <h1 class="fw-bold text-dark mt-2">Ranking</h1>
-
-            <div id="botoesCategoriasDesktop" class="d-flex flex-wrap gap-2 mt-4 mb-5">
-                </div>
-        </div>
-
-        <div class="container" style="max-width: 900px;">
-            <div id="mensagemDesktop"></div>
-            <div id="listaRankingDesktop">
-                </div>
+<main class="d-none d-md-block container-fluid p-5">
+    <div class="row px-lg-5">
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm p-4 sticky-top" style="top: 20px;">
+                <h4 class="fw-bold mb-4">Categorias</h4>
+                <div id="filtrosDesk" class="d-flex flex-column gap-2">
+                    </div>
+            </div>
         </div>
         
+        <div class="col-md-9">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2 class="fw-bold m-0" id="nomeInterclasse">Ranking</h2>
+                <span class="badge bg-light text-dark border p-2" id="totalTurmas">0 Turmas</span>
+            </div>
+            <div id="msgDesk"></div>
+            <div id="listaDesk" class="row g-3">
+                </div>
+        </div>
     </div>
 </main>
 
-<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
 <script>
-    let dadosCategorias = [];
+    // Configurações Globais
+    const urlParams = new URLSearchParams(window.location.search);
+    const idInterclasse = urlParams.get('id'); // Pega o ?id=21 da URL
 
-    async function carregarRankingAtivo() {
-        const msgMobile = document.getElementById('mensagemMobile');
-        const msgDesktop = document.getElementById('mensagemDesktop');
+    let dadosAPI = [];
+    let categoriasUnicas = [];
 
-        msgMobile.innerHTML = '<p class="text-center text-muted">Carregando ranking...</p>';
-        msgDesktop.innerHTML = '<p class="text-center text-muted">Carregando ranking...</p>';
+    async function init() {
+        if (!idInterclasse) {
+            exibirMensagem("ID do Interclasse não fornecido na URL.", "danger");
+            return;
+        }
+        await carregarDados();
+    }
+
+    async function carregarDados() {
+        const loading = '<div class="text-center p-5"><div class="spinner-border text-danger"></div></div>';
+        document.getElementById('listaMob').innerHTML = loading;
+        document.getElementById('listaDesk').innerHTML = loading;
 
         try {
-            const interclasseAtivo = await window.SGIInterclasse.getActiveInterclasse();
-            if (!interclasseAtivo) {
-                throw new Error('Nenhum interclasse ativo');
-            }
+            // Chamada para o seu Back-end passando o filtro de interclasse
+            const response = await fetch(`../../../api/ranking.php?id_interclasse=${idInterclasse}`);
+            const data = await response.json();
 
-            const [categoriasRes, turmasRes] = await Promise.all([
-                fetch(`../../../api/categorias.php?id_interclasse=${interclasseAtivo.id_interclasse}`),
-                fetch(`../../../api/turmas.php?id_interclasse=${interclasseAtivo.id_interclasse}`)
-            ]);
-
-            const categorias = await categoriasRes.json();
-            const turmas = await turmasRes.json();
-            const turmasPorCategoria = new Map();
-
-            (turmas || []).forEach((turma) => {
-                const idCategoria = Number(turma.id_categoria || turma.categorias_id_categoria);
-                if (!turmasPorCategoria.has(idCategoria)) turmasPorCategoria.set(idCategoria, []);
-                turmasPorCategoria.get(idCategoria).push({
-                    nome: turma.nome_turma,
-                    pontos: Number(turma.pontos || 0)
-                });
-            });
-
-            const data = {
-                em_andamento: true,
-                nome_interclasse: interclasseAtivo.nome_interclasse,
-                categorias: (categorias || []).map((cat) => ({
-                    id_categoria: Number(cat.id_categoria),
-                    nome_categoria: cat.nome_categoria,
-                    turmas: (turmasPorCategoria.get(Number(cat.id_categoria)) || []).sort((a, b) => {
-                        if (b.pontos !== a.pontos) return b.pontos - a.pontos;
-                        return a.nome.localeCompare(b.nome);
-                    })
-                }))
-            };
-
-            msgMobile.innerHTML = '';
-            msgDesktop.innerHTML = '';
-
-            if (!data || data.em_andamento === false || !data.categorias || data.categorias.length === 0) {
-                const alerta = `
-                    <div class="alert alert-warning text-center mt-4 border-0 shadow-sm">
-                        <i class="bi bi-info-circle fs-4 d-block mb-2"></i>
-                        Nenhum interclasse em andamento no momento.
-                    </div>
-                `;
-                msgMobile.innerHTML = alerta;
-                msgDesktop.innerHTML = alerta;
-                
-                // Esconde o nome do interclasse no desktop se não houver
-                document.getElementById('nomeInterclasseDesktop').innerText = "Nenhum Ativo";
+            if (!data || data.length === 0) {
+                exibirMensagem("Nenhum dado encontrado para este interclasse.", "warning");
                 return;
             }
 
-            // Atualiza o nome do interclasse no botão do desktop
-            if(data.nome_interclasse) {
-                document.getElementById('nomeInterclasseDesktop').innerText = data.nome_interclasse;
-                window.SGIInterclasse.updatePageTitle(data.nome_interclasse);
-            }
-
-            dadosCategorias = data.categorias;
-            renderizarCategorias();
+            dadosAPI = data;
             
-            if (dadosCategorias.length > 0) {
-                selecionarCategoria(dadosCategorias[0].id_categoria);
-            }
+            // Extrair categorias únicas presentes nos dados
+            categoriasUnicas = [...new Set(data.map(item => item.nome_categoria))];
+            
+            document.getElementById('nomeInterclasse').innerText = data[0].nome_interclasse;
+            document.getElementById('totalTurmas').innerText = `${data.length} Turmas`;
+
+            renderizarFiltros();
+            // Inicia exibindo a primeira categoria encontrada
+            filtrarCategoria(categoriasUnicas[0]);
 
         } catch (error) {
-            console.error("Erro ao buscar ranking:", error);
-            const alertaErro = `<p class="text-danger text-center mt-4 fw-bold">Erro ao carregar o ranking.</p>`;
-            msgMobile.innerHTML = alertaErro;
-            msgDesktop.innerHTML = alertaErro;
+            console.error("Erro:", error);
+            exibirMensagem("Erro ao conectar com o servidor.", "danger");
         }
     }
 
-    function renderizarCategorias() {
-        const divMobile = document.getElementById('botoesCategoriasMobile');
-        const divDesktop = document.getElementById('botoesCategoriasDesktop');
-        
-        let htmlMobile = '';
-        let htmlDesktop = '';
+    function renderizarFiltros() {
+        const fMob = document.getElementById('filtrosMob');
+        const fDesk = document.getElementById('filtrosDesk');
+        fMob.innerHTML = '';
+        fDesk.innerHTML = '';
 
-        dadosCategorias.forEach(cat => {
-            // Botão Mobile (Mantendo o estilo do seu código original)
-            htmlMobile += `
-                <button 
-                    id="btn-cat-mob-${cat.id_categoria}" 
-                    class="btn-categoria rounded-2 fs-6 btn border border-3 py-1 px-2 shadow-sm" 
-                    style="height: 32px;"
-                    onclick="selecionarCategoria(${cat.id_categoria})"
-                >
-                    ${cat.nome_categoria}
-                </button>
-            `;
+        categoriasUnicas.forEach(cat => {
+            const btn = document.createElement('button');
+            btn.className = 'btn btn-outline-secondary btn-categoria';
+            btn.innerText = cat;
+            btn.id = `btn-${cat.replace(/\s/g, '')}`;
+            btn.onclick = () => filtrarCategoria(cat);
+            
+            fMob.appendChild(btn.cloneNode(true)); // Mobile precisa de uma cópia do elemento
+            // Para o desktop, precisamos reatribuir o evento pois o cloneNode não copia eventos complexos às vezes
+            const btnD = btn.cloneNode(true);
+            btnD.onclick = () => filtrarCategoria(cat);
+            fDesk.appendChild(btnD);
+        });
+    }
 
-            // Botão Desktop (Mantendo o estilo do seu código original)
-            htmlDesktop += `
-                <button 
-                    type="button"
-                    id="btn-cat-desk-${cat.id_categoria}" 
-                    class="btn-categoria btn btn-light border rounded-pill px-3 py-1 text-secondary shadow-sm" 
-                    style="font-size: 0.8rem; background-color: #efefef;"
-                    onclick="selecionarCategoria(${cat.id_categoria})"
-                >
-                    ${cat.nome_categoria}
-                </button>
-            `;
+    function filtrarCategoria(categoria) {
+        // Atualizar visual dos botões
+        document.querySelectorAll('.btn-categoria').forEach(b => {
+            b.classList.remove('ativo');
+            if (b.innerText === categoria) b.classList.add('ativo');
         });
 
-        divMobile.innerHTML = htmlMobile;
-        divDesktop.innerHTML = htmlDesktop;
+        const turmasFiltradas = dadosAPI.filter(t => t.nome_categoria === categoria);
+        renderizarRanking(turmasFiltradas);
     }
 
-    function selecionarCategoria(idCategoria) {
-        document.querySelectorAll('.btn-categoria').forEach(btn => btn.classList.remove('ativo'));
-        
-        const btnMob = document.getElementById(`btn-cat-mob-${idCategoria}`);
-        const btnDesk = document.getElementById(`btn-cat-desk-${idCategoria}`);
-        if(btnMob) btnMob.classList.add('ativo');
-        if(btnDesk) btnDesk.classList.add('ativo');
+    function renderizarRanking(turmas) {
+        const cMob = document.getElementById('listaMob');
+        const cDesk = document.getElementById('listaDesk');
+        cMob.innerHTML = '';
+        cDesk.innerHTML = '';
 
-        const categoriaAtual = dadosCategorias.find(c => c.id_categoria === idCategoria);
-        if (!categoriaAtual) return;
+        const maxPontos = Math.max(...turmas.map(t => t.pontuacao_turma)) || 1;
 
-        const turmas = categoriaAtual.turmas || [];
-        turmas.sort((a, b) => b.pontos - a.pontos);
-        renderizarTurmas(turmas);
-    }
-
-    function renderizarTurmas(turmas) {
-        const divMobile = document.getElementById('listaRankingMobile');
-        const divDesktop = document.getElementById('listaRankingDesktop');
-
-        if (turmas.length === 0) {
-            const msgVazia = `<p class="text-center text-muted my-4">Nenhuma sala pontuou nesta categoria.</p>`;
-            divMobile.innerHTML = msgVazia;
-            divDesktop.innerHTML = msgVazia;
-            return;
-        }
-
-        let htmlMobile = '';
-        let htmlDesktop = '';
-        const maiorPontuacao = turmas[0].pontos > 0 ? turmas[0].pontos : 1;
-
-        turmas.forEach((turma, index) => {
+        turmas.forEach((t, index) => {
             const posicao = index + 1;
-            const porcentagem = (turma.pontos / maiorPontuacao) * 100;
+            const porcentagem = (t.pontuacao_turma / maxPontos) * 100;
+            const classeDestaque = posicao <= 3 ? `posicao-${posicao}` : '';
 
-            // ================== RENDER MOBILE ==================
-            if (posicao === 1) {
-                htmlMobile += `
-                <div class="d-flex justify-content-between align-items-center px-4 mb-3 border border-2 shadow" style="height: 60px;">
-                    <div class="d-flex gap-3 align-items-center">
-                        <i class="bi bi-award fs-1" style="color: #a38c41;"></i>
-                        <h2 class="m-0 fs-4">1º <span class="fs-6">${turma.nome}</span></h2>
-                    </div>
-                    <h2 class="m-0 fs-3">${turma.pontos} pts</h2>
-                </div>`;
-            } else if (posicao === 2) {
-                htmlMobile += `
-                <div class="d-flex justify-content-between align-items-center px-4 mb-3 border border-2 shadow card-ranking-2" style="height: 60px;">
-                    <div class="d-flex gap-3 align-items-center">
-                        <i class="bi bi-award fs-1" style="color: #8a8a8a;"></i>
-                        <h2 class="m-0 fs-4">2º <span class="fs-6">${turma.nome}</span></h2>
-                    </div>
-                    <h2 class="m-0 fs-3">${turma.pontos} pts</h2>
-                </div>`;
-            } else if (posicao === 3) {
-                htmlMobile += `
-                <div class="d-flex justify-content-between align-items-center px-4 mb-3 border border-2 shadow" style="height: 60px;">
-                    <div class="d-flex gap-3 align-items-center">
-                        <i class="bi bi-award fs-1" style="color: #be844f;"></i>
-                        <h2 class="m-0 fs-4">3º <span class="fs-6">${turma.nome}</span></h2>
-                    </div>
-                    <h2 class="m-0 fs-3">${turma.pontos} pts</h2>
-                </div>`;
-            } else {
-                if (posicao === 4) htmlMobile += `<hr class="border border-1 border-dark mb-3">`;
-                htmlMobile += `
-                <div class="px-4 py-2 mb-3 border border-2 shadow">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div class="d-flex gap-3 align-items-center">
-                            <h2 class="m-0 fs-4 text-muted">${posicao}º <span class="fs-6 text-dark">${turma.nome}</span></h2>
+            const html = `
+                <div class="col-12">
+                    <div class="card card-turma shadow-sm mb-3 p-3 ${classeDestaque}">
+                        <div class="d-flex align-items-center justify-content-between">
+                            <div class="d-flex align-items-center gap-3">
+                                <h3 class="fw-bold m-0 text-secondary" style="width: 40px;">${posicao}º</h3>
+                                <div>
+                                    <h5 class="fw-bold m-0 text-dark">${t.nome_turma}</h5>
+                                    <small class="text-muted">${t.nome_fantasia_turma || t.turno_turma}</small>
+                                </div>
+                            </div>
+                            <div class="text-end">
+                                <span class="badge badge-pontos fs-6 px-3 py-2 rounded-pill">
+                                    ${t.pontuacao_turma} pts
+                                </span>
+                            </div>
                         </div>
-                        <h2 class="m-0 fs-5">${turma.pontos} pts</h2>
-                    </div>
-                    <div class="barra-fundo w-100">
-                        <div class="barra-progresso" style="width: ${porcentagem}%;"></div>
-                    </div>
-                </div>`;
-            }
-
-            // ================== RENDER DESKTOP ==================
-            if (posicao === 1) {
-                htmlDesktop += `
-                <div class="card border shadow-sm mb-3 p-3">
-                    <div class="d-flex align-items-center justify-content-between px-4">
-                        <div class="d-flex align-items-center gap-5">
-                            <i class="bi bi-award-fill text-warning fs-1"></i>
-                            <span class="fs-2 fw-bold">1º</span>
-                            <span class="fw-bold text-secondary ms-4">${turma.nome}</span>
-                        </div>
-                        <span class="fw-bold fs-5">${turma.pontos} pts</span>
-                    </div>
-                </div>`;
-            } else if (posicao === 2) {
-                htmlDesktop += `
-                <div class="card border shadow-sm mb-3 p-3 card-ranking-2">
-                    <div class="d-flex align-items-center justify-content-between px-4">
-                        <div class="d-flex align-items-center gap-5">
-                            <i class="bi bi-award-fill fs-1" style="color: #C0C0C0 !important;"></i>
-                            <span class="fs-2 fw-bold">2º</span>
-                            <span class="fw-bold text-secondary ms-4">${turma.nome}</span>
-                        </div>
-                        <span class="fw-bold fs-5">${turma.pontos} pts</span>
-                    </div>
-                </div>`;
-            } else if (posicao === 3) {
-                htmlDesktop += `
-                <div class="card border shadow-sm mb-3 p-3">
-                    <div class="d-flex align-items-center justify-content-between px-4">
-                        <div class="d-flex align-items-center gap-5">
-                            <i class="bi bi-award-fill fs-1" style="color: #CD7F32;"></i>
-                            <span class="fs-2 fw-bold">3º</span>
-                            <span class="fw-bold text-secondary ms-4">${turma.nome}</span>
-                        </div>
-                        <span class="fw-bold fs-5">${turma.pontos} pts</span>
-                    </div>
-                </div>`;
-            } else {
-                htmlDesktop += `
-                <div class="card border shadow-sm mb-3 p-4">
-                    <div class="d-flex align-items-center justify-content-between px-4 mb-2">
-                        <div class="d-flex align-items-center gap-5">
-                            <span class="fs-3 fw-bold text-muted" style="width: 45px; text-align: center;">${posicao}º</span>
-                            <span class="fw-bold text-secondary ms-4">${turma.nome}</span>
-                        </div>
-                        <span class="fw-bold text-muted">${turma.pontos} pts</span>
-                    </div>
-                    <div class="px-4 w-100">
-                        <div class="barra-fundo w-100">
-                            <div class="barra-progresso" style="width: ${porcentagem}%;"></div>
+                        <div class="barra-fundo mt-3">
+                            <div class="barra-progresso" style="width: ${porcentagem}%"></div>
                         </div>
                     </div>
-                </div>`;
-            }
+                </div>
+            `;
+            cMob.innerHTML += html;
+            cDesk.innerHTML += html;
         });
-
-        divMobile.innerHTML = htmlMobile;
-        divDesktop.innerHTML = htmlDesktop;
     }
 
-    window.onload = carregarRankingAtivo;
+    function exibirMensagem(texto, tipo) {
+        const alerta = `<div class="alert alert-${tipo} text-center">${texto}</div>`;
+        document.getElementById('msgMob').innerHTML = alerta;
+        document.getElementById('msgDesk').innerHTML = alerta;
+    }
+
+    window.onload = init;
 </script>
-<?php
-require_once '../componentes/footer.php';
-?>
+
+<?php require_once '../componentes/footer.php'; ?>

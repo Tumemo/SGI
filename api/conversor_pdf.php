@@ -1,14 +1,14 @@
-    <?php
-    // 1. Inclusões essenciais para a automação
-    require_once '../vendor/autoload.php';
-    require_once '../config/db.php'; // Necessário para a variável $conn
-    require_once __DIR__ . '/includes/importador_competidores.php';
+<?php
+// 1. Inclusões essenciais para a automação
+require_once '../vendor/autoload.php';
+require_once '../config/db.php'; // Necessário para a variável $conn
+require_once __DIR__ . '/includes/importador_competidores.php';
 
     use Smalot\PdfParser\Parser;
 
     $parser = new Parser();
-    $pasta_pdf     = '../docs/lista_alunos/'; 
-    $pasta_destino = 'json_turmas/';
+    $pasta_pdf     = dirname(__DIR__) . DIRECTORY_SEPARATOR . 'docs' . DIRECTORY_SEPARATOR . 'lista_alunos' . DIRECTORY_SEPARATOR; 
+    $pasta_destino = __DIR__ . DIRECTORY_SEPARATOR . 'json_turmas' . DIRECTORY_SEPARATOR;
     $arquivo_final = $pasta_destino . 'info_alunos.json';
 
     if (!is_dir($pasta_destino)) {

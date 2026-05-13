@@ -5,15 +5,16 @@ header('Content-Type: application/json');
 
 $method = $_SERVER['REQUEST_METHOD'];
 
-function uploadRegulamento($file) {
+function uploadRegulamento($file)
+{
     $diretorioDestino = "../uploads/regulamentos/";
     if (!is_dir($diretorioDestino)) mkdir($diretorioDestino, 0777, true);
     $extensao = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
     if ($extensao !== 'pdf') return ["success" => false, "message" => "O arquivo deve ser um PDF."];
     $novoNome = "reg_" . uniqid() . "." . $extensao;
     $caminhoCompleto = $diretorioDestino . $novoNome;
-    return move_uploaded_file($file['tmp_name'], $caminhoCompleto) 
-        ? ["success" => true, "nome_arquivo" => $novoNome] 
+    return move_uploaded_file($file['tmp_name'], $caminhoCompleto)
+        ? ["success" => true, "nome_arquivo" => $novoNome]
         : ["success" => false, "message" => "Falha ao salvar arquivo."];
 }
 
@@ -33,8 +34,8 @@ switch ($method) {
         $id = $_GET['id'] ?? null;
 
         if ($id) {
-            $dados = ($method === 'PUT') ? $_GET : $_POST; 
-            
+            $dados = ($method === 'PUT') ? $_GET : $_POST;
+
             $campos = [];
             $params = [];
             $types = "";
@@ -62,7 +63,12 @@ switch ($method) {
                 $params[] = $_POST['status_interclasse'];
                 $types .= "s";
             }
-            
+            if (isset($data->valor_item_arrecadacao)) {
+                $campos[] = "valor_item_arrecadacao = ?";
+                $params[] = $data->valor_item_arrecadacao;
+                $types .= "i";
+            }
+
 
             if (empty($campos)) {
                 echo json_encode(["success" => false, "message" => "Dica: Use o método POST no Postman para enviar form-data corretamente."]);
@@ -74,7 +80,7 @@ switch ($method) {
             $types .= "i";
             $stmt = $conn->prepare($sql);
             $stmt->bind_param($types, ...$params);
-            
+
             if ($stmt->execute()) {
                 echo json_encode(["success" => true, "message" => "Atualizado com sucesso!"]);
             } else {

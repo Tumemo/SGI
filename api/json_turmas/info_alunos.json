@@ -1,0 +1,219 @@
+[
+    {
+        "nome": "Alice Fernanda dos Santos",
+        "data_nascimento": "06/01/2009",
+        "rm": "3.263",
+        "genero": "FEM",
+        "turma": "3EMA"
+    },
+    {
+        "nome": "Ana Clara do Amaral Justi",
+        "data_nascimento": "03/04/2009",
+        "rm": "2.810",
+        "genero": "FEM",
+        "turma": "3EMA"
+    },
+    {
+        "nome": "Braien Bernardino Delanhese Galvão",
+        "data_nascimento": "03/04/2008",
+        "rm": "3.356",
+        "genero": "MASC",
+        "turma": "3EMA"
+    },
+    {
+        "nome": "Breno Moura Bianchini",
+        "data_nascimento": "09/12/2008",
+        "rm": "2.833",
+        "genero": "MASC",
+        "turma": "3EMA"
+    },
+    {
+        "nome": "Clara Tauane Moraes Dourado",
+        "data_nascimento": "26/01/2007",
+        "rm": "2.416",
+        "genero": "FEM",
+        "turma": "3EMA"
+    },
+    {
+        "nome": "Eloisa Florence Lima",
+        "data_nascimento": "15/06/2009",
+        "rm": "3.206",
+        "genero": "FEM",
+        "turma": "3EMA"
+    },
+    {
+        "nome": "Enrico Antonio Rodrigues",
+        "data_nascimento": "02/09/2008",
+        "rm": "2.834",
+        "genero": "MASC",
+        "turma": "3EMA"
+    },
+    {
+        "nome": "Gabriela Pissinin Menossi",
+        "data_nascimento": "20/01/2009",
+        "rm": "2.838",
+        "genero": "FEM",
+        "turma": "3EMA"
+    },
+    {
+        "nome": "Geovana Eduarda Sousa de Oliveira",
+        "data_nascimento": "21/09/2008",
+        "rm": "2.817",
+        "genero": "FEM",
+        "turma": "3EMA"
+    },
+    {
+        "nome": "Gustavo Santos Vieira",
+        "data_nascimento": "27/03/2009",
+        "rm": "2.814",
+        "genero": "MASC",
+        "turma": "3EMA"
+    },
+    {
+        "nome": "Henry Salvador Trindade Montoya Neto",
+        "data_nascimento": "17/01/2009",
+        "rm": "3.401",
+        "genero": "MASC",
+        "turma": "3EMA"
+    },
+    {
+        "nome": "Hugo Francisco da Silva",
+        "data_nascimento": "23/06/2008",
+        "rm": "3.002",
+        "genero": "MASC",
+        "turma": "3EMA"
+    },
+    {
+        "nome": "Hytallo Gabriel Ruffo Flores",
+        "data_nascimento": "17/03/2009",
+        "rm": "2.835",
+        "genero": "MASC",
+        "turma": "3EMA"
+    },
+    {
+        "nome": "Kaiky Gonçalves da Silva",
+        "data_nascimento": "06/08/2008",
+        "rm": "2.826",
+        "genero": "MASC",
+        "turma": "3EMA"
+    },
+    {
+        "nome": "Kaio Gabriel Alves Figueredo",
+        "data_nascimento": "25/08/2008",
+        "rm": "2.813",
+        "genero": "MASC",
+        "turma": "3EMA"
+    },
+    {
+        "nome": "Kauê Alves Rufino",
+        "data_nascimento": "11/10/2008",
+        "rm": "2.829",
+        "genero": "MASC",
+        "turma": "3EMA"
+    },
+    {
+        "nome": "Kayky Teófilo de Souza Castriani",
+        "data_nascimento": "10/03/2009",
+        "rm": "2.830",
+        "genero": "MASC",
+        "turma": "3EMA"
+    },
+    {
+        "nome": "Lanna Livia Fernandes Andrade",
+        "data_nascimento": "31/10/2008",
+        "rm": "2.844",
+        "genero": "FEM",
+        "turma": "3EMA"
+    },
+    {
+        "nome": "Lara Wada Oguido",
+        "data_nascimento": "26/03/2009",
+        "rm": "2.851",
+        "genero": "FEM",
+        "turma": "3EMA"
+    },
+    {
+        "nome": "Luiz Gustavo Pereira de Souza",
+        "data_nascimento": "15/10/2008",
+        "rm": "3.052",
+        "genero": "MASC",
+        "turma": "3EMA"
+    },
+    {
+        "nome": "Luma Christofole Massaranduba",
+        "data_nascimento": "30/10/2008",
+        "rm": "2.825",
+        "genero": "FEM",
+        "turma": "3EMA"
+    },
+    {
+        "nome": "Murilo Beraldo Corral Fernandes",
+        "data_nascimento": "31/03/2009",
+        "rm": "2.827",
+        "genero": "MASC",
+        "turma": "3EMA"
+    },
+    {
+        "nome": "Natália Caroline Bosisio",
+        "data_nascimento": "13/11/2008",
+        "rm": "2.832",
+        "genero": "FEM",
+        "turma": "3EMA"
+    },
+    {
+        "nome": "Nicolas Henrique Mendes Oliveira",
+        "data_nascimento": "21/11/2008",
+        "rm": "2.815",
+        "genero": "MASC",
+        "turma": "3EMA"
+    },
+    {
+        "nome": "Pietro Eduardo Coelho Dalbem",
+        "data_nascimento": "04/03/2009",
+        "rm": "2.820",
+        "genero": "MASC",
+        "turma": "3EMA"
+    },
+    {
+        "nome": "Rafael Antonio Mantovani",
+        "data_nascimento": "13/06/2008",
+        "rm": "3.148",
+        "genero": "MASC",
+        "turma": "3EMA"
+    },
+    {
+        "nome": "Ryan Rodrigo dos Santos Clemente da Silva",
+        "data_nascimento": "25/03/2009",
+        "rm": "2.836",
+        "genero": "MASC",
+        "turma": "3EMA"
+    },
+    {
+        "nome": "Ryan Rodrigues Rangel",
+        "data_nascimento": "29/12/2008",
+        "rm": "2.818",
+        "genero": "MASC",
+        "turma": "3EMA"
+    },
+    {
+        "nome": "Thainá Vitória da Silva Pontes",
+        "data_nascimento": "07/01/2009",
+        "rm": "2.823",
+        "genero": "FEM",
+        "turma": "3EMA"
+    },
+    {
+        "nome": "Thauan Mateus de Souza Ramos",
+        "data_nascimento": "24/07/2008",
+        "rm": "2.824",
+        "genero": "MASC",
+        "turma": "3EMA"
+    },
+    {
+        "nome": "Yasmin Gabriélli da Come Silva",
+        "data_nascimento": "14/06/2008",
+        "rm": "3.308",
+        "genero": "FEM",
+        "turma": "3EMA"
+    }
+]

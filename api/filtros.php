@@ -362,35 +362,41 @@ function aplicarFiltrosTurmas() {
     $types = "";
     $params = [];
 
-    if (!empty($_GET['id_turma'])) {
+    // Filtro por ID da Turma
+    if (isset($_GET['id_turma']) && $_GET['id_turma'] !== '') {
         $sqlExtras .= " AND turmas.id_turma = ?";
         $types .= "i";
         $params[] = intval($_GET['id_turma']);
     }
 
-    if (!empty($_GET['id_interclasse'])) {
+    // Filtro por Interclasse
+    if (isset($_GET['id_interclasse']) && $_GET['id_interclasse'] !== '') {
         $sqlExtras .= " AND turmas.interclasses_id_interclasse = ?";
         $types .= "i";
         $params[] = intval($_GET['id_interclasse']);
     }
 
-    if (!empty($_GET['id_categoria'])) {
+    // Filtro por Categoria
+    if (isset($_GET['id_categoria']) && $_GET['id_categoria'] !== '') {
         $sqlExtras .= " AND turmas.categorias_id_categoria = ?";
         $types .= "i";
         $params[] = intval($_GET['id_categoria']);
     }
 
+    // Filtro por Turno (Ex: Manhã, Tarde)
     if (!empty($_GET['turno'])) {
         $sqlExtras .= " AND turmas.turno_turma = ?";
         $types .= "s";
         $params[] = $_GET['turno'];
     }
 
+    // Filtro de Busca Textual
     if (!empty($_GET['busca'])) {
         $sqlExtras .= " AND (turmas.nome_turma LIKE ? OR turmas.nome_fantasia_turma LIKE ?)";
         $types .= "ss";
-        $params[] = "%" . $_GET['busca'] . "%";
-        $params[] = "%" . $_GET['busca'] . "%";
+        $busca = "%" . $_GET['busca'] . "%";
+        $params[] = $busca;
+        $params[] = $busca;
     }
 
     return [

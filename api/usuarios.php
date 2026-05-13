@@ -75,6 +75,22 @@ switch ($metodo) {
             $res = $conn->query($sql);
             $lista = $res ? $res->fetch_all(MYSQLI_ASSOC) : [];
             sgi_json_saida(['status' => 'sucesso', 'usuarios' => $lista]);
+        } elseif ($acao === 'listar_por_turma') {
+            $id_turma = isset($_GET['id_turma']) ? intval($_GET['id_turma']) : 0;
+            if (!$id_turma) {
+                sgi_json_saida(['status' => 'erro', 'mensagem' => 'ID da turma é obrigatório']);
+                break;
+            }
+            $sql = "SELECT DISTINCT u.id_usuario, u.nome_usuario, u.matricula_usuario, u.genero_usuario
+                    FROM usuarios u
+                    INNER JOIN competidores c ON c.usuarios_id_usuario = u.id_usuario
+                    WHERE c.turmas_id_turma = ? AND u.status_usuario = '1'";
+            $stmt = $conn->prepare($sql);
+            $stmt->bind_param('i', $id_turma);
+            $stmt->execute();
+            $res = $stmt->get_result();
+            $lista = $res ? $res->fetch_all(MYSQLI_ASSOC) : [];
+            sgi_json_saida(['status' => 'sucesso', 'usuarios' => $lista]);
         }
         break;
 

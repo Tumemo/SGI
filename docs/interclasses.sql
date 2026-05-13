@@ -25,6 +25,7 @@ CREATE TABLE IF NOT EXISTS `sgi`.`locais` (
   `nome_local` VARCHAR(45) NOT NULL,
   `disponivel_local` ENUM('0', '1') NOT NULL DEFAULT '1',
   `carga_local` INT(11) NULL DEFAULT NULL,
+
   `status_local` ENUM('1', '0') NOT NULL,
   PRIMARY KEY (`id_local`))
 ENGINE = InnoDB

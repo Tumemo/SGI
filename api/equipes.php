@@ -7,10 +7,28 @@ $method = $_SERVER['REQUEST_METHOD'];
 
 switch ($method) {
     case 'GET':
+        // Se solicitar alunos de uma equipe específica
+        if (!empty($_GET['id_equipe']) && empty($_GET['id_turma'])) {
+            $id_equipe = intval($_GET['id_equipe']);
+            $sql = "SELECT u.id_usuario, u.nome_usuario, u.matricula_usuario
+                    FROM usuarios u
+                    INNER JOIN equipes_has_usuarios eu ON eu.usuarios_id_usuario = u.id_usuario
+                    WHERE eu.equipes_id_equipe = ? AND u.status_usuario = '1'";
+            $stmt = $conn->prepare($sql);
+            $stmt->bind_param('i', $id_equipe);
+            $stmt->execute();
+            $res = $stmt->get_result();
+            echo json_encode($res->fetch_all(MYSQLI_ASSOC));
+            break;
+        }
+        
+        // Se solicitar equipes (com filtros)
         $filtro = aplicarFiltrosEquipes();
         $sql = "SELECT 
                     equipes.id_equipe, 
                     equipes.status_equipe,
+                    equipes.modalidades_id_modalidade,
+                    equipes.turmas_id_turma,
                     modalidades.nome_modalidade, 
                     turmas.nome_turma,
                     interclasses.nome_interclasse
