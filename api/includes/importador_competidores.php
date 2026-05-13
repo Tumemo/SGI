@@ -22,15 +22,17 @@ final class ImportadorCompetidores
     }
 
     /**
+     * @param ?int $idInterclasseForcado ID da edição (pode estar inativa). Se null, usa interclasse ativo.
+     * @param ?int $idCategoriaForcado Categoria para criar/vincular turmas do PDF. Se null, usa a primeira do interclasse.
      * @return array{status:string, mensagem?:string, interclasse_vinculado?:int, cadastrados?:int, erros?:list<string>}
      */
-    public function importarDeArquivo(?string $caminhoJson = null): array
+    public function importarDeArquivo(?string $caminhoJson = null, ?int $idInterclasseForcado = null, ?int $idCategoriaForcado = null): array
     {
         $caminhoJson = $caminhoJson ?? self::caminhoJsonPadrao();
 
-        $idInterclasse = $this->resolverInterclasseAtiva();
+        $idInterclasse = $this->resolverInterclassePreferido($idInterclasseForcado);
         if ($idInterclasse === null) {
-            return ['status' => 'erro', 'mensagem' => 'Não existe nenhum Interclasse ativo.'];
+            return ['status' => 'erro', 'mensagem' => 'Interclasse inválido ou nenhuma edição ativa. Informe id_interclasse no upload ou marque uma edição como ativa.'];
         }
 
         if (!is_readable($caminhoJson)) {
@@ -47,9 +49,9 @@ final class ImportadorCompetidores
             return ['status' => 'erro', 'mensagem' => 'JSON inválido ou corrompido.'];
         }
 
-        $idCategoria = $this->resolverPrimeiraCategoriaDoInterclasse($idInterclasse);
+        $idCategoria = $this->resolverCategoriaPreferida($idInterclasse, $idCategoriaForcado);
         if ($idCategoria === null) {
-            return ['status' => 'erro', 'mensagem' => 'Não existe categoria vinculada ao Interclasse ativo. Cadastre uma categoria antes de importar.'];
+            return ['status' => 'erro', 'mensagem' => 'Não existe categoria para este interclasse. Cadastre uma categoria ou informe id_categoria no upload.'];
         }
 
         $prepared = $this->prepararLinhas($alunos);
@@ -137,6 +139,44 @@ final class ImportadorCompetidores
         }
         $row = $res->fetch_assoc();
         return isset($row['id_interclasse']) ? (int) $row['id_interclasse'] : null;
+    }
+
+    /** Usa ID informado no upload (qualquer status) ou, se inválido, o interclasse ativo. */
+    private function resolverInterclassePreferido(?int $forcado): ?int
+    {
+        if ($forcado !== null && $forcado > 0) {
+            $st = $this->conn->prepare('SELECT id_interclasse FROM interclasses WHERE id_interclasse = ? LIMIT 1');
+            if ($st) {
+                $st->bind_param('i', $forcado);
+                $st->execute();
+                $row = $st->get_result()->fetch_assoc();
+                $st->close();
+                if ($row) {
+                    return (int) $row['id_interclasse'];
+                }
+            }
+        }
+        return $this->resolverInterclasseAtiva();
+    }
+
+    /** Categoria explícita (deve pertencer ao interclasse) ou primeira categoria da edição. */
+    private function resolverCategoriaPreferida(int $idInterclasse, ?int $forcado): ?int
+    {
+        if ($forcado !== null && $forcado > 0) {
+            $st = $this->conn->prepare(
+                'SELECT id_categoria FROM categorias WHERE id_categoria = ? AND interclasses_id_interclasse = ? LIMIT 1'
+            );
+            if ($st) {
+                $st->bind_param('ii', $forcado, $idInterclasse);
+                $st->execute();
+                $row = $st->get_result()->fetch_assoc();
+                $st->close();
+                if ($row) {
+                    return (int) $row['id_categoria'];
+                }
+            }
+        }
+        return $this->resolverPrimeiraCategoriaDoInterclasse($idInterclasse);
     }
 
     private function resolverPrimeiraCategoriaDoInterclasse(int $idInterclasse): ?int
@@ -343,9 +383,12 @@ final class ImportadorCompetidores
 
 /**
  * Compatível com conversor_pdf.php e chamadas legadas.
+ *
+ * @param ?int $idInterclasse Opcional: edição alvo (sobrescreve "só ativo").
+ * @param ?int $idCategoria Opcional: categoria para turmas novas do PDF.
  */
-function importarCompetidores(mysqli $conn): array
+function importarCompetidores(mysqli $conn, ?int $idInterclasse = null, ?int $idCategoria = null): array
 {
     $imp = new ImportadorCompetidores($conn);
-    return $imp->importarDeArquivo();
+    return $imp->importarDeArquivo(null, $idInterclasse, $idCategoria);
 }

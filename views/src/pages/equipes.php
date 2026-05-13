@@ -75,7 +75,7 @@ require_once '../componentes/header.php';
                     <div id="msgAdicionarAlunos" class="text-center mb-2"></div>
                     <div class="d-flex justify-content-end gap-2">
                         <button type="button" class="btn btn-outline-danger" data-bs-dismiss="modal">Cancelar</button>
-                        <button type="submit" class="btn btn-danger">Continuar</button>
+                        <button type="submit" class="btn btn-danger">Enviar PDF</button>
                     </div>
                 </form>
             </div>
@@ -86,6 +86,7 @@ require_once '../componentes/header.php';
 <script>
     let modalidadesDisponiveis = [];
     let equipesDisponiveis = [];
+    let nomeTurmaPagina = '';
 
     function atualizarSelectEquipe() {
         // Função auxiliar para atualizar seleção de equipes se necessário
@@ -138,6 +139,7 @@ require_once '../componentes/header.php';
             if (window.SGIInterclasse && typeof window.SGIInterclasse.updatePageTitle === 'function') {
                 window.SGIInterclasse.updatePageTitle(turma?.nome_turma || 'Equipes');
             }
+            nomeTurmaPagina = turma?.nome_turma || '';
             await carregarModalidadesParaEquipe(idInterclasse, idCategoria);
 
             if (!Array.isArray(equipes) || equipes.length === 0) {
@@ -157,7 +159,8 @@ require_once '../componentes/header.php';
                         <span class="fw-semibold d-block">${equipe.nome_modalidade || `Equipe #${equipe.id_equipe}`}</span>
                         <span class="text-muted small">${equipe.nome_turma || ''}</span>
                     </div>
-                    <a class="btn btn-sm btn-outline-danger" href="./equipe_alunos.php?id=${idInterclasse}&id_turma=${idTurma}&id_equipe=${equipe.id_equipe}">Alunos</a>
+                    <a class="btn btn-sm btn-outline-danger" href="./elenco_equipe.php?id=${idInterclasse}&id_turma=${idTurma}&id_categoria=${idCategoria || ''}&id_equipe=${equipe.id_equipe}&nome_turma=${encodeURIComponent(equipe.nome_turma || '')}&nome_modalidade=${encodeURIComponent(equipe.nome_modalidade || '')}">Elenco</a>
+                    <a class="btn btn-sm btn-danger" href="./equipe_alunos.php?id=${idInterclasse}&id_turma=${idTurma}&id_equipe=${equipe.id_equipe}${idCategoria ? `&id_categoria=${idCategoria}` : ''}">Inscrições</a>
                 </div>
             `).join('');
 
@@ -166,7 +169,8 @@ require_once '../componentes/header.php';
                     <div class="bg-white rounded-3 shadow-sm p-4 h-100">
                         <h6 class="fw-bold mb-2">${equipe.nome_modalidade || `Equipe #${equipe.id_equipe}`}</h6>
                         <p class="text-muted mb-3">${equipe.nome_turma || ''}</p>
-                        <a class="btn btn-outline-danger btn-sm" href="./equipe_alunos.php?id=${idInterclasse}&id_turma=${idTurma}&id_equipe=${equipe.id_equipe}">Adicionar alunos</a>
+                        <a class="btn btn-outline-danger btn-sm" href="./elenco_equipe.php?id=${idInterclasse}&id_turma=${idTurma}&id_categoria=${idCategoria || ''}&id_equipe=${equipe.id_equipe}&nome_turma=${encodeURIComponent(equipe.nome_turma || '')}&nome_modalidade=${encodeURIComponent(equipe.nome_modalidade || '')}">Elenco</a>
+                        <a class="btn btn-danger btn-sm" href="./equipe_alunos.php?id=${idInterclasse}&id_turma=${idTurma}&id_equipe=${equipe.id_equipe}${idCategoria ? `&id_categoria=${idCategoria}` : ''}">Inscrições</a>
                     </div>
                 </div>
             `).join('');
@@ -202,8 +206,10 @@ require_once '../componentes/header.php';
             const formData = new FormData();
             formData.append('nome_turma', nomeTurma);
             formData.append('pdf', arquivoPdf);
+            formData.append('id_interclasse', idInterclasse || '');
+            formData.append('id_categoria', idCategoria || '');
 
-            const response = await fetch('../upload_turma_pdf.php', {
+            const response = await fetch('./upload_turma_pdf.php', {
                 method: 'POST',
                 body: formData,
             });
@@ -231,16 +237,17 @@ require_once '../componentes/header.php';
             msg.innerHTML = `<p class="text-danger fw-bold mb-0">${error.message}</p>`;
         } finally {
             btn.disabled = false;
-            btn.innerText = 'Continuar';
+            btn.innerText = 'Enviar PDF';
         }
     });
 
     document.getElementById('formCriarEquipe').addEventListener('submit', async (event) => {
         event.preventDefault();
         const urlParams = new URLSearchParams(window.location.search);
-        const idInterclasse = urlParams.get('id');
-        const idTurma = Number(urlParams.get('id_turma'));
-        const idModalidade = Number(document.getElementById('selectModalidadeEquipe').value);
+            const idInterclasse = urlParams.get('id');
+            const idTurma = Number(urlParams.get('id_turma'));
+            const idCategoria = urlParams.get('id_categoria');
+            const idModalidade = Number(document.getElementById('selectModalidadeEquipe').value);
         const btn = document.getElementById('btnSalvarEquipe');
         const msg = document.getElementById('msgEquipe');
 
@@ -263,7 +270,7 @@ require_once '../componentes/header.php';
             msg.innerHTML = '<p class="text-success fw-bold mb-0">Equipe criada!</p>';
             setTimeout(() => {
                 bootstrap.Modal.getOrCreateInstance(document.getElementById('modalCriarEquipe')).hide();
-                window.location.href = `./equipe_alunos.php?id=${idInterclasse}&id_turma=${idTurma}&id_equipe=${result.id_equipe}`;
+                window.location.href = `./equipe_alunos.php?id=${idInterclasse}&id_turma=${idTurma}&id_equipe=${result.id_equipe}${idCategoria ? `&id_categoria=${encodeURIComponent(idCategoria)}` : ''}`;
             }, 600);
         } catch (error) {
             msg.innerHTML = `<p class="text-danger fw-bold mb-0">${error.message}</p>`;
@@ -274,6 +281,10 @@ require_once '../componentes/header.php';
     });
 
     window.addEventListener('load', carregarEquipesPagina);
+    document.getElementById('modalCriarAlunos').addEventListener('show.bs.modal', () => {
+        const inp = document.getElementById('inputNomeTurmaPdf');
+        if (inp && nomeTurmaPagina) inp.value = nomeTurmaPagina;
+    });
 </script>
 
 <?php

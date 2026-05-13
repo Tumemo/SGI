@@ -80,6 +80,16 @@ require_once '../componentes/header.php';
                 </picture>
             </div>
         </a>
+
+        <a href="./edicao_equipes.php" id="linkEquipes" class="text-decoration-none text-black">
+            <div class="d-flex m-auto justify-content-between align-items-center shadow py-3 px-4 mb-3 border border-1 rounded-3" style="width: 90%;">
+                <i class="bi bi-diagram-3 fs-2"></i>
+                <h2 class="m-0 fs-3 w-100 px-3">Equipes</h2>
+                <picture>
+                    <img src="../../public/icons/arrow-right.svg" alt="Seta para direita">
+                </picture>
+            </div>
+        </a>
     </section>
 </main>
 
@@ -186,7 +196,7 @@ require_once '../componentes/header.php';
             </div>
 
             <div class="col-12 col-md-6 col-lg-4">
-                <a href="turmas.php" id="linkTurmas" class="dash-card">
+                <a href="edicao_categorias.php" id="linkTurmas" class="dash-card">
                     <div class="dash-card-red-corner"></div>
                     <div class="dash-card-header">
                         <div class="dash-card-icon">
@@ -194,7 +204,20 @@ require_once '../componentes/header.php';
                         </div>
                         <h5 class="dash-card-title">TURMAS</h5>
                     </div>
-                    <p class="dash-card-text">Gerencie as turmas participantes do interclasse, incluindo alunos e configurações.</p>
+                    <p class="dash-card-text">Categorias e turmas desta edição: cadastro, PDF de alunos e acesso às equipes por turma.</p>
+                </a>
+            </div>
+
+            <div class="col-12 col-md-6 col-lg-4">
+                <a href="edicao_equipes.php" id="linkEquipes" class="dash-card">
+                    <div class="dash-card-red-corner"></div>
+                    <div class="dash-card-header">
+                        <div class="dash-card-icon">
+                            <i class="bi bi-diagram-3"></i>
+                        </div>
+                        <h5 class="dash-card-title">EQUIPES</h5>
+                    </div>
+                    <p class="dash-card-text">Visualize equipes por categoria e modalidade e abra o elenco de cada turma.</p>
                 </a>
             </div>
 
@@ -243,6 +266,12 @@ require_once '../componentes/header.php';
         });
         document.querySelectorAll('#linkColaboradores').forEach(link => {
             link.href = `./colaboradores.php?id=${idInterclasse}&modo=view`;
+        });
+        document.querySelectorAll('#linkTurmas').forEach(link => {
+            link.href = `./edicao_categorias.php?id=${idInterclasse}&modo=view`;
+        });
+        document.querySelectorAll('#linkEquipes').forEach(link => {
+            link.href = `./edicao_equipes.php?id=${idInterclasse}`;
         });
     }
 

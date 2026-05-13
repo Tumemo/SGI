@@ -96,7 +96,11 @@ require_once __DIR__ . '/includes/importador_competidores.php';
 
         // --- O GATILHO DA AUTOMAÇÃO ---
         // Sincronização com o banco (transação em importador_competidores.php)
-        $resultadoBD = importarCompetidores($conn);
+        $resultadoBD = importarCompetidores(
+            $conn,
+            !empty($GLOBALS['SGI_IMPORT_ID_INTERCLASSE']) ? (int) $GLOBALS['SGI_IMPORT_ID_INTERCLASSE'] : null,
+            !empty($GLOBALS['SGI_IMPORT_ID_CATEGORIA']) ? (int) $GLOBALS['SGI_IMPORT_ID_CATEGORIA'] : null
+        );
 
         if ($resultadoBD['status'] === 'sucesso') {
             echo "🗄️ <b>Banco de Dados:</b> Sincronização automática concluída!<br>";

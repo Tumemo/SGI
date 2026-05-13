@@ -194,7 +194,9 @@ require_once '../componentes/header.php';
     // Transfere o ID para o botão voltar do desktop (opcional, para não perder o fluxo)
     if(idInterclasse){
         if (modo === 'view') {
-            document.getElementById('btnContinuarDesktop').href = `./dashboard.php?id=${idInterclasse}`;
+            const parent = document.getElementById('btnContinuarDesktop')?.parentElement;
+            if (parent) parent.classList.add('d-none');
+            document.getElementById('btnContinuarMobile')?.classList.add('d-none');
             document.getElementById('btnVoltarPontuacao').href = `./dashboard.php?id=${idInterclasse}`;
             document.getElementById('btnVoltarPontuacao').classList.add('d-none');
             document.getElementById('btnVoltarPontuacaoRodape')?.classList.add('d-none');

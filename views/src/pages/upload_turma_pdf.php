@@ -39,9 +39,14 @@ if (!move_uploaded_file($_FILES['pdf']['tmp_name'], $destino)) {
     exit;
 }
 
+$GLOBALS['SGI_IMPORT_ID_INTERCLASSE'] = isset($_POST['id_interclasse']) ? (int) $_POST['id_interclasse'] : 0;
+$GLOBALS['SGI_IMPORT_ID_CATEGORIA'] = isset($_POST['id_categoria']) ? (int) $_POST['id_categoria'] : 0;
+
 ob_start();
 include $pastaRaiz . DIRECTORY_SEPARATOR . 'api' . DIRECTORY_SEPARATOR . 'conversor_pdf.php';
 $saidaConversor = trim(ob_get_clean() ?? '');
+
+unset($GLOBALS['SGI_IMPORT_ID_INTERCLASSE'], $GLOBALS['SGI_IMPORT_ID_CATEGORIA']);
 
 echo json_encode([
     "success" => true,

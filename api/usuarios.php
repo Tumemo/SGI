@@ -83,10 +83,17 @@ switch ($metodo) {
             }
             $sql = "SELECT DISTINCT u.id_usuario, u.nome_usuario, u.matricula_usuario, u.genero_usuario
                     FROM usuarios u
-                    INNER JOIN competidores c ON c.usuarios_id_usuario = u.id_usuario
-                    WHERE c.turmas_id_turma = ? AND u.status_usuario = '1'";
+                    WHERE u.status_usuario = '1'
+                      AND u.competidor_usuario = '1'
+                      AND (
+                          u.turmas_id_turma = ?
+                          OR EXISTS (
+                              SELECT 1 FROM competidores c
+                              WHERE c.usuarios_id_usuario = u.id_usuario AND c.turmas_id_turma = ?
+                          )
+                      )";
             $stmt = $conn->prepare($sql);
-            $stmt->bind_param('i', $id_turma);
+            $stmt->bind_param('ii', $id_turma, $id_turma);
             $stmt->execute();
             $res = $stmt->get_result();
             $lista = $res ? $res->fetch_all(MYSQLI_ASSOC) : [];

@@ -157,6 +157,8 @@ require_once '../componentes/header.php';
             if (!ativo) return;
 
             document.getElementById('nomeInterclasseArrecadacao').innerText = ativo.nome_interclasse;
+            const vDesk = document.getElementById('btnVoltarArrecadacao');
+            if (vDesk) vDesk.href = `./dashboard.php?id=${ativo.id_interclasse}`;
             document.getElementById('barraContinuarArrecadacaoMobile').classList.remove('d-none');
 
             const res = await fetch(`../../../api/turmas.php?id_interclasse=${ativo.id_interclasse}`);

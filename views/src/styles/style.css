@@ -8,6 +8,17 @@
 }
 body, main{
     background-color: #f9f9f9 !important;
+    font-weight: 300;
+}
+h1, h2, h3, h4, h5, h6, .fw-bold, .fw-bolder, .fw-semibold {
+    font-weight: 400 !important;
+}
+/* Ícones Bootstrap: traço fino, sem aparência “preenchida” */
+.bi::before,
+[class^="bi-"]::before,
+[class*=" bi-"]::before {
+    font-weight: 400 !important;
+    -webkit-text-stroke: 0.25px currentColor;
 }
 
 :root{
@@ -102,7 +113,7 @@ body, main{
 }
 
 .dash-card-title {
-    font-weight: 900;
+    font-weight: 400 !important;
     color: #000;
     font-size: 1.15rem;
     margin-bottom: 0;

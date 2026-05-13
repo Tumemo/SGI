@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Tempo de geração: 13/05/2026 às 15:30
+-- Tempo de geração: 13/05/2026 às 18:27
 -- Versão do servidor: 10.4.32-MariaDB
 -- Versão do PHP: 8.2.12
 
@@ -18,7 +18,7 @@ SET time_zone = "+00:00";
 /*!40101 SET NAMES utf8mb4 */;
 
 --
--- Banco de dados: `sgi`
+-- Banco de dados: `sgiv2`
 --
 
 -- --------------------------------------------------------
@@ -85,8 +85,24 @@ CREATE TABLE `interclasses` (
   `status_interclasse` enum('1','0') NOT NULL,
   `ponto_1_lugar` int(11) NOT NULL DEFAULT 10,
   `ponto_2_lugar` int(11) NOT NULL DEFAULT 7,
-  `ponto_3_lugar` int(11) NOT NULL DEFAULT 5
+  `ponto_3_lugar` int(11) NOT NULL DEFAULT 5,
+  `valor_item_arrecadacao` int(11) NOT NULL DEFAULT 2
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Acionadores `interclasses`
+--
+DELIMITER $$
+CREATE TRIGGER `tr_atualiza_pontos_arrecadacao` AFTER UPDATE ON `interclasses` FOR EACH ROW BEGIN
+    -- Se o valor do item mudar, recalcula a pontuação de todas as turmas desse interclasse
+    IF OLD.valor_item_arrecadacao <> NEW.valor_item_arrecadacao THEN
+        UPDATE turmas 
+        SET pontuacao_turma = qtd_itens_arrecadados * NEW.valor_item_arrecadacao
+        WHERE interclasses_id_interclasse = NEW.id_interclasse;
+    END IF;
+END
+$$
+DELIMITER ;
 
 -- --------------------------------------------------------
 
@@ -206,7 +222,8 @@ CREATE TABLE `turmas` (
   `nome_fantasia_turma` varchar(45) DEFAULT NULL,
   `status_turma` enum('1','0') DEFAULT NULL,
   `categorias_id_categoria` int(11) NOT NULL,
-  `pontuacao_turma` int(11) NOT NULL DEFAULT 0
+  `pontuacao_turma` int(11) NOT NULL DEFAULT 0,
+  `qtd_itens_arrecadados` int(11) NOT NULL DEFAULT 0
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------

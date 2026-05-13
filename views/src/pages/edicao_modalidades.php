@@ -357,6 +357,12 @@ require_once '../componentes/header.php';
             carregarCategoriasModalidades()
         ]);
         atualizarBotaoContinuar();
+        if (modo === 'view') {
+            ['btnContinuarDesktop', 'btnContinuarMobile'].forEach((id) => {
+                const el = document.getElementById(id);
+                if (el) el.classList.add('d-none');
+            });
+        }
     };
 </script>
 

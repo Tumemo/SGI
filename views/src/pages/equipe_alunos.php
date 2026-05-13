@@ -8,6 +8,7 @@ require_once '../componentes/header.php';
 
 <main class="d-md-none" style="margin-bottom: 120px;">
     <div class="container mt-3">
+        <a href="#" class="btn btn-outline-danger w-100 mb-3" id="btnVoltarEquipesMobile">Voltar</a>
         <input type="text" id="buscaAlunoMobile" class="form-control mb-3" placeholder="Buscar aluno">
         <div id="listaAlunosMobile"><p class="text-muted text-center">(Carregando alunos...)</p></div>
         <button id="btnSalvarAlunosMobile" class="btn btn-danger w-100 mt-3">Salvar alterações</button>
@@ -72,17 +73,20 @@ require_once '../componentes/header.php';
         const idInterclasse = params.get('id');
         const idTurma = params.get('id_turma');
         const idEquipe = params.get('id_equipe');
-        document.getElementById('btnVoltarEquipesDesktop').href = `./equipes.php?id=${idInterclasse}&id_turma=${idTurma}`;
+        const idCategoria = params.get('id_categoria');
+        const voltar = `./equipes.php?id=${idInterclasse}&id_turma=${idTurma}${idCategoria ? `&id_categoria=${idCategoria}` : ''}`;
+        document.getElementById('btnVoltarEquipesDesktop').href = voltar;
+        const vm = document.getElementById('btnVoltarEquipesMobile');
+        if (vm) vm.href = voltar;
 
         try {
-            // Carregar alunos que já estão na equipe
             const resEquipe = await fetch(`../../../api/equipes.php?id_equipe=${idEquipe}`);
-            alunosNaEquipe = await resEquipe.json();
-            
-            // Carregar alunos da turma
+            const rawEq = await resEquipe.json();
+            alunosNaEquipe = Array.isArray(rawEq) ? rawEq : [];
+
             const res = await fetch(`../../../api/usuarios.php?acao=listar_por_turma&id_turma=${idTurma}`);
             const data = await res.json();
-            alunos = data.usuarios || [];
+            alunos = (data && data.usuarios) ? data.usuarios : (Array.isArray(data) ? data : []);
             renderizar(alunos);
         } catch (error) {
             console.error(error);

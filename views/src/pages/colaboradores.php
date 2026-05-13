@@ -191,14 +191,6 @@ require_once '../componentes/header.php';
     });
 
     window.addEventListener('load', renderizarColaboradores);
-    window.addEventListener('load', () => {
-        if (modoColab === 'view' && idInterclasseColab) {
-            document.getElementById('btnContinuarColaboradoresMobile').classList.remove('d-none');
-            document.getElementById('btnContinuarColaboradoresDesktop').classList.remove('d-none');
-            document.getElementById('btnContinuarColaboradoresMobile').href = `./dashboard.php?id=${idInterclasseColab}`;
-            document.getElementById('btnContinuarColaboradoresDesktop').href = `./dashboard.php?id=${idInterclasseColab}`;
-        }
-    });
 </script>
 
 <?php

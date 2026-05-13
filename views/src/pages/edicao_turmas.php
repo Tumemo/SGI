@@ -70,12 +70,6 @@ require_once '../componentes/header.php';
         </div>
     </div>
 
-    <div class="position-fixed" style="bottom: 40px; right: 5%; z-index: 1050;">
-        <a href="#" id="btnContinuar" class="btn fw-semibold rounded-3 px-5 py-2 text-white text-decoration-none shadow-lg d-flex align-items-center justify-content-center" style="background-color: #ed1c24; border: 2px solid #ed1c24;">
-            Continuar
-        </a>
-    </div>
-
     <div class="modal fade" id="modalCriarTurma" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content border-0 shadow-lg rounded-4 p-2">
@@ -138,8 +132,6 @@ require_once '../componentes/header.php';
         window.location.href = "home.php"; // Redireciona para o início caso tentem acessar direto
     } else {
         // Repassa o ID para os botões e links
-        document.getElementById('btnContinuar').href = `./edicao_modalidades.php?id=${idInterclasse}`;
-        
         // Se a versão mobile for usada e o link existir, repassa o ID também
         const linkAlunos = document.getElementById('linkAlunosMobile');
         if (linkAlunos) linkAlunos.href = `./edicao_alunos.php?id=${idInterclasse}`;
@@ -213,7 +205,7 @@ require_once '../componentes/header.php';
         if (turmas && turmas.length > 0) {
             turmas.forEach(turma => {
                 container.innerHTML += `
-                    <a href="./equipes.php?id=${idInterclasse}&id_categoria=${categoriaSelecionadaId || ''}&id_turma=${turma.id_turma}" class="text-decoration-none">
+                    <a href="./turma_alunos.php?id=${idInterclasse}&id_categoria=${categoriaSelecionadaId || ''}&id_turma=${turma.id_turma}" class="text-decoration-none">
                         <div class="bg-white rounded-3 shadow-sm p-4 d-flex align-items-center justify-content-between">
                             <span class="fw-bold text-dark fs-5">${turma.nome_turma}</span>
                             <i class="bi bi-chevron-right text-muted"></i>
@@ -255,12 +247,11 @@ require_once '../componentes/header.php';
         const inputNome = document.getElementById('inputNomeTurma');
         const inputNomeFantasia = document.getElementById('inputNomeFantasiaTurma');
         const inputTurno = document.getElementById('inputTurnoTurma');
-        const inputCategoria = document.getElementById('inputCategoriaTurma');
         const msg = document.getElementById('msgTurma');
 
         const dadosTurma = {
-            interclasses_id_interclasse: parseInt(idInterclasse),
-            categorias_id_categoria: parseInt(inputCategoria.value),
+            interclasses_id_interclasse: parseInt(idInterclasse, 10),
+            categorias_id_categoria: parseInt(String(categoriaSelecionadaId), 10),
             nome_turma: inputNome.value.trim(),
             nome_fantasia_turma: inputNomeFantasia.value.trim(),
             turno_turma: inputTurno.value,
@@ -285,20 +276,22 @@ require_once '../componentes/header.php';
                 
                 if (pdf) {
                     msg.innerHTML = `<p class="text-info fw-bold mt-2 mb-0">Enviando e processando PDF, aguarde...</p>`;
-                    const formData = new FormData();
-                    formData.append('pdf', pdf);
-                    formData.append('nome_turma', nomeTurma);
                     try {
-                        // 1. Faz o upload físico do arquivo para a pasta correta
-                        await fetch('./upload_turma_pdf.php', { method: 'POST', body: formData });
-                        
-                        // 2. CHAMA O CONVERSOR. Como o conversor lê a pasta automaticamente, não precisa enviar dados para ele
-                        await fetch('./conversor_pdf.php');
-                        
-                        msg.innerHTML = `<p class="text-success fw-bold mt-2 mb-0">Turma e Alunos processados!</p>`;
+                        const formData = new FormData();
+                        formData.append('pdf', pdf);
+                        formData.append('nome_turma', nomeTurma);
+                        formData.append('id_interclasse', String(idInterclasse));
+                        formData.append('id_categoria', String(categoriaSelecionadaId || ''));
+                        const up = await fetch('./upload_turma_pdf.php', { method: 'POST', body: formData });
+                        const upJson = await up.json().catch(() => ({}));
+                        if (!up.ok || upJson.success === false) {
+                            throw new Error(upJson.message || 'Falha no upload ou conversão do PDF.');
+                        }
+                        const logTxt = (upJson.log || '').replace(/<[^>]+>/g, ' ').trim();
+                        msg.innerHTML = `<p class="text-success fw-bold mt-2 mb-0">Turma criada e PDF processado.</p>${logTxt ? `<p class="small text-muted mt-2 mb-0">${logTxt.slice(0, 500)}</p>` : ''}`;
                     } catch (err) { 
                         console.error("Erro na leitura/upload do PDF", err);
-                        msg.innerHTML = `<p class="text-warning fw-bold mt-2 mb-0">Turma criada, mas falha no PDF.</p>`;
+                        msg.innerHTML = `<p class="text-warning fw-bold mt-2 mb-0">Turma criada, mas o PDF falhou: ${err.message || err}</p>`;
                     }
                 } else {
                     msg.innerHTML = `<p class="text-success fw-bold mt-2 mb-0">Turma Adicionada!</p>`;
@@ -307,7 +300,6 @@ require_once '../componentes/header.php';
                 inputNome.value = '';
                 document.getElementById('inputNomeFantasiaTurma').value = '';
                 document.getElementById('inputTurnoTurma').value = '';
-                document.getElementById('inputCategoriaTurma').value = '';
                 document.getElementById('arquivoPdfTurma').value = '';
                 document.getElementById('nomePdfTurma').textContent = '';
 

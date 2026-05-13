@@ -34,7 +34,7 @@ require_once '../componentes/header.php';
 <main class="d-none d-md-block main-desktop-layout">
     <div class="container-fluid px-0 position-relative">
         <div class="mb-5">
-            <a href="./home.php" class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none" style="background-color: #ed1c24; border-radius: 6px;" data-back-link="true">
+            <a href="./dashboard.php" id="btnVoltarCatDesk" class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none" style="background-color: #ed1c24; border-radius: 6px;">
                 <i class="bi bi-arrow-left-circle fs-5"></i> <span id="nomeInterclasseCategoria">Interclasse</span>
             </a>
 
@@ -142,6 +142,14 @@ require_once '../componentes/header.php';
     const modo = urlParams.get('modo') || 'create';
     let categoriaSelecionada = null;
 
+    function aplicarModoContinuar() {
+        const vis = modo !== 'view';
+        ['btnContinuarMobile', 'btnContinuarDesktop'].forEach((id) => {
+            const el = document.getElementById(id);
+            if (el) el.classList.toggle('d-none', !vis);
+        });
+    }
+
     function atualizarAcoesCategoria() {
         const btnTurmaMobile = document.getElementById('btnAdicionarTurmaMobile');
         const btnTurmaDesktop = document.getElementById('btnAdicionarTurmaDesktop');
@@ -157,6 +165,7 @@ require_once '../componentes/header.php';
         const sufixoCategoria = categoriaSelecionada ? `&id_categoria=${categoriaSelecionada}` : '';
         document.getElementById('btnContinuarMobile').href = `${rota}?id=${idInterclasse}${sufixoCategoria}${modo !== 'view' ? '&modo=create' : ''}`;
         document.getElementById('btnContinuarDesktop').href = `${rota}?id=${idInterclasse}${sufixoCategoria}${modo !== 'view' ? '&modo=create' : ''}`;
+        aplicarModoContinuar();
     }
 
     function selecionarCategoria(idCategoria, el) {
@@ -180,7 +189,10 @@ require_once '../componentes/header.php';
                 window.SGIInterclasse.updatePageTitle(dados.nome_interclasse);
             }
         }).catch(console.error);
+        const back = document.getElementById('btnVoltarCatDesk');
+        if (back) back.href = `./dashboard.php?id=${encodeURIComponent(idInterclasse)}`;
         atualizarAcoesCategoria();
+        aplicarModoContinuar();
     }
 
     async function carregarCategorias() {
@@ -344,7 +356,13 @@ require_once '../componentes/header.php';
                 const formData = new FormData();
                 formData.append('pdf', pdf);
                 formData.append('nome_turma', nomeTurma);
-                await fetch('./upload_turma_pdf.php', { method: 'POST', body: formData });
+                formData.append('id_interclasse', String(idInterclasse));
+                formData.append('id_categoria', String(categoriaSelecionada));
+                const up = await fetch('./upload_turma_pdf.php', { method: 'POST', body: formData });
+                const upJson = await up.json().catch(() => ({}));
+                if (!up.ok || upJson.success === false) {
+                    throw new Error(upJson.message || 'Falha ao processar o PDF.');
+                }
             }
 
             msg.innerHTML = '<p class="text-success fw-bold mb-0">Turma criada com sucesso!</p>';

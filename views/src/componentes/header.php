@@ -11,13 +11,17 @@
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js"></script>
 </head>
 <body data-default-title="<?php echo htmlspecialchars($titulo, ENT_QUOTES, 'UTF-8'); ?>">
-    
+<?php
+$sgiHeaderBackHref = './home.php';
+if (!empty($btnVoltar) && isset($_GET['id']) && (string) $_GET['id'] !== '') {
+    $sgiHeaderBackHref = './dashboard.php?id=' . rawurlencode((string) $_GET['id']);
+}
+?>
 <header class="position-relative">
-    <?php 
-    if($btnVoltar){
-        echo '<a href="./home.php" data-back-link="true"><span class="position-absolute m-4 translate-middle" style="z-index: 10; " id="btnVoltar"><i class="bi bi-arrow-left fs-1 text-white"></i></span></a>';
-    } else{
-        echo "";
+    <?php
+    if (!empty($btnVoltar)) {
+        $hrefEsc = htmlspecialchars($sgiHeaderBackHref, ENT_QUOTES, 'UTF-8');
+        echo '<a href="' . $hrefEsc . '" class="text-white text-decoration-none"><span class="position-absolute m-4 translate-middle" style="z-index: 10;" id="btnVoltar"><i class="bi bi-arrow-left-circle fs-1"></i></span></a>';
     }
     ?>
     <!-- header mobile -->

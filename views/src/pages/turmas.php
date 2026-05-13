@@ -28,9 +28,9 @@ require_once '../componentes/header.php';
 <!-- main desktop-->
 <main class="d-none d-md-flex flex-column main-desktop-layout">
 
-    <a href="./home.php" data-back-link="true" class="btn btn-danger d-inline-flex align-items-center mb-4 border-0 shadow-sm text-decoration-none" style="border-radius: 4px; padding: 8px 15px;">
-        <i class="bi bi-arrow-left-circle-fill me-2"></i>
-        <span class="fw-bold" style="font-size: 0.9rem;" id="nomeInterclasseTurmas">Interclasse</span>
+    <a href="./dashboard.php" id="btnVoltarTurmasDesk" class="btn btn-danger d-inline-flex align-items-center mb-4 border-0 shadow-sm text-decoration-none" style="border-radius: 4px; padding: 8px 15px;">
+        <i class="bi bi-arrow-left-circle me-2"></i>
+        <span style="font-size: 0.9rem; font-weight: 400;" id="nomeInterclasseTurmas">Interclasse</span>
     </a>
 
     <h1 class="fw-bold text-dark mb-5 d-flex align-items-center gap-2 fs-2">
@@ -193,6 +193,8 @@ require_once '../componentes/header.php';
             }
 
             document.getElementById('nomeInterclasseTurmas').innerText = interclasseAtivo.nome_interclasse;
+            const bv = document.getElementById('btnVoltarTurmasDesk');
+            if (bv) bv.href = `./dashboard.php?id=${interclasseAtivo.id_interclasse}`;
             window.SGIInterclasse.updatePageTitle(interclasseAtivo.nome_interclasse);
 
             const [categoriasRes, turmasRes] = await Promise.all([
