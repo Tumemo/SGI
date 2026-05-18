@@ -24,7 +24,7 @@ if ($ext !== 'pdf') {
 $nomeSeguro = preg_replace('/[^a-zA-Z0-9 _-]/', '', $nomeTurma);
 $nomeSeguro = preg_replace('/\s+/', ' ', $nomeSeguro);
 $nomeArquivo = trim($nomeSeguro) . '.pdf';
-$pastaRaiz = dirname(__FILE__, 4); // Vai até vsls:/
+$pastaRaiz = dirname(__FILE__, 4); // Vai até SGI/
 $destino = $pastaRaiz . DIRECTORY_SEPARATOR . 'docs' . DIRECTORY_SEPARATOR . 'lista_alunos' . DIRECTORY_SEPARATOR . $nomeArquivo;
 
 // Criar diretório se não existir
@@ -43,7 +43,11 @@ $GLOBALS['SGI_IMPORT_ID_INTERCLASSE'] = isset($_POST['id_interclasse']) ? (int) 
 $GLOBALS['SGI_IMPORT_ID_CATEGORIA'] = isset($_POST['id_categoria']) ? (int) $_POST['id_categoria'] : 0;
 
 ob_start();
-include $pastaRaiz . DIRECTORY_SEPARATOR . 'api' . DIRECTORY_SEPARATOR . 'conversor_pdf.php';
+try {
+    include $pastaRaiz . DIRECTORY_SEPARATOR . 'api' . DIRECTORY_SEPARATOR . 'conversor_pdf.php';
+} catch (Throwable $e) {
+    // Captura erros do conversor
+}
 $saidaConversor = trim(ob_get_clean() ?? '');
 
 unset($GLOBALS['SGI_IMPORT_ID_INTERCLASSE'], $GLOBALS['SGI_IMPORT_ID_CATEGORIA']);
@@ -52,4 +56,4 @@ echo json_encode([
     "success" => true,
     "message" => "PDF enviado e processado.",
     "log" => $saidaConversor
-]);
+], JSON_UNESCAPED_UNICODE);

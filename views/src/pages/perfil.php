@@ -118,14 +118,14 @@ require_once '../componentes/header.php';
             <input type="text" class="form-control perfil-input" id="perfilNomeMob" placeholder="Nome" readonly>
         </div>
         <div class="mb-3">
-            <label class="form-label">Email</label>
-            <input type="email" class="form-control perfil-input" id="perfilEmailMob" placeholder="email" readonly>
+            <label class="form-label">RA</label>
+            <input type="text" class="form-control perfil-input" id="perfilEmailMob" placeholder="RA" readonly>
         </div>
         <div class="mb-4">
             <label class="form-label">Senha:</label>
             <input type="password" class="form-control perfil-input" value="........" readonly>
         </div>
-        <button type="button" class="perfil-btn-editar d-block mx-auto">Editar perfil</button>
+        <button type="button" class="perfil-btn-editar d-block mx-auto" data-bs-toggle="modal" data-bs-target="#modalEditarPerfil">Editar perfil</button>
     </div>
 </main>
 
@@ -155,46 +155,52 @@ require_once '../componentes/header.php';
                         <input type="text" class="form-control form-control-lg perfil-input" id="perfilNomeDesk" placeholder="Nome" readonly>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Email</label>
-                        <input type="email" class="form-control form-control-lg perfil-input" id="perfilEmailDesk" placeholder="email" readonly>
+                        <label class="form-label">RA</label>
+                        <input type="text" class="form-control form-control-lg perfil-input" id="perfilEmailDesk" placeholder="RA" readonly>
                     </div>
                     <div class="mb-4">
                         <label class="form-label">Senha:</label>
                         <input type="password" class="form-control form-control-lg perfil-input" value="........" readonly>
                     </div>
-                    <button type="button" class="perfil-btn-editar">Editar perfil</button>
+                    <button type="button" class="perfil-btn-editar" data-bs-toggle="modal" data-bs-target="#modalEditarPerfil">Editar perfil</button>
                 </div>
             </div>
         </div>
     </div>
 </main>
 
-<div class="modal fade" id="modalSenha" tabindex="-1" aria-hidden="true">
+<div class="modal fade" id="modalEditarPerfil" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content rounded-4 border-0 shadow">
             <div class="modal-header border-0 pt-4 px-4">
-                <h5 class="modal-title text-danger" style="font-weight: 400;">Alterar Senha</h5>
+                <h5 class="modal-title text-danger" style="font-weight: 400;">Editar Perfil</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
             </div>
-            <form action="#" method="POST">
+            <form id="formEditarPerfil">
                 <div class="modal-body px-4">
-                    <p class="small text-muted mb-4">Caso sua senha tenha sido resetada, a padrão é 123456.</p>
+                    <div class="mb-3">
+                        <label class="form-label small">Nome</label>
+                        <input type="text" name="nome_usuario" class="form-control rounded-3 perfil-input" id="editarNome" required>
+                    </div>
+                    <hr>
+                    <p class="small text-muted mb-3">Alterar senha (opcional)</p>
                     <div class="mb-3">
                         <label class="form-label small">Senha Atual</label>
-                        <input type="password" name="senha_atual" class="form-control rounded-3 perfil-input" required>
+                        <input type="password" name="senha_atual" class="form-control rounded-3 perfil-input" id="editarSenhaAtual">
                     </div>
                     <div class="mb-3">
                         <label class="form-label small">Nova Senha</label>
-                        <input type="password" name="nova_senha" class="form-control rounded-3 perfil-input" required>
+                        <input type="password" name="nova_senha" class="form-control rounded-3 perfil-input" id="editarNovaSenha">
                     </div>
                     <div class="mb-3">
                         <label class="form-label small">Confirmar Nova Senha</label>
-                        <input type="password" name="confirmar_senha" class="form-control rounded-3 perfil-input" required>
+                        <input type="password" name="confirmar_senha" class="form-control rounded-3 perfil-input" id="editarConfirmarSenha">
                     </div>
+                    <div id="msgEditarPerfil" class="small text-center"></div>
                 </div>
                 <div class="modal-footer border-0 pb-4 px-4">
                     <button type="button" class="btn btn-outline-secondary rounded-3" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="submit" class="btn btn-danger rounded-3">Salvar Senha</button>
+                    <button type="submit" class="btn btn-danger rounded-3" id="btnSalvarPerfil">Salvar</button>
                 </div>
             </form>
         </div>
@@ -202,11 +208,17 @@ require_once '../componentes/header.php';
 </div>
 
 <script>
+    const API_BASE = '../../../api/';
+
     document.addEventListener('DOMContentLoaded', async () => {
-        const ativo = await window.SGIInterclasse.getActiveInterclasse();
-        const nome = ativo?.nome_interclasse || 'Interclasse';
-        document.getElementById('perfilNomeInterMobile').textContent = nome;
-        document.getElementById('perfilNomeInterDesk').textContent = nome;
+        // Carregar nome do interclasse ativo
+        try {
+            const ativo = await window.SGIInterclasse.getActiveInterclasse();
+            const nome = ativo?.nome_interclasse || 'Interclasse';
+            document.getElementById('perfilNomeInterMobile').textContent = nome;
+            document.getElementById('perfilNomeInterDesk').textContent = nome;
+        } catch (e) {}
+
         const params = new URLSearchParams(window.location.search);
         const id = params.get('id');
         if (id) {
@@ -215,7 +227,97 @@ require_once '../componentes/header.php';
             const mob = document.getElementById('perfilBackMob');
             if (mob) mob.href = href;
         }
+
+        // Carregar dados do perfil
+        await carregarPerfil();
+
+        // Form de edição
+        document.getElementById('formEditarPerfil').addEventListener('submit', salvarPerfil);
     });
+
+    async function carregarPerfil() {
+        try {
+            const resp = await fetch(API_BASE + 'perfil.php');
+            const data = await resp.json();
+            if (!data.success || !data.usuario) return;
+
+            const u = data.usuario;
+
+            // Preencher campos mobile
+            const nomeMob = document.getElementById('perfilNomeMob');
+            const emailMob = document.getElementById('perfilEmailMob');
+            if (nomeMob) nomeMob.value = u.nome_usuario || '';
+            if (emailMob) emailMob.value = u.matricula_usuario || '';
+
+            // Preencher campos desktop
+            const nomeDesk = document.getElementById('perfilNomeDesk');
+            const emailDesk = document.getElementById('perfilEmailDesk');
+            if (nomeDesk) nomeDesk.value = u.nome_usuario || '';
+            if (emailDesk) emailDesk.value = u.matricula_usuario || '';
+
+            // Modal de edição
+            const editarNome = document.getElementById('editarNome');
+            if (editarNome) editarNome.value = u.nome_usuario || '';
+        } catch (e) {
+            console.error('Erro ao carregar perfil:', e);
+        }
+    }
+
+    async function salvarPerfil(e) {
+        e.preventDefault();
+        const msgEl = document.getElementById('msgEditarPerfil');
+        const btn = document.getElementById('btnSalvarPerfil');
+        msgEl.innerHTML = '';
+
+        const nome = document.getElementById('editarNome').value.trim();
+        const senhaAtual = document.getElementById('editarSenhaAtual').value;
+        const novaSenha = document.getElementById('editarNovaSenha').value;
+        const confirmarSenha = document.getElementById('editarConfirmarSenha').value;
+
+        if (novaSenha && novaSenha !== confirmarSenha) {
+            msgEl.innerHTML = '<span class="text-danger">As senhas não coincidem.</span>';
+            return;
+        }
+
+        const body = {};
+        if (nome) body.nome_usuario = nome;
+        if (novaSenha) {
+            body.senha_atual = senhaAtual;
+            body.nova_senha = novaSenha;
+        }
+
+        btn.disabled = true;
+        btn.textContent = 'Salvando...';
+
+        try {
+            const resp = await fetch(API_BASE + 'perfil.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body)
+            });
+            const data = await resp.json();
+
+            if (data.success) {
+                msgEl.innerHTML = '<span class="text-success">' + data.message + '</span>';
+                await carregarPerfil();
+                // Limpar campos de senha
+                document.getElementById('editarSenhaAtual').value = '';
+                document.getElementById('editarNovaSenha').value = '';
+                document.getElementById('editarConfirmarSenha').value = '';
+                setTimeout(() => {
+                    bootstrap.Modal.getInstance(document.getElementById('modalEditarPerfil'))?.hide();
+                    msgEl.innerHTML = '';
+                }, 1500);
+            } else {
+                msgEl.innerHTML = '<span class="text-danger">' + (data.message || 'Erro ao salvar.') + '</span>';
+            }
+        } catch (err) {
+            msgEl.innerHTML = '<span class="text-danger">Erro de conexão.</span>';
+        } finally {
+            btn.disabled = false;
+            btn.textContent = 'Salvar';
+        }
+    }
 </script>
 
 <?php

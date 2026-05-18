@@ -85,7 +85,7 @@ require_once '../componentes/header.php';
                         </select>
                     </div>
                     <div class="mb-3 d-flex align-items-center gap-2 flex-column">
-                        <input type="file" id="arquivoUpload" class="d-none" onchange="mostrarNomeArquivo()">
+                        <input type="file" id="arquivoUpload" class="d-none" accept=".pdf" onchange="mostrarNomeArquivo()">
                         <p style="font-size: 14px;">Adicione aqui o pdf dos alunos da turma criada</p>
 
                         <label for="arquivoUpload" class="">
@@ -165,7 +165,23 @@ require_once '../componentes/header.php';
 
             const data = await res.json();
             if (data.success) {
-                alert('Turma criada com sucesso!');
+                const pdf = document.getElementById('arquivoUpload').files?.[0];
+                if (pdf) {
+                    const formData = new FormData();
+                    formData.append('pdf', pdf);
+                    formData.append('nome_turma', body.nome_turma);
+                    formData.append('id_interclasse', String(interclasseAtivo.id_interclasse));
+                    formData.append('id_categoria', String(body.categorias_id_categoria));
+                    const up = await fetch('../../../api/upload_turma_pdf.php', { method: 'POST', body: formData });
+                    const upJson = await up.json().catch(() => ({}));
+                    if (!up.ok || upJson.success === false) {
+                        alert('Turma criada, mas falha ao processar PDF: ' + (upJson.message || 'Erro desconhecido'));
+                    } else {
+                        alert('Turma criada e PDF processado com sucesso!');
+                    }
+                } else {
+                    alert('Turma criada com sucesso!');
+                }
                 bootstrap.Modal.getInstance(document.getElementById('exampleModal')).hide();
                 document.getElementById('formNovaTurma').reset();
                 carregarTurmasAtivas();

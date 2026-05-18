@@ -56,6 +56,13 @@ require_once '../componentes/header.php';
                         <label class="form-label">Senha</label>
                         <input type="text" class="form-control" id="novaSenhaColaborador" required>
                     </div>
+                    <div class="mb-3">
+                        <label class="form-label">Gênero</label>
+                        <select class="form-select" id="novoGeneroColaborador">
+                            <option value="MASC">Masculino</option>
+                            <option value="FEM">Feminino</option>
+                        </select>
+                    </div>
                     <div class="form-check mb-2">
                         <input class="form-check-input" type="checkbox" id="novoAdminColaborador" checked>
                         <label class="form-check-label" for="novoAdminColaborador">Administrador</label>
@@ -84,9 +91,10 @@ require_once '../componentes/header.php';
     function obterColaboradores() {
         const raw = localStorage.getItem(STORAGE_KEY_COLABORADORES);
         if (raw) return JSON.parse(raw);
-        
-        localStorage.setItem(STORAGE_KEY_COLABORADORES, JSON.stringify(seed));
-        return seed;
+
+        const padrao = [];
+        localStorage.setItem(STORAGE_KEY_COLABORADORES, JSON.stringify(padrao));
+        return padrao;
     }
 
     function salvarColaboradores(lista) {
@@ -149,6 +157,7 @@ require_once '../componentes/header.php';
         const senha = document.getElementById('novaSenhaColaborador').value.trim();
         const admin = document.getElementById('novoAdminColaborador').checked;
         const mesario = document.getElementById('novoMesarioColaborador').checked;
+        const genero = document.getElementById('novoGeneroColaborador').value;
 
         try {
             btn.disabled = true;
@@ -164,6 +173,7 @@ require_once '../componentes/header.php';
             body.append('is_admin_clicado', admin ? '1' : '0');
             body.append('is_mesario_clicado', mesario ? '1' : '0');
             body.append('sigla_usuario', 'SS');
+            body.append('genero_usuario', genero);
 
             const response = await fetch('../../../api/usuarios.php', {
                 method: 'POST',

@@ -282,7 +282,7 @@ require_once '../componentes/header.php';
                         formData.append('nome_turma', nomeTurma);
                         formData.append('id_interclasse', String(idInterclasse));
                         formData.append('id_categoria', String(categoriaSelecionadaId || ''));
-                        const up = await fetch('./upload_turma_pdf.php', { method: 'POST', body: formData });
+                        const up = await fetch('../../../api/upload_turma_pdf.php', { method: 'POST', body: formData });
                         const upJson = await up.json().catch(() => ({}));
                         if (!up.ok || upJson.success === false) {
                             throw new Error(upJson.message || 'Falha no upload ou conversão do PDF.');

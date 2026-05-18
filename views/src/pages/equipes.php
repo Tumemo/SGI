@@ -84,6 +84,10 @@ require_once '../componentes/header.php';
 </div>
 
 <script>
+    const urlParamsEquipes = new URLSearchParams(window.location.search);
+    const idInterclasse = urlParamsEquipes.get('id');
+    const idCategoria = urlParamsEquipes.get('id_categoria');
+
     let modalidadesDisponiveis = [];
     let equipesDisponiveis = [];
     let nomeTurmaPagina = '';
@@ -116,9 +120,7 @@ require_once '../componentes/header.php';
 
     async function carregarEquipesPagina() {
         const urlParams = new URLSearchParams(window.location.search);
-        const idInterclasse = urlParams.get('id');
         const idTurma = urlParams.get('id_turma');
-        const idCategoria = urlParams.get('id_categoria');
         const listaMobile = document.getElementById('listaEquipesMobile');
         const listaDesktop = document.getElementById('listaEquipesDesktop');
 
@@ -209,7 +211,7 @@ require_once '../componentes/header.php';
             formData.append('id_interclasse', idInterclasse || '');
             formData.append('id_categoria', idCategoria || '');
 
-            const response = await fetch('./upload_turma_pdf.php', {
+            const response = await fetch('../../../api/upload_turma_pdf.php', {
                 method: 'POST',
                 body: formData,
             });

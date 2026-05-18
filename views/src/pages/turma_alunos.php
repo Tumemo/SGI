@@ -11,8 +11,8 @@ require_once '../componentes/header.php';
     <h5 style="font-weight: 400;" id="tituloTurmaMob">Turma</h5>
     <p class="text-muted small" id="contagemMob"></p>
     <div id="listaAlunosTurmaMob" class="d-flex flex-column gap-2 mt-3"></div>
-    <div id="blocoPdfMob" class="card border-0 shadow-sm rounded-4 p-3 mt-4 d-none">
-        <p class="small text-muted mb-2">Nenhum aluno cadastrado. Importe a lista oficial (PDF).</p>
+    <div id="blocoPdfMob" class="card border-0 shadow-sm rounded-4 p-3 mt-4">
+        <p class="small text-muted mb-2">Importar alunos via PDF</p>
         <form id="formPdfTurmaMob" enctype="multipart/form-data">
             <input type="hidden" name="nome_turma" id="hiddenNomeTurmaMob">
             <label class="form-label small">Arquivo PDF</label>
@@ -45,7 +45,7 @@ require_once '../componentes/header.php';
                 </table>
             </div>
         </div>
-        <div id="blocoPdfDesk" class="card border-0 shadow-sm rounded-4 p-4 d-none">
+        <div id="blocoPdfDesk" class="card border-0 shadow-sm rounded-4 p-4">
             <h6 style="font-weight: 400;">Cadastrar alunos por PDF</h6>
             <p class="text-muted small">Use o mesmo nome da turma cadastrada para o arquivo bater com o esperado pelo sistema.</p>
             <form id="formPdfTurmaDesk" enctype="multipart/form-data" class="row g-2 align-items-end">
@@ -87,9 +87,7 @@ require_once '../componentes/header.php';
         if (b) b.href = href;
     }
 
-    function mostrarPdfVazio(mostrar, nomeTurma) {
-        document.getElementById('blocoPdfMob').classList.toggle('d-none', !mostrar);
-        document.getElementById('blocoPdfDesk').classList.toggle('d-none', !mostrar);
+    function atualizarNomeTurmaPdf(nomeTurma) {
         document.getElementById('hiddenNomeTurmaMob').value = nomeTurma || '';
         document.getElementById('hiddenNomeTurmaDesk').value = nomeTurma || '';
     }
@@ -125,10 +123,10 @@ require_once '../componentes/header.php';
                 document.getElementById('listaAlunosTurmaMob').innerHTML = '<p class="text-muted small">Sem registros.</p>';
                 document.getElementById('tbodyAlunosTurmaDesk').innerHTML =
                     '<tr><td colspan="3" class="text-muted px-3 py-4">Nenhum aluno cadastrado nesta turma.</td></tr>';
-                mostrarPdfVazio(true, nomeTurma);
+                atualizarNomeTurmaPdf(nomeTurma);
                 return;
             }
-            mostrarPdfVazio(false, nomeTurma);
+            atualizarNomeTurmaPdf(nomeTurma);
             document.getElementById('listaAlunosTurmaMob').innerHTML = arr
                 .map(
                     (u) => `
@@ -163,7 +161,7 @@ require_once '../componentes/header.php';
             if (btn) {
                 btn.disabled = true;
             }
-            const r = await fetch('./upload_turma_pdf.php', { method: 'POST', body: fd });
+            const r = await fetch('../../../api/upload_turma_pdf.php', { method: 'POST', body: fd });
             const js = await r.json().catch(() => ({}));
             if (!r.ok || js.success === false) throw new Error(js.message || 'Falha no upload');
             msgEl.innerHTML = '<span class="text-success">Importação concluída. Atualizando…</span>';

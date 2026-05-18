@@ -174,25 +174,20 @@ require_once '../componentes/header.php';
 </main>
 
 <script>
-    // --- Lógica do Desktop (Mantida) ---
+    // --- Lógica compartilhada ---
     function alterarPontos(idElemento, valor) {
         const elemento = document.getElementById(idElemento);
         let pontosAtuais = parseInt(elemento.innerText);
-
         if (pontosAtuais + valor >= 0) {
             elemento.innerText = pontosAtuais + valor;
         }
     }
 
-    // --- Lógica do Mobile ---
-
-    // 1. Pegar o ID do Interclasse que veio pela URL da página de modalidades
     const urlParams = new URLSearchParams(window.location.search);
     const idInterclasse = urlParams.get('id');
     const modo = urlParams.get('modo') || 'create';
 
-    // Transfere o ID para o botão voltar do desktop (opcional, para não perder o fluxo)
-    if(idInterclasse){
+    if (idInterclasse) {
         if (modo === 'view') {
             const parent = document.getElementById('btnContinuarDesktop')?.parentElement;
             if (parent) parent.classList.add('d-none');
@@ -212,73 +207,102 @@ require_once '../componentes/header.php';
         }).catch(console.error);
     }
 
-    function salvarPontuacaoLocal() {
+    // Carregar valores do banco de dados
+    async function carregarPontuacao() {
         if (!idInterclasse) return;
-        const dados = {
-            p1: Number(document.getElementById('pontos-1')?.innerText || document.getElementById('pontos1Mobile')?.value || 10),
-            p2: Number(document.getElementById('pontos-2')?.innerText || document.getElementById('pontos2Mobile')?.value || 8),
-            p3: Number(document.getElementById('pontos-3')?.innerText || document.getElementById('pontos3Mobile')?.value || 5),
-            arr: Number(document.getElementById('pontos-arr')?.innerText || document.getElementById('multiplicadorMobile')?.value || 2),
-            pb: Number(document.getElementById('penalidadeBrigasMobile')?.value || 0),
-            pa: Number(document.getElementById('penalidadeArbitragemMobile')?.value || 0),
-            pe: Number(document.getElementById('penalidadeExtraMobile')?.value || 0)
-        };
-        localStorage.setItem(`sgi_pontuacao_${idInterclasse}`, JSON.stringify(dados));
+        try {
+            const resp = await fetch(`../../../api/interclasse.php?id_interclasse=${idInterclasse}`);
+            const dados = await resp.json();
+            const interclasse = Array.isArray(dados) ? dados[0] : dados;
+            if (!interclasse) return;
+
+            const p1 = interclasse.ponto_1_lugar ?? 10;
+            const p2 = interclasse.ponto_2_lugar ?? 7;
+            const p3 = interclasse.ponto_3_lugar ?? 5;
+            const arr = interclasse.valor_item_arrecadacao ?? 2;
+
+            // Desktop
+            if (document.getElementById('pontos-1')) document.getElementById('pontos-1').innerText = p1;
+            if (document.getElementById('pontos-2')) document.getElementById('pontos-2').innerText = p2;
+            if (document.getElementById('pontos-3')) document.getElementById('pontos-3').innerText = p3;
+            if (document.getElementById('pontos-arr')) document.getElementById('pontos-arr').innerText = arr;
+            // Mobile
+            if (document.getElementById('pontos1Mobile')) document.getElementById('pontos1Mobile').value = p1;
+            if (document.getElementById('pontos2Mobile')) document.getElementById('pontos2Mobile').value = p2;
+            if (document.getElementById('pontos3Mobile')) document.getElementById('pontos3Mobile').value = p3;
+            if (document.getElementById('multiplicadorMobile')) document.getElementById('multiplicadorMobile').value = arr;
+        } catch (e) {
+            console.error('Erro ao carregar pontuação:', e);
+        }
     }
 
-    function carregarPontuacaoLocal() {
-        if (!idInterclasse) return;
-        const salvo = localStorage.getItem(`sgi_pontuacao_${idInterclasse}`);
-        if (!salvo) return;
-        const dados = JSON.parse(salvo);
-        if (document.getElementById('pontos-1')) document.getElementById('pontos-1').innerText = dados.p1 ?? 10;
-        if (document.getElementById('pontos-2')) document.getElementById('pontos-2').innerText = dados.p2 ?? 8;
-        if (document.getElementById('pontos-3')) document.getElementById('pontos-3').innerText = dados.p3 ?? 5;
-        if (document.getElementById('pontos-arr')) document.getElementById('pontos-arr').innerText = dados.arr ?? 2;
-        if (document.getElementById('pontos1Mobile')) document.getElementById('pontos1Mobile').value = dados.p1 ?? 10;
-        if (document.getElementById('pontos2Mobile')) document.getElementById('pontos2Mobile').value = dados.p2 ?? 8;
-        if (document.getElementById('pontos3Mobile')) document.getElementById('pontos3Mobile').value = dados.p3 ?? 5;
-        if (document.getElementById('multiplicadorMobile')) document.getElementById('multiplicadorMobile').value = dados.arr ?? 2;
-        if (document.getElementById('penalidadeBrigasMobile')) document.getElementById('penalidadeBrigasMobile').value = dados.pb ?? 0;
-        if (document.getElementById('penalidadeArbitragemMobile')) document.getElementById('penalidadeArbitragemMobile').value = dados.pa ?? 0;
-        if (document.getElementById('penalidadeExtraMobile')) document.getElementById('penalidadeExtraMobile').value = dados.pe ?? 0;
-    }
-
-    // 2. Interceptar o clique do botão "Continuar" do Mobile
-    document.getElementById('btnContinuarMobile').addEventListener('click', async (e) => {
-        e.preventDefault();
-
+    // Salvar pontuação no banco de dados
+    async function salvarPontuacao() {
         if (!idInterclasse) {
-            alert("ID do interclasse não encontrado na URL! Volte e crie o interclasse novamente.");
-            return;
+            alert('ID do interclasse não encontrado na URL!');
+            return false;
         }
 
-        // Captura dos valores mantida para futura integração
-        const dadosRegulamento = {
-            id_interclasse: idInterclasse,
-            pontos_1_lugar: document.getElementById('pontos1Mobile').value,
-            pontos_2_lugar: document.getElementById('pontos2Mobile').value,
-            pontos_3_lugar: document.getElementById('pontos3Mobile').value,
-            multiplicador_arrecadacao: document.getElementById('multiplicadorMobile').value,
-            penalidade_brigas: document.getElementById('penalidadeBrigasMobile').value,
-            penalidade_arbitragem: document.getElementById('penalidadeArbitragemMobile').value,
-            penalidade_extra: document.getElementById('penalidadeExtraMobile').value
-        };
+        const p1 = Number(document.getElementById('pontos-1')?.innerText || document.getElementById('pontos1Mobile')?.value || 10);
+        const p2 = Number(document.getElementById('pontos-2')?.innerText || document.getElementById('pontos2Mobile')?.value || 7);
+        const p3 = Number(document.getElementById('pontos-3')?.innerText || document.getElementById('pontos3Mobile')?.value || 5);
+        const arr = Number(document.getElementById('pontos-arr')?.innerText || document.getElementById('multiplicadorMobile')?.value || 2);
 
-        const btnMobile = document.getElementById('btnContinuarMobile');
-        btnMobile.innerHTML = "Salvando...";
-        btnMobile.disabled = true;
+        try {
+            const formData = new FormData();
+            formData.append('ponto_1_lugar', p1);
+            formData.append('ponto_2_lugar', p2);
+            formData.append('ponto_3_lugar', p3);
+            formData.append('valor_item_arrecadacao', arr);
 
-        // Sem integração de API aqui por enquanto (conforme fluxo atual do projeto)
-        console.info("Dados de pontuação prontos para envio futuro:", dadosRegulamento);
-        salvarPontuacaoLocal();
-        window.location.href = modo === 'view'
-            ? `./dashboard.php?id=${idInterclasse}`
-            : `./edicao_resumo.php?id=${idInterclasse}`;
+            const resp = await fetch(`../../../api/interclasse.php?id=${idInterclasse}`, {
+                method: 'POST',
+                body: formData
+            });
+            const result = await resp.json();
+
+            if (result.success) {
+                return true;
+            } else {
+                alert('Erro ao salvar: ' + (result.message || 'Erro desconhecido'));
+                return false;
+            }
+        } catch (e) {
+            console.error('Erro ao salvar pontuação:', e);
+            alert('Erro ao salvar pontuação.');
+            return false;
+        }
+    }
+
+    // Botão Continuar Mobile
+    document.getElementById('btnContinuarMobile').addEventListener('click', async (e) => {
+        e.preventDefault();
+        const btn = document.getElementById('btnContinuarMobile');
+        btn.innerHTML = 'Salvando...';
+        btn.disabled = true;
+
+        const salvo = await salvarPontuacao();
+        if (salvo) {
+            window.location.href = modo === 'view'
+                ? `./dashboard.php?id=${idInterclasse}`
+                : `./edicao_resumo.php?id=${idInterclasse}`;
+        } else {
+            btn.innerHTML = 'Continuar';
+            btn.disabled = false;
+        }
     });
 
-    document.getElementById('btnContinuarDesktop')?.addEventListener('click', salvarPontuacaoLocal);
-    carregarPontuacaoLocal();
+    // Botão Continuar Desktop
+    document.getElementById('btnContinuarDesktop')?.addEventListener('click', async (e) => {
+        e.preventDefault();
+        const salvo = await salvarPontuacao();
+        if (salvo) {
+            window.location.href = `./edicao_resumo.php?id=${idInterclasse}`;
+        }
+    });
+
+    // Carregar valores ao iniciar
+    carregarPontuacao();
 </script>
 
 <?php
