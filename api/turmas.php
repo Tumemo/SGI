@@ -53,6 +53,41 @@ switch ($method) {
             break;
         }
 
+        $nomeTurma = trim((string) $data->nome_turma);
+        $turno = isset($data->turno_turma) ? trim((string) $data->turno_turma) : null;
+        $interclasseId = (int) $data->interclasses_id_interclasse;
+        $categoriaId = (int) $data->categorias_id_categoria;
+
+        $checkSql = "SELECT id_turma FROM turmas WHERE interclasses_id_interclasse = ? AND nome_turma = ?";
+        if ($turno === null) {
+            $checkSql .= " AND turno_turma IS NULL";
+        } else {
+            $checkSql .= " AND turno_turma = ?";
+        }
+        $checkSql .= " LIMIT 1";
+
+        $stmtCheck = $conn->prepare($checkSql);
+        if (!$stmtCheck) {
+            http_response_code(500);
+            echo json_encode(["success" => false, "message" => "Falha ao validar turma: " . $conn->error]);
+            break;
+        }
+
+        if ($turno === null) {
+            $stmtCheck->bind_param("is", $interclasseId, $nomeTurma);
+        } else {
+            $stmtCheck->bind_param("iss", $interclasseId, $nomeTurma, $turno);
+        }
+        $stmtCheck->execute();
+        $stmtCheck->store_result();
+        if ($stmtCheck->num_rows > 0) {
+            http_response_code(409);
+            echo json_encode(["success" => false, "message" => "Já existe uma turma com este nome e período nesta edição do interclasse."]);
+            $stmtCheck->close();
+            break;
+        }
+        $stmtCheck->close();
+
         $turno = $data->turno_turma ?? null;
         $fantasia = $data->nome_fantasia_turma ?? null;
 

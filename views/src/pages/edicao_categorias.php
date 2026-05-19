@@ -168,6 +168,36 @@ require_once '../componentes/header.php';
         aplicarModoContinuar();
     }
 
+    async function enviarPdf(form, msgEl, btn, idManual = null) {
+        msgEl.innerHTML = '';
+        if (!form) {
+            throw new Error('Formulário de upload não encontrado.');
+        }
+        const fd = new FormData(form);
+        const fileInput = form.querySelector('input[type="file"]');
+        if (fileInput && fileInput.files && fileInput.files[0]) {
+            fd.append('pdf_arquivo', fileInput.files[0]);
+        }
+        fd.append('id_interclasse', String(idInterclasse));
+        fd.append('id_categoria', String(categoriaSelecionada));
+        if (idManual !== null) {
+            fd.append('id_turma', String(idManual));
+        }
+
+        const response = await fetch('../../../api/upload_turma_pdf.php', { method: 'POST', body: fd, credentials: 'include' });
+        const text = await response.text();
+        let json = {};
+        try {
+            json = JSON.parse(text);
+        } catch (err) {
+            throw new Error('Resposta inválida do servidor: ' + text.slice(0, 200));
+        }
+        if (!response.ok || json.success === false) {
+            throw new Error(json.message || 'Falha ao enviar o PDF.');
+        }
+        return idManual !== null ? Object.assign(json, { id_turma: idManual }) : json;
+    }
+
     function selecionarCategoria(idCategoria, el) {
         categoriaSelecionada = Number(idCategoria);
         document.querySelectorAll('.categoria-item').forEach((item) => {
@@ -314,7 +344,7 @@ require_once '../componentes/header.php';
         }
     });
 
-    document.getElementById('formNovaTurmaCategoria').addEventListener('submit', async (e) => {
+    document.getElementById('formNovaTurmaCategoria').addEventListener('submit', (e) => {
         e.preventDefault();
         if (!categoriaSelecionada) {
             alert("Selecione uma categoria antes de criar a turma.");
@@ -328,43 +358,36 @@ require_once '../componentes/header.php';
         const turno = document.getElementById('inputTurnoTurma').value;
         const pdf = document.getElementById('arquivoUpload').files?.[0];
 
-        try {
-            btn.disabled = true;
-            btn.innerText = "Criando...";
-            msg.innerHTML = '';
+        btn.disabled = true;
+        btn.innerText = "Criando...";
+        msg.innerHTML = '';
 
-            const payloadTurma = {
-                interclasses_id_interclasse: Number(idInterclasse),
-                categorias_id_categoria: Number(categoriaSelecionada),
-                nome_turma: nomeTurma,
-                nome_fantasia_turma: nomeFantasia,
-                turno_turma: turno,
-                status_turma: "1"
-            };
+        const payloadTurma = {
+            interclasses_id_interclasse: Number(idInterclasse),
+            categorias_id_categoria: Number(categoriaSelecionada),
+            nome_turma: nomeTurma,
+            nome_fantasia_turma: nomeFantasia,
+            turno_turma: turno,
+            status_turma: "1"
+        };
 
-            const resTurma = await fetch('../../../api/turmas.php', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payloadTurma)
-            });
-            const turmaCriada = await resTurma.json();
-            if (!resTurma.ok || !turmaCriada.success) {
-                throw new Error(turmaCriada.message || 'Falha ao criar turma.');
-            }
-
-            if (pdf) {
-                const formData = new FormData();
-                formData.append('pdf', pdf);
-                formData.append('nome_turma', nomeTurma);
-                formData.append('id_interclasse', String(idInterclasse));
-                formData.append('id_categoria', String(categoriaSelecionada));
-                const up = await fetch('../../../api/upload_turma_pdf.php', { method: 'POST', body: formData });
-                const upJson = await up.json().catch(() => ({}));
-                if (!up.ok || upJson.success === false) {
-                    throw new Error(upJson.message || 'Falha ao processar o PDF.');
+        fetch('../../../api/turmas.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payloadTurma)
+        })
+        .then((resTurma) => {
+            return resTurma.json().then((turmaCriada) => {
+                if (!resTurma.ok || !turmaCriada.success) {
+                    throw new Error(turmaCriada.message || 'Falha ao criar turma.');
                 }
-            }
-
+                if (pdf) {
+                    return enviarPdf(document.getElementById('formNovaTurmaCategoria'), msg, btn, turmaCriada.id_turma);
+                }
+                return turmaCriada;
+            });
+        })
+        .then((result) => {
             msg.innerHTML = '<p class="text-success fw-bold mb-0">Turma criada com sucesso!</p>';
             document.getElementById('inputNomeTurma').value = '';
             document.getElementById('inputNomeFantasiaTurma').value = '';
@@ -372,16 +395,24 @@ require_once '../componentes/header.php';
             document.getElementById('arquivoUpload').value = '';
             document.getElementById('nomeArquivo').innerText = '';
 
+            const turmaId = (result && result.id_turma) ? result.id_turma : null;
             setTimeout(() => {
                 bootstrap.Modal.getOrCreateInstance(document.getElementById('criarTurma')).hide();
                 msg.innerHTML = '';
+                if (turmaId) {
+                    window.location.href = `./turma_alunos.php?id=${encodeURIComponent(idInterclasse)}&id_categoria=${encodeURIComponent(categoriaSelecionada)}&id_turma=${encodeURIComponent(turmaId)}`;
+                } else {
+                    carregarCategorias();
+                }
             }, 900);
-        } catch (error) {
+        })
+        .catch((error) => {
             msg.innerHTML = `<p class="text-danger fw-bold mb-0">${error.message || 'Erro ao criar turma.'}</p>`;
-        } finally {
+        })
+        .finally(() => {
             btn.disabled = false;
             btn.innerText = "Criar e enviar";
-        }
+        });
     });
 
     function mostrarNomeArquivo() {

@@ -26,7 +26,7 @@ final class ImportadorCompetidores
      * @param ?int $idCategoriaForcado Categoria para criar/vincular turmas do PDF. Se null, usa a primeira do interclasse.
      * @return array{status:string, mensagem?:string, interclasse_vinculado?:int, cadastrados?:int, erros?:list<string>}
      */
-    public function importarDeArquivo(?string $caminhoJson = null, ?int $idInterclasseForcado = null, ?int $idCategoriaForcado = null): array
+    public function importarDeArquivo(?string $caminhoJson = null, ?int $idInterclasseForcado = null, ?int $idCategoriaForcado = null, ?int $idTurmaForcado = null): array
     {
         $caminhoJson = $caminhoJson ?? self::caminhoJsonPadrao();
 
@@ -50,10 +50,25 @@ final class ImportadorCompetidores
         }
 
         $idCategoria = $this->resolverCategoriaPreferida($idInterclasse, $idCategoriaForcado);
+        $nomeTurmaForcada = null;
+        if ($idTurmaForcado !== null) {
+            $nomeTurmaForcada = $this->buscarNomeTurmaPorId($idTurmaForcado);
+            if ($nomeTurmaForcada === null) {
+                return ['status' => 'erro', 'mensagem' => 'Turma especificada pelo ID não foi encontrada.'];
+            }
+        }
         if ($idCategoria === null) {
             return ['status' => 'erro', 'mensagem' => 'Não existe categoria para este interclasse. Cadastre uma categoria ou informe id_categoria no upload.'];
         }
 
+        if ($nomeTurmaForcada !== null) {
+            foreach ($alunos as &$aluno) {
+                if (is_array($aluno)) {
+                    $aluno['turma'] = $nomeTurmaForcada;
+                }
+            }
+            unset($aluno);
+        }
         $prepared = $this->prepararLinhas($alunos);
         if ($prepared['fatal'] !== null) {
             return ['status' => 'erro', 'mensagem' => $prepared['fatal']];
@@ -261,6 +276,19 @@ final class ImportadorCompetidores
         return $map[$t] ?? 'integral';
     }
 
+    private function buscarNomeTurmaPorId(int $idTurma): ?string
+    {
+        $stmt = $this->conn->prepare('SELECT nome_turma FROM turmas WHERE id_turma = ? LIMIT 1');
+        if (!$stmt) {
+            return null;
+        }
+        $stmt->bind_param('i', $idTurma);
+        $stmt->execute();
+        $row = $stmt->get_result()->fetch_assoc();
+        $stmt->close();
+        return isset($row['nome_turma']) ? (string) $row['nome_turma'] : null;
+    }
+
     /**
      * RF02: cria turmas ausentes, atualiza vínculo com o Interclasse ativo em lote.
      *
@@ -387,8 +415,8 @@ final class ImportadorCompetidores
  * @param ?int $idInterclasse Opcional: edição alvo (sobrescreve "só ativo").
  * @param ?int $idCategoria Opcional: categoria para turmas novas do PDF.
  */
-function importarCompetidores(mysqli $conn, ?int $idInterclasse = null, ?int $idCategoria = null): array
+function importarCompetidores(mysqli $conn, ?int $idInterclasse = null, ?int $idCategoria = null, ?int $idTurma = null): array
 {
     $imp = new ImportadorCompetidores($conn);
-    return $imp->importarDeArquivo(null, $idInterclasse, $idCategoria);
+    return $imp->importarDeArquivo(null, $idInterclasse, $idCategoria, $idTurma);
 }

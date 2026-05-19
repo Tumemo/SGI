@@ -66,9 +66,9 @@ require_once '../componentes/header.php';
 <script>
     const API = '../../../api/';
     const params = new URLSearchParams(window.location.search);
-    const idInterclasse = params.get('id');
-    const idCategoria = params.get('id_categoria');
-    const idTurma = params.get('id_turma');
+    const idInterclasse = Number(params.get('id') || 0);
+    const idCategoria = Number(params.get('id_categoria') || 0);
+    const idTurma = Number(params.get('id_turma') || 0);
 
     function esc(s) {
         const d = document.createElement('div');
@@ -94,14 +94,20 @@ require_once '../componentes/header.php';
 
     async function carregarAlunos() {
         setVoltar();
-        if (!idTurma || !idInterclasse) {
+        if (!idTurma || isNaN(idTurma) || !idInterclasse || isNaN(idInterclasse)) {
             document.getElementById('listaAlunosTurmaMob').innerHTML = '<p class="text-muted">Parâmetros inválidos.</p>';
             return;
         }
         let nomeTurma = '';
         try {
             const rT = await fetch(`${API}turmas.php?id_turma=${encodeURIComponent(idTurma)}&id_interclasse=${encodeURIComponent(idInterclasse)}`);
-            const turmas = await rT.json();
+            const textTurmas = await rT.text();
+            let turmas = null;
+            try {
+                turmas = JSON.parse(textTurmas || 'null');
+            } catch (parseErr) {
+                throw new Error('Resposta inválida de turmas: ' + textTurmas.slice(0, 200));
+            }
             const t = Array.isArray(turmas) ? turmas[0] : null;
             nomeTurma = t?.nome_turma || 'Turma';
             document.getElementById('tituloTurmaMob').textContent = nomeTurma;
@@ -112,9 +118,15 @@ require_once '../componentes/header.php';
         }
 
         try {
-            const r = await fetch(`${API}usuarios.php?acao=listar_por_turma&id_turma=${encodeURIComponent(idTurma)}`);
-            const data = await r.json();
-            const arr = data.usuarios || (Array.isArray(data) ? data : []);
+            const r = await fetch(`${API}usuarios.php?acao=listar_competidores&id_turma=${encodeURIComponent(idTurma)}`);
+            const textData = await r.text();
+            let data;
+            try {
+                data = JSON.parse(textData || '{}');
+            } catch (parseErr) {
+                throw new Error('Resposta inválida de usuários: ' + textData.slice(0, 200));
+            }
+            const arr = data.competidores || data.usuarios || (Array.isArray(data) ? data : []);
             const n = arr.length;
             document.getElementById('contagemMob').textContent = `${n} aluno(s) na turma`;
             document.getElementById('contagemDesk').textContent = `${n} aluno(s) na turma`;
@@ -152,18 +164,32 @@ require_once '../componentes/header.php';
         }
     }
 
-    async function enviarPdf(form, msgEl, btn) {
+    async function enviarPdf(form, msgEl, btn, idManual = null) {
         msgEl.innerHTML = '';
-        const fd = new FormData(form);
+        // Construir FormData explicitamente para garantir nomes esperados pelo backend
+        const fd = new FormData();
+        // Anexa campos existentes do form (texto, hidden, etc.)
+        for (const [k, v] of new FormData(form).entries()) {
+            fd.append(k, v);
+        }
+        // Garante que o arquivo seja enviado com o nome esperado pelo servidor
+        const fileInput = form.querySelector('input[type="file"]');
+        if (fileInput && fileInput.files && fileInput.files[0]) {
+            fd.append('pdf_arquivo', fileInput.files[0]);
+        }
+        // Campos importantes enviados pelo frontend
         fd.append('id_interclasse', idInterclasse || '');
         fd.append('id_categoria', idCategoria || '');
+        fd.append('id_turma', idManual !== null ? String(idManual) : (idTurma || ''));
         try {
             if (btn) {
                 btn.disabled = true;
             }
-            const r = await fetch('../../../api/upload_turma_pdf.php', { method: 'POST', body: fd });
-            const js = await r.json().catch(() => ({}));
-            if (!r.ok || js.success === false) throw new Error(js.message || 'Falha no upload');
+            const r = await fetch('../../../api/upload_turma_pdf.php', { method: 'POST', body: fd, credentials: 'include' });
+            const text = await r.text();
+            let js = {};
+            try { js = JSON.parse(text); } catch (_) { js = {}; }
+            if (!r.ok || js.success === false) throw new Error(js.message || 'Falha no upload: ' + text);
             msgEl.innerHTML = '<span class="text-success">Importação concluída. Atualizando…</span>';
             setTimeout(() => window.location.reload(), 1200);
         } catch (err) {

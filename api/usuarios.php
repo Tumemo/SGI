@@ -69,33 +69,31 @@ function sgi_validar_inscricao_rf05(mysqli $conn, array $dados): array
 
 switch ($metodo) {
     case 'GET':
-        if ($acao === 'listar_competidores' || $acao === '') {
+        if ($acao === 'listar_competidores') {
+            $id_turma = isset($_GET['id_turma']) ? intval($_GET['id_turma']) : 0;
+            if ($id_turma <= 0) {
+                sgi_json_saida(['status' => 'erro', 'mensagem' => 'ID da turma é obrigatório e deve ser um número válido.']);
+                break;
+            }
+
+            $sql = "SELECT * FROM competidores WHERE id_turma = ?";
+            try {
+                $stmt = $conn->prepare($sql);
+                if (!$stmt) {
+                    throw new RuntimeException('Falha ao preparar consulta: ' . $conn->error);
+                }
+                $stmt->bind_param('i', $id_turma);
+                $stmt->execute();
+                $res = $stmt->get_result();
+                $lista = $res ? $res->fetch_all(MYSQLI_ASSOC) : [];
+                sgi_json_saida(['status' => 'sucesso', 'competidores' => $lista]);
+            } catch (Throwable $e) {
+                sgi_json_saida(['status' => 'erro', 'mensagem' => 'Falha ao listar competidores: ' . $e->getMessage()]);
+            }
+        } elseif ($acao === '' || $acao === 'listar_por_turma') {
             $sql = "SELECT id_usuario, nome_usuario, matricula_usuario, genero_usuario
                     FROM usuarios WHERE status_usuario = '1'";
             $res = $conn->query($sql);
-            $lista = $res ? $res->fetch_all(MYSQLI_ASSOC) : [];
-            sgi_json_saida(['status' => 'sucesso', 'usuarios' => $lista]);
-        } elseif ($acao === 'listar_por_turma') {
-            $id_turma = isset($_GET['id_turma']) ? intval($_GET['id_turma']) : 0;
-            if (!$id_turma) {
-                sgi_json_saida(['status' => 'erro', 'mensagem' => 'ID da turma é obrigatório']);
-                break;
-            }
-            $sql = "SELECT DISTINCT u.id_usuario, u.nome_usuario, u.matricula_usuario, u.genero_usuario
-                    FROM usuarios u
-                    WHERE u.status_usuario = '1'
-                      AND u.competidor_usuario = '1'
-                      AND (
-                          u.turmas_id_turma = ?
-                          OR EXISTS (
-                              SELECT 1 FROM competidores c
-                              WHERE c.usuarios_id_usuario = u.id_usuario AND c.turmas_id_turma = ?
-                          )
-                      )";
-            $stmt = $conn->prepare($sql);
-            $stmt->bind_param('ii', $id_turma, $id_turma);
-            $stmt->execute();
-            $res = $stmt->get_result();
             $lista = $res ? $res->fetch_all(MYSQLI_ASSOC) : [];
             sgi_json_saida(['status' => 'sucesso', 'usuarios' => $lista]);
         }

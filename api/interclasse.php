@@ -63,6 +63,25 @@ switch ($method) {
                 $params[] = $_POST['status_interclasse'];
                 $types .= "s";
             }
+            $activateNewInterclasse = false;
+            if (isset($_POST['status_interclasse']) && $_POST['status_interclasse'] === '1') {
+                $activateNewInterclasse = true;
+                $conn->begin_transaction();
+                $deactivate = $conn->prepare("UPDATE interclasses SET status_interclasse = '0' WHERE id_interclasse != ?");
+                if (!$deactivate) {
+                    $conn->rollback();
+                    echo json_encode(["success" => false, "message" => "Falha ao desativar interclasses anteriores: " . $conn->error]);
+                    break;
+                }
+                $deactivate->bind_param("i", $id);
+                if (!$deactivate->execute()) {
+                    $deactivate->close();
+                    $conn->rollback();
+                    echo json_encode(["success" => false, "message" => "Falha ao desativar interclasses anteriores: " . $deactivate->error]);
+                    break;
+                }
+                $deactivate->close();
+            }
             if (isset($data->valor_item_arrecadacao)) {
                 $campos[] = "valor_item_arrecadacao = ?";
                 $params[] = $data->valor_item_arrecadacao;
@@ -82,8 +101,14 @@ switch ($method) {
             $stmt->bind_param($types, ...$params);
 
             if ($stmt->execute()) {
+                if ($activateNewInterclasse) {
+                    $conn->commit();
+                }
                 echo json_encode(["success" => true, "message" => "Atualizado com sucesso!"]);
             } else {
+                if ($activateNewInterclasse) {
+                    $conn->rollback();
+                }
                 echo json_encode(["success" => false, "message" => $conn->error]);
             }
         } else {

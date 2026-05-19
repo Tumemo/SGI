@@ -4,8 +4,18 @@ require_once '../vendor/autoload.php';
 require_once '../config/db.php'; // Necessário para a variável $conn
 require_once __DIR__ . '/includes/importador_competidores.php';
 
-    use Smalot\PdfParser\Parser;
+use Smalot\PdfParser\Parser;
 
+// --- CONFIGURAÇÃO PARA AJAX ---
+ob_start(); // Previne que qualquer aviso ou echo quebre o JSON
+header('Content-Type: application/json');
+
+$resposta = [
+    "success" => false,
+    "message" => ""
+];
+
+try {
     $parser = new Parser();
     $pasta_pdf     = dirname(__DIR__) . DIRECTORY_SEPARATOR . 'docs' . DIRECTORY_SEPARATOR . 'lista_alunos' . DIRECTORY_SEPARATOR; 
     $pasta_destino = __DIR__ . DIRECTORY_SEPARATOR . 'json_turmas' . DIRECTORY_SEPARATOR;
@@ -77,39 +87,44 @@ require_once __DIR__ . '/includes/importador_competidores.php';
                         }
                     }
                 }
-                echo "✅ PDF <b>$nome_turma</b> processado.<br>";
+                // PDF $nome_turma processed silently (no direct output)
 
             } catch (Exception $e) {
-                echo "❌ Erro ao ler $nome_turma: " . $e->getMessage() . "<br>";
+                // Error reading this PDF; keep processing but don't echo HTML
+                $processError = "Erro ao ler $nome_turma: " . $e->getMessage();
             }
         }
-
         $lista_final = array_values($alunos_por_rm);
-        $total_final = count($lista_final);
-        $novos_adicionados = $total_final - $quantidade_inicial;
-
         $jsonFinal = json_encode($lista_final, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
         file_put_contents($arquivo_final, $jsonFinal);
 
-        echo "<hr>";
-        echo "🚀 <b>JSON gerado com sucesso!</b><br>";
+        // --- SINCRONIZAÇÃO COM O BANCO ---
+        // Use os IDs vindos diretamente do POST (enviados via FormData no frontend)
+        $id_interclasse_post = isset($_POST['id_interclasse']) ? (int)$_POST['id_interclasse'] : 0;
+        $id_categoria_post = isset($_POST['id_categoria']) ? (int)$_POST['id_categoria'] : 0;
+        $id_turma_post = isset($_POST['id_turma']) ? (int)$_POST['id_turma'] : null;
 
-        // --- O GATILHO DA AUTOMAÇÃO ---
-        // Sincronização com o banco (transação em importador_competidores.php)
-        $resultadoBD = importarCompetidores(
-            $conn,
-            !empty($GLOBALS['SGI_IMPORT_ID_INTERCLASSE']) ? (int) $GLOBALS['SGI_IMPORT_ID_INTERCLASSE'] : null,
-            !empty($GLOBALS['SGI_IMPORT_ID_CATEGORIA']) ? (int) $GLOBALS['SGI_IMPORT_ID_CATEGORIA'] : null
-        );
+        $resultadoBD = importarCompetidores($conn, $id_interclasse_post, $id_categoria_post, $id_turma_post);
 
-        if ($resultadoBD['status'] === 'sucesso') {
-            echo "🗄️ <b>Banco de Dados:</b> Sincronização automática concluída!<br>";
-            echo "📥 Registros inseridos/verificados: <b>" . $resultadoBD['cadastrados'] . "</b>";
+        if (isset($resultadoBD['status']) && $resultadoBD['status'] === 'sucesso') {
+            $resposta['success'] = true;
+            $cadastrados = isset($resultadoBD['cadastrados']) ? (int)$resultadoBD['cadastrados'] : 0;
+            $resposta['message'] = "Importação concluída: $cadastrados registros inseridos.";
         } else {
-            echo "❌ <b>Banco de Dados:</b> Falha na integração: " . $resultadoBD['mensagem'];
+            $mens = $resultadoBD['mensagem'] ?? 'Erro desconhecido';
+            $resposta['message'] = "Falha na integração com banco: " . $mens;
         }
 
     } else {
-        echo "⚠️ Nenhum PDF novo encontrado em $pasta_pdf";
+        $resposta['message'] = "Nenhum PDF novo encontrado.";
     }
-    ?>
+
+} catch (Exception $e) {
+    $resposta['message'] = "Erro crítico: " . $e->getMessage();
+}
+
+// Limpa qualquer saída HTML/resíduos e entrega apenas o JSON
+ob_end_clean();
+echo json_encode($resposta);
+exit;
+?>
