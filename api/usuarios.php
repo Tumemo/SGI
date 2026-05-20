@@ -76,7 +76,8 @@ switch ($metodo) {
                 break;
             }
 
-            $sql = "SELECT * FROM competidores WHERE id_turma = ?";
+            $sql = "SELECT id_usuario, nome_usuario, matricula_usuario, genero_usuario
+                    FROM usuarios WHERE turmas_id_turma = ? AND competidor_usuario = '1' AND status_usuario = '1'";
             try {
                 $stmt = $conn->prepare($sql);
                 if (!$stmt) {

@@ -75,7 +75,10 @@ require_once '../componentes/header.php';
             const resumoHtml = `
                 <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
                     <div>
-                        <h5 class="fw-bold mb-1">${modalidade.nome_modalidade}</h5>
+                        <h5 class="fw-bold mb-1">
+                            <span id="nomeModalidadeDisplay">${modalidade.nome_modalidade}</span>
+                            <i class="bi bi-pencil-square text-primary ms-2" style="cursor:pointer;font-size:0.9rem;" onclick="editarNomeModalidade(${modalidade.id_modalidade})" title="Editar nome"></i>
+                        </h5>
                         <p class="text-muted mb-1">Categoria: ${modalidade.nome_categoria || '-'}</p>
                         <p class="text-muted mb-0">Tipo: ${modalidade.nome_tipo_modalidade || '-'}</p>
                     </div>
@@ -105,6 +108,49 @@ require_once '../componentes/header.php';
             document.getElementById('listaTurmasMobile').innerHTML = '<p class="text-danger">Erro ao carregar.</p>';
             document.getElementById('listaEquipesDesktop').innerHTML = '<p class="text-danger">Erro ao carregar.</p>';
         }
+    }
+
+    function editarNomeModalidade(idModalidade) {
+        document.querySelectorAll('#nomeModalidadeDisplay').forEach(function(display) {
+            if (display.querySelector('input')) return;
+            const nomeAtual = display.textContent.trim();
+            display.innerHTML = `
+                <input type="text" class="form-control form-control-sm d-inline-block" style="width:auto;min-width:200px;" value="${nomeAtual}" id="inputNomeModalidade">
+                <button class="btn btn-sm btn-success ms-1" onclick="salvarNomeModalidade(${idModalidade})">Salvar</button>
+                <button class="btn btn-sm btn-secondary ms-1" onclick="cancelarEdicaoNome('${nomeAtual.replace(/'/g, "\\'")}')">Cancelar</button>
+            `;
+            display.querySelector('input').focus();
+        });
+    }
+
+    async function salvarNomeModalidade(idModalidade) {
+        const input = document.querySelector('#nomeModalidadeDisplay input');
+        if (!input) return;
+        const novoNome = input.value.trim();
+        if (!novoNome) { alert('O nome não pode estar vazio.'); return; }
+
+        try {
+            const resp = await fetch('../../../api/modalidades.php', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id_modalidade: idModalidade, nome_modalidade: novoNome })
+            });
+            const data = await resp.json();
+            if (data.success === false) throw new Error(data.message || 'Erro ao atualizar.');
+            document.querySelectorAll('#nomeModalidadeDisplay').forEach(function(display) {
+                display.innerHTML = novoNome + ` <i class="bi bi-pencil-square text-primary ms-2" style="cursor:pointer;font-size:0.9rem;" onclick="editarNomeModalidade(${idModalidade})" title="Editar nome"></i>`;
+            });
+        } catch (err) {
+            alert('Erro ao salvar: ' + err.message);
+        }
+    }
+
+    function cancelarEdicaoNome(nomeAtual) {
+        const params = new URLSearchParams(window.location.search);
+        const idModalidade = params.get('id_modalidade');
+        document.querySelectorAll('#nomeModalidadeDisplay').forEach(function(display) {
+            display.innerHTML = nomeAtual + ` <i class="bi bi-pencil-square text-primary ms-2" style="cursor:pointer;font-size:0.9rem;" onclick="editarNomeModalidade(${idModalidade})" title="Editar nome"></i>`;
+        });
     }
 
     window.addEventListener('load', carregarDetalhesModalidade);
