@@ -8,6 +8,9 @@ require_once '../componentes/header.php';
 
 <main class="d-md-none p-3" style="padding-top: 5rem; padding-bottom: 5rem;">
     <p class="text-secondary text-center small mb-3">Equipes por modalidade e categoria desta edição.</p>
+    <button class="btn btn-danger w-100 fw-semibold mb-3 border-0 shadow-sm" style="background-color: #ed1c24; border-radius: 6px;" data-bs-toggle="modal" data-bs-target="#modalCriarEquipe">
+        <i class="bi bi-plus-lg me-1"></i> Criar equipe
+    </button>
     <div id="listaEquipesMobile" class="d-flex flex-column gap-3"></div>
 </main>
 
@@ -18,14 +21,48 @@ require_once '../componentes/header.php';
                 <i class="bi bi-arrow-left-circle fs-5"></i>
                 <span id="nomeInterclasseEquipes" style="font-weight: 400;">Interclasse</span>
             </a>
-            <h4 class="text-dark d-flex align-items-center gap-2 mb-0" style="font-weight: 400;">
-                <i class="bi bi-people fs-4"></i> Equipes
-            </h4>
+            <div class="d-flex justify-content-between align-items-center">
+                <h4 class="text-dark d-flex align-items-center gap-2 mb-0" style="font-weight: 400;">
+                    <i class="bi bi-people fs-4"></i> Equipes
+                </h4>
+                <button class="btn btn-danger fw-semibold border-0 shadow-sm px-3 py-2" style="background-color: #ed1c24; border-radius: 6px;" data-bs-toggle="modal" data-bs-target="#modalCriarEquipe">
+                    <i class="bi bi-plus-lg me-1"></i> Criar equipe
+                </button>
+            </div>
             <p class="text-muted small mt-2 mb-0">Lista das equipes cadastradas nas modalidades. Toque para abrir o elenco da turma.</p>
         </div>
         <div id="listaEquipesDesktop"></div>
     </div>
 </main>
+
+<!-- Modal Criar Equipe -->
+<div class="modal fade" id="modalCriarEquipe" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header border-0">
+                <h5 class="modal-title text-danger">Criar nova equipe</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="formCriarEquipe">
+                    <label for="selectModalidadeEquipe" class="form-label">Modalidade</label>
+                    <select id="selectModalidadeEquipe" class="form-select mb-3" required>
+                        <option value="" selected disabled>Carregando modalidades...</option>
+                    </select>
+                    <label for="selectTurmaEquipe" class="form-label">Turma</label>
+                    <select id="selectTurmaEquipe" class="form-select mb-3" required>
+                        <option value="" selected disabled>Carregando turmas...</option>
+                    </select>
+                    <div id="msgCriarEquipe" class="text-center mb-2"></div>
+                    <div class="d-flex justify-content-end gap-2">
+                        <button type="button" class="btn btn-outline-danger" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-danger" id="btnSalvarEquipe">Criar equipe</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
 
 <script>
     const API = '../../../api/';
@@ -149,6 +186,77 @@ require_once '../componentes/header.php';
             desk.innerHTML = '<p class="text-danger">Erro ao carregar equipes.</p>';
         }
     }
+
+    async function carregarSelectsEquipe() {
+        if (!idInterclasseEq) return;
+        try {
+            const [resMod, resTurmas] = await Promise.all([
+                fetch(`${API}modalidades.php?id_interclasse=${encodeURIComponent(idInterclasseEq)}`),
+                fetch(`${API}turmas.php?id_interclasse=${encodeURIComponent(idInterclasseEq)}`)
+            ]);
+            const modalidades = await resMod.json();
+            const turmas = await resTurmas.json();
+
+            const selMod = document.getElementById('selectModalidadeEquipe');
+            const arr = Array.isArray(modalidades) ? modalidades : [];
+            selMod.innerHTML = arr.length
+                ? '<option value="" selected disabled>Selecione a modalidade</option>' + arr.map((m) => `<option value="${m.id_modalidade}">${esc(m.nome_modalidade)} (${esc(m.genero_modalidade)})</option>`).join('')
+                : '<option value="" selected disabled>Nenhuma modalidade encontrada</option>';
+            selMod.disabled = !arr.length;
+
+            const selTurma = document.getElementById('selectTurmaEquipe');
+            const arrT = Array.isArray(turmas) ? turmas : [];
+            selTurma.innerHTML = arrT.length
+                ? '<option value="" selected disabled>Selecione a turma</option>' + arrT.map((t) => `<option value="${t.id_turma}">${esc(t.nome_turma)}</option>`).join('')
+                : '<option value="" selected disabled>Nenhuma turma encontrada</option>';
+            selTurma.disabled = !arrT.length;
+        } catch (e) {
+            console.error('Erro ao carregar selects:', e);
+        }
+    }
+
+    document.getElementById('formCriarEquipe').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const idModalidade = document.getElementById('selectModalidadeEquipe').value;
+        const idTurma = document.getElementById('selectTurmaEquipe').value;
+        const msg = document.getElementById('msgCriarEquipe');
+        const btn = document.getElementById('btnSalvarEquipe');
+
+        if (!idModalidade || !idTurma) {
+            msg.innerHTML = '<p class="text-danger small">Selecione a modalidade e a turma.</p>';
+            return;
+        }
+
+        btn.disabled = true;
+        btn.textContent = 'Criando…';
+        msg.innerHTML = '';
+
+        try {
+            const resp = await fetch(`${API}equipes.php`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    acao: 'criar_equipe',
+                    modalidades_id_modalidade: Number(idModalidade),
+                    turmas_id_turma: Number(idTurma),
+                    status_equipe: '1'
+                })
+            });
+            const data = await resp.json();
+            if (data.success === false) throw new Error(data.message || 'Erro ao criar equipe.');
+
+            bootstrap.Modal.getInstance(document.getElementById('modalCriarEquipe')).hide();
+            this.reset();
+            carregarEquipes();
+        } catch (err) {
+            msg.innerHTML = `<p class="text-danger small">${esc(err.message)}</p>`;
+        } finally {
+            btn.disabled = false;
+            btn.textContent = 'Criar equipe';
+        }
+    });
+
+    document.getElementById('modalCriarEquipe').addEventListener('show.bs.modal', carregarSelectsEquipe);
 
     document.addEventListener('DOMContentLoaded', () => {
         carregarEquipes();

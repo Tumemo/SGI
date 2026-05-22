@@ -196,7 +196,7 @@ require_once '../componentes/header.php';
             </div>
 
             <div class="col-12 col-md-6 col-lg-4">
-                <a href="edicao_categorias.php" id="linkTurmas" class="dash-card">
+                <a href="turmas.php" id="linkTurmas" class="dash-card">
                     <div class="dash-card-red-corner"></div>
                     <div class="dash-card-header">
                         <div class="dash-card-icon">
@@ -268,7 +268,7 @@ require_once '../componentes/header.php';
             link.href = `./colaboradores.php?id=${idInterclasse}&modo=view`;
         });
         document.querySelectorAll('#linkTurmas').forEach(link => {
-            link.href = `./edicao_categorias.php?id=${idInterclasse}&modo=view`;
+            link.href = `./turmas.php?id=${idInterclasse}&modo=view`;
         });
         document.querySelectorAll('#linkEquipes').forEach(link => {
             link.href = `./edicao_equipes.php?id=${idInterclasse}`;
