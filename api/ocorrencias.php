@@ -9,11 +9,11 @@ switch ($method) {
         $filtro = aplicarFiltrosOcorrencias();
 
         $sql = "SELECT 
-                    ocorrencias.id_ocorrecia, 
-                    ocorrencias.titulo_ocorrecia, 
-                    ocorrencias.descricao_ocorrecia, 
-                    ocorrencias.data_ocorrecia, 
-                    ocorrencias.hora_ocorrecia, 
+                    ocorrencias.id_ocorrencia, 
+                    ocorrencias.titulo_ocorrencia, 
+                    ocorrencias.descricao_ocorrencia, 
+                    ocorrencias.data_ocorrencia, 
+                    ocorrencias.hora_ocorrencia, 
                     ocorrencias.penalidade,
                     usuarios.nome_usuario,
                     usuarios.id_usuario
@@ -21,7 +21,7 @@ switch ($method) {
                 INNER JOIN usuarios ON ocorrencias.usuarios_id_usuario = usuarios.id_usuario 
                 WHERE 1=1" . $filtro['sql'];
 
-        $sql .= " ORDER BY ocorrencias.data_ocorrecia DESC, ocorrencias.hora_ocorrecia DESC";
+        $sql .= " ORDER BY ocorrencias.data_ocorrencia DESC, ocorrencias.hora_ocorrencia DESC";
 
         $stmt = $conn->prepare($sql);
 
@@ -37,7 +37,7 @@ switch ($method) {
     case 'POST':
         $data = json_decode(file_get_contents("php://input"));
 
-        if (!isset($data->titulo_ocorrecia, $data->descricao_ocorrecia, $data->data_ocorrecia, $data->usuarios_id_usuario)) {
+        if (!isset($data->titulo_ocorrencia, $data->descricao_ocorrencia, $data->data_ocorrencia, $data->usuarios_id_usuario)) {
             http_response_code(400);
             echo json_encode(["success" => false, "message" => "Dados incompletos."]);
             break;
@@ -45,16 +45,16 @@ switch ($method) {
 
         $penalidade = isset($data->penalidade) ? intval($data->penalidade) : 0;
 
-        $sql = "INSERT INTO ocorrencias (titulo_ocorrecia, descricao_ocorrecia, data_ocorrecia, usuarios_id_usuario, penalidade) 
+        $sql = "INSERT INTO ocorrencias (titulo_ocorrencia, descricao_ocorrencia, data_ocorrencia, usuarios_id_usuario, penalidade) 
                 VALUES (?, ?, ?, ?, ?)";
 
         $stmt = $conn->prepare($sql);
 
         $stmt->bind_param(
             "sssii",
-            $data->titulo_ocorrecia,
-            $data->descricao_ocorrecia,
-            $data->data_ocorrecia,
+            $data->titulo_ocorrencia,
+            $data->descricao_ocorrencia,
+            $data->data_ocorrencia,
             $data->usuarios_id_usuario,
             $penalidade
         );
@@ -69,11 +69,10 @@ switch ($method) {
         break;
 
     case 'PUT':
-case 'PUT':
         $data = json_decode(file_get_contents("php://input"));
 
         // Apenas o ID é estritamente obrigatório para localizar o registro
-        if (!isset($data->id_ocorrecia)) {
+        if (!isset($data->id_ocorrencia)) {
             http_response_code(400);
             echo json_encode(["success" => false, "message" => "O ID da ocorrência é obrigatório."]);
             break;
@@ -84,20 +83,20 @@ case 'PUT':
         $types = "";
 
         // Verificação dinâmica de cada campo
-        if (isset($data->titulo_ocorrecia)) {
-            $campos[] = "titulo_ocorrecia = ?";
-            $params[] = $data->titulo_ocorrecia;
+        if (isset($data->titulo_ocorrencia)) {
+            $campos[] = "titulo_ocorrencia = ?";
+            $params[] = $data->titulo_ocorrencia;
             $types .= "s"; // string
         }
 
-        if (isset($data->descricao_ocorrecia)) {
-            $campos[] = "descricao_ocorrecia = ?";
-            $params[] = $data->descricao_ocorrecia;
+        if (isset($data->descricao_ocorrencia)) {
+            $campos[] = "descricao_ocorrencia = ?";
+            $params[] = $data->descricao_ocorrencia;
             $types .= "s"; 
         }
-        if (isset($data->status_ocorrecia)) {
-            $campos[] = "status_ocorrecia = ?";
-            $params[] = $data->status_ocorrecia;
+        if (isset($data->status_ocorrencia)) {
+            $campos[] = "status_ocorrencia = ?";
+            $params[] = $data->status_ocorrencia;
             $types .= "s"; 
         }
 
@@ -112,10 +111,10 @@ case 'PUT':
             break;
         }
 
-        $sql = "UPDATE ocorrencias SET " . implode(", ", $campos) . " WHERE id_ocorrecia = ?";
+        $sql = "UPDATE ocorrencias SET " . implode(", ", $campos) . " WHERE id_ocorrencia = ?";
         
 
-        $params[] = $data->id_ocorrecia;
+        $params[] = $data->id_ocorrencia;
         $types .= "i";
 
         $stmt = $conn->prepare($sql);

@@ -34,10 +34,11 @@ function sgi_parse_data_nascimento(?string $data): ?string
 
 /**
  * RF05: cruza RA e data de nascimento na base importada (competidor ativo).
+ * Filtra obrigatoriamente pelo interclasse ativo ($idInterclasse).
  */
-function sgi_buscar_competidor_por_ra_e_data(mysqli $conn, string $raNormalizado, string $dataYmd): ?array
+function sgi_buscar_competidor_por_ra_e_data(mysqli $conn, string $raNormalizado, string $dataYmd, int $idInterclasse): ?array
 {
-    if ($raNormalizado === '') {
+    if ($raNormalizado === '' || $idInterclasse <= 0) {
         return null;
     }
     $sql = 'SELECT id_usuario, nome_usuario, matricula_usuario, senha_usuario, nivel_usuario,
@@ -45,6 +46,7 @@ function sgi_buscar_competidor_por_ra_e_data(mysqli $conn, string $raNormalizado
             FROM usuarios
             WHERE matricula_usuario = ?
               AND data_nasc_usuario = ?
+              AND interclasses_id_interclasse = ?
               AND competidor_usuario = \'1\'
               AND status_usuario = \'1\'
             LIMIT 1';
@@ -52,7 +54,7 @@ function sgi_buscar_competidor_por_ra_e_data(mysqli $conn, string $raNormalizado
     if (!$stmt) {
         return null;
     }
-    $stmt->bind_param('ss', $raNormalizado, $dataYmd);
+    $stmt->bind_param('ssi', $raNormalizado, $dataYmd, $idInterclasse);
     $stmt->execute();
     $row = $stmt->get_result()->fetch_assoc();
     $stmt->close();

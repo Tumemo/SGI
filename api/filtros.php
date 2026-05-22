@@ -278,7 +278,7 @@ function aplicarFiltrosOcorrencias() {
     }
 
     if (!empty($_GET['data'])) {
-        $sqlExtras .= " AND ocorrencias.data_ocorrecia = ?";
+        $sqlExtras .= " AND ocorrencias.data_ocorrencia = ?";
         $types .= "s";
         $params[] = $_GET['data'];
     }
@@ -290,7 +290,7 @@ function aplicarFiltrosOcorrencias() {
     }
 
     if (!empty($_GET['busca'])) {
-        $sqlExtras .= " AND (ocorrencias.titulo_ocorrecia LIKE ? OR ocorrencias.descricao_ocorrecia LIKE ?)";
+        $sqlExtras .= " AND (ocorrencias.titulo_ocorrencia LIKE ? OR ocorrencias.descricao_ocorrencia LIKE ?)";
         $types .= "ss";
         $params[] = "%" . $_GET['busca'] . "%";
         $params[] = "%" . $_GET['busca'] . "%";

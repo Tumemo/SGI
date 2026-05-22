@@ -116,9 +116,9 @@ switch ($method) {
             $params[] = $data->resultado_partida;
             $types .= "i";
         }
-        if (isset($data->status_pardida)) {
-            $campos[] = "status_pardida = ?";
-            $params[] = $data->status_pardida;
+        if (isset($data->status_partida)) {
+            $campos[] = "status_partida = ?";
+            $params[] = $data->status_partida;
             $types .= "s";
         }
 

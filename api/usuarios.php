@@ -5,6 +5,7 @@ declare(strict_types=1);
 require_once dirname(__DIR__) . '/config/db.php';
 require_once __DIR__ . '/includes/usuario_validacao.php';
 require_once __DIR__ . '/includes/importador_competidores.php';
+require_once __DIR__ . '/includes/interclasse_helper.php';
 
 header('Content-Type: application/json; charset=utf-8');
 
@@ -34,6 +35,11 @@ function sgi_validar_inscricao_rf05(mysqli $conn, array $dados): array
         session_start();
     }
 
+    $idInterclasseAtivo = buscarInterclasseAtivo($conn);
+    if ($idInterclasseAtivo === null) {
+        return erroSemInterclasseAtivo();
+    }
+
     $matriculaBruta = trim((string) ($dados['matricula_usuario'] ?? $dados['rm'] ?? $dados['ra'] ?? ''));
     $ra = sgi_normalizar_ra($matriculaBruta);
     $dataYmd = sgi_parse_data_nascimento($dados['data_nasc_usuario'] ?? '');
@@ -42,7 +48,7 @@ function sgi_validar_inscricao_rf05(mysqli $conn, array $dados): array
         return ['status' => 'erro', 'mensagem' => 'Não foi possível validar os dados informados.'];
     }
 
-    $usuario = sgi_buscar_competidor_por_ra_e_data($conn, $ra, $dataYmd);
+    $usuario = sgi_buscar_competidor_por_ra_e_data($conn, $ra, $dataYmd, $idInterclasseAtivo);
     if ($usuario === null) {
         return ['status' => 'erro', 'mensagem' => 'Não foi possível validar os dados informados.'];
     }
@@ -50,6 +56,7 @@ function sgi_validar_inscricao_rf05(mysqli $conn, array $dados): array
     $_SESSION['logado'] = true;
     $_SESSION['id_usuario'] = (int) $usuario['id_usuario'];
     $_SESSION['nivel'] = $usuario['nivel_usuario'];
+    $_SESSION['id_interclasse'] = $idInterclasseAtivo;
 
     return [
         'status' => 'sucesso',
@@ -69,6 +76,12 @@ function sgi_validar_inscricao_rf05(mysqli $conn, array $dados): array
 
 switch ($metodo) {
     case 'GET':
+        $idInterclasseAtivo = buscarInterclasseAtivo($conn);
+        if ($idInterclasseAtivo === null) {
+            sgi_json_saida(erroSemInterclasseAtivo());
+            break;
+        }
+
         if ($acao === 'listar_competidores') {
             $id_turma = isset($_GET['id_turma']) ? intval($_GET['id_turma']) : 0;
             if ($id_turma <= 0) {
@@ -77,13 +90,13 @@ switch ($metodo) {
             }
 
             $sql = "SELECT id_usuario, nome_usuario, matricula_usuario, genero_usuario
-                    FROM usuarios WHERE turmas_id_turma = ? AND competidor_usuario = '1' AND status_usuario = '1'";
+                    FROM usuarios WHERE turmas_id_turma = ? AND interclasses_id_interclasse = ? AND competidor_usuario = '1' AND status_usuario = '1'";
             try {
                 $stmt = $conn->prepare($sql);
                 if (!$stmt) {
                     throw new RuntimeException('Falha ao preparar consulta: ' . $conn->error);
                 }
-                $stmt->bind_param('i', $id_turma);
+                $stmt->bind_param('ii', $id_turma, $idInterclasseAtivo);
                 $stmt->execute();
                 $res = $stmt->get_result();
                 $lista = $res ? $res->fetch_all(MYSQLI_ASSOC) : [];
@@ -93,8 +106,15 @@ switch ($metodo) {
             }
         } elseif ($acao === '' || $acao === 'listar_por_turma') {
             $sql = "SELECT id_usuario, nome_usuario, matricula_usuario, genero_usuario
-                    FROM usuarios WHERE status_usuario = '1'";
-            $res = $conn->query($sql);
+                    FROM usuarios WHERE interclasses_id_interclasse = ? AND status_usuario = '1'";
+            $stmt = $conn->prepare($sql);
+            if (!$stmt) {
+                sgi_json_saida(['status' => 'erro', 'mensagem' => $conn->error]);
+                break;
+            }
+            $stmt->bind_param('i', $idInterclasseAtivo);
+            $stmt->execute();
+            $res = $stmt->get_result();
             $lista = $res ? $res->fetch_all(MYSQLI_ASSOC) : [];
             sgi_json_saida(['status' => 'sucesso', 'usuarios' => $lista]);
         }
@@ -113,6 +133,12 @@ switch ($metodo) {
         }
 
         if ($acao === 'cadastrar_usuario') {
+            $idInterclasseAtivo = buscarInterclasseAtivo($conn);
+            if ($idInterclasseAtivo === null) {
+                sgi_json_saida(erroSemInterclasseAtivo());
+                break;
+            }
+
             $dados = !empty($_POST) ? $_POST : $inputData;
 
             $nome = trim((string) ($dados['nome_usuario'] ?? ''));
@@ -126,6 +152,7 @@ switch ($metodo) {
             $mesario = $isAdmin ? '1' : (string) ($dados['is_mesario_clicado'] ?? '0');
             $competidor = $isAdmin ? '0' : '1';
             $sigla = $competidor === '0' ? 'SS' : (string) ($dados['sigla_usuario'] ?? 'RM');
+            $genero = (string) ($dados['genero_usuario'] ?? 'MASC');
 
             $nomeFotoBanco = 'default.jpg';
 
@@ -149,7 +176,7 @@ switch ($metodo) {
             $senhaHash = password_hash($senhaCrua, PASSWORD_DEFAULT);
             $status = '1';
 
-            $sql = 'INSERT INTO usuarios (nome_usuario, matricula_usuario, senha_usuario, nivel_usuario, competidor_usuario, mesario_usuario, foto_usuario, status_usuario, data_nasc_usuario, sigla_usuario) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
+            $sql = 'INSERT INTO usuarios (nome_usuario, matricula_usuario, senha_usuario, nivel_usuario, competidor_usuario, mesario_usuario, genero_usuario, foto_usuario, status_usuario, data_nasc_usuario, sigla_usuario, interclasses_id_interclasse) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
 
             $stmt = $conn->prepare($sql);
             if (!$stmt) {
@@ -158,23 +185,29 @@ switch ($metodo) {
             }
 
             $stmt->bind_param(
-                'ssssssssss',
+                'sssssssssssi',
                 $nome,
                 $matricula,
                 $senhaHash,
                 $nivel,
                 $competidor,
                 $mesario,
+                $genero,
                 $nomeFotoBanco,
                 $status,
                 $dataNasc,
-                $sigla
+                $sigla,
+                $idInterclasseAtivo
             );
 
             if ($stmt->execute()) {
                 sgi_json_saida(['status' => 'sucesso', 'mensagem' => 'Usuário cadastrado!']);
             } else {
-                sgi_json_saida(['status' => 'erro', 'mensagem' => $stmt->error]);
+                if ($stmt->errno === 1062) {
+                    sgi_json_saida(['status' => 'erro', 'mensagem' => 'Essa matrícula já está cadastrada nesta edição do interclasse.']);
+                } else {
+                    sgi_json_saida(['status' => 'erro', 'mensagem' => $stmt->error]);
+                }
             }
             $stmt->close();
             break;
@@ -182,16 +215,28 @@ switch ($metodo) {
         break;
 
     case 'PUT':
-        if (date('d/m') === '01/01') {
-            $ano = (int) date('Y');
-            $sql = "UPDATE usuarios SET matricula_usuario = (" . $ano . " * 1000000) + matricula_usuario, nome_usuario = CONCAT(nome_usuario, ' (', " . $ano . ", ')'), senha_usuario = CONCAT(senha_usuario, '_old'), status_usuario = '0' WHERE status_usuario = '1'";
-            if ($conn->query($sql)) {
-                sgi_json_saida(['status' => 'sucesso', 'mensagem' => 'Reset concluído']);
-            } else {
-                sgi_json_saida(['status' => 'erro', 'mensagem' => $conn->error]);
-            }
-        } else {
-            sgi_json_saida(['status' => 'erro', 'mensagem' => 'Apenas em 01/01']);
+        // Encerrar edição: desativa o interclasse e o trigger automaticamente desativa os usuários
+        $dadosPut = !empty($inputData) ? $inputData : $_GET;
+        $idAlvo = (int) ($dadosPut['id_interclasse'] ?? 0);
+        $novoStatus = (string) ($dadosPut['status_interclasse'] ?? '');
+
+        if ($idAlvo <= 0 || !in_array($novoStatus, ['0', '1'], true)) {
+            sgi_json_saida(['status' => 'erro', 'mensagem' => 'Informe id_interclasse e status_interclasse (0 ou 1).']);
+            break;
         }
+
+        $stmt = $conn->prepare("UPDATE interclasses SET status_interclasse = ? WHERE id_interclasse = ?");
+        if (!$stmt) {
+            sgi_json_saida(['status' => 'erro', 'mensagem' => $conn->error]);
+            break;
+        }
+        $stmt->bind_param('si', $novoStatus, $idAlvo);
+        if ($stmt->execute()) {
+            $acaoTxt = $novoStatus === '1' ? 'ativada' : 'encerrada';
+            sgi_json_saida(['status' => 'sucesso', 'mensagem' => "Edição $acaoTxt. Usuários atualizados automaticamente."]);
+        } else {
+            sgi_json_saida(['status' => 'erro', 'mensagem' => $stmt->error]);
+        }
+        $stmt->close();
         break;
 }

@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 require_once __DIR__ . '/usuario_validacao.php';
+require_once __DIR__ . '/interclasse_helper.php';
 
 /**
  * Importação RF01/RF02 com transação e pré-processamento de turmas.
@@ -32,7 +33,7 @@ final class ImportadorCompetidores
 
         $idInterclasse = $this->resolverInterclassePreferido($idInterclasseForcado);
         if ($idInterclasse === null) {
-            return ['status' => 'erro', 'mensagem' => 'Interclasse inválido ou nenhuma edição ativa. Informe id_interclasse no upload ou marque uma edição como ativa.'];
+            return erroSemInterclasseAtivo();
         }
 
         if (!is_readable($caminhoJson)) {
@@ -93,8 +94,8 @@ final class ImportadorCompetidores
             $sqlUser = 'INSERT INTO usuarios (
                 sigla_usuario, matricula_usuario, nome_usuario, senha_usuario, nivel_usuario,
                 competidor_usuario, mesario_usuario, genero_usuario, data_nasc_usuario,
-                foto_usuario, status_usuario, turmas_id_turma
-            ) VALUES (\'RM\', ?, ?, ?, \'0\', \'1\', \'0\', ?, ?, \'default.jpg\', \'1\', ?)';
+                foto_usuario, status_usuario, turmas_id_turma, interclasses_id_interclasse
+            ) VALUES (\'RM\', ?, ?, ?, \'0\', \'1\', \'0\', ?, ?, \'default.jpg\', \'1\', ?, ?)';
 
             $stmtU = $this->conn->prepare($sqlUser);
             if (!$stmtU) {
@@ -110,13 +111,14 @@ final class ImportadorCompetidores
 
                 $senhaHash = password_hash($linha['rm'], PASSWORD_DEFAULT);
                 $stmtU->bind_param(
-                    'sssssi',
+                    'sssssii',
                     $linha['rm'],
                     $linha['nome'],
                     $senhaHash,
                     $linha['genero'],
                     $linha['data_nasc'],
-                    $idTurma
+                    $idTurma,
+                    $idInterclasse
                 );
 
                 if (!$stmtU->execute()) {
@@ -156,22 +158,17 @@ final class ImportadorCompetidores
         return isset($row['id_interclasse']) ? (int) $row['id_interclasse'] : null;
     }
 
-    /** Usa ID informado no upload (qualquer status) ou, se inválido, o interclasse ativo. */
+    /**
+     * Usa ID informado no upload APENAS se estiver ativo; caso contrário, o interclasse ativo.
+     * Retorna null se não houver nenhum interclasse ativo.
+     */
     private function resolverInterclassePreferido(?int $forcado): ?int
     {
-        if ($forcado !== null && $forcado > 0) {
-            $st = $this->conn->prepare('SELECT id_interclasse FROM interclasses WHERE id_interclasse = ? LIMIT 1');
-            if ($st) {
-                $st->bind_param('i', $forcado);
-                $st->execute();
-                $row = $st->get_result()->fetch_assoc();
-                $st->close();
-                if ($row) {
-                    return (int) $row['id_interclasse'];
-                }
-            }
+        $ativo = $this->resolverInterclasseAtiva();
+        if ($forcado !== null && $forcado > 0 && $forcado === $ativo) {
+            return $forcado;
         }
-        return $this->resolverInterclasseAtiva();
+        return $ativo;
     }
 
     /** Categoria explícita (deve pertencer ao interclasse) ou primeira categoria da edição. */

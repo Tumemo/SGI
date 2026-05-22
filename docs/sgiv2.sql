@@ -96,8 +96,25 @@ DELIMITER $$
 CREATE TRIGGER `tr_atualiza_pontos_arrecadacao` AFTER UPDATE ON `interclasses` FOR EACH ROW BEGIN
     -- Se o valor do item mudar, recalcula a pontuação de todas as turmas desse interclasse
     IF OLD.valor_item_arrecadacao <> NEW.valor_item_arrecadacao THEN
-        UPDATE turmas 
+        UPDATE turmas
         SET pontuacao_turma = qtd_itens_arrecadados * NEW.valor_item_arrecadacao
+        WHERE interclasses_id_interclasse = NEW.id_interclasse;
+    END IF;
+END
+$$
+CREATE TRIGGER `tr_unico_interclasse_ativo` BEFORE UPDATE ON `interclasses` FOR EACH ROW BEGIN
+    IF NEW.status_interclasse = '1' AND OLD.status_interclasse = '0' THEN
+        UPDATE interclasses
+        SET status_interclasse = '0'
+        WHERE id_interclasse <> NEW.id_interclasse
+          AND status_interclasse = '1';
+    END IF;
+END
+$$
+CREATE TRIGGER `tr_sincroniza_status_usuarios` AFTER UPDATE ON `interclasses` FOR EACH ROW BEGIN
+    IF NEW.status_interclasse <> OLD.status_interclasse THEN
+        UPDATE usuarios
+        SET status_usuario = NEW.status_interclasse
         WHERE interclasses_id_interclasse = NEW.id_interclasse;
     END IF;
 END
@@ -245,7 +262,8 @@ CREATE TABLE `usuarios` (
   `data_nasc_usuario` date NOT NULL,
   `foto_usuario` varchar(255) NOT NULL,
   `status_usuario` enum('0','1') NOT NULL,
-  `turmas_id_turma` int(11) DEFAULT NULL
+  `turmas_id_turma` int(11) DEFAULT NULL,
+  `interclasses_id_interclasse` int(11) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci;
 
 -- --------------------------------------------------------
@@ -368,10 +386,9 @@ ALTER TABLE `turmas`
 --
 ALTER TABLE `usuarios`
   ADD PRIMARY KEY (`id_usuario`),
-  ADD UNIQUE KEY `matricula_usuario_UNIQUE` (`matricula_usuario`),
-  ADD UNIQUE KEY `nome_usuario` (`nome_usuario`),
-  ADD UNIQUE KEY `senha_usuario` (`senha_usuario`),
-  ADD KEY `fk_usuarios_turmas1_idx` (`turmas_id_turma`);
+  ADD UNIQUE KEY `uk_matricula_interclasse` (`matricula_usuario`, `interclasses_id_interclasse`),
+  ADD KEY `fk_usuarios_turmas1_idx` (`turmas_id_turma`),
+  ADD KEY `fk_usuarios_interclasses1_idx` (`interclasses_id_interclasse`);
 
 --
 -- Índices de tabela `usuarios_has_interclasses`
@@ -539,7 +556,11 @@ ALTER TABLE `turmas`
 -- Restrições para tabelas `usuarios`
 --
 ALTER TABLE `usuarios`
-  ADD CONSTRAINT `fk_usuarios_turmas1` FOREIGN KEY (`turmas_id_turma`) REFERENCES `turmas` (`id_turma`);
+  ADD CONSTRAINT `fk_usuarios_turmas1` FOREIGN KEY (`turmas_id_turma`) REFERENCES `turmas` (`id_turma`),
+  ADD CONSTRAINT `fk_usuarios_interclasses1` FOREIGN KEY (`interclasses_id_interclasse`) REFERENCES `interclasses` (`id_interclasse`) ON DELETE NO ACTION ON UPDATE NO ACTION;
+
+-- Nenhum trigger adicional em usuarios.
+-- O trigger tr_sincroniza_status_usuarios (em interclasses) gerencia o status automaticamente.
 
 --
 -- Restrições para tabelas `usuarios_has_interclasses`

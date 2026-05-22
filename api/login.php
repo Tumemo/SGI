@@ -5,6 +5,7 @@ declare(strict_types=1);
 session_start();
 require_once dirname(__DIR__) . '/config/db.php';
 require_once __DIR__ . '/includes/usuario_validacao.php';
+require_once __DIR__ . '/includes/interclasse_helper.php';
 
 header('Content-Type: application/json; charset=utf-8');
 
@@ -23,13 +24,22 @@ if ($ra === '' && $matriculaBruta === '') {
     exit;
 }
 
+// Buscar interclasse ativo — obrigatório para qualquer validação
+$idInterclasseAtivo = buscarInterclasseAtivo($conn);
+
 try {
-    // RF05: competidor valida com RA normalizado + data de nascimento (sem consulta só por data).
+    if ($idInterclasseAtivo === null) {
+        echo json_encode(['sucesso' => false, 'erro' => 'Nenhuma edição de interclasse está ativa.'], JSON_UNESCAPED_UNICODE);
+        exit;
+    }
+
+    // RF05: competidor valida com RA normalizado + data de nascimento, filtrando pelo interclasse ativo.
     if ($dataNascYmd !== null && $ra !== '') {
-        $competidor = sgi_buscar_competidor_por_ra_e_data($conn, $ra, $dataNascYmd);
+        $competidor = sgi_buscar_competidor_por_ra_e_data($conn, $ra, $dataNascYmd, $idInterclasseAtivo);
         if ($competidor !== null) {
             $_SESSION['id_usuario'] = (int) $competidor['id_usuario'];
             $_SESSION['nivel'] = $competidor['nivel_usuario'];
+            $_SESSION['id_interclasse'] = $idInterclasseAtivo;
             $_SESSION['logado'] = true;
 
             echo json_encode([
@@ -57,13 +67,13 @@ try {
     $stmt = $conn->prepare(
         "SELECT id_usuario, nome_usuario, matricula_usuario, senha_usuario, nivel_usuario, mesario_usuario, competidor_usuario, sigla_usuario
          FROM usuarios
-         WHERE matricula_usuario = ? AND status_usuario = '1'
+         WHERE matricula_usuario = ? AND interclasses_id_interclasse = ? AND status_usuario = '1'
          LIMIT 1"
     );
     if (!$stmt) {
         throw new RuntimeException('prepare');
     }
-    $stmt->bind_param('s', $matriculaBruta);
+    $stmt->bind_param('si', $matriculaBruta, $idInterclasseAtivo);
     $stmt->execute();
     $usuario = $stmt->get_result()->fetch_assoc();
     $stmt->close();
@@ -71,6 +81,7 @@ try {
     if ($usuario && password_verify($senhaDigitada, $usuario['senha_usuario'])) {
         $_SESSION['id_usuario'] = (int) $usuario['id_usuario'];
         $_SESSION['nivel'] = $usuario['nivel_usuario'];
+        $_SESSION['id_interclasse'] = $idInterclasseAtivo;
         $_SESSION['logado'] = true;
 
         echo json_encode([

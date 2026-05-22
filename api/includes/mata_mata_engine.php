@@ -181,7 +181,7 @@ function sgi_mm_inserir_jogo_dupla(
     $st->close();
 
     $stP = $conn->prepare(
-        "INSERT INTO partidas (jogos_id_jogo, equipes_id_equipe, resultado_partida, status_pardida) VALUES (?, ?, 0, '1')"
+        "INSERT INTO partidas (jogos_id_jogo, equipes_id_equipe, resultado_partida, status_partida) VALUES (?, ?, 0, '1')"
     );
     $stP->bind_param('ii', $idJogo, $idA);
     $stP->execute();
@@ -211,7 +211,7 @@ function sgi_mm_inserir_jogo_bye(
     $st->close();
 
     $stP = $conn->prepare(
-        "INSERT INTO partidas (jogos_id_jogo, equipes_id_equipe, resultado_partida, status_pardida) VALUES (?, ?, 1, '1')"
+        "INSERT INTO partidas (jogos_id_jogo, equipes_id_equipe, resultado_partida, status_partida) VALUES (?, ?, 1, '1')"
     );
     $stP->bind_param('ii', $idJogo, $idEquipe);
     $stP->execute();
@@ -359,7 +359,7 @@ function sgi_mm_garantir_partida_equipe(mysqli $conn, int $idJogo, int $idEquipe
         return;
     }
     $stP = $conn->prepare(
-        "INSERT INTO partidas (jogos_id_jogo, equipes_id_equipe, resultado_partida, status_pardida) VALUES (?, ?, 0, '1')"
+        "INSERT INTO partidas (jogos_id_jogo, equipes_id_equipe, resultado_partida, status_partida) VALUES (?, ?, 0, '1')"
     );
     $stP->bind_param('ii', $idJogo, $idEquipe);
     $stP->execute();
