@@ -185,7 +185,7 @@ require_once '../componentes/header.php';
 
     const urlParams = new URLSearchParams(window.location.search);
     const idInterclasse = urlParams.get('id');
-    const modo = urlParams.get('modo') || 'create';
+    const modo = urlParams.post('modo') || 'create';
 
     if (idInterclasse) {
         if (modo === 'view') {
