@@ -2,7 +2,7 @@
 $host = "localhost";
 $user = "root";
 $pass = "";
-$db = "sgi";
+$db = "sgiv3";
 
 $conn = new mysqli($host, $user, $pass, $db);
 

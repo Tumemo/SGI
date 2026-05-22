@@ -162,16 +162,43 @@ switch ($method) {
                     $categoria_ii_id = $conn->insert_id;
                 }
 
-                // Verifica tipo de modalidade existente
-                $tipo_modalidade_id = null;
-                $tipo_select = $conn->query("SELECT id_tipo_modalidade FROM tipos_modalidades ORDER BY id_tipo_modalidade LIMIT 1");
+                // Cria tipos de modalidade se não existirem
+                $tipo_mata_mata_id = null;
+                $tipo_individual_id = null;
+
+                $tipo_select = $conn->query("SELECT id_tipo_modalidade, nome_tipo_modalidade FROM tipos_modalidades");
                 if ($tipo_select && $tipo_select->num_rows > 0) {
-                    $row = $tipo_select->fetch_assoc();
-                    $tipo_modalidade_id = $row['id_tipo_modalidade'];
-                } else {
-                    $conn->rollback();
-                    echo json_encode(["success" => false, "message" => "Não há tipo de modalidade cadastrado para usar como padrão."]);
-                    break;
+                    while ($row = $tipo_select->fetch_assoc()) {
+                        if ($row['nome_tipo_modalidade'] === 'Mata-Mata') {
+                            $tipo_mata_mata_id = (int) $row['id_tipo_modalidade'];
+                        } elseif ($row['nome_tipo_modalidade'] === 'Individual') {
+                            $tipo_individual_id = (int) $row['id_tipo_modalidade'];
+                        }
+                    }
+                }
+
+                // Cria Mata-Mata se não existe
+                if (!$tipo_mata_mata_id) {
+                    $tipo_insert = $conn->prepare("INSERT INTO tipos_modalidades (nome_tipo_modalidade, status_tipo_modalidade) VALUES ('Mata-Mata', '1')");
+                    if (!$tipo_insert->execute()) {
+                        $conn->rollback();
+                        echo json_encode(["success" => false, "message" => "Falha ao criar tipo Mata-Mata: " . $conn->error]);
+                        break;
+                    }
+                    $tipo_mata_mata_id = (int) $conn->insert_id;
+                    $tipo_insert->close();
+                }
+
+                // Cria Individual se não existe
+                if (!$tipo_individual_id) {
+                    $tipo_insert = $conn->prepare("INSERT INTO tipos_modalidades (nome_tipo_modalidade, status_tipo_modalidade) VALUES ('Individual', '1')");
+                    if (!$tipo_insert->execute()) {
+                        $conn->rollback();
+                        echo json_encode(["success" => false, "message" => "Falha ao criar tipo Individual: " . $conn->error]);
+                        break;
+                    }
+                    $tipo_individual_id = (int) $conn->insert_id;
+                    $tipo_insert->close();
                 }
 
                 $turmas_sql = "INSERT INTO turmas 
@@ -190,17 +217,17 @@ switch ($method) {
                     break;
                 }
 
-                $modalidades_sql = "INSERT INTO modalidades 
-                (nome_modalidade, genero_modalidade, max_inscrito_modalidade, status_modalidade, tipos_modalidades_id_tipo_modalidade, categorias_id_categoria, interclasses_id_interclasse) 
-                VALUES 
-                ('Futsal', 'MISTO', 12, '1', $tipo_modalidade_id, $categoria_i_id, $new_interclass_id),
-                ('Queimada', 'MISTO', 15, '1', $tipo_modalidade_id, $categoria_i_id, $new_interclass_id),
-                ('Volei', 'MISTO', 10, '1', $tipo_modalidade_id, $categoria_i_id, $new_interclass_id),
-                ('Corrida', 'MISTO', 1, '1', $tipo_modalidade_id, $categoria_i_id, $new_interclass_id),
-                ('Futsal', 'MISTO', 12, '1', $tipo_modalidade_id, $categoria_ii_id, $new_interclass_id),
-                ('Queimada', 'MISTO', 15, '1', $tipo_modalidade_id, $categoria_ii_id, $new_interclass_id),
-                ('Volei', 'MISTO', 10, '1', $tipo_modalidade_id, $categoria_ii_id, $new_interclass_id),
-                ('Corrida', 'MISTO', 1, '1', $tipo_modalidade_id, $categoria_ii_id, $new_interclass_id)";
+                $modalidades_sql = "INSERT INTO modalidades
+                (nome_modalidade, genero_modalidade, max_inscrito_modalidade, status_modalidade, tipos_modalidades_id_tipo_modalidade, categorias_id_categoria, interclasses_id_interclasse)
+                VALUES
+                ('Futsal', 'MISTO', 12, '1', $tipo_mata_mata_id, $categoria_i_id, $new_interclass_id),
+                ('Queimada', 'MISTO', 15, '1', $tipo_mata_mata_id, $categoria_i_id, $new_interclass_id),
+                ('Volei', 'MISTO', 10, '1', $tipo_mata_mata_id, $categoria_i_id, $new_interclass_id),
+                ('Corrida', 'MISTO', 2, '1', $tipo_individual_id, $categoria_i_id, $new_interclass_id),
+                ('Futsal', 'MISTO', 12, '1', $tipo_mata_mata_id, $categoria_ii_id, $new_interclass_id),
+                ('Queimada', 'MISTO', 15, '1', $tipo_mata_mata_id, $categoria_ii_id, $new_interclass_id),
+                ('Volei', 'MISTO', 10, '1', $tipo_mata_mata_id, $categoria_ii_id, $new_interclass_id),
+                ('Corrida', 'MISTO', 2, '1', $tipo_individual_id, $categoria_ii_id, $new_interclass_id)";
                 if (!$conn->query($modalidades_sql)) {
                     $conn->rollback();
                     echo json_encode(["success" => false, "message" => "Falha ao inserir modalidades: " . $conn->error]);

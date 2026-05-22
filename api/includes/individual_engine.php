@@ -10,6 +10,22 @@ declare(strict_types=1);
  * Um "jogo" especial é criado com nome_jogo = "IND:{id_modalidade}" para agrupar o ranking.
  */
 
+/**
+ * Busca o primeiro local ativo disponível.
+ */
+function sgi_ind_resolver_id_local(mysqli $conn): int
+{
+    $q = $conn->query("SELECT id_local FROM locais WHERE status_local = '1' ORDER BY id_local ASC LIMIT 1");
+    if ($q && ($r = $q->fetch_assoc())) {
+        return (int) $r['id_local'];
+    }
+    $q2 = $conn->query('SELECT id_local FROM locais ORDER BY id_local ASC LIMIT 1');
+    if ($q2 && ($r2 = $q2->fetch_assoc())) {
+        return (int) $r2['id_local'];
+    }
+    return 1;
+}
+
 /** Tag para identificar jogos de modalidade individual */
 function sgi_ind_tag(int $idModalidade): string
 {
@@ -87,7 +103,7 @@ function sgi_ind_buscar_jogo_existente(mysqli $conn, int $idModalidade): ?array
 function sgi_ind_criar_jogo(mysqli $conn, int $idModalidade): int
 {
     $tag = sgi_ind_tag($idModalidade);
-    $idLocal = sgi_mm_resolver_id_local($conn);
+    $idLocal = sgi_ind_resolver_id_local($conn);
 
     $st = $conn->prepare(
         "INSERT INTO jogos (nome_jogo, data_jogo, inicio_jogo, status_jogo, modalidades_id_modalidade, locais_id_local)
@@ -150,8 +166,8 @@ function sgi_ind_salvar_ranking(mysqli $conn, int $idModalidade, array $ranking)
     ];
 
     $stIns = $conn->prepare(
-        "INSERT INTO partidas (jogos_id_jogo, equipes_id_equipe, resultado_partida, status_pardida)
-         VALUES (?, ?, ?, '1')"
+        "INSERT INTO partidas (jogos_id_jogo, equipes_id_equipe, usuarios_id_usuario, resultado_partida, status_partida)
+         VALUES (?, ?, ?, ?, '1')"
     );
 
     foreach ($posicoes as $posicao => $idUsuario) {
@@ -161,7 +177,7 @@ function sgi_ind_salvar_ranking(mysqli $conn, int $idModalidade, array $ranking)
             throw new RuntimeException("Usuário {$idUsuario} não possui equipe nesta modalidade.");
         }
 
-        $stIns->bind_param('iii', $idJogo, $equipe, $posicao);
+        $stIns->bind_param('iiii', $idJogo, $equipe, $idUsuario, $posicao);
         $stIns->execute();
     }
     $stIns->close();
@@ -217,12 +233,10 @@ function sgi_ind_montar_json_ranking(mysqli $conn, int $idModalidade): array
                    u.id_usuario, u.nome_usuario,
                    t.nome_turma, t.nome_fantasia_turma
             FROM partidas p
-            INNER JOIN equipes_has_usuarios ehu ON ehu.equipes_id_equipe = p.equipes_id_equipe
-            INNER JOIN usuarios u ON u.id_usuario = ehu.usuarios_id_usuario
+            INNER JOIN usuarios u ON u.id_usuario = p.usuarios_id_usuario
             INNER JOIN equipes e ON e.id_equipe = p.equipes_id_equipe
             INNER JOIN turmas t ON t.id_turma = e.turmas_id_turma
             WHERE p.jogos_id_jogo = ?
-              AND u.competidor_usuario = \'1\'
             ORDER BY p.resultado_partida ASC';
 
     $st = $conn->prepare($sql);
