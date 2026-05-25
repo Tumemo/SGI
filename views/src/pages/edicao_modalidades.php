@@ -28,7 +28,7 @@ require_once '../componentes/header.php';
     <div style="border-radius: 12px;">
 
         <div class="mb-5">
-            <a class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 shadow-sm text-decoration-none" style="background-color: #ed1c24; border-radius: 6px;" id="btnVoltarModalidades" href="./dashboard.php">
+            <a class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 shadow-sm text-decoration-none" style="background-color: #ed1c24; border-radius: 6px;" id="btnVoltarModalidades" href="#" data-sgi-header-back="true">
                 <i class="bi bi-arrow-left-circle fs-5"></i> <span id="nomeInterclasseModalidades">Interclasse</span>
             </a>
 
@@ -44,10 +44,6 @@ require_once '../componentes/header.php';
     </div>
 
     <div class="position-fixed d-flex flex-row align-items-center gap-4 py-3 px-5" style="bottom: 0; right: 0; z-index: 1050; background: transparent;">
-        <a href="#" id="btnEditarModalidadeDesktop" class="btn bg-white fw-bold px-4 py-2 text-decoration-none disabled" style="color: #ed1c24; border: 2px solid #ed1c24; border-radius: 8px;" aria-disabled="true">
-            Editar modalidade
-        </a>
-
         <span class="text-muted small fw-medium">Não tem a modalidade que você quer?</span>
 
         <button type="button" class="btn bg-white fw-bold px-4 py-2 d-flex align-items-center justify-content-center gap-2 shadow-sm" style="color: #ed1c24; border: 2px solid #ed1c24; border-radius: 8px;" data-bs-toggle="modal" data-bs-target="#exampleModal">
@@ -132,7 +128,6 @@ require_once '../componentes/header.php';
         }
         const dados = await window.SGIInterclasse.getInterclasseById(idInterclasse);
         document.getElementById('nomeInterclasseModalidades').innerText = dados?.nome_interclasse || 'Interclasse';
-        document.getElementById('btnVoltarModalidades').href = `./dashboard.php?id=${idInterclasse}`;
         window.SGIInterclasse.updatePageTitle(dados?.nome_interclasse);
         atualizarBotaoContinuar();
         return idInterclasse;

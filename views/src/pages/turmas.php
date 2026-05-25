@@ -28,7 +28,7 @@ require_once '../componentes/header.php';
 <!-- main desktop-->
 <main class="d-none d-md-flex flex-column main-desktop-layout">
 
-    <a href="./dashboard.php" id="btnVoltarTurmasDesk" class="btn btn-danger d-inline-flex align-items-center mb-4 border-0 shadow-sm text-decoration-none" style="border-radius: 4px; padding: 8px 15px;">
+    <a href="#" data-sgi-header-back="true" id="btnVoltarTurmasDesk" class="btn btn-danger d-inline-flex align-items-center mb-4 border-0 shadow-sm text-decoration-none" style="border-radius: 4px; padding: 8px 15px;">
         <i class="bi bi-arrow-left-circle me-2"></i>
         <span style="font-size: 0.9rem; font-weight: 400;" id="nomeInterclasseTurmas">Interclasse</span>
     </a>
@@ -209,8 +209,6 @@ require_once '../componentes/header.php';
             }
 
             document.getElementById('nomeInterclasseTurmas').innerText = interclasseAtivo.nome_interclasse;
-            const bv = document.getElementById('btnVoltarTurmasDesk');
-            if (bv) bv.href = `./dashboard.php?id=${interclasseAtivo.id_interclasse}`;
             window.SGIInterclasse.updatePageTitle(interclasseAtivo.nome_interclasse);
 
             const [categoriasRes, turmasRes] = await Promise.all([
@@ -242,15 +240,20 @@ require_once '../componentes/header.php';
             }
 
             listaMobile.innerHTML = listaFinal.map((turma) => `
-                <a href="./modalidades_alunos.php?id=${interclasseAtivo.id_interclasse}&id_turma=${turma.id_turma}" class="text-decoration-none text-black">
-                    <div class="d-flex m-auto justify-content-between align-items-center shadow py-4 px-4 mb-3 border border-1 rounded-3" style="width: 90%;">
-                        <div>
-                            <h2 class="m-0 fs-5">${turma.nome_turma}</h2>
-                            <small class="text-muted">${mapaCategorias.get(String(turma.id_categoria || turma.categorias_id_categoria)) || 'Categoria vinculada'}</small>
-                        </div>
-                        <picture><img src="../../public/icons/arrow-right.svg" alt="Seta para direita"></picture>
+                <div class="d-flex m-auto justify-content-between align-items-center shadow py-4 px-4 mb-3 border border-1 rounded-3" style="width: 90%;">
+                    <a href="./modalidades_alunos.php?id=${interclasseAtivo.id_interclasse}&id_turma=${turma.id_turma}" class="text-decoration-none text-dark flex-grow-1">
+                        <h2 class="m-0 fs-5">${turma.nome_turma}</h2>
+                        <small class="text-muted">${mapaCategorias.get(String(turma.id_categoria || turma.categorias_id_categoria)) || 'Categoria vinculada'}</small>
+                    </a>
+                    <div class="d-flex align-items-center gap-2">
+                        <button type="button" class="btn btn-link text-danger p-0" title="Excluir turma" onclick="excluirTurma(${turma.id_turma}, ${JSON.stringify(turma.nome_turma)})">
+                            <i class="bi bi-trash fs-5"></i>
+                        </button>
+                        <a href="./modalidades_alunos.php?id=${interclasseAtivo.id_interclasse}&id_turma=${turma.id_turma}">
+                            <img src="../../public/icons/arrow-right.svg" alt="Ver detalhes">
+                        </a>
                     </div>
-                </a>
+                </div>
             `).join('');
 
             listaDesktop.innerHTML = listaFinal.map((turma) => `
@@ -258,8 +261,8 @@ require_once '../componentes/header.php';
                     <div class="card border-0 shadow-sm rounded-4 h-100 p-3 bg-white">
                         <div class="d-flex justify-content-between align-items-center mb-4">
                             <h5 class="fw-bold mb-0 text-dark" style="font-size: 1.3rem;">${turma.nome_turma}</h5>
-                            <button type="button" class="btn btn-danger p-0 d-flex align-items-center justify-content-center shadow-sm" style="width: 35px; height: 35px; border-radius: 6px;">
-                                <i class="bi bi-mortarboard-fill text-white"></i>
+                            <button type="button" class="btn btn-link text-danger p-0" title="Excluir turma" onclick="excluirTurma(${turma.id_turma}, ${JSON.stringify(turma.nome_turma)})">
+                                <i class="bi bi-trash fs-4"></i>
                             </button>
                         </div>
                         <div class="mb-4 text-muted">${mapaCategorias.get(String(turma.id_categoria || turma.categorias_id_categoria)) || 'Categoria vinculada'}</div>
@@ -280,6 +283,25 @@ require_once '../componentes/header.php';
         }
     }
 
+    async function excluirTurma(idTurma, nomeTurma) {
+        if (!confirm(`Deseja excluir a turma "${nomeTurma}"?\nEsta ação não pode ser desfeita.`)) {
+            return;
+        }
+        try {
+            const res = await fetch(`../../../api/turmas.php?id_turma=${encodeURIComponent(idTurma)}`, {
+                method: 'DELETE'
+            });
+            const data = await res.json();
+            if (!res.ok || !data.success) {
+                throw new Error(data.message || 'Não foi possível excluir a turma.');
+            }
+            await carregarTurmasAtivas();
+        } catch (error) {
+            alert(error.message || 'Erro ao excluir turma.');
+        }
+    }
+
+    window.excluirTurma = excluirTurma;
     window.addEventListener('load', carregarTurmasAtivas);
 </script>
 

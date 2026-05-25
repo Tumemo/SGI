@@ -1,6 +1,7 @@
 <?php
 require_once '../config/db.php';
 require_once 'filtros.php';
+require_once __DIR__ . '/includes/locais_padrao.php';
 header('Content-Type: application/json');
 
 $method = $_SERVER['REQUEST_METHOD'];
@@ -22,7 +23,8 @@ switch ($method) {
     case 'GET':
         $filtro = aplicarFiltrosInterclasse();
         $querRegulamento = isset($_GET['regulamento']) && $_GET['regulamento'] === 'true';
-        $colunas = $querRegulamento ? "*" : "id_interclasse, nome_interclasse, ano_interclasse";
+        $detalheEdicao = !empty($_GET['id_interclasse']);
+        $colunas = ($querRegulamento || $detalheEdicao) ? '*' : 'id_interclasse, nome_interclasse, ano_interclasse';
         $sql = "SELECT $colunas FROM interclasses WHERE 1=1" . $filtro['sql'] . " ORDER BY ano_interclasse DESC";
         $stmt = $conn->prepare($sql);
         if (!empty($filtro['params'])) $stmt->bind_param($filtro['types'], ...$filtro['params']);
@@ -63,28 +65,40 @@ switch ($method) {
                 $params[] = $_POST['status_interclasse'];
                 $types .= "s";
             }
-            $activateNewInterclasse = false;
             if (isset($_POST['status_interclasse']) && $_POST['status_interclasse'] === '1') {
-                $activateNewInterclasse = true;
-                $conn->begin_transaction();
-                $deactivate = $conn->prepare("UPDATE interclasses SET status_interclasse = '0' WHERE id_interclasse != ?");
+                $deactivate = $conn->prepare(
+                    "UPDATE interclasses SET status_interclasse = '0' WHERE id_interclasse != ? AND status_interclasse = '1'"
+                );
                 if (!$deactivate) {
-                    $conn->rollback();
                     echo json_encode(["success" => false, "message" => "Falha ao desativar interclasses anteriores: " . $conn->error]);
                     break;
                 }
                 $deactivate->bind_param("i", $id);
                 if (!$deactivate->execute()) {
-                    $deactivate->close();
-                    $conn->rollback();
                     echo json_encode(["success" => false, "message" => "Falha ao desativar interclasses anteriores: " . $deactivate->error]);
+                    $deactivate->close();
                     break;
                 }
                 $deactivate->close();
             }
-            if (isset($data->valor_item_arrecadacao)) {
+            if (isset($_POST['valor_item_arrecadacao'])) {
                 $campos[] = "valor_item_arrecadacao = ?";
-                $params[] = $data->valor_item_arrecadacao;
+                $params[] = $_POST['valor_item_arrecadacao'];
+                $types .= "i";
+            }
+            if (isset($_POST['ponto_1_lugar'])) {
+                $campos[] = "ponto_1_lugar = ?";
+                $params[] = (int) $_POST['ponto_1_lugar'];
+                $types .= "i";
+            }
+            if (isset($_POST['ponto_2_lugar'])) {
+                $campos[] = "ponto_2_lugar = ?";
+                $params[] = (int) $_POST['ponto_2_lugar'];
+                $types .= "i";
+            }
+            if (isset($_POST['ponto_3_lugar'])) {
+                $campos[] = "ponto_3_lugar = ?";
+                $params[] = (int) $_POST['ponto_3_lugar'];
                 $types .= "i";
             }
 
@@ -101,15 +115,9 @@ switch ($method) {
             $stmt->bind_param($types, ...$params);
 
             if ($stmt->execute()) {
-                if ($activateNewInterclasse) {
-                    $conn->commit();
-                }
                 echo json_encode(["success" => true, "message" => "Atualizado com sucesso!"]);
             } else {
-                if ($activateNewInterclasse) {
-                    $conn->rollback();
-                }
-                echo json_encode(["success" => false, "message" => $conn->error]);
+                echo json_encode(["success" => false, "message" => $stmt->error]);
             }
         } else {
             $data = json_decode(file_get_contents("php://input"));
@@ -234,6 +242,7 @@ switch ($method) {
                     break;
                 }
 
+                sgi_criar_locais_padrao_interclasse($conn, $new_interclass_id);
                 $conn->commit();
                 echo json_encode(["success" => true, "id" => $new_interclass_id]);
             }

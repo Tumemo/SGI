@@ -12,16 +12,11 @@
 </head>
 <body data-default-title="<?php echo htmlspecialchars($titulo, ENT_QUOTES, 'UTF-8'); ?>">
 <?php
-$sgiHeaderBackHref = './home.php';
-if (!empty($btnVoltar) && isset($_GET['id']) && (string) $_GET['id'] !== '') {
-    $sgiHeaderBackHref = './dashboard.php?id=' . rawurlencode((string) $_GET['id']);
-}
 ?>
 <header class="position-relative">
     <?php
     if (!empty($btnVoltar)) {
-        $hrefEsc = htmlspecialchars($sgiHeaderBackHref, ENT_QUOTES, 'UTF-8');
-        echo '<a href="' . $hrefEsc . '" class="text-white text-decoration-none"><span class="position-absolute m-4 translate-middle" style="z-index: 10;" id="btnVoltar"><i class="bi bi-arrow-left-circle fs-1"></i></span></a>';
+        echo '<a href="#" data-sgi-header-back="true" class="text-white text-decoration-none"><span class="position-absolute m-4 translate-middle" style="z-index: 10;" id="btnVoltarHeader"><i class="bi bi-arrow-left-circle fs-1"></i></span></a>';
     }
     ?>
     <!-- header mobile -->
@@ -92,17 +87,63 @@ if (!empty($btnVoltar) && isset($_GET['id']) && (string) $_GET['id'] !== '') {
             return `${base}${separador}id=${idInterclasse}`;
         };
 
-        const setupBackLinks = (fallbackPath = './home.php') => {
-            document.querySelectorAll('[data-back-link="true"]').forEach((el) => {
-                el.addEventListener('click', (event) => {
-                    event.preventDefault();
-                    const ref = document.referrer ? new URL(document.referrer) : null;
-                    const cameFromSameOrigin = ref && ref.origin === window.location.origin;
-                    if (window.history.length > 1 && cameFromSameOrigin) {
-                        window.history.back();
-                    } else {
-                        window.location.href = fallbackPath;
+        const navigateBack = (fallbackPath = './home.php') => {
+            try {
+                const stack = JSON.parse(sessionStorage.getItem('sgi_nav_stack') || '[]');
+                if (stack.length > 1) {
+                    stack.pop();
+                    const anterior = stack.pop();
+                    sessionStorage.setItem('sgi_nav_stack', JSON.stringify(stack));
+                    if (anterior) {
+                        window.location.href = anterior;
+                        return;
                     }
+                }
+            } catch (_) { /* ignora */ }
+            if (window.history.length > 1) {
+                window.history.back();
+            } else {
+                window.location.href = fallbackPath;
+            }
+        };
+
+        const registrarPaginaNavegacao = () => {
+            try {
+                const atual = window.location.pathname + window.location.search;
+                const stack = JSON.parse(sessionStorage.getItem('sgi_nav_stack') || '[]');
+                if (stack[stack.length - 1] !== atual) {
+                    stack.push(atual);
+                    sessionStorage.setItem('sgi_nav_stack', JSON.stringify(stack.slice(-30)));
+                }
+            } catch (_) { /* ignora */ }
+        };
+
+        const beforeLeaveHandlers = [];
+
+        const registerBeforeLeave = (handler) => {
+            if (typeof handler === 'function') {
+                beforeLeaveHandlers.push(handler);
+            }
+        };
+
+        const runBeforeLeaveHandlers = async () => {
+            for (const handler of beforeLeaveHandlers) {
+                try {
+                    await handler();
+                } catch (err) {
+                    console.error('Erro ao executar ação antes de sair:', err);
+                }
+            }
+        };
+
+        const setupBackLinks = (fallbackPath = './home.php') => {
+            document.querySelectorAll('[data-back-link="true"], [data-sgi-header-back="true"]').forEach((el) => {
+                if (el.dataset.sgiBackBound === '1') return;
+                el.dataset.sgiBackBound = '1';
+                el.addEventListener('click', async (event) => {
+                    event.preventDefault();
+                    await runBeforeLeaveHandlers();
+                    navigateBack(fallbackPath);
                 });
             });
         };
@@ -149,6 +190,10 @@ if (!empty($btnVoltar) && isset($_GET['id']) && (string) $_GET['id'] !== '') {
             getActiveInterclasse,
             getInterclasseById,
             buildLinkTo,
+            navigateBack,
+            registerBeforeLeave,
+            runBeforeLeaveHandlers,
+            registrarPaginaNavegacao,
             setupBackLinks,
             applyActiveNavbarLinks,
             invalidateCache,
@@ -158,9 +203,12 @@ if (!empty($btnVoltar) && isset($_GET['id']) && (string) $_GET['id'] !== '') {
     })();
 
     document.addEventListener('DOMContentLoaded', () => {
-        window.SGIInterclasse.setupBackLinks();
+        window.SGIInterclasse.registrarPaginaNavegacao();
         window.SGIInterclasse.applyActiveNavbarLinks().catch((error) => {
             console.error('Falha ao configurar navbar dinâmica:', error);
         });
+    });
+    window.addEventListener('load', () => {
+        window.SGIInterclasse.setupBackLinks();
     });
 </script>

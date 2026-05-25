@@ -181,6 +181,35 @@ switch ($method) {
         }
         break;
 
+    case 'DELETE':
+        $idTurma = isset($_GET['id_turma']) ? (int) $_GET['id_turma'] : 0;
+        if ($idTurma <= 0) {
+            http_response_code(400);
+            echo json_encode(['success' => false, 'message' => 'ID da turma é obrigatório.']);
+            break;
+        }
+
+        $stmt = $conn->prepare('DELETE FROM turmas WHERE id_turma = ? LIMIT 1');
+        if (!$stmt) {
+            http_response_code(500);
+            echo json_encode(['success' => false, 'message' => $conn->error]);
+            break;
+        }
+        $stmt->bind_param('i', $idTurma);
+        if ($stmt->execute()) {
+            if ($stmt->affected_rows > 0) {
+                echo json_encode(['success' => true, 'message' => 'Turma excluída com sucesso.']);
+            } else {
+                http_response_code(404);
+                echo json_encode(['success' => false, 'message' => 'Turma não encontrada.']);
+            }
+        } else {
+            http_response_code(500);
+            echo json_encode(['success' => false, 'message' => $stmt->error]);
+        }
+        $stmt->close();
+        break;
+
     default:
         http_response_code(405);
         echo json_encode(["message" => "Método não permitido"]);

@@ -19,12 +19,12 @@ require_once '../componentes/header.php';
             </li>
             <li class="list-group-item justify-content-around d-flex align-items-center">
                 2º lugar
-                <input type="number" id="pontos2Mobile" class="w-25 rounded border border-none shadow-sm text-center" value='10'>
+                <input type="number" id="pontos2Mobile" class="w-25 rounded border border-none shadow-sm text-center" value='7'>
                 Pontos
             </li>
             <li class="list-group-item justify-content-around d-flex align-items-center">
                 3º lugar
-                <input type="number" id="pontos3Mobile" class="w-25 rounded border border-none shadow-sm text-center" value='10'>
+                <input type="number" id="pontos3Mobile" class="w-25 rounded border border-none shadow-sm text-center" value='5'>
                 Pontos
             </li>
         </ul>
@@ -38,7 +38,7 @@ require_once '../componentes/header.php';
             <li class="list-group-item">
                 <div class="d-flex justify-content-between mt-2">
                     Multiplicador
-                    <input type="number" id="multiplicadorMobile" class="w-25 rounded border border-none shadow-sm text-center" value='10'>
+                    <input type="number" id="multiplicadorMobile" class="w-25 rounded border border-none shadow-sm text-center" value='2'>
                 </div>
                 <p class="text-body-tertiary mt-2 mb-0" style="font-size: 14px;">A arrecadação será multiplicada por esse valor</p>
             </li>
@@ -78,7 +78,7 @@ require_once '../componentes/header.php';
     <div class="container-fluid px-0" style="max-width: 80%;">
 
         <div class="mb-5">
-            <a href="./edicao_modalidades.php" class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 shadow-sm text-decoration-none" style="border-radius: 6px;" id="btnVoltarPontuacao">
+            <a href="#" class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 shadow-sm text-decoration-none" style="border-radius: 6px;" id="btnVoltarPontuacao" data-sgi-header-back="true">
                 <i class="bi bi-arrow-left-circle fs-5"></i> <span id="nomeInterclassePontuacao">Interclasse</span>
             </a>
 
@@ -97,9 +97,9 @@ require_once '../componentes/header.php';
                     <div class="text-center mt-auto">
                         <small class="text-muted fw-bold d-block mb-1" style="font-size: 0.7rem; letter-spacing: 0.5px;">PONTOS ATRIBUÍDOS</small>
                         <div class="d-flex justify-content-center align-items-center gap-3">
-                            <button class="btn btn-link text-muted p-0 text-decoration-none" onclick="alterarPontos('pontos-1', -1)"><i class="bi bi-chevron-left"></i></button>
+                            <button type="button" class="btn btn-link text-muted p-0 text-decoration-none" onclick="alterarPontos('pontos-1', -1)"><i class="bi bi-chevron-left"></i></button>
                             <span class="fs-2 fw-bold text-dark" id="pontos-1">10</span>
-                            <button class="btn btn-link text-muted p-0 text-decoration-none" onclick="alterarPontos('pontos-1', 1)"><i class="bi bi-chevron-right"></i></button>
+                            <button type="button" class="btn btn-link text-muted p-0 text-decoration-none" onclick="alterarPontos('pontos-1', 1)"><i class="bi bi-chevron-right"></i></button>
                         </div>
                     </div>
                 </div>
@@ -114,9 +114,9 @@ require_once '../componentes/header.php';
                     <div class="text-center mt-auto">
                         <small class="text-muted fw-bold d-block mb-1" style="font-size: 0.7rem; letter-spacing: 0.5px;">PONTOS ATRIBUÍDOS</small>
                         <div class="d-flex justify-content-center align-items-center gap-3">
-                            <button class="btn btn-link text-muted p-0 text-decoration-none" onclick="alterarPontos('pontos-2', -1)"><i class="bi bi-chevron-left"></i></button>
+                            <button type="button" class="btn btn-link text-muted p-0 text-decoration-none" onclick="alterarPontos('pontos-2', -1)"><i class="bi bi-chevron-left"></i></button>
                             <span class="fs-2 fw-bold text-dark" id="pontos-2">8</span>
-                            <button class="btn btn-link text-muted p-0 text-decoration-none" onclick="alterarPontos('pontos-2', 1)"><i class="bi bi-chevron-right"></i></button>
+                            <button type="button" class="btn btn-link text-muted p-0 text-decoration-none" onclick="alterarPontos('pontos-2', 1)"><i class="bi bi-chevron-right"></i></button>
                         </div>
                     </div>
                 </div>
@@ -131,9 +131,9 @@ require_once '../componentes/header.php';
                     <div class="text-center mt-auto">
                         <small class="text-muted fw-bold d-block mb-1" style="font-size: 0.7rem; letter-spacing: 0.5px;">PONTOS ATRIBUÍDOS</small>
                         <div class="d-flex justify-content-center align-items-center gap-3">
-                            <button class="btn btn-link text-muted p-0 text-decoration-none" onclick="alterarPontos('pontos-3', -1)"><i class="bi bi-chevron-left"></i></button>
+                            <button type="button" class="btn btn-link text-muted p-0 text-decoration-none" onclick="alterarPontos('pontos-3', -1)"><i class="bi bi-chevron-left"></i></button>
                             <span class="fs-2 fw-bold text-dark" id="pontos-3">5</span>
-                            <button class="btn btn-link text-muted p-0 text-decoration-none" onclick="alterarPontos('pontos-3', 1)"><i class="bi bi-chevron-right"></i></button>
+                            <button type="button" class="btn btn-link text-muted p-0 text-decoration-none" onclick="alterarPontos('pontos-3', 1)"><i class="bi bi-chevron-right"></i></button>
                         </div>
                     </div>
                 </div>
@@ -147,9 +147,9 @@ require_once '../componentes/header.php';
                     <div class="text-center mt-auto">
                         <small class="text-muted fw-bold d-block mb-1" style="font-size: 0.7rem; letter-spacing: 0.5px;">PONTOS ATRIBUÍDOS</small>
                         <div class="d-flex justify-content-center align-items-center gap-3">
-                            <button class="btn btn-link text-muted p-0 text-decoration-none" onclick="alterarPontos('pontos-arr', -1)"><i class="bi bi-chevron-left"></i></button>
+                            <button type="button" class="btn btn-link text-muted p-0 text-decoration-none" onclick="alterarPontos('pontos-arr', -1)"><i class="bi bi-chevron-left"></i></button>
                             <span class="fs-2 fw-bold text-dark" id="pontos-arr">2</span>
-                            <button class="btn btn-link text-muted p-0 text-decoration-none" onclick="alterarPontos('pontos-arr', 1)"><i class="bi bi-chevron-right"></i></button>
+                            <button type="button" class="btn btn-link text-muted p-0 text-decoration-none" onclick="alterarPontos('pontos-arr', 1)"><i class="bi bi-chevron-right"></i></button>
                         </div>
                     </div>
                 </div>
@@ -159,13 +159,13 @@ require_once '../componentes/header.php';
 
     <div class="d-none d-md-block fixed-bottom" style="background: linear-gradient(to top, #f8f9fa 70%, rgba(248, 249, 250, 0) 100%); padding: 30px 0;">
         <div class="container-fluid d-flex justify-content-end align-items-center gap-3" style="max-width: 80%;">
-            <a href="./edicao_modalidades.php" class="text-decoration-none" id="btnVoltarPontuacaoRodape">
-                <button class="btn btn-outline-danger bg-white fw-semibold rounded-3 px-4 py-2 shadow-sm">
+            <a href="#" class="text-decoration-none" id="btnVoltarPontuacaoRodape" data-sgi-header-back="true">
+                <button type="button" class="btn btn-outline-danger bg-white fw-semibold rounded-3 px-4 py-2 shadow-sm">
                     Voltar
                 </button>
             </a>
             <a href="./edicao_resumo.php" class="text-decoration-none" id="btnContinuarDesktop">
-                <button class="btn btn-danger fw-semibold rounded-3 px-4 py-2 shadow-sm">
+                <button type="button" class="btn btn-danger fw-semibold rounded-3 px-4 py-2 shadow-sm">
                     Continuar
                 </button>
             </a>
@@ -174,30 +174,45 @@ require_once '../componentes/header.php';
 </main>
 
 <script>
-    // --- Lógica compartilhada ---
     function alterarPontos(idElemento, valor) {
         const elemento = document.getElementById(idElemento);
-        let pontosAtuais = parseInt(elemento.innerText);
+        let pontosAtuais = parseInt(elemento.innerText, 10);
         if (pontosAtuais + valor >= 0) {
             elemento.innerText = pontosAtuais + valor;
         }
     }
 
+    function lerValoresPontuacao() {
+        return {
+            p1: Number(document.getElementById('pontos-1')?.innerText || document.getElementById('pontos1Mobile')?.value || 10),
+            p2: Number(document.getElementById('pontos-2')?.innerText || document.getElementById('pontos2Mobile')?.value || 7),
+            p3: Number(document.getElementById('pontos-3')?.innerText || document.getElementById('pontos3Mobile')?.value || 5),
+            arr: Number(document.getElementById('pontos-arr')?.innerText || document.getElementById('multiplicadorMobile')?.value || 2)
+        };
+    }
+
+    function aplicarValoresNaTela(valores) {
+        if (document.getElementById('pontos-1')) document.getElementById('pontos-1').innerText = valores.p1;
+        if (document.getElementById('pontos-2')) document.getElementById('pontos-2').innerText = valores.p2;
+        if (document.getElementById('pontos-3')) document.getElementById('pontos-3').innerText = valores.p3;
+        if (document.getElementById('pontos-arr')) document.getElementById('pontos-arr').innerText = valores.arr;
+        if (document.getElementById('pontos1Mobile')) document.getElementById('pontos1Mobile').value = valores.p1;
+        if (document.getElementById('pontos2Mobile')) document.getElementById('pontos2Mobile').value = valores.p2;
+        if (document.getElementById('pontos3Mobile')) document.getElementById('pontos3Mobile').value = valores.p3;
+        if (document.getElementById('multiplicadorMobile')) document.getElementById('multiplicadorMobile').value = valores.arr;
+    }
+
     const urlParams = new URLSearchParams(window.location.search);
     const idInterclasse = urlParams.get('id');
-    const modo = urlParams.post('modo') || 'create';
+    const modo = urlParams.get('modo') || 'create';
 
     if (idInterclasse) {
         if (modo === 'view') {
             const parent = document.getElementById('btnContinuarDesktop')?.parentElement;
             if (parent) parent.classList.add('d-none');
             document.getElementById('btnContinuarMobile')?.classList.add('d-none');
-            document.getElementById('btnVoltarPontuacao').href = `./dashboard.php?id=${idInterclasse}`;
-            document.getElementById('btnVoltarPontuacao').classList.add('d-none');
-            document.getElementById('btnVoltarPontuacaoRodape')?.classList.add('d-none');
         } else {
             document.getElementById('btnContinuarDesktop').href = `./edicao_resumo.php?id=${idInterclasse}`;
-            document.getElementById('btnVoltarPontuacao').href = `./edicao_modalidades.php?id=${idInterclasse}`;
         }
         window.SGIInterclasse.getInterclasseById(idInterclasse).then((dados) => {
             if (dados?.nome_interclasse) {
@@ -207,66 +222,66 @@ require_once '../componentes/header.php';
         }).catch(console.error);
     }
 
-    // Carregar valores do banco de dados
     async function carregarPontuacao() {
         if (!idInterclasse) return;
         try {
-            const resp = await fetch(`../../../api/interclasse.php?id_interclasse=${idInterclasse}`);
-            const dados = await resp.json();
+            const resp = await fetch(`../../../api/interclasse.php?id_interclasse=${encodeURIComponent(idInterclasse)}`);
+            const raw = await resp.text();
+            let dados;
+            try {
+                dados = JSON.parse(raw);
+            } catch {
+                console.error('Resposta inválida ao carregar pontuação:', raw);
+                return;
+            }
             const interclasse = Array.isArray(dados) ? dados[0] : dados;
             if (!interclasse) return;
 
-            const p1 = interclasse.ponto_1_lugar ?? 10;
-            const p2 = interclasse.ponto_2_lugar ?? 7;
-            const p3 = interclasse.ponto_3_lugar ?? 5;
-            const arr = interclasse.valor_item_arrecadacao ?? 2;
-
-            // Desktop
-            if (document.getElementById('pontos-1')) document.getElementById('pontos-1').innerText = p1;
-            if (document.getElementById('pontos-2')) document.getElementById('pontos-2').innerText = p2;
-            if (document.getElementById('pontos-3')) document.getElementById('pontos-3').innerText = p3;
-            if (document.getElementById('pontos-arr')) document.getElementById('pontos-arr').innerText = arr;
-            // Mobile
-            if (document.getElementById('pontos1Mobile')) document.getElementById('pontos1Mobile').value = p1;
-            if (document.getElementById('pontos2Mobile')) document.getElementById('pontos2Mobile').value = p2;
-            if (document.getElementById('pontos3Mobile')) document.getElementById('pontos3Mobile').value = p3;
-            if (document.getElementById('multiplicadorMobile')) document.getElementById('multiplicadorMobile').value = arr;
+            aplicarValoresNaTela({
+                p1: interclasse.ponto_1_lugar ?? 10,
+                p2: interclasse.ponto_2_lugar ?? 7,
+                p3: interclasse.ponto_3_lugar ?? 5,
+                arr: interclasse.valor_item_arrecadacao ?? 2
+            });
         } catch (e) {
             console.error('Erro ao carregar pontuação:', e);
         }
     }
 
-    // Salvar pontuação no banco de dados
     async function salvarPontuacao() {
         if (!idInterclasse) {
             alert('ID do interclasse não encontrado na URL!');
             return false;
         }
 
-        const p1 = Number(document.getElementById('pontos-1')?.innerText || document.getElementById('pontos1Mobile')?.value || 10);
-        const p2 = Number(document.getElementById('pontos-2')?.innerText || document.getElementById('pontos2Mobile')?.value || 7);
-        const p3 = Number(document.getElementById('pontos-3')?.innerText || document.getElementById('pontos3Mobile')?.value || 5);
-        const arr = Number(document.getElementById('pontos-arr')?.innerText || document.getElementById('multiplicadorMobile')?.value || 2);
+        const valores = lerValoresPontuacao();
+        const formData = new FormData();
+        formData.append('ponto_1_lugar', valores.p1);
+        formData.append('ponto_2_lugar', valores.p2);
+        formData.append('ponto_3_lugar', valores.p3);
+        formData.append('valor_item_arrecadacao', valores.arr);
 
         try {
-            const formData = new FormData();
-            formData.append('ponto_1_lugar', p1);
-            formData.append('ponto_2_lugar', p2);
-            formData.append('ponto_3_lugar', p3);
-            formData.append('valor_item_arrecadacao', arr);
-
-            const resp = await fetch(`../../../api/interclasse.php?id=${idInterclasse}`, {
+            const resp = await fetch(`../../../api/interclasse.php?id=${encodeURIComponent(idInterclasse)}`, {
                 method: 'POST',
                 body: formData
             });
-            const result = await resp.json();
-
-            if (result.success) {
-                return true;
-            } else {
-                alert('Erro ao salvar: ' + (result.message || 'Erro desconhecido'));
+            const raw = await resp.text();
+            let result;
+            try {
+                result = JSON.parse(raw);
+            } catch {
+                console.error('Resposta inválida ao salvar pontuação:', raw);
+                alert('Erro no servidor ao salvar. Verifique o console (F12).');
                 return false;
             }
+
+            if (result.success) {
+                window.SGIInterclasse?.invalidateCache?.();
+                return true;
+            }
+            alert('Erro ao salvar: ' + (result.message || 'Erro desconhecido'));
+            return false;
         } catch (e) {
             console.error('Erro ao salvar pontuação:', e);
             alert('Erro ao salvar pontuação.');
@@ -274,13 +289,17 @@ require_once '../componentes/header.php';
         }
     }
 
-    // Botão Continuar Mobile
-    document.getElementById('btnContinuarMobile').addEventListener('click', async (e) => {
+    if (window.SGIInterclasse?.registerBeforeLeave) {
+        window.SGIInterclasse.registerBeforeLeave(async () => {
+            await salvarPontuacao();
+        });
+    }
+
+    document.getElementById('btnContinuarMobile')?.addEventListener('click', async (e) => {
         e.preventDefault();
         const btn = document.getElementById('btnContinuarMobile');
         btn.innerHTML = 'Salvando...';
         btn.disabled = true;
-
         const salvo = await salvarPontuacao();
         if (salvo) {
             window.location.href = modo === 'view'
@@ -292,7 +311,6 @@ require_once '../componentes/header.php';
         }
     });
 
-    // Botão Continuar Desktop
     document.getElementById('btnContinuarDesktop')?.addEventListener('click', async (e) => {
         e.preventDefault();
         const salvo = await salvarPontuacao();
@@ -301,8 +319,10 @@ require_once '../componentes/header.php';
         }
     });
 
-    // Carregar valores ao iniciar
-    carregarPontuacao();
+    document.addEventListener('DOMContentLoaded', () => {
+        carregarPontuacao();
+        window.SGIInterclasse.setupBackLinks(`./dashboard.php?id=${idInterclasse || ''}`);
+    });
 </script>
 
 <?php

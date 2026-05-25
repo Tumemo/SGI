@@ -13,6 +13,9 @@ require_once '../componentes/header.php';
 
 <main class="d-md-none" style="margin-bottom: 120px;">
     <div class="container mt-3">
+        <a href="#" data-sgi-header-back="true" class="btn btn-danger btn-sm mb-3 d-inline-flex align-items-center gap-1">
+            <i class="bi bi-arrow-left-circle"></i> Voltar
+        </a>
         <div class="d-flex justify-content-between align-items-center mb-3">
             <h5 class="fw-bold mb-0">Equipe de apoio</h5>
             <button class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#modalAdicionarColaborador"><i class="bi bi-plus-circle"></i> Adicionar</button>
@@ -24,6 +27,9 @@ require_once '../componentes/header.php';
 
 <main class="d-none d-md-block main-desktop-layout">
     <div class="container-fluid px-0" style="max-width: 980px;">
+        <a href="#" data-sgi-header-back="true" class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none" style="background-color: #ed1c24; border-radius: 6px;">
+            <i class="bi bi-arrow-left-circle fs-5"></i> Voltar
+        </a>
         <div class="d-flex justify-content-between align-items-center mb-4">
             <h4 class="fw-bold mb-0">Colaboradores</h4>
             <div class="d-flex gap-2">
@@ -83,70 +89,106 @@ require_once '../componentes/header.php';
 </div>
 
 <script>
-    const STORAGE_KEY_COLABORADORES = 'sgi_colaboradores_locais';
     const paramsColab = new URLSearchParams(window.location.search);
     const idInterclasseColab = paramsColab.get('id');
-    const modoColab = paramsColab.get('modo');
-
-    function obterColaboradores() {
-        const raw = localStorage.getItem(STORAGE_KEY_COLABORADORES);
-        if (raw) return JSON.parse(raw);
-
-        const padrao = [];
-        localStorage.setItem(STORAGE_KEY_COLABORADORES, JSON.stringify(padrao));
-        return padrao;
-    }
-
-    function salvarColaboradores(lista) {
-        localStorage.setItem(STORAGE_KEY_COLABORADORES, JSON.stringify(lista));
-    }
 
     function cardColaborador(item) {
+        const admin = String(item.nivel_usuario) !== '0';
+        const mesario = String(item.mesario_usuario) === '1';
         return `
-            <div class="colaborador-card bg-white rounded-3 shadow-sm p-3 mb-3">
+            <div class="colaborador-card bg-white rounded-3 shadow-sm p-3 mb-3" data-id="${item.id_usuario}">
                 <div class="d-flex justify-content-between align-items-start">
                     <div>
-                        <h6 class="fw-bold mb-1">${item.nome}</h6>
-                        <small class="text-muted">Matrícula: ${item.matricula}</small>
+                        <h6 class="fw-bold mb-1">${item.nome_usuario}</h6>
+                        <small class="text-muted">Matrícula: ${item.matricula_usuario}</small>
                     </div>
-                    <button class="btn btn-sm btn-outline-danger" onclick="removerColaborador('${item.id}')"><i class="bi bi-trash"></i></button>
+                    <button type="button" class="btn btn-sm btn-outline-danger" data-remover="${item.id_usuario}"><i class="bi bi-trash"></i></button>
                 </div>
                 <div class="d-flex gap-4 mt-3">
                     <div class="form-check form-switch">
-                        <input class="form-check-input colaborador-switch" type="checkbox" id="admin_${item.id}" ${item.admin ? 'checked' : ''} onchange="alternarPapel('${item.id}','admin', this.checked)">
-                        <label class="form-check-label" for="admin_${item.id}">Administrador</label>
+                        <input class="form-check-input colaborador-switch" type="checkbox" data-papel="admin" data-id="${item.id_usuario}" ${admin ? 'checked' : ''}>
+                        <label class="form-check-label">Administrador</label>
                     </div>
                     <div class="form-check form-switch">
-                        <input class="form-check-input colaborador-switch" type="checkbox" id="mesario_${item.id}" ${item.mesario ? 'checked' : ''} onchange="alternarPapel('${item.id}','mesario', this.checked)">
-                        <label class="form-check-label" for="mesario_${item.id}">Mesário</label>
+                        <input class="form-check-input colaborador-switch" type="checkbox" data-papel="mesario" data-id="${item.id_usuario}" ${mesario ? 'checked' : ''}>
+                        <label class="form-check-label">Mesário</label>
                     </div>
                 </div>
             </div>
         `;
     }
 
-    function renderizarColaboradores() {
-        const lista = obterColaboradores();
-        const html = lista.length
-            ? lista.map(cardColaborador).join('')
-            : '<p class="text-muted text-center">Nenhum colaborador cadastrado.</p>';
-        document.getElementById('listaColaboradoresDesktop').innerHTML = html;
-        document.getElementById('listaColaboradoresMobile').innerHTML = html;
+    async function carregarColaboradores() {
+        const alvo = [
+            document.getElementById('listaColaboradoresDesktop'),
+            document.getElementById('listaColaboradoresMobile')
+        ];
+        try {
+            const response = await fetch('../../../api/usuarios.php?acao=listar_colaboradores');
+            const resultado = await response.json();
+            if (resultado.status !== 'sucesso') {
+                throw new Error(resultado.mensagem || 'Falha ao listar colaboradores.');
+            }
+            const lista = resultado.colaboradores || [];
+            const html = lista.length
+                ? lista.map(cardColaborador).join('')
+                : '<p class="text-muted text-center">Nenhum colaborador cadastrado.</p>';
+            alvo.forEach((el) => { if (el) el.innerHTML = html; });
+            vincularEventosLista();
+        } catch (error) {
+            alvo.forEach((el) => {
+                if (el) el.innerHTML = `<p class="text-danger text-center">${error.message}</p>`;
+            });
+        }
     }
 
-    window.alternarPapel = (id, chave, valor) => {
-        const lista = obterColaboradores();
-        const alvo = lista.find((item) => item.id === id);
-        if (!alvo) return;
-        alvo[chave] = !!valor;
-        salvarColaboradores(lista);
-    };
+    function vincularEventosLista() {
+        document.querySelectorAll('[data-remover]').forEach((btn) => {
+            btn.addEventListener('click', async () => {
+                if (!confirm('Remover este colaborador?')) return;
+                const id = btn.getAttribute('data-remover');
+                const body = new URLSearchParams();
+                body.append('acao', 'excluir_colaborador');
+                body.append('id_usuario', id);
+                const resp = await fetch('../../../api/usuarios.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: body.toString()
+                });
+                const json = await resp.json();
+                if (json.status !== 'sucesso') {
+                    alert(json.mensagem || 'Erro ao remover.');
+                    return;
+                }
+                await carregarColaboradores();
+            });
+        });
 
-    window.removerColaborador = (id) => {
-        const lista = obterColaboradores().filter((item) => item.id !== id);
-        salvarColaboradores(lista);
-        renderizarColaboradores();
-    };
+        document.querySelectorAll('.colaborador-switch').forEach((input) => {
+            input.addEventListener('change', async () => {
+                const id = input.getAttribute('data-id');
+                const papel = input.getAttribute('data-papel');
+                const card = input.closest('.colaborador-card');
+                const adminEl = card?.querySelector('[data-papel="admin"]');
+                const mesarioEl = card?.querySelector('[data-papel="mesario"]');
+                const body = new URLSearchParams();
+                body.append('acao', 'atualizar_colaborador');
+                body.append('id_usuario', id);
+                body.append('is_admin_clicado', adminEl?.checked ? '1' : '0');
+                body.append('is_mesario_clicado', mesarioEl?.checked ? '1' : '0');
+                const resp = await fetch('../../../api/usuarios.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: body.toString()
+                });
+                const json = await resp.json();
+                if (json.status !== 'sucesso') {
+                    alert(json.mensagem || 'Erro ao atualizar.');
+                    await carregarColaboradores();
+                }
+            });
+        });
+    }
 
     document.getElementById('formNovoColaborador').addEventListener('submit', async (event) => {
         event.preventDefault();
@@ -174,6 +216,7 @@ require_once '../componentes/header.php';
             body.append('is_mesario_clicado', mesario ? '1' : '0');
             body.append('sigla_usuario', 'SS');
             body.append('genero_usuario', genero);
+            body.append('competidor_usuario', '0');
 
             const response = await fetch('../../../api/usuarios.php', {
                 method: 'POST',
@@ -185,10 +228,7 @@ require_once '../componentes/header.php';
                 throw new Error(resultado.mensagem || 'Falha ao cadastrar.');
             }
 
-            const lista = obterColaboradores();
-            lista.unshift({ id: `c_${Date.now()}`, nome, matricula, admin, mesario });
-            salvarColaboradores(lista);
-            renderizarColaboradores();
+            await carregarColaboradores();
             msg.innerHTML = '<p class="text-success fw-bold mb-0">Colaborador cadastrado com sucesso.</p>';
             document.getElementById('formNovoColaborador').reset();
             setTimeout(() => bootstrap.Modal.getOrCreateInstance(document.getElementById('modalAdicionarColaborador')).hide(), 700);
@@ -200,7 +240,7 @@ require_once '../componentes/header.php';
         }
     });
 
-    window.addEventListener('load', renderizarColaboradores);
+    window.addEventListener('load', carregarColaboradores);
 </script>
 
 <?php

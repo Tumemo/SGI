@@ -16,7 +16,7 @@ require_once '../componentes/header.php';
 
     <div class="card shadow m-auto" style="width: 22rem;">
         <div class="card-header fw-bold text-center bg-white">
-            Contagem de Itens (Arrecadação)
+            Itens a adicionar (somam ao ranking)
         </div>
         <ul class="list-group list-group-flush" id="listaArrecadacaoMobile">
             <li class="list-group-item text-center text-muted">(Carregando...)</li>
@@ -78,15 +78,16 @@ require_once '../componentes/header.php';
     
     let todasAsTurmas = []; 
 
-    // Busca valor no LocalStorage ou o valor original vindo da BD
-    function getQuantidade(turma) {
+    // Quantidade a adicionar neste lançamento (não substitui o total já salvo no ranking)
+    function getQuantidadePendente(turma) {
         const local = localStorage.getItem(`${storagePrefix}${turma.id_turma}`);
-        return local !== null ? Number(local) : Number(turma.qtd_itens_arrecadados || 0);
+        return local !== null ? Number(local) : 0;
     }
 
     function salvarLocal(idTurma, valor) {
         localStorage.setItem(`${storagePrefix}${idTurma}`, String(valor));
-        document.getElementById('statusSincronizacao').innerText = "Existem alterações por guardar...";
+        const status = document.getElementById('statusSincronizacao');
+        if (status) status.innerText = 'Itens por lançar (serão somados ao ranking ao guardar)...';
     }
 
     function renderizarTelas(categoriaFiltro = 'todos') {
@@ -112,9 +113,9 @@ require_once '../componentes/header.php';
                     <small class="text-muted">${turma.nome_categoria || 'Geral'}</small>
                 </div>
                 <div class="d-flex align-items-center gap-2">
-                    <input type="number" class="form-control form-control-sm arrec-input text-center" 
+                    <input type="number" step="0.1" min="0" class="form-control form-control-sm arrec-input text-center" 
                         data-id-turma="${turma.id_turma}" 
-                        value="${getQuantidade(turma)}" style="width: 80px;">
+                        value="${getQuantidadePendente(turma)}" style="width: 80px;" placeholder="0">
                 </div>
             </li>
         `).join('');
@@ -128,9 +129,9 @@ require_once '../componentes/header.php';
                         <span class="badge bg-light text-dark fw-normal border">${turma.nome_categoria || 'Geral'}</span>
                     </div>
                     <div class="input-group" style="max-width: 150px;">
-                        <input type="number" class="form-control text-center arrec-input" 
+                        <input type="number" step="0.1" min="0" class="form-control text-center arrec-input" 
                             data-id-turma="${turma.id_turma}" 
-                            value="${getQuantidade(turma)}">
+                            value="${getQuantidadePendente(turma)}" placeholder="0">
                         <span class="input-group-text bg-light border-start-0 small">Qtd</span>
                     </div>
                 </div>
@@ -158,7 +159,10 @@ require_once '../componentes/header.php';
 
             document.getElementById('nomeInterclasseArrecadacao').innerText = ativo.nome_interclasse;
             const vDesk = document.getElementById('btnVoltarArrecadacao');
-            if (vDesk) vDesk.href = `./dashboard.php?id=${ativo.id_interclasse}`;
+            if (vDesk) {
+                vDesk.href = '#';
+                vDesk.setAttribute('data-sgi-header-back', 'true');
+            }
             document.getElementById('barraContinuarArrecadacaoMobile').classList.remove('d-none');
 
             const res = await fetch(`../../../api/turmas.php?id_interclasse=${ativo.id_interclasse}`);
@@ -196,9 +200,16 @@ async function salvarNoServidor() {
         id_interclasse: idInterclasseArrecadacao,
         arrecadacoes: todasAsTurmas.map(t => ({
             id_turma: t.id_turma,
-            quantidade: localStorage.getItem(`${storagePrefix}${t.id_turma}`) || t.qtd_itens_arrecadados || 0
-        }))
+            quantidade: getQuantidadePendente(t)
+        })).filter((item) => item.quantidade > 0)
     };
+
+    if (!payload.arrecadacoes.length) {
+        alert('Informe a quantidade de itens a adicionar em pelo menos uma turma.');
+        btnDesk.disabled = btnMob.disabled = false;
+        btnDesk.innerText = textoOriginal;
+        return;
+    }
 
     try {
         // O caminho deve sair de views/src/pages/ para chegar em api/
@@ -218,12 +229,10 @@ async function salvarNoServidor() {
         const result = await response.json();
 
         if (result.success) {
-            // Limpa o cache local do navegador após o sucesso no banco de dados
             todasAsTurmas.forEach(t => {
                 localStorage.removeItem(`${storagePrefix}${t.id_turma}`);
             });
-
-            alert('Dados guardados e pontuações calculadas com sucesso!');
+            alert('Itens somados ao ranking com sucesso!');
             window.location.reload();
         } else {
             // Exibe a mensagem de erro específica retornada pelo PHP (ex: "Dados incompletos")

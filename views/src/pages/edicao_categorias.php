@@ -15,6 +15,9 @@ require_once '../componentes/header.php';
 
 <!-- main mobile -->
 <main class="position-relative d-md-none" style="margin-bottom: 120px;">
+    <a href="#" data-sgi-header-back="true" class="btn btn-danger btn-sm mt-3 ms-3 d-inline-flex align-items-center gap-1">
+        <i class="bi bi-arrow-left-circle"></i> Voltar
+    </a>
     <p class="text-secondary text-center my-3" style="font-size: 14px;">Selecione uma categoria para adicionar turmas</p>
     
     <div id="listaCategoriasMobile" class="d-flex flex-column align-items-center w-100">
@@ -34,7 +37,7 @@ require_once '../componentes/header.php';
 <main class="d-none d-md-block main-desktop-layout">
     <div class="container-fluid px-0 position-relative">
         <div class="mb-5">
-            <a href="./dashboard.php" id="btnVoltarCatDesk" class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none" style="background-color: #ed1c24; border-radius: 6px;">
+            <a href="#" id="btnVoltarCatDesk" data-sgi-header-back="true" class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none" style="background-color: #ed1c24; border-radius: 6px;">
                 <i class="bi bi-arrow-left-circle fs-5"></i> <span id="nomeInterclasseCategoria">Interclasse</span>
             </a>
 
@@ -219,8 +222,6 @@ require_once '../componentes/header.php';
                 window.SGIInterclasse.updatePageTitle(dados.nome_interclasse);
             }
         }).catch(console.error);
-        const back = document.getElementById('btnVoltarCatDesk');
-        if (back) back.href = `./dashboard.php?id=${encodeURIComponent(idInterclasse)}`;
         atualizarAcoesCategoria();
         aplicarModoContinuar();
     }

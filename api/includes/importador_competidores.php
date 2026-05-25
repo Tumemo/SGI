@@ -63,12 +63,10 @@ final class ImportadorCompetidores
         }
 
         if ($nomeTurmaForcada !== null) {
-            foreach ($alunos as &$aluno) {
-                if (is_array($aluno)) {
-                    $aluno['turma'] = $nomeTurmaForcada;
-                }
-            }
-            unset($aluno);
+            $alunos = array_values(array_filter(
+                $alunos,
+                static fn($a) => is_array($a) && trim((string) ($a['turma'] ?? '')) === $nomeTurmaForcada
+            ));
         }
         $prepared = $this->prepararLinhas($alunos);
         if ($prepared['fatal'] !== null) {
@@ -94,12 +92,18 @@ final class ImportadorCompetidores
             $sqlUser = 'INSERT INTO usuarios (
                 sigla_usuario, matricula_usuario, nome_usuario, senha_usuario, nivel_usuario,
                 competidor_usuario, mesario_usuario, genero_usuario, data_nasc_usuario,
-                foto_usuario, status_usuario, turmas_id_turma, interclasses_id_interclasse
-            ) VALUES (\'RM\', ?, ?, ?, \'0\', \'1\', \'0\', ?, ?, \'default.jpg\', \'1\', ?, ?)';
+                foto_usuario, status_usuario, turmas_id_turma, interclasses_id_interclasse, chave_usuario_edicao
+            ) VALUES (\'RM\', ?, ?, ?, \'0\', \'1\', \'0\', ?, ?, \'default.jpg\', \'1\', ?, ?, ?)';
 
             $stmtU = $this->conn->prepare($sqlUser);
             if (!$stmtU) {
                 throw new RuntimeException('Falha ao preparar inserção de usuários: ' . $this->conn->error);
+            }
+
+            $sqlExiste = 'SELECT id_usuario FROM usuarios WHERE chave_usuario_edicao = ? LIMIT 1';
+            $stmtExiste = $this->conn->prepare($sqlExiste);
+            if (!$stmtExiste) {
+                throw new RuntimeException('Falha ao verificar duplicidade: ' . $this->conn->error);
             }
 
             foreach ($linhas as $linha) {
@@ -109,16 +113,25 @@ final class ImportadorCompetidores
                     throw new RuntimeException('Inconsistência no mapa de turmas.');
                 }
 
+                $chaveEdicao = $linha['rm'] . '-' . $idInterclasse;
+                $stmtExiste->bind_param('s', $chaveEdicao);
+                $stmtExiste->execute();
+                $jaCadastrado = $stmtExiste->get_result()->fetch_assoc();
+                if ($jaCadastrado) {
+                    continue;
+                }
+
                 $senhaHash = password_hash($linha['rm'], PASSWORD_DEFAULT);
                 $stmtU->bind_param(
-                    'sssssii',
+                    'sssssiis',
                     $linha['rm'],
                     $linha['nome'],
                     $senhaHash,
                     $linha['genero'],
                     $linha['data_nasc'],
                     $idTurma,
-                    $idInterclasse
+                    $idInterclasse,
+                    $chaveEdicao
                 );
 
                 if (!$stmtU->execute()) {
@@ -129,6 +142,8 @@ final class ImportadorCompetidores
                 }
                 $cadastrados++;
             }
+
+            $stmtExiste->close();
 
             $stmtU->close();
             $this->conn->commit();

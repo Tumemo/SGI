@@ -1,8 +1,9 @@
 <?php
 // 1. Inclusões essenciais para a automação
 require_once '../vendor/autoload.php';
-require_once '../config/db.php'; // Necessário para a variável $conn
+require_once '../config/db.php';
 require_once __DIR__ . '/includes/importador_competidores.php';
+require_once __DIR__ . '/includes/usuario_validacao.php';
 
 use Smalot\PdfParser\Parser;
 
@@ -33,17 +34,38 @@ try {
 
     $alunos_por_rm = [];
     foreach ($todos_os_alunos as $aluno) {
-        if (isset($aluno['rm'])) {
-            $alunos_por_rm[$aluno['rm']] = $aluno;
+        if (!is_array($aluno) || !isset($aluno['rm'])) {
+            continue;
+        }
+        $turmaKey = trim((string) ($aluno['turma'] ?? ''));
+        $rmNorm = sgi_normalizar_ra($aluno['rm']);
+        if ($rmNorm === '') {
+            continue;
+        }
+        $alunos_por_rm[$turmaKey . '|' . $rmNorm] = $aluno;
+    }
+
+    $id_turma_post = isset($_POST['id_turma']) ? (int) $_POST['id_turma'] : 0;
+    $nome_turma_vinculo = null;
+    if ($id_turma_post > 0) {
+        $stTurma = $conn->prepare('SELECT nome_turma FROM turmas WHERE id_turma = ? LIMIT 1');
+        if ($stTurma) {
+            $stTurma->bind_param('i', $id_turma_post);
+            $stTurma->execute();
+            $rowTurma = $stTurma->get_result()->fetch_assoc();
+            $stTurma->close();
+            $nome_turma_vinculo = isset($rowTurma['nome_turma']) ? (string) $rowTurma['nome_turma'] : null;
         }
     }
 
-    $quantidade_inicial = count($alunos_por_rm); 
-    $arquivos_pdf = glob($pasta_pdf . "*.pdf");
+    $arquivo_turma = $id_turma_post > 0 ? $pasta_pdf . 'turma_' . $id_turma_post . '.pdf' : null;
+    $arquivos_pdf = ($arquivo_turma && is_file($arquivo_turma))
+        ? [$arquivo_turma]
+        : glob($pasta_pdf . "*.pdf");
 
     if (count($arquivos_pdf) > 0) {
         foreach ($arquivos_pdf as $arquivo) {
-            $nome_turma = basename($arquivo, ".pdf");
+            $nome_turma = $nome_turma_vinculo ?? basename($arquivo, ".pdf");
             
             try {
                 $pdf = $parser->parseFile($arquivo);
@@ -76,8 +98,13 @@ try {
                         $nome_final = trim($partes[0]);
                         $nome_final = preg_replace('/\s*[A-Z]{2}$/', '', $nome_final);
 
-                        if (!isset($alunos_por_rm[$rm])) {
-                            $alunos_por_rm[$rm] = [
+                        $rmNorm = sgi_normalizar_ra($rm);
+                        if ($rmNorm === '') {
+                            continue;
+                        }
+                        $chaveRm = $nome_turma . '|' . $rmNorm;
+                        if (!isset($alunos_por_rm[$chaveRm])) {
+                            $alunos_por_rm[$chaveRm] = [
                                 'nome'            => $nome_final,
                                 'data_nascimento' => $data_nasc,
                                 'rm'              => $rm,

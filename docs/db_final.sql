@@ -104,7 +104,14 @@ CREATE TABLE `locais` (
   `disponivel_local` enum('0','1') NOT NULL DEFAULT '1',
   `carga_local` int(11) DEFAULT NULL,
   `status_local` enum('1','0') NOT NULL,
-  PRIMARY KEY (`id_local`)
+  `interclasses_id_interclasse` int(11) NOT NULL,
+  PRIMARY KEY (`id_local`),
+  UNIQUE KEY `uk_local_interclasse` (`nome_local`, `interclasses_id_interclasse`),
+  KEY `fk_locais_interclasses_idx` (`interclasses_id_interclasse`),
+  CONSTRAINT `fk_locais_interclasses`
+    FOREIGN KEY (`interclasses_id_interclasse`)
+    REFERENCES `interclasses` (`id_interclasse`)
+    ON DELETE NO ACTION ON UPDATE NO ACTION
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci;
 
 -- -----------------------------------------------------------

@@ -7,6 +7,9 @@ require_once '../componentes/header.php';
 ?>
 
 <main class="d-md-none">
+    <a href="#" data-sgi-header-back="true" class="btn btn-danger btn-sm mt-3 ms-3 d-inline-flex align-items-center gap-1">
+        <i class="bi bi-arrow-left-circle"></i> Voltar
+    </a>
     <p class="text-secondary text-center my-3">Editar detalhes turmas</p>
     
     <a href="#" id="linkAlunosMobile" class="text-decoration-none text-black">
@@ -35,7 +38,9 @@ require_once '../componentes/header.php';
 
 <main class="d-none d-md-block main-desktop-layout">
     <div class="container-fluid px-0">
-        
+        <a href="#" data-sgi-header-back="true" class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none" style="background-color: #ed1c24; border-radius: 6px;">
+            <i class="bi bi-arrow-left-circle fs-5"></i> Voltar
+        </a>
         <div class="row g-4 mx-0">
             <div class="col-md-4 px-0 px-md-2">
                 <div class="bg-white rounded-4 shadow-sm overflow-hidden border-0">
@@ -249,12 +254,16 @@ require_once '../componentes/header.php';
         const inputTurno = document.getElementById('inputTurnoTurma');
         const msg = document.getElementById('msgTurma');
 
+        const mapaTurno = { 'manhã': 'manha', 'manha': 'manha', 'tarde': 'tarde', 'noite': 'noite', 'integral': 'integral' };
+        const turnoRaw = (inputTurno.value || '').trim().toLowerCase();
+        const turnoNormalizado = mapaTurno[turnoRaw] || (turnoRaw || null);
+
         const dadosTurma = {
             interclasses_id_interclasse: parseInt(idInterclasse, 10),
             categorias_id_categoria: parseInt(String(categoriaSelecionadaId), 10),
             nome_turma: inputNome.value.trim(),
             nome_fantasia_turma: inputNomeFantasia.value.trim(),
-            turno_turma: inputTurno.value,
+            turno_turma: turnoNormalizado,
             status_turma: "1"
         };
 
@@ -272,14 +281,24 @@ require_once '../componentes/header.php';
 
             if (response.ok && result.success) {
                 const nomeTurma = inputNome.value.trim();
+                const idTurmaNova = result.id_turma;
                 const pdf = document.getElementById('arquivoPdfTurma').files?.[0];
+
+                const novaTurmaObj = {
+                    id_turma: idTurmaNova,
+                    nome_turma: nomeTurma,
+                    nome_fantasia_turma: inputNomeFantasia.value.trim(),
+                    turno_turma: turnoNormalizado
+                };
+                todasTurmasAtuais = [...todasTurmasAtuais, novaTurmaObj];
+                renderizarTurmas(todasTurmasAtuais);
                 
-                if (pdf) {
+                if (pdf && idTurmaNova) {
                     msg.innerHTML = `<p class="text-info fw-bold mt-2 mb-0">Enviando e processando PDF, aguarde...</p>`;
                     try {
                         const formData = new FormData();
-                        formData.append('pdf', pdf);
-                        formData.append('nome_turma', nomeTurma);
+                        formData.append('pdf_arquivo', pdf);
+                        formData.append('id_turma', String(idTurmaNova));
                         formData.append('id_interclasse', String(idInterclasse));
                         formData.append('id_categoria', String(categoriaSelecionadaId || ''));
                         const up = await fetch('../../../api/upload_turma_pdf.php', { method: 'POST', body: formData });
@@ -303,7 +322,7 @@ require_once '../componentes/header.php';
                 document.getElementById('arquivoPdfTurma').value = '';
                 document.getElementById('nomePdfTurma').textContent = '';
 
-                carregarTurmas(categoriaSelecionadaId);
+                await carregarTurmas(categoriaSelecionadaId);
 
                 setTimeout(() => {
                     const modalEl = document.getElementById('modalCriarTurma');

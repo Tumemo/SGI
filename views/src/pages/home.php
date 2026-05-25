@@ -93,7 +93,14 @@ require_once '../componentes/header.php';
             method: 'POST',
             body
         });
-        const data = await response.json();
+        const raw = await response.text();
+        let data;
+        try {
+            data = JSON.parse(raw);
+        } catch {
+            console.error('Resposta não-JSON da API:', raw);
+            throw new Error('Erro no servidor ao atualizar status. Verifique o console (F12).');
+        }
         if (!response.ok || !data.success) {
             throw new Error(data.message || 'Não foi possível atualizar o status.');
         }
@@ -102,13 +109,7 @@ require_once '../componentes/header.php';
     }
 
     async function ativarComExclusividade(idParaAtivar) {
-        const ativos = estadoInterclasses.lista.filter(item => statusAtivo(item));
-
-        for (const interclasse of ativos) {
-            if (String(interclasse.id_interclasse) !== String(idParaAtivar)) {
-                await atualizarStatusInterclasse(interclasse.id_interclasse, false);
-            }
-        }
+        // Um único POST: o trigger tr_unico_interclasse_ativo desativa os demais no banco.
         await atualizarStatusInterclasse(idParaAtivar, true);
     }
 

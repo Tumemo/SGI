@@ -104,6 +104,23 @@ switch ($metodo) {
             } catch (Throwable $e) {
                 sgi_json_saida(['status' => 'erro', 'mensagem' => 'Falha ao listar competidores: ' . $e->getMessage()]);
             }
+        } elseif ($acao === 'listar_colaboradores') {
+            $sql = "SELECT id_usuario, nome_usuario, matricula_usuario, genero_usuario, nivel_usuario, mesario_usuario
+                    FROM usuarios
+                    WHERE interclasses_id_interclasse = ?
+                      AND competidor_usuario = '0'
+                      AND status_usuario = '1'
+                    ORDER BY nome_usuario ASC";
+            $stmt = $conn->prepare($sql);
+            if (!$stmt) {
+                sgi_json_saida(['status' => 'erro', 'mensagem' => $conn->error]);
+                break;
+            }
+            $stmt->bind_param('i', $idInterclasseAtivo);
+            $stmt->execute();
+            $res = $stmt->get_result();
+            $lista = $res ? $res->fetch_all(MYSQLI_ASSOC) : [];
+            sgi_json_saida(['status' => 'sucesso', 'colaboradores' => $lista]);
         } elseif ($acao === '' || $acao === 'listar_por_turma') {
             $sql = "SELECT id_usuario, nome_usuario, matricula_usuario, genero_usuario
                     FROM usuarios WHERE interclasses_id_interclasse = ? AND status_usuario = '1'";
@@ -150,7 +167,8 @@ switch ($metodo) {
             $isAdmin = (($dados['is_admin_clicado'] ?? '0') === '1');
             $nivel = $isAdmin ? '1' : '0';
             $mesario = $isAdmin ? '1' : (string) ($dados['is_mesario_clicado'] ?? '0');
-            $competidor = $isAdmin ? '0' : '1';
+            $forcarColaborador = (($dados['competidor_usuario'] ?? null) === '0');
+            $competidor = $forcarColaborador || $isAdmin ? '0' : '1';
             $sigla = $competidor === '0' ? 'SS' : (string) ($dados['sigla_usuario'] ?? 'RM');
             $genero = (string) ($dados['genero_usuario'] ?? 'MASC');
 
@@ -176,7 +194,10 @@ switch ($metodo) {
             $senhaHash = password_hash($senhaCrua, PASSWORD_DEFAULT);
             $status = '1';
 
-            $sql = 'INSERT INTO usuarios (nome_usuario, matricula_usuario, senha_usuario, nivel_usuario, competidor_usuario, mesario_usuario, genero_usuario, foto_usuario, status_usuario, data_nasc_usuario, sigla_usuario, interclasses_id_interclasse) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
+            $matriculaNorm = sgi_normalizar_ra($matricula) ?: $matricula;
+            $chaveEdicao = $matriculaNorm . '-' . $idInterclasseAtivo;
+
+            $sql = 'INSERT INTO usuarios (nome_usuario, matricula_usuario, senha_usuario, nivel_usuario, competidor_usuario, mesario_usuario, genero_usuario, foto_usuario, status_usuario, data_nasc_usuario, sigla_usuario, interclasses_id_interclasse, chave_usuario_edicao) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
 
             $stmt = $conn->prepare($sql);
             if (!$stmt) {
@@ -185,9 +206,9 @@ switch ($metodo) {
             }
 
             $stmt->bind_param(
-                'sssssssssssi',
+                'sssssssssssis',
                 $nome,
-                $matricula,
+                $matriculaNorm,
                 $senhaHash,
                 $nivel,
                 $competidor,
@@ -197,7 +218,8 @@ switch ($metodo) {
                 $status,
                 $dataNasc,
                 $sigla,
-                $idInterclasseAtivo
+                $idInterclasseAtivo,
+                $chaveEdicao
             );
 
             if ($stmt->execute()) {
@@ -208,6 +230,67 @@ switch ($metodo) {
                 } else {
                     sgi_json_saida(['status' => 'erro', 'mensagem' => $stmt->error]);
                 }
+            }
+            $stmt->close();
+            break;
+        }
+
+        if ($acao === 'atualizar_colaborador') {
+            $idInterclasseAtivo = buscarInterclasseAtivo($conn);
+            if ($idInterclasseAtivo === null) {
+                sgi_json_saida(erroSemInterclasseAtivo());
+                break;
+            }
+            $dados = !empty($_POST) ? $_POST : $inputData;
+            $idUsuario = (int) ($dados['id_usuario'] ?? 0);
+            if ($idUsuario <= 0) {
+                sgi_json_saida(['status' => 'erro', 'mensagem' => 'ID do colaborador inválido.']);
+                break;
+            }
+            $isAdmin = (($dados['is_admin_clicado'] ?? '0') === '1');
+            $nivel = $isAdmin ? '1' : '0';
+            $mesario = $isAdmin ? '1' : (string) ($dados['is_mesario_clicado'] ?? '0');
+            $sql = "UPDATE usuarios SET nivel_usuario = ?, mesario_usuario = ?
+                    WHERE id_usuario = ? AND interclasses_id_interclasse = ? AND competidor_usuario = '0'";
+            $stmt = $conn->prepare($sql);
+            if (!$stmt) {
+                sgi_json_saida(['status' => 'erro', 'mensagem' => $conn->error]);
+                break;
+            }
+            $stmt->bind_param('ssii', $nivel, $mesario, $idUsuario, $idInterclasseAtivo);
+            if ($stmt->execute()) {
+                sgi_json_saida(['status' => 'sucesso', 'mensagem' => 'Colaborador atualizado.']);
+            } else {
+                sgi_json_saida(['status' => 'erro', 'mensagem' => $stmt->error]);
+            }
+            $stmt->close();
+            break;
+        }
+
+        if ($acao === 'excluir_colaborador') {
+            $idInterclasseAtivo = buscarInterclasseAtivo($conn);
+            if ($idInterclasseAtivo === null) {
+                sgi_json_saida(erroSemInterclasseAtivo());
+                break;
+            }
+            $dados = !empty($_POST) ? $_POST : $inputData;
+            $idUsuario = (int) ($dados['id_usuario'] ?? 0);
+            if ($idUsuario <= 0) {
+                sgi_json_saida(['status' => 'erro', 'mensagem' => 'ID do colaborador inválido.']);
+                break;
+            }
+            $sql = "UPDATE usuarios SET status_usuario = '0'
+                    WHERE id_usuario = ? AND interclasses_id_interclasse = ? AND competidor_usuario = '0'";
+            $stmt = $conn->prepare($sql);
+            if (!$stmt) {
+                sgi_json_saida(['status' => 'erro', 'mensagem' => $conn->error]);
+                break;
+            }
+            $stmt->bind_param('ii', $idUsuario, $idInterclasseAtivo);
+            if ($stmt->execute()) {
+                sgi_json_saida(['status' => 'sucesso', 'mensagem' => 'Colaborador removido.']);
+            } else {
+                sgi_json_saida(['status' => 'erro', 'mensagem' => $stmt->error]);
             }
             $stmt->close();
             break;

@@ -21,11 +21,15 @@ require_once '../componentes/header.php';
 
 <main class="d-md-none" style="margin-bottom:120px;">
     <div class="container mt-3">
+        <a href="#" data-sgi-header-back="true" class="btn btn-danger btn-sm mb-3 d-inline-flex align-items-center gap-1">
+            <i class="bi bi-arrow-left-circle"></i> Voltar
+        </a>
         <div class="d-flex gap-2 mb-3 flex-wrap">
             <input type="text" id="buscaNomeMobile" class="form-control form-control-sm rounded-pill" placeholder="Buscar por nome..." style="max-width: 200px;">
-            <button id="filtroMasculinoMobile" class="btn btn-outline-secondary btn-sm rounded-pill px-3 filtro-btn" data-filtro="masculino">Masculino</button>
-            <button id="filtroFemininoMobile" class="btn btn-outline-secondary btn-sm rounded-pill px-3 filtro-btn" data-filtro="feminino">Feminino</button>
-            <button id="filtroDestaqueMobile" class="btn btn-outline-warning btn-sm rounded-pill px-3 filtro-btn" data-filtro="destaque">Destaque</button>
+            <button type="button" class="btn btn-outline-secondary btn-sm rounded-pill px-3 filtro-btn" data-filtro="masculino">Masculino</button>
+            <button type="button" class="btn btn-outline-secondary btn-sm rounded-pill px-3 filtro-btn" data-filtro="feminino">Feminino</button>
+            <button type="button" class="btn btn-outline-warning btn-sm rounded-pill px-3 filtro-btn" data-filtro="destaque">Destaque</button>
+            <button type="button" class="btn btn-light btn-sm rounded-pill px-3" data-filtro="limpar">Sem filtro</button>
         </div>
         <div id="listaAlunosMobile"></div>
     </div>
@@ -33,11 +37,15 @@ require_once '../componentes/header.php';
 
 <main class="d-none d-md-block main-desktop-layout">
     <div class="mx-auto" style="max-width: 720px;">
+        <a href="#" data-sgi-header-back="true" class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none" style="background-color: #ed1c24; border-radius: 6px;">
+            <i class="bi bi-arrow-left-circle fs-5"></i> Voltar
+        </a>
         <div class="d-flex gap-2 mb-4 overflow-auto pb-1 pt-2 ps-1" style="white-space: nowrap; scrollbar-width: none;">
             <input type="text" id="buscaNome" class="form-control form-control-sm rounded-pill p-2 ps-4" placeholder="Buscar por nome..." style="max-width: 200px;">
-            <button id="filtroMasculino" class="btn btn-outline-secondary btn-sm rounded-pill px-3 filtro-btn" data-filtro="masculino">Masculino</button>
-            <button id="filtroFeminino" class="btn btn-outline-secondary btn-sm rounded-pill px-3 filtro-btn" data-filtro="feminino">Feminino</button>
-            <button id="filtroDestaque" class="btn btn-outline-warning btn-sm rounded-pill px-3 filtro-btn" data-filtro="destaque">Destaque</button>
+            <button type="button" class="btn btn-outline-secondary btn-sm rounded-pill px-3 filtro-btn" data-filtro="masculino">Masculino</button>
+            <button type="button" class="btn btn-outline-secondary btn-sm rounded-pill px-3 filtro-btn" data-filtro="feminino">Feminino</button>
+            <button type="button" class="btn btn-outline-warning btn-sm rounded-pill px-3 filtro-btn" data-filtro="destaque">Destaque</button>
+            <button type="button" class="btn btn-light btn-sm rounded-pill px-3" data-filtro="limpar">Sem filtro</button>
         </div>
         <div id="listaAlunosDesktop" class="d-flex flex-column gap-3">
             <p class="text-center text-muted">(Carregando alunos...)</p>
@@ -65,7 +73,7 @@ require_once '../componentes/header.php';
     function cardAluno(aluno, mobile = false) {
         const nome = aluno.nome_usuario || aluno.nome || `Aluno ${aluno.id_usuario || aluno.id}`;
         const id = aluno.id_usuario || aluno.id;
-        const genero = aluno.genero_usuario || 'M'; // Assumindo M ou F
+        const genero = (aluno.genero_usuario || 'MASC').toUpperCase();
         const classe = mobile ? 'mb-2' : 'mb-0';
         return `
             <div id="card-aluno-${id}${mobile ? '-m' : ''}" class="bg-white border-0 shadow-sm rounded-3 p-3 d-flex justify-content-between align-items-center aluno-card ${classe}" data-genero="${genero}" data-destaque="0" data-nome="${nome.toLowerCase()}">
@@ -108,13 +116,43 @@ require_once '../componentes/header.php';
         }
     }
 
-    let filtrosAtivos = { genero: null, destaque: false };
+    const paramsAlunos = new URLSearchParams(window.location.search);
+    const idTurmaAlunos = paramsAlunos.get('id_turma');
+
+    let filtrosAtivos = { busca: '', genero: null, destaque: false };
+
+    function sincronizarBusca(origem) {
+        const valor = origem?.value ?? '';
+        filtrosAtivos.busca = valor.toLowerCase();
+        const outro = document.getElementById('buscaNome') && document.getElementById('buscaNomeMobile')
+            ? (origem?.id === 'buscaNome' ? document.getElementById('buscaNomeMobile') : document.getElementById('buscaNome'))
+            : null;
+        if (outro && outro.value !== valor) outro.value = valor;
+    }
+
+    function atualizarEstiloBotoesFiltro() {
+        document.querySelectorAll('[data-filtro="masculino"], [data-filtro="feminino"]').forEach((btn) => {
+            const generoBtn = btn.dataset.filtro === 'masculino' ? 'MASC' : 'FEM';
+            const ativo = filtrosAtivos.genero === generoBtn;
+            btn.classList.toggle('btn-secondary', ativo);
+            btn.classList.toggle('btn-outline-secondary', !ativo);
+            btn.classList.toggle('text-white', ativo);
+        });
+        document.querySelectorAll('[data-filtro="destaque"]').forEach((btn) => {
+            btn.classList.toggle('btn-warning', filtrosAtivos.destaque);
+            btn.classList.toggle('btn-outline-warning', !filtrosAtivos.destaque);
+        });
+        document.querySelectorAll('[data-filtro="limpar"]').forEach((btn) => {
+            const semFiltro = !filtrosAtivos.busca && !filtrosAtivos.genero && !filtrosAtivos.destaque;
+            btn.classList.toggle('btn-secondary', semFiltro);
+            btn.classList.toggle('text-white', semFiltro);
+        });
+    }
 
     function aplicarFiltro() {
-        const busca = document.getElementById('buscaNome')?.value.toLowerCase() || document.getElementById('buscaNomeMobile')?.value.toLowerCase() || '';
         document.querySelectorAll('.aluno-card').forEach((card) => {
             let mostrar = true;
-            if (busca && !card.dataset.nome.includes(busca)) {
+            if (filtrosAtivos.busca && !card.dataset.nome.includes(filtrosAtivos.busca)) {
                 mostrar = false;
             }
             if (filtrosAtivos.genero && card.dataset.genero !== filtrosAtivos.genero) {
@@ -125,34 +163,26 @@ require_once '../componentes/header.php';
             }
             card.classList.toggle('d-none', !mostrar);
         });
+        atualizarEstiloBotoesFiltro();
+    }
+
+    function limparFiltros() {
+        filtrosAtivos = { busca: '', genero: null, destaque: false };
+        document.getElementById('buscaNome')?.value = '';
+        document.getElementById('buscaNomeMobile')?.value = '';
+        aplicarFiltro();
     }
 
     function toggleFiltro(filtro) {
+        if (filtro === 'limpar') {
+            limparFiltros();
+            return;
+        }
         if (filtro === 'masculino' || filtro === 'feminino') {
-            if (filtrosAtivos.genero === filtro) {
-                filtrosAtivos.genero = null;
-            } else {
-                filtrosAtivos.genero = filtro === 'masculino' ? 'M' : 'F';
-            }
-            // Reset outros botões de gênero
-            document.querySelectorAll('[data-filtro="masculino"], [data-filtro="feminino"]').forEach(btn => {
-                const isActive = filtrosAtivos.genero === (btn.dataset.filtro === 'masculino' ? 'M' : 'F');
-                btn.classList.toggle('btn-secondary', isActive);
-                btn.classList.toggle('btn-outline-secondary', !isActive);
-                btn.classList.toggle('text-white', isActive);
-            });
+            const alvo = filtro === 'masculino' ? 'MASC' : 'FEM';
+            filtrosAtivos.genero = filtrosAtivos.genero === alvo ? null : alvo;
         } else if (filtro === 'destaque') {
             filtrosAtivos.destaque = !filtrosAtivos.destaque;
-            const btns = document.querySelectorAll('[data-filtro="destaque"]');
-            btns.forEach(btn => {
-                if (filtrosAtivos.destaque) {
-                    btn.classList.add('btn-warning');
-                    btn.classList.remove('btn-outline-warning');
-                } else {
-                    btn.classList.remove('btn-warning');
-                    btn.classList.add('btn-outline-warning');
-                }
-            });
         }
         aplicarFiltro();
     }
@@ -160,41 +190,47 @@ require_once '../componentes/header.php';
     async function carregarAlunos() {
         const desktop = document.getElementById('listaAlunosDesktop');
         const mobile = document.getElementById('listaAlunosMobile');
+        if (!idTurmaAlunos) {
+            const msg = '<p class="text-muted text-center">Turma não informada na URL.</p>';
+            desktop.innerHTML = msg;
+            mobile.innerHTML = msg;
+            return;
+        }
         try {
-            const res = await fetch('../../../api/usuarios.php');
+            const res = await fetch(`../../../api/usuarios.php?acao=listar_competidores&id_turma=${encodeURIComponent(idTurmaAlunos)}`);
             const data = await res.json();
-            alunosLista = data.usuarios || [];
+            if (data.status !== 'sucesso') {
+                throw new Error(data.mensagem || 'Falha ao carregar alunos.');
+            }
+            alunosLista = data.competidores || [];
             if (!alunosLista.length) {
-                // Adicionar alunos estáticos como exemplo
-                alunosLista = [
-                    { id_usuario: 1, nome_usuario: 'Gustavo', genero_usuario: 'M' },
-                    { id_usuario: 2, nome_usuario: 'Hugio', genero_usuario: 'M' },
-                    { id_usuario: 3, nome_usuario: 'Maria', genero_usuario: 'F' },
-                    { id_usuario: 4, nome_usuario: 'Ana', genero_usuario: 'F' }
-                ];
+                const msg = '<p class="text-muted text-center">Nenhum aluno cadastrado nesta turma.</p>';
+                desktop.innerHTML = msg;
+                mobile.innerHTML = msg;
+                return;
             }
             desktop.innerHTML = alunosLista.map((a) => cardAluno(a, false)).join('');
             mobile.innerHTML = alunosLista.map((a) => cardAluno(a, true)).join('');
+            aplicarFiltro();
         } catch (error) {
             console.error(error);
-            // Fallback para alunos estáticos
-            alunosLista = [
-                { id_usuario: 1, nome_usuario: 'Gustavo', genero_usuario: 'M' },
-                { id_usuario: 2, nome_usuario: 'Hugio', genero_usuario: 'M' },
-                { id_usuario: 3, nome_usuario: 'Maria', genero_usuario: 'F' },
-                { id_usuario: 4, nome_usuario: 'Ana', genero_usuario: 'F' }
-            ];
-            desktop.innerHTML = alunosLista.map((a) => cardAluno(a, false)).join('');
-            mobile.innerHTML = alunosLista.map((a) => cardAluno(a, true)).join('');
+            const msg = `<p class="text-danger text-center">${error.message}</p>`;
+            desktop.innerHTML = msg;
+            mobile.innerHTML = msg;
         }
     }
 
-    document.querySelectorAll('[data-filtro="masculino"]').forEach(btn => btn.addEventListener('click', () => toggleFiltro('masculino')));
-    document.querySelectorAll('[data-filtro="feminino"]').forEach(btn => btn.addEventListener('click', () => toggleFiltro('feminino')));
-    document.querySelectorAll('[data-filtro="destaque"]').forEach(btn => btn.addEventListener('click', () => toggleFiltro('destaque')));
-
-    document.getElementById('buscaNome')?.addEventListener('input', aplicarFiltro);
-    document.getElementById('buscaNomeMobile')?.addEventListener('input', aplicarFiltro);
+    document.getElementById('buscaNome')?.addEventListener('input', (e) => {
+        sincronizarBusca(e.target);
+        aplicarFiltro();
+    });
+    document.getElementById('buscaNomeMobile')?.addEventListener('input', (e) => {
+        sincronizarBusca(e.target);
+        aplicarFiltro();
+    });
+    document.querySelectorAll('[data-filtro]').forEach((btn) => {
+        btn.addEventListener('click', () => toggleFiltro(btn.dataset.filtro));
+    });
 
     window.addEventListener('load', carregarAlunos);
 </script>

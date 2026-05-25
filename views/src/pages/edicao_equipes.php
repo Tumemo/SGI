@@ -7,6 +7,9 @@ require_once '../componentes/header.php';
 ?>
 
 <main class="d-md-none p-3" style="padding-top: 5rem; padding-bottom: 5rem;">
+    <a href="#" data-sgi-header-back="true" class="btn btn-danger btn-sm mb-3 d-inline-flex align-items-center gap-1">
+        <i class="bi bi-arrow-left-circle"></i> Voltar
+    </a>
     <p class="text-secondary text-center small mb-3">Equipes por modalidade e categoria desta edição.</p>
     <button class="btn btn-danger w-100 fw-semibold mb-3 border-0 shadow-sm" style="background-color: #ed1c24; border-radius: 6px;" data-bs-toggle="modal" data-bs-target="#modalCriarEquipe">
         <i class="bi bi-plus-lg me-1"></i> Criar equipe
@@ -17,7 +20,7 @@ require_once '../componentes/header.php';
 <main class="d-none d-md-block main-desktop-layout">
     <div class="container-fluid px-0" style="max-width: 960px;">
         <div class="mb-4">
-            <a href="./dashboard.php" id="btnVoltarEquipesDesk" class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold mb-3 px-3 py-2 border-0 text-decoration-none shadow-sm" style="background-color: #ed1c24; border-radius: 6px;">
+            <a href="#" data-sgi-header-back="true" id="btnVoltarEquipesDesk" class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold mb-3 px-3 py-2 border-0 text-decoration-none shadow-sm" style="background-color: #ed1c24; border-radius: 6px;">
                 <i class="bi bi-arrow-left-circle fs-5"></i>
                 <span id="nomeInterclasseEquipes" style="font-weight: 400;">Interclasse</span>
             </a>
@@ -88,7 +91,6 @@ require_once '../componentes/header.php';
         const dados = await window.SGIInterclasse.getInterclasseById(idInterclasseEq);
         if (dados?.nome_interclasse) {
             document.getElementById('nomeInterclasseEquipes').textContent = dados.nome_interclasse;
-            document.getElementById('btnVoltarEquipesDesk').href = `./dashboard.php?id=${encodeURIComponent(idInterclasseEq)}`;
             window.SGIInterclasse.updatePageTitle(dados.nome_interclasse);
         }
 
@@ -96,11 +98,9 @@ require_once '../componentes/header.php';
         desk.innerHTML = '<p class="text-muted">Carregando…</p>';
 
         try {
-            const resMod = await fetch(`${API}modalidades.php`);
-            const todas = await resMod.json();
-            const mods = (Array.isArray(todas) ? todas : []).filter(
-                (m) => String(m.interclasses_id_interclasse) === String(idInterclasseEq)
-            );
+            const resMod = await fetch(`${API}modalidades.php?id_interclasse=${encodeURIComponent(idInterclasseEq)}`);
+            const modsRaw = await resMod.json();
+            const mods = Array.isArray(modsRaw) ? modsRaw : [];
             if (!mods.length) {
                 const msg = '<p class="text-muted text-center w-100">Nenhuma modalidade nesta edição.</p>';
                 mob.innerHTML = msg;
@@ -198,9 +198,13 @@ require_once '../componentes/header.php';
             const turmas = await resTurmas.json();
 
             const selMod = document.getElementById('selectModalidadeEquipe');
-            const arr = Array.isArray(modalidades) ? modalidades : [];
+            const arrRaw = Array.isArray(modalidades) ? modalidades : [];
+            const arr = arrRaw.filter((m) => String(m.interclasses_id_interclasse) === String(idInterclasseEq));
             selMod.innerHTML = arr.length
-                ? '<option value="" selected disabled>Selecione a modalidade</option>' + arr.map((m) => `<option value="${m.id_modalidade}">${esc(m.nome_modalidade)} (${esc(m.genero_modalidade)})</option>`).join('')
+                ? '<option value="" selected disabled>Selecione a modalidade</option>' + arr.map((m) => {
+                    const cat = m.nome_categoria ? ` — ${esc(m.nome_categoria)}` : '';
+                    return `<option value="${m.id_modalidade}">${esc(m.nome_modalidade)}${cat} (${esc(m.genero_modalidade)})</option>`;
+                }).join('')
                 : '<option value="" selected disabled>Nenhuma modalidade encontrada</option>';
             selMod.disabled = !arr.length;
 

@@ -97,20 +97,29 @@ require_once '../componentes/header.php';
         // Pode ser expandida no futuro
     }
 
-    async function carregarModalidadesParaEquipe(idInterclasse, idCategoria) {
+    async function carregarModalidadesParaEquipe(idInterclasseRef, idCategoriaRef) {
         const select = document.getElementById('selectModalidadeEquipe');
-        const filtroCategoria = idCategoria ? `&id_categoria=${idCategoria}` : '';
+        if (!idInterclasseRef) {
+            select.innerHTML = '<option value="" selected disabled>Edição não informada</option>';
+            return;
+        }
+        const filtroCategoria = idCategoriaRef ? `&id_categoria=${encodeURIComponent(idCategoriaRef)}` : '';
         try {
-            const response = await fetch(`../../../api/modalidades.php?id_interclasse=${idInterclasse}${filtroCategoria}`);
+            const response = await fetch(`../../../api/modalidades.php?id_interclasse=${encodeURIComponent(idInterclasseRef)}${filtroCategoria}`);
             const modalidades = await response.json();
-            modalidadesDisponiveis = Array.isArray(modalidades) ? modalidades : [];
+            const lista = Array.isArray(modalidades) ? modalidades : [];
+            modalidadesDisponiveis = lista.filter(
+                (m) => String(m.interclasses_id_interclasse) === String(idInterclasseRef)
+            );
             if (!modalidadesDisponiveis.length) {
                 select.innerHTML = '<option value="" selected disabled>Nenhuma modalidade disponível</option>';
                 return;
             }
             select.innerHTML = '<option value="" selected disabled>Selecione a modalidade</option>';
             modalidadesDisponiveis.forEach((item) => {
-                select.innerHTML += `<option value="${item.id_modalidade}">${item.nome_modalidade}</option>`;
+                const cat = item.nome_categoria ? ` — ${item.nome_categoria}` : '';
+                const genero = item.genero_modalidade ? ` (${item.genero_modalidade})` : '';
+                select.innerHTML += `<option value="${item.id_modalidade}">${item.nome_modalidade}${cat}${genero}</option>`;
             });
         } catch (error) {
             console.error(error);
@@ -142,7 +151,8 @@ require_once '../componentes/header.php';
                 window.SGIInterclasse.updatePageTitle(turma?.nome_turma || 'Equipes');
             }
             nomeTurmaPagina = turma?.nome_turma || '';
-            await carregarModalidadesParaEquipe(idInterclasse, idCategoria);
+            const idCatTurma = turma?.categorias_id_categoria || idCategoria;
+            await carregarModalidadesParaEquipe(idInterclasse, idCatTurma);
 
             if (!Array.isArray(equipes) || equipes.length === 0) {
                 listaMobile.innerHTML = '<p class="text-center text-muted mt-4">Nenhuma equipe nesta turma.</p>';

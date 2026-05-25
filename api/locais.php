@@ -1,6 +1,7 @@
 <?php
 require_once '../config/db.php';
 require_once 'filtros.php';
+require_once __DIR__ . '/includes/locais_padrao.php';
 header('Content-Type: application/json');
 
 $method = $_SERVER['REQUEST_METHOD'];
@@ -31,19 +32,20 @@ switch ($method) {
     case 'POST':
         $data = json_decode(file_get_contents("php://input"));
 
-        if (!isset($data->nome_local)) {
+        if (!isset($data->nome_local, $data->interclasses_id_interclasse)) {
             http_response_code(400);
-            echo json_encode(["success" => false, "message" => "O nome do local é obrigatório."]);
+            echo json_encode(["success" => false, "message" => "Nome do local e interclasse são obrigatórios."]);
             break;
         }
 
         $disponivel = $data->disponivel_local ?? '1';
         $carga = isset($data->carga_local) ? intval($data->carga_local) : null;
+        $idInterclasse = (int) $data->interclasses_id_interclasse;
 
-        $sql = "INSERT INTO locais (nome_local, disponivel_local, carga_local) VALUES (?, ?, ?)";
+        $sql = "INSERT INTO locais (nome_local, disponivel_local, carga_local, status_local, interclasses_id_interclasse) VALUES (?, ?, ?, '1', ?)";
         $stmt = $conn->prepare($sql);
 
-        $stmt->bind_param("ssi", $data->nome_local, $disponivel, $carga);
+        $stmt->bind_param("ssii", $data->nome_local, $disponivel, $carga, $idInterclasse);
 
         if ($stmt->execute()) {
             http_response_code(201);

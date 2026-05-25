@@ -169,6 +169,12 @@ function aplicarFiltrosModalidades() {
     $types = "";
     $params = [];
 
+    if (!empty($_GET['id_interclasse'])) {
+        $sqlExtras .= " AND modalidades.interclasses_id_interclasse = ?";
+        $types .= "i";
+        $params[] = intval($_GET['id_interclasse']);
+    }
+
     if (!empty($_GET['id_modalidade'])) {
         $sqlExtras .= " AND modalidades.id_modalidade = ?";
         $types .= "i";
@@ -257,6 +263,12 @@ function aplicarFiltrosLocais() {
         $sqlExtras .= " AND nome_local LIKE ?";
         $types .= "s";
         $params[] = "%" . $_GET['busca'] . "%";
+    }
+
+    if (!empty($_GET['id_interclasse'])) {
+        $sqlExtras .= " AND interclasses_id_interclasse = ?";
+        $types .= "i";
+        $params[] = intval($_GET['id_interclasse']);
     }
 
     return [

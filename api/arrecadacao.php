@@ -21,23 +21,23 @@ if ($method === 'POST') {
         */
         $sql = "UPDATE turmas t
                 INNER JOIN interclasses i ON t.interclasses_id_interclasse = i.id_interclasse
-                SET 
-                    t.qtd_itens_arrecadados = t.qtd_itens_arrecadados + ?, 
-                    t.pontuacao_turma = t.pontuacao_turma + (? * i.valor_item_arrecadacao)
+                SET
+                    t.qtd_itens_arrecadados = t.qtd_itens_arrecadados + ?,
+                    t.pontuacao_turma = t.pontuacao_turma + ROUND(? * i.valor_item_arrecadacao, 2)
                 WHERE t.id_turma = ? AND i.id_interclasse = ?";
 
         $stmt = $conn->prepare($sql);
 
         foreach ($data->arrecadacoes as $item) {
-            $quantidade = (int)$item->quantidade;
-            
-            // Se a quantidade enviada for 0, pula para não processar desnecessariamente
-            if ($quantidade === 0) continue;
+            $delta = round((float) $item->quantidade, 2);
+            if ($delta == 0.0) {
+                continue;
+            }
 
-            $id_turma = (int)$item->id_turma;
-            $id_interclasse = (int)$data->id_interclasse;
+            $id_turma = (int) $item->id_turma;
+            $id_interclasse = (int) $data->id_interclasse;
 
-            $stmt->bind_param("iiii", $quantidade, $quantidade, $id_turma, $id_interclasse);
+            $stmt->bind_param("ddii", $delta, $delta, $id_turma, $id_interclasse);
             $stmt->execute();
         }
 

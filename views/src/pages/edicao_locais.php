@@ -25,14 +25,14 @@ require_once '../componentes/header.php';
         <button type="button" class="btn btn-danger flex-grow-1 fw-semibold rounded-3" data-bs-toggle="modal" data-bs-target="#modalNovoLocal">
             <i class="bi bi-plus-lg me-1"></i> Novo local
         </button>
-        <a href="./dashboard.php" id="btnVoltarLocaisMobile" class="btn btn-outline-danger fw-semibold rounded-3">Voltar</a>
+        <a href="#" data-sgi-header-back="true" id="btnVoltarLocaisMobile" class="btn btn-outline-danger fw-semibold rounded-3">Voltar</a>
     </div>
 </main>
 
 <main class="d-none d-md-block main-desktop-layout">
     <div class="container-fluid px-0" style="max-width: 960px;">
         <div class="mb-4">
-            <a href="./dashboard.php" id="btnVoltarLocaisDesk" class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold mb-3 px-3 py-2 border-0 text-decoration-none shadow-sm" style="background-color: #ed1c24; border-radius: 6px;">
+            <a href="#" data-sgi-header-back="true" id="btnVoltarLocaisDesk" class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold mb-3 px-3 py-2 border-0 text-decoration-none shadow-sm" style="background-color: #ed1c24; border-radius: 6px;">
                 <i class="bi bi-arrow-left-circle fs-5"></i>
                 <span id="nomeInterclasseLocais">Interclasse</span>
             </a>
@@ -131,7 +131,8 @@ require_once '../componentes/header.php';
         const mob = document.getElementById('listaLocaisMobile');
         const desk = document.getElementById('listaLocaisDesktop');
         try {
-            const res = await fetch(`${API}locais.php`);
+            const q = idInterclasse ? `?id_interclasse=${encodeURIComponent(idInterclasse)}` : '';
+            const res = await fetch(`${API}locais.php${q}`);
             const data = await res.json();
             const lista = (data && Array.isArray(data.data)) ? data.data : [];
             if (lista.length === 0) {
@@ -161,7 +162,10 @@ require_once '../componentes/header.php';
         msg.textContent = '';
         btn.disabled = true;
         try {
-            const body = { nome_local: nome, disponivel_local: disponivel };
+            if (!idInterclasse) {
+                throw new Error('Nenhuma edição do interclasse selecionada.');
+            }
+            const body = { nome_local: nome, disponivel_local: disponivel, interclasses_id_interclasse: parseInt(idInterclasse, 10) };
             if (carga != null && !Number.isNaN(carga)) body.carga_local = carga;
             const res = await fetch(`${API}locais.php`, {
                 method: 'POST',
@@ -182,9 +186,6 @@ require_once '../componentes/header.php';
     });
 
     document.addEventListener('DOMContentLoaded', async () => {
-        const dash = idInterclasse ? `./dashboard.php?id=${encodeURIComponent(idInterclasse)}` : './dashboard.php';
-        document.getElementById('btnVoltarLocaisDesk').href = dash;
-        document.getElementById('btnVoltarLocaisMobile').href = dash;
         if (idInterclasse) {
             try {
                 const d = await window.SGIInterclasse.getInterclasseById(idInterclasse);
