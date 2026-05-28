@@ -5,7 +5,7 @@ header('Content-Type: application/json');
 
 // Headers CORS
 header('Access-Control-Allow-Origin: *');
-header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
+header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
 header('Access-Control-Allow-Headers: Content-Type');
 
 $method = $_SERVER['REQUEST_METHOD'];
@@ -181,7 +181,7 @@ switch ($method) {
         }
         break;
 
-    case 'DELETE':
+   case 'DELETE':
         $idTurma = isset($_GET['id_turma']) ? (int) $_GET['id_turma'] : 0;
         if ($idTurma <= 0) {
             http_response_code(400);
@@ -195,7 +195,9 @@ switch ($method) {
             echo json_encode(['success' => false, 'message' => $conn->error]);
             break;
         }
+        
         $stmt->bind_param('i', $idTurma);
+        
         if ($stmt->execute()) {
             if ($stmt->affected_rows > 0) {
                 echo json_encode(['success' => true, 'message' => 'Turma excluída com sucesso.']);
@@ -204,8 +206,20 @@ switch ($method) {
                 echo json_encode(['success' => false, 'message' => 'Turma não encontrada.']);
             }
         } else {
-            http_response_code(500);
-            echo json_encode(['success' => false, 'message' => $stmt->error]);
+            // Captura o erro do MySQL
+            $erroCodigo = $stmt->errno;
+            
+            // 1451 é o código padrão do MySQL para restrição de chave estrangeira (Foreign Key constraint)
+            if ($erroCodigo === 1451) {
+                http_response_code(409); // Conflict
+                echo json_encode([
+                    'success' => false, 
+                    'message' => 'Não é possível excluir esta turma pois existem registros (como alunos, modalidades ou jogos) vinculados a ela.'
+                ]);
+            } else {
+                http_response_code(500);
+                echo json_encode(['success' => false, 'message' => 'Erro interno do banco: ' . $stmt->error]);
+            }
         }
         $stmt->close();
         break;

@@ -104,7 +104,7 @@ require_once '../componentes/header.php';
 
         <div class="row g-4 mt-2">
 
-            <div class="col-12 col-md-6 col-lg-4">
+<div class="col-12 col-md-6 col-lg-4">
                 <a href="edicao_modalidades.php" id="linkModalidades" class="dash-card">
                     <div class="dash-card-red-corner"></div>
                     <div class="dash-card-header">
@@ -113,7 +113,7 @@ require_once '../componentes/header.php';
                         </div>
                         <h5 class="dash-card-title">MODALIDADES</h5>
                     </div>
-                    <p class="dash-card-text">Saiba o que estamos arrecadando este ano, os pontos de entrega e como a sua doação faz a diferença.</p>
+                    <p class="dash-card-text">Cadastre e gerencie as modalidades esportivas, regulamentos e especificações de cada competição.</p>
                 </a>
             </div>
 
@@ -126,7 +126,7 @@ require_once '../componentes/header.php';
                         </div>
                         <h5 class="dash-card-title">PONTUAÇÕES</h5>
                     </div>
-                    <p class="dash-card-text">Saiba o que estamos arrecadando este ano, os pontos de entrega e como a sua doação faz a diferença.</p>
+                    <p class="dash-card-text">Acompanhe a tabela de pontos, critérios de classificação e o histórico de pontuação das equipes.</p>
                 </a>
             </div>
 
@@ -152,7 +152,7 @@ require_once '../componentes/header.php';
                         </div>
                         <h5 class="dash-card-title">AGENDA</h5>
                     </div>
-                    <p class="dash-card-text">Saiba o que estamos arrecadando este ano, os pontos de entrega e como a sua doação faz a diferença.</p>
+                    <p class="dash-card-text">Organize o cronograma dos jogos, definição de confrontos, datas e horários das partidas.</p>
                 </a>
             </div>
 
@@ -165,7 +165,7 @@ require_once '../componentes/header.php';
                         </div>
                         <h5 class="dash-card-title">ARRECADAÇÕES</h5>
                     </div>
-                    <p class="dash-card-text">Leia as regras oficiais, entenda o sistema de pontuação e as diretrizes de fair play da competição.</p>
+                    <p class="dash-card-text">Gerencie os itens arrecadados na gincana, metas, pontos de entrega e o impacto das doações.</p>
                 </a>
             </div>
 
@@ -178,7 +178,7 @@ require_once '../componentes/header.php';
                         </div>
                         <h5 class="dash-card-title">CATEGORIAS</h5>
                     </div>
-                    <p class="dash-card-text">Leia as regras oficiais, entenda o sistema de pontuação e as diretrizes de fair play da competição.</p>
+                    <p class="dash-card-text">Configure as divisões da competição por faixa etária, gênero ou nível técnico dos participantes.</p>
                 </a>
             </div>
 
@@ -191,7 +191,7 @@ require_once '../componentes/header.php';
                         </div>
                         <h5 class="dash-card-title">COLABORADORES</h5>
                     </div>
-                    <p class="dash-card-text">Leia as regras oficiais, entenda o sistema de pontuação e as diretrizes de fair play da competição.</p>
+                    <p class="dash-card-text">Gerencie a equipe de organização, voluntários, comissão técnica e juízes do evento.</p>
                 </a>
             </div>
 

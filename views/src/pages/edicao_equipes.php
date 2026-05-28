@@ -265,6 +265,7 @@ require_once '../componentes/header.php';
     document.addEventListener('DOMContentLoaded', () => {
         carregarEquipes();
     });
+    
 </script>
 
 <?php

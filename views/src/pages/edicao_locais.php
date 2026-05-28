@@ -89,6 +89,45 @@ require_once '../componentes/header.php';
     </div>
 </div>
 
+<div class="modal fade" id="modalEditarLocal" tabindex="-1" aria-labelledby="modalEditarLocalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content rounded-4 border-0 shadow">
+            <div class="modal-header border-0 pb-0">
+                <h5 class="modal-title fw-bold text-danger" id="modalEditarLocalLabel">Atualizar Local</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="formEditarLocal">
+                <div class="modal-body">
+                    <input type="hidden" id="edit-local-id" name="id_local">
+
+                    <div class="mb-3">
+                        <label for="edit-local-nome" class="form-label fw-medium">Nome do Local</label>
+                        <input type="text" class="form-control rounded-3" id="edit-local-nome" name="nome_local" required maxlength="45">
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="edit-local-disponivel" class="form-label fw-medium">Disponível para uso</label>
+                        <select class="form-select rounded-3" id="edit-local-disponivel" name="disponivel_local">
+                            <option value="1">Sim</option>
+                            <option value="0">Não</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="edit-local-carga" class="form-label fw-medium">Capacidade (opcional)</label>
+                        <input type="number" class="form-control rounded-3" id="edit-local-carga" name="carga_local" min="0">
+                    </div>
+                    <div id="msgEditarLocal" class="small text-center mb-2"></div>
+                </div>
+                <div class="modal-footer border-0 pt-0 d-flex justify-content-end gap-2">
+                    <button type="button" class="btn btn-outline-secondary rounded-3" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-danger rounded-3 fw-semibold px-4" id="btnAtualizarLocal">Salvar Alterações</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
 <script>
     const API = '../../../api/';
     const params = new URLSearchParams(window.location.search);
@@ -101,29 +140,55 @@ require_once '../componentes/header.php';
     }
 
     function cardLocal(loc) {
-        const disp = String(loc.disponivel_local) === '1' ? 'Disponível' : 'Indisponível';
+        const isDisponivel = Number(loc.disponivel_local) === 1;
+        const disp = isDisponivel ? 'Disponível' : 'Indisponível';
         const carga = loc.carga_local != null && loc.carga_local !== '' ? `Capacidade: ${esc(loc.carga_local)}` : 'Capacidade não informada';
         return `
             <div class="col-12 col-md-6">
                 <div class="local-card bg-white border-0 shadow-sm p-4 h-100 d-flex flex-column">
                     <div class="d-flex justify-content-between align-items-start gap-2 mb-2">
                         <h5 class="fw-bold text-dark mb-0 text-truncate" title="${esc(loc.nome_local)}">${esc(loc.nome_local)}</h5>
-                        <span class="badge rounded-pill border ${String(loc.disponivel_local) === '1' ? 'text-success border-success' : 'text-secondary border-secondary'}">${disp}</span>
+                        <span class="badge rounded-pill border ${isDisponivel ? 'text-success border-success' : 'text-secondary border-secondary'}">${disp}</span>
                     </div>
-                    <p class="text-muted small mb-0 mt-auto">${carga}</p>
+                    <p class="text-muted small mb-3 mt-auto">${carga}</p>
+                    <div class="d-flex justify-content-end">
+                        <button type="button" 
+                                class="btn btn-outline-primary btn-sm rounded-2 d-inline-flex align-items-center gap-1 px-3" 
+                                data-bs-toggle="modal" 
+                                data-bs-target="#modalEditarLocal"
+                                data-id="${loc.id_local}" 
+                                data-nome="${esc(loc.nome_local)}" 
+                                data-disponivel="${isDisponivel ? '1' : '0'}"
+                                data-carga="${loc.carga_local || ''}">
+                            <i class="bi bi-pencil-square"></i> Editar
+                        </button>
+                    </div>
                 </div>
             </div>`;
     }
 
     function linhaLocalMobile(loc) {
-        const disp = String(loc.disponivel_local) === '1' ? 'Disponível' : 'Indisponível';
+        const isDisponivel = Number(loc.disponivel_local) === 1;
+        const disp = isDisponivel ? 'Disponível' : 'Indisponível';
         return `
             <div class="local-card bg-white border-0 shadow-sm rounded-3 p-3 d-flex justify-content-between align-items-center">
-                <div class="min-w-0">
+                <div class="min-w-0 flex-grow-1">
                     <div class="fw-bold text-dark text-truncate">${esc(loc.nome_local)}</div>
                     <div class="text-muted small">${disp}</div>
                 </div>
-                <i class="bi bi-geo-alt text-danger fs-4 flex-shrink-0"></i>
+                <div class="d-flex align-items-center gap-2">
+                    <button type="button" 
+                            class="btn btn-outline-primary btn-sm border-0 p-1" 
+                            data-bs-toggle="modal" 
+                            data-bs-target="#modalEditarLocal"
+                            data-id="${loc.id_local}" 
+                            data-nome="${esc(loc.nome_local)}" 
+                            data-disponivel="${isDisponivel ? '1' : '0'}"
+                            data-carga="${loc.carga_local || ''}">
+                        <i class="bi bi-pencil-square fs-5"></i>
+                    </button>
+                    <i class="bi bi-geo-alt text-danger fs-4 flex-shrink-0"></i>
+                </div>
             </div>`;
     }
 
@@ -150,41 +215,7 @@ require_once '../componentes/header.php';
         }
     }
 
-    document.getElementById('formNovoLocal').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const nome = document.getElementById('inputNomeLocal').value.trim();
-        const disponivel = document.getElementById('selectDisponivelLocal').value;
-        const cargaVal = document.getElementById('inputCargaLocal').value;
-        const carga = cargaVal === '' ? null : parseInt(cargaVal, 10);
-        const msg = document.getElementById('msgNovoLocal');
-        const btn = document.getElementById('btnSalvarLocal');
-        const modalEl = document.getElementById('modalNovoLocal');
-        msg.textContent = '';
-        btn.disabled = true;
-        try {
-            if (!idInterclasse) {
-                throw new Error('Nenhuma edição do interclasse selecionada.');
-            }
-            const body = { nome_local: nome, disponivel_local: disponivel, interclasses_id_interclasse: parseInt(idInterclasse, 10) };
-            if (carga != null && !Number.isNaN(carga)) body.carga_local = carga;
-            const res = await fetch(`${API}locais.php`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(body)
-            });
-            const js = await res.json();
-            if (!res.ok || js.success === false) throw new Error(js.message || 'Não foi possível salvar.');
-            bootstrap.Modal.getInstance(modalEl)?.hide();
-            document.getElementById('formNovoLocal').reset();
-            await carregarLocais();
-        } catch (err) {
-            msg.textContent = err.message || 'Erro.';
-            msg.classList.add('text-danger');
-        } finally {
-            btn.disabled = false;
-        }
-    });
-
+    // Inicialização unificada após o carregamento da página
     document.addEventListener('DOMContentLoaded', async () => {
         if (idInterclasse) {
             try {
@@ -195,7 +226,115 @@ require_once '../componentes/header.php';
                 }
             } catch (_) { /* ok */ }
         }
-        carregarLocais();
+        
+        await carregarLocais();
+
+        // Envio do formulário de NOVO LOCAL
+        document.getElementById('formNovoLocal').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const nome = document.getElementById('inputNomeLocal').value.trim();
+            const disponivel = document.getElementById('selectDisponivelLocal').value;
+            const cargaVal = document.getElementById('inputCargaLocal').value;
+            const carga = cargaVal === '' ? null : parseInt(cargaVal, 10);
+            const msg = document.getElementById('msgNovoLocal');
+            const btn = document.getElementById('btnSalvarLocal');
+            const modalEl = document.getElementById('modalNovoLocal');
+            
+            msg.textContent = '';
+            btn.disabled = true;
+            try {
+                if (!idInterclasse) {
+                    throw new Error('Nenhuma edição do interclasse selecionada.');
+                }
+                const body = { 
+                    nome_local: nome, 
+                    disponivel_local: parseInt(disponivel, 10), 
+                    interclasses_id_interclasse: parseInt(idInterclasse, 10) 
+                };
+                if (carga != null && !Number.isNaN(carga)) body.carga_local = carga;
+                
+                const res = await fetch(`${API}locais.php`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(body)
+                });
+                const js = await res.json();
+                if (!res.ok || js.success === false) throw new Error(js.message || 'Não foi possível salvar.');
+                
+                bootstrap.Modal.getInstance(modalEl)?.hide();
+                document.getElementById('formNovoLocal').reset();
+                await carregarLocais();
+            } catch (err) {
+                msg.textContent = err.message || 'Erro.';
+                msg.className = 'small text-center mb-2 text-danger';
+            } finally {
+                btn.disabled = false;
+            }
+        });
+
+        // Configuração ao abrir o Modal de Edição
+        const modalEditar = document.getElementById('modalEditarLocal');
+        if (modalEditar) {
+            modalEditar.addEventListener('show.bs.modal', function (event) {
+                const botao = event.relatedTarget;
+                
+                const id = botao.getAttribute('data-id');
+                const nome = botao.getAttribute('data-nome');
+                const disponivel = botao.getAttribute('data-disponivel');
+                const carga = botao.getAttribute('data-carga');
+                
+                modalEditar.querySelector('#edit-local-id').value = id;
+                modalEditar.querySelector('#edit-local-nome').value = nome;
+                modalEditar.querySelector('#edit-local-disponivel').value = disponivel;
+                modalEditar.querySelector('#edit-local-carga').value = carga;
+                
+                document.getElementById('msgEditarLocal').textContent = '';
+            });
+        }
+
+        // Envio do formulário de EDITAR LOCAL
+        document.getElementById('formEditarLocal').addEventListener('submit', async function (e) {
+            e.preventDefault();
+            
+            const id = document.getElementById('edit-local-id').value;
+            const nome = document.getElementById('edit-local-nome').value.trim();
+            const disponivel = document.getElementById('edit-local-disponivel').value;
+            const cargaVal = document.getElementById('edit-local-carga').value;
+            const carga = cargaVal === '' ? null : parseInt(cargaVal, 10);
+            
+            const msg = document.getElementById('msgEditarLocal');
+            const btn = document.getElementById('btnAtualizarLocal');
+            
+            msg.textContent = '';
+            btn.disabled = true;
+            
+            try {
+                const body = { 
+                    id_local: parseInt(id, 10),
+                    nome_local: nome, 
+                    disponivel_local: parseInt(disponivel, 10) // Enviando como inteiro puro (1 ou 0)
+                };
+                if (carga != null && !Number.isNaN(carga)) body.carga_local = carga;
+                if (idInterclasse) body.interclasses_id_interclasse = parseInt(idInterclasse, 10);
+                
+                const res = await fetch(`${API}locais.php`, {
+                    method: 'PUT', 
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(body)
+                });
+                
+                const js = await res.json();
+                if (!res.ok || js.success === false) throw new Error(js.message || 'Não foi possível atualizar.');
+                
+                bootstrap.Modal.getInstance(modalEditar)?.hide();
+                await carregarLocais();
+            } catch (err) {
+                msg.textContent = err.message || 'Erro ao atualizar.';
+                msg.className = 'small text-center mb-2 text-danger';
+            } finally {
+                btn.disabled = false;
+            }
+        });
     });
 </script>
 
