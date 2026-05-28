@@ -1,6 +1,6 @@
 <?php
 $titulo = "Equipes";
-$textTop = "Equipes";
+$textTop = "Equipes"; 
 $btnVoltar = true;
 require_once '../componentes/navbar.php';
 require_once '../componentes/header.php';
