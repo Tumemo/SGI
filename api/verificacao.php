@@ -1,17 +1,70 @@
 <?php
 
-session_start();
-
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
 function verificarAdmin(){
-    $_SESSION['nivel'];
-
-    if($_SESSION['nivel'] == '0'){
-
+    if(isset($_SESSION['nivel']) && $_SESSION['nivel'] == '0'){
+        echo json_encode([
+            "success" => true,
+            "mensagem" => "admin liberado"
+        ]);
+        exit;
     }else{
-
+        echo json_encode([
+            "success" => false,
+            "mensagem" => "admin bloqueado"
+        ]);
+        exit;
     }
 }
-// 0 admin
-// 1 colaborador ou comissao
-// 2 mesario
-// 3 competidor
+
+
+function verificarColaborador(){
+    if(isset($_SESSION['nivel']) && $_SESSION['nivel'] == '1'){
+        echo json_encode([
+            "success" => true,
+            "mensagem" => "colaborador liberado"
+        ]);
+        exit;
+    }else{
+        echo json_encode([
+            "success" => false,
+            "mensagem" => "colaborador bloqueado"
+        ]);
+        exit;
+    }
+}
+
+
+function verificarMesario(){
+    if(isset($_SESSION['nivel']) && $_SESSION['nivel'] == '2'){
+        echo json_encode([
+            "success" => true,
+            "mensagem" => "mesario liberado"
+        ]);
+        exit;
+    }else{
+        echo json_encode([
+            "success" => false,
+            "mensagem" => "mesario bloqueado"
+        ]);
+        exit;
+    }
+}
+
+function verificarCompetidor(){
+    if(isset($_SESSION['nivel']) && $_SESSION['nivel'] == '3'){
+        echo json_encode([
+            "success" => true,
+            "mensagem" => "competidor liberado"
+        ]);
+        exit;
+    }else{
+        echo json_encode([
+            "success" => false,
+            "mensagem" => "competidor bloqueado"
+        ]);
+        exit;
+    }
+}
