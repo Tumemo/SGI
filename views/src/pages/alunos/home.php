@@ -4,45 +4,85 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SGI - Aluno Home</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    
+    <style>
+        /* Melhora a experiência de clique e feedback visual no mobile/desktop */
+        .style-card {
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .style-card:hover, .style-card:focus-within {
+            transform: translateY(-2px);
+            box-shadow: 0 .5rem 1rem rgba(0,0,0,.15)!important;
+        }
+        /* Alinha o menu inferior para não cobrir conteúdos importantes no scroll */
+        body {
+            padding-bottom: 90px;
+        }
+    </style>
 </head>
 <body class="bg-light">
+
     <header class="position-relative">
-        <img src="../../../public/images/banner-global.png" alt="Banner" class="w-100">
-        <a href="./notificacoes.php" class="position-absolute text-white fs-3" style="top: 8%; right: 6%;">
+        <img src="../../../public/images/banner-global.png" alt="Banner dos Jogos Interclasses" class="w-100">
+        <a href="./notificacoes.php" class="position-absolute text-white fs-3 d-flex align-items-center justify-content-center" style="top: 15%; right: 6%; width: 44px; height: 44px; background: rgba(0,0,0,0.3); rounded-circle" aria-label="Notificações e avisos">
             <i class="bi bi-bell"></i>
         </a>
     </header>
-    <main class="container py-4" style="margin-bottom: 100px;">
-        <h3 class="text-secondary fs-6 text-center mb-4">Inscreva-se ou visualize resultados</h3>
-        <section class="row g-3" id="listaInterclassesAluno">
-            <p class="text-center text-muted">(Carregando...)</p>
+
+    <main class="container py-4">
+        <h1 class="visually-hidden">Painel do Aluno - Interclasses</h1>
+        <h2 class="text-secondary fs-6 text-center mb-4 fw-normal">Inscreva-se ou visualize resultados</h2>
+        
+        <section class="row g-3" id="listaInterclassesAluno" aria-live="polite">
+            <div class="col-12 text-center text-muted py-5">
+                <div class="spinner-border spinner-border-sm me-2" role="status">
+                    <span class="visually-hidden">Carregando...</span>
+                </div>
+                Carregando competições...
+            </div>
         </section>
     </main>
-    <nav class="fixed-bottom py-2 bg-danger">
-        <ul class="nav justify-content-around fs-1">
-            <li><a href="./home.php" class="text-white"><i class="bi bi-house"></i></a></li>
-            <li><a href="./inscricao.php" class="text-white"><i class="bi bi-people"></i></a></li>
-            <li><a href="./ranking.php" class="text-white"><i class="bi bi-trophy"></i></a></li>
-            <li><a href="./login.php" class="text-white"><i class="bi bi-arrow-bar-right"></i></a></li>
+
+    <nav class="fixed-bottom py-2 bg-danger shadow-lg" aria-label="Navegação principal inferior">
+        <ul class="nav justify-content-around fs-2 list-unstyled mb-0">
+            <li><a href="./home.php" class="text-white nav-link p-2" aria-label="Início"><i class="bi bi-house-door-fill"></i></a></li>
+            <li><a href="./inscricao.php" class="text-white nav-link p-2" aria-label="Inscrições"><i class="bi bi-people-fill"></i></a></li>
+            <li><a href="./ranking.php" class="text-white nav-link p-2" aria-label="Classificação e Ranking"><i class="bi bi-trophy-fill"></i></a></li>
+            <li><a href="./login.php" class="text-white-50 nav-link p-2" onclick="return confirm('Deseja realmente sair?')" aria-label="Sair da conta"><i class="bi bi-box-arrow-right"></i></a></li>
         </ul>
     </nav>
+
     <script>
+        // Função auxiliar para evitar ataques XSS via dados da API
+        function escaparHTML(string) {
+            const mapa = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#x27;' };
+            return String(string || '').replace(/[&<>"']/g, (s) => mapa[s]);
+        }
+
         function cardInterclasse(interclasse, ativo) {
-            const ano = interclasse.ano_interclasse ? String(interclasse.ano_interclasse).split('-')[0] : 'N/A';
+            const nomeSanitizado = escaparHTML(interclasse.nome_interclasse);
+            const ano = interclasse.ano_interclasse ? escaparHTML(String(interclasse.ano_interclasse).split('-')[0]) : 'N/A';
+            
             const status = ativo ? 'Em andamento' : 'Inativo';
-            const classe = ativo ? 'bg-white' : 'bg-secondary-subtle opacity-75';
+            const classeCard = ativo ? 'bg-white' : 'bg-secondary-subtle opacity-75';
             const href = ativo ? `./inscricao.php?id=${interclasse.id_interclasse}` : `./ranking.php?id=${interclasse.id_interclasse}`;
+            
+            // Alterado h2 para h3 para respeitar a semântica da página
+            // Adicionado aria-hidden="true" na imagem decorativa da seta
             return `
                 <div class="col-12 col-md-6 col-lg-4">
-                    <a href="${href}" class="text-decoration-none text-dark">
-                        <div class="shadow-sm d-flex justify-content-between px-4 py-3 rounded ${classe}">
-                            <section>
-                                <h2 class="fs-5 mb-0">${interclasse.nome_interclasse}</h2>
-                                <p class="m-0 text-secondary">(${status}) - ${ano}</p>
-                            </section>
-                            <img src="../../../public/icons/arrow-right.svg" alt="Seta">
+                    <a href="${href}" class="text-decoration-none text-dark card-link d-block h-100">
+                        <div class="shadow-sm d-flex justify-content-between align-items-center px-4 py-3 rounded ${classeCard} h-100 style-card">
+                            <div>
+                                <h3 class="fs-5 mb-1 text-dark fw-semibold">${nomeSanitizado}</h3>
+                                <p class="m-0 text-secondary small">
+                                    <span class="badge ${ativo ? 'bg-success-subtle text-success' : 'bg-secondary-subtle text-secondary'} me-1">${status}</span> 
+                                    - ${ano}
+                                </p>
+                            </div>
+                            <img src="../../../public/icons/arrow-right.svg" alt="" aria-hidden="true" width="24" height="24">
                         </div>
                     </a>
                 </div>
@@ -51,21 +91,42 @@
 
         async function carregarInterclassesAluno() {
             const container = document.getElementById('listaInterclassesAluno');
+            
             try {
                 const res = await fetch('../../../../api/interclasse.php?regulamento=true');
+                
+                if (!res.ok) throw new Error('Resposta do servidor não amigável.');
+                
                 const lista = await res.json();
+                
                 if (!Array.isArray(lista) || lista.length === 0) {
-                    container.innerHTML = '<p class="text-center text-muted">Nenhum interclasse encontrado.</p>';
+                    container.innerHTML = `
+                        <div class="col-12 text-center text-muted py-5">
+                            <i class="bi bi-folder-x fs-1 d-block mb-2"></i>
+                            Nenhum interclasse encontrado no momento.
+                        </div>`;
                     return;
                 }
-                container.innerHTML = lista.map((item) => cardInterclasse(item, String(item.status_interclasse) === '1')).join('');
+                
+                // Renderiza os cards na tela de forma otimizada
+                container.innerHTML = lista.map((item) => {
+                    const isAtivo = item && String(item.status_interclasse) === '1';
+                    return cardInterclasse(item, isAtivo);
+                }).join('');
+                
             } catch (error) {
-                console.error(error);
-                container.innerHTML = '<p class="text-center text-danger">Erro ao carregar interclasses.</p>';
+                console.error('Erro ao buscar dados:', error);
+                container.innerHTML = `
+                    <div class="col-12 text-center text-danger py-5">
+                        <i class="bi bi-exclamation-triangle-fill fs-1 d-block mb-2"></i>
+                        Erro ao carregar interclasses. Por favor, tente novamente mais tarde.
+                    </div>
+                `;
             }
         }
 
-        window.addEventListener('load', carregarInterclassesAluno);
+        // Inicialização rápida do DOM
+        document.addEventListener('DOMContentLoaded', carregarInterclassesAluno);
     </script>
 </body>
 </html>

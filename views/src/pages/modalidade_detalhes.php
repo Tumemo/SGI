@@ -45,7 +45,45 @@ require_once '../componentes/header.php';
     </div>
 </main>
 
+<div class="modal fade" id="modalEditarModalidade" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header border-0">
+                <h5 class="modal-title text-danger fw-bold">Editar Modalidade</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="formEditarModalidade">
+                    <div class="mb-3">
+                        <label class="form-label fw-medium">Nome da Modalidade:</label>
+                        <input type="text" class="form-control" id="editNomeModalidade" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-medium">Tipo de Modalidade:</label>
+                        <select class="form-select" id="editTipoModalidade" required>
+                            <option value="" disabled selected>Carregando...</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-medium">Categoria:</label>
+                        <select class="form-select" id="editCategoriaModalidade" required>
+                            <option value="" disabled selected>Carregando...</option>
+                        </select>
+                    </div>
+                    <div id="msgEditarModalidade" class="mt-2"></div>
+                    <div class="d-flex justify-content-center gap-4 mt-4">
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-danger" id="btnSalvarEdicao">Salvar Alterações</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
+    let modalidadeAtual = null;
+
     async function carregarDetalhesModalidade() {
         const params = new URLSearchParams(window.location.search);
         const idInterclasse = params.get('id');
@@ -69,6 +107,8 @@ require_once '../componentes/header.php';
             const modalidade = (Array.isArray(modalidades) ? modalidades : [])[0];
             if (!modalidade) throw new Error('Modalidade não encontrada.');
 
+            modalidadeAtual = modalidade;
+
             const turmasUnicas = [...new Set((equipes || []).map((item) => item.nome_turma).filter(Boolean))];
             const qtdEquipes = Array.isArray(equipes) ? equipes.length : 0;
 
@@ -77,12 +117,12 @@ require_once '../componentes/header.php';
                     <div>
                         <h5 class="fw-bold mb-1">
                             <span id="nomeModalidadeDisplay">${modalidade.nome_modalidade}</span>
-                            <i class="bi bi-pencil-square text-primary ms-2" style="cursor:pointer;font-size:0.9rem;" onclick="editarNomeModalidade(${modalidade.id_modalidade})" title="Editar nome"></i>
                         </h5>
-                        <p class="text-muted mb-1">Categoria: ${modalidade.nome_categoria || '-'}</p>
-                        <p class="text-muted mb-0">Tipo: ${modalidade.nome_tipo_modalidade || '-'}</p>
+                        <p class="text-muted mb-1">Categoria: <span id="catModalidadeDisplay">${modalidade.nome_categoria || '-'}</span></p>
+                        <p class="text-muted mb-0">Tipo: <span id="tipoModalidadeDisplay">${modalidade.nome_tipo_modalidade || '-'}</span></p>
                     </div>
                     <div class="text-end">
+                        <button class="btn btn-sm btn-outline-danger mb-2" onclick="abrirModalEdicao()">Editar</button><br>
                         <div class="badge bg-danger mb-2">${qtdEquipes} equipe(s)</div><br>
                         <div class="badge bg-secondary">${turmasUnicas.length} turma(s)</div>
                     </div>
@@ -110,48 +150,97 @@ require_once '../componentes/header.php';
         }
     }
 
-    function editarNomeModalidade(idModalidade) {
-        document.querySelectorAll('#nomeModalidadeDisplay').forEach(function(display) {
-            if (display.querySelector('input')) return;
-            const nomeAtual = display.textContent.trim();
-            display.innerHTML = `
-                <input type="text" class="form-control form-control-sm d-inline-block" style="width:auto;min-width:200px;" value="${nomeAtual}" id="inputNomeModalidade">
-                <button class="btn btn-sm btn-success ms-1" onclick="salvarNomeModalidade(${idModalidade})">Salvar</button>
-                <button class="btn btn-sm btn-secondary ms-1" onclick="cancelarEdicaoNome('${nomeAtual.replace(/'/g, "\\'")}')">Cancelar</button>
-            `;
-            display.querySelector('input').focus();
-        });
-    }
-
-    async function salvarNomeModalidade(idModalidade) {
-        const input = document.querySelector('#nomeModalidadeDisplay input');
-        if (!input) return;
-        const novoNome = input.value.trim();
-        if (!novoNome) { alert('O nome não pode estar vazio.'); return; }
-
+    async function carregarTiposEdicao(selectedId) {
+        const select = document.getElementById('editTipoModalidade');
         try {
-            const resp = await fetch('../../../api/modalidades.php', {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ id_modalidade: idModalidade, nome_modalidade: novoNome })
+            const resp = await fetch('../../../api/tipoModalidade.php');
+            const tipos = await resp.json();
+            select.innerHTML = '<option value="" disabled>Selecione...</option>';
+            tipos.forEach(t => {
+                const sel = t.id_tipo_modalidade == selectedId ? 'selected' : '';
+                select.innerHTML += `<option value="${t.id_tipo_modalidade}" ${sel}>${t.nome_tipo_modalidade}</option>`;
             });
-            const data = await resp.json();
-            if (data.success === false) throw new Error(data.message || 'Erro ao atualizar.');
-            document.querySelectorAll('#nomeModalidadeDisplay').forEach(function(display) {
-                display.innerHTML = novoNome + ` <i class="bi bi-pencil-square text-primary ms-2" style="cursor:pointer;font-size:0.9rem;" onclick="editarNomeModalidade(${idModalidade})" title="Editar nome"></i>`;
-            });
-        } catch (err) {
-            alert('Erro ao salvar: ' + err.message);
+        } catch (e) {
+            select.innerHTML = '<option value="" disabled selected>Erro ao carregar</option>';
         }
     }
 
-    function cancelarEdicaoNome(nomeAtual) {
+    async function carregarCategoriasEdicao(selectedId) {
         const params = new URLSearchParams(window.location.search);
-        const idModalidade = params.get('id_modalidade');
-        document.querySelectorAll('#nomeModalidadeDisplay').forEach(function(display) {
-            display.innerHTML = nomeAtual + ` <i class="bi bi-pencil-square text-primary ms-2" style="cursor:pointer;font-size:0.9rem;" onclick="editarNomeModalidade(${idModalidade})" title="Editar nome"></i>`;
-        });
+        const idInterclasse = params.get('id');
+        const select = document.getElementById('editCategoriaModalidade');
+        try {
+            const resp = await fetch(`../../../api/categorias.php?id_interclasse=${idInterclasse}`);
+            const cats = await resp.json();
+            select.innerHTML = '<option value="" disabled>Selecione...</option>';
+            cats.forEach(c => {
+                const sel = c.id_categoria == selectedId ? 'selected' : '';
+                select.innerHTML += `<option value="${c.id_categoria}" ${sel}>${c.nome_categoria}</option>`;
+            });
+        } catch (e) {
+            select.innerHTML = '<option value="" disabled selected>Erro ao carregar</option>';
+        }
     }
+
+    async function abrirModalEdicao() {
+        if (!modalidadeAtual) return;
+
+        document.getElementById('editNomeModalidade').value = modalidadeAtual.nome_modalidade;
+        document.getElementById('msgEditarModalidade').innerHTML = '';
+
+        await Promise.all([
+            carregarTiposEdicao(modalidadeAtual.id_tipo_modalidade),
+            carregarCategoriasEdicao(modalidadeAtual.categorias_id_categoria)
+        ]);
+
+        const modal = new bootstrap.Modal(document.getElementById('modalEditarModalidade'));
+        modal.show();
+    }
+
+    document.getElementById('formEditarModalidade').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        if (!modalidadeAtual) return;
+
+        const btn = document.getElementById('btnSalvarEdicao');
+        const msg = document.getElementById('msgEditarModalidade');
+
+        const dados = {
+            id_modalidade: modalidadeAtual.id_modalidade,
+            nome_modalidade: document.getElementById('editNomeModalidade').value.trim(),
+            tipos_modalidades_id_tipo_modalidade: parseInt(document.getElementById('editTipoModalidade').value),
+            categorias_id_categoria: parseInt(document.getElementById('editCategoriaModalidade').value)
+        };
+
+        if (!dados.nome_modalidade) {
+            msg.innerHTML = '<p class="text-danger text-center fw-bold mb-0">O nome não pode estar vazio.</p>';
+            return;
+        }
+
+        try {
+            btn.disabled = true;
+            btn.innerHTML = 'Salvando...';
+
+            const resp = await fetch('../../../api/modalidades.php', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(dados)
+            });
+            const data = await resp.json();
+
+            if (data.success === false) throw new Error(data.message || 'Erro ao atualizar.');
+
+            msg.innerHTML = '<p class="text-success text-center fw-bold mb-0">Salvo com sucesso!</p>';
+            setTimeout(() => {
+                bootstrap.Modal.getInstance(document.getElementById('modalEditarModalidade')).hide();
+                carregarDetalhesModalidade();
+            }, 800);
+        } catch (err) {
+            msg.innerHTML = `<p class="text-danger text-center fw-bold mb-0">${err.message}</p>`;
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = 'Salvar Alterações';
+        }
+    });
 
     window.addEventListener('load', carregarDetalhesModalidade);
 </script>
