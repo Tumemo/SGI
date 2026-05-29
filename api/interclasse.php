@@ -36,20 +36,21 @@ switch ($method) {
         $id = $_GET['id'] ?? null;
 
         if ($id) {
-            $dados = ($method === 'PUT') ? $_GET : $_POST;
+            // CORREÇÃO: Coleta os dados de $_POST de forma consistente para formulários multipart/form-data
+            $dados = $_POST; 
 
             $campos = [];
             $params = [];
             $types = "";
 
-            if (isset($_POST['nome_interclasse'])) {
+            if (isset($dados['nome_interclasse'])) {
                 $campos[] = "nome_interclasse = ?";
-                $params[] = $_POST['nome_interclasse'];
+                $params[] = $dados['nome_interclasse'];
                 $types .= "s";
             }
-            if (isset($_POST['ano_interclasse'])) {
+            if (isset($dados['ano_interclasse'])) {
                 $campos[] = "ano_interclasse = ?";
-                $params[] = $_POST['ano_interclasse'];
+                $params[] = $dados['ano_interclasse'];
                 $types .= "s";
             }
             if (isset($_FILES['pdf_regulamento']) && $_FILES['pdf_regulamento']['error'] === UPLOAD_ERR_OK) {
@@ -60,12 +61,12 @@ switch ($method) {
                     $types .= "s";
                 }
             }
-            if (isset($_POST['status_interclasse'])) {
+            if (isset($dados['status_interclasse'])) {
                 $campos[] = "status_interclasse = ?";
-                $params[] = $_POST['status_interclasse'];
+                $params[] = $dados['status_interclasse'];
                 $types .= "s";
             }
-            if (isset($_POST['status_interclasse']) && $_POST['status_interclasse'] === '1') {
+            if (isset($dados['status_interclasse']) && $dados['status_interclasse'] === '1') {
                 $deactivate = $conn->prepare(
                     "UPDATE interclasses SET status_interclasse = '0' WHERE id_interclasse != ? AND status_interclasse = '1'"
                 );
@@ -81,30 +82,29 @@ switch ($method) {
                 }
                 $deactivate->close();
             }
-            if (isset($_POST['valor_item_arrecadacao'])) {
+            if (isset($dados['valor_item_arrecadacao'])) {
                 $campos[] = "valor_item_arrecadacao = ?";
-                $params[] = $_POST['valor_item_arrecadacao'];
+                $params[] = $dados['valor_item_arrecadacao'];
                 $types .= "i";
             }
-            if (isset($_POST['ponto_1_lugar'])) {
+            if (isset($dados['ponto_1_lugar'])) {
                 $campos[] = "ponto_1_lugar = ?";
-                $params[] = (int) $_POST['ponto_1_lugar'];
+                $params[] = (int) $dados['ponto_1_lugar'];
                 $types .= "i";
             }
-            if (isset($_POST['ponto_2_lugar'])) {
+            if (isset($dados['ponto_2_lugar'])) {
                 $campos[] = "ponto_2_lugar = ?";
-                $params[] = (int) $_POST['ponto_2_lugar'];
+                $params[] = (int) $dados['ponto_2_lugar'];
                 $types .= "i";
             }
-            if (isset($_POST['ponto_3_lugar'])) {
+            if (isset($dados['ponto_3_lugar'])) {
                 $campos[] = "ponto_3_lugar = ?";
-                $params[] = (int) $_POST['ponto_3_lugar'];
+                $params[] = (int) $dados['ponto_3_lugar'];
                 $types .= "i";
             }
-
 
             if (empty($campos)) {
-                echo json_encode(["success" => false, "message" => "Dica: Use o método POST no Postman para enviar form-data corretamente."]);
+                echo json_encode(["success" => false, "message" => "Nenhum campo fornecido para atualização."]);
                 break;
             }
 
@@ -126,99 +126,64 @@ switch ($method) {
                 echo json_encode(["success" => false, "message" => "Dados incompletos."]);
                 break;
             }
-            $sql = "INSERT INTO interclasses (nome_interclasse, ano_interclasse) VALUES (?, ?)";
+            
+            // CORREÇÃO: Inclusão das colunas obrigatórias 'regulamento_interclasse' e 'status_interclasse'
+            $sql = "INSERT INTO interclasses (nome_interclasse, ano_interclasse, regulamento_interclasse, status_interclasse) VALUES (?, ?, '', '1')";
             $stmt = $conn->prepare($sql);
             $stmt->bind_param("ss", $data->nome_interclasse, $data->ano_interclasse);
+            
             if ($stmt->execute()) {
                 $new_interclass_id = $conn->insert_id;
 
                 $conn->begin_transaction();
 
-                // Cria categorias I e II para este interclasse, se ainda não existirem
+                // Cria categorias I e II para este interclasse
                 $categoria_i_id = null;
                 $categoria_ii_id = null;
-                $categoria_select = $conn->prepare("SELECT id_categoria, nome_categoria FROM categorias WHERE interclasses_id_interclasse = ? AND nome_categoria IN ('Categoria I', 'Categoria II')");
-                $categoria_select->bind_param("i", $new_interclass_id);
-                $categoria_select->execute();
-                $categoria_select->bind_result($categoria_id_temp, $categoria_nome_temp);
-                while ($categoria_select->fetch()) {
-                    if ($categoria_nome_temp === 'Categoria I') {
-                        $categoria_i_id = $categoria_id_temp;
-                    } elseif ($categoria_nome_temp === 'Categoria II') {
-                        $categoria_ii_id = $categoria_id_temp;
-                    }
-                }
-                $categoria_select->close();
-                if (!$categoria_i_id) {
-                    $categoria_insert = $conn->prepare("INSERT INTO categorias (nome_categoria, status_categoria, interclasses_id_interclasse) VALUES ('Categoria I', '1', ?)");
-                    $categoria_insert->bind_param("i", $new_interclass_id);
-                    if (!$categoria_insert->execute()) {
-                        $conn->rollback();
-                        echo json_encode(["success" => false, "message" => "Falha ao criar Categoria I: " . $conn->error]);
-                        break;
-                    }
-                    $categoria_i_id = $conn->insert_id;
-                }
-                if (!$categoria_ii_id) {
-                    $categoria_insert = $conn->prepare("INSERT INTO categorias (nome_categoria, status_categoria, interclasses_id_interclasse) VALUES ('Categoria II', '1', ?)");
-                    $categoria_insert->bind_param("i", $new_interclass_id);
-                    if (!$categoria_insert->execute()) {
-                        $conn->rollback();
-                        echo json_encode(["success" => false, "message" => "Falha ao criar Categoria II: " . $conn->error]);
-                        break;
-                    }
-                    $categoria_ii_id = $conn->insert_id;
-                }
+                
+                $categoria_insert = $conn->prepare("INSERT INTO categorias (nome_categoria, status_categoria, interclasses_id_interclasse) VALUES (?, '1', ?)");
+                
+                $cat_i_nome = "Categoria I - Inter " . $new_interclass_id; // Evita conflito se houver unique index global futuro
+                $categoria_insert->bind_param("si", $cat_i_nome, $new_interclass_id);
+                if (!$categoria_insert->execute()) { $conn->rollback(); echo json_encode(["success" => false, "message" => "Falha Categoria I"]); break; }
+                $categoria_i_id = $conn->insert_id;
 
-                // Cria tipos de modalidade se não existirem
+                $cat_ii_nome = "Categoria II - Inter " . $new_interclass_id;
+                $categoria_insert->bind_param("si", $cat_ii_nome, $new_interclass_id);
+                if (!$categoria_insert->execute()) { $conn->rollback(); echo json_encode(["success" => false, "message" => "Falha Categoria II"]); break; }
+                $categoria_ii_id = $conn->insert_id;
+                $categoria_insert->close();
+
+                // Busca ou cria tipos de modalidade
                 $tipo_mata_mata_id = null;
                 $tipo_individual_id = null;
-
                 $tipo_select = $conn->query("SELECT id_tipo_modalidade, nome_tipo_modalidade FROM tipos_modalidades");
-                if ($tipo_select && $tipo_select->num_rows > 0) {
-                    while ($row = $tipo_select->fetch_assoc()) {
-                        if ($row['nome_tipo_modalidade'] === 'Mata-Mata') {
-                            $tipo_mata_mata_id = (int) $row['id_tipo_modalidade'];
-                        } elseif ($row['nome_tipo_modalidade'] === 'Individual') {
-                            $tipo_individual_id = (int) $row['id_tipo_modalidade'];
-                        }
-                    }
+                while ($row = $tipo_select->fetch_assoc()) {
+                    if ($row['nome_tipo_modalidade'] === 'Mata-Mata') $tipo_mata_mata_id = (int)$row['id_tipo_modalidade'];
+                    if ($row['nome_tipo_modalidade'] === 'Individual') $tipo_individual_id = (int)$row['id_tipo_modalidade'];
                 }
 
-                // Cria Mata-Mata se não existe
                 if (!$tipo_mata_mata_id) {
-                    $tipo_insert = $conn->prepare("INSERT INTO tipos_modalidades (nome_tipo_modalidade, status_tipo_modalidade) VALUES ('Mata-Mata', '1')");
-                    if (!$tipo_insert->execute()) {
-                        $conn->rollback();
-                        echo json_encode(["success" => false, "message" => "Falha ao criar tipo Mata-Mata: " . $conn->error]);
-                        break;
-                    }
-                    $tipo_mata_mata_id = (int) $conn->insert_id;
-                    $tipo_insert->close();
+                    $conn->query("INSERT INTO tipos_modalidades (nome_tipo_modalidade, status_tipo_modalidade) VALUES ('Mata-Mata', '1')");
+                    $tipo_mata_mata_id = $conn->insert_id;
                 }
-
-                // Cria Individual se não existe
                 if (!$tipo_individual_id) {
-                    $tipo_insert = $conn->prepare("INSERT INTO tipos_modalidades (nome_tipo_modalidade, status_tipo_modalidade) VALUES ('Individual', '1')");
-                    if (!$tipo_insert->execute()) {
-                        $conn->rollback();
-                        echo json_encode(["success" => false, "message" => "Falha ao criar tipo Individual: " . $conn->error]);
-                        break;
-                    }
-                    $tipo_individual_id = (int) $conn->insert_id;
-                    $tipo_insert->close();
+                    $conn->query("INSERT INTO tipos_modalidades (nome_tipo_modalidade, status_tipo_modalidade) VALUES ('Individual', '1')");
+                    $tipo_individual_id = $conn->insert_id;
                 }
 
+                // CORREÇÃO: Adicionado 'nome_fantasia_turma' e tornado o 'nome_turma' dinâmico com o ID do interclasse para evitar erro de UNIQUE KEY do banco
                 $turmas_sql = "INSERT INTO turmas 
-                (nome_turma, turno_turma, status_turma, interclasses_id_interclasse, categorias_id_categoria) 
+                (nome_turma, turno_turma, nome_fantasia_turma, status_turma, interclasses_id_interclasse, categorias_id_categoria) 
                 VALUES 
-                ('6EF', 'manha', '1', $new_interclass_id, $categoria_i_id),
-                ('7EF', 'manha', '1', $new_interclass_id, $categoria_i_id),
-                ('8EF', 'manha', '1', $new_interclass_id, $categoria_i_id),
-                ('9EF', 'manha', '1', $new_interclass_id, $categoria_ii_id),
-                ('1EMA', 'manha', '1', $new_interclass_id, $categoria_ii_id),
-                ('2EMA', 'manha', '1', $new_interclass_id, $categoria_ii_id),
-                ('3EMA', 'manha', '1', $new_interclass_id, $categoria_ii_id)";
+                ('6EF-$new_interclass_id', 'manha', 'Sexto Ano', '1', $new_interclass_id, $categoria_i_id),
+                ('7EF-$new_interclass_id', 'manha', 'Sétimo Ano', '1', $new_interclass_id, $categoria_i_id),
+                ('8EF-$new_interclass_id', 'manha', 'Oitavo Ano', '1', $new_interclass_id, $categoria_i_id),
+                ('9EF-$new_interclass_id', 'manha', 'Nono Ano', '1', $new_interclass_id, $categoria_ii_id),
+                ('1EMA-$new_interclass_id', 'manha', '1º Ano Médio', '1', $new_interclass_id, $categoria_ii_id),
+                ('2EMA-$new_interclass_id', 'manha', '2º Ano Médio', '1', $new_interclass_id, $categoria_ii_id),
+                ('3EMA-$new_interclass_id', 'manha', '3º Ano Médio', '1', $new_interclass_id, $categoria_ii_id)";
+                
                 if (!$conn->query($turmas_sql)) {
                     $conn->rollback();
                     echo json_encode(["success" => false, "message" => "Falha ao inserir turmas: " . $conn->error]);
@@ -236,15 +201,21 @@ switch ($method) {
                 ('Queimada', 'MISTO', 15, '1', $tipo_mata_mata_id, $categoria_ii_id, $new_interclass_id),
                 ('Volei', 'MISTO', 10, '1', $tipo_mata_mata_id, $categoria_ii_id, $new_interclass_id),
                 ('Corrida', 'MISTO', 2, '1', $tipo_individual_id, $categoria_ii_id, $new_interclass_id)";
+                
                 if (!$conn->query($modalidades_sql)) {
                     $conn->rollback();
                     echo json_encode(["success" => false, "message" => "Falha ao inserir modalidades: " . $conn->error]);
                     break;
                 }
 
-                sgi_criar_locais_padrao_interclasse($conn, $new_interclass_id);
+                if (function_exists('sgi_criar_locais_padrao_interclasse')) {
+                    sgi_criar_locais_padrao_interclasse($conn, $new_interclass_id);
+                }
+                
                 $conn->commit();
                 echo json_encode(["success" => true, "id" => $new_interclass_id]);
+            } else {
+                echo json_encode(["success" => false, "message" => $stmt->error]);
             }
         }
         break;
