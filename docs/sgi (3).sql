@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Tempo de geração: 13/05/2026 às 18:27
+-- Tempo de geração: 29/05/2026 às 12:35
 -- Versão do servidor: 10.4.32-MariaDB
 -- Versão do PHP: 8.2.12
 
@@ -18,7 +18,7 @@ SET time_zone = "+00:00";
 /*!40101 SET NAMES utf8mb4 */;
 
 --
--- Banco de dados: `sgiv2`
+-- Banco de dados: `sgi`
 --
 
 -- --------------------------------------------------------
@@ -94,7 +94,6 @@ CREATE TABLE `interclasses` (
 --
 DELIMITER $$
 CREATE TRIGGER `tr_atualiza_pontos_arrecadacao` AFTER UPDATE ON `interclasses` FOR EACH ROW BEGIN
-    -- Se o valor do item mudar, recalcula a pontuação de todas as turmas desse interclasse
     IF OLD.valor_item_arrecadacao <> NEW.valor_item_arrecadacao THEN
         UPDATE turmas
         SET pontuacao_turma = qtd_itens_arrecadados * NEW.valor_item_arrecadacao
@@ -102,15 +101,8 @@ CREATE TRIGGER `tr_atualiza_pontos_arrecadacao` AFTER UPDATE ON `interclasses` F
     END IF;
 END
 $$
-CREATE TRIGGER `tr_unico_interclasse_ativo` BEFORE UPDATE ON `interclasses` FOR EACH ROW BEGIN
-    IF NEW.status_interclasse = '1' AND OLD.status_interclasse = '0' THEN
-        UPDATE interclasses
-        SET status_interclasse = '0'
-        WHERE id_interclasse <> NEW.id_interclasse
-          AND status_interclasse = '1';
-    END IF;
-END
-$$
+DELIMITER ;
+DELIMITER $$
 CREATE TRIGGER `tr_sincroniza_status_usuarios` AFTER UPDATE ON `interclasses` FOR EACH ROW BEGIN
     IF NEW.status_interclasse <> OLD.status_interclasse THEN
         UPDATE usuarios
@@ -149,7 +141,8 @@ CREATE TABLE `locais` (
   `nome_local` varchar(45) NOT NULL,
   `disponivel_local` enum('0','1') NOT NULL DEFAULT '1',
   `carga_local` int(11) DEFAULT NULL,
-  `status_local` enum('1','0') NOT NULL
+  `status_local` enum('1','0') NOT NULL,
+  `interclasses_id_interclasse` int(11) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci;
 
 -- --------------------------------------------------------
@@ -176,10 +169,11 @@ CREATE TABLE `modalidades` (
 --
 
 CREATE TABLE `ocorrencias` (
-  `id_ocorrecia` int(11) NOT NULL,
-  `titulo_ocorrecia` varchar(45) NOT NULL,
-  `descricao_ocorrecia` longtext NOT NULL,
-  `data_ocorrecia` datetime NOT NULL,
+  `id_ocorrencia` int(11) NOT NULL,
+  `titulo_ocorrencia` varchar(45) NOT NULL,
+  `descricao_ocorrencia` longtext NOT NULL,
+  `data_ocorrencia` datetime NOT NULL,
+  `hora_ocorrencia` time DEFAULT NULL,
   `penalidade` int(11) DEFAULT 0,
   `status_ocorrencia` enum('1','0') NOT NULL,
   `usuarios_id_usuario` int(11) NOT NULL
@@ -196,7 +190,7 @@ CREATE TABLE `partidas` (
   `jogos_id_jogo` int(11) NOT NULL,
   `equipes_id_equipe` int(11) NOT NULL,
   `resultado_partida` int(11) NOT NULL DEFAULT 0,
-  `status_pardida` enum('1','0') NOT NULL
+  `status_partida` enum('1','0') NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci;
 
 -- --------------------------------------------------------
@@ -240,7 +234,7 @@ CREATE TABLE `turmas` (
   `status_turma` enum('1','0') DEFAULT NULL,
   `categorias_id_categoria` int(11) NOT NULL,
   `pontuacao_turma` int(11) NOT NULL DEFAULT 0,
-  `qtd_itens_arrecadados` int(11) NOT NULL DEFAULT 0
+  `qtd_itens_arrecadados` decimal(10,2) NOT NULL DEFAULT 0.00
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
@@ -263,7 +257,8 @@ CREATE TABLE `usuarios` (
   `foto_usuario` varchar(255) NOT NULL,
   `status_usuario` enum('0','1') NOT NULL,
   `turmas_id_turma` int(11) DEFAULT NULL,
-  `interclasses_id_interclasse` int(11) NOT NULL
+  `interclasses_id_interclasse` int(11) NOT NULL,
+  `chave_usuario_edicao` varchar(50) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci;
 
 -- --------------------------------------------------------
@@ -333,7 +328,9 @@ ALTER TABLE `jogos`
 -- Índices de tabela `locais`
 --
 ALTER TABLE `locais`
-  ADD PRIMARY KEY (`id_local`);
+  ADD PRIMARY KEY (`id_local`),
+  ADD UNIQUE KEY `uk_local_interclasse` (`nome_local`,`interclasses_id_interclasse`),
+  ADD KEY `fk_locais_interclasses_idx` (`interclasses_id_interclasse`);
 
 --
 -- Índices de tabela `modalidades`
@@ -348,7 +345,7 @@ ALTER TABLE `modalidades`
 -- Índices de tabela `ocorrencias`
 --
 ALTER TABLE `ocorrencias`
-  ADD PRIMARY KEY (`id_ocorrecia`),
+  ADD PRIMARY KEY (`id_ocorrencia`),
   ADD KEY `fk_ocorrencias_usuarios1_idx` (`usuarios_id_usuario`);
 
 --
@@ -386,7 +383,7 @@ ALTER TABLE `turmas`
 --
 ALTER TABLE `usuarios`
   ADD PRIMARY KEY (`id_usuario`),
-  ADD UNIQUE KEY `uk_matricula_interclasse` (`matricula_usuario`, `interclasses_id_interclasse`),
+  ADD UNIQUE KEY `uk_chave_usuario_edicao` (`chave_usuario_edicao`),
   ADD KEY `fk_usuarios_turmas1_idx` (`turmas_id_turma`),
   ADD KEY `fk_usuarios_interclasses1_idx` (`interclasses_id_interclasse`);
 
@@ -447,7 +444,7 @@ ALTER TABLE `modalidades`
 -- AUTO_INCREMENT de tabela `ocorrencias`
 --
 ALTER TABLE `ocorrencias`
-  MODIFY `id_ocorrecia` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id_ocorrencia` int(11) NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT de tabela `partidas`
@@ -518,6 +515,12 @@ ALTER TABLE `jogos`
   ADD CONSTRAINT `fk_jogos_modalidades1` FOREIGN KEY (`modalidades_id_modalidade`) REFERENCES `modalidades` (`id_modalidade`);
 
 --
+-- Restrições para tabelas `locais`
+--
+ALTER TABLE `locais`
+  ADD CONSTRAINT `fk_locais_interclasses` FOREIGN KEY (`interclasses_id_interclasse`) REFERENCES `interclasses` (`id_interclasse`) ON DELETE NO ACTION ON UPDATE NO ACTION;
+
+--
 -- Restrições para tabelas `modalidades`
 --
 ALTER TABLE `modalidades`
@@ -556,11 +559,8 @@ ALTER TABLE `turmas`
 -- Restrições para tabelas `usuarios`
 --
 ALTER TABLE `usuarios`
-  ADD CONSTRAINT `fk_usuarios_turmas1` FOREIGN KEY (`turmas_id_turma`) REFERENCES `turmas` (`id_turma`),
-  ADD CONSTRAINT `fk_usuarios_interclasses1` FOREIGN KEY (`interclasses_id_interclasse`) REFERENCES `interclasses` (`id_interclasse`) ON DELETE NO ACTION ON UPDATE NO ACTION;
-
--- Nenhum trigger adicional em usuarios.
--- O trigger tr_sincroniza_status_usuarios (em interclasses) gerencia o status automaticamente.
+  ADD CONSTRAINT `fk_usuarios_interclasses1` FOREIGN KEY (`interclasses_id_interclasse`) REFERENCES `interclasses` (`id_interclasse`) ON DELETE NO ACTION ON UPDATE NO ACTION,
+  ADD CONSTRAINT `fk_usuarios_turmas1` FOREIGN KEY (`turmas_id_turma`) REFERENCES `turmas` (`id_turma`);
 
 --
 -- Restrições para tabelas `usuarios_has_interclasses`
