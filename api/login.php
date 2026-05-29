@@ -4,18 +4,14 @@ require_once __DIR__ . '/conexao.php';
 
 header('Content-Type: application/json');
 
-// Captura o JSON enviado pelo front-end
 $inputData = json_decode(file_get_contents('php://input'), true) ?? [];
 
-// Captura a ação principal
 $acao = $inputData['acao'] ?? $_POST['acao'] ?? $_REQUEST['acao'] ?? '';
 
-// --- 1. AÇÃO: LOGIN DE ALUNOS (COMPETIDORES) ---
 if ($acao === 'login_competidores') {
     $senha = $inputData['senha_usuario'] ?? '';
     $dataNasc  = $inputData['data_nasc_usuario'] ?? '';
 
-    // Regra RF05: Validação via RA e Data de Nascimento
     $sql = "SELECT * FROM usuarios WHERE senha_usuario = ? AND data_nasc_usuario = ? AND nivel_usuario = '3' AND status_usuario = '1' LIMIT 1";
     $stmt = $conn->prepare($sql);
     $stmt->bind_param('ss', $senha, $dataNasc);
@@ -38,12 +34,10 @@ if ($acao === 'login_competidores') {
     exit;
 }
 
-// --- 2. AÇÃO: LOGIN DE DEMAIS USUÁRIOS (ADMIN/COLAB/MESÁRIO) ---
 if ($acao === 'login_gestao') {
     $matricula = $inputData['matricula'] ?? '';
     $senha     = $inputData['senha'] ?? '';
 
-    // Níveis 0, 1 e 2 entram com Matrícula e Senha
     $sql = "SELECT * FROM usuarios WHERE matricula_usuario = ? AND nivel_usuario IN ('0', '1', '2') AND status_usuario = '1' LIMIT 1";
     $stmt = $conn->prepare($sql);
     $stmt->bind_param('s', $matricula);
