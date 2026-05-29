@@ -1,20 +1,20 @@
 <?php
 session_start();
-require_once __DIR__ . '/conexao.php'; 
+require_once '../config/db.php';
 
 header('Content-Type: application/json');
 
 $inputData = json_decode(file_get_contents('php://input'), true) ?? [];
-
 $acao = $inputData['acao'] ?? $_POST['acao'] ?? $_REQUEST['acao'] ?? '';
 
+// --- LOGIN COMPETIDORES (Nível 3) ---
 if ($acao === 'login_competidores') {
-    $senha = $inputData['senha_usuario'] ?? '';
-    $dataNasc  = $inputData['data_nasc_usuario'] ?? '';
+    $matricula = $inputData['matricula'] ?? '';
+    $dataNasc  = $inputData['data_nascimento'] ?? '';
 
-    $sql = "SELECT * FROM usuarios WHERE senha_usuario = ? AND data_nasc_usuario = ? AND nivel_usuario = '3' AND status_usuario = '1' LIMIT 1";
+    $sql = "SELECT * FROM usuarios WHERE matricula_usuario = ? AND data_nasc_usuario = ? AND nivel_usuario = '3' AND status_usuario = '1' LIMIT 1";
     $stmt = $conn->prepare($sql);
-    $stmt->bind_param('ss', $senha, $dataNasc);
+    $stmt->bind_param('ss', $matricula, $dataNasc);
     $stmt->execute();
     $usuario = $stmt->get_result()->fetch_assoc();
 
@@ -25,7 +25,7 @@ if ($acao === 'login_competidores') {
 
         echo json_encode([
             'status'   => 'sucesso',
-            'redirect' => '../views/src/pages/alunos/home.php' // Rota para pasta de alunos
+            'redirect' => '../views/src/pages/alunos/home.php' // Pasta exclusiva Alunos
         ]);
     } else {
         http_response_code(401);
@@ -34,6 +34,7 @@ if ($acao === 'login_competidores') {
     exit;
 }
 
+// --- LOGIN GESTÃO (Níveis 0, 1, 2) ---
 if ($acao === 'login_gestao') {
     $matricula = $inputData['matricula'] ?? '';
     $senha     = $inputData['senha'] ?? '';
@@ -49,9 +50,16 @@ if ($acao === 'login_gestao') {
         $_SESSION['nivel'] = (int)$usuario['nivel_usuario'];
         $_SESSION['nome']  = $usuario['nome_usuario'];
 
+        // REDIRECIONAMENTO POR NÍVEL ESPECÍFICO
+        $destino = match($_SESSION['nivel']) {
+            0, 1    => '../views/src/pages/home.php',      // Admin e Colaboradores
+            2       => '../views/src/pages/mesario.php',   // Mesários (página específica)
+            default => '../login.html'
+        };
+
         echo json_encode([
             'status'   => 'sucesso',
-            'redirect_admin_colaborador' => $_SESSION['nivel'] === 0 || $_SESSION['nivel'] === 1 ? '../views/src/pages/home.php' : null,
+            'redirect' => $destino
         ]);
     } else {
         http_response_code(401);
@@ -59,6 +67,3 @@ if ($acao === 'login_gestao') {
     }
     exit;
 }
-
-
-echo json_encode(['status' => 'erro', 'mensagem' => 'Ação "' . $acao . '" não reconhecida.']);
