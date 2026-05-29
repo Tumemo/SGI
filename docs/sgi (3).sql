@@ -15,15 +15,16 @@ USE `sgi` ;
 -- -----------------------------------------------------
 CREATE TABLE IF NOT EXISTS `sgi`.`interclasses` (
   `id_interclasse` INT(11) NOT NULL AUTO_INCREMENT,
-  `nome_interclasse` VARCHAR(45) NULL DEFAULT NULL,
-  `ano_interclasse` DATETIME NULL DEFAULT NULL,
-  `regulamento_interclasse` VARCHAR(255) NULL DEFAULT NULL,
+  `nome_interclasse` VARCHAR(45) NOT NULL,
+  `ano_interclasse` DATETIME NOT NULL,
+  `regulamento_interclasse` VARCHAR(255) NOT NULL,
   `status_interclasse` ENUM('1', '0') NOT NULL,
   `ponto_1_lugar` INT(11) NOT NULL DEFAULT 10,
   `ponto_2_lugar` INT(11) NOT NULL DEFAULT 7,
   `ponto_3_lugar` INT(11) NOT NULL DEFAULT 5,
   `valor_item_arrecadacao` INT(11) NOT NULL DEFAULT 2,
-  PRIMARY KEY (`id_interclasse`))
+  PRIMARY KEY (`id_interclasse`),
+  UNIQUE INDEX `nome_interclasse_UNIQUE` (`nome_interclasse` ASC))
 ENGINE = InnoDB
 DEFAULT CHARACTER SET = utf8mb4;
 
@@ -41,6 +42,7 @@ CREATE TABLE IF NOT EXISTS `sgi`.`locais` (
   PRIMARY KEY (`id_local`),
   UNIQUE INDEX `uk_local_interclasse` (`nome_local` ASC, `interclasses_id_interclasse` ASC),
   INDEX `fk_locais_interclasses_idx` (`interclasses_id_interclasse` ASC),
+  UNIQUE INDEX `nome_local_UNIQUE` (`nome_local` ASC),
   CONSTRAINT `fk_locais_interclasses`
     FOREIGN KEY (`interclasses_id_interclasse`)
     REFERENCES `sgi`.`interclasses` (`id_interclasse`)
@@ -55,11 +57,12 @@ DEFAULT CHARACTER SET = utf8;
 -- -----------------------------------------------------
 CREATE TABLE IF NOT EXISTS `sgi`.`categorias` (
   `id_categoria` INT(11) NOT NULL AUTO_INCREMENT,
-  `nome_categoria` VARCHAR(45) NULL DEFAULT NULL,
+  `nome_categoria` VARCHAR(45) NOT NULL,
   `status_categoria` ENUM('1', '0') NOT NULL,
   `interclasses_id_interclasse` INT(11) NOT NULL,
   PRIMARY KEY (`id_categoria`),
   INDEX `fk_categorias_interclasses1_idx` (`interclasses_id_interclasse` ASC),
+  UNIQUE INDEX `nome_categoria_UNIQUE` (`nome_categoria` ASC),
   CONSTRAINT `fk_categorias_interclasses1`
     FOREIGN KEY (`interclasses_id_interclasse`)
     REFERENCES `sgi`.`interclasses` (`id_interclasse`)
@@ -143,16 +146,17 @@ DEFAULT CHARACTER SET = utf8;
 CREATE TABLE IF NOT EXISTS `sgi`.`turmas` (
   `id_turma` INT(11) NOT NULL AUTO_INCREMENT,
   `interclasses_id_interclasse` INT(11) NOT NULL,
-  `nome_turma` VARCHAR(45) NULL DEFAULT NULL,
-  `turno_turma` ENUM('manha', 'tarde', 'noite', 'integral') NULL DEFAULT NULL,
-  `nome_fantasia_turma` VARCHAR(45) NULL DEFAULT NULL,
-  `status_turma` ENUM('1', '0') NULL DEFAULT NULL,
+  `nome_turma` VARCHAR(45) NOT NULL,
+  `turno_turma` ENUM('manha', 'tarde', 'noite', 'integral') NOT NULL,
+  `nome_fantasia_turma` VARCHAR(45) NOT NULL,
+  `status_turma` ENUM('1', '0') NOT NULL,
   `categorias_id_categoria` INT(11) NOT NULL,
   `pontuacao_turma` INT(11) NOT NULL DEFAULT 0,
   `qtd_itens_arrecadados` DECIMAL(10,2) NOT NULL DEFAULT 0.00,
   PRIMARY KEY (`id_turma`),
   INDEX `fk_turmas_interclasses1_idx` (`interclasses_id_interclasse` ASC),
   INDEX `fk_turmas_categorias1_idx` (`categorias_id_categoria` ASC),
+  UNIQUE INDEX `nome_turma_UNIQUE` (`nome_turma` ASC),
   CONSTRAINT `fk_turmas_categorias1`
     FOREIGN KEY (`categorias_id_categoria`)
     REFERENCES `sgi`.`categorias` (`id_categoria`),
@@ -172,14 +176,12 @@ CREATE TABLE IF NOT EXISTS `sgi`.`usuarios` (
   `matricula_usuario` VARCHAR(20) NOT NULL,
   `nome_usuario` VARCHAR(45) NOT NULL,
   `senha_usuario` VARCHAR(200) NOT NULL,
-  `nivel_usuario` ENUM('0', '1', '2') NOT NULL DEFAULT '0',
-  `competidor_usuario` ENUM('0', '1') NOT NULL DEFAULT '0',
-  `mesario_usuario` ENUM('0', '1') NOT NULL DEFAULT '0',
+  `nivel_usuario` ENUM('0', '1', '2', '3') NOT NULL DEFAULT '0',
   `genero_usuario` ENUM('FEM', 'MASC') NOT NULL,
   `data_nasc_usuario` DATE NOT NULL,
   `foto_usuario` VARCHAR(255) NOT NULL,
   `status_usuario` ENUM('0', '1') NOT NULL,
-  `turmas_id_turma` INT(11) NULL,
+  `turmas_id_turma` INT(11) NULL DEFAULT NULL,
   `interclasses_id_interclasse` INT(11) NOT NULL,
   `chave_usuario_edicao` VARCHAR(50) NOT NULL,
   PRIMARY KEY (`id_usuario`),

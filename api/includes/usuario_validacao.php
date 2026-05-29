@@ -47,7 +47,7 @@ function sgi_buscar_competidor_por_ra_e_data(mysqli $conn, string $raNormalizado
             WHERE matricula_usuario = ?
               AND data_nasc_usuario = ?
               AND interclasses_id_interclasse = ?
-              AND competidor_usuario = \'1\'
+              AND competidor_usuario = \'3\'
               AND status_usuario = \'1\'
             LIMIT 1';
     $stmt = $conn->prepare($sql);
