@@ -2,6 +2,7 @@
 $titulo = "Regulamentos";
 $textTop = "Regulamentos";
 $btnVoltar = true;
+$modoView = isset($_GET['modo']) && $_GET['modo'] === 'view';
 require_once '../componentes/navbar.php';
 require_once '../componentes/header.php';
 ?>
@@ -68,6 +69,9 @@ require_once '../componentes/header.php';
         </ul>
     </div>
     <section class="d-flex gap-4">
+        <?php if ($modoView): ?>
+        <button id="btnSalvarMobile" class="btn btn-danger">Salvar</button>
+        <?php endif; ?>
         <button id="btnContinuarMobile" class="btn btn-danger">Continuar</button>
     </section>
 </main>
@@ -159,7 +163,12 @@ require_once '../componentes/header.php';
 
     <div class="d-none d-md-block fixed-bottom" style="background: linear-gradient(to top, #f8f9fa 70%, rgba(248, 249, 250, 0) 100%); padding: 30px 0;">
         <div class="container-fluid d-flex justify-content-end align-items-center gap-3" style="max-width: 80%;">
-            <a href="#" class="text-decoration-none" id="btnVoltarPontuacaoRodape" data-sgi-header-back="true">
+            <?php if ($modoView): ?>
+            <button type="button" class="btn btn-danger fw-semibold rounded-3 px-4 py-2 shadow-sm" id="btnSalvarDesktop">
+                Salvar
+            </button>
+            <?php endif; ?>
+            <a href="#" class="text-decoration-none <?= $modoView ? 'd-none' : '' ?>" id="btnVoltarPontuacaoRodape" data-sgi-header-back="true">
                 <button type="button" class="btn btn-outline-danger bg-white fw-semibold rounded-3 px-4 py-2 shadow-sm">
                     Voltar
                 </button>
@@ -208,8 +217,7 @@ require_once '../componentes/header.php';
 
     if (idInterclasse) {
         if (modo === 'view') {
-            const parent = document.getElementById('btnContinuarDesktop')?.parentElement;
-            if (parent) parent.classList.add('d-none');
+            document.getElementById('btnContinuarDesktop')?.classList.add('d-none');
             document.getElementById('btnContinuarMobile')?.classList.add('d-none');
         } else {
             document.getElementById('btnContinuarDesktop').href = `./edicao_resumo.php?id=${idInterclasse}`;
@@ -317,6 +325,30 @@ require_once '../componentes/header.php';
         if (salvo) {
             window.location.href = `./edicao_resumo.php?id=${idInterclasse}`;
         }
+    });
+
+    function feedbackSalvar(mobile) {
+        const btn = mobile
+            ? document.getElementById('btnSalvarMobile')
+            : document.getElementById('btnSalvarDesktop');
+        if (!btn) return;
+        const original = btn.innerText;
+        btn.innerText = 'Salvo!';
+        btn.disabled = true;
+        setTimeout(() => {
+            btn.innerText = original;
+            btn.disabled = false;
+        }, 2000);
+    }
+
+    document.getElementById('btnSalvarMobile')?.addEventListener('click', async () => {
+        const salvo = await salvarPontuacao();
+        if (salvo) feedbackSalvar(true);
+    });
+
+    document.getElementById('btnSalvarDesktop')?.addEventListener('click', async () => {
+        const salvo = await salvarPontuacao();
+        if (salvo) feedbackSalvar(false);
     });
 
     document.addEventListener('DOMContentLoaded', () => {
