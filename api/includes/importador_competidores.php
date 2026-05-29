@@ -90,10 +90,9 @@ final class ImportadorCompetidores
             $erros = $prepared['avisos'];
 
             $sqlUser = 'INSERT INTO usuarios (
-                sigla_usuario, matricula_usuario, nome_usuario, senha_usuario, nivel_usuario,
-                competidor_usuario, mesario_usuario, genero_usuario, data_nasc_usuario,
+                sigla_usuario, matricula_usuario, nome_usuario, senha_usuario, nivel_usuario, genero_usuario, data_nasc_usuario,
                 foto_usuario, status_usuario, turmas_id_turma, interclasses_id_interclasse, chave_usuario_edicao
-            ) VALUES (\'RM\', ?, ?, ?, \'0\', \'1\', \'0\', ?, ?, \'default.jpg\', \'1\', ?, ?, ?)';
+            ) VALUES (\'RM\', ?, ?, ?, \'3\', ?, ?, \'default.jpg\', \'1\', ?, ?, ?)';
 
             $stmtU = $this->conn->prepare($sqlUser);
             if (!$stmtU) {

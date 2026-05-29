@@ -1,105 +1,45 @@
 <?php
-
-declare(strict_types=1);
-
 session_start();
-require_once dirname(__DIR__) . '/config/db.php';
-require_once __DIR__ . '/includes/usuario_validacao.php';
-require_once __DIR__ . '/includes/interclasse_helper.php';
+require_once __DIR__ . '/conexao.php'; 
 
-header('Content-Type: application/json; charset=utf-8');
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $matricula = $_POST['matricula'] ?? '';
+    $tipoLogin = $_POST['tipo_login'] ?? ''; // 'aluno' ou 'staff'
 
-$raw = file_get_contents('php://input');
-$data = json_decode($raw ?: '{}');
-
-$matriculaBruta = trim((string) ($data->matricula_usuario ?? $data->rm ?? $data->ra ?? ''));
-$senhaDigitada = (string) ($data->senha_usuario ?? '');
-$dataNascBruta = $data->data_nasc_usuario ?? null;
-$dataNascYmd = is_string($dataNascBruta) ? sgi_parse_data_nascimento($dataNascBruta) : null;
-
-$ra = sgi_normalizar_ra($matriculaBruta);
-
-if ($ra === '' && $matriculaBruta === '') {
-    echo json_encode(['sucesso' => false, 'erro' => 'Não foi possível validar os dados informados.'], JSON_UNESCAPED_UNICODE);
-    exit;
-}
-
-// Buscar interclasse ativo — obrigatório para qualquer validação
-$idInterclasseAtivo = buscarInterclasseAtivo($conn);
-
-try {
-    if ($idInterclasseAtivo === null) {
-        echo json_encode(['sucesso' => false, 'erro' => 'Nenhuma edição de interclasse está ativa.'], JSON_UNESCAPED_UNICODE);
-        exit;
+    if ($tipoLogin === 'aluno') {
+        // Nível 3: Competidores entram com Data de Nascimento
+        $dataNasc = $_POST['data_nascimento'] ?? '';
+        $sql = "SELECT * FROM usuarios WHERE matricula_usuario = ? AND data_nasc_usuario = ? AND nivel_usuario = '3' AND status_usuario = '1' LIMIT 1";
+        $stmt = $conn->prepare($sql);
+        $stmt->bind_param('ss', $matricula, $dataNasc);
+    } else {
+        // Níveis 0, 1, 2: Entram com Senha
+        $senhaInput = $_POST['senha'] ?? '';
+        $sql = "SELECT * FROM usuarios WHERE matricula_usuario = ? AND nivel_usuario IN ('0', '1', '2') AND status_usuario = '1' LIMIT 1";
+        $stmt = $conn->prepare($sql);
+        $stmt->bind_param('s', $matricula);
     }
 
-    // RF05: competidor valida com RA normalizado + data de nascimento, filtrando pelo interclasse ativo.
-    if ($dataNascYmd !== null && $ra !== '') {
-        $competidor = sgi_buscar_competidor_por_ra_e_data($conn, $ra, $dataNascYmd, $idInterclasseAtivo);
-        if ($competidor !== null) {
-            $_SESSION['id_usuario'] = (int) $competidor['id_usuario'];
-            $_SESSION['nivel'] = $competidor['nivel_usuario'];
-            $_SESSION['id_interclasse'] = $idInterclasseAtivo;
-            $_SESSION['logado'] = true;
+    $stmt->execute();
+    $usuario = $stmt->get_result()->fetch_assoc();
 
-            echo json_encode([
-                'sucesso' => true,
-                'permissoes' => [
-                    'admin' => (int) $competidor['nivel_usuario'] > 0,
-                    'mesario' => (int) $competidor['mesario_usuario'] === 1,
-                    'competidor' => (int) $competidor['competidor_usuario'] === 1,
-                ],
-                'dados' => [
-                    'nome' => $competidor['nome_usuario'],
-                    'sigla' => $competidor['sigla_usuario'],
-                ],
-            ], JSON_UNESCAPED_UNICODE);
+    if ($usuario) {
+        $autorizado = ($tipoLogin === 'aluno') ?: password_verify($senhaInput, $usuario['senha_usuario']);
+
+        if ($autorizado) {
+            $_SESSION['id'] = $usuario['id_usuario'];
+            $_SESSION['nivel'] = (int)$usuario['nivel_usuario'];
+            $_SESSION['nome'] = $usuario['nome_usuario'];
+
+            // Redirecionamento baseado no nível
+            $destino = match($_SESSION['nivel']) {
+                3 => 'src/pages/alunos/dashboard.php',
+                default => 'src/pages/colaboradores.php',
+            };
+
+            echo json_encode(['status' => 'sucesso', 'redirect' => $destino]);
             exit;
         }
     }
-
-    // Colaboradores / perfis com senha: matricula como cadastrada + senha (sem expor se a matrícula existe).
-    if ($matriculaBruta === '' || $senhaDigitada === '') {
-        echo json_encode(['sucesso' => false, 'erro' => 'Não foi possível validar os dados informados.'], JSON_UNESCAPED_UNICODE);
-        exit;
-    }
-
-    $stmt = $conn->prepare(
-        "SELECT id_usuario, nome_usuario, matricula_usuario, senha_usuario, nivel_usuario, mesario_usuario, competidor_usuario, sigla_usuario
-         FROM usuarios
-         WHERE matricula_usuario = ? AND interclasses_id_interclasse = ? AND status_usuario = '1'
-         LIMIT 1"
-    );
-    if (!$stmt) {
-        throw new RuntimeException('prepare');
-    }
-    $stmt->bind_param('si', $matriculaBruta, $idInterclasseAtivo);
-    $stmt->execute();
-    $usuario = $stmt->get_result()->fetch_assoc();
-    $stmt->close();
-
-    if ($usuario && password_verify($senhaDigitada, $usuario['senha_usuario'])) {
-        $_SESSION['id_usuario'] = (int) $usuario['id_usuario'];
-        $_SESSION['nivel'] = $usuario['nivel_usuario'];
-        $_SESSION['id_interclasse'] = $idInterclasseAtivo;
-        $_SESSION['logado'] = true;
-
-        echo json_encode([
-            'sucesso' => true,
-            'permissoes' => [
-                'admin' => (int) $usuario['nivel_usuario'] > 0,
-                'mesario' => (int) $usuario['mesario_usuario'] === 1,
-                'competidor' => (int) $usuario['competidor_usuario'] === 1,
-            ],
-            'dados' => [
-                'nome' => $usuario['nome_usuario'],
-                'sigla' => $usuario['sigla_usuario'],
-            ],
-        ], JSON_UNESCAPED_UNICODE);
-        exit;
-    }
-
-    echo json_encode(['sucesso' => false, 'erro' => 'Não foi possível validar os dados informados.'], JSON_UNESCAPED_UNICODE);
-} catch (Throwable) {
-    echo json_encode(['sucesso' => false, 'erro' => 'Erro no servidor.'], JSON_UNESCAPED_UNICODE);
+    echo json_encode(['status' => 'erro', 'mensagem' => 'Acesso negado.']);
 }
