@@ -7,8 +7,15 @@ require_once '../componentes/header.php';
 ?>
 
 <style>
-    .colaborador-card { border: 1px solid #ececec; border-left: 4px solid #ed1c24; }
-    .colaborador-switch.form-check-input:checked { background-color: #ed1c24; border-color: #ed1c24; }
+    .colaborador-card {
+        border: 1px solid #ececec;
+        border-left: 4px solid #ed1c24;
+    }
+
+    .colaborador-switch.form-check-input:checked {
+        background-color: #ed1c24;
+        border-color: #ed1c24;
+    }
 </style>
 
 <main class="d-md-none" style="margin-bottom: 120px;">
@@ -20,7 +27,9 @@ require_once '../componentes/header.php';
             <h5 class="fw-bold mb-0">Equipe de apoio</h5>
             <button class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#modalAdicionarColaborador"><i class="bi bi-plus-circle"></i> Adicionar</button>
         </div>
-        <div id="listaColaboradoresMobile"><p class="text-muted text-center">(Carregando colaboradores...)</p></div>
+        <div id="listaColaboradoresMobile">
+            <p class="text-muted text-center">(Carregando colaboradores...)</p>
+        </div>
         <a href="#" id="btnContinuarColaboradoresMobile" class="btn btn-danger w-100 mt-3 d-none">Continuar</a>
     </div>
 </main>
@@ -37,7 +46,9 @@ require_once '../componentes/header.php';
                 <button class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#modalAdicionarColaborador"><i class="bi bi-plus-circle"></i> Adicionar colaborador</button>
             </div>
         </div>
-        <div id="listaColaboradoresDesktop"><p class="text-muted text-center">(Carregando colaboradores...)</p></div>
+        <div id="listaColaboradoresDesktop">
+            <p class="text-muted text-center">(Carregando colaboradores...)</p>
+        </div>
     </div>
 </main>
 
@@ -55,8 +66,8 @@ require_once '../componentes/header.php';
                         <input type="text" class="form-control" id="novoNomeColaborador" required>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Matrícula / NIF</label>
-                        <input type="text" class="form-control" id="novoNifColaborador" required>
+                        <label class="form-label">Email</label>
+                        <input type="email" class="form-control" id="novoNifColaborador" required>
                     </div>
                     <div class="mb-3">
                         <label class="form-label">Senha</label>
@@ -70,12 +81,18 @@ require_once '../componentes/header.php';
                         </select>
                     </div>
                     <div class="form-check mb-2">
-                        <input class="form-check-input" type="checkbox" id="novoAdminColaborador" checked>
+                        <input class="form-check-input" type="radio" name="tipoParticipante" id="novoAdminColaborador">
                         <label class="form-check-label" for="novoAdminColaborador">Administrador</label>
                     </div>
-                    <div class="form-check mb-3">
-                        <input class="form-check-input" type="checkbox" id="novoMesarioColaborador" checked>
+
+                    <div class="form-check mb-2">
+                        <input class="form-check-input" type="radio" name="tipoParticipante" id="novoMesarioColaborador" checked>
                         <label class="form-check-label" for="novoMesarioColaborador">Mesário</label>
+                    </div>
+
+                    <div class="form-check mb-3">
+                        <input class="form-check-input" type="radio" name="tipoParticipante" id="novoColaborador">
+                        <label class="form-check-label" for="novoColaborador">Colaborador</label>
                     </div>
                     <div id="msgNovoColaborador" class="text-center mb-2"></div>
                     <div class="d-flex justify-content-end gap-2">
@@ -88,9 +105,50 @@ require_once '../componentes/header.php';
     </div>
 </div>
 
+<div class="modal fade" id="modalEditarColaborador" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header border-0">
+                <h5 class="modal-title text-danger">Editar colaborador</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="formEditarColaborador">
+                    <div class="mb-3">
+                        <label class="form-label">Nome</label>
+                        <input type="text" class="form-control" id="editNomeColaborador" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Matrícula / NIF</label>
+                        <input type="text" class="form-control" id="editNifColaborador" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Nova senha <small class="text-muted">(deixe em branco para manter)</small></label>
+                        <input type="text" class="form-control" id="editSenhaColaborador">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Gênero</label>
+                        <select class="form-select" id="editGeneroColaborador">
+                            <option value="MASC">Masculino</option>
+                            <option value="FEM">Feminino</option>
+                        </select>
+                    </div>
+                    <div id="msgEditarColaborador" class="text-center mb-2"></div>
+                    <div class="d-flex justify-content-end gap-2">
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-danger" id="btnSalvarEdicaoColaborador">Salvar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
     const paramsColab = new URLSearchParams(window.location.search);
     const idInterclasseColab = paramsColab.get('id');
+    let colaboradoresData = [];
+    let editColaboradorId = null;
 
     function cardColaborador(item) {
         const admin = String(item.nivel_usuario) !== '0';
@@ -102,7 +160,10 @@ require_once '../componentes/header.php';
                         <h6 class="fw-bold mb-1">${item.nome_usuario}</h6>
                         <small class="text-muted">Matrícula: ${item.matricula_usuario}</small>
                     </div>
-                    <button type="button" class="btn btn-sm btn-outline-danger" data-remover="${item.id_usuario}"><i class="bi bi-trash"></i></button>
+                    <div>
+                        <button type="button" class="btn btn-sm btn-outline-primary me-1" data-editar="${item.id_usuario}"><i class="bi bi-pencil-square"></i></button>
+                        <button type="button" class="btn btn-sm btn-outline-danger" data-remover="${item.id_usuario}"><i class="bi bi-trash"></i></button>
+                    </div>
                 </div>
                 <div class="d-flex gap-4 mt-3">
                     <div class="form-check form-switch">
@@ -130,10 +191,13 @@ require_once '../componentes/header.php';
                 throw new Error(resultado.mensagem || 'Falha ao listar colaboradores.');
             }
             const lista = resultado.colaboradores || [];
-            const html = lista.length
-                ? lista.map(cardColaborador).join('')
-                : '<p class="text-muted text-center">Nenhum colaborador cadastrado.</p>';
-            alvo.forEach((el) => { if (el) el.innerHTML = html; });
+            colaboradoresData = lista;
+            const html = lista.length ?
+                lista.map(cardColaborador).join('') :
+                '<p class="text-muted text-center">Nenhum colaborador cadastrado.</p>';
+            alvo.forEach((el) => {
+                if (el) el.innerHTML = html;
+            });
             vincularEventosLista();
         } catch (error) {
             alvo.forEach((el) => {
@@ -152,7 +216,9 @@ require_once '../componentes/header.php';
                 body.append('id_usuario', id);
                 const resp = await fetch('../../../api/usuarios.php', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded'
+                    },
                     body: body.toString()
                 });
                 const json = await resp.json();
@@ -161,6 +227,24 @@ require_once '../componentes/header.php';
                     return;
                 }
                 await carregarColaboradores();
+            });
+        });
+
+        document.querySelectorAll('[data-editar]').forEach((btn) => {
+            btn.addEventListener('click', () => {
+                const id = Number(btn.getAttribute('data-editar'));
+                const colab = colaboradoresData.find(c => c.id_usuario === id);
+                if (!colab) return;
+
+                editColaboradorId = id;
+                document.getElementById('editNomeColaborador').value = colab.nome_usuario || '';
+                document.getElementById('editNifColaborador').value = colab.matricula_usuario || '';
+                document.getElementById('editSenhaColaborador').value = '';
+                document.getElementById('editGeneroColaborador').value = colab.genero_usuario || 'MASC';
+                document.getElementById('msgEditarColaborador').innerHTML = '';
+
+                const modal = new bootstrap.Modal(document.getElementById('modalEditarColaborador'));
+                modal.show();
             });
         });
 
@@ -178,7 +262,9 @@ require_once '../componentes/header.php';
                 body.append('is_mesario_clicado', mesarioEl?.checked ? '1' : '0');
                 const resp = await fetch('../../../api/usuarios.php', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded'
+                    },
                     body: body.toString()
                 });
                 const json = await resp.json();
@@ -220,7 +306,9 @@ require_once '../componentes/header.php';
 
             const response = await fetch('../../../api/usuarios.php', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                },
                 body: body.toString()
             });
             const resultado = await response.json();
@@ -237,6 +325,57 @@ require_once '../componentes/header.php';
         } finally {
             btn.disabled = false;
             btn.innerText = 'Cadastrar';
+        }
+    });
+
+    document.getElementById('formEditarColaborador').addEventListener('submit', async (event) => {
+        event.preventDefault();
+        const btn = document.getElementById('btnSalvarEdicaoColaborador');
+        const msg = document.getElementById('msgEditarColaborador');
+
+        const nome = document.getElementById('editNomeColaborador').value.trim();
+        const matricula = document.getElementById('editNifColaborador').value.trim();
+        const senha = document.getElementById('editSenhaColaborador').value.trim();
+        const genero = document.getElementById('editGeneroColaborador').value;
+
+        if (!nome || !matricula) {
+            msg.innerHTML = '<p class="text-danger fw-bold mb-0">Nome e matrícula são obrigatórios.</p>';
+            return;
+        }
+
+        try {
+            btn.disabled = true;
+            btn.innerText = 'Salvando...';
+            msg.innerHTML = '';
+
+            const body = new URLSearchParams();
+            body.append('acao', 'atualizar_dados_colaborador');
+            body.append('id_usuario', String(editColaboradorId));
+            body.append('nome_usuario', nome);
+            body.append('matricula_usuario', matricula);
+            body.append('genero_usuario', genero);
+            if (senha) body.append('senha_usuario', senha);
+
+            const response = await fetch('../../../api/usuarios.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                },
+                body: body.toString()
+            });
+            const resultado = await response.json();
+            if (resultado.status !== 'sucesso') {
+                throw new Error(resultado.mensagem || 'Falha ao atualizar.');
+            }
+
+            await carregarColaboradores();
+            msg.innerHTML = '<p class="text-success fw-bold mb-0">Colaborador atualizado.</p>';
+            setTimeout(() => bootstrap.Modal.getOrCreateInstance(document.getElementById('modalEditarColaborador')).hide(), 700);
+        } catch (error) {
+            msg.innerHTML = `<p class="text-danger fw-bold mb-0">${error.message}</p>`;
+        } finally {
+            btn.disabled = false;
+            btn.innerText = 'Salvar';
         }
     });
 

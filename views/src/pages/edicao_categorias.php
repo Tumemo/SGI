@@ -25,9 +25,7 @@ require_once '../componentes/header.php';
     </div>
 
     <section class="d-flex gap-3 mt-3 position-fixed translate-middle flex-wrap justify-content-center" style="width: max-content; max-width: 96vw; top: 85%; left: 50%; z-index: 10;">
-        <div id="wrapBtnTurmaMobile" class="d-none">
-            <button type="button" id="btnAdicionarTurmaMobile" data-bs-toggle="modal" data-bs-target="#criarTurma" class="btn btn-outline-danger" disabled>Adicionar Turma</button>
-        </div>
+        <button type="button" id="btnEditarCategoriaMobile" class="btn btn-outline-danger" disabled onclick="abrirModalEditarCategoria()">Editar</button>
         <button data-bs-toggle="modal" data-bs-target="#modalCriarCategoria" class="btn btn-outline-danger">Adicionar Categoria</button>
         <a href="#" id="btnContinuarMobile" class="btn btn-danger">Continuar</a>
     </section>
@@ -51,12 +49,10 @@ require_once '../componentes/header.php';
         </div>
 
         <div class="position-fixed d-flex flex-row gap-3" style="bottom: 40px; right: 5%; z-index: 1050;">
-            <div id="wrapBtnTurmaDesktop" class="d-none">
-                <button type="button" id="btnAdicionarTurmaDesktop" class="btn bg-white fw-semibold rounded-3 px-4 py-2 d-flex align-items-center justify-content-center gap-2 shadow-lg" style="color: #ed1c24; border: 2px solid #ed1c24;" data-bs-toggle="modal" data-bs-target="#criarTurma" disabled>
-                    <i class="bi bi-mortarboard"></i> Adicionar Turma
-                </button>
-            </div>
-            
+            <button type="button" id="btnEditarCategoriaDesktop" class="btn bg-white fw-semibold rounded-3 px-4 py-2 d-flex align-items-center justify-content-center gap-2 shadow-lg" style="color: #ed1c24; border: 2px solid #ed1c24;" disabled onclick="abrirModalEditarCategoria()">
+                <i class="bi bi-pencil-square"></i> Editar
+            </button>
+
             <button type="button" class="btn bg-white fw-semibold rounded-3 px-4 py-2 d-flex align-items-center justify-content-center gap-2 shadow-lg" style="color: #ed1c24; border: 2px solid #ed1c24;" data-bs-toggle="modal" data-bs-target="#modalCriarCategoria">
                 <i class="bi bi-plus-circle"></i> Adicionar
             </button>
@@ -139,11 +135,35 @@ require_once '../componentes/header.php';
     </div>
 </div>
 
+<div class="modal fade" id="modalEditarCategoria" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header border-0">
+                <h5 class="modal-title text-danger fw-bold">Editar Categoria</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="formEditarCategoria">
+                    <h2 class="fs-6 mb-3">Altere o nome da categoria:</h2>
+                    <input type="text" class="form-control" id="editNomeCategoria" required>
+                    <div id="msgEditarCategoria" class="mt-2"></div>
+                    <div class="d-flex justify-content-center gap-3 pt-4">
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-danger" id="btnSalvarEdicaoCategoria">Salvar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
     const urlParams = new URLSearchParams(window.location.search);
     const idInterclasse = urlParams.get('id');
     const modo = urlParams.get('modo') || 'create';
     let categoriaSelecionada = null;
+    let categoriasData = [];
+    let editCategoriaId = null;
 
     function aplicarModoContinuar() {
         const vis = modo !== 'view';
@@ -154,15 +174,10 @@ require_once '../componentes/header.php';
     }
 
     function atualizarAcoesCategoria() {
-        const btnTurmaMobile = document.getElementById('btnAdicionarTurmaMobile');
-        const btnTurmaDesktop = document.getElementById('btnAdicionarTurmaDesktop');
-        const wrapMob = document.getElementById('wrapBtnTurmaMobile');
-        const wrapDesk = document.getElementById('wrapBtnTurmaDesktop');
-        const temSel = Boolean(categoriaSelecionada);
-        if (wrapMob) wrapMob.classList.toggle('d-none', !temSel);
-        if (wrapDesk) wrapDesk.classList.toggle('d-none', !temSel);
-        if (btnTurmaMobile) btnTurmaMobile.disabled = !categoriaSelecionada;
-        if (btnTurmaDesktop) btnTurmaDesktop.disabled = !categoriaSelecionada;
+        const btnEditarMobile = document.getElementById('btnEditarCategoriaMobile');
+        const btnEditarDesktop = document.getElementById('btnEditarCategoriaDesktop');
+        if (btnEditarMobile) btnEditarMobile.disabled = !categoriaSelecionada;
+        if (btnEditarDesktop) btnEditarDesktop.disabled = !categoriaSelecionada;
 
         const rota = modo === 'view' ? './dashboard.php' : './edicao_modalidades.php';
         const sufixoCategoria = categoriaSelecionada ? `&id_categoria=${categoriaSelecionada}` : '';
@@ -235,6 +250,8 @@ require_once '../componentes/header.php';
             if (!response.ok) throw new Error(`Erro na API: ${response.status}`);
             const categorias = await response.json();
 
+            categoriasData = Array.isArray(categorias) ? categorias : [];
+
             divMobile.innerHTML = '';
             divDesktop.innerHTML = '';
 
@@ -294,6 +311,56 @@ require_once '../componentes/header.php';
             divDesktop.innerHTML = '<p class="text-danger mt-4">Erro ao carregar categorias.</p>';
         }
     }
+
+    window.abrirModalEditarCategoria = function() {
+        if (!categoriaSelecionada) return;
+        const cat = categoriasData.find(c => c.id_categoria == categoriaSelecionada);
+        if (!cat) return;
+
+        editCategoriaId = cat.id_categoria;
+        document.getElementById('editNomeCategoria').value = cat.nome_categoria || '';
+        document.getElementById('msgEditarCategoria').innerHTML = '';
+
+        const modal = new bootstrap.Modal(document.getElementById('modalEditarCategoria'));
+        modal.show();
+    };
+
+    document.getElementById('formEditarCategoria').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const btn = document.getElementById('btnSalvarEdicaoCategoria');
+        const msg = document.getElementById('msgEditarCategoria');
+
+        const nome = document.getElementById('editNomeCategoria').value.trim();
+        if (!nome) {
+            msg.innerHTML = '<p class="text-danger text-center fw-bold mb-0">O nome não pode estar vazio.</p>';
+            return;
+        }
+
+        try {
+            btn.disabled = true;
+            btn.innerHTML = 'Salvando...';
+
+            const resp = await fetch('../../../api/categorias.php', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id_categoria: editCategoriaId, nome_categoria: nome })
+            });
+            const data = await resp.json();
+
+            if (data.success === false) throw new Error(data.message || 'Erro ao atualizar.');
+
+            msg.innerHTML = '<p class="text-success text-center fw-bold mb-0">Salvo com sucesso!</p>';
+            setTimeout(() => {
+                bootstrap.Modal.getInstance(document.getElementById('modalEditarCategoria')).hide();
+                carregarCategorias();
+            }, 800);
+        } catch (err) {
+            msg.innerHTML = `<p class="text-danger text-center fw-bold mb-0">${err.message}</p>`;
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = 'Salvar';
+        }
+    });
 
     // Lógica para enviar Nova Categoria para a API
     document.getElementById('formNovaCategoria').addEventListener('submit', async (e) => {

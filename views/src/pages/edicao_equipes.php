@@ -98,6 +98,11 @@ require_once '../componentes/header.php';
         desk.innerHTML = '<p class="text-muted">Carregando…</p>';
 
         try {
+            await fetch(`${API}CriarEquipes.php`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id_interclasse: parseInt(idInterclasseEq) })
+            });
             const resMod = await fetch(`${API}modalidades.php?id_interclasse=${encodeURIComponent(idInterclasseEq)}`);
             const modsRaw = await resMod.json();
             const mods = Array.isArray(modsRaw) ? modsRaw : [];

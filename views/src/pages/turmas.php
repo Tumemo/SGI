@@ -84,7 +84,53 @@ require_once '../componentes/header.php';
     </div>
 </div>
 
+<div class="modal fade" id="modalEditarTurma" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header border-0">
+                <h5 class="modal-title text-danger fw-bold">Editar Turma</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="formEditarTurma">
+                    <div class="mb-3">
+                        <label class="form-label">Nome da turma:</label>
+                        <input type="text" class="form-control" id="editNomeTurma" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Nome fantasia:</label>
+                        <input type="text" class="form-control" id="editNomeFantasia" placeholder="Ex: Lobos">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Turno:</label>
+                        <select class="form-select" id="editTurnoTurma">
+                            <option value="">Selecione...</option>
+                            <option value="Manhã">Manhã</option>
+                            <option value="Tarde">Tarde</option>
+                            <option value="Noite">Noite</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Categoria:</label>
+                        <select class="form-select" id="editCategoriaTurma" required>
+                            <option value="">Carregando...</option>
+                        </select>
+                    </div>
+                    <div id="msgEditarTurma" class="mt-2"></div>
+                    <div class="d-flex justify-content-center gap-4 mt-4">
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-danger" id="btnSalvarEdicaoTurma">Salvar Alterações</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
+    let turmasData = [];
+    let editTurmaId = null;
+
     function mostrarNomeArquivo() {
         const input = document.getElementById('arquivoUpload');
         const span = document.getElementById('nomeArquivo');
@@ -192,6 +238,8 @@ require_once '../componentes/header.php';
             const turmasRes = await fetch(`../../../api/turmas.php?id_interclasse=${interclasseAtivo.id_interclasse}`);
             const listaFinal = await turmasRes.json();
 
+            turmasData = Array.isArray(listaFinal) ? listaFinal : [];
+
             if (!listaFinal || !listaFinal.length) {
                 listaMobile.innerHTML = '<p class="text-center text-muted mt-4">Nenhuma turma cadastrada.</p>';
                 listaDesktop.innerHTML = '<p class="text-center text-muted mt-4">Nenhuma turma cadastrada.</p>';
@@ -206,6 +254,9 @@ require_once '../componentes/header.php';
                         <small class="text-muted">${turma.nome_categoria || 'Categoria vinculada'}</small>
                     </a>
                     <div class="d-flex align-items-center gap-2">
+                        <button type="button" class="btn btn-link text-primary p-0" title="Editar turma" onclick='editarTurma(${turma.id_turma})'>
+                            <i class="bi bi-pencil-square fs-5"></i>
+                        </button>
                         <button type="button" class="btn btn-link text-danger p-0" title="Excluir turma" onclick='excluirTurma(${turma.id_turma}, "${turma.nome_turma}")'>
                             <i class="bi bi-trash fs-5"></i>
                         </button>
@@ -221,9 +272,14 @@ require_once '../componentes/header.php';
                     <div class="card border-0 shadow-sm rounded-4 h-100 p-3 bg-white">
                         <div class="d-flex justify-content-between align-items-center mb-4">
                             <h5 class="fw-bold mb-0 text-dark" style="font-size: 1.3rem;">${turma.nome_turma}</h5>
-                            <button type="button" class="btn btn-link text-danger p-0" title="Excluir turma" onclick='excluirTurma(${turma.id_turma}, "${turma.nome_turma}")'>
-                                <i class="bi bi-trash fs-4"></i>
-                            </button>
+                            <div>
+                                <button type="button" class="btn btn-link text-primary p-0 me-2" title="Editar turma" onclick='editarTurma(${turma.id_turma})'>
+                                    <i class="bi bi-pencil-square fs-4"></i>
+                                </button>
+                                <button type="button" class="btn btn-link text-danger p-0" title="Excluir turma" onclick='excluirTurma(${turma.id_turma}, "${turma.nome_turma}")'>
+                                    <i class="bi bi-trash fs-4"></i>
+                                </button>
+                            </div>
                         </div>
                         <div class="mb-4 text-muted">${turma.nome_categoria || 'Categoria vinculada'}</div>
                         <div class="mt-auto">
@@ -242,6 +298,92 @@ require_once '../componentes/header.php';
             listaDesktop.innerHTML = '<p class="text-center text-danger mt-4">Erro ao carregar turmas.</p>';
         }
     }
+
+    async function carregarCategoriasEdicao(selectedId) {
+        try {
+            const interclasseAtivo = await window.SGIInterclasse.getActiveInterclasse();
+            if (!interclasseAtivo) return;
+            const res = await fetch(`../../../api/categorias.php?id_interclasse=${interclasseAtivo.id_interclasse}`);
+            const cats = await res.json();
+            const sel = document.getElementById('editCategoriaTurma');
+            sel.innerHTML = '<option value="">Selecione...</option>';
+            (cats || []).forEach(cat => {
+                const selAttr = cat.id_categoria == selectedId ? 'selected' : '';
+                sel.innerHTML += `<option value="${cat.id_categoria}" ${selAttr}>${cat.nome_categoria}</option>`;
+            });
+        } catch (e) {
+            console.error('Erro ao carregar categorias:', e);
+        }
+    }
+
+    window.editarTurma = async function(idTurma) {
+        const turma = turmasData.find(t => t.id_turma == idTurma);
+        if (!turma) return;
+
+        editTurmaId = turma.id_turma;
+        document.getElementById('editNomeTurma').value = turma.nome_turma || '';
+        document.getElementById('editNomeFantasia').value = turma.nome_fantasia_turma || '';
+        document.getElementById('editTurnoTurma').value = turma.turno_turma || '';
+        document.getElementById('msgEditarTurma').innerHTML = '';
+
+        await carregarCategoriasEdicao(turma.categorias_id_categoria);
+
+        const modal = new bootstrap.Modal(document.getElementById('modalEditarTurma'));
+        modal.show();
+    };
+
+    document.getElementById('formEditarTurma').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const btn = document.getElementById('btnSalvarEdicaoTurma');
+        const msg = document.getElementById('msgEditarTurma');
+
+        const nome = document.getElementById('editNomeTurma').value.trim();
+        if (!nome) {
+            msg.innerHTML = '<p class="text-danger text-center fw-bold mb-0">O nome não pode estar vazio.</p>';
+            return;
+        }
+
+        const interclasseAtivo = await window.SGIInterclasse.getActiveInterclasse();
+        if (!interclasseAtivo) { msg.innerHTML = '<p class="text-danger text-center fw-bold mb-0">Nenhum interclasse ativo.</p>'; return; }
+
+        const body = {
+            id_turma: editTurmaId,
+            nome_turma: nome,
+            nome_fantasia_turma: document.getElementById('editNomeFantasia').value.trim() || null,
+            turno_turma: document.getElementById('editTurnoTurma').value || null,
+            categorias_id_categoria: parseInt(document.getElementById('editCategoriaTurma').value)
+        };
+
+        if (!body.categorias_id_categoria) {
+            msg.innerHTML = '<p class="text-danger text-center fw-bold mb-0">Selecione uma categoria.</p>';
+            return;
+        }
+
+        try {
+            btn.disabled = true;
+            btn.innerHTML = 'Salvando...';
+
+            const resp = await fetch('../../../api/turmas.php', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body)
+            });
+            const data = await resp.json();
+
+            if (data.success === false) throw new Error(data.message || 'Erro ao atualizar.');
+
+            msg.innerHTML = '<p class="text-success text-center fw-bold mb-0">Salvo com sucesso!</p>';
+            setTimeout(() => {
+                bootstrap.Modal.getInstance(document.getElementById('modalEditarTurma')).hide();
+                carregarTurmasAtivas();
+            }, 800);
+        } catch (err) {
+            msg.innerHTML = `<p class="text-danger text-center fw-bold mb-0">${err.message}</p>`;
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = 'Salvar Alterações';
+        }
+    });
 
     // Declaração única vinculada ao escopo do objeto global window
     window.excluirTurma = async function(idTurma, nomeTurma) {

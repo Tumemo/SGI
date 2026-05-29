@@ -24,6 +24,7 @@ switch ($method) {
                     turmas.nome_turma, 
                     turmas.turno_turma, 
                     turmas.nome_fantasia_turma, 
+                    turmas.categorias_id_categoria,
                     interclasses.nome_interclasse,
                     categorias.nome_categoria
                 FROM turmas 

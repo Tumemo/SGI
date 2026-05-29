@@ -267,6 +267,71 @@ switch ($metodo) {
             break;
         }
 
+        if ($acao === 'atualizar_dados_colaborador') {
+            $idInterclasseAtivo = buscarInterclasseAtivo($conn);
+            if ($idInterclasseAtivo === null) {
+                sgi_json_saida(erroSemInterclasseAtivo());
+                break;
+            }
+            $dados = !empty($_POST) ? $_POST : $inputData;
+            $idUsuario = (int) ($dados['id_usuario'] ?? 0);
+            if ($idUsuario <= 0) {
+                sgi_json_saida(['status' => 'erro', 'mensagem' => 'ID do colaborador inválido.']);
+                break;
+            }
+            $nome = trim((string) ($dados['nome_usuario'] ?? ''));
+            $matricula = trim((string) ($dados['matricula_usuario'] ?? ''));
+            $genero = (string) ($dados['genero_usuario'] ?? 'MASC');
+            $senhaCrua = (string) ($dados['senha_usuario'] ?? '');
+
+            if ($nome === '' || $matricula === '') {
+                sgi_json_saida(['status' => 'erro', 'mensagem' => 'Nome e matrícula são obrigatórios.']);
+                break;
+            }
+
+            $campos = [];
+            $params = [];
+            $types = '';
+
+            $campos[] = "nome_usuario = ?";
+            $params[] = $nome;
+            $types .= "s";
+
+            $campos[] = "matricula_usuario = ?";
+            $params[] = $matricula;
+            $types .= "s";
+
+            $campos[] = "genero_usuario = ?";
+            $params[] = $genero;
+            $types .= "s";
+
+            if ($senhaCrua !== '') {
+                $senhaHash = password_hash($senhaCrua, PASSWORD_DEFAULT);
+                $campos[] = "senha_usuario = ?";
+                $params[] = $senhaHash;
+                $types .= "s";
+            }
+
+            $params[] = $idUsuario;
+            $params[] = $idInterclasseAtivo;
+            $types .= "ii";
+
+            $sql = "UPDATE usuarios SET " . implode(", ", $campos) . " WHERE id_usuario = ? AND interclasses_id_interclasse = ? AND competidor_usuario = '0'";
+            $stmt = $conn->prepare($sql);
+            if (!$stmt) {
+                sgi_json_saida(['status' => 'erro', 'mensagem' => $conn->error]);
+                break;
+            }
+            $stmt->bind_param($types, ...$params);
+            if ($stmt->execute()) {
+                sgi_json_saida(['status' => 'sucesso', 'mensagem' => 'Colaborador atualizado.']);
+            } else {
+                sgi_json_saida(['status' => 'erro', 'mensagem' => $stmt->error]);
+            }
+            $stmt->close();
+            break;
+        }
+
         if ($acao === 'excluir_colaborador') {
             $idInterclasseAtivo = buscarInterclasseAtivo($conn);
             if ($idInterclasseAtivo === null) {
