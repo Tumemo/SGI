@@ -8,7 +8,6 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     
     <style>
-        /* Melhora a experiência de clique e feedback visual no mobile/desktop */
         .style-card {
             transition: transform 0.2s ease, box-shadow 0.2s ease;
         }
@@ -16,7 +15,6 @@
             transform: translateY(-2px);
             box-shadow: 0 .5rem 1rem rgba(0,0,0,.15)!important;
         }
-        /* Alinha o menu inferior para não cobrir conteúdos importantes no scroll */
         body {
             padding-bottom: 90px;
         }
@@ -26,7 +24,7 @@
 
     <header class="position-relative">
         <img src="../../../public/images/banner-global.png" alt="Banner dos Jogos Interclasses" class="w-100">
-        <a href="./notificacoes.php" class="position-absolute text-white fs-3 d-flex align-items-center justify-content-center" style="top: 15%; right: 6%; width: 44px; height: 44px; background: rgba(0,0,0,0.3); rounded-circle" aria-label="Notificações e avisos">
+        <a href="./notificacoes.php" class="position-absolute text-white fs-3 d-flex align-items-center justify-content-center rounded-circle" style="top: 15%; right: 6%; width: 44px; height: 44px; background: rgba(0,0,0,0.3);" aria-label="Notificações e avisos">
             <i class="bi bi-bell"></i>
         </a>
     </header>
@@ -55,7 +53,6 @@
     </nav>
 
     <script>
-        // Função auxiliar para evitar ataques XSS via dados da API
         function escaparHTML(string) {
             const mapa = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#x27;' };
             return String(string || '').replace(/[&<>"']/g, (s) => mapa[s]);
@@ -69,8 +66,6 @@
             const classeCard = ativo ? 'bg-white' : 'bg-secondary-subtle opacity-75';
             const href = ativo ? `./inscricao.php?id=${interclasse.id_interclasse}` : `./ranking.php?id=${interclasse.id_interclasse}`;
             
-            // Alterado h2 para h3 para respeitar a semântica da página
-            // Adicionado aria-hidden="true" na imagem decorativa da seta
             return `
                 <div class="col-12 col-md-6 col-lg-4">
                     <a href="${href}" class="text-decoration-none text-dark card-link d-block h-100">
@@ -108,7 +103,6 @@
                     return;
                 }
                 
-                // Renderiza os cards na tela de forma otimizada
                 container.innerHTML = lista.map((item) => {
                     const isAtivo = item && String(item.status_interclasse) === '1';
                     return cardInterclasse(item, isAtivo);
@@ -124,8 +118,6 @@
                 `;
             }
         }
-
-        // Inicialização rápida do DOM
         document.addEventListener('DOMContentLoaded', carregarInterclassesAluno);
     </script>
 </body>
