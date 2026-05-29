@@ -39,7 +39,7 @@
 
         <picture class="w-50 vh-100 position-relative d-block shadow-lg">
 
-            <img src="./public/images/banner-login-desktop.png"
+            <img src="./public/images/banner-login-desktop2.png"
                 alt="Imagem dos desenvolvedores"
                 class="position-absolute top-0 start-0 w-100 h-100 object-fit-cover "
                 style="z-index: 1;">
