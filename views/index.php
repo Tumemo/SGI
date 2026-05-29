@@ -5,9 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="./src/styles/style.css">
     <title>SGI - Login</title>
     <style>
-        .form-control:focus { box-shadow: 0px 0px 10px 2px red; border: none; }
         #msg_erro_mobile, #msg_erro_desktop { font-size: 0.85rem; margin-top: 10px; }
     </style>
 </head>
