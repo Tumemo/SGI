@@ -51,7 +51,10 @@ h1, h2, h3, h4, h5, h6, .fw-bold, .fw-bolder, .fw-semibold {
     border: none;
 }
 
-
+.form-control:focus,.form-control:active,.form-select:focus{
+    box-shadow: 0px 0px 2px 4px rgba(255, 0, 0, 0.64) !important;
+    border: none !important;  
+}
 
 /* ===================== dashboard.php =========================== */
 /* Estilos específicos para os Cards do Menu Principal (desktop) */
