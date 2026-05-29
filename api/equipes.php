@@ -7,7 +7,6 @@ $method = $_SERVER['REQUEST_METHOD'];
 
 switch ($method) {
     case 'GET':
-        // Se solicitar alunos de uma equipe específica
         if (!empty($_GET['id_equipe']) && empty($_GET['id_turma'])) {
             $id_equipe = intval($_GET['id_equipe']);
             $sql = "SELECT u.id_usuario, u.nome_usuario, u.matricula_usuario
@@ -22,7 +21,6 @@ switch ($method) {
             break;
         }
         
-        // Se solicitar equipes (com filtros)
         $filtro = aplicarFiltrosEquipes();
         $sql = "SELECT 
                     equipes.id_equipe, 
@@ -47,7 +45,7 @@ switch ($method) {
         echo json_encode($res->fetch_all(MYSQLI_ASSOC));
         break;
 
- case 'POST':
+    case 'POST':
         $data = json_decode(file_get_contents("php://input"));
         $acao = $data->acao ?? '';
 
@@ -73,6 +71,7 @@ switch ($method) {
                     "id_equipe" => $conn->insert_id
                 ]);
             } else {
+                http_response_code(500);
                 echo json_encode(["success" => false, "message" => "Erro ao inserir: " . $conn->error]);
             }
 
@@ -83,23 +82,34 @@ switch ($method) {
                 break;
             }
 
-            $id_equipe = $data->id_equipe;
+            $id_equipe = intval($data->id_equipe);
             $usuarios = $data->usuarios;
             $sucesso = true;
+
+            
+            $conn->begin_transaction();
+
             $sql = "INSERT IGNORE INTO equipes_has_usuarios (equipes_id_equipe, usuarios_id_usuario) VALUES (?, ?)";
             $stmt = $conn->prepare($sql);
+            
+            $param_user_id = 0;
+            $stmt->bind_param("ii", $id_equipe, $param_user_id);
 
             foreach ($usuarios as $id_usuario) {
-                $stmt->bind_param("ii", $id_equipe, $id_usuario);
+                $param_user_id = intval($id_usuario);
                 if (!$stmt->execute()) {
                     $sucesso = false;
+                    break; 
                 }
             }
 
             if ($sucesso) {
+                $conn->commit(); 
                 echo json_encode(["success" => true, "message" => "Usuários vinculados à equipe com sucesso!"]);
             } else {
-                echo json_encode(["success" => false, "message" => "Houve erro ao vincular alguns usuários."]);
+                $conn->rollback(); 
+                http_response_code(500);
+                echo json_encode(["success" => false, "message" => "Houve erro ao vincular os usuários. Alterações revertidas."]);
             }
 
         } else {
@@ -123,32 +133,30 @@ switch ($method) {
 
         if (isset($data->modalidades_id_modalidade)) {
             $campos[] = "modalidades_id_modalidade = ?";
-            $params[] = $data->modalidades_id_modalidade;
-            $types .= "i";
-        }
-        if (isset($data->usuarios_id_usuario1)) {
-            $campos[] = "usuarios_id_usuario1 = ?";
-            $params[] = $data->usuarios_id_usuario1;
+            $params[] = intval($data->modalidades_id_modalidade);
             $types .= "i";
         }
         if (isset($data->turmas_id_turma)) {
             $campos[] = "turmas_id_turma = ?";
-            $params[] = $data->turmas_id_turma;
+            $params[] = intval($data->turmas_id_turma);
             $types .= "i";
         }
         if (isset($data->status_equipe)) {
             $campos[] = "status_equipe = ?";
-            $params[] = $data->status_equipe;
+            $params[] = (string)$data->status_equipe;
             $types .= "s";
         }
 
+        // REMOVIDO: Bloco do usuarios_id_usuario1 que quebrava o banco.
+
         if (empty($campos)) {
-            echo json_encode(["success" => false, "message" => "Nenhum campo enviado para atualização."]);
+            http_response_code(400);
+            echo json_encode(["success" => false, "message" => "Nenhum campo válido enviado para atualização."]);
             break;
         }
 
         $sql = "UPDATE equipes SET " . implode(", ", $campos) . " WHERE id_equipe = ?";
-        $params[] = $data->id_equipe;
+        $params[] = intval($data->id_equipe);
         $types .= "i";
 
         $stmt = $conn->prepare($sql);
