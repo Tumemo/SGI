@@ -137,7 +137,6 @@ switch ($method) {
 
                 $conn->begin_transaction();
 
-                // Cria categorias I e II para este interclasse
                 $categoria_i_id = null;
                 $categoria_ii_id = null;
                 
@@ -176,13 +175,13 @@ switch ($method) {
                 $turmas_sql = "INSERT INTO turmas 
                 (nome_turma, turno_turma, nome_fantasia_turma, status_turma, interclasses_id_interclasse, categorias_id_categoria) 
                 VALUES 
-                ('6EF-$new_interclass_id', 'manha', 'Sexto Ano', '1', $new_interclass_id, $categoria_i_id),
-                ('7EF-$new_interclass_id', 'manha', 'Sétimo Ano', '1', $new_interclass_id, $categoria_i_id),
-                ('8EF-$new_interclass_id', 'manha', 'Oitavo Ano', '1', $new_interclass_id, $categoria_i_id),
-                ('9EF-$new_interclass_id', 'manha', 'Nono Ano', '1', $new_interclass_id, $categoria_ii_id),
-                ('1EMA-$new_interclass_id', 'manha', '1º Ano Médio', '1', $new_interclass_id, $categoria_ii_id),
-                ('2EMA-$new_interclass_id', 'manha', '2º Ano Médio', '1', $new_interclass_id, $categoria_ii_id),
-                ('3EMA-$new_interclass_id', 'manha', '3º Ano Médio', '1', $new_interclass_id, $categoria_ii_id)";
+                ('6EF', 'manha', 'Sexto Ano', '1', $new_interclass_id, $categoria_i_id),
+                ('7EF', 'manha', 'Sétimo Ano', '1', $new_interclass_id, $categoria_i_id),
+                ('8EF', 'manha', 'Oitavo Ano', '1', $new_interclass_id, $categoria_i_id),
+                ('9EF', 'manha', 'Nono Ano', '1', $new_interclass_id, $categoria_ii_id),
+                ('1EMA', 'manha', '1º Ano Médio', '1', $new_interclass_id, $categoria_ii_id),
+                ('2EMA', 'manha', '2º Ano Médio', '1', $new_interclass_id, $categoria_ii_id),
+                ('3EMA', 'manha', '3º Ano Médio', '1', $new_interclass_id, $categoria_ii_id)";
                 
                 if (!$conn->query($turmas_sql)) {
                     $conn->rollback();

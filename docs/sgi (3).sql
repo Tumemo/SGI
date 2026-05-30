@@ -1,6 +1,5 @@
 -- MySQL Workbench Forward Engineering
 
-SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0;
 SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0;
 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION';
 
@@ -23,8 +22,7 @@ CREATE TABLE IF NOT EXISTS `sgi`.`interclasses` (
   `ponto_2_lugar` INT(11) NOT NULL DEFAULT 7,
   `ponto_3_lugar` INT(11) NOT NULL DEFAULT 5,
   `valor_item_arrecadacao` INT(11) NOT NULL DEFAULT 2,
-  PRIMARY KEY (`id_interclasse`),
-  UNIQUE INDEX `nome_interclasse_UNIQUE` (`nome_interclasse` ASC))
+  PRIMARY KEY (`id_interclasse`))
 ENGINE = InnoDB
 DEFAULT CHARACTER SET = utf8mb4;
 
@@ -40,9 +38,7 @@ CREATE TABLE IF NOT EXISTS `sgi`.`locais` (
   `status_local` ENUM('1', '0') NOT NULL,
   `interclasses_id_interclasse` INT(11) NOT NULL,
   PRIMARY KEY (`id_local`),
-  UNIQUE INDEX `uk_local_interclasse` (`nome_local` ASC, `interclasses_id_interclasse` ASC),
   INDEX `fk_locais_interclasses_idx` (`interclasses_id_interclasse` ASC),
-  UNIQUE INDEX `nome_local_UNIQUE` (`nome_local` ASC),
   CONSTRAINT `fk_locais_interclasses`
     FOREIGN KEY (`interclasses_id_interclasse`)
     REFERENCES `sgi`.`interclasses` (`id_interclasse`)
@@ -62,7 +58,7 @@ CREATE TABLE IF NOT EXISTS `sgi`.`categorias` (
   `interclasses_id_interclasse` INT(11) NOT NULL,
   PRIMARY KEY (`id_categoria`),
   INDEX `fk_categorias_interclasses1_idx` (`interclasses_id_interclasse` ASC),
-  UNIQUE INDEX `nome_categoria_UNIQUE` (`nome_categoria` ASC),
+
   CONSTRAINT `fk_categorias_interclasses1`
     FOREIGN KEY (`interclasses_id_interclasse`)
     REFERENCES `sgi`.`interclasses` (`id_interclasse`)
@@ -156,7 +152,6 @@ CREATE TABLE IF NOT EXISTS `sgi`.`turmas` (
   PRIMARY KEY (`id_turma`),
   INDEX `fk_turmas_interclasses1_idx` (`interclasses_id_interclasse` ASC),
   INDEX `fk_turmas_categorias1_idx` (`categorias_id_categoria` ASC),
-  UNIQUE INDEX `nome_turma_UNIQUE` (`nome_turma` ASC),
   CONSTRAINT `fk_turmas_categorias1`
     FOREIGN KEY (`categorias_id_categoria`)
     REFERENCES `sgi`.`categorias` (`id_categoria`),
@@ -185,7 +180,6 @@ CREATE TABLE IF NOT EXISTS `sgi`.`usuarios` (
   `interclasses_id_interclasse` INT(11) NOT NULL,
   `chave_usuario_edicao` VARCHAR(50) NOT NULL,
   PRIMARY KEY (`id_usuario`),
-  UNIQUE INDEX `uk_chave_usuario_edicao` (`chave_usuario_edicao` ASC),
   INDEX `fk_usuarios_turmas1_idx` (`turmas_id_turma` ASC),
   INDEX `fk_usuarios_interclasses1_idx` (`interclasses_id_interclasse` ASC),
   CONSTRAINT `fk_usuarios_interclasses1`
@@ -386,4 +380,3 @@ DELIMITER ;
 
 SET SQL_MODE=@OLD_SQL_MODE;
 SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS;
-SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS;
