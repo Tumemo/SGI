@@ -246,11 +246,48 @@ require_once '../componentes/header.php';
         const divDesktop = document.getElementById('listaCategoriasDesktop');
 
         try {
-            const response = await fetch(`../../../api/categorias.php?id_interclasse=${idInterclasse}`);
-            if (!response.ok) throw new Error(`Erro na API: ${response.status}`);
-            const categorias = await response.json();
+            const [categorias, turmas, equipes, modalidades, jogos, partidas] = await Promise.all([
+                fetch(`../../../api/categorias.php?id_interclasse=${idInterclasse}`).then(r => r.json()),
+                fetch(`../../../api/turmas.php?id_interclasse=${idInterclasse}`).then(r => r.json()),
+                fetch(`../../../api/equipes.php`).then(r => r.json()),
+                fetch(`../../../api/modalidades.php?id_interclasse=${idInterclasse}`).then(r => r.json()),
+                fetch(`../../../api/jogos.php?x=1`).then(r => r.json()),
+                fetch(`../../../api/partidas.php`).then(r => r.json()),
+            ]);
 
             categoriasData = Array.isArray(categorias) ? categorias : [];
+            const listaTurmas = Array.isArray(turmas) ? turmas : [];
+            const listaEquipes = Array.isArray(equipes) ? equipes : [];
+            const listaModalidades = Array.isArray(modalidades) ? modalidades : [];
+            const listaJogos = Array.isArray(jogos) ? jogos : [];
+            const listaPartidas = Array.isArray(partidas) ? partidas : [];
+
+            // -- CONSTRUIR MAPAS DE RELACIONAMENTO --
+            const turmaParaCategoria = {};
+            listaTurmas.forEach(t => { turmaParaCategoria[t.id_turma] = Number(t.categorias_id_categoria); });
+
+            const modalidadeParaCategoria = {};
+            listaModalidades.forEach(m => { modalidadeParaCategoria[m.id_modalidade] = Number(m.categorias_id_categoria); });
+
+            const jogoParaModalidade = {};
+            listaJogos.forEach(j => { jogoParaModalidade[j.id_jogo] = Number(j.modalidades_id_modalidade); });
+
+            // -- CONTAR EQUIPES POR CATEGORIA --
+            const qtdEquipes = {};
+            listaEquipes.forEach(e => {
+                const catId = turmaParaCategoria[e.turmas_id_turma];
+                if (catId) qtdEquipes[catId] = (qtdEquipes[catId] || 0) + 1;
+            });
+
+            // -- CONTAR PARTIDAS POR CATEGORIA --
+            const qtdPartidas = {};
+            listaPartidas.forEach(p => {
+                const modId = jogoParaModalidade[p.id_jogo];
+                if (modId) {
+                    const catId = modalidadeParaCategoria[modId];
+                    if (catId) qtdPartidas[catId] = (qtdPartidas[catId] || 0) + 1;
+                }
+            });
 
             divMobile.innerHTML = '';
             divDesktop.innerHTML = '';
@@ -263,8 +300,12 @@ require_once '../componentes/header.php';
             }
 
             categorias.forEach((categoria) => {
+                const cId = Number(categoria.id_categoria);
+                const eq = qtdEquipes[cId] || 0;
+                const pt = qtdPartidas[cId] || 0;
+
                 divMobile.innerHTML += `
-                    <button type="button" class="categoria-item bg-white d-flex m-auto justify-content-between align-items-center shadow-sm py-3 px-4 mb-3 border border-1 rounded-3" style="width: 90%;" data-id="${categoria.id_categoria}">
+                    <button type="button" class="categoria-item bg-white d-flex m-auto justify-content-between align-items-center shadow-sm py-3 px-4 mb-3 border border-1 rounded-3" style="width: 90%;" data-id="${cId}">
                         <i class="bi bi-trophy fs-3"></i>
                         <h2 class="m-0 fs-5 text-truncate px-3 w-100 text-start">${categoria.nome_categoria}</h2>
                         <picture><img src="../../public/icons/arrow-right.svg" alt="Seta para direita"></picture>
@@ -273,20 +314,20 @@ require_once '../componentes/header.php';
 
                 divDesktop.innerHTML += `
                     <div class="col-12 col-md-6 col-lg-5 col-xl-4">
-                        <div class="categoria-item card border-0 shadow-sm h-100 p-4" style="border-radius: 12px; cursor: pointer;" data-id="${categoria.id_categoria}">
+                        <div class="categoria-item card border-0 shadow-sm h-100 p-4" style="border-radius: 12px; cursor: pointer;" data-id="${cId}">
                             <div class="card-body p-0 d-flex flex-column">
                                 <h4 class="fw-bold text-dark mb-4 pb-2 text-truncate" title="${categoria.nome_categoria}">${categoria.nome_categoria}</h4>
                                 <div class="d-flex gap-3 mb-4">
                                     <div class="rounded-3 p-2 px-3 flex-fill border border-light-subtle shadow-sm" style="background-color: #f8f9fc;">
                                         <div class="text-dark fw-medium mb-1" style="font-size: 0.65rem;">EQUIPES</div>
-                                        <div class="fs-5 text-dark">0</div>
+                                        <div class="fs-5 text-dark">${eq}</div>
                                     </div>
                                     <div class="rounded-3 p-2 px-3 flex-fill border border-light-subtle shadow-sm" style="background-color: #f8f9fc;">
                                         <div class="text-dark fw-medium mb-1" style="font-size: 0.65rem;">PARTIDAS</div>
-                                        <div class="fs-5 text-dark">0</div>
+                                        <div class="fs-5 text-dark">${pt}</div>
                                     </div>
                                 </div>
-                                <a class="btn btn-danger w-100 fw-semibold text-uppercase mt-auto border-0" style="background-color: #ed1c24; border-radius: 6px; font-size: 0.8rem; padding: 0.75rem;" href="./edicao_turmas.php?id=${idInterclasse}&id_categoria=${categoria.id_categoria}">
+                                <a class="btn btn-danger w-100 fw-semibold text-uppercase mt-auto border-0" style="background-color: #ed1c24; border-radius: 6px; font-size: 0.8rem; padding: 0.75rem;" href="./edicao_turmas.php?id=${idInterclasse}&id_categoria=${cId}">
                                     VER DETALHES <i class="bi bi-arrow-right"></i>
                                 </a>
                             </div>

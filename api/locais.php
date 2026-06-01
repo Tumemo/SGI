@@ -85,9 +85,13 @@ case 'PUT':
     if (isset($data->disponivel_local)) {
         $campos[] = "disponivel_local = ?";
         $params[] = $data->disponivel_local;
+        $types .= "s";
+    }
+    if (isset($data->carga_local)) {
+        $campos[] = "carga_local = ?";
+        $params[] = $data->carga_local;
         $types .= "i";
     }
-
 
     if (empty($campos)) {
         http_response_code(400);

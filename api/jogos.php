@@ -15,16 +15,23 @@ switch ($method) {
                     jogos.data_jogo, 
                     jogos.inicio_jogo, 
                     jogos.termino_jogo, 
-                    jogos.status_jogo, 
+                    jogos.status_jogo,
+                    jogos.modalidades_id_modalidade,
+                    jogos.locais_id_local,
                     modalidades.nome_modalidade, 
                     locais.nome_local,
-                    categorias.nome_categoria
+                    categorias.nome_categoria,
+                    GROUP_CONCAT(DISTINCT t.nome_turma ORDER BY p.id_partida SEPARATOR ' vs ') AS equipes_nomes
                 FROM jogos 
                 INNER JOIN modalidades ON modalidades.id_modalidade = jogos.modalidades_id_modalidade 
                 INNER JOIN locais ON locais.id_local = jogos.locais_id_local
                 INNER JOIN categorias ON categorias.id_categoria = modalidades.categorias_id_categoria
+                LEFT JOIN partidas p ON p.jogos_id_jogo = jogos.id_jogo
+                LEFT JOIN equipes e ON e.id_equipe = p.equipes_id_equipe
+                LEFT JOIN turmas t ON t.id_turma = e.turmas_id_turma
                 WHERE 1=1" . $filtro['sql'];
 
+        $sql .= " GROUP BY jogos.id_jogo";
         $sql .= " ORDER BY jogos.data_jogo ASC, jogos.inicio_jogo ASC";
 
         $stmt = $conn->prepare($sql);

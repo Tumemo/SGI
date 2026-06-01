@@ -115,9 +115,9 @@ require_once '../componentes/header.php';
             const rawEq = await resEquipe.json();
             alunosNaEquipe = Array.isArray(rawEq) ? rawEq : [];
 
-            const res = await fetch(`../../../api/usuarios.php?acao=listar_por_turma&id_turma=${idTurma}`);
+            const res = await fetch(`../../../api/usuarios.php?acao=listar_competidores&id_turma=${idTurma}`);
             const data = await res.json();
-            alunos = (data && data.usuarios) ? data.usuarios : (Array.isArray(data) ? data : []);
+            alunos = (data && data.competidores) ? data.competidores : (Array.isArray(data) ? data : []);
             renderizar(alunos);
         } catch (error) {
             console.error(error);
