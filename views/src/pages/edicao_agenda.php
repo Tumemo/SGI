@@ -17,16 +17,7 @@ require_once '../componentes/header.php';
 </style>
 
 <main class="bg-light d-md-none p-3" style="padding-top: 5rem; padding-bottom: 5.5rem;">
-    <div class="card border-0 shadow-sm rounded-4 mx-auto mb-3" style="max-width: 450px;">
-        <div class="card-body p-3">
-            <label class="form-label small text-muted mb-1">Modalidade (chaveamento)</label>
-            <select id="agenda-select-mod-mobile" class="form-select form-select-sm rounded-3 mb-2">
-                <option value="">Todas</option>
-            </select>
-            <p id="chave-status-mobile" class="small text-muted mb-2"></p>
-            <button type="button" id="btn-gerar-chave-mobile" class="btn btn-danger btn-sm w-100 rounded-3 mb-2" disabled>Gerar chaveamento</button>
-        </div>
-    </div>
+    
 
     <div class="card border-0 shadow-sm rounded-4 mx-auto mb-4" style="max-width: 450px;">
         <div class="card-body p-4">
@@ -78,22 +69,7 @@ require_once '../componentes/header.php';
         <span style="font-size: 0.9rem; font-weight: 400;" id="nomeInterclasseAgenda">Interclasse</span>
     </a>
 
-    <div class="card border-0 shadow-sm rounded-4 mb-4 p-4 bg-white">
-        <div class="row g-3 align-items-end">
-            <div class="col-md-5">
-                <label class="form-label small text-muted mb-1">Modalidade</label>
-                <select id="agenda-select-mod" class="form-select rounded-3">
-                    <option value="">Todas as modalidades</option>
-                </select>
-            </div>
-            <div class="col-md-4">
-                <p id="chave-status-desk" class="small text-muted mb-0"></p>
-            </div>
-            <div class="col-md-3 text-md-end">
-                <button type="button" id="btn-gerar-chave" class="btn btn-danger rounded-3 px-4 w-100 w-md-auto" disabled>Gerar chaveamento</button>
-            </div>
-        </div>
-    </div>
+    
 
     <div class="row">
         <div class="col-lg-6 pe-lg-5">
@@ -520,97 +496,6 @@ require_once '../componentes/header.php';
         });
     }
 
-    function mmJaExisteNaModalidade(idMod) {
-        return jogosCache.some(
-            (j) =>
-                String(j.modalidades_id_modalidade) === String(idMod) &&
-                String(j.nome_jogo || '').startsWith('MM:')
-        );
-    }
-
-    async function contarEquipesValidadas(idModalidade) {
-        const res = await fetch(`${API}equipes.php?id_modalidade=${encodeURIComponent(idModalidade)}`);
-        const equipes = await res.json();
-        const arr = Array.isArray(equipes) ? equipes : [];
-        if (arr.length < 2) return { ok: false, n: arr.length, motivo: 'Menos de duas equipes nesta modalidade.' };
-        const contagens = await Promise.all(
-            arr.map((eq) =>
-                fetch(`${API}equipes.php?id_equipe=${encodeURIComponent(eq.id_equipe)}`)
-                    .then((r) => r.json())
-                    .then((u) => (Array.isArray(u) ? u.length : 0))
-                    .catch(() => 0)
-            )
-        );
-        const comElenco = contagens.filter((c) => c >= 1).length;
-        if (comElenco < 2) {
-            return {
-                ok: false,
-                n: comElenco,
-                motivo: 'É necessário ao menos duas equipes com competidores no elenco (regra do chaveamento).'
-            };
-        }
-        return { ok: true, n: comElenco };
-    }
-
-    async function atualizarPainelChaveamento() {
-        const idMod = modalidadeSelecionadaId();
-        const desk = document.getElementById('chave-status-desk');
-        const mob = document.getElementById('chave-status-mobile');
-        const btn = document.getElementById('btn-gerar-chave');
-        const btnM = document.getElementById('btn-gerar-chave-mobile');
-        const setTxt = (t) => {
-            desk.textContent = t;
-            mob.textContent = t;
-        };
-        const setDisabled = (d) => {
-            btn.disabled = d;
-            btnM.disabled = d;
-        };
-        if (!idMod) {
-            setTxt('Selecione uma modalidade para verificar ou gerar o chaveamento.');
-            setDisabled(true);
-            return;
-        }
-        if (mmJaExisteNaModalidade(idMod)) {
-            setTxt('Chaveamento já gerado para esta modalidade. Ajuste data, horário e local nos jogos abaixo.');
-            setDisabled(true);
-            return;
-        }
-        const v = await contarEquipesValidadas(idMod);
-        if (!v.ok) {
-            setTxt(v.motivo);
-            setDisabled(true);
-            return;
-        }
-        setTxt('Pronto para gerar o chaveamento mata-mata com as equipes atuais.');
-        setDisabled(false);
-    }
-
-    async function gerarChaveamentoClick() {
-        const idMod = modalidadeSelecionadaId();
-        if (!idMod) return;
-        const btn = document.getElementById('btn-gerar-chave');
-        const btnM = document.getElementById('btn-gerar-chave-mobile');
-        btn.disabled = btnM.disabled = true;
-        try {
-            const r = await fetch(`${API}chaveamento.php`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ id_modalidade: Number(idMod, 10) })
-            });
-            const js = await r.json();
-            if (!r.ok || js.success === false) throw new Error(js.message || 'Não foi possível gerar o chaveamento.');
-            alert(js.message || 'Chaveamento gerado.');
-            await carregarJogosDoInterclasse();
-            atualizarTelas();
-            await atualizarPainelChaveamento();
-        } catch (e) {
-            alert(e.message || 'Erro.');
-        } finally {
-            await atualizarPainelChaveamento();
-        }
-    }
-
     document.addEventListener('DOMContentLoaded', async function () {
         try {
             interclasseAtual = await getInterclasseParaAgenda();
@@ -632,7 +517,6 @@ require_once '../componentes/header.php';
             console.error(e);
         }
         atualizarTelas();
-        await atualizarPainelChaveamento();
 
         document.getElementById('btn-prev').addEventListener('click', () => {
             dataNavegacao.setMonth(dataNavegacao.getMonth() - 1);
@@ -662,16 +546,11 @@ require_once '../componentes/header.php';
         document.getElementById('agenda-select-mod').addEventListener('change', () => {
             syncSelectModalidade(true);
             atualizarTelas();
-            atualizarPainelChaveamento();
         });
         document.getElementById('agenda-select-mod-mobile').addEventListener('change', () => {
             syncSelectModalidade(false);
             atualizarTelas();
-            atualizarPainelChaveamento();
         });
-
-        document.getElementById('btn-gerar-chave').addEventListener('click', gerarChaveamentoClick);
-        document.getElementById('btn-gerar-chave-mobile').addEventListener('click', gerarChaveamentoClick);
 
         document.getElementById('edit-jogo-salvar').addEventListener('click', async () => {
             if (!jogoEmEdicao) return;

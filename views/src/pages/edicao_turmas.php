@@ -102,15 +102,6 @@ require_once '../componentes/header.php';
                                 <option value="Noite">Noite</option>
                             </select>
                         </div>
-                        <div class="mb-3 d-flex flex-column align-items-center gap-2">
-                            <input type="file" id="arquivoPdfTurma" class="d-none" accept=".pdf" onchange="mostrarNomePdfTurma()">
-                            <p class="text-center text-muted mb-0" style="font-size: 13px;">Envie o PDF da lista de alunos (opcional)</p>
-                            <label for="arquivoPdfTurma" class="btn btn-light border rounded-circle p-3 mb-0" style="cursor:pointer;">
-                                <i class="bi bi-upload fs-4"></i>
-                            </label>
-                            <span id="nomePdfTurma" class="text-muted small"></span>
-                        </div>
-                        <div id="msgTurma" class="mt-2 text-center"></div>
                     </div>
                     <div class="modal-footer border-0 pt-0 pb-3 justify-content-end gap-2">
                         <button type="button" class="btn bg-white fw-semibold rounded-3 px-4 py-2" data-bs-dismiss="modal" style="color: #ed1c24; border: 1px solid #ed1c24;">
@@ -280,47 +271,21 @@ require_once '../componentes/header.php';
             const result = await response.json();
 
             if (response.ok && result.success) {
-                const nomeTurma = inputNome.value.trim();
                 const idTurmaNova = result.id_turma;
-                const pdf = document.getElementById('arquivoPdfTurma').files?.[0];
 
                 const novaTurmaObj = {
                     id_turma: idTurmaNova,
-                    nome_turma: nomeTurma,
+                    nome_turma: inputNome.value.trim(),
                     nome_fantasia_turma: inputNomeFantasia.value.trim(),
                     turno_turma: turnoNormalizado
                 };
                 todasTurmasAtuais = [...todasTurmasAtuais, novaTurmaObj];
                 renderizarTurmas(todasTurmasAtuais);
-                
-                if (pdf && idTurmaNova) {
-                    msg.innerHTML = `<p class="text-info fw-bold mt-2 mb-0">Enviando e processando PDF, aguarde...</p>`;
-                    try {
-                        const formData = new FormData();
-                        formData.append('pdf_arquivo', pdf);
-                        formData.append('id_turma', String(idTurmaNova));
-                        formData.append('id_interclasse', String(idInterclasse));
-                        formData.append('id_categoria', String(categoriaSelecionadaId || ''));
-                        const up = await fetch('../../../api/upload_turma_pdf.php', { method: 'POST', body: formData });
-                        const upJson = await up.json().catch(() => ({}));
-                        if (!up.ok || upJson.success === false) {
-                            throw new Error(upJson.message || 'Falha no upload ou conversão do PDF.');
-                        }
-                        const logTxt = (upJson.log || '').replace(/<[^>]+>/g, ' ').trim();
-                        msg.innerHTML = `<p class="text-success fw-bold mt-2 mb-0">Turma criada e PDF processado.</p>${logTxt ? `<p class="small text-muted mt-2 mb-0">${logTxt.slice(0, 500)}</p>` : ''}`;
-                    } catch (err) { 
-                        console.error("Erro na leitura/upload do PDF", err);
-                        msg.innerHTML = `<p class="text-warning fw-bold mt-2 mb-0">Turma criada, mas o PDF falhou: ${err.message || err}</p>`;
-                    }
-                } else {
-                    msg.innerHTML = `<p class="text-success fw-bold mt-2 mb-0">Turma Adicionada!</p>`;
-                }
+                msg.innerHTML = `<p class="text-success fw-bold mt-2 mb-0">Turma Adicionada!</p>`;
 
                 inputNome.value = '';
                 document.getElementById('inputNomeFantasiaTurma').value = '';
                 document.getElementById('inputTurnoTurma').value = '';
-                document.getElementById('arquivoPdfTurma').value = '';
-                document.getElementById('nomePdfTurma').textContent = '';
 
                 await carregarTurmas(categoriaSelecionadaId);
 
@@ -346,16 +311,6 @@ require_once '../componentes/header.php';
     // Inicia a tela somente se tiver o ID
     if (idInterclasse) {
         window.onload = carregarCategorias;
-    }
-
-    function mostrarNomePdfTurma() {
-        const inp = document.getElementById('arquivoPdfTurma');
-        const out = document.getElementById('nomePdfTurma');
-        if (inp.files && inp.files.length > 0) {
-            out.textContent = inp.files[0].name;
-        } else {
-            out.textContent = '';
-        }
     }
 </script>
 
