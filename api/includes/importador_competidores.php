@@ -120,7 +120,7 @@ final class ImportadorCompetidores
                     continue;
                 }
 
-                $senhaHash = password_hash($linha['rm'], PASSWORD_DEFAULT);
+                $senhaHash = password_hash('123', PASSWORD_DEFAULT);
                 $stmtU->bind_param(
                     'sssssiis',
                     $linha['rm'],

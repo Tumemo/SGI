@@ -9,6 +9,7 @@
     <title>SGI - Login</title>
     <style>
         #msg_erro_mobile, #msg_erro_desktop { font-size: 0.85rem; margin-top: 10px; }
+        .cursor-pointer { cursor: pointer; }
     </style>
 </head>
 <body>
@@ -19,21 +20,8 @@
         </picture>
 
         <form id="form_mobile" class="m-auto mt-3 text-center" style="width: 80%;">
-            <select class="form-select mb-3 sel-acao" onchange="toggleCampos(this, 'm')">
-                <option value="login_competidores">Sou Aluno (Competidor)</option>
-                <option value="login_gestao">Sou Gestão (Equipe)</option>
-            </select>
-
-            <input type="text" class="form-control mb-3 ipt-matricula" placeholder="RA ou NIF" required>
-            
-            <div class="div-data">
-                <label class="d-block text-start small text-secondary">Nascimento:</label>
-                <input type="date" class="form-control mb-3 ipt-data">
-            </div>
-
-            <div class="div-senha" style="display:none;">
-                <input type="password" class="form-control mb-3 ipt-senha" placeholder="Senha">
-            </div>
+            <input type="text" class="form-control mb-3 ipt-matricula" placeholder="Matrícula (RA ou NIF)" required>
+            <input type="password" class="form-control mb-3 ipt-senha" placeholder="Senha" required>
 
             <p class="small">Esqueci minha senha</p>
             <button type="submit" class="btn btn-danger w-100">Entrar</button>
@@ -59,26 +47,14 @@
             <form id="form_desktop" class="m-auto mt-3 text-center d-flex flex-column align-items-center bg-light p-4" style="width: 80%; border-radius: 15px;">
                 <h2 class="text-danger my-4">Acesso ao sistema</h2>
 
-                <select class="form-select mb-3 w-75 sel-acao" onchange="toggleCampos(this, 'd')">
-                    <option value="login_competidores">Sou Aluno (Competidor)</option>
-                    <option value="login_gestao">Sou Gestão (Equipe)</option>
-                </select>
-
                 <div class="position-relative mb-3 w-75">
                     <i class="bi bi-person-circle position-absolute top-50 start-0 translate-middle-y ms-3 text-dark"></i>
-                    <input type="text" class="form-control ps-5 py-2 ipt-matricula" placeholder="Matrícula (RA/NIF)" style="border-radius: 10px;">
+                    <input type="text" class="form-control ps-5 py-2 ipt-matricula" placeholder="Matrícula (RA/NIF)" style="border-radius: 10px;" required>
                 </div>
 
-                <div class="div-data w-75">
-                    <label class="d-block text-start small text-secondary">Data de Nascimento:</label>
-                    <input type="date" class="form-control mb-3 ipt-data" style="border-radius: 10px;">
-                </div>
-
-                <div class="div-senha w-75" style="display:none;">
-                    <div class="position-relative">
-                        <i class="bi bi-lock position-absolute top-50 start-0 translate-middle-y ms-3 text-dark"></i>
-                        <input type="password" class="form-control ps-5 py-2 ipt-senha" placeholder="Senha" style="border-radius: 10px;">
-                    </div>
+                <div class="position-relative mb-3 w-75">
+                    <i class="bi bi-lock position-absolute top-50 start-0 translate-middle-y ms-3 text-dark"></i>
+                    <input type="password" class="form-control ps-5 py-2 ipt-senha" placeholder="Senha" style="border-radius: 10px;" required>
                 </div>
 
                 <p class="small cursor-pointer">Esqueci minha senha</p>
@@ -89,29 +65,29 @@
     </main>
 
     <script>
-        // Função para alternar campos em qualquer um dos formulários
-        function toggleCampos(selectElement, prefixo) {
-            const form = selectElement.closest('form');
-            const acao = selectElement.value;
-            form.querySelector('.div-data').style.display = (acao === 'login_competidores') ? 'block' : 'none';
-            form.querySelector('.div-senha').style.display = (acao === 'login_gestao') ? 'block' : 'none';
-        }
-
-        // Função universal para enviar o login
+        // Função unificada e corrigida para processar o envio dos dados
         async function realizarLogin(e) {
             e.preventDefault();
-            const form = e.target;
+            
+            const form = e.target; // Captura exatamente o formulário enviado (evita misturar mobile com desktop)
             const msgErro = form.querySelector('[id^="msg_erro"]');
             
+            // Limpa mensagens de erro antigas
+            msgErro.innerText = ""; 
+
+            // Captura os elementos de input especificamente de DENTRO do formulário atual
+            const matriculaInput = form.querySelector('.ipt-matricula');
+            const senhaInput = form.querySelector('.ipt-senha');
+
+            // Monta os dados limpando espaços vazios acidentais nas pontas (.trim())
             const payload = {
-                acao: form.querySelector('.sel-acao').value,
-                matricula: form.querySelector('.ipt-matricula').value,
-                data_nascimento: form.querySelector('.ipt-data').value,
-                senha: form.querySelector('.ipt-senha').value
+                matricula: matriculaInput.value.trim(),
+                senha: senhaInput.value.trim()
             };
 
             try {
-                const response = await fetch('api/login.php', {
+                // Utilizando a rota absoluta corrigida que encontrou o arquivo com sucesso
+                const response = await fetch('/sgi/api/login.php', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload)
@@ -120,15 +96,18 @@
                 const data = await response.json();
 
                 if (response.ok && data.status === 'sucesso') {
+                    // Redireciona para a página correspondente ao nível devolvida pelo PHP
                     window.location.href = data.redirect;
                 } else {
-                    msgErro.innerText = data.mensagem;
+                    // Mostra a mensagem exata retornada pelo PHP (ex: "Matrícula ou Senha incorretos.")
+                    msgErro.innerText = data.mensagem || "Erro ao realizar o login.";
                 }
             } catch (err) {
                 msgErro.innerText = "Erro ao conectar com o servidor.";
             }
         }
 
+        // Registra os eventos de escuta nos dois formulários da página
         document.getElementById('form_mobile').addEventListener('submit', realizarLogin);
         document.getElementById('form_desktop').addEventListener('submit', realizarLogin);
     </script>

@@ -207,10 +207,8 @@ switch ($method) {
                 echo json_encode(['success' => false, 'message' => 'Turma não encontrada.']);
             }
         } else {
-            // Captura o erro do MySQL
             $erroCodigo = $stmt->errno;
             
-            // 1451 é o código padrão do MySQL para restrição de chave estrangeira (Foreign Key constraint)
             if ($erroCodigo === 1451) {
                 http_response_code(409); // Conflict
                 echo json_encode([

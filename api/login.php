@@ -5,65 +5,46 @@ require_once '../config/db.php';
 header('Content-Type: application/json');
 
 $inputData = json_decode(file_get_contents('php://input'), true) ?? [];
-$acao = $inputData['acao'] ?? $_POST['acao'] ?? $_REQUEST['acao'] ?? '';
 
-// --- LOGIN COMPETIDORES (Nível 3) ---
-if ($acao === 'login_competidores') {
-    $matricula = $inputData['matricula'] ?? '';
-    $dataNasc  = $inputData['data_nascimento'] ?? '';
+$matricula = $inputData['matricula'] ?? $_POST['matricula'] ?? '';
+$senha     = $inputData['senha'] ?? $_POST['senha'] ?? '';
 
-    $sql = "SELECT * FROM usuarios WHERE matricula_usuario = ? AND data_nasc_usuario = ? AND nivel_usuario = '3' AND status_usuario = '1' LIMIT 1";
-    $stmt = $conn->prepare($sql);
-    $stmt->bind_param('ss', $matricula, $dataNasc);
-    $stmt->execute();
-    $usuario = $stmt->get_result()->fetch_assoc();
-
-    if ($usuario) {
-        $_SESSION['id']    = $usuario['id_usuario'];
-        $_SESSION['nivel'] = 3;
-        $_SESSION['nome']  = $usuario['nome_usuario'];
-
-        echo json_encode([
-            'status'   => 'sucesso',
-            'redirect' => '../views/src/pages/alunos/home.php' // Pasta exclusiva Alunos
-        ]);
-    } else {
-        http_response_code(401);
-        echo json_encode(['status' => 'erro', 'mensagem' => 'RA ou Data de Nascimento incorretos.']);
-    }
+if (empty($matricula) || empty($senha)) {
+    http_response_code(400);
+    echo json_encode(['status' => 'erro', 'mensagem' => 'Preencha todos os campos.']);
     exit;
 }
 
-// --- LOGIN GESTÃO (Níveis 0, 1, 2) ---
-if ($acao === 'login_gestao') {
-    $matricula = $inputData['matricula'] ?? '';
-    $senha     = $inputData['senha'] ?? '';
+// 1. Busca qualquer usuário ativo que possua a matrícula informada
+$sql = "SELECT * FROM usuarios WHERE matricula_usuario = ? AND status_usuario = '1' LIMIT 1";
+$stmt = $conn->prepare($sql);
+$stmt->bind_param('s', $matricula);
+$stmt->execute();
+$usuario = $stmt->get_result()->fetch_assoc();
 
-    $sql = "SELECT * FROM usuarios WHERE matricula_usuario = ? AND nivel_usuario IN ('0', '1', '2') AND status_usuario = '1' LIMIT 1";
-    $stmt = $conn->prepare($sql);
-    $stmt->bind_param('s', $matricula);
-    $stmt->execute();
-    $usuario = $stmt->get_result()->fetch_assoc();
+// 2. Verifica se o usuário existe e se a senha (criptografada) é válida
+if ($usuario && password_verify($senha, $usuario['senha_usuario'])) {
+    
+    // Grava os dados genéricos na sessão
+    $_SESSION['id']    = $usuario['id_usuario'];
+    $_SESSION['nivel'] = (int)$usuario['nivel_usuario'];
+    $_SESSION['nome']  = $usuario['nome_usuario'];
 
-    if ($usuario && password_verify($senha, $usuario['senha_usuario'])) {
-        $_SESSION['id']    = $usuario['id_usuario'];
-        $_SESSION['nivel'] = (int)$usuario['nivel_usuario'];
-        $_SESSION['nome']  = $usuario['nome_usuario'];
+    // 3. Define o redirecionamento com base no nível de usuário retornado do banco
+    $destino = match($_SESSION['nivel']) {
+        3       => '../views/src/pages/alunos/home.php', // Competidores
+        0, 1    => '../views/src/pages/home.php',        // Admin e Colaboradores
+        2       => '../views/src/pages/mesario.php',     // Mesários
+        default => '../login.html'
+    };
 
-        // REDIRECIONAMENTO POR NÍVEL ESPECÍFICO
-        $destino = match($_SESSION['nivel']) {
-            0, 1    => '../views/src/pages/home.php',      // Admin e Colaboradores
-            2       => '../views/src/pages/mesario.php',   // Mesários (página específica)
-            default => '../login.html'
-        };
-
-        echo json_encode([
-            'status'   => 'sucesso',
-            'redirect' => $destino
-        ]);
-    } else {
-        http_response_code(401);
-        echo json_encode(['status' => 'erro', 'mensagem' => 'Matrícula ou Senha incorretos.']);
-    }
-    exit;
+    echo json_encode([
+        'status'   => 'sucesso',
+        'redirect' => $destino
+    ]);
+} else {
+    // Erro genérico por segurança (não diz se o que está errado é a senha ou a matrícula)
+    http_response_code(401);
+    echo json_encode(['status' => 'erro', 'mensagem' => 'Matrícula ou Senha incorretos.']);
 }
+exit;

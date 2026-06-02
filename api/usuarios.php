@@ -90,7 +90,7 @@ switch ($metodo) {
             }
 
             $sql = "SELECT id_usuario, nome_usuario, matricula_usuario, genero_usuario
-                    FROM usuarios WHERE turmas_id_turma = ? AND interclasses_id_interclasse = ? AND competidor_usuario = '1' AND status_usuario = '1'";
+                    FROM usuarios WHERE turmas_id_turma = ? AND interclasses_id_interclasse = ? AND nivel_usuario = '3' AND status_usuario = '1'";
             try {
                 $stmt = $conn->prepare($sql);
                 if (!$stmt) {

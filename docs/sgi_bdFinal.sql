@@ -58,7 +58,6 @@ CREATE TABLE IF NOT EXISTS `sgi`.`categorias` (
   `interclasses_id_interclasse` INT(11) NOT NULL,
   PRIMARY KEY (`id_categoria`),
   INDEX `fk_categorias_interclasses1_idx` (`interclasses_id_interclasse` ASC),
-
   CONSTRAINT `fk_categorias_interclasses1`
     FOREIGN KEY (`interclasses_id_interclasse`)
     REFERENCES `sgi`.`interclasses` (`id_interclasse`)
@@ -164,11 +163,13 @@ DEFAULT CHARACTER SET = utf8mb4;
 
 -- -----------------------------------------------------
 -- Table `sgi`.`usuarios`
+-- MODIFICADO: interclasses_id_interclasse agora aceita NULL
+-- MODIFICADO: chave_usuario_edicao agora possui restrição UNIQUE
 -- -----------------------------------------------------
 CREATE TABLE IF NOT EXISTS `sgi`.`usuarios` (
   `id_usuario` INT(11) NOT NULL AUTO_INCREMENT,
   `sigla_usuario` ENUM('RM', 'SS', 'SN') NOT NULL,
-  `matricula_usuario` VARCHAR(20) NOT NULL,
+  `matricula_usuario` VARCHAR(45) NOT NULL, -- Aumentado espaço para suportar o e-mail se desejar usar aqui
   `nome_usuario` VARCHAR(45) NOT NULL,
   `senha_usuario` VARCHAR(200) NOT NULL,
   `nivel_usuario` ENUM('0', '1', '2', '3') NOT NULL DEFAULT '0',
@@ -177,9 +178,10 @@ CREATE TABLE IF NOT EXISTS `sgi`.`usuarios` (
   `foto_usuario` VARCHAR(255) NOT NULL,
   `status_usuario` ENUM('0', '1') NOT NULL,
   `turmas_id_turma` INT(11) NULL DEFAULT NULL,
-  `interclasses_id_interclasse` INT(11) NOT NULL,
-  `chave_usuario_edicao` VARCHAR(50) NOT NULL,
+  `interclasses_id_interclasse` INT(11) NULL DEFAULT NULL, -- Alterado para aceitar NULL
+  `chave_usuario_edicao` VARCHAR(50) NULL DEFAULT NULL,   -- Alterado para aceitar NULL inicialmente antes de virar chave única
   PRIMARY KEY (`id_usuario`),
+  UNIQUE INDEX `chave_usuario_edicao_UNIQUE` (`chave_usuario_edicao` ASC), -- Adicionado UNIQUE
   INDEX `fk_usuarios_turmas1_idx` (`turmas_id_turma` ASC),
   INDEX `fk_usuarios_interclasses1_idx` (`interclasses_id_interclasse` ASC),
   CONSTRAINT `fk_usuarios_interclasses1`
@@ -192,6 +194,19 @@ CREATE TABLE IF NOT EXISTS `sgi`.`usuarios` (
     REFERENCES `sgi`.`turmas` (`id_turma`))
 ENGINE = InnoDB
 DEFAULT CHARACTER SET = utf8;
+
+
+-- -----------------------------------------------------
+-- INSERÇÃO DOS USUÁRIOS FIXOS DE SISTEMA
+-- Sem turmas (NULL), Sem interclasse (NULL) e Sem chave (NULL)
+-- -----------------------------------------------------
+INSERT INTO `sgi`.`usuarios` 
+  (`id_usuario`, `sigla_usuario`, `matricula_usuario`, `nome_usuario`, `senha_usuario`, `nivel_usuario`, `genero_usuario`, `data_nasc_usuario`, `foto_usuario`, `status_usuario`, `turmas_id_turma`, `interclasses_id_interclasse`, `chave_usuario_edicao`) 
+VALUES 
+  (1, 'SN', 'sgi@sgi.com', 'Administrador SGI', '$2y$10$5G1J8iMBKFHsZTgCNL9EoeVVzhEyTpZVPe7mzroqp.8Z4BO5Mu57u', '0', 'MASC', '2026-01-01', 'default.png', '1', NULL, NULL, NULL),
+  (2, 'SN', 'colab@sgi.com', 'Colaborador SGI', '$2y$10$5G1J8iMBKFHsZTgCNL9EoeVVzhEyTpZVPe7mzroqp.8Z4BO5Mu57u', '1', 'MASC', '2026-01-01', 'default.png', '1', NULL, NULL, NULL),
+  (3, 'SN', 'mes@sgi.com', 'Mesa Diretora SGI', '$2y$10$5G1J8iMBKFHsZTgCNL9EoeVVzhEyTpZVPe7mzroqp.8Z4BO5Mu57u', '2', 'MASC', '2026-01-01', 'default.png', '1', NULL, NULL, NULL)
+ON DUPLICATE KEY UPDATE `id_usuario`=`id_usuario`;
 
 
 -- -----------------------------------------------------
