@@ -11,11 +11,6 @@ require_once '../componentes/header.php';
         border: 1px solid #ececec;
         border-left: 4px solid #ed1c24;
     }
-
-    .colaborador-switch.form-check-input:checked {
-        background-color: #ed1c24;
-        border-color: #ed1c24;
-    }
 </style>
 
 <main class="d-md-none" style="margin-bottom: 120px;">
@@ -64,8 +59,8 @@ require_once '../componentes/header.php';
                         <input type="text" class="form-control" id="novoNomeColaborador" required>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Email</label>
-                        <input type="email" class="form-control" id="novoNifColaborador" required>
+                        <label class="form-label">Email / Matrícula</label>
+                        <input type="text" class="form-control" id="novoNifColaborador" required>
                     </div>
                     <div class="mb-3">
                         <label class="form-label">Senha</label>
@@ -154,28 +149,28 @@ require_once '../componentes/header.php';
     let editColaboradorId = null;
 
     function cardColaborador(item) {
-        const admin = String(item.nivel_usuario) !== '0';
-        const mesario = String(item.mesario_usuario) === '1';
+        let legendaPapel = '';
+        const nivel = String(item.nivel_usuario);
+
+        if (nivel === '0') {
+            legendaPapel = '<span class="badge bg-danger">Administrador</span>';
+        } else if (nivel === '2') {
+            legendaPapel = '<span class="badge bg-primary">Mesário</span>';
+        } else {
+            legendaPapel = '<span class="badge bg-secondary">Colaborador</span>';
+        }
+
         return `
             <div class="colaborador-card bg-white rounded-3 shadow-sm p-3 mb-3" data-id="${item.id_usuario}">
                 <div class="d-flex justify-content-between align-items-start">
                     <div>
                         <h6 class="fw-bold mb-1">${item.nome_usuario}</h6>
-                        <small class="text-muted">Matrícula: ${item.matricula_usuario}</small>
+                        <small class="text-muted d-block mb-2">Matrícula: ${item.matricula_usuario}</small>
+                        ${legendaPapel}
                     </div>
                     <div>
                         <button type="button" class="btn btn-sm btn-outline-primary me-1" data-editar="${item.id_usuario}"><i class="bi bi-pencil-square"></i></button>
                         <button type="button" class="btn btn-sm btn-outline-danger" data-remover="${item.id_usuario}"><i class="bi bi-trash"></i></button>
-                    </div>
-                </div>
-                <div class="d-flex gap-4 mt-3">
-                    <div class="form-check form-switch">
-                        <input class="form-check-input colaborador-switch" type="checkbox" data-papel="admin" data-id="${item.id_usuario}" ${admin ? 'checked' : ''}>
-                        <label class="form-check-label">Administrador</label>
-                    </div>
-                    <div class="form-check form-switch">
-                        <input class="form-check-input colaborador-switch" type="checkbox" data-papel="mesario" data-id="${item.id_usuario}" ${mesario ? 'checked' : ''}>
-                        <label class="form-check-label">Mesário</label>
                     </div>
                 </div>
             </div>
@@ -217,11 +212,10 @@ require_once '../componentes/header.php';
                 const body = new URLSearchParams();
                 body.append('acao', 'excluir_colaborador');
                 body.append('id_usuario', id);
+                
                 const resp = await fetch('../../../api/usuarios.php', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/x-www-form-urlencoded'
-                    },
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
                     body: body.toString()
                 });
                 const json = await resp.json();
@@ -248,33 +242,6 @@ require_once '../componentes/header.php';
 
                 const modal = new bootstrap.Modal(document.getElementById('modalEditarColaborador'));
                 modal.show();
-            });
-        });
-
-        document.querySelectorAll('.colaborador-switch').forEach((input) => {
-            input.addEventListener('change', async () => {
-                const id = input.getAttribute('data-id');
-                const papel = input.getAttribute('data-papel');
-                const card = input.closest('.colaborador-card');
-                const adminEl = card?.querySelector('[data-papel="admin"]');
-                const mesarioEl = card?.querySelector('[data-papel="mesario"]');
-                const body = new URLSearchParams();
-                body.append('acao', 'atualizar_colaborador');
-                body.append('id_usuario', id);
-                body.append('is_admin_clicado', adminEl?.checked ? '1' : '0');
-                body.append('is_mesario_clicado', mesarioEl?.checked ? '1' : '0');
-                const resp = await fetch('../../../api/usuarios.php', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/x-www-form-urlencoded'
-                    },
-                    body: body.toString()
-                });
-                const json = await resp.json();
-                if (json.status !== 'sucesso') {
-                    alert(json.mensagem || 'Erro ao atualizar.');
-                    await carregarColaboradores();
-                }
             });
         });
     }
@@ -305,13 +272,10 @@ require_once '../componentes/header.php';
             body.append('is_mesario_clicado', mesario ? '1' : '0');
             body.append('sigla_usuario', 'SS');
             body.append('genero_usuario', genero);
-            body.append('competidor_usuario', '0');
 
             const response = await fetch('../../../api/usuarios.php', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded'
-                },
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
                 body: body.toString()
             });
             const resultado = await response.json();
@@ -322,7 +286,7 @@ require_once '../componentes/header.php';
             await carregarColaboradores();
             msg.innerHTML = '<p class="text-success fw-bold mb-0">Colaborador cadastrado com sucesso.</p>';
             document.getElementById('formNovoColaborador').reset();
-            setTimeout(() => bootstrap.Modal.getOrCreateInstance(document.getElementById('modalAdicionarColaborador')).hide(), 700);
+            setTimeout(() => bootstrap.Modal.getInstance(document.getElementById('modalAdicionarColaborador')).hide(), 700);
         } catch (error) {
             msg.innerHTML = `<p class="text-danger fw-bold mb-0">${error.message}</p>`;
         } finally {
@@ -361,9 +325,7 @@ require_once '../componentes/header.php';
 
             const response = await fetch('../../../api/usuarios.php', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded'
-                },
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
                 body: body.toString()
             });
             const resultado = await response.json();
@@ -372,8 +334,8 @@ require_once '../componentes/header.php';
             }
 
             await carregarColaboradores();
-            msg.innerHTML = '<p class="text-success fw-bold mb-0">Colaborador atualizado.</p>';
-            setTimeout(() => bootstrap.Modal.getOrCreateInstance(document.getElementById('modalEditarColaborador')).hide(), 700);
+            msg.innerHTML = '<p class="text-success fw-bold mb-0">Colaborador updated.</p>';
+            setTimeout(() => bootstrap.Modal.getInstance(document.getElementById('modalEditarColaborador')).hide(), 700);
         } catch (error) {
             msg.innerHTML = `<p class="text-danger fw-bold mb-0">${error.message}</p>`;
         } finally {
