@@ -7,7 +7,7 @@ require_once '../componentes/header.php';
 ?>
 
 <main class="d-md-none">
-    <a href="./dashboard.php" id="btnVoltarTurmasMobile" class="btn btn-danger btn-sm mt-3 ms-3 d-inline-flex align-items-center gap-1">
+   <a href="./dashboard.php" id="btnVoltarTurmasMobile" class="btn btn-danger btn-sm mt-3 ms-3 d-inline-flex align-items-center gap-1">
         <i class="bi bi-arrow-left-circle"></i> Voltar
     </a>
     <p class="text-secondary text-center my-3">Editar detalhes turmas</p>
@@ -38,7 +38,7 @@ require_once '../componentes/header.php';
 
 <main class="d-none d-md-block main-desktop-layout">
     <div class="container-fluid px-0">
-        <a href="./dashboard.php" id="btnVoltarTurmasDesk" class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none" style="background-color: #ed1c24; border-radius: 6px;">
+       <a href="./dashboard.php" id="btnVoltarTurmasDesk" class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none" style="background-color: #ed1c24; border-radius: 6px;">
             <i class="bi bi-arrow-left-circle fs-5"></i> Voltar
         </a>
         <div class="row g-4 mx-0">
@@ -103,7 +103,8 @@ require_once '../componentes/header.php';
                             </select>
                         </div>
                     </div>
-                    <div class="modal-footer border-0 pt-0 pb-3 justify-content-end gap-2">
+                    <div class="modal-footer border-0 pt-0 pb-3 justify-content-end gap-2 flex-wrap">
+                        <div id="msgTurma" class="w-100 text-center small mb-2"></div>
                         <button type="button" class="btn bg-white fw-semibold rounded-3 px-4 py-2" data-bs-dismiss="modal" style="color: #ed1c24; border: 1px solid #ed1c24;">
                             Cancelar
                         </button>
@@ -118,7 +119,6 @@ require_once '../componentes/header.php';
 </main>
 
 <script>
-    // 1. TRAVA DE SEGURANÇA: Captura e valida o ID do Interclasse
     const urlParams = new URLSearchParams(window.location.search);
     const idInterclasse = urlParams.get('id');
     const idCategoriaUrl = urlParams.get('id_categoria');
@@ -132,8 +132,6 @@ require_once '../componentes/header.php';
         alert("Erro: Nenhum interclasse selecionado! Você será redirecionado.");
         window.location.href = "home.php";
     } else {
-        // Repassa o ID para os botões e links
-        // Se a versão mobile for usada e o link existir, repassa o ID também
         const linkAlunos = document.getElementById('linkAlunosMobile');
         if (linkAlunos) linkAlunos.href = `./edicao_alunos.php?id=${idInterclasse}`;
     }
@@ -141,7 +139,6 @@ require_once '../componentes/header.php';
     let categoriaSelecionadaId = null;
     let todasTurmasAtuais = []; 
 
-    // 2. Carregar Categorias
     async function carregarCategorias() {
         try {
             const response = await fetch(`../../../api/categorias.php?id_interclasse=${idInterclasse}`);
@@ -181,12 +178,6 @@ require_once '../componentes/header.php';
         }
     }
 
-    // Carregar categorias no select do modal
-    async function carregarCategoriasSelect() {
-        // Removido, pois categoria é automática
-    }
-
-    // 3. Carregar Turmas 
     async function carregarTurmas(idCategoria) {
         try {
             const response = await fetch(`../../../api/turmas.php?id_categoria=${idCategoria}&id_interclasse=${idInterclasse}`);
@@ -198,7 +189,6 @@ require_once '../componentes/header.php';
         }
     }
 
-    // Função para desenhar as turmas na tela
     function renderizarTurmas(turmas) {
         const container = document.getElementById('listaTurmas');
         container.innerHTML = '';
@@ -223,7 +213,6 @@ require_once '../componentes/header.php';
         }
     }
 
-    // Filtro de Busca Front-end
     document.getElementById('inputBuscaTurma').addEventListener('input', (e) => {
         const termo = e.target.value.toLowerCase();
         const turmasFiltradas = todasTurmasAtuais.filter(t => 
@@ -232,7 +221,6 @@ require_once '../componentes/header.php';
         renderizarTurmas(turmasFiltradas);
     });
 
-    // 4. Adicionar Nova Turma (Submit do Modal)
     document.getElementById('formTurma').addEventListener('submit', async (e) => {
         e.preventDefault();
 
@@ -313,7 +301,6 @@ require_once '../componentes/header.php';
         }
     });
 
-    // Inicia a tela somente se tiver o ID
     if (idInterclasse) {
         window.addEventListener('load', carregarCategorias);
     }
