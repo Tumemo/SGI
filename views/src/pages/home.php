@@ -272,7 +272,7 @@ require_once '../componentes/header.php';
     });
 
     // Inicia a listagem ao carregar a página
-    window.onload = listarInterclasses;
+    window.addEventListener('load', listarInterclasses);
 </script>
 
 <style>

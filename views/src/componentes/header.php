@@ -90,21 +90,15 @@
         const navigateBack = (fallbackPath = './home.php') => {
             try {
                 const stack = JSON.parse(sessionStorage.getItem('sgi_nav_stack') || '[]');
-                if (stack.length > 1) {
-                    stack.pop();
-                    const anterior = stack.pop();
-                    sessionStorage.setItem('sgi_nav_stack', JSON.stringify(stack));
-                    if (anterior) {
-                        window.location.href = anterior;
-                        return;
-                    }
+                stack.pop();
+                const anterior = stack.pop();
+                sessionStorage.setItem('sgi_nav_stack', JSON.stringify(stack));
+                if (anterior) {
+                    window.location.href = anterior;
+                    return;
                 }
             } catch (_) { /* ignora */ }
-            if (window.history.length > 1) {
-                window.history.back();
-            } else {
-                window.location.href = fallbackPath;
-            }
+            window.location.href = fallbackPath;
         };
 
         const registrarPaginaNavegacao = () => {

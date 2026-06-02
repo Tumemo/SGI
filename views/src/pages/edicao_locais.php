@@ -25,14 +25,14 @@ require_once '../componentes/header.php';
         <button type="button" class="btn btn-danger flex-grow-1 fw-semibold rounded-3" data-bs-toggle="modal" data-bs-target="#modalNovoLocal">
             <i class="bi bi-plus-lg me-1"></i> Novo local
         </button>
-        <a href="#" data-sgi-header-back="true" id="btnVoltarLocaisMobile" class="btn btn-outline-danger fw-semibold rounded-3">Voltar</a>
+        <a href="./dashboard.php" id="btnVoltarLocaisMobile" class="btn btn-outline-danger fw-semibold rounded-3">Voltar</a>
     </div>
 </main>
 
 <main class="d-none d-md-block main-desktop-layout">
     <div class="container-fluid px-0" style="max-width: 960px;">
         <div class="mb-4">
-            <a href="#" data-sgi-header-back="true" id="btnVoltarLocaisDesk" class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold mb-3 px-3 py-2 border-0 text-decoration-none shadow-sm" style="background-color: #ed1c24; border-radius: 6px;">
+            <a href="./dashboard.php" id="btnVoltarLocaisDesk" class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold mb-3 px-3 py-2 border-0 text-decoration-none shadow-sm" style="background-color: #ed1c24; border-radius: 6px;">
                 <i class="bi bi-arrow-left-circle fs-5"></i>
                 <span id="nomeInterclasseLocais">Interclasse</span>
             </a>
@@ -132,6 +132,11 @@ require_once '../componentes/header.php';
     const API = '../../../api/';
     const params = new URLSearchParams(window.location.search);
     const idInterclasse = params.get('id');
+
+    if (idInterclasse) {
+        document.getElementById('btnVoltarLocaisMobile').href = `./dashboard.php?id=${idInterclasse}`;
+        document.getElementById('btnVoltarLocaisDesk').href = `./dashboard.php?id=${idInterclasse}`;
+    }
 
     function esc(s) {
         const d = document.createElement('div');

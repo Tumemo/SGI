@@ -20,7 +20,7 @@ require_once '../componentes/header.php';
 
 <main class="d-md-none" style="margin-bottom: 120px;">
     <div class="container mt-3">
-        <a href="#" data-sgi-header-back="true" class="btn btn-danger btn-sm mb-3 d-inline-flex align-items-center gap-1">
+        <a href="./dashboard.php" id="btnVoltarColabMobile" class="btn btn-danger btn-sm mb-3 d-inline-flex align-items-center gap-1">
             <i class="bi bi-arrow-left-circle"></i> Voltar
         </a>
         <div class="d-flex justify-content-between align-items-center mb-3">
@@ -30,19 +30,17 @@ require_once '../componentes/header.php';
         <div id="listaColaboradoresMobile">
             <p class="text-muted text-center">(Carregando colaboradores...)</p>
         </div>
-        <a href="#" id="btnContinuarColaboradoresMobile" class="btn btn-danger w-100 mt-3 d-none">Continuar</a>
     </div>
 </main>
 
 <main class="d-none d-md-block main-desktop-layout">
     <div class="container-fluid px-0" style="max-width: 980px;">
-        <a href="#" data-sgi-header-back="true" class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none" style="background-color: #ed1c24; border-radius: 6px;">
+        <a href="./dashboard.php" id="btnVoltarColabDesk" class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none" style="background-color: #ed1c24; border-radius: 6px;">
             <i class="bi bi-arrow-left-circle fs-5"></i> Voltar
         </a>
         <div class="d-flex justify-content-between align-items-center mb-4">
             <h4 class="fw-bold mb-0">Colaboradores</h4>
             <div class="d-flex gap-2">
-                <a href="#" id="btnContinuarColaboradoresDesktop" class="btn btn-danger d-none">Continuar</a>
                 <button class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#modalAdicionarColaborador"><i class="bi bi-plus-circle"></i> Adicionar colaborador</button>
             </div>
         </div>
@@ -148,6 +146,11 @@ require_once '../componentes/header.php';
     const paramsColab = new URLSearchParams(window.location.search);
     const idInterclasseColab = paramsColab.get('id');
     let colaboradoresData = [];
+
+    if (idInterclasseColab) {
+        document.getElementById('btnVoltarColabMobile').href = `./dashboard.php?id=${idInterclasseColab}`;
+        document.getElementById('btnVoltarColabDesk').href = `./dashboard.php?id=${idInterclasseColab}`;
+    }
     let editColaboradorId = null;
 
     function cardColaborador(item) {

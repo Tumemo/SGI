@@ -184,7 +184,7 @@ require_once '../componentes/header.php';
         document.getElementById('msgDesk').innerHTML = alerta;
     }
 
-    window.onload = init;
+    window.addEventListener('load', init);
 </script>
 
 <?php require_once '../componentes/footer.php'; ?>
