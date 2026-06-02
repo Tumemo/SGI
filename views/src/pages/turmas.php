@@ -250,7 +250,7 @@ require_once '../componentes/header.php';
             // Correção crucial: uso de aspas simples externas no onclick do botão para blindar a renderização do HTML
             listaMobile.innerHTML = listaFinal.map((turma) => `
                 <div class="d-flex m-auto justify-content-between align-items-center shadow py-4 px-4 mb-3 border border-1 rounded-3" style="width: 90%;">
-                    <a href="./modalidades_alunos.php?id=${interclasseAtivo.id_interclasse}&id_turma=${turma.id_turma}" class="text-decoration-none text-dark flex-grow-1">
+                    <a href="./edicao_turmas.php?id=${interclasseAtivo.id_interclasse}&id_turma=${turma.id_turma}&id_categoria=${turma.categorias_id_categoria}" class="text-decoration-none text-dark flex-grow-1">
                         <h2 class="m-0 fs-5">${turma.nome_turma}</h2>
                         <small class="text-muted">${turma.nome_categoria || 'Categoria vinculada'}</small>
                     </a>
@@ -261,7 +261,7 @@ require_once '../componentes/header.php';
                         <button type="button" class="btn btn-link text-danger p-0" title="Excluir turma" onclick='excluirTurma(${turma.id_turma}, "${turma.nome_turma}")'>
                             <i class="bi bi-trash fs-5"></i>
                         </button>
-                        <a href="./modalidades_alunos.php?id=${interclasseAtivo.id_interclasse}&id_turma=${turma.id_turma}">
+                        <a href="./edicao_turmas.php?id=${interclasseAtivo.id_interclasse}&id_turma=${turma.id_turma}&id_categoria=${turma.categorias_id_categoria}">
                             <img src="../../public/icons/arrow-right.svg" alt="Ver detalhes">
                         </a>
                     </div>
@@ -284,7 +284,7 @@ require_once '../componentes/header.php';
                         </div>
                         <div class="mb-4 text-muted">${turma.nome_categoria || 'Categoria vinculada'}</div>
                         <div class="mt-auto">
-                            <a href="./modalidades_alunos.php?id=${interclasseAtivo.id_interclasse}&id_turma=${turma.id_turma}" class="text-decoration-none">
+                            <a href="./modalidades_alunos.php?id=${interclasseAtivo.id_interclasse}&id_turma=${turma.id_turma}&id_categoria=${turma.categorias_id_categoria}" class="text-decoration-none">
                                 <button type="button" class="btn btn-danger w-100 fw-bold shadow-sm d-flex justify-content-center align-items-center gap-1" style="font-size: 0.85rem; padding: 12px; border-radius: 6px;">
                                     VER DETALHES <i class="bi bi-arrow-right"></i>
                                 </button>
