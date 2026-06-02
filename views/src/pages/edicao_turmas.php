@@ -292,6 +292,7 @@ require_once '../componentes/header.php';
                 alert("Erro ao criar turma: " + (result.message || "Erro desconhecido."));
                 msg.innerHTML = "";
             }
+
         } catch (error) {
             console.error("Erro na requisição:", error);
             alert("Erro de conexão.");
