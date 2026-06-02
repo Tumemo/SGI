@@ -7,7 +7,7 @@ require_once '../componentes/header.php';
 ?>
 
 <main class="d-md-none">
-    <a href="#" data-sgi-header-back="true" class="btn btn-danger btn-sm mt-3 ms-3 d-inline-flex align-items-center gap-1">
+    <a href="./dashboard.php" id="btnVoltarTurmasMobile" class="btn btn-danger btn-sm mt-3 ms-3 d-inline-flex align-items-center gap-1">
         <i class="bi bi-arrow-left-circle"></i> Voltar
     </a>
     <p class="text-secondary text-center my-3">Editar detalhes turmas</p>
@@ -38,7 +38,7 @@ require_once '../componentes/header.php';
 
 <main class="d-none d-md-block main-desktop-layout">
     <div class="container-fluid px-0">
-        <a href="#" data-sgi-header-back="true" class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none" style="background-color: #ed1c24; border-radius: 6px;">
+        <a href="./dashboard.php" id="btnVoltarTurmasDesk" class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none" style="background-color: #ed1c24; border-radius: 6px;">
             <i class="bi bi-arrow-left-circle fs-5"></i> Voltar
         </a>
         <div class="row g-4 mx-0">
@@ -123,9 +123,14 @@ require_once '../componentes/header.php';
     const idInterclasse = urlParams.get('id');
     const idCategoriaUrl = urlParams.get('id_categoria');
 
+    if (idInterclasse) {
+        document.getElementById('btnVoltarTurmasMobile').href = `./dashboard.php?id=${idInterclasse}`;
+        document.getElementById('btnVoltarTurmasDesk').href = `./dashboard.php?id=${idInterclasse}`;
+    }
+
     if (!idInterclasse) {
         alert("Erro: Nenhum interclasse selecionado! Você será redirecionado.");
-        window.location.href = "home.php"; // Redireciona para o início caso tentem acessar direto
+        window.location.href = "home.php";
     } else {
         // Repassa o ID para os botões e links
         // Se a versão mobile for usada e o link existir, repassa o ID também
@@ -310,7 +315,7 @@ require_once '../componentes/header.php';
 
     // Inicia a tela somente se tiver o ID
     if (idInterclasse) {
-        window.onload = carregarCategorias;
+        window.addEventListener('load', carregarCategorias);
     }
 </script>
 

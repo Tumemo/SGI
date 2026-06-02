@@ -104,8 +104,8 @@ require_once '../componentes/header.php';
     <div class="container-fluid" style="max-width: 92%;">
 
         <div class="mb-5">
-            <a href="#"
-               class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 shadow-sm text-decoration-none rounded-3" data-sgi-header-back="true">
+            <a href="./dashboard.php" id="btnVoltarPontuacao"
+               class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 shadow-sm text-decoration-none rounded-3">
                 <i class="bi bi-arrow-left-circle"></i>
                 <span id="nomeInterclassePontuacao">Interclasse</span>
             </a>
@@ -122,9 +122,14 @@ require_once '../componentes/header.php';
 
         <div class="d-flex justify-content-between align-items-center mb-3">
             <h4 class="fw-bold mb-0">Pontuações</h4>
-            <button class="btn btn-danger fw-bold px-4" id="btnSalvarPontuacao" onclick="salvarPontuacao()">
-                <i class="bi bi-check-lg me-1"></i> Salvar
-            </button>
+            <div class="d-flex gap-2">
+                <button class="btn btn-danger fw-bold px-4" id="btnSalvarPontuacao" onclick="salvarPontuacao()">
+                    <i class="bi bi-check-lg me-1"></i> Salvar
+                </button>
+                <a href="#" id="btnContinuarPontuacao" class="btn btn-dark fw-bold px-4 d-none">
+                    Continuar <i class="bi bi-arrow-right-circle ms-1"></i>
+                </a>
+            </div>
         </div>
 
         <div class="row g-4 mb-5">
@@ -356,6 +361,7 @@ require_once '../componentes/header.php';
 <script>
     const urlParams = new URLSearchParams(window.location.search);
     let idInterclasse = urlParams.get('id');
+    const modo = urlParams.get('modo') || 'create';
     let modalidadesCache = [];
 
     function alterarPontos(idElemento, valor) {
@@ -380,6 +386,11 @@ require_once '../componentes/header.php';
         const dados = await window.SGIInterclasse.getInterclasseById(idInterclasse);
         document.getElementById('nomeInterclassePontuacao').innerText = dados?.nome_interclasse || 'Interclasse';
         window.SGIInterclasse.updatePageTitle(dados?.nome_interclasse);
+
+        const btnBack = document.getElementById('btnVoltarPontuacao');
+        if (btnBack) {
+            btnBack.href = `./dashboard.php?id=${idInterclasse}`;
+        }
 
         if (dados) {
             document.getElementById('pontos-1').innerText = dados.ponto_1_lugar || 0;
@@ -614,14 +625,21 @@ require_once '../componentes/header.php';
         carregarJogos();
     });
 
-    window.onload = async () => {
+    window.addEventListener('load', async () => {
         const idOk = await resolverInterclasse();
         if (!idOk) return;
+
+        const btnContinuar = document.getElementById('btnContinuarPontuacao');
+        if (btnContinuar) {
+            btnContinuar.href = `./edicao_resumo.php?id=${idInterclasse}&modo=create`;
+            if (modo === 'create') btnContinuar.classList.remove('d-none');
+        }
+
         await Promise.all([
             carregarModalidades(),
             carregarJogos()
         ]);
-    };
+    });
 </script>
 
 <?php

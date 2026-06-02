@@ -21,7 +21,7 @@ require_once '../componentes/header.php';
 
 <main class="d-md-none" style="margin-bottom:120px;">
     <div class="container mt-3">
-        <a href="#" data-sgi-header-back="true" class="btn btn-danger btn-sm mb-3 d-inline-flex align-items-center gap-1">
+        <a href="./dashboard.php" id="btnVoltarAlunosMobile" class="btn btn-danger btn-sm mb-3 d-inline-flex align-items-center gap-1">
             <i class="bi bi-arrow-left-circle"></i> Voltar
         </a>
         <div class="d-flex gap-2 mb-3 flex-wrap">
@@ -37,7 +37,7 @@ require_once '../componentes/header.php';
 
 <main class="d-none d-md-block main-desktop-layout">
     <div class="mx-auto" style="max-width: 720px;">
-        <a href="#" data-sgi-header-back="true" class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none" style="background-color: #ed1c24; border-radius: 6px;">
+        <a href="./dashboard.php" id="btnVoltarAlunosDesk" class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none" style="background-color: #ed1c24; border-radius: 6px;">
             <i class="bi bi-arrow-left-circle fs-5"></i> Voltar
         </a>
         <div class="d-flex gap-2 mb-4 overflow-auto pb-1 pt-2 ps-1" style="white-space: nowrap; scrollbar-width: none;">
@@ -117,7 +117,13 @@ require_once '../componentes/header.php';
     }
 
     const paramsAlunos = new URLSearchParams(window.location.search);
+    const idInterclasseAlunos = paramsAlunos.get('id');
     const idTurmaAlunos = paramsAlunos.get('id_turma');
+
+    if (idInterclasseAlunos) {
+        document.getElementById('btnVoltarAlunosMobile').href = `./dashboard.php?id=${idInterclasseAlunos}`;
+        document.getElementById('btnVoltarAlunosDesk').href = `./dashboard.php?id=${idInterclasseAlunos}`;
+    }
 
     let filtrosAtivos = { busca: '', genero: null, destaque: false };
 

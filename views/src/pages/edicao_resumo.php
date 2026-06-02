@@ -229,10 +229,10 @@ require_once '../componentes/header.php';
         }
     }
 
-    window.onload = async () => {
+    window.addEventListener('load', async () => {
         await configurarLinks();
         await carregarResumos();
-    };
+    });
 
     document.getElementById('btnCriarInterclasseFinal')?.addEventListener('click', async (event) => {
         if (!idInterclasse) return;

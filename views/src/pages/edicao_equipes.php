@@ -7,7 +7,7 @@ require_once '../componentes/header.php';
 ?>
 
 <main class="d-md-none p-3" style="padding-top: 5rem; padding-bottom: 5rem;">
-    <a href="#" data-sgi-header-back="true" class="btn btn-danger btn-sm mb-3 d-inline-flex align-items-center gap-1">
+    <a href="./dashboard.php" id="btnVoltarEquipesMobile" class="btn btn-danger btn-sm mb-3 d-inline-flex align-items-center gap-1">
         <i class="bi bi-arrow-left-circle"></i> Voltar
     </a>
     <p class="text-secondary text-center small mb-3">Equipes por modalidade e categoria desta edição.</p>
@@ -20,7 +20,7 @@ require_once '../componentes/header.php';
 <main class="d-none d-md-block main-desktop-layout">
     <div class="container-fluid px-0" style="max-width: 960px;">
         <div class="mb-4">
-            <a href="#" data-sgi-header-back="true" id="btnVoltarEquipesDesk" class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold mb-3 px-3 py-2 border-0 text-decoration-none shadow-sm" style="background-color: #ed1c24; border-radius: 6px;">
+            <a href="./dashboard.php" id="btnVoltarEquipesDesk" class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold mb-3 px-3 py-2 border-0 text-decoration-none shadow-sm" style="background-color: #ed1c24; border-radius: 6px;">
                 <i class="bi bi-arrow-left-circle fs-5"></i>
                 <span id="nomeInterclasseEquipes" style="font-weight: 400;">Interclasse</span>
             </a>
@@ -71,6 +71,14 @@ require_once '../componentes/header.php';
     const API = '../../../api/';
     const params = new URLSearchParams(window.location.search);
     const idInterclasseEq = params.get('id');
+
+    let modalidadesCache = [];
+    let turmasCache = [];
+
+    if (idInterclasseEq) {
+        document.getElementById('btnVoltarEquipesMobile').href = `./dashboard.php?id=${idInterclasseEq}`;
+        document.getElementById('btnVoltarEquipesDesk').href = `./dashboard.php?id=${idInterclasseEq}`;
+    }
 
     function esc(s) {
         const d = document.createElement('div');
@@ -192,6 +200,32 @@ require_once '../componentes/header.php';
         }
     }
 
+    function filtrarTurmasPorModalidade() {
+        const selMod = document.getElementById('selectModalidadeEquipe');
+        const selTurma = document.getElementById('selectTurmaEquipe');
+        const idModalidade = selMod.value;
+
+        if (!idModalidade) {
+            selTurma.innerHTML = '<option value="" selected disabled>Selecione uma modalidade primeiro</option>';
+            selTurma.disabled = true;
+            return;
+        }
+
+        const mod = modalidadesCache.find(m => String(m.id_modalidade) === idModalidade);
+        const idCategoria = mod ? String(mod.categorias_id_categoria) : null;
+
+        const turmasFiltradas = idCategoria
+            ? turmasCache.filter(t => String(t.categorias_id_categoria) === idCategoria)
+            : turmasCache;
+
+        selTurma.innerHTML = turmasFiltradas.length
+            ? '<option value="" selected disabled>Selecione a turma</option>' + turmasFiltradas.map((t) =>
+                `<option value="${t.id_turma}">${esc(t.nome_turma)}</option>`
+              ).join('')
+            : '<option value="" selected disabled>Nenhuma turma nesta categoria</option>';
+        selTurma.disabled = !turmasFiltradas.length;
+    }
+
     async function carregarSelectsEquipe() {
         if (!idInterclasseEq) return;
         try {
@@ -202,23 +236,21 @@ require_once '../componentes/header.php';
             const modalidades = await resMod.json();
             const turmas = await resTurmas.json();
 
+            modalidadesCache = Array.isArray(modalidades) ? modalidades.filter(
+                (m) => String(m.interclasses_id_interclasse) === String(idInterclasseEq)
+            ) : [];
+            turmasCache = Array.isArray(turmas) ? turmas : [];
+
             const selMod = document.getElementById('selectModalidadeEquipe');
-            const arrRaw = Array.isArray(modalidades) ? modalidades : [];
-            const arr = arrRaw.filter((m) => String(m.interclasses_id_interclasse) === String(idInterclasseEq));
-            selMod.innerHTML = arr.length
-                ? '<option value="" selected disabled>Selecione a modalidade</option>' + arr.map((m) => {
+            selMod.innerHTML = modalidadesCache.length
+                ? '<option value="" selected disabled>Selecione a modalidade</option>' + modalidadesCache.map((m) => {
                     const cat = m.nome_categoria ? ` — ${esc(m.nome_categoria)}` : '';
                     return `<option value="${m.id_modalidade}">${esc(m.nome_modalidade)}${cat} (${esc(m.genero_modalidade)})</option>`;
                 }).join('')
                 : '<option value="" selected disabled>Nenhuma modalidade encontrada</option>';
-            selMod.disabled = !arr.length;
+            selMod.disabled = !modalidadesCache.length;
 
-            const selTurma = document.getElementById('selectTurmaEquipe');
-            const arrT = Array.isArray(turmas) ? turmas : [];
-            selTurma.innerHTML = arrT.length
-                ? '<option value="" selected disabled>Selecione a turma</option>' + arrT.map((t) => `<option value="${t.id_turma}">${esc(t.nome_turma)}</option>`).join('')
-                : '<option value="" selected disabled>Nenhuma turma encontrada</option>';
-            selTurma.disabled = !arrT.length;
+            filtrarTurmasPorModalidade();
         } catch (e) {
             console.error('Erro ao carregar selects:', e);
         }
@@ -266,6 +298,7 @@ require_once '../componentes/header.php';
     });
 
     document.getElementById('modalCriarEquipe').addEventListener('show.bs.modal', carregarSelectsEquipe);
+    document.getElementById('selectModalidadeEquipe').addEventListener('change', filtrarTurmasPorModalidade);
 
     document.addEventListener('DOMContentLoaded', () => {
         carregarEquipes();

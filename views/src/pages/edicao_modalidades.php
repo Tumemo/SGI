@@ -28,7 +28,7 @@ require_once '../componentes/header.php';
     <div style="border-radius: 12px;">
 
         <div class="mb-5">
-            <a class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 shadow-sm text-decoration-none" style="background-color: #ed1c24; border-radius: 6px;" id="btnVoltarModalidades" href="#" data-sgi-header-back="true">
+            <a class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 shadow-sm text-decoration-none" style="background-color: #ed1c24; border-radius: 6px;" id="btnVoltarModalidades" href="./dashboard.php">
                 <i class="bi bi-arrow-left-circle fs-5"></i> <span id="nomeInterclasseModalidades">Interclasse</span>
             </a>
 
@@ -159,6 +159,11 @@ require_once '../componentes/header.php';
             botao.classList.toggle('disabled', disabled);
             botao.setAttribute('aria-disabled', disabled ? 'true' : 'false');
         });
+
+        const backBtn = document.getElementById('btnVoltarModalidades');
+        if (backBtn) {
+            backBtn.href = `./dashboard.php?id=${idInterclasse}`;
+        }
     }
 
     // 1. FUNÇÃO: Listar as modalidades já existentes (Cards)
@@ -342,10 +347,9 @@ require_once '../componentes/header.php';
     });
 
     // 5. INICIALIZAÇÃO: Onde a mágica acontece
-    window.onload = async () => {
+    window.addEventListener('load', async () => {
         const idOk = await resolverInterclasse();
         if (!idOk) return;
-        // Executa todas as buscas ao mesmo tempo
         await Promise.all([
             carregarModalidades(),
             carregarTiposModalidades(),
@@ -358,7 +362,7 @@ require_once '../componentes/header.php';
                 if (el) el.classList.add('d-none');
             });
         }
-    };
+    });
 </script>
 
 <style>
