@@ -1,50 +1,17 @@
-<!DOCTYPE html>
-<html lang="pt-br">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SGI - Inscrição Aluno</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-    <style>
-        .btn-confirmar {
-            background-color: #2b2b2b !important;
-            color: #fff !important;
-            border: none;
-            border-radius: 6px;
-            padding: 12px 48px;
-            font-size: 1.2rem;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.15);
-            transition: background-color 0.2s;
-        }
-        .btn-confirmar:disabled {
-            background-color: #6c757d !important;
-            opacity: 0.6;
-        }
-        .modalidade {
-            transition: all 0.2s ease-in-out;
-            border: 2px solid transparent !important;
-            border-radius: 8px !important;
-            color: #000000 !important;
-            background-color: #ffffff !important;
-        }
-        /* Apenas adiciona borda vermelha ao selecionar */
-        .modalidade.ativa {
-            border: 2px solid #dc3545 !important;
-            box-shadow: 0 4px 8px rgba(220, 53, 69, 0.15) !important;
-        }
-        .nav-bottom-icon {
-            font-size: 2.2rem;
-        }
-    </style>
-</head>
-<body class="bg-light" style="background-color: #f8f9fa !important;">
-    
-    <header class="position-relative">
-        <img src="../../../public/images/banner-global.png" alt="Banner" class="w-100" style="object-fit: cover; height: 180px;">
-        <h2 class="position-absolute top-50 translate-middle text-white start-50 m-0 fw-bold" style="letter-spacing: 0.5px;">Inscrição</h2>
-        <a href="./home.php" class="bi bi-arrow-left position-absolute text-white fs-3 text-decoration-none" style="top: 20px; left: 20px; z-index: 10;"></a>
-    </header>
+<?php
+$tituloPagina = 'SGI - Inscrição Aluno';
+$cssExtra = '
+        .btn-confirmar { background-color: #2b2b2b !important; color: #fff !important; border: none; border-radius: 6px; padding: 12px 48px; font-size: 1.2rem; box-shadow: 0 4px 6px rgba(0,0,0,0.15); transition: background-color 0.2s; }
+        .btn-confirmar:disabled { background-color: #6c757d !important; opacity: 0.6; }
+        .modalidade { transition: all 0.2s ease-in-out; border: 2px solid transparent !important; border-radius: 8px !important; color: #000000 !important; background-color: #ffffff !important; }
+        .modalidade.ativa { border: 2px solid #dc3545 !important; box-shadow: 0 4px 8px rgba(220, 53, 69, 0.15) !important; }
+';
+include 'componentes/head.php';
+$titulo = 'Inscrição';
+$mostrarVoltar = true;
+$urlVoltar = './home.php';
+include 'componentes/header.php';
+?>
 
     <form id="formInscricao" method="POST" action="processar_inscricao.php">
         <main class="m-auto pb-5" style="width: 90%; margin-bottom: 160px;">
@@ -73,14 +40,10 @@
         </div>
     </div>
 
-    <nav class="fixed-bottom py-3 bg-danger" style="border-top-left-radius: 25px; border-top-right-radius: 25px; z-index: 1030;">
-        <ul class="nav justify-content-around align-items-center m-0 p-0">
-            <li><a href="./home.php" class="text-white opacity-75 nav-bottom-icon"><i class="bi bi-house-door"></i></a></li>
-            <li><a href="./inscricao.php" class="text-white nav-bottom-icon"><i class="bi bi-people-fill"></i></a></li>
-            <li><a href="./ranking.php" class="text-white opacity-75 nav-bottom-icon"><i class="bi bi-trophy"></i></a></li>
-            <li><a href="./login.php" class="text-white opacity-75 nav-bottom-icon"><i class="bi bi-arrow-right"></i></a></li>
-        </ul>
-    </nav>
+<?php
+$paginaAtiva = 'inscricao';
+include 'componentes/nav.php';
+?>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
     <script>

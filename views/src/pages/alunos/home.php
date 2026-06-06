@@ -1,33 +1,14 @@
-<!DOCTYPE html>
-<html lang="pt-br">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SGI - Aluno Home</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-    
-    <style>
-        .style-card {
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
-        }
-        .style-card:hover, .style-card:focus-within {
-            transform: translateY(-2px);
-            box-shadow: 0 .5rem 1rem rgba(0,0,0,.15)!important;
-        }
-        body {
-            padding-bottom: 90px;
-        }
-    </style>
-</head>
-<body class="bg-light">
-
-    <header class="position-relative">
-        <img src="../../../public/images/banner-global.png" alt="Banner dos Jogos Interclasses" class="w-100">
-        <a href="./notificacoes.php" class="position-absolute text-white fs-3 d-flex align-items-center justify-content-center rounded-circle" style="top: 15%; right: 6%; width: 44px; height: 44px; background: rgba(0,0,0,0.3);" aria-label="Notificações e avisos">
-            <i class="bi bi-bell"></i>
-        </a>
-    </header>
+<?php
+$tituloPagina = 'SGI - Aluno Home';
+$cssExtra = '
+        .style-card { transition: transform 0.2s ease, box-shadow 0.2s ease; }
+        .style-card:hover, .style-card:focus-within { transform: translateY(-2px); box-shadow: 0 .5rem 1rem rgba(0,0,0,.15)!important; }
+';
+include 'componentes/head.php';
+$mostrarSino = true;
+$mostrarVoltar = false;
+include 'componentes/header.php';
+?>
 
     <main class="container py-4">
         <h1 class="visually-hidden">Painel do Aluno - Interclasses</h1>
@@ -43,14 +24,10 @@
         </section>
     </main>
 
-    <nav class="fixed-bottom py-2 bg-danger shadow-lg" aria-label="Navegação principal inferior">
-        <ul class="nav justify-content-around fs-2 list-unstyled mb-0">
-            <li><a href="./home.php" class="text-white nav-link p-2" aria-label="Início"><i class="bi bi-house-door-fill"></i></a></li>
-            <li><a href="./inscricao.php" class="text-white nav-link p-2" aria-label="Inscrições"><i class="bi bi-people-fill"></i></a></li>
-            <li><a href="./ranking.php" class="text-white nav-link p-2" aria-label="Classificação e Ranking"><i class="bi bi-trophy-fill"></i></a></li>
-            <li><a href="./login.php" class="text-white-50 nav-link p-2" onclick="return confirm('Deseja realmente sair?')" aria-label="Sair da conta"><i class="bi bi-box-arrow-right"></i></a></li>
-        </ul>
-    </nav>
+<?php
+$paginaAtiva = 'home';
+include 'componentes/nav.php';
+?>
 
     <script>
         function escaparHTML(string) {
