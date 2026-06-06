@@ -18,9 +18,9 @@ require_once '../componentes/header.php';
 </main>
 
 <main class="d-none d-md-flex flex-column main-desktop-layout">
-    <a href="./dashboard.php" id="btnVoltarTurmasDesk" class="btn btn-danger d-inline-flex align-items-center mb-4 border-0 shadow-sm text-decoration-none" style="border-radius: 4px; padding: 8px 15px;">
+    <a href="./dashboard.php" id="btnVoltarTurmasDesk" class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none shadow-sm" style="background-color: #ed1c24; border-radius: 6px;">
         <i class="bi bi-arrow-left-circle me-2"></i>
-        <span style="font-size: 0.9rem; font-weight: 400;" id="nomeInterclasseTurmas">Interclasse</span>
+        <span id="nomeInterclasseTurmas" style="font-weight: 400;">Interclasse</span>
     </a>
 
     <h1 class="fw-bold text-dark mb-5 d-flex align-items-center gap-2 fs-2">
@@ -183,7 +183,9 @@ require_once '../componentes/header.php';
 
             const res = await fetch('../../../api/turmas.php', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json'
+                },
                 body: JSON.stringify(body)
             });
 
@@ -196,7 +198,10 @@ require_once '../componentes/header.php';
                     formData.append('nome_turma', body.nome_turma);
                     formData.append('id_interclasse', String(interclasseAtivo.id_interclasse));
                     formData.append('id_categoria', String(body.categorias_id_categoria));
-                    const up = await fetch('../../../api/upload_turma_pdf.php', { method: 'POST', body: formData });
+                    const up = await fetch('../../../api/upload_turma_pdf.php', {
+                        method: 'POST',
+                        body: formData
+                    });
                     const upJson = await up.json().catch(() => ({}));
                     if (!up.ok || upJson.success === false) {
                         alert('Turma criada, mas falha ao processar PDF: ' + (upJson.message || 'Erro desconhecido'));
@@ -284,7 +289,7 @@ require_once '../componentes/header.php';
                         </div>
                         <div class="mb-4 text-muted">${turma.nome_categoria || 'Categoria vinculada'}</div>
                         <div class="mt-auto">
-                            <a href="./modalidades_alunos.php?id=${interclasseAtivo.id_interclasse}&id_turma=${turma.id_turma}&id_categoria=${turma.categorias_id_categoria}" class="text-decoration-none">
+                            <a href="./turma_alunos.php?id=${interclasseAtivo.id_interclasse}&id_turma=${turma.id_turma}&id_categoria=${turma.categorias_id_categoria}" class="text-decoration-none">
                                 <button type="button" class="btn btn-danger w-100 fw-bold shadow-sm d-flex justify-content-center align-items-center gap-1" style="font-size: 0.85rem; padding: 12px; border-radius: 6px;">
                                     VER DETALHES <i class="bi bi-arrow-right"></i>
                                 </button>
@@ -345,7 +350,10 @@ require_once '../componentes/header.php';
         }
 
         const interclasseAtivo = await window.SGIInterclasse.getActiveInterclasse();
-        if (!interclasseAtivo) { msg.innerHTML = '<p class="text-danger text-center fw-bold mb-0">Nenhum interclasse ativo.</p>'; return; }
+        if (!interclasseAtivo) {
+            msg.innerHTML = '<p class="text-danger text-center fw-bold mb-0">Nenhum interclasse ativo.</p>';
+            return;
+        }
 
         const body = {
             id_turma: editTurmaId,
@@ -366,7 +374,9 @@ require_once '../componentes/header.php';
 
             const resp = await fetch('../../../api/turmas.php', {
                 method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json'
+                },
                 body: JSON.stringify(body)
             });
             const data = await resp.json();
@@ -395,24 +405,24 @@ require_once '../componentes/header.php';
             const res = await fetch(`../../../api/turmas.php?id_turma=${parseInt(idTurma)}`, {
                 method: 'DELETE'
             });
-            
+
             const textoResposta = await res.text();
             let data = null;
-            
+
             try {
                 data = JSON.parse(textoResposta);
             } catch (e) {
                 console.error("Resposta não pôde ser convertida em JSON:", textoResposta);
             }
-            
+
             if (!res.ok || !data || data.success === false) {
-                const mensagemErro = (data && data.message) 
-                    ? data.message 
-                    : 'Não é possível excluir esta turma porque existem registros vinculados a ela (alunos, modalidades ou jogos).';
-                
+                const mensagemErro = (data && data.message) ?
+                    data.message :
+                    'Não é possível excluir esta turma porque existem registros vinculados a ela (alunos, modalidades ou jogos).';
+
                 throw new Error(mensagemErro);
             }
-            
+
             alert('Turma excluída com sucesso!');
             await carregarTurmasAtivas();
         } catch (error) {

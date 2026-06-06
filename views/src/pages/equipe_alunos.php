@@ -13,7 +13,9 @@ require_once '../componentes/header.php';
             <button class="btn btn-danger flex-fill" data-bs-toggle="modal" data-bs-target="#modalImportarPdf">Importar PDF</button>
         </div>
         <input type="text" id="buscaAlunoMobile" class="form-control mb-3" placeholder="Buscar aluno">
-        <div id="listaAlunosMobile"><p class="text-muted text-center">(Carregando alunos...)</p></div>
+        <div id="listaAlunosMobile">
+            <p class="text-muted text-center">(Carregando alunos...)</p>
+        </div>
         <button id="btnSalvarAlunosMobile" class="btn btn-danger w-100 mt-3">Salvar alterações</button>
         <div id="msgAlunosMobile" class="text-center mt-2"></div>
     </div>
@@ -24,14 +26,15 @@ require_once '../componentes/header.php';
         <div class="d-flex justify-content-between align-items-center mb-3">
             <h4 class="fw-bold mb-0">Adicionar alunos à equipe</h4>
             <div class="d-flex gap-2">
+                <button id="btnSalvarAlunosDesktop" class="btn btn-danger">Salvar alterações</button>
+
                 <button class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#modalImportarPdf">Importar PDF</button>
                 <a href="./equipes.php" id="btnVoltarEquipesDesktop" class="btn btn-outline-danger">Voltar</a>
             </div>
         </div>
         <input type="text" id="buscaAlunoDesktop" class="form-control mb-3" placeholder="Buscar aluno">
-        <div id="listaAlunosDesktop"><p class="text-muted text-center">(Carregando alunos...)</p></div>
-        <div class="d-flex justify-content-end mt-3">
-            <button id="btnSalvarAlunosDesktop" class="btn btn-danger">Salvar alterações</button>
+        <div id="listaAlunosDesktop">
+            <p class="text-muted text-center">(Carregando alunos...)</p>
         </div>
         <div id="msgAlunosDesktop" class="text-center mt-2"></div>
     </div>
@@ -105,7 +108,7 @@ require_once '../componentes/header.php';
         const idTurma = params.get('id_turma');
         const idEquipe = params.get('id_equipe');
         const idCategoria = params.get('id_categoria');
-        const voltar = `./equipes.php?id=${idInterclasse}&id_turma=${idTurma}${idCategoria ? `&id_categoria=${idCategoria}` : ''}`;
+        const voltar = `./elenco_equipe.php?id=${idInterclasse}&id_turma=${idTurma}${idCategoria ? `&id_categoria=${idCategoria}` : ''}`;
         document.getElementById('btnVoltarEquipesDesktop').href = voltar;
         const vm = document.getElementById('btnVoltarEquipesMobile');
         if (vm) vm.href = voltar;
@@ -138,7 +141,9 @@ require_once '../componentes/header.php';
                 botao.innerText = 'Salvando...';
                 const response = await fetch('../../../api/equipes.php', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
                     body: JSON.stringify({
                         acao: 'adicionar_usuarios',
                         id_equipe: Number(idEquipe),
@@ -235,7 +240,8 @@ require_once '../componentes/header.php';
                 if (turmas && turmas[0] && turmas[0].nome_turma) {
                     inp.value = turmas[0].nome_turma;
                 }
-            } catch (e) { /* ignora */ }
+            } catch (e) {
+                /* ignora */ }
         }
     });
 

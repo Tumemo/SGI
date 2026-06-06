@@ -6,7 +6,7 @@ require_once '../componentes/navbar.php';
 require_once '../componentes/header.php';
 ?>
 <main class="d-md-none">
-   <a href="./dashboard.php" id="btnVoltarTurmasMobile" class="btn btn-danger btn-sm mt-3 ms-3 d-inline-flex align-items-center gap-1">
+    <a href="./dashboard.php" id="btnVoltarTurmasMobile" class="btn btn-danger btn-sm mt-3 ms-3 d-inline-flex align-items-center gap-1">
         <i class="bi bi-arrow-left-circle"></i> Voltar
     </a>
     <p class="text-secondary text-center my-3">Editar detalhes turmas</p>
@@ -20,7 +20,7 @@ require_once '../componentes/header.php';
 
 <main class="d-none d-md-block main-desktop-layout" id="viewTurmasGestaoDesk">
     <div class="container-fluid px-0">
-       <a href="./dashboard.php" id="btnVoltarTurmasDesk" class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none" style="background-color: #ed1c24; border-radius: 6px;">
+        <a href="./dashboard.php" id="btnVoltarTurmasDesk" class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none" style="background-color: #ed1c24; border-radius: 6px;">
             <i class="bi bi-arrow-left-circle fs-5"></i> Voltar
         </a>
         <div class="row g-4 mx-0">
@@ -30,7 +30,7 @@ require_once '../componentes/header.php';
                         <i class="bi bi-plus-circle fs-5" style="cursor: pointer;" title="Adicionar Categoria"></i>
                         <h6 class="mb-0 fw-bold fs-5">Categorias</h6>
                     </div>
-                    
+
                     <div id="listaCategorias" class="list-group list-group-flush" style="max-height: 60vh; overflow-y: auto;">
                         <p class="text-muted p-3 mb-0 text-center">Carregando categorias...</p>
                     </div>
@@ -38,7 +38,7 @@ require_once '../componentes/header.php';
             </div>
 
             <div class="col-md-8 px-0 px-md-2 d-flex flex-column gap-3">
-                
+
                 <div class="bg-white rounded-3 shadow-sm p-2 d-flex align-items-center">
                     <i class="bi bi-search text-muted ms-3"></i>
                     <input type="text" id="inputBuscaTurma" class="form-control border-0 shadow-none bg-transparent" placeholder="Buscar turma">
@@ -53,6 +53,48 @@ require_once '../componentes/header.php';
                     </div>
                 </div>
 
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="modalCriarTurma" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg rounded-4 p-2">
+                <div class="modal-header border-0 pb-0 justify-content-center">
+                    <h5 class="modal-title fw-bold text-center w-100" style="color: #ed1c24;">
+                        ADICIONAR TURMA
+                    </h5>
+                </div>
+                <form id="formTurma">
+                    <div class="modal-body pt-3 pb-3">
+                        <div class="mb-3">
+                            <label class="text-dark mb-1 fw-medium" style="font-size: 0.95rem;">Nome da turma:</label>
+                            <input type="text" class="form-control form-control-lg shadow-sm rounded-3 text-secondary" placeholder="Ex: 9º Ano A" style="font-size: 0.95rem; border: 1px solid #dee2e6;" id="inputNomeTurma" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="text-dark mb-1 fw-medium" style="font-size: 0.95rem;">Nome fantasia:</label>
+                            <input type="text" class="form-control form-control-lg shadow-sm rounded-3 text-secondary" placeholder="Ex: Turma dos Campeões" style="font-size: 0.95rem; border: 1px solid #dee2e6;" id="inputNomeFantasiaTurma">
+                        </div>
+                        <div class="mb-3">
+                            <label class="text-dark mb-1 fw-medium" style="font-size: 0.95rem;">Turno:</label>
+                            <select class="form-select form-select-lg shadow-sm rounded-3 text-secondary" style="font-size: 0.95rem; border: 1px solid #dee2e6;" id="inputTurnoTurma">
+                                <option value="">Selecione o turno</option>
+                                <option value="Manhã">Manhã</option>
+                                <option value="Tarde">Tarde</option>
+                                <option value="Noite">Noite</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="modal-footer border-0 pt-0 pb-3 justify-content-end gap-2 flex-wrap">
+                        <div id="msgTurma" class="w-100 text-center small mb-2"></div>
+                        <button type="button" class="btn bg-white fw-semibold rounded-3 px-4 py-2" data-bs-dismiss="modal" style="color: #ed1c24; border: 1px solid #ed1c24;">
+                            Cancelar
+                        </button>
+                        <button type="submit" class="btn fw-semibold rounded-3 px-4 py-2 text-white" style="background-color: #ed1c24; border: 1px solid #ed1c24;" id="btnSalvarTurma">
+                            Adicionar
+                        </button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>
@@ -75,7 +117,9 @@ require_once '../componentes/header.php';
         window.location.href = "home.php";
     }
 
-    function getEl(id) { return document.getElementById(id); }
+    function getEl(id) {
+        return document.getElementById(id);
+    }
 
     // ─── BACK BUTTONS ────────────────────────────────────────────────
     if (idInterclasse) {
@@ -149,7 +193,7 @@ require_once '../componentes/header.php';
 
         if (turmas && turmas.length > 0) {
             const html = turmas.map(turma => `
-                <a href="./modalidades_alunos.php?id=${idInterclasse}&id_turma=${turma.id_turma}" class="text-decoration-none">
+                <a href="./turma_alunos.php?id=${idInterclasse}&id_turma=${turma.id_turma}" class="text-decoration-none">
                     <div class="bg-white rounded-3 shadow-sm p-4 d-flex align-items-center justify-content-between">
                         <span class="fw-bold text-dark fs-5">${esc(turma.nome_turma)}</span>
                         <i class="bi bi-chevron-right text-muted"></i>
@@ -168,6 +212,7 @@ require_once '../componentes/header.php';
     // Search sync between mobile and desktop
     const inputBuscaTurma = getEl('inputBuscaTurma');
     const inputBuscaTurmaMob = getEl('inputBuscaTurmaMobile');
+
     function filtrarTurmasGestao(termo) {
         const t = (termo || '').toLowerCase();
         const filtradas = todasTurmasAtuais.filter(tur => tur.nome_turma.toLowerCase().includes(t));
@@ -206,7 +251,13 @@ require_once '../componentes/header.php';
             const inputTurno = getEl('inputTurnoTurma');
             const msg = getEl('msgTurma');
 
-            const mapaTurno = { 'manhã': 'manha', 'manha': 'manha', 'tarde': 'tarde', 'noite': 'noite', 'integral': 'integral' };
+            const mapaTurno = {
+                'manhã': 'manha',
+                'manha': 'manha',
+                'tarde': 'tarde',
+                'noite': 'noite',
+                'integral': 'integral'
+            };
             const turnoRaw = (inputTurno.value || '').trim().toLowerCase();
             const turnoNormalizado = mapaTurno[turnoRaw] || (turnoRaw || null);
 
@@ -224,7 +275,9 @@ require_once '../componentes/header.php';
                 msg.innerHTML = "Salvando turma...";
                 const response = await fetch(`${API}turmas.php`, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
                     body: JSON.stringify(dadosTurma)
                 });
                 const result = await response.json();

@@ -6,6 +6,7 @@ require_once '../componentes/navbar.php';
 require_once '../componentes/header.php';
 ?>
 
+<!-- main mobile -->
 <main class="d-md-none p-3" style="padding-top: 5.5rem; padding-bottom: 5rem;">
     <a href="#" class="btn btn-danger btn-sm mb-3 rounded-3" id="btnVoltarTurmaAlunosMob">Voltar</a>
     <h5 style="font-weight: 400;" id="tituloTurmaMob">Turma</h5>
@@ -23,6 +24,7 @@ require_once '../componentes/header.php';
     </div>
 </main>
 
+<!-- main desktop -->
 <main class="d-none d-md-block main-desktop-layout">
     <div class="container-fluid px-0" style="max-width: 800px;">
         <a href="#" class="btn btn-danger d-inline-flex align-items-center gap-2 mb-4 border-0 shadow-sm text-decoration-none rounded-3" id="btnVoltarTurmaAlunosDesk">
@@ -31,20 +33,7 @@ require_once '../componentes/header.php';
         </a>
         <h4 style="font-weight: 400;" id="tituloTurmaDesk">Alunos da turma</h4>
         <p class="text-muted" id="contagemDesk"></p>
-        <div class="card border-0 shadow-sm rounded-4 mb-4">
-            <div class="table-responsive">
-                <table class="table align-middle mb-0">
-                    <thead class="table-light">
-                        <tr>
-                            <th style="font-weight: 400;">Nome</th>
-                            <th style="font-weight: 400;">RM</th>
-                            <th style="font-weight: 400;">Gênero</th>
-                        </tr>
-                    </thead>
-                    <tbody id="tbodyAlunosTurmaDesk"></tbody>
-                </table>
-            </div>
-        </div>
+
         <div id="blocoPdfDesk" class="card border-0 shadow-sm rounded-4 p-4">
             <h6 style="font-weight: 400;">Cadastrar alunos por PDF</h6>
             <p class="text-muted small">Use o mesmo nome da turma cadastrada para o arquivo bater com o esperado pelo sistema.</p>
@@ -60,6 +49,22 @@ require_once '../componentes/header.php';
                 <div id="msgPdfDesk" class="col-12 small text-center"></div>
             </form>
         </div>
+
+        <div class="card border-0 shadow-sm rounded-4 mb-4 mt-4">
+            <div class="table-responsive">
+                <table class="table align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th style="font-weight: 400;">Nome</th>
+                            <th style="font-weight: 400;">RM</th>
+                            <th style="font-weight: 400;">Gênero</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tbodyAlunosTurmaDesk"></tbody>
+                </table>
+            </div>
+        </div>
+
     </div>
 </main>
 
@@ -80,7 +85,8 @@ require_once '../componentes/header.php';
         const q = new URLSearchParams();
         if (idInterclasse) q.set('id', idInterclasse);
         if (idCategoria) q.set('id_categoria', idCategoria);
-        const href = `./edicao_turmas.php?${q.toString()}`;
+        const pagina = idCategoria ? 'turmas' : 'edicao_turmas';
+        const href = `./${pagina}.php?${q.toString()}`;
         const a = document.getElementById('btnVoltarTurmaAlunosMob');
         const b = document.getElementById('btnVoltarTurmaAlunosDesk');
         if (a) a.href = href;
@@ -185,10 +191,18 @@ require_once '../componentes/header.php';
             if (btn) {
                 btn.disabled = true;
             }
-            const r = await fetch('../../../api/upload_turma_pdf.php', { method: 'POST', body: fd, credentials: 'include' });
+            const r = await fetch('../../../api/upload_turma_pdf.php', {
+                method: 'POST',
+                body: fd,
+                credentials: 'include'
+            });
             const text = await r.text();
             let js = {};
-            try { js = JSON.parse(text); } catch (_) { js = {}; }
+            try {
+                js = JSON.parse(text);
+            } catch (_) {
+                js = {};
+            }
             if (!r.ok || js.success === false) throw new Error(js.message || 'Falha no upload: ' + text);
             msgEl.innerHTML = '<span class="text-success">Importação concluída. Atualizando…</span>';
             setTimeout(() => window.location.reload(), 1200);

@@ -11,7 +11,7 @@ require_once '../componentes/header.php';
 <main class="d-md-none" style="margin-bottom: 120px;">
     <p class="text-center mt-3 text-secondary">Editar detalhes do interclasse</p>
     <section>
-        <a href="./modalidades.php" id="linkModalidades" class="text-decoration-none text-black">
+        <a href="./edicao_modalidades.php" id="linkModalidades" class="text-decoration-none text-black">
             <div class="d-flex m-auto justify-content-between align-items-center shadow py-3 px-4 mb-3 border border-1 rounded-3" style="width: 90%;">
                 <i class="bi bi-trophy fs-2"></i>
                 <h2 class="m-0 fs-3 w-100 px-3">Modalidades</h2>
