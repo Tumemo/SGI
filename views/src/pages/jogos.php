@@ -36,7 +36,9 @@ require_once '../componentes/header.php';
     <div id="placar-loading" class="text-muted py-5">Carregando…</div>
     <div id="placar-conteudo" class="d-none">
         <p class="text-muted small mb-3" id="placar-meta"></p>
-        <div class="d-flex flex-wrap gap-2 mb-4" id="placar-acoes"></div>
+
+        <div class="d-flex flex-wrap gap-2 mb-4 align-items-center" id="placar-acoes"></div>
+
         <div class="placar-container" id="placar-grid"></div>
     </div>
 </main>
@@ -49,8 +51,24 @@ require_once '../componentes/header.php';
     let estadoJogo = null;
     let partidasLista = [];
     let timerId = null;
-    let segundos = 0;
+    let tempoRestante = 0;
+    let duracaoJogo = 20 * 60;
+    let pausado = false;
     let saveTimers = {};
+
+    function formatNomeJogo(nomeJogo) {
+        const mm = (nomeJogo || '').match(/^MM:(\d+):(\d+):([NB])$/);
+        if (mm) {
+            const largura = parseInt(mm[1], 10);
+            const slot = parseInt(mm[2], 10);
+            const kind = mm[3];
+            const fases = { 8: 'Oitavas de final', 4: 'Quartas de final', 2: 'Final', 1: 'Campeão' };
+            const fase = fases[largura] || 'Fase';
+            if (largura === 1) return fase;
+            return `${fase} — Confronto ${slot + 1}${kind === 'B' ? ' (bye)' : ''}`;
+        }
+        return nomeJogo || 'Jogo';
+    }
 
     function nomeEquipe(p) {
         return p.nome_fantasia_turma || p.nome_turma || `Equipe ${p.equipes_id_equipe}`;
@@ -66,11 +84,7 @@ require_once '../componentes/header.php';
         const r = await fetch(url, opts);
         const t = await r.text();
         let j;
-        try {
-            j = t ? JSON.parse(t) : {};
-        } catch {
-            j = {};
-        }
+        try { j = t ? JSON.parse(t) : {}; } catch { j = {}; }
         if (!r.ok) throw new Error(j.message || `Erro HTTP ${r.status}`);
         return j;
     }
@@ -82,19 +96,66 @@ require_once '../componentes/header.php';
         }
     }
 
+    function atualizarDisplayTimer() {
+        const el = document.getElementById('timer-placar');
+        if (!el) return;
+        const m = String(Math.floor(Math.max(0, tempoRestante) / 60)).padStart(2, '0');
+        const s = String(Math.max(0, tempoRestante) % 60).padStart(2, '0');
+        el.textContent = `${m}:${s}`;
+    }
+
     function iniciarTimerDisplay() {
         const el = document.getElementById('timer-placar');
         if (!el) return;
         pararTimer();
-        segundos = 0;
-        const tick = () => {
-            segundos += 1;
-            const m = String(Math.floor(segundos / 60)).padStart(2, '0');
-            const s = String(segundos % 60).padStart(2, '0');
-            el.textContent = `${m}:${s}`;
-        };
-        tick();
-        timerId = setInterval(tick, 1000);
+        if (tempoRestante <= 0) {
+            tempoRestante = duracaoJogo;
+        }
+        pausado = estadoJogo.status_jogo === 'Pausado';
+        atualizarDisplayTimer();
+        const btnPause = document.getElementById('btn-pausar');
+        if (btnPause) btnPause.textContent = pausado ? 'Retomar' : 'Pausar';
+        if (!pausado) {
+            timerId = setInterval(() => {
+                if (tempoRestante > 0) {
+                    tempoRestante--;
+                    atualizarDisplayTimer();
+                    if (tempoRestante <= 0) {
+                        pararTimer();
+                    }
+                }
+            }, 1000);
+        }
+    }
+
+    function togglePause() {
+        pausado = !pausado;
+        const btn = document.getElementById('btn-pausar');
+        if (btn) btn.textContent = pausado ? 'Retomar' : 'Pausar';
+        fetchJson(`${API}jogos.php`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id_jogo: idJogo, tempo_restante_jogo: tempoRestante })
+        }).catch(() => {});
+        if (!pausado && !timerId) {
+            timerId = setInterval(() => {
+                if (tempoRestante > 0) {
+                    tempoRestante--;
+                    atualizarDisplayTimer();
+                    if (tempoRestante <= 0) pararTimer();
+                }
+            }, 1000);
+        }
+    }
+
+    function mudarDuracao(segundos) {
+        const st = estadoJogo.status_jogo;
+        const diff = segundos - duracaoJogo;
+        duracaoJogo = segundos;
+        if (st === 'Iniciado' || st === 'Pausado') {
+            tempoRestante = Math.max(1, tempoRestante + diff);
+            atualizarDisplayTimer();
+        }
     }
 
     function agendarSalvarPartida(idPartida, gols) {
@@ -116,10 +177,11 @@ require_once '../componentes/header.php';
     }
 
     async function iniciarJogoServidor() {
+        duracaoJogo = parseInt(document.getElementById('select-duracao').value, 10) * 60;
         await fetchJson(`${API}jogos.php`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ id_jogo: idJogo, status_jogo: 'Iniciado' })
+            body: JSON.stringify({ id_jogo: idJogo, status_jogo: 'Iniciado', tempo_restante_jogo: duracaoJogo })
         });
         estadoJogo.status_jogo = 'Iniciado';
         renderTudo();
@@ -156,7 +218,7 @@ require_once '../componentes/header.php';
         const grid = document.getElementById('placar-grid');
         const titulo = document.getElementById('placar-titulo-jogo');
 
-        titulo.textContent = estadoJogo.nome_jogo || 'Placar';
+        titulo.textContent = formatNomeJogo(estadoJogo.nome_jogo) || 'Placar';
         meta.textContent = [
             estadoJogo.nome_modalidade,
             estadoJogo.nome_local,
@@ -165,6 +227,8 @@ require_once '../componentes/header.php';
         ].filter(Boolean).join(' · ');
 
         acoes.innerHTML = '';
+        grid.innerHTML = '';
+
         const st = estadoJogo.status_jogo;
         const emAndamento = st === 'Iniciado' || st === 'Pausado';
         const encerrado = st === 'Concluido' || st === 'Finalizado';
@@ -199,10 +263,28 @@ require_once '../componentes/header.php';
             return;
         }
 
-        const meioTimer = emAndamento
+        const podeTimer = emAndamento || st === 'Agendado';
+
+        const meioTimer = podeTimer
             ? `<div class="text-center">
-                <div class="timer-display" id="timer-placar">00:00</div>
-                <p class="text-muted small mt-2">Cronômetro local (referência)</p>
+                <div class="d-flex align-items-center justify-content-center gap-2 mb-2">
+                    <label class="small text-muted mb-0">Tempo:</label>
+                    <select id="select-duracao" class="form-select form-select-sm d-inline-block w-auto"
+                        style="max-width: 110px;">
+                        <option value="5">5 min</option>
+                        <option value="10">10 min</option>
+                        <option value="15">15 min</option>
+                        <option value="20" selected>20 min</option>
+                        <option value="25">25 min</option>
+                        <option value="30">30 min</option>
+                        <option value="40">40 min</option>
+                        <option value="45">45 min</option>
+                    </select>
+                </div>
+                <div class="timer-display" id="timer-placar">20:00</div>
+                ${emAndamento ? `<div class="mt-2">
+                    <button type="button" class="btn btn-sm btn-danger px-3" id="btn-pausar">Pausar</button>
+                </div>` : ''}
                </div>`
             : '<div class="text-center text-muted small">Controle do placar</div>';
 
@@ -214,7 +296,7 @@ require_once '../componentes/header.php';
                 : `<button type="button" class="btn-score btn-placar-menos" data-idx="${idx}">−</button>`;
             const plus = readOnly
                 ? `<button type="button" class="btn-score" disabled>+</button>`
-                : `<button type="button" class="btn-score btn-placar-mais" data-idx="${idx}" style="background: var(--inter-red); color: white;">+</button>`;
+                : `<button type="button" class="btn-score btn-placar-mais" data-idx="${idx}" style="background: var(--inter-red); color: white; width: 50px; height: 50px; font-size: 2rem; border-radius: 8px;">+</button>`;
             return `
                 <div class="time-card" data-partida-idx="${idx}">
                     <h3 class="fw-bold h5">${esc(nomeEquipe(p))}</h3>
@@ -238,6 +320,16 @@ require_once '../componentes/header.php';
         document.querySelectorAll('.btn-placar-mais').forEach((btn) => {
             btn.addEventListener('click', () => ajustarGols(parseInt(btn.getAttribute('data-idx'), 10), 1));
         });
+
+        const selDuracao = document.getElementById('select-duracao');
+        if (selDuracao) {
+            selDuracao.addEventListener('change', () => mudarDuracao(parseInt(selDuracao.value, 10)));
+        }
+
+        const btnPause = document.getElementById('btn-pausar');
+        if (btnPause) {
+            btnPause.addEventListener('click', () => togglePause());
+        }
 
         if (emAndamento) {
             iniciarTimerDisplay();
@@ -274,12 +366,15 @@ require_once '../componentes/header.php';
             const lista = await fetchJson(`${API}jogos.php?id_jogo=${idJogo}`);
             if (!Array.isArray(lista) || lista.length === 0) throw new Error('Jogo não encontrado.');
             estadoJogo = lista[0];
-            if (!estadoJogo.nome_modalidade) {
-                estadoJogo.nome_modalidade = '';
-            }
+            if (!estadoJogo.nome_modalidade) estadoJogo.nome_modalidade = '';
 
             partidasLista = await fetchJson(`${API}partidas.php?id_jogo=${idJogo}`);
             if (!Array.isArray(partidasLista)) partidasLista = [];
+
+            if (estadoJogo.tempo_restante_jogo != null) {
+                const v = parseInt(estadoJogo.tempo_restante_jogo, 10);
+                if (!isNaN(v) && v > 0) tempoRestante = v;
+            }
 
             load.classList.add('d-none');
             cont.classList.remove('d-none');
@@ -298,4 +393,3 @@ require_once '../componentes/header.php';
 
 <?php
 require_once '../componentes/footer.php';
-?>

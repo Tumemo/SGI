@@ -16,6 +16,7 @@ switch ($method) {
                     jogos.inicio_jogo, 
                     jogos.termino_jogo, 
                     jogos.status_jogo,
+                    jogos.tempo_restante_jogo,
                     jogos.modalidades_id_modalidade,
                     jogos.locais_id_local,
                     modalidades.nome_modalidade, 
@@ -123,6 +124,11 @@ switch ($method) {
             $campos[] = "termino_jogo = ?";
             $params[] = $data->termino_jogo;
             $types .= "s";
+        }
+        if (isset($data->tempo_restante_jogo)) {
+            $campos[] = "tempo_restante_jogo = ?";
+            $params[] = $data->tempo_restante_jogo;
+            $types .= "i";
         }
         if (isset($data->status_jogo)) {
             $campos[] = "status_jogo = ?";

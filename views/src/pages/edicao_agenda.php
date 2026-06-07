@@ -5,7 +5,6 @@ $btnVoltar = true;
 require_once '../componentes/navbar.php';
 require_once '../componentes/header.php';
 ?>
-
 <style>
     .cal-dia-marcado {
         box-shadow: inset 0 -3px 0 var(--inter-red, #ed1c24);
@@ -17,8 +16,6 @@ require_once '../componentes/header.php';
 </style>
 
 <main class="bg-light d-md-none p-3" style="padding-top: 5rem; padding-bottom: 5.5rem;">
-    
-
     <div class="card border-0 shadow-sm rounded-4 mx-auto mb-4" style="max-width: 450px;">
         <div class="card-body p-4">
             <div class="d-flex justify-content-between align-items-center mb-4">
@@ -68,8 +65,6 @@ require_once '../componentes/header.php';
         <i class="bi bi-arrow-left-circle me-2"></i>
         <span style="font-size: 0.9rem; font-weight: 400;" id="nomeInterclasseAgenda">Interclasse</span>
     </a>
-
-    
 
     <div class="row">
         <div class="col-lg-6 pe-lg-5">
@@ -146,6 +141,20 @@ require_once '../componentes/header.php';
     let modalidadesLista = [];
     let locaisLista = [];
     let jogoEmEdicao = null;
+
+    function formatNomeJogo(nomeJogo) {
+        const mm = (nomeJogo || '').match(/^MM:(\d+):(\d+):([NB])$/);
+        if (mm) {
+            const largura = parseInt(mm[1], 10);
+            const slot = parseInt(mm[2], 10);
+            const kind = mm[3];
+            const fases = { 8: 'Oitavas de final', 4: 'Quartas de final', 2: 'Final', 1: 'Campeão' };
+            const fase = fases[largura] || 'Fase';
+            if (largura === 1) return fase;
+            return `${fase} — Confronto ${slot + 1}${kind === 'B' ? ' (bye)' : ''}`;
+        }
+        return nomeJogo || 'Jogo';
+    }
 
     function ymd(d) {
         const y = d.getFullYear();
@@ -240,6 +249,10 @@ require_once '../componentes/header.php';
         jogosCache = Array.from(map.values());
     }
 
+    function isJogoCampeao(nomeJogo) {
+        return /^MM:1:\d+:[NB]$/.test(nomeJogo || '');
+    }
+
     function jogosDoMesVisivel() {
         const y = dataNavegacao.getFullYear();
         const m = dataNavegacao.getMonth();
@@ -247,6 +260,7 @@ require_once '../componentes/header.php';
         return jogosCache
             .filter((j) => {
                 if (!j.data_jogo) return false;
+                if (isJogoCampeao(j.nome_jogo)) return false;
                 const [jy, jm] = j.data_jogo.split('-').map(Number);
                 if (jy !== y || jm - 1 !== m) return false;
                 if (modF && String(j.modalidades_id_modalidade) !== String(modF)) return false;
@@ -266,6 +280,7 @@ require_once '../componentes/header.php';
         const modF = modalidadeSelecionadaId();
         return jogosCache.some((j) => {
             if (j.data_jogo !== key) return false;
+            if (isJogoCampeao(j.nome_jogo)) return false;
             if (modF && String(j.modalidades_id_modalidade) !== String(modF)) return false;
             return true;
         });
@@ -299,7 +314,7 @@ require_once '../componentes/header.php';
         return `
             <div class="card bg-white border-0 shadow-sm rounded-3 p-3 position-relative w-100 mb-0">
                 <div class="card-body p-0">
-                    <h5 class="text-dark mb-1" style="font-weight: 400;">${escapeHtml(j.nome_jogo || 'Jogo')}</h5>
+                    <h5 class="text-dark mb-1" style="font-weight: 400;">${escapeHtml(formatNomeJogo(j.nome_jogo))}</h5>
                     <p class="text-muted mb-1 small">${escapeHtml(j.nome_modalidade || '')} · ${escapeHtml(j.nome_local || '')}</p>
                     <p class="text-muted mb-1" style="font-size: 0.8rem;">${diaNum}, ${diaSem}</p>
                     <p class="text-muted mb-2" style="font-size: 0.8rem;">${horario}</p>
@@ -369,7 +384,7 @@ require_once '../componentes/header.php';
                 const j = jogosCache.find((x) => Number(x.id_jogo) === id);
                 if (!j) return;
                 jogoEmEdicao = j;
-                document.getElementById('edit-jogo-titulo').textContent = j.nome_jogo || 'Jogo';
+                document.getElementById('edit-jogo-titulo').textContent = formatNomeJogo(j.nome_jogo) || 'Jogo';
                 document.getElementById('edit-jogo-data').value = j.data_jogo || '';
                 document.getElementById('edit-jogo-inicio').value = formatarHora(j.inicio_jogo) || '08:00';
                 document.getElementById('edit-jogo-fim').value = formatarHora(j.termino_jogo || j.terminno_jogo) || '09:00';

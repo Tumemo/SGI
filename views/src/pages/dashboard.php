@@ -90,6 +90,16 @@ require_once '../componentes/header.php';
                 </picture>
             </div>
         </a>
+
+        <a href="./chaveamento_arvore.php" id="linkChaveamento" class="text-decoration-none text-black">
+            <div class="d-flex m-auto justify-content-between align-items-center shadow py-3 px-4 mb-3 border border-1 rounded-3" style="width: 90%;">
+                <i class="bi bi-diagram-3-fill fs-2"></i>
+                <h2 class="m-0 fs-3 w-100 px-3">Chaveamento</h2>
+                <picture>
+                    <img src="../../public/icons/arrow-right.svg" alt="Seta para direita">
+                </picture>
+            </div>
+        </a>
     </section>
 </main>
 
@@ -221,6 +231,19 @@ require_once '../componentes/header.php';
                 </a>
             </div>
 
+            <div class="col-12 col-md-6 col-lg-4">
+                <a href="chaveamento_arvore.php" id="linkChaveamento" class="dash-card">
+                    <div class="dash-card-red-corner"></div>
+                    <div class="dash-card-header">
+                        <div class="dash-card-icon">
+                            <i class="bi bi-diagram-3-fill"></i>
+                        </div>
+                        <h5 class="dash-card-title">CHAVEAMENTO</h5>
+                    </div>
+                    <p class="dash-card-text">Visualize a árvore completa do chaveamento mata-mata: confrontos, resultados e avanço das equipes.</p>
+                </a>
+            </div>
+
         </div>
     </div>
 </main>
@@ -272,6 +295,9 @@ require_once '../componentes/header.php';
         });
         document.querySelectorAll('#linkEquipes').forEach(link => {
             link.href = `./edicao_equipes.php?id=${idInterclasse}`;
+        });
+        document.querySelectorAll('#linkChaveamento').forEach(link => {
+            link.href = `./chaveamento_arvore.php?id=${idInterclasse}`;
         });
     }
 

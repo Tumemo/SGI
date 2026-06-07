@@ -59,7 +59,7 @@ function sgi_ind_buscar_participantes(mysqli $conn, int $idModalidade): array
             WHERE e.modalidades_id_modalidade = ?
               AND e.status_equipe = \'1\'
               AND u.status_usuario = \'1\'
-              AND u.competidor_usuario = \'1\'
+              AND u.competidor_usuario = \'3\'
             ORDER BY t.nome_turma, u.nome_usuario';
 
     $st = $conn->prepare($sql);

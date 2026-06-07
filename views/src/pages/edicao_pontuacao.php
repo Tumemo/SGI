@@ -284,6 +284,11 @@ require_once '../componentes/header.php';
                 </div>
                 <div class="col-lg-6">
                     <div id="msgChaveamento" class="mt-2"></div>
+                    <div id="linkVerArvore" class="mt-2 d-none">
+                        <a href="#" id="btnVerArvore" class="btn btn-outline-danger btn-sm fw-bold">
+                            <i class="bi bi-diagram-3-fill me-1"></i> Ver árvore do chaveamento
+                        </a>
+                    </div>
                 </div>
 
             </div>
@@ -550,6 +555,9 @@ require_once '../componentes/header.php';
             if (data.success === false) throw new Error(data.message || 'Erro ao gerar chaveamento.');
 
             msgEl.innerHTML = `<p class="text-success fw-bold mb-0">${data.message} (${data.jogos_criados} jogos criados).</p>`;
+            const linkArvore = document.getElementById('linkVerArvore');
+            linkArvore.classList.remove('d-none');
+            document.getElementById('btnVerArvore').href = `./chaveamento_arvore.php?id=${idInterclasse}`;
             carregarJogos();
         } catch (err) {
             msgEl.innerHTML = `<p class="text-danger fw-bold mb-0">${err.message}</p>`;

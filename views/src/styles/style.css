@@ -216,31 +216,8 @@ body {
     line-height: 1;
 }
 
-.timer-controls {
-    display: flex;
-    justify-content: center;
-    gap: 15px;
-    margin-top: 20px;
-}
 
-.btn-timer-main {
-    background-color: var(--inter-red);
-    color: white;
-    width: 80px;
-    height: 80px;
-    border-radius: 8px;
-    border: none;
-    font-size: 2rem;
-}
 
-.btn-timer-secondary {
-    background: white;
-    border: 1px solid #ddd;
-    width: 60px;
-    height: 60px;
-    border-radius: 8px;
-    font-size: 1.5rem;
-}
 
 .registro-geral {
     background: #F8F9FA;
@@ -253,3 +230,27 @@ body {
     background-color: #F0F0F0;
     border: 1px solid #E0E0E0;
 }
+.btn-score:active {
+    transform: scale(0.9);
+}
+
+
+.btn-placar-menos {
+    background: #D9D9D9;
+    border: none;
+    width: 50px;
+    height: 50px;
+    border-radius: 8px;
+    font-size: 1.8rem;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.15s, transform 0.1s;
+}
+
+.btn-placar-menos:hover {
+    background: #bbb;
+}
+
+

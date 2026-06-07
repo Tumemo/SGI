@@ -89,7 +89,7 @@ function sgi_mm_buscar_equipes_validadas(mysqli $conn, int $idModalidade): array
             WHERE e.modalidades_id_modalidade = ?
               AND e.status_equipe = \'1\'
               AND u.status_usuario = \'1\'
-              AND u.competidor_usuario = \'1\'';
+              AND u.competidor_usuario = \'3\'';
     $st = $conn->prepare($sql);
     if (!$st) {
         throw new RuntimeException($conn->error);
