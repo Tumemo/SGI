@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="pt-br">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,10 +9,18 @@
     <link rel="stylesheet" href="./src/styles/style.css">
     <title>SGI - Login</title>
     <style>
-        #msg_erro_mobile, #msg_erro_desktop { font-size: 0.85rem; margin-top: 10px; }
-        .cursor-pointer { cursor: pointer; }
+        #msg_erro_mobile,
+        #msg_erro_desktop {
+            font-size: 0.85rem;
+            margin-top: 10px;
+        }
+
+        .cursor-pointer {
+            cursor: pointer;
+        }
     </style>
 </head>
+
 <body>
     <main class="d-md-none">
         <picture>
@@ -65,51 +74,60 @@
     </main>
 
     <script>
-        // Função unificada e corrigida para processar o envio dos dados
         async function realizarLogin(e) {
             e.preventDefault();
-            
-            const form = e.target; // Captura exatamente o formulário enviado (evita misturar mobile com desktop)
-            const msgErro = form.querySelector('[id^="msg_erro"]');
-            
-            // Limpa mensagens de erro antigas
-            msgErro.innerText = ""; 
 
-            // Captura os elementos de input especificamente de DENTRO do formulário atual
-            const matriculaInput = form.querySelector('.ipt-matricula');
-            const senhaInput = form.querySelector('.ipt-senha');
+            const form = e.target;
 
-            // Monta os dados limpando espaços vazios acidentais nas pontas (.trim())
-            const payload = {
-                matricula: matriculaInput.value.trim(),
-                senha: senhaInput.value.trim()
-            };
+            const matricula =
+                form.querySelector('.ipt-matricula').value.trim();
+
+            const senha =
+                form.querySelector('.ipt-senha').value.trim();
+
+            const msgErro =
+                form.querySelector('[id^="msg_erro"]');
+
+            msgErro.innerText = '';
 
             try {
-                // Utilizando a rota absoluta corrigida que encontrou o arquivo com sucesso
-                const response = await fetch('/sgi/api/login.php', {
+
+                const response = await fetch('../api/login.php', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        matricula,
+                        senha
+                    })
                 });
 
                 const data = await response.json();
 
-                if (response.ok && data.status === 'sucesso') {
-                    // Redireciona para a página correspondente ao nível devolvida pelo PHP
+                if (data.status === 'sucesso') {
                     window.location.href = data.redirect;
                 } else {
-                    // Mostra a mensagem exata retornada pelo PHP (ex: "Matrícula ou Senha incorretos.")
-                    msgErro.innerText = data.mensagem || "Erro ao realizar o login.";
+                    msgErro.innerText = data.mensagem;
                 }
-            } catch (err) {
-                msgErro.innerText = "Erro ao conectar com o servidor.";
+
+            } catch (erro) {
+
+                console.error(erro);
+
+                msgErro.innerText =
+                    'Erro ao conectar com o servidor.';
             }
         }
 
-        // Registra os eventos de escuta nos dois formulários da página
-        document.getElementById('form_mobile').addEventListener('submit', realizarLogin);
-        document.getElementById('form_desktop').addEventListener('submit', realizarLogin);
+        document
+            .getElementById('form_mobile')
+            .addEventListener('submit', realizarLogin);
+
+        document
+            .getElementById('form_desktop')
+            .addEventListener('submit', realizarLogin);
     </script>
 </body>
+
 </html>
