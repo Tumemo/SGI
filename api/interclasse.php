@@ -119,18 +119,33 @@ switch ($method) {
             } else {
                 echo json_encode(["success" => false, "message" => $stmt->error]);
             }
-        } else {
-            $data = json_decode(file_get_contents("php://input"));
-            if (!isset($data->nome_interclasse, $data->ano_interclasse)) {
+        }  else {
+            // ALTERADO: Agora lê de $_POST por causa do FormData (envio de arquivos)
+            $nome_interclasse = $_POST['nome_interclasse'] ?? null;
+            $ano_interclasse = $_POST['ano_interclasse'] ?? null;
+
+            if (!$nome_interclasse || !$ano_interclasse) {
                 http_response_code(400);
-                echo json_encode(["success" => false, "message" => "Dados incompletos."]);
+                echo json_encode(["success" => false, "message" => "Dados incompletos. Nome e Ano são obrigatórios."]);
                 break;
             }
             
-            // CORREÇÃO: Inclusão das colunas obrigatórias 'regulamento_interclasse' e 'status_interclasse'
-            $sql = "INSERT INTO interclasses (nome_interclasse, ano_interclasse, regulamento_interclasse, status_interclasse) VALUES (?, ?, '', '1')";
+            // Verifica se enviou regulamento já na criação
+            $nome_regulamento = '';
+            if (isset($_FILES['pdf_regulamento']) && $_FILES['pdf_regulamento']['error'] === UPLOAD_ERR_OK) {
+                $upload = uploadRegulamento($_FILES['pdf_regulamento']);
+                if ($upload['success']) {
+                    $nome_regulamento = $upload['nome_arquivo'];
+                } else {
+                    echo json_encode(["success" => false, "message" => $upload['message']]);
+                    break;
+                }
+            }
+
+            // Inserindo com o regulamento (se houver) e status ativo '1'
+            $sql = "INSERT INTO interclasses (nome_interclasse, ano_interclasse, regulamento_interclasse, status_interclasse) VALUES (?, ?, ?, '1')";
             $stmt = $conn->prepare($sql);
-            $stmt->bind_param("ss", $data->nome_interclasse, $data->ano_interclasse);
+            $stmt->bind_param("sss", $nome_interclasse, $ano_interclasse, $nome_regulamento);
             
             if ($stmt->execute()) {
                 $new_interclass_id = $conn->insert_id;
@@ -142,7 +157,7 @@ switch ($method) {
                 
                 $categoria_insert = $conn->prepare("INSERT INTO categorias (nome_categoria, status_categoria, interclasses_id_interclasse) VALUES (?, '1', ?)");
                 
-                $cat_i_nome = "Categoria I - Inter " . $new_interclass_id; // Evita conflito se houver unique index global futuro
+                $cat_i_nome = "Categoria I - Inter " . $new_interclass_id; 
                 $categoria_insert->bind_param("si", $cat_i_nome, $new_interclass_id);
                 if (!$categoria_insert->execute()) { $conn->rollback(); echo json_encode(["success" => false, "message" => "Falha Categoria I"]); break; }
                 $categoria_i_id = $conn->insert_id;
@@ -153,7 +168,6 @@ switch ($method) {
                 $categoria_ii_id = $conn->insert_id;
                 $categoria_insert->close();
 
-                // Busca ou cria tipos de modalidade
                 $tipo_mata_mata_id = null;
                 $tipo_individual_id = null;
                 $tipo_select = $conn->query("SELECT id_tipo_modalidade, nome_tipo_modalidade FROM tipos_modalidades");
@@ -171,7 +185,6 @@ switch ($method) {
                     $tipo_individual_id = $conn->insert_id;
                 }
 
-                // CORREÇÃO: Adicionado 'nome_fantasia_turma' e tornado o 'nome_turma' dinâmico com o ID do interclasse para evitar erro de UNIQUE KEY do banco
                 $turmas_sql = "INSERT INTO turmas 
                 (nome_turma, turno_turma, nome_fantasia_turma, status_turma, interclasses_id_interclasse, categorias_id_categoria) 
                 VALUES 
@@ -217,5 +230,4 @@ switch ($method) {
                 echo json_encode(["success" => false, "message" => $stmt->error]);
             }
         }
-        break;
-}
+    }

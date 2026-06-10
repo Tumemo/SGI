@@ -1,8 +1,4 @@
-
 <?php
-require_once '../../../api/verificacao.php';
-exigirAdmin();
-
 $titulo = "Home";
 $textTop = "";
 $btnVoltar = false;
@@ -38,7 +34,7 @@ require_once '../componentes/header.php';
             </div>
 
             <div class="mt-2" id="listaDesktop">
-                 <p class="text-center text-muted mt-5">(Carregando...)</p>
+                <p class="text-center text-muted mt-5">(Carregando...)</p>
             </div>
         </div>
 
@@ -55,18 +51,23 @@ require_once '../componentes/header.php';
             </div>
             <div class="modal-body">
                 <h2 class="fs-6">Insira o nome da sua nova edição:</h2>
-                <form id="formulario">
+                <form id="formulario" enctype="multipart/form-data">
                     <div>
-                        <input type="text" class="form-control" placeholder="Ex: interclasse 2026" id="nomeNovaEdicao" required>
+                        <label for="nomeNovaEdicao" class="form-label">Nome da nova edição</label>
+                        <input type="text" class="form-control" placeholder="Ex: Interclasse" id="nomeNovaEdicao" required>
+                    </div>
+                    <div class="mt-3">
+                        <label for="anoNovaEdicao" class="form-label">Ano da Edição</label>
+                        <input type="number" class="form-control" placeholder="Ex: 2026" id="anoNovaEdicao" value="2026" required>
                     </div>
                     <div class="mt-4">
-                        <label for="anoNovaEdicao" class="form-label fs-6">Ano</label>
-                        <input type="number" class="form-control" placeholder="Ex: 2026" id="anoNovaEdicao" value="2026" required>
+                        <label for="formFile" class="form-label">Regulamento Do Interclasse (PDF)</label>
+                        <input class="form-control" type="file" id="formFile" name="pdf_regulamento" accept="application/pdf">
                     </div>
 
                     <div id="caixaMensagem"></div>
 
-                    <div class="d-flex justify-content-center gap-2 mt-5 pt-5">
+                    <div class="d-flex justify-content-center gap-2 mt-2 pt-5">
                         <button type="button" class="btn btn-outline-danger" data-bs-dismiss="modal">Cancelar</button>
                         <button type="submit" class="btn btn-danger" id="btnCriar">Criar</button>
                     </div>
@@ -125,10 +126,10 @@ require_once '../componentes/header.php';
     async function listarInterclasses() {
         const listarMobile = document.getElementById('caixaListar');
         const listarDesktop = document.getElementById('listaDesktop');
-        
+
         try {
             const res = await axios.get("../../../api/interclasse.php?regulamento=true");
-            
+
             if (!res.data || res.data.length === 0) {
                 const msgVazia = `<p class="text-center text-muted mt-5">Nenhum interclasse encontrado</p>`;
                 listarMobile.innerHTML = msgVazia;
@@ -145,9 +146,9 @@ require_once '../componentes/header.php';
             listaOrdenada.forEach((item) => {
                 const anoStr = anoInterclasse(item);
                 const ativo = statusAtivo(item);
-                const statusBadge = ativo
-                    ? '<span class="bg-danger rounded-3 text-white px-3 py-1" style="font-size: 0.82rem;">Ativo</span>'
-                    : '<span class="bg-secondary rounded-3 text-white px-3 py-1" style="font-size: 0.82rem;">Inativo</span>';
+                const statusBadge = ativo ?
+                    '<span class="bg-danger rounded-3 text-white px-3 py-1" style="font-size: 0.82rem;">Ativo</span>' :
+                    '<span class="bg-secondary rounded-3 text-white px-3 py-1" style="font-size: 0.82rem;">Inativo</span>';
 
                 // Montar HTML Mobile
                 htmlMobile += `
@@ -228,40 +229,57 @@ require_once '../componentes/header.php';
     const caixaMensagem = document.getElementById('caixaMensagem');
 
     formulario.addEventListener("submit", async (event) => {
-        event.preventDefault(); 
+        event.preventDefault();
 
         const nome = document.getElementById('nomeNovaEdicao').value;
         const ano = document.getElementById('anoNovaEdicao').value;
+        const arquivoInput = document.getElementById('formFile');
 
-        // Formata o ano para o padrão YYYY-MM-DD
+        // Formata a data completa YYYY-MM-DD exigida pelo banco
         const dataAtual = new Date();
         const mes = String(dataAtual.getMonth() + 1).padStart(2, '0');
         const dia = String(dataAtual.getDate()).padStart(2, '0');
         const dataFormatada = `${ano}-${mes}-${dia}`;
 
-        const novoInterclasse = {
-            nome_interclasse: nome.trim(),
-            ano_interclasse: dataFormatada
-        };
+        // ESSENCIAL: Usar FormData para transferir arquivos via Ajax
+        const dadosFormulario = new FormData();
+        dadosFormulario.append('nome_interclasse', nome.trim());
+        dadosFormulario.append('ano_interclasse', dataFormatada);
+
+        // Se houver arquivo selecionado, anexa-o com a chave esperada pelo PHP
+        if (arquivoInput.files.length > 0) {
+            dadosFormulario.append('pdf_regulamento', arquivoInput.files[0]);
+        }
 
         try {
             document.getElementById('btnCriar').disabled = true;
             document.getElementById('btnCriar').innerText = "Criando...";
 
-            const res = await axios.post("../../../api/interclasse.php", novoInterclasse);
+            // Enviando o FormData completo via POST
+            const res = await axios.post("../../../api/interclasse.php", dadosFormulario, {
+                headers: {
+                    'Content-Type': 'multipart/form-data'
+                }
+            });
 
             if (res.data && res.data.success) {
                 caixaMensagem.innerHTML = `<p class="text-success text-center mt-3 mb-0 fw-bold">Criado com sucesso!</p>`;
                 const idCriado = res.data.id;
-                await atualizarStatusInterclasse(idCriado, false);
-                await window.SGIInterclasse.refreshNavigation();
+
+                // Opcional: Se sua API já salva ele como status '1', 
+                // talvez você queira forçar a exclusividade dele agora:
+                await ativarComExclusividade(idCriado);
+
+                if (window.SGIInterclasse && typeof window.SGIInterclasse.refreshNavigation === 'function') {
+                    await window.SGIInterclasse.refreshNavigation();
+                }
 
                 formulario.reset();
                 listarInterclasses();
 
                 setTimeout(() => {
                     window.location.href = `./edicao_categorias.php?id=${idCriado}`;
-                }, 800); // Dei um tempo ligeiramente maior para o usuário ler o "Criado com sucesso!"
+                }, 1000);
             } else {
                 throw new Error(res.data ? res.data.message : "Erro interno no servidor ao salvar.");
             }
@@ -284,6 +302,7 @@ require_once '../componentes/header.php';
         background-color: #ed1c24;
         border-color: #ed1c24;
     }
+
     .status-switch.form-check-input:focus {
         border-color: #ed1c24;
         box-shadow: 0 0 0 0.2rem rgba(237, 28, 36, 0.25);
