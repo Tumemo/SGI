@@ -145,6 +145,12 @@ function aplicarFiltrosJogos() {
         $params[] = $_GET['status'];
     }
 
+    if (!empty($_GET['id_interclasse'])) {
+        $sqlExtras .= " AND modalidades.interclasses_id_interclasse = ?";
+        $types .= "i";
+        $params[] = intval($_GET['id_interclasse']);
+    }
+
     return [
         'sql' => $sqlExtras,
         'types' => $types,

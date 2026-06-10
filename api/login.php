@@ -34,7 +34,7 @@ if ($usuario && password_verify($senha, $usuario['senha_usuario'])) {
     $destino = match($_SESSION['nivel']) {
         3       => '../views/src/pages/alunos/home.php', // Competidores
         0, 1    => '../views/src/pages/home.php',        // Admin e Colaboradores
-        2       => '../views/src/pages/mesario.php',     // Mesários
+        2       =>        '../views/src/pages/mesarios/home.php', // Mesários
         default => '../login.html'
     };
 
