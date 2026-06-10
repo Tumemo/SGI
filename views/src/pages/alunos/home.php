@@ -24,6 +24,35 @@ include 'componentes/header.php';
         </section>
     </main>
 
+    <div class="modal fade" id="modalTermo" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-scrollable">
+            <div class="modal-content border-0 shadow">
+                <div class="modal-header bg-dark text-white border-0">
+                    <h5 class="modal-title fw-bold">Termo de Responsabilidade</h5>
+                </div>
+                <div class="modal-body">
+                    <p>Declaro para os devidos fins que aceito e assumo inteira responsabilidade pelos termos abaixo descritos para participação no Interclasse:</p>
+                    <ol class="ps-3">
+                        <li class="mb-2"><strong>Conduta:</strong> Comprometo-me a agir com respeito, <em>fair play</em> e espírito esportivo durante todas as atividades.</li>
+                        <li class="mb-2"><strong>Regras:</strong> Declaro estar ciente e de acordo com todas as regras oficiais do Interclasse, acatando as decisões da organização e arbitragem.</li>
+                        <li class="mb-2"><strong>Materiais:</strong> Responsabilizo-me pelos materiais esportivos e uniformes que me forem confiados, respondendo por eventuais danos ou extravios.</li>
+                        <li class="mb-2"><strong>Saúde:</strong> Declaro estar em condições físicas adequadas para a prática das modalidades escolhidas, isentando a organização de responsabilidade por acidentes ou lesões decorrentes da participação.</li>
+                        <li class="mb-2"><strong>Imagem:</strong> Autorizo o uso de minha imagem e voz para fins de divulgação do evento nas mídias oficiais da instituição.</li>
+                        <li class="mb-2"><strong>Pontuação:</strong> Aceito o sistema de pontuação e classificação estabelecido, bem como as penalidades previstas no regulamento.</li>
+                    </ol>
+                    <div id="avisoRecusa" class="alert alert-danger d-none" role="alert">
+                        <i class="bi bi-exclamation-triangle-fill me-1"></i>
+                        Não é possível continuar sem aceitar os termos.
+                    </div>
+                </div>
+                <div class="modal-footer border-0 justify-content-center gap-3 pb-4">
+                    <button type="button" class="btn btn-outline-secondary px-4" id="btnRecusarTermo">Recusar</button>
+                    <button type="button" class="btn btn-danger px-4" id="btnAceitarTermo">Aceitar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
 <?php
 $paginaAtiva = 'home';
 include 'componentes/nav.php';
@@ -95,7 +124,51 @@ include 'componentes/nav.php';
                 `;
             }
         }
-        document.addEventListener('DOMContentLoaded', carregarInterclassesAluno);
+        function initModalTermo() {
+            const modalTermo = new bootstrap.Modal(document.getElementById('modalTermo'));
+            const btnAceitar = document.getElementById('btnAceitarTermo');
+            const btnRecusar = document.getElementById('btnRecusarTermo');
+            const avisoRecusa = document.getElementById('avisoRecusa');
+
+            modalTermo.show();
+
+            btnAceitar.addEventListener('click', async function () {
+                btnAceitar.disabled = true;
+                btnAceitar.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status"></span>Salvando...';
+
+                try {
+                    const res = await fetch('../../../../api/concordarTermos.php', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' }
+                    });
+                    const data = await res.json();
+
+                    if (data.success) {
+                        avisoRecusa.classList.add('d-none');
+                        modalTermo.hide();
+                    } else {
+                        avisoRecusa.textContent = data.message || 'Erro ao salvar aceite. Tente novamente.';
+                        avisoRecusa.classList.remove('d-none');
+                    }
+                } catch (error) {
+                    avisoRecusa.textContent = 'Erro de conexão. Verifique sua internet e tente novamente.';
+                    avisoRecusa.classList.remove('d-none');
+                } finally {
+                    btnAceitar.disabled = false;
+                    btnAceitar.textContent = 'Aceitar';
+                }
+            });
+
+            btnRecusar.addEventListener('click', function () {
+                avisoRecusa.classList.remove('d-none');
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            carregarInterclassesAluno();
+            initModalTermo();
+        });
     </script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
 </body>
 </html>

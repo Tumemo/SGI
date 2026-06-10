@@ -4,7 +4,8 @@ $navItens = [
     'home'     => ['label' => 'Início',       'icon' => 'bi-house-door-fill',   'url' => './home.php'],
     'inscricao' => ['label' => 'Inscrições',   'icon' => 'bi-people-fill',       'url' => './inscricao.php'],
     'ranking'  => ['label' => 'Ranking',       'icon' => 'bi-trophy-fill',       'url' => './ranking.php'],
-    'sair'     => ['label' => 'Sair',          'icon' => 'bi-box-arrow-right',   'url' => './login.php'],
+    'termos'   => ['label' => 'Termos',        'icon' => 'bi-file-text-fill',    'url' => './termos.php'],
+    'sair'     => ['label' => 'Sair',          'icon' => 'bi-box-arrow-right',   'url' => '../../../../api/logout.php'],
 ];
 ?>
 <nav class="fixed-bottom py-2 bg-danger shadow-lg" aria-label="Navegação principal inferior">

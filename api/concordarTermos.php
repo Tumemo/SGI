@@ -2,7 +2,7 @@
 require_once '../config/db.php';
 session_start();
 
-if (!isset($_SESSION['usuarios']['id'])) {
+if (!isset($_SESSION['id'])) {
     echo json_encode([
         "success" => false,
         "message" => "Sessão expirada ou usuário não autenticado."
@@ -10,7 +10,7 @@ if (!isset($_SESSION['usuarios']['id'])) {
     exit;
 }
 
-$id_usuario = $_SESSION['usuarios']['id'];
+$id_usuario = $_SESSION['id'];
 
 $sql = "SELECT u.id_usuario, u.interclasses_id_interclasse, ui.aceito_termo 
         FROM usuarios u
