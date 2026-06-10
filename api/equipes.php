@@ -37,11 +37,22 @@ switch ($method) {
                 WHERE 1=1" . $filtro['sql'];
 
         $stmt = $conn->prepare($sql);
+        if (!$stmt) {
+            echo json_encode(["success" => false, "message" => "Erro ao preparar consulta: " . $conn->error]);
+            break;
+        }
         if (!empty($filtro['params'])) {
             $stmt->bind_param($filtro['types'], ...$filtro['params']);
         }
-        $stmt->execute();
+        if (!$stmt->execute()) {
+            echo json_encode(["success" => false, "message" => "Erro ao executar consulta: " . $stmt->error]);
+            break;
+        }
         $res = $stmt->get_result();
+        if (!$res) {
+            echo json_encode(["success" => false, "message" => "Erro ao obter resultados."]);
+            break;
+        }
         echo json_encode($res->fetch_all(MYSQLI_ASSOC));
         break;
 

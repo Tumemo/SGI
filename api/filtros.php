@@ -67,12 +67,6 @@ function aplicarFiltrosEquipes() {
         $params[] = intval($_GET['id_turma']);
     }
 
-    if (!empty($_GET['ano'])) {
-        $sqlExtras .= " AND YEAR(interclasses.ano_interclasse) = ?";
-        $types .= "i";
-        $params[] = intval($_GET['ano']);
-    }
-
     if (!empty($_GET['id_modalidade'])) {
         $sqlExtras .= " AND equipes.modalidades_id_modalidade = ?";
         $types .= "i";
@@ -151,12 +145,6 @@ function aplicarFiltrosJogos() {
         $params[] = $_GET['status'];
     }
 
-    if (!empty($_GET['ano'])) {
-        $sqlExtras .= " AND YEAR(interclasses.ano_interclasse) = ?";
-        $types .= "i";
-        $params[] = intval($_GET['ano']);
-    }
-
     return [
         'sql' => $sqlExtras,
         'types' => $types,
@@ -197,12 +185,6 @@ function aplicarFiltrosModalidades() {
         $sqlExtras .= " AND modalidades.genero_modalidade = ?";
         $types .= "s";
         $params[] = strtoupper($_GET['genero']);
-    }
-
-    if (!empty($_GET['ano'])) {
-        $sqlExtras .= " AND YEAR(jogos.data_jogo) = ?";
-        $types .= "i";
-        $params[] = intval($_GET['ano']);
     }
 
     return [

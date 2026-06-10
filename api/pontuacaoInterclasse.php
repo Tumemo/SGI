@@ -26,7 +26,7 @@ switch ($method) {
         break;
 
     case 'PUT':
-        $dados = json_encode(file_get_contents("php://input"), true);
+        $dados = json_decode(file_get_contents("php://input"), true);
 
         if (!isset($dados['id_pontuacao'], $dados['pontos'])) {
             http_response_code(400);
