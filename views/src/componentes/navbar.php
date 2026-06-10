@@ -62,7 +62,7 @@
         </li>
 
         <li class="">
-            <a href="../../index.php" class="text-white">
+            <a href="../../../api/logout.php" class="text-white">
                 <i class="bi bi-box-arrow-right"></i>
             </a>
         </li>
