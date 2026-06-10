@@ -1,15 +1,19 @@
 <?php
+
 $titulo = "Dashboard";
 $textTop = "Menu de Edição";
 $btnVoltar = true;
+
 require_once '../componentes/navbar.php';
 require_once '../componentes/header.php';
+
 ?>
 
 
 <!-- main mobile -->
 <main class="d-md-none" style="margin-bottom: 120px;">
-    <p class="text-center mt-3 text-secondary">Editar detalhes do interclasse</p>
+    <p class="text-center mt-3 text-secondary">Editar detalhes do interclasse       
+</p>
     <section>
         <a href="./edicao_modalidades.php" id="linkModalidades" class="text-decoration-none text-black">
             <div class="d-flex m-auto justify-content-between align-items-center shadow py-3 px-4 mb-3 border border-1 rounded-3" style="width: 90%;">
@@ -30,6 +34,7 @@ require_once '../componentes/header.php';
                 </picture>
             </div>
         </a>
+
 
         <a href="./edicao_pontuacao.php" id="linkRegulamentos" class="text-decoration-none text-black">
             <div class="d-flex m-auto justify-content-between align-items-center shadow py-3 px-4 mb-3 border border-1 rounded-3" style="width: 90%;">

@@ -1,4 +1,8 @@
+
 <?php
+require_once '../../../api/verificacao.php';
+exigirAdmin();
+
 $titulo = "Home";
 $textTop = "";
 $btnVoltar = false;
