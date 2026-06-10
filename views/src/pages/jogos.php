@@ -132,12 +132,9 @@ require_once '../componentes/header.php';
         pausado = !pausado;
         const btn = document.getElementById('btn-pausar');
         if (btn) btn.textContent = pausado ? 'Retomar' : 'Pausar';
-        fetchJson(`${API}jogos.php`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ id_jogo: idJogo, tempo_restante_jogo: tempoRestante })
-        }).catch(() => {});
-        if (!pausado && !timerId) {
+        if (pausado) {
+            pararTimer();
+        } else if (!timerId) {
             timerId = setInterval(() => {
                 if (tempoRestante > 0) {
                     tempoRestante--;
@@ -146,6 +143,11 @@ require_once '../componentes/header.php';
                 }
             }, 1000);
         }
+        fetchJson(`${API}jogos.php`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id_jogo: idJogo, tempo_restante_jogo: tempoRestante })
+        }).catch(() => {});
     }
 
     function mudarDuracao(segundos) {
@@ -154,8 +156,10 @@ require_once '../componentes/header.php';
         duracaoJogo = segundos;
         if (st === 'Iniciado' || st === 'Pausado') {
             tempoRestante = Math.max(1, tempoRestante + diff);
-            atualizarDisplayTimer();
+        } else {
+            tempoRestante = segundos;
         }
+        atualizarDisplayTimer();
     }
 
     function agendarSalvarPartida(idPartida, gols) {
@@ -271,17 +275,12 @@ require_once '../componentes/header.php';
                     <label class="small text-muted mb-0">Tempo:</label>
                     <select id="select-duracao" class="form-select form-select-sm d-inline-block w-auto"
                         style="max-width: 110px;">
-                        <option value="5">5 min</option>
-                        <option value="10">10 min</option>
-                        <option value="15">15 min</option>
-                        <option value="20" selected>20 min</option>
-                        <option value="25">25 min</option>
-                        <option value="30">30 min</option>
-                        <option value="40">40 min</option>
-                        <option value="45">45 min</option>
+                        ${[5,10,15,20,25,30,40,45].map(v =>
+                            `<option value="${v}" ${duracaoJogo === v*60 ? 'selected' : ''}>${v} min</option>`
+                        ).join('')}
                     </select>
                 </div>
-                <div class="timer-display" id="timer-placar">20:00</div>
+                <div class="timer-display" id="timer-placar">${String(Math.floor(duracaoJogo / 60)).padStart(2, '0')}:${String(duracaoJogo % 60).padStart(2, '0')}</div>
                 ${emAndamento ? `<div class="mt-2">
                     <button type="button" class="btn btn-sm btn-danger px-3" id="btn-pausar">Pausar</button>
                 </div>` : ''}
@@ -323,7 +322,7 @@ require_once '../componentes/header.php';
 
         const selDuracao = document.getElementById('select-duracao');
         if (selDuracao) {
-            selDuracao.addEventListener('change', () => mudarDuracao(parseInt(selDuracao.value, 10)));
+            selDuracao.addEventListener('change', () => mudarDuracao(parseInt(selDuracao.value, 10) * 60));
         }
 
         const btnPause = document.getElementById('btn-pausar');

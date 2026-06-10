@@ -96,7 +96,7 @@ require_once '../componentes/header.php';
             return;
         }
         try {
-            const r = await fetch(`${API}equipes.php?id_equipe=${encodeURIComponent(idEquipe)}`);
+            const r = await fetch(`${API}equipes.php?id_equipe=${encodeURIComponent(idEquipe)}&_t=${Date.now()}`);
             const lista = await r.json();
             const arr = Array.isArray(lista) ? lista : [];
             if (arr.length === 0) {

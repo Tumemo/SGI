@@ -9,6 +9,9 @@ require_once '../componentes/header.php';
 
 <!-- main mobile -->
 <main class="d-md-none" style="margin-bottom: 120px;">
+    <a href="./home.php" class="btn btn-outline-danger btn-sm ms-3 mt-3 d-inline-flex align-items-center gap-1">
+        <i class="bi bi-house"></i> Voltar ao início
+    </a>
     <p class="text-center mt-3 text-secondary">Editar detalhes do interclasse</p>
     <section>
         <a href="./edicao_modalidades.php" id="linkModalidades" class="text-decoration-none text-black">
@@ -107,6 +110,9 @@ require_once '../componentes/header.php';
 <!-- main desktop -->
 <main class="d-none d-md-block main-desktop-layout">
     <div class="container-fluid px-0">
+        <a href="./home.php" class="btn btn-outline-danger btn-sm mb-3 d-inline-flex align-items-center gap-1">
+            <i class="bi bi-house"></i> Voltar ao início
+        </a>
         <div id="avisoFinalizacaoInterclasse" class="d-none alert alert-warning d-flex justify-content-between align-items-center mb-4">
             <span>Esta edição ainda não foi finalizada. Conclua as etapas para ativá-la.</span>
             <a id="linkConcluirInterclasse" class="btn btn-sm btn-danger" href="#">Concluir criação</a>

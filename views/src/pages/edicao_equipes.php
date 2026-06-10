@@ -136,7 +136,7 @@ require_once '../componentes/header.php';
                 htmlDesk += `<h5 class="text-danger mt-4 mb-3" style="font-weight:400;">${esc(nomeCat)}</h5>`;
 
                 for (const m of listaMod) {
-                    const rEq = await fetch(`${API}equipes.php?id_modalidade=${encodeURIComponent(m.id_modalidade)}`);
+                    const rEq = await fetch(`${API}equipes.php?id_modalidade=${encodeURIComponent(m.id_modalidade)}&_t=${Date.now()}`);
                     const equipes = await rEq.json();
                     const arr = Array.isArray(equipes) ? equipes : [];
 

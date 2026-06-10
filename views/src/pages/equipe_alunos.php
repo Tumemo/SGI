@@ -104,11 +104,12 @@ require_once '../componentes/header.php';
         if (vm) vm.href = voltar;
 
         try {
-            const resEquipe = await fetch(`../../../api/equipes.php?id_equipe=${idEquipe}`);
+            const ts = Date.now();
+            const resEquipe = await fetch(`../../../api/equipes.php?id_equipe=${idEquipe}&_t=${ts}`);
             const rawEq = await resEquipe.json();
             alunosNaEquipe = Array.isArray(rawEq) ? rawEq : [];
 
-            const res = await fetch(`../../../api/usuarios.php?acao=listar_competidores&id_turma=${idTurma}`);
+            const res = await fetch(`../../../api/usuarios.php?acao=listar_competidores&id_turma=${idTurma}&_t=${ts}`);
             const data = await res.json();
             alunos = (data && data.competidores) ? data.competidores : (Array.isArray(data) ? data : []);
             renderizar(alunos);

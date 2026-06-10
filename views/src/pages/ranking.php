@@ -66,7 +66,14 @@ require_once '../componentes/header.php';
 
     async function init() {
         if (!idInterclasse) {
-            exibirMensagem("ID do Interclasse não fornecido na URL.", "danger");
+            try {
+                const ativo = await window.SGIInterclasse.getActiveInterclasse();
+                if (ativo) {
+                    window.location.href = `./ranking.php?id=${ativo.id_interclasse}`;
+                    return;
+                }
+            } catch (_) {}
+            exibirMensagem("Nenhum interclasse ativo encontrado.", "danger");
             return;
         }
         await carregarDados();

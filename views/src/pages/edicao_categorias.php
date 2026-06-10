@@ -231,10 +231,17 @@ require_once '../componentes/header.php';
     }
 
     if (!idInterclasse) {
-        document.getElementById('listaCategoriasMobile').innerHTML = '<p class="text-muted mt-4 text-center w-100">Nenhum interclasse selecionado.</p>';
-        document.getElementById('listaCategoriasDesktop').innerHTML = '<p class="text-muted mt-4 text-center w-100">Nenhum interclasse selecionado.</p>';
-        document.getElementById('btnContinuarMobile').href = './dashboard.php';
-        document.getElementById('btnContinuarDesktop').href = './dashboard.php';
+        // Tenta resolver para o interclasse ativo
+        window.SGIInterclasse.getActiveInterclasse().then(ativo => {
+            if (ativo) {
+                window.location.href = `./edicao_categorias.php?id=${ativo.id_interclasse}&${modo !== 'view' ? 'modo=create' : 'modo=view'}`;
+                return;
+            }
+            document.getElementById('listaCategoriasMobile').innerHTML = '<p class="text-muted mt-4 text-center w-100">Nenhum interclasse ativo.</p>';
+            document.getElementById('listaCategoriasDesktop').innerHTML = '<p class="text-muted mt-4 text-center w-100">Nenhum interclasse ativo.</p>';
+            document.getElementById('btnContinuarMobile').href = './dashboard.php';
+            document.getElementById('btnContinuarDesktop').href = './dashboard.php';
+        });
     } else {
         window.SGIInterclasse.getInterclasseById(idInterclasse).then((dados) => {
             if (dados?.nome_interclasse) {
@@ -251,21 +258,23 @@ require_once '../componentes/header.php';
         const divDesktop = document.getElementById('listaCategoriasDesktop');
 
         try {
-            const [categorias, turmas, equipes, modalidades, jogos, partidas] = await Promise.all([
+            const respostas = await Promise.allSettled([
                 fetch(`../../../api/categorias.php?id_interclasse=${idInterclasse}`).then(r => r.json()),
                 fetch(`../../../api/turmas.php?id_interclasse=${idInterclasse}`).then(r => r.json()),
                 fetch(`../../../api/equipes.php`).then(r => r.json()),
                 fetch(`../../../api/modalidades.php?id_interclasse=${idInterclasse}`).then(r => r.json()),
-                fetch(`../../../api/jogos.php?x=1`).then(r => r.json()),
+                fetch(`../../../api/jogos.php?id_interclasse=${idInterclasse}`).then(r => r.json()),
                 fetch(`../../../api/partidas.php`).then(r => r.json()),
             ]);
 
-            categoriasData = Array.isArray(categorias) ? categorias : [];
-            const listaTurmas = Array.isArray(turmas) ? turmas : [];
-            const listaEquipes = Array.isArray(equipes) ? equipes : [];
-            const listaModalidades = Array.isArray(modalidades) ? modalidades : [];
-            const listaJogos = Array.isArray(jogos) ? jogos : [];
-            const listaPartidas = Array.isArray(partidas) ? partidas : [];
+            const extrair = (res, padrao) => (res.status === 'fulfilled' && Array.isArray(res.value)) ? res.value : padrao;
+
+            const categorias = extrair(respostas[0], []);
+            const listaTurmas = extrair(respostas[1], []);
+            const listaEquipes = extrair(respostas[2], []);
+            const listaModalidades = extrair(respostas[3], []);
+            const listaJogos = extrair(respostas[4], []);
+            const listaPartidas = extrair(respostas[5], []);
 
             // -- CONSTRUIR MAPAS DE RELACIONAMENTO --
             const turmaParaCategoria = {};

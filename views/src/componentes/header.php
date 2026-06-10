@@ -130,14 +130,16 @@
             }
         };
 
-        const setupBackLinks = (fallbackPath = './home.php') => {
+        const setupBackLinks = (fallbackPath) => {
             document.querySelectorAll('[data-back-link="true"], [data-sgi-header-back="true"]').forEach((el) => {
                 if (el.dataset.sgiBackBound === '1') return;
                 el.dataset.sgiBackBound = '1';
                 el.addEventListener('click', async (event) => {
                     event.preventDefault();
                     await runBeforeLeaveHandlers();
-                    navigateBack(fallbackPath);
+                    const elHref = el.getAttribute('href');
+                    const fallback = fallbackPath || (elHref && elHref !== '#' ? elHref : './home.php');
+                    navigateBack(fallback);
                 });
             });
         };
@@ -148,10 +150,22 @@
             document.querySelectorAll('[data-active-link]').forEach((link) => {
                 const key = link.getAttribute('data-active-link');
                 const semInterclasse = !id;
-                const permitirSemInterclasse = key === 'home';
+                if (key === 'home') {
+                    link.href = id ? `./dashboard.php?id=${id}` : './home.php';
+                    if (semInterclasse) {
+                        link.classList.add('disabled');
+                        link.style.pointerEvents = 'none';
+                        link.style.opacity = '0.45';
+                    } else {
+                        link.classList.remove('disabled');
+                        link.style.pointerEvents = '';
+                        link.style.opacity = '';
+                    }
+                    return;
+                }
                 const href = id ? buildLinkTo(key, id) : (endpoints[key] || endpoints.home);
                 link.href = href;
-                if (semInterclasse && !permitirSemInterclasse) {
+                if (semInterclasse) {
                     link.classList.add('disabled');
                     link.style.pointerEvents = 'none';
                     link.style.opacity = '0.45';

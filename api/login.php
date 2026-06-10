@@ -25,10 +25,10 @@ $usuario = $stmt->get_result()->fetch_assoc();
 // 2. Verifica se o usuário existe e se a senha (criptografada) é válida
 if ($usuario && password_verify($senha, $usuario['senha_usuario'])) {
     
-    // Grava os dados genéricos na sessão
-    $_SESSION['id']    = $usuario['id_usuario'];
-    $_SESSION['nivel'] = (int)$usuario['nivel_usuario'];
-    $_SESSION['nome']  = $usuario['nome_usuario'];
+    $_SESSION['id']        = $usuario['id_usuario'];
+    $_SESSION['nivel']     = (int)$usuario['nivel_usuario'];
+    $_SESSION['nome']      = $usuario['nome_usuario'];
+    $_SESSION['matricula'] = $usuario['matricula_usuario'];
 
     // 3. Define o redirecionamento com base no nível de usuário retornado do banco
     $destino = match($_SESSION['nivel']) {

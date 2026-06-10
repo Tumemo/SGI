@@ -2,6 +2,108 @@
 $titulo = "Perfil";
 $textTop = "Perfil";
 $btnVoltar = true;
+
+session_start();
+$conn = null;
+$sessionId = $_SESSION['id'] ?? null;
+$sessionNome = $_SESSION['nome'] ?? '';
+$usuarioPerfil = [
+    'nome_usuario' => $sessionNome,
+    'matricula_usuario' => $_SESSION['matricula'] ?? '',
+    'foto_usuario' => ''
+];
+try {
+    $dbPath = dirname(__DIR__, 3) . DIRECTORY_SEPARATOR . 'config' . DIRECTORY_SEPARATOR . 'db.php';
+    require_once $dbPath;
+    if ($sessionId && $conn) {
+        $id = (int) $sessionId;
+        $st = $conn->prepare('SELECT nome_usuario, matricula_usuario, foto_usuario FROM usuarios WHERE id_usuario = ? AND status_usuario = \'1\' LIMIT 1');
+        if ($st && $st->execute()) {
+            $row = $st->get_result()->fetch_assoc();
+            $st->close();
+            if ($row) $usuarioPerfil = array_merge($usuarioPerfil, $row);
+        }
+    }
+} catch (Throwable $e) {
+    // keep session defaults
+}
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    header('Content-Type: application/json');
+    try {
+        if (!isset($_SESSION['id'])) {
+            echo json_encode(['success' => false, 'message' => 'Não autorizado.']);
+            exit;
+        }
+        $id = (int) $_SESSION['id'];
+
+        // Upload de foto
+        if (isset($_POST['acao']) && $_POST['acao'] === 'upload_foto') {
+            if (!isset($_FILES['foto']) || $_FILES['foto']['error'] !== UPLOAD_ERR_OK) {
+                echo json_encode(['success' => false, 'message' => 'Erro no upload do arquivo.']);
+                exit;
+            }
+            $ext = strtolower(pathinfo($_FILES['foto']['name'], PATHINFO_EXTENSION));
+            if (!in_array($ext, ['jpg', 'jpeg', 'png', 'gif', 'webp'])) {
+                echo json_encode(['success' => false, 'message' => 'Formato inválido. Use JPG, PNG, GIF ou WebP.']);
+                exit;
+            }
+            $nomeArquivo = 'user_' . $id . '_' . time() . '.' . $ext;
+            $uploadDir = dirname(__DIR__, 3) . DIRECTORY_SEPARATOR . 'uploads' . DIRECTORY_SEPARATOR . 'fotosUsuarios';
+            if (!is_dir($uploadDir)) mkdir($uploadDir, 0755, true);
+            $destino = $uploadDir . DIRECTORY_SEPARATOR . $nomeArquivo;
+            move_uploaded_file($_FILES['foto']['tmp_name'], $destino);
+
+            $st = $conn->prepare('UPDATE usuarios SET foto_usuario = ? WHERE id_usuario = ?');
+            $st->bind_param('si', $nomeArquivo, $id);
+            $st->execute();
+            $st->close();
+
+            echo json_encode(['success' => true, 'mensagem' => 'Foto atualizada!', 'arquivo' => $nomeArquivo]);
+            exit;
+        }
+
+        // Atualizar perfil (nome/senha)
+        if (isset($_POST['salvar_perfil'])) {
+            $nome = trim($_POST['nome_usuario'] ?? '');
+            if ($nome === '') {
+                echo json_encode(['success' => false, 'message' => 'Nome não pode ficar vazio.']);
+                exit;
+            }
+            $senhaAtual = $_POST['senha_atual'] ?? '';
+            $novaSenha = $_POST['nova_senha'] ?? '';
+
+            if ($novaSenha) {
+                $st = $conn->prepare('SELECT senha_usuario FROM usuarios WHERE id_usuario = ? LIMIT 1');
+                $st->bind_param('i', $id);
+                $st->execute();
+                $row = $st->get_result()->fetch_assoc();
+                $st->close();
+                if (!$row || !password_verify($senhaAtual, $row['senha_usuario'])) {
+                    echo json_encode(['success' => false, 'message' => 'Senha atual incorreta.']);
+                    exit;
+                }
+                $hash = password_hash($novaSenha, PASSWORD_DEFAULT);
+                $st = $conn->prepare('UPDATE usuarios SET nome_usuario = ?, senha_usuario = ? WHERE id_usuario = ?');
+                $st->bind_param('ssi', $nome, $hash, $id);
+                $st->execute();
+                $st->close();
+            } else {
+                $st = $conn->prepare('UPDATE usuarios SET nome_usuario = ? WHERE id_usuario = ?');
+                $st->bind_param('si', $nome, $id);
+                $st->execute();
+                $st->close();
+            }
+            $_SESSION['nome'] = $nome;
+            echo json_encode(['success' => true, 'message' => 'Perfil atualizado com sucesso!']);
+            exit;
+        }
+    } catch (Throwable $e) {
+        echo json_encode(['success' => false, 'message' => 'Erro ao salvar.']);
+    }
+    exit;
+}
+
 require_once '../componentes/navbar.php';
 require_once '../componentes/header.php';
 ?>
@@ -106,24 +208,26 @@ require_once '../componentes/header.php';
     </h2>
     <div class="perfil-card p-4">
         <div class="text-center mb-4 position-relative d-inline-block w-100">
-            <div class="perfil-foto-circle mx-auto">
-                <i class="bi bi-person-gear"></i>
+            <div class="perfil-foto-circle mx-auto overflow-hidden" id="fotoCircleMob">
+                <?php $fotoPath = $usuarioPerfil['foto_usuario'] ? '/sgi/uploads/fotosUsuarios/' . rawurlencode($usuarioPerfil['foto_usuario']) : ''; ?>
+                <img src="<?= $fotoPath ?>" id="fotoImgMob" class="w-100 h-100 object-fit-cover <?= $fotoPath ? '' : 'd-none' ?>" alt="Foto" onerror="this.classList.add('d-none');document.getElementById('fotoIconMob')?.classList.remove('d-none');">
+                <i class="bi bi-person-gear <?= $fotoPath ? 'd-none' : '' ?>" id="fotoIconMob"></i>
             </div>
-            <button type="button" class="perfil-btn-camera" style="bottom: 0; right: calc(50% - 100px);" title="Alterar foto" aria-label="Alterar foto">
+            <button type="button" class="perfil-btn-camera" id="btnCameraMob" style="bottom: 0; right: calc(50% - 100px);" title="Alterar foto" aria-label="Alterar foto">
                 <i class="bi bi-camera"></i>
             </button>
         </div>
         <div class="mb-3">
-            <label class="form-label">Nome:</label>
-            <input type="text" class="form-control perfil-input" id="perfilNomeMob" placeholder="Nome" readonly>
+            <label class="form-label text-muted small">Nome</label>
+            <p class="fw-semibold fs-5 mb-0" id="perfilNomeMob"><?= htmlspecialchars($usuarioPerfil['nome_usuario'] ?? '', ENT_QUOTES) ?></p>
         </div>
         <div class="mb-3">
-            <label class="form-label">RA</label>
-            <input type="text" class="form-control perfil-input" id="perfilEmailMob" placeholder="RA" readonly>
+            <label class="form-label text-muted small">RA</label>
+            <p class="fw-semibold fs-5 mb-0" id="perfilEmailMob"><?= htmlspecialchars($usuarioPerfil['matricula_usuario'] ?? '', ENT_QUOTES) ?></p>
         </div>
         <div class="mb-4">
-            <label class="form-label">Senha:</label>
-            <input type="password" class="form-control perfil-input" value="........" readonly>
+            <label class="form-label text-muted small">Senha</label>
+            <p class="fw-semibold fs-5 mb-0">********</p>
         </div>
         <button type="button" class="perfil-btn-editar d-block mx-auto" data-bs-toggle="modal" data-bs-target="#modalEditarPerfil">Editar perfil</button>
     </div>
@@ -142,25 +246,27 @@ require_once '../componentes/header.php';
         <div class="perfil-card">
             <div class="row g-0">
                 <div class="col-md-5 perfil-foto-wrap">
-                    <div class="perfil-foto-circle">
-                        <i class="bi bi-person-gear"></i>
+                    <div class="perfil-foto-circle overflow-hidden">
+                        <?php $fotoPathDesk = $usuarioPerfil['foto_usuario'] ? '/sgi/uploads/fotosUsuarios/' . rawurlencode($usuarioPerfil['foto_usuario']) : ''; ?>
+                        <img src="<?= $fotoPathDesk ?>" id="fotoImgDesk" class="w-100 h-100 object-fit-cover <?= $fotoPathDesk ? '' : 'd-none' ?>" alt="Foto" onerror="this.classList.add('d-none');document.getElementById('fotoIconDesk')?.classList.remove('d-none');">
+                        <i class="bi bi-person-gear <?= $fotoPathDesk ? 'd-none' : '' ?>" id="fotoIconDesk"></i>
                     </div>
-                    <button type="button" class="perfil-btn-camera" title="Alterar foto" aria-label="Alterar foto">
+                    <button type="button" class="perfil-btn-camera" id="btnCameraDesk" title="Alterar foto" aria-label="Alterar foto">
                         <i class="bi bi-camera"></i>
                     </button>
                 </div>
                 <div class="col-md-7 perfil-form-area">
                     <div class="mb-3">
-                        <label class="form-label">Nome:</label>
-                        <input type="text" class="form-control form-control-lg perfil-input" id="perfilNomeDesk" placeholder="Nome" readonly>
+                        <label class="form-label text-muted">Nome</label>
+                        <p class="fw-semibold fs-5 mb-0" id="perfilNomeDesk"><?= htmlspecialchars($usuarioPerfil['nome_usuario'] ?? '', ENT_QUOTES) ?></p>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">RA</label>
-                        <input type="text" class="form-control form-control-lg perfil-input" id="perfilEmailDesk" placeholder="RA" readonly>
+                        <label class="form-label text-muted">RA</label>
+                        <p class="fw-semibold fs-5 mb-0" id="perfilEmailDesk"><?= htmlspecialchars($usuarioPerfil['matricula_usuario'] ?? '', ENT_QUOTES) ?></p>
                     </div>
                     <div class="mb-4">
-                        <label class="form-label">Senha:</label>
-                        <input type="password" class="form-control form-control-lg perfil-input" value="........" readonly>
+                        <label class="form-label text-muted">Senha</label>
+                        <p class="fw-semibold fs-5 mb-0">********</p>
                     </div>
                     <button type="button" class="perfil-btn-editar" data-bs-toggle="modal" data-bs-target="#modalEditarPerfil">Editar perfil</button>
                 </div>
@@ -207,11 +313,17 @@ require_once '../componentes/header.php';
     </div>
 </div>
 
+<input type="file" id="fotoUploadInput" accept="image/jpeg,image/png,image/gif,image/webp" style="display:none">
+
 <script>
-    const API_BASE = '../../../api/';
+    const DADOS_PERFIL = {
+        nome: <?= json_encode($usuarioPerfil['nome_usuario'] ?? '') ?>,
+        matricula: <?= json_encode($usuarioPerfil['matricula_usuario'] ?? '') ?>,
+        id: <?= json_encode($sessionId ?? 0) ?>
+    };
+    const API_FOTO = '/sgi/api/foto.php';
 
     document.addEventListener('DOMContentLoaded', async () => {
-        // Carregar nome do interclasse ativo
         try {
             const ativo = await window.SGIInterclasse.getActiveInterclasse();
             const nome = ativo?.nome_interclasse || 'Interclasse';
@@ -228,40 +340,74 @@ require_once '../componentes/header.php';
             if (mob) mob.href = href;
         }
 
-        // Carregar dados do perfil
-        await carregarPerfil();
+            preencherPerfil();
 
-        // Form de edição
         document.getElementById('formEditarPerfil').addEventListener('submit', salvarPerfil);
     });
 
-    async function carregarPerfil() {
-        try {
-            const resp = await fetch(API_BASE + 'perfil.php');
-            const data = await resp.json();
-            if (!data.success || !data.usuario) return;
-
-            const u = data.usuario;
-
-            // Preencher campos mobile
-            const nomeMob = document.getElementById('perfilNomeMob');
-            const emailMob = document.getElementById('perfilEmailMob');
-            if (nomeMob) nomeMob.value = u.nome_usuario || '';
-            if (emailMob) emailMob.value = u.matricula_usuario || '';
-
-            // Preencher campos desktop
-            const nomeDesk = document.getElementById('perfilNomeDesk');
-            const emailDesk = document.getElementById('perfilEmailDesk');
-            if (nomeDesk) nomeDesk.value = u.nome_usuario || '';
-            if (emailDesk) emailDesk.value = u.matricula_usuario || '';
-
-            // Modal de edição
-            const editarNome = document.getElementById('editarNome');
-            if (editarNome) editarNome.value = u.nome_usuario || '';
-        } catch (e) {
-            console.error('Erro ao carregar perfil:', e);
-        }
+    function preencherPerfil() {
+        document.getElementById('perfilNomeMob').textContent = DADOS_PERFIL.nome;
+        document.getElementById('perfilEmailMob').textContent = DADOS_PERFIL.matricula;
+        document.getElementById('perfilNomeDesk').textContent = DADOS_PERFIL.nome;
+        document.getElementById('perfilEmailDesk').textContent = DADOS_PERFIL.matricula;
+        const editarNome = document.getElementById('editarNome');
+        if (editarNome) editarNome.value = DADOS_PERFIL.nome;
     }
+
+    function mostrarFoto(url) {
+        if (!url) return;
+        ['Mob', 'Desk'].forEach(suf => {
+            const img = document.getElementById('fotoImg' + suf);
+            const icon = document.getElementById('fotoIcon' + suf);
+            if (img && icon) {
+                img.onload = () => {
+                    img.classList.remove('d-none');
+                    icon.classList.add('d-none');
+                };
+                img.onerror = () => {
+                    img.classList.add('d-none');
+                    icon.classList.remove('d-none');
+                    console.warn('Foto não carregou:', url);
+                };
+                img.src = url;
+            }
+        });
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        const input = document.getElementById('fotoUploadInput');
+        const btnCameras = ['btnCameraMob', 'btnCameraDesk'];
+        btnCameras.forEach(id => {
+            const btn = document.getElementById(id);
+            if (btn) btn.addEventListener('click', () => input.click());
+        });
+
+        (async () => {
+            try {
+                const resp = await fetch(API_FOTO + '?user_id=' + DADOS_PERFIL.id);
+                const data = await resp.json();
+                if (data.success && data.url) mostrarFoto(data.url);
+            } catch (e) {
+                console.warn('Erro ao buscar foto:', e);
+            }
+        })();
+
+        input.addEventListener('change', async () => {
+            const file = input.files?.[0];
+            if (!file) return;
+            const fd = new FormData();
+            fd.append('foto', file);
+            try {
+                const resp = await fetch(API_FOTO, { method: 'POST', body: fd });
+                const data = await resp.json();
+                if (data.success) mostrarFoto(data.url);
+                else alert(data.mensagem || 'Erro ao enviar foto.');
+            } catch (e) {
+                alert('Erro de conexão.');
+            }
+            input.value = '';
+        });
+    });
 
     async function salvarPerfil(e) {
         e.preventDefault();
@@ -279,28 +425,25 @@ require_once '../componentes/header.php';
             return;
         }
 
-        const body = {};
-        if (nome) body.nome_usuario = nome;
+        const fd = new FormData();
+        fd.append('salvar_perfil', '1');
+        fd.append('nome_usuario', nome);
         if (novaSenha) {
-            body.senha_atual = senhaAtual;
-            body.nova_senha = novaSenha;
+            fd.append('senha_atual', senhaAtual);
+            fd.append('nova_senha', novaSenha);
         }
 
         btn.disabled = true;
         btn.textContent = 'Salvando...';
 
         try {
-            const resp = await fetch(API_BASE + 'perfil.php', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(body)
-            });
+            const resp = await fetch(window.location.href, { method: 'POST', body: fd });
             const data = await resp.json();
 
             if (data.success) {
                 msgEl.innerHTML = '<span class="text-success">' + data.message + '</span>';
-                await carregarPerfil();
-                // Limpar campos de senha
+                DADOS_PERFIL.nome = nome;
+                preencherPerfil();
                 document.getElementById('editarSenhaAtual').value = '';
                 document.getElementById('editarNovaSenha').value = '';
                 document.getElementById('editarConfirmarSenha').value = '';
