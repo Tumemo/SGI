@@ -1,174 +1,555 @@
-<?php
-$tituloPagina = 'SGI - Aluno Home';
-$cssExtra = '
-        .style-card { transition: transform 0.2s ease, box-shadow 0.2s ease; }
-        .style-card:hover, .style-card:focus-within { transform: translateY(-2px); box-shadow: 0 .5rem 1rem rgba(0,0,0,.15)!important; }
-';
-include 'componentes/head.php';
-$mostrarSino = true;
-$mostrarVoltar = false;
-include 'componentes/header.php';
-?>
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Regulamento - Interclasse 2026</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
-    <main class="container py-4">
-        <h1 class="visually-hidden">Painel do Aluno - Interclasses</h1>
-        <h2 class="text-secondary fs-6 text-center mb-4 fw-normal">Inscreva-se ou visualize resultados</h2>
-        
-        <section class="row g-3" id="listaInterclassesAluno" aria-live="polite">
-            <div class="col-12 text-center text-muted py-5">
-                <div class="spinner-border spinner-border-sm me-2" role="status">
-                    <span class="visually-hidden">Carregando...</span>
-                </div>
-                Carregando competições...
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', sans-serif;
+        }
+
+        body {
+            background-color: #ffffff;
+            display: flex;
+            min-height: 100vh;
+            overflow: hidden;
+        }
+
+        .app-container {
+            display: flex;
+            width: 100vw;
+            height: 100vh;
+            background-color: #ffffff;
+            overflow: hidden;
+        }
+
+        /* --- SIDEBAR COM ESPAÇAMENTO JUSTIFY-AROUND --- */
+        .sidebar {
+            width: 70px;
+            background: #e60012;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-around; /* Distribuído igualmente */
+            align-items: center;
+            padding: 25px 0;
+            height: 100vh;
+            flex-shrink: 0;
+        }
+
+        .menu-icons {
+            display: flex;
+            flex-direction: column;
+            gap: 30px; /* Mantém consistência interna se necessário */
+            align-items: center;
+        }
+
+        /* Se quiser que TODOS os itens (incluindo logout) sigam o mesmo fluxo do space-around diretamente na sidebar */
+        .sidebar a {
+            color: white;
+            cursor: pointer;
+            transition: opacity 0.2s, transform 0.2s;
+            opacity: 0.7;
+            text-decoration: none;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* ÍCONES EM TAMANHO 25PX X 25PX */
+        .sidebar a i {
+            font-size: 25px;
+            width: 25px;
+            height: 25px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .sidebar a:hover, .sidebar a.active {
+            opacity: 1;
+            transform: scale(1.1);
+        }
+
+        /* --- CONTEÚDO PRINCIPAL --- */
+        .main-content {
+            flex: 1;
+            padding: 40px 50px;
+            display: flex;
+            flex-direction: column;
+            background-color: #fcfcfc;
+            overflow-y: auto;
+            height: 100vh;
+        }
+
+        .badge-interclasse {
+            background-color: #e60012;
+            color: white;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 22px;
+            font-weight: 600;
+            font-size: 14px;
+            border-radius: 8px;
+            width: fit-content;
+            margin-bottom: 30px;
+            text-decoration: none;
+        }
+
+        .page-title {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            font-size: 28px;
+            color: #0f172a;
+            font-weight: 700;
+            margin-bottom: 12px;
+            position: relative;
+        }
+
+        .page-title::after {
+            content: '';
+            position: absolute;
+            bottom: -8px;
+            left: 0;
+            width: 50px;
+            height: 3px;
+            background-color: #e60012;
+            border-radius: 2px;
+        }
+
+        .card-download {
+            background-color: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.02);
+            padding: 45px 40px;
+            text-align: center;
+            max-width: 760px;
+            width: 100%;
+            margin: auto;
+        }
+
+        .pdf-icon-container {
+            width: 80px;
+            height: 80px;
+            background-color: #fff1f2;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 0 auto 20px auto;
+        }
+
+        .pdf-icon-container i {
+            color: #e60012;
+            font-size: 36px;
+        }
+
+        .download-link-block {
+            text-decoration: none;
+            display: inline-block;
+            margin-bottom: 10px;
+        }
+
+        .download-title {
+            font-size: 20px;
+            color: #000000;
+            font-weight: 700;
+            transition: color 0.2s ease;
+        }
+
+        .download-link-block:hover .download-title {
+            color: #e60012;
+        }
+
+        .download-subtitle {
+            font-size: 14px;
+            color: #64748b;
+            margin-bottom: 30px;
+        }
+
+        .card-divider {
+            height: 1px;
+            background-color: #f1f5f9;
+            margin-bottom: 30px;
+        }
+
+        .checkbox-label {
+            display: flex;
+            align-items: flex-start;
+            justify-content: center;
+            gap: 14px;
+            margin-bottom: 30px;
+            cursor: pointer;
+            text-align: left;
+            max-width: 520px;
+            margin-left: auto;
+            margin-right: auto;
+            font-size: 14px;
+            color: #334155;
+            line-height: 1.5;
+        }
+
+        .checkbox-label input {
+            display: none;
+        }
+
+        .checkbox-custom {
+            width: 24px;
+            height: 24px;
+            border: 2px solid #cbd5e1;
+            border-radius: 6px;
+            background-color: #fff;
+            flex-shrink: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: all 0.2s;
+            margin-top: 2px;
+        }
+
+        .checkbox-label input:checked + .checkbox-custom {
+            background-color: #e60012;
+            border-color: #e60012;
+        }
+
+        .checkbox-label input:checked + .checkbox-custom::after {
+            content: "✓";
+            color: white;
+            font-size: 15px;
+            font-weight: bold;
+            display: block;
+        }
+
+        .btn-submit {
+            background-color: #e60012;
+            color: #ffffff;
+            border: none;
+            padding: 14px 40px;
+            font-size: 15px;
+            font-weight: 600;
+            border-radius: 8px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            transition: background-color 0.2s, transform 0.1s;
+            box-shadow: 0 4px 12px rgba(230, 0, 18, 0.2);
+        }
+
+        .btn-submit:hover {
+            background-color: #cc0010;
+        }
+
+        .btn-submit:active {
+            transform: scale(0.98);
+        }
+
+        .card-footer-info {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            margin-top: 25px;
+            font-size: 12px;
+            color: #64748b;
+        }
+
+        .card-footer-info i {
+            color: #10b981;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+
+
+    <div class="app-container">
+         
+        <aside class="sidebar">
+            <a href="#"><i class="bi bi-person-gear"></i></a>
+            <a href="index.html" class="active"><i class="bi bi-house"></i></a>
+            <a href="modalidade.php"><i class="bi bi-trophy"></i></a>
+            <a href="teste.php"><i class="bi bi-calendar3"></i></a>
+            <a href="notificacao.html"><i class="bi bi-bell"></i></a>
+            <a href="#" class="logout"><i class="bi bi-box-arrow-right"></i></a>
+        </aside>
+
+        <main class="main-content">
+            
+             <h1 class="fs-2">Edições do interclasse</h1>
+
+      
+
+        <div>
+            <div class="row mt-4 bg-danger rounded-3 shadow text-white py-3 fs-5 fw-medium px-2">
+                <div class="col-4">Edição interclasse</div>
+                <div class="col-4 text-center">Ano</div>
+                <div class="col-4 text-center">Status</div>
             </div>
-        </section>
-    </main>
 
-    <div class="modal fade" id="modalTermo" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-scrollable">
-            <div class="modal-content border-0 shadow">
-                <div class="modal-header bg-dark text-white border-0">
-                    <h5 class="modal-title fw-bold">Termo de Responsabilidade</h5>
-                </div>
-                <div class="modal-body">
-                    <p>Declaro para os devidos fins que aceito e assumo inteira responsabilidade pelos termos abaixo descritos para participação no Interclasse:</p>
-                    <ol class="ps-3">
-                        <li class="mb-2"><strong>Conduta:</strong> Comprometo-me a agir com respeito, <em>fair play</em> e espírito esportivo durante todas as atividades.</li>
-                        <li class="mb-2"><strong>Regras:</strong> Declaro estar ciente e de acordo com todas as regras oficiais do Interclasse, acatando as decisões da organização e arbitragem.</li>
-                        <li class="mb-2"><strong>Materiais:</strong> Responsabilizo-me pelos materiais esportivos e uniformes que me forem confiados, respondendo por eventuais danos ou extravios.</li>
-                        <li class="mb-2"><strong>Saúde:</strong> Declaro estar em condições físicas adequadas para a prática das modalidades escolhidas, isentando a organização de responsabilidade por acidentes ou lesões decorrentes da participação.</li>
-                        <li class="mb-2"><strong>Imagem:</strong> Autorizo o uso de minha imagem e voz para fins de divulgação do evento nas mídias oficiais da instituição.</li>
-                        <li class="mb-2"><strong>Pontuação:</strong> Aceito o sistema de pontuação e classificação estabelecido, bem como as penalidades previstas no regulamento.</li>
-                    </ol>
-                    <div id="avisoRecusa" class="alert alert-danger d-none" role="alert">
-                        <i class="bi bi-exclamation-triangle-fill me-1"></i>
-                        Não é possível continuar sem aceitar os termos.
-                    </div>
-                </div>
-                <div class="modal-footer border-0 justify-content-center gap-3 pb-4">
-                    <button type="button" class="btn btn-outline-secondary px-4" id="btnRecusarTermo">Recusar</button>
-                    <button type="button" class="btn btn-danger px-4" id="btnAceitarTermo">Aceitar</button>
-                </div>
+            <div class="mt-2" id="listaDesktop">
+                 <p class="text-center text-muted mt-5">(Carregando...)</p>
             </div>
         </div>
+
+    </section>
+
+           <div class="modal fade" id="modalRegulamento" tabindex="-1" data-bs-backdrop="static">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+
+            <div class="modal-header">
+                <h5 class="modal-title">
+                  
+                    Regulamento
+                </h5>
+            </div>
+
+            <div class="modal-body">
+
+                <section class="card-download">
+
+                    <div class="pdf-icon-container">
+                        <i class="bi bi-file-earmark-pdf"></i>
+                    </div>
+
+                    <a href="#" download="regulamento_interclasse_2026.pdf" class="download-link-block">
+                        <h2 class="download-title">Acessar PDF do regulamento</h2>
+                    </a>
+
+                    <p class="download-subtitle">
+                        Leia o documento completo para participar com segurança e estar por dentro de todas as regras.
+                    </p>
+
+                    <div class="card-divider"></div>
+
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="terms-checkbox">
+                        <span class="checkbox-custom"></span>
+                        <span>
+                            Declaro que li e concordo com os termos de participação e regulamento apresentados.
+                        </span>
+                    </label>
+
+                    <button type="button"
+                            id="btn-submit-terms"
+                            class="btn-submit"
+                            onclick="validarEAvancar()">
+                        <i class="bi bi-file-earmark-text"></i>
+                        Li e concordo com os termos
+                    </button>
+
+                    <div class="card-footer-info">
+                        <i class="bi bi-check-circle"></i>
+                        <span>
+                            Sua participação só será confirmada após a concordância com o regulamento.
+                        </span>
+                    </div>
+
+                </section>
+
+            </div>
+
+        </div>
+    </div>
+</div>
+
+
+
+<div class="modal fade" id="modalModalidades" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    Escolha suas modalidades
+                </h5>
+            </div>
+
+            <div class="modal-body">
+
+                  <div class="app-container">
+        
+        <aside class="sidebar">
+    <a href="#"><i class="bi bi-person-gear"></i></a>
+
+    <a href="home.php">
+        <i class="bi bi-house"></i>
+    </a>
+
+    <a href="modalidades.php" class="active">
+        <i class="bi bi-trophy"></i>
+    </a>
+
+    <a href="agenda.php">
+        <i class="bi bi-calendar3"></i>
+    </a>
+
+    <a href="notificacao.php">
+        <i class="bi bi-bell"></i>
+    </a>
+
+    <a href="#" class="logout">
+        <i class="bi bi-box-arrow-right"></i>
+    </a>
+</aside>
+
+        <main class="main-content">
+            
+            <a href="#" class="badge-interclasse">
+               <i class="bi bi-arrow-left-circle-fill"></i> Interclasse 2026
+              </a>
+
+            <h1 class="page-title">
+               <i class="bi bi-trophy"></i> Modalidades
+            </h1>
+
+            <div class="modalidades-grid">
+                
+<div class="modalidade-card" onclick="toggleModalidade(this)">
+    <i class="bi bi-trophy"></i>
+    Basquete
+</div>
+
+<div class="modalidade-card" onclick="toggleModalidade(this)">
+    <i class="bi bi-trophy"></i>
+    Futebol
+</div>
+
+<div class="modalidade-card" onclick="toggleModalidade(this)">
+    <i class="bi bi-trophy"></i>
+    Vôlei
+</div>
+
+<div class="modalidade-card" onclick="toggleModalidade(this)">
+    <i class="bi bi-trophy"></i>
+    Handebol
+</div>
+
+<div class="modalidade-card" onclick="toggleModalidade(this)">
+    <i class="bi bi-trophy"></i>
+    Tênis de Mesa
+</div>
+
+<div class="modalidade-card" onclick="toggleModalidade(this)">
+    <i class="bi bi-trophy"></i>
+    Corrida
+</div>
+            </div>
+
+            <div class="footer-actions">
+                <p class="counter-text">Você pode escolher até 3 modalidades</p>
+                
+                <button type="button" class="btn-save" onclick="salvarEscolhas()">
+                    Salvar
+                </button>
+               
+
+        </main>
     </div>
 
-<?php
-$paginaAtiva = 'home';
-include 'componentes/nav.php';
-?>
-
     <script>
-        function escaparHTML(string) {
-            const mapa = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#x27;' };
-            return String(string || '').replace(/[&<>"']/g, (s) => mapa[s]);
-        }
-
-        function cardInterclasse(interclasse, ativo) {
-            const nomeSanitizado = escaparHTML(interclasse.nome_interclasse);
-            const ano = interclasse.ano_interclasse ? escaparHTML(String(interclasse.ano_interclasse).split('-')[0]) : 'N/A';
+        function toggleModalidade(card) {
+            // Conta quantos já estão selecionados atualmente
+            const selecionados = document.querySelectorAll('.modalidade-card.selected');
             
-            const status = ativo ? 'Em andamento' : 'Inativo';
-            const classeCard = ativo ? 'bg-white' : 'bg-secondary-subtle opacity-75';
-            const href = ativo ? `./inscricao.php?id=${interclasse.id_interclasse}` : `./ranking.php?id=${interclasse.id_interclasse}`;
-            
-            return `
-                <div class="col-12 col-md-6 col-lg-4">
-                    <a href="${href}" class="text-decoration-none text-dark card-link d-block h-100">
-                        <div class="shadow-sm d-flex justify-content-between align-items-center px-4 py-3 rounded ${classeCard} h-100 style-card">
-                            <div>
-                                <h3 class="fs-5 mb-1 text-dark fw-semibold">${nomeSanitizado}</h3>
-                                <p class="m-0 text-secondary small">
-                                    <span class="badge ${ativo ? 'bg-success-subtle text-success' : 'bg-secondary-subtle text-secondary'} me-1">${status}</span> 
-                                    - ${ano}
-                                </p>
-                            </div>
-                            <img src="../../../public/icons/arrow-right.svg" alt="" aria-hidden="true" width="24" height="24">
-                        </div>
-                    </a>
-                </div>
-            `;
-        }
-
-        async function carregarInterclassesAluno() {
-            const container = document.getElementById('listaInterclassesAluno');
-            
-            try {
-                const res = await fetch('../../../../api/interclasse.php?regulamento=true');
-                
-                if (!res.ok) throw new Error('Resposta do servidor não amigável.');
-                
-                const lista = await res.json();
-                
-                if (!Array.isArray(lista) || lista.length === 0) {
-                    container.innerHTML = `
-                        <div class="col-12 text-center text-muted py-5">
-                            <i class="bi bi-folder-x fs-1 d-block mb-2"></i>
-                            Nenhum interclasse encontrado no momento.
-                        </div>`;
+            // Se já estiver selecionado, remove a seleção livremente
+            if (card.classList.contains('selected')) {
+                card.classList.remove('selected');
+            } else {
+                // REQUISITO: Bloqueia se tentar selecionar mais do que 3
+                if (selecionados.length >= 3) {
+                    alert("Você só pode escolher até 3 modalidades!");
                     return;
                 }
-                
-                container.innerHTML = lista.map((item) => {
-                    const isAtivo = item && String(item.status_interclasse) === '1';
-                    return cardInterclasse(item, isAtivo);
-                }).join('');
-                
-            } catch (error) {
-                console.error('Erro ao buscar dados:', error);
-                container.innerHTML = `
-                    <div class="col-12 text-center text-danger py-5">
-                        <i class="bi bi-exclamation-triangle-fill fs-1 d-block mb-2"></i>
-                        Erro ao carregar interclasses. Por favor, tente novamente mais tarde.
-                    </div>
-                `;
+                card.classList.add('selected');
             }
         }
-        function initModalTermo() {
-            const modalTermo = new bootstrap.Modal(document.getElementById('modalTermo'));
-            const btnAceitar = document.getElementById('btnAceitarTermo');
-            const btnRecusar = document.getElementById('btnRecusarTermo');
-            const avisoRecusa = document.getElementById('avisoRecusa');
 
-            modalTermo.show();
-
-            btnAceitar.addEventListener('click', async function () {
-                btnAceitar.disabled = true;
-                btnAceitar.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status"></span>Salvando...';
-
-                try {
-                    const res = await fetch('../../../../api/concordarTermos.php', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' }
-                    });
-                    const data = await res.json();
-
-                    if (data.success) {
-                        avisoRecusa.classList.add('d-none');
-                        modalTermo.hide();
-                    } else {
-                        avisoRecusa.textContent = data.message || 'Erro ao salvar aceite. Tente novamente.';
-                        avisoRecusa.classList.remove('d-none');
-                    }
-                } catch (error) {
-                    avisoRecusa.textContent = 'Erro de conexão. Verifique sua internet e tente novamente.';
-                    avisoRecusa.classList.remove('d-none');
-                } finally {
-                    btnAceitar.disabled = false;
-                    btnAceitar.textContent = 'Aceitar';
-                }
+        function salvarEscolhas() {
+            const selecionados = document.querySelectorAll('.modalidade-card.selected');
+            if(selecionados.length === 0) {
+                alert("Por favor, escolha pelo menos 1 modalidade antes de salvar.");
+                return;
+            }
+            
+            // Coleta os nomes das modalidades selecionadas
+            let escolhidas = [];
+            selecionados.forEach(card => {
+                escolhidas.push(card.innerText.trim());
             });
-
-            btnRecusar.addEventListener('click', function () {
-                avisoRecusa.classList.remove('d-none');
-            });
+            
+            alert("Suas modalidades foram salvas com sucesso: " + escolhidas.join(", "));
+            window.location.href = "home.php";
         }
-
-        document.addEventListener('DOMContentLoaded', function () {
-            carregarInterclassesAluno();
-            initModalTermo();
-        });
+        
     </script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
+
+            </div>
+
+        </div>
+    </div>
+</div>
+
+        </main>
+    </div>
+    <script>
+window.addEventListener('load', () => {
+
+    const aceitou = localStorage.getItem('regulamentoAceito');
+
+    if (!aceitou) {
+
+        const modal = new bootstrap.Modal(
+            document.getElementById('modalRegulamento')
+        );
+
+        modal.show();
+    }
+
+});
+</script>
+<script>
+function validarEAvancar() {
+
+    const checkbox = document.getElementById('terms-checkbox');
+
+    if (!checkbox.checked) {
+        alert('Você precisa aceitar o regulamento.');
+        return;
+    }
+
+    // salva que já aceitou
+    localStorage.setItem('regulamentoAceito', 'true');
+
+    const modalReg = bootstrap.Modal.getInstance(
+        document.getElementById('modalRegulamento')
+    );
+
+    modalReg.hide();
+
+    // abre modal de modalidades
+    const modalMod = new bootstrap.Modal(
+        document.getElementById('modalModalidades')
+    );
+
+    modalMod.show();
+}
+</script>
+    
+
 </body>
 </html>
