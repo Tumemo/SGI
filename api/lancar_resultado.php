@@ -35,6 +35,17 @@ try {
 
     sgi_chaveamento_processar_avanco($conn, $idJogo);
 
+    // Atualiza pontuação das turmas no ranking (soma os gols ao pontuacao_turma)
+    $stUpd = $conn->prepare(
+        'UPDATE turmas t
+         INNER JOIN equipes e ON e.turmas_id_turma = t.id_turma
+         INNER JOIN partidas p ON p.equipes_id_equipe = e.id_equipe AND p.jogos_id_jogo = ?
+         SET t.pontuacao_turma = t.pontuacao_turma + p.resultado_partida'
+    );
+    $stUpd->bind_param('i', $idJogo);
+    $stUpd->execute();
+    $stUpd->close();
+
     $conn->commit();
     echo json_encode(['success' => true, 'message' => 'Resultado lançado!'], JSON_UNESCAPED_UNICODE);
 } catch (Throwable $e) {

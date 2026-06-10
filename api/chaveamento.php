@@ -10,8 +10,9 @@ header('Content-Type: application/json; charset=utf-8');
 
 $method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
 $data = json_decode(file_get_contents('php://input') ?: '{}');
+$tipoModalidade = $data->tipo_modalidade ?? ($_GET['tipo_modalidade'] ?? null);
 
-if ($data->tipo_modalidade == 'individual') {
+if ($tipoModalidade === 'individual') {
     switch ($method) {
         case 'GET':
             $idModalidade = isset($_GET['id_modalidade']) ? (int) $_GET['id_modalidade'] : 0;
