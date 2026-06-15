@@ -5,6 +5,7 @@ $navItens = [
     'inscricao' => ['label' => 'Inscrições',   'icon' => 'bi-people-fill',       'url' => './modalidade.php'],
     'ranking'  => ['label' => 'Ranking',       'icon' => 'bi-trophy-fill',       'url' => './ranking.php'],
     'termos'   => ['label' => 'Termos',        'icon' => 'bi-file-text-fill',    'url' => './termos.php'],
+    'perfil'   => ['label' => 'Perfil',        'icon' => 'bi-person-gear',       'url' => './perfil.php'],
     'sair'     => ['label' => 'Sair',          'icon' => 'bi-box-arrow-right',   'url' => '../../../../api/logout.php'],
 ];
 ?>

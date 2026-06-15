@@ -209,7 +209,7 @@ require_once '../componentes/header.php';
     <div class="perfil-card p-4">
         <div class="text-center mb-4 position-relative d-inline-block w-100">
             <div class="perfil-foto-circle mx-auto overflow-hidden" id="fotoCircleMob">
-                <?php $fotoPath = $usuarioPerfil['foto_usuario'] ? '/sgi/uploads/fotosUsuarios/' . rawurlencode($usuarioPerfil['foto_usuario']) : ''; ?>
+                <?php $fotoPath = $usuarioPerfil['foto_usuario'] ? '../../uploads/fotosUsuarios/' . rawurlencode($usuarioPerfil['foto_usuario']) : ''; ?>
                 <img src="<?= $fotoPath ?>" id="fotoImgMob" class="w-100 h-100 object-fit-cover <?= $fotoPath ? '' : 'd-none' ?>" alt="Foto" onerror="this.classList.add('d-none');document.getElementById('fotoIconMob')?.classList.remove('d-none');">
                 <i class="bi bi-person-gear <?= $fotoPath ? 'd-none' : '' ?>" id="fotoIconMob"></i>
             </div>
@@ -247,7 +247,7 @@ require_once '../componentes/header.php';
             <div class="row g-0">
                 <div class="col-md-5 perfil-foto-wrap">
                     <div class="perfil-foto-circle overflow-hidden">
-                        <?php $fotoPathDesk = $usuarioPerfil['foto_usuario'] ? '/sgi/uploads/fotosUsuarios/' . rawurlencode($usuarioPerfil['foto_usuario']) : ''; ?>
+                        <?php $fotoPathDesk = $usuarioPerfil['foto_usuario'] ? '../../uploads/fotosUsuarios/' . rawurlencode($usuarioPerfil['foto_usuario']) : ''; ?>
                         <img src="<?= $fotoPathDesk ?>" id="fotoImgDesk" class="w-100 h-100 object-fit-cover <?= $fotoPathDesk ? '' : 'd-none' ?>" alt="Foto" onerror="this.classList.add('d-none');document.getElementById('fotoIconDesk')?.classList.remove('d-none');">
                         <i class="bi bi-person-gear <?= $fotoPathDesk ? 'd-none' : '' ?>" id="fotoIconDesk"></i>
                     </div>
@@ -321,7 +321,7 @@ require_once '../componentes/header.php';
         matricula: <?= json_encode($usuarioPerfil['matricula_usuario'] ?? '') ?>,
         id: <?= json_encode($sessionId ?? 0) ?>
     };
-    const API_FOTO = '/sgi/api/foto.php';
+    const API_FOTO = '../../api/foto.php';
 
     document.addEventListener('DOMContentLoaded', async () => {
         try {
