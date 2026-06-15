@@ -1,8 +1,8 @@
 <?php
 $paginaAtiva = $paginaAtiva ?? 'home';
 $navItens = [
-    'home'       => ['label' => 'Início',       'icon' => 'bi-house-door-fill',   'url' => './home.php'],
-    'jogos'      => ['label' => 'Jogos',        'icon' => 'bi-play-circle-fill',  'url' => './jogos.php'],
+    'home'       => ['label' => 'Início',       'icon' => 'bi-house-door-fill',   'url' => './dashboard.php'],
+    'dashboard'  => ['label' => 'Dashboard',    'icon' => 'bi-grid-fill',         'url' => './dashboard.php'],
     'pontuacao'  => ['label' => 'Chaveamentos', 'icon' => 'bi-award-fill',        'url' => './pontuacao.php'],
     'sair'       => ['label' => 'Sair',         'icon' => 'bi-box-arrow-right',   'url' => '../../../../api/logout.php'],
 ];

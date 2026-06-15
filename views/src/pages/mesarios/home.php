@@ -73,7 +73,7 @@ include 'componentes/nav.php';
 
         return `
             <div class="col-12 col-md-6 col-lg-4">
-                <a href="./jogos_lista.php?id=${interclasse.id_interclasse}" class="text-decoration-none text-dark card-link d-block h-100">
+                <a href="./dashboard.php?id=${interclasse.id_interclasse}" class="text-decoration-none text-dark card-link d-block h-100">
                     <div class="shadow-sm d-flex justify-content-between align-items-center px-4 py-3 rounded ${classeCard} h-100 style-card">
                         <div>
                             <h3 class="fs-5 mb-1 text-dark fw-semibold">${nomeSanitizado}</h3>
