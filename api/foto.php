@@ -32,8 +32,7 @@ if ($method === 'GET') {
     echo json_encode([
         'success' => true,
         'user_id' => $userId,
-        'foto_usuario' => $foto,
-        'url' => $foto ? '/sgi/uploads/fotosUsuarios/' . rawurlencode($foto) : ''
+        'foto_usuario' => $foto
     ]);
     exit;
 }
@@ -79,8 +78,7 @@ if ($method === 'POST') {
     echo json_encode([
         'success' => true,
         'mensagem' => 'Foto atualizada!',
-        'arquivo' => $nomeArquivo,
-        'url' => '/sgi/uploads/fotosUsuarios/' . rawurlencode($nomeArquivo)
+        'arquivo' => $nomeArquivo
     ]);
     exit;
 }
