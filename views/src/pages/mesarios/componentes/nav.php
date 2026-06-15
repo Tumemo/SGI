@@ -47,7 +47,7 @@ if (typeof SGI_USER_ID !== 'undefined' && SGI_USER_ID) {
     fetch('/sgi/api/foto.php?user_id=' + SGI_USER_ID)
         .then(function(r) { return r.json(); })
         .then(function(d) {
-            if (d.success && d.url) {
+            if (d.success && d.foto_usuario) {
                 [
                     {img:'perfilImgMes', icon:'perfilIconMes'},
                     {img:'perfilImgMesDesk', icon:'perfilIconMesDesk'}
@@ -57,7 +57,7 @@ if (typeof SGI_USER_ID !== 'undefined' && SGI_USER_ID) {
                     if (img && icon) {
                         img.onload = function() { img.classList.remove('d-none'); icon.classList.add('d-none'); };
                         img.onerror = function() { img.classList.add('d-none'); icon.classList.remove('d-none'); };
-                        img.src = d.url;
+                        img.src = '/sgi/uploads/fotosUsuarios/' + d.foto_usuario;
                     }
                 });
             }

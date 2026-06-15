@@ -4,7 +4,7 @@ $textTop = "Chaveamentos";
 $btnVoltar = true;
 
 if (isset($_GET['ajax'])) {
-    session_start();
+    (session_status() === PHP_SESSION_NONE) && session_start();
     if (!isset($_SESSION['id'])) {
         header('Content-Type: application/json');
         echo json_encode(['success' => false, 'message' => 'Não autorizado.']);

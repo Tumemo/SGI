@@ -5,7 +5,7 @@ $mostrarVoltar = true;
 $mostrarSino = false;
 $urlVoltar = './home.php';
 
-session_start();
+(session_status() === PHP_SESSION_NONE) && session_start();
 $conn = null;
 $sessionId = $_SESSION['id'] ?? null;
 $sessionNome = $_SESSION['nome'] ?? '';
@@ -323,9 +323,9 @@ include 'componentes/header.php';
 
         (async () => {
             try {
-                const resp = await fetch('../../../api/foto.php?user_id=' + DADOS_PERFIL.id);
+                const resp = await fetch('/sgi/api/foto.php?user_id=' + DADOS_PERFIL.id);
                 const data = await resp.json();
-                if (data.foto_usuario) mostrarFoto('../../../uploads/fotosUsuarios/' + data.foto_usuario);
+                if (data.foto_usuario) mostrarFoto('/sgi/uploads/fotosUsuarios/' + data.foto_usuario);
             } catch (e) {
                 console.warn('Erro ao buscar foto:', e);
             }
@@ -341,7 +341,7 @@ include 'componentes/header.php';
                 const resp = await fetch(window.location.href, { method: 'POST', body: fd });
                 const data = await resp.json();
                 if (data.success) {
-                    if (data.arquivo) mostrarFoto('../../../uploads/fotosUsuarios/' + data.arquivo);
+                    if (data.arquivo) mostrarFoto('/sgi/uploads/fotosUsuarios/' + data.arquivo);
                 } else {
                     alert(data.mensagem || 'Erro ao enviar foto.');
                 }

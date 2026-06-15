@@ -1,18 +1,20 @@
 <?php
-session_start();
+(session_status() === PHP_SESSION_NONE) && session_start();
 require_once '../../../../config/db.php';
 
 $id_usuario = (int)($_SESSION['id'] ?? 0);
 $genero_usuario = 'MASC';
+$categoria_usuario = 0;
 $modalidades_inscritas = [];
 
 if ($id_usuario) {
-    $stmt = $conn->prepare("SELECT genero_usuario FROM usuarios WHERE id_usuario = ?");
+    $stmt = $conn->prepare("SELECT u.genero_usuario, t.categorias_id_categoria FROM usuarios u LEFT JOIN turmas t ON u.turmas_id_turma = t.id_turma WHERE u.id_usuario = ?");
     $stmt->bind_param('i', $id_usuario);
     $stmt->execute();
     $result = $stmt->get_result();
     if ($row = $result->fetch_assoc()) {
         $genero_usuario = $row['genero_usuario'];
+        $categoria_usuario = (int)($row['categorias_id_categoria'] ?? 0);
     }
 
     $sql = "SELECT m.id_modalidade, m.nome_modalidade, m.genero_modalidade, 
@@ -144,6 +146,11 @@ include 'componentes/header.php';
         padding: 4px 14px;
         border-radius: 20px;
     }
+    .membro-foto {
+        flex-shrink: 0;
+        border: 2px solid #fff;
+        box-shadow: 0 1px 4px rgba(0,0,0,.12);
+    }
 </style>
 
 <main class="container py-4">
@@ -178,6 +185,7 @@ include 'componentes/nav.php';
     const urlParams = new URLSearchParams(window.location.search);
     const idInterclasse = urlParams.get('id');
     const generoUsuario = '<?= $genero_usuario ?>';
+    const categoriaUsuario = <?= $categoria_usuario ?>;
     const modalidadesInscritas = <?= json_encode($modalidades_inscritas) ?>;
     const estaInscrito = modalidadesInscritas.length > 0;
     let modalidadesData = [];
@@ -185,12 +193,20 @@ include 'componentes/nav.php';
     function esc(s) { const d = document.createElement('div'); d.textContent = s == null ? '' : String(s); return d.innerHTML; }
 
     async function carregarDados() {
-        if (!idInterclasse) {
-            document.getElementById('subtitulo').textContent = 'Nenhum interclasse selecionado.';
-            return;
-        }
-
         try {
+            if (!idInterclasse) {
+                const listaInter = await (await fetch('../../../../api/interclasse.php?regulamento=true')).json();
+                const ativos = (Array.isArray(listaInter) ? listaInter : []).filter(i => String(i.status_interclasse) === '1');
+                if (ativos.length === 0) {
+                    document.getElementById('subtitulo').textContent = 'Nenhum interclasse ativo no momento.';
+                    return;
+                }
+                idInterclasse = String(ativos[0].id_interclasse);
+                const url = new URL(window.location);
+                url.searchParams.set('id', idInterclasse);
+                window.history.replaceState({}, '', url);
+            }
+
             const resInter = await fetch('../../../../api/interclasse.php?regulamento=true');
             const listaInter = await resInter.json();
             const dadosInter = (Array.isArray(listaInter) ? listaInter : []).find(i => String(i.id_interclasse) === String(idInterclasse));
@@ -222,11 +238,12 @@ include 'componentes/nav.php';
         acoes.classList.remove('d-none');
 
         const filtradas = modalidadesData.filter(mod =>
-            mod.genero_modalidade === 'MISTO' || mod.genero_modalidade === generoUsuario
+            (mod.genero_modalidade === 'MISTO' || mod.genero_modalidade === generoUsuario) &&
+            parseInt(mod.categorias_id_categoria) === categoriaUsuario
         );
 
         if (filtradas.length === 0) {
-            grid.innerHTML = '<div class="col-12 text-center text-muted py-5"><i class="bi bi-inbox fs-1 d-block mb-2"></i>Nenhuma modalidade disponível para seu gênero no momento.</div>';
+            grid.innerHTML = '<div class="col-12 text-center text-muted py-5"><i class="bi bi-inbox fs-1 d-block mb-2"></i>Nenhuma modalidade disponível para sua categoria no momento.</div>';
             return;
         }
 
@@ -297,12 +314,27 @@ include 'componentes/nav.php';
             const userId = <?= $id_usuario ?>;
             membros.forEach(m => {
                 const ehVoce = String(m.id_usuario) === String(userId);
-                container.innerHTML += `
-                    <div class="membro-equipe">
-                        <i class="bi bi-person-circle text-secondary"></i>
-                        <span class="${ehVoce ? 'voce' : ''}">${esc(m.nome_usuario)} ${ehVoce ? '(Você)' : ''}</span>
-                    </div>
-                `;
+                const div = document.createElement('div');
+                div.className = 'membro-equipe';
+                const img = document.createElement('img');
+                img.className = 'rounded-circle d-none object-fit-cover membro-foto';
+                img.width = 26; img.height = 26;
+                img.alt = '';
+                img.onload = function() { img.classList.remove('d-none'); icon.classList.add('d-none'); };
+                img.onerror = function() { img.classList.add('d-none'); icon.classList.remove('d-none'); };
+                const icon = document.createElement('i');
+                icon.className = 'bi bi-person-circle text-secondary';
+                div.appendChild(img);
+                div.appendChild(icon);
+                const span = document.createElement('span');
+                span.className = ehVoce ? 'voce' : '';
+                span.textContent = esc(m.nome_usuario) + (ehVoce ? ' (Você)' : '');
+                div.appendChild(span);
+                container.appendChild(div);
+                fetch('/sgi/api/foto.php?user_id=' + m.id_usuario)
+                    .then(r => r.json())
+                    .then(d => { if (d.foto_usuario) img.src = '/sgi/uploads/fotosUsuarios/' + d.foto_usuario; })
+                    .catch(function() {});
             });
         } catch (e) {
             console.error('Erro ao carregar membros:', e);

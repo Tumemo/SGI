@@ -17,6 +17,7 @@ $backHome = './home.php';
 $nivel = (int)($_SESSION['nivel'] ?? 0);
 if ($nivel === 3) $backHome = './alunos/home.php';
 elseif ($nivel === 2) $backHome = './mesarios/home.php';
+define('SGI_PERFIL_ALLOW', true);
 try {
     $dbPath = dirname(__DIR__, 3) . DIRECTORY_SEPARATOR . 'config' . DIRECTORY_SEPARATOR . 'db.php';
     require_once $dbPath;
@@ -324,9 +325,10 @@ require_once '../componentes/header.php';
     const DADOS_PERFIL = {
         nome: <?= json_encode($usuarioPerfil['nome_usuario'] ?? '') ?>,
         matricula: <?= json_encode($usuarioPerfil['matricula_usuario'] ?? '') ?>,
-        id: <?= json_encode($sessionId ?? 0) ?>
+        id: <?= json_encode($sessionId ?? 0) ?>,
+        nivel: <?= json_encode((int)($nivel ?? 0)) ?>
     };
-    const API_FOTO = '../../api/foto.php';
+    const API_FOTO = '/sgi/api/foto.php';
 
     document.addEventListener('DOMContentLoaded', async () => {
         try {
@@ -339,9 +341,13 @@ require_once '../componentes/header.php';
         const params = new URLSearchParams(window.location.search);
         const id = params.get('id');
         if (id) {
-            const href = `./dashboard.php?id=${encodeURIComponent(id)}`;
+            var prefix = '.';
+            if (DADOS_PERFIL.nivel === 3) prefix = './alunos';
+            else if (DADOS_PERFIL.nivel === 2) prefix = './mesarios';
+            var page = (DADOS_PERFIL.nivel === 3) ? 'modalidade.php' : 'dashboard.php';
+            var href = prefix + '/' + page + '?id=' + encodeURIComponent(id);
             document.getElementById('perfilBackDesk').href = href;
-            const mob = document.getElementById('perfilBackMob');
+            var mob = document.getElementById('perfilBackMob');
             if (mob) mob.href = href;
         }
 
@@ -391,7 +397,7 @@ require_once '../componentes/header.php';
             try {
                 const resp = await fetch(API_FOTO + '?user_id=' + DADOS_PERFIL.id);
                 const data = await resp.json();
-                if (data.success && data.url) mostrarFoto(data.url);
+                if (data.success && data.foto_usuario) mostrarFoto('/sgi/uploads/fotosUsuarios/' + data.foto_usuario);
             } catch (e) {
                 console.warn('Erro ao buscar foto:', e);
             }
@@ -405,7 +411,7 @@ require_once '../componentes/header.php';
             try {
                 const resp = await fetch(API_FOTO, { method: 'POST', body: fd });
                 const data = await resp.json();
-                if (data.success) mostrarFoto(data.url);
+                if (data.success && data.arquivo) mostrarFoto('/sgi/uploads/fotosUsuarios/' + data.arquivo);
                 else alert(data.mensagem || 'Erro ao enviar foto.');
             } catch (e) {
                 alert('Erro de conexão.');

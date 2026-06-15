@@ -4,13 +4,12 @@ $navItens = [
     'home'     => ['label' => 'Início',       'icon' => 'bi-house-door-fill',   'url' => './home.php'],
     'inscricao' => ['label' => 'Inscrições',   'icon' => 'bi-people-fill',       'url' => './modalidade.php'],
     'ranking'  => ['label' => 'Ranking',       'icon' => 'bi-trophy-fill',       'url' => './ranking.php'],
-    'perfil'   => ['label' => 'Perfil',        'icon' => 'bi-person-gear',      'url' => '../perfil.php'],
+    'perfil'   => ['label' => 'Perfil',        'icon' => 'bi-person-gear',      'url' => './perfil.php'],
     'termos'   => ['label' => 'Termos',        'icon' => 'bi-file-text-fill',    'url' => './termos.php'],
-    'perfil'   => ['label' => 'Perfil',        'icon' => 'bi-person-gear',       'url' => './perfil.php'],
     'sair'     => ['label' => 'Sair',          'icon' => 'bi-box-arrow-right',   'url' => '../../../../api/logout.php'],
 ];
 ?>
-<nav class="fixed-bottom py-2 bg-danger shadow-lg" aria-label="Navegação principal inferior">
+<nav class="fixed-bottom py-2 bg-danger shadow-lg border-top border-white border-opacity-25" aria-label="Navegação principal inferior">
     <ul class="nav justify-content-around fs-2 list-unstyled mb-0">
         <?php foreach ($navItens as $key => $item): ?>
         <?php
@@ -33,13 +32,13 @@ if (typeof SGI_USER_ID !== 'undefined' && SGI_USER_ID) {
     fetch('/sgi/api/foto.php?user_id=' + SGI_USER_ID)
         .then(function(r) { return r.json(); })
         .then(function(d) {
-            if (d.success && d.url) {
+            if (d.success && d.foto_usuario) {
                 var img = document.getElementById('perfilImgAluno');
                 var icon = document.getElementById('perfilIconAluno');
                 if (img && icon) {
                     img.onload = function() { img.classList.remove('d-none'); icon.classList.add('d-none'); };
                     img.onerror = function() { img.classList.add('d-none'); icon.classList.remove('d-none'); };
-                    img.src = d.url;
+                    img.src = '/sgi/uploads/fotosUsuarios/' + d.foto_usuario;
                 }
             }
         })

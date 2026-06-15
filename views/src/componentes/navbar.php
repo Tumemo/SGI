@@ -1,6 +1,7 @@
-<?php session_start(); ?>
+<?php (session_status() === PHP_SESSION_NONE) && session_start();
+if (!defined('SGI_PERFIL_ALLOW') && !in_array((int)($_SESSION['nivel'] ?? -1), [0, 1])) { header('Location: /sgi/views/index.php'); exit; } ?>
 <!-- navbar mobile -->
-<nav class="d-md-none order-last fixed-bottom py-2 order-lg-first bg-danger">
+<nav class="d-md-none order-last fixed-bottom py-2 order-lg-first bg-danger shadow-lg">
     <ul class="nav justify-content-around fs-1">
         <li><a href="../pages/home.php" class="text-white" data-active-link="home"><i class="bi bi-house"></i></a></li>
         <li><a href="../pages/turmas.php" class="text-white" data-active-link="turmas"><i class="bi bi-people"></i></a></li>

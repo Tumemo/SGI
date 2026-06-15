@@ -1,4 +1,4 @@
-<?php session_start(); ?>
+<?php (session_status() === PHP_SESSION_NONE) && session_start(); ?>
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
@@ -230,7 +230,8 @@
         fetch('/sgi/api/foto.php?user_id=' + userId)
             .then(function(r) { return r.json(); })
             .then(function(d) {
-                if (d.success && d.url) {
+                if (d.success && d.foto_usuario) {
+                    var fotoUrl = '/sgi/uploads/fotosUsuarios/' + d.foto_usuario;
                     ['Mob', 'Desk'].forEach(function(suf) {
                         var img = document.getElementById('perfilImg' + suf);
                         var icon = document.getElementById('perfilIcon' + suf);
@@ -243,7 +244,7 @@
                                 img.classList.add('d-none');
                                 icon.classList.remove('d-none');
                             };
-                            img.src = d.url;
+                            img.src = fotoUrl;
                         }
                     });
                 }
