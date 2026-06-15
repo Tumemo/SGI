@@ -32,9 +32,10 @@ if ($usuario && password_verify($senha, $usuario['senha_usuario'])) {
 
     // 3. Define o redirecionamento com base no nível de usuário retornado do banco
     $destino = match($_SESSION['nivel']) {
-        3       => '../views/src/pages/alunos/home.php', // Competidores
-        0, 1    => '../views/src/pages/home.php',        // Admin e Colaboradores
-        2       =>        '../views/src/pages/mesarios/home.php', // Mesários
+        3       => '../views/src/pages/alunos/home.php',        // Competidores
+        0       => '../views/src/pages/home.php',               // Admin
+        1       => '../views/src/pages/colaborador/home.php',   // Colaborador
+        2       => '../views/src/pages/mesarios/home.php',      // Mesários
         default => '../login.html'
     };
 
