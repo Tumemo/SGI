@@ -125,12 +125,15 @@ include 'componentes/nav.php';
             }
         }
         function initModalTermo() {
+            if (sessionStorage.getItem('sgi_termo_exibido')) return;
+
             const modalTermo = new bootstrap.Modal(document.getElementById('modalTermo'));
             const btnAceitar = document.getElementById('btnAceitarTermo');
             const btnRecusar = document.getElementById('btnRecusarTermo');
             const avisoRecusa = document.getElementById('avisoRecusa');
 
             modalTermo.show();
+            sessionStorage.setItem('sgi_termo_exibido', 'true');
 
             btnAceitar.addEventListener('click', async function () {
                 btnAceitar.disabled = true;

@@ -1,3 +1,4 @@
+<?php session_start(); ?>
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
@@ -12,3 +13,4 @@
     </style>
 </head>
 <body class="bg-light">
+<script>var SGI_USER_ID = <?= (int)($_SESSION['id'] ?? 0) ?>;</script>

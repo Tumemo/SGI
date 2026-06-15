@@ -1,4 +1,37 @@
 <?php
+session_start();
+require_once '../../../../config/db.php';
+
+$id_usuario = (int)($_SESSION['id'] ?? 0);
+$genero_usuario = 'MASC';
+$modalidades_inscritas = [];
+
+if ($id_usuario) {
+    $stmt = $conn->prepare("SELECT genero_usuario FROM usuarios WHERE id_usuario = ?");
+    $stmt->bind_param('i', $id_usuario);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    if ($row = $result->fetch_assoc()) {
+        $genero_usuario = $row['genero_usuario'];
+    }
+
+    $sql = "SELECT m.id_modalidade, m.nome_modalidade, m.genero_modalidade, 
+                   e.id_equipe, c.nome_categoria,
+                   m.categorias_id_categoria
+            FROM equipes_has_usuarios eu
+            JOIN equipes e ON eu.equipes_id_equipe = e.id_equipe
+            JOIN modalidades m ON e.modalidades_id_modalidade = m.id_modalidade
+            JOIN categorias c ON m.categorias_id_categoria = c.id_categoria
+            WHERE eu.usuarios_id_usuario = ? AND e.status_equipe = '1'";
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param('i', $id_usuario);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    while ($row = $result->fetch_assoc()) {
+        $modalidades_inscritas[] = $row;
+    }
+}
+
 $tituloPagina = 'SGI - Inscrições';
 $titulo = 'Inscrições';
 $mostrarVoltar = true;
@@ -84,6 +117,33 @@ include 'componentes/header.php';
         cursor: not-allowed;
         transform: none;
     }
+
+    .card-inscrito {
+        background-color: #ffffff;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        padding: 1.25rem;
+        border-left: 4px solid #28a745;
+        transition: transform 0.15s;
+    }
+    .card-inscrito:hover {
+        transform: translateY(-2px);
+    }
+    .membro-equipe {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 4px 0;
+    }
+    .membro-equipe .voce {
+        font-weight: 600;
+        color: #28a745;
+    }
+    .btn-ver-equipe {
+        font-size: 0.85rem;
+        padding: 4px 14px;
+        border-radius: 20px;
+    }
 </style>
 
 <main class="container py-4">
@@ -100,7 +160,7 @@ include 'componentes/header.php';
         </div>
     </div>
 
-    <div class="d-flex flex-column align-items-center gap-3 mt-4 pt-3">
+    <div id="acoesInscricao" class="d-none d-flex flex-column align-items-center gap-3 mt-4 pt-3">
         <p class="counter-text text-muted small mb-0" id="contador">Você pode escolher até 3 modalidades</p>
         <button type="button" class="btn-save" id="btnSalvar" onclick="salvarEscolhas()">
             <i class="bi bi-check-lg"></i> Salvar
@@ -117,7 +177,12 @@ include 'componentes/nav.php';
 <script>
     const urlParams = new URLSearchParams(window.location.search);
     const idInterclasse = urlParams.get('id');
+    const generoUsuario = '<?= $genero_usuario ?>';
+    const modalidadesInscritas = <?= json_encode($modalidades_inscritas) ?>;
+    const estaInscrito = modalidadesInscritas.length > 0;
     let modalidadesData = [];
+
+    function esc(s) { const d = document.createElement('div'); d.textContent = s == null ? '' : String(s); return d.innerHTML; }
 
     async function carregarDados() {
         if (!idInterclasse) {
@@ -130,36 +195,118 @@ include 'componentes/nav.php';
             const listaInter = await resInter.json();
             const dadosInter = (Array.isArray(listaInter) ? listaInter : []).find(i => String(i.id_interclasse) === String(idInterclasse));
             if (dadosInter) {
-                document.getElementById('subtitulo').textContent = dadosInter.nome_interclasse + ' — Selecione até 3 modalidades';
+                const msg = estaInscrito ? ' — Suas inscrições' : ' — Selecione até 3 modalidades';
+                document.getElementById('subtitulo').textContent = dadosInter.nome_interclasse + msg;
             }
 
             const res = await fetch(`../../../../api/modalidades.php?id_interclasse=${idInterclasse}`);
             const lista = await res.json();
             modalidadesData = Array.isArray(lista) ? lista.filter(m => String(m.status_modalidade) === '1') : [];
 
-            const grid = document.getElementById('modalidadesGrid');
-            grid.innerHTML = '';
-
-            if (modalidadesData.length === 0) {
-                grid.innerHTML = '<div class="col-12 text-center text-muted py-5"><i class="bi bi-inbox fs-1 d-block mb-2"></i>Nenhuma modalidade disponível no momento.</div>';
-                return;
+            if (estaInscrito) {
+                renderizarInscricoes();
+            } else {
+                renderizarSelecao();
             }
 
-            modalidadesData.forEach(mod => {
-                const genero = mod.genero_modalidade === 'MASC' ? '♂' : mod.genero_modalidade === 'FEM' ? '♀' : '⚤';
-                const col = document.createElement('div');
-                col.className = 'col';
-                col.innerHTML = `
-                    <div class="modalidade-card" data-id="${mod.id_modalidade}" onclick="toggleModalidade(this)">
-                        <i class="bi bi-trophy"></i>
-                        ${mod.nome_modalidade} (${genero})
-                    </div>
-                `;
-                grid.appendChild(col);
-            });
         } catch (e) {
             console.error(e);
             document.getElementById('modalidadesGrid').innerHTML = '<div class="col-12 text-center text-danger py-5">Erro ao carregar modalidades.</div>';
+        }
+    }
+
+    function renderizarSelecao() {
+        const grid = document.getElementById('modalidadesGrid');
+        const acoes = document.getElementById('acoesInscricao');
+        grid.innerHTML = '';
+        acoes.classList.remove('d-none');
+
+        const filtradas = modalidadesData.filter(mod =>
+            mod.genero_modalidade === 'MISTO' || mod.genero_modalidade === generoUsuario
+        );
+
+        if (filtradas.length === 0) {
+            grid.innerHTML = '<div class="col-12 text-center text-muted py-5"><i class="bi bi-inbox fs-1 d-block mb-2"></i>Nenhuma modalidade disponível para seu gênero no momento.</div>';
+            return;
+        }
+
+        filtradas.forEach(mod => {
+            const col = document.createElement('div');
+            col.className = 'col';
+            col.innerHTML = `
+                <div class="modalidade-card" data-id="${mod.id_modalidade}" onclick="toggleModalidade(this)">
+                    <i class="bi bi-trophy"></i>
+                    ${esc(mod.nome_modalidade)}
+                </div>
+            `;
+            grid.appendChild(col);
+        });
+    }
+
+    function renderizarInscricoes() {
+        const grid = document.getElementById('modalidadesGrid');
+        const acoes = document.getElementById('acoesInscricao');
+        acoes.classList.add('d-none');
+        grid.innerHTML = '';
+
+        if (modalidadesInscritas.length === 0) {
+            grid.innerHTML = '<div class="col-12 text-center text-muted py-5"><i class="bi bi-inbox fs-1 d-block mb-2"></i>Você ainda não está inscrito em nenhuma modalidade.</div>';
+            return;
+        }
+
+        modalidadesInscritas.forEach(mod => {
+            const col = document.createElement('div');
+            col.className = 'col';
+            col.innerHTML = `
+                <div class="card-inscrito h-100" data-equipe="${mod.id_equipe}">
+                    <div class="d-flex align-items-center gap-2 mb-2">
+                        <i class="bi bi-trophy fs-4 text-success"></i>
+                        <div>
+                            <strong class="d-block">${esc(mod.nome_modalidade)}</strong>
+                            <small class="text-muted">${esc(mod.nome_categoria)}</small>
+                        </div>
+                        <span class="badge bg-success-subtle text-success ms-auto rounded-pill">Inscrito</span>
+                    </div>
+                    <div class="membros-equipe mt-2" id="membros-${mod.id_equipe}">
+                        <div class="text-center text-muted small py-2">
+                            <div class="spinner-border spinner-border-sm me-1" role="status"></div>
+                            Carregando equipe...
+                        </div>
+                    </div>
+                </div>
+            `;
+            grid.appendChild(col);
+            carregarMembros(mod.id_equipe);
+        });
+    }
+
+    async function carregarMembros(idEquipe) {
+        const container = document.getElementById('membros-' + idEquipe);
+        try {
+            const res = await fetch(`../../../../api/equipes.php?id_equipe=${idEquipe}`);
+            const data = await res.json();
+            const membros = Array.isArray(data) ? data : [];
+
+            container.innerHTML = '<div class="fw-semibold small text-muted mb-1"><i class="bi bi-people-fill me-1"></i>Sua equipe:</div>';
+
+            if (membros.length === 0) {
+                container.innerHTML += '<div class="text-muted small">Nenhum colega na equipe ainda.</div>';
+                return;
+            }
+
+            const userId = <?= $id_usuario ?>;
+            membros.forEach(m => {
+                const ehVoce = String(m.id_usuario) === String(userId);
+                container.innerHTML += `
+                    <div class="membro-equipe">
+                        <i class="bi bi-person-circle text-secondary"></i>
+                        <span class="${ehVoce ? 'voce' : ''}">${esc(m.nome_usuario)} ${ehVoce ? '(Você)' : ''}</span>
+                    </div>
+                `;
+            });
+        } catch (e) {
+            console.error('Erro ao carregar membros:', e);
+            container.innerHTML = '<div class="text-danger small">Erro ao carregar equipe.</div>';
         }
     }
 

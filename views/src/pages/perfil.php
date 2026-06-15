@@ -12,6 +12,11 @@ $usuarioPerfil = [
     'matricula_usuario' => $_SESSION['matricula'] ?? '',
     'foto_usuario' => ''
 ];
+
+$backHome = './home.php';
+$nivel = (int)($_SESSION['nivel'] ?? 0);
+if ($nivel === 3) $backHome = './alunos/home.php';
+elseif ($nivel === 2) $backHome = './mesarios/home.php';
 try {
     $dbPath = dirname(__DIR__, 3) . DIRECTORY_SEPARATOR . 'config' . DIRECTORY_SEPARATOR . 'db.php';
     require_once $dbPath;
@@ -199,7 +204,7 @@ require_once '../componentes/header.php';
 </style>
 
 <main class="perfil-page d-md-none p-3" style="padding-top: 5.5rem; padding-bottom: 5rem;">
-    <a href="./home.php" class="perfil-topbar" id="perfilBackMob">
+    <a href="<?= $backHome ?>" class="perfil-topbar" id="perfilBackMob">
         <i class="bi bi-arrow-left-circle fs-5"></i>
         <span id="perfilNomeInterMobile">Interclasse</span>
     </a>
@@ -235,7 +240,7 @@ require_once '../componentes/header.php';
 
 <main class="perfil-page d-none d-md-block main-desktop-layout">
     <div class="container-fluid px-2 px-md-4 py-4">
-        <a href="./home.php" class="perfil-topbar" id="perfilBackDesk">
+        <a href="<?= $backHome ?>" class="perfil-topbar" id="perfilBackDesk">
             <i class="bi bi-arrow-left-circle fs-5"></i>
             <span id="perfilNomeInterDesk">Interclasse</span>
         </a>

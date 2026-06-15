@@ -1,3 +1,4 @@
+<?php session_start(); ?>
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
@@ -21,7 +22,10 @@
     ?>
     <!-- header mobile -->
     <section class="d-md-none" style="height: 120px;">
-        <a href="perfil.php"><span class="position-absolute m-4 translate-middle text-white fs-2" style="z-index: 10; top: 3%; right: -20px;" id="btnVoltar"><i class="bi bi-person-gear"></i></span></a>
+        <a href="perfil.php" class="text-decoration-none"><span class="position-absolute m-4 translate-middle text-white d-flex align-items-center justify-content-center" style="z-index: 10; top: 3%; right: -20px; width: 44px; height: 44px;" id="btnVoltar">
+                <img src="" id="perfilImgMob" class="rounded-circle object-fit-cover w-100 h-100 position-absolute top-0 start-0 d-none" alt="Foto" onerror="this.classList.add('d-none');document.getElementById('perfilIconMob')?.classList.remove('d-none')">
+                <i class="bi bi-person-gear fs-2" id="perfilIconMob"></i>
+            </span></a>
         <img src="../../public/images/banner-global.png" alt="Imagens de alunos do SESI" class="w-100 object-fit-cover" style="height: 100%;">
         <h1 class="position-absolute top-50 start-50 translate-middle text-white w-100 text-center"><?php echo $textTop ?></h1>
     </section>
@@ -219,4 +223,31 @@
     window.addEventListener('load', () => {
         window.SGIInterclasse.setupBackLinks();
     });
+
+    (function() {
+        var userId = <?= (int)($_SESSION['id'] ?? 0) ?>;
+        if (!userId) return;
+        fetch('/sgi/api/foto.php?user_id=' + userId)
+            .then(function(r) { return r.json(); })
+            .then(function(d) {
+                if (d.success && d.url) {
+                    ['Mob', 'Desk'].forEach(function(suf) {
+                        var img = document.getElementById('perfilImg' + suf);
+                        var icon = document.getElementById('perfilIcon' + suf);
+                        if (img && icon) {
+                            img.onload = function() {
+                                img.classList.remove('d-none');
+                                icon.classList.add('d-none');
+                            };
+                            img.onerror = function() {
+                                img.classList.add('d-none');
+                                icon.classList.remove('d-none');
+                            };
+                            img.src = d.url;
+                        }
+                    });
+                }
+            })
+            .catch(function() {});
+    })();
 </script>
