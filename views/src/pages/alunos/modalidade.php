@@ -1,353 +1,228 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Modalidades - Interclasse 2026</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+<?php
+$tituloPagina = 'SGI - Inscrições';
+$titulo = 'Inscrições';
+$mostrarVoltar = true;
+$mostrarSino = true;
+$urlVoltar = './home.php';
+include 'componentes/head.php';
+include 'componentes/header.php';
+?>
 
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Inter', sans-serif;
-        }
+<style>
+    .modalidade-card {
+        background-color: #ffffff;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        min-height: 70px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        cursor: pointer;
+        font-size: 1rem;
+        font-weight: 500;
+        color: #000;
+        position: relative;
+        user-select: none;
+        transition: transform 0.15s, background-color 0.2s, color 0.2s;
+        padding: 1rem 0.75rem;
+    }
+    .modalidade-card:hover {
+        transform: translateY(-2px);
+    }
+    .modalidade-card.selected {
+        background-color: #5cb85c;
+        color: #fff;
+    }
+    .modalidade-card.selected i {
+        color: #fff;
+    }
+    .modalidade-card.selected::after {
+        content: "✓";
+        position: absolute;
+        top: -6px;
+        right: -6px;
+        width: 22px;
+        height: 22px;
+        background-color: #5cb85c;
+        border: 2px solid #fff;
+        color: white;
+        border-radius: 50%;
+        font-size: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+    }
+    .btn-save {
+        background: linear-gradient(135deg, #e60012, #ff3344);
+        color: white;
+        border: none;
+        padding: 14px 28px;
+        min-width: 220px;
+        border-radius: 12px;
+        font-size: 15px;
+        font-weight: 600;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        box-shadow: 0 10px 25px rgba(230,0,18,.25);
+        transition: all .25s ease;
+    }
+    .btn-save:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 14px 30px rgba(230,0,18,.35);
+        color: white;
+    }
+    .btn-save:active {
+        transform: scale(.98);
+    }
+    .btn-save:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+        transform: none;
+    }
+</style>
 
-        body {
-            background-color: #1a1a1a;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            
-        }
+<main class="container py-4">
+    <div class="d-flex align-items-center gap-2 mb-4">
+        <i class="bi bi-trophy fs-3"></i>
+        <h1 class="fs-4 fw-bold m-0">Modalidades</h1>
+    </div>
+    <p class="text-muted small mb-4" id="subtitulo">Carregando...</p>
 
-        /* Container Principal do App */
-        /* Container Principal do App */
-.app-container {
-    display: flex;
-    width: 100vw;  /* Ocupa 100% da largura da janela visual */
-    height: 100vh; /* Ocupa 100% da altura da janela visual */
-    background-color: #f4f4f4;
-   
-    overflow: hidden;
-   
-}
-
-   .sidebar {
-    width: 70px;
-    background: #e60012;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-around;
-    align-items: center;
-    padding: 25px 0;
-    height: 100vh;
-    flex-shrink: 0;
-}
-
-.sidebar a {
-    color: white;
-    text-decoration: none;
-    opacity: 0.7;
-    transition: all .2s ease;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-}
-
-.sidebar a i {
-    font-size: 25px;
-    width: 25px;
-    height: 25px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-}
-
-.sidebar a:hover,
-.sidebar a.active {
-    opacity: 1;
-    transform: scale(1.1);
-}
-
-        /* --- CONTEÚDO PRINCIPAL --- */
-        .main-content {
-            flex: 1;
-            padding: 40px;
-            display: flex;
-            flex-direction: column;
-            position: relative;
-        }
-
-        /* Botão Vermelho Superior */
-        .badge-interclasse {
-            background-color: #e30613;
-            color: white;
-            display: inline-flex;
-            align-items: center;
-            gap: 10px;
-            padding: 10px 20px;
-            font-weight: 700;
-            font-size: 15px;
-            border-radius: 4px;
-            width: fit-content;
-            margin-bottom: 25px;
-            text-decoration: none;
-        }
-
-        /* Título Modalidades */
-        .page-title {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            font-size: 26px;
-            color: #000000;
-            font-weight: 700;
-            margin-bottom: 30px;
-        }
-
-        /* --- GRID DE MODALIDADES --- */
-        .modalidades-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 20px;
-            width: 100%;
-            max-width: 900px;
-            margin: 0 auto;
-        }
-
-        /* Card de Modalidade Padrão (Não selecionado) */
-        .modalidade-card {
-            background-color: #ffffff;
-            border-radius: 8px;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
-            height: 70px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 12px;
-            cursor: pointer;
-            font-size: 18px;
-            font-weight: 700;
-            color: #000000; /* Letra preta por padrão */
-            position: relative;
-            user-select: none;
-            transition: transform 0.15s, background-color 0.2s, color 0.2s;
-        }
-
- .modalidade-card {
-    font-size: 18px;
-    font-weight: 500;
-}
-        .modalidade-card:hover {
-            transform: translateY(-2px);
-        }
-
-        /* REQUISITO: Card Selecionado (Fundo verde, letra e ícone em branco) */
-        .modalidade-card.selected {
-            background-color: #5cb85c; /* Tom de verde idêntico ao da imagem */
-            color: #ffffff !important; /* Letra branca forcada */
-        }
-
-        /* Checkmark redondo verde no canto superior direito do card selecionado */
-        .modalidade-card.selected::after {
-            content: "✓";
-            position: absolute;
-            top: -6px;
-            right: -6px;
-            width: 20px;
-            height: 20px;
-            background-color: #5cb85c;
-            border: 2px solid #ffffff;
-            color: white;
-            border-radius: 50%;
-            font-size: 11px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
-        }
-
-        /* --- ÁREA INFERIOR DE SALVAMENTO --- */
-        .footer-actions {
-            margin-top: auto;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 15px;
-            width: 100%;
-        }
-
-        .counter-text {
-            font-size: 14px;
-            color: #333333;
-            font-weight: 500;
-        }
-
-        /* REQUISITO: Botão verde de salvar */
-      .btn-save {
-    background: linear-gradient(135deg, #e60012, #ff3344);
-    color: white;
-    border: none;
-    padding: 14px 28px;
-    min-width: 220px;
-    height: 50px;
-    border-radius: 12px;
-    font-size: 15px;
-    font-weight: 600;
-    cursor: pointer;
-
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 10px;
-
-    box-shadow: 0 10px 25px rgba(230, 0, 18, .25);
-
-    transition: all .25s ease;
-}
-
-.btn-save:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 14px 30px rgba(230, 0, 18, .35);
-}
-
-.btn-save:active {
-    transform: scale(.98);
-}
-
-        /* Texto sutil "Confirmar" na parte inferior */
-        .bottom-label {
-            font-size: 14px;
-            color: #b3b3b3;
-            font-weight: 500;
-            margin-top: 5px;
-        }
-    </style>
-</head>
-<body>
-
-    <div class="app-container">
-        
-        <aside class="sidebar">
-    <a href="#"><i class="bi bi-person-gear"></i></a>
-
-    <a href="home.php">
-        <i class="bi bi-house"></i>
-    </a>
-
-    <a href="modalidades.php" class="active">
-        <i class="bi bi-trophy"></i>
-    </a>
-
-    <a href="agenda.php">
-        <i class="bi bi-calendar3"></i>
-    </a>
-
-    <a href="notificacao.php">
-        <i class="bi bi-bell"></i>
-    </a>
-
-    <a href="#" class="logout">
-        <i class="bi bi-box-arrow-right"></i>
-    </a>
-</aside>
-
-        <main class="main-content">
-            
-            <a href="#" class="badge-interclasse">
-               <i class="bi bi-arrow-left-circle-fill"></i> Interclasse 2026
-              </a>
-
-            <h1 class="page-title">
-               <i class="bi bi-trophy"></i> Modalidades
-            </h1>
-
-            <div class="modalidades-grid">
-                
-<div class="modalidade-card" onclick="toggleModalidade(this)">
-    <i class="bi bi-trophy"></i>
-    Basquete
-</div>
-
-<div class="modalidade-card" onclick="toggleModalidade(this)">
-    <i class="bi bi-trophy"></i>
-    Futebol
-</div>
-
-<div class="modalidade-card" onclick="toggleModalidade(this)">
-    <i class="bi bi-trophy"></i>
-    Vôlei
-</div>
-
-<div class="modalidade-card" onclick="toggleModalidade(this)">
-    <i class="bi bi-trophy"></i>
-    Handebol
-</div>
-
-<div class="modalidade-card" onclick="toggleModalidade(this)">
-    <i class="bi bi-trophy"></i>
-    Tênis de Mesa
-</div>
-
-<div class="modalidade-card" onclick="toggleModalidade(this)">
-    <i class="bi bi-trophy"></i>
-    Corrida
-</div>
-            </div>
-
-            <div class="footer-actions">
-                <p class="counter-text">Você pode escolher até 3 modalidades</p>
-                
-                <button type="button" class="btn-save" onclick="salvarEscolhas()">
-                    Salvar
-                </button>
-               
-
-        </main>
+    <div class="row row-cols-1 row-cols-md-3 g-3" id="modalidadesGrid">
+        <div class="col text-center py-5">
+            <div class="spinner-border spinner-border-sm me-2" role="status"></div>
+            Carregando modalidades...
+        </div>
     </div>
 
-    <script>
-        function toggleModalidade(card) {
-            // Conta quantos já estão selecionados atualmente
-            const selecionados = document.querySelectorAll('.modalidade-card.selected');
-            
-            // Se já estiver selecionado, remove a seleção livremente
-            if (card.classList.contains('selected')) {
-                card.classList.remove('selected');
-            } else {
-                // REQUISITO: Bloqueia se tentar selecionar mais do que 3
-                if (selecionados.length >= 3) {
-                    alert("Você só pode escolher até 3 modalidades!");
-                    return;
-                }
-                card.classList.add('selected');
-            }
+    <div class="d-flex flex-column align-items-center gap-3 mt-4 pt-3">
+        <p class="counter-text text-muted small mb-0" id="contador">Você pode escolher até 3 modalidades</p>
+        <button type="button" class="btn-save" id="btnSalvar" onclick="salvarEscolhas()">
+            <i class="bi bi-check-lg"></i> Salvar
+        </button>
+        <p class="bottom-label text-muted small" id="msgFeedback"></p>
+    </div>
+</main>
+
+<?php
+$paginaAtiva = 'inscricao';
+include 'componentes/nav.php';
+?>
+
+<script>
+    const urlParams = new URLSearchParams(window.location.search);
+    const idInterclasse = urlParams.get('id');
+    let modalidadesData = [];
+
+    async function carregarDados() {
+        if (!idInterclasse) {
+            document.getElementById('subtitulo').textContent = 'Nenhum interclasse selecionado.';
+            return;
         }
 
-        function salvarEscolhas() {
-            const selecionados = document.querySelectorAll('.modalidade-card.selected');
-            if(selecionados.length === 0) {
-                alert("Por favor, escolha pelo menos 1 modalidade antes de salvar.");
+        try {
+            const resInter = await fetch('../../../../api/interclasse.php?regulamento=true');
+            const listaInter = await resInter.json();
+            const dadosInter = (Array.isArray(listaInter) ? listaInter : []).find(i => String(i.id_interclasse) === String(idInterclasse));
+            if (dadosInter) {
+                document.getElementById('subtitulo').textContent = dadosInter.nome_interclasse + ' — Selecione até 3 modalidades';
+            }
+
+            const res = await fetch(`../../../../api/modalidades.php?id_interclasse=${idInterclasse}`);
+            const lista = await res.json();
+            modalidadesData = Array.isArray(lista) ? lista.filter(m => String(m.status_modalidade) === '1') : [];
+
+            const grid = document.getElementById('modalidadesGrid');
+            grid.innerHTML = '';
+
+            if (modalidadesData.length === 0) {
+                grid.innerHTML = '<div class="col-12 text-center text-muted py-5"><i class="bi bi-inbox fs-1 d-block mb-2"></i>Nenhuma modalidade disponível no momento.</div>';
                 return;
             }
-            
-            // Coleta os nomes das modalidades selecionadas
-            let escolhidas = [];
-            selecionados.forEach(card => {
-                escolhidas.push(card.innerText.trim());
-            });
-            
-            alert("Suas modalidades foram salvas com sucesso: " + escolhidas.join(", "));
-            window.location.href = "home.php";
-        }
-        
-    </script>
 
+            modalidadesData.forEach(mod => {
+                const genero = mod.genero_modalidade === 'MASC' ? '♂' : mod.genero_modalidade === 'FEM' ? '♀' : '⚤';
+                const col = document.createElement('div');
+                col.className = 'col';
+                col.innerHTML = `
+                    <div class="modalidade-card" data-id="${mod.id_modalidade}" onclick="toggleModalidade(this)">
+                        <i class="bi bi-trophy"></i>
+                        ${mod.nome_modalidade} (${genero})
+                    </div>
+                `;
+                grid.appendChild(col);
+            });
+        } catch (e) {
+            console.error(e);
+            document.getElementById('modalidadesGrid').innerHTML = '<div class="col-12 text-center text-danger py-5">Erro ao carregar modalidades.</div>';
+        }
+    }
+
+    function toggleModalidade(card) {
+        const selecionados = document.querySelectorAll('.modalidade-card.selected');
+        if (card.classList.contains('selected')) {
+            card.classList.remove('selected');
+        } else {
+            if (selecionados.length >= 3) {
+                document.getElementById('msgFeedback').textContent = 'Você só pode escolher até 3 modalidades!';
+                setTimeout(() => document.getElementById('msgFeedback').textContent = '', 2000);
+                return;
+            }
+            card.classList.add('selected');
+        }
+        const qtd = document.querySelectorAll('.modalidade-card.selected').length;
+        document.getElementById('contador').textContent = `Você pode escolher até 3 modalidades (${qtd}/3)`;
+    }
+
+    async function salvarEscolhas() {
+        const selecionados = document.querySelectorAll('.modalidade-card.selected');
+        if (selecionados.length === 0) {
+            document.getElementById('msgFeedback').textContent = 'Por favor, escolha pelo menos 1 modalidade.';
+            setTimeout(() => document.getElementById('msgFeedback').textContent = '', 2000);
+            return;
+        }
+        const btn = document.getElementById('btnSalvar');
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status"></span> Salvando...';
+
+        const ids = [];
+        selecionados.forEach(card => ids.push(parseInt(card.dataset.id)));
+
+        try {
+            const res = await fetch('../../../../api/inscricao.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    id_interclasse: parseInt(idInterclasse),
+                    id_modalidades: ids
+                })
+            });
+            const result = await res.json();
+            document.getElementById('msgFeedback').textContent = result.message;
+            if (result.success) {
+                document.getElementById('msgFeedback').className = 'bottom-label text-success small';
+                setTimeout(() => window.location.href = 'home.php', 1500);
+            } else {
+                document.getElementById('msgFeedback').className = 'bottom-label text-danger small';
+                btn.disabled = false;
+                btn.innerHTML = '<i class="bi bi-check-lg"></i> Salvar';
+            }
+        } catch (e) {
+            console.error(e);
+            document.getElementById('msgFeedback').textContent = 'Erro de conexão. Tente novamente.';
+            document.getElementById('msgFeedback').className = 'bottom-label text-danger small';
+            btn.disabled = false;
+            btn.innerHTML = '<i class="bi bi-check-lg"></i> Salvar';
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', carregarDados);
+</script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
 </body>
 </html>

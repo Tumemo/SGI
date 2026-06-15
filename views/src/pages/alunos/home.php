@@ -70,7 +70,7 @@ include 'componentes/nav.php';
             
             const status = ativo ? 'Em andamento' : 'Inativo';
             const classeCard = ativo ? 'bg-white' : 'bg-secondary-subtle opacity-75';
-            const href = ativo ? `./inscricao.php?id=${interclasse.id_interclasse}` : `./ranking.php?id=${interclasse.id_interclasse}`;
+            const href = ativo ? `./modalidade.php?id=${interclasse.id_interclasse}` : `./ranking.php?id=${interclasse.id_interclasse}`;
             
             return `
                 <div class="col-12 col-md-6 col-lg-4">
@@ -160,7 +160,7 @@ include 'componentes/nav.php';
             });
 
             btnRecusar.addEventListener('click', function () {
-                avisoRecusa.classList.remove('d-none');
+                modalTermo.hide();
             });
         }
 
