@@ -16,4 +16,4 @@ if (!in_array((int)($_SESSION['nivel'] ?? -1), [0, 1], true)) { header('Location
     </style>
 </head>
 <body class="bg-light">
-<script>var SGI_USER_ID = <?= (int)($_SESSION['id'] ?? 0) ?>;</script>
+

@@ -15,4 +15,4 @@ if ((int)($_SESSION['nivel'] ?? -1) !== 2) { header('Location: /sgi/views/index.
     </style>
 </head>
 <body class="bg-light">
-<script>var SGI_USER_ID = <?= (int)($_SESSION['id'] ?? 0) ?>;</script>
+

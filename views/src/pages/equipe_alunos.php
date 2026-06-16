@@ -166,7 +166,7 @@ require_once '../componentes/header.php';
     document.getElementById('buscaAlunoDesktop').addEventListener('input', (e) => filtrar(e.target.value));
     document.getElementById('buscaAlunoMobile').addEventListener('input', (e) => filtrar(e.target.value));
 
-    window.addEventListener('load', carregar);
+    window.addEventListener('pageshow', carregar);
 </script>
 
 <?php

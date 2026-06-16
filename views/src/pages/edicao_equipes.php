@@ -300,9 +300,7 @@ require_once '../componentes/header.php';
     document.getElementById('modalCriarEquipe').addEventListener('show.bs.modal', carregarSelectsEquipe);
     document.getElementById('selectModalidadeEquipe').addEventListener('change', filtrarTurmasPorModalidade);
 
-    document.addEventListener('DOMContentLoaded', () => {
-        carregarEquipes();
-    });
+    window.addEventListener('pageshow', carregarEquipes);
     
 </script>
 

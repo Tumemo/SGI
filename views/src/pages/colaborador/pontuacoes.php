@@ -8,150 +8,148 @@ include 'componentes/head.php';
 include 'componentes/header.php';
 ?>
 
-<main class="position-relative d-md-none" style="margin-bottom: 120px;">
-    <section id="listaPontuacoesMobile" class="d-flex flex-column align-items-center w-100 mt-4">
-        <p class="text-muted small">(Carregando pontuações...)</p>
-    </section>
+<style>
+    .section-title {
+        font-size: 1.7rem;
+        font-weight: 700;
+        color: #1f2937;
+    }
+
+    .card-custom {
+        background: white;
+        border: none;
+        border-radius: 22px;
+        box-shadow: 0 6px 18px rgba(0,0,0,.06);
+    }
+
+    .pontuacao-card {
+        transition: .2s ease;
+        min-height: 180px;
+    }
+
+    .pontuacao-card:hover {
+        transform: translateY(-4px);
+    }
+
+    .pontuacao-numero {
+        font-size: 3rem;
+        font-weight: 700;
+        color: #111827;
+    }
+</style>
+
+<main class="d-md-none" style="margin-bottom: 120px;">
+    <div class="container-fluid px-3 py-4">
+        <a href="./dashboard.php" id="btnVoltarPontuacaoMob"
+           class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 shadow-sm text-decoration-none rounded-3">
+            <i class="bi bi-arrow-left-circle"></i>
+            <span id="nomeInterclassePontuacaoMob">Interclasse</span>
+        </a>
+
+        <h4 class="fw-bold d-flex align-items-center gap-2 mb-4">
+            <i class="bi bi-award fs-4 text-dark"></i> Pontuações
+        </h4>
+
+        <div class="row g-4 mb-5" id="cardsContainerMob"></div>
+    </div>
 </main>
 
-<main class="d-none d-md-block main-desktop-layout">
-    <div style="border-radius: 12px;">
+<main class="d-none d-md-block main-desktop-layout py-4">
+    <div class="container-fluid" style="max-width: 92%;">
         <div class="mb-5">
-            <a class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 shadow-sm text-decoration-none" style="background-color: #ed1c24; border-radius: 6px;" href="./dashboard.php">
-                <i class="bi bi-arrow-left-circle fs-5"></i> Voltar
+            <a href="./dashboard.php" id="btnVoltarPontuacao"
+               class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 shadow-sm text-decoration-none rounded-3">
+                <i class="bi bi-arrow-left-circle"></i>
+                <span id="nomeInterclassePontuacao">Interclasse</span>
             </a>
 
-            <h4 class="fw-bold d-flex align-items-center gap-2 text-dark mb-0 fs-5">
-                <i class="bi bi-award fs-4 text-dark"></i> Pontuações
-            </h4>
+            <h2 class="section-title d-flex align-items-center gap-2 mb-0">
+                <i class="bi bi-award"></i> Pontuações
+            </h2>
+
+            <p class="text-muted mb-0">Visualização das pontuações configuradas para as modalidades.</p>
         </div>
 
-        <div class="table-responsive" id="listaPontuacoesDesktop">
-            <p class="text-muted">(Carregando pontuações...)</p>
-        </div>
+        <div class="row g-4 mb-5" id="cardsContainerDesk"></div>
     </div>
 </main>
 
 <script>
     const urlParams = new URLSearchParams(window.location.search);
-    let idInterclasse = null;
+    let idInterclasse = urlParams.get('id');
 
-    async function carregarPontuacoes() {
-        const divMobile = document.getElementById('listaPontuacoesMobile');
-        const divDesktop = document.getElementById('listaPontuacoesDesktop');
+    function montarCard(tituloCard, icone, cor, valor, id) {
+        return `
+            <div class="col-12 col-md-6 col-xl-3">
+                <div class="card-custom pontuacao-card p-4 d-flex flex-column justify-content-between"
+                     style="border-bottom: 6px solid ${cor};">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <i class="bi ${icone} fs-4" style="color:${cor};"></i>
+                    </div>
+                    <div class="text-center">
+                        <small class="text-muted fw-semibold">${tituloCard}</small>
+                        <div class="d-flex justify-content-center align-items-center gap-4 mt-2">
+                            <span class="pontuacao-numero" id="${id}">${valor}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    async function carregar() {
+        const mob = document.getElementById('cardsContainerMob');
+        const desk = document.getElementById('cardsContainerDesk');
+
+        if (!idInterclasse) {
+            try {
+                const ativo = await window.SGIInterclasse.getActiveInterclasse();
+                idInterclasse = ativo?.id_interclasse || null;
+            } catch (_) {}
+        }
+
+        if (!idInterclasse) {
+            const msg = '<p class="text-muted text-center w-100 mt-4">Nenhum interclasse ativo encontrado.</p>';
+            if (mob) mob.innerHTML = msg;
+            if (desk) desk.innerHTML = msg;
+            return;
+        }
 
         try {
-            const response = await axios.get('../../../../api/pontuacao.php', {
-                params: { id_interclasse: idInterclasse }
-            });
-            let dados = response.data;
-            if (!Array.isArray(dados)) {
-                if (dados?.data && Array.isArray(dados.data)) {
-                    dados = dados.data;
-                } else {
-                    dados = [];
-                }
+            const dados = await window.SGIInterclasse.getInterclasseById(idInterclasse);
+
+            if (dados?.nome_interclasse) {
+                const n1 = document.getElementById('nomeInterclassePontuacao');
+                const n2 = document.getElementById('nomeInterclassePontuacaoMob');
+                if (n1) n1.textContent = dados.nome_interclasse;
+                if (n2) n2.textContent = dados.nome_interclasse;
+                window.SGIInterclasse.updatePageTitle(dados.nome_interclasse);
             }
 
-            if (divMobile) divMobile.innerHTML = '';
-            if (divDesktop) divDesktop.innerHTML = '';
+            const p1 = dados?.ponto_1_lugar ?? '--';
+            const p2 = dados?.ponto_2_lugar ?? '--';
+            const p3 = dados?.ponto_3_lugar ?? '--';
+            const arr = dados?.valor_item_arrecadacao ?? '--';
 
-            if (!dados || dados.length === 0) {
-                const msgVazia = '<p class="text-muted mt-4 text-center w-100">Nenhuma pontuação encontrada.</p>';
-                if (divMobile) divMobile.innerHTML = msgVazia;
-                if (divDesktop) divDesktop.innerHTML = msgVazia;
-                return;
-            }
+            const cards = [
+                montarCard('PONTOS', 'bi-trophy', '#e2b714', p1, 'pontos-1'),
+                montarCard('PONTOS', 'bi-award', '#9ca3af', p2, 'pontos-2'),
+                montarCard('PONTOS', 'bi-award-fill', '#b87333', p3, 'pontos-3'),
+                montarCard('MULTIPLICADOR', 'bi-heart-fill', '#dc2626', arr, 'pontos-arr')
+            ];
 
-            if (divMobile) {
-                dados.forEach((item) => {
-                    const pontos1 = item.pontos_1 || item.p1 || 0;
-                    const pontos2 = item.pontos_2 || item.p2 || 0;
-                    const pontos3 = item.pontos_3 || item.p3 || 0;
-                    const total = item.total_pontos || item.total || (pontos1 + pontos2 + pontos3);
-
-                    divMobile.innerHTML +=
-                        '<div class="bg-white w-100 shadow-sm py-3 px-4 mb-3 border border-1 rounded-3" style="max-width: 92%;">' +
-                            '<div class="d-flex align-items-center gap-2 mb-2">' +
-                                '<i class="bi bi-award fs-5 text-danger"></i>' +
-                                '<h3 class="m-0 fs-6 fw-bold text-truncate">' + esc(item.nome_modalidade || '---') + '</h3>' +
-                            '</div>' +
-                            '<div class="d-flex justify-content-between align-items-center mb-1">' +
-                                '<span class="text-muted small">Turma:</span>' +
-                                '<span class="fw-medium small">' + esc(item.nome_turma || '---') + '</span>' +
-                            '</div>' +
-                            '<div class="d-flex justify-content-between align-items-center mb-1">' +
-                                '<span class="text-muted small">1º lugar:</span>' +
-                                '<span class="fw-bold text-success small">' + pontos1 + ' pts</span>' +
-                            '</div>' +
-                            '<div class="d-flex justify-content-between align-items-center mb-1">' +
-                                '<span class="text-muted small">2º lugar:</span>' +
-                                '<span class="fw-bold text-primary small">' + pontos2 + ' pts</span>' +
-                            '</div>' +
-                            '<div class="d-flex justify-content-between align-items-center mb-1">' +
-                                '<span class="text-muted small">3º lugar:</span>' +
-                                '<span class="fw-bold text-warning small">' + pontos3 + ' pts</span>' +
-                            '</div>' +
-                            '<hr class="my-1">' +
-                            '<div class="d-flex justify-content-between align-items-center">' +
-                                '<span class="fw-bold small">Total:</span>' +
-                                '<span class="fw-bold fs-6">' + total + ' pts</span>' +
-                            '</div>' +
-                        '</div>';
-                });
-            }
-
-            if (divDesktop) {
-                let html = '<table class="table table-striped table-hover align-middle mb-0">' +
-                    '<thead class="table-dark">' +
-                        '<tr>' +
-                            '<th class="py-3">Modalidade</th>' +
-                            '<th class="py-3">Turma / Equipe</th>' +
-                            '<th class="py-3 text-center">1º</th>' +
-                            '<th class="py-3 text-center">2º</th>' +
-                            '<th class="py-3 text-center">3º</th>' +
-                            '<th class="py-3 text-center">Total</th>' +
-                        '</tr>' +
-                    '</thead>' +
-                    '<tbody>';
-
-                dados.forEach((item) => {
-                    const pontos1 = item.pontos_1 || item.p1 || 0;
-                    const pontos2 = item.pontos_2 || item.p2 || 0;
-                    const pontos3 = item.pontos_3 || item.p3 || 0;
-                    const total = item.total_pontos || item.total || (pontos1 + pontos2 + pontos3);
-
-                    html +=
-                        '<tr>' +
-                            '<td class="py-3">' + esc(item.nome_modalidade || '---') + '</td>' +
-                            '<td class="py-3">' + esc(item.nome_turma || '---') + '</td>' +
-                            '<td class="py-3 text-center fw-bold text-success">' + pontos1 + '</td>' +
-                            '<td class="py-3 text-center fw-bold text-primary">' + pontos2 + '</td>' +
-                            '<td class="py-3 text-center fw-bold text-warning">' + pontos3 + '</td>' +
-                            '<td class="py-3 text-center fw-bold fs-5">' + total + '</td>' +
-                        '</tr>';
-                });
-
-                html += '</tbody></table>';
-                divDesktop.innerHTML = html;
-            }
+            const html = cards.join('');
+            if (mob) mob.innerHTML = html;
+            if (desk) desk.innerHTML = html;
         } catch (error) {
             console.error('Erro ao carregar pontuações:', error);
             const errMsg = '<p class="text-danger mt-4 text-center w-100">Erro ao carregar pontuações.</p>';
-            if (divMobile) divMobile.innerHTML = errMsg;
-            if (divDesktop) divDesktop.innerHTML = errMsg;
+            if (mob) mob.innerHTML = errMsg;
+            if (desk) desk.innerHTML = errMsg;
         }
     }
 
-    window.addEventListener('load', async () => {
-        idInterclasse = await window.SGIInterclasse.resolveId();
-        if (!idInterclasse) {
-            alert('Nenhum interclasse ativo encontrado.');
-            window.location.href = 'home.php';
-            return;
-        }
-        await carregarPontuacoes();
-    });
+    window.addEventListener('pageshow', carregar);
 </script>
 
 <?php

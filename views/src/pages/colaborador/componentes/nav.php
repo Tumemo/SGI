@@ -47,27 +47,25 @@ $onclickSair = "onclick=\"return confirm('Deseja realmente sair?')\"";
 </nav>
 
 <script>
-if (typeof SGI_USER_ID !== 'undefined' && SGI_USER_ID) {
-    fetch('/sgi/api/foto.php?user_id=' + SGI_USER_ID)
-        .then(function(r) { return r.json(); })
-        .then(function(d) {
-            if (d.success && d.foto_usuario) {
-                [
-                    {img:'perfilImgCol', icon:'perfilIconCol'},
-                    {img:'perfilImgColDesk', icon:'perfilIconColDesk'}
-                ].forEach(function(pair) {
-                    var img = document.getElementById(pair.img);
-                    var icon = document.getElementById(pair.icon);
-                    if (img && icon) {
-                        img.onload = function() { img.classList.remove('d-none'); icon.classList.add('d-none'); };
-                        img.onerror = function() { img.classList.add('d-none'); icon.classList.remove('d-none'); };
-                        img.src = '/sgi/uploads/fotosUsuarios/' + d.foto_usuario;
-                    }
-                });
-            }
-        })
-        .catch(function() {});
-}
+fetch('/sgi/api/foto.php?user_id=<?= (int)($_SESSION['id'] ?? 0) ?>')
+    .then(function(r) { return r.json(); })
+    .then(function(d) {
+        if (d.success && d.foto_usuario) {
+            [
+                {img:'perfilImgCol', icon:'perfilIconCol'},
+                {img:'perfilImgColDesk', icon:'perfilIconColDesk'}
+            ].forEach(function(pair) {
+                var img = document.getElementById(pair.img);
+                var icon = document.getElementById(pair.icon);
+                if (img && icon) {
+                    img.onload = function() { img.classList.remove('d-none'); icon.classList.add('d-none'); };
+                    img.onerror = function() { img.classList.add('d-none'); icon.classList.remove('d-none'); };
+                    img.src = '/sgi/uploads/fotosUsuarios/' + d.foto_usuario;
+                }
+            });
+        }
+    })
+    .catch(function() {});
 </script>
 
 <style>
