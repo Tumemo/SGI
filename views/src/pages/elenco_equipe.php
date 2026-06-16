@@ -131,7 +131,7 @@ require_once '../componentes/header.php';
         }
     }
 
-    document.addEventListener('DOMContentLoaded', carregar);
+    window.addEventListener('pageshow', carregar);
 </script>
 
 <?php
