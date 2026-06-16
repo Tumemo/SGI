@@ -10,7 +10,6 @@
 <script>
     window.SGIInterclasse = (() => {
         const endpoints = {
-            home: './home.php',
             dashboard: './dashboard.php',
             modalidades: './modalidades.php',
             pontuacoes: './pontuacoes.php',
@@ -62,8 +61,31 @@
             document.title = nomeInterclasse ? `SGI - Colaborador - ${nomeInterclasse}` : `SGI - Colaborador`;
         };
 
+        const resolveId = async () => {
+            const params = new URLSearchParams(window.location.search);
+            let id = params.get('id');
+            if (!id) {
+                const ativo = await getActiveInterclasse();
+                id = ativo?.id_interclasse || null;
+                if (id) {
+                    window.history.replaceState(null, '', `?id=${id}`);
+                }
+            }
+            if (id) {
+                const dados = await getInterclasseById(id);
+                if (dados) updatePageTitle(dados.nome_interclasse);
+            }
+            return id;
+        };
+
         return {
-            endpoints, getInterclasses, getActiveInterclasse, getInterclasseById, updatePageTitle
+            endpoints, getInterclasses, getActiveInterclasse, getInterclasseById, updatePageTitle, resolveId
         };
     })();
+
+    function esc(s) {
+        var d = document.createElement('div');
+        d.textContent = s == null ? '' : String(s);
+        return d.innerHTML;
+    }
 </script>

@@ -6,7 +6,7 @@ include 'componentes/head.php';
 include 'componentes/header.php';
 ?>
 
-<main class="d-md-none p-3" style="padding-top: 1rem; padding-bottom: 5rem;">
+<main class="d-md-none p-3" style="padding-top: 1rem; padding-bottom: 120px;">
     <h2 class="d-flex align-items-center gap-2 text-dark mb-4" style="font-weight: 400; font-size: 1.1rem;">
         <i class="bi bi-house-door-fill"></i> Início
     </h2>
@@ -46,11 +46,11 @@ include 'componentes/header.php';
                 <a href="./dashboard.php?id=${ativo.id_interclasse}" class="text-decoration-none text-dark">
                     <div class="m-auto shadow d-flex justify-content-between align-content-center px-3 py-3 rounded-3 my-3 border border-1" style="width: 90%;">
                         <div>
-                            <h2 class="m-0 fs-4">${ativo.nome_interclasse}</h2>
-                            <p class="text-secondary m-0">${ano}</p>
+                            <h2 class="m-0 fs-4">${esc(ativo.nome_interclasse)}</h2>
+                            <p class="text-secondary m-0">${esc(ano)}</p>
                             <span class="badge bg-danger mt-2">Ativo</span>
                         </div>
-                        <img src="../../public/icons/arrow-right.svg" alt="icone de seta">
+                        <img src="../../../public/icons/arrow-right.svg" alt="icone de seta">
                     </div>
                 </a>
             `;
@@ -61,8 +61,8 @@ include 'componentes/header.php';
                      onmouseover="this.style.backgroundColor='#f8f9fa'"
                      onmouseout="this.style.backgroundColor='#ffffff'"
                      onclick="window.location.href='./dashboard.php?id=${ativo.id_interclasse}'">
-                    <div class="col-6 fw-semibold text-dark text-truncate">${ativo.nome_interclasse}</div>
-                    <div class="col-3 text-center text-secondary">${ano}</div>
+                    <div class="col-6 fw-semibold text-dark text-truncate">${esc(ativo.nome_interclasse)}</div>
+                    <div class="col-3 text-center text-secondary">${esc(ano)}</div>
                     <div class="col-3 text-center">${statusBadge}</div>
                 </div>
             `;

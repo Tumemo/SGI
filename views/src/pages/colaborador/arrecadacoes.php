@@ -1,252 +1,278 @@
 <?php
-$tituloPagina = 'SGI - Colaborador - Arrecadações';
-$titulo = 'Arrecadações';
+$tituloPagina = 'SGI - Colaborador - Arrecadação';
+$titulo = 'Arrecadação';
 $mostrarVoltar = true;
 $urlVoltar = './dashboard.php';
 include 'componentes/head.php';
 include 'componentes/header.php';
+$paginaAtiva = 'arrecadacoes';
 ?>
 
 <main class="d-md-none" style="margin-bottom: 120px;">
-    <p class="text-center text-secondary mt-3" style="font-size: 14px;">Itens arrecadados no interclasse</p>
-    <div id="listaArrecadacoesMobile" class="d-flex flex-column align-items-center w-100">
-        <p class="text-muted small mt-3">(Carregando arrecadações...)</p>
+    <div class="px-3 mt-4">
+        <label class="form-label small fw-bold text-muted">Filtrar Categoria:</label>
+        <select id="filtroCategoriaMobile" class="form-select shadow-sm mb-3">
+            <option value="todos">Todas as Categorias</option>
+        </select>
     </div>
-    <div class="d-flex justify-content-center mt-4">
-        <button data-bs-toggle="modal" data-bs-target="#modalAdicionarItem" class="btn btn-outline-danger">Adicionar item</button>
+
+    <div class="card shadow m-auto" style="width: 22rem;">
+        <div class="card-header fw-bold text-center bg-white">
+            Itens a adicionar (somam ao ranking)
+        </div>
+        <ul class="list-group list-group-flush" id="listaArrecadacaoMobile">
+            <li class="list-group-item text-center text-muted">(Carregando...)</li>
+        </ul>
+    </div>
+    
+    <div class="container mt-3 mb-5 pb-4">
+        <div id="barraContinuarArrecadacaoMobile" class="d-none">
+            <button id="btnSalvarMobile" class="btn btn-danger w-100 fw-semibold rounded-3 py-2 shadow-sm">Salvar Alterações</button>
+        </div>
     </div>
 </main>
 
 <main class="d-none d-md-block main-desktop-layout">
-    <div class="container-fluid px-0 position-relative">
-        <h4 class="fw-bold d-flex align-items-center gap-2 text-dark mb-4">
-            <i class="bi bi-basket fs-5"></i> Arrecadações
-        </h4>
-        <div id="listaArrecadacoesDesktop">
-            <p class="text-muted">(Carregando arrecadações...)</p>
+    <div class="container-fluid px-0" style="max-width: 1000px;">
+        <div class="mb-5">
+            <a href="./dashboard.php" id="btnVoltarArrecadacao" class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none" style="background-color: #ed1c24; border-radius: 6px;">
+                <i class="bi bi-arrow-left-circle fs-5"></i> <span id="nomeInterclasseArrecadacao">Interclasse</span>
+            </a>
+
+            <div class="d-flex justify-content-between align-items-end">
+                <div>
+                    <h4 class="fw-bold text-dark mb-0">Lançamento de Arrecadações</h4>
+                    <div class="mt-3" style="min-width: 250px;">
+                        <label class="small fw-bold text-muted">Filtrar por Categoria:</label>
+                        <select id="filtroCategoriaDesktop" class="form-select border-0 shadow-sm mt-1">
+                            <option value="todos">Todas as Categorias</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="d-flex gap-2">
+                    <button type="button" onclick="window.location.reload()" class="btn bg-white fw-semibold rounded-3 px-4 py-2" style="color: #ed1c24; border: 1px solid #ed1c24;">
+                        Cancelar
+                    </button>
+                    <button type="button" id="btnSalvarDesktop" class="btn fw-semibold rounded-3 px-4 py-2 text-white" style="background-color: #ed1c24; border: 1px solid #ed1c24;">
+                        Salvar Dados
+                    </button>
+                </div>
+            </div>
         </div>
-        <button type="button" class="btn bg-white fw-semibold rounded-3 px-4 py-2 d-flex align-items-center justify-content-center gap-2 shadow-lg mt-4" style="color: #ed1c24; border: 2px solid #ed1c24;" data-bs-toggle="modal" data-bs-target="#modalAdicionarItem">
-            <i class="bi bi-plus-circle"></i> Adicionar item
-        </button>
+
+        <div class="row g-4 mb-5" id="listaArrecadacaoDesktop"></div>
     </div>
 </main>
 
-<div class="modal fade" id="modalAdicionarItem" tabindex="-1" aria-labelledby="modalAdicionarItemLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header border border-0">
-                <h1 class="modal-title fs-5 text-danger" id="modalAdicionarItemLabel">Adicionar Item</h1>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <form id="formAdicionarItem">
-                    <div class="mb-3">
-                        <label for="inputNomeItem" class="form-label fw-semibold">Nome do item</label>
-                        <input type="text" class="form-control" id="inputNomeItem" placeholder="Ex: Garrafa PET" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="inputQuantidade" class="form-label fw-semibold">Quantidade</label>
-                        <input type="number" class="form-control" id="inputQuantidade" min="1" step="1" placeholder="Ex: 10" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="selectCategoria" class="form-label fw-semibold">Categoria</label>
-                        <select class="form-select" id="selectCategoria" required>
-                            <option value="">Selecione uma categoria</option>
-                        </select>
-                    </div>
-                    <div class="d-flex justify-content-center gap-3 pt-4">
-                        <button type="button" class="btn btn-outline-danger" data-bs-dismiss="modal">Cancelar</button>
-                        <button type="submit" class="btn btn-danger" id="btnSalvarItem">Adicionar</button>
-                    </div>
-                </form>
-            </div>
-        </div>
+<div id="barraContinuarArrecadacaoDesktop" class="d-none d-md-block fixed-bottom" style="background: linear-gradient(to top, #f8f9fa 70%, rgba(248, 249, 250, 0) 100%); padding: 24px 0; z-index: 1020;">
+    <div class="container-fluid d-flex justify-content-end align-items-center" style="max-width: 1000px; margin-left: auto; margin-right: auto;">
+        <span class="text-muted me-3 small" id="statusSincronizacao">Dados guardados localmente</span>
     </div>
 </div>
 
 <script>
-    let idInterclasse = null;
-    let categorias = [];
+    const storagePrefix = 'sgi_items_';
+    const paramsArrecadacao = new URLSearchParams(window.location.search);
+    const idInterclasseArrecadacao = paramsArrecadacao.get('id');
+    
+    let todasAsTurmas = [];
 
-    async function obterIdInterclasse() {
-        const urlParams = new URLSearchParams(window.location.search);
-        idInterclasse = urlParams.get('id');
-        if (!idInterclasse) {
-            const ativo = await window.SGIInterclasse.getActiveInterclasse();
-            idInterclasse = ativo?.id_interclasse || null;
-            if (idInterclasse) {
-                window.history.replaceState(null, '', `?id=${idInterclasse}`);
-            }
-        }
-        return idInterclasse;
+    function getQuantidadePendente(turma) {
+        const local = localStorage.getItem(`${storagePrefix}${turma.id_turma}`);
+        return local !== null ? Number(local) : 0;
     }
 
-    async function carregarCategorias() {
-        if (!idInterclasse) return;
-        try {
-            const res = await fetch(`../../../../api/categorias.php?id_interclasse=${idInterclasse}`);
-            const data = await res.json();
-            categorias = Array.isArray(data) ? data : [];
-            const select = document.getElementById('selectCategoria');
-            select.innerHTML = '<option value="">Selecione uma categoria</option>';
-            categorias.forEach(cat => {
-                const opt = document.createElement('option');
-                opt.value = cat.id_categoria;
-                opt.textContent = cat.nome_categoria;
-                select.appendChild(opt);
-            });
-        } catch (error) {
-            console.error('Erro ao carregar categorias:', error);
-        }
+    function salvarLocal(idTurma, valor) {
+        localStorage.setItem(`${storagePrefix}${idTurma}`, String(valor));
+        const status = document.getElementById('statusSincronizacao');
+        if (status) status.innerText = 'Itens por lançar (serão somados ao ranking ao guardar)...';
     }
 
-    function agruparPorCategoria(itens) {
-        const grupos = {};
-        itens.forEach(item => {
-            const chave = item.nome_categoria || 'Sem categoria';
-            if (!grupos[chave]) grupos[chave] = [];
-            grupos[chave].push(item);
-        });
-        return grupos;
-    }
+    function renderizarTelas(categoriaFiltro = 'todos') {
+        const listaMobile = document.getElementById('listaArrecadacaoMobile');
+        const listaDesktop = document.getElementById('listaArrecadacaoDesktop');
+        
+        const turmasFiltradas = categoriaFiltro === 'todos' 
+            ? todasAsTurmas 
+            : todasAsTurmas.filter(t => t.nome_categoria === categoriaFiltro);
 
-    function renderizarArrecadacoes(itens) {
-        const divMobile = document.getElementById('listaArrecadacoesMobile');
-        const divDesktop = document.getElementById('listaArrecadacoesDesktop');
-
-        if (!itens.length) {
-            const msg = '<p class="text-muted mt-4 text-center w-100">Nenhum item arrecadado ainda.</p>';
-            divMobile.innerHTML = msg;
-            divDesktop.innerHTML = msg;
+        if (turmasFiltradas.length === 0) {
+            const msg = '<p class="p-4 text-center text-muted">Nenhuma turma encontrada nesta categoria.</p>';
+            listaMobile.innerHTML = msg;
+            listaDesktop.innerHTML = msg;
             return;
         }
 
-        const grupos = agruparPorCategoria(itens);
-
-        divMobile.innerHTML = '';
-        divDesktop.innerHTML = '';
-
-        Object.keys(grupos).forEach(categoria => {
-            const items = grupos[categoria];
-
-            divMobile.innerHTML += `
-                <div class="bg-white d-flex flex-column m-auto justify-content-between shadow-sm py-3 px-4 mb-3 border border-1 rounded-3" style="width: 90%;">
-                    <h2 class="fs-6 fw-bold text-danger mb-3">${categoria}</h2>
-                    ${items.map(item => `
-                        <div class="d-flex justify-content-between align-items-center py-1 border-bottom border-light">
-                            <span class="fw-medium">${item.nome_item}</span>
-                            <span class="badge bg-danger rounded-pill">${item.quantidade}</span>
-                        </div>
-                    `).join('')}
+        listaMobile.innerHTML = turmasFiltradas.map(turma => `
+            <li class="list-group-item justify-content-between d-flex align-items-center px-3">
+                <div>
+                    <span class="fw-bold d-block">${esc(turma.nome_turma)}</span>
+                    <small class="text-muted">${esc(turma.nome_categoria || 'Geral')}</small>
                 </div>
-            `;
+                <div class="d-flex align-items-center gap-2">
+                    <input type="number" step="0.1" min="0" class="form-control form-control-sm arrec-input text-center" 
+                        data-id-turma="${turma.id_turma}" 
+                        value="${getQuantidadePendente(turma)}" style="width: 80px;" placeholder="0">
+                </div>
+            </li>
+        `).join('');
 
-            divDesktop.innerHTML += `
-                <div class="mb-4">
-                    <h5 class="fw-bold text-danger mb-2">${categoria}</h5>
-                    <div class="table-responsive">
-                        <table class="table table-bordered table-hover bg-white shadow-sm rounded-3 overflow-hidden mb-0">
-                            <thead class="table-light">
-                                <tr>
-                                    <th class="fw-semibold">Item</th>
-                                    <th class="fw-semibold text-center" style="width: 120px;">Quantidade</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                ${items.map(item => `
-                                    <tr>
-                                        <td>${item.nome_item}</td>
-                                        <td class="text-center">${item.quantidade}</td>
-                                    </tr>
-                                `).join('')}
-                            </tbody>
-                        </table>
+        listaDesktop.innerHTML = turmasFiltradas.map(turma => `
+            <div class="col-12 col-md-6">
+                <div class="bg-white border-0 shadow-sm rounded-3 p-3 px-4 d-flex justify-content-between align-items-center">
+                    <div>
+                        <span class="fw-semibold text-dark fs-6 d-block">${esc(turma.nome_turma)}</span>
+                        <span class="badge bg-light text-dark fw-normal border">${esc(turma.nome_categoria || 'Geral')}</span>
+                    </div>
+                    <div class="input-group" style="max-width: 150px;">
+                        <input type="number" step="0.1" min="0" class="form-control text-center arrec-input" 
+                            data-id-turma="${turma.id_turma}" 
+                            value="${getQuantidadePendente(turma)}" placeholder="0">
+                        <span class="input-group-text bg-light border-start-0 small">Qtd</span>
                     </div>
                 </div>
-            `;
+            </div>
+        `).join('');
+
+        vincularEventosInputs();
+    }
+
+    let autoSaveTimer = null;
+
+    function vincularEventosInputs() {
+        document.querySelectorAll('.arrec-input').forEach(input => {
+            input.addEventListener('input', (e) => {
+                salvarLocal(e.target.dataset.idTurma, e.target.value);
+                agendarAutoSave();
+            });
         });
     }
 
-    async function carregarArrecadacoes() {
-        if (!idInterclasse) return;
+    function agendarAutoSave() {
+        if (autoSaveTimer) clearTimeout(autoSaveTimer);
+        autoSaveTimer = setTimeout(() => salvarNoServidor(true), 3000);
+    }
+
+    window.addEventListener('beforeunload', () => {
+        const pendentes = todasAsTurmas.some(t => getQuantidadePendente(t) > 0);
+        if (pendentes) {
+            const xhr = new XMLHttpRequest();
+            xhr.open('POST', '../../../../api/arrecadacao.php', false);
+            xhr.setRequestHeader('Content-Type', 'application/json');
+            const payload = {
+                id_interclasse: idInterclasseArrecadacao,
+                arrecadacoes: todasAsTurmas.map(t => ({
+                    id_turma: t.id_turma,
+                    quantidade: getQuantidadePendente(t)
+                })).filter((item) => item.quantidade > 0)
+            };
+            xhr.send(JSON.stringify(payload));
+        }
+    });
+
+    async function carregarDados() {
         try {
-            const res = await fetch(`../../../../api/arrecadacao.php?id_interclasse=${idInterclasse}`);
-            const data = await res.json();
-            const itens = Array.isArray(data) ? data : [];
-            renderizarArrecadacoes(itens);
+            const ativo = idInterclasseArrecadacao
+                ? await window.SGIInterclasse.getInterclasseById(idInterclasseArrecadacao)
+                : await window.SGIInterclasse.getActiveInterclasse();
+            
+            if (!ativo) return;
+
+            document.getElementById('nomeInterclasseArrecadacao').innerText = ativo.nome_interclasse;
+            const vDesk = document.getElementById('btnVoltarArrecadacao');
+            if (vDesk) {
+                vDesk.href = `./dashboard.php?id=${idInterclasseArrecadacao || ativo.id_interclasse}`;
+            }
+            document.getElementById('barraContinuarArrecadacaoMobile').classList.remove('d-none');
+
+            const res = await fetch(`../../../../api/turmas.php?id_interclasse=${ativo.id_interclasse}`);
+            todasAsTurmas = await res.json();
+
+            const categorias = [...new Set(todasAsTurmas.map(t => t.nome_categoria))].filter(Boolean);
+            const selects = [document.getElementById('filtroCategoriaMobile'), document.getElementById('filtroCategoriaDesktop')];
+            
+            categorias.forEach(cat => {
+                selects.forEach(select => {
+                    const opt = document.createElement('option');
+                    opt.value = cat; opt.innerText = cat;
+                    select.appendChild(opt);
+                });
+            });
+
+            renderizarTelas();
         } catch (error) {
-            console.error('Erro ao carregar arrecadações:', error);
-            document.getElementById('listaArrecadacoesMobile').innerHTML = '<p class="text-danger mt-4 text-center">Erro ao carregar arrecadações.</p>';
-            document.getElementById('listaArrecadacoesDesktop').innerHTML = '<p class="text-danger mt-4 text-center">Erro ao carregar arrecadações.</p>';
+            console.error("Erro ao carregar dados:", error);
         }
     }
 
-    document.getElementById('formAdicionarItem').addEventListener('submit', async (e) => {
-        e.preventDefault();
+    async function salvarNoServidor(auto = false) {
+        const btnDesk = document.getElementById('btnSalvarDesktop');
+        const btnMob = document.getElementById('btnSalvarMobile');
+        
+        const payload = {
+            id_interclasse: idInterclasseArrecadacao,
+            arrecadacoes: todasAsTurmas.map(t => ({
+                id_turma: t.id_turma,
+                quantidade: getQuantidadePendente(t)
+            })).filter((item) => item.quantidade > 0)
+        };
 
-        const nomeItem = document.getElementById('inputNomeItem').value.trim();
-        const quantidade = parseInt(document.getElementById('inputQuantidade').value, 10);
-        const idCategoria = document.getElementById('selectCategoria').value;
-
-        if (!nomeItem || !quantidade || !idCategoria || !idInterclasse) {
-            alert('Preencha todos os campos.');
+        if (!payload.arrecadacoes.length) {
+            if (!auto) alert('Informe a quantidade de itens a adicionar em pelo menos uma turma.');
             return;
         }
 
-        const btnSalvar = document.getElementById('btnSalvarItem');
-        btnSalvar.disabled = true;
-        btnSalvar.innerHTML = "Salvando...";
+        const textoOriginal = btnDesk.innerText;
+        if (!auto) {
+            btnDesk.disabled = btnMob.disabled = true;
+            btnDesk.innerText = "A guardar...";
+        }
 
         try {
             const response = await fetch('../../../../api/arrecadacao.php', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    id_interclasse: parseInt(idInterclasse, 10),
-                    nome_item: nomeItem,
-                    quantidade: quantidade,
-                    id_categoria: parseInt(idCategoria, 10)
-                })
+                body: JSON.stringify(payload)
             });
+
+            if (!response.ok) {
+                throw new Error(`Erro de rede: ${response.status}`);
+            }
 
             const result = await response.json();
 
-            if (response.ok && result.success) {
-                document.getElementById('inputNomeItem').value = '';
-                document.getElementById('inputQuantidade').value = '';
-                document.getElementById('selectCategoria').value = '';
-                const modalEl = document.getElementById('modalAdicionarItem');
-                const modalObj = bootstrap.Modal.getOrCreateInstance(modalEl);
-                modalObj.hide();
-                carregarArrecadacoes();
+            if (result.success) {
+                todasAsTurmas.forEach(t => {
+                    localStorage.removeItem(`${storagePrefix}${t.id_turma}`);
+                });
+                const status = document.getElementById('statusSincronizacao');
+                if (status) status.innerText = 'Salvo no servidor!';
+                if (!auto) {
+                    alert('Itens somados ao ranking com sucesso!');
+                    window.location.reload();
+                }
             } else {
-                alert('Erro: ' + (result.message || 'Não foi possível adicionar o item.'));
+                if (!auto) alert('Erro do servidor: ' + result.message);
             }
         } catch (error) {
-            console.error('Erro ao adicionar item:', error);
-            alert('Erro de conexão com o servidor ao adicionar item.');
+            if (!auto) {
+                alert('Erro de comunicação. Verifique se o banco de dados está online.');
+            }
+            console.error('Falha no salvamento:', error);
         } finally {
-            btnSalvar.disabled = false;
-            btnSalvar.innerHTML = "Adicionar";
-        }
-    });
-
-    document.addEventListener('DOMContentLoaded', async () => {
-        try {
-            await obterIdInterclasse();
-            if (!idInterclasse) {
-                document.getElementById('listaArrecadacoesMobile').innerHTML = '<p class="text-muted mt-4 text-center w-100">Nenhum interclasse ativo.</p>';
-                document.getElementById('listaArrecadacoesDesktop').innerHTML = '<p class="text-muted mt-4 text-center w-100">Nenhum interclasse ativo.</p>';
-                return;
+            if (!auto) {
+                btnDesk.disabled = btnMob.disabled = false;
+                btnDesk.innerText = textoOriginal;
             }
-            await Promise.all([
-                carregarCategorias(),
-                carregarArrecadacoes()
-            ]);
-        } catch (error) {
-            console.error(error);
         }
-    });
+    }
+
+    document.getElementById('filtroCategoriaMobile').addEventListener('change', (e) => renderizarTelas(e.target.value));
+    document.getElementById('filtroCategoriaDesktop').addEventListener('change', (e) => renderizarTelas(e.target.value));
+    document.getElementById('btnSalvarDesktop').addEventListener('click', salvarNoServidor);
+    document.getElementById('btnSalvarMobile').addEventListener('click', salvarNoServidor);
+
+    window.addEventListener('load', carregarDados);
 </script>
 
 <?php

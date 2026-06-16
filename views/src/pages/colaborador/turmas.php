@@ -5,6 +5,7 @@ $mostrarVoltar = true;
 $urlVoltar = './dashboard.php';
 include 'componentes/head.php';
 include 'componentes/header.php';
+$paginaAtiva = 'turmas';
 ?>
 
 <main class="d-md-none" style="margin-bottom: 120px;">
@@ -16,6 +17,9 @@ include 'componentes/header.php';
 
 <main class="d-none d-md-block main-desktop-layout">
     <div class="container-fluid px-0 position-relative">
+        <a href="./dashboard.php" class="btn btn-outline-danger btn-sm mb-3 d-inline-flex align-items-center gap-1 text-decoration-none">
+            <i class="bi bi-arrow-left"></i> Voltar
+        </a>
         <h4 class="fw-bold d-flex align-items-center gap-2 text-dark mb-4">
             <i class="bi bi-people-fill fs-5"></i> Turmas
         </h4>
@@ -44,15 +48,7 @@ include 'componentes/header.php';
     let turmasData = [];
 
     async function carregarTurmas() {
-        const urlParams = new URLSearchParams(window.location.search);
-        let idInterclasse = urlParams.get('id');
-        if (!idInterclasse) {
-            const ativo = await window.SGIInterclasse.getActiveInterclasse();
-            idInterclasse = ativo?.id_interclasse || null;
-            if (idInterclasse) {
-                window.history.replaceState(null, '', `?id=${idInterclasse}`);
-            }
-        }
+        let idInterclasse = await window.SGIInterclasse.resolveId();
         if (!idInterclasse) {
             const msg = '<p class="text-center text-muted mt-4">Nenhum interclasse ativo.</p>';
             document.getElementById('listaTurmasMobile').innerHTML = msg;
@@ -79,8 +75,8 @@ include 'componentes/header.php';
                 <div class="d-flex flex-column m-auto justify-content-between shadow-sm py-3 px-4 mb-3 border border-1 rounded-3" style="width: 90%;">
                     <div class="d-flex justify-content-between align-items-center">
                         <div>
-                            <h2 class="m-0 fs-5">${turma.nome_turma}${turma.nome_fantasia_turma ? ' - ' + turma.nome_fantasia_turma : ''}</h2>
-                            <small class="text-muted">${turma.turno_turma || 'Turno não definido'}</small>
+                            <h2 class="m-0 fs-5">${esc(turma.nome_turma)}${turma.nome_fantasia_turma ? ' - ' + esc(turma.nome_fantasia_turma) : ''}</h2>
+                            <small class="text-muted">${esc(turma.turno_turma || 'Turno não definido')}</small>
                         </div>
                     </div>
                     <div class="d-flex justify-content-between align-items-center mt-3">
@@ -96,9 +92,9 @@ include 'componentes/header.php';
                 <div class="col-12 col-md-6 col-lg-4 col-xl-3">
                     <div class="card border-0 shadow-sm h-100 p-4" style="border-radius: 12px;">
                         <div class="card-body p-0 d-flex flex-column">
-                            <h5 class="fw-bold text-dark mb-1">${turma.nome_turma}</h5>
-                            ${turma.nome_fantasia_turma ? `<span class="text-muted small mb-1">${turma.nome_fantasia_turma}</span>` : ''}
-                            <span class="text-muted small mb-3">${turma.turno_turma || 'Turno não definido'}</span>
+                            <h5 class="fw-bold text-dark mb-1">${esc(turma.nome_turma)}</h5>
+                            ${turma.nome_fantasia_turma ? `<span class="text-muted small mb-1">${esc(turma.nome_fantasia_turma)}</span>` : ''}
+                            <span class="text-muted small mb-3">${esc(turma.turno_turma || 'Turno não definido')}</span>
                             <div class="mt-auto d-flex gap-2">
                                 <button type="button" class="btn btn-outline-danger btn-sm flex-grow-1" onclick='verDetalhes(${turma.id_turma})' data-bs-toggle="modal" data-bs-target="#modalDetalhesTurma">
                                     <i class="bi bi-info-circle"></i> Detalhes
@@ -125,14 +121,14 @@ include 'componentes/header.php';
         document.getElementById('modalDetalhesLabel').textContent = turma.nome_turma;
         document.getElementById('modalDetalhesBody').innerHTML = `
             <div class="mb-3">
-                <strong>Categoria:</strong> ${turma.nome_categoria || 'Não definida'}
+                <strong>Categoria:</strong> ${esc(turma.nome_categoria || 'Não definida')}
             </div>
             <div class="mb-3">
-                <strong>Turno:</strong> ${turma.turno_turma || 'Não definido'}
+                <strong>Turno:</strong> ${esc(turma.turno_turma || 'Não definido')}
             </div>
-            ${turma.nome_fantasia_turma ? `<div class="mb-3"><strong>Nome fantasia:</strong> ${turma.nome_fantasia_turma}</div>` : ''}
+            ${turma.nome_fantasia_turma ? `<div class="mb-3"><strong>Nome fantasia:</strong> ${esc(turma.nome_fantasia_turma)}</div>` : ''}
             <div class="mb-3">
-                <strong>Quantidade de alunos:</strong> ${turma.quantidade_alunos || '0'}
+                <strong>Quantidade de alunos:</strong> ${esc(turma.quantidade_alunos || '0')}
             </div>
         `;
     };

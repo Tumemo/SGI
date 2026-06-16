@@ -3,7 +3,7 @@ $tituloPagina = 'SGI - Colaborador - Pontuações';
 $titulo = 'Pontuações';
 $mostrarVoltar = true;
 $urlVoltar = './dashboard.php';
-$paginaAtiva = 'dashboard';
+$paginaAtiva = 'pontuacoes';
 include 'componentes/head.php';
 include 'componentes/header.php';
 ?>
@@ -32,25 +32,9 @@ include 'componentes/header.php';
     </div>
 </main>
 
-<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
 <script>
     const urlParams = new URLSearchParams(window.location.search);
-    let idInterclasse = urlParams.get('id');
-
-    async function resolverInterclasse() {
-        if (!idInterclasse) {
-            const ativo = await window.SGIInterclasse.getActiveInterclasse();
-            idInterclasse = ativo?.id_interclasse || null;
-        }
-        if (!idInterclasse) {
-            alert('Nenhum interclasse ativo encontrado.');
-            window.location.href = 'home.php';
-            return null;
-        }
-        const dados = await window.SGIInterclasse.getInterclasseById(idInterclasse);
-        window.SGIInterclasse.updatePageTitle(dados?.nome_interclasse);
-        return idInterclasse;
-    }
+    let idInterclasse = null;
 
     async function carregarPontuacoes() {
         const divMobile = document.getElementById('listaPontuacoesMobile');
@@ -90,11 +74,11 @@ include 'componentes/header.php';
                         '<div class="bg-white w-100 shadow-sm py-3 px-4 mb-3 border border-1 rounded-3" style="max-width: 92%;">' +
                             '<div class="d-flex align-items-center gap-2 mb-2">' +
                                 '<i class="bi bi-award fs-5 text-danger"></i>' +
-                                '<h3 class="m-0 fs-6 fw-bold text-truncate">' + (item.nome_modalidade || '---') + '</h3>' +
+                                '<h3 class="m-0 fs-6 fw-bold text-truncate">' + esc(item.nome_modalidade || '---') + '</h3>' +
                             '</div>' +
                             '<div class="d-flex justify-content-between align-items-center mb-1">' +
                                 '<span class="text-muted small">Turma:</span>' +
-                                '<span class="fw-medium small">' + (item.nome_turma || '---') + '</span>' +
+                                '<span class="fw-medium small">' + esc(item.nome_turma || '---') + '</span>' +
                             '</div>' +
                             '<div class="d-flex justify-content-between align-items-center mb-1">' +
                                 '<span class="text-muted small">1º lugar:</span>' +
@@ -139,8 +123,8 @@ include 'componentes/header.php';
 
                     html +=
                         '<tr>' +
-                            '<td class="py-3">' + (item.nome_modalidade || '---') + '</td>' +
-                            '<td class="py-3">' + (item.nome_turma || '---') + '</td>' +
+                            '<td class="py-3">' + esc(item.nome_modalidade || '---') + '</td>' +
+                            '<td class="py-3">' + esc(item.nome_turma || '---') + '</td>' +
                             '<td class="py-3 text-center fw-bold text-success">' + pontos1 + '</td>' +
                             '<td class="py-3 text-center fw-bold text-primary">' + pontos2 + '</td>' +
                             '<td class="py-3 text-center fw-bold text-warning">' + pontos3 + '</td>' +
@@ -160,8 +144,12 @@ include 'componentes/header.php';
     }
 
     window.addEventListener('load', async () => {
-        const idOk = await resolverInterclasse();
-        if (!idOk) return;
+        idInterclasse = await window.SGIInterclasse.resolveId();
+        if (!idInterclasse) {
+            alert('Nenhum interclasse ativo encontrado.');
+            window.location.href = 'home.php';
+            return;
+        }
         await carregarPontuacoes();
     });
 </script>

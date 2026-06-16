@@ -3,7 +3,8 @@ $tituloPagina = 'SGI - Colaborador - Modalidades';
 $titulo = 'Modalidades';
 $mostrarVoltar = true;
 $urlVoltar = './dashboard.php';
-$paginaAtiva = 'dashboard';
+$paginaAtiva = 'modalidades';
+$cssExtra = '.transition-hover { transition: all 0.2s ease-in-out; } .transition-hover:hover { transform: translateY(-3px); box-shadow: 0 .5rem 1rem rgba(0, 0, 0, .08) !important; }';
 include 'componentes/head.php';
 include 'componentes/header.php';
 ?>
@@ -49,7 +50,7 @@ include 'componentes/header.php';
 <div class="modal fade" id="modalCriarModalidade" tabindex="-1" aria-labelledby="modalCriarModalidadeLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
-            <div class="modal-header border border-0">
+            <div class="modal-header border-0">
                 <h1 class="modal-title fs-5 text-danger" id="modalCriarModalidadeLabel">Criar nova Modalidade</h1>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
@@ -91,25 +92,9 @@ include 'componentes/header.php';
     </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
 <script>
     const urlParams = new URLSearchParams(window.location.search);
-    let idInterclasse = urlParams.get('id');
-
-    async function resolverInterclasse() {
-        if (!idInterclasse) {
-            const ativo = await window.SGIInterclasse.getActiveInterclasse();
-            idInterclasse = ativo?.id_interclasse || null;
-        }
-        if (!idInterclasse) {
-            alert('Nenhum interclasse ativo encontrado.');
-            window.location.href = 'home.php';
-            return null;
-        }
-        const dados = await window.SGIInterclasse.getInterclasseById(idInterclasse);
-        window.SGIInterclasse.updatePageTitle(dados?.nome_interclasse);
-        return idInterclasse;
-    }
+    let idInterclasse = null;
 
     async function carregarModalidades() {
         const divMobile = document.getElementById('listaModalidadesMobile');
@@ -144,20 +129,20 @@ include 'componentes/header.php';
                 const mods = modalidadesPorCategoria[categoria];
 
                 if (divMobile) {
-                    divMobile.innerHTML += '<h5 class="mt-4 mb-3 text-muted px-3">' + categoria + '</h5>';
+                    divMobile.innerHTML += '<h5 class="mt-4 mb-3 text-muted px-3">' + esc(categoria) + '</h5>';
                     mods.forEach((modalidade) => {
                         divMobile.innerHTML +=
                             '<div class="bg-white d-flex align-items-center shadow py-3 px-4 mb-3 border border-1 rounded-3 w-100" style="max-width: 90%;">' +
                                 '<i class="bi bi-trophy fs-4"></i>' +
                                 '<div class="text-start px-3 w-100">' +
-                                    '<h2 class="m-0 fs-5 text-truncate">' + modalidade.nome_modalidade + '</h2>' +
+                                    '<h2 class="m-0 fs-5 text-truncate">' + esc(modalidade.nome_modalidade) + '</h2>' +
                                 '</div>' +
                             '</div>';
                     });
                 }
 
                 if (divDesktop) {
-                    divDesktop.innerHTML += '<h4 class="mt-4 mb-3 text-muted">' + categoria + '</h4><div class="row g-4">';
+                    divDesktop.innerHTML += '<h4 class="mt-4 mb-3 text-muted">' + esc(categoria) + '</h4><div class="row g-4">';
                     mods.forEach((modalidade) => {
                         divDesktop.innerHTML +=
                             '<div class="col-12 col-md-6 col-lg-4">' +
@@ -165,7 +150,7 @@ include 'componentes/header.php';
                                     '<div class="d-flex align-items-center gap-3">' +
                                         '<i class="bi bi-trophy fs-4 text-dark"></i>' +
                                         '<div>' +
-                                            '<h5 class="m-0 fw-bold fs-6">' + modalidade.nome_modalidade + '</h5>' +
+                                            '<h5 class="m-0 fw-bold fs-6">' + esc(modalidade.nome_modalidade) + '</h5>' +
                                         '</div>' +
                                     '</div>' +
                                 '</div>' +
@@ -189,7 +174,7 @@ include 'componentes/header.php';
 
             selectTipo.innerHTML = '<option value="" disabled selected>Selecione um tipo...</option>';
             tipos.forEach(tipo => {
-                selectTipo.innerHTML += '<option value="' + tipo.id_tipo_modalidade + '">' + tipo.nome_tipo_modalidade + '</option>';
+                selectTipo.innerHTML += '<option value="' + esc(tipo.id_tipo_modalidade) + '">' + esc(tipo.nome_tipo_modalidade) + '</option>';
             });
         } catch (error) {
             console.error('Erro ao carregar tipos:', error);
@@ -207,7 +192,7 @@ include 'componentes/header.php';
 
             selectCat.innerHTML = '<option value="" disabled selected>Selecione uma categoria...</option>';
             categorias.forEach((cat) => {
-                selectCat.innerHTML += '<option value="' + cat.id_categoria + '">' + cat.nome_categoria + '</option>';
+                selectCat.innerHTML += '<option value="' + esc(cat.id_categoria) + '">' + esc(cat.nome_categoria) + '</option>';
             });
         } catch (error) {
             console.error('Erro ao carregar categorias:', error);
@@ -251,8 +236,12 @@ include 'componentes/header.php';
     });
 
     window.addEventListener('load', async () => {
-        const idOk = await resolverInterclasse();
-        if (!idOk) return;
+        idInterclasse = await window.SGIInterclasse.resolveId();
+        if (!idInterclasse) {
+            alert('Nenhum interclasse ativo encontrado.');
+            window.location.href = 'home.php';
+            return;
+        }
         await Promise.all([
             carregarModalidades(),
             carregarTiposModalidades(),
@@ -260,17 +249,6 @@ include 'componentes/header.php';
         ]);
     });
 </script>
-
-<style>
-    .transition-hover {
-        transition: all 0.2s ease-in-out;
-    }
-
-    .transition-hover:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 .5rem 1rem rgba(0, 0, 0, .08) !important;
-    }
-</style>
 
 <?php
 include 'componentes/nav.php';

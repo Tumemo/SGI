@@ -5,6 +5,7 @@ $mostrarVoltar = true;
 $urlVoltar = './turmas.php';
 include 'componentes/head.php';
 include 'componentes/header.php';
+$paginaAtiva = 'turmas';
 ?>
 
 <main class="d-md-none" style="margin-bottom: 120px;">
@@ -15,6 +16,9 @@ include 'componentes/header.php';
 
 <main class="d-none d-md-block main-desktop-layout">
     <div class="container-fluid px-0" style="max-width: 800px;">
+        <a href="./turmas.php" class="btn btn-outline-danger btn-sm mb-3 d-inline-flex align-items-center gap-1 text-decoration-none">
+            <i class="bi bi-arrow-left"></i> Voltar
+        </a>
         <h4 style="font-weight: 400;" id="tituloTurmaDesk">Alunos da Turma</h4>
         <p class="text-muted" id="contagemDesk"></p>
 
@@ -39,12 +43,6 @@ include 'componentes/header.php';
     const API = '../../../../api/';
     const params = new URLSearchParams(window.location.search);
     const idTurma = Number(params.get('id_turma') || 0);
-
-    function esc(s) {
-        const d = document.createElement('div');
-        d.textContent = s == null ? '' : String(s);
-        return d.innerHTML;
-    }
 
     async function carregarDados() {
         if (!idTurma || isNaN(idTurma)) {

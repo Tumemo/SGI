@@ -17,6 +17,7 @@ $backHome = './home.php';
 $nivel = (int)($_SESSION['nivel'] ?? 0);
 if ($nivel === 3) $backHome = './alunos/home.php';
 elseif ($nivel === 2) $backHome = './mesarios/home.php';
+elseif ($nivel === 1) $backHome = './colaborador/home.php';
 define('SGI_PERFIL_ALLOW', true);
 try {
     $dbPath = dirname(__DIR__, 3) . DIRECTORY_SEPARATOR . 'config' . DIRECTORY_SEPARATOR . 'db.php';
@@ -344,6 +345,7 @@ require_once '../componentes/header.php';
             var prefix = '.';
             if (DADOS_PERFIL.nivel === 3) prefix = './alunos';
             else if (DADOS_PERFIL.nivel === 2) prefix = './mesarios';
+            else if (DADOS_PERFIL.nivel === 1) prefix = './colaborador';
             var page = (DADOS_PERFIL.nivel === 3) ? 'modalidade.php' : 'dashboard.php';
             var href = prefix + '/' + page + '?id=' + encodeURIComponent(id);
             document.getElementById('perfilBackDesk').href = href;

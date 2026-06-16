@@ -3,7 +3,8 @@ $tituloPagina = 'SGI - Colaborador - Equipes';
 $titulo = 'Equipes';
 $mostrarVoltar = true;
 $urlVoltar = './dashboard.php';
-$paginaAtiva = 'dashboard';
+$paginaAtiva = 'equipes';
+$cssExtra = '.transition-hover { transition: all 0.2s ease-in-out; } .transition-hover:hover { transform: translateY(-3px); box-shadow: 0 .5rem 1rem rgba(0, 0, 0, .08) !important; }';
 include 'componentes/head.php';
 include 'componentes/header.php';
 ?>
@@ -30,6 +31,9 @@ include 'componentes/header.php';
 <main class="d-none d-md-block main-desktop-layout">
     <div style="border-radius: 12px;">
         <div class="mb-4">
+            <a href="./dashboard.php" class="btn btn-outline-danger btn-sm mb-3 d-inline-flex align-items-center gap-1 text-decoration-none">
+                <i class="bi bi-arrow-left"></i> Voltar
+            </a>
             <div class="d-flex align-items-center justify-content-between mb-3">
                 <h4 class="fw-bold d-flex align-items-center gap-2 text-dark mb-0 fs-5">
                     <i class="bi bi-people fs-4 text-dark"></i> Equipes
@@ -57,7 +61,7 @@ include 'componentes/header.php';
 <div class="modal fade" id="modalCriarEquipe" tabindex="-1" aria-labelledby="modalCriarEquipeLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
-            <div class="modal-header border border-0">
+            <div class="modal-header border-0">
                 <h1 class="modal-title fs-5 text-danger" id="modalCriarEquipeLabel">Criar nova equipe</h1>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
@@ -84,27 +88,11 @@ include 'componentes/header.php';
     </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
 <script>
     const urlParams = new URLSearchParams(window.location.search);
-    let idInterclasse = urlParams.get('id');
+    let idInterclasse = null;
     let modalidadesLista = [];
     let equipesLista = [];
-
-    async function resolverInterclasse() {
-        if (!idInterclasse) {
-            const ativo = await window.SGIInterclasse.getActiveInterclasse();
-            idInterclasse = ativo?.id_interclasse || null;
-        }
-        if (!idInterclasse) {
-            alert('Nenhum interclasse ativo encontrado.');
-            window.location.href = 'home.php';
-            return null;
-        }
-        const dados = await window.SGIInterclasse.getInterclasseById(idInterclasse);
-        window.SGIInterclasse.updatePageTitle(dados?.nome_interclasse);
-        return idInterclasse;
-    }
 
     async function carregarModalidades() {
         try {
@@ -127,7 +115,7 @@ include 'componentes/header.php';
                     sel.innerHTML = '<option value="">Todas as modalidades</option>';
                 }
                 modalidadesLista.forEach((m) => {
-                    sel.innerHTML += `<option value="${m.id_modalidade}">${m.nome_modalidade}${m.genero_modalidade ? ' (' + m.genero_modalidade + ')' : ''}</option>`;
+                    sel.innerHTML += `<option value="${m.id_modalidade}">${esc(m.nome_modalidade)}${m.genero_modalidade ? ' (' + esc(m.genero_modalidade) + ')' : ''}</option>`;
                 });
             });
         } catch (error) {
@@ -160,8 +148,8 @@ include 'componentes/header.php';
                 <div class="bg-white d-flex align-items-center shadow py-3 px-4 mb-3 border border-1 rounded-3 w-100">
                     <i class="bi bi-people fs-4"></i>
                     <div class="text-start px-3 w-100">
-                        <h2 class="m-0 fs-5 text-truncate">${equipe.nome_equipe || 'Equipe #' + equipe.id_equipe}</h2>
-                        <p class="m-0 text-muted small">${equipe.nome_turma || ''}${equipe.nome_turma && equipe.nome_modalidade ? ' &middot; ' : ''}${equipe.nome_modalidade || ''}</p>
+                        <h2 class="m-0 fs-5 text-truncate">${esc(equipe.nome_equipe || 'Equipe #' + equipe.id_equipe)}</h2>
+                        <p class="m-0 text-muted small">${esc(equipe.nome_turma || '')}${equipe.nome_turma && equipe.nome_modalidade ? ' &middot; ' : ''}${esc(equipe.nome_modalidade || '')}</p>
                     </div>
                 </div>
             `).join('');
@@ -174,8 +162,8 @@ include 'componentes/header.php';
                         <div class="d-flex align-items-center gap-3">
                             <i class="bi bi-people fs-4 text-dark"></i>
                             <div>
-                                <h5 class="m-0 fw-bold fs-6">${equipe.nome_equipe || 'Equipe #' + equipe.id_equipe}</h5>
-                                <p class="m-0 text-muted small">${equipe.nome_turma || ''}${equipe.nome_turma && equipe.nome_modalidade ? ' &middot; ' : ''}${equipe.nome_modalidade || ''}</p>
+                                <h5 class="m-0 fw-bold fs-6">${esc(equipe.nome_equipe || 'Equipe #' + equipe.id_equipe)}</h5>
+                                <p class="m-0 text-muted small">${esc(equipe.nome_turma || '')}${equipe.nome_turma && equipe.nome_modalidade ? ' &middot; ' : ''}${esc(equipe.nome_modalidade || '')}</p>
                             </div>
                         </div>
                     </div>
@@ -246,24 +234,18 @@ include 'componentes/header.php';
     });
 
     window.addEventListener('load', async () => {
-        const idOk = await resolverInterclasse();
-        if (!idOk) return;
+        idInterclasse = await window.SGIInterclasse.resolveId();
+        if (!idInterclasse) {
+            alert('Nenhum interclasse ativo encontrado.');
+            window.location.href = 'home.php';
+            return;
+        }
         await Promise.all([
             carregarModalidades(),
             carregarEquipes()
         ]);
     });
 </script>
-
-<style>
-    .transition-hover {
-        transition: all 0.2s ease-in-out;
-    }
-    .transition-hover:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 .5rem 1rem rgba(0, 0, 0, .08) !important;
-    }
-</style>
 
 <?php
 include 'componentes/nav.php';

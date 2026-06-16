@@ -5,6 +5,7 @@ $mostrarVoltar = true;
 $urlVoltar = './home.php';
 include 'componentes/head.php';
 include 'componentes/header.php';
+$paginaAtiva = 'dashboard';
 ?>
 
 <main class="d-md-none" style="margin-bottom: 120px;">
@@ -17,56 +18,56 @@ include 'componentes/header.php';
             <div class="d-flex m-auto justify-content-between align-items-center shadow py-3 px-4 mb-3 border border-1 rounded-3" style="width: 90%;">
                 <i class="bi bi-trophy fs-2"></i>
                 <h2 class="m-0 fs-3 w-100 px-3">Modalidades</h2>
-                <picture><img src="../../public/icons/arrow-right.svg" alt="Seta"></picture>
+                <picture><img src="../../../public/icons/arrow-right.svg" alt="Seta"></picture>
             </div>
         </a>
         <a href="./pontuacoes.php" id="linkPontuacoes" class="text-decoration-none text-black">
             <div class="d-flex m-auto justify-content-between align-items-center shadow py-3 px-4 mb-3 border border-1 rounded-3" style="width: 90%;">
                 <i class="bi bi-award fs-2"></i>
                 <h2 class="m-0 fs-3 w-100 px-3">Pontuações</h2>
-                <picture><img src="../../public/icons/arrow-right.svg" alt="Seta"></picture>
+                <picture><img src="../../../public/icons/arrow-right.svg" alt="Seta"></picture>
             </div>
         </a>
         <a href="./locais.php" id="linkLocais" class="text-decoration-none text-black">
             <div class="d-flex m-auto justify-content-between align-items-center shadow py-3 px-4 mb-3 border border-1 rounded-3" style="width: 90%;">
                 <i class="bi bi-geo-alt fs-2"></i>
                 <h2 class="m-0 fs-3 w-100 px-3">Locais</h2>
-                <picture><img src="../../public/icons/arrow-right.svg" alt="Seta"></picture>
+                <picture><img src="../../../public/icons/arrow-right.svg" alt="Seta"></picture>
             </div>
         </a>
         <a href="./colaboradores.php" id="linkColaboradores" class="text-decoration-none text-black">
             <div class="d-flex m-auto justify-content-between align-items-center shadow py-3 px-4 mb-3 border border-1 rounded-3" style="width: 90%;">
                 <i class="bi bi-people fs-2"></i>
                 <h2 class="m-0 fs-3 w-100 px-3">Colaboradores</h2>
-                <picture><img src="../../public/icons/arrow-right.svg" alt="Seta"></picture>
+                <picture><img src="../../../public/icons/arrow-right.svg" alt="Seta"></picture>
             </div>
         </a>
         <a href="./arrecadacoes.php" id="linkArrecadacoes" class="text-decoration-none text-black">
             <div class="d-flex m-auto justify-content-between align-items-center shadow py-3 px-4 mb-3 border border-1 rounded-3" style="width: 90%;">
                 <i class="bi bi-basket fs-2"></i>
                 <h2 class="m-0 fs-3 w-100 px-3">Arrecadações</h2>
-                <picture><img src="../../public/icons/arrow-right.svg" alt="Seta"></picture>
+                <picture><img src="../../../public/icons/arrow-right.svg" alt="Seta"></picture>
             </div>
         </a>
         <a href="./categorias.php" id="linkCategorias" class="text-decoration-none text-black">
             <div class="d-flex m-auto justify-content-between align-items-center shadow py-3 px-4 mb-3 border border-1 rounded-3" style="width: 90%;">
                 <i class="bi bi-bookmarks fs-2"></i>
                 <h2 class="m-0 fs-3 w-100 px-3">Categorias</h2>
-                <picture><img src="../../public/icons/arrow-right.svg" alt="Seta"></picture>
+                <picture><img src="../../../public/icons/arrow-right.svg" alt="Seta"></picture>
             </div>
         </a>
         <a href="./turmas.php" id="linkTurmas" class="text-decoration-none text-black">
             <div class="d-flex m-auto justify-content-between align-items-center shadow py-3 px-4 mb-3 border border-1 rounded-3" style="width: 90%;">
                 <i class="bi bi-backpack fs-2"></i>
                 <h2 class="m-0 fs-3 w-100 px-3">Turmas</h2>
-                <picture><img src="../../public/icons/arrow-right.svg" alt="Seta"></picture>
+                <picture><img src="../../../public/icons/arrow-right.svg" alt="Seta"></picture>
             </div>
         </a>
         <a href="./equipes.php" id="linkEquipes" class="text-decoration-none text-black">
             <div class="d-flex m-auto justify-content-between align-items-center shadow py-3 px-4 mb-3 border border-1 rounded-3" style="width: 90%;">
                 <i class="bi bi-diagram-3 fs-2"></i>
                 <h2 class="m-0 fs-3 w-100 px-3">Equipes</h2>
-                <picture><img src="../../public/icons/arrow-right.svg" alt="Seta"></picture>
+                <picture><img src="../../../public/icons/arrow-right.svg" alt="Seta"></picture>
             </div>
         </a>
     </section>

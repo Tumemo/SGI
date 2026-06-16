@@ -5,6 +5,7 @@ $mostrarVoltar = true;
 $urlVoltar = './dashboard.php';
 include 'componentes/head.php';
 include 'componentes/header.php';
+$paginaAtiva = 'categorias';
 ?>
 
 <main class="d-md-none" style="margin-bottom: 120px;">
@@ -19,6 +20,9 @@ include 'componentes/header.php';
 
 <main class="d-none d-md-block main-desktop-layout">
     <div class="container-fluid px-0 position-relative">
+        <a href="./dashboard.php" class="btn btn-outline-danger btn-sm mb-3 d-inline-flex align-items-center gap-1 text-decoration-none">
+            <i class="bi bi-arrow-left"></i> Voltar
+        </a>
         <h4 class="fw-bold d-flex align-items-center gap-2 text-dark mb-4">
             <i class="bi bi-bookmark fs-5"></i> Categorias
         </h4>
@@ -34,7 +38,7 @@ include 'componentes/header.php';
 <div class="modal fade" id="modalCriarCategoria" tabindex="-1" aria-labelledby="modalNovaCategoriaLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
-            <div class="modal-header border border-0">
+            <div class="modal-header border-0">
                 <h1 class="modal-title fs-5 text-danger" id="modalNovaCategoriaLabel">Criar nova Categoria</h1>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
@@ -56,15 +60,7 @@ include 'componentes/header.php';
 
 <script>
     async function carregarCategorias() {
-        const urlParams = new URLSearchParams(window.location.search);
-        let idInterclasse = urlParams.get('id');
-        if (!idInterclasse) {
-            const ativo = await window.SGIInterclasse.getActiveInterclasse();
-            idInterclasse = ativo?.id_interclasse || null;
-            if (idInterclasse) {
-                window.history.replaceState(null, '', `?id=${idInterclasse}`);
-            }
-        }
+        let idInterclasse = await window.SGIInterclasse.resolveId();
         if (!idInterclasse) {
             document.getElementById('listaCategoriasMobile').innerHTML = '<p class="text-muted mt-4 text-center w-100">Nenhum interclasse ativo.</p>';
             document.getElementById('listaCategoriasDesktop').innerHTML = '<p class="text-muted mt-4 text-center w-100">Nenhum interclasse ativo.</p>';
@@ -107,7 +103,7 @@ include 'componentes/header.php';
                     <div class="bg-white d-flex flex-column m-auto justify-content-between shadow-sm py-3 px-4 mb-3 border border-1 rounded-3" style="width: 90%;">
                         <div class="d-flex align-items-center mb-2">
                             <i class="bi bi-trophy fs-3 me-3"></i>
-                            <h2 class="m-0 fs-5 text-truncate">${categoria.nome_categoria}</h2>
+                            <h2 class="m-0 fs-5 text-truncate">${esc(categoria.nome_categoria)}</h2>
                         </div>
                         <div class="d-flex justify-content-between align-items-center">
                             <span class="text-muted small">${count} turma(s)</span>
@@ -120,7 +116,7 @@ include 'componentes/header.php';
                     <div class="col-12 col-md-6 col-lg-5 col-xl-4">
                         <div class="card border-0 shadow-sm h-100 p-4" style="border-radius: 12px;">
                             <div class="card-body p-0 d-flex flex-column">
-                                <h4 class="fw-bold text-dark mb-4 pb-2 text-truncate" title="${categoria.nome_categoria}">${categoria.nome_categoria}</h4>
+                                <h4 class="fw-bold text-dark mb-4 pb-2 text-truncate" title="${esc(categoria.nome_categoria)}">${esc(categoria.nome_categoria)}</h4>
                                 <div class="rounded-3 p-2 px-3 mb-4 border border-light-subtle shadow-sm" style="background-color: #f8f9fc;">
                                     <div class="text-dark fw-medium mb-1" style="font-size: 0.65rem;">TURMAS</div>
                                     <div class="fs-5 text-dark">${count}</div>
@@ -143,12 +139,7 @@ include 'componentes/header.php';
     document.getElementById('formNovaCategoria').addEventListener('submit', async (e) => {
         e.preventDefault();
 
-        const urlParams = new URLSearchParams(window.location.search);
-        let idInterclasse = urlParams.get('id');
-        if (!idInterclasse) {
-            const ativo = await window.SGIInterclasse.getActiveInterclasse();
-            idInterclasse = ativo?.id_interclasse || null;
-        }
+        let idInterclasse = await window.SGIInterclasse.resolveId();
         if (!idInterclasse) {
             alert("Nenhum interclasse ativo disponível.");
             return;

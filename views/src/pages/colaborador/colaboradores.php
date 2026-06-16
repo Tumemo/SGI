@@ -3,17 +3,11 @@ $tituloPagina = 'SGI - Colaborador - Colaboradores';
 $titulo = 'Colaboradores';
 $mostrarVoltar = true;
 $urlVoltar = './dashboard.php';
+$cssExtra = '.colaborador-card { border: 1px solid #ececec; border-left: 4px solid #ed1c24; }';
 include 'componentes/head.php';
 include 'componentes/header.php';
 $paginaAtiva = 'colaboradores';
 ?>
-
-<style>
-    .colaborador-card {
-        border: 1px solid #ececec;
-        border-left: 4px solid #ed1c24;
-    }
-</style>
 
 <main class="d-md-none" style="margin-bottom: 120px;">
     <div class="container mt-3">
@@ -29,6 +23,9 @@ $paginaAtiva = 'colaboradores';
 
 <main class="d-none d-md-block main-desktop-layout">
     <div class="container-fluid px-0" style="max-width: 980px;">
+        <a href="./dashboard.php" class="btn btn-outline-danger btn-sm mb-3 d-inline-flex align-items-center gap-1 text-decoration-none">
+            <i class="bi bi-arrow-left"></i> Voltar
+        </a>
         <div class="d-flex justify-content-between align-items-center mb-4">
             <h4 class="fw-bold mb-0">Colaboradores</h4>
             <div class="d-flex gap-2">
@@ -112,8 +109,8 @@ $paginaAtiva = 'colaboradores';
             <div class="colaborador-card bg-white rounded-3 shadow-sm p-3 mb-3" data-id="${item.id_usuario}">
                 <div class="d-flex justify-content-between align-items-start">
                     <div>
-                        <h6 class="fw-bold mb-1">${item.nome_usuario}</h6>
-                        <small class="text-muted d-block mb-2">Matrícula: ${item.matricula_usuario}</small>
+                        <h6 class="fw-bold mb-1">${esc(item.nome_usuario)}</h6>
+                        <small class="text-muted d-block mb-2">Matrícula: ${esc(item.matricula_usuario)}</small>
                         ${legendaPapel}
                     </div>
                 </div>
@@ -127,7 +124,8 @@ $paginaAtiva = 'colaboradores';
             document.getElementById('listaColaboradoresMobile')
         ];
         try {
-            const response = await fetch('../../../../api/usuarios.php?acao=listar_colaboradores');
+            const q = idInterclasseColab ? `&id_interclasse=${encodeURIComponent(idInterclasseColab)}` : '';
+            const response = await fetch(`../../../../api/usuarios.php?acao=listar_colaboradores${q}`);
             const resultado = await response.json();
             if (resultado.status !== 'sucesso') {
                 throw new Error(resultado.mensagem || 'Falha ao listar colaboradores.');

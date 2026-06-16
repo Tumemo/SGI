@@ -3,21 +3,13 @@ $tituloPagina = 'SGI - Colaborador - Locais';
 $titulo = 'Locais';
 $mostrarVoltar = true;
 $urlVoltar = './dashboard.php';
+$cssExtra = '.local-card { border-radius: 12px; transition: box-shadow 0.2s ease; } .local-card:hover { box-shadow: 0 0.35rem 1rem rgba(0, 0, 0, 0.08) !important; }';
 include 'componentes/head.php';
 include 'componentes/header.php';
+$paginaAtiva = 'locais';
 ?>
 
-<style>
-    .local-card {
-        border-radius: 12px;
-        transition: box-shadow 0.2s ease;
-    }
-    .local-card:hover {
-        box-shadow: 0 0.35rem 1rem rgba(0, 0, 0, 0.08) !important;
-    }
-</style>
-
-<main class="d-md-none p-3" style="padding-top: 5rem; padding-bottom: 6rem;">
+<main class="d-md-none p-3" style="padding-top: 5rem; padding-bottom: 120px;">
     <p class="text-secondary text-center small mb-3">Locais onde os jogos acontecem</p>
     <div id="listaLocaisMobile" class="d-flex flex-column gap-3 mx-auto" style="max-width: 420px;">
         <p class="text-muted small text-center">Carregando…</p>
@@ -90,12 +82,6 @@ include 'componentes/header.php';
     if (idInterclasse) {
         document.getElementById('btnVoltarLocaisMobile').href = `./dashboard.php?id=${idInterclasse}`;
         document.getElementById('btnVoltarLocaisDesk').href = `./dashboard.php?id=${idInterclasse}`;
-    }
-
-    function esc(s) {
-        const d = document.createElement('div');
-        d.textContent = s == null ? '' : String(s);
-        return d.innerHTML;
     }
 
     function cardLocal(loc) {
