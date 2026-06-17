@@ -170,7 +170,7 @@ require_once '../componentes/header.php';
                     </div>
                     <div>
                         <button type="button" class="btn btn-sm btn-outline-primary me-1" data-editar="${item.id_usuario}"><i class="bi bi-pencil-square"></i></button>
-                        <button type="button" class="btn btn-sm btn-outline-danger" data-remover="${item.id_usuario}"><i class="bi bi-trash"></i></button>
+                        ${nivel !== '0' ? `<button type="button" class="btn btn-sm btn-outline-danger" data-remover="${item.id_usuario}"><i class="bi bi-trash"></i></button>` : ''}
                     </div>
                 </div>
             </div>

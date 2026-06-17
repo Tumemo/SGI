@@ -346,11 +346,40 @@ switch ($metodo) {
         }
 
         if ($acao === 'excluir_colaborador') {
+            if (session_status() === PHP_SESSION_NONE) {
+                session_start();
+            }
+            if (!isset($_SESSION['nivel']) || (int)$_SESSION['nivel'] !== 0) {
+                sgi_json_saida(['status' => 'erro', 'mensagem' => 'Acesso negado. Apenas administradores podem remover colaboradores.']);
+                break;
+            }
+
             $idInterclasseAtivo = buscarInterclasseAtivo($conn);
             $dados = !empty($_POST) ? $_POST : $inputData;
             $idUsuario = (int) ($dados['id_usuario'] ?? 0);
             if ($idUsuario <= 0) {
                 sgi_json_saida(['status' => 'erro', 'mensagem' => 'ID do colaborador inválido.']);
+                break;
+            }
+
+            $checkStmt = $conn->prepare('SELECT nivel_usuario FROM usuarios WHERE id_usuario = ?');
+            $checkStmt->bind_param('i', $idUsuario);
+            $checkStmt->execute();
+            $checkResult = $checkStmt->get_result();
+            $targetUser = $checkResult->fetch_assoc();
+            $checkStmt->close();
+
+            if (!$targetUser) {
+                sgi_json_saida(['status' => 'erro', 'mensagem' => 'Usuário não encontrado.']);
+                break;
+            }
+            if ($targetUser['nivel_usuario'] === '0') {
+                sgi_json_saida(['status' => 'erro', 'mensagem' => 'Não é possível remover um administrador.']);
+                break;
+            }
+
+            if (isset($_SESSION['id']) && (int)$_SESSION['id'] === $idUsuario) {
+                sgi_json_saida(['status' => 'erro', 'mensagem' => 'Você não pode remover a própria conta.']);
                 break;
             }
             
