@@ -18,6 +18,7 @@ switch ($method) {
                     j.id_jogo,
                     j.nome_jogo, 
                     j.status_jogo,
+                    t.id_turma,
                     t.nome_turma,
                     t.nome_fantasia_turma,
                     m.nome_modalidade
