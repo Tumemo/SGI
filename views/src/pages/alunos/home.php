@@ -271,6 +271,132 @@
             color: #10b981;
             font-size: 14px;
         }
+
+        /* --- GRID DE MODALIDADES --- */
+        .modal-modalidades{
+    max-width: 900px;
+}
+.modalidades-container{
+    padding: 20px;
+}
+.modal-content{
+    padding:20px;
+}
+
+.modalidades-grid{
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 15px;
+    max-width: 100%;
+}
+
+        /* Card de Modalidade Padrão (Não selecionado) */
+        .modalidade-card {
+            background-color: #ffffff;
+            border-radius: 8px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+            height: 70px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            cursor: pointer;
+            font-size: 18px;
+            font-weight: 700;
+            color: #000000; /* Letra preta por padrão */
+            position: relative;
+            user-select: none;
+            transition: transform 0.15s, background-color 0.2s, color 0.2s;
+        }
+
+ .modalidade-card {
+    font-size: 18px;
+    font-weight: 500;
+}
+        .modalidade-card:hover {
+            transform: translateY(-2px);
+        }
+
+        /* REQUISITO: Card Selecionado (Fundo verde, letra e ícone em branco) */
+        .modalidade-card.selected {
+            background-color: #5cb85c; /* Tom de verde idêntico ao da imagem */
+            color: #ffffff !important; /* Letra branca forcada */
+        }
+
+        /* Checkmark redondo verde no canto superior direito do card selecionado */
+        .modalidade-card.selected::after {
+            content: "✓";
+            position: absolute;
+            top: -6px;
+            right: -6px;
+            width: 20px;
+            height: 20px;
+            background-color: #5cb85c;
+            border: 2px solid #ffffff;
+            color: white;
+            border-radius: 50%;
+            font-size: 11px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+
+        /* --- ÁREA INFERIOR DE SALVAMENTO --- */
+        .footer-actions {
+            margin-top: auto;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+            width: 100%;
+        }
+
+        .counter-text {
+            font-size: 14px;
+            color: #333333;
+            font-weight: 500;
+        }
+
+        /* REQUISITO: Botão verde de salvar */
+      .btn-save {
+    background: linear-gradient(135deg, #e60012, #ff3344);
+    color: white;
+    border: none;
+    padding: 14px 28px;
+    min-width: 220px;
+    height: 50px;
+    border-radius: 12px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+
+    box-shadow: 0 10px 25px rgba(230, 0, 18, .25);
+
+    transition: all .25s ease;
+}
+
+.btn-save:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 14px 30px rgba(230, 0, 18, .35);
+}
+
+.btn-save:active {
+    transform: scale(.98);
+}
+
+        /* Texto sutil "Confirmar" na parte inferior */
+        .bottom-label {
+            font-size: 14px;
+            color: #b3b3b3;
+            font-weight: 500;
+            margin-top: 5px;
+        }
     </style>
 </head>
 <body>
@@ -280,10 +406,10 @@
          
         <aside class="sidebar">
             <a href="#"><i class="bi bi-person-gear"></i></a>
-            <a href="index.html" class="active"><i class="bi bi-house"></i></a>
-            <a href="modalidade.php"><i class="bi bi-trophy"></i></a>
+            <a href="home.php" class="active"><i class="bi bi-house"></i></a>
+            <a href="ranking.php"><i class="bi bi-trophy"></i></a>
             <a href="teste.php"><i class="bi bi-calendar3"></i></a>
-            <a href="notificacao.html"><i class="bi bi-bell"></i></a>
+            <a href="notificacoes.php"><i class="bi bi-bell"></i></a>
             <a href="#" class="logout"><i class="bi bi-box-arrow-right"></i></a>
         </aside>
 
@@ -381,41 +507,15 @@
 
             <div class="modal-body">
 
-                  <div class="app-container">
-        
-        <aside class="sidebar">
-    <a href="#"><i class="bi bi-person-gear"></i></a>
-
-    <a href="home.php">
-        <i class="bi bi-house"></i>
-    </a>
-
-    <a href="modalidades.php" class="active">
-        <i class="bi bi-trophy"></i>
-    </a>
-
-    <a href="agenda.php">
-        <i class="bi bi-calendar3"></i>
-    </a>
-
-    <a href="notificacao.php">
-        <i class="bi bi-bell"></i>
-    </a>
-
-    <a href="#" class="logout">
-        <i class="bi bi-box-arrow-right"></i>
-    </a>
-</aside>
-
-        <main class="main-content">
             
-            <a href="#" class="badge-interclasse">
-               <i class="bi bi-arrow-left-circle-fill"></i> Interclasse 2026
-              </a>
+          
+<br>
 
             <h1 class="page-title">
                <i class="bi bi-trophy"></i> Modalidades
             </h1>
+            <br>
+            <br>
 
             <div class="modalidades-grid">
                 
@@ -451,6 +551,7 @@
             </div>
 
             <div class="footer-actions">
+                <br>
                 <p class="counter-text">Você pode escolher até 3 modalidades</p>
                 
                 <button type="button" class="btn-save" onclick="salvarEscolhas()">
@@ -496,7 +597,65 @@
             window.location.href = "home.php";
         }
         
+        
     </script>
+
+    <script>
+
+        async function carregarInterclasses() {
+    try {
+
+        const response = await fetch('../../../../api/interclasses.php');
+
+        const dados = await response.json();
+
+        const lista = document.getElementById('listaDesktop');
+
+        lista.innerHTML = '';
+
+        dados.forEach(interclasse => {
+
+            lista.innerHTML += `
+                <div class="row bg-white border rounded-3 shadow-sm py-3 px-2 mb-2 align-items-center">
+
+                    <div class="col-4 fw-semibold">
+                        ${interclasse.nome_interclasse}
+                    </div>
+
+                    <div class="col-4 text-center">
+                        ${interclasse.ano}
+                    </div>
+
+                    <div class="col-4 text-center">
+
+                        <button
+                            class="btn btn-danger btn-sm"
+                            onclick="abrirInterclasse(${interclasse.id_interclasse})">
+
+                            Participar
+
+                        </button>
+
+                    </div>
+
+                </div>
+            `;
+        });
+
+    } catch (erro) {
+
+        console.error(erro);
+
+        document.getElementById('listaDesktop').innerHTML = `
+            <div class="alert alert-danger">
+                Erro ao carregar interclasses
+            </div>
+        `;
+    }
+}
+
+window.addEventListener('load', carregarInterclasses);
+        </script>
 
             </div>
 
@@ -504,9 +663,20 @@
     </div>
 </div>
 
-        </main>
-    </div>
+      
     <script>
+
+
+// window.addEventListener('load', () => 
+// {
+
+//     const modal = new bootstrap.Modal(
+//         document.getElementById('modalRegulamento')
+//     );
+
+//     modal.show();
+
+// });
 window.addEventListener('load', () => {
 
     const aceitou = localStorage.getItem('regulamentoAceito');
@@ -521,6 +691,10 @@ window.addEventListener('load', () => {
     }
 
 });
+
+
+
+;
 </script>
 <script>
 function validarEAvancar() {
@@ -532,7 +706,7 @@ function validarEAvancar() {
         return;
     }
 
-    // salva que já aceitou
+    // Salva que aceitou
     localStorage.setItem('regulamentoAceito', 'true');
 
     const modalReg = bootstrap.Modal.getInstance(
@@ -541,7 +715,7 @@ function validarEAvancar() {
 
     modalReg.hide();
 
-    // abre modal de modalidades
+    // Abre o modal de modalidades
     const modalMod = new bootstrap.Modal(
         document.getElementById('modalModalidades')
     );
