@@ -325,7 +325,7 @@ include 'componentes/nav.php';
 
         const selDuracao = document.getElementById('select-duracao');
         if (selDuracao) {
-            selDuracao.addEventListener('change', () => mudarDuracao(parseInt(selDuracao.value, 10)));
+            selDuracao.addEventListener('change', () => mudarDuracao(parseInt(selDuracao.value, 10) * 60));
         }
 
         const btnPause = document.getElementById('btn-pausar');

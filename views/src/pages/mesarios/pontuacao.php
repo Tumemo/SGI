@@ -88,19 +88,7 @@ include 'componentes/nav.php';
                         <option value="">Todas as modalidades</option>
                     </select>
                 </div>
-                <div class="col-lg-3 d-grid">
-                    <button class="btn-gerar" id="btnGerarChaveamento" onclick="gerarChaveamento()">
-                        <i class="bi bi-diagram-3-fill me-2"></i>
-                        Gerar Chaveamento
-                    </button>
-                </div>
-                <div class="col-lg-6">
-                    <div id="msgChaveamento" class="mt-2"></div>
-                    <div id="linkVerArvore" class="mt-2 d-none">
-                        <a href="#" id="btnVerArvore" class="btn btn-outline-danger btn-sm fw-bold">
-                            <i class="bi bi-diagram-3-fill me-1"></i> Ver árvore do chaveamento
-                        </a>
-                    </div>
+                <div class="col-lg-9">
                 </div>
             </div>
         </div>
@@ -241,51 +229,7 @@ include 'componentes/nav.php';
         }
     }
 
-    window.gerarChaveamento = async function() {
-        const idModalidade = document.getElementById('selectModalidade').value;
-        const msgEl = document.getElementById('msgChaveamento');
-        const btn = document.getElementById('btnGerarChaveamento');
-
-        if (!idModalidade) {
-            msgEl.innerHTML = '<p class="text-danger fw-bold mb-0">Selecione uma modalidade primeiro.</p>';
-            return;
-        }
-
-        const mod = modalidadesCache.find(m => String(m.id_modalidade) === idModalidade);
-        const tipoNome = mod?.nome_tipo_modalidade || '';
-
-        if (tipoNome === 'Individual') {
-            msgEl.innerHTML = '<p class="text-warning fw-bold mb-0">Modalidade individual requer registro manual de ranking (1º, 2º, 3º lugar).</p>';
-            return;
-        }
-
-        msgEl.innerHTML = '<p class="text-muted fw-bold mb-0">Gerando chaveamento...</p>';
-
-        try {
-            btn.disabled = true;
-            const resp = await fetch('../../../../api/chaveamento.php', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ id_modalidade: Number(idModalidade), tipo_modalidade: 'mata_mata' })
-            });
-            const data = await resp.json();
-
-            if (data.success === false) throw new Error(data.message || 'Erro ao gerar chaveamento.');
-
-            msgEl.innerHTML = `<p class="text-success fw-bold mb-0">${data.message} (${data.jogos_criados} jogos criados).</p>`;
-            const linkArvore = document.getElementById('linkVerArvore');
-            linkArvore.classList.remove('d-none');
-            document.getElementById('btnVerArvore').href = `../../chaveamento_arvore.php?id=${idInterclasse}`;
-            carregarJogos();
-        } catch (err) {
-            msgEl.innerHTML = `<p class="text-danger fw-bold mb-0">${err.message}</p>`;
-        } finally {
-            btn.disabled = false;
-        }
-    };
-
     document.getElementById('selectModalidade').addEventListener('change', () => {
-        document.getElementById('msgChaveamento').innerHTML = '';
         carregarJogos();
     });
 

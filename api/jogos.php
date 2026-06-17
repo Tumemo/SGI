@@ -3,6 +3,62 @@ require_once '../config/db.php';
 require_once 'filtros.php';
 header('Content-Type: application/json');
 
+function sgi_validar_horario_turmas($conn, $id_jogo, $inicio, $termino) {
+    $turnos = [
+        'manha'    => ['07:00', '12:00'],
+        'tarde'    => ['13:00', '18:00'],
+        'noite'    => ['19:00', '22:30'],
+        'integral' => ['07:00', '18:00'],
+    ];
+
+    $sql = "SELECT DISTINCT t.turno_turma
+            FROM partidas p
+            INNER JOIN equipes e ON e.id_equipe = p.equipes_id_equipe
+            INNER JOIN turmas t ON t.id_turma = e.turmas_id_turma
+            WHERE p.jogos_id_jogo = ?";
+
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param("i", $id_jogo);
+    $stmt->execute();
+    $res = $stmt->get_result();
+    $turnos_turmas = [];
+    while ($row = $res->fetch_assoc()) {
+        $turnos_turmas[] = $row['turno_turma'];
+    }
+    $stmt->close();
+
+    if (empty($turnos_turmas)) {
+        return null;
+    }
+
+    $inicio_ts = strtotime($inicio);
+    $termino_ts = strtotime($termino);
+    if ($inicio_ts === false || $termino_ts === false) {
+        return "Horário inválido.";
+    }
+
+    foreach ($turnos_turmas as $turno) {
+        if (!isset($turnos[$turno])) {
+            continue;
+        }
+        list($limite_inicio, $limite_fim) = $turnos[$turno];
+        $limite_inicio_ts = strtotime($limite_inicio);
+        $limite_fim_ts = strtotime($limite_fim);
+
+        if ($inicio_ts < $limite_inicio_ts || $termino_ts > $limite_fim_ts) {
+            $mapa_nomes = [
+                'manha' => 'Manhã (07:00-12:00)',
+                'tarde' => 'Tarde (13:00-18:00)',
+                'noite' => 'Noite (19:00-22:30)',
+                'integral' => 'Integral (07:00-18:00)',
+            ];
+            $nome_turno = $mapa_nomes[$turno] ?? $turno;
+            return "O horário do jogo excede o turno <b>{$nome_turno}</b> de uma ou mais turmas participantes. Ajuste o horário ou contate a coordenação.";
+        }
+    }
+    return null;
+}
+
 $method = $_SERVER['REQUEST_METHOD'];
 
 switch ($method) {
@@ -160,6 +216,38 @@ switch ($method) {
             break;
         }
 
+        if (isset($data->inicio_jogo) || isset($data->termino_jogo)) {
+            $id_jogo_val = (int)$data->id_jogo;
+            $inicio_val = $data->inicio_jogo ?? '00:00:00';
+            $termino_val = $data->termino_jogo ?? '00:00:00';
+
+            $ck_sql = "SELECT inicio_jogo, termino_jogo FROM jogos WHERE id_jogo = ?";
+            $ck_stmt = $conn->prepare($ck_sql);
+            $ck_stmt->bind_param("i", $id_jogo_val);
+            $ck_stmt->execute();
+            $cur = $ck_stmt->get_result()->fetch_assoc();
+            $ck_stmt->close();
+
+            $time_changed = !$cur || $inicio_val !== $cur['inicio_jogo'] || $termino_val !== $cur['termino_jogo'];
+            if ($time_changed) {
+                $erro_turno = sgi_validar_horario_turmas($conn, $id_jogo_val, $inicio_val, $termino_val);
+                if ($erro_turno) {
+                    http_response_code(422);
+                    echo json_encode(["success" => false, "message" => $erro_turno]);
+                    break;
+                }
+            }
+        }
+
+        if (isset($data->data_jogo)) {
+            $hoje = date('Y-m-d');
+            if ($data->data_jogo < $hoje) {
+                http_response_code(422);
+                echo json_encode(["success" => false, "message" => "Não é permitido agendar um jogo para uma data passada."]);
+                break;
+            }
+        }
+
         $sql = "UPDATE jogos SET " . implode(", ", $campos) . " WHERE id_jogo = ?";
         $params[] = $data->id_jogo;
         $types .= "i";
@@ -171,7 +259,7 @@ switch ($method) {
             echo json_encode(["success" => true, "message" => "Jogo atualizado com sucesso!"]);
         } else {
             http_response_code(500);
-            echo json_encode(["success" => false, "message" => $conn->error]);
+            echo json_encode(["success" => false, "message" => "Erro ao atualizar: " . $conn->error]);
         }
         break;
 

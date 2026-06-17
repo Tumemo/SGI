@@ -87,7 +87,7 @@
 
             try {
                 // Utilizando a rota absoluta corrigida que encontrou o arquivo com sucesso
-                const response = await fetch('/sgi/api/login.php', {
+                const response = await fetch('../api/login.php', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload)

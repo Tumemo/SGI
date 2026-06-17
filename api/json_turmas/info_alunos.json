@@ -439,5 +439,229 @@
         "rm": "3.319",
         "genero": "FEM",
         "turma": "2EMA"
+    },
+    {
+        "nome": "Alice dos Santos Zanelato",
+        "data_nascimento": "24/05/2014",
+        "rm": "3.466",
+        "genero": "FEM",
+        "turma": "6EFB"
+    },
+    {
+        "nome": "Ana Beatriz dos Reis Oliveira",
+        "data_nascimento": "05/10/2014",
+        "rm": "3.447",
+        "genero": "FEM",
+        "turma": "6EFB"
+    },
+    {
+        "nome": "Ana Júlia Souza Silva",
+        "data_nascimento": "13/10/2014",
+        "rm": "3.452",
+        "genero": "FEM",
+        "turma": "6EFB"
+    },
+    {
+        "nome": "Ana Laura Rodrigues",
+        "data_nascimento": "29/09/2014",
+        "rm": "3.468",
+        "genero": "FEM",
+        "turma": "6EFB"
+    },
+    {
+        "nome": "Apolo dos Santos Fonseca",
+        "data_nascimento": "31/07/2014",
+        "rm": "3.446",
+        "genero": "MASC",
+        "turma": "6EFB"
+    },
+    {
+        "nome": "Breno Gabriel Gonçalves Silva",
+        "data_nascimento": "01/06/2014",
+        "rm": "3.470",
+        "genero": "MASC",
+        "turma": "6EFB"
+    },
+    {
+        "nome": "Bryan Gabriel da Silva Oliveira",
+        "data_nascimento": "18/08/2014",
+        "rm": "3.471",
+        "genero": "MASC",
+        "turma": "6EFB"
+    },
+    {
+        "nome": "Daniel Correia Carvalho",
+        "data_nascimento": "13/05/2014",
+        "rm": "3.462",
+        "genero": "MASC",
+        "turma": "6EFB"
+    },
+    {
+        "nome": "Daniel Scatolon Machado",
+        "data_nascimento": "10/02/2014",
+        "rm": "3.459",
+        "genero": "MASC",
+        "turma": "6EFB"
+    },
+    {
+        "nome": "Davi de Lima Rodrigues Monteiro",
+        "data_nascimento": "19/05/2014",
+        "rm": "3.439",
+        "genero": "MASC",
+        "turma": "6EFB"
+    },
+    {
+        "nome": "Francine Renata Crispim Moreira",
+        "data_nascimento": "08/10/2014",
+        "rm": "3.454",
+        "genero": "FEM",
+        "turma": "6EFB"
+    },
+    {
+        "nome": "Gabrielli Donato Resende Batista",
+        "data_nascimento": "26/11/2014",
+        "rm": "3.444",
+        "genero": "FEM",
+        "turma": "6EFB"
+    },
+    {
+        "nome": "Isabella Cáceres Coronel",
+        "data_nascimento": "18/06/2015",
+        "rm": "3.450",
+        "genero": "FEM",
+        "turma": "6EFB"
+    },
+    {
+        "nome": "Isadora Betine Pirão",
+        "data_nascimento": "14/04/2014",
+        "rm": "3.465",
+        "genero": "FEM",
+        "turma": "6EFB"
+    },
+    {
+        "nome": "Livia Mariana Sobrinho Silva",
+        "data_nascimento": "28/10/2014",
+        "rm": "3.442",
+        "genero": "FEM",
+        "turma": "6EFB"
+    },
+    {
+        "nome": "Lorena Bento Seolin",
+        "data_nascimento": "07/11/2014",
+        "rm": "3.464",
+        "genero": "FEM",
+        "turma": "6EFB"
+    },
+    {
+        "nome": "Luiz Henrique Francisquini",
+        "data_nascimento": "26/12/2014",
+        "rm": "3.458",
+        "genero": "MASC",
+        "turma": "6EFB"
+    },
+    {
+        "nome": "Maressa Carvalho Alecrim",
+        "data_nascimento": "26/11/2014",
+        "rm": "3.467",
+        "genero": "FEM",
+        "turma": "6EFB"
+    },
+    {
+        "nome": "Maria Alice Pereira Lima",
+        "data_nascimento": "08/08/2014",
+        "rm": "3.448",
+        "genero": "FEM",
+        "turma": "6EFB"
+    },
+    {
+        "nome": "Maria Eduarda Pereira Macedo",
+        "data_nascimento": "24/07/2014",
+        "rm": "3.457",
+        "genero": "FEM",
+        "turma": "6EFB"
+    },
+    {
+        "nome": "Maria Gabriela Martins de Oliveira",
+        "data_nascimento": "12/10/2014",
+        "rm": "3.460",
+        "genero": "FEM",
+        "turma": "6EFB"
+    },
+    {
+        "nome": "Mariana Flausino Vilalva",
+        "data_nascimento": "26/01/2015",
+        "rm": "3.455",
+        "genero": "FEM",
+        "turma": "6EFB"
+    },
+    {
+        "nome": "Marinalva Gabriela Batista Hoedlich",
+        "data_nascimento": "02/12/2014",
+        "rm": "3.438",
+        "genero": "FEM",
+        "turma": "6EFB"
+    },
+    {
+        "nome": "Matheus Freitas Mariza",
+        "data_nascimento": "23/03/2015",
+        "rm": "3.469",
+        "genero": "MASC",
+        "turma": "6EFB"
+    },
+    {
+        "nome": "Pedro Augusto Martins Santos",
+        "data_nascimento": "31/01/2015",
+        "rm": "3.443",
+        "genero": "MASC",
+        "turma": "6EFB"
+    },
+    {
+        "nome": "Pierre Nascimento Biazetto",
+        "data_nascimento": "19/02/2015",
+        "rm": "3.451",
+        "genero": "MASC",
+        "turma": "6EFB"
+    },
+    {
+        "nome": "Rafael Corbari Fraga de Souza",
+        "data_nascimento": "17/01/2015",
+        "rm": "3.453",
+        "genero": "MASC",
+        "turma": "6EFB"
+    },
+    {
+        "nome": "Rafaella Almeida Barcello",
+        "data_nascimento": "07/06/2014",
+        "rm": "3.461",
+        "genero": "FEM",
+        "turma": "6EFB"
+    },
+    {
+        "nome": "Samuel Acorse Ribeiro Costa",
+        "data_nascimento": "06/11/2014",
+        "rm": "3.445",
+        "genero": "MASC",
+        "turma": "6EFB"
+    },
+    {
+        "nome": "Samuel Barbosa Ferreira",
+        "data_nascimento": "05/12/2014",
+        "rm": "3.441",
+        "genero": "MASC",
+        "turma": "6EFB"
+    },
+    {
+        "nome": "Samuel Lucas Besson Souza",
+        "data_nascimento": "15/12/2014",
+        "rm": "3.449",
+        "genero": "MASC",
+        "turma": "6EFB"
+    },
+    {
+        "nome": "Sophia Gabrielly Oliveira",
+        "data_nascimento": "27/03/2015",
+        "rm": "3.440",
+        "genero": "FEM",
+        "turma": "6EFB"
     }
 ]

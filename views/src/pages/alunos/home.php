@@ -1,15 +1,14 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Regulamento - Interclasse 2026</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<?php
+$tituloPagina = 'SGI - Aluno Home';
+$cssExtra = '
+        .style-card { transition: transform 0.2s ease, box-shadow 0.2s ease; }
+        .style-card:hover, .style-card:focus-within { transform: translateY(-2px); box-shadow: 0 .5rem 1rem rgba(0,0,0,.15)!important; }
+';
+include 'componentes/head.php';
+$mostrarSino = true;
+$mostrarVoltar = false;
+include 'componentes/header.php';
+?>
 
     <style>
         * {
@@ -548,7 +547,12 @@
     <i class="bi bi-trophy"></i>
     Corrida
 </div>
+
+    
             </div>
+        </section>
+    </main>
+
 
             <div class="footer-actions">
                 <br>
@@ -560,42 +564,124 @@
                
 
         </main>
+
+   
     </div>
 
+<?php
+$paginaAtiva = 'home';
+include 'componentes/nav.php';
+?>
+
     <script>
-        function toggleModalidade(card) {
-            // Conta quantos já estão selecionados atualmente
-            const selecionados = document.querySelectorAll('.modalidade-card.selected');
-            
-            // Se já estiver selecionado, remove a seleção livremente
-            if (card.classList.contains('selected')) {
-                card.classList.remove('selected');
-            } else {
-                // REQUISITO: Bloqueia se tentar selecionar mais do que 3
-                if (selecionados.length >= 3) {
-                    alert("Você só pode escolher até 3 modalidades!");
-                    return;
-                }
-                card.classList.add('selected');
-            }
+        function escaparHTML(string) {
+            const mapa = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#x27;' };
+            return String(string || '').replace(/[&<>"']/g, (s) => mapa[s]);
         }
 
-        function salvarEscolhas() {
-            const selecionados = document.querySelectorAll('.modalidade-card.selected');
-            if(selecionados.length === 0) {
-                alert("Por favor, escolha pelo menos 1 modalidade antes de salvar.");
-                return;
-            }
+        function cardInterclasse(interclasse, ativo) {
+            const nomeSanitizado = escaparHTML(interclasse.nome_interclasse);
+            const ano = interclasse.ano_interclasse ? escaparHTML(String(interclasse.ano_interclasse).split('-')[0]) : 'N/A';
             
-            // Coleta os nomes das modalidades selecionadas
-            let escolhidas = [];
-            selecionados.forEach(card => {
-                escolhidas.push(card.innerText.trim());
-            });
+            const status = ativo ? 'Em andamento' : 'Inativo';
+            const classeCard = ativo ? 'bg-white' : 'bg-secondary-subtle opacity-75';
+            const href = ativo ? `./modalidade.php?id=${interclasse.id_interclasse}` : `./ranking.php?id=${interclasse.id_interclasse}`;
             
-            alert("Suas modalidades foram salvas com sucesso: " + escolhidas.join(", "));
-            window.location.href = "home.php";
+            return `
+                <div class="col-12 col-md-6 col-lg-4">
+                    <a href="${href}" class="text-decoration-none text-dark card-link d-block h-100">
+                        <div class="shadow-sm d-flex justify-content-between align-items-center px-4 py-3 rounded ${classeCard} h-100 style-card">
+                            <div>
+                                <h3 class="fs-5 mb-1 text-dark fw-semibold">${nomeSanitizado}</h3>
+                                <p class="m-0 text-secondary small">
+                                    <span class="badge ${ativo ? 'bg-success-subtle text-success' : 'bg-secondary-subtle text-secondary'} me-1">${status}</span> 
+                                    - ${ano}
+                                </p>
+                            </div>
+                            <img src="../../../public/icons/arrow-right.svg" alt="" aria-hidden="true" width="24" height="24">
+                        </div>
+                    </a>
+                </div>
+            `;
         }
+
+        async function carregarInterclassesAluno() {
+            const container = document.getElementById('listaInterclassesAluno');
+            
+            try {
+                const res = await fetch('../../../../api/interclasse.php?regulamento=true');
+                
+                if (!res.ok) throw new Error('Resposta do servidor não amigável.');
+                
+                const lista = await res.json();
+                
+                if (!Array.isArray(lista) || lista.length === 0) {
+                    container.innerHTML = `
+                        <div class="col-12 text-center text-muted py-5">
+                            <i class="bi bi-folder-x fs-1 d-block mb-2"></i>
+                            Nenhum interclasse encontrado no momento.
+                        </div>`;
+                    return;
+                }
+                
+                container.innerHTML = lista.map((item) => {
+                    const isAtivo = item && String(item.status_interclasse) === '1';
+                    return cardInterclasse(item, isAtivo);
+                }).join('');
+                
+            } catch (error) {
+                console.error('Erro ao buscar dados:', error);
+                container.innerHTML = `
+                    <div class="col-12 text-center text-danger py-5">
+                        <i class="bi bi-exclamation-triangle-fill fs-1 d-block mb-2"></i>
+                        Erro ao carregar interclasses. Por favor, tente novamente mais tarde.
+                    </div>
+                `;
+            }
+        }
+        function initModalTermo() {
+            if (sessionStorage.getItem('sgi_termo_exibido')) return;
+
+            const modalTermo = new bootstrap.Modal(document.getElementById('modalTermo'));
+            const btnAceitar = document.getElementById('btnAceitarTermo');
+            const btnRecusar = document.getElementById('btnRecusarTermo');
+            const avisoRecusa = document.getElementById('avisoRecusa');
+
+            modalTermo.show();
+            sessionStorage.setItem('sgi_termo_exibido', 'true');
+
+            btnAceitar.addEventListener('click', async function () {
+                btnAceitar.disabled = true;
+                btnAceitar.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status"></span>Salvando...';
+
+                try {
+                    const res = await fetch('../../../../api/concordarTermos.php', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' }
+                    });
+                    const data = await res.json();
+
+                    if (data.success) {
+                        avisoRecusa.classList.add('d-none');
+                        modalTermo.hide();
+                    } else {
+                        avisoRecusa.textContent = data.message || 'Erro ao salvar aceite. Tente novamente.';
+                        avisoRecusa.classList.remove('d-none');
+                    }
+                } catch (error) {
+                    avisoRecusa.textContent = 'Erro de conexão. Verifique sua internet e tente novamente.';
+                    avisoRecusa.classList.remove('d-none');
+                } finally {
+                    btnAceitar.disabled = false;
+                    btnAceitar.textContent = 'Aceitar';
+                }
+            });
+
+            btnRecusar.addEventListener('click', function () {
+                modalTermo.hide();
+            });
+        }
+
         
         
     </script>
@@ -724,6 +810,5 @@ function validarEAvancar() {
 }
 </script>
     
-
 </body>
 </html>

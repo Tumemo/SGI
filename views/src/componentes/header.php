@@ -1,3 +1,4 @@
+<?php (session_status() === PHP_SESSION_NONE) && session_start(); ?>
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
@@ -21,7 +22,10 @@
     ?>
     <!-- header mobile -->
     <section class="d-md-none" style="height: 120px;">
-        <a href="perfil.php"><span class="position-absolute m-4 translate-middle text-white fs-2" style="z-index: 10; top: 3%; right: -20px;" id="btnVoltar"><i class="bi bi-person-gear"></i></span></a>
+        <a href="perfil.php" class="text-decoration-none"><span class="position-absolute m-4 translate-middle text-white d-flex align-items-center justify-content-center" style="z-index: 10; top: 3%; right: -20px; width: 44px; height: 44px;" id="btnVoltar">
+                <img src="" id="perfilImgMob" class="rounded-circle object-fit-cover w-100 h-100 position-absolute top-0 start-0 d-none" alt="Foto" onerror="this.classList.add('d-none');document.getElementById('perfilIconMob')?.classList.remove('d-none')">
+                <i class="bi bi-person-gear fs-2" id="perfilIconMob"></i>
+            </span></a>
         <img src="../../public/images/banner-global.png" alt="Imagens de alunos do SESI" class="w-100 object-fit-cover" style="height: 100%;">
         <h1 class="position-absolute top-50 start-50 translate-middle text-white w-100 text-center"><?php echo $textTop ?></h1>
     </section>
@@ -130,14 +134,16 @@
             }
         };
 
-        const setupBackLinks = (fallbackPath = './home.php') => {
+        const setupBackLinks = (fallbackPath) => {
             document.querySelectorAll('[data-back-link="true"], [data-sgi-header-back="true"]').forEach((el) => {
                 if (el.dataset.sgiBackBound === '1') return;
                 el.dataset.sgiBackBound = '1';
                 el.addEventListener('click', async (event) => {
                     event.preventDefault();
                     await runBeforeLeaveHandlers();
-                    navigateBack(fallbackPath);
+                    const elHref = el.getAttribute('href');
+                    const fallback = fallbackPath || (elHref && elHref !== '#' ? elHref : './home.php');
+                    navigateBack(fallback);
                 });
             });
         };
@@ -148,10 +154,22 @@
             document.querySelectorAll('[data-active-link]').forEach((link) => {
                 const key = link.getAttribute('data-active-link');
                 const semInterclasse = !id;
-                const permitirSemInterclasse = key === 'home';
+                if (key === 'home') {
+                    link.href = id ? `./dashboard.php?id=${id}` : './home.php';
+                    if (semInterclasse) {
+                        link.classList.add('disabled');
+                        link.style.pointerEvents = 'none';
+                        link.style.opacity = '0.45';
+                    } else {
+                        link.classList.remove('disabled');
+                        link.style.pointerEvents = '';
+                        link.style.opacity = '';
+                    }
+                    return;
+                }
                 const href = id ? buildLinkTo(key, id) : (endpoints[key] || endpoints.home);
                 link.href = href;
-                if (semInterclasse && !permitirSemInterclasse) {
+                if (semInterclasse) {
                     link.classList.add('disabled');
                     link.style.pointerEvents = 'none';
                     link.style.opacity = '0.45';
@@ -205,4 +223,32 @@
     window.addEventListener('load', () => {
         window.SGIInterclasse.setupBackLinks();
     });
+
+    (function() {
+        var userId = <?= (int)($_SESSION['id'] ?? 0) ?>;
+        if (!userId) return;
+        fetch('/sgi/api/foto.php?user_id=' + userId)
+            .then(function(r) { return r.json(); })
+            .then(function(d) {
+                if (d.success && d.foto_usuario) {
+                    var fotoUrl = '/sgi/uploads/fotosUsuarios/' + d.foto_usuario;
+                    ['Mob', 'Desk'].forEach(function(suf) {
+                        var img = document.getElementById('perfilImg' + suf);
+                        var icon = document.getElementById('perfilIcon' + suf);
+                        if (img && icon) {
+                            img.onload = function() {
+                                img.classList.remove('d-none');
+                                icon.classList.add('d-none');
+                            };
+                            img.onerror = function() {
+                                img.classList.add('d-none');
+                                icon.classList.remove('d-none');
+                            };
+                            img.src = fotoUrl;
+                        }
+                    });
+                }
+            })
+            .catch(function() {});
+    })();
 </script>

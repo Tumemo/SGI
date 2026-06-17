@@ -1,5 +1,7 @@
+<?php (session_status() === PHP_SESSION_NONE) && session_start();
+if (!defined('SGI_PERFIL_ALLOW') && !in_array((int)($_SESSION['nivel'] ?? -1), [0, 1])) { header('Location: /sgi/views/index.php'); exit; } ?>
 <!-- navbar mobile -->
-<nav class="d-md-none order-last fixed-bottom py-2 order-lg-first bg-danger">
+<nav class="d-md-none order-last fixed-bottom py-2 order-lg-first bg-danger shadow-lg">
     <ul class="nav justify-content-around fs-1">
         <li><a href="../pages/home.php" class="text-white" data-active-link="home"><i class="bi bi-house"></i></a></li>
         <li><a href="../pages/turmas.php" class="text-white" data-active-link="turmas"><i class="bi bi-people"></i></a></li>
@@ -14,8 +16,9 @@
 
     <ul class="nav flex-column align-items-center justify-content-around h-100 py-4 gap-4 fs-3">
         <li>
-            <a href="perfil.php" class="text-white hover-opacity-100">
-                <i class="bi bi-person-gear"></i>
+            <a href="perfil.php" class="text-white hover-opacity-100 d-flex align-items-center justify-content-center position-relative" style="width: 44px; height: 44px;">
+                <img src="" id="perfilImgDesk" class="rounded-circle object-fit-cover w-100 h-100 position-absolute top-0 start-0 d-none" alt="Foto" onerror="this.classList.add('d-none');document.getElementById('perfilIconDesk')?.classList.remove('d-none')">
+                <i class="bi bi-person-gear" id="perfilIconDesk"></i>
             </a>
         </li>
 

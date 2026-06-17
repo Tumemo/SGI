@@ -141,13 +141,38 @@ require_once '../componentes/header.php';
         vincularEventosInputs();
     }
 
+    let autoSaveTimer = null;
+
     function vincularEventosInputs() {
         document.querySelectorAll('.arrec-input').forEach(input => {
             input.addEventListener('input', (e) => {
                 salvarLocal(e.target.dataset.idTurma, e.target.value);
+                agendarAutoSave();
             });
         });
     }
+
+    function agendarAutoSave() {
+        if (autoSaveTimer) clearTimeout(autoSaveTimer);
+        autoSaveTimer = setTimeout(() => salvarNoServidor(true), 3000);
+    }
+
+    window.addEventListener('beforeunload', () => {
+        const pendentes = todasAsTurmas.some(t => getQuantidadePendente(t) > 0);
+        if (pendentes) {
+            const xhr = new XMLHttpRequest();
+            xhr.open('POST', '../../../api/arrecadacao.php', false);
+            xhr.setRequestHeader('Content-Type', 'application/json');
+            const payload = {
+                id_interclasse: idInterclasseArrecadacao,
+                arrecadacoes: todasAsTurmas.map(t => ({
+                    id_turma: t.id_turma,
+                    quantidade: getQuantidadePendente(t)
+                })).filter((item) => item.quantidade > 0)
+            };
+            xhr.send(JSON.stringify(payload));
+        }
+    });
 
     async function carregarDados() {
         try {
@@ -184,17 +209,10 @@ require_once '../componentes/header.php';
         }
     }
 
-async function salvarNoServidor() {
+async function salvarNoServidor(auto = false) {
     const btnDesk = document.getElementById('btnSalvarDesktop');
     const btnMob = document.getElementById('btnSalvarMobile');
     
-    // Bloqueia os botões para evitar cliques duplos durante o processamento
-    btnDesk.disabled = btnMob.disabled = true;
-    const textoOriginal = btnDesk.innerText;
-    btnDesk.innerText = "A guardar...";
-
-    // Prepara os dados para envio em lote
-    // O backend percorrerá o array 'arrecadacoes' para atualizar cada turma
     const payload = {
         id_interclasse: idInterclasseArrecadacao,
         arrecadacoes: todasAsTurmas.map(t => ({
@@ -204,23 +222,23 @@ async function salvarNoServidor() {
     };
 
     if (!payload.arrecadacoes.length) {
-        alert('Informe a quantidade de itens a adicionar em pelo menos uma turma.');
-        btnDesk.disabled = btnMob.disabled = false;
-        btnDesk.innerText = textoOriginal;
+        if (!auto) alert('Informe a quantidade de itens a adicionar em pelo menos uma turma.');
         return;
     }
 
+    const textoOriginal = btnDesk.innerText;
+    if (!auto) {
+        btnDesk.disabled = btnMob.disabled = true;
+        btnDesk.innerText = "A guardar...";
+    }
+
     try {
-        // O caminho deve sair de views/src/pages/ para chegar em api/
         const response = await fetch('../../../api/arrecadacao.php', {
             method: 'POST',
-            headers: { 
-                'Content-Type': 'application/json' 
-            },
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload)
         });
 
-        // Verifica se o servidor encontrou o arquivo e respondeu sem erros de sistema
         if (!response.ok) {
             throw new Error(`Erro de rede: ${response.status}`);
         }
@@ -231,19 +249,25 @@ async function salvarNoServidor() {
             todasAsTurmas.forEach(t => {
                 localStorage.removeItem(`${storagePrefix}${t.id_turma}`);
             });
-            alert('Itens somados ao ranking com sucesso!');
-            window.location.reload();
+            const status = document.getElementById('statusSincronizacao');
+            if (status) status.innerText = 'Salvo no servidor!';
+            if (!auto) {
+                alert('Itens somados ao ranking com sucesso!');
+                window.location.reload();
+            }
         } else {
-            // Exibe a mensagem de erro específica retornada pelo PHP (ex: "Dados incompletos")
-            alert('Erro do servidor: ' + result.message);
+            if (!auto) alert('Erro do servidor: ' + result.message);
         }
     } catch (error) {
-        alert('Erro de comunicação: Verifique se o ficheiro api/arrecadacao.php existe e se o banco de dados está online.');
+        if (!auto) {
+            alert('Erro de comunicação: Verifique se o ficheiro api/arrecadacao.php existe e se o banco de dados está online.');
+        }
         console.error('Falha no salvamento:', error);
     } finally {
-        // Restaura os botões para o estado inicial
-        btnDesk.disabled = btnMob.disabled = false;
-        btnDesk.innerText = textoOriginal;
+        if (!auto) {
+            btnDesk.disabled = btnMob.disabled = false;
+            btnDesk.innerText = textoOriginal;
+        }
     }
 }
 

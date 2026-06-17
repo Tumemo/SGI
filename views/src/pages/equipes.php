@@ -205,7 +205,7 @@ require_once '../componentes/header.php';
         }
     });
 
-    window.addEventListener('load', carregarEquipesPagina);
+    window.addEventListener('pageshow', carregarEquipesPagina);
 </script>
 
 <?php

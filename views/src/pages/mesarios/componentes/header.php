@@ -16,7 +16,9 @@
             categorias: './categorias.php',
             turmas: './turmas.php',
             agenda: './agenda.php',
-            pontuacoes: './pontuacao.php'
+            pontuacoes: './pontuacao.php',
+            dashboard: './dashboard.php',
+            turmas: './turmas.php'
         };
         let cache = null;
 

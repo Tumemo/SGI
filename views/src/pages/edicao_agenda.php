@@ -68,7 +68,7 @@ require_once '../componentes/header.php';
 
     <div class="row">
         <div class="col-lg-6 pe-lg-5">
-            <h2 class="text-dark mb-4 d-flex align-items-center gap-2" style="font-weight: 400; font-size: 20px;">
+            <h2 class="text-dark mb-4 d-flex align-items-center gap-2" style="font-weight: 400;">
                 <i class="bi bi-calendar3"></i> Agenda
             </h2>
             <div id="lista-eventos" class="d-flex flex-column gap-3"></div>
