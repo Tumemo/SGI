@@ -1,5 +1,5 @@
 <?php (session_status() === PHP_SESSION_NONE) && session_start();
-if ((int)($_SESSION['nivel'] ?? -1) !== 2) { header('Location: /sgi/views/index.php'); exit; } ?>
+if ((int)($_SESSION['nivel'] ?? -1) !== 2) { header('Location: /2025/SGI/views/index.php'); exit; } ?>
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>

@@ -227,11 +227,11 @@
     (function() {
         var userId = <?= (int)($_SESSION['id'] ?? 0) ?>;
         if (!userId) return;
-        fetch('/sgi/api/foto.php?user_id=' + userId)
+        fetch('/2025/SGI/api/foto.php?user_id=' + userId)
             .then(function(r) { return r.json(); })
             .then(function(d) {
                 if (d.success && d.foto_usuario) {
-                    var fotoUrl = '/sgi/uploads/fotosUsuarios/' + d.foto_usuario;
+                    var fotoUrl = '/2025/SGI/uploads/fotosUsuarios/' + d.foto_usuario;
                     ['Mob', 'Desk'].forEach(function(suf) {
                         var img = document.getElementById('perfilImg' + suf);
                         var icon = document.getElementById('perfilIcon' + suf);

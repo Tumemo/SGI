@@ -329,7 +329,7 @@ require_once '../componentes/header.php';
         id: <?= json_encode($sessionId ?? 0) ?>,
         nivel: <?= json_encode((int)($nivel ?? 0)) ?>
     };
-    const API_FOTO = '/sgi/api/foto.php';
+    const API_FOTO = '/2025/SGI/api/foto.php';
 
     document.addEventListener('DOMContentLoaded', async () => {
         try {
@@ -399,7 +399,7 @@ require_once '../componentes/header.php';
             try {
                 const resp = await fetch(API_FOTO + '?user_id=' + DADOS_PERFIL.id);
                 const data = await resp.json();
-                if (data.success && data.foto_usuario) mostrarFoto('/sgi/uploads/fotosUsuarios/' + data.foto_usuario);
+                if (data.success && data.foto_usuario) mostrarFoto('/2025/SGI/uploads/fotosUsuarios/' + data.foto_usuario);
             } catch (e) {
                 console.warn('Erro ao buscar foto:', e);
             }
@@ -413,7 +413,7 @@ require_once '../componentes/header.php';
             try {
                 const resp = await fetch(API_FOTO, { method: 'POST', body: fd });
                 const data = await resp.json();
-                if (data.success && data.arquivo) mostrarFoto('/sgi/uploads/fotosUsuarios/' + data.arquivo);
+                if (data.success && data.arquivo) mostrarFoto('/2025/SGI/uploads/fotosUsuarios/' + data.arquivo);
                 else alert(data.mensagem || 'Erro ao enviar foto.');
             } catch (e) {
                 alert('Erro de conexão.');
