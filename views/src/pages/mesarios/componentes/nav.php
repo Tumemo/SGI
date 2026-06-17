@@ -3,7 +3,7 @@ $paginaAtiva = $paginaAtiva ?? 'home';
 $navItens = [
     'home'       => ['label' => 'Início',       'icon' => 'bi-house-door-fill',   'url' => './home.php'],
     'pontuacao'  => ['label' => 'Chaveamentos', 'icon' => 'bi-award-fill',        'url' => './pontuacao.php'],
-    'perfil'     => ['label' => 'Perfil',        'icon' => 'bi-person-gear',      'url' => '../perfil.php'],
+    'perfil'     => ['label' => 'Perfil',        'icon' => 'bi-person-gear',      'url' => './perfil.php'],
     'sair'       => ['label' => 'Sair',         'icon' => 'bi-box-arrow-right',   'url' => '../../../../api/logout.php'],
 ];
 $classeLink = fn($key) => $key === $paginaAtiva ? 'text-white fw-bold' : 'text-white-50';
