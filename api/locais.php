@@ -119,6 +119,43 @@ case 'PUT':
     }
     break;
 
+    case 'DELETE':
+        $idLocal = isset($_GET['id_local']) ? (int) $_GET['id_local'] : 0;
+        if ($idLocal <= 0) {
+            http_response_code(400);
+            echo json_encode(['success' => false, 'message' => 'ID do local é obrigatório.']);
+            break;
+        }
+
+        $stmt = $conn->prepare('DELETE FROM locais WHERE id_local = ? LIMIT 1');
+        if (!$stmt) {
+            http_response_code(500);
+            echo json_encode(['success' => false, 'message' => $conn->error]);
+            break;
+        }
+
+        $stmt->bind_param('i', $idLocal);
+
+        if ($stmt->execute()) {
+            if ($stmt->affected_rows > 0) {
+                echo json_encode(['success' => true, 'message' => 'Local excluído com sucesso.']);
+            } else {
+                http_response_code(404);
+                echo json_encode(['success' => false, 'message' => 'Local não encontrado.']);
+            }
+        } else {
+            $erroCodigo = $stmt->errno;
+            if ($erroCodigo === 1451) {
+                http_response_code(409);
+                echo json_encode(['success' => false, 'message' => 'Não é possível excluir este local pois existem jogos vinculados a ele.']);
+            } else {
+                http_response_code(500);
+                echo json_encode(['success' => false, 'message' => 'Erro interno do banco: ' . $stmt->error]);
+            }
+        }
+        $stmt->close();
+        break;
+
     default:
         http_response_code(405);
         echo json_encode(["message" => "Método não permitido"]);

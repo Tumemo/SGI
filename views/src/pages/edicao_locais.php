@@ -156,16 +156,23 @@ require_once '../componentes/header.php';
                         <span class="badge rounded-pill border ${isDisponivel ? 'text-success border-success' : 'text-secondary border-secondary'}">${disp}</span>
                     </div>
                     <p class="text-muted small mb-3 mt-auto">${carga}</p>
-                    <div class="d-flex justify-content-end">
+                    <div class="d-flex justify-content-end gap-2">
                         <button type="button" 
-                                class="btn btn-outline-primary btn-sm rounded-2 d-inline-flex align-items-center gap-1 px-3" 
+                                class="btn btn-link text-primary p-0" 
+                                title="Editar local"
                                 data-bs-toggle="modal" 
                                 data-bs-target="#modalEditarLocal"
                                 data-id="${loc.id_local}" 
                                 data-nome="${esc(loc.nome_local)}" 
                                 data-disponivel="${isDisponivel ? '1' : '0'}"
                                 data-carga="${loc.carga_local || ''}">
-                            <i class="bi bi-pencil-square"></i> Editar
+                            <i class="bi bi-pencil-square fs-4"></i>
+                        </button>
+                        <button type="button" 
+                                class="btn btn-link text-danger p-0" 
+                                title="Excluir local"
+                                onclick='excluirLocal(${loc.id_local}, "${esc(loc.nome_local)}")'>
+                            <i class="bi bi-trash fs-4"></i>
                         </button>
                     </div>
                 </div>
@@ -183,7 +190,8 @@ require_once '../componentes/header.php';
                 </div>
                 <div class="d-flex align-items-center gap-2">
                     <button type="button" 
-                            class="btn btn-outline-primary btn-sm border-0 p-1" 
+                            class="btn btn-link text-primary p-0" 
+                            title="Editar local"
                             data-bs-toggle="modal" 
                             data-bs-target="#modalEditarLocal"
                             data-id="${loc.id_local}" 
@@ -192,10 +200,34 @@ require_once '../componentes/header.php';
                             data-carga="${loc.carga_local || ''}">
                         <i class="bi bi-pencil-square fs-5"></i>
                     </button>
+                    <button type="button" 
+                            class="btn btn-link text-danger p-0" 
+                            title="Excluir local"
+                            onclick='excluirLocal(${loc.id_local}, "${esc(loc.nome_local)}")'>
+                        <i class="bi bi-trash fs-5"></i>
+                    </button>
                     <i class="bi bi-geo-alt text-danger fs-4 flex-shrink-0"></i>
                 </div>
             </div>`;
     }
+
+    window.excluirLocal = async function(idLocal, nomeLocal) {
+        if (!confirm(`Deseja excluir o local "${nomeLocal}"?\nEsta ação não pode ser desfeita.`)) {
+            return;
+        }
+        try {
+            const res = await fetch(`${API}locais.php?id_local=${parseInt(idLocal)}`, {
+                method: 'DELETE'
+            });
+            const data = await res.json();
+            if (!res.ok || data.success === false) {
+                throw new Error(data.message || 'Não foi possível excluir o local.');
+            }
+            await carregarLocais();
+        } catch (error) {
+            alert(error.message);
+        }
+    };
 
     async function carregarLocais() {
         const mob = document.getElementById('listaLocaisMobile');
