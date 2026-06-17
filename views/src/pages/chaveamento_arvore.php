@@ -76,17 +76,6 @@ require_once '../componentes/header.php';
         border-top: 1px solid #f0f0f0;
     }
 
-    .matchup-team.winner {
-        background: #f0fdf4;
-        font-weight: 600;
-    }
-
-    .matchup-team.winner .team-name::after {
-        content: " ✓";
-        color: #16a34a;
-        font-weight: 700;
-    }
-
     .team-name {
         font-size: 0.85rem;
         color: #1f2937;
@@ -106,11 +95,6 @@ require_once '../componentes/header.php';
         background: #f3f4f6;
         border-radius: 6px;
         padding: 0 6px;
-    }
-
-    .matchup-team.winner .team-score {
-        background: #dcfce7;
-        color: #16a34a;
     }
 
     .game-status-badge {
@@ -184,14 +168,24 @@ require_once '../componentes/header.php';
     .btn-gerar {
         background: #E30613;
         border: none;
-        padding: 12px 24px;
+        padding: 6.5px 24px;
         border-radius: 5px;
         color: white;
         font-weight: 600;
+        height: 100%;
     }
 
     .btn-gerar:hover {
         background: #bb0812;
+    }
+
+    .modal-editar-jogo .modal-header {
+        background: #E30613;
+        color: white;
+        border-radius: 16px 16px 0 0;
+    }
+    .modal-editar-jogo .btn-close {
+        filter: brightness(0) invert(1);
     }
 
     .table-custom thead {
@@ -219,6 +213,42 @@ require_once '../componentes/header.php';
     .search-input {
         border-radius: 12px;
         padding: 10px 14px;
+    }
+
+    .acao-btn {
+        width: 34px;
+        height: 34px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        transition: all 0.2s;
+        border: none;
+    }
+    .acao-btn-play {
+        background: #e8f5e9;
+        color: #2e7d32;
+    }
+    .acao-btn-play:hover {
+        background: #2e7d32;
+        color: #fff;
+        transform: scale(1.05);
+    }
+    .acao-btn-editar {
+        background: #f3f4f6;
+        color: #4b5563;
+    }
+    .acao-btn-editar:hover {
+        background: #4b5563;
+        color: #fff;
+        transform: scale(1.05);
+    }
+    .acao-btn i {
+        font-size: 1rem;
+        line-height: 1;
+    }
+    .tr-filtro-oculto {
+        display: none !important;
     }
 
     .card-custom {
@@ -323,6 +353,62 @@ require_once '../componentes/header.php';
 
 </main>
 
+<div class="modal fade modal-editar-jogo" id="modalEditarJogo" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content rounded-4 border-0 shadow">
+            <div class="modal-header border-0">
+                <h5 class="modal-title fw-bold"><i class="bi bi-pencil-square me-2"></i>Editar Jogo</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+            </div>
+            <form id="formEditarJogo" onsubmit="return salvarEdicaoJogo(event)">
+                <div class="modal-body px-4">
+                    <input type="hidden" id="editIdJogo">
+                    <div class="bg-light rounded-3 p-3 mb-3" id="editResumoPartida">
+                        <div class="small text-muted mb-1">Partida</div>
+                        <div class="fw-semibold" id="editNomePartida">---</div>
+                        <div class="small text-muted mt-1" id="editModalidadePartida"></div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Data</label>
+                        <input type="date" class="form-control" id="editDataJogo" required>
+                    </div>
+                    <div class="row g-3 mb-3">
+                        <div class="col-6">
+                            <label class="form-label fw-semibold">Início</label>
+                            <input type="time" class="form-control" id="editInicioJogo">
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label fw-semibold">Término</label>
+                            <input type="time" class="form-control" id="editTerminoJogo">
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Local</label>
+                        <select class="form-select" id="editLocalJogo">
+                            <option value="">Selecione um local</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Status</label>
+                        <select class="form-select" id="editStatusJogo">
+                            <option value="Agendado">Agendado</option>
+                            <option value="Andamento">Andamento</option>
+                            <option value="Concluido">Concluído</option>
+                        </select>
+                    </div>
+                    <div id="msgEditarJogo" class="small"></div>
+                </div>
+                <div class="modal-footer border-0 pb-4 px-4">
+                    <button type="button" class="btn btn-outline-secondary rounded-3" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-danger rounded-3 px-4" id="btnSalvarJogo">
+                        <i class="bi bi-check-lg me-1"></i>Salvar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
 <script>
     const urlParams = new URLSearchParams(window.location.search);
     let idInterclasse = urlParams.get('id');
@@ -385,6 +471,105 @@ require_once '../componentes/header.php';
         return tag || '---';
     }
 
+    let _editIdJogo = null;
+
+    function editarJogo(btn) {
+        let jogo;
+        try {
+            jogo = JSON.parse(btn.dataset.jogo);
+        } catch (e) {
+            console.error('Erro ao parsear dados do jogo:', e);
+            return;
+        }
+
+        _editIdJogo = jogo.id_jogo;
+
+        document.getElementById('editIdJogo').value = jogo.id_jogo || '';
+        document.getElementById('editNomePartida').textContent = formatarNomePartida(jogo);
+        document.getElementById('editModalidadePartida').textContent = jogo.nome_modalidade || '';
+        document.getElementById('editDataJogo').value = jogo.data_jogo || '';
+        document.getElementById('editInicioJogo').value = jogo.inicio_jogo || '';
+        document.getElementById('editTerminoJogo').value = jogo.termino_jogo || '';
+        document.getElementById('editStatusJogo').value = jogo.status_jogo || 'Agendado';
+        document.getElementById('msgEditarJogo').innerHTML = '';
+
+        var modalEl = document.getElementById('modalEditarJogo');
+        var selectLocal = document.getElementById('editLocalJogo');
+        selectLocal.innerHTML = '<option value="">Carregando...</option>';
+
+        fetch('../../../api/locais.php')
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                if (_editIdJogo !== jogo.id_jogo) return;
+                const locais = data.success && Array.isArray(data.data) ? data.data : [];
+                selectLocal.innerHTML = '<option value="">Selecione um local</option>';
+                locais.forEach(function(l) {
+                    var sel = Number(l.id_local) === Number(jogo.locais_id_local) ? 'selected' : '';
+                    selectLocal.innerHTML += '<option value="' + l.id_local + '" ' + sel + '>' + l.nome_local + '</option>';
+                });
+            })
+            .catch(function() {
+                if (_editIdJogo !== jogo.id_jogo) return;
+                selectLocal.innerHTML = '<option value="">Erro ao carregar locais</option>';
+            });
+
+        var modal = bootstrap.Modal.getInstance(modalEl);
+        if (!modal) modal = new bootstrap.Modal(modalEl);
+        modal.show();
+    }
+
+    async function salvarEdicaoJogo(e) {
+        e.preventDefault();
+        var btn = document.getElementById('btnSalvarJogo');
+        var msgEl = document.getElementById('msgEditarJogo');
+        msgEl.innerHTML = '';
+
+        var id_jogo = document.getElementById('editIdJogo').value;
+        var data_jogo = document.getElementById('editDataJogo').value;
+        var inicio_jogo = document.getElementById('editInicioJogo').value;
+        var termino_jogo = document.getElementById('editTerminoJogo').value;
+        var locais_id_local = document.getElementById('editLocalJogo').value;
+        var status_jogo = document.getElementById('editStatusJogo').value;
+
+        if (!data_jogo) {
+            msgEl.innerHTML = '<span class="text-danger fw-bold">Selecione a data do jogo.</span>';
+            return;
+        }
+
+        var payload = { id_jogo: Number(id_jogo), data_jogo: data_jogo, status_jogo: status_jogo };
+        if (inicio_jogo) payload.inicio_jogo = inicio_jogo;
+        if (termino_jogo) payload.termino_jogo = termino_jogo;
+        if (locais_id_local) payload.locais_id_local = Number(locais_id_local);
+
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status"></span> Salvando...';
+
+        try {
+            var resp = await fetch('../../../api/jogos.php', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            var data = await resp.json();
+
+            if (data.success) {
+                msgEl.innerHTML = '<span class="text-success fw-bold">Jogo atualizado com sucesso!</span>';
+                setTimeout(function() {
+                    var m = bootstrap.Modal.getInstance(document.getElementById('modalEditarJogo'));
+                    if (m) m.hide();
+                    carregarJogos();
+                }, 1000);
+            } else {
+                msgEl.innerHTML = '<span class="text-danger fw-bold">' + (data.message || 'Erro ao atualizar jogo.') + '</span>';
+            }
+        } catch (err) {
+            msgEl.innerHTML = '<span class="text-danger fw-bold">Erro de conexão.</span>';
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="bi bi-check-lg me-1"></i>Salvar';
+        }
+    }
+
     async function carregarJogos() {
         const tbody = document.getElementById('tbodyJogos');
         try {
@@ -394,14 +579,28 @@ require_once '../componentes/header.php';
 
             const resp = await fetch(url);
             const data = await resp.json();
-            const jogos = Array.isArray(data) ? data : [];
+            let jogos = Array.isArray(data) ? data : [];
+
+            jogos = jogos.filter(function(j) {
+                var nomes = (j.equipes_nomes || '').trim();
+                return nomes.indexOf(' vs ') !== -1;
+            });
 
             if (!jogos.length) {
                 tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted py-4">Nenhum jogo encontrado.</td></tr>';
                 return;
             }
 
-            tbody.innerHTML = jogos.map(j => {
+            var minLargura = Infinity;
+            jogos.forEach(function(j) {
+                var m = (j.nome_jogo || '').match(/^MM:(\d+):/);
+                if (m) {
+                    var l = parseInt(m[1], 10);
+                    if (l > 0 && l < minLargura) minLargura = l;
+                }
+            });
+
+            tbody.innerHTML = jogos.map(function(j) {
                 let dataJogo = '---';
                 if (j.data_jogo) {
                     try {
@@ -409,18 +608,28 @@ require_once '../componentes/header.php';
                     } catch (_) { dataJogo = j.data_jogo; }
                 }
                 const statusClass = j.status_jogo === 'Concluido' ? 'status-success' : '';
+                var nomePartida = formatarNomePartida(j);
+                var m = (j.nome_jogo || '').match(/^MM:(\d+):/);
+                if (m && parseInt(m[1], 10) === minLargura) {
+                    var fases = { 8: 'Oitavas de final', 4: 'Quartas de final', 2: 'Semifinal', 1: 'Final' };
+                    var faseOriginal = fases[minLargura] || '';
+                    if (faseOriginal !== 'Final') {
+                        nomePartida = nomePartida.replace(faseOriginal, 'Final');
+                    }
+                }
                 return `<tr>
-                    <td>${formatarNomePartida(j)}</td>
+                    <td>${nomePartida}</td>
                     <td>${j.nome_modalidade || '---'}</td>
                     <td>${dataJogo}</td>
                     <td><span class="status ${statusClass}">${j.status_jogo || '---'}</span></td>
                     <td class="text-end">
-                        <a href="./jogos.php?id_jogo=${j.id_jogo}" class="btn btn-link text-success p-0 me-2" title="Acessar Jogo">
-                            <i class="bi bi-play-circle"></i>
+                        <a href="./jogos.php?id_jogo=${j.id_jogo}" class="acao-btn acao-btn-play" title="Acessar Jogo">
+                            <i class="bi bi-play-fill"></i>
                         </a>
-                        <button class="btn btn-link btn-edit p-0 ms-2" title="Editar Jogo"
-                            onclick="editarJogo(${j.id_jogo},'${j.data_jogo || ''}','${j.inicio_jogo || ''}','${j.termino_jogo || ''}',${j.locais_id_local || 'null'})">
-                            <i class="bi bi-pencil-square"></i>
+                        <button class="acao-btn acao-btn-editar ms-1" title="Editar Jogo"
+                            data-jogo='${JSON.stringify(j).replace(/'/g, "&#39;")}'
+                            onclick="editarJogo(this)">
+                            <i class="bi bi-pencil"></i>
                         </button>
                     </td>
                 </tr>`;
@@ -502,7 +711,7 @@ require_once '../componentes/header.php';
                 rounds[nivel].push(jogo);
             });
 
-            const niveis = Object.keys(rounds).map(Number).sort((a, b) => a - b);
+            const niveis = Object.keys(rounds).map(Number).sort((a, b) => b - a);
 
             let html = `<div class="bracket-container"><div class="bracket-wrapper">`;
 
@@ -527,10 +736,8 @@ require_once '../componentes/header.php';
                         html += `<div class="matchup-team"><span class="team-name text-muted">A definir</span><span class="team-score">--</span></div>`;
                     } else {
                         eqs.forEach(eq => {
-                            const ehVencedor = vencId && Number(eq.id_equipe) === Number(vencId);
-                            const cls = ehVencedor ? 'matchup-team winner' : 'matchup-team';
                             const nome = eq.nome_fantasia || eq.nome_turma || `Equipe #${eq.id_equipe}`;
-                            html += `<div class="${cls}">`;
+                            html += `<div class="matchup-team">`;
                             html += `<span class="team-name">${nome}</span>`;
                             html += `<span class="team-score">${eq.gols ?? 0}</span>`;
                             html += `</div>`;
@@ -608,6 +815,23 @@ require_once '../componentes/header.php';
         } finally {
             btn.disabled = false;
         }
+    });
+
+    document.getElementById('inputBuscaJogo').addEventListener('keyup', function () {
+        var termo = this.value.toLowerCase().trim();
+        var linhas = document.querySelectorAll('#tbodyJogos tr');
+        linhas.forEach(function(tr) {
+            if (termo === '') {
+                tr.classList.remove('tr-filtro-oculto');
+                return;
+            }
+            var texto = tr.textContent.toLowerCase();
+            if (texto.indexOf(termo) !== -1) {
+                tr.classList.remove('tr-filtro-oculto');
+            } else {
+                tr.classList.add('tr-filtro-oculto');
+            }
+        });
     });
 
     window.addEventListener('load', async () => {
