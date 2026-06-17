@@ -13,6 +13,23 @@ require_once '../componentes/header.php';
     .cal-dia-hoje.cal-dia-marcado {
         border-radius: 50%;
     }
+    .cal-dia-clickable {
+        cursor: pointer;
+        transition: background .15s;
+    }
+    .cal-dia-clickable:hover {
+        background: rgba(237, 28, 36, .08);
+        border-radius: 50%;
+    }
+    .cal-dia-selecionado {
+        background: var(--inter-red, #ed1c24) !important;
+        color: #fff !important;
+        border-radius: 50%;
+        font-weight: 600;
+    }
+    .cal-dia-selecionado.cal-dia-marcado {
+        box-shadow: none;
+    }
 </style>
 
 <main class="bg-light d-md-none p-3" style="padding-top: 5rem; padding-bottom: 5.5rem;">
@@ -54,6 +71,11 @@ require_once '../componentes/header.php';
     </div>
 
     <div id="lista-eventos-mobile" class="d-flex flex-column gap-3 mx-auto px-1" style="max-width: 450px;"></div>
+    <div class="text-center mt-2 mb-2" id="container-mostrar-todos-mobile" style="display:none;">
+        <button type="button" class="btn btn-outline-danger btn-sm rounded-3" id="btn-mostrar-todos-mobile">
+            <i class="bi bi-calendar-x me-1"></i>Mostrar Todos os Jogos
+        </button>
+    </div>
 
     <div class="d-flex justify-content-center mt-3 mb-3">
         <a href="https://calendar.google.com" target="_blank" rel="noopener noreferrer" class="btn btn-outline-danger btn-sm">Abrir no Google Calendar</a>
@@ -72,6 +94,11 @@ require_once '../componentes/header.php';
                 <i class="bi bi-calendar3"></i> Agenda
             </h2>
             <div id="lista-eventos" class="d-flex flex-column gap-3"></div>
+            <div class="text-center mt-3" id="container-mostrar-todos" style="display:none;">
+                <button type="button" class="btn btn-outline-danger btn-sm rounded-3" id="btn-mostrar-todos">
+                    <i class="bi bi-calendar-x me-1"></i>Mostrar Todos os Jogos
+                </button>
+            </div>
         </div>
         <div class="col-lg-6 d-flex justify-content-center align-items-start mt-5 mt-lg-0">
             <div class="bg-white shadow-sm rounded-3 overflow-hidden" style="width: 100%; max-width: 380px;">
@@ -141,6 +168,7 @@ require_once '../componentes/header.php';
     let modalidadesLista = [];
     let locaisLista = [];
     let jogoEmEdicao = null;
+    let filtroData = null;
 
     function formatNomeJogo(nomeJogo) {
         const mm = (nomeJogo || '').match(/^MM:(\d+):(\d+):([NB])$/);
@@ -261,6 +289,7 @@ require_once '../componentes/header.php';
             .filter((j) => {
                 if (!j.data_jogo) return false;
                 if (isJogoCampeao(j.nome_jogo)) return false;
+                if (filtroData && j.data_jogo !== filtroData) return false;
                 const [jy, jm] = j.data_jogo.split('-').map(Number);
                 if (jy !== y || jm - 1 !== m) return false;
                 if (modF && String(j.modalidades_id_modalidade) !== String(modF)) return false;
@@ -345,9 +374,13 @@ require_once '../componentes/header.php';
         }
 
         if (lista.length === 0) {
-            const msgVazia = '<p class="text-muted text-center w-100">Nenhum jogo neste mês.</p>';
-            containerDesk.innerHTML = msgVazia;
-            containerMob.innerHTML = msgVazia;
+            const msg = filtroData
+                ? '<p class="text-muted text-center w-100">Nenhum jogo nesta data.</p>'
+                : '<p class="text-muted text-center w-100">Nenhum jogo neste mês.</p>';
+            containerDesk.innerHTML = msg;
+            containerMob.innerHTML = msg;
+            document.getElementById('container-mostrar-todos').style.display = filtroData ? 'block' : 'none';
+            document.getElementById('container-mostrar-todos-mobile').style.display = filtroData ? 'block' : 'none';
             return;
         }
 
@@ -378,6 +411,9 @@ require_once '../componentes/header.php';
             });
         });
 
+        document.getElementById('container-mostrar-todos').style.display = filtroData ? 'block' : 'none';
+        document.getElementById('container-mostrar-todos-mobile').style.display = filtroData ? 'block' : 'none';
+
         document.querySelectorAll('.btn-ajuste-jogo').forEach((btn) => {
             btn.addEventListener('click', () => {
                 const id = Number(btn.getAttribute('data-id-jogo'), 10);
@@ -386,11 +422,13 @@ require_once '../componentes/header.php';
                 jogoEmEdicao = j;
                 document.getElementById('edit-jogo-titulo').textContent = formatNomeJogo(j.nome_jogo) || 'Jogo';
                 document.getElementById('edit-jogo-data').value = j.data_jogo || '';
+                document.getElementById('edit-jogo-data').min = hojeISO();
                 document.getElementById('edit-jogo-inicio').value = formatarHora(j.inicio_jogo) || '08:00';
                 document.getElementById('edit-jogo-fim').value = formatarHora(j.termino_jogo || j.terminno_jogo) || '09:00';
                 const sel = document.getElementById('edit-jogo-local');
-                let match = locaisLista.find((l) => (l.nome_local || '') === (j.nome_local || ''));
-                sel.value = match ? String(match.id_local) : (sel.options[0] && sel.options[0].value) || '';
+                sel.value = locaisLista.some(l => String(l.id_local) === String(j.locais_id_local))
+                    ? String(j.locais_id_local)
+                    : (sel.options[0]?.value ?? '');
                 const modal = new bootstrap.Modal(document.getElementById('modalEditarJogoAgenda'));
                 modal.show();
             });
@@ -434,11 +472,15 @@ require_once '../componentes/header.php';
         for (let dia = 1; dia <= diasNoMes; dia++) {
             const isHoje = dia === hojeReal.getDate() && mesNavegacao === hojeReal.getMonth() && anoNavegacao === hojeReal.getFullYear();
             const temEvt = temJogoNoDia(anoNavegacao, mesNavegacao, dia);
+            const dataStr = `${anoNavegacao}-${String(mesNavegacao + 1).padStart(2, '0')}-${String(dia).padStart(2, '0')}`;
+            const isSelecionado = filtroData === dataStr;
             const hojeClass = isHoje ? 'fw-bold text-danger border border-danger rounded-circle' : '';
             const marcaClass = temEvt ? ' cal-dia-marcado' : '';
+            const selecClass = isSelecionado ? ' cal-dia-selecionado' : '';
             grade.innerHTML += `
-            <div class="d-flex align-items-center justify-content-center ${hojeClass}${marcaClass}"
-                 style="width: 14%; height: 40px; cursor: default; font-size: 0.9rem;">
+            <div class="d-flex align-items-center justify-content-center cal-dia-clickable${hojeClass}${marcaClass}${selecClass}"
+                 style="width: 14%; height: 40px; font-size: 0.9rem;"
+                 data-date="${dataStr}">
                 ${dia}
             </div>`;
         }
@@ -458,11 +500,14 @@ require_once '../componentes/header.php';
         for (let dia = 1; dia <= diasNoMes; dia++) {
             const isHoje = dia === hojeReal.getDate() && mesNavegacao === hojeReal.getMonth() && anoNavegacao === hojeReal.getFullYear();
             const temEvt = temJogoNoDia(anoNavegacao, mesNavegacao, dia);
-            const baseCirc = isHoje ? 'bg-dark text-white rounded-circle' : 'text-dark';
+            const dataStr = `${anoNavegacao}-${String(mesNavegacao + 1).padStart(2, '0')}-${String(dia).padStart(2, '0')}`;
+            const isSelecionado = filtroData === dataStr;
+            const baseCirc = isHoje && !isSelecionado ? 'bg-dark text-white rounded-circle' : 'text-dark';
             const marcaClass = temEvt ? ' cal-dia-marcado' : '';
+            const selecClass = isSelecionado ? ' cal-dia-selecionado' : '';
             grade.innerHTML += `
-            <div class="d-flex align-items-center justify-content-center" style="width: 14%; height: 40px; margin-bottom: 5px;">
-                <span class="${baseCirc}${marcaClass} d-flex align-items-center justify-content-center" style="width: 35px; height: 35px; font-size: 0.95rem;">
+            <div class="d-flex align-items-center justify-content-center cal-dia-clickable" style="width: 14%; height: 40px; margin-bottom: 5px;" data-date="${dataStr}">
+                <span class="${baseCirc}${marcaClass}${selecClass} d-flex align-items-center justify-content-center" style="width: 35px; height: 35px; font-size: 0.95rem;">
                     ${dia}
                 </span>
             </div>`;
@@ -472,6 +517,7 @@ require_once '../componentes/header.php';
     function preencherSelectModalidades() {
         const desk = document.getElementById('agenda-select-mod');
         const mob = document.getElementById('agenda-select-mod-mobile');
+        if (!desk || !mob) return;
         const cur = desk.value;
         desk.innerHTML = '';
         mob.innerHTML = '';
@@ -533,43 +579,81 @@ require_once '../componentes/header.php';
         }
         atualizarTelas();
 
-        document.getElementById('btn-prev').addEventListener('click', () => {
-            dataNavegacao.setMonth(dataNavegacao.getMonth() - 1);
+        function navegarMes(delta) {
+            dataNavegacao.setMonth(dataNavegacao.getMonth() + delta);
+            filtroData = null;
             atualizarTelas();
-        });
-        document.getElementById('btn-next').addEventListener('click', () => {
-            dataNavegacao.setMonth(dataNavegacao.getMonth() + 1);
-            atualizarTelas();
-        });
-        document.getElementById('btn-prev-mobile').addEventListener('click', () => {
-            dataNavegacao.setMonth(dataNavegacao.getMonth() - 1);
-            atualizarTelas();
-        });
-        document.getElementById('btn-next-mobile').addEventListener('click', () => {
-            dataNavegacao.setMonth(dataNavegacao.getMonth() + 1);
-            atualizarTelas();
-        });
-        document.getElementById('select-mes').addEventListener('change', (e) => {
+        }
+
+        const el1 = document.getElementById('btn-prev');
+        if (el1) el1.addEventListener('click', () => navegarMes(-1));
+        const el2 = document.getElementById('btn-next');
+        if (el2) el2.addEventListener('click', () => navegarMes(1));
+        const el3 = document.getElementById('btn-prev-mobile');
+        if (el3) el3.addEventListener('click', () => navegarMes(-1));
+        const el4 = document.getElementById('btn-next-mobile');
+        if (el4) el4.addEventListener('click', () => navegarMes(1));
+        const el5 = document.getElementById('select-mes');
+        if (el5) el5.addEventListener('change', (e) => {
             dataNavegacao.setMonth(parseInt(e.target.value, 10));
+            filtroData = null;
             atualizarTelas();
         });
-        document.getElementById('select-ano').addEventListener('change', (e) => {
+        const el6 = document.getElementById('select-ano');
+        if (el6) el6.addEventListener('change', (e) => {
             dataNavegacao.setFullYear(parseInt(e.target.value, 10));
+            filtroData = null;
             atualizarTelas();
         });
 
-        document.getElementById('agenda-select-mod').addEventListener('change', () => {
+        function aplicarFiltroData(dataStr) {
+            filtroData = filtroData === dataStr ? null : dataStr;
+            atualizarTelas();
+        }
+
+        const gradeDesk = document.getElementById('calendario-grade');
+        if (gradeDesk) gradeDesk.addEventListener('click', (e) => {
+            const target = e.target.closest('[data-date]');
+            if (target) aplicarFiltroData(target.dataset.date);
+        });
+        const gradeMob = document.getElementById('calendario-grade-mobile');
+        if (gradeMob) gradeMob.addEventListener('click', (e) => {
+            const target = e.target.closest('[data-date]');
+            if (target) aplicarFiltroData(target.dataset.date);
+        });
+
+        const limparFiltro = () => {
+            if (filtroData) {
+                filtroData = null;
+                atualizarTelas();
+            }
+        };
+        const el7 = document.getElementById('btn-mostrar-todos');
+        if (el7) el7.addEventListener('click', limparFiltro);
+        const el8 = document.getElementById('btn-mostrar-todos-mobile');
+        if (el8) el8.addEventListener('click', limparFiltro);
+
+        const elMod = document.getElementById('agenda-select-mod');
+        if (elMod) elMod.addEventListener('change', () => {
             syncSelectModalidade(true);
+            filtroData = null;
             atualizarTelas();
         });
-        document.getElementById('agenda-select-mod-mobile').addEventListener('change', () => {
+        const elModMob = document.getElementById('agenda-select-mod-mobile');
+        if (elModMob) elModMob.addEventListener('change', () => {
             syncSelectModalidade(false);
+            filtroData = null;
             atualizarTelas();
         });
 
-        document.getElementById('edit-jogo-salvar').addEventListener('click', async () => {
+        const elSalvar = document.getElementById('edit-jogo-salvar');
+        if (elSalvar) elSalvar.addEventListener('click', async () => {
             if (!jogoEmEdicao) return;
             const data = document.getElementById('edit-jogo-data').value;
+            if (data < hojeISO()) {
+                alert('Não é permitido agendar um jogo para uma data passada.');
+                return;
+            }
             const ini = document.getElementById('edit-jogo-inicio').value;
             const fim = document.getElementById('edit-jogo-fim').value;
             const idLocal = parseInt(document.getElementById('edit-jogo-local').value, 10);
