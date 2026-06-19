@@ -17,9 +17,16 @@ if ($method === 'OPTIONS') {
 
 switch ($method) {
     case 'GET':
+        // Exige o id_interclasse — sem ele, retorna vazio
+        if (!isset($_GET['id_interclasse']) || $_GET['id_interclasse'] === '') {
+            echo json_encode([]);
+            break;
+        }
+
+        $idInterclasse = intval($_GET['id_interclasse']);
+
         $filtro = aplicarFiltrosTurmas();
 
-        // Correção crucial: Forçamos o filtro do interclasse ativo também na tabela de categorias/relacionamentos
         $sql = "SELECT 
                     turmas.id_turma, 
                     turmas.nome_turma, 
@@ -31,13 +38,8 @@ switch ($method) {
                 FROM turmas 
                 INNER JOIN interclasses ON interclasses.id_interclasse = turmas.interclasses_id_interclasse
                 INNER JOIN categorias ON categorias.id_categoria = turmas.categorias_id_categoria
-                WHERE 1=1" . $filtro['sql'];
-
-        // Se por algum motivo o filtro do javascript falhar, essa linha garante segurança total contra misturas
-        if (!isset($_GET['id_interclasse']) || $_GET['id_interclasse'] === '') {
-            // Caso queira evitar que exiba tudo se o front esquecer o parâmetro, descomente a linha abaixo:
-            // $sql .= " AND interclasses.id_interclasse = 0";
-        }
+                WHERE turmas.interclasses_id_interclasse = ? AND categorias.interclasses_id_interclasse = ?"
+                . $filtro['sql'];
 
         $sql .= " ORDER BY turmas.nome_turma ASC";
 
@@ -47,9 +49,15 @@ switch ($method) {
             break;
         }
 
-        if (!empty($filtro['params'])) {
-            $stmt->bind_param($filtro['types'], ...$filtro['params']);
+        $bindParams = array_merge([$idInterclasse, $idInterclasse], $filtro['params']);
+        $bindTypes = 'ii' . $filtro['types'];
+
+        $bindArgs = [$bindTypes];
+        for ($i = 0; $i < count($bindParams); $i++) {
+            $bindArgs[] = &$bindParams[$i];
         }
+        call_user_func_array([$stmt, 'bind_param'], $bindArgs);
+        unset($bindArgs);
 
         if (!$stmt->execute()) {
             echo json_encode(["success" => false, "message" => "Erro ao executar consulta: " . $stmt->error]);
@@ -61,7 +69,6 @@ switch ($method) {
             break;
         }
         
-        // Remove quaisquer dados duplicados indesejados que possam surgir de junções incorretas nas tabelas antigas
         $resultados = $res->fetch_all(MYSQLI_ASSOC);
         echo json_encode($resultados);
         break;
