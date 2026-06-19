@@ -149,6 +149,7 @@ require_once '../componentes/header.php';
                     <div id="msgEditarCategoria" class="mt-2"></div>
                     <div class="d-flex justify-content-center gap-3 pt-4">
                         <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="button" class="btn btn-outline-danger" id="btnExcluirCategoria">Excluir</button>
                         <button type="submit" class="btn btn-danger" id="btnSalvarEdicaoCategoria">Salvar</button>
                     </div>
                 </form>
@@ -270,6 +271,7 @@ require_once '../componentes/header.php';
             const extrair = (res, padrao) => (res.status === 'fulfilled' && Array.isArray(res.value)) ? res.value : padrao;
 
             const categorias = extrair(respostas[0], []);
+            categoriasData = categorias;
             const listaTurmas = extrair(respostas[1], []);
             const listaEquipes = extrair(respostas[2], []);
             const listaModalidades = extrair(respostas[3], []);
@@ -414,6 +416,36 @@ require_once '../componentes/header.php';
         } finally {
             btn.disabled = false;
             btn.innerHTML = 'Salvar';
+        }
+    });
+
+    document.getElementById('btnExcluirCategoria').addEventListener('click', async () => {
+        if (!editCategoriaId) return;
+        if (!confirm('Tem certeza que deseja excluir esta categoria?')) return;
+
+        const btn = document.getElementById('btnExcluirCategoria');
+        const msg = document.getElementById('msgEditarCategoria');
+
+        try {
+            btn.disabled = true;
+            btn.innerHTML = 'Excluindo...';
+
+            const resp = await fetch('../../../api/categorias.php', {
+                method: 'DELETE',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id_categoria: editCategoriaId })
+            });
+            const data = await resp.json();
+
+            if (data.success === false) throw new Error(data.message || 'Erro ao excluir.');
+
+            bootstrap.Modal.getInstance(document.getElementById('modalEditarCategoria')).hide();
+            carregarCategorias();
+        } catch (err) {
+            msg.innerHTML = `<p class="text-danger text-center fw-bold mb-0">${err.message}</p>`;
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = 'Excluir';
         }
     });
 

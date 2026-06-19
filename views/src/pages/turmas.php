@@ -18,15 +18,15 @@ require_once '../componentes/header.php';
 </main>
 
 <main class="d-none d-md-flex flex-column main-desktop-layout">
-    <a href="./dashboard.php" id="btnVoltarTurmasDesk" class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none shadow-sm" style="background-color: #ed1c24; border-radius: 6px; width:10%;">
-        <i class="bi bi-arrow-left-circle me-2"></i>
-        <span id="nomeInterclasseTurmas" style="font-weight: 400;">Interclasse</span>
-    </a>
+        <div class="mb-5">
+            <a href="./dashboard.php" id="btnVoltarCatDesk" class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none" style="background-color: #ed1c24; border-radius: 6px;">
+                <i class="bi bi-arrow-left-circle fs-5"></i> <span id="nomeInterclasseCategoria">Interclasse</span>
+            </a>
 
-    <h1 class="fw-bold text-dark mb-5 d-flex align-items-center gap-2 fs-2">
-        <i class="bi bi-people-fill"></i>
-        <span>Turmas</span>
-    </h1>
+            <h4 class="fw-bold d-flex align-items-center gap-2 text-dark mb-0">
+                <i class="bi bi-bookmark fs-5"></i> Turmas
+            </h4>
+        </div>
 
     <div class="row row-cols-1 row-cols-md-2 row-cols-xl-4 g-4" id="listaTurmasDesktop"></div>
 </main>
@@ -131,6 +131,17 @@ require_once '../componentes/header.php';
     let turmasData = [];
     let editTurmaId = null;
 
+    const urlParams = new URLSearchParams(window.location.search);
+    const idInterclasse = urlParams.get('id');
+
+    async function resolverInterclasse() {
+        if (idInterclasse) {
+            const dados = await window.SGIInterclasse.getInterclasseById(idInterclasse);
+            if (dados) return dados;
+        }
+        return window.SGIInterclasse.getActiveInterclasse();
+    }
+
     function mostrarNomeArquivo() {
         const input = document.getElementById('arquivoUpload');
         const span = document.getElementById('nomeArquivo');
@@ -144,10 +155,10 @@ require_once '../componentes/header.php';
 
     async function carregarCategoriasModal() {
         try {
-            const interclasseAtivo = await window.SGIInterclasse.getActiveInterclasse();
-            if (!interclasseAtivo) return;
+            const interclasse = await resolverInterclasse();
+            if (!interclasse) return;
 
-            const res = await fetch(`../../../api/categorias.php?id_interclasse=${interclasseAtivo.id_interclasse}`);
+            const res = await fetch(`../../../api/categorias.php?id_interclasse=${interclasse.id_interclasse}`);
             const categorias = await res.json();
             const sel = document.getElementById('categoriaTurma');
             sel.innerHTML = '<option value="">Selecione...</option>';
@@ -166,14 +177,14 @@ require_once '../componentes/header.php';
     document.getElementById('formNovaTurma').addEventListener('submit', async (e) => {
         e.preventDefault();
         try {
-            const interclasseAtivo = await window.SGIInterclasse.getActiveInterclasse();
-            if (!interclasseAtivo) {
-                alert('Nenhum interclasse ativo.');
+            const interclasse = await resolverInterclasse();
+            if (!interclasse) {
+                alert('Nenhum interclasse disponível.');
                 return;
             }
 
             const body = {
-                interclasses_id_interclasse: interclasseAtivo.id_interclasse,
+                interclasses_id_interclasse: interclasse.id_interclasse,
                 categorias_id_categoria: document.getElementById('categoriaTurma').value,
                 nome_turma: document.getElementById('nomeTurma').value.trim(),
                 nome_fantasia_turma: document.getElementById('nomeFantasia').value.trim() || null,
@@ -196,7 +207,7 @@ require_once '../componentes/header.php';
                     const formData = new FormData();
                     formData.append('pdf', pdf);
                     formData.append('nome_turma', body.nome_turma);
-                    formData.append('id_interclasse', String(interclasseAtivo.id_interclasse));
+                    formData.append('id_interclasse', String(interclasse.id_interclasse));
                     formData.append('id_categoria', String(body.categorias_id_categoria));
                     const up = await fetch('../../../api/upload_turma_pdf.php', {
                         method: 'POST',
@@ -230,18 +241,18 @@ require_once '../componentes/header.php';
         const listaDesktop = document.getElementById('listaTurmasDesktop');
 
         try {
-            const interclasseAtivo = await window.SGIInterclasse.getActiveInterclasse();
-            if (!interclasseAtivo) {
+            const interclasse = await resolverInterclasse();
+            if (!interclasse) {
                 listaMobile.innerHTML = '<p class="text-center text-muted mt-4">Nenhum interclasse ativo.</p>';
                 listaDesktop.innerHTML = '<p class="text-center text-muted mt-4">Nenhum interclasse ativo.</p>';
                 return;
             }
 
-            document.getElementById('nomeInterclasseTurmas').innerText = interclasseAtivo.nome_interclasse;
-            document.getElementById('btnVoltarTurmasDesk').href = `./dashboard.php?id=${interclasseAtivo.id_interclasse}`;
-            window.SGIInterclasse.updatePageTitle(interclasseAtivo.nome_interclasse);
+            document.getElementById('nomeInterclasseCategoria').innerText = interclasse.nome_interclasse;
+            document.getElementById('btnVoltarCatDesk').href = `./dashboard.php?id=${interclasse.id_interclasse}`;
+            window.SGIInterclasse.updatePageTitle(interclasse.nome_interclasse);
 
-            const turmasRes = await fetch(`../../../api/turmas.php?id_interclasse=${interclasseAtivo.id_interclasse}`);
+            const turmasRes = await fetch(`../../../api/turmas.php?id_interclasse=${interclasse.id_interclasse}`);
             const listaFinal = await turmasRes.json();
 
             turmasData = Array.isArray(listaFinal) ? listaFinal : [];
@@ -255,7 +266,7 @@ require_once '../componentes/header.php';
             // Correção crucial: uso de aspas simples externas no onclick do botão para blindar a renderização do HTML
             listaMobile.innerHTML = listaFinal.map((turma) => `
                 <div class="d-flex m-auto justify-content-between align-items-center shadow py-4 px-4 mb-3 border border-1 rounded-3" style="width: 90%;">
-                    <a href="./edicao_turmas.php?id=${interclasseAtivo.id_interclasse}&id_turma=${turma.id_turma}&id_categoria=${turma.categorias_id_categoria}" class="text-decoration-none text-dark flex-grow-1">
+                    <a href="./edicao_turmas.php?id=${interclasse.id_interclasse}&id_turma=${turma.id_turma}&id_categoria=${turma.categorias_id_categoria}" class="text-decoration-none text-dark flex-grow-1">
                         <h2 class="m-0 fs-5">${turma.nome_turma}</h2>
                         <small class="text-muted">${turma.nome_categoria || 'Categoria vinculada'}</small>
                     </a>
@@ -266,7 +277,7 @@ require_once '../componentes/header.php';
                         <button type="button" class="btn btn-link text-danger p-0" title="Excluir turma" onclick='excluirTurma(${turma.id_turma}, "${turma.nome_turma}")'>
                             <i class="bi bi-trash fs-5"></i>
                         </button>
-                        <a href="./edicao_turmas.php?id=${interclasseAtivo.id_interclasse}&id_turma=${turma.id_turma}&id_categoria=${turma.categorias_id_categoria}">
+                        <a href="./edicao_turmas.php?id=${interclasse.id_interclasse}&id_turma=${turma.id_turma}&id_categoria=${turma.categorias_id_categoria}">
                             <img src="../../public/icons/arrow-right.svg" alt="Ver detalhes">
                         </a>
                     </div>
@@ -289,7 +300,7 @@ require_once '../componentes/header.php';
                         </div>
                         <div class="mb-4 text-muted">${turma.nome_categoria || 'Categoria vinculada'}</div>
                         <div class="mt-auto">
-                            <a href="./turma_alunos.php?id=${interclasseAtivo.id_interclasse}&id_turma=${turma.id_turma}&id_categoria=${turma.categorias_id_categoria}" class="text-decoration-none">
+                            <a href="./turma_alunos.php?id=${interclasse.id_interclasse}&id_turma=${turma.id_turma}&id_categoria=${turma.categorias_id_categoria}" class="text-decoration-none">
                                 <button type="button" class="btn btn-danger w-100 fw-bold shadow-sm d-flex justify-content-center align-items-center gap-1" style="font-size: 0.85rem; padding: 12px; border-radius: 6px;">
                                     VER DETALHES <i class="bi bi-arrow-right"></i>
                                 </button>
@@ -307,9 +318,9 @@ require_once '../componentes/header.php';
 
     async function carregarCategoriasEdicao(selectedId) {
         try {
-            const interclasseAtivo = await window.SGIInterclasse.getActiveInterclasse();
-            if (!interclasseAtivo) return;
-            const res = await fetch(`../../../api/categorias.php?id_interclasse=${interclasseAtivo.id_interclasse}`);
+            const interclasse = await resolverInterclasse();
+            if (!interclasse) return;
+            const res = await fetch(`../../../api/categorias.php?id_interclasse=${interclasse.id_interclasse}`);
             const cats = await res.json();
             const sel = document.getElementById('editCategoriaTurma');
             sel.innerHTML = '<option value="">Selecione...</option>';
@@ -349,9 +360,9 @@ require_once '../componentes/header.php';
             return;
         }
 
-        const interclasseAtivo = await window.SGIInterclasse.getActiveInterclasse();
-        if (!interclasseAtivo) {
-            msg.innerHTML = '<p class="text-danger text-center fw-bold mb-0">Nenhum interclasse ativo.</p>';
+        const interclasse = await resolverInterclasse();
+        if (!interclasse) {
+            msg.innerHTML = '<p class="text-danger text-center fw-bold mb-0">Nenhum interclasse disponível.</p>';
             return;
         }
 
