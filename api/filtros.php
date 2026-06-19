@@ -51,7 +51,7 @@ function aplicarFiltrosArtilharia() {
 }
 // teste
 function aplicarFiltrosEquipes() {
-    $sqlExtras = "";
+    $sqlExtras = " AND equipes.status_equipe = '1'";
     $types = "";
     $params = [];
 
@@ -159,7 +159,7 @@ function aplicarFiltrosJogos() {
 }
 
 function aplicarFiltrosModalidades() {
-    $sqlExtras = "";
+    $sqlExtras = " AND modalidades.status_modalidade = '1'";
     $types = "";
     $params = [];
 
@@ -201,7 +201,7 @@ function aplicarFiltrosModalidades() {
 }
 
 function aplicarFiltrosCategorias() {
-    $sqlExtras = "";
+    $sqlExtras = " AND status_categoria = '1'";
     $types = "";
     $params = [];
 
@@ -358,7 +358,7 @@ function aplicarFiltrosTiposModalidades() {
 }
 
 function aplicarFiltrosTurmas() {
-    $sqlExtras = "";
+    $sqlExtras = " AND turmas.status_turma = '1'";
     $types = "";
     $params = [];
 

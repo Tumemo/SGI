@@ -172,12 +172,29 @@ switch ($method) {
         $stmt = $conn->prepare($sql);
         $stmt->bind_param("i", $data->id_categoria);
 
-        if ($stmt->execute()) {
-            echo json_encode(["success" => true, "message" => "Categoria excluída com sucesso!"]);
-        } else {
+        if (!$stmt->execute()) {
             http_response_code(500);
             echo json_encode(["success" => false, "message" => "Erro no servidor: " . $conn->error]);
+            break;
         }
+
+        $idCat = $data->id_categoria;
+
+        $updates = [
+            "UPDATE turmas SET status_turma = '0' WHERE categorias_id_categoria = ?" => "i",
+            "UPDATE modalidades SET status_modalidade = '0' WHERE categorias_id_categoria = ?" => "i",
+            "UPDATE equipes SET status_equipe = '0' WHERE modalidades_id_modalidade IN (SELECT id_modalidade FROM modalidades WHERE categorias_id_categoria = ?)" => "i",
+            "UPDATE equipes SET status_equipe = '0' WHERE turmas_id_turma IN (SELECT id_turma FROM turmas WHERE categorias_id_categoria = ?) AND status_equipe = '1'" => "i"
+        ];
+
+        foreach ($updates as $sqlUpd => $type) {
+            $st = $conn->prepare($sqlUpd);
+            $st->bind_param($type, $idCat);
+            $st->execute();
+            $st->close();
+        }
+
+        echo json_encode(["success" => true, "message" => "Categoria excluída com sucesso!"]);
         break;
     default:
         http_response_code(405);

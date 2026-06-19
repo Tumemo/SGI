@@ -155,10 +155,6 @@ require_once '../componentes/header.php';
         width: 200px;
         height: 200px;
         border-radius: 50%;
-        background: #e8e8e8;
-        display: flex;
-        align-items: center;
-        justify-content: center;
     }
     .perfil-foto-circle i {
         font-size: 4.5rem;
@@ -166,18 +162,32 @@ require_once '../componentes/header.php';
     }
     .perfil-btn-camera {
         position: absolute;
-        bottom: 2rem;
-        right: 2rem;
-        width: 44px;
-        height: 44px;
+        bottom: 0;
+        right: 0;
+        width: 40px;
+        height: 40px;
         border-radius: 50%;
         background: #ed1c24;
-        border: none;
+        border: 2.5px solid #fff;
         display: flex;
         align-items: center;
         justify-content: center;
         color: #fff;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+        z-index: 2;
+        padding: 0;
+        line-height: 1;
+        cursor: pointer;
+    }
+    .perfil-btn-camera i {
+        font-size: 1.15rem;
+    }
+    .perfil-foto-actions {
+        position: absolute;
+        bottom: 2rem;
+        right: 2rem;
+        display: flex;
+        gap: 0.5rem;
     }
     .perfil-form-area {
         padding: 2rem 2.5rem;
@@ -214,15 +224,21 @@ require_once '../componentes/header.php';
         <i class="bi bi-person-gear"></i> Perfil
     </h2>
     <div class="perfil-card p-4">
-        <div class="text-center mb-4 position-relative d-inline-block w-100">
-            <div class="perfil-foto-circle mx-auto overflow-hidden" id="fotoCircleMob">
-                <?php $fotoPath = $usuarioPerfil['foto_usuario'] ? '../../uploads/fotosUsuarios/' . rawurlencode($usuarioPerfil['foto_usuario']) : ''; ?>
-                <img src="<?= $fotoPath ?>" id="fotoImgMob" class="w-100 h-100 object-fit-cover <?= $fotoPath ? '' : 'd-none' ?>" alt="Foto" onerror="this.classList.add('d-none');document.getElementById('fotoIconMob')?.classList.remove('d-none');">
-                <i class="bi bi-person-gear <?= $fotoPath ? 'd-none' : '' ?>" id="fotoIconMob"></i>
+        <div class="text-center mb-4">
+            <div class="perfil-foto-circle mx-auto position-relative" id="fotoCircleMob">
+                <div class="w-100 h-100 rounded-circle overflow-hidden d-flex align-items-center justify-content-center" style="background:#e8e8e8;">
+                    <?php $fotoPath = $usuarioPerfil['foto_usuario'] ? '../../uploads/fotosUsuarios/' . rawurlencode($usuarioPerfil['foto_usuario']) : ''; ?>
+                    <img src="<?= $fotoPath ?>" id="fotoImgMob" class="w-100 h-100 object-fit-cover <?= $fotoPath ? '' : 'd-none' ?>" alt="Foto" onerror="this.classList.add('d-none');document.getElementById('fotoIconMob')?.classList.remove('d-none');">
+                    <i class="bi bi-person-gear <?= $fotoPath ? 'd-none' : '' ?>" id="fotoIconMob"></i>
+                </div>
+                <button type="button" class="perfil-btn-camera" id="btnCameraMob" title="Alterar foto" aria-label="Alterar foto">
+                    <i class="bi bi-camera"></i>
+                </button>
             </div>
-            <button type="button" class="perfil-btn-camera" id="btnCameraMob" style="bottom: 0; right: calc(50% - 100px);" title="Alterar foto" aria-label="Alterar foto">
-                <i class="bi bi-camera"></i>
-            </button>
+            <div class="d-flex justify-content-center gap-2 mt-2">
+                <button type="button" class="btn btn-sm btn-danger rounded-3 d-none" id="btnSalvarFotoMob">Salvar foto</button>
+                <button type="button" class="btn btn-sm btn-outline-danger rounded-3 d-none" id="btnExcluirFotoMob" title="Excluir foto"><i class="bi bi-trash"></i></button>
+            </div>
         </div>
         <div class="mb-3">
             <label class="form-label text-muted small">Nome</label>
@@ -253,14 +269,20 @@ require_once '../componentes/header.php';
         <div class="perfil-card">
             <div class="row g-0">
                 <div class="col-md-5 perfil-foto-wrap">
-                    <div class="perfil-foto-circle overflow-hidden">
-                        <?php $fotoPathDesk = $usuarioPerfil['foto_usuario'] ? '../../uploads/fotosUsuarios/' . rawurlencode($usuarioPerfil['foto_usuario']) : ''; ?>
-                        <img src="<?= $fotoPathDesk ?>" id="fotoImgDesk" class="w-100 h-100 object-fit-cover <?= $fotoPathDesk ? '' : 'd-none' ?>" alt="Foto" onerror="this.classList.add('d-none');document.getElementById('fotoIconDesk')?.classList.remove('d-none');">
-                        <i class="bi bi-person-gear <?= $fotoPathDesk ? 'd-none' : '' ?>" id="fotoIconDesk"></i>
+                    <div class="perfil-foto-circle position-relative" id="fotoCircleDesk">
+                        <div class="w-100 h-100 rounded-circle overflow-hidden d-flex align-items-center justify-content-center" style="background:#e8e8e8;">
+                            <?php $fotoPathDesk = $usuarioPerfil['foto_usuario'] ? '../../uploads/fotosUsuarios/' . rawurlencode($usuarioPerfil['foto_usuario']) : ''; ?>
+                            <img src="<?= $fotoPathDesk ?>" id="fotoImgDesk" class="w-100 h-100 object-fit-cover <?= $fotoPathDesk ? '' : 'd-none' ?>" alt="Foto" onerror="this.classList.add('d-none');document.getElementById('fotoIconDesk')?.classList.remove('d-none');">
+                            <i class="bi bi-person-gear <?= $fotoPathDesk ? 'd-none' : '' ?>" id="fotoIconDesk"></i>
+                        </div>
+                        <button type="button" class="perfil-btn-camera" id="btnCameraDesk" title="Alterar foto" aria-label="Alterar foto">
+                            <i class="bi bi-camera"></i>
+                        </button>
                     </div>
-                    <button type="button" class="perfil-btn-camera" id="btnCameraDesk" title="Alterar foto" aria-label="Alterar foto">
-                        <i class="bi bi-camera"></i>
-                    </button>
+                    <div class="perfil-foto-actions">
+                        <button type="button" class="btn btn-sm btn-danger rounded-3 d-none" id="btnSalvarFotoDesk">Salvar foto</button>
+                        <button type="button" class="btn btn-sm btn-outline-danger rounded-3 d-none" id="btnExcluirFotoDesk" title="Excluir foto"><i class="bi bi-trash"></i></button>
+                    </div>
                 </div>
                 <div class="col-md-7 perfil-form-area">
                     <div class="mb-3">
@@ -387,6 +409,19 @@ require_once '../componentes/header.php';
         });
     }
 
+    let fotoPreviewFile = null;
+    let temFotoAtual = false;
+
+    function atualizarBotoesFoto() {
+        const temPreview = fotoPreviewFile !== null;
+        ['Mob', 'Desk'].forEach(suf => {
+            const btnSalvar = document.getElementById('btnSalvarFoto' + suf);
+            const btnExcluir = document.getElementById('btnExcluirFoto' + suf);
+            if (btnSalvar) btnSalvar.classList.toggle('d-none', !temPreview);
+            if (btnExcluir) btnExcluir.classList.toggle('d-none', !temFotoAtual);
+        });
+    }
+
     document.addEventListener('DOMContentLoaded', () => {
         const input = document.getElementById('fotoUploadInput');
         const btnCameras = ['btnCameraMob', 'btnCameraDesk'];
@@ -399,26 +434,74 @@ require_once '../componentes/header.php';
             try {
                 const resp = await fetch(API_FOTO + '?user_id=' + DADOS_PERFIL.id);
                 const data = await resp.json();
-                if (data.success && data.foto_usuario) mostrarFoto('/2025/SGI/uploads/fotosUsuarios/' + data.foto_usuario);
+                if (data.success && data.foto_usuario) {
+                    temFotoAtual = true;
+                    mostrarFoto('/2025/SGI/uploads/fotosUsuarios/' + data.foto_usuario);
+                    atualizarBotoesFoto();
+                }
             } catch (e) {
                 console.warn('Erro ao buscar foto:', e);
             }
         })();
 
-        input.addEventListener('change', async () => {
+        input.addEventListener('change', () => {
             const file = input.files?.[0];
             if (!file) return;
-            const fd = new FormData();
-            fd.append('foto', file);
-            try {
-                const resp = await fetch(API_FOTO, { method: 'POST', body: fd });
-                const data = await resp.json();
-                if (data.success && data.arquivo) mostrarFoto('/2025/SGI/uploads/fotosUsuarios/' + data.arquivo);
-                else alert(data.mensagem || 'Erro ao enviar foto.');
-            } catch (e) {
-                alert('Erro de conexão.');
-            }
+            const url = URL.createObjectURL(file);
+            mostrarFoto(url);
+            fotoPreviewFile = file;
+            atualizarBotoesFoto();
             input.value = '';
+        });
+
+        document.querySelectorAll('[id^="btnSalvarFoto"]').forEach(btn => {
+            btn.addEventListener('click', async () => {
+                if (!fotoPreviewFile) return;
+                const fd = new FormData();
+                fd.append('foto', fotoPreviewFile);
+                try {
+                    const resp = await fetch(API_FOTO, { method: 'POST', body: fd });
+                    const data = await resp.json();
+                    if (data.success && data.arquivo) {
+                        fotoPreviewFile = null;
+                        temFotoAtual = true;
+                        mostrarFoto('/2025/SGI/uploads/fotosUsuarios/' + data.arquivo);
+                        atualizarBotoesFoto();
+                    } else {
+                        alert(data.mensagem || 'Erro ao enviar foto.');
+                    }
+                } catch (e) {
+                    alert('Erro de conexão.');
+                }
+            });
+        });
+
+        document.querySelectorAll('[id^="btnExcluirFoto"]').forEach(btn => {
+            btn.addEventListener('click', async () => {
+                if (!confirm('Remover foto de perfil?')) return;
+                try {
+                    const resp = await fetch(API_FOTO, { method: 'DELETE' });
+                    const data = await resp.json();
+                    if (data.success) {
+                        fotoPreviewFile = null;
+                        temFotoAtual = false;
+                        ['Mob', 'Desk'].forEach(suf => {
+                            const img = document.getElementById('fotoImg' + suf);
+                            const icon = document.getElementById('fotoIcon' + suf);
+                            if (img && icon) {
+                                img.classList.add('d-none');
+                                img.src = '';
+                                icon.classList.remove('d-none');
+                            }
+                        });
+                        atualizarBotoesFoto();
+                    } else {
+                        alert(data.mensagem || 'Erro ao remover foto.');
+                    }
+                } catch (e) {
+                    alert('Erro de conexão.');
+                }
+            });
         });
     });
 

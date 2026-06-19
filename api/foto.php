@@ -1,6 +1,6 @@
 <?php
 header('Access-Control-Allow-Origin: *');
-header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
+header('Access-Control-Allow-Methods: GET, POST, DELETE, OPTIONS');
 header('Access-Control-Allow-Headers: Content-Type');
 
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
@@ -80,6 +80,35 @@ if ($method === 'POST') {
         'mensagem' => 'Foto atualizada!',
         'arquivo' => $nomeArquivo
     ]);
+    exit;
+}
+
+if ($method === 'DELETE') {
+    if (!isset($_SESSION['id'])) {
+        http_response_code(401);
+        echo json_encode(['success' => false, 'mensagem' => 'Não autorizado.']);
+        exit;
+    }
+
+    $id = (int)$_SESSION['id'];
+
+    $st = $conn->prepare('SELECT foto_usuario FROM usuarios WHERE id_usuario = ?');
+    $st->bind_param('i', $id);
+    $st->execute();
+    $row = $st->get_result()->fetch_assoc();
+    $st->close();
+
+    if ($row && $row['foto_usuario']) {
+        $filePath = __DIR__ . '/../uploads/fotosUsuarios/' . $row['foto_usuario'];
+        if (file_exists($filePath)) @unlink($filePath);
+    }
+
+    $st = $conn->prepare('UPDATE usuarios SET foto_usuario = NULL WHERE id_usuario = ?');
+    $st->bind_param('i', $id);
+    $st->execute();
+    $st->close();
+
+    echo json_encode(['success' => true, 'mensagem' => 'Foto removida.']);
     exit;
 }
 

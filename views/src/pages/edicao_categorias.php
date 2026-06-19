@@ -25,7 +25,8 @@ require_once '../componentes/header.php';
     </div>
 
     <section class="d-flex gap-3 mt-3 position-fixed translate-middle flex-wrap justify-content-center" style="width: max-content; max-width: 96vw; top: 85%; left: 50%; z-index: 10;">
-        <button type="button" id="btnEditarCategoriaMobile" class="btn btn-outline-danger" disabled onclick="abrirModalEditarCategoria()">Editar</button>
+        <button type="button" id="btnEditarCategoriaMobile" class="btn btn-outline-danger d-none" onclick="abrirModalEditarCategoria()">Editar</button>
+        <button type="button" id="btnExcluirCategoriaMobile" class="btn btn-danger d-none" onclick="excluirCategoria()">Excluir</button>
         <button data-bs-toggle="modal" data-bs-target="#modalCriarCategoria" class="btn btn-outline-danger">Adicionar Categoria</button>
         <a href="#" id="btnContinuarMobile" class="btn btn-danger">Continuar</a>
     </section>
@@ -49,8 +50,12 @@ require_once '../componentes/header.php';
         </div>
 
         <div class="position-fixed d-flex flex-row gap-3" style="bottom: 40px; right: 5%; z-index: 1050;">
-            <button type="button" id="btnEditarCategoriaDesktop" class="btn bg-white fw-semibold rounded-3 px-4 py-2 d-flex align-items-center justify-content-center gap-2 shadow-lg" style="color: #ed1c24; border: 2px solid #ed1c24;" disabled onclick="abrirModalEditarCategoria()">
+            <button type="button" id="btnEditarCategoriaDesktop" class="btn bg-white fw-semibold rounded-3 px-4 py-2 d-flex align-items-center justify-content-center gap-2 shadow-lg d-none" style="color: #ed1c24; border: 2px solid #ed1c24;" onclick="abrirModalEditarCategoria()">
                 <i class="bi bi-pencil-square"></i> Editar
+            </button>
+
+            <button type="button" id="btnExcluirCategoriaDesktop" class="btn btn-danger fw-semibold rounded-3 px-4 py-2 d-flex align-items-center justify-content-center gap-2 shadow-lg d-none" onclick="excluirCategoria()">
+                <i class="bi bi-trash"></i> Excluir
             </button>
 
             <button type="button" class="btn bg-white fw-semibold rounded-3 px-4 py-2 d-flex align-items-center justify-content-center gap-2 shadow-lg" style="color: #ed1c24; border: 2px solid #ed1c24;" data-bs-toggle="modal" data-bs-target="#modalCriarCategoria">
@@ -60,7 +65,6 @@ require_once '../componentes/header.php';
             <a href="#" id="btnContinuarDesktop" class="btn fw-semibold rounded-3 px-5 py-2 text-white text-decoration-none shadow-lg d-flex align-items-center justify-content-center" style="background-color: #ed1c24; border: 2px solid #ed1c24;">
                 Continuar
             </a>
-            
         </div>
     </div>
 </main>
@@ -149,7 +153,6 @@ require_once '../componentes/header.php';
                     <div id="msgEditarCategoria" class="mt-2"></div>
                     <div class="d-flex justify-content-center gap-3 pt-4">
                         <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
-                        <button type="button" class="btn btn-outline-danger" id="btnExcluirCategoria">Excluir</button>
                         <button type="submit" class="btn btn-danger" id="btnSalvarEdicaoCategoria">Salvar</button>
                     </div>
                 </form>
@@ -175,10 +178,11 @@ require_once '../componentes/header.php';
     }
 
     function atualizarAcoesCategoria() {
-        const btnEditarMobile = document.getElementById('btnEditarCategoriaMobile');
-        const btnEditarDesktop = document.getElementById('btnEditarCategoriaDesktop');
-        if (btnEditarMobile) btnEditarMobile.disabled = !categoriaSelecionada;
-        if (btnEditarDesktop) btnEditarDesktop.disabled = !categoriaSelecionada;
+        ['btnEditarCategoriaMobile', 'btnEditarCategoriaDesktop',
+         'btnExcluirCategoriaMobile', 'btnExcluirCategoriaDesktop'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.classList.toggle('d-none', !categoriaSelecionada);
+        });
 
         const rota = modo === 'view' ? './dashboard.php' : './edicao_modalidades.php';
         const sufixoCategoria = categoriaSelecionada ? `&id_categoria=${categoriaSelecionada}` : '';
@@ -419,35 +423,33 @@ require_once '../componentes/header.php';
         }
     });
 
-    document.getElementById('btnExcluirCategoria').addEventListener('click', async () => {
-        if (!editCategoriaId) return;
+    window.excluirCategoria = async function() {
+        if (!categoriaSelecionada) return;
         if (!confirm('Tem certeza que deseja excluir esta categoria?')) return;
 
-        const btn = document.getElementById('btnExcluirCategoria');
-        const msg = document.getElementById('msgEditarCategoria');
+        const btn = document.getElementById('btnExcluirCategoriaDesktop');
+        const btnMob = document.getElementById('btnExcluirCategoriaMobile');
+        const desabilitar = (d) => { if (btn) btn.disabled = d; if (btnMob) btnMob.disabled = d; };
 
         try {
-            btn.disabled = true;
-            btn.innerHTML = 'Excluindo...';
+            desabilitar(true);
 
             const resp = await fetch('../../../api/categorias.php', {
                 method: 'DELETE',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ id_categoria: editCategoriaId })
+                body: JSON.stringify({ id_categoria: categoriaSelecionada })
             });
             const data = await resp.json();
 
             if (data.success === false) throw new Error(data.message || 'Erro ao excluir.');
 
-            bootstrap.Modal.getInstance(document.getElementById('modalEditarCategoria')).hide();
             carregarCategorias();
         } catch (err) {
-            msg.innerHTML = `<p class="text-danger text-center fw-bold mb-0">${err.message}</p>`;
+            alert(err.message);
         } finally {
-            btn.disabled = false;
-            btn.innerHTML = 'Excluir';
+            desabilitar(false);
         }
-    });
+    };
 
     // Lógica para enviar Nova Categoria para a API
     document.getElementById('formNovaCategoria').addEventListener('submit', async (e) => {
