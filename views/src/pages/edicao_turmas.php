@@ -20,7 +20,7 @@ require_once '../componentes/header.php';
 
 <main class="d-none d-md-block main-desktop-layout" id="viewTurmasGestaoDesk">
     <div class="container-fluid px-0">
-        <a href="./dashboard.php" id="btnVoltarTurmasDesk" class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none" style="background-color: #ed1c24; border-radius: 6px;">
+        <a href="./edicao_categorias.php" id="btnVoltarTurmasDesk" class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none" style="background-color: #ed1c24; border-radius: 6px;">
             <i class="bi bi-arrow-left-circle fs-5"></i> Voltar
         </a>
         <div class="row g-4 mx-0">
@@ -126,7 +126,7 @@ require_once '../componentes/header.php';
         const backs = ['btnVoltarTurmasMobile', 'btnVoltarTurmasDesk'];
         backs.forEach(id => {
             const el = getEl(id);
-            if (el) el.href = `./dashboard.php?id=${idInterclasse}`;
+            if (el) el.href = `./edicao_categorias.php?id=${idInterclasse}`;
         });
     }
 
