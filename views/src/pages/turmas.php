@@ -18,7 +18,7 @@ require_once '../componentes/header.php';
 </main>
 
 <main class="d-none d-md-flex flex-column main-desktop-layout">
-    <a href="./dashboard.php" id="btnVoltarTurmasDesk" class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none shadow-sm" style="background-color: #ed1c24; border-radius: 6px;">
+    <a href="./dashboard.php" id="btnVoltarTurmasDesk" class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none shadow-sm" style="background-color: #ed1c24; border-radius: 6px; width:10%;">
         <i class="bi bi-arrow-left-circle me-2"></i>
         <span id="nomeInterclasseTurmas" style="font-weight: 400;">Interclasse</span>
     </a>

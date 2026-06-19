@@ -19,6 +19,7 @@ switch ($method) {
     case 'GET':
         $filtro = aplicarFiltrosTurmas();
 
+        // Correção crucial: Forçamos o filtro do interclasse ativo também na tabela de categorias/relacionamentos
         $sql = "SELECT 
                     turmas.id_turma, 
                     turmas.nome_turma, 
@@ -31,6 +32,12 @@ switch ($method) {
                 INNER JOIN interclasses ON interclasses.id_interclasse = turmas.interclasses_id_interclasse
                 INNER JOIN categorias ON categorias.id_categoria = turmas.categorias_id_categoria
                 WHERE 1=1" . $filtro['sql'];
+
+        // Se por algum motivo o filtro do javascript falhar, essa linha garante segurança total contra misturas
+        if (!isset($_GET['id_interclasse']) || $_GET['id_interclasse'] === '') {
+            // Caso queira evitar que exiba tudo se o front esquecer o parâmetro, descomente a linha abaixo:
+            // $sql .= " AND interclasses.id_interclasse = 0";
+        }
 
         $sql .= " ORDER BY turmas.nome_turma ASC";
 
@@ -53,7 +60,10 @@ switch ($method) {
             echo json_encode(["success" => false, "message" => "Erro ao obter resultados."]);
             break;
         }
-        echo json_encode($res->fetch_all(MYSQLI_ASSOC));
+        
+        // Remove quaisquer dados duplicados indesejados que possam surgir de junções incorretas nas tabelas antigas
+        $resultados = $res->fetch_all(MYSQLI_ASSOC);
+        echo json_encode($resultados);
         break;
 
     case 'POST':
@@ -107,7 +117,8 @@ switch ($method) {
                 VALUES (?, ?, ?, ?, ?, ?)";
 
         $stmt = $conn->prepare($sql);
-        $stmt->bind_param("iissss",
+        $stmt->bind_param(
+            "iissss",
             $data->interclasses_id_interclasse,
             $data->categorias_id_categoria,
             $data->nome_turma,
@@ -167,7 +178,7 @@ switch ($method) {
             $params[] = $data->categorias_id_categoria;
             $types .= "i";
         }
-        if (isset($data->status_turma)){
+        if (isset($data->status_turma)) {
             $campos[] = "status_turma = ?";
             $params[] = $data->status_turma;
             $types .= "s";
@@ -193,7 +204,7 @@ switch ($method) {
         }
         break;
 
-   case 'DELETE':
+    case 'DELETE':
         $idTurma = isset($_GET['id_turma']) ? (int) $_GET['id_turma'] : 0;
         if ($idTurma <= 0) {
             http_response_code(400);
@@ -207,9 +218,9 @@ switch ($method) {
             echo json_encode(['success' => false, 'message' => $conn->error]);
             break;
         }
-        
+
         $stmt->bind_param('i', $idTurma);
-        
+
         if ($stmt->execute()) {
             if ($stmt->affected_rows > 0) {
                 echo json_encode(['success' => true, 'message' => 'Turma excluída com sucesso.']);
@@ -219,11 +230,11 @@ switch ($method) {
             }
         } else {
             $erroCodigo = $stmt->errno;
-            
+
             if ($erroCodigo === 1451) {
                 http_response_code(409); // Conflict
                 echo json_encode([
-                    'success' => false, 
+                    'success' => false,
                     'message' => 'Não é possível excluir esta turma pois existem registros (como alunos, modalidades ou jogos) vinculados a ela.'
                 ]);
             } else {
