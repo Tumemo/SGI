@@ -192,14 +192,16 @@ switch ($method) {
                 $modalidades_sql = "INSERT INTO modalidades
                 (nome_modalidade, genero_modalidade, max_inscrito_modalidade, status_modalidade, tipos_modalidades_id_tipo_modalidade, categorias_id_categoria, interclasses_id_interclasse)
                 VALUES
-                ('Futsal', 'MISTO', 12, '1', $tipo_mata_mata_id, $categoria_i_id, $new_interclass_id),
-                ('Queimada', 'MISTO', 15, '1', $tipo_mata_mata_id, $categoria_i_id, $new_interclass_id),
-                ('Volei', 'MISTO', 10, '1', $tipo_mata_mata_id, $categoria_i_id, $new_interclass_id),
-                ('Corrida', 'MISTO', 2, '1', $tipo_individual_id, $categoria_i_id, $new_interclass_id),
-                ('Futsal', 'MISTO', 12, '1', $tipo_mata_mata_id, $categoria_ii_id, $new_interclass_id),
-                ('Queimada', 'MISTO', 15, '1', $tipo_mata_mata_id, $categoria_ii_id, $new_interclass_id),
-                ('Volei', 'MISTO', 10, '1', $tipo_mata_mata_id, $categoria_ii_id, $new_interclass_id),
-                ('Corrida', 'MISTO', 2, '1', $tipo_individual_id, $categoria_ii_id, $new_interclass_id)";
+                ('Futsal - MA', 'MASC', 12, '1', $tipo_mata_mata_id, $categoria_i_id, $new_interclass_id),
+                ('Queimada - MI', 'MISTO', 15, '1', $tipo_mata_mata_id, $categoria_i_id, $new_interclass_id),
+                ('Volei - MI', 'MISTO', 10, '1', $tipo_mata_mata_id, $categoria_i_id, $new_interclass_id),
+                ('Corrida - FE', 'FEM', 2, '1', $tipo_individual_id, $categoria_i_id, $new_interclass_id),
+                ('Corrida - MA', 'MASC', 2, '1', $tipo_individual_id, $categoria_i_id, $new_interclass_id),
+                ('Futsal - MA', 'MASC', 12, '1', $tipo_mata_mata_id, $categoria_ii_id, $new_interclass_id),
+                ('Queimada - MI', 'MISTO', 15, '1', $tipo_mata_mata_id, $categoria_ii_id, $new_interclass_id),
+                ('Volei - MI', 'MISTO', 10, '1', $tipo_mata_mata_id, $categoria_ii_id, $new_interclass_id),
+                ('Corrida - FE', 'FEM', 2, '1', $tipo_individual_id, $categoria_ii_id, $new_interclass_id),
+                ('Corrida - MA', 'MASC', 2, '1', $tipo_individual_id, $categoria_ii_id, $new_interclass_id)";
                 
                 if (!$conn->query($modalidades_sql)) {
                     $conn->rollback();
