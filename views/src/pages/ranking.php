@@ -134,15 +134,21 @@ require_once '../componentes/header.php';
     }
 
     function filtrarCategoria(categoria) {
-        // Atualizar visual dos botões
-        document.querySelectorAll('.btn-categoria').forEach(b => {
-            b.classList.remove('ativo');
-            if (b.innerText === categoria) b.classList.add('ativo');
-        });
+    // Atualizar visual dos botões
+    document.querySelectorAll('.btn-categoria').forEach(b => {
+        b.classList.remove('ativo');
+        if (b.innerText === categoria) b.classList.add('ativo');
+    });
 
-        const turmasFiltradas = dadosAPI.filter(t => t.nome_categoria === categoria);
-        renderizarRanking(turmasFiltradas);
-    }
+    // 1. Filtra as turmas pela categoria selecionada
+    const turmasFiltradas = dadosAPI.filter(t => t.nome_categoria === categoria);
+    
+    // 2. ADICIONE ESTA LINHA: Atualiza o contador com o total filtrado
+    document.getElementById('totalTurmas').innerText = `${turmasFiltradas.length} Turmas`;
+
+    // 3. Renderiza a lista na tela
+    renderizarRanking(turmasFiltradas);
+}
 
     function renderizarRanking(turmas) {
         const cMob = document.getElementById('listaMob');
