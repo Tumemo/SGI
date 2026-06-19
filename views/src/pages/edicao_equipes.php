@@ -11,6 +11,9 @@ require_once '../componentes/header.php';
         <i class="bi bi-arrow-left-circle"></i> Voltar
     </a>
     <p class="text-secondary text-center small mb-3">Equipes por modalidade e categoria desta edição.</p>
+
+    <div id="filtroCategoriaMobile" class="d-flex flex-nowrap overflow-auto gap-2 pb-2 mb-3"></div>
+
     <button class="btn btn-danger w-100 fw-semibold mb-3 border-0 shadow-sm" style="background-color: #ed1c24; border-radius: 6px;" data-bs-toggle="modal" data-bs-target="#modalCriarEquipe">
         <i class="bi bi-plus-lg me-1"></i> Criar equipe
     </button>
@@ -18,27 +21,27 @@ require_once '../componentes/header.php';
 </main>
 
 <main class="d-none d-md-block main-desktop-layout">
-    <div class="container-fluid px-0" style="max-width: 960px;">
-        <div class="mb-4">
-            <a href="./dashboard.php" id="btnVoltarEquipesDesk" class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold mb-3 px-3 py-2 border-0 text-decoration-none shadow-sm" style="background-color: #ed1c24; border-radius: 6px;">
-                <i class="bi bi-arrow-left-circle fs-5"></i>
-                <span id="nomeInterclasseEquipes" style="font-weight: 400;">Interclasse</span>
-            </a>
-            <div class="d-flex justify-content-between align-items-center">
+    <div class="container-fluid px-4 py-4">
+        <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
+            <div>
+                <a href="./dashboard.php" id="btnVoltarEquipesDesk" class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold mb-2 px-3 py-2 border-0 text-decoration-none shadow-sm" style="background-color: #ed1c24; border-radius: 6px;">
+                    <i class="bi bi-arrow-left-circle fs-5"></i>
+                    <span id="nomeInterclasseEquipes" style="font-weight: 400;">Interclasse</span>
+                </a>
                 <h4 class="text-dark d-flex align-items-center gap-2 mb-0" style="font-weight: 400;">
                     <i class="bi bi-people fs-4"></i> Equipes
                 </h4>
-                <button class="btn btn-danger fw-semibold border-0 shadow-sm px-3 py-2" style="background-color: #ed1c24; border-radius: 6px;" data-bs-toggle="modal" data-bs-target="#modalCriarEquipe">
+            </div>
+            <button class="btn btn-danger fw-semibold border-0 shadow-sm px-3 py-2" style="background-color: #ed1c24; border-radius: 6px;" data-bs-toggle="modal" data-bs-target="#modalCriarEquipe">
                     <i class="bi bi-plus-lg me-1"></i> Criar equipe
                 </button>
             </div>
-            <p class="text-muted small mt-2 mb-0">Lista das equipes cadastradas nas modalidades. Toque para abrir o elenco da turma.</p>
+            <p class="text-muted small mb-4">Clique em uma categoria para filtrar as modalidades e equipes.</p>
+            <div id="filtroCategoria" class="d-flex flex-wrap gap-2 mb-4"></div>
+            <div id="listaEquipesDesktop"></div>
         </div>
-        <div id="listaEquipesDesktop"></div>
-    </div>
 </main>
 
-<!-- Modal Criar Equipe -->
 <div class="modal fade" id="modalCriarEquipe" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
@@ -67,6 +70,22 @@ require_once '../componentes/header.php';
     </div>
 </div>
 
+<style>
+    .btn-filter-cat {
+        color: #ed1c24;
+        border-color: #ed1c24;
+        background: transparent;
+    }
+    .btn-filter-cat:hover,
+    .btn-filter-cat.active {
+        color: #fff;
+        background-color: #ed1c24;
+        border-color: #ed1c24;
+    }
+    .btn-filter-cat:focus-visible {
+        box-shadow: 0 0 0 0.25rem rgba(237, 28, 36, 0.5);
+    }
+</style>
 <script>
     const API = '../../../api/';
     const params = new URLSearchParams(window.location.search);
@@ -84,6 +103,41 @@ require_once '../componentes/header.php';
         const d = document.createElement('div');
         d.textContent = s == null ? '' : String(s);
         return d.innerHTML;
+    }
+
+    function obterIdCategoriaFiltro() {
+        const btn = document.querySelector('#filtroCategoria .active, #filtroCategoriaMobile .active');
+        return btn?.dataset.id || '';
+    }
+
+    function ativarCategoria(btn) {
+        if (!btn) return;
+        const id = btn.dataset.id;
+        ['filtroCategoria', 'filtroCategoriaMobile'].forEach(idContainer => {
+            const c = document.getElementById(idContainer);
+            if (!c) return;
+            c.querySelectorAll('button').forEach(b => {
+                b.classList.toggle('active', b.dataset.id === id);
+            });
+        });
+    }
+
+    async function carregarCategorias() {
+        if (!idInterclasseEq) return;
+        try {
+            const res = await fetch(`${API}categorias.php?id_interclasse=${encodeURIComponent(idInterclasseEq)}`);
+            const cats = await res.json();
+            const lista = Array.isArray(cats) ? cats : [];
+
+            const btns = lista.map((c, i) => `<button class="btn btn-filter-cat${i === 0 ? ' active' : ''}" data-id="${c.id_categoria}">${esc(c.nome_categoria)}</button>`).join('');
+
+            const desk = document.getElementById('filtroCategoria');
+            const mob = document.getElementById('filtroCategoriaMobile');
+            if (desk) desk.innerHTML = btns;
+            if (mob) mob.innerHTML = btns;
+        } catch (e) {
+            console.error('Erro ao carregar categorias:', e);
+        }
     }
 
     async function carregarEquipes() {
@@ -105,17 +159,25 @@ require_once '../componentes/header.php';
         mob.innerHTML = '<p class="text-muted text-center">Carregando…</p>';
         desk.innerHTML = '<p class="text-muted">Carregando…</p>';
 
+        const idCategoriaFiltro = obterIdCategoriaFiltro();
+
         try {
             await fetch(`${API}CriarEquipes.php`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ id_interclasse: parseInt(idInterclasseEq) })
             });
-            const resMod = await fetch(`${API}modalidades.php?id_interclasse=${encodeURIComponent(idInterclasseEq)}`);
+
+            let urlMod = `${API}modalidades.php?id_interclasse=${encodeURIComponent(idInterclasseEq)}`;
+            if (idCategoriaFiltro) {
+                urlMod += `&id_categoria=${encodeURIComponent(idCategoriaFiltro)}`;
+            }
+            const resMod = await fetch(urlMod);
             const modsRaw = await resMod.json();
-            const mods = Array.isArray(modsRaw) ? modsRaw : [];
+            let mods = Array.isArray(modsRaw) ? modsRaw : [];
+
             if (!mods.length) {
-                const msg = '<p class="text-muted text-center w-100">Nenhuma modalidade nesta edição.</p>';
+                const msg = '<p class="text-muted text-center w-100">Nenhuma modalidade encontrada para o filtro selecionado.</p>';
                 mob.innerHTML = msg;
                 desk.innerHTML = msg;
                 return;
@@ -132,15 +194,15 @@ require_once '../componentes/header.php';
             let htmlDesk = '';
 
             for (const [nomeCat, listaMod] of Object.entries(porCategoria)) {
-                htmlMob += `<h6 class="text-danger mt-3 mb-2" style="font-weight:400;">${esc(nomeCat)}</h6>`;
-                htmlDesk += `<h5 class="text-danger mt-4 mb-3" style="font-weight:400;">${esc(nomeCat)}</h5>`;
-
                 for (const m of listaMod) {
                     const rEq = await fetch(`${API}equipes.php?id_modalidade=${encodeURIComponent(m.id_modalidade)}&_t=${Date.now()}`);
                     const equipes = await rEq.json();
                     const arr = Array.isArray(equipes) ? equipes : [];
 
-                    htmlMob += `<div class="card border-0 shadow-sm rounded-3 mb-2"><div class="card-body py-2 px-3"><div class="small text-muted">${esc(m.nome_modalidade)}</div>`;
+                    htmlMob += `<div class="card border-0 shadow-sm rounded-3 mb-2">
+                        <div class="card-body py-2 px-3">
+                            <div class="small text-muted">${esc(m.nome_modalidade)}</div>`;
+
                     if (!arr.length) {
                         htmlMob += '<p class="text-muted small mb-0">Nenhuma equipe.</p></div></div>';
                     } else {
@@ -168,6 +230,7 @@ require_once '../componentes/header.php';
 
                     htmlDesk += `<div class="card border-0 shadow-sm rounded-4 mb-4"><div class="card-body p-4">`;
                     htmlDesk += `<h6 class="mb-3" style="font-weight:400;">${esc(m.nome_modalidade)}</h6>`;
+
                     if (!arr.length) {
                         htmlDesk += '<p class="text-muted small mb-0">Nenhuma equipe cadastrada nesta modalidade.</p>';
                     } else {
@@ -187,6 +250,7 @@ require_once '../componentes/header.php';
                         });
                         htmlDesk += '</tbody></table></div>';
                     }
+
                     htmlDesk += '</div></div>';
                 }
             }
@@ -300,8 +364,23 @@ require_once '../componentes/header.php';
     document.getElementById('modalCriarEquipe').addEventListener('show.bs.modal', carregarSelectsEquipe);
     document.getElementById('selectModalidadeEquipe').addEventListener('change', filtrarTurmasPorModalidade);
 
-    window.addEventListener('pageshow', carregarEquipes);
-    
+    document.getElementById('filtroCategoria')?.addEventListener('click', function(e) {
+        const btn = e.target.closest('button');
+        if (!btn) return;
+        ativarCategoria(btn);
+        carregarEquipes();
+    });
+    document.getElementById('filtroCategoriaMobile')?.addEventListener('click', function(e) {
+        const btn = e.target.closest('button');
+        if (!btn) return;
+        ativarCategoria(btn);
+        carregarEquipes();
+    });
+
+    window.addEventListener('pageshow', async () => {
+        await carregarCategorias();
+        carregarEquipes();
+    });
 </script>
 
 <?php
