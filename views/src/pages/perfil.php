@@ -13,7 +13,7 @@ $usuarioPerfil = [
     'foto_usuario' => ''
 ];
 
-$backHome = './home.php';
+$backHome = './dashboard.php';
 $nivel = (int)($_SESSION['nivel'] ?? 0);
 if ($nivel === 3) $backHome = './alunos/home.php';
 elseif ($nivel === 2) $backHome = './mesarios/home.php';

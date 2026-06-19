@@ -142,10 +142,22 @@ require_once '../componentes/header.php';
     const idInterclasseColab = paramsColab.get('id');
     let colaboradoresData = [];
 
-    if (idInterclasseColab) {
-        document.getElementById('btnVoltarColabMobile').href = `./dashboard.php?id=${idInterclasseColab}`;
-        document.getElementById('btnVoltarColabDesk').href = `./dashboard.php?id=${idInterclasseColab}`;
-    }
+    (async () => {
+        const ic = idInterclasseColab
+            ? await window.SGIInterclasse.getInterclasseById(idInterclasseColab)
+            : await window.SGIInterclasse.getActiveInterclasse();
+        if (ic) {
+            const nome = ic.nome_interclasse || 'Voltar';
+            const href = `./dashboard.php?id=${ic.id_interclasse}`;
+            ['btnVoltarColabMobile', 'btnVoltarColabDesk'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) {
+                    el.href = href;
+                    el.innerHTML = `<i class="${el.querySelector('i').className}"></i> ${nome}`;
+                }
+            });
+        }
+    })();
     let editColaboradorId = null;
 
     function cardColaborador(item) {
