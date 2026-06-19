@@ -124,7 +124,7 @@ require_once '../componentes/header.php';
         }
 
         try {
-            const r = await fetch(`${API}usuarios.php?acao=listar_competidores&id_turma=${encodeURIComponent(idTurma)}`);
+            const r = await fetch(`${API}usuarios.php?acao=listar_competidores&id_turma=${encodeURIComponent(idTurma)}&id_interclasse=${encodeURIComponent(idInterclasse)}`);
             const textData = await r.text();
             let data;
             try {

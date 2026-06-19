@@ -42,6 +42,7 @@ $paginaAtiva = 'turmas';
 <script>
     const API = '../../../../api/';
     const params = new URLSearchParams(window.location.search);
+    const idInterclasse = Number(params.get('id') || 0);
     const idTurma = Number(params.get('id_turma') || 0);
 
     async function carregarDados() {
@@ -70,7 +71,7 @@ $paginaAtiva = 'turmas';
         }
 
         try {
-            const r = await fetch(`${API}usuarios.php?acao=listar_competidores&id_turma=${encodeURIComponent(idTurma)}`);
+            const r = await fetch(`${API}usuarios.php?acao=listar_competidores&id_turma=${encodeURIComponent(idTurma)}&id_interclasse=${encodeURIComponent(idInterclasse)}`);
             const textData = await r.text();
             let data;
             try {
