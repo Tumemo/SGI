@@ -147,6 +147,38 @@ switch ($method) {
             echo json_encode(["success" => false, "message" => "Erro no servidor: " . $conn->error]);
         }
         break;
+    case 'DELETE':
+        $data = json_decode(file_get_contents("php://input"));
+
+        if (!isset($data->id_categoria)) {
+            http_response_code(400);
+            echo json_encode(["success" => false, "message" => "O ID da categoria é obrigatório."]);
+            break;
+        }
+
+        $checkSql = "SELECT status_categoria FROM categorias WHERE id_categoria = ?";
+        $stmtCheck = $conn->prepare($checkSql);
+        $stmtCheck->bind_param("i", $data->id_categoria);
+        $stmtCheck->execute();
+        $res = $stmtCheck->get_result()->fetch_assoc();
+
+        if (!$res) {
+            http_response_code(404);
+            echo json_encode(["success" => false, "message" => "Categoria não encontrada."]);
+            break;
+        }
+
+        $sql = "UPDATE categorias SET status_categoria = '0' WHERE id_categoria = ?";
+        $stmt = $conn->prepare($sql);
+        $stmt->bind_param("i", $data->id_categoria);
+
+        if ($stmt->execute()) {
+            echo json_encode(["success" => true, "message" => "Categoria excluída com sucesso!"]);
+        } else {
+            http_response_code(500);
+            echo json_encode(["success" => false, "message" => "Erro no servidor: " . $conn->error]);
+        }
+        break;
     default:
         http_response_code(405);
         echo json_encode(["message" => "Método não permitido"]);
