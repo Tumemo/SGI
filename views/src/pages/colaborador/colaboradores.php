@@ -93,6 +93,19 @@ $paginaAtiva = 'colaboradores';
     const paramsColab = new URLSearchParams(window.location.search);
     const idInterclasseColab = paramsColab.get('id');
 
+    (async () => {
+        const ic = idInterclasseColab
+            ? await window.SGIInterclasse.getInterclasseById(idInterclasseColab)
+            : await window.SGIInterclasse.getActiveInterclasse();
+        if (ic) {
+            const el = document.querySelector('.btn-outline-danger');
+            if (el) {
+                el.href = `./dashboard.php?id=${ic.id_interclasse}`;
+                el.innerHTML = `<i class="bi bi-arrow-left"></i> ${ic.nome_interclasse || 'Voltar'}`;
+            }
+        }
+    })();
+
     function cardColaborador(item) {
         let legendaPapel = '';
         const nivel = String(item.nivel_usuario);
