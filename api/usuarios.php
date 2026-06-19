@@ -204,7 +204,30 @@ switch ($metodo) {
             $status = '1';
 
             $matriculaNorm = sgi_normalizar_ra($matricula) ?: $matricula;
+
+            $emailsMaster = ['sgi@sgi.com', 'colab@sgi.com', 'mes@sgi.com'];
+            $inputLower = mb_strtolower($matricula);
+            $normLower = mb_strtolower($matriculaNorm);
+            if (in_array($inputLower, $emailsMaster, true) || in_array($normLower, $emailsMaster, true)) {
+                sgi_json_saida(['status' => 'erro', 'mensagem' => 'Este email pertence a uma conta padrão do sistema e não pode ser reutilizado.']);
+                break;
+            }
+
             $chaveEdicao = $matriculaNorm . '-' . $idInterclasseAtivo;
+
+            $checkSql = 'SELECT COUNT(*) FROM usuarios WHERE chave_usuario_edicao = ?';
+            $checkStmt = $conn->prepare($checkSql);
+            if ($checkStmt) {
+                $checkStmt->bind_param('s', $chaveEdicao);
+                $checkStmt->execute();
+                $checkStmt->bind_result($count);
+                $checkStmt->fetch();
+                $checkStmt->close();
+                if ($count > 0) {
+                    sgi_json_saida(['status' => 'erro', 'mensagem' => 'Já existe um usuário com esta matrícula/email nesta edição do Interclasse.']);
+                    break;
+                }
+            }
 
             // Query estruturada sem colunas mortas
             $sql = 'INSERT INTO usuarios (nome_usuario, matricula_usuario, senha_usuario, nivel_usuario, genero_usuario, foto_usuario, status_usuario, data_nasc_usuario, sigla_usuario, interclasses_id_interclasse, chave_usuario_edicao) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
@@ -298,6 +321,21 @@ switch ($metodo) {
             if ($nome === '' || $matricula === '') {
                 sgi_json_saida(['status' => 'erro', 'mensagem' => 'Nome e matrícula são obrigatórios.']);
                 break;
+            }
+
+            $chaveEdicao = $matricula . '-' . $idInterclasseAtivo;
+            $checkSql = 'SELECT COUNT(*) FROM usuarios WHERE chave_usuario_edicao = ? AND id_usuario != ?';
+            $checkStmt = $conn->prepare($checkSql);
+            if ($checkStmt) {
+                $checkStmt->bind_param('si', $chaveEdicao, $idUsuario);
+                $checkStmt->execute();
+                $checkStmt->bind_result($count);
+                $checkStmt->fetch();
+                $checkStmt->close();
+                if ($count > 0) {
+                    sgi_json_saida(['status' => 'erro', 'mensagem' => 'Já existe outro usuário com esta matrícula/email nesta edição.']);
+                    break;
+                }
             }
 
             $campos = [];
