@@ -97,7 +97,8 @@ switch ($metodo) {
                 if (!$stmt) {
                     throw new RuntimeException('Falha ao preparar consulta: ' . $conn->error);
                 }
-                $stmt->bind_param('ii', $id_turma, $idInterclasseAtivo);
+                $idInterclasseFiltro = isset($_GET['id_interclasse']) ? intval($_GET['id_interclasse']) : $idInterclasseAtivo;
+                $stmt->bind_param('ii', $id_turma, $idInterclasseFiltro);
                 $stmt->execute();
                 $res = $stmt->get_result();
                 $lista = $res ? $res->fetch_all(MYSQLI_ASSOC) : [];
