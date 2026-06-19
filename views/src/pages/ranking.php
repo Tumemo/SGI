@@ -95,9 +95,10 @@ require_once '../componentes/header.php';
             }
 
             dadosAPI = data;
-            
-            // Extrair categorias únicas presentes nos dados
-            categoriasUnicas = [...new Set(data.map(item => item.nome_categoria))];
+
+            const catRes = await fetch(`../../../api/categorias.php?id_interclasse=${idInterclasse}`);
+            const catData = await catRes.json();
+            categoriasUnicas = Array.isArray(catData) ? catData.map(c => c.nome_categoria) : [];
             
             document.getElementById('nomeInterclasse').innerText = data[0].nome_interclasse;
             document.getElementById('totalTurmas').innerText = `${data.length} Turmas`;
