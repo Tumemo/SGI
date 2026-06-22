@@ -157,11 +157,15 @@ require_once '../componentes/header.php';
         cMob.innerHTML = '';
         cDesk.innerHTML = '';
 
-        const maxPontos = Math.max(...turmas.map(t => t.pontuacao_turma)) || 1;
+        const maxPontos = Math.max(...turmas.map(t => t.pontuacao_sem_penalidade || t.pontuacao_turma)) || 1;
 
         turmas.forEach((t, index) => {
             const posicao = index + 1;
-            const porcentagem = (t.pontuacao_turma / maxPontos) * 100;
+            const ptsSemPenalidade = t.pontuacao_sem_penalidade ?? t.pontuacao_turma;
+            const ptsComPenalidade = t.pontuacao_turma;
+            const perdeu = ptsSemPenalidade - ptsComPenalidade;
+            const porcentagemSem = (ptsSemPenalidade / maxPontos) * 100;
+            const porcentagemCom = (ptsComPenalidade / maxPontos) * 100;
             const classeDestaque = posicao <= 3 ? `posicao-${posicao}` : '';
 
             const html = `
@@ -177,12 +181,27 @@ require_once '../componentes/header.php';
                             </div>
                             <div class="text-end">
                                 <span class="badge badge-pontos fs-6 px-3 py-2 rounded-pill">
-                                    ${t.pontuacao_turma} pts
+                                    ${ptsComPenalidade} pts
                                 </span>
                             </div>
                         </div>
-                        <div class="barra-fundo mt-3">
-                            <div class="barra-progresso" style="width: ${porcentagem}%"></div>
+                        <div class="mt-2">
+                            <div class="d-flex justify-content-between small text-muted mb-1">
+                                <span>Pontuação que a turma deveria ter</span>
+                                <span>${ptsSemPenalidade} pts</span>
+                            </div>
+                            <div class="barra-fundo" style="height:6px;">
+                                <div class="barra-progresso" style="width:${porcentagemSem}%;background-color:#adb5bd;"></div>
+                            </div>
+                        </div>
+                        <div class="mt-2">
+                            <div class="d-flex justify-content-between small mb-1">
+                                <span class="fw-semibold text-danger">Pontuação final</span>
+                                <span class="fw-semibold">${ptsComPenalidade} pts${perdeu > 0 ? ` <span class="text-danger">(-${perdeu})</span>` : ''}</span>
+                            </div>
+                            <div class="barra-fundo" style="height:8px;">
+                                <div class="barra-progresso" style="width:${porcentagemCom}%;"></div>
+                            </div>
                         </div>
                     </div>
                 </div>

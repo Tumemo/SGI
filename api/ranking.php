@@ -24,19 +24,27 @@ switch ($method) {
                 turmas.nome_turma, 
                 turmas.turno_turma, 
                 turmas.nome_fantasia_turma, 
-                turmas.pontuacao_turma,
+                turmas.pontuacao_turma AS pontuacao_sem_penalidade,
+                (turmas.pontuacao_turma - COALESCE(penalidades.total_penalidades, 0)) AS pontuacao_turma,
                 interclasses.nome_interclasse,
                 categorias.nome_categoria
             FROM turmas 
             INNER JOIN interclasses ON interclasses.id_interclasse = turmas.interclasses_id_interclasse
             INNER JOIN categorias ON categorias.id_categoria = turmas.categorias_id_categoria
+            LEFT JOIN (
+                SELECT usuarios.turmas_id_turma, SUM(ocorrencias.penalidade) AS total_penalidades
+                FROM ocorrencias
+                INNER JOIN usuarios ON ocorrencias.usuarios_id_usuario = usuarios.id_usuario
+                WHERE ocorrencias.status_ocorrencia = '1'
+                GROUP BY usuarios.turmas_id_turma
+            ) penalidades ON penalidades.turmas_id_turma = turmas.id_turma
             WHERE 1=1";
 
         if (!empty($filtro['sql'])) {
             $sql .= $filtro['sql'];
         }
 
-        $sql .= " ORDER BY turmas.pontuacao_turma DESC, turmas.nome_turma ASC";
+        $sql .= " ORDER BY pontuacao_turma DESC, turmas.nome_turma ASC";
 
         $stmt = $conn->prepare($sql);
         

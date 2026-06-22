@@ -106,11 +106,15 @@ include 'componentes/nav.php';
 
         function renderizarRanking(turmas) {
             const container = document.getElementById('listaRanking');
-            const maxPontos = Math.max(...turmas.map(t => t.pontuacao_turma)) || 1;
+            const maxPontos = Math.max(...turmas.map(t => t.pontuacao_sem_penalidade || t.pontuacao_turma)) || 1;
 
             container.innerHTML = turmas.map((t, index) => {
                 const posicao = index + 1;
-                const porcentagem = (t.pontuacao_turma / maxPontos) * 100;
+                const ptsSemPenalidade = t.pontuacao_sem_penalidade ?? t.pontuacao_turma;
+                const ptsComPenalidade = t.pontuacao_turma;
+                const perdeu = ptsSemPenalidade - ptsComPenalidade;
+                const porcentagemSem = (ptsSemPenalidade / maxPontos) * 100;
+                const porcentagemCom = (ptsComPenalidade / maxPontos) * 100;
                 return `
                     <div class="bg-white rounded-3 shadow-sm p-3 ${posicao <= 3 ? `pos-${posicao}` : ''}">
                         <div class="d-flex align-items-center justify-content-between">
@@ -121,10 +125,25 @@ include 'componentes/nav.php';
                                     <small class="text-muted">${esc(t.nome_fantasia_turma || t.turno_turma || '')}</small>
                                 </div>
                             </div>
-                            <span class="badge bg-light text-dark border px-3 py-2 rounded-pill fs-6">${t.pontuacao_turma} pts</span>
+                            <span class="badge bg-light text-dark border px-3 py-2 rounded-pill fs-6">${ptsComPenalidade} pts</span>
                         </div>
-                        <div class="barra-fundo mt-3">
-                            <div class="barra-progresso" style="width: ${porcentagem}%"></div>
+                        <div class="mt-2">
+                            <div class="d-flex justify-content-between small text-muted mb-1">
+                                <span>Sem penalidades</span>
+                                <span>${ptsSemPenalidade} pts</span>
+                            </div>
+                            <div class="barra-fundo" style="height:6px;">
+                                <div class="barra-progresso" style="width:${porcentagemSem}%;background-color:#adb5bd;"></div>
+                            </div>
+                        </div>
+                        <div class="mt-2">
+                            <div class="d-flex justify-content-between small mb-1">
+                                <span class="fw-semibold text-danger">Pontuação final</span>
+                                <span class="fw-semibold">${ptsComPenalidade} pts${perdeu > 0 ? ` <span class="text-danger">(-${perdeu})</span>` : ''}</span>
+                            </div>
+                            <div class="barra-fundo" style="height:8px;">
+                                <div class="barra-progresso" style="width:${porcentagemCom}%;"></div>
+                            </div>
                         </div>
                     </div>
                 `;

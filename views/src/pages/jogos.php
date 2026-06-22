@@ -532,6 +532,42 @@ require_once '../componentes/header.php';
                         </select>
                     </div>
                     <div class="mb-2">
+                        <label class="form-label fw-semibold small">Penalidade (1–30)</label>
+                        <select class="form-select form-select-sm" id="penalidadeOcorrencia">
+                            <option value="0">Sem penalidade</option>
+                            <option value="1">1</option>
+                            <option value="2">2</option>
+                            <option value="3">3</option>
+                            <option value="4">4</option>
+                            <option value="5">5</option>
+                            <option value="6">6</option>
+                            <option value="7">7</option>
+                            <option value="8">8</option>
+                            <option value="9">9</option>
+                            <option value="10">10</option>
+                            <option value="11">11</option>
+                            <option value="12">12</option>
+                            <option value="13">13</option>
+                            <option value="14">14</option>
+                            <option value="15">15</option>
+                            <option value="16">16</option>
+                            <option value="17">17</option>
+                            <option value="18">18</option>
+                            <option value="19">19</option>
+                            <option value="20">20</option>
+                            <option value="21">21</option>
+                            <option value="22">22</option>
+                            <option value="23">23</option>
+                            <option value="24">24</option>
+                            <option value="25">25</option>
+                            <option value="26">26</option>
+                            <option value="27">27</option>
+                            <option value="28">28</option>
+                            <option value="29">29</option>
+                            <option value="30">30</option>
+                        </select>
+                    </div>
+                    <div class="mb-2">
                         <label class="form-label fw-semibold small">Descrição</label>
                         <textarea class="form-control form-control-sm" id="descricaoOcorrencia" rows="2" required placeholder="Motivo da ocorrência..."></textarea>
                     </div>
@@ -1069,11 +1105,21 @@ require_once '../componentes/header.php';
                 if (tipo.indexOf('vermelho') !== -1) cls = 'vermelho';
                 else if (tipo.indexOf('suspensao') !== -1 || tipo.indexOf('suspensão') !== -1) cls = 'suspensao';
                 var label = tipo === 'amarelo' ? 'A' : (tipo.indexOf('vermelho') !== -1 ? 'V' : 'S');
+                var pts = parseInt(o.penalidade, 10);
+                var ptsHtml = pts > 0 ? '<span class="badge bg-danger bg-opacity-10 text-danger rounded-pill" style="font-size:0.7rem;">-' + pts + ' pts</span>' : '';
                 return '<div class="ocorrencia-item">' +
                     '<span class="ocorrencia-tipo ' + cls + '">' + label + '</span>' +
                     '<div class="flex-grow-1">' +
-                        '<div class="fw-semibold small">' + esc(o.nome_usuario) + '</div>' +
+                        '<div class="fw-semibold small">' + esc(o.nome_usuario) + ' ' + ptsHtml + '</div>' +
                         '<div class="text-muted" style="font-size:0.8rem;">' + esc(limparDescricaoOcorrencia(o.descricao_ocorrencia)) + '</div>' +
+                    '</div>' +
+                    '<div class="d-flex gap-1 flex-shrink-0">' +
+                        '<button type="button" class="btn btn-sm btn-outline-secondary rounded-pill px-2" onclick="editarOcorrencia(' + o.id_ocorrencia + ')" title="Editar">' +
+                            '<i class="bi bi-pencil"></i>' +
+                        '</button>' +
+                        '<button type="button" class="btn btn-sm btn-outline-danger rounded-pill px-2" onclick="excluirOcorrencia(' + o.id_ocorrencia + ')" title="Excluir">' +
+                            '<i class="bi bi-trash"></i>' +
+                        '</button>' +
                     '</div>' +
                 '</div>';
             }).join('');
@@ -1082,7 +1128,10 @@ require_once '../componentes/header.php';
         }
     }
 
+    var _editandoOcorrenciaId = null;
+
     function abrirModalOcorrencia() {
+        _editandoOcorrenciaId = null;
         document.getElementById('formOcorrencia').reset();
         document.getElementById('msgOcorrencia').innerHTML = '';
         document.querySelectorAll('.ocorrencia-tipo-option').forEach(function(el) {
@@ -1091,8 +1140,72 @@ require_once '../componentes/header.php';
         var selAluno = document.getElementById('selectAlunoOcorrencia');
         selAluno.disabled = true;
         selAluno.innerHTML = '<option value="">Selecione uma turma primeiro</option>';
+        document.getElementById('btnSalvarOcorrencia').innerHTML = '<i class="bi bi-check-lg me-1"></i>Registrar';
         var modal = new bootstrap.Modal(document.getElementById('modalOcorrencia'));
         modal.show();
+    }
+
+    async function editarOcorrencia(id) {
+        _editandoOcorrenciaId = id;
+        document.getElementById('formOcorrencia').reset();
+        document.getElementById('msgOcorrencia').innerHTML = '';
+        document.querySelectorAll('.ocorrencia-tipo-option').forEach(function(el) {
+            el.classList.remove('active');
+        });
+        var selAluno = document.getElementById('selectAlunoOcorrencia');
+        selAluno.disabled = true;
+        selAluno.innerHTML = '<option value="">Carregando...</option>';
+        document.getElementById('btnSalvarOcorrencia').innerHTML = '<i class="bi bi-check-lg me-1"></i>Atualizar';
+
+        try {
+            var lista = await fetchJson(API + 'ocorrencias.php?id_ocorrencia=' + id);
+            var o = Array.isArray(lista) ? lista[0] : null;
+            if (!o) return;
+            document.querySelectorAll('.ocorrencia-tipo-option').forEach(function(el) {
+                if (el.getAttribute('data-tipo') === o.titulo_ocorrencia) {
+                    el.classList.add('active');
+                    var radio = el.querySelector('input[type="radio"]');
+                    if (radio) radio.checked = true;
+                }
+            });
+            document.getElementById('descricaoOcorrencia').value = limparDescricaoOcorrencia(o.descricao_ocorrencia);
+            document.getElementById('penalidadeOcorrencia').value = o.penalidade || 0;
+            var idTurma = o.turmas_id_turma || 0;
+            if (idTurma) {
+                document.getElementById('filtroTurmaOcorrencia').value = idTurma;
+                try {
+                    await carregarAlunosOcorrencia();
+                } catch (e) {}
+                var sel = document.getElementById('selectAlunoOcorrencia');
+                sel.value = o.id_usuario;
+                if (sel.value !== String(o.id_usuario)) {
+                    var opt = document.createElement('option');
+                    opt.value = o.id_usuario;
+                    opt.textContent = esc(o.nome_usuario);
+                    sel.appendChild(opt);
+                    sel.value = o.id_usuario;
+                }
+            }
+            var modal = new bootstrap.Modal(document.getElementById('modalOcorrencia'));
+            modal.show();
+        } catch (e) {
+            _editandoOcorrenciaId = null;
+            document.getElementById('btnSalvarOcorrencia').innerHTML = '<i class="bi bi-check-lg me-1"></i>Registrar';
+        }
+    }
+
+    async function excluirOcorrencia(id) {
+        if (!confirm('Tem certeza que deseja excluir esta ocorrência?')) return;
+        try {
+            await fetchJson(API + 'ocorrencias.php', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id_ocorrencia: id, status_ocorrencia: '0' })
+            });
+            carregarOcorrencias();
+        } catch (e) {
+            alert('Erro ao excluir ocorrência.');
+        }
     }
 
     async function salvarOcorrencia(e) {
@@ -1100,6 +1213,8 @@ require_once '../componentes/header.php';
         var btn = document.getElementById('btnSalvarOcorrencia');
         var msg = document.getElementById('msgOcorrencia');
         msg.innerHTML = '';
+
+        var editando = _editandoOcorrenciaId;
 
         var tipoEl = document.querySelector('.ocorrencia-tipo-option.active');
         if (!tipoEl) {
@@ -1128,47 +1243,54 @@ require_once '../componentes/header.php';
         btn.disabled = true;
         btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Salvando...';
 
+        var isUpdate = !!editando;
         var payload = {
-            id_jogo: idJogo,
-            id_turma: parseInt(idTurma, 10),
             titulo_ocorrencia: tipo,
             descricao_ocorrencia: descricao,
             data_ocorrencia: estadoJogo.data_jogo || new Date().toISOString().slice(0, 10),
             usuarios_id_usuario: parseInt(idAluno, 10),
-            penalidade: tipo === 'Vermelho' ? 1 : (tipo === 'Suspensao' ? 3 : 0)
+            penalidade: parseInt(document.getElementById('penalidadeOcorrencia').value, 10)
         };
+
+        if (isUpdate) {
+            payload.id_ocorrencia = editando;
+        } else {
+            payload.id_jogo = idJogo;
+            payload.id_turma = parseInt(idTurma, 10);
+        }
 
         try {
             var resp = await fetch(API + 'ocorrencias.php', {
-                method: 'POST',
+                method: isUpdate ? 'PUT' : 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)
             });
             var result = await resp.json();
             if (result.success) {
-                msg.innerHTML = '<span class="text-success">Ocorrência registrada!</span>';
-                if (result.evento === 'segundo_amarelo') {
+                msg.innerHTML = '<span class="text-success">Ocorrência ' + (isUpdate ? 'atualizada' : 'registrada') + '!</span>';
+                if (!isUpdate && result.evento === 'segundo_amarelo') {
                     var selAluno = document.getElementById('selectAlunoOcorrencia');
                     var nomeAluno = selAluno.options[selAluno.selectedIndex] ? selAluno.options[selAluno.selectedIndex].text : '';
                     carregarAlunosOcorrencia();
                     mostrarAlertaSegundoAmarelo(nomeAluno);
-                } else if (tipo === 'Vermelho' || tipo === 'Suspensao') {
+                } else if (!isUpdate && (tipo === 'Vermelho' || tipo === 'Suspensao')) {
                     carregarAlunosOcorrencia();
                 }
                 setTimeout(function() {
                     var m = bootstrap.Modal.getInstance(document.getElementById('modalOcorrencia'));
                     if (m) m.hide();
+                    _editandoOcorrenciaId = null;
                     carregarOcorrencias();
                 }, 600);
             } else {
-                msg.innerHTML = '<span class="text-danger">' + (result.message || 'Erro ao registrar.') + '</span>';
+                msg.innerHTML = '<span class="text-danger">' + (result.message || 'Erro ao salvar.') + '</span>';
                 btn.disabled = false;
-                btn.innerHTML = '<i class="bi bi-check-lg me-1"></i>Registrar';
+                btn.innerHTML = isUpdate ? '<i class="bi bi-check-lg me-1"></i>Atualizar' : '<i class="bi bi-check-lg me-1"></i>Registrar';
             }
         } catch (err) {
             msg.innerHTML = '<span class="text-danger">Erro de conexão.</span>';
             btn.disabled = false;
-            btn.innerHTML = '<i class="bi bi-check-lg me-1"></i>Registrar';
+            btn.innerHTML = isUpdate ? '<i class="bi bi-check-lg me-1"></i>Atualizar' : '<i class="bi bi-check-lg me-1"></i>Registrar';
         }
     }
 

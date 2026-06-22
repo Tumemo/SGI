@@ -283,6 +283,12 @@ function aplicarFiltrosOcorrencias() {
         $params[] = $_GET['data'];
     }
 
+    if (!empty($_GET['id_ocorrencia'])) {
+        $sqlExtras .= " AND ocorrencias.id_ocorrencia = ?";
+        $types .= "i";
+        $params[] = intval($_GET['id_ocorrencia']);
+    }
+
     if (isset($_GET['penalidade'])) {
         $sqlExtras .= " AND ocorrencias.penalidade = ?";
         $types .= "i";

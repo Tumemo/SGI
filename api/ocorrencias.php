@@ -54,7 +54,8 @@ switch ($method) {
                     ocorrencias.hora_ocorrencia, 
                     ocorrencias.penalidade,
                     usuarios.nome_usuario,
-                    usuarios.id_usuario
+                    usuarios.id_usuario,
+                    usuarios.turmas_id_turma
                 FROM ocorrencias 
                 INNER JOIN usuarios ON ocorrencias.usuarios_id_usuario = usuarios.id_usuario 
                 WHERE 1=1" . $filtro['sql'];
