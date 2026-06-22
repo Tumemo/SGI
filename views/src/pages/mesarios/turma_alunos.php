@@ -22,10 +22,9 @@ include 'componentes/nav.php';
 
 <!-- main desktop -->
 <main class="d-none d-md-block main-desktop-layout">
-    <div class="container-fluid px-0" style="max-width: 800px;">
-        <a href="#" class="btn btn-danger d-inline-flex align-items-center gap-2 mb-4 border-0 shadow-sm text-decoration-none rounded-3" id="btnVoltarTurmaAlunosDesk">
-            <i class="bi bi-arrow-left-circle"></i>
-            <span style="font-weight: 400;">Voltar</span>
+    <div class="container-fluid px-0">
+        <a href="#" id="btnVoltarTurmaAlunosDesk" class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none" style="background-color: #ed1c24; border-radius: 6px;">
+            <i class="bi bi-arrow-left-circle fs-5"></i> Voltar
         </a>
         <h4 style="font-weight: 400;" id="tituloTurmaDesk">Alunos da turma</h4>
         <p class="text-muted" id="contagemDesk"></p>
