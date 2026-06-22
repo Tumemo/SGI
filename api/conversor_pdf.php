@@ -26,8 +26,10 @@ try {
         mkdir($pasta_destino, 0777, true);
     }
 
+    $id_turma_post = isset($_POST['id_turma']) ? (int) $_POST['id_turma'] : 0;
+
     $todos_os_alunos = [];
-    if (file_exists($arquivo_final)) {
+    if ($id_turma_post <= 0 && file_exists($arquivo_final)) {
         $conteudo_atual = file_get_contents($arquivo_final);
         $todos_os_alunos = json_decode($conteudo_atual, true) ?? [];
     }
@@ -44,8 +46,6 @@ try {
         }
         $alunos_por_rm[$turmaKey . '|' . $rmNorm] = $aluno;
     }
-
-    $id_turma_post = isset($_POST['id_turma']) ? (int) $_POST['id_turma'] : 0;
     $nome_turma_vinculo = null;
     if ($id_turma_post > 0) {
         $stTurma = $conn->prepare('SELECT nome_turma FROM turmas WHERE id_turma = ? LIMIT 1');
@@ -137,6 +137,9 @@ try {
             $resposta['success'] = true;
             $cadastrados = isset($resultadoBD['cadastrados']) ? (int)$resultadoBD['cadastrados'] : 0;
             $resposta['message'] = "Importação concluída: $cadastrados registros inseridos.";
+            if (file_exists($arquivo_final)) {
+                unlink($arquivo_final);
+            }
         } else {
             $mens = $resultadoBD['mensagem'] ?? 'Erro desconhecido';
             $resposta['message'] = "Falha na integração com banco: " . $mens;

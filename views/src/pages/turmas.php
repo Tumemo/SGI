@@ -205,10 +205,11 @@ require_once '../componentes/header.php';
                 const pdf = document.getElementById('arquivoUpload').files?.[0];
                 if (pdf) {
                     const formData = new FormData();
-                    formData.append('pdf', pdf);
+                    formData.append('pdf_arquivo', pdf);
                     formData.append('nome_turma', body.nome_turma);
                     formData.append('id_interclasse', String(interclasse.id_interclasse));
                     formData.append('id_categoria', String(body.categorias_id_categoria));
+                    formData.append('id_turma', String(data.id_turma));
                     const up = await fetch('../../../api/upload_turma_pdf.php', {
                         method: 'POST',
                         body: formData

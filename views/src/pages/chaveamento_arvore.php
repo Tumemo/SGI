@@ -257,6 +257,12 @@ require_once '../componentes/header.php';
         border-radius: 22px;
         box-shadow: 0 6px 18px rgba(0,0,0,.06);
     }
+
+    #filtroCategoriaJogos, #filtroModalidadeJogos{
+        border-radius: 10px;
+        height: 40px;
+        /* border: 1px solid #E30613; */
+    }
 </style>
 
 <main class="main-desktop-layout py-4">
@@ -313,7 +319,15 @@ require_once '../componentes/header.php';
                             <h4 class="fw-bold">Jogos Realizados</h4>
                             <span class="text-muted">Histórico de partidas concluídas.</span>
                         </div>
-                        <input type="text" class="form-control search-input" placeholder="Buscar partida..." style="width:300px" id="inputBuscaJogo">
+                        <div class="d-flex gap-2 align-items-center">
+                            <select class="form-select form-select-sm" id="filtroModalidadeJogos" style="min-width:160px;">
+                                <option value="">Todas modalidades</option>
+                            </select>
+                            <select class="form-select form-select-sm" id="filtroCategoriaJogos" style="min-width:140px;">
+                                <option value="">Todas categorias</option>
+                            </select>
+                            <input type="text" class="form-control form-control-sm search-input" placeholder="Buscar partida..." style="width:200px" id="inputBuscaJogo">
+                        </div>
                     </div>
 
                     <div class="table-responsive">
@@ -441,13 +455,32 @@ require_once '../componentes/header.php';
             modalidadesCache = Array.isArray(data) ? data : [];
             const select = document.getElementById('selectModalidade');
             select.innerHTML = '<option value="">Todas as modalidades</option>';
+            const selectJogos = document.getElementById('filtroModalidadeJogos');
+            selectJogos.innerHTML = '<option value="">Todas modalidades</option>';
             modalidadesCache.forEach(mod => {
                 const genero = mod.genero_modalidade ? ` (${mod.genero_modalidade})` : '';
                 const categoria = mod.nome_categoria ? ` [${mod.nome_categoria}]` : '';
-                select.innerHTML += `<option value="${mod.id_modalidade}">${mod.nome_modalidade}${genero}${categoria}</option>`;
+                const label = `${mod.nome_modalidade}${genero}${categoria}`;
+                select.innerHTML += `<option value="${mod.id_modalidade}">${label}</option>`;
+                selectJogos.innerHTML += `<option value="${mod.id_modalidade}">${label}</option>`;
             });
         } catch (e) {
             console.error("Erro ao carregar modalidades:", e);
+        }
+    }
+
+    async function carregarCategorias() {
+        const select = document.getElementById('filtroCategoriaJogos');
+        try {
+            const resp = await fetch(`../../../api/categorias.php?id_interclasse=${idInterclasse}`);
+            const data = await resp.json();
+            const categorias = Array.isArray(data) ? data : [];
+            select.innerHTML = '<option value="">Todas categorias</option>';
+            categorias.forEach(c => {
+                select.innerHTML += `<option value="${c.id_categoria}">${c.nome_categoria}</option>`;
+            });
+        } catch (e) {
+            console.error("Erro ao carregar categorias:", e);
         }
     }
 
@@ -573,9 +606,15 @@ require_once '../componentes/header.php';
     async function carregarJogos() {
         const tbody = document.getElementById('tbodyJogos');
         try {
-            const idModalidade = document.getElementById('selectModalidade').value;
+            const idModalidade = document.getElementById('filtroModalidadeJogos').value;
+            const idCategoria = document.getElementById('filtroCategoriaJogos').value;
+            if (!idModalidade && !idCategoria) {
+                tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted py-4">Selecione uma modalidade ou categoria para ver os jogos.</td></tr>';
+                return;
+            }
             let url = `../../../api/jogos.php?id_interclasse=${idInterclasse}`;
             if (idModalidade) url += `&id_modalidade=${idModalidade}`;
+            if (idCategoria) url += `&id_categoria=${idCategoria}`;
 
             const resp = await fetch(url);
             const data = await resp.json();
@@ -770,8 +809,10 @@ require_once '../componentes/header.php';
     document.getElementById('selectModalidade').addEventListener('change', function () {
         document.getElementById('msgChaveamento').innerHTML = '';
         carregarArvore(this.value);
-        carregarJogos();
     });
+
+    document.getElementById('filtroModalidadeJogos').addEventListener('change', carregarJogos);
+    document.getElementById('filtroCategoriaJogos').addEventListener('change', carregarJogos);
 
     document.getElementById('btnGerarChaveamento').addEventListener('click', async function () {
         const idModalidade = document.getElementById('selectModalidade').value;
@@ -838,6 +879,7 @@ require_once '../componentes/header.php';
         const idOk = await resolverInterclasse();
         if (!idOk) return;
         await carregarModalidades();
+        await carregarCategorias();
         await carregarJogos();
     });
 </script>

@@ -85,7 +85,14 @@ final class ImportadorCompetidores
 
         $this->conn->begin_transaction();
         try {
-            $mapaTurmas = $this->sincronizarTurmasEmLote($idInterclasse, $idCategoria, $linhas);
+            if ($idTurmaForcado !== null && $idTurmaForcado > 0) {
+                $mapaTurmas = [];
+                foreach ($linhas as $l) {
+                    $mapaTurmas[$l['turma']] = $idTurmaForcado;
+                }
+            } else {
+                $mapaTurmas = $this->sincronizarTurmasEmLote($idInterclasse, $idCategoria, $linhas);
+            }
             $cadastrados = 0;
             $erros = $prepared['avisos'];
 
