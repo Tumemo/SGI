@@ -234,11 +234,16 @@ require_once '../componentes/header.php';
     }
 
     function selecionarCategoria(idCategoria, el) {
-        categoriaSelecionada = Number(idCategoria);
-        document.querySelectorAll('.categoria-item').forEach((item) => {
-            item.classList.remove('categoria-item--selected');
-        });
-        el.classList.add('categoria-item--selected');
+        if (categoriaSelecionada === Number(idCategoria)) {
+            categoriaSelecionada = null;
+            el.classList.remove('categoria-item--selected');
+        } else {
+            categoriaSelecionada = Number(idCategoria);
+            document.querySelectorAll('.categoria-item').forEach((item) => {
+                item.classList.remove('categoria-item--selected');
+            });
+            el.classList.add('categoria-item--selected');
+        }
         atualizarAcoesCategoria();
     }
 
