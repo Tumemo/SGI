@@ -162,7 +162,9 @@ require_once '../componentes/header.php';
 
         const backBtn = document.getElementById('btnVoltarModalidades');
         if (backBtn) {
-            backBtn.href = `./dashboard.php?id=${idInterclasse}`;
+            backBtn.href = modo === 'view'
+                ? `./dashboard.php?id=${idInterclasse}`
+                : `./edicao_categorias.php?id=${idInterclasse}&modo=create`;
         }
     }
 

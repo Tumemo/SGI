@@ -251,7 +251,9 @@ require_once '../componentes/header.php';
 
         const btnBack = document.getElementById('btnVoltarPontuacao');
         if (btnBack) {
-            btnBack.href = `./dashboard.php?id=${idInterclasse}`;
+            btnBack.href = modo === 'view'
+                ? `./dashboard.php?id=${idInterclasse}`
+                : `./edicao_modalidades.php?id=${idInterclasse}&modo=create`;
         }
 
         if (dados) {
