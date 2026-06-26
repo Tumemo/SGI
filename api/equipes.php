@@ -181,6 +181,24 @@ switch ($method) {
         }
         break;
 
+    case 'DELETE':
+        $data = json_decode(file_get_contents("php://input"));
+        $id = intval($data->id_equipe ?? 0);
+        if (!$id) {
+            http_response_code(400);
+            echo json_encode(["success" => false, "message" => "ID da equipe é obrigatório."]);
+            break;
+        }
+        $stmt = $conn->prepare("UPDATE equipes SET status_equipe = '0' WHERE id_equipe = ?");
+        $stmt->bind_param("i", $id);
+        if ($stmt->execute() && $stmt->affected_rows > 0) {
+            echo json_encode(["success" => true, "message" => "Equipe excluída com sucesso!"]);
+        } else {
+            http_response_code(404);
+            echo json_encode(["success" => false, "message" => "Equipe não encontrada."]);
+        }
+        break;
+
     default:
         http_response_code(405);
         echo json_encode(["message" => "Método não permitido"]);

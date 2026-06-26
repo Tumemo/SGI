@@ -221,7 +221,11 @@ require_once '../componentes/header.php';
                             htmlMob += `<li class="list-group-item px-0">
                                 <div class="d-flex justify-content-between align-items-center gap-2">
                                     <a class="text-decoration-none text-dark flex-grow-1" href="${hrefTurma}"><span>${esc(eq.nome_turma || 'Turma')}</span></a>
-                                    <a class="btn btn-sm btn-danger rounded-3" href="${hrefElenco}">Elenco</a>
+                                    <div class="d-flex gap-1">
+                                        <button class="btn btn-sm btn-outline-danger rounded-3"
+                                            onclick="excluirEquipe(${eq.id_equipe}, '${esc(eq.nome_turma || 'Turma')}')"><i class="bi bi-trash"></i> Excluir</button>
+                                        <a class="btn btn-sm btn-danger rounded-3" href="${hrefElenco}">Elenco</a>
+                                    </div>
                                 </div>
                             </li>`;
                         });
@@ -246,7 +250,14 @@ require_once '../componentes/header.php';
                             });
                             const hrefElenco = `./elenco_equipe.php?${qElenco.toString()}`;
                             const hrefTurma = `./equipes.php?id=${encodeURIComponent(idInterclasseEq)}&id_categoria=${encodeURIComponent(m.categorias_id_categoria)}&id_turma=${encodeURIComponent(eq.turmas_id_turma)}`;
-                            htmlDesk += `<tr><td><a class="text-decoration-none text-dark" href="${hrefTurma}">${esc(eq.nome_turma || 'Turma')}</a></td><td class="text-end"><a class="btn btn-sm btn-outline-danger rounded-3" href="${hrefElenco}">Elenco</a></td></tr>`;
+                            htmlDesk += `<tr>
+                                <td><a class="text-decoration-none text-dark" href="${hrefTurma}">${esc(eq.nome_turma || 'Turma')}</a></td>
+                                <td class="text-end">
+                                    <button class="btn btn-sm btn-outline-danger rounded-3 me-1"
+                                        onclick="excluirEquipe(${eq.id_equipe}, '${esc(eq.nome_turma || 'Turma')}')"><i class="bi bi-trash"></i> Excluir</button>
+                                    <a class="btn btn-sm btn-outline-danger rounded-3" href="${hrefElenco}">Elenco</a>
+                                </td>
+                            </tr>`;
                         });
                         htmlDesk += '</tbody></table></div>';
                     }
@@ -376,6 +387,22 @@ require_once '../componentes/header.php';
         ativarCategoria(btn);
         carregarEquipes();
     });
+
+    window.excluirEquipe = async function(id, nome) {
+        if (!confirm(`Excluir a equipe "${nome}"?`)) return;
+        try {
+            const resp = await fetch(`${API}equipes.php`, {
+                method: 'DELETE',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id_equipe: id })
+            });
+            const data = await resp.json();
+            if (data.success === false) throw new Error(data.message || 'Erro ao excluir.');
+            carregarEquipes();
+        } catch (err) {
+            alert(err.message);
+        }
+    };
 
     window.addEventListener('pageshow', async () => {
         await carregarCategorias();
