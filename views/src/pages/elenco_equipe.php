@@ -1,9 +1,11 @@
 <?php
-$titulo = "Elenco";
-$textTop = "Elenco da equipe";
-$btnVoltar = true;
-require_once '../componentes/navbar.php';
-require_once '../componentes/header.php';
+$tituloPagina = 'SGI - Elenco';
+$titulo = 'Elenco da equipe';
+$mostrarVoltar = true;
+$urlVoltar = './dashboard.php';
+include 'componentes/head.php';
+include 'componentes/header.php';
+$paginaAtiva = 'dashboard';
 ?>
 
 <main class="d-md-none p-3" style="padding-top: 5.5rem; padding-bottom: 5rem;">
@@ -135,4 +137,5 @@ require_once '../componentes/header.php';
 </script>
 
 <?php
+include 'componentes/nav.php';
 require_once '../componentes/footer.php';

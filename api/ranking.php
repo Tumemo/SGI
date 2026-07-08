@@ -5,7 +5,8 @@ header("Access-Control-Allow-Methods: GET, PUT, OPTIONS");
 header("Access-Control-Allow-Headers: Content-Type, Authorization");
 
 require_once '../config/db.php';
-require_once 'filtros.php'; 
+require_once 'filtros.php';
+require_once 'auth.php';
 
 $method = $_SERVER['REQUEST_METHOD'];
 
@@ -62,6 +63,7 @@ switch ($method) {
         break;
 
     case 'PUT':
+        requerEscrita();
         $rawInput = file_get_contents("php://input");
         $data = json_decode($rawInput);
         if (json_last_error() !== JSON_ERROR_NONE || !isset($data->id_turma)) {

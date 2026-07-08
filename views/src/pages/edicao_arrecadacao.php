@@ -1,9 +1,11 @@
 <?php
-$titulo = "Arrecadação";
-$textTop = "Arrecadação";
-$btnVoltar = true;
-require_once '../componentes/navbar.php';
-require_once '../componentes/header.php';
+$tituloPagina = 'SGI - Arrecadação';
+$titulo = 'Arrecadação';
+$mostrarVoltar = true;
+$urlVoltar = './dashboard.php';
+include 'componentes/head.php';
+include 'componentes/header.php';
+$paginaAtiva = 'dashboard';
 ?>
 
 <main class="d-md-none" style="margin-bottom: 120px;">
@@ -68,7 +70,7 @@ require_once '../componentes/header.php';
     </div>
 </div>
 
-<?php require_once '../componentes/footer.php'; ?>
+<?php include 'componentes/nav.php'; require_once '../componentes/footer.php'; ?>
 
 <script>
     // Prefixo para evitar conflitos no LocalStorage

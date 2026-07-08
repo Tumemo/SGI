@@ -1,9 +1,11 @@
 <?php
-$titulo = "Colaboradores";
-$textTop = "Colaboradores";
-$btnVoltar = true;
-require_once '../componentes/navbar.php';
-require_once '../componentes/header.php';
+$tituloPagina = 'SGI - Colaboradores';
+$titulo = 'Colaboradores';
+$mostrarVoltar = true;
+$urlVoltar = './dashboard.php';
+include 'componentes/head.php';
+include 'componentes/header.php';
+$paginaAtiva = 'dashboard';
 ?>
 
 <style>
@@ -360,5 +362,6 @@ require_once '../componentes/header.php';
 </script>
 
 <?php
+include 'componentes/nav.php';
 require_once '../componentes/footer.php';
 ?>

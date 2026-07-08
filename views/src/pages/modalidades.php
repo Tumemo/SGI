@@ -1,12 +1,12 @@
 <?php
-$tituloPagina = 'SGI - Colaborador - Modalidades';
+$tituloPagina = 'SGI - Modalidades';
 $titulo = 'Modalidades';
 $mostrarVoltar = true;
 $urlVoltar = './dashboard.php';
-$paginaAtiva = 'modalidades';
-$cssExtra = '.transition-hover { transition: all 0.2s ease-in-out; } .transition-hover:hover { transform: translateY(-3px); box-shadow: 0 .5rem 1rem rgba(0, 0, 0, .08) !important; }';
+$nivelUsuario = (int)($_SESSION['nivel'] ?? -1);
 include 'componentes/head.php';
 include 'componentes/header.php';
+$paginaAtiva = 'modalidades';
 ?>
 
 <main class="position-relative d-md-none" style="margin-bottom: 120px;">
@@ -69,6 +69,12 @@ include 'componentes/header.php';
                             <option value="MISTO">Misto</option>
                         </select>
                     </div>
+                    <?php if ($nivelUsuario === 0): ?>
+                    <div class="mb-3">
+                        <label class="form-label fw-medium">Máx. de Inscritos (Opcional):</label>
+                        <input type="number" class="form-control" placeholder="Ex: 12" id="inputMaxInscritos" min="0">
+                    </div>
+                    <?php endif; ?>
                     <div class="mb-3">
                         <label class="form-label fw-medium">Tipo de Modalidade:</label>
                         <select class="form-select" id="inputTipoModalidade" required>
@@ -93,7 +99,7 @@ include 'componentes/header.php';
 </div>
 
 <script>
-    const urlParams = new URLSearchParams(window.location.search);
+    const nivelUsuario = <?= $nivelUsuario ?>;
     let idInterclasse = null;
 
     async function carregarModalidades() {
@@ -101,7 +107,7 @@ include 'componentes/header.php';
         const divDesktop = document.getElementById('listaModalidadesDesktop');
 
         try {
-            const response = await axios.get('../../../../api/modalidades.php?x=1');
+            const response = await axios.get('../../../api/modalidades.php?x=1');
             let modalidades = response.data.data || response.data;
             if (!Array.isArray(modalidades)) modalidades = [];
             modalidades = modalidades.filter((item) => String(item.interclasses_id_interclasse) === String(idInterclasse));
@@ -131,30 +137,44 @@ include 'componentes/header.php';
                 if (divMobile) {
                     divMobile.innerHTML += '<h5 class="mt-4 mb-3 text-muted px-3">' + esc(categoria) + '</h5>';
                     mods.forEach((modalidade) => {
+                        const botoesAdmin = nivelUsuario === 0
+                            ? '<div class="d-flex gap-1 ms-2">'
+                                + '<a class="btn btn-sm btn-outline-primary" href="./modalidade_detalhes.php?id=' + idInterclasse + '&id_modalidade=' + modalidade.id_modalidade + '" title="Editar"><i class="bi bi-pencil"></i></a>'
+                                + '<button class="btn btn-sm btn-outline-danger" onclick="excluirModalidade(' + modalidade.id_modalidade + ')" title="Excluir"><i class="bi bi-trash"></i></button>'
+                                + '</div>'
+                            : '';
                         divMobile.innerHTML +=
-                            '<div class="bg-white d-flex align-items-center shadow py-3 px-4 mb-3 border border-1 rounded-3 w-100" style="max-width: 90%;">' +
-                                '<i class="bi bi-trophy fs-4"></i>' +
-                                '<div class="text-start px-3 w-100">' +
-                                    '<h2 class="m-0 fs-5 text-truncate">' + esc(modalidade.nome_modalidade) + '</h2>' +
-                                '</div>' +
-                            '</div>';
+                            '<div class="bg-white d-flex align-items-center shadow py-3 px-4 mb-3 border border-1 rounded-3 w-100" style="max-width: 90%;">'
+                                + '<i class="bi bi-trophy fs-4"></i>'
+                                + '<div class="text-start px-3 w-100">'
+                                    + '<h2 class="m-0 fs-5 text-truncate">' + esc(modalidade.nome_modalidade) + '</h2>'
+                                + '</div>'
+                                + botoesAdmin
+                            + '</div>';
                     });
                 }
 
                 if (divDesktop) {
                     divDesktop.innerHTML += '<h4 class="mt-4 mb-3 text-muted">' + esc(categoria) + '</h4><div class="row g-4">';
                     mods.forEach((modalidade) => {
+                        const botoesAdmin = nivelUsuario === 0
+                            ? '<div class="d-flex gap-1 ms-2">'
+                                + '<a class="btn btn-sm btn-outline-primary" href="./modalidade_detalhes.php?id=' + idInterclasse + '&id_modalidade=' + modalidade.id_modalidade + '" title="Editar"><i class="bi bi-pencil"></i></a>'
+                                + '<button class="btn btn-sm btn-outline-danger" onclick="excluirModalidade(' + modalidade.id_modalidade + ')" title="Excluir"><i class="bi bi-trash"></i></button>'
+                                + '</div>'
+                            : '';
                         divDesktop.innerHTML +=
-                            '<div class="col-12 col-md-6 col-lg-4">' +
-                                '<div class="card border border-light-subtle shadow-sm h-100 py-4 px-4 d-flex flex-row align-items-center" style="border-radius: 10px;">' +
-                                    '<div class="d-flex align-items-center gap-3">' +
-                                        '<i class="bi bi-trophy fs-4 text-dark"></i>' +
-                                        '<div>' +
-                                            '<h5 class="m-0 fw-bold fs-6">' + esc(modalidade.nome_modalidade) + '</h5>' +
-                                        '</div>' +
-                                    '</div>' +
-                                '</div>' +
-                            '</div>';
+                            '<div class="col-12 col-md-6 col-lg-4">'
+                                + '<div class="card border border-light-subtle shadow-sm h-100 py-4 px-4 d-flex flex-row align-items-center" style="border-radius: 10px;">'
+                                    + '<div class="d-flex align-items-center gap-3 flex-grow-1">'
+                                        + '<i class="bi bi-trophy fs-4 text-dark"></i>'
+                                        + '<div>'
+                                            + '<h5 class="m-0 fw-bold fs-6">' + esc(modalidade.nome_modalidade) + '</h5>'
+                                        + '</div>'
+                                    + '</div>'
+                                    + botoesAdmin
+                                + '</div>'
+                            + '</div>';
                     });
                     divDesktop.innerHTML += '</div>';
                 }
@@ -169,7 +189,7 @@ include 'componentes/header.php';
         if (!selectTipo) return;
 
         try {
-            const response = await axios.get('../../../../api/tipoModalidade.php');
+            const response = await axios.get('../../../api/tipoModalidade.php');
             const tipos = response.data;
 
             selectTipo.innerHTML = '<option value="" disabled selected>Selecione um tipo...</option>';
@@ -187,7 +207,7 @@ include 'componentes/header.php';
         if (!selectCat) return;
 
         try {
-            const response = await axios.get('../../../../api/categorias.php?id_interclasse=' + idInterclasse);
+            const response = await axios.get('../../../api/categorias.php?id_interclasse=' + idInterclasse);
             const categorias = response.data;
 
             selectCat.innerHTML = '<option value="" disabled selected>Selecione uma categoria...</option>';
@@ -197,6 +217,25 @@ include 'componentes/header.php';
         } catch (error) {
             console.error('Erro ao carregar categorias:', error);
             selectCat.innerHTML = '<option value="" disabled selected>Erro ao carregar</option>';
+        }
+    }
+
+    async function excluirModalidade(id) {
+        if (!confirm('Tem certeza que deseja excluir esta modalidade?')) return;
+
+        try {
+            const res = await axios.put('../../../api/modalidades.php', {
+                id_modalidade: id,
+                status_modalidade: '0'
+            });
+            if (res.data.success) {
+                carregarModalidades();
+            } else {
+                alert('Erro ao excluir modalidade.');
+            }
+        } catch (error) {
+            alert('Erro ao excluir modalidade.');
+            console.error(error);
         }
     }
 
@@ -213,10 +252,15 @@ include 'componentes/header.php';
             categorias_id_categoria: document.getElementById('inputCategoriaModalidade').value
         };
 
+        const maxInscritos = document.getElementById('inputMaxInscritos');
+        if (maxInscritos) {
+            dados.max_inscrito_modalidade = parseInt(maxInscritos.value) || 0;
+        }
+
         try {
             btnSalvar.disabled = true;
             btnSalvar.innerHTML = 'Salvando...';
-            const res = await axios.post('../../../../api/modalidades.php', dados);
+            const res = await axios.post('../../../api/modalidades.php', dados);
 
             if (res.data.success) {
                 caixaMensagem.innerHTML = '<p class="text-success text-center fw-bold">Criada com sucesso!</p>';
@@ -252,5 +296,5 @@ include 'componentes/header.php';
 
 <?php
 include 'componentes/nav.php';
-require_once '../../componentes/footer.php';
+require_once '../componentes/footer.php';
 ?>

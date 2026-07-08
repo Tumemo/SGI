@@ -1,9 +1,11 @@
 <?php
-$titulo = "Árvore de Chaveamento";
-$textTop = "Chaveamento";
-$btnVoltar = true;
-require_once '../componentes/navbar.php';
-require_once '../componentes/header.php';
+$tituloPagina = 'SGI - Árvore de Chaveamento';
+$titulo = 'Chaveamento';
+$mostrarVoltar = true;
+$urlVoltar = './dashboard.php';
+include 'componentes/head.php';
+include 'componentes/header.php';
+$paginaAtiva = 'dashboard';
 ?>
 
 <style>
@@ -885,5 +887,6 @@ require_once '../componentes/header.php';
 </script>
 
 <?php
+include 'componentes/nav.php';
 require_once '../componentes/footer.php';
 ?>

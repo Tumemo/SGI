@@ -2,10 +2,10 @@
 $tituloPagina = 'SGI - Mesário - Individual';
 $titulo = 'Individual';
 $mostrarVoltar = true;
-$urlVoltar = './home.php';
+$urlVoltar = './dashboard.php';
 include 'componentes/head.php';
 include 'componentes/header.php';
-include 'componentes/nav.php';
+$paginaAtiva = 'dashboard';
 ?>
 
 <style>
@@ -95,7 +95,7 @@ include 'componentes/nav.php';
 </div>
 
 <script>
-    const API = '../../../../api/';
+    const API = '../../../api/';
     const urlParams = new URLSearchParams(window.location.search);
     let idInterclasse = urlParams.get('id');
 
@@ -332,5 +332,6 @@ include 'componentes/nav.php';
 </script>
 
 <?php
-require_once '../../componentes/footer.php';
+include 'componentes/nav.php';
+require_once '../componentes/footer.php';
 ?>

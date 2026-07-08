@@ -2,10 +2,10 @@
 $tituloPagina = 'SGI - Mesário - Chaveamentos';
 $titulo = 'Chaveamentos';
 $mostrarVoltar = true;
-$urlVoltar = './home.php';
+$urlVoltar = './dashboard.php';
 include 'componentes/head.php';
 include 'componentes/header.php';
-include 'componentes/nav.php';
+$paginaAtiva = 'dashboard';
 ?>
 
 <style>
@@ -152,7 +152,7 @@ include 'componentes/nav.php';
 
     async function carregarModalidades() {
         try {
-            const resp = await fetch(`../../../../api/modalidades.php?id_interclasse=${idInterclasse}`);
+            const resp = await fetch(`../../../api/modalidades.php?id_interclasse=${idInterclasse}`);
             const data = await resp.json();
             modalidadesCache = Array.isArray(data) ? data : [];
             const select = document.getElementById('selectModalidade');
@@ -191,7 +191,7 @@ include 'componentes/nav.php';
         const tbody = document.getElementById('tbodyJogos');
         try {
             const idModalidade = document.getElementById('selectModalidade').value;
-            let url = `../../../../api/jogos.php?x=1`;
+            let url = `../../../api/jogos.php?x=1`;
             if (idModalidade) url += `&id_modalidade=${idModalidade}`;
 
             const resp = await fetch(url);
@@ -245,5 +245,6 @@ include 'componentes/nav.php';
 </script>
 
 <?php
-require_once '../../componentes/footer.php';
+include 'componentes/nav.php';
+require_once '../componentes/footer.php';
 ?>

@@ -5,6 +5,7 @@ declare(strict_types=1);
 require_once dirname(__DIR__) . '/config/db.php';
 require_once __DIR__ . '/includes/mata_mata_engine.php';
 require_once __DIR__ . '/includes/individual_engine.php';
+require_once __DIR__ . '/auth.php';
 
 header('Content-Type: application/json; charset=utf-8');
 
@@ -34,6 +35,7 @@ if ($tipoModalidade === 'individual') {
             break;
 
         case 'POST':
+            requerEscrita();
             $idModalidade = isset($data->id_modalidade) ? (int) $data->id_modalidade : 0;
             if ($idModalidade <= 0) {
                 http_response_code(400);
@@ -84,6 +86,7 @@ switch ($method) {
         break;
 
     case 'POST':
+        requerEscrita();
         $idModalidade = isset($data->id_modalidade) ? (int) $data->id_modalidade : 0;
 
         if ($idModalidade <= 0) {

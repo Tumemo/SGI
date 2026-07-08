@@ -1,6 +1,7 @@
 <?php
 require_once '../config/db.php';
 require_once 'filtros.php';
+require_once 'auth.php';
 require_once __DIR__ . '/includes/locais_padrao.php';
 header('Content-Type: application/json');
 
@@ -33,6 +34,7 @@ switch ($method) {
         break;
 
     case 'POST':
+        requerEscrita();
         $id = $_GET['id'] ?? null;
 
         if ($id) {
@@ -142,12 +144,12 @@ switch ($method) {
                 
                 $categoria_insert = $conn->prepare("INSERT INTO categorias (nome_categoria, status_categoria, interclasses_id_interclasse) VALUES (?, '1', ?)");
                 
-                $cat_i_nome = "Categoria I - Inter " . $new_interclass_id; // Evita conflito se houver unique index global futuro
+                $cat_i_nome = "Categoria I";
                 $categoria_insert->bind_param("si", $cat_i_nome, $new_interclass_id);
                 if (!$categoria_insert->execute()) { $conn->rollback(); echo json_encode(["success" => false, "message" => "Falha Categoria I"]); break; }
                 $categoria_i_id = $conn->insert_id;
 
-                $cat_ii_nome = "Categoria II - Inter " . $new_interclass_id;
+                $cat_ii_nome = "Categoria II";
                 $categoria_insert->bind_param("si", $cat_ii_nome, $new_interclass_id);
                 if (!$categoria_insert->execute()) { $conn->rollback(); echo json_encode(["success" => false, "message" => "Falha Categoria II"]); break; }
                 $categoria_ii_id = $conn->insert_id;

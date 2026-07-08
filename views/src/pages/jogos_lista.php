@@ -2,10 +2,10 @@
 $tituloPagina = 'SGI - Mesário - Jogos';
 $titulo = 'Jogos';
 $mostrarVoltar = true;
-$urlVoltar = './home.php';
+$urlVoltar = './dashboard.php';
 include 'componentes/head.php';
 include 'componentes/header.php';
-include 'componentes/nav.php';
+$paginaAtiva = 'dashboard';
 ?>
 
 <style>
@@ -52,7 +52,7 @@ include 'componentes/nav.php';
         try {
             const [dadosInter, resJogos] = await Promise.all([
                 window.SGIInterclasse.getInterclasseById(idInterclasse),
-                fetch(`../../../../api/jogos.php?x=1&id_interclasse=${idInterclasse}`)
+                fetch(`../../../api/jogos.php?x=1&id_interclasse=${idInterclasse}`)
             ]);
 
             if (dadosInter) {
@@ -108,5 +108,6 @@ include 'componentes/nav.php';
 </script>
 
 <?php
-require_once '../../componentes/footer.php';
+include 'componentes/nav.php';
+require_once '../componentes/footer.php';
 ?>

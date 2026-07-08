@@ -1,10 +1,12 @@
 <?php
-$titulo = "Categorias";
-$textTop = "Categorias";
+$tituloPagina = 'SGI - Categorias';
+$titulo = 'Categorias';
 $modoPagina = $_GET['modo'] ?? 'create';
-$btnVoltar = $modoPagina === 'view';
-require_once '../componentes/navbar.php';
-require_once '../componentes/header.php';
+$mostrarVoltar = $modoPagina === 'view';
+$urlVoltar = './dashboard.php';
+include 'componentes/head.php';
+include 'componentes/header.php';
+$paginaAtiva = 'dashboard';
 ?>
 
 <style>
@@ -28,7 +30,7 @@ require_once '../componentes/header.php';
     </div>
 
     <section class="d-flex gap-3 mt-3 position-fixed translate-middle flex-wrap justify-content-center" style="width: max-content; max-width: 96vw; top: 85%; left: 50%; z-index: 10;">
-        <button type="button" id="btnEditarCategoriaMobile" class="btn btn-outline-danger d-none" onclick="abrirModalEditarCategoria()">Editar</button>
+        <button type="button" id="btnEditarCategoriaMobile" class="btn btn-outline-primary d-none" onclick="abrirModalEditarCategoria()">Editar</button>
         <button type="button" id="btnExcluirCategoriaMobile" class="btn btn-danger d-none" onclick="excluirCategoria()">Excluir</button>
         <button data-bs-toggle="modal" data-bs-target="#modalCriarCategoria" class="btn btn-outline-danger">Adicionar Categoria</button>
         <a href="#" id="btnContinuarMobile" class="btn btn-danger">Continuar</a>
@@ -55,7 +57,7 @@ require_once '../componentes/header.php';
         </div>
 
         <div class="position-fixed d-flex flex-row gap-3" style="bottom: 40px; right: 5%; z-index: 1050;">
-            <button type="button" id="btnEditarCategoriaDesktop" class="btn bg-white fw-semibold rounded-3 px-4 py-2 d-flex align-items-center justify-content-center gap-2 shadow-lg d-none" style="color: #ed1c24; border: 2px solid #ed1c24;" onclick="abrirModalEditarCategoria()">
+            <button type="button" id="btnEditarCategoriaDesktop" class="btn btn-outline-primary fw-semibold rounded-3 px-4 py-2 d-flex align-items-center justify-content-center gap-2 shadow-lg d-none" onclick="abrirModalEditarCategoria()">
                 <i class="bi bi-pencil-square"></i> Editar
             </button>
 
@@ -600,5 +602,6 @@ require_once '../componentes/header.php';
 </script>
 
 <?php
+include 'componentes/nav.php';
 require_once '../componentes/footer.php';
 ?>

@@ -1,11 +1,12 @@
 <?php
-$tituloPagina = 'SGI - Colaborador - Pontuações';
+$tituloPagina = 'SGI - Pontuações';
 $titulo = 'Pontuações';
 $mostrarVoltar = true;
 $urlVoltar = './dashboard.php';
-$paginaAtiva = 'pontuacoes';
+$nivelUsuario = (int)($_SESSION['nivel'] ?? -1);
 include 'componentes/head.php';
 include 'componentes/header.php';
+$paginaAtiva = 'pontuacoes';
 ?>
 
 <style>
@@ -36,6 +37,17 @@ include 'componentes/header.php';
         font-weight: 700;
         color: #111827;
     }
+
+    .btn-pontos {
+        border: none;
+        background: transparent;
+        font-size: 1.5rem;
+        color: #6b7280;
+    }
+
+    .btn-pontos:hover {
+        color: #dc2626;
+    }
 </style>
 
 <main class="d-md-none" style="margin-bottom: 120px;">
@@ -49,6 +61,14 @@ include 'componentes/header.php';
         <h4 class="fw-bold d-flex align-items-center gap-2 mb-4">
             <i class="bi bi-award fs-4 text-dark"></i> Pontuações
         </h4>
+
+        <?php if ($nivelUsuario === 0): ?>
+        <div class="d-flex justify-content-end mb-3">
+            <button class="btn btn-danger fw-bold px-4" id="btnSalvarPontuacao" onclick="salvarPontuacao()">
+                <i class="bi bi-check-lg me-1"></i> Salvar
+            </button>
+        </div>
+        <?php endif; ?>
 
         <div class="row g-4 mb-5" id="cardsContainerMob"></div>
     </div>
@@ -70,6 +90,14 @@ include 'componentes/header.php';
             <p class="text-muted mb-0">Visualização das pontuações configuradas para as modalidades.</p>
         </div>
 
+        <?php if ($nivelUsuario === 0): ?>
+        <div class="d-flex justify-content-end mb-3">
+            <button class="btn btn-danger fw-bold px-4" id="btnSalvarPontuacaoDesktop" onclick="salvarPontuacao()">
+                <i class="bi bi-check-lg me-1"></i> Salvar
+            </button>
+        </div>
+        <?php endif; ?>
+
         <div class="row g-4 mb-5" id="cardsContainerDesk"></div>
     </div>
 </main>
@@ -77,8 +105,43 @@ include 'componentes/header.php';
 <script>
     const urlParams = new URLSearchParams(window.location.search);
     let idInterclasse = urlParams.get('id');
+    const nivelUsuario = <?= $nivelUsuario ?>;
+
+    function alterarPontos(idElemento, valor) {
+        const elemento = document.getElementById(idElemento);
+        let atual = parseInt(elemento.innerText);
+        if (isNaN(atual)) atual = 0;
+        if (atual + valor >= 0) {
+            elemento.innerText = atual + valor;
+        }
+    }
 
     function montarCard(tituloCard, icone, cor, valor, id) {
+        if (nivelUsuario === 0) {
+            return `
+                <div class="col-12 col-md-6 col-xl-3">
+                    <div class="card-custom pontuacao-card p-4 d-flex flex-column justify-content-between"
+                         style="border-bottom: 6px solid ${cor};">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <i class="bi ${icone} fs-4" style="color:${cor};"></i>
+                        </div>
+                        <div class="text-center">
+                            <small class="text-muted fw-semibold">${tituloCard}</small>
+                            <div class="d-flex justify-content-center align-items-center gap-4 mt-2">
+                                <button class="btn-pontos" onclick="alterarPontos('${id}', -1)">
+                                    <i class="bi bi-dash"></i>
+                                </button>
+                                <span class="pontuacao-numero" id="${id}">${valor}</span>
+                                <button class="btn-pontos" onclick="alterarPontos('${id}', 1)">
+                                    <i class="bi bi-plus"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
         return `
             <div class="col-12 col-md-6 col-xl-3">
                 <div class="card-custom pontuacao-card p-4 d-flex flex-column justify-content-between"
@@ -149,10 +212,50 @@ include 'componentes/header.php';
         }
     }
 
+    window.salvarPontuacao = async function() {
+        const btn = document.getElementById('btnSalvarPontuacao');
+        const btnDesktop = document.getElementById('btnSalvarPontuacaoDesktop');
+        const pontos1 = parseInt(document.getElementById('pontos-1').innerText);
+        const pontos2 = parseInt(document.getElementById('pontos-2').innerText);
+        const pontos3 = parseInt(document.getElementById('pontos-3').innerText);
+        const pontosArr = parseInt(document.getElementById('pontos-arr').innerText);
+
+        try {
+            if (btn) { btn.disabled = true; btn.innerHTML = 'Salvando...'; }
+            if (btnDesktop) { btnDesktop.disabled = true; btnDesktop.innerHTML = 'Salvando...'; }
+
+            const formData = new FormData();
+            formData.append('ponto_1_lugar', pontos1);
+            formData.append('ponto_2_lugar', pontos2);
+            formData.append('ponto_3_lugar', pontos3);
+            formData.append('valor_item_arrecadacao', pontosArr);
+
+            const resp = await fetch('../../../api/interclasse.php?id=' + idInterclasse, {
+                method: 'POST',
+                body: formData
+            });
+            const data = await resp.json();
+
+            if (data.success === false) throw new Error(data.message || 'Erro ao salvar.');
+
+            const salvo = '<i class="bi bi-check-lg me-1"></i> Salvo!';
+            if (btn) btn.innerHTML = salvo;
+            if (btnDesktop) btnDesktop.innerHTML = salvo;
+            setTimeout(() => {
+                if (btn) { btn.disabled = false; btn.innerHTML = '<i class="bi bi-check-lg me-1"></i> Salvar'; }
+                if (btnDesktop) { btnDesktop.disabled = false; btnDesktop.innerHTML = '<i class="bi bi-check-lg me-1"></i> Salvar'; }
+            }, 2000);
+        } catch (err) {
+            alert(err.message);
+            if (btn) { btn.disabled = false; btn.innerHTML = '<i class="bi bi-check-lg me-1"></i> Salvar'; }
+            if (btnDesktop) { btnDesktop.disabled = false; btnDesktop.innerHTML = '<i class="bi bi-check-lg me-1"></i> Salvar'; }
+        }
+    };
+
     window.addEventListener('pageshow', carregar);
 </script>
 
 <?php
 include 'componentes/nav.php';
-require_once '../../componentes/footer.php';
+require_once '../componentes/footer.php';
 ?>

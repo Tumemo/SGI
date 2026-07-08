@@ -1,6 +1,7 @@
 <?php
 require_once '../config/db.php';
 require_once 'filtros.php';
+require_once 'auth.php';
 header('Content-Type: application/json');
 
 // Headers CORS
@@ -74,6 +75,7 @@ switch ($method) {
         break;
 
     case 'POST':
+        requerEscrita();
         $data = json_decode(file_get_contents("php://input"));
 
         if (!isset($data->interclasses_id_interclasse, $data->categorias_id_categoria, $data->nome_turma)) {
@@ -148,6 +150,7 @@ switch ($method) {
         break;
 
     case 'PUT':
+        requerEscrita();
         $data = json_decode(file_get_contents("php://input"));
 
         if (!isset($data->id_turma)) {
@@ -212,6 +215,7 @@ switch ($method) {
         break;
 
     case 'DELETE':
+        requerExclusao();
         $idTurma = isset($_GET['id_turma']) ? (int) $_GET['id_turma'] : 0;
         if ($idTurma <= 0) {
             http_response_code(400);

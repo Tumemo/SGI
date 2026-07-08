@@ -1,10 +1,12 @@
 <?php
 require_once '../config/db.php';
+require_once 'auth.php';
 header('Content-Type: application/json');
 
 $method = $_SERVER['REQUEST_METHOD'];
 
 if ($method === 'POST') {
+    requerEscrita();
     $data = json_decode(file_get_contents("php://input"));
 
     if (!isset($data->arrecadacoes) || !isset($data->id_interclasse)) {

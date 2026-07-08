@@ -1,9 +1,11 @@
 <?php
-$titulo = "Alunos da turma";
-$textTop = "Alunos da turma";
-$btnVoltar = true;
-require_once '../componentes/navbar.php';
-require_once '../componentes/header.php';
+$tituloPagina = 'SGI - Alunos da turma';
+$titulo = 'Alunos da turma';
+$mostrarVoltar = true;
+$urlVoltar = './dashboard.php';
+include 'componentes/head.php';
+include 'componentes/header.php';
+$paginaAtiva = 'turmas';
 ?>
 
 <!-- main mobile -->
@@ -12,6 +14,7 @@ require_once '../componentes/header.php';
     <h5 style="font-weight: 400;" id="tituloTurmaMob">Turma</h5>
     <p class="text-muted small" id="contagemMob"></p>
     <div id="listaAlunosTurmaMob" class="d-flex flex-column gap-2 mt-3"></div>
+    <?php if ($nivelUsuario === 0): ?>
     <div id="blocoPdfMob" class="card border-0 shadow-sm rounded-4 p-3 mt-4">
         <p class="small text-muted mb-2">Importar alunos via PDF</p>
         <form id="formPdfTurmaMob" enctype="multipart/form-data">
@@ -22,6 +25,7 @@ require_once '../componentes/header.php';
             <div id="msgPdfMob" class="small mt-2 text-center"></div>
         </form>
     </div>
+    <?php endif; ?>
 </main>
 
 <!-- main desktop -->
@@ -33,6 +37,7 @@ require_once '../componentes/header.php';
         <h4 style="font-weight: 400;" id="tituloTurmaDesk">Alunos da turma</h4>
         <p class="text-muted" id="contagemDesk"></p>
 
+        <?php if ($nivelUsuario === 0): ?>
         <div id="blocoPdfDesk" class="card border-0 shadow-sm rounded-4 p-4">
             <h6 style="font-weight: 400;">Cadastrar alunos por PDF</h6>
             <p class="text-muted small">Use o mesmo nome da turma cadastrada para o arquivo bater com o esperado pelo sistema.</p>
@@ -48,6 +53,7 @@ require_once '../componentes/header.php';
                 <div id="msgPdfDesk" class="col-12 small text-center"></div>
             </form>
         </div>
+        <?php endif; ?>
 
         <div class="card border-0 shadow-sm rounded-4 mb-4 mt-4">
             <div class="table-responsive">
@@ -232,4 +238,5 @@ require_once '../componentes/header.php';
 </script>
 
 <?php
+include 'componentes/nav.php';
 require_once '../componentes/footer.php';

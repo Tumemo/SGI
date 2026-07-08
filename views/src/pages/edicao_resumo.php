@@ -1,9 +1,11 @@
 <?php
-$titulo = "Resumo";
-$textTop = "Resumo da Edição";
-$btnVoltar = true;
-require_once '../componentes/navbar.php';
-require_once '../componentes/header.php';
+$tituloPagina = 'SGI - Resumo';
+$titulo = 'Resumo da Edição';
+$mostrarVoltar = true;
+$urlVoltar = './dashboard.php';
+include 'componentes/head.php';
+include 'componentes/header.php';
+$paginaAtiva = 'dashboard';
 ?>
 
 <main class="mt-4 d-flex justify-content-center align-items-center flex-column position-relative d-md-none" style="margin-bottom: 120px;">
@@ -259,5 +261,6 @@ require_once '../componentes/header.php';
 </script>
 
 <?php
+include 'componentes/nav.php';
 require_once '../componentes/footer.php';
 ?>

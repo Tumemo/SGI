@@ -1,9 +1,11 @@
 <?php
-$titulo = "Modalidades";
-$textTop = "Modalidades";
-$btnVoltar = true;
-require_once '../componentes/navbar.php';
-require_once '../componentes/header.php';
+$tituloPagina = 'SGI - Modalidades';
+$titulo = 'Modalidades';
+$mostrarVoltar = true;
+$urlVoltar = './dashboard.php';
+include 'componentes/head.php';
+include 'componentes/header.php';
+$paginaAtiva = 'dashboard';
 ?>
 
 <!-- main mobile -->
@@ -15,7 +17,7 @@ require_once '../componentes/header.php';
     </section>
 
     <div class="position-fixed d-flex gap-2" style="bottom: 92px; right: 16px; z-index: 20;">
-        <a href="#" class="btn btn-outline-danger disabled" id="btnEditarModalidadeMobile" aria-disabled="true">Editar</a>
+        <a href="#" class="btn btn-outline-primary disabled" id="btnEditarModalidadeMobile" aria-disabled="true">Editar</a>
         <button class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#exampleModal">Adicionar</button>
         <a href="#" class="btn btn-danger disabled" id="btnContinuarMobile" aria-disabled="true">Continuar</a>
     </div>
@@ -380,5 +382,6 @@ require_once '../componentes/header.php';
 </style>
 
 <?php
+include 'componentes/nav.php';
 require_once '../componentes/footer.php';
 ?>

@@ -2,6 +2,7 @@
 require_once '../config/db.php';
 require_once __DIR__ . '/includes/mata_mata_engine.php';
 require_once 'filtros.php';
+require_once 'auth.php';
 header('Content-Type: application/json');
 
 $method = $_SERVER['REQUEST_METHOD'];
@@ -52,8 +53,7 @@ switch ($method) {
         break;
 
     case 'POST':
-        // No seu sistema, o POST parece ser usado para ATUALIZAR o resultado (encerrar partida)
-        // Se for criar um novo vínculo de equipe no jogo, use um INSERT.
+        requerEscrita();
         $data = json_decode(file_get_contents("php://input"));
 
         if (!isset($data->id_partida, $data->resultado_final)) {
@@ -101,6 +101,7 @@ switch ($method) {
         break;
 
     case 'PUT':
+        requerEscrita();
         $data = json_decode(file_get_contents("php://input"));
 
         if (!isset($data->id_partida)) {

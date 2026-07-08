@@ -1,6 +1,7 @@
 <?php
 require_once '../config/db.php';
 require_once 'filtros.php';
+require_once 'auth.php';
 
 header('Content-Type: application/json');
 
@@ -42,6 +43,7 @@ switch ($method) {
         break;
 
     case 'POST':
+        requerEscrita();
         $data = json_decode(file_get_contents("php://input"));
 
         if (!isset($data->usuarios_id_usuario, $data->jogos_id_jogo, $data->num_gol)) {
@@ -63,6 +65,7 @@ switch ($method) {
         break;
 
     case 'PUT':
+        requerEscrita();
         $data = json_decode(file_get_contents("php://input"));
 
         if (!isset($data->usuarios_id_usuario, $data->jogos_id_jogo, $data->num_gol)) {

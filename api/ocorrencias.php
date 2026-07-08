@@ -1,6 +1,7 @@
 <?php
 require_once '../config/db.php';
 require_once 'filtros.php';
+require_once 'auth.php';
 header('Content-Type: application/json');
 $method = $_SERVER['REQUEST_METHOD'];
 
@@ -86,6 +87,7 @@ switch ($method) {
         break;
 
     case 'POST':
+        requerEscrita();
         $data = json_decode(file_get_contents("php://input"));
 
         if (!isset($data->titulo_ocorrencia, $data->descricao_ocorrencia, $data->data_ocorrencia, $data->usuarios_id_usuario)) {
@@ -160,6 +162,7 @@ switch ($method) {
         break;
 
     case 'PUT':
+        requerEscrita();
         $data = json_decode(file_get_contents("php://input"));
 
         // Apenas o ID é estritamente obrigatório para localizar o registro

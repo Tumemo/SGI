@@ -1,9 +1,11 @@
 <?php
-$titulo = "Turmas";
-$textTop = "Turmas";
-$btnVoltar = true;
-require_once '../componentes/navbar.php';
-require_once '../componentes/header.php';
+$tituloPagina = 'SGI - Turmas';
+$titulo = 'Turmas';
+$mostrarVoltar = true;
+$urlVoltar = './dashboard.php';
+include 'componentes/head.php';
+include 'componentes/header.php';
+$paginaAtiva = 'categorias';
 ?>
 
 <main class="position-relative d-md-none" style="margin-bottom: 120px;">
@@ -12,9 +14,11 @@ require_once '../componentes/header.php';
         <p class="text-center text-muted mt-4">(Carregando...)</p>
     </section>
 
+    <?php if ($nivelUsuario === 0): ?>
     <button class="border border-none bg-danger rounded-circle p-3 fs-2 d-flex align-items-center justify-content-center position-fixed position-absolute" style="height: 60px; width: 60px; top: 80%; left: 80%; z-index: 10; cursor: pointer;" data-bs-toggle="modal" data-bs-target="#exampleModal">
         <i class="bi bi-plus text-white" style="font-size: 1.4em;"></i>
     </button>
+    <?php endif; ?>
 </main>
 
 <main class="d-none d-md-flex flex-column main-desktop-layout">
@@ -130,6 +134,7 @@ require_once '../componentes/header.php';
 <script>
     let turmasData = [];
     let editTurmaId = null;
+    const NIVEL_USUARIO = <?= $nivelUsuario ?>;
 
     const urlParams = new URLSearchParams(window.location.search);
     const idInterclasse = urlParams.get('id');
@@ -265,39 +270,45 @@ require_once '../componentes/header.php';
             }
 
             // Correção crucial: uso de aspas simples externas no onclick do botão para blindar a renderização do HTML
+            const btnEditDelete = (turma) => NIVEL_USUARIO === 0
+                ? `<button type="button" class="btn btn-link text-primary p-0" title="Editar turma" onclick='editarTurma(${turma.id_turma})'>
+                        <i class="bi bi-pencil-square fs-5"></i>
+                   </button>
+                   <button type="button" class="btn btn-link text-danger p-0" title="Excluir turma" onclick='excluirTurma(${turma.id_turma}, "${turma.nome_turma}")'>
+                        <i class="bi bi-trash fs-5"></i>
+                   </button>`
+                : '';
+
             listaMobile.innerHTML = listaFinal.map((turma) => `
                 <div class="d-flex m-auto justify-content-between align-items-center shadow py-4 px-4 mb-3 border border-1 rounded-3" style="width: 90%;">
-                    <a href="./edicao_turmas.php?id=${interclasse.id_interclasse}&id_turma=${turma.id_turma}&id_categoria=${turma.categorias_id_categoria}" class="text-decoration-none text-dark flex-grow-1">
+                    <a href="./turma_alunos.php?id=${interclasse.id_interclasse}&id_turma=${turma.id_turma}&id_categoria=${turma.categorias_id_categoria}" class="text-decoration-none text-dark flex-grow-1">
                         <h2 class="m-0 fs-5">${turma.nome_turma}</h2>
                         <small class="text-muted">${turma.nome_categoria || 'Categoria vinculada'}</small>
                     </a>
                     <div class="d-flex align-items-center gap-2">
-                        <button type="button" class="btn btn-link text-primary p-0" title="Editar turma" onclick='editarTurma(${turma.id_turma})'>
-                            <i class="bi bi-pencil-square fs-5"></i>
-                        </button>
-                        <button type="button" class="btn btn-link text-danger p-0" title="Excluir turma" onclick='excluirTurma(${turma.id_turma}, "${turma.nome_turma}")'>
-                            <i class="bi bi-trash fs-5"></i>
-                        </button>
-                        <a href="./edicao_turmas.php?id=${interclasse.id_interclasse}&id_turma=${turma.id_turma}&id_categoria=${turma.categorias_id_categoria}">
+                        ${btnEditDelete(turma)}
+                        <a href="./turma_alunos.php?id=${interclasse.id_interclasse}&id_turma=${turma.id_turma}&id_categoria=${turma.categorias_id_categoria}">
                             <img src="../../public/icons/arrow-right.svg" alt="Ver detalhes">
                         </a>
                     </div>
                 </div>
             `).join('');
 
+            const btnEditDeleteDesk = (turma) => NIVEL_USUARIO === 0
+                ? `<button type="button" class="btn btn-link text-primary p-0 me-2" title="Editar turma" onclick='editarTurma(${turma.id_turma})'>
+                        <i class="bi bi-pencil-square fs-4"></i>
+                   </button>
+                   <button type="button" class="btn btn-link text-danger p-0" title="Excluir turma" onclick='excluirTurma(${turma.id_turma}, "${turma.nome_turma}")'>
+                        <i class="bi bi-trash fs-4"></i>
+                   </button>`
+                : '';
+
             listaDesktop.innerHTML = listaFinal.map((turma) => `
                 <div class="col">
                     <div class="card border-0 shadow-sm rounded-4 h-100 p-3 bg-white">
                         <div class="d-flex justify-content-between align-items-center mb-4">
                             <h5 class="fw-bold mb-0 text-dark" style="font-size: 1.3rem;">${turma.nome_turma}</h5>
-                            <div>
-                                <button type="button" class="btn btn-link text-primary p-0 me-2" title="Editar turma" onclick='editarTurma(${turma.id_turma})'>
-                                    <i class="bi bi-pencil-square fs-4"></i>
-                                </button>
-                                <button type="button" class="btn btn-link text-danger p-0" title="Excluir turma" onclick='excluirTurma(${turma.id_turma}, "${turma.nome_turma}")'>
-                                    <i class="bi bi-trash fs-4"></i>
-                                </button>
-                            </div>
+                            <div>${btnEditDeleteDesk(turma)}</div>
                         </div>
                         <div class="mb-4 text-muted">${turma.nome_categoria || 'Categoria vinculada'}</div>
                         <div class="mt-auto">
@@ -446,5 +457,6 @@ require_once '../componentes/header.php';
 </script>
 
 <?php
+include 'componentes/nav.php';
 require_once '../componentes/footer.php';
 ?>

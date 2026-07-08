@@ -157,7 +157,7 @@ $paginaAtiva = 'arrecadacoes';
         const pendentes = todasAsTurmas.some(t => getQuantidadePendente(t) > 0);
         if (pendentes) {
             const xhr = new XMLHttpRequest();
-            xhr.open('POST', '../../../../api/arrecadacao.php', false);
+            xhr.open('POST', '../../../api/arrecadacao.php', false);
             xhr.setRequestHeader('Content-Type', 'application/json');
             const payload = {
                 id_interclasse: idInterclasseArrecadacao,
@@ -185,7 +185,7 @@ $paginaAtiva = 'arrecadacoes';
             }
             document.getElementById('barraContinuarArrecadacaoMobile').classList.remove('d-none');
 
-            const res = await fetch(`../../../../api/turmas.php?id_interclasse=${ativo.id_interclasse}`);
+            const res = await fetch(`../../../api/turmas.php?id_interclasse=${ativo.id_interclasse}`);
             todasAsTurmas = await res.json();
 
             const categorias = [...new Set(todasAsTurmas.map(t => t.nome_categoria))].filter(Boolean);
@@ -229,7 +229,7 @@ $paginaAtiva = 'arrecadacoes';
         }
 
         try {
-            const response = await fetch('../../../../api/arrecadacao.php', {
+            const response = await fetch('../../../api/arrecadacao.php', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)
@@ -277,5 +277,5 @@ $paginaAtiva = 'arrecadacoes';
 
 <?php
 include 'componentes/nav.php';
-require_once '../../componentes/footer.php';
+require_once '../componentes/footer.php';
 ?>

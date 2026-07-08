@@ -1,9 +1,11 @@
 <?php
-$titulo = "Detalhes da Modalidade";
-$textTop = "Modalidade";
-$btnVoltar = true;
-require_once '../componentes/navbar.php';
-require_once '../componentes/header.php';
+$tituloPagina = 'SGI - Detalhes da Modalidade';
+$titulo = 'Modalidade';
+$mostrarVoltar = true;
+$urlVoltar = './dashboard.php';
+include 'componentes/head.php';
+include 'componentes/header.php';
+$paginaAtiva = 'dashboard';
 ?>
 
 <main class="d-md-none" style="margin-bottom: 120px;">
@@ -122,7 +124,7 @@ require_once '../componentes/header.php';
                         <p class="text-muted mb-0">Tipo: <span id="tipoModalidadeDisplay">${modalidade.nome_tipo_modalidade || '-'}</span></p>
                     </div>
                     <div class="text-end">
-                        <button class="btn btn-sm btn-outline-danger mb-2" onclick="abrirModalEdicao()">Editar</button><br>
+                        <button class="btn btn-sm btn-outline-primary mb-2" onclick="abrirModalEdicao()">Editar</button><br>
                         <div class="badge bg-danger mb-2">${qtdEquipes} equipe(s)</div><br>
                         <div class="badge bg-secondary">${turmasUnicas.length} turma(s)</div>
                     </div>
@@ -246,5 +248,6 @@ require_once '../componentes/header.php';
 </script>
 
 <?php
+include 'componentes/nav.php';
 require_once '../componentes/footer.php';
 ?>

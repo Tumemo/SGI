@@ -1,6 +1,7 @@
 <?php
 require_once '../config/db.php';
 require_once 'filtros.php';
+require_once 'auth.php';
 header('Content-Type: application/json');
 header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: POST, OPTIONS');
@@ -17,6 +18,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     exit();
 }
 
+requerEscrita();
 $data = json_decode(file_get_contents("php://input"));
 $idInterclasse = isset($data->id_interclasse) ? (int) $data->id_interclasse : 0;
 

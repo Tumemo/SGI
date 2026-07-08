@@ -1,9 +1,11 @@
 <?php
-$titulo = "Adicionar Alunos";
-$textTop = "Inscrições";
-$btnVoltar = true;
-require_once '../componentes/navbar.php';
-require_once '../componentes/header.php';
+$tituloPagina = 'SGI - Adicionar Alunos';
+$titulo = 'Inscrições';
+$mostrarVoltar = true;
+$urlVoltar = './dashboard.php';
+include 'componentes/head.php';
+include 'componentes/header.php';
+$paginaAtiva = 'dashboard';
 ?>
 
 <main class="d-md-none" style="margin-bottom: 120px;">
@@ -258,5 +260,6 @@ require_once '../componentes/header.php';
 </script>
 
 <?php
+include 'componentes/nav.php';
 require_once '../componentes/footer.php';
 ?>

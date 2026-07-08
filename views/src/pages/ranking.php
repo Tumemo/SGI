@@ -1,9 +1,11 @@
 <?php
-$titulo = "Ranking Geral";
-$textTop = "Ranking de Turmas";
-$btnVoltar = true;
-require_once '../componentes/navbar.php';
-require_once '../componentes/header.php';
+$tituloPagina = 'SGI - Ranking Geral';
+$titulo = 'Ranking de Turmas';
+$mostrarVoltar = true;
+$urlVoltar = './dashboard.php';
+include 'componentes/head.php';
+include 'componentes/header.php';
+$paginaAtiva = 'dashboard';
 ?>
 
 <style>
@@ -220,4 +222,4 @@ require_once '../componentes/header.php';
     window.addEventListener('load', init);
 </script>
 
-<?php require_once '../componentes/footer.php'; ?>
+<?php include 'componentes/nav.php'; require_once '../componentes/footer.php'; ?>

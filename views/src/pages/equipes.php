@@ -1,9 +1,12 @@
 <?php
-$titulo = "Equipes";
-$textTop = "Equipes";
-$btnVoltar = true;
-require_once '../componentes/navbar.php';
-require_once '../componentes/header.php';
+$tituloPagina = 'SGI - Equipes';
+$titulo = 'Equipes';
+$mostrarVoltar = true;
+$urlVoltar = './dashboard.php';
+$nivelUsuario = (int)($_SESSION['nivel'] ?? -1);
+include 'componentes/head.php';
+include 'componentes/header.php';
+$paginaAtiva = 'equipes';
 ?>
 
 <main class="d-md-none" style="margin-bottom:120px;">
@@ -209,5 +212,6 @@ require_once '../componentes/header.php';
 </script>
 
 <?php
+include 'componentes/nav.php';
 require_once '../componentes/footer.php';
 ?>

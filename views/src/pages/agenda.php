@@ -5,7 +5,7 @@ $mostrarVoltar = true;
 $urlVoltar = './dashboard.php';
 include 'componentes/head.php';
 include 'componentes/header.php';
-include 'componentes/nav.php';
+$paginaAtiva = 'agenda';
 ?>
 <style>
     .cal-dia-marcado {
@@ -105,7 +105,7 @@ include 'componentes/nav.php';
 
 <script>
 (function () {
-    const API = '../../../../api/';
+    const API = '../../../api/';
     let dataNavegacao = new Date();
     const params = new URLSearchParams(window.location.search);
     const idInterclasseAgenda = params.get('id');
@@ -523,5 +523,6 @@ include 'componentes/nav.php';
 </script>
 
 <?php
-require_once '../../componentes/footer.php';
+include 'componentes/nav.php';
+require_once '../componentes/footer.php';
 ?>

@@ -1,6 +1,7 @@
 <?php
 require_once '../config/db.php';
 require_once 'filtros.php';
+require_once 'auth.php';
 require_once __DIR__ . '/includes/locais_padrao.php';
 header('Content-Type: application/json');
 
@@ -30,6 +31,7 @@ switch ($method) {
         break;
 
     case 'POST':
+        requerEscrita();
         $data = json_decode(file_get_contents("php://input"));
 
         if (!isset($data->nome_local, $data->interclasses_id_interclasse)) {
@@ -61,6 +63,7 @@ switch ($method) {
         break;
 
 case 'PUT':
+    requerEscrita();
     $data = json_decode(file_get_contents("php://input"));
 
     if (!isset($data->id_local)) {
@@ -120,6 +123,7 @@ case 'PUT':
     break;
 
     case 'DELETE':
+        requerExclusao();
         $idLocal = isset($_GET['id_local']) ? (int) $_GET['id_local'] : 0;
         if ($idLocal <= 0) {
             http_response_code(400);

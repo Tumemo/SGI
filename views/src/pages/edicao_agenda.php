@@ -1,9 +1,11 @@
 <?php
-$titulo = "Agenda";
-$textTop = "Agenda";
-$btnVoltar = true;
-require_once '../componentes/navbar.php';
-require_once '../componentes/header.php';
+$tituloPagina = 'SGI - Agenda';
+$titulo = 'Agenda';
+$mostrarVoltar = true;
+$urlVoltar = './dashboard.php';
+include 'componentes/head.php';
+include 'componentes/header.php';
+$paginaAtiva = 'dashboard';
 ?>
 <style>
     .cal-dia-marcado {
@@ -684,4 +686,5 @@ require_once '../componentes/header.php';
 </script>
 
 <?php
+include 'componentes/nav.php';
 require_once '../componentes/footer.php';

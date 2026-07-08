@@ -1,9 +1,11 @@
 <?php
-$titulo = "Placar";
-$textTop = "Placar";
-$btnVoltar = true;
-require_once '../componentes/navbar.php';
-require_once '../componentes/header.php';
+$tituloPagina = 'SGI - Placar';
+$titulo = 'Placar';
+$mostrarVoltar = true;
+$urlVoltar = './dashboard.php';
+include 'componentes/head.php';
+include 'componentes/header.php';
+$paginaAtiva = 'dashboard';
 ?>
 
 <style>
@@ -1114,7 +1116,7 @@ require_once '../componentes/header.php';
                         '<div class="text-muted" style="font-size:0.8rem;">' + esc(limparDescricaoOcorrencia(o.descricao_ocorrencia)) + '</div>' +
                     '</div>' +
                     '<div class="d-flex gap-1 flex-shrink-0">' +
-                        '<button type="button" class="btn btn-sm btn-outline-secondary rounded-pill px-2" onclick="editarOcorrencia(' + o.id_ocorrencia + ')" title="Editar">' +
+                        '<button type="button" class="btn btn-sm btn-outline-primary rounded-pill px-2" onclick="editarOcorrencia(' + o.id_ocorrencia + ')" title="Editar">' +
                             '<i class="bi bi-pencil"></i>' +
                         '</button>' +
                         '<button type="button" class="btn btn-sm btn-outline-danger rounded-pill px-2" onclick="excluirOcorrencia(' + o.id_ocorrencia + ')" title="Excluir">' +
@@ -1440,5 +1442,6 @@ require_once '../componentes/header.php';
 </script>
 
 <?php
+include 'componentes/nav.php';
 require_once '../componentes/footer.php';
 ?>

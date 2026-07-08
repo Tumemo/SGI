@@ -1,9 +1,10 @@
 <?php
-$titulo = "Perfil";
-$textTop = "Perfil";
-$btnVoltar = true;
+$tituloPagina = 'SGI - Perfil';
+$titulo = 'Perfil';
+$mostrarVoltar = true;
+$urlVoltar = './dashboard.php';
 
-session_start();
+(session_status() === PHP_SESSION_NONE) && session_start();
 $conn = null;
 $sessionId = $_SESSION['id'] ?? null;
 $sessionNome = $_SESSION['nome'] ?? '';
@@ -13,12 +14,8 @@ $usuarioPerfil = [
     'foto_usuario' => ''
 ];
 
-$backHome = './dashboard.php';
-$nivel = (int)($_SESSION['nivel'] ?? 0);
-if ($nivel === 3) $backHome = './alunos/home.php';
-elseif ($nivel === 2) $backHome = './mesarios/home.php';
-elseif ($nivel === 1) $backHome = './colaborador/home.php';
-define('SGI_PERFIL_ALLOW', true);
+$nivelUsuario = (int)($_SESSION['nivel'] ?? 0);
+
 try {
     $dbPath = dirname(__DIR__, 3) . DIRECTORY_SEPARATOR . 'config' . DIRECTORY_SEPARATOR . 'db.php';
     require_once $dbPath;
@@ -31,9 +28,7 @@ try {
             if ($row) $usuarioPerfil = array_merge($usuarioPerfil, $row);
         }
     }
-} catch (Throwable $e) {
-    // keep session defaults
-}
+} catch (Throwable $e) {}
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     header('Content-Type: application/json');
@@ -44,7 +39,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
         $id = (int) $_SESSION['id'];
 
-        // Upload de foto
         if (isset($_POST['acao']) && $_POST['acao'] === 'upload_foto') {
             if (!isset($_FILES['foto']) || $_FILES['foto']['error'] !== UPLOAD_ERR_OK) {
                 echo json_encode(['success' => false, 'message' => 'Erro no upload do arquivo.']);
@@ -70,7 +64,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             exit;
         }
 
-        // Atualizar perfil (nome/senha)
         if (isset($_POST['salvar_perfil'])) {
             $nome = trim($_POST['nome_usuario'] ?? '');
             if ($nome === '') {
@@ -111,8 +104,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     exit;
 }
 
-require_once '../componentes/navbar.php';
-require_once '../componentes/header.php';
+include 'componentes/head.php';
+include 'componentes/header.php';
+$paginaAtiva = 'perfil';
 ?>
 
 <style>
@@ -364,12 +358,8 @@ require_once '../componentes/header.php';
         const params = new URLSearchParams(window.location.search);
         const id = params.get('id');
         if (id) {
-            var prefix = '.';
-            if (DADOS_PERFIL.nivel === 3) prefix = './alunos';
-            else if (DADOS_PERFIL.nivel === 2) prefix = './mesarios';
-            else if (DADOS_PERFIL.nivel === 1) prefix = './colaborador';
-            var page = (DADOS_PERFIL.nivel === 3) ? 'modalidade.php' : 'dashboard.php';
-            var href = prefix + '/' + page + '?id=' + encodeURIComponent(id);
+            var page = 'dashboard.php';
+            var href = './' + page + '?id=' + encodeURIComponent(id);
             document.getElementById('perfilBackDesk').href = href;
             var mob = document.getElementById('perfilBackMob');
             if (mob) mob.href = href;
@@ -560,4 +550,5 @@ require_once '../componentes/header.php';
 </script>
 
 <?php
+include 'componentes/nav.php';
 require_once '../componentes/footer.php';

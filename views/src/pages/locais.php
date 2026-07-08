@@ -1,31 +1,24 @@
 <?php
-$tituloPagina = 'SGI - Locais';
+$tituloPagina = 'SGI - Colaborador - Locais';
 $titulo = 'Locais';
 $mostrarVoltar = true;
 $urlVoltar = './dashboard.php';
+$cssExtra = '.local-card { border-radius: 12px; transition: box-shadow 0.2s ease; } .local-card:hover { box-shadow: 0 0.35rem 1rem rgba(0, 0, 0, 0.08) !important; }';
 include 'componentes/head.php';
 include 'componentes/header.php';
-$paginaAtiva = 'dashboard';
+$nivelUsuario = (int)($_SESSION['nivel'] ?? -1);
+$paginaAtiva = 'locais';
 ?>
+<script>const NIVEL_USUARIO = <?= $nivelUsuario ?>;</script>
 
-<style>
-    .local-card {
-        border-radius: 12px;
-        transition: box-shadow 0.2s ease;
-    }
-    .local-card:hover {
-        box-shadow: 0 0.35rem 1rem rgba(0, 0, 0, 0.08) !important;
-    }
-</style>
-
-<main class="d-md-none p-3" style="padding-top: 5rem; padding-bottom: 6rem;">
-    <p class="text-secondary text-center small mb-3">Locais onde os jogos acontecem (ginásio, quadra, etc.)</p>
+<main class="d-md-none p-3" style="padding-top: 5rem; padding-bottom: 120px;">
+    <p class="text-secondary text-center small mb-3">Locais onde os jogos acontecem</p>
     <div id="listaLocaisMobile" class="d-flex flex-column gap-3 mx-auto" style="max-width: 420px;">
         <p class="text-muted small text-center">Carregando…</p>
     </div>
     <div class="position-fixed start-0 end-0 bottom-0 p-3 bg-light border-top shadow-sm d-flex gap-2" style="z-index: 1030;">
         <button type="button" class="btn btn-danger flex-grow-1 fw-semibold rounded-3" data-bs-toggle="modal" data-bs-target="#modalNovoLocal">
-            <i class="bi bi-plus-lg me-1"></i> Novo local
+            <i class="bi bi-plus-lg me-1"></i> Adicionar local
         </button>
         <a href="./dashboard.php" id="btnVoltarLocaisMobile" class="btn btn-outline-danger fw-semibold rounded-3">Voltar</a>
     </div>
@@ -34,19 +27,18 @@ $paginaAtiva = 'dashboard';
 <main class="d-none d-md-block main-desktop-layout">
     <div class="container-fluid px-0" style="max-width: 960px;">
         <div class="mb-4">
-            <a href="./dashboard.php" id="btnVoltarLocaisDesk" class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold mb-3 px-3 py-2 border-0 text-decoration-none shadow-sm" style="background-color: #ed1c24; border-radius: 6px;">
-                <i class="bi bi-arrow-left-circle fs-5"></i>
-                <span id="nomeInterclasseLocais">Interclasse</span>
+            <a href="./dashboard.php" id="btnVoltarLocaisDesk" class="btn btn-outline-danger btn-sm d-inline-flex align-items-center gap-1 mb-3 text-decoration-none">
+                <i class="bi bi-arrow-left"></i> Voltar
             </a>
             <h4 class="fw-bold text-dark d-flex align-items-center gap-2 mb-0">
-                <i class="bi bi-geo-alt fs-4"></i> Locais de competição
+                <i class="bi bi-geo-alt fs-4"></i> Locais
             </h4>
-            <p class="text-muted small mt-2 mb-0">Cadastre os espaços antes de agendar jogos. Estes registros são usados em toda a competição.</p>
+            <p class="text-muted small mt-2 mb-0">Visualize e cadastre os locais da competição.</p>
         </div>
 
         <div class="d-flex justify-content-end mb-3">
             <button type="button" class="btn btn-danger fw-semibold rounded-3 px-4 py-2 shadow-sm d-inline-flex align-items-center gap-2" data-bs-toggle="modal" data-bs-target="#modalNovoLocal" style="background-color: #ed1c24; border: none;">
-                <i class="bi bi-plus-circle"></i> Novo local
+                <i class="bi bi-plus-circle"></i> Adicionar local
             </button>
         </div>
 
@@ -67,18 +59,11 @@ $paginaAtiva = 'dashboard';
                 <form id="formNovoLocal">
                     <div class="mb-3">
                         <label class="form-label fw-medium" for="inputNomeLocal">Nome do local</label>
-                        <input type="text" class="form-control rounded-3" id="inputNomeLocal" required maxlength="45" placeholder="Ex.: Quadra poliesportiva — Bloco B">
+                        <input type="text" class="form-control rounded-3" id="inputNomeLocal" name="nome_local" required maxlength="45" placeholder="Ex.: Quadra poliesportiva">
                     </div>
                     <div class="mb-3">
-                        <label class="form-label fw-medium" for="selectDisponivelLocal">Disponível para uso</label>
-                        <select class="form-select rounded-3" id="selectDisponivelLocal">
-                            <option value="1" selected>Sim</option>
-                            <option value="0">Não</option>
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label fw-medium" for="inputCargaLocal">Capacidade (opcional)</label>
-                        <input type="number" class="form-control rounded-3" id="inputCargaLocal" min="0" placeholder="Público ou lotação">
+                        <label class="form-label fw-medium" for="inputEnderecoLocal">Endereço</label>
+                        <input type="text" class="form-control rounded-3" id="inputEnderecoLocal" name="endereco_local" maxlength="100" placeholder="Ex.: Bloco B, primeiro andar">
                     </div>
                     <div id="msgNovoLocal" class="small text-center mb-2"></div>
                     <div class="d-flex justify-content-end gap-2 pt-2">
@@ -106,7 +91,7 @@ $paginaAtiva = 'dashboard';
                         <label for="edit-local-nome" class="form-label fw-medium">Nome do Local</label>
                         <input type="text" class="form-control rounded-3" id="edit-local-nome" name="nome_local" required maxlength="45">
                     </div>
-                    
+
                     <div class="mb-3">
                         <label for="edit-local-disponivel" class="form-label fw-medium">Disponível para uso</label>
                         <select class="form-select rounded-3" id="edit-local-disponivel" name="disponivel_local">
@@ -133,7 +118,7 @@ $paginaAtiva = 'dashboard';
 <script>
     const API = '../../../api/';
     const params = new URLSearchParams(window.location.search);
-    const idInterclasse = params.get('id');
+    let idInterclasse = params.get('id');
 
     if (idInterclasse) {
         document.getElementById('btnVoltarLocaisMobile').href = `./dashboard.php?id=${idInterclasse}`;
@@ -147,9 +132,30 @@ $paginaAtiva = 'dashboard';
     }
 
     function cardLocal(loc) {
+        const isAdmin = NIVEL_USUARIO === 0;
         const isDisponivel = Number(loc.disponivel_local) === 1;
         const disp = isDisponivel ? 'Disponível' : 'Indisponível';
         const carga = loc.carga_local != null && loc.carga_local !== '' ? `Capacidade: ${esc(loc.carga_local)}` : 'Capacidade não informada';
+        const botoes = isAdmin ? `
+            <div class="d-flex justify-content-end gap-2">
+                <button type="button"
+                        class="btn btn-link text-primary p-0"
+                        title="Editar local"
+                        data-bs-toggle="modal"
+                        data-bs-target="#modalEditarLocal"
+                        data-id="${loc.id_local}"
+                        data-nome="${esc(loc.nome_local)}"
+                        data-disponivel="${isDisponivel ? '1' : '0'}"
+                        data-carga="${loc.carga_local || ''}">
+                    <i class="bi bi-pencil-square fs-4"></i>
+                </button>
+                <button type="button"
+                        class="btn btn-link text-danger p-0"
+                        title="Excluir local"
+                        onclick='excluirLocal(${loc.id_local}, "${esc(loc.nome_local)}")'>
+                    <i class="bi bi-trash fs-4"></i>
+                </button>
+            </div>` : '';
         return `
             <div class="col-12 col-md-6">
                 <div class="local-card bg-white border-0 shadow-sm p-4 h-100 d-flex flex-column">
@@ -158,58 +164,43 @@ $paginaAtiva = 'dashboard';
                         <span class="badge rounded-pill border ${isDisponivel ? 'text-success border-success' : 'text-secondary border-secondary'}">${disp}</span>
                     </div>
                     <p class="text-muted small mb-3 mt-auto">${carga}</p>
-                    <div class="d-flex justify-content-end gap-2">
-                        <button type="button" 
-                                class="btn btn-link text-primary p-0" 
-                                title="Editar local"
-                                data-bs-toggle="modal" 
-                                data-bs-target="#modalEditarLocal"
-                                data-id="${loc.id_local}" 
-                                data-nome="${esc(loc.nome_local)}" 
-                                data-disponivel="${isDisponivel ? '1' : '0'}"
-                                data-carga="${loc.carga_local || ''}">
-                            <i class="bi bi-pencil-square fs-4"></i>
-                        </button>
-                        <button type="button" 
-                                class="btn btn-link text-danger p-0" 
-                                title="Excluir local"
-                                onclick='excluirLocal(${loc.id_local}, "${esc(loc.nome_local)}")'>
-                            <i class="bi bi-trash fs-4"></i>
-                        </button>
-                    </div>
+                    ${botoes}
                 </div>
             </div>`;
     }
 
     function linhaLocalMobile(loc) {
+        const isAdmin = NIVEL_USUARIO === 0;
         const isDisponivel = Number(loc.disponivel_local) === 1;
         const disp = isDisponivel ? 'Disponível' : 'Indisponível';
+        const botoes = isAdmin ? `
+            <div class="d-flex align-items-center gap-2">
+                <button type="button"
+                        class="btn btn-link text-primary p-0"
+                        title="Editar local"
+                        data-bs-toggle="modal"
+                        data-bs-target="#modalEditarLocal"
+                        data-id="${loc.id_local}"
+                        data-nome="${esc(loc.nome_local)}"
+                        data-disponivel="${isDisponivel ? '1' : '0'}"
+                        data-carga="${loc.carga_local || ''}">
+                    <i class="bi bi-pencil-square fs-5"></i>
+                </button>
+                <button type="button"
+                        class="btn btn-link text-danger p-0"
+                        title="Excluir local"
+                        onclick='excluirLocal(${loc.id_local}, "${esc(loc.nome_local)}")'>
+                    <i class="bi bi-trash fs-5"></i>
+                </button>
+            </div>` : '';
         return `
             <div class="local-card bg-white border-0 shadow-sm rounded-3 p-3 d-flex justify-content-between align-items-center">
                 <div class="min-w-0 flex-grow-1">
                     <div class="fw-bold text-dark text-truncate">${esc(loc.nome_local)}</div>
                     <div class="text-muted small">${disp}</div>
                 </div>
-                <div class="d-flex align-items-center gap-2">
-                    <button type="button" 
-                            class="btn btn-link text-primary p-0" 
-                            title="Editar local"
-                            data-bs-toggle="modal" 
-                            data-bs-target="#modalEditarLocal"
-                            data-id="${loc.id_local}" 
-                            data-nome="${esc(loc.nome_local)}" 
-                            data-disponivel="${isDisponivel ? '1' : '0'}"
-                            data-carga="${loc.carga_local || ''}">
-                        <i class="bi bi-pencil-square fs-5"></i>
-                    </button>
-                    <button type="button" 
-                            class="btn btn-link text-danger p-0" 
-                            title="Excluir local"
-                            onclick='excluirLocal(${loc.id_local}, "${esc(loc.nome_local)}")'>
-                        <i class="bi bi-trash fs-5"></i>
-                    </button>
-                    <i class="bi bi-geo-alt text-danger fs-4 flex-shrink-0"></i>
-                </div>
+                ${botoes}
+                <i class="bi bi-geo-alt text-danger fs-4 flex-shrink-0 ms-2"></i>
             </div>`;
     }
 
@@ -240,7 +231,7 @@ $paginaAtiva = 'dashboard';
             const data = await res.json();
             const lista = (data && Array.isArray(data.data)) ? data.data : [];
             if (lista.length === 0) {
-                const msg = '<p class="text-muted text-center w-100 mb-0">Nenhum local cadastrado. Toque em &quot;Novo local&quot;.</p>';
+                const msg = '<p class="text-muted text-center w-100 mb-0">Nenhum local cadastrado.</p>';
                 mob.innerHTML = msg;
                 desk.innerHTML = `<div class="col-12">${msg}</div>`;
                 return;
@@ -254,44 +245,37 @@ $paginaAtiva = 'dashboard';
         }
     }
 
-    // Inicialização unificada após o carregamento da página
     document.addEventListener('DOMContentLoaded', async () => {
-        if (idInterclasse) {
-            try {
-                const d = await window.SGIInterclasse.getInterclasseById(idInterclasse);
-                if (d?.nome_interclasse) {
-                    document.getElementById('nomeInterclasseLocais').textContent = d.nome_interclasse;
-                    window.SGIInterclasse.updatePageTitle(d.nome_interclasse);
-                }
-            } catch (_) { /* ok */ }
+        if (!idInterclasse) {
+            const resolved = await window.SGIInterclasse.resolveId();
+            if (resolved) {
+                idInterclasse = resolved;
+                document.getElementById('btnVoltarLocaisMobile').href = `./dashboard.php?id=${idInterclasse}`;
+                document.getElementById('btnVoltarLocaisDesk').href = `./dashboard.php?id=${idInterclasse}`;
+            }
         }
-        
         await carregarLocais();
 
-        // Envio do formulário de NOVO LOCAL
         document.getElementById('formNovoLocal').addEventListener('submit', async (e) => {
             e.preventDefault();
             const nome = document.getElementById('inputNomeLocal').value.trim();
-            const disponivel = document.getElementById('selectDisponivelLocal').value;
-            const cargaVal = document.getElementById('inputCargaLocal').value;
-            const carga = cargaVal === '' ? null : parseInt(cargaVal, 10);
+            const endereco = document.getElementById('inputEnderecoLocal').value.trim();
             const msg = document.getElementById('msgNovoLocal');
             const btn = document.getElementById('btnSalvarLocal');
             const modalEl = document.getElementById('modalNovoLocal');
-            
+
             msg.textContent = '';
             btn.disabled = true;
             try {
                 if (!idInterclasse) {
                     throw new Error('Nenhuma edição do interclasse selecionada.');
                 }
-                const body = { 
-                    nome_local: nome, 
-                    disponivel_local: parseInt(disponivel, 10), 
-                    interclasses_id_interclasse: parseInt(idInterclasse, 10) 
+                const body = {
+                    nome_local: nome,
+                    endereco_local: endereco,
+                    interclasses_id_interclasse: parseInt(idInterclasse, 10)
                 };
-                if (carga != null && !Number.isNaN(carga)) body.carga_local = carga;
-                
+
                 const res = await fetch(`${API}locais.php`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -299,7 +283,7 @@ $paginaAtiva = 'dashboard';
                 });
                 const js = await res.json();
                 if (!res.ok || js.success === false) throw new Error(js.message || 'Não foi possível salvar.');
-                
+
                 bootstrap.Modal.getInstance(modalEl)?.hide();
                 document.getElementById('formNovoLocal').reset();
                 await carregarLocais();
@@ -311,60 +295,44 @@ $paginaAtiva = 'dashboard';
             }
         });
 
-        // Configuração ao abrir o Modal de Edição
         const modalEditar = document.getElementById('modalEditarLocal');
         if (modalEditar) {
             modalEditar.addEventListener('show.bs.modal', function (event) {
                 const botao = event.relatedTarget;
-                
-                const id = botao.getAttribute('data-id');
-                const nome = botao.getAttribute('data-nome');
-                const disponivel = botao.getAttribute('data-disponivel');
-                const carga = botao.getAttribute('data-carga');
-                
-                modalEditar.querySelector('#edit-local-id').value = id;
-                modalEditar.querySelector('#edit-local-nome').value = nome;
-                modalEditar.querySelector('#edit-local-disponivel').value = disponivel;
-                modalEditar.querySelector('#edit-local-carga').value = carga;
-                
+                modalEditar.querySelector('#edit-local-id').value = botao.getAttribute('data-id');
+                modalEditar.querySelector('#edit-local-nome').value = botao.getAttribute('data-nome');
+                modalEditar.querySelector('#edit-local-disponivel').value = botao.getAttribute('data-disponivel');
+                modalEditar.querySelector('#edit-local-carga').value = botao.getAttribute('data-carga');
                 document.getElementById('msgEditarLocal').textContent = '';
             });
         }
 
-        // Envio do formulário de EDITAR LOCAL
         document.getElementById('formEditarLocal').addEventListener('submit', async function (e) {
             e.preventDefault();
-            
             const id = document.getElementById('edit-local-id').value;
             const nome = document.getElementById('edit-local-nome').value.trim();
             const disponivel = document.getElementById('edit-local-disponivel').value;
             const cargaVal = document.getElementById('edit-local-carga').value;
             const carga = cargaVal === '' ? null : parseInt(cargaVal, 10);
-            
             const msg = document.getElementById('msgEditarLocal');
             const btn = document.getElementById('btnAtualizarLocal');
-            
             msg.textContent = '';
             btn.disabled = true;
-            
             try {
-                const body = { 
+                const body = {
                     id_local: parseInt(id, 10),
-                    nome_local: nome, 
-                    disponivel_local: parseInt(disponivel, 10) // Enviando como inteiro puro (1 ou 0)
+                    nome_local: nome,
+                    disponivel_local: parseInt(disponivel, 10)
                 };
                 if (carga != null && !Number.isNaN(carga)) body.carga_local = carga;
                 if (idInterclasse) body.interclasses_id_interclasse = parseInt(idInterclasse, 10);
-                
                 const res = await fetch(`${API}locais.php`, {
-                    method: 'PUT', 
+                    method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(body)
                 });
-                
                 const js = await res.json();
                 if (!res.ok || js.success === false) throw new Error(js.message || 'Não foi possível atualizar.');
-                
                 bootstrap.Modal.getInstance(modalEditar)?.hide();
                 await carregarLocais();
             } catch (err) {

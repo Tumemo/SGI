@@ -1,6 +1,7 @@
 <?php
 require_once '../config/db.php';
 require_once 'filtros.php';
+require_once 'auth.php';
 header('Content-Type: application/json');
 header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
@@ -64,6 +65,7 @@ switch ($method) {
         break;
 
     case 'POST':
+        requerEscrita();
         $data = json_decode(file_get_contents("php://input"));
 
         if (!isset($data->nome_modalidade, $data->genero_modalidade, $data->tipos_modalidades_id_tipo_modalidade,  $data->categorias_id_categoria)) {
@@ -104,7 +106,7 @@ switch ($method) {
         break;
 
     case 'PUT':
-        
+        requerEscrita();
         $data = json_decode(file_get_contents("php://input"));
 
         // O ID da modalidade é obrigatório para a atualização

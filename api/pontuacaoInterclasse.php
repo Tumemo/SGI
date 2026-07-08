@@ -1,6 +1,7 @@
 <?php
 require_once '../config/db.php';
 require_once 'filtros.php';
+require_once 'auth.php';
 header('Content-Type: application/json');
 
 $method = $_SERVER['REQUEST_METHOD'];
@@ -26,6 +27,7 @@ switch ($method) {
         break;
 
     case 'PUT':
+        requerEscrita();
         $dados = json_decode(file_get_contents("php://input"), true);
 
         if (!isset($dados['id_pontuacao'], $dados['pontos'])) {

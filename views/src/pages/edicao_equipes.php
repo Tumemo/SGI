@@ -1,9 +1,11 @@
 <?php
-$titulo = "Equipes";
-$textTop = "Equipes"; 
-$btnVoltar = true;
-require_once '../componentes/navbar.php';
-require_once '../componentes/header.php';
+$tituloPagina = 'SGI - Equipes';
+$titulo = 'Equipes';
+$mostrarVoltar = true;
+$urlVoltar = './dashboard.php';
+include 'componentes/head.php';
+include 'componentes/header.php';
+$paginaAtiva = 'dashboard';
 ?>
 
 <main class="d-md-none p-3" style="padding-top: 5rem; padding-bottom: 5rem;">
@@ -89,7 +91,7 @@ require_once '../componentes/header.php';
 <script>
     const API = '../../../api/';
     const params = new URLSearchParams(window.location.search);
-    const idInterclasseEq = params.get('id');
+    let idInterclasseEq = params.get('id');
 
     let modalidadesCache = [];
     let turmasCache = [];
@@ -405,10 +407,19 @@ require_once '../componentes/header.php';
     };
 
     window.addEventListener('pageshow', async () => {
+        if (!idInterclasseEq) {
+            const resolved = await window.SGIInterclasse.resolveId();
+            if (resolved) {
+                idInterclasseEq = resolved;
+                document.getElementById('btnVoltarEquipesMobile').href = `./dashboard.php?id=${idInterclasseEq}`;
+                document.getElementById('btnVoltarEquipesDesk').href = `./dashboard.php?id=${idInterclasseEq}`;
+            }
+        }
         await carregarCategorias();
         carregarEquipes();
     });
 </script>
 
 <?php
+include 'componentes/nav.php';
 require_once '../componentes/footer.php';

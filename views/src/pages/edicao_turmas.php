@@ -1,9 +1,11 @@
 <?php
-$titulo = "Turmas";
-$textTop = "Turmas";
-$btnVoltar = true;
-require_once '../componentes/navbar.php';
-require_once '../componentes/header.php';
+$tituloPagina = 'SGI - Gerenciar Turmas';
+$titulo = 'Turmas';
+$mostrarVoltar = true;
+$urlVoltar = './edicao_categorias.php';
+include 'componentes/head.php';
+include 'componentes/header.php';
+$paginaAtiva = 'categorias';
 ?>
 <main class="d-md-none">
     <a href="./dashboard.php" id="btnVoltarTurmasMobile" class="btn btn-danger btn-sm mt-3 ms-3 d-inline-flex align-items-center gap-1">
@@ -321,5 +323,6 @@ require_once '../componentes/header.php';
 </script>
 
 <?php
+include 'componentes/nav.php';
 require_once '../componentes/footer.php';
 ?>
