@@ -394,7 +394,7 @@ $isMesario = $nivelUsuario === 2;
     document.querySelectorAll('#linkArrecadacoes').forEach(link => { link.href = `./arrecadacoes.php?id=${idInterclasse}`; });
     document.querySelectorAll('#linkCategorias').forEach(link => { link.href = `./categorias.php?id=${idInterclasse}`; });
     document.querySelectorAll('#linkTurmas').forEach(link => { link.href = `./turmas.php?id=${idInterclasse}`; });
-    document.querySelectorAll('#linkEquipes').forEach(link => { link.href = `./equipes.php?id=${idInterclasse}`; });
+    document.querySelectorAll('#linkEquipes').forEach(link => { link.href = `./edicao_equipes.php?id=${idInterclasse}`; });
     <?php endif; ?>
 
     <?php if ($isAdmin): ?>

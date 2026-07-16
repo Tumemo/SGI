@@ -5,6 +5,8 @@ $mostrarVoltar = true;
 $urlVoltar = './dashboard.php';
 include 'componentes/head.php';
 include 'componentes/header.php';
+$nivelUsuario = (int)($_SESSION['nivel'] ?? -1);
+$isAdmin = $nivelUsuario === 0;
 $paginaAtiva = 'dashboard';
 ?>
 
@@ -13,7 +15,9 @@ $paginaAtiva = 'dashboard';
     <h5 class="mb-2" style="font-weight: 400;" id="tituloElencoMob">Elenco</h5>
     <p class="text-muted small mb-3" id="subtituloElencoMob"></p>
     <div id="listaElencoMob" class="d-flex flex-column gap-2"></div>
+    <?php if ($isAdmin): ?>
     <a class="btn btn-outline-danger w-100 mt-4 rounded-3" id="linkGerenciarMob" href="#">Gerenciar inscrições na equipe</a>
+    <?php endif; ?>
 </main>
 
 <main class="d-none d-md-block main-desktop-layout">
@@ -36,8 +40,10 @@ $paginaAtiva = 'dashboard';
                     <tbody id="tbodyElencoDesk"></tbody>
                 </table>
             </div>
-        </div>
-        <a class="btn btn-outline-danger mt-4 rounded-3" id="linkGerenciarDesk" href="#">Gerenciar inscrições na equipe</a>
+    </div>
+    <?php if ($isAdmin): ?>
+    <a class="btn btn-outline-danger mt-4 rounded-3" id="linkGerenciarDesk" href="#">Gerenciar inscrições na equipe</a>
+    <?php endif; ?>
     </div>
 </main>
 

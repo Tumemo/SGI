@@ -5,6 +5,8 @@ $mostrarVoltar = true;
 $urlVoltar = './dashboard.php';
 include 'componentes/head.php';
 include 'componentes/header.php';
+$nivelUsuario = (int)($_SESSION['nivel'] ?? -1);
+$isAdmin = $nivelUsuario === 0;
 $paginaAtiva = 'dashboard';
 ?>
 
@@ -16,7 +18,7 @@ $paginaAtiva = 'dashboard';
 
     <div id="filtroCategoriaMobile" class="d-flex flex-nowrap overflow-auto gap-2 pb-2 mb-3"></div>
 
-    <button class="btn btn-danger w-100 fw-semibold mb-3 border-0 shadow-sm" style="background-color: #ed1c24; border-radius: 6px;" data-bs-toggle="modal" data-bs-target="#modalCriarEquipe">
+    <button id="btnCriarEquipeMob" class="btn btn-danger w-100 fw-semibold mb-3 border-0 shadow-sm" style="background-color: #ed1c24; border-radius: 6px;" data-bs-toggle="modal" data-bs-target="#modalCriarEquipe">
         <i class="bi bi-plus-lg me-1"></i> Criar equipe
     </button>
     <div id="listaEquipesMobile" class="d-flex flex-column gap-3"></div>
@@ -34,7 +36,7 @@ $paginaAtiva = 'dashboard';
                     <i class="bi bi-people fs-4"></i> Equipes
                 </h4>
             </div>
-            <button class="btn btn-danger fw-semibold border-0 shadow-sm px-3 py-2" style="background-color: #ed1c24; border-radius: 6px;" data-bs-toggle="modal" data-bs-target="#modalCriarEquipe">
+            <button id="btnCriarEquipeDesk" class="btn btn-danger fw-semibold border-0 shadow-sm px-3 py-2" style="background-color: #ed1c24; border-radius: 6px;" data-bs-toggle="modal" data-bs-target="#modalCriarEquipe">
                     <i class="bi bi-plus-lg me-1"></i> Criar equipe
                 </button>
             </div>
@@ -92,6 +94,7 @@ $paginaAtiva = 'dashboard';
     const API = '../../../api/';
     const params = new URLSearchParams(window.location.search);
     let idInterclasseEq = params.get('id');
+    const isAdmin = <?= $isAdmin ? 'true' : 'false' ?>;
 
     let modalidadesCache = [];
     let turmasCache = [];
@@ -164,11 +167,13 @@ $paginaAtiva = 'dashboard';
         const idCategoriaFiltro = obterIdCategoriaFiltro();
 
         try {
-            await fetch(`${API}CriarEquipes.php`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ id_interclasse: parseInt(idInterclasseEq) })
-            });
+            if (isAdmin) {
+                await fetch(`${API}CriarEquipes.php`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ id_interclasse: parseInt(idInterclasseEq) })
+                });
+            }
 
             let urlMod = `${API}modalidades.php?id_interclasse=${encodeURIComponent(idInterclasseEq)}`;
             if (idCategoriaFiltro) {
@@ -224,8 +229,8 @@ $paginaAtiva = 'dashboard';
                                 <div class="d-flex justify-content-between align-items-center gap-2">
                                     <a class="text-decoration-none text-dark flex-grow-1" href="${hrefTurma}"><span>${esc(eq.nome_turma || 'Turma')}</span></a>
                                     <div class="d-flex gap-1">
-                                        <button class="btn btn-sm btn-outline-danger rounded-3"
-                                            onclick="excluirEquipe(${eq.id_equipe}, '${esc(eq.nome_turma || 'Turma')}')"><i class="bi bi-trash"></i> Excluir</button>
+                                        ${isAdmin ? `<button class="btn btn-sm btn-outline-danger rounded-3"
+                                            onclick="excluirEquipe(${eq.id_equipe}, '${esc(eq.nome_turma || 'Turma')}')"><i class="bi bi-trash"></i> Excluir</button>` : ''}
                                         <a class="btn btn-sm btn-danger rounded-3" href="${hrefElenco}">Elenco</a>
                                     </div>
                                 </div>
@@ -255,8 +260,8 @@ $paginaAtiva = 'dashboard';
                             htmlDesk += `<tr>
                                 <td><a class="text-decoration-none text-dark" href="${hrefTurma}">${esc(eq.nome_turma || 'Turma')}</a></td>
                                 <td class="text-end">
-                                    <button class="btn btn-sm btn-outline-danger rounded-3 me-1"
-                                        onclick="excluirEquipe(${eq.id_equipe}, '${esc(eq.nome_turma || 'Turma')}')"><i class="bi bi-trash"></i> Excluir</button>
+                                    ${isAdmin ? `<button class="btn btn-sm btn-outline-danger rounded-3 me-1"
+                                        onclick="excluirEquipe(${eq.id_equipe}, '${esc(eq.nome_turma || 'Turma')}')"><i class="bi bi-trash"></i> Excluir</button>` : ''}
                                     <a class="btn btn-sm btn-outline-danger rounded-3" href="${hrefElenco}">Elenco</a>
                                 </td>
                             </tr>`;
@@ -407,6 +412,12 @@ $paginaAtiva = 'dashboard';
     };
 
     window.addEventListener('pageshow', async () => {
+        if (!isAdmin) {
+            const btnMob = document.getElementById('btnCriarEquipeMob');
+            const btnDesk = document.getElementById('btnCriarEquipeDesk');
+            if (btnMob) btnMob.style.display = 'none';
+            if (btnDesk) btnDesk.style.display = 'none';
+        }
         if (!idInterclasseEq) {
             const resolved = await window.SGIInterclasse.resolveId();
             if (resolved) {
