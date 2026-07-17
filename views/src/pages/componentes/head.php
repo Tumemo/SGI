@@ -1,6 +1,6 @@
 <?php (session_status() === PHP_SESSION_NONE) && session_start();
 $nivelUsuario = (int)($_SESSION['nivel'] ?? -1);
-if (!in_array($nivelUsuario, [0, 1, 2], true)) { header('Location: /2025/SGI/views/index.php'); exit; }
+if (!in_array($nivelUsuario, [0, 1, 2], true)) { header('Location: ../../index.php'); exit; }
 $tituloPagina = $tituloPagina ?? 'SGI';
 $cssExtra = $cssExtra ?? '';
 ?>

@@ -207,6 +207,11 @@ $paginaAtiva = 'perfil';
         width: 100%;
         max-width: 320px;
     }
+    .perfil-btn-excluir:disabled {
+        opacity: 0.35;
+        cursor: not-allowed;
+        pointer-events: none;
+    }
 </style>
 
 <main class="perfil-page d-md-none p-3" style="padding-top: 5.5rem; padding-bottom: 5rem;">
@@ -231,7 +236,7 @@ $paginaAtiva = 'perfil';
             </div>
             <div class="d-flex justify-content-center gap-2 mt-2">
                 <button type="button" class="btn btn-sm btn-danger rounded-3 d-none" id="btnSalvarFotoMob">Salvar foto</button>
-                <button type="button" class="btn btn-sm btn-outline-danger rounded-3 d-none" id="btnExcluirFotoMob" title="Excluir foto"><i class="bi bi-trash"></i></button>
+                <button type="button" class="btn btn-sm btn-outline-danger rounded-3 perfil-btn-excluir" id="btnExcluirFotoMob" disabled title="Excluir foto"><i class="bi bi-trash"></i></button>
             </div>
         </div>
         <div class="mb-3">
@@ -275,7 +280,7 @@ $paginaAtiva = 'perfil';
                     </div>
                     <div class="perfil-foto-actions">
                         <button type="button" class="btn btn-sm btn-danger rounded-3 d-none" id="btnSalvarFotoDesk">Salvar foto</button>
-                        <button type="button" class="btn btn-sm btn-outline-danger rounded-3 d-none" id="btnExcluirFotoDesk" title="Excluir foto"><i class="bi bi-trash"></i></button>
+                        <button type="button" class="btn btn-sm btn-outline-danger rounded-3 perfil-btn-excluir" id="btnExcluirFotoDesk" disabled title="Excluir foto"><i class="bi bi-trash"></i></button>
                     </div>
                 </div>
                 <div class="col-md-7 perfil-form-area">
@@ -345,7 +350,7 @@ $paginaAtiva = 'perfil';
         id: <?= json_encode($sessionId ?? 0) ?>,
         nivel: <?= json_encode((int)($nivel ?? 0)) ?>
     };
-    const API_FOTO = '/2025/SGI/api/foto.php';
+    const API_FOTO = '../../../api/foto.php';
 
     document.addEventListener('DOMContentLoaded', async () => {
         try {
@@ -408,7 +413,7 @@ $paginaAtiva = 'perfil';
             const btnSalvar = document.getElementById('btnSalvarFoto' + suf);
             const btnExcluir = document.getElementById('btnExcluirFoto' + suf);
             if (btnSalvar) btnSalvar.classList.toggle('d-none', !temPreview);
-            if (btnExcluir) btnExcluir.classList.toggle('d-none', !temFotoAtual);
+            if (btnExcluir) btnExcluir.disabled = !temFotoAtual;
         });
     }
 
@@ -426,7 +431,7 @@ $paginaAtiva = 'perfil';
                 const data = await resp.json();
                 if (data.success && data.foto_usuario) {
                     temFotoAtual = true;
-                    mostrarFoto('/2025/SGI/uploads/fotosUsuarios/' + data.foto_usuario);
+                    mostrarFoto('../../../uploads/fotosUsuarios/' + data.foto_usuario);
                     atualizarBotoesFoto();
                 }
             } catch (e) {
@@ -455,7 +460,7 @@ $paginaAtiva = 'perfil';
                     if (data.success && data.arquivo) {
                         fotoPreviewFile = null;
                         temFotoAtual = true;
-                        mostrarFoto('/2025/SGI/uploads/fotosUsuarios/' + data.arquivo);
+                        mostrarFoto('../../../uploads/fotosUsuarios/' + data.arquivo);
                         atualizarBotoesFoto();
                     } else {
                         alert(data.mensagem || 'Erro ao enviar foto.');

@@ -331,9 +331,9 @@ include 'componentes/nav.php';
                 span.textContent = esc(m.nome_usuario) + (ehVoce ? ' (Você)' : '');
                 div.appendChild(span);
                 container.appendChild(div);
-                fetch('/2025/SGI/api/foto.php?user_id=' + m.id_usuario)
+                fetch('../../../../api/foto.php?user_id=' + m.id_usuario)
                     .then(r => r.json())
-                    .then(d => { if (d.foto_usuario) img.src = '/2025/SGI/uploads/fotosUsuarios/' + d.foto_usuario; })
+                    .then(d => { if (d.foto_usuario) img.src = '../../../../uploads/fotosUsuarios/' + d.foto_usuario; })
                     .catch(function() {});
             });
         } catch (e) {

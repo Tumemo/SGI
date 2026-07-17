@@ -1,5 +1,5 @@
 <?php (session_status() === PHP_SESSION_NONE) && session_start();
-if (!defined('SGI_PERFIL_ALLOW') && !in_array((int)($_SESSION['nivel'] ?? -1), [0, 1])) { header('Location: /2025/SGI/views/index.php'); exit; } ?>
+if (!defined('SGI_PERFIL_ALLOW') && !in_array((int)($_SESSION['nivel'] ?? -1), [0, 1])) { header('Location: ../../index.php'); exit; } ?>
 <!-- navbar mobile -->
 <nav class="d-md-none order-last fixed-bottom py-2 order-lg-first bg-danger shadow-lg">
     <ul class="nav justify-content-around fs-1">

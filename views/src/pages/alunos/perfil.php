@@ -168,6 +168,15 @@ include 'componentes/header.php';
         font-size: 1.1rem;
         margin-bottom: 0;
     }
+    .perfil-foto-actions {
+        display: flex;
+        gap: 0.5rem;
+    }
+    .perfil-btn-excluir:disabled {
+        opacity: 0.35;
+        cursor: not-allowed;
+        pointer-events: none;
+    }
 </style>
 
 <main class="perfil-page d-md-none p-3" style="padding-top: 5.5rem; padding-bottom: 5rem;">
@@ -183,6 +192,9 @@ include 'componentes/header.php';
             <button type="button" class="perfil-btn-camera" id="btnCameraMob" title="Alterar foto" aria-label="Alterar foto">
                 <i class="bi bi-camera"></i>
             </button>
+        </div>
+        <div class="d-flex justify-content-center gap-2 mt-2">
+            <button type="button" class="btn btn-sm btn-outline-danger rounded-3 perfil-btn-excluir" id="btnExcluirFotoMob" disabled title="Excluir foto" aria-label="Excluir foto"><i class="bi bi-trash"></i></button>
         </div>
     </div>
     <div class="mb-3">
@@ -215,6 +227,9 @@ include 'componentes/header.php';
                     <button type="button" class="perfil-btn-camera" id="btnCameraDesk" title="Alterar foto" aria-label="Alterar foto">
                         <i class="bi bi-camera"></i>
                     </button>
+                </div>
+                <div class="perfil-foto-actions">
+                    <button type="button" class="btn btn-sm btn-outline-danger rounded-3 perfil-btn-excluir" id="btnExcluirFotoDesk" disabled title="Excluir foto" aria-label="Excluir foto"><i class="bi bi-trash"></i></button>
                 </div>
             </div>
             <div class="col-md-8">
@@ -283,6 +298,8 @@ include 'componentes/header.php';
         matricula: <?= json_encode($usuarioPerfil['matricula_usuario'] ?? '') ?>,
         id: <?= json_encode($sessionId ?? 0) ?>
     };
+    const API_FOTO = '../../../../api/foto.php';
+    let temFotoAtual = false;
 
     document.addEventListener('DOMContentLoaded', async () => {
         preencherPerfil();
@@ -314,6 +331,13 @@ include 'componentes/header.php';
         });
     }
 
+    function atualizarBotoesExcluir() {
+        ['Mob', 'Desk'].forEach(suf => {
+            const btn = document.getElementById('btnExcluirFoto' + suf);
+            if (btn) btn.disabled = !temFotoAtual;
+        });
+    }
+
     document.addEventListener('DOMContentLoaded', () => {
         const input = document.getElementById('fotoUploadInput');
         ['btnCameraMob', 'btnCameraDesk'].forEach(id => {
@@ -323,9 +347,13 @@ include 'componentes/header.php';
 
         (async () => {
             try {
-                const resp = await fetch('/2025/SGI/api/foto.php?user_id=' + DADOS_PERFIL.id);
+                const resp = await fetch(API_FOTO + '?user_id=' + DADOS_PERFIL.id);
                 const data = await resp.json();
-                if (data.foto_usuario) mostrarFoto('/2025/SGI/uploads/fotosUsuarios/' + data.foto_usuario);
+                if (data.foto_usuario) {
+                    temFotoAtual = true;
+                    mostrarFoto('../../../../uploads/fotosUsuarios/' + data.foto_usuario);
+                    atualizarBotoesExcluir();
+                }
             } catch (e) {
                 console.warn('Erro ao buscar foto:', e);
             }
@@ -341,7 +369,11 @@ include 'componentes/header.php';
                 const resp = await fetch(window.location.href, { method: 'POST', body: fd });
                 const data = await resp.json();
                 if (data.success) {
-                    if (data.arquivo) mostrarFoto('/2025/SGI/uploads/fotosUsuarios/' + data.arquivo);
+                    if (data.arquivo) {
+                        temFotoAtual = true;
+                        mostrarFoto('../../../../uploads/fotosUsuarios/' + data.arquivo);
+                        atualizarBotoesExcluir();
+                    }
                 } else {
                     alert(data.mensagem || 'Erro ao enviar foto.');
                 }
@@ -349,6 +381,33 @@ include 'componentes/header.php';
                 alert('Erro de conexão.');
             }
             input.value = '';
+        });
+
+        document.querySelectorAll('[id^="btnExcluirFoto"]').forEach(btn => {
+            btn.addEventListener('click', async () => {
+                if (!confirm('Remover foto de perfil?')) return;
+                try {
+                    const resp = await fetch(API_FOTO, { method: 'DELETE' });
+                    const data = await resp.json();
+                    if (data.success) {
+                        temFotoAtual = false;
+                        ['Mob', 'Desk'].forEach(suf => {
+                            const img = document.getElementById('fotoImg' + suf);
+                            const icon = document.getElementById('fotoIcon' + suf);
+                            if (img && icon) {
+                                img.classList.add('d-none');
+                                img.src = '';
+                                icon.classList.remove('d-none');
+                            }
+                        });
+                        atualizarBotoesExcluir();
+                    } else {
+                        alert(data.mensagem || 'Erro ao remover foto.');
+                    }
+                } catch (e) {
+                    alert('Erro de conexão.');
+                }
+            });
         });
     });
 
