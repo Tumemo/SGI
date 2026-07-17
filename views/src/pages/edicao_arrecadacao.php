@@ -78,7 +78,8 @@ $paginaAtiva = 'dashboard';
     const paramsArrecadacao = new URLSearchParams(window.location.search);
     const idInterclasseArrecadacao = paramsArrecadacao.get('id');
     
-    let todasAsTurmas = []; 
+    let todasAsTurmas = [];
+    let idInterclasseResolvida = null;
 
     // Quantidade a adicionar neste lançamento (não substitui o total já salvo no ranking)
     function getQuantidadePendente(turma) {
@@ -184,6 +185,8 @@ $paginaAtiva = 'dashboard';
             
             if (!ativo) return;
 
+            idInterclasseResolvida = ativo.id_interclasse;
+
             document.getElementById('nomeInterclasseArrecadacao').innerText = ativo.nome_interclasse;
             const vDesk = document.getElementById('btnVoltarArrecadacao');
             if (vDesk) {
@@ -216,7 +219,7 @@ async function salvarNoServidor(auto = false) {
     const btnMob = document.getElementById('btnSalvarMobile');
     
     const payload = {
-        id_interclasse: idInterclasseArrecadacao,
+        id_interclasse: idInterclasseResolvida || idInterclasseArrecadacao,
         arrecadacoes: todasAsTurmas.map(t => ({
             id_turma: t.id_turma,
             quantidade: getQuantidadePendente(t)
@@ -254,7 +257,7 @@ async function salvarNoServidor(auto = false) {
             const status = document.getElementById('statusSincronizacao');
             if (status) status.innerText = 'Salvo no servidor!';
             if (!auto) {
-                alert('Itens somados ao ranking com sucesso!');
+                alert('Dados salvos com sucesso!');
                 window.location.reload();
             }
         } else {
@@ -275,8 +278,8 @@ async function salvarNoServidor(auto = false) {
 
     document.getElementById('filtroCategoriaMobile').addEventListener('change', (e) => renderizarTelas(e.target.value));
     document.getElementById('filtroCategoriaDesktop').addEventListener('change', (e) => renderizarTelas(e.target.value));
-    document.getElementById('btnSalvarDesktop').addEventListener('click', salvarNoServidor);
-    document.getElementById('btnSalvarMobile').addEventListener('click', salvarNoServidor);
+    document.getElementById('btnSalvarDesktop').addEventListener('click', () => salvarNoServidor());
+    document.getElementById('btnSalvarMobile').addEventListener('click', () => salvarNoServidor());
 
     window.addEventListener('load', carregarDados);
 </script>

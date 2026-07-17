@@ -3,7 +3,7 @@ $paginaAtiva = $paginaAtiva ?? 'home';
 $nivelUsuario = (int)($_SESSION['nivel'] ?? -1);
 
 $todosItens = [
-    'perfil'        => ['label' => 'Perfil',       'icon' => 'bi-person-gear',           'url' => './perfil.php',        'niveis' => [0, 1]],
+    'perfil'        => ['label' => 'Perfil',       'icon' => 'bi-person-gear',           'url' => './perfil.php',        'niveis' => [0, 1, 2]],
     'dashboard'     => ['label' => 'Dashboard',    'icon' => 'bi-house-door-fill',   'url' => './dashboard.php',     'niveis' => [0, 1]],
     'categorias'    => ['label' => 'Categorias',   'icon' => 'bi-bookmarks',         'url' => './categorias.php',    'niveis' => [0, 1, 2]],
     'equipes'       => ['label' => 'Equipes',      'icon' => 'bi-diagram-3',         'url' => './edicao_equipes.php',       'niveis' => [0, 1]],

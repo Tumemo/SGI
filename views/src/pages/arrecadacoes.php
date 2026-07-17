@@ -50,9 +50,6 @@ $paginaAtiva = 'arrecadacoes';
                     </div>
                 </div>
                 <div class="d-flex gap-2">
-                    <button type="button" onclick="window.location.reload()" class="btn bg-white fw-semibold rounded-3 px-4 py-2" style="color: #ed1c24; border: 1px solid #ed1c24;">
-                        Cancelar
-                    </button>
                     <button type="button" id="btnSalvarDesktop" class="btn fw-semibold rounded-3 px-4 py-2 text-white" style="background-color: #ed1c24; border: 1px solid #ed1c24;">
                         Salvar Dados
                     </button>
@@ -76,6 +73,7 @@ $paginaAtiva = 'arrecadacoes';
     const idInterclasseArrecadacao = paramsArrecadacao.get('id');
     
     let todasAsTurmas = [];
+    let idInterclasseResolvida = null;
 
     function getQuantidadePendente(turma) {
         const local = localStorage.getItem(`${storagePrefix}${turma.id_turma}`);
@@ -178,6 +176,8 @@ $paginaAtiva = 'arrecadacoes';
             
             if (!ativo) return;
 
+            idInterclasseResolvida = ativo.id_interclasse;
+
             document.getElementById('nomeInterclasseArrecadacao').innerText = ativo.nome_interclasse;
             const vDesk = document.getElementById('btnVoltarArrecadacao');
             if (vDesk) {
@@ -210,7 +210,7 @@ $paginaAtiva = 'arrecadacoes';
         const btnMob = document.getElementById('btnSalvarMobile');
         
         const payload = {
-            id_interclasse: idInterclasseArrecadacao,
+            id_interclasse: idInterclasseResolvida || idInterclasseArrecadacao,
             arrecadacoes: todasAsTurmas.map(t => ({
                 id_turma: t.id_turma,
                 quantidade: getQuantidadePendente(t)
@@ -248,7 +248,7 @@ $paginaAtiva = 'arrecadacoes';
                 const status = document.getElementById('statusSincronizacao');
                 if (status) status.innerText = 'Salvo no servidor!';
                 if (!auto) {
-                    alert('Itens somados ao ranking com sucesso!');
+                    alert('Dados salvos com sucesso!');
                     window.location.reload();
                 }
             } else {
@@ -269,8 +269,8 @@ $paginaAtiva = 'arrecadacoes';
 
     document.getElementById('filtroCategoriaMobile').addEventListener('change', (e) => renderizarTelas(e.target.value));
     document.getElementById('filtroCategoriaDesktop').addEventListener('change', (e) => renderizarTelas(e.target.value));
-    document.getElementById('btnSalvarDesktop').addEventListener('click', salvarNoServidor);
-    document.getElementById('btnSalvarMobile').addEventListener('click', salvarNoServidor);
+    document.getElementById('btnSalvarDesktop').addEventListener('click', () => salvarNoServidor());
+    document.getElementById('btnSalvarMobile').addEventListener('click', () => salvarNoServidor());
 
     window.addEventListener('load', carregarDados);
 </script>

@@ -41,6 +41,13 @@ $isMesario = $nivelUsuario === 2;
                 <picture><img src="../../public/icons/arrow-right.svg" alt="Seta para direita"></picture>
             </div>
         </a>
+        <a href="./ranking.php" id="linkRanking" class="text-decoration-none text-black">
+            <div class="d-flex m-auto justify-content-between align-items-center shadow py-3 px-4 mb-3 border border-1 rounded-3" style="width: 90%;">
+                <i class="bi bi-trophy-fill fs-2"></i>
+                <h2 class="m-0 fs-3 w-100 px-3">Ranking</h2>
+                <picture><img src="../../public/icons/arrow-right.svg" alt="Seta"></picture>
+            </div>
+        </a>
         <?php endif; ?>
 
         <?php if ($isColaborador || $isAdmin): ?>
@@ -100,6 +107,13 @@ $isMesario = $nivelUsuario === 2;
                 <picture><img src="../../public/icons/arrow-right.svg" alt="Seta"></picture>
             </div>
         </a>
+        <a href="./ranking.php" id="linkRanking" class="text-decoration-none text-black">
+            <div class="d-flex m-auto justify-content-between align-items-center shadow py-3 px-4 mb-3 border border-1 rounded-3" style="width: 90%;">
+                <i class="bi bi-trophy-fill fs-2"></i>
+                <h2 class="m-0 fs-3 w-100 px-3">Ranking</h2>
+                <picture><img src="../../public/icons/arrow-right.svg" alt="Seta"></picture>
+            </div>
+        </a>
         <?php endif; ?>
     </section>
 </main>
@@ -151,6 +165,16 @@ $isMesario = $nivelUsuario === 2;
                         <h5 class="dash-card-title">CHAVEAMENTOS</h5>
                     </div>
                     <p class="dash-card-text">Visualize os chaveamentos e acesse os confrontos das modalidades.</p>
+                </a>
+            </div>
+            <div class="col-12 col-md-6 col-lg-4">
+                <a href="ranking.php" id="linkRanking" class="dash-card">
+                    <div class="dash-card-red-corner"></div>
+                    <div class="dash-card-header">
+                        <div class="dash-card-icon"><i class="bi bi-trophy-fill"></i></div>
+                        <h5 class="dash-card-title">RANKING</h5>
+                    </div>
+                    <p class="dash-card-text">Visualize o ranking geral de pontuações por categoria.</p>
                 </a>
             </div>
             <?php endif; ?>
@@ -234,6 +258,16 @@ $isMesario = $nivelUsuario === 2;
                         <h5 class="dash-card-title">EQUIPES</h5>
                     </div>
                     <p class="dash-card-text">Visualize equipes por modalidade e crie novas equipes.</p>
+                </a>
+            </div>
+            <div class="col-12 col-md-6 col-lg-4">
+                <a href="ranking.php" id="linkRanking" class="dash-card">
+                    <div class="dash-card-red-corner"></div>
+                    <div class="dash-card-header">
+                        <div class="dash-card-icon"><i class="bi bi-trophy-fill"></i></div>
+                        <h5 class="dash-card-title">RANKING</h5>
+                    </div>
+                    <p class="dash-card-text">Visualize o ranking geral de pontuações por categoria.</p>
                 </a>
             </div>
             <?php endif; ?>
@@ -339,6 +373,16 @@ $isMesario = $nivelUsuario === 2;
                     <p class="dash-card-text">Visualize a árvore completa do chaveamento mata-mata: confrontos, resultados e avanço das equipes.</p>
                 </a>
             </div>
+            <div class="col-12 col-md-6 col-lg-4">
+                <a href="ranking.php" id="linkRanking" class="dash-card">
+                    <div class="dash-card-red-corner"></div>
+                    <div class="dash-card-header">
+                        <div class="dash-card-icon"><i class="bi bi-trophy-fill"></i></div>
+                        <h5 class="dash-card-title">RANKING</h5>
+                    </div>
+                    <p class="dash-card-text">Visualize o ranking geral de pontuações por categoria.</p>
+                </a>
+            </div>
             <?php endif; ?>
         </div>
     </div>
@@ -384,6 +428,7 @@ $isMesario = $nivelUsuario === 2;
     document.querySelectorAll('#linkCategorias').forEach(link => { link.href = `./categorias.php?id=${idInterclasse}&${modoParam}`; });
     document.querySelectorAll('#linkAgenda').forEach(link => { link.href = `./agenda.php?id=${idInterclasse}&${modoParam}`; });
     document.querySelectorAll('#linkChaveamentos').forEach(link => { link.href = `./pontuacao.php?id=${idInterclasse}&${modoParam}`; });
+    document.querySelectorAll('#linkRanking').forEach(link => { link.href = `./ranking.php?id=${idInterclasse}`; });
     <?php endif; ?>
 
     <?php if ($isColaborador): ?>
@@ -395,6 +440,7 @@ $isMesario = $nivelUsuario === 2;
     document.querySelectorAll('#linkCategorias').forEach(link => { link.href = `./categorias.php?id=${idInterclasse}`; });
     document.querySelectorAll('#linkTurmas').forEach(link => { link.href = `./turmas.php?id=${idInterclasse}`; });
     document.querySelectorAll('#linkEquipes').forEach(link => { link.href = `./edicao_equipes.php?id=${idInterclasse}`; });
+    document.querySelectorAll('#linkRanking').forEach(link => { link.href = `./ranking.php?id=${idInterclasse}`; });
     <?php endif; ?>
 
     <?php if ($isAdmin): ?>
@@ -408,6 +454,7 @@ $isMesario = $nivelUsuario === 2;
     document.querySelectorAll('#linkTurmas').forEach(link => { link.href = `./turmas.php?id=${idInterclasse}&modo=view`; });
     document.querySelectorAll('#linkEquipes').forEach(link => { link.href = `./edicao_equipes.php?id=${idInterclasse}`; });
     document.querySelectorAll('#linkChaveamento').forEach(link => { link.href = `./chaveamento_arvore.php?id=${idInterclasse}`; });
+    document.querySelectorAll('#linkRanking').forEach(link => { link.href = `./ranking.php?id=${idInterclasse}`; });
     <?php endif; ?>
 })();
 </script>
