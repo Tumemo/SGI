@@ -7,32 +7,7 @@ include 'componentes/head.php';
 include 'componentes/header.php';
 $paginaAtiva = 'dashboard';
 ?>
-<style>
-    .cal-dia-marcado {
-        box-shadow: inset 0 -3px 0 var(--inter-red, #ed1c24);
-        font-weight: 500;
-    }
-    .cal-dia-hoje.cal-dia-marcado {
-        border-radius: 50%;
-    }
-    .cal-dia-clickable {
-        cursor: pointer;
-        transition: background .15s;
-    }
-    .cal-dia-clickable:hover {
-        background: rgba(237, 28, 36, .08);
-        border-radius: 50%;
-    }
-    .cal-dia-selecionado {
-        background: var(--inter-red, #ed1c24) !important;
-        color: #fff !important;
-        border-radius: 50%;
-        font-weight: 600;
-    }
-    .cal-dia-selecionado.cal-dia-marcado {
-        box-shadow: none;
-    }
-</style>
+
 
 <main class="bg-light d-md-none p-3" style="padding-top: 5rem; padding-bottom: 5.5rem;">
     <div class="card border-0 shadow-sm rounded-4 mx-auto mb-4" style="max-width: 450px;">

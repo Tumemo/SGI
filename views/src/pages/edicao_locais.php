@@ -8,15 +8,7 @@ include 'componentes/header.php';
 $paginaAtiva = 'dashboard';
 ?>
 
-<style>
-    .local-card {
-        border-radius: 12px;
-        transition: box-shadow 0.2s ease;
-    }
-    .local-card:hover {
-        box-shadow: 0 0.35rem 1rem rgba(0, 0, 0, 0.08) !important;
-    }
-</style>
+
 
 <main class="d-md-none p-3" style="padding-top: 5rem; padding-bottom: 6rem;">
     <p class="text-secondary text-center small mb-3">Locais onde os jogos acontecem (ginásio, quadra, etc.)</p>

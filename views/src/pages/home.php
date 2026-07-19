@@ -11,14 +11,7 @@ $isColaborador = $nivelUsuario === 1;
 $isMesario = $nivelUsuario === 2;
 ?>
 
-<?php if ($isMesario): ?>
-<style>
-    .status-switch.form-check-input:checked { background-color: #ed1c24; border-color: #ed1c24; }
-    .status-switch.form-check-input:focus { border-color: #ed1c24; box-shadow: 0 0 0 0.2rem rgba(237, 28, 36, 0.25); }
-    .style-card { transition: transform 0.2s ease, box-shadow 0.2s ease; }
-    .style-card:hover, .style-card:focus-within { transform: translateY(-2px); box-shadow: 0 .5rem 1rem rgba(0,0,0,.15)!important; }
-</style>
-<?php endif; ?>
+
 
 <!-- main mobile -->
 <main class="d-md-none" style="<?= $isMesario ? '' : 'margin-bottom: 120px;' ?>">
@@ -334,12 +327,7 @@ window.addEventListener('load', listarInterclasses);
 <?php endif; ?>
 </script>
 
-<?php if ($isAdmin): ?>
-<style>
-    .status-switch.form-check-input:checked { background-color: #ed1c24; border-color: #ed1c24; }
-    .status-switch.form-check-input:focus { border-color: #ed1c24; box-shadow: 0 0 0 0.2rem rgba(237, 28, 36, 0.25); }
-</style>
-<?php endif; ?>
+
 
 <?php
 include 'componentes/nav.php';

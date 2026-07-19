@@ -8,12 +8,7 @@ include 'componentes/header.php';
 $paginaAtiva = 'dashboard';
 ?>
 
-<style>
-    .colaborador-card {
-        border: 1px solid #ececec;
-        border-left: 4px solid #ed1c24;
-    }
-</style>
+
 
 <main class="d-md-none" style="margin-bottom: 120px;">
     <div class="container mt-3">

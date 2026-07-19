@@ -8,22 +8,7 @@ include 'componentes/header.php';
 $paginaAtiva = 'dashboard';
 ?>
 
-<style>
-    .jogo-card {
-        transition: transform 0.2s ease, box-shadow 0.2s ease;
-        cursor: pointer;
-    }
-    .jogo-card:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 .5rem 1rem rgba(0,0,0,.15)!important;
-    }
-    .status-badge {
-        padding: 4px 10px;
-        border-radius: 999px;
-        font-size: .8rem;
-        font-weight: 600;
-    }
-</style>
+
 
 <main class="container py-4 main-desktop-layout">
     <h1 class="fs-2 mb-1" id="listaTitulo">Jogos</h1>

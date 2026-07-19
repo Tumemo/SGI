@@ -8,26 +8,7 @@ include 'componentes/header.php';
 $paginaAtiva = 'dashboard';
 ?>
 
-<style>
-    /* Estilização dos Cards e Barras */
-    .btn-categoria { transition: all 0.2s; border-radius: 20px !important; min-width: 120px; }
-    .btn-categoria.ativo { 
-        background-color: #ed1c24 !important; 
-        color: white !important; 
-        border-color: #ed1c24 !important;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-    }
-    .card-turma { transition: transform 0.2s; border-left: 5px solid #dee2e6; }
-    .card-turma:hover { transform: translateY(-3px); }
-    .posicao-1 { border-left-color: #FFD700 !important; } /* Ouro */
-    .posicao-2 { border-left-color: #C0C0C0 !important; } /* Prata */
-    .posicao-3 { border-left-color: #CD7F32 !important; } /* Bronze */
-    
-    .barra-fundo { background-color: #f0f0f0; height: 8px; border-radius: 10px; overflow: hidden; }
-    .barra-progresso { background-color: #ed1c24; height: 100%; transition: width 0.8s ease; }
-    
-    .badge-pontos { background-color: #f8f9fa; color: #333; border: 1px solid #ddd; }
-</style>
+
 
 <main class="container d-md-none py-4" style="margin-bottom: 100px;">
     <div id="msgMob"></div>

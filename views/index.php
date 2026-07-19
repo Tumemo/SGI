@@ -7,10 +7,7 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
     <link rel="stylesheet" href="./src/styles/style.css">
     <title>SGI - Login</title>
-    <style>
-        #msg_erro_mobile, #msg_erro_desktop { font-size: 0.85rem; margin-top: 10px; }
-        .cursor-pointer { cursor: pointer; }
-    </style>
+
 </head>
 <body>
     <main class="d-md-none">

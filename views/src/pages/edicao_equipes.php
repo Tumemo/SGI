@@ -74,22 +74,7 @@ $paginaAtiva = 'dashboard';
     </div>
 </div>
 
-<style>
-    .btn-filter-cat {
-        color: #ed1c24;
-        border-color: #ed1c24;
-        background: transparent;
-    }
-    .btn-filter-cat:hover,
-    .btn-filter-cat.active {
-        color: #fff;
-        background-color: #ed1c24;
-        border-color: #ed1c24;
-    }
-    .btn-filter-cat:focus-visible {
-        box-shadow: 0 0 0 0.25rem rgba(237, 28, 36, 0.5);
-    }
-</style>
+
 <script>
     const API = '../../../api/';
     const params = new URLSearchParams(window.location.search);

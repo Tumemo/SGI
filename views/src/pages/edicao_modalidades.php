@@ -369,17 +369,7 @@ $paginaAtiva = 'dashboard';
     });
 </script>
 
-<style>
-    /* Efeito sutil para os cards no desktop quando passa o mouse */
-    .transition-hover {
-        transition: all 0.2s ease-in-out;
-    }
 
-    .transition-hover:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 .5rem 1rem rgba(0, 0, 0, .08) !important;
-    }
-</style>
 
 <?php
 include 'componentes/nav.php';

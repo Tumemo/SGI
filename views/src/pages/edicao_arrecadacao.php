@@ -49,8 +49,8 @@ $isAdmin = $nivelUsuario === 0;
                     <i class="bi bi-arrow-left-circle fs-5"></i> <span id="nomeInterclasseArrecadacao">Interclasse</span>
                 </a>
                 <?php if ($isAdmin): ?>
-                <button type="button" class="btn btn-outline-secondary d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2" data-bs-toggle="modal" data-bs-target="#modalHistoricoArrecadacao" onclick="carregarHistorico()" style="border-radius: 6px;">
-                    <i class="bi bi-gear fs-5"></i> Histórico
+                <button type="button" class="btn btn-outline-secondary d-inline-flex align-items-center gap-2 fw-bold mb-4 px-2 py-1" data-bs-toggle="modal" data-bs-target="#modalHistoricoArrecadacao" onclick="carregarHistorico()" style="border-radius: 6px;">
+                    <i class="bi bi-gear fs-6"></i> Histórico
                 </button>
                 <?php endif; ?>
             </div>

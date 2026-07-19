@@ -61,13 +61,4 @@ $onclickSair = "onclick=\"return confirm('Deseja realmente sair?')\"";
     </ul>
 </nav>
 
-<style>
-    .nav li a:hover {
-        opacity: 1 !important;
-        transition: 0.3s;
-    }
-    .active-nav-icon {
-        opacity: 1 !important;
-        filter: drop-shadow(0 0 4px rgba(255,255,255,0.5));
-    }
-</style>
+

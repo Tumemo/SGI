@@ -9,46 +9,7 @@ include 'componentes/header.php';
 $paginaAtiva = 'pontuacoes';
 ?>
 
-<style>
-    .section-title {
-        font-size: 1.7rem;
-        font-weight: 700;
-        color: #1f2937;
-    }
 
-    .card-custom {
-        background: white;
-        border: none;
-        border-radius: 22px;
-        box-shadow: 0 6px 18px rgba(0,0,0,.06);
-    }
-
-    .pontuacao-card {
-        transition: .2s ease;
-        min-height: 180px;
-    }
-
-    .pontuacao-card:hover {
-        transform: translateY(-4px);
-    }
-
-    .pontuacao-numero {
-        font-size: 3rem;
-        font-weight: 700;
-        color: #111827;
-    }
-
-    .btn-pontos {
-        border: none;
-        background: transparent;
-        font-size: 1.5rem;
-        color: #6b7280;
-    }
-
-    .btn-pontos:hover {
-        color: #dc2626;
-    }
-</style>
 
 <main class="d-md-none" style="margin-bottom: 120px;">
     <div class="container-fluid px-3 py-4">

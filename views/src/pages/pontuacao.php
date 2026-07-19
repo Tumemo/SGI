@@ -8,57 +8,7 @@ include 'componentes/header.php';
 $paginaAtiva = 'dashboard';
 ?>
 
-<style>
-    .section-title {
-        font-size: 1.7rem;
-        font-weight: 700;
-        color: #1f2937;
-    }
 
-    .card-custom {
-        background: white;
-        border: none;
-        border-radius: 22px;
-        box-shadow: 0 6px 18px rgba(0,0,0,.06);
-    }
-
-    .filtro-box {
-        background: white;
-        border-radius: 20px;
-        padding: 24px;
-        box-shadow: 0 6px 18px rgba(0,0,0,.05);
-    }
-
-    .status {
-        padding: 6px 12px;
-        border-radius: 999px;
-        font-size: .8rem;
-        font-weight: 600;
-    }
-
-    .status-success {
-        background: #dcfce7;
-        color: #166534;
-    }
-
-    .btn-gerar {
-        background: #E30613;
-        border: none;
-        padding: 12px 24px;
-        border-radius: 5px;
-        color: white;
-        font-weight: 600;
-    }
-
-    .btn-gerar:hover {
-        background: #bb0812;
-    }
-
-    .search-input {
-        border-radius: 12px;
-        padding: 10px 14px;
-    }
-</style>
 
 <main class="main-desktop-layout py-4">
     <div class="container-fluid" style="max-width: 92%;">

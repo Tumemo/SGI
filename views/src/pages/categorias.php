@@ -11,12 +11,7 @@ $isColaborador = $nivelUsuario === 1;
 $isMesario = $nivelUsuario === 2;
 ?>
 
-<style>
-    .categoria-item--selected {
-        border: 2px solid #ed1c24 !important;
-        box-shadow: 0 0.25rem 0.75rem rgba(237, 28, 36, 0.12) !important;
-    }
-</style>
+
 
 <!-- main mobile -->
 <main class="position-relative d-md-none" style="margin-bottom: 120px;">

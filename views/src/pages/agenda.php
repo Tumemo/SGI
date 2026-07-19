@@ -7,23 +7,7 @@ include 'componentes/head.php';
 include 'componentes/header.php';
 $paginaAtiva = 'agenda';
 ?>
-<style>
-    .cal-dia-marcado {
-        box-shadow: inset 0 -3px 0 var(--inter-red, #ed1c24);
-        font-weight: 500;
-    }
-    .cal-dia-hoje.cal-dia-marcado {
-        border-radius: 50%;
-    }
-    .jogo-card-hover {
-        transition: transform 0.2s ease, box-shadow 0.2s ease;
-        cursor: pointer;
-    }
-    .jogo-card-hover:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 .5rem 1rem rgba(0,0,0,.15)!important;
-    }
-</style>
+
 
 <main class="bg-light d-md-none p-3" style="padding-top: 5rem; padding-bottom: 5.5rem;">
     <div class="card border-0 shadow-sm rounded-4 mx-auto mb-4" style="max-width: 450px;">

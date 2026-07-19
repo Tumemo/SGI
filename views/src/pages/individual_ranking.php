@@ -8,47 +8,7 @@ include 'componentes/header.php';
 $paginaAtiva = 'dashboard';
 ?>
 
-<style>
-    .podium-card {
-        background: white;
-        border-radius: 22px;
-        border: none;
-        box-shadow: 0 6px 18px rgba(0,0,0,.06);
-    }
-    .podium-card .pos-1 {
-        border-left: 5px solid #ffd700;
-    }
-    .podium-card .pos-2 {
-        border-left: 5px solid #c0c0c0;
-    }
-    .podium-card .pos-3 {
-        border-left: 5px solid #cd7f32;
-    }
-    .podium-place {
-        font-weight: 700;
-        color: #1f2937;
-    }
-    .medal {
-        font-size: 1.4rem;
-    }
-    .select-wrapper {
-        background: white;
-        border-radius: 20px;
-        padding: 24px;
-        box-shadow: 0 6px 18px rgba(0,0,0,.05);
-    }
-    .btn-salvar {
-        background: #E30613;
-        border: none;
-        padding: 12px 32px;
-        border-radius: 5px;
-        color: white;
-        font-weight: 600;
-    }
-    .btn-salvar:hover {
-        background: #bb0812;
-    }
-</style>
+
 
 <main class="main-desktop-layout py-4">
     <div class="container-fluid" style="max-width: 720px;">
