@@ -79,7 +79,7 @@ $isMesario = $nivelUsuario === 2;
                 <picture><img src="../../public/icons/arrow-right.svg" alt="Seta"></picture>
             </div>
         </a>
-        <a href="./arrecadacoes.php" id="linkArrecadacoes" class="text-decoration-none text-black">
+        <a href="./edicao_arrecadacao.php" id="linkArrecadacoes" class="text-decoration-none text-black">
             <div class="d-flex m-auto justify-content-between align-items-center shadow py-3 px-4 mb-3 border border-1 rounded-3" style="width: 90%;">
                 <i class="bi bi-basket fs-2"></i>
                 <h2 class="m-0 fs-3 w-100 px-3">Arrecadações</h2>
@@ -221,7 +221,7 @@ $isMesario = $nivelUsuario === 2;
                 </a>
             </div>
             <div class="col-12 col-md-6 col-lg-4">
-                <a href="arrecadacoes.php" id="linkArrecadacoes" class="dash-card">
+                <a href="edicao_arrecadacao.php" id="linkArrecadacoes" class="dash-card">
                     <div class="dash-card-red-corner"></div>
                     <div class="dash-card-header">
                         <div class="dash-card-icon"><i class="bi bi-basket"></i></div>
@@ -436,7 +436,7 @@ $isMesario = $nivelUsuario === 2;
     document.querySelectorAll('#linkPontuacoes').forEach(link => { link.href = `./pontuacoes.php?id=${idInterclasse}`; });
     document.querySelectorAll('#linkLocais').forEach(link => { link.href = `./locais.php?id=${idInterclasse}`; });
     document.querySelectorAll('#linkColaboradores').forEach(link => { link.href = `./colaboradores.php?id=${idInterclasse}`; });
-    document.querySelectorAll('#linkArrecadacoes').forEach(link => { link.href = `./arrecadacoes.php?id=${idInterclasse}`; });
+    document.querySelectorAll('#linkArrecadacoes').forEach(link => { link.href = `./edicao_arrecadacao.php?id=${idInterclasse}`; });
     document.querySelectorAll('#linkCategorias').forEach(link => { link.href = `./categorias.php?id=${idInterclasse}`; });
     document.querySelectorAll('#linkTurmas').forEach(link => { link.href = `./turmas.php?id=${idInterclasse}`; });
     document.querySelectorAll('#linkEquipes').forEach(link => { link.href = `./edicao_equipes.php?id=${idInterclasse}`; });
@@ -446,7 +446,7 @@ $isMesario = $nivelUsuario === 2;
     <?php if ($isAdmin): ?>
     document.querySelectorAll('#linkModalidades').forEach(link => { link.href = `./edicao_modalidades.php?id=${idInterclasse}&modo=view`; });
     document.querySelectorAll('#linkPontuacoes').forEach(link => { link.href = `./edicao_pontuacao.php?id=${idInterclasse}&modo=view`; });
-    document.querySelectorAll('#linkArrecadacoes').forEach(link => { link.href = `./edicao_arrecadacao.php?id=${idInterclasse}&modo=view`; });
+    document.querySelectorAll('#linkArrecadacoes').forEach(link => { link.href = `./edicao_arrecadacao.php?id=${idInterclasse}`; });
     document.querySelectorAll('#linkCategorias').forEach(link => { link.href = `./edicao_categorias.php?id=${idInterclasse}&modo=view`; });
     document.querySelectorAll('#linkLocais').forEach(link => { link.href = `./edicao_locais.php?id=${idInterclasse}`; });
     document.querySelectorAll('#linkAgenda').forEach(link => { link.href = `./edicao_agenda.php?id=${idInterclasse}&modo=view`; });

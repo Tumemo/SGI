@@ -9,7 +9,7 @@ $todosItens = [
     'equipes'       => ['label' => 'Equipes',      'icon' => 'bi-diagram-3',         'url' => './edicao_equipes.php',       'niveis' => [0, 1]],
     'modalidades'   => ['label' => 'Modalidades',  'icon' => 'bi-trophy',            'url' => './modalidades.php',   'niveis' => [0, 1]],
     'pontuacoes'    => ['label' => 'Pontuações',   'icon' => 'bi-award',             'url' => './pontuacoes.php',    'niveis' => [0, 1]],
-    'arrecadacoes'  => ['label' => 'Arrecadações', 'icon' => 'bi-basket',            'url' => './arrecadacoes.php',  'niveis' => [0, 1]],
+    'arrecadacoes'  => ['label' => 'Arrecadações', 'icon' => 'bi-basket',            'url' => './edicao_arrecadacao.php',  'niveis' => [0, 1]],
     'colaboradores' => ['label' => 'Colaboradores','icon' => 'bi-people',            'url' => './colaboradores.php', 'niveis' => [0]],
     'agenda'        => ['label' => 'Agenda',       'icon' => 'bi-calendar3',         'url' => './agenda.php',        'niveis' => [2]],
     'chaveamentos'  => ['label' => 'Chaveamentos', 'icon' => 'bi-diagram-3-fill',    'url' => './pontuacao.php',     'niveis' => [2]],

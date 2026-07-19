@@ -359,6 +359,41 @@ CREATE TABLE IF NOT EXISTS `sgi`.`usuarios_has_interclasses` (
 ENGINE = InnoDB
 DEFAULT CHARACTER SET = utf8;
 
+-- -----------------------------------------------------
+-- Table `sgi`.`historico_arrecadacoes`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `sgi`.`historico_arrecadacoes` (
+  `id_historico` INT(11) NOT NULL AUTO_INCREMENT,
+  `id_turma` INT(11) NOT NULL,
+  `id_interclasse` INT(11) NOT NULL,
+  `quantidade` DECIMAL(10,2) NOT NULL,
+  `pontos_adicionados` INT(11) NOT NULL,
+  `data_registro` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `registrado_por` INT(11) NULL DEFAULT NULL,
+  `status_historico` ENUM('1','0') NOT NULL DEFAULT '1',
+  PRIMARY KEY (`id_historico`),
+  INDEX `fk_hist_arrec_turmas_idx` (`id_turma` ASC),
+  INDEX `fk_hist_arrec_interclasses_idx` (`id_interclasse` ASC),
+  INDEX `fk_hist_arrec_usuarios_idx` (`registrado_por` ASC),
+  CONSTRAINT `fk_hist_arrec_turmas`
+    FOREIGN KEY (`id_turma`)
+    REFERENCES `sgi`.`turmas` (`id_turma`)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION,
+  CONSTRAINT `fk_hist_arrec_interclasses`
+    FOREIGN KEY (`id_interclasse`)
+    REFERENCES `sgi`.`interclasses` (`id_interclasse`)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION,
+  CONSTRAINT `fk_hist_arrec_usuarios`
+    FOREIGN KEY (`registrado_por`)
+    REFERENCES `sgi`.`usuarios` (`id_usuario`)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION)
+ENGINE = InnoDB
+DEFAULT CHARACTER SET = utf8mb4;
+
+
 USE `sgi`;
 
 DELIMITER $$

@@ -27,7 +27,7 @@ window.SGIInterclasse = (() => {
         modalidades: './modalidades.php',
         pontuacoes: './pontuacoes.php',
         locais: './locais.php',
-        arrecadacoes: './arrecadacoes.php',
+        arrecadacoes: './edicao_arrecadacao.php',
         colaboradores: './colaboradores.php',
         agenda: './agenda.php',
         chaveamentos: './pontuacao.php',
