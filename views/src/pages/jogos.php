@@ -3,148 +3,345 @@ $tituloPagina = 'SGI - Placar';
 $titulo = 'Placar';
 $mostrarVoltar = true;
 $urlVoltar = './dashboard.php';
+
+$cssExtra = '
+/* ==========================================================
+   MATCH CENTER — Premium Sports UI
+   ========================================================== */
+
+/* --- Page Layout --- */
+.mc-page{max-width:1100px;margin:0 auto;width:100%}
+
+/* --- Header --- */
+.mc-header{display:flex;align-items:flex-start;justify-content:space-between;gap:1rem;margin-bottom:2rem;flex-wrap:wrap}
+.mc-back-link{display:inline-flex;align-items:center;gap:.5rem;color:#6b7280;text-decoration:none;font-size:.9rem;font-weight:600;transition:color .2s;padding:.5rem .75rem;border-radius:10px;margin:-.5rem -.75rem}
+.mc-back-link:hover{color:#111827;background:rgba(0,0,0,.04)}
+.mc-back-link i{font-size:1.1rem;transition:transform .2s}
+.mc-back-link:hover i{transform:translateX(-3px)}
+.mc-match-info{display:flex;flex-direction:column;gap:.25rem;flex:1;min-width:0}
+.mc-match-title{font-size:1.6rem;font-weight:800;color:#111827;letter-spacing:-.03em;line-height:1.2}
+.mc-match-meta{font-size:.85rem;color:#9ca3af;font-weight:500;letter-spacing:.01em}
+.mc-header-status{flex-shrink:0}
+
+/* --- Status Badges --- */
+.mc-badge{display:inline-flex;align-items:center;gap:.5rem;padding:.45rem .9rem;border-radius:999px;font-size:.8rem;font-weight:700;letter-spacing:.02em;white-space:nowrap}
+.mc-badge-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.mc-badge--live{background:#dcfce7;color:#166534}
+.mc-badge--live .mc-badge-dot{background:#16a34a}
+.mc-badge-dot--pulse{animation:dot-pulse 1.5s ease-in-out infinite}
+.mc-badge--finished{background:#f3f4f6;color:#6b7280}
+.mc-badge--finished .mc-badge-dot{background:#9ca3af}
+.mc-badge--scheduled{background:#fef3c7;color:#92400e}
+.mc-badge--scheduled .mc-badge-dot{background:#f59e0b}
+.mc-badge--paused{background:#dbeafe;color:#1e40af}
+.mc-badge--paused .mc-badge-dot{background:#3b82f6}
+
+/* --- Actions --- */
+.mc-actions{display:flex;flex-wrap:wrap;gap:.75rem;margin-bottom:1.5rem;align-items:center}
+.mc-action-btn{display:inline-flex;align-items:center;gap:.5rem;padding:.7rem 1.4rem;border-radius:12px;font-size:.9rem;font-weight:700;border:none;cursor:pointer;transition:all .2s ease;letter-spacing:-.01em}
+.mc-action-btn i{font-size:1rem}
+.mc-action-btn--start{background:#E30613;color:#fff;box-shadow:0 4px 14px rgba(227,6,19,.3)}
+.mc-action-btn--start:hover{background:#bb0812;box-shadow:0 6px 20px rgba(227,6,19,.4);transform:translateY(-1px)}
+.mc-action-btn--finish{background:#fff;color:#E30613;border:2px solid #fecdd3;box-shadow:0 2px 8px rgba(0,0,0,.04)}
+.mc-action-btn--finish:hover{background:#fef2f2;border-color:#E30613;transform:translateY(-1px)}
+.mc-action-btn:active{transform:scale(.97)!important}
+
+/* --- Scoreboard Card --- */
+#placar-grid{background:#fff;border-radius:24px;box-shadow:0 4px 24px rgba(0,0,0,.06);border:1px solid #f3f4f6;padding:2.5rem 2rem 2rem;display:flex;flex-direction:column;align-items:center;gap:0;position:relative;overflow:hidden;transition:box-shadow .3s}
+#placar-grid.score-blocked::after{content:"Tempo esgotado";position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.6);color:#fff;font-size:1.25rem;font-weight:800;border-radius:24px;backdrop-filter:blur(4px);z-index:5;letter-spacing:.02em}
+
+/* --- Timer Section --- */
+.mc-timer-section{text-align:center;padding-bottom:1.75rem;width:100%;border-bottom:1px solid #f3f4f6;margin-bottom:1.75rem}
+.mc-timer-time{font-size:3.5rem;font-weight:800;color:#111827;font-variant-numeric:tabular-nums;letter-spacing:.03em;line-height:1;transition:color .3s,text-shadow .3s}
+.mc-timer-time.timer-expired{color:#E30613;text-shadow:0 0 30px rgba(227,6,19,.25);animation:timer-pulse .8s ease-in-out infinite alternate}
+.mc-timer-time--idle{color:#d1d5db}
+.mc-timer-controls{display:flex;align-items:center;justify-content:center;gap:.75rem;margin-top:.75rem}
+.mc-duration-select{appearance:none;-webkit-appearance:none;background:#f9fafb url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'12\' height=\'12\' viewBox=\'0 0 12 12\'%3E%3Cpath fill=\'%236b7280\' d=\'M2 4l4 4 4-4\'/%3E%3C/svg%3E") no-repeat right .75rem center;border:1.5px solid #e5e7eb;border-radius:8px;padding:.45rem 2rem .45rem .85rem;font-size:.8rem;font-weight:600;color:#374151;cursor:pointer;transition:border-color .2s,box-shadow .2s}
+.mc-duration-select:focus{outline:none;border-color:#E30613;box-shadow:0 0 0 3px rgba(227,6,19,.1)}
+.mc-duration-select:disabled{opacity:.4;cursor:not-allowed}
+.mc-pause-btn{padding:.45rem 1rem;border-radius:8px;border:1.5px solid #e5e7eb;background:#fff;color:#374151;font-size:.8rem;font-weight:600;cursor:pointer;transition:all .2s}
+.mc-pause-btn:hover{border-color:#E30613;color:#E30613;background:#fef2f2}
+
+/* --- Teams Row --- */
+.mc-teams{display:flex;align-items:center;justify-content:center;gap:1.5rem;width:100%}
+.mc-team{flex:1;text-align:center;max-width:340px;padding:1rem 0}
+.mc-team-name{font-size:1.2rem;font-weight:700;color:#1f2937;margin-bottom:1rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.3}
+.mc-score-row{display:flex;align-items:center;justify-content:center;gap:1rem}
+.mc-score{font-size:6.5rem;font-weight:800;color:#111827;line-height:1;min-width:5rem;text-align:center;font-variant-numeric:tabular-nums;letter-spacing:-.03em;transition:color .2s}
+.mc-vs{display:flex;align-items:center;justify-content:center;padding:0 .5rem;flex-shrink:0}
+.mc-vs span{font-size:1.6rem;font-weight:800;color:#d1d5db;letter-spacing:.08em}
+
+/* --- Score Buttons --- */
+.btn-score{width:56px;height:56px;border-radius:16px;border:none;font-size:1.5rem;font-weight:700;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;transition:all .15s ease;line-height:1;flex-shrink:0}
+.btn-score:active:not(:disabled){transform:scale(.85)}
+.btn-score:disabled{opacity:.25;cursor:not-allowed}
+.btn-score-minus{background:#f3f4f6;color:#9ca3af}
+.btn-score-minus:hover:not(:disabled){background:#e5e7eb;color:#6b7280}
+.btn-score-plus{background:#E30613;color:#fff;box-shadow:0 4px 14px rgba(227,6,19,.3)}
+.btn-score-plus:hover:not(:disabled){background:#dc2626;box-shadow:0 6px 18px rgba(227,6,19,.4);transform:translateY(-1px)}
+.btn-score-plus:active:not(:disabled){transform:scale(.85)!important;box-shadow:0 2px 8px rgba(227,6,19,.3)!important}
+
+/* --- Score Animation --- */
+@keyframes score-bump{0%{transform:scale(1)}40%{transform:scale(1.15)}100%{transform:scale(1)}}
+.score-animate{animation:score-bump .3s cubic-bezier(.4,0,.2,1)}
+
+/* --- Quick Stats --- */
+.mc-quick-stats{display:flex;justify-content:center;gap:.75rem;margin-top:1.5rem;flex-wrap:wrap}
+.mc-stat-chip{display:inline-flex;align-items:center;gap:.4rem;padding:.4rem .85rem;background:#f9fafb;border:1px solid #f3f4f6;border-radius:999px;font-size:.78rem;font-weight:600;color:#6b7280}
+.mc-stat-chip i{font-size:.85rem;color:#9ca3af}
+.mc-stat-chip-label{color:#9ca3af;font-weight:500}
+
+/* --- Section Headers --- */
+.mc-section-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem;margin-top:2.5rem}
+.mc-section-title{font-size:1.1rem;font-weight:800;color:#111827;letter-spacing:-.02em;display:flex;align-items:center;gap:.5rem;margin:0}
+.mc-section-title i{color:#E30613;font-size:1.1rem}
+
+/* --- Timeline --- */
+.mc-timeline{position:relative;padding-left:1.5rem}
+.tl-event{display:flex;gap:1rem;padding-bottom:1.25rem;position:relative;animation:event-slide-in .35s ease-out}
+.tl-event:last-child{padding-bottom:0}
+.tl-event-track{display:flex;flex-direction:column;align-items:center;flex-shrink:0;width:16px}
+.tl-event-dot{width:12px;height:12px;border-radius:50%;background:#d1d5db;z-index:1;flex-shrink:0;margin-top:6px;transition:transform .2s}
+.tl-event:hover .tl-event-dot{transform:scale(1.3)}
+.tl-event-line{width:2px;flex:1;background:#e5e7eb;margin-top:4px}
+.tl-event--last .tl-event-line{display:none}
+.tl-event--amarelo .tl-event-dot{background:#f59e0b;box-shadow:0 0 0 3px rgba(245,158,11,.15)}
+.tl-event--vermelho .tl-event-dot{background:#ef4444;box-shadow:0 0 0 3px rgba(239,68,68,.15)}
+.tl-event--suspensao .tl-event-dot{background:#8b5cf6;box-shadow:0 0 0 3px rgba(139,92,246,.15)}
+.tl-event-body{flex:1;background:#fff;border-radius:14px;padding:.9rem 1.1rem;border:1px solid #f3f4f6;box-shadow:0 1px 3px rgba(0,0,0,.03);transition:box-shadow .2s,transform .2s;min-width:0}
+.tl-event-body:hover{box-shadow:0 4px 14px rgba(0,0,0,.07);transform:translateY(-1px)}
+.tl-event-top{display:flex;align-items:center;gap:.5rem;margin-bottom:.35rem;flex-wrap:wrap}
+.tl-event-icon{width:28px;height:28px;border-radius:8px;display:inline-flex;align-items:center;justify-content:center;font-size:.85rem;color:#fff;flex-shrink:0}
+.tl-event--amarelo .tl-event-icon{background:#f59e0b}
+.tl-event--vermelho .tl-event-icon{background:#ef4444}
+.tl-event--suspensao .tl-event-icon{background:#8b5cf6}
+.tl-event-label{font-size:.85rem;font-weight:700;color:#1f2937}
+.tl-badge{font-size:.7rem;font-weight:700;padding:.15rem .5rem;border-radius:999px;background:#fef2f2;color:#dc2626}
+.tl-event-player{font-size:.85rem;font-weight:600;color:#374151;margin-bottom:.15rem}
+.tl-event-desc{font-size:.8rem;color:#9ca3af;line-height:1.4}
+.tl-event-actions{display:flex;gap:.35rem;margin-top:.5rem;opacity:0;transition:opacity .2s}
+.tl-event:hover .tl-event-actions{opacity:1}
+.tl-action-btn{width:30px;height:30px;border-radius:8px;border:none;display:inline-flex;align-items:center;justify-content:center;font-size:.8rem;cursor:pointer;transition:all .15s}
+.tl-action-btn--edit{background:#f3f4f6;color:#6b7280}
+.tl-action-btn--edit:hover{background:#dbeafe;color:#2563eb}
+.tl-action-btn--delete{background:#f3f4f6;color:#6b7280}
+.tl-action-btn--delete:hover{background:#fef2f2;color:#dc2626}
+.mc-timeline-empty{text-align:center;padding:3rem 1.5rem;color:#9ca3af}
+.mc-timeline-empty i{font-size:2.5rem;color:#d1d5db;margin-bottom:.75rem;display:block}
+.mc-timeline-empty p{font-size:.9rem;font-weight:500;margin:0}
+.mc-timeline-empty--error i{color:#fca5a5}
+
+/* --- Artilheiro --- */
+.mc-artilheiro-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:1rem}
+.mc-artilheiro-card{background:#fff;border-radius:14px;padding:1.25rem;border:1px solid #f3f4f6;box-shadow:0 1px 3px rgba(0,0,0,.03);transition:box-shadow .2s,transform .2s}
+.mc-artilheiro-card:hover{box-shadow:0 4px 14px rgba(0,0,0,.07);transform:translateY(-2px)}
+
+/* --- FAB --- */
+.mc-fab{position:fixed;bottom:2rem;right:2rem;width:62px;height:62px;border-radius:50%;background:#E30613;color:#fff;border:none;box-shadow:0 6px 24px rgba(227,6,19,.4);font-size:1.5rem;display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:1030;transition:all .25s cubic-bezier(.4,0,.2,1)}
+.mc-fab:hover{transform:scale(1.08) translateY(-2px);box-shadow:0 10px 32px rgba(227,6,19,.5)}
+.mc-fab:active{transform:scale(.95);box-shadow:0 4px 16px rgba(227,6,19,.4)}
+.mc-fab i{line-height:1;transition:transform .2s}
+.mc-fab:hover i{transform:rotate(90deg)}
+
+/* --- Error / Loading --- */
+.mc-error{background:#fef2f2;border:1px solid #fecdd3;color:#991b1b;padding:1rem 1.25rem;border-radius:14px;font-size:.9rem;font-weight:500;margin-bottom:1rem}
+.mc-loading{text-align:center;padding:4rem 2rem;color:#9ca3af;font-size:.95rem;font-weight:500}
+.mc-loading::before{content:"";display:block;width:36px;height:36px;border:3px solid #e5e7eb;border-top-color:#E30613;border-radius:50%;margin:0 auto 1rem;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.mc-empty{text-align:center;padding:3rem;color:#9ca3af;font-size:.9rem;font-weight:500}
+
+/* --- Modal Restyling --- */
+.mc-modal .modal-content{border-radius:20px;border:none;box-shadow:0 20px 60px rgba(0,0,0,.12);overflow:hidden}
+.mc-modal .modal-header{padding:1.5rem 1.5rem .75rem;border-bottom:none}
+.mc-modal .modal-title{font-size:1.15rem;font-weight:800;letter-spacing:-.02em;color:#111827}
+.mc-modal .modal-body{padding:.5rem 1.5rem 1rem}
+.mc-modal .modal-footer{padding:.5rem 1.5rem 1.5rem;border-top:none}
+.mc-modal .form-label{font-size:.75rem;text-transform:uppercase;letter-spacing:.06em;color:#9ca3af;font-weight:700;margin-bottom:.35rem}
+.mc-modal .form-select,.mc-modal .form-control{border-radius:10px;font-size:.875rem;padding:.6rem .85rem;border:1.5px solid #e5e7eb;transition:border-color .2s,box-shadow .2s;background-color:#fafbfc}
+.mc-modal .form-select:focus,.mc-modal .form-control:focus{border-color:#E30613;box-shadow:0 0 0 3px rgba(227,6,19,.08);background-color:#fff}
+.mc-modal .btn-close{opacity:.4;transition:opacity .2s}
+.mc-modal .btn-close:hover{opacity:.8}
+.mc-modal .ocorrencia-tipo-option{border-radius:10px;padding:.5rem .9rem;font-size:.82rem;font-weight:600;border:1.5px solid #e5e7eb;transition:all .2s}
+.mc-modal .ocorrencia-tipo-option:hover{transform:translateY(-1px)}
+.mc-tipo-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:.5rem}
+
+/* --- Animations --- */
+@keyframes dot-pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(.7)}}
+@keyframes timer-pulse{0%{opacity:1}100%{opacity:.55}}
+@keyframes event-slide-in{0%{opacity:0;transform:translateY(12px)}100%{opacity:1;transform:translateY(0)}}
+@keyframes alert-slide-in{0%{opacity:0;transform:translateY(-8px)}100%{opacity:1;transform:translateY(0)}}
+@keyframes fab-enter{0%{opacity:0;transform:scale(.5)}100%{opacity:1;transform:scale(1)}}
+
+/* --- Alert Second Yellow --- */
+#alerta-segundo-amarelo .alert{animation:alert-slide-in .35s ease-out;border-left:4px solid #E30613!important;border-radius:14px!important;background:#fef2f2!important;color:#991b1b!important}
+
+/* --- Responsive --- */
+@media(max-width:767px){
+    #placar-grid{padding:1.75rem 1rem 1.25rem;border-radius:20px}
+    .mc-timer-time{font-size:2.5rem}
+    .mc-teams{flex-direction:column;gap:.5rem}
+    .mc-team{max-width:100%;padding:.5rem 0}
+    .mc-team-name{font-size:1.05rem;margin-bottom:.5rem}
+    .mc-score{font-size:4.5rem;min-width:auto}
+    .mc-vs{padding:.25rem 0}
+    .mc-vs span{font-size:1.2rem}
+    .btn-score{width:48px;height:48px;border-radius:14px;font-size:1.3rem}
+    .mc-score-row{gap:.75rem}
+    .mc-header{flex-direction:column;gap:.75rem}
+    .mc-header-status{align-self:flex-start}
+    .mc-fab{bottom:5.5rem;right:1.25rem;width:56px;height:56px;font-size:1.3rem}
+    .mc-section-header{margin-top:2rem}
+    .mc-timeline{padding-left:1rem}
+    .tl-event{gap:.75rem}
+    .tl-event-actions{opacity:1}
+    .mc-quick-stats{gap:.5rem}
+    .mc-stat-chip{padding:.35rem .7rem;font-size:.72rem}
+    .mc-modal .modal-content{margin:.5rem;border-radius:16px}
+    .mc-modal .modal-header{padding:1.25rem 1.25rem .5rem}
+    .mc-modal .modal-body{padding:.5rem 1.25rem .75rem}
+    .mc-modal .modal-footer{padding:.5rem 1.25rem 1.25rem}
+    .mc-tipo-grid{grid-template-columns:repeat(2,1fr)}
+    .mc-modal .ocorrencia-tipo-option{padding:.45rem .75rem;font-size:.78rem}
+    .mc-match-title{font-size:1.3rem}
+}
+
+@media(max-width:400px){
+    .mc-score{font-size:3.5rem}
+    .mc-timer-time{font-size:2rem}
+    .btn-score{width:44px;height:44px;border-radius:12px;font-size:1.15rem}
+}
+
+/* --- Section 14 Override (compatibility) --- */
+.time-card,.timer-wrap,.timer-display,.timer-select,.score-display,.timer-expired,.timer-pulse,.ocorrencias-card,.ocorrencia-item,.ocorrencia-tipo,.artilheiro-select-wrap,.artilheiro-list,.score-blocked,.container-principal,.section-meta,.section-header,.section-title,#placar-meta,#placar-acoes,#artilheiro-section .row.g-3>div,#alerta-segundo-amarelo .alert,.page-header,.page-title{all:unset}
+';
+
 include 'componentes/head.php';
 include 'componentes/header.php';
 $paginaAtiva = 'dashboard';
 ?>
 
+<main class="main-desktop-layout">
+    <div class="container-principal mc-page">
 
-
-<main class="container py-4 main-desktop-layout">
-    <div class="container-principal">
-    <div class="page-header d-flex flex-column align-items-start gap-3 mb-4">
-        <a href="./edicao_agenda.php"
-           class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold mb-3 px-3 py-2 border-0 shadow-sm text-decoration-none rounded-3"
-           data-back-link="true">
-            <i class="bi bi-arrow-left-circle"></i>
-            Voltar à agenda
-        </a>
-        <div class="d-flex align-items-center gap-2 text-secondary fw-bold">
-            <i class="bi bi-record-circle"></i>
-            <span id="placar-titulo-jogo" class="page-title">Placar</span>
+        <div class="mc-header">
+            <div class="mc-match-info">
+                <a href="./edicao_agenda.php" class="mc-back-link" data-back-link="true">
+                    <i class="bi bi-arrow-left"></i>
+                    <span>Voltar</span>
+                </a>
+                <h1 id="placar-titulo-jogo" class="mc-match-title">Placar</h1>
+                <span id="placar-meta" class="mc-match-meta"></span>
+            </div>
+            <div id="mc-status-badge" class="mc-header-status"></div>
         </div>
-    </div>
 
-    <div class="placar-wrapper">
-        <div id="placar-erro" class="alert alert-danger d-none" role="alert"></div>
-        <div id="placar-loading" class="text-muted py-5">Carregando…</div>
+        <div id="placar-erro" class="mc-error d-none" role="alert"></div>
+        <div id="placar-loading" class="mc-loading">Carregando partida...</div>
+
         <div id="placar-conteudo" class="d-none">
-            <p class="text-muted small mb-4 section-meta" id="placar-meta"></p>
 
-            <div class="d-flex flex-wrap gap-2 mb-4 align-items-center" id="placar-acoes"></div>
+            <div id="placar-acoes" class="mc-actions"></div>
 
-            <div class="placar-grid" id="placar-grid"></div>
+            <div id="placar-grid"></div>
 
-            <div id="artilheiro-section" class="d-none mt-5">
-                <div class="section-header d-flex align-items-center justify-content-between mb-3">
-                    <h6 class="fw-bold mb-0 section-title"><i class="bi bi-person-fill me-1"></i>Artilharia / Destaques</h6>
+            <div class="mc-quick-stats">
+                <div class="mc-stat-chip">
+                    <i class="bi bi-clock-history"></i>
+                    <span id="mc-occ-count">0</span>
+                    <span class="mc-stat-chip-label">ocorrências</span>
                 </div>
-                <div class="row g-3" id="artilheiro-cards"></div>
+                <div class="mc-stat-chip">
+                    <i class="bi bi-stopwatch"></i>
+                    <span id="mc-duration-stat">--</span>
+                    <span class="mc-stat-chip-label">duração</span>
+                </div>
             </div>
 
-            <div id="ocorrencias-section" class="d-none mt-5">
-                <div class="section-header d-flex align-items-center justify-content-between mb-3">
-                    <h6 class="fw-bold mb-0 section-title"><i class="bi bi-exclamation-triangle me-1"></i>Ocorrências da Partida</h6>
-                    <button class="btn btn-sm btn-outline-danger rounded-pill" id="btnNovaOcorrencia" onclick="abrirModalOcorrencia()">
-                        <i class="bi bi-plus-lg"></i> Nova
-                    </button>
+            <div id="artilheiro-section" class="d-none">
+                <div class="mc-section-header">
+                    <h2 class="mc-section-title"><i class="bi bi-trophy-fill"></i> Artilharia / Destaques</h2>
                 </div>
-                <div class="ocorrencias-card" id="lista-ocorrencias">
-                    <div class="text-center text-muted small py-3">Nenhuma ocorrência registrada.</div>
+                <div class="mc-artilheiro-grid" id="artilheiro-cards"></div>
+            </div>
+
+            <div id="ocorrencias-section" class="d-none">
+                <div class="mc-section-header">
+                    <h2 class="mc-section-title"><i class="bi bi-clock-history"></i> Timeline da Partida</h2>
+                </div>
+                <div id="lista-ocorrencias" class="mc-timeline">
+                    <div class="mc-timeline-empty"><i class="bi bi-clock-history"></i><p>Nenhuma ocorrência registrada.</p></div>
                 </div>
             </div>
         </div>
+
         <div id="alerta-segundo-amarelo"></div>
-    </div>
     </div>
 </main>
 
-<div class="modal fade" id="modalOcorrencia" tabindex="-1" aria-hidden="true">
+<button type="button" class="mc-fab" id="btnNovaOcorrencia" onclick="abrirModalOcorrencia()" title="Nova ocorrência" aria-label="Registrar nova ocorrência">
+    <i class="bi bi-plus-lg"></i>
+</button>
+
+<!-- Modal Ocorrência -->
+<div class="modal fade mc-modal" id="modalOcorrencia" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content rounded-4 border-0 shadow">
-            <div class="modal-header border-0">
-                <h6 class="modal-title fw-bold">Nova Ocorrência</h6>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        <div class="modal-content">
+            <div class="modal-header">
+                <h6 class="modal-title">Nova Ocorrência</h6>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
             </div>
             <form id="formOcorrencia" onsubmit="return salvarOcorrencia(event)">
-                <div class="modal-body px-4 pt-0">
+                <div class="modal-body">
                     <div class="mb-3">
-                        <label class="form-label fw-semibold small">Tipo</label>
-                        <div class="d-flex gap-2">
-                            <label class="btn btn-outline-warning rounded-pill px-3 d-flex align-items-center gap-1 ocorrencia-tipo-option" data-tipo="Amarelo">
-                                <span class="ocorrencia-tipo amarelo" style="width:20px;height:20px;font-size:0.6rem;">A</span>
+                        <label class="form-label">Tipo</label>
+                        <div class="mc-tipo-grid">
+                            <label class="btn btn-outline-warning ocorrencia-tipo-option d-flex align-items-center justify-content-center gap-1" data-tipo="Amarelo">
+                                <i class="bi bi-square-fill" style="color:#f59e0b;font-size:.7rem"></i>
                                 Amarelo
                                 <input type="radio" name="tipo_ocorrencia" value="Amarelo" class="d-none">
                             </label>
-                            <label class="btn btn-outline-danger rounded-pill px-3 d-flex align-items-center gap-1 ocorrencia-tipo-option" data-tipo="Vermelho">
-                                <span class="ocorrencia-tipo vermelho" style="width:20px;height:20px;font-size:0.6rem;">V</span>
+                            <label class="btn btn-outline-danger ocorrencia-tipo-option d-flex align-items-center justify-content-center gap-1" data-tipo="Vermelho">
+                                <i class="bi bi-x-octagon-fill" style="font-size:.7rem"></i>
                                 Vermelho
                                 <input type="radio" name="tipo_ocorrencia" value="Vermelho" class="d-none">
                             </label>
-                            <label class="btn btn-outline-suspensao rounded-pill px-3 d-flex align-items-center gap-1 ocorrencia-tipo-option" data-tipo="Suspensao">
-                                <span class="ocorrencia-tipo suspensao" style="width:20px;height:20px;font-size:0.6rem;">S</span>
+                            <label class="btn btn-outline-suspensao ocorrencia-tipo-option d-flex align-items-center justify-content-center gap-1" data-tipo="Suspensao">
+                                <i class="bi bi-pause-circle-fill" style="font-size:.7rem"></i>
                                 Suspensão
                                 <input type="radio" name="tipo_ocorrencia" value="Suspensao" class="d-none">
                             </label>
                         </div>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label fw-semibold small">Turma</label>
-                        <select class="form-select form-select-sm" id="filtroTurmaOcorrencia" onchange="carregarAlunosOcorrencia()">
+                        <label class="form-label">Turma</label>
+                        <select class="form-select" id="filtroTurmaOcorrencia" onchange="carregarAlunosOcorrencia()">
                             <option value="">Selecione a turma</option>
                         </select>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label fw-semibold small">Aluno</label>
-                        <select class="form-select form-select-sm" id="selectAlunoOcorrencia" required disabled>
+                        <label class="form-label">Aluno</label>
+                        <select class="form-select" id="selectAlunoOcorrencia" required disabled>
                             <option value="">Selecione uma turma primeiro</option>
                         </select>
                     </div>
-                    <div class="mb-2">
-                        <label class="form-label fw-semibold small">Penalidade (1–30)</label>
-                        <select class="form-select form-select-sm" id="penalidadeOcorrencia">
+                    <div class="mb-3">
+                        <label class="form-label">Penalidade (1–30)</label>
+                        <select class="form-select" id="penalidadeOcorrencia">
                             <option value="0">Sem penalidade</option>
-                            <option value="1">1</option>
-                            <option value="2">2</option>
-                            <option value="3">3</option>
-                            <option value="4">4</option>
-                            <option value="5">5</option>
-                            <option value="6">6</option>
-                            <option value="7">7</option>
-                            <option value="8">8</option>
-                            <option value="9">9</option>
-                            <option value="10">10</option>
-                            <option value="11">11</option>
-                            <option value="12">12</option>
-                            <option value="13">13</option>
-                            <option value="14">14</option>
-                            <option value="15">15</option>
-                            <option value="16">16</option>
-                            <option value="17">17</option>
-                            <option value="18">18</option>
-                            <option value="19">19</option>
-                            <option value="20">20</option>
-                            <option value="21">21</option>
-                            <option value="22">22</option>
-                            <option value="23">23</option>
-                            <option value="24">24</option>
-                            <option value="25">25</option>
-                            <option value="26">26</option>
-                            <option value="27">27</option>
-                            <option value="28">28</option>
-                            <option value="29">29</option>
-                            <option value="30">30</option>
+                            <?php for($i=1;$i<=30;$i++): ?>
+                            <option value="<?= $i ?>"><?= $i ?></option>
+                            <?php endfor; ?>
                         </select>
                     </div>
                     <div class="mb-2">
-                        <label class="form-label fw-semibold small">Descrição</label>
-                        <textarea class="form-control form-control-sm" id="descricaoOcorrencia" rows="2" required placeholder="Motivo da ocorrência..."></textarea>
+                        <label class="form-label">Descrição</label>
+                        <textarea class="form-control" id="descricaoOcorrencia" rows="2" required placeholder="Motivo da ocorrência..."></textarea>
                     </div>
                     <div id="msgOcorrencia" class="small"></div>
                 </div>
-                <div class="modal-footer border-0 pt-0 px-4 pb-4">
+                <div class="modal-footer">
                     <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="submit" class="btn btn-danger rounded-3 px-4" id="btnSalvarOcorrencia">
+                    <button type="submit" class="btn btn-sm btn-danger rounded-pill px-4 fw-bold" id="btnSalvarOcorrencia">
                         <i class="bi bi-check-lg me-1"></i>Registrar
                     </button>
                 </div>
@@ -153,36 +350,37 @@ $paginaAtiva = 'dashboard';
     </div>
 </div>
 
-<div class="modal fade" id="modalArtilheiro" tabindex="-1" aria-hidden="true">
+<!-- Modal Artilheiro -->
+<div class="modal fade mc-modal" id="modalArtilheiro" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content rounded-4 border-0 shadow">
-            <div class="modal-header border-0">
-                <h6 class="modal-title fw-bold"><i class="bi bi-person-fill me-1"></i>Registrar Gol</h6>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        <div class="modal-content">
+            <div class="modal-header">
+                <h6 class="modal-title"><i class="bi bi-trophy-fill me-1" style="color:#f59e0b"></i>Registrar Gol</h6>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
             </div>
             <form id="formArtilheiro" onsubmit="return salvarArtilheiro(event)">
-                <div class="modal-body px-4 pt-0">
+                <div class="modal-body">
                     <div class="mb-3">
-                        <label class="form-label fw-semibold small">Equipe</label>
-                        <select class="form-select form-select-sm" id="selectEquipeArtilheiro" onchange="carregarAlunosArtilheiro()">
+                        <label class="form-label">Equipe</label>
+                        <select class="form-select" id="selectEquipeArtilheiro" onchange="carregarAlunosArtilheiro()">
                             <option value="">Selecione a equipe</option>
                         </select>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label fw-semibold small">Jogador(a)</label>
-                        <select class="form-select form-select-sm" id="selectAlunoArtilheiro" required>
+                        <label class="form-label">Jogador(a)</label>
+                        <select class="form-select" id="selectAlunoArtilheiro" required>
                             <option value="">Selecione uma equipe primeiro</option>
                         </select>
                     </div>
                     <div class="mb-2">
-                        <label class="form-label fw-semibold small">Quantidade de gols neste lance</label>
-                        <input type="number" class="form-control form-control-sm" id="numGolsArtilheiro" value="1" min="1" max="99" required>
+                        <label class="form-label">Quantidade de gols neste lance</label>
+                        <input type="number" class="form-control" id="numGolsArtilheiro" value="1" min="1" max="99" required>
                     </div>
                     <div id="msgArtilheiro" class="small"></div>
                 </div>
-                <div class="modal-footer border-0 pt-0 px-4 pb-4">
+                <div class="modal-footer">
                     <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="submit" class="btn btn-sm btn-success rounded-pill px-3" id="btnSalvarArtilheiro">
+                    <button type="submit" class="btn btn-sm btn-success rounded-pill px-3 fw-bold" id="btnSalvarArtilheiro">
                         <i class="bi bi-check-lg me-1"></i>Registrar Gol
                     </button>
                 </div>
@@ -253,6 +451,8 @@ $paginaAtiva = 'dashboard';
         var s = String(Math.max(0, tempoRestante) % 60).padStart(2, '0');
         el.textContent = m + ':' + s;
         el.classList.toggle('timer-expired', tempoRestante <= 0 && tempoEsgotado);
+        var statTimer = document.getElementById('mc-duration-stat');
+        if (statTimer) statTimer.textContent = m + ':' + s;
     }
 
     function tocarAlertaSonoro() {
@@ -416,6 +616,7 @@ $paginaAtiva = 'dashboard';
         var acoes = document.getElementById('placar-acoes');
         var grid = document.getElementById('placar-grid');
         var titulo = document.getElementById('placar-titulo-jogo');
+        var statusEl = document.getElementById('mc-status-badge');
 
         titulo.textContent = formatNomeJogo(estadoJogo.nome_jogo) || 'Placar';
         meta.textContent = [
@@ -423,20 +624,30 @@ $paginaAtiva = 'dashboard';
             estadoJogo.nome_local,
             estadoJogo.data_jogo,
             estadoJogo.inicio_jogo ? estadoJogo.inicio_jogo.slice(0, 5) : ''
-        ].filter(Boolean).join(' · ');
+        ].filter(Boolean).join('  ·  ');
+
+        var st = estadoJogo.status_jogo;
+        if (statusEl) {
+            var badgeClass = 'mc-badge--scheduled';
+            var badgeLabel = 'Agendado';
+            var dotPulse = '';
+            if (st === 'Iniciado') { badgeClass = 'mc-badge--live'; badgeLabel = 'Em andamento'; dotPulse = ' mc-badge-dot--pulse'; }
+            else if (st === 'Pausado') { badgeClass = 'mc-badge--paused'; badgeLabel = 'Pausado'; }
+            else if (st === 'Concluido' || st === 'Finalizado') { badgeClass = 'mc-badge--finished'; badgeLabel = 'Encerrado'; }
+            statusEl.innerHTML = '<span class="mc-badge ' + badgeClass + '"><span class="mc-badge-dot' + dotPulse + '"></span>' + badgeLabel + '</span>';
+        }
 
         acoes.innerHTML = '';
         grid.innerHTML = '';
         grid.classList.remove('score-blocked');
 
-        var st = estadoJogo.status_jogo;
         var emAndamento = st === 'Iniciado' || st === 'Pausado';
         var encerrado = st === 'Concluido' || st === 'Finalizado';
 
         if (st === 'Agendado') {
             var b = document.createElement('button');
             b.type = 'button';
-            b.className = 'btn btn-danger d-inline-flex align-items-center gap-2 fw-bold px-3 py-2 border-0 shadow-sm rounded-3';
+            b.className = 'mc-action-btn mc-action-btn--start';
             b.innerHTML = '<i class="bi bi-play-fill"></i> Iniciar jogo';
             b.addEventListener('click', function() {
                 iniciarJogoServidor().catch(function(e) { alert(e.message); });
@@ -447,72 +658,73 @@ $paginaAtiva = 'dashboard';
         if (emAndamento && partidasLista.length >= 2) {
             var b2 = document.createElement('button');
             b2.type = 'button';
-            b2.className = 'btn btn-outline-danger d-inline-flex align-items-center gap-2 fw-bold px-3 py-2 border-0 shadow-sm rounded-3';
-            b2.innerHTML = '<i class="bi bi-stop-fill"></i> Finalizar jogo e salvar resultado';
+            b2.className = 'mc-action-btn mc-action-btn--finish';
+            b2.innerHTML = '<i class="bi bi-stop-fill"></i> Finalizar jogo';
             b2.addEventListener('click', function() { finalizarJogo(); });
             acoes.appendChild(b2);
         }
 
-        if (encerrado) {
-            var span = document.createElement('span');
-            span.className = 'badge bg-secondary rounded-pill px-3 py-2';
-            span.innerHTML = '<i class="bi bi-check-circle me-1"></i> Jogo encerrado';
-            acoes.appendChild(span);
-        }
 
         if (partidasLista.length === 0) {
-            grid.innerHTML = '<p class="text-muted">Não há equipes vinculadas a este jogo. Cadastre as partidas no sistema.</p>';
+            grid.innerHTML = '<div class="mc-empty"><i class="bi bi-inbox" style="font-size:2rem;display:block;margin-bottom:.5rem;color:#d1d5db"></i>Não há equipes vinculadas a este jogo. Cadastre as partidas no sistema.</div>';
             return;
         }
 
         var podeTimer = emAndamento || st === 'Agendado';
+        var readonly = encerrado || st === 'Agendado' || tempoEsgotado;
 
-        var meioTimer = podeTimer
-            ? '<div class="timer-wrap">' +
-                '<div class="d-flex align-items-center justify-content-center gap-2 mb-2">' +
-                    '<label class="small text-muted mb-0">Tempo:</label>' +
-                    '<select id="select-duracao" class="form-select form-select-sm d-inline-block w-auto timer-select rounded-pill"' +
-                        'style="max-width:105px;" ' + (emAndamento ? 'disabled' : '') + '>' +
-                        [5,10,15,20,25,30,40,45].map(function(v) {
-                            return '<option value="' + v + '" ' + (duracaoJogo === v*60 ? 'selected' : '') + '>' + v + ' min</option>';
-                        }).join('') +
-                    '</select>' +
-                '</div>' +
-                '<div class="timer-display" id="timer-placar">' +
-                    String(Math.floor(duracaoJogo / 60)).padStart(2, '0') + ':' +
-                    String(duracaoJogo % 60).padStart(2, '0') +
-                '</div>' +
-                (emAndamento ? '<div class="mt-2"><button type="button" class="btn btn-sm btn-outline-danger rounded-pill px-3" id="btn-pausar">' +
-                    (pausado ? 'Retomar' : 'Pausar') +
-                '</button></div>' : '') +
-              '</div>'
-            : '<div class="timer-wrap"><div class="text-center text-muted small">Controle do placar</div></div>';
+        var html = '';
 
-        var cards = partidasLista.map(function(p, idx) {
-            var gols = Math.max(0, parseInt(p.resultado_partida, 10) || 0);
-            var readonly = encerrado || st === 'Agendado' || tempoEsgotado;
-            var minus = readonly
-                ? '<button type="button" class="btn-score btn-score-minus" disabled><i class="bi bi-dash"></i></button>'
-                : '<button type="button" class="btn-score btn-score-minus" data-idx="' + idx + '"><i class="bi bi-dash"></i></button>';
-            var plus = readonly
-                ? '<button type="button" class="btn-score btn-score-plus" disabled><i class="bi bi-plus"></i></button>'
-                : '<button type="button" class="btn-score btn-score-plus" data-idx="' + idx + '"><i class="bi bi-plus"></i></button>';
-            return '<div class="time-card" data-partida-idx="' + idx + '">' +
-                    '<h3 class="fw-bold h6 mb-0">' + esc(nomeEquipe(p)) + '</h3>' +
-                    '<div class="score-display">' +
-                        minus +
-                        '<span class="score-number" data-gols="' + idx + '">' + String(gols).padStart(2, '0') + '</span>' +
-                        plus +
-                    '</div>' +
-                   '</div>';
-        });
+        // Timer
+        if (podeTimer) {
+            var selOpts = [5,10,15,20,25,30,40,45].map(function(v) {
+                return '<option value="' + v + '"' + (duracaoJogo === v*60 ? ' selected' : '') + '>' + v + ' min</option>';
+            }).join('');
 
-        if (partidasLista.length === 1) {
-            grid.innerHTML = cards[0] + meioTimer;
+            html += '<div class="mc-timer-section">';
+            html += '<div class="mc-timer-time" id="timer-placar">' +
+                String(Math.floor(duracaoJogo / 60)).padStart(2, '0') + ':' +
+                String(duracaoJogo % 60).padStart(2, '0') + '</div>';
+            html += '<div class="mc-timer-controls">';
+            html += '<select id="select-duracao" class="mc-duration-select"' + (emAndamento ? ' disabled' : '') + '>' + selOpts + '</select>';
+            if (emAndamento) {
+                html += '<button type="button" class="mc-pause-btn" id="btn-pausar">' + (pausado ? 'Retomar' : 'Pausar') + '</button>';
+            }
+            html += '</div></div>';
         } else {
-            grid.innerHTML = cards[0] + meioTimer + cards[1];
+            html += '<div class="mc-timer-section"><div class="mc-timer-time mc-timer-time--idle" id="timer-placar">--:--</div></div>';
         }
 
+        // Teams
+        html += '<div class="mc-teams">';
+
+        partidasLista.forEach(function(p, idx) {
+            var gols = Math.max(0, parseInt(p.resultado_partida, 10) || 0);
+            var btnMinus = readonly
+                ? '<button type="button" class="btn-score btn-score-minus" disabled><i class="bi bi-dash-lg"></i></button>'
+                : '<button type="button" class="btn-score btn-score-minus" data-idx="' + idx + '"><i class="bi bi-dash-lg"></i></button>';
+            var btnPlus = readonly
+                ? '<button type="button" class="btn-score btn-score-plus" disabled><i class="bi bi-plus-lg"></i></button>'
+                : '<button type="button" class="btn-score btn-score-plus" data-idx="' + idx + '"><i class="bi bi-plus-lg"></i></button>';
+
+            html += '<div class="mc-team" data-partida-idx="' + idx + '">';
+            html += '<h3 class="mc-team-name">' + esc(nomeEquipe(p)) + '</h3>';
+            html += '<div class="mc-score-row">';
+            html += btnMinus;
+            html += '<span class="mc-score score-number" data-gols="' + idx + '">' + String(gols).padStart(2, '0') + '</span>';
+            html += btnPlus;
+            html += '</div></div>';
+
+            if (idx === 0 && partidasLista.length === 2) {
+                html += '<div class="mc-vs"><span>VS</span></div>';
+            }
+        });
+
+        html += '</div>';
+
+        grid.innerHTML = html;
+
+        // Bind events
         document.querySelectorAll('.btn-score-minus').forEach(function(btn) {
             btn.addEventListener('click', function() {
                 if (!tempoEsgotado) ajustarGols(parseInt(btn.getAttribute('data-idx'), 10), -1);
@@ -539,6 +751,9 @@ $paginaAtiva = 'dashboard';
         if (emAndamento) {
             iniciarTimerDisplay();
         }
+
+        var durStat = document.getElementById('mc-duration-stat');
+        if (durStat) durStat.textContent = Math.floor(duracaoJogo / 60) + ' min';
     }
 
     function ajustarGols(idx, delta) {
@@ -548,7 +763,12 @@ $paginaAtiva = 'dashboard';
         var g = Math.max(0, (parseInt(p.resultado_partida, 10) || 0) + delta);
         p.resultado_partida = g;
         var el = document.querySelector('[data-gols="' + idx + '"]');
-        if (el) el.textContent = String(g).padStart(2, '0');
+        if (el) {
+            el.textContent = String(g).padStart(2, '0');
+            el.classList.remove('score-animate');
+            void el.offsetWidth;
+            el.classList.add('score-animate');
+        }
         agendarSalvarPartida(parseInt(p.id_partida, 10), g);
 
         if (delta > 0 && ehFutsal()) {
@@ -664,36 +884,48 @@ $paginaAtiva = 'dashboard';
         try {
             var data = await fetchJson(API + 'ocorrencias.php?id_jogo=' + idJogo + '&data=' + (estadoJogo.data_jogo || ''));
             var lista = Array.isArray(data) ? data : [];
+            var countEl = document.getElementById('mc-occ-count');
+            if (countEl) countEl.textContent = lista.length;
             if (!lista.length) {
-                container.innerHTML = '<div class="text-center text-muted small py-3">Nenhuma ocorrência registrada.</div>';
+                container.innerHTML = '<div class="mc-timeline-empty"><i class="bi bi-clock-history"></i><p>Nenhuma ocorrência registrada.</p></div>';
                 return;
             }
-            container.innerHTML = lista.map(function(o) {
+            container.innerHTML = lista.map(function(o, i) {
                 var tipo = (o.titulo_ocorrencia || '').toLowerCase();
-                var cls = 'amarelo';
-                if (tipo.indexOf('vermelho') !== -1) cls = 'vermelho';
-                else if (tipo.indexOf('suspensao') !== -1 || tipo.indexOf('suspensão') !== -1) cls = 'suspensao';
-                var label = tipo === 'amarelo' ? 'A' : (tipo.indexOf('vermelho') !== -1 ? 'V' : 'S');
+                var isAmarelo = tipo === 'amarelo';
+                var isVermelho = tipo.indexOf('vermelho') !== -1;
+                var isSuspensao = tipo.indexOf('suspensao') !== -1 || tipo.indexOf('suspensão') !== -1;
+
+                var cls = isAmarelo ? 'amarelo' : (isVermelho ? 'vermelho' : 'suspensao');
+                var icon = isAmarelo ? 'bi-square-fill' : (isVermelho ? 'bi-x-octagon-fill' : 'bi-pause-circle-fill');
+                var label = isAmarelo ? 'Cartão Amarelo' : (isVermelho ? 'Cartão Vermelho' : 'Suspensão');
+
                 var pts = parseInt(o.penalidade, 10);
-                var ptsHtml = pts > 0 ? '<span class="badge bg-danger bg-opacity-10 text-danger rounded-pill" style="font-size:0.7rem;">-' + pts + ' pts</span>' : '';
-                return '<div class="ocorrencia-item">' +
-                    '<span class="ocorrencia-tipo ' + cls + '">' + label + '</span>' +
-                    '<div class="flex-grow-1">' +
-                        '<div class="fw-semibold small">' + esc(o.nome_usuario) + ' ' + ptsHtml + '</div>' +
-                        '<div class="text-muted" style="font-size:0.8rem;">' + esc(limparDescricaoOcorrencia(o.descricao_ocorrencia)) + '</div>' +
+                var ptsHtml = pts > 0 ? '<span class="tl-badge">-' + pts + ' pts</span>' : '';
+                var isLast = i === lista.length - 1;
+
+                return '<div class="tl-event tl-event--' + cls + (isLast ? ' tl-event--last' : '') + '">' +
+                    '<div class="tl-event-track">' +
+                        '<div class="tl-event-dot"></div>' +
+                        '<div class="tl-event-line"></div>' +
                     '</div>' +
-                    '<div class="d-flex gap-1 flex-shrink-0">' +
-                        '<button type="button" class="btn btn-sm btn-outline-primary rounded-pill px-2" onclick="editarOcorrencia(' + o.id_ocorrencia + ')" title="Editar">' +
-                            '<i class="bi bi-pencil"></i>' +
-                        '</button>' +
-                        '<button type="button" class="btn btn-sm btn-outline-danger rounded-pill px-2" onclick="excluirOcorrencia(' + o.id_ocorrencia + ')" title="Excluir">' +
-                            '<i class="bi bi-trash"></i>' +
-                        '</button>' +
+                    '<div class="tl-event-body">' +
+                        '<div class="tl-event-top">' +
+                            '<span class="tl-event-icon"><i class="bi ' + icon + '"></i></span>' +
+                            '<span class="tl-event-label">' + label + '</span>' +
+                            ptsHtml +
+                        '</div>' +
+                        '<div class="tl-event-player">' + esc(o.nome_usuario) + '</div>' +
+                        '<div class="tl-event-desc">' + esc(limparDescricaoOcorrencia(o.descricao_ocorrencia)) + '</div>' +
+                        '<div class="tl-event-actions">' +
+                            '<button type="button" class="tl-action-btn tl-action-btn--edit" onclick="editarOcorrencia(' + o.id_ocorrencia + ')" title="Editar"><i class="bi bi-pencil-square"></i></button>' +
+                            '<button type="button" class="tl-action-btn tl-action-btn--delete" onclick="excluirOcorrencia(' + o.id_ocorrencia + ')" title="Excluir"><i class="bi bi-trash3"></i></button>' +
+                        '</div>' +
                     '</div>' +
                 '</div>';
             }).join('');
         } catch (e) {
-            container.innerHTML = '<div class="text-center text-danger small py-3">Erro ao carregar ocorrências.</div>';
+            container.innerHTML = '<div class="mc-timeline-empty mc-timeline-empty--error"><i class="bi bi-exclamation-circle"></i><p>Erro ao carregar ocorrências.</p></div>';
         }
     }
 
@@ -972,13 +1204,13 @@ $paginaAtiva = 'dashboard';
         if (!container) return;
         var nome = nomeAluno || 'Jogador(a)';
         container.innerHTML =
-            '<div class="alert alert-danger d-flex align-items-center gap-3 py-3 px-4 mb-0 rounded-3 shadow-sm border-0" role="alert" style="background:#fef2f2;color:#991b1b;">' +
-                '<span class="ocorrencia-tipo vermelho" style="width:36px;height:36px;font-size:1rem;flex-shrink:0;">V</span>' +
+            '<div class="alert d-flex align-items-center gap-3 py-3 px-4 mb-0 rounded-3 shadow-sm border-0" role="alert" style="background:#fef2f2;color:#991b1b;">' +
+                '<span style="width:36px;height:36px;font-size:1rem;flex-shrink:0;border-radius:50%;background:#ef4444;color:#fff;display:inline-flex;align-items:center;justify-content:center;font-weight:700;">V</span>' +
                 '<div class="flex-grow-1">' +
-                    '<strong class="d-block mb-1" style="font-size:0.85rem;">SEGUNDO CARTÃO AMARELO</strong>' +
-                    '<span style="font-size:0.82rem;">' + esc(nome) + ' recebeu o segundo amarelo e foi expulso(a) da partida (Cartão Vermelho automático).</span>' +
+                    '<strong class="d-block mb-1" style="font-size:.85rem;">SEGUNDO CARTÃO AMARELO</strong>' +
+                    '<span style="font-size:.82rem;">' + esc(nome) + ' recebeu o segundo amarelo e foi expulso(a) da partida (Cartão Vermelho automático).</span>' +
                 '</div>' +
-                '<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Fechar" style="font-size:0.75rem;"></button>' +
+                '<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Fechar" style="font-size:.75rem;"></button>' +
             '</div>';
         setTimeout(function() {
             var alert = container.querySelector('.alert');
