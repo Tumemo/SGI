@@ -33,10 +33,8 @@ try {
     require_once __DIR__ . '/../vendor/autoload.php';
     require_once __DIR__ . '/includes/pdf_helper.php';
 
-    // Resolve conexão com o banco
     require_once __DIR__ . '/../config/db.php';
 
-    // Busca nome da turma e interclasse
     $stTurma = $conn->prepare('SELECT nome_turma, interclasses_id_interclasse FROM turmas WHERE id_turma = ? LIMIT 1');
     if (!$stTurma) {
         throw new Exception('Falha ao consultar turma.');
@@ -58,7 +56,6 @@ try {
     }
 
     if ($id_interclasse <= 0) {
-        // Fallback: busca interclasse ativo
         $resAtivo = $conn->query("SELECT id_interclasse FROM interclasses WHERE status_interclasse = '1' LIMIT 1");
         if ($resAtivo) {
             $rowAtivo = $resAtivo->fetch_assoc();
@@ -70,7 +67,6 @@ try {
         throw new Exception('Nenhum interclasse ativo encontrado. Informe id_interclasse no upload.');
     }
 
-    // Pasta de destino
     $destDir = dirname(__DIR__) . DIRECTORY_SEPARATOR . 'docs' . DIRECTORY_SEPARATOR . 'lista_alunos' . DIRECTORY_SEPARATOR;
     if (!is_dir($destDir)) {
         if (!mkdir($destDir, 0777, true)) {
@@ -86,17 +82,34 @@ try {
         throw new Exception('Falha ao salvar o arquivo no servidor.');
     }
 
-    // Extrai alunos do PDF com o nome correto da turma
-    $alunos = sgi_extrair_alunos_do_pdf($destPath, $nomeTurma);
+    $csvFilename = 'turma_' . $id_turma . '.csv';
+    $csvPath = $destDir . $csvFilename;
 
-    if (empty($alunos)) {
-        $resposta['message'] = 'PDF salvo, mas nenhum aluno foi extraído. Verifique o formato do PDF.';
+    $csvOk = sgi_pdf_para_csv($destPath, $csvPath);
+
+    if (!$csvOk) {
+        $resposta['message'] = 'Não foi possível extrair alunos do PDF. O PDF pode ser uma imagem (digitalizada). Tente usar um conversor online: https://www.ilovepdf.com/pt';
+        $resposta['fallback_converter'] = true;
         ob_end_clean();
         echo json_encode($resposta);
         exit;
     }
 
-    // Insere alunos diretamente na turma
+    $alunos = sgi_extrair_alunos_do_csv($csvPath);
+
+    if (empty($alunos)) {
+        $resposta['message'] = 'PDF convertido para CSV, mas nenhum aluno foi extraído. Verifique o formato do PDF.';
+        $resposta['fallback_converter'] = true;
+        ob_end_clean();
+        echo json_encode($resposta);
+        exit;
+    }
+
+    foreach ($alunos as &$aluno) {
+        $aluno['turma'] = $nomeTurma;
+    }
+    unset($aluno);
+
     $resultado = sgi_inserir_alunos_na_turma($conn, $alunos, $id_turma, $id_interclasse);
 
     if ($resultado['status'] === 'sucesso') {

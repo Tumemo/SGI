@@ -6,7 +6,7 @@ require_once __DIR__ . '/usuario_validacao.php';
 
 use Smalot\PdfParser\Parser;
 
-function sgi_extrair_alunos_do_pdf(string $caminhoPdf, string $nomeTurma): array
+function sgi_extrair_linhas_do_pdf(string $caminhoPdf): array
 {
     $parser = new Parser();
     $pdf = $parser->parseFile($caminhoPdf);
@@ -18,40 +18,141 @@ function sgi_extrair_alunos_do_pdf(string $caminhoPdf, string $nomeTurma): array
         $linha_limpa = trim($linha);
         if (empty($linha_limpa)) continue;
 
-        if (!preg_match('/^(\d+)\s+/', $linha_limpa)) continue;
-
-        preg_match('/(\d{2}\/\d{2}\/\d{4})/', $linha_limpa, $m_data);
-        $data_nasc = $m_data[1] ?? "";
-
-        preg_match('/(\d+\.\d+)/', $linha_limpa, $m_rm);
-        $rm = $m_rm[1] ?? "";
-
-        if (empty($rm)) continue;
-
-        $genero = "MASC";
-        if (!empty($data_nasc)) {
-            $posicao_data = strpos($linha_limpa, $data_nasc);
-            $depois_da_data = substr($linha_limpa, $posicao_data + strlen($data_nasc), 5);
-            $genero = (stripos($depois_da_data, 'F') !== false) ? "FEM" : "MASC";
+        $resultado = sgi_parsear_linha_aluno($linha_limpa);
+        if ($resultado !== null) {
+            $alunos[] = $resultado;
         }
+    }
 
-        $nome_bruto = preg_replace('/^\d+\s+/', '', $linha_limpa);
-        $divisor = !empty($data_nasc) ? $data_nasc : "\t";
+    return $alunos;
+}
+
+function sgi_parsear_linha_aluno(string $linha): ?array
+{
+    if (!preg_match('/(\d{2}\/\d{2}\/\d{4})/', $linha, $m_data)) {
+        return null;
+    }
+    $data_nasc = $m_data[1];
+
+    $genero = "MASC";
+    if (preg_match('/([FM])\s*\|\s*\d{2}\/\d{2}\/\d{4}/', $linha, $m_gen)) {
+        $genero = ($m_gen[1] === 'F') ? "FEM" : "MASC";
+    } elseif (!empty($data_nasc)) {
+        $posicao_data = strpos($linha, $data_nasc);
+        $depois_da_data = substr($linha, $posicao_data + strlen($data_nasc), 5);
+        if (stripos($depois_da_data, 'F') !== false) {
+            $genero = "FEM";
+        }
+    }
+
+    if (preg_match('/\|\s*\d+\s*\|\s*(.+?)\s+\S+\s*\|\s*\d{2}\/\d{2}\/\d{4}/', $linha, $m_nome)) {
+        $nome_final = trim($m_nome[1]);
+    } elseif (preg_match('/^(\d+)\s+/', $linha)) {
+        $nome_bruto = preg_replace('/^\d+\s+/', '', $linha);
+        $divisor = $data_nasc;
         $partes = explode($divisor, $nome_bruto);
         $nome_final = trim($partes[0]);
         $nome_final = preg_replace('/\s*[A-Z]{2}$/', '', $nome_final);
+    } else {
+        return null;
+    }
+
+    $rm = "";
+    if (preg_match('/^([\d.]+)[\s|]+/', $linha, $m_rm_dot)) {
+        $rm = $m_rm_dot[1];
+    } elseif (preg_match('/(\d+\.\d+)/', $linha, $m_rm_dec)) {
+        $rm = $m_rm_dec[1];
+    }
+
+    if (empty($rm)) return null;
+
+    $rmNorm = sgi_normalizar_ra($rm);
+    if ($rmNorm === '') return null;
+
+    return [
+        'nome'            => $nome_final,
+        'data_nascimento' => $data_nasc,
+        'rm'              => $rm,
+        'genero'          => $genero,
+    ];
+}
+
+function sgi_pdf_para_csv(string $caminhoPdf, string $caminhoCsv): bool
+{
+    $alunos = sgi_extrair_linhas_do_pdf($caminhoPdf);
+
+    if (empty($alunos)) {
+        return false;
+    }
+
+    $fp = fopen($caminhoCsv, 'w');
+    if (!$fp) {
+        return false;
+    }
+
+    fputcsv($fp, ['nome', 'rm', 'data_nascimento', 'genero']);
+
+    foreach ($alunos as $aluno) {
+        fputcsv($fp, [
+            $aluno['nome'],
+            $aluno['rm'],
+            $aluno['data_nascimento'],
+            $aluno['genero'],
+        ]);
+    }
+
+    fclose($fp);
+    return true;
+}
+
+function sgi_extrair_alunos_do_csv(string $caminhoCsv): array
+{
+    $alunos = [];
+
+    if (!file_exists($caminhoCsv)) {
+        return $alunos;
+    }
+
+    $fp = fopen($caminhoCsv, 'r');
+    if (!$fp) {
+        return $alunos;
+    }
+
+    fgetcsv($fp);
+
+    while (($row = fgetcsv($fp)) !== false) {
+        if (count($row) < 4) continue;
+
+        $nome = trim($row[0]);
+        $rm = trim($row[1]);
+        $data_nasc = trim($row[2]);
+        $genero = trim($row[3]);
+
+        if (empty($nome) || empty($rm)) continue;
 
         $rmNorm = sgi_normalizar_ra($rm);
         if ($rmNorm === '') continue;
 
         $alunos[] = [
-            'nome'            => $nome_final,
-            'data_nascimento' => $data_nasc,
+            'nome'            => $nome,
             'rm'              => $rm,
+            'data_nascimento' => $data_nasc,
             'genero'          => $genero,
-            'turma'           => $nomeTurma
         ];
     }
+
+    fclose($fp);
+    return $alunos;
+}
+
+function sgi_extrair_alunos_do_pdf(string $caminhoPdf, string $nomeTurma): array
+{
+    $alunos = sgi_extrair_linhas_do_pdf($caminhoPdf);
+
+    foreach ($alunos as &$aluno) {
+        $aluno['turma'] = $nomeTurma;
+    }
+    unset($aluno);
 
     return $alunos;
 }

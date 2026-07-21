@@ -18,11 +18,16 @@ $paginaAtiva = 'turmas';
     <div id="blocoPdfMob" class="card border-0 shadow-sm rounded-4 p-3 mt-4">
         <p class="small text-muted mb-2">Importar alunos via PDF</p>
         <form id="formPdfTurmaMob" enctype="multipart/form-data">
-            <input type="hidden" name="nome_turma" id="hiddenNomeTurmaMob">
-            <label class="form-label small">Arquivo PDF</label>
+            <label class="form-label small">Arquivo PDF (com texto selecionável)</label>
             <input type="file" class="form-control form-control-sm mb-2" name="pdf" accept="application/pdf" required>
             <button type="submit" class="btn btn-danger w-100 rounded-3">Importar PDF</button>
             <div id="msgPdfMob" class="small mt-2 text-center"></div>
+            <div id="fallbackMob" class="d-none mt-3 text-center">
+                <p class="small text-muted mb-2">O PDF parece ser uma imagem. Converta para PDF selecionável:</p>
+                <a href="https://www.ilovepdf.com/pt/download/l3w270hy6bhh3vg86m6h107rv3wA1dkt377wsjbsj9v9k7tgz76cyxfw89fkymvxw7wqy3vy4bwmntykf5kd8g6s2pg6xkl7v1qp0js1A3wdk9wrdvvndvvs3xggvsm2l9rq8bpx6l7qh68c69x8rvvpd3tpdbhd4zj29qhs8nm02zvc7bfq/95o" target="_blank" class="btn btn-outline-danger btn-sm rounded-3">
+                    <i class="bi bi-box-arrow-up-right"></i> Converter PDF (iLovePDF)
+                </a>
+            </div>
         </form>
     </div>
     <?php endif; ?>
@@ -40,9 +45,8 @@ $paginaAtiva = 'turmas';
         <?php if ($nivelUsuario === 0): ?>
         <div id="blocoPdfDesk" class="card border-0 shadow-sm rounded-4 p-4">
             <h6 style="font-weight: 400;">Cadastrar alunos por PDF</h6>
-            <p class="text-muted small">Use o mesmo nome da turma cadastrada para o arquivo bater com o esperado pelo sistema.</p>
+            <p class="text-muted small">O PDF deve conter texto selecionável (não imagem). Os alunos serão vinculados automaticamente a esta turma.</p>
             <form id="formPdfTurmaDesk" enctype="multipart/form-data" class="row g-2 align-items-end">
-                <input type="hidden" name="nome_turma" id="hiddenNomeTurmaDesk">
                 <div class="col-md-8">
                     <label class="form-label small">PDF (lista de alunos)</label>
                     <input type="file" class="form-control" name="pdf" accept="application/pdf" required>
@@ -51,6 +55,12 @@ $paginaAtiva = 'turmas';
                     <button type="submit" class="btn btn-danger w-100 rounded-3">Importar</button>
                 </div>
                 <div id="msgPdfDesk" class="col-12 small text-center"></div>
+                <div id="fallbackDesk" class="col-12 d-none text-center mt-2">
+                    <p class="small text-muted mb-2">O PDF parece ser uma imagem. Converta para PDF selecionável:</p>
+                    <a href="https://www.ilovepdf.com/pt/download/l3w270hy6bhh3vg86m6h107rv3wA1dkt377wsjbsj9v9k7tgz76cyxfw89fkymvxw7wqy3vy4bwmntykf5kd8g6s2pg6xkl7v1qp0js1A3wdk9wrdvvndvvs3xggvsm2l9rq8bpx6l7qh68c69x8rvvpd3tpdbhd4zj29qhs8nm02zvc7bfq/95o" target="_blank" class="btn btn-outline-danger btn-sm rounded-3">
+                        <i class="bi bi-box-arrow-up-right"></i> Converter PDF (iLovePDF)
+                    </a>
+                </div>
             </form>
         </div>
         <?php endif; ?>
@@ -98,10 +108,7 @@ $paginaAtiva = 'turmas';
         if (b) b.href = href;
     }
 
-    function atualizarNomeTurmaPdf(nomeTurma) {
-        document.getElementById('hiddenNomeTurmaMob').value = nomeTurma || '';
-        document.getElementById('hiddenNomeTurmaDesk').value = nomeTurma || '';
-    }
+    function atualizarNomeTurmaPdf() {}
 
     async function carregarAlunos() {
         setVoltar();
@@ -146,10 +153,8 @@ $paginaAtiva = 'turmas';
                 document.getElementById('listaAlunosTurmaMob').innerHTML = '<p class="text-muted small">Sem registros.</p>';
                 document.getElementById('tbodyAlunosTurmaDesk').innerHTML =
                     '<tr><td colspan="3" class="text-muted px-3 py-4">Nenhum aluno cadastrado nesta turma.</td></tr>';
-                atualizarNomeTurmaPdf(nomeTurma);
                 return;
             }
-            atualizarNomeTurmaPdf(nomeTurma);
             document.getElementById('listaAlunosTurmaMob').innerHTML = arr
                 .map(
                     (u) => `
@@ -175,44 +180,44 @@ $paginaAtiva = 'turmas';
         }
     }
 
-    async function enviarPdf(form, msgEl, btn, idManual = null) {
+    async function enviarPdf(form, msgEl, btn, fallbackEl) {
         msgEl.innerHTML = '';
-        // Construir FormData explicitamente para garantir nomes esperados pelo backend
+        if (fallbackEl) fallbackEl.classList.add('d-none');
         const fd = new FormData();
-        // Anexa campos existentes do form (texto, hidden, etc.)
         for (const [k, v] of new FormData(form).entries()) {
             fd.append(k, v);
         }
-        // Garante que o arquivo seja enviado com o nome esperado pelo servidor
         const fileInput = form.querySelector('input[type="file"]');
         if (fileInput && fileInput.files && fileInput.files[0]) {
             fd.append('pdf_arquivo', fileInput.files[0]);
         }
-        // Campos importantes enviados pelo frontend
         fd.append('id_interclasse', idInterclasse || '');
         fd.append('id_categoria', idCategoria || '');
-        fd.append('id_turma', idManual !== null ? String(idManual) : (idTurma || ''));
+        fd.append('id_turma', idTurma || '');
+        let js = {};
         try {
-            if (btn) {
-                btn.disabled = true;
-            }
+            if (btn) btn.disabled = true;
             const r = await fetch('../../../api/upload_turma_pdf.php', {
                 method: 'POST',
                 body: fd,
                 credentials: 'include'
             });
             const text = await r.text();
-            let js = {};
             try {
                 js = JSON.parse(text);
             } catch (_) {
                 js = {};
             }
-            if (!r.ok || js.success === false) throw new Error(js.message || 'Falha no upload: ' + text);
+            if (!r.ok || js.success === false) {
+                throw new Error(js.message || 'Falha no upload: ' + text);
+            }
             msgEl.innerHTML = '<span class="text-success">Importação concluída. Atualizando…</span>';
             setTimeout(() => window.location.reload(), 1200);
         } catch (err) {
             msgEl.innerHTML = `<span class="text-danger">${esc(err.message || String(err))}</span>`;
+            if (fallbackEl && js.fallback_converter) {
+                fallbackEl.classList.remove('d-none');
+            }
         } finally {
             if (btn) btn.disabled = false;
         }
@@ -225,13 +230,13 @@ $paginaAtiva = 'turmas';
         if (fMob) {
             fMob.addEventListener('submit', (e) => {
                 e.preventDefault();
-                enviarPdf(fMob, document.getElementById('msgPdfMob'), fMob.querySelector('button[type="submit"]'));
+                enviarPdf(fMob, document.getElementById('msgPdfMob'), fMob.querySelector('button[type="submit"]'), document.getElementById('fallbackMob'));
             });
         }
         if (fDesk) {
             fDesk.addEventListener('submit', (e) => {
                 e.preventDefault();
-                enviarPdf(fDesk, document.getElementById('msgPdfDesk'), fDesk.querySelector('button[type="submit"]'));
+                enviarPdf(fDesk, document.getElementById('msgPdfDesk'), fDesk.querySelector('button[type="submit"]'), document.getElementById('fallbackDesk'));
             });
         }
     });
