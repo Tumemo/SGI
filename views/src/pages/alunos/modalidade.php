@@ -193,7 +193,6 @@ include 'componentes/nav.php';
                 const listaInter = await (await fetch('../../../../api/interclasse.php?regulamento=true')).json();
                 const ativos = (Array.isArray(listaInter) ? listaInter : []).filter(i => String(i.status_interclasse) === '1');
                 if (ativos.length === 0) {
-                    document.getElementById('subtitulo').textContent = 'Nenhum interclasse ativo no momento.';
                     return;
                 }
                 idInterclasse = String(ativos[0].id_interclasse);
@@ -207,7 +206,6 @@ include 'componentes/nav.php';
             const dadosInter = (Array.isArray(listaInter) ? listaInter : []).find(i => String(i.id_interclasse) === String(idInterclasse));
             if (dadosInter) {
                 const msg = estaInscrito ? ' — Suas inscrições' : ' — Selecione até 3 modalidades';
-                document.getElementById('subtitulo').textContent = dadosInter.nome_interclasse + msg;
             }
 
             const res = await fetch(`../../../../api/modalidades.php?id_interclasse=${idInterclasse}`);

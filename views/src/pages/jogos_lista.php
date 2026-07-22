@@ -39,8 +39,6 @@ $paginaAtiva = 'dashboard';
             ]);
 
             if (dadosInter) {
-                document.getElementById('listaTitulo').textContent = `Jogos - ${dadosInter.nome_interclasse}`;
-                document.getElementById('listaSubtitulo').textContent = 'Selecione um jogo para gerenciar o placar';
                 window.SGIInterclasse.updatePageTitle(dadosInter.nome_interclasse);
             }
 

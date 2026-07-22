@@ -89,10 +89,6 @@ $paginaAtiva = 'dashboard';
         montarGerenciar();
         const tit = nomeModalidade ? `${nomeModalidade}` : 'Elenco da equipe';
         const sub = nomeTurma ? `Turma: ${nomeTurma}` : '';
-        document.getElementById('tituloElencoMob').textContent = tit;
-        document.getElementById('tituloElencoDesk').textContent = tit;
-        document.getElementById('subtituloElencoMob').textContent = sub;
-        document.getElementById('subtituloElencoDesk').textContent = sub;
 
         const mob = document.getElementById('listaElencoMob');
         const tbody = document.getElementById('tbodyElencoDesk');

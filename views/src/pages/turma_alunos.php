@@ -199,11 +199,7 @@ $podeGerenciar = in_array($nivelUsuario, [0, 1, 2], true);
             try { turmas = JSON.parse(textTurmas || 'null'); } catch (_) { turmas = null; }
             const t = Array.isArray(turmas) ? turmas[0] : null;
             nomeTurma = t?.nome_turma || 'Turma';
-            document.getElementById('tituloTurmaMob').textContent = nomeTurma;
-            document.getElementById('tituloTurmaDesk').textContent = nomeTurma;
         } catch (_) {
-            document.getElementById('tituloTurmaMob').textContent = 'Turma';
-            document.getElementById('tituloTurmaDesk').textContent = 'Turma';
         }
 
         try {
@@ -213,8 +209,6 @@ $podeGerenciar = in_array($nivelUsuario, [0, 1, 2], true);
             try { data = JSON.parse(textData || '{}'); } catch (_) { data = {}; }
             const arr = data.competidores || data.usuarios || (Array.isArray(data) ? data : []);
             const n = arr.length;
-            document.getElementById('contagemMob').textContent = `${n} aluno(s) na turma`;
-            document.getElementById('contagemDesk').textContent = `${n} aluno(s) na turma`;
 
             if (n === 0) {
                 document.getElementById('listaAlunosTurmaMob').innerHTML = '<p class="text-muted small">Sem registros.</p>';

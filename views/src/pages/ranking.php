@@ -14,6 +14,7 @@ $paginaAtiva = 'ranking';
 
     <header class="rk-mobile-header">
         <div>
+            <h1 class="rk-mobile-header__title d-none" id="nomeInterclasse"></h1>
         </div>
         <div class="rk-stat-chip">
             <span>&#x1F465;</span>
@@ -43,6 +44,7 @@ $paginaAtiva = 'ranking';
         <section class="rk-main">
             <header class="rk-header">
                 <div class="rk-header__left">
+                    <h1 class="rk-header__title d-none" id="nomeInterclasseDesk"></h1>
                 </div>
                 <div class="rk-stat-chip">
                     <span>&#x1F465;</span>
@@ -98,7 +100,7 @@ $paginaAtiva = 'ranking';
             const catData = await catRes.json();
             categoriasUnicas = Array.isArray(catData) ? catData.map(c => c.nome_categoria) : [];
 
-            document.getElementById('nomeInterclasse').innerText = data[0].nome_interclasse;
+            document.querySelectorAll('#nomeInterclasse').forEach(el => el.innerText = data[0].nome_interclasse);
             document.getElementById('totalTurmas').innerText = `${data.length} Turmas`;
 
             renderizarFiltros();
