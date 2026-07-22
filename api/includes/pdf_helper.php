@@ -58,8 +58,8 @@ function sgi_parsear_linha_aluno(string $linha): ?array
     }
 
     $rm = "";
-    if (preg_match('/^([\d.]+)[\s|]+/', $linha, $m_rm_dot)) {
-        $rm = $m_rm_dot[1];
+    if (preg_match('/(\d{2}\/\d{2}\/\d{4})[FM]([\d.]+)/i', $linha, $m_rm)) {
+        $rm = $m_rm[2];
     } elseif (preg_match('/(\d+\.\d+)/', $linha, $m_rm_dec)) {
         $rm = $m_rm_dec[1];
     }

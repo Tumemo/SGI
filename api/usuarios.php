@@ -90,7 +90,7 @@ switch ($metodo) {
                 break;
             }
 
-            $sql = "SELECT id_usuario, nome_usuario, matricula_usuario, genero_usuario, nivel_usuario
+            $sql = "SELECT id_usuario, nome_usuario, matricula_usuario, genero_usuario, nivel_usuario, data_nasc_usuario
                     FROM usuarios WHERE turmas_id_turma = ? AND interclasses_id_interclasse = ? AND nivel_usuario = '3' AND status_usuario = '1'";
             try {
                 $stmt = $conn->prepare($sql);
@@ -377,6 +377,195 @@ switch ($metodo) {
             $stmt->bind_param($types, ...$params);
             if ($stmt->execute()) {
                 sgi_json_saida(['status' => 'sucesso', 'mensagem' => 'Colaborador atualizado.']);
+            } else {
+                sgi_json_saida(['status' => 'erro', 'mensagem' => $stmt->error]);
+            }
+            $stmt->close();
+            break;
+        }
+
+        if ($acao === 'criar_aluno') {
+            require_once __DIR__ . '/auth.php';
+            requerNivel([0, 1, 2]);
+
+            $idInterclasseAtivo = buscarInterclasseAtivo($conn);
+            if ($idInterclasseAtivo === null) {
+                sgi_json_saida(erroSemInterclasseAtivo());
+                break;
+            }
+
+            $dados = !empty($_POST) ? $_POST : $inputData;
+            $nome = trim((string) ($dados['nome_usuario'] ?? ''));
+            $matricula = trim((string) ($dados['matricula_usuario'] ?? ''));
+            $genero = strtoupper((string) ($dados['genero_usuario'] ?? 'MASC'));
+            $dataNascRaw = trim((string) ($dados['data_nasc_usuario'] ?? ''));
+            $dataNasc = sgi_parse_data_nascimento($dataNascRaw);
+            $idTurma = (int) ($dados['turmas_id_turma'] ?? 0);
+
+            if ($nome === '' || $matricula === '' || $dataNasc === null || $idTurma <= 0) {
+                sgi_json_saida(['status' => 'erro', 'mensagem' => 'Campos obrigatórios: nome, RM, data de nascimento e turma.']);
+                break;
+            }
+
+            if (!in_array($genero, ['FEM', 'MASC'], true)) {
+                $genero = 'MASC';
+            }
+
+            $rmNorm = sgi_normalizar_ra($matricula);
+            if ($rmNorm === '') {
+                sgi_json_saida(['status' => 'erro', 'mensagem' => 'RM inválido.']);
+                break;
+            }
+
+            $chaveEdicao = $rmNorm . '-' . $idInterclasseAtivo;
+
+            $checkStmt = $conn->prepare('SELECT id_usuario FROM usuarios WHERE chave_usuario_edicao = ? LIMIT 1');
+            if ($checkStmt) {
+                $checkStmt->bind_param('s', $chaveEdicao);
+                $checkStmt->execute();
+                if ($checkStmt->get_result()->fetch_assoc()) {
+                    $checkStmt->close();
+                    sgi_json_saida(['status' => 'erro', 'mensagem' => 'Já existe um aluno com este RM nesta edição do interclasse.']);
+                    break;
+                }
+                $checkStmt->close();
+            }
+
+            $senhaHash = password_hash('123', PASSWORD_DEFAULT);
+
+            $sql = 'INSERT INTO usuarios (sigla_usuario, matricula_usuario, nome_usuario, senha_usuario, nivel_usuario, genero_usuario, data_nasc_usuario, foto_usuario, status_usuario, turmas_id_turma, interclasses_id_interclasse, chave_usuario_edicao)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
+            $stmt = $conn->prepare($sql);
+            if (!$stmt) {
+                sgi_json_saida(['status' => 'erro', 'mensagem' => $conn->error]);
+                break;
+            }
+
+            $nivel = '3';
+            $sigla = 'RM';
+            $foto = 'default.jpg';
+            $status = '1';
+            $stmt->bind_param('sssssssssiis',
+                $sigla, $rmNorm, $nome, $senhaHash, $nivel, $genero, $dataNasc, $foto, $status, $idTurma, $idInterclasseAtivo, $chaveEdicao
+            );
+
+            if ($stmt->execute()) {
+                sgi_json_saida(['status' => 'sucesso', 'mensagem' => 'Aluno cadastrado!', 'id_usuario' => $stmt->insert_id]);
+            } else {
+                if ($stmt->errno === 1062) {
+                    sgi_json_saida(['status' => 'erro', 'mensagem' => 'RM já cadastrado nesta edição.']);
+                } else {
+                    sgi_json_saida(['status' => 'erro', 'mensagem' => $stmt->error]);
+                }
+            }
+            $stmt->close();
+            break;
+        }
+
+        if ($acao === 'editar_aluno') {
+            require_once __DIR__ . '/auth.php';
+            requerNivel([0, 1, 2]);
+
+            $idInterclasseAtivo = buscarInterclasseAtivo($conn);
+            if ($idInterclasseAtivo === null) {
+                sgi_json_saida(erroSemInterclasseAtivo());
+                break;
+            }
+
+            $dados = !empty($_POST) ? $_POST : $inputData;
+            $idUsuario = (int) ($dados['id_usuario'] ?? 0);
+            if ($idUsuario <= 0) {
+                sgi_json_saida(['status' => 'erro', 'mensagem' => 'ID do aluno inválido.']);
+                break;
+            }
+
+            $nome = trim((string) ($dados['nome_usuario'] ?? ''));
+            $matricula = trim((string) ($dados['matricula_usuario'] ?? ''));
+            $genero = strtoupper((string) ($dados['genero_usuario'] ?? 'MASC'));
+            $dataNascRaw = trim((string) ($dados['data_nasc_usuario'] ?? ''));
+            $dataNasc = sgi_parse_data_nascimento($dataNascRaw);
+
+            if ($nome === '' || $matricula === '' || $dataNasc === null) {
+                sgi_json_saida(['status' => 'erro', 'mensagem' => 'Campos obrigatórios: nome, RM e data de nascimento.']);
+                break;
+            }
+
+            if (!in_array($genero, ['FEM', 'MASC'], true)) {
+                $genero = 'MASC';
+            }
+
+            $rmNorm = sgi_normalizar_ra($matricula);
+            if ($rmNorm === '') {
+                sgi_json_saida(['status' => 'erro', 'mensagem' => 'RM inválido.']);
+                break;
+            }
+
+            $chaveEdicao = $rmNorm . '-' . $idInterclasseAtivo;
+
+            $checkStmt = $conn->prepare('SELECT id_usuario FROM usuarios WHERE chave_usuario_edicao = ? AND id_usuario != ? LIMIT 1');
+            if ($checkStmt) {
+                $checkStmt->bind_param('si', $chaveEdicao, $idUsuario);
+                $checkStmt->execute();
+                if ($checkStmt->get_result()->fetch_assoc()) {
+                    $checkStmt->close();
+                    sgi_json_saida(['status' => 'erro', 'mensagem' => 'Já existe outro aluno com este RM nesta edição.']);
+                    break;
+                }
+                $checkStmt->close();
+            }
+
+            $sql = 'UPDATE usuarios SET nome_usuario = ?, matricula_usuario = ?, genero_usuario = ?, data_nasc_usuario = ?, chave_usuario_edicao = ? WHERE id_usuario = ? AND nivel_usuario = \'3\'';
+            $stmt = $conn->prepare($sql);
+            if (!$stmt) {
+                sgi_json_saida(['status' => 'erro', 'mensagem' => $conn->error]);
+                break;
+            }
+            $stmt->bind_param('sssssi', $nome, $rmNorm, $genero, $dataNasc, $chaveEdicao, $idUsuario);
+
+            if ($stmt->execute()) {
+                sgi_json_saida(['status' => 'sucesso', 'mensagem' => 'Aluno atualizado!']);
+            } else {
+                if ($stmt->errno === 1062) {
+                    sgi_json_saida(['status' => 'erro', 'mensagem' => 'RM já cadastrado nesta edição.']);
+                } else {
+                    sgi_json_saida(['status' => 'erro', 'mensagem' => $stmt->error]);
+                }
+            }
+            $stmt->close();
+            break;
+        }
+
+        if ($acao === 'excluir_aluno') {
+            require_once __DIR__ . '/auth.php';
+            requerNivel([0, 1, 2]);
+
+            $dados = !empty($_POST) ? $_POST : $inputData;
+            $idUsuario = (int) ($dados['id_usuario'] ?? 0);
+            if ($idUsuario <= 0) {
+                sgi_json_saida(['status' => 'erro', 'mensagem' => 'ID do aluno inválido.']);
+                break;
+            }
+
+            $checkStmt = $conn->prepare('SELECT nivel_usuario FROM usuarios WHERE id_usuario = ? AND nivel_usuario = \'3\'');
+            $checkStmt->bind_param('i', $idUsuario);
+            $checkStmt->execute();
+            $target = $checkStmt->get_result()->fetch_assoc();
+            $checkStmt->close();
+
+            if (!$target) {
+                sgi_json_saida(['status' => 'erro', 'mensagem' => 'Aluno não encontrado ou não pode ser removido.']);
+                break;
+            }
+
+            $sql = "UPDATE usuarios SET status_usuario = '0' WHERE id_usuario = ? AND nivel_usuario = '3'";
+            $stmt = $conn->prepare($sql);
+            if (!$stmt) {
+                sgi_json_saida(['status' => 'erro', 'mensagem' => $conn->error]);
+                break;
+            }
+            $stmt->bind_param('i', $idUsuario);
+            if ($stmt->execute()) {
+                sgi_json_saida(['status' => 'sucesso', 'mensagem' => 'Aluno removido.']);
             } else {
                 sgi_json_saida(['status' => 'erro', 'mensagem' => $stmt->error]);
             }
