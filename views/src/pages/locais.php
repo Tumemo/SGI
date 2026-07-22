@@ -12,7 +12,6 @@ $paginaAtiva = 'locais';
 <script>const NIVEL_USUARIO = <?= $nivelUsuario ?>;</script>
 
 <main class="d-md-none p-3" style="padding-top: 5rem; padding-bottom: 120px;">
-    <p class="text-secondary text-center small mb-3">Locais onde os jogos acontecem</p>
     <div id="listaLocaisMobile" class="d-flex flex-column gap-3 mx-auto" style="max-width: 420px;">
         <p class="text-muted small text-center">Carregando…</p>
     </div>
@@ -30,10 +29,6 @@ $paginaAtiva = 'locais';
             <a href="./dashboard.php" id="btnVoltarLocaisDesk" class="btn btn-outline-danger btn-sm d-inline-flex align-items-center gap-1 mb-3 text-decoration-none">
                 <i class="bi bi-arrow-left"></i> Voltar
             </a>
-            <h4 class="fw-bold text-dark d-flex align-items-center gap-2 mb-0">
-                <i class="bi bi-geo-alt fs-4"></i> Locais
-            </h4>
-            <p class="text-muted small mt-2 mb-0">Visualize e cadastre os locais da competição.</p>
         </div>
 
         <div class="d-flex justify-content-end mb-3">

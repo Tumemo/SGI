@@ -154,11 +154,6 @@ include 'componentes/header.php';
 </style>
 
 <main class="container py-4">
-    <div class="d-flex align-items-center gap-2 mb-4">
-        <i class="bi bi-trophy fs-3"></i>
-        <h1 class="fs-4 fw-bold m-0">Modalidades</h1>
-    </div>
-    <p class="text-muted small mb-4" id="subtitulo">Carregando...</p>
 
     <div class="row row-cols-1 row-cols-md-3 g-3" id="modalidadesGrid">
         <div class="col text-center py-5">

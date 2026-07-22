@@ -32,15 +32,11 @@ $paginaAtiva = 'dashboard';
                     <i class="bi bi-arrow-left-circle fs-5"></i>
                     <span id="nomeInterclasseEquipes" style="font-weight: 400;">Interclasse</span>
                 </a>
-                <h4 class="text-dark d-flex align-items-center gap-2 mb-0" style="font-weight: 400;">
-                    <i class="bi bi-people-fill fs-4"></i> Equipes
-                </h4>
             </div>
             <button id="btnCriarEquipeDesk" class="btn btn-danger fw-semibold border-0 shadow-sm px-3 py-2" style="background-color: #ed1c24; border-radius: 6px;" data-bs-toggle="modal" data-bs-target="#modalCriarEquipe">
                     <i class="bi bi-plus-lg me-1"></i> Criar equipe
                 </button>
             </div>
-            <p class="text-muted small mb-4">Clique em uma categoria para filtrar as modalidades e equipes.</p>
             <div id="filtroCategoria" class="d-flex flex-wrap gap-2 mb-4"></div>
             <div id="listaEquipesDesktop"></div>
         </div>

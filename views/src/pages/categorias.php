@@ -18,7 +18,6 @@ $isMesario = $nivelUsuario === 2;
     <a href="./dashboard.php" id="btnVoltarCatMobile" class="btn btn-danger btn-sm mt-3 ms-3 d-inline-flex align-items-center gap-1">
         <i class="bi bi-arrow-left-circle"></i> Voltar
     </a>
-    <p class="text-secondary text-center my-3" style="font-size: 14px;">Categorias do interclasse</p>
 
     <div id="listaCategoriasMobile" class="d-flex flex-column align-items-center w-100">
         <p class="text-muted small mt-3">(Carregando categorias...)</p>
@@ -45,10 +44,6 @@ $isMesario = $nivelUsuario === 2;
             <a href="./dashboard.php" id="btnVoltarCatDesk" class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none" style="background-color: #ed1c24; border-radius: 6px;">
                 <i class="bi bi-arrow-left-circle fs-5"></i> <span id="nomeInterclasseCategoria">Interclasse</span>
             </a>
-
-            <h4 class="fw-bold d-flex align-items-center gap-2 text-dark mb-0">
-                <i class="bi bi-bookmark fs-5"></i> Categorias
-            </h4>
         </div>
 
         <div class="row g-4" id="listaCategoriasDesktop">

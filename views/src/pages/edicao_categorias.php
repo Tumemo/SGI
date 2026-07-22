@@ -18,8 +18,7 @@ $paginaAtiva = 'dashboard';
         <i class="bi bi-arrow-left-circle"></i> Voltar
     </a>
     <?php endif; ?>
-    <p class="text-secondary text-center my-3" style="font-size: 14px;">Selecione uma categoria para adicionar turmas</p>
-    
+
     <div id="listaCategoriasMobile" class="d-flex flex-column align-items-center w-100">
         <p class="text-muted small mt-3">(Carregando categorias...)</p>
     </div>
@@ -41,10 +40,6 @@ $paginaAtiva = 'dashboard';
                 <i class="bi bi-arrow-left-circle fs-5"></i> <span id="nomeInterclasseCategoria">Interclasse</span>
             </a>
             <?php endif; ?>
-
-            <h4 class="fw-bold d-flex align-items-center gap-2 text-dark mb-0">
-                <i class="bi bi-bookmark fs-5"></i> Categorias
-            </h4>
         </div>
 
         <div class="row g-4" id="listaCategoriasDesktop">

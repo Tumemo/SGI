@@ -14,8 +14,6 @@ $paginaAtiva = 'ranking';
 
     <header class="rk-mobile-header">
         <div>
-            <h1 class="rk-mobile-header__title" id="nomeInterclasse">Ranking</h1>
-            <p class="rk-mobile-header__sub">Ranking das turmas</p>
         </div>
         <div class="rk-stat-chip">
             <span>&#x1F465;</span>
@@ -45,8 +43,6 @@ $paginaAtiva = 'ranking';
         <section class="rk-main">
             <header class="rk-header">
                 <div class="rk-header__left">
-                    <h1 class="rk-header__title" id="nomeInterclasse">Ranking</h1>
-                    <p class="rk-header__sub">Ranking das turmas</p>
                 </div>
                 <div class="rk-stat-chip">
                     <span>&#x1F465;</span>

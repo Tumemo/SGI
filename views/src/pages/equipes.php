@@ -23,7 +23,6 @@ $paginaAtiva = 'equipes';
 <main class="d-none d-md-block main-desktop-layout">
     <div class="container-fluid px-0">
         <div class="d-flex justify-content-between align-items-center mb-4">
-            <h4 class="fw-bold mb-0">Equipes da turma</h4>
             <div>
                 <button class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#modalCriarEquipe">Adicionar equipe</button>
             </div>

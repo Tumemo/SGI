@@ -9,7 +9,6 @@ $paginaAtiva = 'categorias';
 ?>
 
 <main class="position-relative d-md-none" style="margin-bottom: 120px;">
-    <p class="text-center mt-3 text-secondary">Editar detalhes da turma</p>
     <section id="listaTurmasMobile">
         <p class="text-center text-muted mt-4">(Carregando...)</p>
     </section>
@@ -26,10 +25,6 @@ $paginaAtiva = 'categorias';
             <a href="./dashboard.php" id="btnVoltarCatDesk" class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none" style="background-color: #ed1c24; border-radius: 6px;">
                 <i class="bi bi-arrow-left-circle fs-5"></i> <span id="nomeInterclasseCategoria">Interclasse</span>
             </a>
-
-            <h4 class="fw-bold d-flex align-items-center gap-2 text-dark mb-0">
-                <i class="bi bi-bookmark fs-5"></i> Turmas
-            </h4>
         </div>
 
     <div class="row row-cols-1 row-cols-md-2 row-cols-xl-4 g-4" id="listaTurmasDesktop"></div>

@@ -11,7 +11,6 @@ $paginaAtiva = 'dashboard';
 
 
 <main class="d-md-none p-3" style="padding-top: 5rem; padding-bottom: 6rem;">
-    <p class="text-secondary text-center small mb-3">Locais onde os jogos acontecem (ginásio, quadra, etc.)</p>
     <div id="listaLocaisMobile" class="d-flex flex-column gap-3 mx-auto" style="max-width: 420px;">
         <p class="text-muted small text-center">Carregando…</p>
     </div>
@@ -30,10 +29,6 @@ $paginaAtiva = 'dashboard';
                 <i class="bi bi-arrow-left-circle fs-5"></i>
                 <span id="nomeInterclasseLocais">Interclasse</span>
             </a>
-            <h4 class="fw-bold text-dark d-flex align-items-center gap-2 mb-0">
-                <i class="bi bi-geo-alt fs-4"></i> Locais de competição
-            </h4>
-            <p class="text-muted small mt-2 mb-0">Cadastre os espaços antes de agendar jogos. Estes registros são usados em toda a competição.</p>
         </div>
 
         <div class="d-flex justify-content-end mb-3">

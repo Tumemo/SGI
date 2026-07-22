@@ -12,8 +12,6 @@ $podeGerenciar = in_array($nivelUsuario, [0, 1, 2], true);
 <!-- main mobile -->
 <main class="d-md-none p-3" style="padding-top: 5.5rem; padding-bottom: 5rem;">
     <a href="#" class="btn btn-danger btn-sm mb-3 rounded-3" id="btnVoltarTurmaAlunosMob">Voltar</a>
-    <h5 style="font-weight: 400;" id="tituloTurmaMob">Turma</h5>
-    <p class="text-muted small" id="contagemMob"></p>
 
     <?php if ($podeGerenciar): ?>
     <button class="btn btn-outline-danger btn-sm rounded-3 mb-3" onclick="abrirModalAluno()">
@@ -48,14 +46,12 @@ $podeGerenciar = in_array($nivelUsuario, [0, 1, 2], true);
             <i class="bi bi-arrow-left-circle fs-5"></i> Voltar
         </a>
         <div class="d-flex align-items-center gap-3 mb-2">
-            <h4 style="font-weight: 400;" id="tituloTurmaDesk">Alunos da turma</h4>
             <?php if ($podeGerenciar): ?>
             <button class="btn btn-outline-danger btn-sm rounded-3" onclick="abrirModalAluno()">
                 <i class="bi bi-plus-lg"></i> Adicionar aluno
             </button>
             <?php endif; ?>
         </div>
-        <p class="text-muted" id="contagemDesk"></p>
 
         <?php if ($nivelUsuario === 0): ?>
         <div id="blocoPdfDesk" class="card border-0 shadow-sm rounded-4 p-4">

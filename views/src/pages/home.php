@@ -22,9 +22,6 @@ $isMesario = $nivelUsuario === 2;
     <?php endif; ?>
     <?php if ($isColaborador): ?>
     <div class="p-3">
-        <h2 class="d-flex align-items-center gap-2 text-dark mb-4" style="font-weight: 400; font-size: 1.1rem;">
-            <i class="bi bi-house-door-fill"></i> Início
-        </h2>
     </div>
     <?php endif; ?>
     <div id="caixaListar" class="pb-5 mb-2 mt-2">
@@ -35,8 +32,6 @@ $isMesario = $nivelUsuario === 2;
 <!-- main desktop -->
 <main class="d-none d-md-flex main-desktop-layout">
     <section class="mt-4 container">
-
-        <h1 class="fs-2">Edições do interclasse</h1>
 
         <?php if ($isAdmin): ?>
         <button class="btn btn-outline-danger d-flex gap-2 mt-3 mb-4 align-items-center" data-bs-toggle="modal" data-bs-target="#exampleModal">

@@ -11,8 +11,6 @@ $paginaAtiva = 'dashboard';
 
 
 <main class="container py-4 main-desktop-layout">
-    <h1 class="fs-2 mb-1" id="listaTitulo">Jogos</h1>
-    <p class="text-muted mb-4" id="listaSubtitulo">Carregando...</p>
 
     <div class="row g-3" id="listaJogos">
         <div class="col-12 text-center text-muted py-5">
