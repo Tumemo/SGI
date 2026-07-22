@@ -112,7 +112,7 @@ $paginaAtiva = 'perfil';
 
 
 <main class="perfil-page d-md-none p-3" style="padding-top: 5.5rem; padding-bottom: 5rem;">
-    <a href="<?= $backHome ?>" class="perfil-topbar" id="perfilBackMob">
+    <a href="<?= htmlspecialchars($urlVoltar) ?>" class="perfil-topbar" id="perfilBackMob">
         <i class="bi bi-arrow-left-circle fs-5"></i>
         <span id="perfilNomeInterMobile">Interclasse</span>
     </a>
@@ -154,7 +154,7 @@ $paginaAtiva = 'perfil';
 
 <main class="perfil-page d-none d-md-block main-desktop-layout">
     <div class="container-fluid px-2 px-md-4 py-4">
-        <a href="<?= $backHome ?>" class="perfil-topbar" id="perfilBackDesk">
+        <a href="<?= htmlspecialchars($urlVoltar) ?>" class="perfil-topbar" id="perfilBackDesk">
             <i class="bi bi-arrow-left-circle fs-5"></i>
             <span id="perfilNomeInterDesk">Interclasse</span>
         </a>
@@ -245,32 +245,9 @@ $paginaAtiva = 'perfil';
         nome: <?= json_encode($usuarioPerfil['nome_usuario'] ?? '') ?>,
         matricula: <?= json_encode($usuarioPerfil['matricula_usuario'] ?? '') ?>,
         id: <?= json_encode($sessionId ?? 0) ?>,
-        nivel: <?= json_encode((int)($nivel ?? 0)) ?>
+        nivel: <?= json_encode((int)($nivelUsuario ?? 0)) ?>
     };
     const API_FOTO = '../../../api/foto.php';
-
-    document.addEventListener('DOMContentLoaded', async () => {
-        try {
-            const ativo = await window.SGIInterclasse.getActiveInterclasse();
-            const nome = ativo?.nome_interclasse || 'Interclasse';
-            document.getElementById('perfilNomeInterMobile').textContent = nome;
-            document.getElementById('perfilNomeInterDesk').textContent = nome;
-        } catch (e) {}
-
-        const params = new URLSearchParams(window.location.search);
-        const id = params.get('id');
-        if (id) {
-            var page = 'dashboard.php';
-            var href = './' + page + '?id=' + encodeURIComponent(id);
-            document.getElementById('perfilBackDesk').href = href;
-            var mob = document.getElementById('perfilBackMob');
-            if (mob) mob.href = href;
-        }
-
-            preencherPerfil();
-
-        document.getElementById('formEditarPerfil').addEventListener('submit', salvarPerfil);
-    });
 
     function preencherPerfil() {
         document.getElementById('perfilNomeMob').textContent = DADOS_PERFIL.nome;
@@ -314,11 +291,28 @@ $paginaAtiva = 'perfil';
         });
     }
 
-    document.addEventListener('DOMContentLoaded', () => {
+    document.addEventListener('DOMContentLoaded', async () => {
+        try {
+            const ativo = await window.SGIInterclasse.getActiveInterclasse();
+            const nome = ativo?.nome_interclasse || 'Interclasse';
+            document.getElementById('perfilNomeInterMobile').textContent = nome;
+            document.getElementById('perfilNomeInterDesk').textContent = nome;
+        } catch (e) {}
+
+        const params = new URLSearchParams(window.location.search);
+        const id = params.get('id');
+        if (id) {
+            var href = './dashboard.php?id=' + encodeURIComponent(id);
+            document.getElementById('perfilBackDesk').href = href;
+            var mob = document.getElementById('perfilBackMob');
+            if (mob) mob.href = href;
+        }
+
+        preencherPerfil();
+
         const input = document.getElementById('fotoUploadInput');
-        const btnCameras = ['btnCameraMob', 'btnCameraDesk'];
-        btnCameras.forEach(id => {
-            const btn = document.getElementById(id);
+        ['btnCameraMob', 'btnCameraDesk'].forEach(btnId => {
+            const btn = document.getElementById(btnId);
             if (btn) btn.addEventListener('click', () => input.click());
         });
 
@@ -395,6 +389,8 @@ $paginaAtiva = 'perfil';
                 }
             });
         });
+
+        document.getElementById('formEditarPerfil').addEventListener('submit', salvarPerfil);
     });
 
     async function salvarPerfil(e) {

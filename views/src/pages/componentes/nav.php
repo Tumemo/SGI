@@ -3,12 +3,12 @@ $paginaAtiva = $paginaAtiva ?? 'home';
 $nivelUsuario = (int)($_SESSION['nivel'] ?? -1);
 
 $todosItens = [
-    'perfil'            => ['label' => 'Perfil',          'icon' => 'bi-person-gear',        'url' => './perfil.php',              'niveis' => [0, 1, 2]],
+    'perfil'            => ['label' => 'Perfil',          'icon' => 'bi-person',             'url' => './perfil.php',              'niveis' => [0, 1, 2]],
     'dashboard'         => ['label' => 'Dashboard',       'icon' => 'bi-house-door',         'url' => './dashboard.php',           'niveis' => [0, 1]],
     'categorias'        => ['label' => 'Categorias',      'icon' => 'bi-bookmarks',          'url' => './categorias.php',          'niveis' => [0, 1, 2]],
     'chaveamento'       => ['label' => 'Chaveamento',     'icon' => 'bi-diagram-3',          'url' => './chaveamento_arvore.php',  'niveis' => [0, 1]],
     'ranking'           => ['label' => 'Ranking',         'icon' => 'bi-trophy',             'url' => './ranking.php',             'niveis' => [0, 1]],
-    'agenda'            => ['label' => 'Agenda',          'icon' => 'bi-calendar3',          'url' => './edicao_agenda.php',       'niveis' => [0, 1]],
+    'agenda'            => ['label' => 'Agenda',          'icon' => 'bi-calendar2-check',          'url' => './edicao_agenda.php',       'niveis' => [0, 1]],
     'arrecadacoes'      => ['label' => 'Arrecadações',    'icon' => 'bi-basket',             'url' => './edicao_arrecadacao.php',  'niveis' => [0, 1]],
     'colaboradores'     => ['label' => 'Colaboradores',   'icon' => 'bi-people',             'url' => './colaboradores.php',       'niveis' => [0]],
     'chaveamentos_mesario' => ['label' => 'Chaveamentos', 'icon' => 'bi-diagram-3',          'url' => './pontuacao.php',           'niveis' => [2]],

@@ -5,7 +5,7 @@ $mostrarVoltar = true;
 $urlVoltar = './dashboard.php';
 include 'componentes/head.php';
 include 'componentes/header.php';
-$paginaAtiva = 'dashboard';
+$paginaAtiva = 'colaboradores';
 ?>
 
 
