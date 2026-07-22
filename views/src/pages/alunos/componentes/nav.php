@@ -3,7 +3,6 @@ $paginaAtiva = $paginaAtiva ?? 'home';
 $navItens = [
     'home'     => ['label' => 'Início',       'icon' => 'bi-house-door-fill',   'url' => './home.php'],
     'ranking'  => ['label' => 'Ranking',       'icon' => 'bi-trophy-fill',       'url' => './ranking.php'],
-    'notificacao' => ['label' => 'Notificação', 'icon' => 'bi bi-bell-fill', 'url' => './notificacoes.php'],
     'perfil'   => ['label' => 'Perfil',        'icon' => 'bi-person-gear',      'url' => './perfil.php'],
     'termos'   => ['label' => 'Termos',        'icon' => 'bi-file-text-fill',    'url' => './termos.php'],
     'sair'     => ['label' => 'Sair',          'icon' => 'bi-box-arrow-right',   'url' => '../../../../api/logout.php'],
