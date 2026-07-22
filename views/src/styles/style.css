@@ -166,6 +166,15 @@ select:disabled {
     flex-direction: column;
 }
 
+body > main {
+    animation: page-fade-in 0.3s ease;
+}
+
+@keyframes page-fade-in {
+    0%   { opacity: 0; transform: translateY(6px); }
+    100% { opacity: 1; transform: translateY(0); }
+}
+
 
 /* ==========================================================================
    6. NAVBAR / NAVEGAÇÃO (componentes/nav.php)
@@ -178,7 +187,13 @@ select:disabled {
 
 .active-nav-icon {
     opacity: 1 !important;
-    filter: drop-shadow(0 0 4px rgba(255,255,255,0.5));
+    transform: scale(1.15);
+    filter: drop-shadow(0 0 6px rgba(255,255,255,0.45));
+    transition: transform 0.25s ease, filter 0.25s ease;
+}
+
+.nav li a i.bi {
+    transition: transform 0.25s ease;
 }
 
 
@@ -756,6 +771,68 @@ select:disabled {
 
 #artilheiro-section .row.g-3 > div {
     margin-bottom: 0;
+}
+
+.mc-artilheiro-grid {
+    display: flex;
+    flex-direction: column;
+    gap: .5rem;
+}
+
+.mc-artilheiro-card {
+    display: flex;
+    align-items: center;
+    gap: .75rem;
+    background: var(--mc-card-bg);
+    border: 1px solid var(--mc-border);
+    border-radius: var(--mc-radius);
+    padding: .65rem 1rem;
+}
+
+.mc-artilheiro-card-icon {
+    font-size: 1.1rem;
+    flex-shrink: 0;
+    width: 1.5rem;
+    text-align: center;
+}
+
+.mc-artilheiro-card-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.mc-artilheiro-card-nome {
+    font-weight: 600;
+    font-size: .9rem;
+    color: var(--mc-text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.mc-artilheiro-card-turma {
+    font-size: .75rem;
+    color: var(--mc-text-muted);
+}
+
+.mc-artilheiro-card-gols {
+    font-weight: 700;
+    font-size: .95rem;
+    color: var(--mc-accent);
+    white-space: nowrap;
+}
+
+.mc-artilheiro-empty {
+    text-align: center;
+    padding: 1.5rem 1rem;
+    color: var(--mc-text-muted);
+    font-size: .85rem;
+}
+
+.mc-artilheiro-empty i {
+    font-size: 1.5rem;
+    display: block;
+    margin-bottom: .4rem;
 }
 
 #alerta-segundo-amarelo .alert {

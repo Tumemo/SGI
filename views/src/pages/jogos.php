@@ -481,6 +481,96 @@ $paginaAtiva = 'dashboard';
         });
         var grid = document.getElementById('placar-grid');
         if (grid) grid.classList.add('score-blocked');
+
+        // Mostrar botões de tempo extra se o jogo não estiver encerrado
+        var st = estadoJogo.status_jogo;
+        if (st === 'Iniciado' || st === 'Pausado') {
+            mostrarBotoesTempoExtra();
+        }
+    }
+
+    function mostrarBotoesTempoExtra() {
+        var acoes = document.getElementById('placar-acoes');
+        if (!acoes) return;
+        // Evitar duplicar
+        if (document.getElementById('mc-overtime-actions')) return;
+
+        var container = document.createElement('div');
+        container.id = 'mc-overtime-actions';
+        container.className = 'mc-actions';
+        container.style.marginTop = '1rem';
+
+        var label = document.createElement('span');
+        label.className = 'fw-bold text-danger';
+        label.style.fontSize = '.9rem';
+        label.innerHTML = '<i class="bi bi-stopwatch me-1"></i>Tempo esgotado — Adicionar acréscimos:';
+        container.appendChild(label);
+
+        [1, 2, 3, 5].forEach(function(min) {
+            var b = document.createElement('button');
+            b.type = 'button';
+            b.className = 'mc-action-btn mc-action-btn--start';
+            b.style.fontSize = '.8rem';
+            b.style.padding = '.5rem 1rem';
+            b.innerHTML = '<i class="bi bi-plus-circle me-1"></i>+' + min + ' min';
+            b.addEventListener('click', function() {
+                adicionarTempoExtra(min * 60);
+            });
+            container.appendChild(b);
+        });
+
+        acoes.appendChild(container);
+    }
+
+    async function adicionarTempoExtra(segundos) {
+        var novoTotal = (parseInt(estadoJogo.tempo_extra_jogo, 10) || 0) + segundos;
+        try {
+            await fetchJson(API + 'jogos.php', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    id_jogo: idJogo,
+                    tempo_extra_jogo: novoTotal,
+                    tempo_restante_jogo: tempoRestante + segundos
+                })
+            });
+            estadoJogo.tempo_extra_jogo = novoTotal;
+            tempoRestante = tempoRestante + segundos;
+            tempoEsgotado = false;
+
+            // Remover bloqueio visual
+            var grid = document.getElementById('placar-grid');
+            if (grid) grid.classList.remove('score-blocked');
+            document.querySelectorAll('.btn-score-plus, .btn-score-minus').forEach(function(b) {
+                b.disabled = false;
+            });
+
+            // Remover botões de overtime
+            var ov = document.getElementById('mc-overtime-actions');
+            if (ov) ov.remove();
+
+            // Reiniciar timer
+            atualizarDisplayTimer();
+            pausado = false;
+            timerId = setInterval(function() {
+                if (tempoRestante > 0) {
+                    tempoRestante--;
+                    atualizarDisplayTimer();
+                    if (tempoRestante <= 0) {
+                        bloquearPontuacao();
+                    }
+                }
+            }, 1000);
+
+            // Salvar estado
+            fetchJson(API + 'jogos.php', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id_jogo: idJogo, tempo_restante_jogo: tempoRestante })
+            }).catch(function() {});
+        } catch (e) {
+            alert('Erro ao adicionar tempo extra: ' + (e.message || 'Erro de conexão'));
+        }
     }
 
     function iniciarTimerDisplay() {
@@ -495,6 +585,16 @@ $paginaAtiva = 'dashboard';
         if (tempoRestante <= 0) {
             tempoEsgotado = true;
             atualizarDisplayTimer();
+            // Se jogo em andamento, mostrar botões de tempo extra
+            var st = estadoJogo.status_jogo;
+            if (st === 'Iniciado' || st === 'Pausado') {
+                document.querySelectorAll('.btn-score-plus, .btn-score-minus').forEach(function(b) {
+                    b.disabled = true;
+                });
+                var grid = document.getElementById('placar-grid');
+                if (grid) grid.classList.add('score-blocked');
+                mostrarBotoesTempoExtra();
+            }
             return;
         }
 
@@ -522,22 +622,33 @@ $paginaAtiva = 'dashboard';
         if (btn) btn.textContent = pausado ? 'Retomar' : 'Pausar';
         if (pausado) {
             pararTimer();
-        } else if (!timerId) {
-            timerId = setInterval(function() {
-                if (tempoRestante > 0) {
-                    tempoRestante--;
-                    atualizarDisplayTimer();
-                    if (tempoRestante <= 0) {
-                        bloquearPontuacao();
+            // Pausar: servidor calcula e salva tempo_restante, limpa data_inicio_real
+            fetchJson(API + 'jogos.php', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id_jogo: idJogo, status_jogo: 'Pausado' })
+            }).catch(function() {});
+            estadoJogo.status_jogo = 'Pausado';
+        } else {
+            // Retomar: servidor define data_inicio_real = NOW()
+            fetchJson(API + 'jogos.php', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id_jogo: idJogo, status_jogo: 'Iniciado' })
+            }).catch(function() {});
+            estadoJogo.status_jogo = 'Iniciado';
+            if (!timerId) {
+                timerId = setInterval(function() {
+                    if (tempoRestante > 0) {
+                        tempoRestante--;
+                        atualizarDisplayTimer();
+                        if (tempoRestante <= 0) {
+                            bloquearPontuacao();
+                        }
                     }
-                }
-            }, 1000);
+                }, 1000);
+            }
         }
-        fetchJson(API + 'jogos.php', {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ id_jogo: idJogo, tempo_restante_jogo: tempoRestante })
-        }).catch(function() {});
     }
 
     function mudarDuracao(segundos) {
@@ -577,9 +688,17 @@ $paginaAtiva = 'dashboard';
         await fetchJson(API + 'jogos.php', {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ id_jogo: idJogo, status_jogo: 'Iniciado', tempo_restante_jogo: duracaoJogo })
+            body: JSON.stringify({
+                id_jogo: idJogo,
+                status_jogo: 'Iniciado',
+                duracao_jogo: duracaoJogo,
+                tempo_restante_jogo: duracaoJogo,
+                tempo_extra_jogo: 0
+            })
         });
         estadoJogo.status_jogo = 'Iniciado';
+        estadoJogo.duracao_jogo = duracaoJogo;
+        estadoJogo.tempo_extra_jogo = 0;
         renderTudo();
         iniciarTimerDisplay();
     }
@@ -778,7 +897,7 @@ $paginaAtiva = 'dashboard';
     }
 
     function ehFutsal() {
-        return (estadoJogo.nome_modalidade || '').toLowerCase() === 'futsal';
+        return parseInt(estadoJogo.tipos_modalidades_id_tipo_modalidade, 10) === 1;
     }
 
     async function carregarDados() {
@@ -808,9 +927,23 @@ $paginaAtiva = 'dashboard';
             partidasLista = await fetchJson(API + 'partidas.php?id_jogo=' + idJogo);
             if (!Array.isArray(partidasLista)) partidasLista = [];
 
-            if (estadoJogo.tempo_restante_jogo != null) {
-                var v = parseInt(estadoJogo.tempo_restante_jogo, 10);
-                if (!isNaN(v) && v > 0) tempoRestante = v;
+            // Restaurar duração do jogo do servidor
+            if (estadoJogo.duracao_jogo) {
+                var d = parseInt(estadoJogo.duracao_jogo, 10);
+                if (!isNaN(d) && d > 0) duracaoJogo = d;
+            }
+
+            if (estadoJogo.tempo_restante_calculado != null) {
+                var v = parseInt(estadoJogo.tempo_restante_calculado, 10);
+                if (!isNaN(v) && v > 0) {
+                    tempoRestante = v;
+                } else if (v <= 0 && (estadoJogo.status_jogo === 'Iniciado' || estadoJogo.status_jogo === 'Pausado')) {
+                    tempoRestante = 0;
+                    tempoEsgotado = true;
+                }
+            } else if (estadoJogo.tempo_restante_jogo != null) {
+                var v2 = parseInt(estadoJogo.tempo_restante_jogo, 10);
+                if (!isNaN(v2) && v2 > 0) tempoRestante = v2;
             }
 
             load.classList.add('d-none');
@@ -1098,6 +1231,37 @@ $paginaAtiva = 'dashboard';
     function iniciarArtilheiro() {
         document.getElementById('artilheiro-section').classList.remove('d-none');
         carregarEquipesArtilheiro();
+        carregarArtilheiros();
+    }
+
+    async function carregarArtilheiros() {
+        var cards = document.getElementById('artilheiro-cards');
+        if (!cards) return;
+        try {
+            var data = await fetchJson(API + 'artilheiro.php?id_jogo=' + idJogo);
+            if (!Array.isArray(data) || data.length === 0) {
+                cards.innerHTML = '<div class="mc-artilheiro-empty"><i class="bi bi-trophy"></i><p>Nenhum gol registrado ainda.</p></div>';
+                return;
+            }
+            var html = '';
+            data.forEach(function(a) {
+                var nome = esc(a.nome_usuario || 'Desconhecido');
+                var turma = esc(a.nome_fantasia_turma || a.nome_turma || '');
+                var gols = parseInt(a.total_gols, 10) || 0;
+                var icon = gols >= 3 ? 'bi-star-fill text-warning' : gols >= 2 ? 'bi-fire text-danger' : 'bi-circle-fill text-success';
+                html += '<div class="mc-artilheiro-card">' +
+                    '<div class="mc-artilheiro-card-icon"><i class="bi ' + icon + '"></i></div>' +
+                    '<div class="mc-artilheiro-card-info">' +
+                    '<div class="mc-artilheiro-card-nome">' + nome + '</div>' +
+                    '<div class="mc-artilheiro-card-turma">' + turma + '</div>' +
+                    '</div>' +
+                    '<div class="mc-artilheiro-card-gols">' + gols + ' gol' + (gols > 1 ? 's' : '') + '</div>' +
+                    '</div>';
+            });
+            cards.innerHTML = html;
+        } catch (e) {
+            cards.innerHTML = '<div class="mc-artilheiro-empty"><i class="bi bi-exclamation-circle"></i><p>Erro ao carregar artilharia.</p></div>';
+        }
     }
 
     async function carregarEquipesArtilheiro() {
@@ -1183,7 +1347,10 @@ $paginaAtiva = 'dashboard';
             var result = await resp.json();
             if (result.success) {
                 msg.innerHTML = '<span class="text-success">Gol(s) registrado(s)!</span>';
+                carregarArtilheiros();
                 setTimeout(function() {
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="bi bi-check-lg me-1"></i>Registrar Gol';
                     var m = bootstrap.Modal.getInstance(document.getElementById('modalArtilheiro'));
                     if (m) m.hide();
                 }, 600);

@@ -4,14 +4,14 @@ $nivelUsuario = (int)($_SESSION['nivel'] ?? -1);
 
 $todosItens = [
     'perfil'            => ['label' => 'Perfil',          'icon' => 'bi-person-gear',        'url' => './perfil.php',              'niveis' => [0, 1, 2]],
-    'dashboard'         => ['label' => 'Dashboard',       'icon' => 'bi-house-door-fill',    'url' => './dashboard.php',           'niveis' => [0, 1]],
+    'dashboard'         => ['label' => 'Dashboard',       'icon' => 'bi-house-door',         'url' => './dashboard.php',           'niveis' => [0, 1]],
     'categorias'        => ['label' => 'Categorias',      'icon' => 'bi-bookmarks',          'url' => './categorias.php',          'niveis' => [0, 1, 2]],
-    'chaveamento'       => ['label' => 'Chaveamento',     'icon' => 'bi-diagram-3-fill',     'url' => './chaveamento_arvore.php',  'niveis' => [0, 1]],
-    'ranking'           => ['label' => 'Ranking',         'icon' => 'bi-trophy-fill',        'url' => './ranking.php',             'niveis' => [0, 1]],
+    'chaveamento'       => ['label' => 'Chaveamento',     'icon' => 'bi-diagram-3',          'url' => './chaveamento_arvore.php',  'niveis' => [0, 1]],
+    'ranking'           => ['label' => 'Ranking',         'icon' => 'bi-trophy',             'url' => './ranking.php',             'niveis' => [0, 1]],
     'agenda'            => ['label' => 'Agenda',          'icon' => 'bi-calendar3',          'url' => './edicao_agenda.php',       'niveis' => [0, 1]],
     'arrecadacoes'      => ['label' => 'Arrecadações',    'icon' => 'bi-basket',             'url' => './edicao_arrecadacao.php',  'niveis' => [0, 1]],
     'colaboradores'     => ['label' => 'Colaboradores',   'icon' => 'bi-people',             'url' => './colaboradores.php',       'niveis' => [0]],
-    'chaveamentos_mesario' => ['label' => 'Chaveamentos', 'icon' => 'bi-diagram-3-fill',    'url' => './pontuacao.php',           'niveis' => [2]],
+    'chaveamentos_mesario' => ['label' => 'Chaveamentos', 'icon' => 'bi-diagram-3',          'url' => './pontuacao.php',           'niveis' => [2]],
     'agenda_mesario'    => ['label' => 'Agenda',          'icon' => 'bi-calendar3',          'url' => './agenda.php',              'niveis' => [2]],
 ];
 
@@ -23,6 +23,7 @@ foreach ($todosItens as $key => $item) {
 }
 
 $classeLink = fn($key) => $key === $paginaAtiva ? 'text-white fw-bold' : 'text-white-50';
+$iconeNav = fn($icon, $key) => $key === $paginaAtiva ? $icon . '-fill' : $icon;
 $onclickSair = "onclick=\"return confirm('Deseja realmente sair?')\"";
 ?>
 <!-- navbar mobile -->
@@ -30,8 +31,8 @@ $onclickSair = "onclick=\"return confirm('Deseja realmente sair?')\"";
     <ul class="nav justify-content-around flex-wrap fs-5 list-unstyled mb-0 gap-0 px-1">
         <?php foreach ($navItens as $key => $item): ?>
         <li>
-            <a href="<?= $item['url'] ?>" class="<?= $classeLink($key) ?> nav-link p-1" aria-label="<?= $item['label'] ?>">
-                <i class="bi <?= $item['icon'] ?>"></i>
+            <a href="<?= $item['url'] ?>" class="<?= $classeLink($key) ?> nav-link p-1 <?= $key === $paginaAtiva ? 'active-nav-icon' : '' ?>" aria-label="<?= $item['label'] ?>">
+                <i class="bi <?= $iconeNav($item['icon'], $key) ?>"></i>
             </a>
         </li>
         <?php endforeach; ?>
@@ -49,7 +50,7 @@ $onclickSair = "onclick=\"return confirm('Deseja realmente sair?')\"";
         <?php foreach ($navItens as $key => $item): ?>
         <li>
             <a href="<?= $item['url'] ?>" class="text-white d-flex align-items-center justify-content-center position-relative <?= $key === $paginaAtiva ? 'active-nav-icon' : '' ?>" title="<?= $item['label'] ?>">
-                <i class="bi <?= $item['icon'] ?>"></i>
+                <i class="bi <?= $iconeNav($item['icon'], $key) ?>"></i>
             </a>
         </li>
         <?php endforeach; ?>

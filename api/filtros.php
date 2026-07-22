@@ -13,6 +13,12 @@ function aplicarFiltrosArtilharia() {
     $types .= "i";
     $params[] = $ano;
 
+    if (!empty($_GET['id_jogo'])) {
+        $sqlExtras .= " AND jogos.id_jogo = ?";
+        $types .= "i";
+        $params[] = intval($_GET['id_jogo']);
+    }
+
     if (!empty($_GET['id_modalidade'])) {
         $sqlExtras .= " AND modalidades.id_modalidade = ?";
         $types .= "i";

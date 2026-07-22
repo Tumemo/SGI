@@ -73,9 +73,14 @@ switch ($method) {
                     jogos.inicio_jogo, 
                     jogos.termino_jogo, 
                     jogos.status_jogo,
+                    jogos.tempo_restante_jogo,
+                    jogos.duracao_jogo,
+                    jogos.tempo_extra_jogo,
+                    jogos.data_inicio_real,
                     jogos.modalidades_id_modalidade,
                     jogos.locais_id_local,
-                    modalidades.nome_modalidade, 
+                    modalidades.nome_modalidade,
+                    modalidades.tipos_modalidades_id_tipo_modalidade,
                     locais.nome_local,
                     categorias.nome_categoria,
                     GROUP_CONCAT(DISTINCT t.nome_turma ORDER BY p.id_partida SEPARATOR ' vs ') AS equipes_nomes
@@ -109,7 +114,24 @@ switch ($method) {
             echo json_encode(["success" => false, "message" => "Erro ao obter resultados."]);
             break;
         }
-        echo json_encode($res->fetch_all(MYSQLI_ASSOC));
+
+        $jogos = $res->fetch_all(MYSQLI_ASSOC);
+
+        // Calcular tempo restante no servidor para jogos em andamento
+        foreach ($jogos as &$jogo) {
+            if ($jogo['status_jogo'] === 'Iniciado' && $jogo['data_inicio_real'] && $jogo['duracao_jogo']) {
+                $inicioTs = strtotime($jogo['data_inicio_real']);
+                $agoraTs = time();
+                $decorrido = $agoraTs - $inicioTs;
+                $totalProgramado = (int) $jogo['duracao_jogo'] + (int) ($jogo['tempo_extra_jogo'] ?? 0);
+                $jogo['tempo_restante_calculado'] = max(0, $totalProgramado - $decorrido);
+            } else {
+                $jogo['tempo_restante_calculado'] = $jogo['tempo_restante_jogo'];
+            }
+        }
+        unset($jogo);
+
+        echo json_encode($jogos, JSON_UNESCAPED_UNICODE);
         break;
 
     case 'POST':
@@ -195,7 +217,17 @@ switch ($method) {
         }
         if (isset($data->tempo_restante_jogo)) {
             $campos[] = "tempo_restante_jogo = ?";
-            $params[] = $data->tempo_restante_jogo;
+            $params[] = (int) $data->tempo_restante_jogo;
+            $types .= "i";
+        }
+        if (isset($data->duracao_jogo)) {
+            $campos[] = "duracao_jogo = ?";
+            $params[] = (int) $data->duracao_jogo;
+            $types .= "i";
+        }
+        if (isset($data->tempo_extra_jogo)) {
+            $campos[] = "tempo_extra_jogo = ?";
+            $params[] = (int) $data->tempo_extra_jogo;
             $types .= "i";
         }
         if (isset($data->status_jogo)) {
@@ -212,6 +244,37 @@ switch ($method) {
             $campos[] = "locais_id_local = ?";
             $params[] = $data->locais_id_local;
             $types .= "i";
+        }
+
+        // Gerenciamento automático de data_inicio_real baseado na transição de status
+        $novoStatus = $data->status_jogo ?? null;
+        $idJogoPut = (int) $data->id_jogo;
+
+        if ($novoStatus === 'Iniciado' && !isset($data->data_inicio_real)) {
+            // Iniciar ou retomar: registrar data_inicio_real = NOW()
+            $campos[] = "data_inicio_real = NOW()";
+        } elseif ($novoStatus === 'Pausado' || $novoStatus === 'Concluido') {
+            // Pausar ou concluir: calcular e salvar tempo_restante, limpar data_inicio_real
+            if (!isset($data->tempo_restante_jogo)) {
+                // Buscar estado atual para calcular
+                $ck = $conn->prepare("SELECT duracao_jogo, tempo_extra_jogo, data_inicio_real FROM jogos WHERE id_jogo = ?");
+                $ck->bind_param('i', $idJogoPut);
+                $ck->execute();
+                $cur = $ck->get_result()->fetch_assoc();
+                $ck->close();
+
+                if ($cur && $cur['data_inicio_real'] && $cur['duracao_jogo']) {
+                    $inicioTs = strtotime($cur['data_inicio_real']);
+                    $agoraTs = time();
+                    $decorrido = $agoraTs - $inicioTs;
+                    $total = (int) $cur['duracao_jogo'] + (int) ($cur['tempo_extra_jogo'] ?? 0);
+                    $restante = max(0, $total - $decorrido);
+                    $campos[] = "tempo_restante_jogo = ?";
+                    $params[] = $restante;
+                    $types .= "i";
+                }
+            }
+            $campos[] = "data_inicio_real = NULL";
         }
 
         if (empty($campos)) {
