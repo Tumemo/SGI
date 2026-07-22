@@ -154,11 +154,6 @@ include 'componentes/header.php';
 </style>
 
 <main class="container py-4">
-    <div class="d-flex align-items-center gap-2 mb-4">
-        <i class="bi bi-trophy fs-3"></i>
-        <h1 class="fs-4 fw-bold m-0">Modalidades</h1>
-    </div>
-    <p class="text-muted small mb-4" id="subtitulo">Carregando...</p>
 
     <div class="row row-cols-1 row-cols-md-3 g-3" id="modalidadesGrid">
         <div class="col text-center py-5">
@@ -198,7 +193,6 @@ include 'componentes/nav.php';
                 const listaInter = await (await fetch('../../../../api/interclasse.php?regulamento=true')).json();
                 const ativos = (Array.isArray(listaInter) ? listaInter : []).filter(i => String(i.status_interclasse) === '1');
                 if (ativos.length === 0) {
-                    document.getElementById('subtitulo').textContent = 'Nenhum interclasse ativo no momento.';
                     return;
                 }
                 idInterclasse = String(ativos[0].id_interclasse);
@@ -212,7 +206,6 @@ include 'componentes/nav.php';
             const dadosInter = (Array.isArray(listaInter) ? listaInter : []).find(i => String(i.id_interclasse) === String(idInterclasse));
             if (dadosInter) {
                 const msg = estaInscrito ? ' — Suas inscrições' : ' — Selecione até 3 modalidades';
-                document.getElementById('subtitulo').textContent = dadosInter.nome_interclasse + msg;
             }
 
             const res = await fetch(`../../../../api/modalidades.php?id_interclasse=${idInterclasse}`);

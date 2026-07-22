@@ -20,15 +20,6 @@ $paginaAtiva = 'dashboard';
                 <i class="bi bi-arrow-left-circle"></i>
                 <span id="nomeInterclassePontuacao">Interclasse</span>
             </a>
-
-            <h2 class="section-title d-flex align-items-center gap-2 mb-0">
-                <i class="bi bi-award"></i>
-                Gerenciamento de Pontuações
-            </h2>
-
-            <p class="text-muted mb-0">
-                Configure as pontuações das modalidades.
-            </p>
         </div>
 
         <div class="d-flex justify-content-between align-items-center mb-3">

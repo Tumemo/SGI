@@ -12,8 +12,6 @@ $paginaAtiva = 'dashboard';
 
 <main class="d-md-none p-3" style="padding-top: 5.5rem; padding-bottom: 5rem;">
     <a href="./edicao_equipes.php" class="btn btn-danger btn-sm mb-3 rounded-3" id="btnVoltarElencoMob">Voltar</a>
-    <h5 class="mb-2" style="font-weight: 400;" id="tituloElencoMob">Elenco</h5>
-    <p class="text-muted small mb-3" id="subtituloElencoMob"></p>
     <div id="listaElencoMob" class="d-flex flex-column gap-2"></div>
     <?php if ($isAdmin): ?>
     <a class="btn btn-outline-danger w-100 mt-4 rounded-3" id="linkGerenciarMob" href="#">Gerenciar inscrições na equipe</a>
@@ -26,8 +24,6 @@ $paginaAtiva = 'dashboard';
             <i class="bi bi-arrow-left-circle"></i>
             <span style="font-weight: 400;">Voltar</span>
         </a>
-        <h4 class="mb-1" style="font-weight: 400;" id="tituloElencoDesk">Elenco da equipe</h4>
-        <p class="text-muted mb-4" id="subtituloElencoDesk"></p>
         <div class="card border-0 shadow-sm rounded-4">
             <div class="table-responsive">
                 <table class="table table-hover align-middle mb-0">
@@ -93,10 +89,6 @@ $paginaAtiva = 'dashboard';
         montarGerenciar();
         const tit = nomeModalidade ? `${nomeModalidade}` : 'Elenco da equipe';
         const sub = nomeTurma ? `Turma: ${nomeTurma}` : '';
-        document.getElementById('tituloElencoMob').textContent = tit;
-        document.getElementById('tituloElencoDesk').textContent = tit;
-        document.getElementById('subtituloElencoMob').textContent = sub;
-        document.getElementById('subtituloElencoDesk').textContent = sub;
 
         const mob = document.getElementById('listaElencoMob');
         const tbody = document.getElementById('tbodyElencoDesk');

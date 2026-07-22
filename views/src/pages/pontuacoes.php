@@ -19,10 +19,6 @@ $paginaAtiva = 'pontuacoes';
             <span id="nomeInterclassePontuacaoMob">Interclasse</span>
         </a>
 
-        <h4 class="fw-bold d-flex align-items-center gap-2 mb-4">
-            <i class="bi bi-award fs-4 text-dark"></i> Pontuações
-        </h4>
-
         <?php if ($nivelUsuario === 0): ?>
         <div class="d-flex justify-content-end mb-3">
             <button class="btn btn-danger fw-bold px-4" id="btnSalvarPontuacao" onclick="salvarPontuacao()">
@@ -43,12 +39,6 @@ $paginaAtiva = 'pontuacoes';
                 <i class="bi bi-arrow-left-circle"></i>
                 <span id="nomeInterclassePontuacao">Interclasse</span>
             </a>
-
-            <h2 class="section-title d-flex align-items-center gap-2 mb-0">
-                <i class="bi bi-award"></i> Pontuações
-            </h2>
-
-            <p class="text-muted mb-0">Visualização das pontuações configuradas para as modalidades.</p>
         </div>
 
         <?php if ($nivelUsuario === 0): ?>

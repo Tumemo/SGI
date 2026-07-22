@@ -19,13 +19,6 @@ $paginaAtiva = 'dashboard';
                 <i class="bi bi-arrow-left-circle"></i>
                 <span id="nomeInterclasseIndividual">Interclasse</span>
             </a>
-            <h2 class="fw-bold d-flex align-items-center gap-2">
-                <i class="bi bi-trophy"></i>
-                Ranking Individual
-            </h2>
-            <p class="text-muted mb-0">
-                Registre o 1º, 2º e 3º lugar das modalidades individuais (corrida, natação, etc.).
-            </p>
         </div>
 
         <div class="select-wrapper mb-4">

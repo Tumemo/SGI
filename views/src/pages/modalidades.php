@@ -27,10 +27,6 @@ $paginaAtiva = 'modalidades';
             <a class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 shadow-sm text-decoration-none" style="background-color: #ed1c24; border-radius: 6px;" href="./dashboard.php">
                 <i class="bi bi-arrow-left-circle fs-5"></i> Voltar
             </a>
-
-            <h4 class="fw-bold d-flex align-items-center gap-2 text-dark mb-0 fs-5">
-                <i class="bi bi-trophy fs-4 text-dark"></i> Modalidades
-            </h4>
         </div>
 
         <div class="row g-4" id="listaModalidadesDesktop">

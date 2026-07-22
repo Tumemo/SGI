@@ -20,15 +20,6 @@ $paginaAtiva = 'dashboard';
                 <i class="bi bi-arrow-left-circle"></i>
                 <span id="nomeInterclasse">Interclasse</span>
             </a>
-
-            <h2 class="fw-bold d-flex align-items-center gap-2">
-                <i class="bi bi-diagram-3-fill" style="color:#e30613;"></i>
-                Árvore de Chaveamento
-            </h2>
-
-            <p class="text-muted mb-0">
-                Visualize o chaveamento mata-mata das modalidades.
-            </p>
         </div>
 
         <div class="filtro-box mb-4">

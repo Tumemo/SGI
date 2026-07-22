@@ -19,15 +19,6 @@ $paginaAtiva = 'dashboard';
                 <i class="bi bi-arrow-left-circle"></i>
                 <span id="nomeInterclassePontuacao">Interclasse</span>
             </a>
-
-            <h2 class="section-title d-flex align-items-center gap-2">
-                <i class="bi bi-diagram-3"></i>
-                Chaveamentos
-            </h2>
-
-            <p class="text-muted mb-0">
-                Visualize e gerencie os chaveamentos das modalidades.
-            </p>
         </div>
 
         <div class="filtro-box mb-4">
