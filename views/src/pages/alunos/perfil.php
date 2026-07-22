@@ -20,7 +20,7 @@ try {
     require_once $dbPath;
     if ($sessionId && $conn) {
         $id = (int) $sessionId;
-        $st = $conn->prepare('SELECT nome_usuario, matricula_usuario, foto_usuario FROM usuarios WHERE id_usuario = ? AND status_usuario = \'1\' LIMIT 1');
+        $st = $conn->prepare("SELECT nome_usuario, matricula_usuario, foto_usuario FROM usuarios WHERE id_usuario = ? AND status_usuario = '1' LIMIT 1");
         if ($st && $st->execute()) {
             $row = $st->get_result()->fetch_assoc();
             $st->close();
@@ -30,6 +30,7 @@ try {
 } catch (Throwable $e) {
 }
 
+// Trata os envios POST (Salvar dados e Foto)
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     header('Content-Type: application/json');
     try {
@@ -105,36 +106,61 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 include 'componentes/head.php';
+
+// Inclusão da barra lateral antes da estrutura principal
+$paginaAtiva = 'perfil';
+include 'componentes/nav.php';
+
+// Inclusão do header/banner no topo
 include 'componentes/header.php';
 ?>
 
 <style>
-    .perfil-page { font-weight: 300; }
+    .perfil-page { 
+        font-weight: 300; 
+    }
+    .perfil-foto-container {
+        position: relative;
+        width: 160px;
+        height: 160px;
+        margin: 0 auto;
+    }
     .perfil-foto-circle {
-        width: 200px;
-        height: 200px;
+        width: 100%;
+        height: 100%;
         border-radius: 50%;
         background: #e8e8e8;
         display: flex;
         align-items: center;
         justify-content: center;
         overflow: hidden;
+        border: 3px solid #fff;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.08);
     }
-    .perfil-foto-circle i { font-size: 4.5rem; color: #222; }
+    .perfil-foto-circle i { 
+        font-size: 4rem; 
+        color: #555; 
+    }
     .perfil-btn-camera {
         position: absolute;
         bottom: 5px;
         right: 5px;
-        width: 44px;
-        height: 44px;
+        width: 40px;
+        height: 40px;
         border-radius: 50%;
         background: #ed1c24;
-        border: none;
+        border: 2px solid #fff;
         display: flex;
         align-items: center;
         justify-content: center;
         color: #fff;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+        cursor: pointer;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+        transition: transform 0.2s, background-color 0.2s;
+    }
+    .perfil-btn-camera:hover {
+        transform: scale(1.08);
+        background: #d41920;
     }
     .perfil-input {
         background: #f5f5f5 !important;
@@ -151,138 +177,119 @@ include 'componentes/header.php';
         color: #fff;
         border: none;
         border-radius: 10px;
-        padding: 0.65rem 2.5rem;
+        padding: 0.65rem 2rem;
         font-weight: 400;
-        width: 100%;
-        max-width: 320px;
+        transition: background-color 0.2s;
     }
-    .perfil-btn-editar:hover { background-color: #d41920; color: #fff; }
+    .perfil-btn-editar:hover { 
+        background-color: #d41920; 
+        color: #fff; 
+    }
     .perfil-label {
         font-weight: 300;
-        color: #444;
+        color: #666;
         font-size: 0.85rem;
         margin-bottom: 0.15rem;
     }
     .perfil-valor {
         font-weight: 500;
         font-size: 1.1rem;
+        color: #222;
         margin-bottom: 0;
-    }
-    .perfil-foto-actions {
-        display: flex;
-        gap: 0.5rem;
-    }
-    .perfil-btn-excluir:disabled {
-        opacity: 0.35;
-        cursor: not-allowed;
-        pointer-events: none;
     }
 </style>
 
-<main class="perfil-page d-md-none p-3" style="padding-top: 5.5rem; padding-bottom: 5rem;">
-    <h2 class="d-flex align-items-center gap-2 text-dark mb-4" style="font-weight: 400; font-size: 1.1rem;">
-        <i class="bi bi-person-gear"></i> Perfil
-    </h2>
-    <div class="text-center mb-4">
-        <div class="position-relative d-inline-block">
-            <div class="perfil-foto-circle" id="fotoCircleMob">
-                <img src="" id="fotoImgMob" class="w-100 h-100 object-fit-cover d-none" alt="Foto" onerror="this.classList.add('d-none');document.getElementById('fotoIconMob')?.classList.remove('d-none');">
-                <i class="bi bi-person-gear" id="fotoIconMob"></i>
-            </div>
-            <button type="button" class="perfil-btn-camera" id="btnCameraMob" title="Alterar foto" aria-label="Alterar foto">
-                <i class="bi bi-camera"></i>
-            </button>
-        </div>
-        <div class="d-flex justify-content-center gap-2 mt-2">
-            <button type="button" class="btn btn-sm btn-outline-danger rounded-3 perfil-btn-excluir" id="btnExcluirFotoMob" disabled title="Excluir foto" aria-label="Excluir foto"><i class="bi bi-trash"></i></button>
-        </div>
-    </div>
-    <div class="mb-3">
-        <div class="perfil-label">Nome</div>
-        <div class="perfil-valor" id="perfilNomeMob"><?= htmlspecialchars($usuarioPerfil['nome_usuario'] ?? '', ENT_QUOTES) ?></div>
-    </div>
-    <div class="mb-3">
-        <div class="perfil-label">RA</div>
-        <div class="perfil-valor" id="perfilRaMob"><?= htmlspecialchars($usuarioPerfil['matricula_usuario'] ?? '', ENT_QUOTES) ?></div>
-    </div>
-    <div class="mb-4">
-        <div class="perfil-label">Senha</div>
-        <div class="perfil-valor">********</div>
-    </div>
-    <button type="button" class="perfil-btn-editar d-block mx-auto" data-bs-toggle="modal" data-bs-target="#modalEditarPerfil">Editar perfil</button>
-</main>
+<!-- Conteúdo Centralizado -->
+<main class="perfil-page container py-4 flex-grow-1">
+    <div class="row justify-content-center mt-3">
+        <div class="col-12 col-md-10 col-lg-8">
+            <h2 class="d-flex align-items-center gap-2 text-dark mb-4 fs-4 fw-normal">
+                <i class="bi bi-person-gear text-danger"></i> Detalhes do Perfil
+            </h2>
+            
+            <div class="card border-0 shadow-sm rounded-4 p-4 p-md-5 bg-white">
+                <div class="row g-4 align-items-center">
+                    
+                    <!-- Bloco da Foto -->
+                    <div class="col-12 col-md-5 text-center border-end-md">
+                        <div class="perfil-foto-container mb-3">
+                            <div class="perfil-foto-circle">
+                                <img src="" id="fotoImg" class="w-100 h-100 object-fit-cover d-none" alt="Foto de Perfil" onerror="this.classList.add('d-none'); document.getElementById('fotoIcon')?.classList.remove('d-none');">
+                                <i class="bi bi-person-gear" id="fotoIcon"></i>
+                            </div>
+                            <button type="button" class="perfil-btn-camera" id="btnCamera" title="Alterar foto" aria-label="Alterar foto">
+                                <i class="bi bi-camera-fill"></i>
+                            </button>
+                        </div>
 
-<main class="perfil-page d-none d-md-block" style="padding-top: 5.5rem;">
-    <div class="container-fluid px-2 px-md-4 py-4">
-        <h2 class="d-flex align-items-center gap-2 text-dark mb-4" style="font-weight: 400;">
-            <i class="bi bi-person-gear"></i> Perfil
-        </h2>
-        <div class="row g-4">
-            <div class="col-md-4 text-center">
-                <div class="position-relative d-inline-block">
-                    <div class="perfil-foto-circle" id="fotoCircleDesk">
-                        <img src="" id="fotoImgDesk" class="w-100 h-100 object-fit-cover d-none" alt="Foto" onerror="this.classList.add('d-none');document.getElementById('fotoIconDesk')?.classList.remove('d-none');">
-                        <i class="bi bi-person-gear" id="fotoIconDesk"></i>
+                        <div class="d-flex justify-content-center gap-2">
+                            <button type="button" class="btn btn-sm btn-outline-danger rounded-3 px-3" id="btnExcluirFoto" disabled title="Excluir foto">
+                                <i class="bi bi-trash me-1"></i> Remover foto
+                            </button>
+                        </div>
                     </div>
-                    <button type="button" class="perfil-btn-camera" id="btnCameraDesk" title="Alterar foto" aria-label="Alterar foto">
-                        <i class="bi bi-camera"></i>
-                    </button>
+
+                    <!-- Bloco das Informações -->
+                    <div class="col-12 col-md-7 ps-md-4">
+                        <div class="mb-3">
+                            <div class="perfil-label">Nome Completo</div>
+                            <div class="perfil-valor" id="perfilNome"><?= htmlspecialchars($usuarioPerfil['nome_usuario'] ?? '', ENT_QUOTES) ?></div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <div class="perfil-label">Matrícula (RA)</div>
+                            <div class="perfil-valor" id="perfilRa"><?= htmlspecialchars($usuarioPerfil['matricula_usuario'] ?? '', ENT_QUOTES) ?></div>
+                        </div>
+
+                        <div class="mb-4">
+                            <div class="perfil-label">Senha</div>
+                            <div class="perfil-valor">••••••••</div>
+                        </div>
+
+                        <button type="button" class="perfil-btn-editar w-100 w-md-auto" data-bs-toggle="modal" data-bs-target="#modalEditarPerfil">
+                            Editar perfil
+                        </button>
+                    </div>
+
                 </div>
-                <div class="perfil-foto-actions">
-                    <button type="button" class="btn btn-sm btn-outline-danger rounded-3 perfil-btn-excluir" id="btnExcluirFotoDesk" disabled title="Excluir foto" aria-label="Excluir foto"><i class="bi bi-trash"></i></button>
-                </div>
-            </div>
-            <div class="col-md-8">
-                <div class="mb-3">
-                    <div class="perfil-label">Nome</div>
-                    <div class="perfil-valor" id="perfilNomeDesk"><?= htmlspecialchars($usuarioPerfil['nome_usuario'] ?? '', ENT_QUOTES) ?></div>
-                </div>
-                <div class="mb-3">
-                    <div class="perfil-label">RA</div>
-                    <div class="perfil-valor" id="perfilRaDesk"><?= htmlspecialchars($usuarioPerfil['matricula_usuario'] ?? '', ENT_QUOTES) ?></div>
-                </div>
-                <div class="mb-4">
-                    <div class="perfil-label">Senha</div>
-                    <div class="perfil-valor">********</div>
-                </div>
-                <button type="button" class="perfil-btn-editar" data-bs-toggle="modal" data-bs-target="#modalEditarPerfil">Editar perfil</button>
             </div>
         </div>
     </div>
 </main>
 
+<!-- Modal Editar Perfil -->
 <div class="modal fade" id="modalEditarPerfil" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content rounded-4 border-0 shadow">
             <div class="modal-header border-0 pt-4 px-4">
-                <h5 class="modal-title text-danger" style="font-weight: 400;">Editar Perfil</h5>
+                <h5 class="modal-title text-danger fw-normal">Editar Perfil</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
             </div>
             <form id="formEditarPerfil">
                 <div class="modal-body px-4">
                     <div class="mb-3">
-                        <label class="form-label small">Nome</label>
+                        <label class="form-label small text-muted">Nome</label>
                         <input type="text" name="nome_usuario" class="form-control rounded-3 perfil-input" id="editarNome" required>
                     </div>
-                    <hr>
-                    <p class="small text-muted mb-3">Alterar senha (opcional)</p>
+                    <hr class="my-4 opacity-25">
+                    <p class="small text-muted mb-3 fw-semibold">Alterar senha (opcional)</p>
                     <div class="mb-3">
-                        <label class="form-label small">Senha Atual</label>
+                        <label class="form-label small text-muted">Senha Atual</label>
                         <input type="password" name="senha_atual" class="form-control rounded-3 perfil-input" id="editarSenhaAtual">
                     </div>
                     <div class="mb-3">
-                        <label class="form-label small">Nova Senha</label>
+                        <label class="form-label small text-muted">Nova Senha</label>
                         <input type="password" name="nova_senha" class="form-control rounded-3 perfil-input" id="editarNovaSenha">
                     </div>
                     <div class="mb-3">
-                        <label class="form-label small">Confirmar Nova Senha</label>
+                        <label class="form-label small text-muted">Confirmar Nova Senha</label>
                         <input type="password" name="confirmar_senha" class="form-control rounded-3 perfil-input" id="editarConfirmarSenha">
                     </div>
-                    <div id="msgEditarPerfil" class="small text-center"></div>
+                    <div id="msgEditarPerfil" class="small text-center mt-2"></div>
                 </div>
                 <div class="modal-footer border-0 pb-4 px-4">
                     <button type="button" class="btn btn-outline-secondary rounded-3" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="submit" class="btn btn-danger rounded-3" id="btnSalvarPerfil">Salvar</button>
+                    <button type="submit" class="btn btn-danger rounded-3 px-4" id="btnSalvarPerfil">Salvar</button>
                 </div>
             </form>
         </div>
@@ -302,63 +309,27 @@ include 'componentes/header.php';
     let temFotoAtual = false;
 
     document.addEventListener('DOMContentLoaded', async () => {
-        preencherPerfil();
-        document.getElementById('formEditarPerfil').addEventListener('submit', salvarPerfil);
-    });
-
-    function preencherPerfil() {
-        document.getElementById('perfilNomeMob').textContent = DADOS_PERFIL.nome;
-        document.getElementById('perfilRaMob').textContent = DADOS_PERFIL.matricula;
-        document.getElementById('perfilNomeDesk').textContent = DADOS_PERFIL.nome;
-        document.getElementById('perfilRaDesk').textContent = DADOS_PERFIL.matricula;
         const editarNome = document.getElementById('editarNome');
         if (editarNome) editarNome.value = DADOS_PERFIL.nome;
-    }
 
-    function mostrarFoto(url) {
-        if (!url) return;
-        ['Mob', 'Desk'].forEach(suf => {
-            const img = document.getElementById('fotoImg' + suf);
-            const icon = document.getElementById('fotoIcon' + suf);
-            if (img && icon) {
-                const load = () => { img.classList.remove('d-none'); icon.classList.add('d-none'); };
-                const err = () => { img.classList.add('d-none'); icon.classList.remove('d-none'); };
-                img.onload = load;
-                img.onerror = err;
-                if (img.complete && img.naturalWidth) load();
-                img.src = url;
-            }
-        });
-    }
-
-    function atualizarBotoesExcluir() {
-        ['Mob', 'Desk'].forEach(suf => {
-            const btn = document.getElementById('btnExcluirFoto' + suf);
-            if (btn) btn.disabled = !temFotoAtual;
-        });
-    }
-
-    document.addEventListener('DOMContentLoaded', () => {
+        document.getElementById('formEditarPerfil').addEventListener('submit', salvarPerfil);
+        
         const input = document.getElementById('fotoUploadInput');
-        ['btnCameraMob', 'btnCameraDesk'].forEach(id => {
-            const btn = document.getElementById(id);
-            if (btn) btn.addEventListener('click', () => input.click());
-        });
+        document.getElementById('btnCamera')?.addEventListener('click', () => input.click());
 
-        (async () => {
-            try {
-                const resp = await fetch(API_FOTO + '?user_id=' + DADOS_PERFIL.id);
-                const data = await resp.json();
-                if (data.foto_usuario) {
-                    temFotoAtual = true;
-                    mostrarFoto('../../../../uploads/fotosUsuarios/' + data.foto_usuario);
-                    atualizarBotoesExcluir();
-                }
-            } catch (e) {
-                console.warn('Erro ao buscar foto:', e);
+        // Carrega foto inicial se existir
+        try {
+            const resp = await fetch(API_FOTO + '?user_id=' + DADOS_PERFIL.id);
+            const data = await resp.json();
+            if (data.foto_usuario) {
+                temFotoAtual = true;
+                mostrarFoto('../../../../uploads/fotosUsuarios/' + data.foto_usuario);
             }
-        })();
+        } catch (e) {
+            console.warn('Erro ao carregar foto:', e);
+        }
 
+        // Upload de nova foto
         input.addEventListener('change', async () => {
             const file = input.files?.[0];
             if (!file) return;
@@ -368,48 +339,56 @@ include 'componentes/header.php';
             try {
                 const resp = await fetch(window.location.href, { method: 'POST', body: fd });
                 const data = await resp.json();
-                if (data.success) {
-                    if (data.arquivo) {
-                        temFotoAtual = true;
-                        mostrarFoto('../../../../uploads/fotosUsuarios/' + data.arquivo);
-                        atualizarBotoesExcluir();
-                    }
+                if (data.success && data.arquivo) {
+                    temFotoAtual = true;
+                    mostrarFoto('../../../../uploads/fotosUsuarios/' + data.arquivo + '?v=' + new Date().getTime());
                 } else {
-                    alert(data.mensagem || 'Erro ao enviar foto.');
+                    alert(data.message || 'Erro ao enviar foto.');
                 }
             } catch (e) {
-                alert('Erro de conexão.');
+                alert('Erro na requisição.');
             }
             input.value = '';
         });
 
-        document.querySelectorAll('[id^="btnExcluirFoto"]').forEach(btn => {
-            btn.addEventListener('click', async () => {
-                if (!confirm('Remover foto de perfil?')) return;
-                try {
-                    const resp = await fetch(API_FOTO, { method: 'DELETE' });
-                    const data = await resp.json();
-                    if (data.success) {
-                        temFotoAtual = false;
-                        ['Mob', 'Desk'].forEach(suf => {
-                            const img = document.getElementById('fotoImg' + suf);
-                            const icon = document.getElementById('fotoIcon' + suf);
-                            if (img && icon) {
-                                img.classList.add('d-none');
-                                img.src = '';
-                                icon.classList.remove('d-none');
-                            }
-                        });
-                        atualizarBotoesExcluir();
-                    } else {
-                        alert(data.mensagem || 'Erro ao remover foto.');
+        // Remover foto
+        document.getElementById('btnExcluirFoto').addEventListener('click', async () => {
+            if (!confirm('Remover foto de perfil?')) return;
+            try {
+                const resp = await fetch(API_FOTO, { method: 'DELETE' });
+                const data = await resp.json();
+                if (data.success) {
+                    temFotoAtual = false;
+                    const img = document.getElementById('fotoImg');
+                    const icon = document.getElementById('fotoIcon');
+                    if (img && icon) {
+                        img.classList.add('d-none');
+                        img.src = '';
+                        icon.classList.remove('d-none');
                     }
-                } catch (e) {
-                    alert('Erro de conexão.');
+                    atualizarBotoes();
                 }
-            });
+            } catch (e) {
+                alert('Erro ao excluir foto.');
+            }
         });
     });
+
+    function mostrarFoto(url) {
+        const img = document.getElementById('fotoImg');
+        const icon = document.getElementById('fotoIcon');
+        if (img && icon) {
+            img.onload = () => { img.classList.remove('d-none'); icon.classList.add('d-none'); };
+            img.onerror = () => { img.classList.add('d-none'); icon.classList.remove('d-none'); };
+            img.src = url;
+        }
+        atualizarBotoes();
+    }
+
+    function atualizarBotoes() {
+        const btn = document.getElementById('btnExcluirFoto');
+        if (btn) btn.disabled = !temFotoAtual;
+    }
 
     async function salvarPerfil(e) {
         e.preventDefault();
@@ -449,15 +428,17 @@ include 'componentes/header.php';
 
             if (data.success) {
                 msgEl.innerHTML = '<span class="text-success">' + data.message + '</span>';
+                document.getElementById('perfilNome').textContent = nome;
                 DADOS_PERFIL.nome = nome;
-                preencherPerfil();
+                
                 document.getElementById('editarSenhaAtual').value = '';
                 document.getElementById('editarNovaSenha').value = '';
                 document.getElementById('editarConfirmarSenha').value = '';
+
                 setTimeout(() => {
                     bootstrap.Modal.getInstance(document.getElementById('modalEditarPerfil'))?.hide();
                     msgEl.innerHTML = '';
-                }, 1500);
+                }, 1200);
             } else {
                 msgEl.innerHTML = '<span class="text-danger">' + (data.message || 'Erro ao salvar.') + '</span>';
             }
@@ -469,10 +450,5 @@ include 'componentes/header.php';
         }
     }
 </script>
-
-<?php
-$paginaAtiva = 'perfil';
-include 'componentes/nav.php';
-?>
 </body>
 </html>

@@ -14,25 +14,24 @@ if ((int)($_SESSION['nivel'] ?? -1) !== 3) { header('Location: ../../index.php')
     <style>
         body { 
             background-color: #f8f9fa;
-            /* No mobile, cria margem para o menu inferior não cobrir conteúdo */
-            padding-bottom: 80px; 
+            padding-bottom: 70px; /* Margem para menu mobile inferior */
         }
 
-        /* Em telas de Computador (Desktop) */
-        @media (min-width: 992px) {
+        /* Deslocamento no Desktop para o menu lateral de 80px */
+        @media (min-width: 768px) {
             body { 
-                padding-bottom: 0; /* Remove a margem inferior */
+                padding-bottom: 0;
+                margin-left: 80px; /* Evita que o conteúdo fique sob a sidebar */
             }
         }
 
-        /* Ajuste fino do Banner no Desktop */
         .header-banner-container {
-            max-height: 220px;
+            max-height: 180px;
             overflow: hidden;
         }
         .header-banner-img {
             object-fit: cover;
-            height: 220px;
+            height: 180px;
         }
 
         <?= $cssExtra ?? '' ?>

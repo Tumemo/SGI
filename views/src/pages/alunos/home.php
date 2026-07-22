@@ -14,29 +14,28 @@ $cssExtra = '
 
 include 'componentes/head.php';
 
-// 1. INCLUI O BANNER SUPERIOR
+// Navegação Lateral/Inferior
+$paginaAtiva = 'home';
+include 'componentes/nav.php';
+
+// Banner Superior
 $mostrarSino = true;
 $mostrarVoltar = false;
 $titulo = 'Interclasses';
 include 'componentes/header.php';
-
-// 2. INCLUI A NAVEGAÇÃO LOGO ABAIXO DO BANNER (FIXANDO NO TOPO PARA DESKTOP)
-$paginaAtiva = 'home';
-include 'componentes/nav.php';
 ?>
 
-<!-- Conteúdo Principal -->
 <main class="container py-4 flex-grow-1">
     <h1 class="visually-hidden">Painel do Aluno - Interclasses</h1>
     
-    <!-- Cabeçalho do Conteúdo -->
+    <!-- Subtítulo -->
     <div class="text-center mb-4">
         <h2 class="text-secondary fs-5 fw-normal">Inscreva-se ou visualize resultados das competições</h2>
         <hr class="w-25 mx-auto border-danger opacity-50 my-3">
     </div>
 
-    <!-- Grid Otimizado para os Cards -->
-    <section class="row g-3 g-md-4 justify-content-start" id="listaInterclassesAluno" aria-live="polite">
+    <!-- Lista de Interclasses -->
+    <section class="row g-3 g-md-4 justify-content-center" id="listaInterclassesAluno" aria-live="polite">
         <div class="col-12 text-center text-muted py-5">
             <div class="spinner-border spinner-border-sm text-danger me-2" role="status">
                 <span class="visually-hidden">Carregando...</span>
@@ -64,7 +63,7 @@ include 'componentes/nav.php';
                     <li class="mb-2"><strong>Materiais:</strong> Responsabilizo-me pelos materiais esportivos e uniformes que me forem confiados, respondendo por eventuais danos ou extravios.</li>
                     <li class="mb-2"><strong>Saúde:</strong> Declaro estar em condições físicas adequadas para a prática das modalidades escolhidas, isentando a organização de responsabilidade por acidentes ou lesões decorrentes da participação.</li>
                     <li class="mb-2"><strong>Imagem:</strong> Autorizo o uso de minha imagem e voz para fins de divulgação do evento nas mídias oficiais da instituição.</li>
-                    <li class="mb-2"><strong>Pontuação:</strong> Aceito o sistema de pontuação e classificação established, bem como as penalidades previstas no regulamento.</li>
+                    <li class="mb-2"><strong>Pontuação:</strong> Aceito o sistema de pontuação e classificação estabelecido, bem como as penalidades previstas no regulamento.</li>
                 </ol>
 
                 <div id="avisoRecusa" class="alert alert-danger d-none m-0" role="alert">
@@ -101,7 +100,7 @@ include 'componentes/nav.php';
         const href = ativo ? `./modalidade.php?id=${interclasse.id_interclasse}` : `./ranking.php?id=${interclasse.id_interclasse}`;
 
         return `
-            <div class="col-12 col-md-6 col-lg-4">
+            <div class="col-12 col-md-6 col-lg-5 col-xl-4">
                 <a href="${href}" class="text-decoration-none text-dark card-link d-block h-100">
                     <div class="shadow-sm d-flex justify-content-between align-items-center p-4 rounded-3 ${classeCard} h-100 style-card">
                         <div>
@@ -154,10 +153,7 @@ include 'componentes/nav.php';
 
     async function initModalTermo() {
         const modalElement = document.getElementById('modalTermo');
-        const modalTermo = new bootstrap.Modal(modalElement, {
-            backdrop: 'static',
-            keyboard: false
-        });
+        const modalTermo = new bootstrap.Modal(modalElement, { backdrop: 'static', keyboard: false });
 
         const btnAceitar = document.getElementById('btnAceitarTermo');
         const btnRecusar = document.getElementById('btnRecusarTermo');
@@ -165,16 +161,10 @@ include 'componentes/nav.php';
 
         try {
             const checagem = await fetch('../../../../api/concordarTermos.php', { method: 'GET' });
-
-            if (checagem.status === 401) {
-                console.warn("API retornou 401. Verifique a chave da $_SESSION no PHP!");
-                return;
-            }
+            if (checagem.status === 401) return;
 
             const resCheck = await checagem.json();
-            if (resCheck.success && resCheck.termo_aceito === true) {
-                return;
-            }
+            if (resCheck.success && resCheck.termo_aceito === true) return;
         } catch (e) {
             console.error("Erro ao verificar status dos termos:", e);
         }
@@ -198,7 +188,6 @@ include 'componentes/nav.php';
                 }
 
                 const data = await res.json();
-
                 if (data.success) {
                     avisoRecusa.classList.add('d-none');
                     modalTermo.hide();
