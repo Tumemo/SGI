@@ -72,6 +72,7 @@ include 'componentes/nav.php';
             const classeCard = ativo ? 'bg-white' : 'bg-secondary-subtle opacity-75';
             const href = ativo ? `./modalidade.php?id=${interclasse.id_interclasse}` : `./ranking.php?id=${interclasse.id_interclasse}`;
             
+            
             return `
                 <div class="col-12 col-md-6 col-lg-4">
                     <a href="${href}" class="text-decoration-none text-dark card-link d-block h-100">
@@ -108,9 +109,10 @@ include 'componentes/nav.php';
                         </div>`;
                     return;
                 }
-                
                 container.innerHTML = lista.map((item) => {
-                    const isAtivo = item && String(item.status_interclasse) === '1';
+                    const isAtivo = item && String(item.status_interclasse) === '1' ;
+                    
+                    
                     return cardInterclasse(item, isAtivo);
                 }).join('');
                 
