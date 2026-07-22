@@ -81,8 +81,16 @@ switch ($method) {
             echo json_encode(['success' => false, 'message' => 'ID da modalidade é obrigatório.'], JSON_UNESCAPED_UNICODE);
             break;
         }
-        $arvore = sgi_mm_montar_json_arvore($conn, $idModalidade);
-        echo json_encode($arvore, JSON_UNESCAPED_UNICODE);
+        $acao = $_GET['acao'] ?? 'arvore';
+        if ($acao === 'historico') {
+            $resultado = sgi_mm_montar_historico($conn, $idModalidade);
+        } elseif ($acao === 'classificacao') {
+            $resultado = sgi_mm_montar_historico($conn, $idModalidade);
+            unset($resultado['confrontos']);
+        } else {
+            $resultado = sgi_mm_montar_json_arvore($conn, $idModalidade);
+        }
+        echo json_encode($resultado, JSON_UNESCAPED_UNICODE);
         break;
 
     case 'POST':

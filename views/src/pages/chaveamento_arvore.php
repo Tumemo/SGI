@@ -108,6 +108,26 @@ $paginaAtiva = 'dashboard';
             </div>
         </div>
 
+        <div id="historicoArea" class="d-none">
+            <div class="card card-custom mb-4">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <div>
+                            <h4 class="fw-bold"><i class="bi bi-trophy-fill me-2" style="color:#e30613;"></i>Classificação Final</h4>
+                            <span class="text-muted">Resultado final do torneio.</span>
+                        </div>
+                    </div>
+                    <div id="podioContent"></div>
+                </div>
+            </div>
+            <div class="card card-custom mb-4">
+                <div class="card-body">
+                    <h5 class="fw-bold mb-3"><i class="bi bi-list-ul me-2"></i>Confrontos Realizados</h5>
+                    <div id="confrontosContent"></div>
+                </div>
+            </div>
+        </div>
+
     </div>
 
 </main>
@@ -245,6 +265,12 @@ $paginaAtiva = 'dashboard';
                 return `${fase} — confronto ${confronto}: ${equipes}${sufixo}`;
             }
             return `${fase} — confronto ${confronto}${sufixo}`;
+        }
+        const pos = tag.match(/^POS:(\d+):(\d+):([NB])$/);
+        if (pos) {
+            const posicao = parseInt(pos[1], 10);
+            const nomesPos = { 3: 'Disputa de 3º lugar', 5: 'Disputa de 5º lugar' };
+            return nomesPos[posicao] || `Disputa de ${posicao}º lugar`;
         }
         return tag || '---';
     }
@@ -436,6 +462,16 @@ $paginaAtiva = 'dashboard';
         return fasesLabel[faseNivel] || `Fase ${faseNivel}`;
     }
 
+    function formatFaseFromNome(nomeJogo) {
+        const pos = (nomeJogo || '').match(/^POS:(\d+):/);
+        if (pos) {
+            const p = parseInt(pos[1], 10);
+            const nomesPos = { 3: 'Disputa de 3º lugar', 5: 'Disputa de 5º lugar' };
+            return nomesPos[p] || `Disputa de ${p}º lugar`;
+        }
+        return null;
+    }
+
     async function carregarArvore(idModalidade) {
         const area = document.getElementById('bracketArea');
         const linkArvore = document.getElementById('linkVerArvore');
@@ -489,10 +525,15 @@ $paginaAtiva = 'dashboard';
             }
 
             const rounds = {};
+            const posGames = [];
             jogos.forEach(jogo => {
                 const nivel = jogo.fase_nivel || 0;
-                if (!rounds[nivel]) rounds[nivel] = [];
-                rounds[nivel].push(jogo);
+                if (nivel === 0 && jogo.eh_disputa_posicao) {
+                    posGames.push(jogo);
+                } else {
+                    if (!rounds[nivel]) rounds[nivel] = [];
+                    rounds[nivel].push(jogo);
+                }
             });
 
             const niveis = Object.keys(rounds).map(Number).sort((a, b) => b - a);
@@ -541,6 +582,34 @@ $paginaAtiva = 'dashboard';
                 html += `</div>`;
             });
 
+            if (posGames.length > 0) {
+                html += `<div class="bracket-round">`;
+                html += `<div class="bracket-round-title" style="color:#e30613;">Disputas de Posição</div>`;
+                posGames.forEach(jogo => {
+                    const eqs = jogo.equipes || [];
+                    const isConcluido = jogo.status_jogo === 'Concluido' || jogo.status_jogo === 'Finalizado';
+                    const classes = ['bracket-game', 'disputa-posicao'];
+                    if (isConcluido) classes.push('concluido');
+                    html += `<div class="${classes.join(' ')}">`;
+                    html += `<div class="matchup-team" style="font-size:0.7em;color:#e30613;font-weight:700;">${formatFaseFromNome(jogo.nome_jogo)}</div>`;
+                    if (eqs.length === 0) {
+                        html += `<div class="matchup-team"><span class="team-name text-muted">A definir</span><span class="team-score">--</span></div>`;
+                    } else {
+                        eqs.forEach(eq => {
+                            const nome = eq.nome_fantasia || eq.nome_turma || `Equipe #${eq.id_equipe}`;
+                            html += `<div class="matchup-team">`;
+                            html += `<span class="team-name">${nome}</span>`;
+                            html += `<span class="team-score">${eq.gols ?? 0}</span>`;
+                            html += `</div>`;
+                        });
+                    }
+                    const statusClass = (jogo.status_jogo || '').toLowerCase();
+                    html += `<div class="game-status-badge ${statusClass}">${jogo.status_jogo || '---'}</div>`;
+                    html += `</div>`;
+                });
+                html += `</div>`;
+            }
+
             html += `</div></div>`;
 
             area.innerHTML = html;
@@ -551,9 +620,65 @@ $paginaAtiva = 'dashboard';
         }
     }
 
+    async function carregarHistorico(idModalidade) {
+        const histArea = document.getElementById('historicoArea');
+        const podioEl = document.getElementById('podioContent');
+        const confrontosEl = document.getElementById('confrontosContent');
+
+        try {
+            const resp = await fetch(`../../../api/chaveamento.php?id_modalidade=${idModalidade}&acao=historico`);
+            const data = await resp.json();
+
+            if (!data.success || !data.concluido) {
+                histArea.classList.add('d-none');
+                return;
+            }
+
+            histArea.classList.remove('d-none');
+
+            const classificacao = data.classificacao || [];
+            const nomesPos = ['🏆 Campeão', '🥈 Vice-campeão', '🥉 3º Lugar', '4º Lugar', '5º Lugar', '6º Lugar', '7º Lugar', '8º Lugar'];
+            let podioHtml = '<div class="row g-3">';
+            classificacao.forEach((eq, idx) => {
+                const nome = eq.nome_fantasia || eq.nome_turma || `Equipe #${eq.id_equipe}`;
+                const label = nomesPos[idx] || `${idx+1}º Lugar`;
+                const cores = ['warning', 'secondary', 'info', 'light', 'light', 'light', 'light', 'light'];
+                const icone = ['bi-trophy-fill', 'bi-award-fill', 'bi-award', 'bi-tag', 'bi-tag', 'bi-tag', 'bi-tag', 'bi-tag'];
+                podioHtml += `
+                    <div class="col-md-3 col-6">
+                        <div class="card text-center border-0 shadow-sm">
+                            <div class="card-body py-3">
+                                <i class="bi ${icone[idx] || 'bi-tag'} fs-2 mb-2" style="color:${idx===0?'#e30613':idx===1?'#808080':idx===2?'#cd7f32':'#999'};"></i>
+                                <div class="fw-bold small text-muted">${label}</div>
+                                <div class="fw-bold fs-5">${nome}</div>
+                            </div>
+                        </div>
+                    </div>`;
+            });
+            podioHtml += '</div>';
+            podioEl.innerHTML = podioHtml;
+
+            const confrontos = data.confrontos || [];
+            let confHtml = '<div class="table-responsive"><table class="table table-sm align-middle"><thead><tr><th>Fase</th><th>Vencedor</th><th>Placar</th><th>Perdedor</th></tr></thead><tbody>';
+            confrontos.forEach(c => {
+                confHtml += `<tr><td><span class="fw-bold">${c.fase}</span></td><td>${c.vencedor_nome}</td><td class="text-center fw-bold">${c.vencedor_gols} x ${c.perdedor_gols}</td><td>${c.perdedor_nome}</td></tr>`;
+            });
+            confHtml += '</tbody></table></div>';
+            confrontosEl.innerHTML = confHtml;
+
+        } catch (e) {
+            console.error("Erro ao carregar histórico:", e);
+            histArea.classList.add('d-none');
+        }
+    }
+
     document.getElementById('selectModalidade').addEventListener('change', function () {
         document.getElementById('msgChaveamento').innerHTML = '';
+        document.getElementById('historicoArea').classList.add('d-none');
         carregarArvore(this.value);
+        if (this.value) {
+            carregarHistorico(this.value);
+        }
     });
 
     document.getElementById('filtroModalidadeJogos').addEventListener('change', carregarJogos);
@@ -596,6 +721,7 @@ $paginaAtiva = 'dashboard';
             document.getElementById('btnVerArvore').href = `./chaveamento_arvore.php?id=${idInterclasse}`;
             carregarArvore(idModalidade);
             carregarJogos();
+            document.getElementById('historicoArea').classList.add('d-none');
         } catch (err) {
             msgEl.innerHTML = `<p class="text-danger fw-bold mb-0">${err.message}</p>`;
         } finally {

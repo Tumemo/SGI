@@ -17,7 +17,7 @@ $isMesario = $nivelUsuario === 2;
     <a href="./home.php" class="btn btn-outline-danger btn-sm ms-3 mt-3 d-inline-flex align-items-center gap-1">
         <i class="bi bi-house"></i> Voltar ao início
     </a>
-    <p class="text-center mt-3 text-secondary" id="subtituloMobile">Selecione uma opção</p>
+    
     <section>
         <?php if ($isMesario): ?>
         <a href="./categorias.php" id="linkCategorias" class="text-decoration-none text-black">
@@ -132,8 +132,6 @@ $isMesario = $nivelUsuario === 2;
         </div>
         <?php endif; ?>
 
-        <h1 class="fs-2 mb-1" id="tituloDashboard">Dashboard</h1>
-        <p class="text-muted mb-4" id="subtituloDesktop">Carregando...</p>
 
         <div class="row g-4 mt-2">
             <?php if ($isMesario): ?>

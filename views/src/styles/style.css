@@ -870,6 +870,17 @@ select:disabled {
     border-color: #198754;
 }
 
+.bracket-game.disputa-posicao {
+    border-color: #e30613;
+    border-width: 2px;
+    background: linear-gradient(135deg, #fff5f5, #fff);
+}
+
+.bracket-game.disputa-posicao.concluido {
+    border-color: #e30613;
+    box-shadow: 0 0 0 1px #e30613;
+}
+
 .matchup-team {
     display: flex;
     justify-content: space-between;

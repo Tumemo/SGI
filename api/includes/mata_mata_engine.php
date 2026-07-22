@@ -15,13 +15,19 @@ function sgi_mm_tag(int $larguraFase, int $slot, string $kind): string
     return 'MM:' . $larguraFase . ':' . $slot . ':' . $kind;
 }
 
-/** @return array{largura:int, slot:int, kind:string}|null */
+/** @return array{largura:int, slot:int, kind:string, posicao?:int}|null */
 function sgi_mm_parse(?string $nomeJogo): ?array
 {
-    if (!is_string($nomeJogo) || !preg_match('/^MM:(\d+):(\d+):([NB])$/', $nomeJogo, $m)) {
+    if (!is_string($nomeJogo)) {
         return null;
     }
-    return ['largura' => (int) $m[1], 'slot' => (int) $m[2], 'kind' => $m[3]];
+    if (preg_match('/^MM:(\d+):(\d+):([NB])$/', $nomeJogo, $m)) {
+        return ['largura' => (int) $m[1], 'slot' => (int) $m[2], 'kind' => $m[3]];
+    }
+    if (preg_match('/^POS:(\d+):(\d+):([NB])$/', $nomeJogo, $m)) {
+        return ['largura' => 0, 'slot' => (int) $m[2], 'kind' => $m[3], 'posicao' => (int) $m[1]];
+    }
+    return null;
 }
 
 function sgi_mm_proxima_largura(int $largura): int
@@ -431,6 +437,10 @@ function sgi_chaveamento_processar_avanco(mysqli $conn, int $idJogo): void
         }
         sgi_mm_tentar_autoconcluir_pai_um_clube($conn, $idModalidade, $idPai);
 
+        if ($largura === 2) {
+            sgi_mm_verificar_gerar_disputas_posicao($conn, $idModalidade, 2);
+        }
+
         return;
     }
 
@@ -464,6 +474,10 @@ function sgi_chaveamento_processar_avanco(mysqli $conn, int $idJogo): void
     $idPai = (int) $existente['id_jogo'];
     sgi_mm_garantir_partida_equipe($conn, $idPai, $w1);
     sgi_mm_garantir_partida_equipe($conn, $idPai, $w2);
+
+    if ($largura === 2) {
+        sgi_mm_verificar_gerar_disputas_posicao($conn, $idModalidade, 2);
+    }
 }
 
 /**
@@ -530,6 +544,8 @@ function sgi_mm_montar_json_arvore(mysqli $conn, int $idModalidade): array
         $ehBye = $kind === 'B';
 
         $proximoId = null;
+        $ehDisputaPosicao = isset($m['posicao']);
+
         if ($faseNivel !== null && $faseNivel > 1 && $slot !== null) {
             $lp = sgi_mm_proxima_largura($faseNivel);
             $sp = sgi_mm_slot_pai($slot);
@@ -553,6 +569,10 @@ function sgi_mm_montar_json_arvore(mysqli $conn, int $idModalidade): array
 
         $posicaoNaChave = $slot !== null ? $slot + 1 : null;
         $nomeFase = $faseNivel ? sgi_mm_nome_fase_pt($faseNivel) : null;
+        if ($ehDisputaPosicao) {
+            $posicaoNum = $m['posicao'] ?? 3;
+            $nomeFase = sgi_mm_nome_fase_posicao($posicaoNum);
+        }
         $nomeDisplay = $nomeFase && $posicaoNaChave
             ? $nomeFase . ' — confronto ' . $posicaoNaChave . ($ehBye ? ' (bye)' : '')
             : $bloco['nome_jogo'];
@@ -576,6 +596,7 @@ function sgi_mm_montar_json_arvore(mysqli $conn, int $idModalidade): array
             'fase_nivel' => $faseNivel,
             'posicao_na_chave' => $posicaoNaChave,
             'eh_bye' => $ehBye,
+            'eh_disputa_posicao' => $ehDisputaPosicao,
             'status_jogo' => $bloco['status_jogo'],
             'data_jogo' => $bloco['data_jogo'],
             'inicio_jogo' => $bloco['inicio_jogo'],
@@ -596,4 +617,270 @@ function sgi_mm_montar_json_arvore(mysqli $conn, int $idModalidade): array
     });
 
     return ['success' => true, 'jogos' => $saida];
+}
+
+
+/* ==========================================================================
+   DISPUTAS DE POSIÇÃO (3º, 4º lugares)
+   ========================================================================== */
+
+function sgi_mm_nome_fase_posicao(int $posicao): string
+{
+    return match ($posicao) {
+        3 => 'Disputa de 3º lugar',
+        5 => 'Disputa de 5º lugar',
+        default => 'Disputa de ' . $posicao . 'º lugar',
+    };
+}
+
+/** @param list<array{equipes_id_equipe:int, resultado_partida:int}> $partidas */
+function sgi_mm_perdedor_de_partidas(array $partidas): ?int
+{
+    if (count($partidas) < 2) {
+        return null;
+    }
+    usort($partidas, static function (array $x, array $y): int {
+        if ((int) $x['resultado_partida'] !== (int) $y['resultado_partida']) {
+            return (int) $y['resultado_partida'] <=> (int) $x['resultado_partida'];
+        }
+        return (int) $x['equipes_id_equipe'] <=> (int) $y['equipes_id_equipe'];
+    });
+    return (int) $partidas[1]['equipes_id_equipe'];
+}
+
+function sgi_mm_perdedor_do_jogo(mysqli $conn, int $idJogo, string $statusJogo, string $kind): ?int
+{
+    if (!sgi_mm_jogo_esta_encerrado($statusJogo)) {
+        return null;
+    }
+    $ps = sgi_mm_carregar_partidas_jogo($conn, $idJogo);
+    if ($kind === 'B' || count($ps) < 2) {
+        return null;
+    }
+    return sgi_mm_perdedor_de_partidas($ps);
+}
+
+function sgi_mm_inserir_jogo_posicao(
+    mysqli $conn,
+    int $idModalidade,
+    int $idLocal,
+    int $posicao,
+    int $idA,
+    int $idB,
+): int {
+    $nome = 'POS:' . $posicao . ':0:N';
+    $st = $conn->prepare(
+        "INSERT INTO jogos (nome_jogo, data_jogo, inicio_jogo, status_jogo, modalidades_id_modalidade, locais_id_local)
+         VALUES (?, CURDATE(), '08:00:00', 'Agendado', ?, ?)"
+    );
+    $st->bind_param('sii', $nome, $idModalidade, $idLocal);
+    $st->execute();
+    $idJogo = (int) $conn->insert_id;
+    $st->close();
+
+    $stP = $conn->prepare(
+        "INSERT INTO partidas (jogos_id_jogo, equipes_id_equipe, resultado_partida, status_partida) VALUES (?, ?, 0, '1')"
+    );
+    $stP->bind_param('ii', $idJogo, $idA);
+    $stP->execute();
+    $stP->bind_param('ii', $idJogo, $idB);
+    $stP->execute();
+    $stP->close();
+
+    return $idJogo;
+}
+
+/**
+ * Verifica se todos os jogos de uma fase foram concluídos e gera disputas de posição.
+ * Chamada ao final de sgi_chaveamento_processar_avanco().
+ */
+function sgi_mm_verificar_gerar_disputas_posicao(mysqli $conn, int $idModalidade, int $larguraFase): void
+{
+    $tagLike = 'MM:' . $larguraFase . ':%';
+
+    $stT = $conn->prepare("SELECT COUNT(*) AS total FROM jogos WHERE modalidades_id_modalidade = ? AND nome_jogo LIKE ?");
+    $stT->bind_param('is', $idModalidade, $tagLike);
+    $stT->execute();
+    $total = (int) ($stT->get_result()->fetch_assoc()['total'] ?? 0);
+    $stT->close();
+
+    if ($total === 0) {
+        return;
+    }
+
+    $stC = $conn->prepare("SELECT COUNT(*) AS c FROM jogos WHERE modalidades_id_modalidade = ? AND nome_jogo LIKE ? AND (status_jogo = 'Concluido' OR status_jogo = 'Finalizado')");
+    $stC->bind_param('is', $idModalidade, $tagLike);
+    $stC->execute();
+    $concluidos = (int) ($stC->get_result()->fetch_assoc()['c'] ?? 0);
+    $stC->close();
+
+    if ($concluidos < $total) {
+        return;
+    }
+
+    if ($larguraFase === 2) {
+        sgi_mm_gerar_disputa_3_lugar($conn, $idModalidade);
+    }
+}
+
+function sgi_mm_gerar_disputa_3_lugar(mysqli $conn, int $idModalidade): void
+{
+    $existente = $conn->prepare("SELECT 1 FROM jogos WHERE modalidades_id_modalidade = ? AND nome_jogo = 'POS:3:0:N' LIMIT 1");
+    $existente->bind_param('i', $idModalidade);
+    $existente->execute();
+    if ($existente->get_result()->num_rows > 0) {
+        $existente->close();
+        return;
+    }
+    $existente->close();
+
+    $st = $conn->prepare("SELECT id_jogo, status_jogo, nome_jogo FROM jogos WHERE modalidades_id_modalidade = ? AND nome_jogo LIKE 'MM:2:%'");
+    $st->bind_param('i', $idModalidade);
+    $st->execute();
+    $semifinals = $st->get_result()->fetch_all(MYSQLI_ASSOC);
+    $st->close();
+
+    if (count($semifinals) < 2) {
+        return;
+    }
+
+    $losers = [];
+    foreach ($semifinals as $sf) {
+        $meta = sgi_mm_parse($sf['nome_jogo']);
+        if ($meta === null) {
+            continue;
+        }
+        $loser = sgi_mm_perdedor_do_jogo($conn, (int) $sf['id_jogo'], (string) $sf['status_jogo'], $meta['kind']);
+        if ($loser !== null) {
+            $losers[] = $loser;
+        }
+    }
+
+    if (count($losers) < 2) {
+        return;
+    }
+
+    $idLocal = sgi_mm_resolver_id_local($conn);
+    sgi_mm_inserir_jogo_posicao($conn, $idModalidade, $idLocal, 3, $losers[0], $losers[1]);
+}
+
+/**
+ * Verifica se o torneio da modalidade está totalmente concluído.
+ */
+function sgi_mm_torneio_concluido(mysqli $conn, int $idModalidade): bool
+{
+    $st = $conn->prepare(
+        "SELECT COUNT(*) AS c FROM jogos
+         WHERE modalidades_id_modalidade = ?
+           AND status_jogo NOT IN ('Concluido', 'Finalizado')"
+    );
+    $st->bind_param('i', $idModalidade);
+    $st->execute();
+    $pendentes = (int) ($st->get_result()->fetch_assoc()['c'] ?? 0);
+    $st->close();
+    return $pendentes === 0;
+}
+
+/**
+ * Monta o histórico completo do torneio: classificação final + todos os confrontos.
+ */
+function sgi_mm_montar_historico(mysqli $conn, int $idModalidade): array
+{
+    $concluido = sgi_mm_torneio_concluido($conn, $idModalidade);
+
+    $stJ = $conn->prepare(
+        'SELECT j.id_jogo, j.nome_jogo, j.status_jogo, j.data_jogo,
+                p.id_partida, p.equipes_id_equipe, p.resultado_partida,
+                t.nome_turma, t.nome_fantasia_turma
+         FROM jogos j
+         INNER JOIN partidas p ON j.id_jogo = p.jogos_id_jogo
+         INNER JOIN equipes e ON p.equipes_id_equipe = e.id_equipe
+         INNER JOIN turmas t ON e.turmas_id_turma = t.id_turma
+         WHERE j.modalidades_id_modalidade = ?
+         ORDER BY j.id_jogo ASC, p.resultado_partida DESC'
+    );
+    $stJ->bind_param('i', $idModalidade);
+    $stJ->execute();
+    $rows = $stJ->get_result()->fetch_all(MYSQLI_ASSOC);
+    $stJ->close();
+
+    $porJogo = [];
+    foreach ($rows as $row) {
+        $idJ = (int) $row['id_jogo'];
+        if (!isset($porJogo[$idJ])) {
+            $meta = sgi_mm_parse($row['nome_jogo']);
+            $porJogo[$idJ] = [
+                'id_jogo' => $idJ,
+                'nome_jogo' => $row['nome_jogo'],
+                'meta' => $meta,
+                'status_jogo' => $row['status_jogo'],
+                'data_jogo' => $row['data_jogo'],
+                'partidas' => [],
+            ];
+        }
+        $porJogo[$idJ]['partidas'][] = [
+            'id_equipe' => (int) $row['equipes_id_equipe'],
+            'gols' => (int) $row['resultado_partida'],
+            'nome_turma' => $row['nome_turma'],
+            'nome_fantasia' => $row['nome_fantasia_turma'],
+        ];
+    }
+
+    $classificacao = [];
+    $confrontos = [];
+
+    foreach ($porJogo as $jogo) {
+        $meta = $jogo['meta'];
+        $ps = $jogo['partidas'];
+        if ($meta === null || count($ps) < 2) {
+            continue;
+        }
+
+        usort($ps, static fn($a, $b) => $b['gols'] <=> $a['gols']);
+        $vencedor = $ps[0];
+        $perdedor = $ps[1];
+
+        $fase = $meta['largura'] ?? 0;
+        $posicao = $meta['posicao'] ?? null;
+
+        if (isset($meta['posicao'])) {
+            $nomeFase = sgi_mm_nome_fase_posicao($meta['posicao']);
+            $posVencedor = $meta['posicao'];
+            $posPerdedor = $meta['posicao'] + 1;
+            $classificacao[$posVencedor] = $vencedor;
+            $classificacao[$posPerdedor] = $perdedor;
+        } elseif ($fase === 1) {
+            $classificacao[1] = $vencedor;
+            $classificacao[2] = $perdedor;
+            $nomeFase = 'Final';
+        } else {
+            $nomeFase = sgi_mm_nome_fase_pt($fase);
+        }
+
+        $confrontos[] = [
+            'fase' => $nomeFase,
+            'vencedor_nome' => $vencedor['nome_fantasia'] ?: $vencedor['nome_turma'],
+            'vencedor_gols' => $vencedor['gols'],
+            'perdedor_nome' => $perdedor['nome_fantasia'] ?: $perdedor['nome_turma'],
+            'perdedor_gols' => $perdedor['gols'],
+        ];
+    }
+
+    if (!isset($classificacao[1]) && !isset($classificacao[2])) {
+        usort($confrontos, static function ($a, $b) {
+            $order = ['Final' => 1, 'Semifinal' => 2, 'Disputa de 3º lugar' => 3, 'Quartas de final' => 4, 'Oitavas de final' => 5];
+            $oa = $order[$a['fase']] ?? 99;
+            $ob = $order[$b['fase']] ?? 99;
+            return $oa <=> $ob;
+        });
+    }
+
+    ksort($classificacao);
+
+    return [
+        'success' => true,
+        'concluido' => $concluido,
+        'classificacao' => array_values($classificacao),
+        'confrontos' => $confrontos,
+    ];
 }
