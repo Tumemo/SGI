@@ -3,16 +3,16 @@ $paginaAtiva = $paginaAtiva ?? 'home';
 $nivelUsuario = (int)($_SESSION['nivel'] ?? -1);
 
 $todosItens = [
-    'perfil'        => ['label' => 'Perfil',       'icon' => 'bi-person-gear',           'url' => './perfil.php',        'niveis' => [0, 1, 2]],
-    'dashboard'     => ['label' => 'Dashboard',    'icon' => 'bi-house-door-fill',   'url' => './dashboard.php',     'niveis' => [0, 1]],
-    'categorias'    => ['label' => 'Categorias',   'icon' => 'bi-bookmarks',         'url' => './categorias.php',    'niveis' => [0, 1, 2]],
-    'equipes'       => ['label' => 'Equipes',      'icon' => 'bi-diagram-3',         'url' => './edicao_equipes.php',       'niveis' => [0, 1]],
-    'modalidades'   => ['label' => 'Modalidades',  'icon' => 'bi-trophy',            'url' => './modalidades.php',   'niveis' => [0, 1]],
-    'pontuacoes'    => ['label' => 'Pontuações',   'icon' => 'bi-award',             'url' => './pontuacoes.php',    'niveis' => [0, 1]],
-    'arrecadacoes'  => ['label' => 'Arrecadações', 'icon' => 'bi-basket',            'url' => './edicao_arrecadacao.php',  'niveis' => [0, 1]],
-    'colaboradores' => ['label' => 'Colaboradores','icon' => 'bi-people',            'url' => './colaboradores.php', 'niveis' => [0]],
-    'agenda'        => ['label' => 'Agenda',       'icon' => 'bi-calendar3',         'url' => './agenda.php',        'niveis' => [2]],
-    'chaveamentos'  => ['label' => 'Chaveamentos', 'icon' => 'bi-diagram-3-fill',    'url' => './pontuacao.php',     'niveis' => [2]],
+    'perfil'            => ['label' => 'Perfil',          'icon' => 'bi-person-gear',        'url' => './perfil.php',              'niveis' => [0, 1, 2]],
+    'dashboard'         => ['label' => 'Dashboard',       'icon' => 'bi-house-door-fill',    'url' => './dashboard.php',           'niveis' => [0, 1]],
+    'categorias'        => ['label' => 'Categorias',      'icon' => 'bi-bookmarks',          'url' => './categorias.php',          'niveis' => [0, 1, 2]],
+    'chaveamento'       => ['label' => 'Chaveamento',     'icon' => 'bi-diagram-3-fill',     'url' => './chaveamento_arvore.php',  'niveis' => [0, 1]],
+    'ranking'           => ['label' => 'Ranking',         'icon' => 'bi-trophy-fill',        'url' => './ranking.php',             'niveis' => [0, 1]],
+    'agenda'            => ['label' => 'Agenda',          'icon' => 'bi-calendar3',          'url' => './edicao_agenda.php',       'niveis' => [0, 1]],
+    'arrecadacoes'      => ['label' => 'Arrecadações',    'icon' => 'bi-basket',             'url' => './edicao_arrecadacao.php',  'niveis' => [0, 1]],
+    'colaboradores'     => ['label' => 'Colaboradores',   'icon' => 'bi-people',             'url' => './colaboradores.php',       'niveis' => [0]],
+    'chaveamentos_mesario' => ['label' => 'Chaveamentos', 'icon' => 'bi-diagram-3-fill',    'url' => './pontuacao.php',           'niveis' => [2]],
+    'agenda_mesario'    => ['label' => 'Agenda',          'icon' => 'bi-calendar3',          'url' => './agenda.php',              'niveis' => [2]],
 ];
 
 $navItens = [];
