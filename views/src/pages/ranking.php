@@ -5,44 +5,64 @@ $mostrarVoltar = true;
 $urlVoltar = './dashboard.php';
 include 'componentes/head.php';
 include 'componentes/header.php';
-$paginaAtiva = 'dashboard';
+$paginaAtiva = 'ranking';
 ?>
 
-
-
-<main class="container d-md-none py-4" style="margin-bottom: 100px;">
+<!-- ======================== MOBILE ======================== -->
+<main class="d-md-none py-3 px-3" style="margin-bottom: 100px;">
     <div id="msgMob"></div>
-    <div id="filtrosMob" class="d-flex overflow-auto gap-2 pb-3 mb-4">
+
+    <header class="rk-mobile-header">
+        <div>
+            <h1 class="rk-mobile-header__title" id="nomeInterclasse">Ranking</h1>
+            <p class="rk-mobile-header__sub">Ranking das turmas</p>
         </div>
-    <div id="listaMob"></div>
+        <div class="rk-stat-chip">
+            <span>&#x1F465;</span>
+            <span id="totalTurmas">0 Turmas</span>
+        </div>
+    </header>
+
+    <div id="filtrosMob" class="rk-filters-mobile"></div>
+    <div id="listaMob" class="rk-ranking-list"></div>
 </main>
 
-<main class="d-none d-md-block container-fluid p-5">
-    <div class="row px-lg-5">
-        <div class="col-md-3">
-            <div class="card border-0 shadow-sm p-4 sticky-top" style="top: 20px;">
-                <h4 class="fw-bold mb-4">Categorias</h4>
-                <div id="filtrosDesk" class="d-flex flex-column gap-2">
-                    </div>
-            </div>
-        </div>
-        
-        <div class="col-md-9">
-            <div class="d-flex justify-content-between align-items-center mb-4">
-                <h2 class="fw-bold m-0" id="nomeInterclasse">Ranking</h2>
-                <span class="badge bg-light text-dark border p-2" id="totalTurmas">0 Turmas</span>
-            </div>
-            <div id="msgDesk"></div>
-            <div id="listaDesk" class="row g-3">
+<!-- ======================== DESKTOP ======================== -->
+<main class="d-none d-md-block main-desktop-layout">
+    <div class="rk-layout">
+        <!-- Sidebar -->
+        <aside class="rk-sidebar">
+            <div class="rk-sidebar__card">
+                <div class="rk-sidebar__header">
+                    <i class="bi bi-trophy-fill"></i>
+                    <span>Categorias</span>
                 </div>
-        </div>
+                <div id="filtrosDesk" class="rk-sidebar__list"></div>
+            </div>
+        </aside>
+
+        <!-- Main content -->
+        <section class="rk-main">
+            <header class="rk-header">
+                <div class="rk-header__left">
+                    <h1 class="rk-header__title" id="nomeInterclasse">Ranking</h1>
+                    <p class="rk-header__sub">Ranking das turmas</p>
+                </div>
+                <div class="rk-stat-chip">
+                    <span>&#x1F465;</span>
+                    <span id="totalTurmas">0 Turmas</span>
+                </div>
+            </header>
+
+            <div id="msgDesk"></div>
+            <div id="listaDesk" class="rk-ranking-list"></div>
+        </section>
     </div>
 </main>
 
 <script>
-    // Configurações Globais
     const urlParams = new URLSearchParams(window.location.search);
-    const idInterclasse = urlParams.get('id'); // Pega o ?id=21 da URL
+    const idInterclasse = urlParams.get('id');
 
     let dadosAPI = [];
     let categoriasUnicas = [];
@@ -63,12 +83,11 @@ $paginaAtiva = 'dashboard';
     }
 
     async function carregarDados() {
-        const loading = '<div class="text-center p-5"><div class="spinner-border text-danger"></div></div>';
+        const loading = '<div class="rk-loading"><div class="spinner-border text-danger"></div></div>';
         document.getElementById('listaMob').innerHTML = loading;
         document.getElementById('listaDesk').innerHTML = loading;
 
         try {
-            // Chamada para o seu Back-end passando o filtro de interclasse
             const response = await fetch(`../../../api/ranking.php?id_interclasse=${idInterclasse}`);
             const data = await response.json();
 
@@ -82,12 +101,11 @@ $paginaAtiva = 'dashboard';
             const catRes = await fetch(`../../../api/categorias.php?id_interclasse=${idInterclasse}`);
             const catData = await catRes.json();
             categoriasUnicas = Array.isArray(catData) ? catData.map(c => c.nome_categoria) : [];
-            
+
             document.getElementById('nomeInterclasse').innerText = data[0].nome_interclasse;
             document.getElementById('totalTurmas').innerText = `${data.length} Turmas`;
 
             renderizarFiltros();
-            // Inicia exibindo a primeira categoria encontrada
             filtrarCategoria(categoriasUnicas[0]);
 
         } catch (error) {
@@ -104,13 +122,12 @@ $paginaAtiva = 'dashboard';
 
         categoriasUnicas.forEach(cat => {
             const btn = document.createElement('button');
-            btn.className = 'btn btn-outline-secondary btn-categoria';
-            btn.innerText = cat;
+            btn.className = 'btn btn-categoria rk-cat-btn';
+            btn.innerHTML = `<i class="bi bi-tag-fill"></i> ${cat}`;
             btn.id = `btn-${cat.replace(/\s/g, '')}`;
             btn.onclick = () => filtrarCategoria(cat);
-            
-            fMob.appendChild(btn.cloneNode(true)); // Mobile precisa de uma cópia do elemento
-            // Para o desktop, precisamos reatribuir o evento pois o cloneNode não copia eventos complexos às vezes
+
+            fMob.appendChild(btn.cloneNode(true));
             const btnD = btn.cloneNode(true);
             btnD.onclick = () => filtrarCategoria(cat);
             fDesk.appendChild(btnD);
@@ -118,21 +135,15 @@ $paginaAtiva = 'dashboard';
     }
 
     function filtrarCategoria(categoria) {
-    // Atualizar visual dos botões
-    document.querySelectorAll('.btn-categoria').forEach(b => {
-        b.classList.remove('ativo');
-        if (b.innerText === categoria) b.classList.add('ativo');
-    });
+        document.querySelectorAll('.btn-categoria').forEach(b => {
+            b.classList.remove('ativo');
+            if (b.innerText.trim().includes(categoria)) b.classList.add('ativo');
+        });
 
-    // 1. Filtra as turmas pela categoria selecionada
-    const turmasFiltradas = dadosAPI.filter(t => t.nome_categoria === categoria);
-    
-    // 2. ADICIONE ESTA LINHA: Atualiza o contador com o total filtrado
-    document.getElementById('totalTurmas').innerText = `${turmasFiltradas.length} Turmas`;
-
-    // 3. Renderiza a lista na tela
-    renderizarRanking(turmasFiltradas);
-}
+        const turmasFiltradas = dadosAPI.filter(t => t.nome_categoria === categoria);
+        document.getElementById('totalTurmas').innerText = `${turmasFiltradas.length} Turmas`;
+        renderizarRanking(turmasFiltradas);
+    }
 
     function renderizarRanking(turmas) {
         const cMob = document.getElementById('listaMob');
@@ -140,7 +151,16 @@ $paginaAtiva = 'dashboard';
         cMob.innerHTML = '';
         cDesk.innerHTML = '';
 
+        if (!turmas.length) {
+            const empty = '<div class="rk-empty"><i class="bi bi-inbox"></i><p>Nenhuma turma nesta categoria.</p></div>';
+            cMob.innerHTML = empty;
+            cDesk.innerHTML = empty;
+            return;
+        }
+
         const maxPontos = Math.max(...turmas.map(t => t.pontuacao_sem_penalidade || t.pontuacao_turma)) || 1;
+
+        const medals = ['&#x1F947;', '&#x1F948;', '&#x1F949;'];
 
         turmas.forEach((t, index) => {
             const posicao = index + 1;
@@ -150,40 +170,43 @@ $paginaAtiva = 'dashboard';
             const porcentagemSem = (ptsSemPenalidade / maxPontos) * 100;
             const porcentagemCom = (ptsComPenalidade / maxPontos) * 100;
             const classeDestaque = posicao <= 3 ? `posicao-${posicao}` : '';
+            const isTop3 = posicao <= 3;
 
             const html = `
-                <div class="col-12">
-                    <div class="card card-turma shadow-sm mb-3 p-3 ${classeDestaque}">
-                        <div class="d-flex align-items-center justify-content-between">
-                            <div class="d-flex align-items-center gap-3">
-                                <h3 class="fw-bold m-0 text-secondary" style="width: 40px;">${posicao}º</h3>
-                                <div>
-                                    <h5 class="fw-bold m-0 text-dark">${t.nome_turma}</h5>
-                                    <small class="text-muted">${t.nome_fantasia_turma || t.turno_turma}</small>
+                <div class="rk-card-wrapper ${isTop3 ? 'rk-card-wrapper--top' : ''}" style="animation-delay: ${index * 0.07}s">
+                    <div class="card card-turma rk-rank-card ${classeDestaque} ${isTop3 ? 'rk-rank-card--podium' : ''}">
+                        ${isTop3 ? `<div class="rk-rank-card__medal">${medals[posicao - 1]}</div>` : ''}
+
+                        <div class="rk-rank-card__head">
+                            <div class="rk-rank-card__pos ${isTop3 ? 'rk-rank-card__pos--podium' : ''}">${posicao}°</div>
+                            <div class="rk-rank-card__info">
+                                <div class="rk-rank-card__name">${t.nome_turma}</div>
+                                <div class="rk-rank-card__detail"><i class="bi bi-mortarboard-fill"></i> ${t.nome_fantasia_turma || t.turno_turma}</div>
+                            </div>
+                            <div class="rk-rank-card__badge badge-pontos ${isTop3 ? 'rk-rank-card__badge--podium' : ''}">
+                                <span class="rk-rank-card__pts">${ptsComPenalidade}</span>
+                                <span class="rk-rank-card__pts-label">pts</span>
+                            </div>
+                        </div>
+
+                        <div class="rk-rank-card__bars">
+                            <div class="rk-bar-group">
+                                <div class="rk-bar-group__header">
+                                    <span><i class="bi bi-star"></i> Pontuação esperada</span>
+                                    <span class="rk-bar-group__val">${ptsSemPenalidade} pts</span>
+                                </div>
+                                <div class="barra-fundo" style="height: 8px;">
+                                    <div class="barra-progresso rk-bar--expected" style="width: ${porcentagemSem}%;"></div>
                                 </div>
                             </div>
-                            <div class="text-end">
-                                <span class="badge badge-pontos fs-6 px-3 py-2 rounded-pill">
-                                    ${ptsComPenalidade} pts
-                                </span>
-                            </div>
-                        </div>
-                        <div class="mt-2">
-                            <div class="d-flex justify-content-between small text-muted mb-1">
-                                <span>Pontuação que a turma deveria ter</span>
-                                <span>${ptsSemPenalidade} pts</span>
-                            </div>
-                            <div class="barra-fundo" style="height:6px;">
-                                <div class="barra-progresso" style="width:${porcentagemSem}%;background-color:#adb5bd;"></div>
-                            </div>
-                        </div>
-                        <div class="mt-2">
-                            <div class="d-flex justify-content-between small mb-1">
-                                <span class="fw-semibold text-danger">Pontuação final</span>
-                                <span class="fw-semibold">${ptsComPenalidade} pts${perdeu > 0 ? ` <span class="text-danger">(-${perdeu})</span>` : ''}</span>
-                            </div>
-                            <div class="barra-fundo" style="height:8px;">
-                                <div class="barra-progresso" style="width:${porcentagemCom}%;"></div>
+                            <div class="rk-bar-group">
+                                <div class="rk-bar-group__header">
+                                    <span class="text-danger fw-semibold"><i class="bi bi-flag-fill"></i> Pontuação final</span>
+                                    <span class="rk-bar-group__val fw-bold">${ptsComPenalidade} pts${perdeu > 0 ? ` <span class="text-danger">(-${perdeu})</span>` : ''}</span>
+                                </div>
+                                <div class="barra-fundo" style="height: 12px;">
+                                    <div class="barra-progresso rk-bar--final" style="width: ${porcentagemCom}%;"></div>
+                                </div>
                             </div>
                         </div>
                     </div>

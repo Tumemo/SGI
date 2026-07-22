@@ -1207,49 +1207,548 @@ body > main {
    17. RANKING (ranking.php)
    ========================================================================== */
 
-.btn-categoria {
-    transition: all 0.2s;
-    border-radius: 20px !important;
-    min-width: 120px;
+/* ── Layout ─────────────────────────────────────────────────────────────── */
+
+.rk-layout {
+    display: flex;
+    gap: 2rem;
+    max-width: 1400px;
+    margin: 0 auto;
 }
 
-.btn-categoria.ativo {
-    background-color: #ed1c24 !important;
-    color: white !important;
-    border-color: #ed1c24 !important;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+.rk-sidebar {
+    flex: 0 0 260px;
+    position: sticky;
+    top: 20px;
+    align-self: flex-start;
 }
 
-.card-turma {
-    transition: transform 0.2s;
-    border-left: 5px solid #dee2e6;
+.rk-sidebar__card {
+    background: #fff;
+    border-radius: 20px;
+    box-shadow: 0 1px 3px rgba(0,0,0,.06), 0 8px 24px rgba(0,0,0,.04);
+    padding: 1.5rem;
+    border: 1px solid #f0f0f0;
 }
 
-.card-turma:hover {
-    transform: translateY(-3px);
+.rk-sidebar__header {
+    display: flex;
+    align-items: center;
+    gap: .6rem;
+    font-weight: 700;
+    font-size: 1.05rem;
+    color: #1F2937;
+    margin-bottom: 1rem;
+    padding-bottom: .75rem;
+    border-bottom: 1px solid #f0f0f0;
 }
 
-.posicao-1 { border-left-color: #FFD700 !important; }
-.posicao-2 { border-left-color: #C0C0C0 !important; }
-.posicao-3 { border-left-color: #CD7F32 !important; }
+.rk-sidebar__header i {
+    color: #E30613;
+    font-size: 1.15rem;
+}
+
+.rk-sidebar__list {
+    display: flex;
+    flex-direction: column;
+    gap: .5rem;
+}
+
+.rk-main {
+    flex: 1;
+    min-width: 0;
+}
+
+/* ── Header ─────────────────────────────────────────────────────────────── */
+
+.rk-header,
+.rk-mobile-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 2rem;
+    gap: 1rem;
+}
+
+.rk-header__title,
+.rk-mobile-header__title {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #1F2937;
+    margin: 0;
+    line-height: 1.15;
+}
+
+.rk-header__sub,
+.rk-mobile-header__sub {
+    font-size: .9rem;
+    color: #6B7280;
+    margin: .25rem 0 0;
+}
+
+.rk-stat-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: .45rem;
+    background: #F5F6F8;
+    border: 1px solid #E5E7EB;
+    border-radius: 50px;
+    padding: .5rem 1rem;
+    font-size: .85rem;
+    font-weight: 600;
+    color: #1F2937;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+/* ── Category Filters ───────────────────────────────────────────────────── */
+
+.rk-filters-mobile {
+    display: flex;
+    gap: .5rem;
+    overflow-x: auto;
+    padding-bottom: .75rem;
+    margin-bottom: 1.5rem;
+    -webkit-overflow-scrolling: touch;
+}
+
+.rk-filters-mobile::-webkit-scrollbar { height: 0; }
+
+.btn-categoria.rk-cat-btn {
+    border: 1.5px solid #E5E7EB !important;
+    background: #fff !important;
+    color: #4B5563 !important;
+    border-radius: 50px !important;
+    padding: .55rem 1.15rem !important;
+    font-size: .82rem !important;
+    font-weight: 600 !important;
+    white-space: nowrap;
+    box-shadow: 0 1px 2px rgba(0,0,0,.04);
+    transition: all 0.2s ease !important;
+}
+
+.btn-categoria.rk-cat-btn:hover {
+    border-color: #E30613 !important;
+    color: #E30613 !important;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(227,6,19,.1);
+}
+
+.btn-categoria.rk-cat-btn.ativo {
+    background: #E30613 !important;
+    color: #fff !important;
+    border-color: #E30613 !important;
+    box-shadow: 0 4px 12px rgba(227,6,19,.3) !important;
+    transform: translateY(-1px);
+}
+
+.btn-categoria.rk-cat-btn.ativo:hover {
+    box-shadow: 0 6px 18px rgba(227,6,19,.4) !important;
+}
+
+/* ── Ranking Cards ──────────────────────────────────────────────────────── */
+
+.rk-ranking-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.rk-card-wrapper {
+    animation: rk-card-in 0.4s ease both;
+}
+
+@keyframes rk-card-in {
+    from { opacity: 0; transform: translateY(12px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+.rk-rank-card {
+    border: 1.5px solid #F0F0F0;
+    border-left: 5px solid #E5E7EB;
+    border-radius: 20px;
+    padding: 1.4rem 1.6rem;
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
+    box-shadow: 0 1px 3px rgba(0,0,0,.04);
+    position: relative;
+    overflow: visible;
+}
+
+.rk-rank-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 28px rgba(0,0,0,.08);
+}
+
+/* ── Top 3 ──────────────────────────────────────────────────────────────── */
+
+.rk-rank-card--podium {
+    padding: 1.6rem 1.8rem;
+    border-width: 2px;
+}
+
+.rk-rank-card__medal {
+    position: absolute;
+    top: -14px;
+    right: 20px;
+    font-size: 2rem;
+    filter: drop-shadow(0 2px 4px rgba(0,0,0,.15));
+    animation: rk-medal-bob 2s ease-in-out infinite;
+    z-index: 2;
+}
+
+@keyframes rk-medal-bob {
+    0%, 100% { transform: translateY(0); }
+    50%      { transform: translateY(-3px); }
+}
+
+/* Posicao 1 – Gold */
+.posicao-1.rk-rank-card--podium,
+.rk-rank-card.posicao-1.rk-rank-card--podium {
+    border-left-color: #FFC107 !important;
+    background: linear-gradient(135deg, #FFFBEB 0%, #FFFFFF 50%);
+    box-shadow: 0 4px 20px rgba(255,193,7,.15), 0 1px 3px rgba(0,0,0,.04);
+}
+
+.posicao-1.rk-rank-card--podium::before {
+    content: '';
+    position: absolute;
+    inset: -2px;
+    border-radius: 21px;
+    background: linear-gradient(135deg, rgba(255,193,7,.2), transparent 60%);
+    pointer-events: none;
+    z-index: 0;
+}
+
+.rk-rank-card.posicao-1 .rk-rank-card__pos--podium {
+    background: #FFC107;
+    color: #78350F;
+    box-shadow: 0 2px 8px rgba(255,193,7,.4);
+}
+
+.rk-rank-card.posicao-1 .rk-rank-card__badge--podium {
+    background: linear-gradient(135deg, #FEF3C7, #FDE68A) !important;
+    color: #92400E !important;
+    border-color: #FCD34D !important;
+    box-shadow: 0 2px 10px rgba(255,193,7,.25);
+}
+
+/* Posicao 2 – Silver */
+.posicao-2.rk-rank-card--podium,
+.rk-rank-card.posicao-2.rk-rank-card--podium {
+    border-left-color: #94A3B8 !important;
+    background: linear-gradient(135deg, #F8FAFC 0%, #FFFFFF 50%);
+    box-shadow: 0 4px 20px rgba(148,163,184,.12), 0 1px 3px rgba(0,0,0,.04);
+}
+
+.rk-rank-card.posicao-2 .rk-rank-card__pos--podium {
+    background: #CBD5E1;
+    color: #334155;
+    box-shadow: 0 2px 8px rgba(148,163,184,.35);
+}
+
+.rk-rank-card.posicao-2 .rk-rank-card__badge--podium {
+    background: linear-gradient(135deg, #F1F5F9, #E2E8F0) !important;
+    color: #334155 !important;
+    border-color: #CBD5E1 !important;
+    box-shadow: 0 2px 10px rgba(148,163,184,.2);
+}
+
+/* Posicao 3 – Bronze */
+.posicao-3.rk-rank-card--podium,
+.rk-rank-card.posicao-3.rk-rank-card--podium {
+    border-left-color: #D77A32 !important;
+    background: linear-gradient(135deg, #FFF7ED 0%, #FFFFFF 50%);
+    box-shadow: 0 4px 20px rgba(215,122,50,.1), 0 1px 3px rgba(0,0,0,.04);
+}
+
+.rk-rank-card.posicao-3 .rk-rank-card__pos--podium {
+    background: #D77A32;
+    color: #fff;
+    box-shadow: 0 2px 8px rgba(215,122,50,.4);
+}
+
+.rk-rank-card.posicao-3 .rk-rank-card__badge--podium {
+    background: linear-gradient(135deg, #FFEDD5, #FED7AA) !important;
+    color: #9A3412 !important;
+    border-color: #FDBA74 !important;
+    box-shadow: 0 2px 10px rgba(215,122,50,.2);
+}
+
+/* ── Card Head ──────────────────────────────────────────────────────────── */
+
+.rk-rank-card__head {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    position: relative;
+    z-index: 1;
+}
+
+.rk-rank-card__pos {
+    width: 44px;
+    height: 44px;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    font-size: 1rem;
+    background: #F5F6F8;
+    color: #6B7280;
+    flex-shrink: 0;
+}
+
+.rk-rank-card__pos--podium {
+    width: 52px;
+    height: 52px;
+    border-radius: 16px;
+    font-size: 1.2rem;
+    font-weight: 900;
+    color: #fff;
+}
+
+.rk-rank-card__info {
+    flex: 1;
+    min-width: 0;
+}
+
+.rk-rank-card__name {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: #1F2937;
+    margin: 0;
+    line-height: 1.2;
+}
+
+.rk-rank-card--podium .rk-rank-card__name {
+    font-size: 1.5rem;
+}
+
+.rk-rank-card__detail {
+    font-size: .8rem;
+    color: #9CA3AF;
+    margin-top: .15rem;
+}
+
+.rk-rank-card__detail i {
+    font-size: .7rem;
+    margin-right: .2rem;
+}
+
+.rk-rank-card__badge {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    border-radius: 16px;
+    padding: .55rem .9rem;
+    min-width: 70px;
+    flex-shrink: 0;
+}
+
+.rk-rank-card__pts {
+    font-size: 1.35rem;
+    font-weight: 800;
+    line-height: 1;
+}
+
+.rk-rank-card__pts-label {
+    font-size: .65rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    opacity: .7;
+}
+
+.rk-rank-card--podium .rk-rank-card__badge {
+    padding: .65rem 1.1rem;
+    min-width: 80px;
+}
+
+.rk-rank-card--podium .rk-rank-card__pts {
+    font-size: 1.7rem;
+}
+
+.rk-rank-card--podium .rk-rank-card__pts-label {
+    font-size: .72rem;
+}
+
+/* ── Bars ───────────────────────────────────────────────────────────────── */
+
+.rk-rank-card__bars {
+    margin-top: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: .65rem;
+    position: relative;
+    z-index: 1;
+}
+
+.rk-bar-group__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: .75rem;
+    color: #9CA3AF;
+    margin-bottom: .3rem;
+}
+
+.rk-bar-group__header i {
+    font-size: .65rem;
+    margin-right: .2rem;
+}
+
+.rk-bar-group__val {
+    font-weight: 700;
+    font-size: .78rem;
+    color: #4B5563;
+}
 
 .barra-fundo {
-    background-color: #f0f0f0;
-    height: 8px;
-    border-radius: 10px;
+    background-color: #F3F4F6;
+    border-radius: 50px;
     overflow: hidden;
 }
 
 .barra-progresso {
-    background-color: #ed1c24;
     height: 100%;
-    transition: width 0.8s ease;
+    border-radius: 50px;
+    transition: width 0.8s cubic-bezier(.22,1,.36,1);
 }
 
-.badge-pontos {
-    background-color: #f8f9fa;
-    color: #333;
-    border: 1px solid #ddd;
+.rk-bar--expected {
+    background: #CBD5E1;
+}
+
+.rk-bar--final {
+    background: linear-gradient(90deg, #E30613, #FF3D4A);
+}
+
+.posicao-1 .rk-bar--final {
+    background: linear-gradient(90deg, #F59E0B, #FFC107);
+}
+
+.posicao-2 .rk-bar--final {
+    background: linear-gradient(90deg, #64748B, #94A3B8);
+}
+
+.posicao-3 .rk-bar--final {
+    background: linear-gradient(90deg, #D77A32, #F59E0B);
+}
+
+/* ── Empty / Loading ────────────────────────────────────────────────────── */
+
+.rk-empty {
+    text-align: center;
+    padding: 3rem 1rem;
+    color: #9CA3AF;
+}
+
+.rk-empty i {
+    font-size: 2.5rem;
+    display: block;
+    margin-bottom: .5rem;
+}
+
+.rk-loading {
+    text-align: center;
+    padding: 3rem;
+}
+
+/* ── Responsive: Tablet ─────────────────────────────────────────────────── */
+
+@media (max-width: 991.98px) {
+    .rk-layout {
+        flex-direction: column;
+        gap: 1.25rem;
+    }
+
+    .rk-sidebar {
+        flex: none;
+        position: static;
+        width: 100%;
+    }
+
+    .rk-sidebar__card {
+        padding: 1.25rem;
+    }
+
+    .rk-sidebar__list {
+        flex-direction: row;
+        flex-wrap: wrap;
+        gap: .5rem;
+    }
+
+    .rk-header__title,
+    .rk-mobile-header__title {
+        font-size: 1.6rem;
+    }
+}
+
+/* ── Responsive: Mobile ─────────────────────────────────────────────────── */
+
+@media (max-width: 575.98px) {
+    .rk-header__title,
+    .rk-mobile-header__title {
+        font-size: 1.4rem;
+    }
+
+    .rk-header__sub,
+    .rk-mobile-header__sub {
+        font-size: .8rem;
+    }
+
+    .rk-rank-card {
+        padding: 1.1rem 1.2rem;
+        border-radius: 16px;
+    }
+
+    .rk-rank-card--podium {
+        padding: 1.3rem 1.3rem;
+    }
+
+    .rk-rank-card__pos {
+        width: 38px;
+        height: 38px;
+        border-radius: 12px;
+        font-size: .85rem;
+    }
+
+    .rk-rank-card__pos--podium {
+        width: 46px;
+        height: 46px;
+        border-radius: 14px;
+        font-size: 1.1rem;
+    }
+
+    .rk-rank-card__name {
+        font-size: 1.05rem;
+    }
+
+    .rk-rank-card--podium .rk-rank-card__name {
+        font-size: 1.25rem;
+    }
+
+    .rk-rank-card__medal {
+        font-size: 1.6rem;
+        top: -12px;
+    }
+
+    .rk-rank-card__badge {
+        min-width: 60px;
+        padding: .45rem .7rem;
+    }
+
+    .rk-rank-card__pts {
+        font-size: 1.15rem;
+    }
+
+    .rk-rank-card--podium .rk-rank-card__pts {
+        font-size: 1.4rem;
+    }
+
+    .rk-rank-card--podium .rk-rank-card__badge {
+        min-width: 70px;
+    }
 }
 
 
