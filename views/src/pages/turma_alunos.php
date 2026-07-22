@@ -30,7 +30,7 @@ $podeGerenciar = in_array($nivelUsuario, [0, 1, 2], true);
             <div id="msgPdfMob" class="small mt-2 text-center"></div>
             <div id="fallbackMob" class="d-none mt-3 text-center">
                 <p class="small text-muted mb-2">O PDF parece ser uma imagem. Converta para PDF selecionável:</p>
-                <a href="https://www.ilovepdf.com/pt/download/l3w270hy6bhh3vg86m6h107rv3wA1dkt377wsjbsj9v9k7tgz76cyxfw89fkymvxw7wqy3vy4bwmntykf5kd8g6s2pg6xkl7v1qp0js1A3wdk9wrdvvndvvs3xggvsm2l9rq8bpx6l7qh68c69x8rvvpd3tpdbhd4zj29qhs8nm02zvc7bfq/95o" target="_blank" class="btn btn-outline-danger btn-sm rounded-3">
+                <a href="https://www.ilovepdf.com/pt/ocr-pdf" target="_blank" class="btn btn-outline-danger btn-sm rounded-3">
                     <i class="bi bi-box-arrow-up-right"></i> Converter PDF (iLovePDF)
                 </a>
             </div>

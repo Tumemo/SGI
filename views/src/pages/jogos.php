@@ -238,7 +238,7 @@ $paginaAtiva = 'dashboard';
         <div id="placar-erro" class="mc-error d-none" role="alert"></div>
         <div id="placar-loading" class="mc-loading">Carregando partida...</div>
 
-        <div id="placar-conteudo" class="d-none">
+        <div id="placar-conteudo" class="d-none d-grid gap-3">
 
             <div id="placar-acoes" class="mc-actions"></div>
 

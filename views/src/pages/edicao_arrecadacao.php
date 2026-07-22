@@ -3,6 +3,69 @@ $tituloPagina = 'SGI - Arrecadação';
 $titulo = 'Arrecadação';
 $mostrarVoltar = true;
 $urlVoltar = './dashboard.php';
+$cssExtra = '
+/* ═══ Arrecadação Modern ═══ */
+.arc-page{padding-bottom:5rem}
+.arc-container{width:100%;padding:0 2rem}
+.arc-header{margin-bottom:2rem}
+.arc-header__top{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem}
+.arc-header__title{font-size:1.75rem;font-weight:800;color:#111827;letter-spacing:-.03em;margin:0;line-height:1.2}
+.arc-header__sub{font-size:.9rem;color:#6B7280;margin:.35rem 0 0;font-weight:400}
+.arc-hist-btn{display:inline-flex;align-items:center;gap:.45rem;border:1.5px solid #E5E7EB;background:#fff;color:#374151;border-radius:10px;padding:.5rem 1rem;font-size:.82rem;font-weight:600;cursor:pointer;transition:all .15s}
+.arc-hist-btn:hover{border-color:#D1D5DB;background:#F9FAFB;transform:translateY(-1px);box-shadow:0 2px 8px rgba(0,0,0,.06)}
+.arc-hist-btn i{font-size:.9rem;color:#9CA3AF}
+
+/* Controls bar */
+.arc-controls{background:#fff;border:1px solid #F0F0F0;border-radius:16px;padding:1.25rem 1.5rem;display:flex;align-items:flex-end;justify-content:space-between;gap:1.5rem;box-shadow:0 1px 3px rgba(0,0,0,.03),0 4px 16px rgba(0,0,0,.02);margin-bottom:2rem;flex-wrap:wrap}
+.arc-controls__field{flex:1;min-width:200px}
+.arc-controls__field label{display:block;font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#9CA3AF;margin-bottom:.4rem}
+.arc-controls__field select{width:100%;border:1.5px solid #E5E7EB;border-radius:10px;font-size:.85rem;font-weight:500;color:#374151;background:#fff;padding:.6rem .85rem;transition:border-color .15s,box-shadow .15s;cursor:pointer;appearance:auto}
+.arc-controls__field select:focus{border-color:#E30613;box-shadow:0 0 0 3px rgba(227,6,19,.08);outline:none}
+.arc-controls__actions{display:flex;gap:.6rem;flex-shrink:0}
+.arc-btn-cancel{border:1.5px solid #E5E7EB;background:#fff;color:#6B7280;border-radius:10px;padding:.6rem 1.25rem;font-size:.85rem;font-weight:600;cursor:pointer;transition:all .15s}
+.arc-btn-cancel:hover{border-color:#D1D5DB;background:#F9FAFB;color:#374151}
+.arc-btn-save{background:#E30613;border:none;color:#fff;border-radius:10px;padding:.6rem 1.5rem;font-size:.85rem;font-weight:700;cursor:pointer;transition:all .15s;box-shadow:0 2px 8px rgba(227,6,19,.25)}
+.arc-btn-save:hover{background:#C50510;transform:translateY(-1px);box-shadow:0 4px 14px rgba(227,6,19,.35)}
+.arc-btn-save:active{transform:translateY(0)}
+
+/* Cards grid */
+.arc-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:1rem;margin-bottom:2rem}
+@media(max-width:991.98px){.arc-grid{grid-template-columns:1fr}}
+@media(max-width:575.98px){.arc-controls{flex-direction:column;align-items:stretch}.arc-controls__actions{justify-content:flex-end}.arc-container{padding:0 1rem}}
+
+/* Turma card */
+.arc-card{background:#fff;border:1px solid #F0F0F0;border-radius:16px;padding:1.25rem 1.5rem;transition:transform .2s,box-shadow .2s;display:flex;align-items:center;gap:1rem;position:relative;overflow:hidden}
+.arc-card:hover{transform:translateY(-2px);box-shadow:0 4px 16px rgba(0,0,0,.06)}
+.arc-card__icon{width:44px;height:44px;border-radius:12px;background:linear-gradient(135deg,#FEF2F2,#FEE2E2);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.arc-card__icon i{font-size:1.15rem;color:#E30613}
+.arc-card__info{flex:1;min-width:0}
+.arc-card__name{font-size:.95rem;font-weight:700;color:#111827;margin:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.arc-card__badge{display:inline-flex;align-items:center;font-size:.7rem;font-weight:600;background:#F3F4F6;color:#6B7280;border-radius:6px;padding:.15rem .5rem;margin-top:.25rem;border:1px solid #F0F0F0}
+.arc-card__input-wrap{flex-shrink:0;position:relative;width:100px}
+.arc-card__input{width:100%;border:1.5px solid #E5E7EB;border-radius:10px;font-size:1rem;font-weight:700;color:#111827;text-align:center;padding:.55rem .5rem;padding-right:2.2rem;transition:all .15s;background:#FAFAFA}
+.arc-card__input:focus{border-color:#E30613;box-shadow:0 0 0 3px rgba(227,6,19,.08);outline:none;background:#fff}
+.arc-card__input::placeholder{color:#D1D5DB;font-weight:400}
+.arc-card__input-suffix{position:absolute;right:.6rem;top:50%;transform:translateY(-50%);font-size:.7rem;font-weight:700;color:#9CA3AF;text-transform:uppercase;letter-spacing:.04em;pointer-events:none}
+
+/* Status footer */
+.arc-status{display:flex;justify-content:center;margin-bottom:1.5rem}
+.arc-status__card{display:inline-flex;align-items:center;gap:.5rem;background:#F9FAFB;border:1px solid #F0F0F0;border-radius:12px;padding:.5rem 1.15rem;font-size:.8rem;color:#6B7280;font-weight:500}
+.arc-status__card i{color:#10B981;font-size:.9rem}
+
+/* Mobile layout */
+.arc-mobile{padding-top:5.5rem;padding-bottom:6rem}
+.arc-mobile .arc-card{padding:1rem}
+.arc-mobile .arc-card__input-wrap{width:80px}
+.arc-mobile .arc-card__input{font-size:.9rem;padding:.5rem .4rem;padding-right:2rem}
+.arc-mobile .arc-btn-save{width:100%;padding:.7rem;font-size:.9rem}
+.arc-mobile .arc-controls{margin:0 1rem 1.5rem}
+
+/* Modal improvements */
+.arc-modal .modal-content{border:none;border-radius:16px;box-shadow:0 20px 60px rgba(0,0,0,.15)}
+.arc-modal .modal-header{border:none;padding:1.25rem 1.5rem .5rem}
+.arc-modal .modal-title{font-size:1.05rem;font-weight:700}
+.arc-modal .modal-body{padding:.5rem 1.5rem 1.25rem}
+';
 include 'componentes/head.php';
 include 'componentes/header.php';
 $paginaAtiva = 'arrecadacoes';
@@ -10,91 +73,104 @@ $nivelUsuario = (int)($_SESSION['nivel'] ?? -1);
 $isAdmin = $nivelUsuario === 0;
 ?>
 
-<main class="d-md-none" style="margin-bottom: 120px;">
-    <?php if ($isAdmin): ?>
-    <div class="px-3 mt-4 d-flex justify-content-end">
-        <button type="button" class="btn btn-outline-secondary btn-sm d-flex align-items-center gap-1 fw-semibold" data-bs-toggle="modal" data-bs-target="#modalHistoricoArrecadacao" onclick="carregarHistorico()">
-            <i class="bi bi-gear"></i> Histórico
-        </button>
-    </div>
-    <?php endif; ?>
-    <div class="px-3 mt-4">
-        <label class="form-label small fw-bold text-muted">Filtrar Categoria:</label>
-        <select id="filtroCategoriaMobile" class="form-select shadow-sm mb-3">
-            <option value="todos">Todas as Categorias</option>
-        </select>
+<!-- ═══ MOBILE ═══ -->
+<main class="d-md-none arc-mobile">
+    <div class="px-3 mt-3">
+        <a href="./dashboard.php" id="btnVoltarArrecadacaoMob" class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none" style="background-color: #ed1c24; border-radius: 6px;">
+            <i class="bi bi-arrow-left-circle fs-5"></i> <span id="nomeInterclasseArrecadacaoMob">Interclasse</span>
+        </a>
+
+        <div class="d-flex align-items-center justify-content-between mb-3">
+            <div>
+                <h1 class="arc-header__title">Lançamento de Arrecadações</h1>
+                <p class="arc-header__sub">Registre as arrecadações das turmas por categoria.</p>
+            </div>
+            <?php if ($isAdmin): ?>
+            <button type="button" class="arc-hist-btn" data-bs-toggle="modal" data-bs-target="#modalHistoricoArrecadacao" onclick="carregarHistorico()">
+                <i class="bi bi-clock-history"></i> Histórico
+            </button>
+            <?php endif; ?>
+        </div>
+
+        <div class="arc-controls">
+            <div class="arc-controls__field">
+                <label>Categoria</label>
+                <select id="filtroCategoriaMobile">
+                    <option value="todos">Todas as Categorias</option>
+                </select>
+            </div>
+        </div>
     </div>
 
-    <div class="card shadow m-auto" style="width: 22rem;">
-        <div class="card-header fw-bold text-center bg-white">
-            Itens a adicionar (somam ao ranking)
+    <div class="px-3">
+        <div class="arc-grid" id="listaArrecadacaoMobile" style="grid-template-columns:1fr;">
+            <div class="text-center text-muted py-5"><div class="spinner-border spinner-border-sm me-2"></div>Carregando...</div>
         </div>
-        <ul class="list-group list-group-flush" id="listaArrecadacaoMobile">
-            <li class="list-group-item text-center text-muted">(Carregando...)</li>
-        </ul>
     </div>
 
-    <div class="container mt-3 mb-5 pb-4">
-        <div id="barraContinuarArrecadacaoMobile" class="d-none">
-            <button id="btnSalvarMobile" class="btn btn-danger w-100 fw-semibold rounded-3 py-2 shadow-sm">Salvar Alterações</button>
-        </div>
+    <div id="barraContinuarArrecadacaoMobile" class="d-none px-3 mt-3">
+        <button id="btnSalvarMobile" class="arc-btn-save">Salvar Alterações</button>
     </div>
 </main>
 
-<main class="d-none d-md-block main-desktop-layout">
-    <div class="container-fluid px-0" style="max-width: 1000px;">
-        <div class="mb-5">
-            <div class="d-flex justify-content-between align-items-start">
-                <a href="./dashboard.php" id="btnVoltarArrecadacao" class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none" style="background-color: #ed1c24; border-radius: 6px;">
-                    <i class="bi bi-arrow-left-circle fs-5"></i> <span id="nomeInterclasseArrecadacao">Interclasse</span>
-                </a>
+<!-- ═══ DESKTOP ═══ -->
+<main class="d-none d-md-block main-desktop-layout arc-page">
+    <div class="arc-container">
+        <div class="mb-4">
+            <a href="./dashboard.php" id="btnVoltarArrecadacao" class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none" style="background-color: #ed1c24; border-radius: 6px;">
+                <i class="bi bi-arrow-left-circle fs-5"></i> <span id="nomeInterclasseArrecadacao">Interclasse</span>
+            </a>
+        </div>
+
+        <div class="arc-header">
+            <div class="arc-header__top">
+                <div>
+                    <h1 class="arc-header__title">Lançamento de Arrecadações</h1>
+                    <p class="arc-header__sub">Registre as arrecadações das turmas por categoria.</p>
+                </div>
                 <?php if ($isAdmin): ?>
-                <button type="button" class="btn btn-outline-secondary d-inline-flex align-items-center gap-2 fw-bold mb-4 px-2 py-1" data-bs-toggle="modal" data-bs-target="#modalHistoricoArrecadacao" onclick="carregarHistorico()" style="border-radius: 6px;">
-                    <i class="bi bi-gear fs-6"></i> Histórico
+                <button type="button" class="arc-hist-btn" data-bs-toggle="modal" data-bs-target="#modalHistoricoArrecadacao" onclick="carregarHistorico()">
+                    <i class="bi bi-clock-history"></i> Histórico
                 </button>
                 <?php endif; ?>
             </div>
+        </div>
 
-            <div class="d-flex justify-content-between align-items-end">
-                <div>
-                    <h4 class="fw-bold text-dark mb-0">Lançamento de Arrecadações</h4>
-                    <div class="mt-3" style="min-width: 250px;">
-                        <label class="small fw-bold text-muted">Filtrar por Categoria:</label>
-                        <select id="filtroCategoriaDesktop" class="form-select border-0 shadow-sm mt-1">
-                            <option value="todos">Todas as Categorias</option>
-                        </select>
-                    </div>
-                </div>
-                <div class="d-flex gap-2">
-                    <?php if ($isAdmin): ?>
-                    <button type="button" onclick="window.location.reload()" class="btn bg-white fw-semibold rounded-3 px-4 py-2" style="color: #ed1c24; border: 1px solid #ed1c24;">
-                        Cancelar
-                    </button>
-                    <?php endif; ?>
-                    <button type="button" id="btnSalvarDesktop" class="btn fw-semibold rounded-3 px-4 py-2 text-white" style="background-color: #ed1c24; border: 1px solid #ed1c24;">
-                        Salvar Dados
-                    </button>
-                </div>
+        <div class="arc-controls">
+            <div class="arc-controls__field">
+                <label>Filtrar por Categoria</label>
+                <select id="filtroCategoriaDesktop">
+                    <option value="todos">Todas as Categorias</option>
+                </select>
+            </div>
+            <div class="arc-controls__actions">
+                <?php if ($isAdmin): ?>
+                <button type="button" onclick="window.location.reload()" class="arc-btn-cancel">Cancelar</button>
+                <?php endif; ?>
+                <button type="button" id="btnSalvarDesktop" class="arc-btn-save">Salvar Dados</button>
             </div>
         </div>
 
-        <div class="row g-4 mb-5" id="listaArrecadacaoDesktop"></div>
+        <div class="arc-grid" id="listaArrecadacaoDesktop">
+            <div class="text-center text-muted py-5" style="grid-column:1/-1"><div class="spinner-border spinner-border-sm me-2"></div>Carregando...</div>
+        </div>
+
+        <div id="barraContinuarArrecadacaoDesktop" class="d-none arc-status">
+            <div class="arc-status__card">
+                <i class="bi bi-shield-check"></i>
+                <span id="statusSincronizacao">Dados guardados localmente</span>
+            </div>
+        </div>
     </div>
 </main>
-
-<div id="barraContinuarArrecadacaoDesktop" class="d-none d-md-block fixed-bottom" style="background: linear-gradient(to top, #f8f9fa 70%, rgba(248, 249, 250, 0) 100%); padding: 24px 0; z-index: 1020;">
-    <div class="container-fluid d-flex justify-content-end align-items-center" style="max-width: 1000px; margin-left: auto; margin-right: auto;">
-        <span class="text-muted me-3 small" id="statusSincronizacao">Dados guardados localmente</span>
-    </div>
-</div>
 
 <?php include 'componentes/nav.php'; require_once '../componentes/footer.php'; ?>
 
 <?php if ($isAdmin): ?>
-<div class="modal fade" id="modalHistoricoArrecadacao" tabindex="-1" aria-labelledby="modalHistoricoArrecadacaoLabel" aria-hidden="true">
+<div class="modal fade arc-modal" id="modalHistoricoArrecadacao" tabindex="-1" aria-labelledby="modalHistoricoArrecadacaoLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-scrollable">
         <div class="modal-content">
-            <div class="modal-header border-0 pb-0">
+            <div class="modal-header">
                 <h5 class="modal-title fw-bold" id="modalHistoricoArrecadacaoLabel">
                     <i class="bi bi-clock-history me-2"></i>Histórico de Arrecadações
                 </h5>
@@ -153,39 +229,40 @@ $isAdmin = $nivelUsuario === 0;
             : todasAsTurmas.filter(t => t.nome_categoria === categoriaFiltro);
 
         if (turmasFiltradas.length === 0) {
-            const msg = '<p class="p-4 text-center text-muted">Nenhuma turma encontrada nesta categoria.</p>';
+            const msg = '<div class="text-center text-muted py-5" style="grid-column:1/-1"><i class="bi bi-inbox" style="font-size:2rem;display:block;margin-bottom:.5rem;color:#D1D5DB"></i>Nenhuma turma encontrada nesta categoria.</div>';
             listaMobile.innerHTML = msg;
             listaDesktop.innerHTML = msg;
             return;
         }
 
         listaMobile.innerHTML = turmasFiltradas.map(turma => `
-            <li class="list-group-item justify-content-between d-flex align-items-center px-3">
-                <div>
-                    <span class="fw-bold d-block">${esc(turma.nome_turma)}</span>
-                    <small class="text-muted">${esc(turma.nome_categoria || 'Geral')}</small>
+            <div class="arc-card">
+                <div class="arc-card__icon"><i class="bi bi-people-fill"></i></div>
+                <div class="arc-card__info">
+                    <p class="arc-card__name">${esc(turma.nome_turma)}</p>
+                    <span class="arc-card__badge">${esc(turma.nome_categoria || 'Geral')}</span>
                 </div>
-                <div class="d-flex align-items-center gap-2">
-                    <input type="number" step="0.1" min="0" class="form-control form-control-sm arrec-input text-center"
+                <div class="arc-card__input-wrap">
+                    <input type="number" step="0.1" min="0" class="arc-card__input arrec-input"
                         data-id-turma="${turma.id_turma}"
-                        value="${getQuantidadePendente(turma)}" style="width: 80px;" placeholder="0">
+                        value="${getQuantidadePendente(turma)}" placeholder="0">
+                    <span class="arc-card__input-suffix">Qtd</span>
                 </div>
-            </li>
+            </div>
         `).join('');
 
         listaDesktop.innerHTML = turmasFiltradas.map(turma => `
-            <div class="col-12 col-md-6">
-                <div class="bg-white border-0 shadow-sm rounded-3 p-3 px-4 d-flex justify-content-between align-items-center">
-                    <div>
-                        <span class="fw-semibold text-dark fs-6 d-block">${esc(turma.nome_turma)}</span>
-                        <span class="badge bg-light text-dark fw-normal border">${esc(turma.nome_categoria || 'Geral')}</span>
-                    </div>
-                    <div class="input-group" style="max-width: 150px;">
-                        <input type="number" step="0.1" min="0" class="form-control text-center arrec-input"
-                            data-id-turma="${turma.id_turma}"
-                            value="${getQuantidadePendente(turma)}" placeholder="0">
-                        <span class="input-group-text bg-light border-start-0 small">Qtd</span>
-                    </div>
+            <div class="arc-card">
+                <div class="arc-card__icon"><i class="bi bi-people-fill"></i></div>
+                <div class="arc-card__info">
+                    <p class="arc-card__name">${esc(turma.nome_turma)}</p>
+                    <span class="arc-card__badge">${esc(turma.nome_categoria || 'Geral')}</span>
+                </div>
+                <div class="arc-card__input-wrap">
+                    <input type="number" step="0.1" min="0" class="arc-card__input arrec-input"
+                        data-id-turma="${turma.id_turma}"
+                        value="${getQuantidadePendente(turma)}" placeholder="0">
+                    <span class="arc-card__input-suffix">Qtd</span>
                 </div>
             </div>
         `).join('');
@@ -237,11 +314,18 @@ $isAdmin = $nivelUsuario === 0;
             idInterclasseResolvida = ativo.id_interclasse;
 
             document.getElementById('nomeInterclasseArrecadacao').innerText = ativo.nome_interclasse;
+            const nomeMob = document.getElementById('nomeInterclasseArrecadacaoMob');
+            if (nomeMob) nomeMob.innerText = ativo.nome_interclasse;
             const vDesk = document.getElementById('btnVoltarArrecadacao');
             if (vDesk) {
                 vDesk.href = `./dashboard.php?id=${idInterclasseArrecadacao || ativo.id_interclasse}`;
             }
+            const vMob = document.getElementById('btnVoltarArrecadacaoMob');
+            if (vMob) {
+                vMob.href = `./dashboard.php?id=${idInterclasseArrecadacao || ativo.id_interclasse}`;
+            }
             document.getElementById('barraContinuarArrecadacaoMobile').classList.remove('d-none');
+            document.getElementById('barraContinuarArrecadacaoDesktop').classList.remove('d-none');
 
             const res = await fetch(`../../../api/turmas.php?id_interclasse=${ativo.id_interclasse}`);
             todasAsTurmas = await res.json();
