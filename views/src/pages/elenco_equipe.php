@@ -79,6 +79,8 @@ $paginaAtiva = 'dashboard';
         if (idTurma) q.set('id_turma', idTurma);
         if (idEquipe) q.set('id_equipe', idEquipe);
         if (idCategoria) q.set('id_categoria', idCategoria);
+        if (nomeTurma) q.set('nome_turma', nomeTurma);
+        if (nomeModalidade) q.set('nome_modalidade', nomeModalidade);
         const href = `./equipe_alunos.php?${q.toString()}`;
         const a = document.getElementById('linkGerenciarMob');
         const b = document.getElementById('linkGerenciarDesk');

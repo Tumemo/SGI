@@ -143,7 +143,17 @@ $paginaAtiva = 'dashboard';
         const idModalidade = params.get('id_modalidade');
         console.log(idModalidade);
 
-        const voltar = `./elenco_equipe.php?id=${idInterclasse}&id_turma=${idTurma}${idCategoria ? `&id_categoria=${idCategoria}` : ''}`;
+        const nomeTurma = params.get('nome_turma') || '';
+        const nomeModalidade = params.get('nome_modalidade') || '';
+
+        const qVoltar = new URLSearchParams();
+        if (idInterclasse) qVoltar.set('id', idInterclasse);
+        if (idTurma) qVoltar.set('id_turma', idTurma);
+        if (idEquipe) qVoltar.set('id_equipe', idEquipe);
+        if (idCategoria) qVoltar.set('id_categoria', idCategoria);
+        if (nomeTurma) qVoltar.set('nome_turma', nomeTurma);
+        if (nomeModalidade) qVoltar.set('nome_modalidade', nomeModalidade);
+        const voltar = `./elenco_equipe.php?${qVoltar.toString()}`;
         document.getElementById('btnVoltarEquipesDesktop').href = voltar;
         const vm = document.getElementById('btnVoltarEquipesMobile');
         if (vm) vm.href = voltar;
