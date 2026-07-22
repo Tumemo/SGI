@@ -100,17 +100,19 @@ function sgi_mm_buscar_equipes_validadas(mysqli $conn, int $idModalidade): array
     return array_map(static fn (array $r): array => ['id_equipe' => (int) $r['id_equipe']], $rows);
 }
 
-function sgi_mm_fase_inicial_existe(mysqli $conn, int $idModalidade): bool{
+function sgi_mm_fase_inicial_existe(mysqli $conn, int $idModalidade): bool
+{
     $st = $conn->prepare("SELECT 1 FROM jogos WHERE modalidades_id_modalidade = ? AND nome_jogo LIKE 'MM:%' LIMIT 1");
     $st->bind_param('i', $idModalidade);
     $st->execute();
     $ok = $st->get_result()->num_rows > 0;
     $st->close();
-    return $ok;}
+    return $ok;
+}
 
-
- @param list<array{id_equipe:int}> $equipes
-
+/**
+ * @param list<array{id_equipe:int}> $equipes
+ */
 function sgi_mm_criar_chaveamento_inicial(mysqli $conn, int $idModalidade, array $equipes): array
 {
     if (sgi_mm_fase_inicial_existe($conn, $idModalidade)) {
