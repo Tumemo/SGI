@@ -1212,7 +1212,7 @@ body > main {
 .rk-layout {
     display: flex;
     gap: 2rem;
-    max-width: 1400px;
+    min-width: 100%;
     margin: 0 auto;
 }
 
