@@ -6,12 +6,36 @@ if ((int)($_SESSION['nivel'] ?? -1) !== 3) { header('Location: ../../index.php')
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?= htmlspecialchars($tituloPagina ?? 'SGI') ?></title>
+    <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous">
+    <!-- Bootstrap Icons -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    
     <style>
-        body { padding-bottom: 90px; background-color: #f8f9fa; }
+        body { 
+            background-color: #f8f9fa;
+            /* No mobile, cria margem para o menu inferior não cobrir conteúdo */
+            padding-bottom: 80px; 
+        }
+
+        /* Em telas de Computador (Desktop) */
+        @media (min-width: 992px) {
+            body { 
+                padding-bottom: 0; /* Remove a margem inferior */
+            }
+        }
+
+        /* Ajuste fino do Banner no Desktop */
+        .header-banner-container {
+            max-height: 220px;
+            overflow: hidden;
+        }
+        .header-banner-img {
+            object-fit: cover;
+            height: 220px;
+        }
+
         <?= $cssExtra ?? '' ?>
     </style>
 </head>
-<body class="bg-light">
-
+<body class="bg-light d-flex flex-column min-vh-100">

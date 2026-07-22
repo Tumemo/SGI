@@ -1,23 +1,44 @@
 <?php
 $tituloPagina = 'SGI - Aluno Home';
 $cssExtra = '
-        .style-card { transition: transform 0.2s ease, box-shadow 0.2s ease; }
-        .style-card:hover, .style-card:focus-within { transform: translateY(-2px); box-shadow: 0 .5rem 1rem rgba(0,0,0,.15)!important; }
+    .style-card { 
+        transition: all 0.25s ease-in-out; 
+        border: 1px solid rgba(0,0,0,0.08);
+    }
+    .style-card:hover { 
+        transform: translateY(-4px); 
+        box-shadow: 0 0.5rem 1.25rem rgba(0,0,0,0.1) !important; 
+        border-color: #dc3545;
+    }
 ';
+
 include 'componentes/head.php';
+
+// 1. INCLUI O BANNER SUPERIOR
 $mostrarSino = true;
 $mostrarVoltar = false;
+$titulo = 'Interclasses';
 include 'componentes/header.php';
 
+// 2. INCLUI A NAVEGAÇÃO LOGO ABAIXO DO BANNER (FIXANDO NO TOPO PARA DESKTOP)
+$paginaAtiva = 'home';
+include 'componentes/nav.php';
 ?>
 
-<main class="container py-4">
+<!-- Conteúdo Principal -->
+<main class="container py-4 flex-grow-1">
     <h1 class="visually-hidden">Painel do Aluno - Interclasses</h1>
-    <h2 class="text-secondary fs-6 text-center mb-4 fw-normal">Inscreva-se ou visualize resultados</h2>
+    
+    <!-- Cabeçalho do Conteúdo -->
+    <div class="text-center mb-4">
+        <h2 class="text-secondary fs-5 fw-normal">Inscreva-se ou visualize resultados das competições</h2>
+        <hr class="w-25 mx-auto border-danger opacity-50 my-3">
+    </div>
 
-    <section class="row g-3" id="listaInterclassesAluno" aria-live="polite">
+    <!-- Grid Otimizado para os Cards -->
+    <section class="row g-3 g-md-4 justify-content-start" id="listaInterclassesAluno" aria-live="polite">
         <div class="col-12 text-center text-muted py-5">
-            <div class="spinner-border spinner-border-sm me-2" role="status">
+            <div class="spinner-border spinner-border-sm text-danger me-2" role="status">
                 <span class="visually-hidden">Carregando...</span>
             </div>
             Carregando competições...
@@ -25,39 +46,39 @@ include 'componentes/header.php';
     </section>
 </main>
 
+<!-- Modal do Termo de Responsabilidade -->
 <div class="modal fade" id="modalTermo" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-scrollable">
-        <div class="modal-content border-0 shadow">
-            <div class="modal-header bg-dark text-white border-0">
-                <h5 class="modal-title fw-bold">Termo de Responsabilidade</h5>
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-header bg-danger text-white border-0">
+                <h5 class="modal-title fw-bold">
+                    <i class="bi bi-file-earmark-text me-2"></i>Termo de Responsabilidade
+                </h5>
             </div>
-            <div class="modal-body">
-                <p>Declaro para os devidos fins que aceito e assumo inteira responsabilidade pelos termos abaixo descritos para participação no Interclasse:</p>
-                <ol class="ps-3">
+            <div class="modal-body p-4">
+                <p class="text-muted">Declaro para os devidos fins que aceito e assumo inteira responsabilidade pelos termos abaixo descritos para participação no Interclasse:</p>
+                
+                <ol class="ps-3 text-secondary lh-lg mb-3">
                     <li class="mb-2"><strong>Conduta:</strong> Comprometo-me a agir com respeito, <em>fair play</em> e espírito esportivo durante todas as atividades.</li>
                     <li class="mb-2"><strong>Regras:</strong> Declaro estar ciente e de acordo com todas as regras oficiais do Interclasse, acatando as decisões da organização e arbitragem.</li>
                     <li class="mb-2"><strong>Materiais:</strong> Responsabilizo-me pelos materiais esportivos e uniformes que me forem confiados, respondendo por eventuais danos ou extravios.</li>
                     <li class="mb-2"><strong>Saúde:</strong> Declaro estar em condições físicas adequadas para a prática das modalidades escolhidas, isentando a organização de responsabilidade por acidentes ou lesões decorrentes da participação.</li>
                     <li class="mb-2"><strong>Imagem:</strong> Autorizo o uso de minha imagem e voz para fins de divulgação do evento nas mídias oficiais da instituição.</li>
-                    <li class="mb-2"><strong>Pontuação:</strong> Aceito o sistema de pontuação e classificação estabelecido, bem como as penalidades previstas no regulamento.</li>
+                    <li class="mb-2"><strong>Pontuação:</strong> Aceito o sistema de pontuação e classificação established, bem como as penalidades previstas no regulamento.</li>
                 </ol>
-                <div id="avisoRecusa" class="alert alert-danger d-none" role="alert">
+
+                <div id="avisoRecusa" class="alert alert-danger d-none m-0" role="alert">
                     <i class="bi bi-exclamation-triangle-fill me-1"></i>
                     Não é possível continuar sem aceitar os termos.
                 </div>
             </div>
-            <div class="modal-footer border-0 justify-content-center gap-3 pb-4">
-                <button type="button" class="btn btn-outline-secondary px-4" id="btnRecusarTermo">Recusar</button>
-                <button type="button" class="btn btn-danger px-4" id="btnAceitarTermo">Aceitar</button>
+            <div class="modal-footer border-0 justify-content-end gap-2 bg-light px-4 py-3">
+                <button type="button" class="btn btn-outline-secondary px-4 fw-semibold" id="btnRecusarTermo">Recusar</button>
+                <button type="button" class="btn btn-danger px-4 fw-semibold" id="btnAceitarTermo">Aceitar e Continuar</button>
             </div>
         </div>
     </div>
 </div>
-
-<?php
-$paginaAtiva = 'home';
-include 'componentes/nav.php';
-?>
 
 <script>
     function escaparHTML(string) {
@@ -76,26 +97,25 @@ include 'componentes/nav.php';
         const ano = interclasse.ano_interclasse ? escaparHTML(String(interclasse.ano_interclasse).split('-')[0]) : 'N/A';
 
         const status = ativo ? 'Em andamento' : 'Inativo';
-        const classeCard = ativo ? 'bg-white' : 'bg-secondary-subtle opacity-75';
+        const classeCard = ativo ? 'bg-white' : 'bg-white opacity-75';
         const href = ativo ? `./modalidade.php?id=${interclasse.id_interclasse}` : `./ranking.php?id=${interclasse.id_interclasse}`;
 
-
         return `
-                <div class="col-12 col-md-6 col-lg-4">
-                    <a href="${href}" class="text-decoration-none text-dark card-link d-block h-100">
-                        <div class="shadow-sm d-flex justify-content-between align-items-center px-4 py-3 rounded ${classeCard} h-100 style-card">
-                            <div>
-                                <h3 class="fs-5 mb-1 text-dark fw-semibold">${nomeSanitizado}</h3>
-                                <p class="m-0 text-secondary small">
-                                    <span class="badge ${ativo ? 'bg-success-subtle text-success' : 'bg-secondary-subtle text-secondary'} me-1">${status}</span> 
-                                    - ${ano}
-                                </p>
-                            </div>
-                            <img src="../../../public/icons/arrow-right.svg" alt="" aria-hidden="true" width="24" height="24">
+            <div class="col-12 col-md-6 col-lg-4">
+                <a href="${href}" class="text-decoration-none text-dark card-link d-block h-100">
+                    <div class="shadow-sm d-flex justify-content-between align-items-center p-4 rounded-3 ${classeCard} h-100 style-card">
+                        <div>
+                            <h3 class="fs-5 mb-2 text-dark fw-bold">${nomeSanitizado}</h3>
+                            <p class="m-0 text-secondary small d-flex align-items-center gap-2">
+                                <span class="badge ${ativo ? 'bg-success-subtle text-success border border-success-subtle' : 'bg-secondary-subtle text-secondary border border-secondary-subtle'}">${status}</span> 
+                                <span class="fw-semibold text-muted">• ${ano}</span>
+                            </p>
                         </div>
-                    </a>
-                </div>
-            `;
+                        <i class="bi bi-chevron-right text-danger fs-4 ms-3"></i>
+                    </div>
+                </a>
+            </div>
+        `;
     }
 
     async function carregarInterclassesAluno() {
@@ -110,29 +130,28 @@ include 'componentes/nav.php';
 
             if (!Array.isArray(lista) || lista.length === 0) {
                 container.innerHTML = `
-                        <div class="col-12 text-center text-muted py-5">
-                            <i class="bi bi-folder-x fs-1 d-block mb-2"></i>
-                            Nenhum interclasse encontrado no momento.
-                        </div>`;
+                    <div class="col-12 text-center text-muted py-5">
+                        <i class="bi bi-folder-x fs-1 d-block text-secondary mb-2"></i>
+                        Nenhum interclasse encontrado no momento.
+                    </div>`;
                 return;
             }
             container.innerHTML = lista.map((item) => {
                 const isAtivo = item && String(item.status_interclasse) === '1';
-
-
                 return cardInterclasse(item, isAtivo);
             }).join('');
 
         } catch (error) {
             console.error('Erro ao buscar dados:', error);
             container.innerHTML = `
-                    <div class="col-12 text-center text-danger py-5">
-                        <i class="bi bi-exclamation-triangle-fill fs-1 d-block mb-2"></i>
-                        Erro ao carregar interclasses. Por favor, tente novamente mais tarde.
-                    </div>
-                `;
+                <div class="col-12 text-center text-danger py-5">
+                    <i class="bi bi-exclamation-triangle-fill fs-1 d-block mb-2"></i>
+                    Erro ao carregar interclasses. Por favor, tente novamente mais tarde.
+                </div>
+            `;
         }
     }
+
     async function initModalTermo() {
         const modalElement = document.getElementById('modalTermo');
         const modalTermo = new bootstrap.Modal(modalElement, {
@@ -144,21 +163,15 @@ include 'componentes/nav.php';
         const btnRecusar = document.getElementById('btnRecusarTermo');
         const avisoRecusa = document.getElementById('avisoRecusa');
 
-        // 1. Checa com a API se o usuário logado já aceitou
         try {
-            const checagem = await fetch('../../../../api/concordarTermos.php', {
-                method: 'GET'
-            });
+            const checagem = await fetch('../../../../api/concordarTermos.php', { method: 'GET' });
 
-            // Se retornar 401 (Sessão Expirada), redireciona para a tela de login
             if (checagem.status === 401) {
-    console.warn("API retornou 401. Verifique a chave da $_SESSION no PHP!");
+                console.warn("API retornou 401. Verifique a chave da $_SESSION no PHP!");
                 return;
             }
 
             const resCheck = await checagem.json();
-
-            // Se o usuário já aceitou os termos, encerra a função sem abrir o modal
             if (resCheck.success && resCheck.termo_aceito === true) {
                 return;
             }
@@ -166,10 +179,8 @@ include 'componentes/nav.php';
             console.error("Erro ao verificar status dos termos:", e);
         }
 
-        // 2. Se não aceitou (ou se é o primeiro acesso), abre o modal
         modalTermo.show();
 
-        // Evento do botão ACEITAR
         btnAceitar.addEventListener('click', async function() {
             btnAceitar.disabled = true;
             btnRecusar.disabled = true;
@@ -178,9 +189,7 @@ include 'componentes/nav.php';
             try {
                 const res = await fetch('../../../../api/concordarTermos.php', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    }
+                    headers: { 'Content-Type': 'application/json' }
                 });
 
                 if (res.status === 401) {
@@ -203,16 +212,15 @@ include 'componentes/nav.php';
             } finally {
                 btnAceitar.disabled = false;
                 btnRecusar.disabled = false;
-                btnAceitar.textContent = 'Aceitar';
+                btnAceitar.textContent = 'Aceitar e Continuar';
             }
         });
 
-        // Evento do botão RECUSAR
         btnRecusar.addEventListener('click', function() {
             avisoRecusa.innerHTML = `
-            <i class="bi bi-exclamation-triangle-fill me-1"></i>
-            <strong>Acesso bloqueado:</strong> É necessário aceitar os termos de responsabilidade para participar e utilizar o painel.
-        `;
+                <i class="bi bi-exclamation-triangle-fill me-1"></i>
+                <strong>Acesso bloqueado:</strong> É necessário aceitar os termos de responsabilidade para participar e utilizar o painel.
+            `;
             avisoRecusa.classList.remove('d-none');
         });
     }
@@ -224,5 +232,4 @@ include 'componentes/nav.php';
 </script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
 </body>
-
 </html>
