@@ -104,7 +104,7 @@ $cssExtra = '
 ';
 include 'componentes/head.php';
 include 'componentes/header.php';
-$paginaAtiva = 'dashboard';
+$paginaAtiva = 'agenda';
 ?>
 
 <!-- ═══ MOBILE ═══ -->
