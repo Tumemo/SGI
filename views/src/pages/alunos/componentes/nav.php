@@ -1,87 +1,88 @@
 <?php
+(session_status() === PHP_SESSION_NONE) && session_start();
+
 $paginaAtiva = $paginaAtiva ?? 'home';
+$nivelUsuario = (int)($_SESSION['nivel'] ?? -1);
+
+// Busca a foto da sessão ou do array $usuarioPerfil (caso esteja definido na página perfil.php)
+$fotoUsuario = $_SESSION['foto_usuario'] ?? $usuarioPerfil['foto_usuario'] ?? null;
+
 $navItens = [
-    'home'    => ['label' => 'Início',   'icon' => 'bi-house-door-fill',   'url' => './home.php'],
-    'ranking' => ['label' => 'Ranking',  'icon' => 'bi-trophy-fill',       'url' => './ranking.php'],
-    'perfil'  => ['label' => 'Perfil',   'icon' => 'bi-person-gear',      'url' => './perfil.php'],
-    'termos'  => ['label' => 'Termos',   'icon' => 'bi-file-text-fill',    'url' => './termos.php'],
-    'sair'    => ['label' => 'Sair',     'icon' => 'bi-box-arrow-right',   'url' => '../../../../api/logout.php'],
+    'home'    => ['label' => 'Início',   'icon' => 'bi-house-door',   'url' => './home.php'],
+    'ranking' => ['label' => 'Ranking',  'icon' => 'bi-trophy',       'url' => './ranking.php'],
+    'perfil'  => ['label' => 'Perfil',   'icon' => 'bi-person-gear',  'url' => './perfil.php'],
+    'termos'  => ['label' => 'Termos',   'icon' => 'bi-file-text',    'url' => './termos.php'],
 ];
+
+$classeLink = fn($key) => $key === $paginaAtiva ? 'text-white fw-bold' : 'text-white-50';
+$iconeNav = fn($icon, $key) => $key === $paginaAtiva ? $icon . '-fill' : $icon;
+$onclickSair = "onclick=\"return confirm('Deseja realmente sair?')\"";
 ?>
 
-<!-- NAVEGAÇÃO PRINCIPAL -->
-<nav class="bg-danger shadow-lg border-top border-white border-opacity-25 
-            fixed-bottom d-lg-none py-2" aria-label="Navegação mobile">
-    <!-- LAYOUT MOBILE (Rodapé) -->
-    <ul class="nav justify-content-around fs-2 list-unstyled mb-0">
-        <?php foreach ($navItens as $key => $item): 
-            $classe = $key === $paginaAtiva ? 'text-white' : 'text-white-50';
-            $onclick = $key === 'sair' ? "onclick=\"return confirm('Deseja realmente sair?')\"" : '';
-        ?>
+<!-- Estilos para a foto redonda no menu de navegação -->
+<style>
+    .nav-avatar-img {
+        width: 32px;
+        height: 32px;
+        object-fit: cover;
+        border-radius: 50%;
+        border: 2px solid #fff;
+        transition: transform 0.2s ease, border-color 0.2s ease;
+    }
+    .nav-avatar-img-mobile {
+        width: 26px;
+        height: 26px;
+        object-fit: cover;
+        border-radius: 50%;
+        border: 1.5px solid #fff;
+    }
+    .active-nav-icon .nav-avatar-img {
+        border-color: #ffe6e6;
+        box-shadow: 0 0 8px rgba(255, 255, 255, 0.8);
+        transform: scale(1.1);
+    }
+</style>
+
+<!-- Navbar Mobile (Fixo na parte inferior) -->
+<nav class="d-md-none fixed-bottom py-1 bg-danger shadow-lg" style="z-index: 1040;">
+    <ul class="nav justify-content-around flex-wrap fs-5 list-unstyled mb-0 gap-0 px-1 align-items-center">
+        <?php foreach ($navItens as $key => $item): ?>
         <li>
-            <a href="<?= $item['url'] ?>" class="<?= $classe ?> nav-link p-2 d-flex flex-column align-items-center" aria-label="<?= $item['label'] ?>" <?= $onclick ?>>
-                <?php if ($key === 'perfil'): ?>
-                    <img src="" id="perfilImgAlunoMobile" class="rounded-circle d-none" width="28" height="28" style="object-fit: cover;" onerror="this.classList.add('d-none');document.getElementById('perfilIconAlunoMobile')?.classList.remove('d-none')">
+            <a href="<?= $item['url'] ?>" class="<?= $classeLink($key) ?> nav-link p-1 d-flex align-items-center justify-content-center <?= $key === $paginaAtiva ? 'active-nav-icon' : '' ?>" aria-label="<?= $item['label'] ?>">
+                <?php if ($key === 'perfil' && !empty($fotoUsuario)): ?>
+                    <img src="../../../../uploads/fotosUsuarios/<?= htmlspecialchars($fotoUsuario) ?>" class="nav-avatar-img-mobile" alt="Perfil">
+                <?php else: ?>
+                    <i class="bi <?= $iconeNav($item['icon'], $key) ?>"></i>
                 <?php endif; ?>
-                <i class="bi <?= $item['icon'] ?>"<?= $key === 'perfil' ? ' id="perfilIconAlunoMobile"' : '' ?>></i>
             </a>
         </li>
         <?php endforeach; ?>
+        <li>
+            <a href="../../../api/logout.php" class="text-white-50 nav-link p-1" aria-label="Sair" <?= $onclickSair ?>>
+                <i class="bi bi-box-arrow-right"></i>
+            </a>
+        </li>
     </ul>
 </nav>
 
-<!-- LAYOUT DESKTOP (Topo Superior) -->
-<nav class="navbar navbar-expand-lg navbar-dark bg-danger shadow-sm d-none d-lg-block sticky-top" aria-label="Navegação desktop">
-    <div class="container">
-        <a class="navbar-brand fw-bold" href="./home.php">
-            <i class="bi bi-mortarboard-fill me-2"></i>SGI Aluno
-        </a>
-        
-        <div class="collapse navbar-collapse" id="navbarDesktop">
-            <ul class="navbar-nav ms-auto mb-2 mb-lg-0 gap-2">
-                <?php foreach ($navItens as $key => $item): 
-                    $ativo = $key === $paginaAtiva ? 'active fw-bold border-bottom border-2 border-white' : '';
-                    $onclick = $key === 'sair' ? "onclick=\"return confirm('Deseja realmente sair?')\"" : '';
-                ?>
-                <li class="nav-item">
-                    <a class="nav-link text-white d-flex align-items-center gap-2 px-3 <?= $ativo ?>" href="<?= $item['url'] ?>" <?= $onclick ?>>
-                        <?php if ($key === 'perfil'): ?>
-                            <img src="" id="perfilImgAlunoDesktop" class="rounded-circle d-none" width="24" height="24" style="object-fit: cover;" onerror="this.classList.add('d-none');document.getElementById('perfilIconAlunoDesktop')?.classList.remove('d-none')">
-                        <?php endif; ?>
-                        <i class="bi <?= $item['icon'] ?>"<?= $key === 'perfil' ? ' id="perfilIconAlunoDesktop"' : '' ?>></i>
-                        <span><?= $item['label'] ?></span>
-                    </a>
-                </li>
-                <?php endforeach; ?>
-            </ul>
-        </div>
-    </div>
+<!-- Navbar Desktop (Barra lateral esquerda) -->
+<nav class="d-none d-md-flex flex-column position-fixed vh-100 start-0 shadow-lg bg-danger" style="width: 80px; top: 0; z-index: 1040;">
+    <ul class="nav flex-column align-items-center justify-content-around h-100 py-4 gap-4 fs-3">
+        <?php foreach ($navItens as $key => $item): ?>
+        <li>
+            <a href="<?= $item['url'] ?>" class="text-white d-flex align-items-center justify-content-center position-relative <?= $key === $paginaAtiva ? 'active-nav-icon' : '' ?>" title="<?= $item['label'] ?>">
+                <?php if ($key === 'perfil' && !empty($fotoUsuario)): ?>
+                    <img src="../../../../uploads/fotosUsuarios/<?= htmlspecialchars($fotoUsuario) ?>" class="nav-avatar-img" alt="Perfil">
+                <?php else: ?>
+                    <i class="bi <?= $iconeNav($item['icon'], $key) ?>"></i>
+                <?php endif; ?>
+            </a>
+        </li>
+        <?php endforeach; ?>
+        <li>
+            <a href="../../../../api/logout.php" class="text-white" <?= $onclickSair ?> title="Sair">
+                <i class="bi bi-box-arrow-right"></i>
+            </a>
+        </li>
+    </ul>
 </nav>
-
-<script>
-// Carregamento dinâmico da imagem do perfil em ambas as versões
-fetch('../../../../api/foto.php?user_id=<?= (int)($_SESSION['id'] ?? 0) ?>')
-    .then(function(r) { return r.json(); })
-    .then(function(d) {
-        if (d.success && d.foto_usuario) {
-            var fotoUrl = '../../../../uploads/fotosUsuarios/' + d.foto_usuario;
-            
-            // Atualiza imagem no mobile
-            var imgM = document.getElementById('perfilImgAlunoMobile');
-            var iconM = document.getElementById('perfilIconAlunoMobile');
-            if (imgM && iconM) {
-                imgM.onload = function() { imgM.classList.remove('d-none'); iconM.classList.add('d-none'); };
-                imgM.src = fotoUrl;
-            }
-
-            // Atualiza imagem no desktop
-            var imgD = document.getElementById('perfilImgAlunoDesktop');
-            var iconD = document.getElementById('perfilIconAlunoDesktop');
-            if (imgD && iconD) {
-                imgD.onload = function() { imgD.classList.remove('d-none'); iconD.classList.add('d-none'); };
-                imgD.src = fotoUrl;
-            }
-        }
-    })
-    .catch(function() {});
-</script>

@@ -808,7 +808,7 @@ $cssExtra = '
 
 include 'componentes/head.php';
 include 'componentes/header.php';
-$paginaAtiva = 'dashboard';
+$paginaAtiva = 'chaveamento';
 ?>
 
 <main class="d-md-none kv-page" style="padding:20px;">
