@@ -75,6 +75,7 @@ if ($method === 'POST') {
     $st->execute();
     $st->close();
 
+    $_SESSION['foto_usuario'] = $nomeArquivo;
     echo json_encode([
         'success' => true,
         'mensagem' => 'Foto atualizada!',

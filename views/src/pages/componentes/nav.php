@@ -1,6 +1,8 @@
 <?php
+(session_status() === PHP_SESSION_NONE) && session_start();
 $paginaAtiva = $paginaAtiva ?? 'home';
 $nivelUsuario = (int)($_SESSION['nivel'] ?? -1);
+$fotoUsuario = $_SESSION['foto_usuario'] ?? null;
 
 $todosItens = [
     'perfil'            => ['label' => 'Perfil',          'icon' => 'bi-person',             'url' => './perfil.php',              'niveis' => [0, 1, 2]],
@@ -26,13 +28,39 @@ $classeLink = fn($key) => $key === $paginaAtiva ? 'text-white fw-bold' : 'text-w
 $iconeNav = fn($icon, $key) => $key === $paginaAtiva ? $icon . '-fill' : $icon;
 $onclickSair = "onclick=\"return confirm('Deseja realmente sair?')\"";
 ?>
+<style>
+    .nav-avatar-img {
+        width: 32px;
+        height: 32px;
+        object-fit: cover;
+        border-radius: 50%;
+        border: 2px solid #fff;
+        transition: transform 0.2s ease, border-color 0.2s ease;
+    }
+    .nav-avatar-img-mobile {
+        width: 26px;
+        height: 26px;
+        object-fit: cover;
+        border-radius: 50%;
+        border: 1.5px solid #fff;
+    }
+    .active-nav-icon .nav-avatar-img {
+        border-color: #ffe6e6;
+        box-shadow: 0 0 8px rgba(255, 255, 255, 0.8);
+        transform: scale(1.1);
+    }
+</style>
 <!-- navbar mobile -->
 <nav class="d-md-none fixed-bottom py-1 bg-danger shadow-lg">
     <ul class="nav justify-content-around flex-wrap fs-5 list-unstyled mb-0 gap-0 px-1">
         <?php foreach ($navItens as $key => $item): ?>
         <li>
             <a href="<?= $item['url'] ?>" class="<?= $classeLink($key) ?> nav-link p-1 <?= $key === $paginaAtiva ? 'active-nav-icon' : '' ?>" aria-label="<?= $item['label'] ?>">
-                <i class="bi <?= $iconeNav($item['icon'], $key) ?>"></i>
+                <?php if ($key === 'perfil' && !empty($fotoUsuario)): ?>
+                    <img src="../../../../uploads/fotosUsuarios/<?= htmlspecialchars($fotoUsuario) ?>" class="nav-avatar-img-mobile" alt="Perfil">
+                <?php else: ?>
+                    <i class="bi <?= $iconeNav($item['icon'], $key) ?>"></i>
+                <?php endif; ?>
             </a>
         </li>
         <?php endforeach; ?>
@@ -50,7 +78,11 @@ $onclickSair = "onclick=\"return confirm('Deseja realmente sair?')\"";
         <?php foreach ($navItens as $key => $item): ?>
         <li>
             <a href="<?= $item['url'] ?>" class="text-white d-flex align-items-center justify-content-center position-relative <?= $key === $paginaAtiva ? 'active-nav-icon' : '' ?>" title="<?= $item['label'] ?>">
-                <i class="bi <?= $iconeNav($item['icon'], $key) ?>"></i>
+                <?php if ($key === 'perfil' && !empty($fotoUsuario)): ?>
+                    <img src="../../../uploads/fotosUsuarios/<?= htmlspecialchars($fotoUsuario) ?>" class="nav-avatar-img" alt="Perfil">
+                <?php else: ?>
+                    <i class="bi <?= $iconeNav($item['icon'], $key) ?>"></i>
+                <?php endif; ?>
             </a>
         </li>
         <?php endforeach; ?>
@@ -61,5 +93,3 @@ $onclickSair = "onclick=\"return confirm('Deseja realmente sair?')\"";
         </li>
     </ul>
 </nav>
-
-

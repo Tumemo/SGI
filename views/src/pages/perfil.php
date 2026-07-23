@@ -39,28 +39,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
         $id = (int) $_SESSION['id'];
 
-        if (isset($_POST['acao']) && $_POST['acao'] === 'upload_foto') {
-            if (!isset($_FILES['foto']) || $_FILES['foto']['error'] !== UPLOAD_ERR_OK) {
-                echo json_encode(['success' => false, 'message' => 'Erro no upload do arquivo.']);
-                exit;
-            }
-            $ext = strtolower(pathinfo($_FILES['foto']['name'], PATHINFO_EXTENSION));
-            if (!in_array($ext, ['jpg', 'jpeg', 'png', 'gif', 'webp'])) {
-                echo json_encode(['success' => false, 'message' => 'Formato inválido. Use JPG, PNG, GIF ou WebP.']);
-                exit;
-            }
-            $nomeArquivo = 'user_' . $id . '_' . time() . '.' . $ext;
-            $uploadDir = dirname(__DIR__, 3) . DIRECTORY_SEPARATOR . 'uploads' . DIRECTORY_SEPARATOR . 'fotosUsuarios';
-            if (!is_dir($uploadDir)) mkdir($uploadDir, 0755, true);
-            $destino = $uploadDir . DIRECTORY_SEPARATOR . $nomeArquivo;
-            move_uploaded_file($_FILES['foto']['tmp_name'], $destino);
+        if (isset($_POST['acao']) && $_POST['acao'] === 'remover_foto') {
+            $st = $conn->prepare('SELECT foto_usuario FROM usuarios WHERE id_usuario = ?');
+            $st->bind_param('i', $id);
+            $st->execute();
+            $row = $st->get_result()->fetch_assoc();
+            $st->close();
 
-            $st = $conn->prepare('UPDATE usuarios SET foto_usuario = ? WHERE id_usuario = ?');
-            $st->bind_param('si', $nomeArquivo, $id);
+            if ($row && $row['foto_usuario']) {
+                $filePath = dirname(__DIR__, 3) . DIRECTORY_SEPARATOR . 'uploads' . DIRECTORY_SEPARATOR . 'fotosUsuarios' . DIRECTORY_SEPARATOR . $row['foto_usuario'];
+                if (file_exists($filePath)) @unlink($filePath);
+            }
+
+            $st = $conn->prepare('UPDATE usuarios SET foto_usuario = NULL WHERE id_usuario = ?');
+            $st->bind_param('i', $id);
             $st->execute();
             $st->close();
 
-            echo json_encode(['success' => true, 'mensagem' => 'Foto atualizada!', 'arquivo' => $nomeArquivo]);
+            $_SESSION['foto_usuario'] = null;
+            echo json_encode(['success' => true, 'mensagem' => 'Foto removida.']);
             exit;
         }
 
@@ -366,7 +363,9 @@ $paginaAtiva = 'perfil';
             btn.addEventListener('click', async () => {
                 if (!confirm('Remover foto de perfil?')) return;
                 try {
-                    const resp = await fetch(API_FOTO, { method: 'DELETE' });
+                    const fd = new FormData();
+                    fd.append('acao', 'remover_foto');
+                    const resp = await fetch(window.location.href, { method: 'POST', body: fd });
                     const data = await resp.json();
                     if (data.success) {
                         fotoPreviewFile = null;
