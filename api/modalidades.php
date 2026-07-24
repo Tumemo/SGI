@@ -4,7 +4,7 @@ require_once 'filtros.php';
 require_once 'auth.php';
 header('Content-Type: application/json');
 header('Access-Control-Allow-Origin: *');
-header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
+header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
 header('Access-Control-Allow-Headers: Content-Type');
 
 $method = $_SERVER['REQUEST_METHOD'];
@@ -187,6 +187,54 @@ switch ($method) {
             http_response_code(500);
             echo json_encode(["success" => false, "message" => "Erro no banco: " . $conn->error]);
         }
+        break;
+
+    case 'DELETE':
+        requerEscrita();
+        $data = json_decode(file_get_contents("php://input"));
+
+        if (!isset($data->id_modalidade)) {
+            http_response_code(400);
+            echo json_encode(["success" => false, "message" => "O ID da modalidade é obrigatório."]);
+            break;
+        }
+
+        $idModalidade = intval($data->id_modalidade);
+
+        // Verificar se existem jogos ou equipes vinculados
+        $checkStmt = $conn->prepare("SELECT 
+            (SELECT COUNT(*) FROM jogos WHERE modalidades_id_modalidade = ?) AS qtd_jogos,
+            (SELECT COUNT(*) FROM equipes WHERE modalidades_id_modalidade = ?) AS qtd_equipes
+        ");
+        $checkStmt->bind_param("ii", $idModalidade, $idModalidade);
+        $checkStmt->execute();
+        $checks = $checkStmt->get_result()->fetch_assoc();
+        $checkStmt->close();
+
+        if ($checks['qtd_jogos'] > 0 || $checks['qtd_equipes'] > 0) {
+            $motivos = [];
+            if ($checks['qtd_jogos'] > 0) $motivos[] = $checks['qtd_jogos'] . ' jogo(s)';
+            if ($checks['qtd_equipes'] > 0) $motivos[] = $checks['qtd_equipes'] . ' equipe(s)';
+            http_response_code(422);
+            echo json_encode(["success" => false, "message" => "Não é possível excluir. Existem " . implode(' e ', $motivos) . " vinculados a esta modalidade."]);
+            break;
+        }
+
+        $stmt = $conn->prepare("DELETE FROM modalidades WHERE id_modalidade = ?");
+        $stmt->bind_param("i", $idModalidade);
+
+        if ($stmt->execute()) {
+            if ($stmt->affected_rows > 0) {
+                echo json_encode(["success" => true, "message" => "Modalidade excluída com sucesso!"]);
+            } else {
+                http_response_code(404);
+                echo json_encode(["success" => false, "message" => "Modalidade não encontrada."]);
+            }
+        } else {
+            http_response_code(500);
+            echo json_encode(["success" => false, "message" => "Erro ao excluir: " . $conn->error]);
+        }
+        $stmt->close();
         break;
 
     default:

@@ -17,7 +17,8 @@ $paginaAtiva = 'dashboard';
     </section>
 
     <div class="position-fixed d-flex gap-2" style="bottom: 92px; right: 16px; z-index: 20;">
-        <a href="#" class="btn btn-outline-primary disabled" id="btnEditarModalidadeMobile" aria-disabled="true">Editar</a>
+        <button type="button" class="btn btn-outline-primary d-none" id="btnEditarModalidadeMobile" onclick="abrirModalEditarModalidade()">Editar</button>
+        <button type="button" class="btn btn-danger d-none" id="btnExcluirModalidadeMobile" onclick="excluirModalidade()">Excluir</button>
         <button class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#exampleModal">Adicionar</button>
         <a href="#" class="btn btn-danger disabled" id="btnContinuarMobile" aria-disabled="true">Continuar</a>
     </div>
@@ -42,7 +43,14 @@ $paginaAtiva = 'dashboard';
     </div>
 
     <div class="position-fixed d-flex flex-row align-items-center gap-4 py-3 px-5" style="bottom: 0; right: 0; z-index: 1050; background: transparent;">
-        <span class="text-muted small fw-medium">Não tem a modalidade que você quer?</span>
+
+        <button type="button" id="btnEditarModalidadeDesktop" class="btn btn-outline-primary fw-bold px-4 py-2 d-flex align-items-center justify-content-center gap-2 shadow-sm d-none" style="border-radius: 8px; margin-top: -40px;" onclick="abrirModalEditarModalidade()">
+            <i class="bi bi-pencil-square"></i> Editar
+        </button>
+
+        <button type="button" id="btnExcluirModalidadeDesktop" class="btn btn-danger fw-bold px-4 py-2 d-flex align-items-center justify-content-center gap-2 shadow-sm d-none" style="border-radius: 8px; margin-top: -40px;" onclick="excluirModalidade()">
+            <i class="bi bi-trash"></i> Excluir
+        </button>
 
         <button type="button" class="btn bg-white fw-bold px-4 py-2 d-flex align-items-center justify-content-center gap-2 shadow-sm" style="color: #ed1c24; border: 2px solid #ed1c24; border-radius: 8px;" data-bs-toggle="modal" data-bs-target="#exampleModal">
             <i class="bi bi-plus-circle"></i> Adicionar
@@ -105,6 +113,54 @@ $paginaAtiva = 'dashboard';
     </div>
 </div>
 
+<div class="modal fade" id="modalEditarModalidade" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header border border-0">
+                <h1 class="modal-title fs-5 text-danger">Editar Modalidade</h1>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="formEditarModalidade">
+                    <div class="mb-3">
+                        <label for="editNomeModalidade" class="form-label fw-medium">Nome da Modalidade:</label>
+                        <input type="text" class="form-control" id="editNomeModalidade" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-medium">Gênero:</label>
+                        <select class="form-select" id="editGeneroModalidade" required>
+                            <option value="MASC">Masculino (M)</option>
+                            <option value="FEM">Feminino (F)</option>
+                            <option value="MISTO">Misto</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-medium">Máx. de Inscritos (Opcional):</label>
+                        <input type="number" class="form-control" id="editMaxInscritos" min="0">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-medium">Tipo de Modalidade:</label>
+                        <select class="form-select" id="editTipoModalidade" required>
+                            <option value="" disabled selected>Carregando tipos...</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-medium">Categoria:</label>
+                        <select class="form-select" id="editCategoriaModalidade" required>
+                            <option value="" disabled selected>Carregando categorias...</option>
+                        </select>
+                    </div>
+                    <div id="caixaMensagemEditarModalidade" class="mt-3"></div>
+                    <div class="d-flex justify-content-center gap-4 mt-4">
+                        <button type="button" class="btn btn-outline-danger" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-danger" id="btnSalvarEdicaoModalidade">Salvar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
 <script>
     const urlParams = new URLSearchParams(window.location.search);
@@ -112,6 +168,7 @@ $paginaAtiva = 'dashboard';
     const idCategoria = urlParams.get('id_categoria');
     const modo = urlParams.get('modo') || 'create';
     let modalidadeSelecionada = null;
+    let modalidadesData = [];
 
     // TRAVA DE SEGURANÇA e Configuração do Botão "Continuar"
     async function resolverInterclasse() {
@@ -134,8 +191,6 @@ $paginaAtiva = 'dashboard';
     function atualizarBotaoContinuar() {
         const botaoDesktop = document.getElementById('btnContinuarDesktop');
         const botaoMobile = document.getElementById('btnContinuarMobile');
-        const botaoEditarDesktop = document.getElementById('btnEditarModalidadeDesktop');
-        const botaoEditarMobile = document.getElementById('btnEditarModalidadeMobile');
         const destino = modo === 'view'
             ? `./dashboard.php?id=${idInterclasse}`
             : `./edicao_pontuacao.php?id=${idInterclasse}&modo=create${modalidadeSelecionada ? `&id_modalidade=${modalidadeSelecionada}` : ''}`;
@@ -147,15 +202,11 @@ $paginaAtiva = 'dashboard';
             botao.setAttribute('aria-disabled', disabled ? 'true' : 'false');
         });
 
-        const destinoEdicaoModalidade = modalidadeSelecionada
-            ? `./modalidade_detalhes.php?id=${idInterclasse}&id_modalidade=${modalidadeSelecionada}`
-            : '#';
-        [botaoEditarDesktop, botaoEditarMobile].forEach((botao) => {
-            if (!botao) return;
-            botao.href = destinoEdicaoModalidade;
-            const disabled = !modalidadeSelecionada;
-            botao.classList.toggle('disabled', disabled);
-            botao.setAttribute('aria-disabled', disabled ? 'true' : 'false');
+        // Editar / Excluir buttons
+        ['btnEditarModalidadeDesktop', 'btnEditarModalidadeMobile',
+         'btnExcluirModalidadeDesktop', 'btnExcluirModalidadeMobile'].forEach((id) => {
+            const el = document.getElementById(id);
+            if (el) el.classList.toggle('d-none', !modalidadeSelecionada);
         });
 
         const backBtn = document.getElementById('btnVoltarModalidades');
@@ -177,6 +228,7 @@ $paginaAtiva = 'dashboard';
             let modalidades = response.data.data || response.data;
             if (!Array.isArray(modalidades)) modalidades = [];
             modalidades = modalidades.filter((item) => String(item.interclasses_id_interclasse) === String(idInterclasse));
+            modalidadesData = modalidades;
 
             if (divMobile) divMobile.innerHTML = '';
             if (divDesktop) divDesktop.innerHTML = '';
@@ -262,8 +314,8 @@ $paginaAtiva = 'dashboard';
                 });
             });
 
-            const primeira = document.querySelector('.modalidade-opcao');
-            if (primeira && modo !== 'view') primeira.click();
+            modalidadeSelecionada = null;
+            atualizarBotaoContinuar();
         } catch (error) {
             console.error("Erro ao carregar lista:", error);
         }
@@ -272,6 +324,7 @@ $paginaAtiva = 'dashboard';
     // 2. FUNÇÃO: Preencher o Select de TIPOS (Vem da api/tipo_modalidade.php)
     async function carregarTiposModalidades() {
         const selectTipo = document.getElementById('inputTipoModalidade');
+        const editSelectTipo = document.getElementById('editTipoModalidade');
         if (!selectTipo) return;
 
         try {
@@ -279,8 +332,10 @@ $paginaAtiva = 'dashboard';
             const tipos = response.data;
 
             selectTipo.innerHTML = '<option value="" disabled selected>Selecione um tipo...</option>';
+            if (editSelectTipo) editSelectTipo.innerHTML = '<option value="" disabled selected>Selecione um tipo...</option>';
             tipos.forEach(tipo => {
                 selectTipo.innerHTML += `<option value="${tipo.id_tipo_modalidade}">${tipo.nome_tipo_modalidade}</option>`;
+                if (editSelectTipo) editSelectTipo.innerHTML += `<option value="${tipo.id_tipo_modalidade}">${tipo.nome_tipo_modalidade}</option>`;
             });
         } catch (error) {
             console.error("Erro ao carregar tipos:", error);
@@ -291,6 +346,7 @@ $paginaAtiva = 'dashboard';
     // 3. FUNÇÃO: Preencher o Select de CATEGORIAS (Vem da api/categorias.php)
     async function carregarCategoriasModalidades() {
         const selectCat = document.getElementById('inputCategoriaModalidade');
+        const editSelectCat = document.getElementById('editCategoriaModalidade');
         if (!selectCat) return;
 
         try {
@@ -298,15 +354,115 @@ $paginaAtiva = 'dashboard';
             const categorias = response.data;
 
             selectCat.innerHTML = '<option value="" disabled selected>Selecione uma categoria...</option>';
+            if (editSelectCat) editSelectCat.innerHTML = '<option value="" disabled selected>Selecione uma categoria...</option>';
             categorias.forEach((cat) => {
                 const selected = idCategoria && String(idCategoria) === String(cat.id_categoria) ? 'selected' : '';
                 selectCat.innerHTML += `<option value="${cat.id_categoria}" ${selected}>${cat.nome_categoria}</option>`;
+                if (editSelectCat) editSelectCat.innerHTML += `<option value="${cat.id_categoria}">${cat.nome_categoria}</option>`;
             });
         } catch (error) {
             console.error("Erro ao carregar categorias:", error);
             selectCat.innerHTML = '<option value="" disabled selected>Erro ao carregar</option>';
         }
     }
+
+    // Editar Modalidade
+    window.abrirModalEditarModalidade = function() {
+        if (!modalidadeSelecionada) return;
+        const mod = modalidadesData.find(m => m.id_modalidade == modalidadeSelecionada);
+        if (!mod) return;
+
+        document.getElementById('editNomeModalidade').value = mod.nome_modalidade || '';
+        document.getElementById('editGeneroModalidade').value = mod.genero_modalidade || 'MISTO';
+        document.getElementById('editMaxInscritos').value = mod.max_inscrito_modalidade || '';
+        document.getElementById('caixaMensagemEditarModalidade').innerHTML = '';
+
+        // Preencher selects de tipo e categoria
+        const selectTipo = document.getElementById('editTipoModalidade');
+        const selectCat = document.getElementById('editCategoriaModalidade');
+
+        if (mod.tipos_modalidades_id_tipo_modalidade) {
+            Array.from(selectTipo.options).forEach(opt => {
+                opt.selected = String(opt.value) === String(mod.tipos_modalidades_id_tipo_modalidade);
+            });
+        }
+        if (mod.categorias_id_categoria) {
+            Array.from(selectCat.options).forEach(opt => {
+                opt.selected = String(opt.value) === String(mod.categorias_id_categoria);
+            });
+        }
+
+        const modal = new bootstrap.Modal(document.getElementById('modalEditarModalidade'));
+        modal.show();
+    };
+
+    document.getElementById('formEditarModalidade').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const btnSalvar = document.getElementById('btnSalvarEdicaoModalidade');
+        const caixaMensagem = document.getElementById('caixaMensagemEditarModalidade');
+
+        const dados = {
+            id_modalidade: parseInt(modalidadeSelecionada),
+            nome_modalidade: document.getElementById('editNomeModalidade').value.trim(),
+            genero_modalidade: document.getElementById('editGeneroModalidade').value,
+            max_inscrito_modalidade: parseInt(document.getElementById('editMaxInscritos').value) || 0,
+            tipos_modalidades_id_tipo_modalidade: document.getElementById('editTipoModalidade').value,
+            categorias_id_categoria: document.getElementById('editCategoriaModalidade').value
+        };
+
+        try {
+            btnSalvar.disabled = true;
+            btnSalvar.innerHTML = "Salvando...";
+            const res = await axios.put('../../../api/modalidades.php', dados);
+
+            if (res.data.success) {
+                caixaMensagem.innerHTML = `<p class="text-success text-center fw-bold">Salvo com sucesso!</p>`;
+                setTimeout(() => {
+                    bootstrap.Modal.getInstance(document.getElementById('modalEditarModalidade')).hide();
+                    caixaMensagem.innerHTML = "";
+                    carregarModalidades();
+                }, 800);
+            }
+        } catch (error) {
+            const msg = error.response?.data?.message || 'Erro ao salvar.';
+            caixaMensagem.innerHTML = `<p class="text-danger text-center fw-bold">${msg}</p>`;
+        } finally {
+            btnSalvar.disabled = false;
+            btnSalvar.innerHTML = "Salvar";
+        }
+    });
+
+    // Excluir Modalidade
+    window.excluirModalidade = async function() {
+        if (!modalidadeSelecionada) return;
+        const mod = modalidadesData.find(m => m.id_modalidade == modalidadeSelecionada);
+        const nomeMod = mod ? mod.nome_modalidade : 'esta modalidade';
+
+        if (!confirm(`Tem certeza que deseja excluir "${nomeMod}"?`)) return;
+
+        const btnDesktop = document.getElementById('btnExcluirModalidadeDesktop');
+        const btnMobile = document.getElementById('btnExcluirModalidadeMobile');
+
+        try {
+            if (btnDesktop) btnDesktop.disabled = true;
+            if (btnMobile) btnMobile.disabled = true;
+
+            const res = await axios.delete('../../../api/modalidades.php', {
+                data: { id_modalidade: parseInt(modalidadeSelecionada) }
+            });
+
+            if (res.data.success) {
+                modalidadeSelecionada = null;
+                carregarModalidades();
+            }
+        } catch (error) {
+            const msg = error.response?.data?.message || 'Erro ao excluir.';
+            alert(msg);
+        } finally {
+            if (btnDesktop) btnDesktop.disabled = false;
+            if (btnMobile) btnMobile.disabled = false;
+        }
+    };
 
     // 4. EVENTO: Enviar Formulário de Criação
     document.getElementById('formNovaModalidade').addEventListener('submit', async (e) => {

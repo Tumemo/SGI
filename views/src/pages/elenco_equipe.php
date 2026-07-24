@@ -50,6 +50,7 @@ $paginaAtiva = 'dashboard';
     const idEquipe = params.get('id_equipe');
     const idTurma = params.get('id_turma');
     const idCategoria = params.get('id_categoria');
+    const idModalidade = params.get('id_modalidade');
     const nomeTurma = params.get('nome_turma') || '';
     const nomeModalidade = params.get('nome_modalidade') || '';
 
@@ -75,6 +76,7 @@ $paginaAtiva = 'dashboard';
         if (idTurma) q.set('id_turma', idTurma);
         if (idEquipe) q.set('id_equipe', idEquipe);
         if (idCategoria) q.set('id_categoria', idCategoria);
+        if (idModalidade) q.set('id_modalidade', idModalidade);
         if (nomeTurma) q.set('nome_turma', nomeTurma);
         if (nomeModalidade) q.set('nome_modalidade', nomeModalidade);
         const href = `./equipe_alunos.php?${q.toString()}`;
