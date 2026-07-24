@@ -59,8 +59,12 @@ switch ($method) {
 
     case 'POST':
         requerEscrita();
+        
+        // Tenta ler JSON enviado via fetch body
         $data = json_decode(file_get_contents("php://input"));
-        $acao = $data->acao ?? '';
+        
+        // Pega a ação vinda de JSON ou de Formulário POST convencional
+        $acao = $data->acao ?? $_POST['acao'] ?? '';
 
         if ($acao === 'criar_equipe') {
             if (!isset($data->modalidades_id_modalidade, $data->turmas_id_turma)) {
@@ -99,7 +103,6 @@ switch ($method) {
             $usuarios = $data->usuarios;
             $sucesso = true;
 
-            
             $conn->begin_transaction();
 
             $sql = "INSERT IGNORE INTO equipes_has_usuarios (equipes_id_equipe, usuarios_id_usuario) VALUES (?, ?)";
@@ -125,12 +128,33 @@ switch ($method) {
                 echo json_encode(["success" => false, "message" => "Houve erro ao vincular os usuários. Alterações revertidas."]);
             }
 
+        } elseif ($acao === 'remover_aluno') {
+            // Suporta dados via JSON ou FormData
+            $id_equipe = intval($data->id_equipe ?? $_POST['id_equipe'] ?? 0);
+            $id_usuario = intval($data->id_usuario ?? $_POST['id_usuario'] ?? 0);
+
+            if ($id_equipe <= 0 || $id_usuario <= 0) {
+                http_response_code(400);
+                echo json_encode(["success" => false, "message" => "ID da equipe e ID do usuário são obrigatórios."]);
+                break;
+            }
+
+            $sql = "DELETE FROM equipes_has_usuarios WHERE equipes_id_equipe = ? AND usuarios_id_usuario = ?";
+            $stmt = $conn->prepare($sql);
+            $stmt->bind_param("ii", $id_equipe, $id_usuario);
+
+            if ($stmt->execute()) {
+                echo json_encode(["success" => true, "message" => "Aluno removido da equipe com sucesso!"]);
+            } else {
+                http_response_code(500);
+                echo json_encode(["success" => false, "message" => "Erro ao remover aluno: " . $conn->error]);
+            }
+
         } else {
             http_response_code(400);
             echo json_encode(["success" => false, "message" => "Ação inválida ou não informada."]);
         }
         break;
-
     case 'PUT':
         requerEscrita();
         $data = json_decode(file_get_contents("php://input"));

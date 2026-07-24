@@ -31,6 +31,9 @@ $paginaAtiva = 'dashboard';
                         <tr>
                             <th style="font-weight: 400;">Nome</th>
                             <th style="font-weight: 400;">RM / Matrícula</th>
+                            <?php if ($isAdmin): ?>
+                            <th style="font-weight: 400;" class="text-end px-3">Ações</th>
+                            <?php endif; ?>
                         </tr>
                     </thead>
                     <tbody id="tbodyElencoDesk"></tbody>
@@ -45,6 +48,7 @@ $paginaAtiva = 'dashboard';
 
 <script>
     const API = '../../../api/';
+    const isAdmin = <?php echo json_encode($isAdmin); ?>;
     const params = new URLSearchParams(window.location.search);
     const idInterclasse = params.get('id');
     const idEquipe = params.get('id_equipe');
@@ -87,49 +91,90 @@ $paginaAtiva = 'dashboard';
     async function carregar() {
         montarVoltar();
         montarGerenciar();
-        const tit = nomeModalidade ? `${nomeModalidade}` : 'Elenco da equipe';
-        const sub = nomeTurma ? `Turma: ${nomeTurma}` : '';
-
         const mob = document.getElementById('listaElencoMob');
         const tbody = document.getElementById('tbodyElencoDesk');
+        const colspan = isAdmin ? 3 : 2;
+
         if (!idEquipe) {
             mob.innerHTML = '<p class="text-muted">Parâmetro id_equipe ausente.</p>';
             tbody.innerHTML = '';
             return;
         }
+
         try {
             const r = await fetch(`${API}equipes.php?id_equipe=${encodeURIComponent(idEquipe)}&_t=${Date.now()}`);
             const lista = await r.json();
             const arr = Array.isArray(lista) ? lista : [];
+
             if (arr.length === 0) {
                 mob.innerHTML = '<p class="text-muted">Nenhum jogador vinculado a esta equipe ainda.</p>';
-                tbody.innerHTML = '<tr><td colspan="2" class="text-muted px-3 py-4">Nenhum jogador vinculado a esta equipe ainda.</td></tr>';
+                tbody.innerHTML = `<tr><td colspan="${colspan}" class="text-muted px-3 py-4">Nenhum jogador vinculado a esta equipe ainda.</td></tr>`;
                 return;
             }
-            mob.innerHTML = arr
-                .map(
-                    (u) => `
+
+            mob.innerHTML = arr.map((u) => `
                 <div class="bg-white rounded-3 shadow-sm p-3 d-flex justify-content-between align-items-center">
                     <div>
                         <div class="fw-medium">${esc(u.nome_usuario)}</div>
                         <div class="text-muted small">${esc(u.matricula_usuario)}</div>
                     </div>
-                </div>`
-                )
-                .join('');
-            tbody.innerHTML = arr
-                .map(
-                    (u) => `
+                    ${isAdmin ? `
+                        <button onclick="removerAluno(${u.id_usuario}, ${idEquipe})" class="btn btn-outline-danger btn-sm rounded-3">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    ` : ''}
+                </div>
+            `).join('');
+
+            tbody.innerHTML = arr.map((u) => `
                 <tr>
                     <td class="px-3">${esc(u.nome_usuario)}</td>
                     <td class="px-3">${esc(u.matricula_usuario)}</td>
-                </tr>`
-                )
-                .join('');
+                    ${isAdmin ? `
+                        <td class="px-3 text-end">
+                            <button onclick="removerAluno(${u.id_usuario}, ${idEquipe})" class="btn btn-outline-danger btn-sm rounded-3">
+                                <i class="bi bi-trash"></i> Remover
+                            </button>
+                        </td>
+                    ` : ''}
+                </tr>
+            `).join('');
+
         } catch (e) {
             console.error(e);
             mob.innerHTML = '<p class="text-danger">Erro ao carregar elenco.</p>';
-            tbody.innerHTML = '<tr><td colspan="2" class="text-danger px-3">Erro ao carregar.</td></tr>';
+            tbody.innerHTML = `<tr><td colspan="${colspan}" class="text-danger px-3">Erro ao carregar.</td></tr>`;
+        }
+    }
+
+    async function removerAluno(idUsuario, idEquipe) {
+        if (!confirm('Deseja realmente remover este aluno da equipe?')) {
+            return;
+        }
+
+        try {
+            const response = await fetch(`${API}equipes.php`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    acao: 'remover_aluno',
+                    id_usuario: idUsuario,
+                    id_equipe: idEquipe
+                })
+            });
+
+            const res = await response.json();
+
+            if (res.success) {
+                carregar(); // Recarrega a tabela sem atualizar a página
+            } else {
+                alert(res.message || 'Erro ao remover aluno.');
+            }
+        } catch (e) {
+            console.error('Erro de requisição:', e);
+            alert('Erro de conexão ao tentar remover o aluno.');
         }
     }
 
@@ -139,3 +184,4 @@ $paginaAtiva = 'dashboard';
 <?php
 include 'componentes/nav.php';
 require_once '../componentes/footer.php';
+?>
