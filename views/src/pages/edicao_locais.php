@@ -476,7 +476,7 @@ document.getElementById('formRegulamento').addEventListener('submit', async (e) 
     } finally {
         btn.disabled = false;
     }
-});
+});;
 
         // Envio do formulário NOVO LOCAL
         document.getElementById('formNovoLocal').addEventListener('submit', async (e) => {

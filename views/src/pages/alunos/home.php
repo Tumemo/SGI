@@ -51,13 +51,13 @@ include 'componentes/header.php';
         <div class="modal-content border-0 shadow-lg">
             <div class="modal-header bg-danger text-white border-0">
                 <h5 class="modal-title fw-bold">
-                    <i class="bi bi-file-earmark-text me-2"></i>Termo de Responsabilidade
+                    <i class="bi bi-file-earmark-text me-2"></i>Termo de Responsabilidade e Regulamento
                 </h5>
             </div>
             <div class="modal-body p-4">
-                <p class="text-muted">Declaro para os devidos fins que aceito e assumo inteira responsabilidade pelos termos abaixo descritos para participação no Interclasse:</p>
-                
-                <ol class="ps-3 text-secondary lh-lg mb-3">
+                <p class="text-muted mb-3">Declaro para os devidos fins que aceito e assumo inteira responsabilidade pelos termos abaixo descritos para participação no Interclasse:</p>
+
+                <ol class="ps-3 text-secondary lh-lg mb-4">
                     <li class="mb-2"><strong>Conduta:</strong> Comprometo-me a agir com respeito, <em>fair play</em> e espírito esportivo durante todas as atividades.</li>
                     <li class="mb-2"><strong>Regras:</strong> Declaro estar ciente e de acordo com todas as regras oficiais do Interclasse, acatando as decisões da organização e arbitragem.</li>
                     <li class="mb-2"><strong>Materiais:</strong> Responsabilizo-me pelos materiais esportivos e uniformes que me forem confiados, respondendo por eventuais danos ou extravios.</li>
@@ -66,6 +66,22 @@ include 'componentes/header.php';
                     <li class="mb-2"><strong>Pontuação:</strong> Aceito o sistema de pontuação e classificação estabelecido, bem como as penalidades previstas no regulamento.</li>
                 </ol>
 
+                <!-- Área de Download/Visualização do PDF do Regulamento (Agora no Final) -->
+                <div id="containerPdfRegulamento" class="card border-danger-subtle bg-danger-subtle bg-opacity-10 mb-3">
+                    <div class="card-body p-3 d-flex align-items-center justify-content-between flex-wrap gap-2">
+                        <div class="d-flex align-items-center gap-2">
+                            <i class="bi bi-file-earmark-pdf-fill fs-3 text-danger"></i>
+                            <div>
+                                <h6 class="fw-bold mb-0 text-dark">Regulamento Oficial (PDF)</h6>
+                                <small class="text-muted">Leia o regulamento completo antes de aceitar.</small>
+                            </div>
+                        </div>
+                        <a id="btnBaixarPdf" href="#" target="_blank" class="btn btn-danger btn-sm rounded-3 fw-semibold d-inline-flex align-items-center gap-1 disabled">
+                            <i class="bi bi-download"></i> Baixar / Ler PDF
+                        </a>
+                    </div>
+                </div>
+
                 <div id="avisoRecusa" class="alert alert-danger d-none m-0" role="alert">
                     <i class="bi bi-exclamation-triangle-fill me-1"></i>
                     Não é possível continuar sem aceitar os termos.
@@ -73,7 +89,7 @@ include 'componentes/header.php';
             </div>
             <div class="modal-footer border-0 justify-content-end gap-2 bg-light px-4 py-3">
                 <button type="button" class="btn btn-outline-secondary px-4 fw-semibold" id="btnRecusarTermo">Recusar</button>
-                <button type="button" class="btn btn-danger px-4 fw-semibold" id="btnAceitarTermo">Aceitar e Continuar</button>
+                <button type="button" class="btn btn-danger px-4 fw-semibold" id="btnAceitarTermo" disabled title="Abra o PDF do regulamento acima para liberar o botão">Aceitar e Continuar</button>
             </div>
         </div>
     </div>
@@ -151,6 +167,39 @@ include 'componentes/header.php';
         }
     }
 
+    // Carrega o PDF do Regulamento no Modal
+    async function carregarRegulamentoModal() {
+        const btnPdf = document.getElementById('btnBaixarPdf');
+        const btnAceitar = document.getElementById('btnAceitarTermo');
+
+        try {
+            const res = await fetch('../../../../api/interclasse.php?status_interclasse=1&regulamento=true');
+            const data = await res.json();
+            const ativo = Array.isArray(data) ? data[0] : data;
+
+            if (ativo && ativo.regulamento_interclasse && ativo.regulamento_interclasse.trim() !== '') {
+                btnPdf.href = `../../../../uploads/regulamentos/${ativo.regulamento_interclasse}`;
+                btnPdf.classList.remove('disabled');
+
+                // Quando o aluno clicar no PDF, libera o botão de aceite
+                btnPdf.addEventListener('click', () => {
+                    btnAceitar.disabled = false;
+                    btnAceitar.removeAttribute('title');
+                });
+            } else {
+                // Caso não haja PDF cadastrado, libera o botão diretamente
+                btnPdf.textContent = 'Sem PDF anexado';
+                btnPdf.classList.add('btn-secondary', 'disabled');
+                btnPdf.classList.remove('btn-danger');
+                btnAceitar.disabled = false;
+                btnAceitar.removeAttribute('title');
+            }
+        } catch (e) {
+            console.error("Erro ao carregar PDF do regulamento:", e);
+            btnAceitar.disabled = false;
+        }
+    }
+
     async function initModalTermo() {
         const modalElement = document.getElementById('modalTermo');
         const modalTermo = new bootstrap.Modal(modalElement, { backdrop: 'static', keyboard: false });
@@ -169,6 +218,8 @@ include 'componentes/header.php';
             console.error("Erro ao verificar status dos termos:", e);
         }
 
+        // Carrega o PDF do Regulamento e exibe o Modal
+        await carregarRegulamentoModal();
         modalTermo.show();
 
         btnAceitar.addEventListener('click', async function() {
