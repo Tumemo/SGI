@@ -677,6 +677,7 @@ $cssExtra = '
 .kv-history-card__header {
     padding: 24px 28px;
     border-bottom: 1px solid #f0f0f5;
+    margin-button: 12px;
 }
 .kv-history-card__title { font-size: 1.1rem; font-weight: 700; color: #111827; display: flex; align-items: center; gap: 10px; }
 .kv-history-card__title i { color: #e30613; }
@@ -698,6 +699,34 @@ $cssExtra = '
 .kv-podium-item__icon { font-size: 2rem; margin-bottom: 8px; }
 .kv-podium-item__label { font-size: 0.73rem; color: #9ca3af; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 4px; }
 .kv-podium-item__name { font-size: 1rem; font-weight: 700; color: #111827; }
+
+/* ── Classificação Geral (Todos os Campeões) ── */
+.kv-classificacao-geral { display: flex; flex-direction: column; gap: 20px; }
+.kv-classificacao-geral__item {
+    border-bottom: 1px solid #f3f4f6;
+    padding-bottom: 16px;
+}
+.kv-classificacao-geral__item:last-child { border-bottom: none; padding-bottom: 0; }
+.kv-classificacao-geral__mod {
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: #6b7280;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+.kv-classificacao-geral__mod::before {
+    content: "";
+    width: 4px;
+    height: 16px;
+    border-radius: 2px;
+    background: #e30613;
+    flex-shrink: 0;
+}
+.kv-classificacao-geral__podium { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 12px; }
 
 /* ── Confrontos Table ── */
 .kv-confronto-row {
@@ -800,6 +829,7 @@ $cssExtra = '
     .bkt-connector { display: none; }
     .bracket-champion-col { min-width: 100%; flex: none; padding: 0; margin-top: 16px; }
     .edit-modal-grid { grid-template-columns: 1fr; gap: 0; }
+    .kv-classificacao-geral__podium { grid-template-columns: 1fr 1fr; }
 }
 
 /* ── Animations ── */
@@ -863,17 +893,6 @@ $paginaAtiva = 'chaveamento';
         <div class="kv-empty__desc">Selecione uma modalidade acima para gerar ou visualizar um chaveamento.</div>
     </div>
 
-    <div id="historicoAreaMob" class="d-none" style="margin-top:20px;">
-        <div class="kv-history-card">
-            <div class="kv-history-card__header"><div class="kv-history-card__title"><i class="bi bi-trophy-fill"></i> Classificação Final</div></div>
-            <div class="kv-history-card__body"><div id="podioContentMob"></div></div>
-        </div>
-        <div class="kv-history-card">
-            <div class="kv-history-card__header"><div class="kv-history-card__title"><i class="bi bi-list-ul"></i> Confrontos Realizados</div></div>
-            <div class="kv-history-card__body"><div id="confrontosContentMob"></div></div>
-        </div>
-    </div>
-
     <div id="secaoJogosMob" style="margin-top:24px;">
         <div class="kv-table-card">
             <div class="kv-table-card__header">
@@ -891,9 +910,9 @@ $paginaAtiva = 'chaveamento';
             </div>
             <div class="table-responsive">
                 <table class="table table-hover align-middle">
-                    <thead><tr><th>Partida</th><th>Modalidade</th><th>Data</th><th>Status</th><th class="text-end">Ações</th></tr></thead>
+                    <thead><tr><th>Partida</th><th>Modalidade</th><th>Data</th><th>Tempo</th><th>Acréscimos</th><th>Artilheiro/Destaque</th><th>Status</th><th class="text-end">Ações</th></tr></thead>
                     <tbody id="tbodyJogosMob">
-                        <tr><td colspan="5" class="text-center text-muted py-4">Carregando jogos...</td></tr>
+                        <tr><td colspan="8" class="text-center text-muted py-4">Carregando jogos...</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -973,25 +992,6 @@ $paginaAtiva = 'chaveamento';
             </div>
         </div>
 
-        <div id="historicoArea" class="d-none">
-            <div class="kv-history-card">
-                <div class="kv-history-card__header">
-                    <div class="kv-history-card__title"><i class="bi bi-trophy-fill"></i> Classificação Final</div>
-                </div>
-                <div class="kv-history-card__body">
-                    <div id="podioContent"></div>
-                </div>
-            </div>
-            <div class="kv-history-card">
-                <div class="kv-history-card__header">
-                    <div class="kv-history-card__title"><i class="bi bi-list-ul"></i> Confrontos Realizados</div>
-                </div>
-                <div class="kv-history-card__body">
-                    <div id="confrontosContent"></div>
-                </div>
-            </div>
-        </div>
-
         <div id="secaoJogos" style="margin-top:24px;">
             <div class="kv-table-card">
                 <div class="kv-table-card__header">
@@ -1014,13 +1014,16 @@ $paginaAtiva = 'chaveamento';
                                 <th>Partida</th>
                                 <th>Modalidade</th>
                                 <th>Data</th>
+                                <th>Tempo</th>
+                                <th>Acréscimos</th>
+                                <th>Artilheiro/Destaque</th>
                                 <th>Status</th>
                                 <th class="text-end">Ações</th>
                             </tr>
                         </thead>
                         <tbody id="tbodyJogos">
                             <tr>
-                                <td colspan="5" class="text-center text-muted py-4">
+                                <td colspan="8" class="text-center text-muted py-4">
                                     Carregando jogos...
                                 </td>
                             </tr>
@@ -1112,6 +1115,12 @@ $paginaAtiva = 'chaveamento';
     let idInterclasse = urlParams.get('id');
     let modalidadesCache = [];
     let jogosCache = [];
+
+    function esc(s) {
+        const d = document.createElement('div');
+        d.textContent = s == null ? '' : String(s);
+        return d.innerHTML;
+    }
 
     async function resolverInterclasse() {
         if (!idInterclasse) {
@@ -1464,6 +1473,39 @@ $paginaAtiva = 'chaveamento';
         }
     }
 
+    function formatarDuracaoJogo(j) {
+        if (j.status_jogo !== 'Concluido' && j.status_jogo !== 'Finalizado') return '---';
+        if (j.data_inicio_real && j.termino_jogo) {
+            try {
+                const ini = new Date(j.data_jogo + 'T' + j.data_inicio_real);
+                const fim = new Date(j.data_jogo + 'T' + j.termino_jogo);
+                let diff = Math.max(0, Math.floor((fim - ini) / 60000));
+                const h = Math.floor(diff / 60);
+                const m = diff % 60;
+                if (h > 0) return h + 'h' + (m > 0 ? m + 'min' : '');
+                return m + 'min';
+            } catch (_) {}
+        }
+        if (j.duracao_jogo) {
+            const totalSec = parseInt(j.duracao_jogo, 10);
+            const h = Math.floor(totalSec / 3600);
+            const m = Math.floor((totalSec % 3600) / 60);
+            if (h > 0) return h + 'h' + (m > 0 ? m + 'min' : '');
+            return m + 'min';
+        }
+        return '---';
+    }
+
+    function formatarAcrescimosJogo(j) {
+        if (j.status_jogo !== 'Concluido' && j.status_jogo !== 'Finalizado') return '---';
+        const extraSec = parseInt(j.tempo_extra_jogo, 10);
+        if (!extraSec || extraSec <= 0) return '---';
+        const m = Math.floor(extraSec / 60);
+        const s = extraSec % 60;
+        if (m > 0) return '+' + m + 'min' + (s > 0 ? s + 's' : '');
+        return '+' + s + 's';
+    }
+
     function renderizarLinhaJogo(j, labelsLarguras) {
         let dataJogo = '---';
         if (j.data_jogo) {
@@ -1486,10 +1528,16 @@ $paginaAtiva = 'chaveamento';
         }
         const statusLower = (j.status_jogo || '').toLowerCase();
         const statusLabel = j.status_jogo || '---';
+        const tempoDecorrido = formatarDuracaoJogo(j);
+        const acrescimos = formatarAcrescimosJogo(j);
+        const destaque = j.artilheiro_nome || '---';
         return `<tr>
             <td class="td-partida">${nomePartida}</td>
             <td class="td-modalidade">${j.nome_modalidade || '---'}</td>
             <td class="td-data">${dataJogo}</td>
+            <td>${tempoDecorrido}</td>
+            <td>${acrescimos}</td>
+            <td>${destaque}</td>
             <td><span class="kv-badge kv-badge--${statusLower}">${statusLabel}</span></td>
             <td>
                 <div class="kv-table-actions">
@@ -1524,7 +1572,7 @@ $paginaAtiva = 'chaveamento';
             atualizarStats(statsJogos);
 
             if (!idModalidade && !idCategoria) {
-                const msg = '<tr><td colspan="5" class="text-center text-muted py-4">Selecione uma modalidade ou categoria para ver os jogos.</td></tr>';
+                const msg = '<tr><td colspan="8" class="text-center text-muted py-4">Selecione uma modalidade ou categoria para ver os jogos.</td></tr>';
                 tbody.innerHTML = msg;
                 if (tbodyMob) tbodyMob.innerHTML = msg;
                 return;
@@ -1545,7 +1593,7 @@ $paginaAtiva = 'chaveamento';
             jogosCache = jogos;
 
             if (!jogos.length) {
-                const msg = '<tr><td colspan="5" class="text-center text-muted py-4">Nenhum jogo encontrado.</td></tr>';
+                const msg = '<tr><td colspan="8" class="text-center text-muted py-4">Nenhum jogo encontrado.</td></tr>';
                 tbody.innerHTML = msg;
                 if (tbodyMob) tbodyMob.innerHTML = msg;
                 return;
@@ -1573,7 +1621,7 @@ $paginaAtiva = 'chaveamento';
             if (tbodyMob) tbodyMob.innerHTML = html;
         } catch (e) {
             console.error("Erro ao carregar jogos:", e);
-            const msg = '<tr><td colspan="5" class="text-center text-danger py-4">Erro ao carregar jogos.</td></tr>';
+            const msg = '<tr><td colspan="8" class="text-center text-danger py-4">Erro ao carregar jogos.</td></tr>';
             tbody.innerHTML = msg;
             if (tbodyMob) tbodyMob.innerHTML = msg;
         }
@@ -1837,6 +1885,56 @@ $paginaAtiva = 'chaveamento';
         });
     }
 
+    async function salvarIndRanking(idModalidade) {
+        const selects1 = document.querySelectorAll('#indSelectPrimeiro');
+        const selects2 = document.querySelectorAll('#indSelectSegundo');
+        const selects3 = document.querySelectorAll('#indSelectTerceiro');
+        function getVisibleValue(els) {
+            for (const el of els) {
+                if (el.offsetParent !== null) return Number(el.value);
+            }
+            return Number(els[0]?.value || 0);
+        }
+        const primeiro = getVisibleValue(selects1);
+        const segundo = getVisibleValue(selects2);
+        const terceiro = getVisibleValue(selects3);
+        const msg = document.getElementById('msgIndRanking');
+        const btns = document.querySelectorAll('#btnSalvarIndRanking');
+        const btn = btns[0];
+
+        if (!primeiro || !segundo || !terceiro) {
+            document.querySelectorAll('#msgIndRanking').forEach(m => m.innerHTML = '<span style="color:#dc2626;font-weight:700;">Selecione 1º, 2º e 3º lugar.</span>');
+            return;
+        }
+        if (primeiro === segundo || primeiro === terceiro || segundo === terceiro) {
+            document.querySelectorAll('#msgIndRanking').forEach(m => m.innerHTML = '<span style="color:#dc2626;font-weight:700;">Os participantes devem ser diferentes.</span>');
+            return;
+        }
+
+        btns.forEach(b => { b.disabled = true; b.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Salvando...'; });
+        document.querySelectorAll('#msgIndRanking').forEach(m => m.innerHTML = '');
+
+        try {
+            const resp = await fetch('../../../api/chaveamento.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    tipo_modalidade: 'individual',
+                    id_modalidade: idModalidade,
+                    ranking: { primeiro, segundo, terceiro }
+                })
+            });
+            const data = await resp.json();
+            if (!data.success) throw new Error(data.message || 'Erro ao salvar.');
+            document.querySelectorAll('#msgIndRanking').forEach(m => m.innerHTML = '<span style="color:#16a34a;font-weight:700;">Ranking salvo com sucesso!</span>');
+            await carregarArvore(String(idModalidade));
+        } catch (e) {
+            document.querySelectorAll('#msgIndRanking').forEach(m => m.innerHTML = `<span style="color:#dc2626;font-weight:700;">${esc(e.message)}</span>`);
+        } finally {
+            btns.forEach(b => { b.disabled = false; b.innerHTML = '<i class="bi bi-check-lg"></i> Salvar Ranking'; });
+        }
+    }
+
     async function carregarArvore(idModalidade) {
         const area = document.getElementById('bracketArea');
         const areaMob = document.getElementById('bracketAreaMob');
@@ -1875,14 +1973,128 @@ $paginaAtiva = 'chaveamento';
         const isIndividual = mod && Number(mod.id_tipo_modalidade) === 2;
 
         if (isIndividual) {
-            const infoHtml = `
-                <div class="kv-empty kv-animate">
-                    <div class="kv-empty__icon"><i class="bi bi-info-circle"></i></div>
-                    <div class="kv-empty__title">Modalidade Individual</div>
-                    <div class="kv-empty__desc">Modalidades individuais não possuem chaveamento. Utilize a seção de Pontuação Individual para registrar 1º, 2º e 3º lugar.</div>
+            const loadingHtml = `
+                <div class="kv-loading kv-animate">
+                    <div class="kv-loading__spinner"></div>
+                    <div class="kv-loading__text">Carregando ranking individual...</div>
                 </div>`;
-            area.innerHTML = infoHtml;
-            if (areaMob) areaMob.innerHTML = infoHtml;
+            area.innerHTML = loadingHtml;
+            if (areaMob) areaMob.innerHTML = loadingHtml;
+
+            try {
+                const [resPart, resRank] = await Promise.all([
+                    fetch(`../../../api/chaveamento.php?tipo_modalidade=individual&acao=participantes&id_modalidade=${idModalidade}`),
+                    fetch(`../../../api/chaveamento.php?tipo_modalidade=individual&acao=ranking&id_modalidade=${idModalidade}`)
+                ]);
+                const dadosPart = await resPart.json();
+                const dadosRank = await resRank.json();
+                const participantes = (dadosPart.success && dadosPart.participantes) ? dadosPart.participantes : [];
+                const rankingAtual = (dadosRank.success && dadosRank.ranking) ? dadosRank.ranking : [];
+
+                const selectOpts = participantes.map(p =>
+                    `<option value="${p.id_usuario}">${esc(p.nome_usuario)} — ${esc(p.nome_turma)}</option>`
+                ).join('');
+                const selectEmpty = '<option value="">Selecione...</option>';
+
+                const primeiroAtual = rankingAtual.find(r => r.posicao === 1);
+                const segundoAtual = rankingAtual.find(r => r.posicao === 2);
+                const terceiroAtual = rankingAtual.find(r => r.posicao === 3);
+
+                let rankingDisplay = '';
+                if (rankingAtual.length > 0) {
+                    const posLabels = ['🥇 1º Lugar', '🥈 2º Lugar', '🥉 3º Lugar'];
+                    const posBg = ['kv-podium-item--first', 'kv-podium-item--second', 'kv-podium-item--third'];
+                    rankingDisplay = '<div class="kv-podium" style="margin-top:20px;">';
+                    rankingAtual.forEach((r, idx) => {
+                        const nome = esc(r.nome_usuario || 'Desconhecido');
+                        const turma = esc(r.nome_fantasia_turma || r.nome_turma || '');
+                        rankingDisplay += `
+                            <div class="kv-podium-item ${posBg[idx] || ''}">
+                                <div class="kv-podium-item__icon" style="font-size:1.6rem;">${idx === 0 ? '🥇' : idx === 1 ? '🥈' : '🥉'}</div>
+                                <div class="kv-podium-item__label">${posLabels[idx] || (idx+1)+'º Lugar'}</div>
+                                <div class="kv-podium-item__name">${nome}</div>
+                                <div class="kv-podium-item__turma" style="font-size:0.78rem;color:#6b7280;margin-top:4px;">${turma}</div>
+                            </div>`;
+                    });
+                    rankingDisplay += '</div>';
+                } else {
+                    rankingDisplay = '<div class="kv-empty" style="padding:24px;"><div class="kv-empty__icon"><i class="bi bi-award"></i></div><div class="kv-empty__title">Nenhum ranking registrado</div><div class="kv-empty__desc">Selecione os colocados abaixo para registrar o resultado.</div></div>';
+                }
+
+                let partOptsHtml = selectEmpty;
+                if (participantes.length > 0) {
+                    partOptsHtml = selectOpts;
+                }
+
+                const individualHtml = `
+                    <div class="kv-history-card" style="margin-bottom:20px;">
+                        <div class="kv-history-card__header">
+                            <div class="kv-history-card__title"><i class="bi bi-trophy-fill"></i> Registrar Resultado Individual</div>
+                        </div>
+                        <div class="kv-history-card__body">
+                            <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;">
+                                <div>
+                                    <label class="form-label fw-semibold" style="font-size:0.8rem;color:#6b7280;">🥇 1º Lugar</label>
+                                    <select class="form-select" id="indSelectPrimeiro" style="border-radius:10px;font-size:0.88rem;">${partOptsHtml}</select>
+                                </div>
+                                <div>
+                                    <label class="form-label fw-semibold" style="font-size:0.8rem;color:#6b7280;">🥈 2º Lugar</label>
+                                    <select class="form-select" id="indSelectSegundo" style="border-radius:10px;font-size:0.88rem;">${partOptsHtml}</select>
+                                </div>
+                                <div>
+                                    <label class="form-label fw-semibold" style="font-size:0.8rem;color:#6b7280;">🥉 3º Lugar</label>
+                                    <select class="form-select" id="indSelectTerceiro" style="border-radius:10px;font-size:0.88rem;">${partOptsHtml}</select>
+                                </div>
+                            </div>
+                            <div style="margin-top:16px;display:flex;align-items:center;gap:12px;">
+                                <button type="button" class="kv-btn-generate" id="btnSalvarIndRanking" style="font-size:0.88rem;padding:10px 22px;">
+                                    <i class="bi bi-check-lg"></i> Salvar Ranking
+                                </button>
+                                <span id="msgIndRanking" style="font-size:0.85rem;"></span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="kv-history-card">
+                        <div class="kv-history-card__header">
+                            <div class="kv-history-card__title"><i class="bi bi-award-fill"></i> Ranking Atual</div>
+                        </div>
+                        <div class="kv-history-card__body">
+                            ${rankingDisplay}
+                        </div>
+                    </div>`;
+
+                area.innerHTML = individualHtml;
+                if (areaMob) areaMob.innerHTML = individualHtml;
+
+                if (primeiroAtual) {
+                    const el1 = document.getElementById('indSelectPrimeiro');
+                    const el1m = document.getElementById('bracketAreaMob')?.querySelector('#indSelectPrimeiro');
+                    if (el1) el1.value = primeiroAtual.id_usuario;
+                    if (el1m) el1m.value = primeiroAtual.id_usuario;
+                }
+                if (segundoAtual) {
+                    const el2 = document.getElementById('indSelectSegundo');
+                    const el2m = document.getElementById('bracketAreaMob')?.querySelector('#indSelectSegundo');
+                    if (el2) el2.value = segundoAtual.id_usuario;
+                    if (el2m) el2m.value = segundoAtual.id_usuario;
+                }
+                if (terceiroAtual) {
+                    const el3 = document.getElementById('indSelectTerceiro');
+                    const el3m = document.getElementById('bracketAreaMob')?.querySelector('#indSelectTerceiro');
+                    if (el3) el3.value = terceiroAtual.id_usuario;
+                    if (el3m) el3m.value = terceiroAtual.id_usuario;
+                }
+
+                document.querySelectorAll('#btnSalvarIndRanking').forEach(btn => {
+                    btn.addEventListener('click', () => salvarIndRanking(idModalidade));
+                });
+
+            } catch (e) {
+                console.error("Erro ao carregar ranking individual:", e);
+                const errHtml = `<div class="kv-empty kv-animate"><div class="kv-empty__icon"><i class="bi bi-exclamation-triangle" style="color:#f59e0b;"></i></div><div class="kv-empty__title">Erro</div><div class="kv-empty__desc">Erro ao carregar dados da modalidade individual.</div></div>`;
+                area.innerHTML = errHtml;
+                if (areaMob) areaMob.innerHTML = errHtml;
+            }
             return;
         }
 
@@ -1976,96 +2188,18 @@ $paginaAtiva = 'chaveamento';
         if (_pollingTimer) { clearInterval(_pollingTimer); _pollingTimer = null; }
     }
 
-    async function carregarHistorico(idModalidade) {
-        const histArea = document.getElementById('historicoArea');
-        const histAreaMob = document.getElementById('historicoAreaMob');
-        const podioEl = document.getElementById('podioContent');
-        const podioElMob = document.getElementById('podioContentMob');
-        const confrontosEl = document.getElementById('confrontosContent');
-        const confrontosElMob = document.getElementById('confrontosContentMob');
-
-        try {
-            const resp = await fetch(`../../../api/chaveamento.php?id_modalidade=${idModalidade}&acao=historico`);
-            const data = await resp.json();
-
-            if (!data.success || !data.concluido) {
-                histArea.classList.add('d-none');
-                if (histAreaMob) histAreaMob.classList.add('d-none');
-                return;
-            }
-
-            histArea.classList.remove('d-none');
-            if (histAreaMob) histAreaMob.classList.remove('d-none');
-
-            const classificacao = data.classificacao || [];
-            const nomesPos = ['🏆 Campeão', '🥈 Vice-campeão', '🥉 3º Lugar', '4º Lugar', '5º Lugar', '6º Lugar', '7º Lugar', '8º Lugar'];
-            const cores = ['#f59e0b', '#9ca3af', '#d97706', '#6b7280', '#9ca3af', '#9ca3af', '#9ca3af', '#9ca3af'];
-            const bgClasses = ['kv-podium-item--first', 'kv-podium-item--second', 'kv-podium-item--third', '', '', '', '', ''];
-
-            let podioHtml = '<div class="kv-podium">';
-            classificacao.forEach((eq, idx) => {
-                const nome = eq.nome_fantasia || eq.nome_turma || `Equipe #${eq.id_equipe}`;
-                const label = nomesPos[idx] || `${idx+1}º Lugar`;
-                const icones = ['bi-trophy-fill', 'bi-award-fill', 'bi-award', 'bi-tag', 'bi-tag', 'bi-tag', 'bi-tag', 'bi-tag'];
-                podioHtml += `
-                    <div class="kv-podium-item ${bgClasses[idx] || ''}">
-                        <div class="kv-podium-item__icon" style="color:${cores[idx]};"><i class="bi ${icones[idx] || 'bi-tag'}"></i></div>
-                        <div class="kv-podium-item__label">${label}</div>
-                        <div class="kv-podium-item__name">${nome}</div>
-                    </div>`;
-            });
-            podioHtml += '</div>';
-            if (podioEl) podioEl.innerHTML = podioHtml;
-            if (podioElMob) podioElMob.innerHTML = podioHtml;
-
-            const confrontos = data.confrontos || [];
-            let confHtml = '<div class="kv-table-responsive">';
-            confrontos.forEach(c => {
-                let tempoHtml = '';
-                if (c.total_min) {
-                    const extraLabel = c.tempo_extra_min ? ` (+${c.tempo_extra_min}min acrésc.)` : '';
-                    tempoHtml = `<div class="kv-confronto-row__time"><i class="bi bi-clock me-1"></i>${c.total_min} min${extraLabel}</div>`;
-                }
-                confHtml += `<div class="kv-confronto-row">
-                    <div class="kv-confronto-row__fase">${c.fase}</div>
-                    <div class="kv-confronto-row__winner"><i class="bi bi-check-circle-fill me-1" style="color:#16a34a;"></i>${c.vencedor_nome}</div>
-                    <div class="kv-confronto-row__score">${c.vencedor_gols} x ${c.perdedor_gols}</div>
-                    <div class="kv-confronto-row__loser">${c.perdedor_nome}</div>
-                    ${tempoHtml}
-                </div>`;
-            });
-            confHtml += '</div>';
-            if (confrontosEl) confrontosEl.innerHTML = confHtml;
-            if (confrontosElMob) confrontosElMob.innerHTML = confHtml;
-
-        } catch (e) {
-            console.error("Erro ao carregar histórico:", e);
-            histArea.classList.add('d-none');
-            if (histAreaMob) histAreaMob.classList.add('d-none');
-        }
-    }
-
     document.getElementById('selectModalidade').addEventListener('change', function () {
         document.getElementById('msgChaveamento').innerHTML = '';
-        document.getElementById('historicoArea').classList.add('d-none');
         document.getElementById('faseTimeline').classList.add('d-none');
         pararPolling();
         carregarArvore(this.value);
-        if (this.value) {
-            carregarHistorico(this.value);
-        }
     });
 
     document.getElementById('selectModalidadeMob').addEventListener('change', function () {
         const msgMob = document.getElementById('msgChaveamentoMob');
         if (msgMob) msgMob.style.display = 'none';
-        const histMob = document.getElementById('historicoAreaMob');
-        if (histMob) histMob.classList.add('d-none');
         pararPolling();
         carregarArvore(this.value);
-        if (this.value) {
-            carregarHistorico(this.value);
-        }
     });
 
     document.getElementById('filtroModalidadeJogos').addEventListener('change', carregarJogos);
@@ -2098,7 +2232,7 @@ $paginaAtiva = 'chaveamento';
         const tipoId = mod ? Number(mod.id_tipo_modalidade) : 0;
 
         if (tipoId === 2) {
-            msgEl.innerHTML = '<div class="kv-alert kv-alert--info">Use a seção "Pontuação Individual" para registrar 1º, 2º e 3º lugar.</div>';
+            msgEl.innerHTML = '<div class="kv-alert kv-alert--info">Modalidades individuais não possuem chaveamento. Use o formulário abaixo para registrar o ranking.</div>';
             return;
         }
 
@@ -2122,7 +2256,6 @@ $paginaAtiva = 'chaveamento';
             document.getElementById('btnVerArvore').href = `./chaveamento_arvore.php?id=${idInterclasse}`;
             carregarArvore(idModalidade);
             carregarJogos();
-            document.getElementById('historicoArea').classList.add('d-none');
         } catch (err) {
             msgEl.innerHTML = `<div class="kv-alert kv-alert--error">${err.message}</div>`;
         } finally {

@@ -83,7 +83,8 @@ switch ($method) {
                     modalidades.tipos_modalidades_id_tipo_modalidade,
                     locais.nome_local,
                     categorias.nome_categoria,
-                    GROUP_CONCAT(DISTINCT t.nome_turma ORDER BY p.id_partida SEPARATOR ' vs ') AS equipes_nomes
+                    GROUP_CONCAT(DISTINCT t.nome_turma ORDER BY p.id_partida SEPARATOR ' vs ') AS equipes_nomes,
+                    art_top.nome_usuario AS artilheiro_nome
                 FROM jogos 
                 INNER JOIN modalidades ON modalidades.id_modalidade = jogos.modalidades_id_modalidade 
                 INNER JOIN locais ON locais.id_local = jogos.locais_id_local
@@ -91,6 +92,13 @@ switch ($method) {
                 LEFT JOIN partidas p ON p.jogos_id_jogo = jogos.id_jogo
                 LEFT JOIN equipes e ON e.id_equipe = p.equipes_id_equipe
                 LEFT JOIN turmas t ON t.id_turma = e.turmas_id_turma
+                LEFT JOIN (
+                    SELECT a.jogos_id_jogo, u.nome_usuario,
+                           ROW_NUMBER() OVER (PARTITION BY a.jogos_id_jogo ORDER BY COUNT(*) DESC, u.nome_usuario ASC) AS rn
+                    FROM artilheiros a
+                    INNER JOIN usuarios u ON u.id_usuario = a.usuarios_id_usuario
+                    GROUP BY a.jogos_id_jogo, a.usuarios_id_usuario, u.nome_usuario
+                ) art_top ON art_top.jogos_id_jogo = jogos.id_jogo AND art_top.rn = 1
                 WHERE 1=1" . $filtro['sql'];
 
         $sql .= " GROUP BY jogos.id_jogo";
