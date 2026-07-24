@@ -14,6 +14,7 @@ include 'componentes/header.php';
     <main class="container py-4">
         <h1 class="visually-hidden">Termos e Regulamento</h1>
 
+        <!-- Termo de Responsabilidade -->
         <section class="mb-5">
             <h2 class="fs-5 fw-bold mb-3">Termo de Responsabilidade</h2>
             <div class="bg-white rounded-3 p-4 shadow-sm">
@@ -27,17 +28,28 @@ include 'componentes/header.php';
             </div>
         </section>
 
+        <!-- Regulamento do Interclasse -->
         <section>
             <h2 class="fs-5 fw-bold mb-3">Regulamento do Interclasse</h2>
             <div class="regulamento-card">
                 <p id="statusRegulamento" class="text-muted mb-0">
-                    <span class="spinner-border spinner-border-sm me-2" role="status"></span>Carregando...
+                    <span class="spinner-border spinner-border-sm me-2 text-danger" role="status"></span>Carregando regulamento...
                 </p>
-                <div id="linkRegulamento" class="d-none">
-                    <p class="text-secondary mb-3">Clique no botão abaixo para visualizar ou baixar o regulamento completo do Interclasse.</p>
-                    <a id="downloadRegulamento" href="#" target="_blank" class="btn btn-danger px-4">
-                        <i class="bi bi-file-earmark-pdf-fill me-2"></i>Baixar Regulamento (PDF)
-                    </a>
+                
+                <!-- Bloco no mesmo padrão visual do Modal -->
+                <div id="containerPdfRegulamento" class="card border-danger-subtle bg-danger-subtle bg-opacity-10 d-none">
+                    <div class="card-body p-3 d-flex align-items-center justify-content-between flex-wrap gap-2">
+                        <div class="d-flex align-items-center gap-2">
+                            <i class="bi bi-file-earmark-pdf-fill fs-3 text-danger"></i>
+                            <div>
+                                <h6 class="fw-bold mb-0 text-dark">Regulamento Oficial (PDF)</h6>
+                                <small class="text-muted">Clique para ler as regras completas da competição.</small>
+                            </div>
+                        </div>
+                        <a id="btnBaixarPdf" href="#" target="_blank" class="btn btn-danger btn-sm rounded-3 fw-semibold d-inline-flex align-items-center gap-1">
+                            <i class="bi bi-download"></i> Baixar / Ler PDF
+                        </a>
+                    </div>
                 </div>
             </div>
         </section>
@@ -52,24 +64,33 @@ include 'componentes/nav.php';
     <script>
         async function carregarRegulamento() {
             const statusEl = document.getElementById('statusRegulamento');
-            const linkDiv = document.getElementById('linkRegulamento');
-            const downloadLink = document.getElementById('downloadRegulamento');
+            const containerPdf = document.getElementById('containerPdfRegulamento');
+            const btnPdf = document.getElementById('btnBaixarPdf');
 
             try {
+                // Busca a lista de interclasses com regulamento atrelado
                 const res = await fetch('../../../../api/interclasse.php?regulamento=true');
-                const lista = await res.json();
+                if (!res.ok) throw new Error('Erro na resposta da API');
 
-                const ativo = (Array.isArray(lista) ? lista : []).find(i => String(i.status_interclasse) === '1');
+                const data = await res.json();
+                
+                // Trata retorno caso venha um array ou objeto único
+                const lista = Array.isArray(data) ? data : [data];
+                
+                // Busca o interclasse ativo (status_interclasse === '1' ou 1)
+                const ativo = lista.find(i => String(i.status_interclasse) === '1') || lista[0];
 
-                if (ativo && ativo.regulamento_interclasse) {
-                    downloadLink.href = '../../../../uploads/regulamentos/' + ativo.regulamento_interclasse;
+                if (ativo && ativo.regulamento_interclasse && ativo.regulamento_interclasse.trim() !== '') {
+                    btnPdf.href = '../../../../uploads/regulamentos/' + ativo.regulamento_interclasse;
+                    
                     statusEl.classList.add('d-none');
-                    linkDiv.classList.remove('d-none');
+                    containerPdf.classList.remove('d-none');
                 } else {
                     statusEl.textContent = 'Nenhum regulamento disponível no momento.';
                     statusEl.className = 'text-muted mb-0';
                 }
             } catch (error) {
+                console.error("Erro ao carregar regulamento:", error);
                 statusEl.textContent = 'Erro ao carregar regulamento. Tente novamente mais tarde.';
                 statusEl.className = 'text-danger mb-0';
             }
