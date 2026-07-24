@@ -703,6 +703,7 @@ $cssExtra = '
 .kv-confronto-row {
     display: flex;
     align-items: center;
+    flex-wrap: wrap;
     padding: 12px 0;
     border-bottom: 1px solid #f3f4f6;
     gap: 12px;
@@ -712,6 +713,7 @@ $cssExtra = '
 .kv-confronto-row__winner { font-weight: 600; color: #166534; flex: 1; }
 .kv-confronto-row__score { font-weight: 800; color: #111827; font-size: 0.95rem; min-width: 50px; text-align: center; }
 .kv-confronto-row__loser { color: #9ca3af; flex: 1; text-decoration: line-through; }
+.kv-confronto-row__time { width: 100%; font-size: 0.78rem; color: #6b7280; margin-top: 4px; padding-top: 4px; border-top: 1px dashed #e5e7eb; }
 
 /* ── Modal ── */
 .kv-modal .modal-content { border-radius: 18px; border: none; box-shadow: 0 20px 60px rgba(0,0,0,0.15); }
@@ -926,7 +928,7 @@ $paginaAtiva = 'chaveamento';
                 <div class="kv-stat__info"><div class="kv-stat__number" id="statModalidades">0</div><div class="kv-stat__label">Modalidades</div></div>
             </div>
             <div class="kv-stat">
-                <div class="kv-stat__icon kv-stat__icon--jogos"><i class="bi bi-game-controller"></i></div>
+                <div class="kv-stat__icon kv-stat__icon--jogos"><i class="fa-solid fa-volleyball"></i></div>
                 <div class="kv-stat__info"><div class="kv-stat__number" id="statJogos">0</div><div class="kv-stat__label">Jogos</div></div>
             </div>
             <div class="kv-stat">
@@ -1055,7 +1057,7 @@ $paginaAtiva = 'chaveamento';
                             <div id="editTeamsSection" style="display:none;">
                                 <label class="form-label">Equipes e Placar</label>
                                 <div id="editTeamsList"></div>
-                                <div id="editWinnerSection" class="mt-3" style="display:none;">
+                                <div id="editWinnerSection" class="mt-3 grid gap-2" style="display:none;">
                                     <label class="form-label">Vencedor</label>
                                     <div id="editWinnerOptions"></div>
                                 </div>
@@ -1239,7 +1241,7 @@ $paginaAtiva = 'chaveamento';
             const largura = parseInt(mm[1], 10);
             const slot = parseInt(mm[2], 10);
             const kind = mm[3];
-            const fases = { 8: 'Oitavas de final', 4: 'Quartas de final', 2: 'Semifinal', 1: 'Final' };
+            const fases = { 16: 'Oitavas de final', 8: 'Quartas de final', 4: 'Semifinal', 2: 'Final', 1: 'Campeão' };
             const fase = fases[largura] || 'Fase ' + largura;
             const confronto = slot + 1;
             const equipes = (jogo.equipes_nomes || '').trim();
@@ -1335,7 +1337,7 @@ $paginaAtiva = 'chaveamento';
         var selectLocal = document.getElementById('editLocalJogo');
         selectLocal.innerHTML = '<option value="">Carregando...</option>';
 
-        fetch('../../../api/locais.php')
+        fetch('../../../api/locais.php?id_interclasse=' + idInterclasse)
             .then(function(r) { return r.json(); })
             .then(function(data) {
                 if (_editIdJogo !== jogo.id_jogo) return;
@@ -1376,6 +1378,17 @@ $paginaAtiva = 'chaveamento';
         if (!data_jogo) {
             msgEl.innerHTML = '<span class="text-danger fw-bold">Selecione a data do jogo.</span>';
             return;
+        }
+
+        if (status_jogo === 'Concluido') {
+            const scoreInputsCheck = document.querySelectorAll('.edit-score-input');
+            if (scoreInputsCheck.length > 0) {
+                const totalGols = Array.from(scoreInputsCheck).reduce((sum, inp) => sum + (Number(inp.value) || 0), 0);
+                if (totalGols === 0) {
+                    msgEl.innerHTML = '<span class="text-danger fw-bold">Não é possível finalizar um jogo com placar 0x0. Registre o placar correto.</span>';
+                    return;
+                }
+            }
         }
 
         var payload = { id_jogo: Number(id_jogo), data_jogo: data_jogo, status_jogo: status_jogo };
@@ -1464,7 +1477,7 @@ $paginaAtiva = 'chaveamento';
             var largura = parseInt(m[1], 10);
             var labelCorreto = labelsLarguras[largura];
             if (labelCorreto) {
-                var fases = { 8: 'Oitavas de final', 4: 'Quartas de final', 2: 'Semifinal', 1: 'Final' };
+                var fases = { 16: 'Oitavas de final', 8: 'Quartas de final', 4: 'Semifinal', 2: 'Final', 1: 'Campeão' };
                 var faseOriginal = fases[largura] || '';
                 if (faseOriginal && faseOriginal !== labelCorreto) {
                     nomePartida = nomePartida.replace(faseOriginal, labelCorreto);
@@ -1499,6 +1512,17 @@ $paginaAtiva = 'chaveamento';
         try {
             const idModalidade = document.getElementById('filtroModalidadeJogos').value;
             const idCategoria = document.getElementById('filtroCategoriaJogos').value;
+
+            let statsUrl = `../../../api/jogos.php?id_interclasse=${idInterclasse}`;
+            const statsResp = await fetch(statsUrl);
+            const statsData = await statsResp.json();
+            let statsJogos = Array.isArray(statsData) ? statsData : [];
+            statsJogos = statsJogos.filter(function(j) {
+                var nomes = (j.equipes_nomes || '').trim();
+                return nomes.indexOf(' vs ') !== -1;
+            });
+            atualizarStats(statsJogos);
+
             if (!idModalidade && !idCategoria) {
                 const msg = '<tr><td colspan="5" class="text-center text-muted py-4">Selecione uma modalidade ou categoria para ver os jogos.</td></tr>';
                 tbody.innerHTML = msg;
@@ -1519,7 +1543,6 @@ $paginaAtiva = 'chaveamento';
             });
 
             jogosCache = jogos;
-            atualizarStats(jogos);
 
             if (!jogos.length) {
                 const msg = '<tr><td colspan="5" class="text-center text-muted py-4">Nenhum jogo encontrado.</td></tr>';
@@ -1534,7 +1557,7 @@ $paginaAtiva = 'chaveamento';
                 var m = (j.nome_jogo || '').match(/^MM:(\d+):/);
                 if (m) {
                     var l = parseInt(m[1], 10);
-                    if (l > 0 && !largurasSet[l]) { largurasSet[l] = true; larguras.push(l); }
+                    if (l > 1 && !largurasSet[l]) { largurasSet[l] = true; larguras.push(l); }
                 }
             });
             larguras.sort(function(a, b) { return b - a; });
@@ -1557,11 +1580,11 @@ $paginaAtiva = 'chaveamento';
     }
 
     const fasesLabel = {
-        1: 'Final',
-        2: 'Semifinal',
-        4: 'Quartas de final',
-        8: 'Oitavas de final',
-        16: 'Primeira fase'
+        1: 'Campeão',
+        2: 'Final',
+        4: 'Semifinal',
+        8: 'Quartas de final',
+        16: 'Oitavas de final'
     };
 
     function formatFase(faseNivel) {
@@ -1683,7 +1706,7 @@ $paginaAtiva = 'chaveamento';
     }
 
     function _renderModernBracket(jogos) {
-        const mmGames = jogos.filter(j => !j.eh_disputa_posicao);
+        const mmGames = jogos.filter(j => !j.eh_disputa_posicao && j.fase_nivel !== 1);
         const posGames = jogos.filter(j => j.eh_disputa_posicao);
 
         const rounds = {};
@@ -1906,7 +1929,7 @@ $paginaAtiva = 'chaveamento';
                 _drawConnectors(areaMob);
             });
 
-            const niveis = [...new Set(jogos.filter(j => !j.eh_disputa_posicao).map(j => j.fase_nivel))].sort((a,b) => b - a);
+            const niveis = [...new Set(jogos.filter(j => !j.eh_disputa_posicao && j.fase_nivel !== 1).map(j => j.fase_nivel))].sort((a,b) => b - a);
             atualizarTimeline(niveis);
             iniciarPolling();
 
@@ -1998,11 +2021,17 @@ $paginaAtiva = 'chaveamento';
             const confrontos = data.confrontos || [];
             let confHtml = '<div class="kv-table-responsive">';
             confrontos.forEach(c => {
+                let tempoHtml = '';
+                if (c.total_min) {
+                    const extraLabel = c.tempo_extra_min ? ` (+${c.tempo_extra_min}min acrésc.)` : '';
+                    tempoHtml = `<div class="kv-confronto-row__time"><i class="bi bi-clock me-1"></i>${c.total_min} min${extraLabel}</div>`;
+                }
                 confHtml += `<div class="kv-confronto-row">
                     <div class="kv-confronto-row__fase">${c.fase}</div>
                     <div class="kv-confronto-row__winner"><i class="bi bi-check-circle-fill me-1" style="color:#16a34a;"></i>${c.vencedor_nome}</div>
                     <div class="kv-confronto-row__score">${c.vencedor_gols} x ${c.perdedor_gols}</div>
                     <div class="kv-confronto-row__loser">${c.perdedor_nome}</div>
+                    ${tempoHtml}
                 </div>`;
             });
             confHtml += '</div>';

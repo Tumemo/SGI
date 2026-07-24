@@ -120,6 +120,7 @@ body {
 
 .form-control, .form-select {
     animation: 1s;
+    padding-right: 2rem;
 }
 
 .form-control:focus, .form-select:focus {

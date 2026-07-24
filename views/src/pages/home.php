@@ -34,7 +34,7 @@ $isMesario = $nivelUsuario === 2;
     <section class="mt-4 container">
 
         <?php if ($isAdmin): ?>
-        <button class="btn btn-outline-danger d-flex gap-2 mt-3 mb-4 align-items-center" data-bs-toggle="modal" data-bs-target="#exampleModal">
+        <button class="btn btn-outline-danger d-flex gap-2 mt-2 mb-4 align-items-center" data-bs-toggle="modal" data-bs-target="#exampleModal">
             <i class="bi bi-plus-circle"></i>Criar Nova Edição
         </button>
         <?php endif; ?>

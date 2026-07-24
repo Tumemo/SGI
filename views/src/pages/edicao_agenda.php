@@ -259,7 +259,7 @@ $paginaAtiva = 'agenda';
             const largura = parseInt(mm[1], 10);
             const slot = parseInt(mm[2], 10);
             const kind = mm[3];
-            const fases = { 8: 'Oitavas de final', 4: 'Quartas de final', 2: 'Final', 1: 'Campeão' };
+            const fases = { 16: 'Oitavas de final', 8: 'Quartas de final', 4: 'Semifinal', 2: 'Final', 1: 'Campeão' };
             const fase = fases[largura] || 'Fase';
             if (largura === 1) return fase;
             return `${fase} — Confronto ${slot + 1}${kind === 'B' ? ' (bye)' : ''}`;

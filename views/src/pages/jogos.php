@@ -410,7 +410,7 @@ $paginaAtiva = 'dashboard';
             const largura = parseInt(mm[1], 10);
             const slot = parseInt(mm[2], 10);
             const kind = mm[3];
-            const fases = { 8: 'Oitavas de final', 4: 'Quartas de final', 2: 'Final', 1: 'Campeão' };
+            const fases = { 16: 'Oitavas de final', 8: 'Quartas de final', 4: 'Semifinal', 2: 'Final', 1: 'Campeão' };
             const fase = fases[largura] || 'Fase';
             if (largura === 1) return fase;
             return fase + ' — Confronto ' + (slot + 1) + (kind === 'B' ? ' (bye)' : '');
@@ -492,34 +492,71 @@ $paginaAtiva = 'dashboard';
     function mostrarBotoesTempoExtra() {
         var acoes = document.getElementById('placar-acoes');
         if (!acoes) return;
-        // Evitar duplicar
         if (document.getElementById('mc-overtime-actions')) return;
 
         var container = document.createElement('div');
         container.id = 'mc-overtime-actions';
         container.className = 'mc-actions';
         container.style.marginTop = '1rem';
+        container.style.display = 'flex';
+        container.style.alignItems = 'center';
+        container.style.gap = '.5rem';
+        container.style.flexWrap = 'wrap';
 
         var label = document.createElement('span');
         label.className = 'fw-bold text-danger';
         label.style.fontSize = '.9rem';
-        label.innerHTML = '<i class="bi bi-stopwatch me-1"></i>Tempo esgotado — Adicionar acréscimos:';
+        label.innerHTML = '<i class="bi bi-stopwatch me-1"></i>Tempo esgotado — Acréscimos:';
         container.appendChild(label);
 
-        [1, 2, 3, 5].forEach(function(min) {
-            var b = document.createElement('button');
-            b.type = 'button';
-            b.className = 'mc-action-btn mc-action-btn--start';
-            b.style.fontSize = '.8rem';
-            b.style.padding = '.5rem 1rem';
-            b.innerHTML = '<i class="bi bi-plus-circle me-1"></i>+' + min + ' min';
-            b.addEventListener('click', function() {
-                adicionarTempoExtra(min * 60);
-            });
-            container.appendChild(b);
-        });
+        var inputGroup = document.createElement('div');
+        inputGroup.style.display = 'flex';
+        inputGroup.style.alignItems = 'center';
+        inputGroup.style.gap = '.35rem';
 
+        var input = document.createElement('input');
+        input.type = 'number';
+        input.id = 'mc-overtime-input';
+        input.min = '1';
+        input.max = '30';
+        input.placeholder = 'min';
+        input.style.width = '60px';
+        input.style.padding = '.4rem .5rem';
+        input.style.borderRadius = '8px';
+        input.style.border = '1.5px solid #e5e7eb';
+        input.style.fontSize = '.85rem';
+        input.style.textAlign = 'center';
+        input.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') { btn.click(); }
+        });
+        inputGroup.appendChild(input);
+
+        var minLabel = document.createElement('span');
+        minLabel.style.fontSize = '.8rem';
+        minLabel.style.color = '#6b7280';
+        minLabel.textContent = 'min';
+        inputGroup.appendChild(minLabel);
+
+        var btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'mc-action-btn mc-action-btn--start';
+        btn.style.fontSize = '.8rem';
+        btn.style.padding = '.5rem 1rem';
+        btn.innerHTML = '<i class="bi bi-plus-circle me-1"></i>Adicionar';
+        btn.addEventListener('click', function() {
+            var val = parseInt(input.value, 10);
+            if (!val || val < 1) {
+                input.style.borderColor = '#e30613';
+                input.focus();
+                return;
+            }
+            adicionarTempoExtra(val * 60);
+        });
+        inputGroup.appendChild(btn);
+
+        container.appendChild(inputGroup);
         acoes.appendChild(container);
+        input.focus();
     }
 
     async function adicionarTempoExtra(segundos) {

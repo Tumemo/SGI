@@ -60,10 +60,11 @@ function sgi_mm_proximo_pow2(int $n): int
 function sgi_mm_nome_fase_pt(int $largura): string
 {
     return match ($largura) {
-        8 => 'Oitavas de final',
-        4 => 'Quartas de final',
-        2 => 'Semifinal',
-        1 => 'Final',
+        16 => 'Oitavas de final',
+        8 => 'Quartas de final',
+        4 => 'Semifinal',
+        2 => 'Final',
+        1 => 'Campeão',
         default => 'Fase ' . $largura,
     };
 }
@@ -369,6 +370,77 @@ function sgi_mm_garantir_partida_equipe(mysqli $conn, int $idJogo, int $idEquipe
     $stP->bind_param('ii', $idJogo, $idEquipe);
     $stP->execute();
     $stP->close();
+}
+
+/**
+ * Limpa todos os jogos MM nas fases posteriores à fase informada e reprocessa o avanço
+ * a partir dos jogos concluídos daquela fase em diante. Usado quando o vencedor de um
+ * jogo já concluído é alterado.
+ */
+function sgi_chaveamento_rebuild_from_round(mysqli $conn, int $idModalidade, int $larguraInicial): void
+{
+    $st = $conn->prepare(
+        "SELECT id_jogo, nome_jogo, status_jogo FROM jogos WHERE modalidades_id_modalidade = ? AND nome_jogo LIKE 'MM:%' ORDER BY id_jogo ASC"
+    );
+    $st->bind_param('i', $idModalidade);
+    $st->execute();
+    $jogos = $st->get_result()->fetch_all(MYSQLI_ASSOC);
+    $st->close();
+
+    foreach ($jogos as $j) {
+        $meta = sgi_mm_parse($j['nome_jogo']);
+        if ($meta === null) {
+            continue;
+        }
+        if ($meta['largura'] < $larguraInicial) {
+            $stD = $conn->prepare("DELETE FROM partidas WHERE jogos_id_jogo = ?");
+            $stD->bind_param('i', (int) $j['id_jogo']);
+            $stD->execute();
+            $stD->close();
+
+            $stU = $conn->prepare("UPDATE jogos SET status_jogo = 'Agendado' WHERE id_jogo = ?");
+            $stU->bind_param('i', (int) $j['id_jogo']);
+            $stU->execute();
+            $stU->close();
+        }
+    }
+
+    $stPOS = $conn->prepare("SELECT id_jogo FROM jogos WHERE modalidades_id_modalidade = ? AND nome_jogo LIKE 'POS:%'");
+    $stPOS->bind_param('i', $idModalidade);
+    $stPOS->execute();
+    $posGames = $stPOS->get_result()->fetch_all(MYSQLI_ASSOC);
+    $stPOS->close();
+    foreach ($posGames as $pg) {
+        $stDP = $conn->prepare("DELETE FROM partidas WHERE jogos_id_jogo = ?");
+        $stDP->bind_param('i', (int) $pg['id_jogo']);
+        $stDP->execute();
+        $stDP->close();
+        $stDJ = $conn->prepare("DELETE FROM jogos WHERE id_jogo = ?");
+        $stDJ->bind_param('i', (int) $pg['id_jogo']);
+        $stDJ->execute();
+        $stDJ->close();
+    }
+
+    $jogosPorRodada = [];
+    foreach ($jogos as $j) {
+        $meta = sgi_mm_parse($j['nome_jogo']);
+        if ($meta === null) {
+            continue;
+        }
+        $l = $meta['largura'];
+        if ($l >= $larguraInicial) {
+            $jogosPorRodada[$l][] = $j;
+        }
+    }
+    krsort($jogosPorRodada);
+
+    foreach ($jogosPorRodada as $rodada) {
+        foreach ($rodada as $j) {
+            if (sgi_mm_jogo_esta_encerrado((string) $j['status_jogo'])) {
+                sgi_chaveamento_processar_avanco($conn, (int) $j['id_jogo']);
+            }
+        }
+    }
 }
 
 /**
@@ -790,6 +862,7 @@ function sgi_mm_montar_historico(mysqli $conn, int $idModalidade): array
 
     $stJ = $conn->prepare(
         'SELECT j.id_jogo, j.nome_jogo, j.status_jogo, j.data_jogo,
+                j.duracao_jogo, j.tempo_extra_jogo, j.inicio_jogo, j.termino_jogo,
                 p.id_partida, p.equipes_id_equipe, p.resultado_partida,
                 t.nome_turma, t.nome_fantasia_turma
          FROM jogos j
@@ -815,6 +888,10 @@ function sgi_mm_montar_historico(mysqli $conn, int $idModalidade): array
                 'meta' => $meta,
                 'status_jogo' => $row['status_jogo'],
                 'data_jogo' => $row['data_jogo'],
+                'duracao_jogo' => $row['duracao_jogo'],
+                'tempo_extra_jogo' => $row['tempo_extra_jogo'],
+                'inicio_jogo' => $row['inicio_jogo'],
+                'termino_jogo' => $row['termino_jogo'],
                 'partidas' => [],
             ];
         }
@@ -857,12 +934,21 @@ function sgi_mm_montar_historico(mysqli $conn, int $idModalidade): array
             $nomeFase = sgi_mm_nome_fase_pt($fase);
         }
 
+        $tempoExtra = (int) ($jogo['tempo_extra_jogo'] ?? 0);
+        $duracao = (int) ($jogo['duracao_jogo'] ?? 0);
+        $duracaoMin = $duracao > 0 ? (int) ceil($duracao / 60) : null;
+        $extraMin = $tempoExtra > 0 ? (int) ceil($tempoExtra / 60) : null;
+        $totalMin = ($duracaoMin ?? 0) + ($extraMin ?? 0);
+
         $confrontos[] = [
             'fase' => $nomeFase,
             'vencedor_nome' => $vencedor['nome_fantasia'] ?: $vencedor['nome_turma'],
             'vencedor_gols' => $vencedor['gols'],
             'perdedor_nome' => $perdedor['nome_fantasia'] ?: $perdedor['nome_turma'],
             'perdedor_gols' => $perdedor['gols'],
+            'duracao_min' => $duracaoMin,
+            'tempo_extra_min' => $extraMin,
+            'total_min' => $totalMin > 0 ? $totalMin : null,
         ];
     }
 
