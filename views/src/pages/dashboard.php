@@ -114,6 +114,13 @@ $isMesario = $nivelUsuario === 2;
                 <picture><img src="../../public/icons/arrow-right.svg" alt="Seta"></picture>
             </div>
         </a>
+        <a href="./cadastrarRegulamento.php" id="linkRegulamento" class="text-decoration-none text-black">
+            <div class="d-flex m-auto justify-content-between align-items-center shadow py-3 px-4 mb-3 border border-1 rounded-3" style="width: 90%;">
+                <i class="bi bi-file-earmark-pdf fs-2"></i>
+                <h2 class="m-0 fs-3 w-100 px-3">Cadastrar regulamentos</h2>
+                <picture><img src="../../public/icons/arrow-right.svg" alt="Seta"></picture>
+            </div>
+        </a>
         <?php endif; ?>
     </section>
 </main>
@@ -131,7 +138,6 @@ $isMesario = $nivelUsuario === 2;
             <a id="linkConcluirInterclasse" class="btn btn-sm btn-danger" href="#">Concluir criação</a>
         </div>
         <?php endif; ?>
-
 
         <div class="row g-4 mt-2">
             <?php if ($isMesario): ?>
@@ -268,6 +274,16 @@ $isMesario = $nivelUsuario === 2;
                     <p class="dash-card-text">Visualize o ranking geral de pontuações por categoria.</p>
                 </a>
             </div>
+            <div class="col-12 col-md-6 col-lg-4">
+                <a href="cadastrarRegulamento.php" id="linkRegulamento" class="dash-card">
+                    <div class="dash-card-red-corner"></div>
+                    <div class="dash-card-header">
+                        <div class="dash-card-icon"><i class="bi bi-file-earmark-pdf"></i></div>
+                        <h5 class="dash-card-title">REGULAMENTOS</h5>
+                    </div>
+                    <p class="dash-card-text">Cadastre e gerencie os regulamentos em PDF do evento.</p>
+                </a>
+            </div>
             <?php endif; ?>
 
             <?php if ($isAdmin): ?>
@@ -295,10 +311,10 @@ $isMesario = $nivelUsuario === 2;
                 <a href="edicao_locais.php" id="linkLocais" class="dash-card">
                     <div class="dash-card-red-corner"></div>
                     <div class="dash-card-header">
-                        <div class="dash-card-icon"><i class="bi bi-geo-alt"></i></div>
-                        <h5 class="dash-card-title">LOCAIS</h5>
+                        <div class="dash-card-icon"><i class="bi bi-building-gear"></i></div>
+                        <h5 class="dash-card-title">LOCAIS E REGULAMENTO DO INTERCLASSE</h5>
                     </div>
-                    <p class="dash-card-text">Cadastre quadras, ginásios e demais espaços usados nos jogos antes de montar a agenda.</p>
+                    <p class="dash-card-text">Cadastre quadras, ginásios e demais espaços usados nos jogos antes de montar a agenda e cadstre e atualize o regulamento do interclasse.</p>
                 </a>
             </div>
             <div class="col-12 col-md-6 col-lg-4">
@@ -381,7 +397,7 @@ $isMesario = $nivelUsuario === 2;
                     <p class="dash-card-text">Visualize o ranking geral de pontuações por categoria.</p>
                 </a>
             </div>
-            <?php endif; ?>
+             <?php endif; ?>
         </div>
     </div>
 </main>
@@ -439,6 +455,7 @@ $isMesario = $nivelUsuario === 2;
     document.querySelectorAll('#linkTurmas').forEach(link => { link.href = `./turmas.php?id=${idInterclasse}`; });
     document.querySelectorAll('#linkEquipes').forEach(link => { link.href = `./edicao_equipes.php?id=${idInterclasse}`; });
     document.querySelectorAll('#linkRanking').forEach(link => { link.href = `./ranking.php?id=${idInterclasse}`; });
+    document.querySelectorAll('#linkRegulamento').forEach(link => { link.href = `./cadastrarRegulamento.php?id=${idInterclasse}`; });
     <?php endif; ?>
 
     <?php if ($isAdmin): ?>
@@ -453,6 +470,7 @@ $isMesario = $nivelUsuario === 2;
     document.querySelectorAll('#linkEquipes').forEach(link => { link.href = `./edicao_equipes.php?id=${idInterclasse}`; });
     document.querySelectorAll('#linkChaveamento').forEach(link => { link.href = `./chaveamento_arvore.php?id=${idInterclasse}`; });
     document.querySelectorAll('#linkRanking').forEach(link => { link.href = `./ranking.php?id=${idInterclasse}`; });
+    document.querySelectorAll('#linkRegulamento').forEach(link => { link.href = `./cadastrarRegulamento.php?id=${idInterclasse}`; });
     <?php endif; ?>
 })();
 </script>

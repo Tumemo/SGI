@@ -1,6 +1,6 @@
 <?php
-$tituloPagina = 'SGI - Locais';
-$titulo = 'Locais';
+$tituloPagina = 'SGI - Locais e Regulamento do Interclasse';
+$titulo = 'Locais e Regulamento do Interclasse';
 $mostrarVoltar = true;
 $urlVoltar = './dashboard.php';
 include 'componentes/head.php';
@@ -8,12 +8,32 @@ include 'componentes/header.php';
 $paginaAtiva = 'dashboard';
 ?>
 
-
-
+<!-- ================= MOBILE ================= -->
 <main class="d-md-none p-3" style="padding-top: 5rem; padding-bottom: 6rem;">
+    <!-- Seção Regulamento Mobile -->
+    <div class="card border-0 shadow-sm rounded-3 mb-3">
+        <div class="card-body">
+            <div class="d-flex align-items-center justify-content-between mb-2">
+                <h6 class="fw-bold mb-0 text-dark"><i class="bi bi-file-earmark-pdf text-danger me-1"></i> Regulamento</h6>
+                <span id="badgeRegulamentoMob" class="badge bg-secondary">Buscando...</span>
+            </div>
+            <p id="infoRegulamentoMob" class="small text-muted mb-2">Carregando informações...</p>
+            <div class="d-flex gap-2">
+                <a id="btnVerPdfMob" href="#" target="_blank" class="btn btn-sm btn-outline-danger w-100 d-none">
+                    <i class="bi bi-eye"></i> Visualizar
+                </a>
+                <button type="button" class="btn btn-sm btn-danger w-100" data-bs-toggle="modal" data-bs-target="#modalRegulamento">
+                    <i class="bi bi-upload"></i> Enviar PDF
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Lista Locais Mobile -->
     <div id="listaLocaisMobile" class="d-flex flex-column gap-3 mx-auto" style="max-width: 420px;">
         <p class="text-muted small text-center">Carregando…</p>
     </div>
+
     <div class="position-fixed start-0 end-0 bottom-0 p-3 bg-light border-top shadow-sm d-flex gap-2" style="z-index: 1030;">
         <button type="button" class="btn btn-danger flex-grow-1 fw-semibold rounded-3" data-bs-toggle="modal" data-bs-target="#modalNovoLocal">
             <i class="bi bi-plus-lg me-1"></i> Novo local
@@ -22,27 +42,77 @@ $paginaAtiva = 'dashboard';
     </div>
 </main>
 
-<main class="d-none d-md-block main-desktop-layout">
+<!-- ================= DESKTOP ================= -->
+<main class="d-none d-md-block main-desktop-layout my-4">
     <div class="container-fluid px-0" style="max-width: 960px;">
-        <div class="mb-4">
-            <a href="./dashboard.php" id="btnVoltarLocaisDesk" class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold mb-3 px-3 py-2 border-0 text-decoration-none shadow-sm" style="background-color: #ed1c24; border-radius: 6px;">
+        <div class="mb-4 d-flex justify-content-between align-items-center">
+            <a href="./dashboard.php" id="btnVoltarLocaisDesk" class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold px-3 py-2 border-0 text-decoration-none shadow-sm" style="background-color: #ed1c24; border-radius: 6px;">
                 <i class="bi bi-arrow-left-circle fs-5"></i>
                 <span id="nomeInterclasseLocais">Interclasse</span>
             </a>
-        </div>
 
-        <div class="d-flex justify-content-end mb-3">
             <button type="button" class="btn btn-danger fw-semibold rounded-3 px-4 py-2 shadow-sm d-inline-flex align-items-center gap-2" data-bs-toggle="modal" data-bs-target="#modalNovoLocal" style="background-color: #ed1c24; border: none;">
                 <i class="bi bi-plus-circle"></i> Novo local
             </button>
         </div>
 
+        <!-- Seção do Regulamento em Destaque Desktop -->
+        <div class="card border-0 shadow-sm rounded-4 mb-4">
+            <div class="card-body p-4 d-flex justify-content-between align-items-center">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="rounded-circle bg-danger-subtle p-3 d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
+                        <i class="bi bi-file-earmark-pdf-fill fs-3 text-danger"></i>
+                    </div>
+                    <div>
+                        <h5 class="fw-bold text-dark mb-1">Regulamento Oficial</h5>
+                        <p id="infoRegulamentoDesk" class="text-muted mb-0 small">Verificando regulamento cadastrado...</p>
+                    </div>
+                </div>
+                <div class="d-flex gap-2">
+                    <a id="btnVerPdfDesk" href="#" target="_blank" class="btn btn-outline-danger fw-semibold rounded-3 px-3 d-none">
+                        <i class="bi bi-file-earmark-pdf"></i> Visualizar PDF
+                    </a>
+                    <button type="button" class="btn btn-danger fw-semibold rounded-3 px-3" data-bs-toggle="modal" data-bs-target="#modalRegulamento" style="background-color: #ed1c24; border: none;">
+                        <i class="bi bi-cloud-upload me-1"></i> Upload do Regulamento
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <h5 class="fw-bold mb-3">Locais de Jogos</h5>
         <div id="listaLocaisDesktop" class="row g-3">
             <p class="text-muted">Carregando…</p>
         </div>
     </div>
 </main>
 
+<!-- ================= MODAL REGULAMENTO ================= -->
+<div class="modal fade" id="modalRegulamento" tabindex="-1" aria-labelledby="modalRegulamentoLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content rounded-4 border-0 shadow">
+            <div class="modal-header border-0 pb-0">
+                <h5 class="modal-title fw-bold text-danger" id="modalRegulamentoLabel">Atualizar Regulamento (PDF)</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+            </div>
+            <form id="formRegulamento" enctype="multipart/form-data">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="pdf_regulamento" class="form-label fw-medium">Selecione o arquivo em PDF</label>
+                        <input type="file" class="form-control rounded-3" id="pdf_regulamento" name="pdf_regulamento" accept=".pdf" required>
+                        <div class="form-text small">Tamanho máximo suportado e formato PDF.</div>
+                    </div>
+                    <div id="msgRegulamento" class="small text-center mb-2"></div>
+                </div>
+                <div class="modal-footer border-0 pt-0 d-flex justify-content-end gap-2">
+                    <button type="button" class="btn btn-outline-secondary rounded-3" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-danger rounded-3 fw-semibold px-4" id="btnSalvarRegulamento">Enviar Arquivo</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- ================= MODAL NOVO LOCAL ================= -->
 <div class="modal fade" id="modalNovoLocal" tabindex="-1" aria-labelledby="tituloModalLocal" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content rounded-4 border-0 shadow">
@@ -78,6 +148,7 @@ $paginaAtiva = 'dashboard';
     </div>
 </div>
 
+<!-- ================= MODAL EDITAR LOCAL ================= -->
 <div class="modal fade" id="modalEditarLocal" tabindex="-1" aria-labelledby="modalEditarLocalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content rounded-4 border-0 shadow">
@@ -120,7 +191,37 @@ $paginaAtiva = 'dashboard';
 <script>
     const API = '../../../api/';
     const params = new URLSearchParams(window.location.search);
-    const idInterclasse = params.get('id');
+    let idInterclasse = params.get('id');
+
+    // Função para buscar o ID do Interclasse Ativo caso não exista parâmetro na URL
+    async function obterInterclasseAtivo() {
+        if (idInterclasse) return idInterclasse;
+
+        try {
+            // Chamada ajustada para a API interclasse.php (no singular)
+            const res = await fetch(`${API}interclasse.php?status_interclasse=1`);
+            const data = await res.json();
+            
+            const ativo = Array.isArray(data) ? data[0] : data;
+            if (ativo && ativo.id_interclasse) {
+                idInterclasse = ativo.id_interclasse;
+                
+                const btnVoltarMob = document.getElementById('btnVoltarLocaisMobile');
+                const btnVoltarDesk = document.getElementById('btnVoltarLocaisDesk');
+                if (btnVoltarMob) btnVoltarMob.href = `./dashboard.php?id=${idInterclasse}`;
+                if (btnVoltarDesk) btnVoltarDesk.href = `./dashboard.php?id=${idInterclasse}`;
+                if (ativo.nome_interclasse) {
+                    const elNome = document.getElementById('nomeInterclasseLocais');
+                    if (elNome) elNome.textContent = ativo.nome_interclasse;
+                }
+                
+                return idInterclasse;
+            }
+        } catch (e) {
+            console.error('Erro ao obter interclasse ativo:', e);
+        }
+        return null;
+    }
 
     if (idInterclasse) {
         document.getElementById('btnVoltarLocaisMobile').href = `./dashboard.php?id=${idInterclasse}`;
@@ -131,6 +232,60 @@ $paginaAtiva = 'dashboard';
         const d = document.createElement('div');
         d.textContent = s == null ? '' : String(s);
         return d.innerHTML;
+    }
+
+    // --- LÓGICA DO REGULAMENTO ---
+    async function carregarRegulamento() {
+        if (!idInterclasse) await obterInterclasseAtivo();
+        if (!idInterclasse) return;
+
+        try {
+            // Chamada ajustada para a API interclasse.php (no singular)
+            const res = await fetch(`${API}interclasse.php?id_interclasse=${idInterclasse}&regulamento=true`);
+            const data = await res.json();
+            
+            const item = Array.isArray(data) ? data[0] : data;
+            
+            const pdfName = item?.regulamento_interclasse;
+            const badgeMob = document.getElementById('badgeRegulamentoMob');
+            const infoMob = document.getElementById('infoRegulamentoMob');
+            const infoDesk = document.getElementById('infoRegulamentoDesk');
+            const btnVerDesk = document.getElementById('btnVerPdfDesk');
+            const btnVerMob = document.getElementById('btnVerPdfMob');
+
+            if (pdfName && pdfName.trim() !== '') {
+                const pdfUrl = `../../../uploads/regulamentos/${pdfName}`;
+                
+                if (badgeMob) {
+                    badgeMob.textContent = 'Cadastrado';
+                    badgeMob.className = 'badge bg-success';
+                }
+                if (infoMob) infoMob.textContent = 'Regulamento disponível em PDF.';
+                if (infoDesk) infoDesk.textContent = 'O regulamento em PDF está atualizado e disponível para consulta.';
+                
+                if (btnVerDesk) {
+                    btnVerDesk.href = pdfUrl;
+                    btnVerDesk.classList.remove('d-none');
+                }
+                
+                if (btnVerMob) {
+                    btnVerMob.href = pdfUrl;
+                    btnVerMob.classList.remove('d-none');
+                }
+            } else {
+                if (badgeMob) {
+                    badgeMob.textContent = 'Pendente';
+                    badgeMob.className = 'badge bg-warning text-dark';
+                }
+                if (infoMob) infoMob.textContent = 'Nenhum regulamento enviado.';
+                if (infoDesk) infoDesk.textContent = 'Nenhum arquivo de regulamento foi enviado até o momento.';
+                
+                if (btnVerDesk) btnVerDesk.classList.add('d-none');
+                if (btnVerMob) btnVerMob.classList.add('d-none');
+            }
+        } catch (e) {
+            console.error('Erro ao buscar regulamento:', e);
+        }
     }
 
     function cardLocal(loc) {
@@ -221,6 +376,9 @@ $paginaAtiva = 'dashboard';
     async function carregarLocais() {
         const mob = document.getElementById('listaLocaisMobile');
         const desk = document.getElementById('listaLocaisDesktop');
+        
+        if (!idInterclasse) await obterInterclasseAtivo();
+
         try {
             const q = idInterclasse ? `?id_interclasse=${encodeURIComponent(idInterclasse)}` : '';
             const res = await fetch(`${API}locais.php${q}`);
@@ -241,21 +399,86 @@ $paginaAtiva = 'dashboard';
         }
     }
 
-    // Inicialização unificada após o carregamento da página
     document.addEventListener('DOMContentLoaded', async () => {
+        if (!idInterclasse) {
+            await obterInterclasseAtivo();
+        }
+
         if (idInterclasse) {
             try {
-                const d = await window.SGIInterclasse.getInterclasseById(idInterclasse);
-                if (d?.nome_interclasse) {
-                    document.getElementById('nomeInterclasseLocais').textContent = d.nome_interclasse;
-                    window.SGIInterclasse.updatePageTitle(d.nome_interclasse);
+                if (window.SGIInterclasse?.getInterclasseById) {
+                    const d = await window.SGIInterclasse.getInterclasseById(idInterclasse);
+                    if (d?.nome_interclasse) {
+                        document.getElementById('nomeInterclasseLocais').textContent = d.nome_interclasse;
+                        window.SGIInterclasse.updatePageTitle(d.nome_interclasse);
+                    }
                 }
             } catch (_) { /* ok */ }
         }
         
         await carregarLocais();
+        await carregarRegulamento();
 
-        // Envio do formulário de NOVO LOCAL
+        // Envio do FORMULÁRIO REGULAMENTO
+        // Envio do FORMULÁRIO REGULAMENTO (Popup de Sucesso)
+document.getElementById('formRegulamento').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const msg = document.getElementById('msgRegulamento');
+    const btn = document.getElementById('btnSalvarRegulamento');
+    const fileInput = document.getElementById('pdf_regulamento');
+    const modalEl = document.getElementById('modalRegulamento');
+
+    if (!idInterclasse) {
+        await obterInterclasseAtivo();
+    }
+
+    if (!idInterclasse) {
+        alert('Nenhuma edição do interclasse encontrada ou ativa.');
+        return;
+    }
+
+    if (!fileInput.files || fileInput.files.length === 0) {
+        alert('Por favor, selecione um arquivo PDF.');
+        return;
+    }
+
+    const formData = new FormData();
+    formData.append('pdf_regulamento', fileInput.files[0]);
+
+    msg.textContent = '';
+    btn.disabled = true;
+
+    try {
+        const res = await fetch(`${API}interclasse.php?id=${idInterclasse}`, {
+            method: 'POST',
+            body: formData
+        });
+        
+        const js = await res.json();
+        if (!res.ok || js.success === false) {
+            throw new Error(js.message || 'Falha ao salvar o regulamento.');
+        }
+
+        // 1. Fecha o modal
+        bootstrap.Modal.getInstance(modalEl)?.hide();
+        
+        // 2. Limpa o input de arquivo
+        document.getElementById('formRegulamento').reset();
+        
+        // 3. Exibe o Popup de Sucesso 🎉
+        alert('Regulamento enviado e atualizado com sucesso! :)');
+        
+        // 4. Recarrega as informações na tela
+        await carregarRegulamento();
+
+    } catch (err) {
+        alert(err.message || 'Erro no envio do regulamento.');
+    } finally {
+        btn.disabled = false;
+    }
+});
+
+        // Envio do formulário NOVO LOCAL
         document.getElementById('formNovoLocal').addEventListener('submit', async (e) => {
             e.preventDefault();
             const nome = document.getElementById('inputNomeLocal').value.trim();
@@ -270,7 +493,10 @@ $paginaAtiva = 'dashboard';
             btn.disabled = true;
             try {
                 if (!idInterclasse) {
-                    throw new Error('Nenhuma edição do interclasse selecionada.');
+                    await obterInterclasseAtivo();
+                }
+                if (!idInterclasse) {
+                    throw new Error('Nenhuma edição do interclasse selecionada/ativa.');
                 }
                 const body = { 
                     nome_local: nome, 
@@ -298,7 +524,7 @@ $paginaAtiva = 'dashboard';
             }
         });
 
-        // Configuração ao abrir o Modal de Edição
+        // Configuração ao abrir o Modal EDITAR LOCAL
         const modalEditar = document.getElementById('modalEditarLocal');
         if (modalEditar) {
             modalEditar.addEventListener('show.bs.modal', function (event) {
@@ -318,7 +544,7 @@ $paginaAtiva = 'dashboard';
             });
         }
 
-        // Envio do formulário de EDITAR LOCAL
+        // Envio do formulário EDITAR LOCAL
         document.getElementById('formEditarLocal').addEventListener('submit', async function (e) {
             e.preventDefault();
             
@@ -338,7 +564,7 @@ $paginaAtiva = 'dashboard';
                 const body = { 
                     id_local: parseInt(id, 10),
                     nome_local: nome, 
-                    disponivel_local: parseInt(disponivel, 10) // Enviando como inteiro puro (1 ou 0)
+                    disponivel_local: parseInt(disponivel, 10)
                 };
                 if (carga != null && !Number.isNaN(carga)) body.carga_local = carga;
                 if (idInterclasse) body.interclasses_id_interclasse = parseInt(idInterclasse, 10);
