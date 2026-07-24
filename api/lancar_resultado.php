@@ -43,12 +43,20 @@ try {
 
     if (!$jaConcluido) {
         $totalGols = 0;
+        $golsArray = [];
         foreach ($data->resultados as $res) {
-            $totalGols += (int) $res->gols;
+            $g = (int) $res->gols;
+            $totalGols += $g;
+            $golsArray[] = $g;
         }
         if ($totalGols === 0) {
             $conn->rollback();
             echo json_encode(['success' => false, 'message' => 'Não é possível finalizar um jogo com placar 0x0. Registre o placar correto.'], JSON_UNESCAPED_UNICODE);
+            exit;
+        }
+        if (count($golsArray) >= 2 && $golsArray[0] === $golsArray[1]) {
+            $conn->rollback();
+            echo json_encode(['success' => false, 'message' => 'O jogo não pode terminar empatado! Registre o placar correto.'], JSON_UNESCAPED_UNICODE);
             exit;
         }
 
@@ -124,12 +132,20 @@ try {
         }
     } else {
         $totalGols = 0;
+        $golsArray2 = [];
         foreach ($data->resultados as $res) {
-            $totalGols += (int) $res->gols;
+            $g = (int) $res->gols;
+            $totalGols += $g;
+            $golsArray2[] = $g;
         }
         if ($totalGols === 0) {
             $conn->rollback();
             echo json_encode(['success' => false, 'message' => 'Não é possível alterar o placar de um jogo finalizado para 0x0.'], JSON_UNESCAPED_UNICODE);
+            exit;
+        }
+        if (count($golsArray2) >= 2 && $golsArray2[0] === $golsArray2[1]) {
+            $conn->rollback();
+            echo json_encode(['success' => false, 'message' => 'O jogo não pode terminar empatado! Registre o placar correto.'], JSON_UNESCAPED_UNICODE);
             exit;
         }
 

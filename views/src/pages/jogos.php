@@ -366,15 +366,11 @@ $paginaAtiva = 'dashboard';
                             <option value="">Selecione a equipe</option>
                         </select>
                     </div>
-                    <div class="mb-3">
+                    <div class="mb-2">
                         <label class="form-label">Jogador(a)</label>
                         <select class="form-select" id="selectAlunoArtilheiro" required>
                             <option value="">Selecione uma equipe primeiro</option>
                         </select>
-                    </div>
-                    <div class="mb-2">
-                        <label class="form-label">Quantidade de gols neste lance</label>
-                        <input type="number" class="form-control" id="numGolsArtilheiro" value="1" min="1" max="99" required>
                     </div>
                     <div id="msgArtilheiro" class="small"></div>
                 </div>
@@ -748,6 +744,10 @@ $paginaAtiva = 'dashboard';
                 gols: Math.max(0, parseInt(p.resultado_partida, 10) || 0)
             };
         });
+        if (resultados.length >= 2 && resultados[0].gols === resultados[1].gols) {
+            alert('O jogo não pode terminar empatado! Registre o placar correto antes de finalizar.');
+            return;
+        }
         try {
             var res = await fetch(API + 'lancar_resultado.php', {
                 method: 'POST',
@@ -1341,7 +1341,6 @@ $paginaAtiva = 'dashboard';
         _artilheiroEquipeAtual = idEquipe;
         document.getElementById('formArtilheiro').reset();
         document.getElementById('msgArtilheiro').innerHTML = '';
-        document.getElementById('numGolsArtilheiro').value = 1;
 
         var selectEquipe = document.getElementById('selectEquipeArtilheiro');
         selectEquipe.value = idEquipe;
@@ -1362,11 +1361,6 @@ $paginaAtiva = 'dashboard';
             msg.innerHTML = '<span class="text-danger">Selecione o(a) jogador(a).</span>';
             return;
         }
-        var numGols = parseInt(document.getElementById('numGolsArtilheiro').value, 10);
-        if (!numGols || numGols < 1) {
-            msg.innerHTML = '<span class="text-danger">Informe ao menos 1 gol.</span>';
-            return;
-        }
 
         btn.disabled = true;
         btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Salvando...';
@@ -1378,12 +1372,12 @@ $paginaAtiva = 'dashboard';
                 body: JSON.stringify({
                     usuarios_id_usuario: parseInt(idAluno, 10),
                     jogos_id_jogo: idJogo,
-                    num_gol: numGols
+                    num_gol: 1
                 })
             });
             var result = await resp.json();
             if (result.success) {
-                msg.innerHTML = '<span class="text-success">Gol(s) registrado(s)!</span>';
+                msg.innerHTML = '<span class="text-success">Gol registrado!</span>';
                 carregarArtilheiros();
                 setTimeout(function() {
                     btn.disabled = false;
