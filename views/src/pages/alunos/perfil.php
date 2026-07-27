@@ -111,8 +111,6 @@ include 'componentes/head.php';
 $paginaAtiva = 'perfil';
 include 'componentes/nav.php';
 
-// Inclusão do header/banner no topo
-include 'componentes/header.php';
 ?>
 
 <style>

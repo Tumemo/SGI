@@ -44,11 +44,11 @@ $paginaAtiva = 'dashboard';
 
     <div class="position-fixed d-flex flex-row align-items-center gap-4 py-3 px-5" style="bottom: 0; right: 0; z-index: 1050; background: transparent;">
 
-        <button type="button" id="btnEditarModalidadeDesktop" class="btn btn-outline-primary fw-bold px-4 py-2 d-flex align-items-center justify-content-center gap-2 shadow-sm d-none" style="border-radius: 8px; margin-top: -40px;" onclick="abrirModalEditarModalidade()">
+        <button type="button" id="btnEditarModalidadeDesktop" class="btn btn-outline-primary fw-bold px-4 py-2 d-flex align-items-center justify-content-center gap-2 shadow-sm d-none" style="border-radius: 8px;" onclick="abrirModalEditarModalidade()">
             <i class="bi bi-pencil-square"></i> Editar
         </button>
 
-        <button type="button" id="btnExcluirModalidadeDesktop" class="btn btn-danger fw-bold px-4 py-2 d-flex align-items-center justify-content-center gap-2 shadow-sm d-none" style="border-radius: 8px; margin-top: -40px;" onclick="excluirModalidade()">
+        <button type="button" id="btnExcluirModalidadeDesktop" class="btn btn-danger fw-bold px-4 py-2 d-flex align-items-center justify-content-center gap-2 shadow-sm d-none" style="border-radius: 8px;" onclick="excluirModalidade()">
             <i class="bi bi-trash"></i> Excluir
         </button>
 
@@ -166,7 +166,7 @@ $paginaAtiva = 'dashboard';
     const urlParams = new URLSearchParams(window.location.search);
     let idInterclasse = urlParams.get('id');
     const idCategoria = urlParams.get('id_categoria');
-    const modo = urlParams.get('modo') || 'create';
+    const modo = urlParams.get('modo') || 'view';
     let modalidadeSelecionada = null;
     let modalidadesData = [];
 

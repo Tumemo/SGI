@@ -172,7 +172,7 @@ $paginaAtiva = 'dashboard';
 <script>
     const urlParams = new URLSearchParams(window.location.search);
     let idInterclasse = urlParams.get('id');
-    const modo = urlParams.get('modo') || 'create';
+    const modo = urlParams.get('modo') || 'view';
     function alterarPontos(idElemento, valor) {
         const elemento = document.getElementById(idElemento);
         let atual = parseInt(elemento.innerText);

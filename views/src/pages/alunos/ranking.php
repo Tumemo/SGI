@@ -13,7 +13,6 @@ include 'componentes/head.php';
 $titulo = 'Ranking';
 $mostrarVoltar = true;
 $urlVoltar = './home.php';
-include 'componentes/header.php';
 ?>
 
     <main class="container py-4">

@@ -22,7 +22,6 @@ include 'componentes/nav.php';
 $mostrarSino = true;
 $mostrarVoltar = false;
 $titulo = 'Interclasses';
-include 'componentes/header.php';
 ?>
 
 <main class="container py-4 flex-grow-1">

@@ -1,7 +1,7 @@
 <?php
 $tituloPagina = 'SGI - Categorias';
 $titulo = 'Categorias';
-$modoPagina = $_GET['modo'] ?? 'create';
+$modoPagina = $_GET['modo'] ?? 'view';
 $mostrarVoltar = $modoPagina === 'view';
 $urlVoltar = './dashboard.php';
 include 'componentes/head.php';
@@ -161,7 +161,7 @@ $paginaAtiva = 'dashboard';
 <script>
     const urlParams = new URLSearchParams(window.location.search);
     const idInterclasse = urlParams.get('id');
-    const modo = urlParams.get('modo') || 'create';
+    const modo = urlParams.get('modo') || 'view';
     let categoriaSelecionada = null;
     let categoriasData = [];
     let editCategoriaId = null;

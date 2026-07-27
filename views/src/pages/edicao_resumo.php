@@ -137,17 +137,17 @@ $paginaAtiva = 'dashboard';
         if (!idInterclasse) return;
         const nome = interclasse?.nome_interclasse || 'Interclasse';
 
-        document.getElementById('btnVoltarMobile').href = `./edicao_pontuacao.php?id=${idInterclasse}`;
-        document.getElementById('btnVoltarDesktop').href = `./edicao_pontuacao.php?id=${idInterclasse}`;
-        document.getElementById('btnVoltarResumoTopo').href = `./edicao_pontuacao.php?id=${idInterclasse}`;
+        document.getElementById('btnVoltarMobile').href = `./edicao_pontuacao.php?id=${idInterclasse}&modo=create`;
+        document.getElementById('btnVoltarDesktop').href = `./edicao_pontuacao.php?id=${idInterclasse}&modo=create`;
+        document.getElementById('btnVoltarResumoTopo').href = `./edicao_pontuacao.php?id=${idInterclasse}&modo=create`;
 
-        document.getElementById('linkEditarModalidadesMobile').href = `./edicao_modalidades.php?id=${idInterclasse}`;
-        document.getElementById('linkEditarModalidadesDesktop').href = `./edicao_modalidades.php?id=${idInterclasse}`;
+        document.getElementById('linkEditarModalidadesMobile').href = `./edicao_modalidades.php?id=${idInterclasse}&modo=create`;
+        document.getElementById('linkEditarModalidadesDesktop').href = `./edicao_modalidades.php?id=${idInterclasse}&modo=create`;
 
-        document.getElementById('linkEditarRegulamentosMobile').href = `./edicao_pontuacao.php?id=${idInterclasse}`;
-        document.getElementById('linkEditarRegulamentosDesktop').href = `./edicao_pontuacao.php?id=${idInterclasse}`;
-        document.getElementById('linkEditarCategoriasMobile').href = `./edicao_categorias.php?id=${idInterclasse}`;
-        document.getElementById('linkEditarCategoriasDesktop').href = `./edicao_categorias.php?id=${idInterclasse}`;
+        document.getElementById('linkEditarRegulamentosMobile').href = `./edicao_pontuacao.php?id=${idInterclasse}&modo=create`;
+        document.getElementById('linkEditarRegulamentosDesktop').href = `./edicao_pontuacao.php?id=${idInterclasse}&modo=create`;
+        document.getElementById('linkEditarCategoriasMobile').href = `./edicao_categorias.php?id=${idInterclasse}&modo=create`;
+        document.getElementById('linkEditarCategoriasDesktop').href = `./edicao_categorias.php?id=${idInterclasse}&modo=create`;
         window.SGIInterclasse.getActiveInterclasse().then((ativo) => {
             const idTurmas = ativo?.id_interclasse || idInterclasse;
             document.getElementById('linkEditarTurmasMobile').href = `./turmas.php?id=${idTurmas}`;

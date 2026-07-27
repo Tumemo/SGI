@@ -40,7 +40,6 @@ $mostrarVoltar = true;
 $mostrarSino = true;
 $urlVoltar = './home.php';
 include 'componentes/head.php';
-include 'componentes/header.php';
 ?>
 
 <style>
