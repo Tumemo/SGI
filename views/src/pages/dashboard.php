@@ -83,7 +83,14 @@ $isMesario = $nivelUsuario === 2;
             <div class="d-flex m-auto justify-content-between align-items-center shadow py-3 px-4 mb-3 border border-1 rounded-3" style="width: 90%;">
                 <i class="bi bi-basket fs-2"></i>
                 <h2 class="m-0 fs-3 w-100 px-3">Arrecadações</h2>
-                <picture><img src="../../public/icons/arrow-right.svg" alt="Seta"></picture>
+                <picture><img src="../../public/icons/arrow-right.svg" alt="Seta para direita"></picture>
+            </div>
+        </a>
+        <a href="./ocorrencias.php" id="linkOcorrencias" class="text-decoration-none text-black">
+            <div class="d-flex m-auto justify-content-between align-items-center shadow py-3 px-4 mb-3 border border-1 rounded-3" style="width: 90%;">
+                <i class="bi bi-exclamation-triangle fs-2"></i>
+                <h2 class="m-0 fs-3 w-100 px-3">Ocorrências</h2>
+                <picture><img src="../../public/icons/arrow-right.svg" alt="Seta para direita"></picture>
             </div>
         </a>
         <a href="./categorias.php" id="linkCategorias" class="text-decoration-none text-black">
@@ -235,6 +242,16 @@ $isMesario = $nivelUsuario === 2;
                 </a>
             </div>
             <div class="col-12 col-md-6 col-lg-4">
+                <a href="ocorrencias.php" id="linkOcorrenciasColab" class="dash-card">
+                    <div class="dash-card-red-corner"></div>
+                    <div class="dash-card-header">
+                        <div class="dash-card-icon"><i class="bi bi-exclamation-triangle"></i></div>
+                        <h5 class="dash-card-title">OCORRÊNCIAS</h5>
+                    </div>
+                    <p class="dash-card-text">Registre ocorrências e aplique descontos de pontos nas turmas.</p>
+                </a>
+            </div>
+            <div class="col-12 col-md-6 col-lg-4">
                 <a href="categorias.php" id="linkCategorias" class="dash-card">
                     <div class="dash-card-red-corner"></div>
                     <div class="dash-card-header">
@@ -335,6 +352,16 @@ $isMesario = $nivelUsuario === 2;
                         <h5 class="dash-card-title">ARRECADAÇÕES</h5>
                     </div>
                     <p class="dash-card-text">Gerencie os itens arrecadados na gincana, metas, pontos de entrega e o impacto das doações.</p>
+                </a>
+            </div>
+            <div class="col-12 col-md-6 col-lg-4">
+                <a href="ocorrencias.php" id="linkOcorrenciasAdmin" class="dash-card">
+                    <div class="dash-card-red-corner"></div>
+                    <div class="dash-card-header">
+                        <div class="dash-card-icon"><i class="bi bi-exclamation-triangle"></i></div>
+                        <h5 class="dash-card-title">OCORRÊNCIAS</h5>
+                    </div>
+                    <p class="dash-card-text">Registre ocorrências e aplique descontos de pontos nas turmas por modalidade.</p>
                 </a>
             </div>
             <div class="col-12 col-md-6 col-lg-4">
@@ -451,6 +478,7 @@ $isMesario = $nivelUsuario === 2;
     document.querySelectorAll('#linkLocais').forEach(link => { link.href = `./locais.php?id=${idInterclasse}`; });
     document.querySelectorAll('#linkColaboradores').forEach(link => { link.href = `./colaboradores.php?id=${idInterclasse}`; });
     document.querySelectorAll('#linkArrecadacoes').forEach(link => { link.href = `./edicao_arrecadacao.php?id=${idInterclasse}`; });
+    document.querySelectorAll('#linkOcorrencias').forEach(link => { link.href = `./ocorrencias.php?id=${idInterclasse}`; });
     document.querySelectorAll('#linkCategorias').forEach(link => { link.href = `./categorias.php?id=${idInterclasse}`; });
     document.querySelectorAll('#linkTurmas').forEach(link => { link.href = `./turmas.php?id=${idInterclasse}`; });
     document.querySelectorAll('#linkEquipes').forEach(link => { link.href = `./edicao_equipes.php?id=${idInterclasse}`; });
@@ -462,6 +490,9 @@ $isMesario = $nivelUsuario === 2;
     document.querySelectorAll('#linkModalidades').forEach(link => { link.href = `./edicao_modalidades.php?id=${idInterclasse}&modo=view`; });
     document.querySelectorAll('#linkPontuacoes').forEach(link => { link.href = `./edicao_pontuacao.php?id=${idInterclasse}&modo=view`; });
     document.querySelectorAll('#linkArrecadacoes').forEach(link => { link.href = `./edicao_arrecadacao.php?id=${idInterclasse}`; });
+    document.querySelectorAll('#linkOcorrencias').forEach(link => { link.href = `./ocorrencias.php?id=${idInterclasse}`; });
+    document.querySelectorAll('#linkOcorrenciasAdmin').forEach(link => { link.href = `./ocorrencias.php?id=${idInterclasse}`; });
+    document.querySelectorAll('#linkOcorrenciasColab').forEach(link => { link.href = `./ocorrencias.php?id=${idInterclasse}`; });
     document.querySelectorAll('#linkCategorias').forEach(link => { link.href = `./edicao_categorias.php?id=${idInterclasse}&modo=view`; });
     document.querySelectorAll('#linkLocais').forEach(link => { link.href = `./edicao_locais.php?id=${idInterclasse}`; });
     document.querySelectorAll('#linkAgenda').forEach(link => { link.href = `./edicao_agenda.php?id=${idInterclasse}&modo=view`; });
