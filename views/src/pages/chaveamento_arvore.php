@@ -1935,6 +1935,42 @@ $paginaAtiva = 'chaveamento';
         }
     }
 
+    let _jogoIndividualCache = null;
+
+    async function editarJogoIndividual(e) {
+        if (e) e.preventDefault();
+        if (!_jogoIndividualCache) {
+            alert('Nenhum jogo registrado para esta modalidade.');
+            return;
+        }
+        const jogo = _jogoIndividualCache;
+        _popularModalEdicao(jogo);
+
+        var modalEl = document.getElementById('modalEditarJogo');
+        var selectLocal = document.getElementById('editLocalJogo');
+        selectLocal.innerHTML = '<option value="">Carregando...</option>';
+
+        fetch('../../../api/locais.php?id_interclasse=' + idInterclasse)
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                if (_editIdJogo !== jogo.id_jogo) return;
+                const locais = data.success && Array.isArray(data.data) ? data.data : [];
+                selectLocal.innerHTML = '<option value="">Selecione um local</option>';
+                locais.forEach(function(l) {
+                    var sel = Number(l.id_local) === Number(jogo.locais_id_local) ? 'selected' : '';
+                    selectLocal.innerHTML += '<option value="' + l.id_local + '" ' + sel + '>' + l.nome_local + '</option>';
+                });
+            })
+            .catch(function() {
+                if (_editIdJogo !== jogo.id_jogo) return;
+                selectLocal.innerHTML = '<option value="">Erro ao carregar locais</option>';
+            });
+
+        var modal = bootstrap.Modal.getInstance(modalEl);
+        if (!modal) modal = new bootstrap.Modal(modalEl);
+        modal.show();
+    }
+
     async function carregarArvore(idModalidade) {
         const area = document.getElementById('bracketArea');
         const areaMob = document.getElementById('bracketAreaMob');
@@ -1990,6 +2026,7 @@ $paginaAtiva = 'chaveamento';
                 const dadosRank = await resRank.json();
                 const participantes = (dadosPart.success && dadosPart.participantes) ? dadosPart.participantes : [];
                 const rankingAtual = (dadosRank.success && dadosRank.ranking) ? dadosRank.ranking : [];
+                const jogoIndividual = dadosRank.jogo || null;
 
                 const selectOpts = participantes.map(p =>
                     `<option value="${p.id_usuario}">${esc(p.nome_usuario)} — ${esc(p.nome_turma)}</option>`
@@ -2028,8 +2065,17 @@ $paginaAtiva = 'chaveamento';
 
                 const individualHtml = `
                     <div class="kv-history-card" style="margin-bottom:20px;">
-                        <div class="kv-history-card__header">
+                        <div class="kv-history-card__header" style="display:flex;justify-content:space-between;align-items:center;">
                             <div class="kv-history-card__title"><i class="bi bi-trophy-fill"></i> Registrar Resultado Individual</div>
+                            ${jogoIndividual ? `
+                            <div class="dropdown">
+                                <button class="kv-action" type="button" data-bs-toggle="dropdown" aria-expanded="false" title="Mais opções">
+                                    <i class="bi bi-three-dots-vertical"></i>
+                                </button>
+                                <ul class="dropdown-menu dropdown-menu-end" style="min-width:180px;border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,0.12);border:1px solid #e5e7eb;">
+                                    <li><a class="dropdown-item" href="#" onclick="editarJogoIndividual(event)" style="font-size:0.88rem;display:flex;align-items:center;gap:8px;"><i class="bi bi-pencil"></i> Editar Jogo</a></li>
+                                </ul>
+                            </div>` : ''}
                         </div>
                         <div class="kv-history-card__body">
                             <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;">
@@ -2063,6 +2109,7 @@ $paginaAtiva = 'chaveamento';
                         </div>
                     </div>`;
 
+                _jogoIndividualCache = jogoIndividual;
                 area.innerHTML = individualHtml;
                 if (areaMob) areaMob.innerHTML = individualHtml;
 

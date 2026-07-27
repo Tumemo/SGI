@@ -255,12 +255,31 @@ function sgi_ind_montar_json_ranking(mysqli $conn, int $idModalidade): array
         ];
     }
 
+    $stJ = $conn->prepare(
+        'SELECT j.id_jogo, j.nome_jogo, j.data_jogo, j.inicio_jogo, j.termino_jogo,
+                j.status_jogo, j.locais_id_local, j.modalidades_id_modalidade,
+                m.nome_modalidade
+         FROM jogos j
+         LEFT JOIN modalidades m ON m.id_modalidade = j.modalidades_id_modalidade
+         WHERE j.id_jogo = ? LIMIT 1'
+    );
+    $stJ->bind_param('i', $jogo['id_jogo']);
+    $stJ->execute();
+    $jogoDetalhes = $stJ->get_result()->fetch_assoc();
+    $stJ->close();
+
     return [
         'success' => true,
         'ranking' => $ranking,
-        'jogo' => [
-            'id_jogo' => $jogo['id_jogo'],
-            'status_jogo' => $jogo['status_jogo'],
-        ],
+        'jogo' => $jogoDetalhes ? [
+            'id_jogo' => (int) $jogoDetalhes['id_jogo'],
+            'nome_jogo' => $jogoDetalhes['nome_jogo'],
+            'data_jogo' => $jogoDetalhes['data_jogo'],
+            'inicio_jogo' => $jogoDetalhes['inicio_jogo'],
+            'termino_jogo' => $jogoDetalhes['termino_jogo'],
+            'status_jogo' => $jogoDetalhes['status_jogo'],
+            'locais_id_local' => $jogoDetalhes['locais_id_local'],
+            'nome_modalidade' => $jogoDetalhes['nome_modalidade'],
+        ] : null,
     ];
 }
