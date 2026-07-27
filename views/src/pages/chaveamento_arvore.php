@@ -366,6 +366,7 @@ $cssExtra = '
     white-space: nowrap;
 }
 .bkt-match__status--agendado { background: #fef3c7; color: #92400e; }
+.bkt-match__status--aguardando { background: #f3e8ff; color: #7c3aed; }
 .bkt-match__status--andamento { background: #dbeafe; color: #1e40af; animation: statusPulse 1.5s ease-in-out infinite; }
 .bkt-match__status--concluido { background: #dcfce7; color: #166534; }
 .bkt-match__status--iniciado { background: #dbeafe; color: #1e40af; animation: statusPulse 1.5s ease-in-out infinite; }
@@ -635,6 +636,8 @@ $cssExtra = '
 }
 .kv-badge--agendado { background: #fef3c7; color: #92400e; }
 .kv-badge--agendado::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: #f59e0b; }
+.kv-badge--aguardando { background: #f3e8ff; color: #7c3aed; }
+.kv-badge--aguardando::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: #8b5cf6; }
 .kv-badge--andamento { background: #dbeafe; color: #1e40af; }
 .kv-badge--andamento::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: #3b82f6; }
 .kv-badge--concluido, .kv-badge--finalizado { background: #dcfce7; color: #166534; }
@@ -1090,6 +1093,7 @@ $paginaAtiva = 'chaveamento';
                             <div class="mb-3">
                                 <label class="form-label">Status</label>
                                 <select class="form-select" id="editStatusJogo">
+                                    <option value="Aguardando">Aguardando</option>
                                     <option value="Agendado">Agendado</option>
                                     <option value="Iniciado">Em Andamento</option>
                                     <option value="Concluido">Concluído</option>
@@ -1701,6 +1705,7 @@ $paginaAtiva = 'chaveamento';
         if (isBye) { statusLabel = 'Bye'; statusCls += ' bkt-match__status--bye'; }
         else if (isConcluido) { statusCls += ' bkt-match__status--concluido'; statusLabel = 'Finalizado'; }
         else if (isIniciado) { statusCls += ' bkt-match__status--andamento'; statusLabel = 'Em andamento'; }
+        else if (jogo.status_jogo === 'Aguardando') { statusCls += ' bkt-match__status--aguardando'; statusLabel = 'Aguardando'; }
         else { statusCls += ' bkt-match__status--agendado'; }
 
         const nomeModalidade = jogo.nome_modalidade || '';

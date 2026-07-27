@@ -136,7 +136,7 @@ $paginaAtiva = 'colaboradores';
         </div>
 
         <div class="col-stats" id="statsMobile">
-            <div class="col-stat"><div class="col-stat__icon col-stat__icon--total"><i class="bi bi-people-fill"></i></div><div><div class="col-stat__num" id="statTotalMob">-</div><div class="col-stat__label">Colaboradores</div></div></div>
+            <div class="col-stat"><div class="col-stat__icon col-stat__icon--total"><i class="bi bi-people-fill"></i></div><div><div class="col-stat__num" id="statTotalMob">-</div><div class="col-stat__label">Usuários</div></div></div>
             <div class="col-stat"><div class="col-stat__icon col-stat__icon--admin"><i class="bi bi-shield-fill"></i></div><div><div class="col-stat__num" id="statAdminMob">-</div><div class="col-stat__label">Admins</div></div></div>
             <div class="col-stat"><div class="col-stat__icon col-stat--mesario"><i class="bi bi-clipboard-check"></i></div><div><div class="col-stat__num" id="statMesarioMob">-</div><div class="col-stat__label">Mesários</div></div></div>
             <div class="col-stat"><div class="col-stat__icon col-stat__icon--colab"><i class="bi bi-person"></i></div><div><div class="col-stat__num" id="statColabMob">-</div><div class="col-stat__label">Colaboradores</div></div></div>
@@ -178,7 +178,7 @@ $paginaAtiva = 'colaboradores';
         </div>
 
         <div class="col-stats" id="statsDesktop">
-            <div class="col-stat"><div class="col-stat__icon col-stat__icon--total"><i class="bi bi-people-fill"></i></div><div><div class="col-stat__num" id="statTotalDesk">-</div><div class="col-stat__label">Colaboradores</div></div></div>
+            <div class="col-stat"><div class="col-stat__icon col-stat__icon--total"><i class="bi bi-people-fill"></i></div><div><div class="col-stat__num" id="statTotalDesk">-</div><div class="col-stat__label">Usuários</div></div></div>
             <div class="col-stat"><div class="col-stat__icon col-stat__icon--admin"><i class="bi bi-shield-fill"></i></div><div><div class="col-stat__num" id="statAdminDesk">-</div><div class="col-stat__label">Admins</div></div></div>
             <div class="col-stat"><div class="col-stat__icon col-stat--mesario"><i class="bi bi-clipboard-check"></i></div><div><div class="col-stat__num" id="statMesarioDesk">-</div><div class="col-stat__label">Mesários</div></div></div>
             <div class="col-stat"><div class="col-stat__icon col-stat__icon--colab"><i class="bi bi-person"></i></div><div><div class="col-stat__num" id="statColabDesk">-</div><div class="col-stat__label">Colaboradores</div></div></div>

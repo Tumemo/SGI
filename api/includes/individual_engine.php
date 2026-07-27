@@ -106,7 +106,7 @@ function sgi_ind_criar_jogo(mysqli $conn, int $idModalidade): int
 
     $st = $conn->prepare(
         "INSERT INTO jogos (nome_jogo, data_jogo, inicio_jogo, status_jogo, modalidades_id_modalidade, locais_id_local)
-         VALUES (?, CURDATE(), '08:00:00', 'Agendado', ?, ?)"
+         VALUES (?, CURDATE(), '08:00:00', 'Aguardando', ?, ?)"
     );
     $st->bind_param('sii', $tag, $idModalidade, $idLocal);
     $st->execute();
