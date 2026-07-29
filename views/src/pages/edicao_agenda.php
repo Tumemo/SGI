@@ -238,7 +238,6 @@ $paginaAtiva = 'agenda';
         </div>
     </div>
 </div>
-
 <script>
 (function () {
     const API = '../../../api/';
@@ -635,19 +634,46 @@ $paginaAtiva = 'agenda';
         }
     }
 
+    /* ── FUNÇÃO DE LOCAIS ATUALIZADA COM OS FILTROS ── */
     async function carregarLocais() {
-        const res = await fetch(`${API}locais.php`);
+        if (!interclasseAtual || !interclasseAtual.id_interclasse) return;
+
+        const res = await fetch(`${API}locais.php?id_interclasse=${encodeURIComponent(interclasseAtual.id_interclasse)}`);
         const data = await res.json();
-        locaisLista = data && Array.isArray(data.data) ? data.data : Array.isArray(data) ? data : [];
+        
+        let todosLocais = data && Array.isArray(data.data) ? data.data : Array.isArray(data) ? data : [];
+        
+        // Filtra para manter apenas os do interclasse atual e que estejam 'Disponivel'
+        locaisLista = todosLocais.filter((loc) => {
+            const mesmoInterclasse = String(loc.interclasses_id_interclasse) === String(interclasseAtual.id_interclasse);
+            
+            const statusClean = (loc.status_local || loc.status || '')
+                .normalize("NFD")
+                .replace(/[\u0300-\u036f]/g, "")
+                .toLowerCase();
+                
+            const isDisponivel = statusClean === 'disponivel';
+            
+            return mesmoInterclasse && isDisponivel;
+        });
+
         const sel = document.getElementById('edit-jogo-local');
         sel.innerHTML = '';
+
+        if (locaisLista.length === 0) {
+            sel.innerHTML = '<option value="">Nenhum local disponível</option>';
+            return;
+        }
+
         locaisLista.forEach((loc) => {
             sel.innerHTML += `<option value="${loc.id_local}">${escapeHtml(loc.nome_local || 'Local')}</option>`;
         });
     }
 
+    /* ── ORDEM DE EXECUÇÃO AJUSTADA NO DOMCONTENTLOADED ── */
     document.addEventListener('DOMContentLoaded', async function () {
         try {
+            // 1. Obtém primeiro o interclasse selecionado
             interclasseAtual = await getInterclasseParaAgenda();
             if (interclasseAtual) {
                 document.getElementById('nomeInterclasseAgenda').innerText = interclasseAtual.nome_interclasse;
@@ -659,13 +685,16 @@ $paginaAtiva = 'agenda';
         }
 
         inicializarAnos();
+        
         try {
+            // 2. Carrega locais e jogos SOMENTE após o interclasseAtual ter sido definido
             await carregarLocais();
             await carregarJogosDoInterclasse();
             preencherSelectModalidades();
         } catch (e) {
             console.error(e);
         }
+        
         atualizarTelas();
 
         function navegarMes(delta) {

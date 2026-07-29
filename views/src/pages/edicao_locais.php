@@ -164,7 +164,7 @@ $paginaAtiva = 'dashboard';
                         <label for="edit-local-nome" class="form-label fw-medium">Nome do Local</label>
                         <input type="text" class="form-control rounded-3" id="edit-local-nome" name="nome_local" required maxlength="45">
                     </div>
-                    
+
                     <div class="mb-3">
                         <label for="edit-local-disponivel" class="form-label fw-medium">Disponível para uso</label>
                         <select class="form-select rounded-3" id="edit-local-disponivel" name="disponivel_local">
@@ -201,11 +201,11 @@ $paginaAtiva = 'dashboard';
             // Chamada ajustada para a API interclasse.php (no singular)
             const res = await fetch(`${API}interclasse.php?status_interclasse=1`);
             const data = await res.json();
-            
+
             const ativo = Array.isArray(data) ? data[0] : data;
             if (ativo && ativo.id_interclasse) {
                 idInterclasse = ativo.id_interclasse;
-                
+
                 const btnVoltarMob = document.getElementById('btnVoltarLocaisMobile');
                 const btnVoltarDesk = document.getElementById('btnVoltarLocaisDesk');
                 if (btnVoltarMob) btnVoltarMob.href = `./dashboard.php?id=${idInterclasse}`;
@@ -214,7 +214,7 @@ $paginaAtiva = 'dashboard';
                     const elNome = document.getElementById('nomeInterclasseLocais');
                     if (elNome) elNome.textContent = ativo.nome_interclasse;
                 }
-                
+
                 return idInterclasse;
             }
         } catch (e) {
@@ -243,9 +243,9 @@ $paginaAtiva = 'dashboard';
             // Chamada ajustada para a API interclasse.php (no singular)
             const res = await fetch(`${API}interclasse.php?id_interclasse=${idInterclasse}&regulamento=true`);
             const data = await res.json();
-            
+
             const item = Array.isArray(data) ? data[0] : data;
-            
+
             const pdfName = item?.regulamento_interclasse;
             const badgeMob = document.getElementById('badgeRegulamentoMob');
             const infoMob = document.getElementById('infoRegulamentoMob');
@@ -255,19 +255,19 @@ $paginaAtiva = 'dashboard';
 
             if (pdfName && pdfName.trim() !== '') {
                 const pdfUrl = `../../../uploads/regulamentos/${pdfName}`;
-                
+
                 if (badgeMob) {
                     badgeMob.textContent = 'Cadastrado';
                     badgeMob.className = 'badge bg-success';
                 }
                 if (infoMob) infoMob.textContent = 'Regulamento disponível em PDF.';
                 if (infoDesk) infoDesk.textContent = 'O regulamento em PDF está atualizado e disponível para consulta.';
-                
+
                 if (btnVerDesk) {
                     btnVerDesk.href = pdfUrl;
                     btnVerDesk.classList.remove('d-none');
                 }
-                
+
                 if (btnVerMob) {
                     btnVerMob.href = pdfUrl;
                     btnVerMob.classList.remove('d-none');
@@ -279,7 +279,7 @@ $paginaAtiva = 'dashboard';
                 }
                 if (infoMob) infoMob.textContent = 'Nenhum regulamento enviado.';
                 if (infoDesk) infoDesk.textContent = 'Nenhum arquivo de regulamento foi enviado até o momento.';
-                
+
                 if (btnVerDesk) btnVerDesk.classList.add('d-none');
                 if (btnVerMob) btnVerMob.classList.add('d-none');
             }
@@ -376,14 +376,16 @@ $paginaAtiva = 'dashboard';
     async function carregarLocais() {
         const mob = document.getElementById('listaLocaisMobile');
         const desk = document.getElementById('listaLocaisDesktop');
-        
+
         if (!idInterclasse) await obterInterclasseAtivo();
 
         try {
+            // Envia o id_interclasse na Query String para filtrar só os do interclasse atual
             const q = idInterclasse ? `?id_interclasse=${encodeURIComponent(idInterclasse)}` : '';
             const res = await fetch(`${API}locais.php${q}`);
             const data = await res.json();
             const lista = (data && Array.isArray(data.data)) ? data.data : [];
+
             if (lista.length === 0) {
                 const msg = '<p class="text-muted text-center w-100 mb-0">Nenhum local cadastrado. Toque em &quot;Novo local&quot;.</p>';
                 mob.innerHTML = msg;
@@ -413,70 +415,72 @@ $paginaAtiva = 'dashboard';
                         window.SGIInterclasse.updatePageTitle(d.nome_interclasse);
                     }
                 }
-            } catch (_) { /* ok */ }
+            } catch (_) {
+                /* ok */
+            }
         }
-        
+
         await carregarLocais();
         await carregarRegulamento();
 
         // Envio do FORMULÁRIO REGULAMENTO
         // Envio do FORMULÁRIO REGULAMENTO (Popup de Sucesso)
-document.getElementById('formRegulamento').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const msg = document.getElementById('msgRegulamento');
-    const btn = document.getElementById('btnSalvarRegulamento');
-    const fileInput = document.getElementById('pdf_regulamento');
-    const modalEl = document.getElementById('modalRegulamento');
+        document.getElementById('formRegulamento').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const msg = document.getElementById('msgRegulamento');
+            const btn = document.getElementById('btnSalvarRegulamento');
+            const fileInput = document.getElementById('pdf_regulamento');
+            const modalEl = document.getElementById('modalRegulamento');
 
-    if (!idInterclasse) {
-        await obterInterclasseAtivo();
-    }
+            if (!idInterclasse) {
+                await obterInterclasseAtivo();
+            }
 
-    if (!idInterclasse) {
-        alert('Nenhuma edição do interclasse encontrada ou ativa.');
-        return;
-    }
+            if (!idInterclasse) {
+                alert('Nenhuma edição do interclasse encontrada ou ativa.');
+                return;
+            }
 
-    if (!fileInput.files || fileInput.files.length === 0) {
-        alert('Por favor, selecione um arquivo PDF.');
-        return;
-    }
+            if (!fileInput.files || fileInput.files.length === 0) {
+                alert('Por favor, selecione um arquivo PDF.');
+                return;
+            }
 
-    const formData = new FormData();
-    formData.append('pdf_regulamento', fileInput.files[0]);
+            const formData = new FormData();
+            formData.append('pdf_regulamento', fileInput.files[0]);
 
-    msg.textContent = '';
-    btn.disabled = true;
+            msg.textContent = '';
+            btn.disabled = true;
 
-    try {
-        const res = await fetch(`${API}interclasse.php?id=${idInterclasse}`, {
-            method: 'POST',
-            body: formData
-        });
-        
-        const js = await res.json();
-        if (!res.ok || js.success === false) {
-            throw new Error(js.message || 'Falha ao salvar o regulamento.');
-        }
+            try {
+                const res = await fetch(`${API}interclasse.php?id=${idInterclasse}`, {
+                    method: 'POST',
+                    body: formData
+                });
 
-        // 1. Fecha o modal
-        bootstrap.Modal.getInstance(modalEl)?.hide();
-        
-        // 2. Limpa o input de arquivo
-        document.getElementById('formRegulamento').reset();
-        
-        // 3. Exibe o Popup de Sucesso 🎉
-        alert('Regulamento enviado e atualizado com sucesso! :)');
-        
-        // 4. Recarrega as informações na tela
-        await carregarRegulamento();
+                const js = await res.json();
+                if (!res.ok || js.success === false) {
+                    throw new Error(js.message || 'Falha ao salvar o regulamento.');
+                }
 
-    } catch (err) {
-        alert(err.message || 'Erro no envio do regulamento.');
-    } finally {
-        btn.disabled = false;
-    }
-});;
+                // 1. Fecha o modal
+                bootstrap.Modal.getInstance(modalEl)?.hide();
+
+                // 2. Limpa o input de arquivo
+                document.getElementById('formRegulamento').reset();
+
+                // 3. Exibe o Popup de Sucesso 🎉
+                alert('Regulamento enviado e atualizado com sucesso! :)');
+
+                // 4. Recarrega as informações na tela
+                await carregarRegulamento();
+
+            } catch (err) {
+                alert(err.message || 'Erro no envio do regulamento.');
+            } finally {
+                btn.disabled = false;
+            }
+        });;
 
         // Envio do formulário NOVO LOCAL
         document.getElementById('formNovoLocal').addEventListener('submit', async (e) => {
@@ -488,7 +492,7 @@ document.getElementById('formRegulamento').addEventListener('submit', async (e) 
             const msg = document.getElementById('msgNovoLocal');
             const btn = document.getElementById('btnSalvarLocal');
             const modalEl = document.getElementById('modalNovoLocal');
-            
+
             msg.textContent = '';
             btn.disabled = true;
             try {
@@ -498,21 +502,23 @@ document.getElementById('formRegulamento').addEventListener('submit', async (e) 
                 if (!idInterclasse) {
                     throw new Error('Nenhuma edição do interclasse selecionada/ativa.');
                 }
-                const body = { 
-                    nome_local: nome, 
-                    disponivel_local: parseInt(disponivel, 10), 
-                    interclasses_id_interclasse: parseInt(idInterclasse, 10) 
+                const body = {
+                    nome_local: nome,
+                    disponivel_local: parseInt(disponivel, 10),
+                    interclasses_id_interclasse: parseInt(idInterclasse, 10)
                 };
                 if (carga != null && !Number.isNaN(carga)) body.carga_local = carga;
-                
+
                 const res = await fetch(`${API}locais.php`, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
                     body: JSON.stringify(body)
                 });
                 const js = await res.json();
                 if (!res.ok || js.success === false) throw new Error(js.message || 'Não foi possível salvar.');
-                
+
                 bootstrap.Modal.getInstance(modalEl)?.hide();
                 document.getElementById('formNovoLocal').reset();
                 await carregarLocais();
@@ -527,66 +533,72 @@ document.getElementById('formRegulamento').addEventListener('submit', async (e) 
         // Configuração ao abrir o Modal EDITAR LOCAL
         const modalEditar = document.getElementById('modalEditarLocal');
         if (modalEditar) {
-            modalEditar.addEventListener('show.bs.modal', function (event) {
+            modalEditar.addEventListener('show.bs.modal', function(event) {
                 const botao = event.relatedTarget;
-                
+
                 const id = botao.getAttribute('data-id');
                 const nome = botao.getAttribute('data-nome');
                 const disponivel = botao.getAttribute('data-disponivel');
                 const carga = botao.getAttribute('data-carga');
-                
+
                 modalEditar.querySelector('#edit-local-id').value = id;
                 modalEditar.querySelector('#edit-local-nome').value = nome;
                 modalEditar.querySelector('#edit-local-disponivel').value = disponivel;
                 modalEditar.querySelector('#edit-local-carga').value = carga;
-                
+
                 document.getElementById('msgEditarLocal').textContent = '';
             });
         }
 
         // Envio do formulário EDITAR LOCAL
-        document.getElementById('formEditarLocal').addEventListener('submit', async function (e) {
-            e.preventDefault();
-            
-            const id = document.getElementById('edit-local-id').value;
-            const nome = document.getElementById('edit-local-nome').value.trim();
-            const disponivel = document.getElementById('edit-local-disponivel').value;
-            const cargaVal = document.getElementById('edit-local-carga').value;
-            const carga = cargaVal === '' ? null : parseInt(cargaVal, 10);
-            
-            const msg = document.getElementById('msgEditarLocal');
-            const btn = document.getElementById('btnAtualizarLocal');
-            
-            msg.textContent = '';
-            btn.disabled = true;
-            
-            try {
-                const body = { 
-                    id_local: parseInt(id, 10),
-                    nome_local: nome, 
-                    disponivel_local: parseInt(disponivel, 10)
-                };
-                if (carga != null && !Number.isNaN(carga)) body.carga_local = carga;
-                if (idInterclasse) body.interclasses_id_interclasse = parseInt(idInterclasse, 10);
-                
-                const res = await fetch(`${API}locais.php`, {
-                    method: 'PUT', 
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(body)
-                });
-                
-                const js = await res.json();
-                if (!res.ok || js.success === false) throw new Error(js.message || 'Não foi possível atualizar.');
-                
-                bootstrap.Modal.getInstance(modalEditar)?.hide();
-                await carregarLocais();
-            } catch (err) {
-                msg.textContent = err.message || 'Erro ao atualizar.';
-                msg.className = 'small text-center mb-2 text-danger';
-            } finally {
-                btn.disabled = false;
-            }
+       document.getElementById('formEditarLocal').addEventListener('submit', async function (e) {
+    e.preventDefault();
+    
+    // Garante que temos o ID do interclasse atual antes de enviar
+    if (!idInterclasse) {
+        await obterInterclasseAtivo();
+    }
+    
+    const id = document.getElementById('edit-local-id').value;
+    const nome = document.getElementById('edit-local-nome').value.trim();
+    const disponivel = document.getElementById('edit-local-disponivel').value;
+    const cargaVal = document.getElementById('edit-local-carga').value;
+    const carga = cargaVal === '' ? null : parseInt(cargaVal, 10);
+    
+    const msg = document.getElementById('msgEditarLocal');
+    const btn = document.getElementById('btnAtualizarLocal');
+    
+    msg.textContent = '';
+    btn.disabled = true;
+    
+    try {
+        const body = { 
+            id_local: parseInt(id, 10),
+            nome_local: nome, 
+            disponivel_local: parseInt(disponivel, 10),
+            status_local: disponivel,
+            interclasses_id_interclasse: parseInt(idInterclasse, 10) // VINCULA AO INTERCLASSE ATUAL
+        };
+        if (carga != null && !Number.isNaN(carga)) body.carga_local = carga;
+        
+        const res = await fetch(`${API}locais.php`, {
+            method: 'PUT', 
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body)
         });
+        
+        const js = await res.json();
+        if (!res.ok || js.success === false) throw new Error(js.message || 'Não foi possível atualizar.');
+        
+        bootstrap.Modal.getInstance(modalEditar)?.hide();
+        await carregarLocais();
+    } catch (err) {
+        msg.textContent = err.message || 'Erro ao atualizar.';
+        msg.className = 'small text-center mb-2 text-danger';
+    } finally {
+        btn.disabled = false;
+    }
+});
     });
 </script>
 

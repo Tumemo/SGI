@@ -858,19 +858,31 @@ $paginaAtiva = 'chaveamento';
     <div class="kv-stats" style="grid-template-columns:repeat(2,1fr);margin-bottom:20px;">
         <div class="kv-stat">
             <div class="kv-stat__icon kv-stat__icon--modalidades"><i class="bi bi-trophy"></i></div>
-            <div class="kv-stat__info"><div class="kv-stat__number" id="statModalidadesMob">0</div><div class="kv-stat__label">Modalidades</div></div>
+            <div class="kv-stat__info">
+                <div class="kv-stat__number" id="statModalidadesMob">0</div>
+                <div class="kv-stat__label">Modalidades</div>
+            </div>
         </div>
         <div class="kv-stat">
             <div class="kv-stat__icon kv-stat__icon--jogos"><i class="bi bi-game-controller"></i></div>
-            <div class="kv-stat__info"><div class="kv-stat__number" id="statJogosMob">0</div><div class="kv-stat__label">Jogos</div></div>
+            <div class="kv-stat__info">
+                <div class="kv-stat__number" id="statJogosMob">0</div>
+                <div class="kv-stat__label">Jogos</div>
+            </div>
         </div>
         <div class="kv-stat">
             <div class="kv-stat__icon kv-stat__icon--campeoes"><i class="bi bi-award"></i></div>
-            <div class="kv-stat__info"><div class="kv-stat__number" id="statCampeoesMob">0</div><div class="kv-stat__label">Campeões</div></div>
+            <div class="kv-stat__info">
+                <div class="kv-stat__number" id="statCampeoesMob">0</div>
+                <div class="kv-stat__label">Campeões</div>
+            </div>
         </div>
         <div class="kv-stat">
             <div class="kv-stat__icon kv-stat__icon--pendentes"><i class="bi bi-hourglass-split"></i></div>
-            <div class="kv-stat__info"><div class="kv-stat__number" id="statPendentesMob">0</div><div class="kv-stat__label">Pendentes</div></div>
+            <div class="kv-stat__info">
+                <div class="kv-stat__number" id="statPendentesMob">0</div>
+                <div class="kv-stat__label">Pendentes</div>
+            </div>
         </div>
     </div>
 
@@ -913,9 +925,22 @@ $paginaAtiva = 'chaveamento';
             </div>
             <div class="table-responsive">
                 <table class="table table-hover align-middle">
-                    <thead><tr><th>Partida</th><th>Modalidade</th><th>Data</th><th>Tempo</th><th>Acréscimos</th><th>Artilheiro/Destaque</th><th>Status</th><th class="text-end">Ações</th></tr></thead>
+                    <thead>
+                        <tr>
+                            <th>Partida</th>
+                            <th>Modalidade</th>
+                            <th>Data</th>
+                            <th>Tempo</th>
+                            <th>Acréscimos</th>
+                            <th>Artilheiro/Destaque</th>
+                            <th>Status</th>
+                            <th class="text-end">Ações</th>
+                        </tr>
+                    </thead>
                     <tbody id="tbodyJogosMob">
-                        <tr><td colspan="8" class="text-center text-muted py-4">Carregando jogos...</td></tr>
+                        <tr>
+                            <td colspan="8" class="text-center text-muted py-4">Carregando jogos...</td>
+                        </tr>
                     </tbody>
                 </table>
             </div>
@@ -947,19 +972,31 @@ $paginaAtiva = 'chaveamento';
         <div class="kv-stats">
             <div class="kv-stat">
                 <div class="kv-stat__icon kv-stat__icon--modalidades"><i class="bi bi-trophy"></i></div>
-                <div class="kv-stat__info"><div class="kv-stat__number" id="statModalidades">0</div><div class="kv-stat__label">Modalidades</div></div>
+                <div class="kv-stat__info">
+                    <div class="kv-stat__number" id="statModalidades">0</div>
+                    <div class="kv-stat__label">Modalidades</div>
+                </div>
             </div>
             <div class="kv-stat">
                 <div class="kv-stat__icon kv-stat__icon--jogos"><i class="fa-solid fa-volleyball"></i></div>
-                <div class="kv-stat__info"><div class="kv-stat__number" id="statJogos">0</div><div class="kv-stat__label">Jogos</div></div>
+                <div class="kv-stat__info">
+                    <div class="kv-stat__number" id="statJogos">0</div>
+                    <div class="kv-stat__label">Jogos</div>
+                </div>
             </div>
             <div class="kv-stat">
                 <div class="kv-stat__icon kv-stat__icon--campeoes"><i class="bi bi-award"></i></div>
-                <div class="kv-stat__info"><div class="kv-stat__number" id="statCampeoes">0</div><div class="kv-stat__label">Campeões definidos</div></div>
+                <div class="kv-stat__info">
+                    <div class="kv-stat__number" id="statCampeoes">0</div>
+                    <div class="kv-stat__label">Campeões definidos</div>
+                </div>
             </div>
             <div class="kv-stat">
                 <div class="kv-stat__icon kv-stat__icon--pendentes"><i class="bi bi-hourglass-split"></i></div>
-                <div class="kv-stat__info"><div class="kv-stat__number" id="statPendentes">0</div><div class="kv-stat__label">Jogos pendentes</div></div>
+                <div class="kv-stat__info">
+                    <div class="kv-stat__number" id="statPendentes">0</div>
+                    <div class="kv-stat__label">Jogos pendentes</div>
+                </div>
             </div>
         </div>
 
@@ -1177,7 +1214,10 @@ $paginaAtiva = 'chaveamento';
             return;
         }
 
-        const fases = niveis.map((n, i) => ({ nivel: n, label: (computarLabelsFases(niveis)[n]) || formatFase(n) }));
+        const fases = niveis.map((n, i) => ({
+            nivel: n,
+            label: (computarLabelsFases(niveis)[n]) || formatFase(n)
+        }));
         const nivelAtual = fases[0]?.nivel || 1;
 
         let html = '<div class="kv-phase">';
@@ -1254,7 +1294,13 @@ $paginaAtiva = 'chaveamento';
             const largura = parseInt(mm[1], 10);
             const slot = parseInt(mm[2], 10);
             const kind = mm[3];
-            const fases = { 16: 'Oitavas de final', 8: 'Quartas de final', 4: 'Semifinal', 2: 'Final', 1: 'Campeão' };
+            const fases = {
+                16: 'Oitavas de final',
+                8: 'Quartas de final',
+                4: 'Semifinal',
+                2: 'Final',
+                1: 'Campeão'
+            };
             const fase = fases[largura] || 'Fase ' + largura;
             const confronto = slot + 1;
             const equipes = (jogo.equipes_nomes || '').trim();
@@ -1267,7 +1313,10 @@ $paginaAtiva = 'chaveamento';
         const pos = tag.match(/^POS:(\d+):(\d+):([NB])$/);
         if (pos) {
             const posicao = parseInt(pos[1], 10);
-            const nomesPos = { 3: 'Disputa de 3º lugar', 5: 'Disputa de 5º lugar' };
+            const nomesPos = {
+                3: 'Disputa de 3º lugar',
+                5: 'Disputa de 5º lugar'
+            };
             return nomesPos[posicao] || `Disputa de ${posicao}º lugar`;
         }
         return tag || '---';
@@ -1350,8 +1399,10 @@ $paginaAtiva = 'chaveamento';
         var selectLocal = document.getElementById('editLocalJogo');
         selectLocal.innerHTML = '<option value="">Carregando...</option>';
 
-        fetch('../../../api/locais.php?id_interclasse=' + idInterclasse)
-            .then(function(r) { return r.json(); })
+        fetch('../../../api/locais.php?id_interclasse=' + idInterclasse + '&disponivel=1')
+            .then(function(r) {
+                return r.json();
+            })
             .then(function(data) {
                 if (_editIdJogo !== jogo.id_jogo) return;
                 const locais = data.success && Array.isArray(data.data) ? data.data : [];
@@ -1404,7 +1455,11 @@ $paginaAtiva = 'chaveamento';
             }
         }
 
-        var payload = { id_jogo: Number(id_jogo), data_jogo: data_jogo, status_jogo: status_jogo };
+        var payload = {
+            id_jogo: Number(id_jogo),
+            data_jogo: data_jogo,
+            status_jogo: status_jogo
+        };
         if (inicio_jogo) payload.inicio_jogo = inicio_jogo;
         if (termino_jogo) payload.termino_jogo = termino_jogo;
         if (locais_id_local) payload.locais_id_local = Number(locais_id_local);
@@ -1415,7 +1470,9 @@ $paginaAtiva = 'chaveamento';
         try {
             var resp = await fetch('../../../api/jogos.php', {
                 method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json'
+                },
                 body: JSON.stringify(payload)
             });
             var data = await resp.json();
@@ -1436,8 +1493,13 @@ $paginaAtiva = 'chaveamento';
 
                     const scoreResp = await fetch('../../../api/lancar_resultado.php', {
                         method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ id_jogo: Number(id_jogo), resultados: resultados })
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            id_jogo: Number(id_jogo),
+                            resultados: resultados
+                        })
                     });
                     const scoreData = await scoreResp.json();
                     scoresSaved = scoreData.success;
@@ -1515,7 +1577,9 @@ $paginaAtiva = 'chaveamento';
         if (j.data_jogo) {
             try {
                 dataJogo = new Date(j.data_jogo + (j.inicio_jogo ? 'T' + j.inicio_jogo : '')).toLocaleString('pt-BR');
-            } catch (_) { dataJogo = j.data_jogo; }
+            } catch (_) {
+                dataJogo = j.data_jogo;
+            }
         }
         var nomePartida = formatarNomePartida(j);
         var m = (j.nome_jogo || '').match(/^MM:(\d+):/);
@@ -1523,7 +1587,13 @@ $paginaAtiva = 'chaveamento';
             var largura = parseInt(m[1], 10);
             var labelCorreto = labelsLarguras[largura];
             if (labelCorreto) {
-                var fases = { 16: 'Oitavas de final', 8: 'Quartas de final', 4: 'Semifinal', 2: 'Final', 1: 'Campeão' };
+                var fases = {
+                    16: 'Oitavas de final',
+                    8: 'Quartas de final',
+                    4: 'Semifinal',
+                    2: 'Final',
+                    1: 'Campeão'
+                };
                 var faseOriginal = fases[largura] || '';
                 if (faseOriginal && faseOriginal !== labelCorreto) {
                     nomePartida = nomePartida.replace(faseOriginal, labelCorreto);
@@ -1609,12 +1679,23 @@ $paginaAtiva = 'chaveamento';
                 var m = (j.nome_jogo || '').match(/^MM:(\d+):/);
                 if (m) {
                     var l = parseInt(m[1], 10);
-                    if (l > 1 && !largurasSet[l]) { largurasSet[l] = true; larguras.push(l); }
+                    if (l > 1 && !largurasSet[l]) {
+                        largurasSet[l] = true;
+                        larguras.push(l);
+                    }
                 }
             });
-            larguras.sort(function(a, b) { return b - a; });
+            larguras.sort(function(a, b) {
+                return b - a;
+            });
             var labelsLarguras = {};
-            var nomesPos = { 1: 'Final', 2: 'Semifinal', 3: 'Quartas de final', 4: 'Oitavas de final', 5: 'Primeira fase' };
+            var nomesPos = {
+                1: 'Final',
+                2: 'Semifinal',
+                3: 'Quartas de final',
+                4: 'Oitavas de final',
+                5: 'Primeira fase'
+            };
             larguras.forEach(function(l, i) {
                 var pos = larguras.length - i;
                 labelsLarguras[l] = nomesPos[pos] || 'Fase ' + l;
@@ -1645,7 +1726,13 @@ $paginaAtiva = 'chaveamento';
 
     function computarLabelsFases(niveis) {
         const total = niveis.length;
-        const nomes = { 1: 'Final', 2: 'Semifinal', 3: 'Quartas de final', 4: 'Oitavas de final', 5: 'Primeira fase' };
+        const nomes = {
+            1: 'Final',
+            2: 'Semifinal',
+            3: 'Quartas de final',
+            4: 'Oitavas de final',
+            5: 'Primeira fase'
+        };
         const labels = {};
         niveis.forEach((n, i) => {
             const pos = total - i;
@@ -1658,7 +1745,10 @@ $paginaAtiva = 'chaveamento';
         const pos = (nomeJogo || '').match(/^POS:(\d+):/);
         if (pos) {
             const p = parseInt(pos[1], 10);
-            const nomesPos = { 3: 'Disputa de 3º lugar', 5: 'Disputa de 5º lugar' };
+            const nomesPos = {
+                3: 'Disputa de 3º lugar',
+                5: 'Disputa de 5º lugar'
+            };
             return nomesPos[p] || `Disputa de ${p}º lugar`;
         }
         return null;
@@ -1702,11 +1792,21 @@ $paginaAtiva = 'chaveamento';
 
         let statusLabel = jogo.status_jogo || '---';
         let statusCls = 'bkt-match__status';
-        if (isBye) { statusLabel = 'Bye'; statusCls += ' bkt-match__status--bye'; }
-        else if (isConcluido) { statusCls += ' bkt-match__status--concluido'; statusLabel = 'Finalizado'; }
-        else if (isIniciado) { statusCls += ' bkt-match__status--andamento'; statusLabel = 'Em andamento'; }
-        else if (jogo.status_jogo === 'Aguardando') { statusCls += ' bkt-match__status--aguardando'; statusLabel = 'Aguardando'; }
-        else { statusCls += ' bkt-match__status--agendado'; }
+        if (isBye) {
+            statusLabel = 'Bye';
+            statusCls += ' bkt-match__status--bye';
+        } else if (isConcluido) {
+            statusCls += ' bkt-match__status--concluido';
+            statusLabel = 'Finalizado';
+        } else if (isIniciado) {
+            statusCls += ' bkt-match__status--andamento';
+            statusLabel = 'Em andamento';
+        } else if (jogo.status_jogo === 'Aguardando') {
+            statusCls += ' bkt-match__status--aguardando';
+            statusLabel = 'Aguardando';
+        } else {
+            statusCls += ' bkt-match__status--agendado';
+        }
 
         const nomeModalidade = jogo.nome_modalidade || '';
         const nomeCategoria = jogo.nome_categoria || '';
@@ -1755,7 +1855,10 @@ $paginaAtiva = 'chaveamento';
         const nome = winner.nome_fantasia || winner.nome_turma || `Equipe #${winner.id_equipe}`;
         const mod = modalidadesCache.find(m => String(m.id_modalidade) == _currentModalidade);
         const modName = mod ? `${mod.nome_modalidade}${mod.genero_modalidade ? ' ('+mod.genero_modalidade+')' : ''}${mod.nome_categoria ? ' ['+mod.nome_categoria+']' : ''}` : '';
-        return { nome, modalidade: modName };
+        return {
+            nome,
+            modalidade: modName
+        };
     }
 
     function _renderModernBracket(jogos) {
@@ -1800,7 +1903,9 @@ $paginaAtiva = 'chaveamento';
         if (posGames.length > 0) {
             html += '<div class="bracket-round-col">';
             html += '<div class="bracket-round-header" style="color:#e30613;border-color:#fecaca;background:linear-gradient(135deg,#fff5f5,#fff);">Disputas de Posição</div>';
-            posGames.forEach(j => { html += _renderBracketMatch(j); });
+            posGames.forEach(j => {
+                html += _renderBracketMatch(j);
+            });
             html += '</div>';
         }
 
@@ -1894,6 +1999,7 @@ $paginaAtiva = 'chaveamento';
         const selects1 = document.querySelectorAll('#indSelectPrimeiro');
         const selects2 = document.querySelectorAll('#indSelectSegundo');
         const selects3 = document.querySelectorAll('#indSelectTerceiro');
+
         function getVisibleValue(els) {
             for (const el of els) {
                 if (el.offsetParent !== null) return Number(el.value);
@@ -1916,17 +2022,26 @@ $paginaAtiva = 'chaveamento';
             return;
         }
 
-        btns.forEach(b => { b.disabled = true; b.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Salvando...'; });
+        btns.forEach(b => {
+            b.disabled = true;
+            b.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Salvando...';
+        });
         document.querySelectorAll('#msgIndRanking').forEach(m => m.innerHTML = '');
 
         try {
             const resp = await fetch('../../../api/chaveamento.php', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json'
+                },
                 body: JSON.stringify({
                     tipo_modalidade: 'individual',
                     id_modalidade: idModalidade,
-                    ranking: { primeiro, segundo, terceiro }
+                    ranking: {
+                        primeiro,
+                        segundo,
+                        terceiro
+                    }
                 })
             });
             const data = await resp.json();
@@ -1936,7 +2051,10 @@ $paginaAtiva = 'chaveamento';
         } catch (e) {
             document.querySelectorAll('#msgIndRanking').forEach(m => m.innerHTML = `<span style="color:#dc2626;font-weight:700;">${esc(e.message)}</span>`);
         } finally {
-            btns.forEach(b => { b.disabled = false; b.innerHTML = '<i class="bi bi-check-lg"></i> Salvar Ranking'; });
+            btns.forEach(b => {
+                b.disabled = false;
+                b.innerHTML = '<i class="bi bi-check-lg"></i> Salvar Ranking';
+            });
         }
     }
 
@@ -1956,7 +2074,9 @@ $paginaAtiva = 'chaveamento';
         selectLocal.innerHTML = '<option value="">Carregando...</option>';
 
         fetch('../../../api/locais.php?id_interclasse=' + idInterclasse)
-            .then(function(r) { return r.json(); })
+            .then(function(r) {
+                return r.json();
+            })
             .then(function(data) {
                 if (_editIdJogo !== jogo.id_jogo) return;
                 const locais = data.success && Array.isArray(data.data) ? data.data : [];
@@ -2193,7 +2313,7 @@ $paginaAtiva = 'chaveamento';
                 _drawConnectors(areaMob);
             });
 
-            const niveis = [...new Set(jogos.filter(j => !j.eh_disputa_posicao && j.fase_nivel !== 1).map(j => j.fase_nivel))].sort((a,b) => b - a);
+            const niveis = [...new Set(jogos.filter(j => !j.eh_disputa_posicao && j.fase_nivel !== 1).map(j => j.fase_nivel))].sort((a, b) => b - a);
             atualizarTimeline(niveis);
             iniciarPolling();
 
@@ -2232,22 +2352,26 @@ $paginaAtiva = 'chaveamento';
                     });
                     carregarJogos();
                 }
-            } catch (e) { /* silent */ }
+            } catch (e) {
+                /* silent */ }
         }, 8000);
     }
 
     function pararPolling() {
-        if (_pollingTimer) { clearInterval(_pollingTimer); _pollingTimer = null; }
+        if (_pollingTimer) {
+            clearInterval(_pollingTimer);
+            _pollingTimer = null;
+        }
     }
 
-    document.getElementById('selectModalidade').addEventListener('change', function () {
+    document.getElementById('selectModalidade').addEventListener('change', function() {
         document.getElementById('msgChaveamento').innerHTML = '';
         document.getElementById('faseTimeline').classList.add('d-none');
         pararPolling();
         carregarArvore(this.value);
     });
 
-    document.getElementById('selectModalidadeMob').addEventListener('change', function () {
+    document.getElementById('selectModalidadeMob').addEventListener('change', function() {
         const msgMob = document.getElementById('msgChaveamentoMob');
         if (msgMob) msgMob.style.display = 'none';
         pararPolling();
@@ -2260,11 +2384,11 @@ $paginaAtiva = 'chaveamento';
     document.getElementById('filtroModalidadeJogosMob').addEventListener('change', carregarJogos);
     document.getElementById('filtroCategoriaJogosMob').addEventListener('change', carregarJogos);
 
-    document.getElementById('btnGerarChaveamento').addEventListener('click', async function () {
+    document.getElementById('btnGerarChaveamento').addEventListener('click', async function() {
         await gerarChaveamento(this, 'msgChaveamento');
     });
 
-    document.getElementById('btnGerarChaveamentoMob').addEventListener('click', async function () {
+    document.getElementById('btnGerarChaveamentoMob').addEventListener('click', async function() {
         const msgEl = document.getElementById('msgChaveamentoMob');
         if (msgEl) msgEl.style.display = 'block';
         await gerarChaveamento(this, 'msgChaveamentoMob');
@@ -2295,8 +2419,13 @@ $paginaAtiva = 'chaveamento';
             btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Gerando...';
             const resp = await fetch('../../../api/chaveamento.php', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ id_modalidade: Number(idModalidade), tipo_modalidade: 'mata_mata' })
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    id_modalidade: Number(idModalidade),
+                    tipo_modalidade: 'mata_mata'
+                })
             });
             const data = await resp.json();
 
@@ -2316,7 +2445,7 @@ $paginaAtiva = 'chaveamento';
         }
     }
 
-    document.getElementById('inputBuscaJogo').addEventListener('keyup', function () {
+    document.getElementById('inputBuscaJogo').addEventListener('keyup', function() {
         var termo = this.value.toLowerCase().trim();
         var linhas = document.querySelectorAll('#tbodyJogos tr');
         linhas.forEach(function(tr) {
@@ -2333,7 +2462,7 @@ $paginaAtiva = 'chaveamento';
         });
     });
 
-    document.getElementById('inputBuscaJogoMob').addEventListener('keyup', function () {
+    document.getElementById('inputBuscaJogoMob').addEventListener('keyup', function() {
         var termo = this.value.toLowerCase().trim();
         var linhas = document.querySelectorAll('#tbodyJogosMob tr');
         linhas.forEach(function(tr) {

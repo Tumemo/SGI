@@ -75,6 +75,7 @@ case 'PUT':
     $campos = [];
     $params = [];
     $types = "";
+
     if (isset($data->nome_local)) {
         $campos[] = "nome_local = ?";
         $params[] = $data->nome_local;
@@ -82,12 +83,12 @@ case 'PUT':
     }
     if (isset($data->status_local)) {
         $campos[] = "status_local = ?";
-        $params[] = $data->status_local;
+        $params[] = (string)$data->status_local;
         $types .= "s";
     }
     if (isset($data->disponivel_local)) {
         $campos[] = "disponivel_local = ?";
-        $params[] = $data->disponivel_local;
+        $params[] = (string)$data->disponivel_local;
         $types .= "s";
     }
     if (isset($data->carga_local)) {
@@ -102,16 +103,19 @@ case 'PUT':
         break;
     }
 
-    // Monta a SQL dinamicamente
-    $sql = "UPDATE locais SET " . implode(", ", $campos) . " WHERE id_local = ?";
-    
-    // Adiciona o ID ao final dos parâmetros e tipos
-    $params[] = $data->id_local;
-    $types .= "i"; // 'i' para integer
+    // Se o interclasse foi enviado, adicionamos a validação dele na cláusula WHERE
+    if (isset($data->interclasses_id_interclasse) && !empty($data->interclasses_id_interclasse)) {
+        $sql = "UPDATE locais SET " . implode(", ", $campos) . " WHERE id_local = ? AND interclasses_id_interclasse = ?";
+        $params[] = (int)$data->id_local;
+        $params[] = (int)$data->interclasses_id_interclasse;
+        $types .= "ii";
+    } else {
+        $sql = "UPDATE locais SET " . implode(", ", $campos) . " WHERE id_local = ?";
+        $params[] = (int)$data->id_local;
+        $types .= "i";
+    }
 
     $stmt = $conn->prepare($sql);
-    
-    // O operador '...' (splat operator) desempacota o array de parâmetros
     $stmt->bind_param($types, ...$params);
 
     if ($stmt->execute()) {
