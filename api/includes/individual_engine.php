@@ -106,7 +106,7 @@ function sgi_ind_criar_jogo(mysqli $conn, int $idModalidade): int
 
     $st = $conn->prepare(
         "INSERT INTO jogos (nome_jogo, data_jogo, inicio_jogo, status_jogo, modalidades_id_modalidade, locais_id_local)
-         VALUES (?, CURDATE(), '08:00:00', 'Aguardando', ?, ?)"
+         VALUES (?, CURDATE(), '08:00:00', 'Agendado', ?, ?)"
     );
     $st->bind_param('sii', $tag, $idModalidade, $idLocal);
     $st->execute();
@@ -283,3 +283,66 @@ function sgi_ind_montar_json_ranking(mysqli $conn, int $idModalidade): array
         ] : null,
     ];
 }
+
+/**
+ * Cria ou atualiza o jogo da modalidade individual para exibição na Agenda.
+ * Vincula todas as equipes ativas dessa modalidade ao jogo na tabela `partidas`.
+ *
+ * @return array{success:bool, message:string, id_jogo:int, jogos_criados:int}
+ */
+function sgi_ind_criar_jogo_agenda(mysqli $conn, int $idModalidade): array
+{
+    // Buscar equipes ativas desta modalidade
+    $stEq = $conn->prepare(
+        "SELECT id_equipe FROM equipes WHERE modalidades_id_modalidade = ? AND status_equipe = '1'"
+    );
+    if (!$stEq) {
+        throw new RuntimeException($conn->error);
+    }
+    $stEq->bind_param('i', $idModalidade);
+    $stEq->execute();
+    $rowsEq = $stEq->get_result()->fetch_all(MYSQLI_ASSOC);
+    $stEq->close();
+
+    if (empty($rowsEq)) {
+        throw new RuntimeException('É necessário ao menos uma equipe ativa cadastrada nesta modalidade.');
+    }
+
+    $equipeIds = array_map(static fn(array $r): int => (int) $r['id_equipe'], $rowsEq);
+
+    // Buscar ou criar o jogo de tag IND:{idModalidade}
+    $jogo = sgi_ind_buscar_jogo_existente($conn, $idModalidade);
+    if ($jogo === null) {
+        $idJogo = sgi_ind_criar_jogo($conn, $idModalidade);
+    } else {
+        $idJogo = $jogo['id_jogo'];
+    }
+
+    // Buscar equipes já vinculadas em partidas deste jogo
+    $stP = $conn->prepare('SELECT DISTINCT equipes_id_equipe FROM partidas WHERE jogos_id_jogo = ?');
+    $stP->bind_param('i', $idJogo);
+    $stP->execute();
+    $rowsPart = $stP->get_result()->fetch_all(MYSQLI_ASSOC);
+    $stP->close();
+
+    $equipesExistentes = array_map(static fn(array $r): int => (int) $r['equipes_id_equipe'], $rowsPart);
+
+    $stIns = $conn->prepare(
+        "INSERT INTO partidas (jogos_id_jogo, equipes_id_equipe, resultado_partida, status_partida) VALUES (?, ?, 0, '1')"
+    );
+    foreach ($equipeIds as $idEquipe) {
+        if (!in_array($idEquipe, $equipesExistentes, true)) {
+            $stIns->bind_param('ii', $idJogo, $idEquipe);
+            $stIns->execute();
+        }
+    }
+    $stIns->close();
+
+    return [
+        'success' => true,
+        'message' => 'Jogo de modalidade individual gerado para a agenda.',
+        'id_jogo' => $idJogo,
+        'jogos_criados' => 1,
+    ];
+}
+

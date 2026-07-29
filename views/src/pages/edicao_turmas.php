@@ -29,7 +29,6 @@ $paginaAtiva = 'categorias';
             <div class="col-md-4 px-0 px-md-2">
                 <div class="bg-white rounded-4 shadow-sm overflow-hidden border-0">
                     <div class="p-3 d-flex align-items-center gap-2" style="background-color: #ed1c24; color: white;">
-                        <i class="bi bi-plus-circle fs-5" style="cursor: pointer;" title="Adicionar Categoria"></i>
                         <h6 class="mb-0 fw-bold fs-5">Categorias</h6>
                     </div>
 
@@ -96,7 +95,7 @@ $paginaAtiva = 'categorias';
                             Adicionar
                         </button>
                     </div>
-                </form>
+                </form> 
             </div>
         </div>
     </div>

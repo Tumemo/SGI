@@ -44,25 +44,32 @@ if ($tipoModalidade === 'individual') {
             }
 
             $ranking = $data->ranking ?? null;
-            if (!$ranking || !isset($ranking->primeiro, $ranking->segundo, $ranking->terceiro)) {
-                http_response_code(400);
-                echo json_encode(['success' => false, 'message' => 'Informe o ranking (1º, 2º e 3º lugar).'], JSON_UNESCAPED_UNICODE);
-                break;
-            }
-
-            $conn->begin_transaction();
-            try {
-                $resultado = sgi_ind_salvar_ranking($conn, $idModalidade, [
-                    'primeiro' => (int) $ranking->primeiro,
-                    'segundo' => (int) $ranking->segundo,
-                    'terceiro' => (int) $ranking->terceiro,
-                ]);
-                $conn->commit();
-                echo json_encode($resultado, JSON_UNESCAPED_UNICODE);
-            } catch (Throwable $e) {
-                $conn->rollback();
-                http_response_code(400);
-                echo json_encode(['success' => false, 'message' => $e->getMessage()], JSON_UNESCAPED_UNICODE);
+            if ($ranking && isset($ranking->primeiro, $ranking->segundo, $ranking->terceiro)) {
+                $conn->begin_transaction();
+                try {
+                    $resultado = sgi_ind_salvar_ranking($conn, $idModalidade, [
+                        'primeiro' => (int) $ranking->primeiro,
+                        'segundo' => (int) $ranking->segundo,
+                        'terceiro' => (int) $ranking->terceiro,
+                    ]);
+                    $conn->commit();
+                    echo json_encode($resultado, JSON_UNESCAPED_UNICODE);
+                } catch (Throwable $e) {
+                    $conn->rollback();
+                    http_response_code(400);
+                    echo json_encode(['success' => false, 'message' => $e->getMessage()], JSON_UNESCAPED_UNICODE);
+                }
+            } else {
+                $conn->begin_transaction();
+                try {
+                    $resultado = sgi_ind_criar_jogo_agenda($conn, $idModalidade);
+                    $conn->commit();
+                    echo json_encode($resultado, JSON_UNESCAPED_UNICODE);
+                } catch (Throwable $e) {
+                    $conn->rollback();
+                    http_response_code(400);
+                    echo json_encode(['success' => false, 'message' => $e->getMessage()], JSON_UNESCAPED_UNICODE);
+                }
             }
             break;
 
@@ -103,8 +110,24 @@ switch ($method) {
             break;
         }
 
+        // Verificar o tipo real da modalidade
+        $stMod = $conn->prepare('SELECT tipos_modalidades_id_tipo_modalidade FROM modalidades WHERE id_modalidade = ? LIMIT 1');
+        $stMod->bind_param('i', $idModalidade);
+        $stMod->execute();
+        $rowMod = $stMod->get_result()->fetch_assoc();
+        $stMod->close();
+
+        $isIndividual = $rowMod && ((int) $rowMod['tipos_modalidades_id_tipo_modalidade'] === 2);
+
         $conn->begin_transaction();
         try {
+            if ($isIndividual) {
+                $resultado = sgi_ind_criar_jogo_agenda($conn, $idModalidade);
+                $conn->commit();
+                echo json_encode($resultado, JSON_UNESCAPED_UNICODE);
+                break;
+            }
+
             $equipes = sgi_mm_buscar_equipes_validadas($conn, $idModalidade);
             if (count($equipes) < 2) {
                 throw new RuntimeException('É necessário ao menos duas equipes ativas com competidores vinculados (elenco).');
