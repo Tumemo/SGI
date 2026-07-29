@@ -20,6 +20,7 @@ switch ($method) {
     case 'GET':
         $filtro = aplicarFiltrosTurmas();
 
+        // CORREÇÃO: Removido a referência à tabela inexistente 'ocorrencias_turmas'
         $sql = "SELECT 
                 turmas.id_turma, 
                 turmas.nome_turma, 
@@ -33,10 +34,6 @@ switch ($method) {
             INNER JOIN interclasses ON interclasses.id_interclasse = turmas.interclasses_id_interclasse
             INNER JOIN categorias ON categorias.id_categoria = turmas.categorias_id_categoria
             LEFT JOIN (
-                SELECT turmas_id_turma, SUM(pontos_descontados) AS total_penalidades
-                FROM ocorrencias_turmas
-                GROUP BY turmas_id_turma
-                UNION ALL
                 SELECT usuarios.turmas_id_turma, SUM(ocorrencias.penalidade) AS total_penalidades
                 FROM ocorrencias
                 INNER JOIN usuarios ON ocorrencias.usuarios_id_usuario = usuarios.id_usuario
@@ -135,8 +132,3 @@ function responderErro($codigo, $mensagem) {
     echo json_encode(["success" => false, "message" => $mensagem]);
     exit();
 }
-
-/**
- * Função movida para fora do switch para evitar erros de escopo.
- * Se esta função já estiver em 'filtros.php', você pode deletar este bloco.
- */
