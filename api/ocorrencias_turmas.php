@@ -22,7 +22,7 @@ switch ($method) {
                 FROM ocorrencias_turmas ot
                 INNER JOIN turmas t ON t.id_turma = ot.turmas_id_turma
                 INNER JOIN categorias c ON c.id_categoria = t.categorias_id_categoria
-                INNER JOIN usuarios u ON u.id_usuario = ot.usuarios_id_usuario
+                LEFT JOIN usuarios u ON u.id_usuario = ot.usuarios_id_usuario
                 WHERE ot.interclasses_id_interclasse = ?";
         $types = 'i';
         $params = [$idInterclasse];

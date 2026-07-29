@@ -9,19 +9,10 @@ $cssExtra = '
 .ocr-header__top{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem;flex-wrap:wrap;gap:1rem}
 .ocr-header__title{font-size:1.75rem;font-weight:800;color:#111827;letter-spacing:-.03em;margin:0;line-height:1.2}
 .ocr-header__sub{font-size:.9rem;color:#6B7280;margin:.35rem 0 0;font-weight:400}
-.ocr-hist-btn{display:inline-flex;align-items:center;gap:.45rem;border:1.5px solid #E5E7EB;background:#fff;color:#374151;border-radius:10px;padding:.5rem 1rem;font-size:.82rem;font-weight:600;cursor:pointer;transition:all .15s}
-.ocr-hist-btn:hover{border-color:#D1D5DB;background:#F9FAFB;transform:translateY(-1px);box-shadow:0 2px 8px rgba(0,0,0,.06)}
-.ocr-hist-btn i{font-size:.9rem;color:#9CA3AF}
-
-.ocr-controls{background:#fff;border:1px solid #F0F0F0;border-radius:16px;padding:1.25rem 1.5rem;display:flex;gap:1.5rem;box-shadow:0 1px 3px rgba(0,0,0,.03),0 4px 16px rgba(0,0,0,.02);margin-bottom:2rem;flex-wrap:wrap}
-.ocr-controls__field{flex:1;min-width:200px}
-.ocr-controls__field label{display:block;font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#9CA3AF;margin-bottom:.4rem}
-.ocr-controls__field select{width:100%;border:1.5px solid #E5E7EB;border-radius:10px;font-size:.85rem;font-weight:500;color:#374151;background:#fff;padding:.6rem .85rem;transition:border-color .15s,box-shadow .15s;cursor:pointer}
-.ocr-controls__field select:focus{border-color:#E30613;box-shadow:0 0 0 3px rgba(227,6,19,.08);outline:none}
 
 .ocr-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:1rem;margin-bottom:2rem}
 @media(max-width:991.98px){.ocr-grid{grid-template-columns:1fr}}
-@media(max-width:575.98px){.ocr-controls{flex-direction:column;align-items:stretch}.ocr-container{padding:0 1rem}}
+@media(max-width:575.98px){.ocr-container{padding:0 1rem}}
 
 .ocr-card{background:#fff;border:1px solid #F0F0F0;border-radius:16px;padding:1.25rem 1.5rem;transition:transform .2s,box-shadow .2s;display:flex;align-items:center;gap:1rem;overflow:hidden}
 .ocr-card:hover{transform:translateY(-2px);box-shadow:0 4px 16px rgba(0,0,0,.06)}
@@ -30,6 +21,10 @@ $cssExtra = '
 .ocr-card__info{flex:1;min-width:0}
 .ocr-card__name{font-size:.95rem;font-weight:700;color:#111827;margin:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .ocr-card__badge{display:inline-flex;align-items:center;font-size:.7rem;font-weight:600;background:#F3F4F6;color:#6B7280;border-radius:6px;padding:.15rem .5rem;margin-top:.25rem;border:1px solid #F0F0F0}
+
+.ocr-card__hist{width:38px;height:38px;border-radius:50%;border:1.5px solid #E5E7EB;background:#fff;color:#6B7280;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .2s;flex-shrink:0;font-size:1rem}
+.ocr-card__hist:hover{border-color:#D1D5DB;background:#F9FAFB;color:#374151;transform:scale(1.1)}
+
 .ocr-card__add{width:38px;height:38px;border-radius:50%;border:2px dashed #D1D5DB;background:transparent;color:#9CA3AF;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .2s;flex-shrink:0;font-size:1.1rem}
 .ocr-card__add:hover{border-color:#E30613;color:#E30613;background:#FEF2F2;transform:scale(1.1)}
 
@@ -43,7 +38,6 @@ $cssExtra = '
 
 .ocr-mobile{padding-top:5.5rem;padding-bottom:6rem}
 .ocr-mobile .ocr-card{padding:1rem}
-.ocr-mobile .ocr-controls{margin:0 1rem 1.5rem}
 ';
 
 include 'componentes/head.php';
@@ -59,23 +53,9 @@ $isAdmin = $nivelUsuario === 0;
             <i class="bi bi-arrow-left-circle fs-5"></i> <span id="nomeInterclasseOcrMob">Interclasse</span>
         </a>
 
-        <div class="d-flex align-items-center justify-content-between mb-3">
-            <div>
-                <h1 class="ocr-header__title">Ocorrências</h1>
-                <p class="ocr-header__sub">Registre ocorrências e descontos de pontos por turma.</p>
-            </div>
-            <button type="button" class="ocr-hist-btn" data-bs-toggle="modal" data-bs-target="#modalHistoricoOcorrencias" onclick="carregarHistorico()">
-                <i class="bi bi-clock-history"></i> Histórico
-            </button>
-        </div>
-
-        <div class="ocr-controls">
-            <div class="ocr-controls__field">
-                <label>Filtrar por Categoria</label>
-                <select id="filtroCategoriaMob">
-                    <option value="">Todas as Categorias</option>
-                </select>
-            </div>
+        <div class="mb-4">
+            <h1 class="ocr-header__title">Ocorrências</h1>
+            <p class="ocr-header__sub">Registre ocorrências e descontos de pontos por turma.</p>
         </div>
     </div>
 
@@ -100,18 +80,6 @@ $isAdmin = $nivelUsuario === 0;
                     <h1 class="ocr-header__title">Ocorrências</h1>
                     <p class="ocr-header__sub">Registre ocorrências e descontos de pontos por turma.</p>
                 </div>
-                <button type="button" class="ocr-hist-btn" data-bs-toggle="modal" data-bs-target="#modalHistoricoOcorrencias" onclick="carregarHistorico()">
-                    <i class="bi bi-clock-history"></i> Histórico
-                </button>
-            </div>
-        </div>
-
-        <div class="ocr-controls">
-            <div class="ocr-controls__field">
-                <label>Filtrar por Categoria</label>
-                <select id="filtroCategoriaDesktop">
-                    <option value="">Todas as Categorias</option>
-                </select>
             </div>
         </div>
 
@@ -155,7 +123,7 @@ $isAdmin = $nivelUsuario === 0;
     <div class="modal-dialog modal-lg modal-dialog-scrollable">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title fw-bold"><i class="bi bi-clock-history me-2"></i>Histórico de Ocorrências</h5>
+                <h5 class="modal-title fw-bold"><i class="bi bi-clock-history me-2"></i>Histórico de Ocorrências - <span id="modalHistoricoTurmaNome"></span></h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
             </div>
             <div class="modal-body">
@@ -182,6 +150,7 @@ $isAdmin = $nivelUsuario === 0;
     let todasCategorias = [];
     let historicoRegistros = [];
     let modalTurmaId = null;
+    let historicoTurmaId = null;
 
     async function resolverInterclasse() {
         if (!idInterclasse) {
@@ -218,33 +187,11 @@ $isAdmin = $nivelUsuario === 0;
         }
         todasTurmas = await resTurmas.json();
 
-        const catsMap = {};
-        todasTurmas.forEach(t => {
-            if (t.categorias_id_categoria && t.nome_categoria) {
-                catsMap[t.categorias_id_categoria] = t.nome_categoria;
-            }
-        });
-        todasCategorias = Object.entries(catsMap).map(([id, nome]) => ({ id_categoria: Number(id), nome_categoria: nome }));
-
-        const selects = ['filtroCategoriaDesktop', 'filtroCategoriaMob'];
-        selects.forEach(id => {
-            const el = document.getElementById(id);
-            if (!el) return;
-            el.innerHTML = '<option value="">Todas as Categorias</option>';
-            todasCategorias.forEach(c => {
-                el.innerHTML += `<option value="${c.id_categoria}">${esc(c.nome_categoria)}</option>`;
-            });
-        });
-
         carregarLista();
     }
 
     function turmasFiltradas() {
-        const idCatDesk = document.getElementById('filtroCategoriaDesktop').value;
-        const idCatMob = document.getElementById('filtroCategoriaMob').value;
-        const idCat = idCatDesk || idCatMob;
-        if (!idCat) return todasTurmas;
-        return todasTurmas.filter(t => String(t.categorias_id_categoria) === String(idCat));
+        return todasTurmas;
     }
 
     function carregarLista() {
@@ -256,6 +203,9 @@ $isAdmin = $nivelUsuario === 0;
                         <p class="ocr-card__name">${esc(turma.nome_fantasia_turma || turma.nome_turma)}</p>
                         <span class="ocr-card__badge">${esc(turma.nome_categoria || 'Geral')}</span>
                     </div>
+                    <button class="ocr-card__hist" onclick="abrirHistoricoTurma(${turma.id_turma}, '${esc(turma.nome_fantasia_turma || turma.nome_turma)}')" title="Ver histórico">
+                        <i class="bi bi-clock-history"></i>
+                    </button>
                     <button class="ocr-card__add" onclick="abrirModalOcorrencia(${turma.id_turma}, '${esc(turma.nome_fantasia_turma || turma.nome_turma)}')" title="Adicionar ocorrência">
                         <i class="bi bi-plus-lg"></i>
                     </button>
@@ -335,27 +285,34 @@ $isAdmin = $nivelUsuario === 0;
         }
     }
 
-    async function carregarHistorico() {
+    function abrirHistoricoTurma(idTurma, nomeTurma) {
+        historicoTurmaId = idTurma;
+        document.getElementById('modalHistoricoTurmaNome').innerText = nomeTurma;
+        const modal = new bootstrap.Modal(document.getElementById('modalHistoricoOcorrencias'));
+        modal.show();
+        carregarHistorico(idTurma);
+    }
+
+    async function carregarHistorico(idTurma) {
         const conteudo = document.getElementById('historicoConteudo');
         conteudo.innerHTML = '<div class="spinner-border text-danger" role="status"></div>';
 
         try {
             if (!idInterclasse) return;
-            const res = await fetch(`${API_BASE}/ocorrencias_turmas.php?id_interclasse=${idInterclasse}`);
+            const res = await fetch(`${API_BASE}/ocorrencias_turmas.php?id_interclasse=${idInterclasse}&id_turma=${idTurma}`);
             historicoRegistros = await res.json();
 
             if (!Array.isArray(historicoRegistros) || historicoRegistros.length === 0) {
-                conteudo.innerHTML = '<p class="text-muted py-3">Nenhuma ocorrência registrada.</p>';
+                conteudo.innerHTML = '<p class="text-muted py-3">Nenhuma ocorrência registrada para esta turma.</p>';
                 return;
             }
 
             let html = '<div class="table-responsive"><table class="table table-hover align-middle">';
-            html += '<thead><tr class="table-light"><th>Data</th><th>Turma</th><th>Título</th><th>Descrição</th><th class="text-center">Pontos</th><th class="text-center">Ação</th></tr></thead><tbody>';
+            html += '<thead><tr class="table-light"><th>Data</th><th>Título</th><th>Descrição</th><th class="text-center">Pontos</th><th class="text-center">Ação</th></tr></thead><tbody>';
 
             historicoRegistros.forEach(r => {
                 html += '<tr>';
                 html += '<td class="small text-muted">' + esc(r.data_ocorrencia) + '</td>';
-                html += '<td class="fw-semibold">' + esc(r.nome_fantasia_turma || r.nome_turma) + '</td>';
                 html += '<td>' + esc(r.titulo_ocorrencia) + '</td>';
                 html += '<td class="small text-muted">' + esc(r.descricao_ocorrencia || '-') + '</td>';
                 html += '<td class="text-center"><span class="ocr-badge ocr-badge--pontos">-' + r.pontos_descontados + ' pts</span></td>';
@@ -383,7 +340,7 @@ $isAdmin = $nivelUsuario === 0;
             const result = await res.json();
             if (result.success) {
                 alert('Ocorrência removida!');
-                carregarHistorico();
+                carregarHistorico(historicoTurmaId);
             } else {
                 alert('Erro: ' + result.message);
             }
@@ -391,9 +348,6 @@ $isAdmin = $nivelUsuario === 0;
             alert('Erro de conexão.');
         }
     }
-
-    document.getElementById('filtroCategoriaDesktop').addEventListener('change', carregarLista);
-    document.getElementById('filtroCategoriaMob').addEventListener('change', carregarLista);
 
     window.addEventListener('load', carregarDados);
 </script>
