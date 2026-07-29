@@ -18,21 +18,14 @@ switch ($method) {
         }
 
         $sql = "SELECT ot.*, t.nome_turma, t.nome_fantasia_turma,
-                       c.nome_categoria, m.nome_modalidade, u.nome_usuario
+                       c.nome_categoria, u.nome_usuario
                 FROM ocorrencias_turmas ot
                 INNER JOIN turmas t ON t.id_turma = ot.turmas_id_turma
                 INNER JOIN categorias c ON c.id_categoria = t.categorias_id_categoria
-                INNER JOIN modalidades m ON m.id_modalidade = ot.modalidades_id_modalidade
                 INNER JOIN usuarios u ON u.id_usuario = ot.usuarios_id_usuario
                 WHERE ot.interclasses_id_interclasse = ?";
         $types = 'i';
         $params = [$idInterclasse];
-
-        if (!empty($_GET['id_modalidade'])) {
-            $sql .= " AND ot.modalidades_id_modalidade = ?";
-            $types .= 'i';
-            $params[] = (int) $_GET['id_modalidade'];
-        }
 
         if (!empty($_GET['id_turma'])) {
             $sql .= " AND ot.turmas_id_turma = ?";
@@ -52,9 +45,9 @@ switch ($method) {
         requerEscrita();
         $data = json_decode(file_get_contents('php://input'));
 
-        if (empty($data->turmas_id_turma) || empty($data->modalidades_id_modalidade) ||
+        if (empty($data->turmas_id_turma) ||
             empty($data->interclasses_id_interclasse) || empty($data->titulo_ocorrencia) ||
-            empty($data->data_ocorrencia) || empty($data->usuarios_id_usuario)) {
+            empty($data->data_ocorrencia)) {
             http_response_code(400);
             echo json_encode(["success" => false, "message" => "Dados incompletos."]);
             break;
@@ -62,22 +55,26 @@ switch ($method) {
 
         $pontos = isset($data->pontos_descontados) ? (int) $data->pontos_descontados : 0;
         $descricao = $data->descricao_ocorrencia ?? '';
+        $idUsuario = $data->usuarios_id_usuario ?? $_SESSION['id_usuario'] ?? null;
+
+        $types = 'iissis';
+        $params = [$data->turmas_id_turma, $data->interclasses_id_interclasse,
+                   $data->titulo_ocorrencia, $descricao, $pontos, $data->data_ocorrencia];
+
+        if ($idUsuario === null) {
+            $types .= 's';
+            $params[] = null;
+        } else {
+            $types .= 'i';
+            $params[] = (int) $idUsuario;
+        }
 
         $stmt = $conn->prepare(
-            "INSERT INTO ocorrencias_turmas (turmas_id_turma, modalidades_id_modalidade, interclasses_id_interclasse,
+            "INSERT INTO ocorrencias_turmas (turmas_id_turma, interclasses_id_interclasse,
              titulo_ocorrencia, descricao_ocorrencia, pontos_descontados, data_ocorrencia, usuarios_id_usuario)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
+             VALUES (?, ?, ?, ?, ?, ?, ?)"
         );
-        $stmt->bind_param('iiisssis',
-            $data->turmas_id_turma,
-            $data->modalidades_id_modalidade,
-            $data->interclasses_id_interclasse,
-            $data->titulo_ocorrencia,
-            $descricao,
-            $pontos,
-            $data->data_ocorrencia,
-            $data->usuarios_id_usuario
-        );
+        $stmt->bind_param($types, ...$params);
 
         if ($stmt->execute()) {
             http_response_code(201);

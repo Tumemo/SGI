@@ -21,7 +21,7 @@ window.SGIInterclasse = (() => {
     const endpoints = {
         home: './home.php',
         dashboard: './dashboard.php',
-        categorias: './categorias.php',
+        categorias: './ocorrencias.php',
         turmas: './turmas.php',
         equipes: './equipes.php',
         modalidades: './modalidades.php',

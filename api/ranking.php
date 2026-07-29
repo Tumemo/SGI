@@ -33,6 +33,10 @@ switch ($method) {
             INNER JOIN interclasses ON interclasses.id_interclasse = turmas.interclasses_id_interclasse
             INNER JOIN categorias ON categorias.id_categoria = turmas.categorias_id_categoria
             LEFT JOIN (
+                SELECT turmas_id_turma, SUM(pontos_descontados) AS total_penalidades
+                FROM ocorrencias_turmas
+                GROUP BY turmas_id_turma
+                UNION ALL
                 SELECT usuarios.turmas_id_turma, SUM(ocorrencias.penalidade) AS total_penalidades
                 FROM ocorrencias
                 INNER JOIN usuarios ON ocorrencias.usuarios_id_usuario = usuarios.id_usuario
