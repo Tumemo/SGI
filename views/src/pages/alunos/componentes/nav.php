@@ -104,7 +104,7 @@ $onclickSair = "onclick=\"return confirm('Deseja realmente sair?')\"";
 </nav>
 
 <!-- Navbar Desktop (Barra lateral esquerda) -->
-<nav class="d-none d-md-flex flex-column position-fixed vh-100 start-0 shadow-lg bg-danger" style="width: 80px; top: 0; z-index: 1040;">
+<nav class="d-none d-md-flex flex-column position-fixed vh-100 start-0 shadow-lg" style="width: 80px; top: 0; z-index: 1040; background-color: #e30613;">
     <ul class="nav flex-column align-items-center justify-content-around h-100 py-4 gap-4 fs-3">
         <?php foreach ($navItens as $key => $item): ?>
         <li>
