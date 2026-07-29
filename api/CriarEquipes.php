@@ -62,18 +62,23 @@ try {
             $nomeTurma = $turma['nome_turma'];
             $nomeModalidade = $modalidade['nome_modalidade'];
 
-            // 3. Conta quantas equipes já existem para essa turma nesta modalidade
+            // 3. Verifica se já existe QUALQUER equipe para essa turma nesta modalidade
             $sqlCount = "SELECT COUNT(*) as total FROM equipes WHERE modalidades_id_modalidade = ? AND turmas_id_turma = ?";
             $stmtCount = $conn->prepare($sqlCount);
             if (!$stmtCount) continue;
             $stmtCount->bind_param("ii", $idModalidade, $idTurma);
             $stmtCount->execute();
             $resCount = $stmtCount->get_result()->fetch_assoc();
-            $proximoNumero = ((int) $resCount['total']) + 1;
+            $totalExistente = (int) ($resCount['total'] ?? 0);
             $stmtCount->close();
 
-            // 4. Monta o nome padronizado (Ex: "9º Ano A Xadrez Equipe 1")
-            $nomeEquipe = trim("{$nomeTurma} {$nomeModalidade} Equipe {$proximoNumero}");
+            // REGRA RÍGIDA: Se já existir pelo menos 1 equipe, ignora e pula para o próximo
+            if ($totalExistente > 0) {
+                continue;
+            }
+
+            // 4. Monta o nome da única equipe da turma/modalidade (Ex: "9º Ano A Xadrez Equipe 1")
+            $nomeEquipe = trim("{$nomeTurma} {$nomeModalidade} Equipe 1");
 
             // 5. Insere a equipe com o nome preenchido
             $sqlInsert = "INSERT INTO equipes (status_equipe, modalidades_id_modalidade, turmas_id_turma, nome_equipe) VALUES ('1', ?, ?, ?)";
