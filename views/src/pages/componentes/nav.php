@@ -3,6 +3,12 @@
 $paginaAtiva = $paginaAtiva ?? 'home';
 $nivelUsuario = (int)($_SESSION['nivel'] ?? -1);
 $fotoUsuario = $_SESSION['foto_usuario'] ?? null;
+if ($fotoUsuario) {
+    $fotoPath = dirname(__DIR__, 4) . DIRECTORY_SEPARATOR . 'uploads' . DIRECTORY_SEPARATOR . 'fotosUsuarios' . DIRECTORY_SEPARATOR . $fotoUsuario;
+    if (!file_exists($fotoPath)) $fotoUsuario = null;
+}
+$nomeUsuario = $_SESSION['nome'] ?? 'Usuário';
+$inicialNome = strtoupper(substr($nomeUsuario, 0, 1));
 
 $todosItens = [
     'perfil'            => ['label' => 'Perfil',          'icon' => 'bi-person',             'url' => './perfil.php',              'niveis' => [0, 1, 2]],
@@ -49,6 +55,36 @@ $onclickSair = "onclick=\"return confirm('Deseja realmente sair?')\"";
         box-shadow: 0 0 8px rgba(255, 255, 255, 0.8);
         transform: scale(1.1);
     }
+    .nav-avatar-fallback {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        background: #fff;
+        color: #dc3545;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 600;
+        font-size: 0.85rem;
+        border: 2px solid #fff;
+    }
+    .nav-avatar-fallback-mobile {
+        width: 26px;
+        height: 26px;
+        border-radius: 50%;
+        background: #fff;
+        color: #dc3545;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 600;
+        font-size: 0.75rem;
+        border: 1.5px solid #fff;
+    }
+    .active-nav-icon .nav-avatar-fallback {
+        box-shadow: 0 0 8px rgba(255, 255, 255, 0.8);
+        transform: scale(1.1);
+    }
 </style>
 <!-- navbar mobile -->
 <nav class="d-md-none fixed-bottom py-1 bg-danger shadow-lg">
@@ -57,7 +93,9 @@ $onclickSair = "onclick=\"return confirm('Deseja realmente sair?')\"";
         <li>
             <a href="<?= $item['url'] ?>" class="<?= $classeLink($key) ?> nav-link p-1 <?= $key === $paginaAtiva ? 'active-nav-icon' : '' ?>" aria-label="<?= $item['label'] ?>">
                 <?php if ($key === 'perfil' && !empty($fotoUsuario)): ?>
-                    <img src="../../../../uploads/fotosUsuarios/<?= htmlspecialchars($fotoUsuario) ?>" class="nav-avatar-img-mobile" alt="Perfil">
+                    <img src="../../../uploads/fotosUsuarios/<?= htmlspecialchars($fotoUsuario) ?>" class="nav-avatar-img-mobile" alt="Perfil">
+                <?php elseif ($key === 'perfil'): ?>
+                    <span class="nav-avatar-fallback-mobile"><?= $inicialNome ?></span>
                 <?php else: ?>
                     <i class="bi <?= $iconeNav($item['icon'], $key) ?>"></i>
                 <?php endif; ?>
@@ -80,6 +118,8 @@ $onclickSair = "onclick=\"return confirm('Deseja realmente sair?')\"";
             <a href="<?= $item['url'] ?>" class="text-white d-flex align-items-center justify-content-center position-relative <?= $key === $paginaAtiva ? 'active-nav-icon' : '' ?>" title="<?= $item['label'] ?>">
                 <?php if ($key === 'perfil' && !empty($fotoUsuario)): ?>
                     <img src="../../../uploads/fotosUsuarios/<?= htmlspecialchars($fotoUsuario) ?>" class="nav-avatar-img" alt="Perfil">
+                <?php elseif ($key === 'perfil'): ?>
+                    <span class="nav-avatar-fallback"><?= $inicialNome ?></span>
                 <?php else: ?>
                     <i class="bi <?= $iconeNav($item['icon'], $key) ?>"></i>
                 <?php endif; ?>

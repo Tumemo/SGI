@@ -61,6 +61,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $st->execute();
             $st->close();
 
+            $_SESSION['foto_usuario'] = $nomeArquivo;
+
             echo json_encode(['success' => true, 'mensagem' => 'Foto atualizada!', 'arquivo' => $nomeArquivo]);
             exit;
         }
@@ -221,6 +223,7 @@ include 'componentes/nav.php';
                         </div>
 
                         <div class="d-flex justify-content-center gap-2">
+                            <button type="button" class="btn btn-sm btn-danger rounded-3 d-none" id="btnSalvarFoto">Salvar</button>
                             <button type="button" class="btn btn-sm btn-outline-danger rounded-3 px-3" id="btnExcluirFoto" disabled title="Excluir foto">
                                 <i class="bi bi-trash me-1"></i> Remover foto
                             </button>
@@ -304,7 +307,26 @@ include 'componentes/nav.php';
         id: <?= json_encode($sessionId ?? 0) ?>
     };
     const API_FOTO = '../../../../api/foto.php';
+    let fotoPreviewFile = null;
     let temFotoAtual = false;
+
+    function mostrarFoto(url) {
+        const img = document.getElementById('fotoImg');
+        const icon = document.getElementById('fotoIcon');
+        if (img && icon) {
+            img.onload = () => { img.classList.remove('d-none'); icon.classList.add('d-none'); };
+            img.onerror = () => { img.classList.add('d-none'); icon.classList.remove('d-none'); };
+            img.src = url;
+        }
+        atualizarBotoes();
+    }
+
+    function atualizarBotoes() {
+        const temPreview = fotoPreviewFile !== null;
+        document.getElementById('btnSalvarFoto').classList.toggle('d-none', !temPreview);
+        const btnExcluir = document.getElementById('btnExcluirFoto');
+        if (btnExcluir) btnExcluir.disabled = !temFotoAtual && !temPreview;
+    }
 
     document.addEventListener('DOMContentLoaded', async () => {
         const editarNome = document.getElementById('editarNome');
@@ -327,26 +349,38 @@ include 'componentes/nav.php';
             console.warn('Erro ao carregar foto:', e);
         }
 
-        // Upload de nova foto
-        input.addEventListener('change', async () => {
+        // Preview da foto sem salvar
+        input.addEventListener('change', () => {
             const file = input.files?.[0];
             if (!file) return;
+            fotoPreviewFile = file;
+            const url = URL.createObjectURL(file);
+            mostrarFoto(url);
+            input.value = '';
+        });
+
+        // Salvar foto
+        document.getElementById('btnSalvarFoto').addEventListener('click', async () => {
+            if (!fotoPreviewFile) return;
             const fd = new FormData();
             fd.append('acao', 'upload_foto');
-            fd.append('foto', file);
+            fd.append('foto', fotoPreviewFile);
+            document.getElementById('btnSalvarFoto').disabled = true;
+            document.getElementById('btnSalvarFoto').textContent = 'Salvando...';
             try {
                 const resp = await fetch(window.location.href, { method: 'POST', body: fd });
                 const data = await resp.json();
-                if (data.success && data.arquivo) {
-                    temFotoAtual = true;
-                    mostrarFoto('../../../../uploads/fotosUsuarios/' + data.arquivo + '?v=' + new Date().getTime());
+                if (data.success) {
+                    window.location.reload();
                 } else {
-                    alert(data.message || 'Erro ao enviar foto.');
+                    alert(data.message || 'Erro ao salvar foto.');
                 }
             } catch (e) {
                 alert('Erro na requisição.');
+            } finally {
+                document.getElementById('btnSalvarFoto').disabled = false;
+                document.getElementById('btnSalvarFoto').textContent = 'Salvar';
             }
-            input.value = '';
         });
 
         // Remover foto
@@ -356,37 +390,13 @@ include 'componentes/nav.php';
                 const resp = await fetch(API_FOTO, { method: 'DELETE' });
                 const data = await resp.json();
                 if (data.success) {
-                    temFotoAtual = false;
-                    const img = document.getElementById('fotoImg');
-                    const icon = document.getElementById('fotoIcon');
-                    if (img && icon) {
-                        img.classList.add('d-none');
-                        img.src = '';
-                        icon.classList.remove('d-none');
-                    }
-                    atualizarBotoes();
+                    window.location.reload();
                 }
             } catch (e) {
                 alert('Erro ao excluir foto.');
             }
         });
     });
-
-    function mostrarFoto(url) {
-        const img = document.getElementById('fotoImg');
-        const icon = document.getElementById('fotoIcon');
-        if (img && icon) {
-            img.onload = () => { img.classList.remove('d-none'); icon.classList.add('d-none'); };
-            img.onerror = () => { img.classList.add('d-none'); icon.classList.remove('d-none'); };
-            img.src = url;
-        }
-        atualizarBotoes();
-    }
-
-    function atualizarBotoes() {
-        const btn = document.getElementById('btnExcluirFoto');
-        if (btn) btn.disabled = !temFotoAtual;
-    }
 
     async function salvarPerfil(e) {
         e.preventDefault();

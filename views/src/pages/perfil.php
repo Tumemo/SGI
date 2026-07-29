@@ -342,19 +342,21 @@ $paginaAtiva = 'perfil';
                 if (!fotoPreviewFile) return;
                 const fd = new FormData();
                 fd.append('foto', fotoPreviewFile);
+                btn.disabled = true;
+                btn.textContent = 'Salvando...';
                 try {
                     const resp = await fetch(API_FOTO, { method: 'POST', body: fd });
                     const data = await resp.json();
                     if (data.success && data.arquivo) {
-                        fotoPreviewFile = null;
-                        temFotoAtual = true;
-                        mostrarFoto('../../../uploads/fotosUsuarios/' + data.arquivo);
-                        atualizarBotoesFoto();
+                        window.location.reload();
                     } else {
                         alert(data.mensagem || 'Erro ao enviar foto.');
                     }
                 } catch (e) {
                     alert('Erro de conexão.');
+                } finally {
+                    btn.disabled = false;
+                    btn.textContent = 'Salvar foto';
                 }
             });
         });
@@ -368,18 +370,7 @@ $paginaAtiva = 'perfil';
                     const resp = await fetch(window.location.href, { method: 'POST', body: fd });
                     const data = await resp.json();
                     if (data.success) {
-                        fotoPreviewFile = null;
-                        temFotoAtual = false;
-                        ['Mob', 'Desk'].forEach(suf => {
-                            const img = document.getElementById('fotoImg' + suf);
-                            const icon = document.getElementById('fotoIcon' + suf);
-                            if (img && icon) {
-                                img.classList.add('d-none');
-                                img.src = '';
-                                icon.classList.remove('d-none');
-                            }
-                        });
-                        atualizarBotoesFoto();
+                        window.location.reload();
                     } else {
                         alert(data.mensagem || 'Erro ao remover foto.');
                     }
