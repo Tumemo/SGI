@@ -1010,7 +1010,7 @@ $paginaAtiva = 'chaveamento';
                     <option value="">Selecione uma modalidade</option>
                 </select>
             </div>
-            <div class="kv-gen-card__note">⚠ Um novo chaveamento substituirá o existente para a modalidade selecionada.</div>
+            <div class="kv-gen-card__note">⚠ Não há possibilidade de gerar um segundo chaveamento.Tome cuidado!</div>
             <div id="msgChaveamento"></div>
             <div id="linkVerArvore" class="d-none" style="margin-top:12px;">
                 <a href="#" id="btnVerArvore" class="kv-link-btn">
