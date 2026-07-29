@@ -60,10 +60,8 @@ $cssExtra = '
 .aluno-empty .empty-icon { font-size: 3rem; margin-bottom: 1rem; color: var(--aluno-text-muted); }
 .aluno-empty h5 { font-weight: 600; margin-bottom: 0.5rem; }
 .aluno-empty p { font-size: 0.9rem; max-width: 400px; margin: 0 auto; }
-.btn-aluno { background: var(--aluno-primary); color: #fff; border: none; border-radius: var(--aluno-radius-md); padding: 0.5rem 1.5rem; font-weight: 500; transition: all var(--aluno-transition); }
+.btn-aluno { background: var(--aluno-primary); color: #fff; border: none; border-radius: var(--aluno-radius-md); padding: 0.5rem 1.5rem; font-weight: 500; transition: all var(--aluno-transition); text-decoration: none; }
 .btn-aluno:hover { background: var(--aluno-primary-dark); color: #fff; }
-.btn-aluno-outline { background: transparent; color: var(--aluno-primary); border: 1.5px solid var(--aluno-primary); border-radius: var(--aluno-radius-md); padding: 0.5rem 1.5rem; font-weight: 500; transition: all var(--aluno-transition); text-decoration: none; }
-.btn-aluno-outline:hover { background: var(--aluno-primary); color: #fff; }
 ';
 
 include 'componentes/head.php';
@@ -142,27 +140,14 @@ function renderizar(lista) {
     const mobile = document.getElementById('listaAlunosMobile');
     const desktop = document.getElementById('listaAlunosDesktop');
 
-    const genMod = String(generoDaModalidade || '').toUpperCase().trim();
-    const listaFiltrada = lista.filter(aluno => {
-        if (genMod === 'MISTO' || genMod === 'MISTA' || genMod === '') return true;
-        const genAluno = String(aluno.genero_usuario || '').toUpperCase().trim();
-        const ehModFeminina = genMod.startsWith('FEM') || genMod === 'F';
-        const ehModMasculina = genMod.startsWith('MAS') || genMod === 'M';
-        const ehAlunoFeminino = genAluno.startsWith('FEM') || genAluno === 'F';
-        const ehAlunoMasculino = genAluno.startsWith('MAS') || genAluno === 'M';
-        if (ehModFeminina && ehAlunoMasculino) return false;
-        if (ehModMasculina && ehAlunoFeminino) return false;
-        return true;
-    });
-
-    if (!listaFiltrada.length) {
-        const msg = '<div class="aluno-empty"><div class="empty-icon"><i class="bi bi-people"></i></div><h5>Nenhum aluno compatível</h5><p>Nenhum aluno com o gênero compatível com a modalidade foi encontrado nesta turma.</p></div>';
+    if (!lista.length) {
+        const msg = '<div class="aluno-empty"><div class="empty-icon"><i class="bi bi-people"></i></div><h5>Nenhum aluno disponível</h5><p>Nenhum aluno foi encontrado para esta turma com o gênero compatível com a modalidade.</p></div>';
         mobile.innerHTML = msg;
         desktop.innerHTML = msg;
         return;
     }
 
-    const html = listaFiltrada.map(cardAluno).join('');
+    const html = lista.map(cardAluno).join('');
     mobile.innerHTML = html;
     desktop.innerHTML = html;
 }
@@ -232,7 +217,8 @@ async function carregar() {
         const rawEq = await resEquipe.json();
         alunosNaEquipe = Array.isArray(rawEq) ? rawEq : [];
 
-        const res = await fetch(`../../../api/usuarios.php?acao=listar_competidores&id_turma=${idTurma}&_t=${ts}`);
+        const generoParam = (generoDaModalidade === 'MISTO' || generoDaModalidade === 'MISTA') ? '' : `&genero=${generoDaModalidade}`;
+        const res = await fetch(`../../../api/usuarios.php?acao=listar_competidores&id_turma=${idTurma}${generoParam}&_t=${ts}`);
         const data = await res.json();
         alunos = (data && data.competidores) ? data.competidores : (Array.isArray(data) ? data : []);
 

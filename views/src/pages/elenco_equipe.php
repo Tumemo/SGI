@@ -55,8 +55,8 @@ $cssExtra = '
 }
 .btn-aluno { background: var(--aluno-primary); color: #fff; border: none; border-radius: var(--aluno-radius-md); padding: 0.5rem 1.25rem; font-weight: 500; transition: all var(--aluno-transition); text-decoration: none; display: inline-flex; align-items: center; gap: 0.5rem; }
 .btn-aluno:hover { background: var(--aluno-primary-dark); color: #fff; }
-.btn-aluno-outline { background: transparent; color: var(--aluno-primary); border: 1.5px solid var(--aluno-primary); border-radius: var(--aluno-radius-md); padding: 0.5rem 1.25rem; font-weight: 500; transition: all var(--aluno-transition); text-decoration: none; display: inline-flex; align-items: center; gap: 0.5rem; }
-.btn-aluno-outline:hover { background: var(--aluno-primary); color: #fff; }
+.btn-aluno { background: transparent; color: var(--aluno-primary); border: 1.5px solid var(--aluno-primary); border-radius: var(--aluno-radius-md); padding: 0.5rem 1.25rem; font-weight: 500; transition: all var(--aluno-transition); text-decoration: none; display: inline-flex; align-items: center; gap: 0.5rem; }
+.btn-aluno:hover { background: var(--aluno-primary); color: #fff; }
 .aluno-empty { text-align: center; padding: 3rem 1rem; color: var(--aluno-text-secondary); }
 .aluno-empty .empty-icon { font-size: 3rem; margin-bottom: 1rem; color: var(--aluno-text-muted); }
 .aluno-empty h5 { font-weight: 600; margin-bottom: 0.5rem; }
@@ -77,7 +77,7 @@ $paginaAtiva = 'dashboard';
     </a>
     <div id="listaElencoMob" class="d-flex flex-column gap-2"></div>
     <?php if ($isAdmin): ?>
-    <a class="btn btn-aluno-outline w-100 mt-4" id="linkGerenciarMob" href="#">
+    <a class="btn btn-aluno w-100 mt-4" id="linkGerenciarMob" href="#">
         <i class="bi bi-person-plus"></i>
     </a>
     <?php endif; ?>
@@ -90,7 +90,7 @@ $paginaAtiva = 'dashboard';
             <h1>Elenco da equipe</h1>
             <?php if ($isAdmin): ?>
             <div class="ms-auto">
-                <a class="btn btn-aluno-outline" id="linkGerenciarDesk" href="#">
+                <a class="btn btn-aluno" id="linkGerenciarDesk" href="#">
                     <i class="bi bi-person-plus"></i>
                 </a>
             </div>
@@ -191,7 +191,7 @@ async function carregar() {
                     <div class="text-muted small">${esc(u.matricula_usuario)}</div>
                 </div>
                 ${isAdmin ? `
-                    <button onclick="removerAluno(${u.id_usuario}, ${idEquipe})" class="btn btn-aluno-outline btn-sm" style="padding:0.3rem 0.75rem;font-size:0.8rem">
+                    <button onclick="removerAluno(${u.id_usuario}, ${idEquipe})" class="btn btn-aluno btn-sm" style="padding:0.3rem 0.75rem;font-size:0.8rem">
                         <i class="bi bi-trash"></i>
                     </button>
                 ` : ''}
@@ -204,7 +204,7 @@ async function carregar() {
                 <td>${esc(u.matricula_usuario)}</td>
                 ${isAdmin ? `
                     <td class="text-end">
-                        <button onclick="removerAluno(${u.id_usuario}, ${idEquipe})" class="btn btn-aluno-outline btn-sm" style="padding:0.3rem 0.75rem;font-size:0.8rem">
+                        <button onclick="removerAluno(${u.id_usuario}, ${idEquipe})" class="btn btn-aluno btn-sm" style="padding:0.3rem 0.75rem;font-size:0.8rem">
                             <i class="bi bi-trash"></i>
                         </button>
                     </td>
