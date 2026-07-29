@@ -46,13 +46,28 @@ include 'componentes/nav.php';
             if (!idInterclasse) {
                 try {
                     const res = await fetch('../../../../api/interclasse.php?regulamento=true');
-                    const lista = await res.json();
-                    const ativo = (lista || []).find(i => String(i.status_interclasse) === '1');
-                    if (ativo) idInterclasse = ativo.id_interclasse;
-                } catch (e) {}
+                    if (!res.ok) throw new Error(`HTTP Error ${res.status}`);
+                    
+                    const data = await res.json();
+                    const lista = Array.isArray(data) ? data : [data];
+                    
+                    const ativo = lista.find(i => String(i.status_interclasse) === '1');
+                    if (ativo) {
+                        idInterclasse = ativo.id_interclasse;
+                        
+                        const url = new URL(window.location);
+                        url.searchParams.set('id', idInterclasse);
+                        window.history.replaceState({}, '', url);
+                    }
+                } catch (e) {
+                    console.error("Erro ao carregar interclasse ativo:", e);
+                    document.getElementById('listaRanking').innerHTML = `<p class="text-center text-danger py-5">Erro ao buscar interclasse ativo: ${e.message}</p>`;
+                    return;
+                }
             }
+            
             if (!idInterclasse) {
-                document.getElementById('listaRanking').innerHTML = '<p class="text-center text-muted">Nenhum interclasse selecionado.</p>';
+                document.getElementById('listaRanking').innerHTML = '<p class="text-center text-muted py-5">Nenhum interclasse selecionado ou ativo no momento.</p>';
                 return;
             }
             await carregarDados();
@@ -63,23 +78,66 @@ include 'componentes/nav.php';
             container.innerHTML = '<div class="text-center py-5"><div class="spinner-border text-danger"></div></div>';
 
             try {
-                const res = await fetch(`../../../../api/ranking.php?id_interclasse=${idInterclasse}`);
-                const data = await res.json();
+                const response = await fetch(`../../../../api/ranking.php?id_interclasse=${idInterclasse}`);
+                
+                // 1. Tratamento de erro HTTP (Servidor offline, 404, 500)
+                if (!response.ok) {
+                    throw new Error(`O servidor retornou um erro HTTP ${response.status}: ${response.statusText}`);
+                }
 
-                if (!data || data.length === 0) {
+                // 2. Lê a resposta como Texto primeiro (Para capturar erros do PHP não formatados como JSON)
+                const textData = await response.text();
+                if (!textData || textData.trim() === '') {
+                    throw new Error("A API retornou uma resposta completamente vazia (em branco).");
+                }
+
+                // 3. Tenta converter para JSON
+                let data;
+                try {
+                    data = JSON.parse(textData);
+                } catch (e) {
+                    console.error("Resposta crua da API (Não é JSON válido):", textData);
+                    throw new Error(`Falha ao converter os dados (Formato Inválido). O PHP pode estar imprimindo erros. Verifique o console. Resposta: ${textData.substring(0, 100)}...`);
+                }
+
+                // 4. Trata se a API retornou um objeto de erro documentado
+                if (data.error || data.erro) {
+                    throw new Error(`Erro retornado pela API: ${data.error || data.erro}`);
+                }
+
+                // 5. Verifica se os dados estão vazios
+                if (!data || (Array.isArray(data) && data.length === 0)) {
                     container.innerHTML = '<p class="text-center text-muted py-5">Nenhum resultado disponível para esta edição.</p>';
                     return;
                 }
 
-                dadosAPI = data;
-                categoriasUnicas = [...new Set(data.map(item => item.nome_categoria))];
-                document.getElementById('nomeInterclasseRanking').innerText = data[0].nome_interclasse || 'Ranking';
+                // 6. Normaliza para array (mesmo se for apenas 1 objeto)
+                const rankingArray = Array.isArray(data) ? data : [data];
+
+                // 7. Valida a estrutura dos dados
+                if (!rankingArray[0] || rankingArray[0].nome_categoria === undefined) {
+                    console.warn("Objeto recebido:", rankingArray[0]);
+                    throw new Error("Os dados recebidos da API não contêm a coluna 'nome_categoria'. Verifique a consulta SQL do seu arquivo de API.");
+                }
+
+                dadosAPI = rankingArray;
+                categoriasUnicas = [...new Set(rankingArray.map(item => item.nome_categoria))];
+                document.getElementById('nomeInterclasseRanking').innerText = rankingArray[0].nome_interclasse || 'Ranking';
 
                 renderizarFiltros();
                 if (categoriasUnicas.length > 0) filtrarCategoria(categoriasUnicas[0]);
+                
             } catch (error) {
-                console.error(error);
-                container.innerHTML = '<p class="text-center text-danger py-5">Erro ao carregar ranking.</p>';
+                console.error("Erro detalhado do Ranking:", error);
+                container.innerHTML = `
+                    <div class="alert alert-danger m-3 shadow-sm border-0" role="alert">
+                        <h4 class="alert-heading fs-5"><i class="bi bi-bug me-2"></i> Erro de Diagnóstico</h4>
+                        <p class="mb-1">Houve um problema técnico ao carregar o ranking. Leia o erro abaixo:</p>
+                        <hr class="my-2">
+                        <p class="mb-0 text-break fw-bold text-danger" style="font-family: monospace;">${error.message}</p>
+                    </div>
+                `;
+                document.getElementById('nomeInterclasseRanking').innerText = "Erro ao Carregar";
             }
         }
 

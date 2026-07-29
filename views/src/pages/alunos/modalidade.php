@@ -177,7 +177,10 @@ include 'componentes/nav.php';
 
 <script>
     const urlParams = new URLSearchParams(window.location.search);
-    const idInterclasse = urlParams.get('id');
+    
+    // CORREÇÃO: Transformado de "const" para "let" para permitir a reatribuição da variável depois
+    let idInterclasse = urlParams.get('id'); 
+    
     const generoUsuario = '<?= $genero_usuario ?>';
     const categoriaUsuario = <?= $categoria_usuario ?>;
     const modalidadesInscritas = <?= json_encode($modalidades_inscritas) ?>;
