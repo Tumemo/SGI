@@ -12,7 +12,7 @@ $paginaAtiva = 'equipes';
 <main class="d-md-none" style="margin-bottom:120px;">
     <div class="container mt-3">
         <div class="d-flex gap-2 mb-3">
-            <button class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#modalCriarEquipe">Adicionar equipe</button>
+            <button class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#modalCriarEquipe"><i class="bi bi-plus-lg"></i></button>
         </div>
         <div id="listaEquipesMobile">
             <p class="text-center text-muted">(Carregando equipes...)</p>
@@ -24,7 +24,7 @@ $paginaAtiva = 'equipes';
     <div class="container-fluid px-0">
         <div class="d-flex justify-content-between align-items-center mb-4">
             <div>
-                <button class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#modalCriarEquipe">Adicionar equipe</button>
+            <button class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#modalCriarEquipe"><i class="bi bi-plus-lg"></i></button>
             </div>
         </div>
         <div class="row g-3" id="listaEquipesDesktop">
@@ -146,8 +146,8 @@ $paginaAtiva = 'equipes';
                         <span class="fw-semibold d-block">${equipe.nome_modalidade || `Equipe #${equipe.id_equipe}`}</span>
                         <span class="text-muted small">${equipe.nome_turma || ''}</span>
                     </div>
-                    <a class="btn btn-sm btn-outline-danger" href="./elenco_equipe.php?id=${idInterclasse}&id_turma=${idTurma}&id_categoria=${idCategoria || ''}&id_equipe=${equipe.id_equipe}&id_modalidade=${equipe.modalidades_id_modalidade}&nome_turma=${encodeURIComponent(equipe.nome_turma || '')}&nome_modalidade=${encodeURIComponent(equipe.nome_modalidade || '')}">Elenco</a>
-                    <a class="btn btn-sm btn-danger" href="./equipe_alunos.php?id=${idInterclasse}&id_turma=${idTurma}&id_equipe=${equipe.id_equipe}&id_modalidade=${equipe.modalidades_id_modalidade}${idCategoria ? `&id_categoria=${idCategoria}` : ''}">Inscrições</a>
+                    <a class="btn btn-sm btn-danger" href="./equipe_alunos.php?id=${idInterclasse}&id_turma=${idTurma}&id_equipe=${equipe.id_equipe}&id_modalidade=${equipe.modalidades_id_modalidade}${idCategoria ? `&id_categoria=${idCategoria}` : ''}"><i class="bi bi-person-plus"></i></a>
+                    <a class="btn btn-sm btn-danger" href="./elenco_equipe.php?id=${idInterclasse}&id_turma=${idTurma}&id_categoria=${idCategoria || ''}&id_equipe=${equipe.id_equipe}&id_modalidade=${equipe.modalidades_id_modalidade}&nome_turma=${encodeURIComponent(equipe.nome_turma || '')}&nome_modalidade=${encodeURIComponent(equipe.nome_modalidade || '')}"><i class="bi bi-people-fill"></i></a>
                 </div>
             `).join('');
 
@@ -156,8 +156,8 @@ $paginaAtiva = 'equipes';
                     <div class="bg-white rounded-3 shadow-sm p-4 h-100">
                         <h6 class="fw-bold mb-2">${equipe.nome_modalidade || `Equipe #${equipe.id_equipe}`}</h6>
                         <p class="text-muted mb-3">${equipe.nome_turma || ''}</p>
-                        <a class="btn btn-outline-danger btn-sm" href="./elenco_equipe.php?id=${idInterclasse}&id_turma=${idTurma}&id_categoria=${idCategoria || ''}&id_equipe=${equipe.id_equipe}&id_modalidade=${equipe.modalidades_id_modalidade}&nome_turma=${encodeURIComponent(equipe.nome_turma || '')}&nome_modalidade=${encodeURIComponent(equipe.nome_modalidade || '')}">Elenco</a>
-                        <a class="btn btn-danger btn-sm" href="./equipe_alunos.php?id=${idInterclasse}&id_turma=${idTurma}&id_equipe=${equipe.id_equipe}&id_modalidade=${equipe.modalidades_id_modalidade}${idCategoria ? `&id_categoria=${idCategoria}` : ''}">Inscrições</a>
+                        <a class="btn btn-danger btn-sm" href="./equipe_alunos.php?id=${idInterclasse}&id_turma=${idTurma}&id_equipe=${equipe.id_equipe}&id_modalidade=${equipe.modalidades_id_modalidade}${idCategoria ? `&id_categoria=${idCategoria}` : ''}"><i class="bi bi-person-plus"></i></a>
+                        <a class="btn btn-danger btn-sm" href="./elenco_equipe.php?id=${idInterclasse}&id_turma=${idTurma}&id_categoria=${idCategoria || ''}&id_equipe=${equipe.id_equipe}&id_modalidade=${equipe.modalidades_id_modalidade}&nome_turma=${encodeURIComponent(equipe.nome_turma || '')}&nome_modalidade=${encodeURIComponent(equipe.nome_modalidade || '')}"><i class="bi bi-people-fill"></i></a>
                     </div>
                 </div>
             `).join('');

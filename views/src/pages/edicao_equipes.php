@@ -56,12 +56,12 @@ $cssExtra = '
 .aluno-table tbody tr:hover td { background: #f8f9fa; }
 .btn-aluno { background: var(--aluno-primary); color: #fff; border: none; border-radius: var(--aluno-radius-md); padding: 0.5rem 1.25rem; font-weight: 500; transition: all var(--aluno-transition); text-decoration: none; display: inline-flex; align-items: center; gap: 0.5rem; }
 .btn-aluno:hover { background: var(--aluno-primary-dark); color: #fff; }
-.btn-aluno-outline { background: transparent; color: var(--aluno-primary); border: 1.5px solid var(--aluno-primary); border-radius: var(--aluno-radius-md); padding: 0.4rem 1rem; font-weight: 500; transition: all var(--aluno-transition); text-decoration: none; display: inline-flex; align-items: center; gap: 0.35rem; font-size: 0.85rem; }
-.btn-aluno-outline:hover { background: var(--aluno-primary); color: #fff; }
+.btn-aluno { background: transparent; color: var(--aluno-primary); border: 1.5px solid var(--aluno-primary); border-radius: var(--aluno-radius-md); padding: 0.4rem 1rem; font-weight: 500; transition: all var(--aluno-transition); text-decoration: none; display: inline-flex; align-items: center; gap: 0.35rem; font-size: 0.85rem; }
+.btn-aluno:hover { background: var(--aluno-primary); color: #fff; }
 .btn-filter-cat {
-  padding: 0.35rem 1rem; border-radius: 50px;
+  padding: 0.55rem 1.3rem; border-radius: 50px;
   border: 1.5px solid var(--aluno-border); background: var(--aluno-surface);
-  color: var(--aluno-text-secondary); font-size: 0.85rem; font-weight: 500;
+  color: var(--aluno-text-secondary); font-size: 0.9rem; font-weight: 600;
   cursor: pointer; transition: all var(--aluno-transition);
 }
 .btn-filter-cat:hover { border-color: var(--aluno-primary); color: var(--aluno-primary); background: var(--aluno-primary-subtle); }
@@ -142,7 +142,7 @@ $paginaAtiva = 'dashboard';
                     </select>
                     <div id="msgCriarEquipe" class="text-center mb-2 small"></div>
                     <div class="d-flex justify-content-end gap-2 pt-2">
-                        <button type="button" class="btn btn-aluno-outline" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="button" class="btn btn-aluno" data-bs-dismiss="modal">Cancelar</button>
                         <button type="submit" class="btn btn-aluno" id="btnSalvarEquipe"><i class="bi bi-check-lg"></i></button>
                     </div>
                 </form>
@@ -280,6 +280,7 @@ $paginaAtiva = 'dashboard';
                                 id: idInterclasseEq,
                                 id_equipe: String(eq.id_equipe),
                                 id_turma: String(eq.turmas_id_turma),
+                                id_modalidade: String(m.id_modalidade),
                                 id_categoria: String(m.categorias_id_categoria),
                                 nome_turma: eq.nome_turma || '',
                                 nome_modalidade: m.nome_modalidade || ''
@@ -289,8 +290,8 @@ $paginaAtiva = 'dashboard';
                                 <div class="d-flex justify-content-between align-items-center py-1">
                                     <span>${esc(eq.nome_turma || 'Turma')}</span>
                                     <div class="d-flex gap-1">
-                                        ${isAdmin ? `<button class="btn btn-aluno-outline btn-sm" onclick="excluirEquipe(${eq.id_equipe}, '${esc(eq.nome_turma || 'Turma')}')"><i class="bi bi-trash"></i></button>` : ''}
-                                        <a class="btn btn-aluno-outline btn-sm" href="${hrefElenco}"><i class="bi bi-people-fill"></i></a>
+                                        <a class="btn btn-aluno btn-sm" href="${hrefElenco}"><i class="bi bi-people-fill"></i></a>
+                                        ${isAdmin ? `<button class="btn btn-aluno btn-sm" onclick="excluirEquipe(${eq.id_equipe}, '${esc(eq.nome_turma || 'Turma')}')"><i class="bi bi-trash"></i></button>` : ''}
                                     </div>
                                 </div>`;
                         });
@@ -312,6 +313,7 @@ $paginaAtiva = 'dashboard';
                                 id: idInterclasseEq,
                                 id_equipe: String(eq.id_equipe),
                                 id_turma: String(eq.turmas_id_turma),
+                                id_modalidade: String(m.id_modalidade),
                                 id_categoria: String(m.categorias_id_categoria),
                                 nome_turma: eq.nome_turma || '',
                                 nome_modalidade: m.nome_modalidade || ''
@@ -320,8 +322,8 @@ $paginaAtiva = 'dashboard';
                             htmlDesk += `<tr>
                                 <td style="padding-left:1.25rem">${esc(eq.nome_turma || 'Turma')}</td>
                                 <td class="text-end" style="padding-right:1.25rem">
-                                    ${isAdmin ? `<button class="btn btn-aluno-outline btn-sm me-1" onclick="excluirEquipe(${eq.id_equipe}, '${esc(eq.nome_turma || 'Turma')}')"><i class="bi bi-trash"></i></button>` : ''}
-                                    <a class="btn btn-aluno-outline btn-sm" href="${hrefElenco}"><i class="bi bi-people-fill"></i></a>
+                                    <a class="btn btn-aluno btn-sm me-1" href="${hrefElenco}"><i class="bi bi-people-fill"></i></a>
+                                    ${isAdmin ? `<button class="btn btn-aluno btn-sm" onclick="excluirEquipe(${eq.id_equipe}, '${esc(eq.nome_turma || 'Turma')}')"><i class="bi bi-trash"></i></button>` : ''}
                                 </td>
                             </tr>`;
                         });
