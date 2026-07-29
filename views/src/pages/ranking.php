@@ -3,6 +3,12 @@ $tituloPagina = 'SGI - Ranking Geral';
 $titulo = 'Ranking de Turmas';
 $mostrarVoltar = true;
 $urlVoltar = './dashboard.php';
+$cssExtra = '
+.btn-categoria { transition: all 0.2s; border-radius: 50px !important; min-width: 100px; border: 1.5px solid #E5E7EB; background: #fff; color: #4B5563; font-weight: 600; font-size: .9rem; padding: .55rem 1.3rem; white-space: nowrap; }
+.rk-stat-chip { font-size: .9rem; padding: .55rem 1.1rem; }
+.btn-categoria:hover { border-color: #dc3545 !important; color: #dc3545 !important; background: #fff5f5 !important; }
+.btn-categoria.ativo { background: #dc3545 !important; color: #fff !important; border-color: #dc3545 !important; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+';
 include 'componentes/head.php';
 include 'componentes/header.php';
 $paginaAtiva = 'ranking';
@@ -28,33 +34,17 @@ $paginaAtiva = 'ranking';
 
 <!-- ======================== DESKTOP ======================== -->
 <main class="d-none d-md-block main-desktop-layout">
-    <div class="rk-layout">
-        <!-- Sidebar -->
-        <aside class="rk-sidebar">
-            <div class="rk-sidebar__card">
-                <div class="rk-sidebar__header">
-                    <i class="bi bi-trophy-fill"></i>
-                    <span>Categorias</span>
-                </div>
-                <div id="filtrosDesk" class="rk-sidebar__list"></div>
+    <div class="container-fluid px-4 py-4">
+        <div class="d-flex align-items-center justify-content-between mb-3 gap-3 flex-wrap">
+            <div id="filtrosDesk" class="d-flex overflow-auto gap-2"></div>
+            <div class="rk-stat-chip flex-shrink-0">
+                <span>&#x1F465;</span>
+                <span id="totalTurmasDesk">0 Turmas</span>
             </div>
-        </aside>
+        </div>
 
-        <!-- Main content -->
-        <section class="rk-main">
-            <header class="rk-header">
-                <div class="rk-header__left">
-                    <h1 class="rk-header__title d-none" id="nomeInterclasseDesk"></h1>
-                </div>
-                <div class="rk-stat-chip">
-                    <span>&#x1F465;</span>
-                    <span id="totalTurmas">0 Turmas</span>
-                </div>
-            </header>
-
-            <div id="msgDesk"></div>
-            <div id="listaDesk" class="rk-ranking-list"></div>
-        </section>
+        <div id="msgDesk"></div>
+        <div id="listaDesk" class="d-flex flex-column gap-3"></div>
     </div>
 </main>
 
@@ -102,6 +92,8 @@ $paginaAtiva = 'ranking';
 
             document.querySelectorAll('#nomeInterclasse').forEach(el => el.innerText = data[0].nome_interclasse);
             document.getElementById('totalTurmas').innerText = `${data.length} Turmas`;
+            const ttd = document.getElementById('totalTurmasDesk');
+            if (ttd) ttd.innerText = `${data.length} Turmas`;
 
             renderizarFiltros();
             filtrarCategoria(categoriasUnicas[0]);
@@ -120,9 +112,8 @@ $paginaAtiva = 'ranking';
 
         categoriasUnicas.forEach(cat => {
             const btn = document.createElement('button');
-            btn.className = 'btn btn-categoria rk-cat-btn';
-            btn.innerHTML = `<i class="bi bi-tag-fill"></i> ${cat}`;
-            btn.id = `btn-${cat.replace(/\s/g, '')}`;
+            btn.className = 'btn btn-outline-secondary btn-categoria';
+            btn.textContent = cat;
             btn.onclick = () => filtrarCategoria(cat);
 
             fMob.appendChild(btn.cloneNode(true));
@@ -135,11 +126,13 @@ $paginaAtiva = 'ranking';
     function filtrarCategoria(categoria) {
         document.querySelectorAll('.btn-categoria').forEach(b => {
             b.classList.remove('ativo');
-            if (b.innerText.trim().includes(categoria)) b.classList.add('ativo');
+            if (b.textContent.trim() === categoria) b.classList.add('ativo');
         });
 
         const turmasFiltradas = dadosAPI.filter(t => t.nome_categoria === categoria);
         document.getElementById('totalTurmas').innerText = `${turmasFiltradas.length} Turmas`;
+        const ttd = document.getElementById('totalTurmasDesk');
+        if (ttd) ttd.innerText = `${turmasFiltradas.length} Turmas`;
         renderizarRanking(turmasFiltradas);
     }
 

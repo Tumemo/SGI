@@ -1,54 +1,394 @@
 <?php
-$tituloPagina = 'SGI - Aluno Home';
+$tituloPagina = 'SGI - Início';
 $cssExtra = '
-    .style-card { 
-        transition: all 0.25s ease-in-out; 
-        border: 1px solid rgba(0,0,0,0.08);
-    }
-    .style-card:hover { 
-        transform: translateY(-4px); 
-        box-shadow: 0 0.5rem 1.25rem rgba(0,0,0,0.1) !important; 
-        border-color: #dc3545;
-    }
+
+/* ==================== DESIGN SYSTEM ==================== */
+:root {
+  --aluno-primary: #dc3545;
+  --aluno-primary-dark: #b02a37;
+  --aluno-primary-light: #fce4e6;
+  --aluno-primary-subtle: #fff0f0;
+  --aluno-success: #198754;
+  --aluno-bg: #f5f6fa;
+  --aluno-surface: #ffffff;
+  --aluno-border: #e9ecef;
+  --aluno-text: #1a1a2e;
+  --aluno-text-secondary: #6c757d;
+  --aluno-text-muted: #adb5bd;
+  --aluno-radius-sm: 8px;
+  --aluno-radius-md: 12px;
+  --aluno-radius-lg: 16px;
+  --aluno-radius-xl: 24px;
+  --aluno-shadow-sm: 0 1px 3px rgba(0,0,0,0.06);
+  --aluno-shadow-md: 0 4px 12px rgba(0,0,0,0.08);
+  --aluno-shadow-lg: 0 8px 24px rgba(0,0,0,0.12);
+  --aluno-shadow-hover: 0 12px 28px rgba(0,0,0,0.15);
+  --aluno-transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.aluno-page {
+  font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+  color: var(--aluno-text);
+}
+
+/* Hero Section */
+.aluno-hero {
+  background: linear-gradient(135deg, var(--aluno-primary) 0%, #c82333 100%);
+  border-radius: var(--aluno-radius-xl);
+  padding: 2.5rem 2rem;
+  color: #fff;
+  position: relative;
+  overflow: hidden;
+}
+.aluno-hero::before {
+  content: "";
+  position: absolute;
+  top: -50%;
+  right: -20%;
+  width: 300px;
+  height: 300px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.08);
+}
+.aluno-hero::after {
+  content: "";
+  position: absolute;
+  bottom: -30%;
+  left: 10%;
+  width: 200px;
+  height: 200px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.05);
+}
+.aluno-hero h1 {
+  font-size: 1.75rem;
+  font-weight: 700;
+  margin-bottom: 0.25rem;
+  position: relative;
+  z-index: 1;
+}
+.aluno-hero p {
+  font-size: 1rem;
+  opacity: 0.9;
+  margin-bottom: 0;
+  position: relative;
+  z-index: 1;
+}
+
+/* Search Bar */
+.aluno-search {
+  position: relative;
+}
+.aluno-search .form-control {
+  border-radius: var(--aluno-radius-lg);
+  border: 2px solid var(--aluno-border);
+  padding: 0.75rem 1rem 0.75rem 2.75rem;
+  font-size: 0.95rem;
+  transition: border-color var(--aluno-transition), box-shadow var(--aluno-transition);
+}
+.aluno-search .form-control:focus {
+  border-color: var(--aluno-primary);
+  box-shadow: 0 0 0 3px rgba(220,53,69,0.15);
+  outline: none;
+}
+.aluno-search .search-icon {
+  position: absolute;
+  left: 1rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--aluno-text-muted);
+  font-size: 1.1rem;
+  pointer-events: none;
+}
+
+/* Filter Pills */
+.aluno-filter-pills {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+.aluno-filter-pills .filter-pill {
+  padding: 0.4rem 1rem;
+  border-radius: 50px;
+  border: 1.5px solid var(--aluno-border);
+  background: var(--aluno-surface);
+  color: var(--aluno-text-secondary);
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--aluno-transition);
+  user-select: none;
+}
+.aluno-filter-pills .filter-pill:hover {
+  border-color: var(--aluno-primary);
+  color: var(--aluno-primary);
+  background: var(--aluno-primary-subtle);
+}
+.aluno-filter-pills .filter-pill.active {
+  background: var(--aluno-primary);
+  border-color: var(--aluno-primary);
+  color: #fff;
+}
+
+/* Card Grid */
+.aluno-card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(420px, 1fr));
+  gap: 1.25rem;
+}
+
+/* Individual Card */
+.aluno-card {
+  background: var(--aluno-surface);
+  border-radius: var(--aluno-radius-lg);
+  border: 1px solid var(--aluno-border);
+  padding: 1.5rem;
+  transition: all var(--aluno-transition);
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+.aluno-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--aluno-shadow-hover);
+  border-color: transparent;
+}
+.aluno-card .card-accent {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 4px;
+  height: 100%;
+  border-radius: 4px 0 0 4px;
+}
+.aluno-card .card-accent.active {
+  background: var(--aluno-success);
+}
+.aluno-card .card-accent.inactive {
+  background: var(--aluno-text-muted);
+}
+.aluno-card .card-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: var(--aluno-radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  margin-bottom: 1rem;
+  flex-shrink: 0;
+}
+.aluno-card .card-icon.active {
+  background: var(--aluno-primary-light);
+  color: var(--aluno-primary);
+}
+.aluno-card .card-icon.inactive {
+  background: #f0f0f0;
+  color: var(--aluno-text-muted);
+}
+.aluno-card .card-body {
+  flex: 1;
+}
+.aluno-card .card-title {
+  font-size: 1.15rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  color: var(--aluno-text);
+}
+.aluno-card .card-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+  font-size: 0.85rem;
+  color: var(--aluno-text-secondary);
+}
+.aluno-card .card-meta .bi {
+  margin-right: 0.25rem;
+}
+.aluno-card .card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: auto;
+}
+.aluno-card .btn-card {
+  background: var(--aluno-primary);
+  color: #fff;
+  border: none;
+  border-radius: var(--aluno-radius-md);
+  padding: 0.5rem 1.25rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition: all var(--aluno-transition);
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.aluno-card .btn-card:hover {
+  background: var(--aluno-primary-dark);
+  color: #fff;
+  transform: translateX(2px);
+}
+.aluno-card .btn-card.inactive {
+  background: var(--aluno-text-muted);
+  cursor: default;
+  pointer-events: none;
+}
+
+/* Status Badge */
+.aluno-status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.25rem 0.75rem;
+  border-radius: 50px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+.aluno-status-badge.active {
+  background: #d1e7dd;
+  color: #0a3622;
+}
+.aluno-status-badge.inactive {
+  background: #e9ecef;
+  color: #6c757d;
+}
+
+/* Section Header */
+.aluno-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+.aluno-section-header h2 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--aluno-text);
+  margin: 0;
+}
+.aluno-section-header h2 .bi {
+  color: var(--aluno-primary);
+  margin-right: 0.5rem;
+}
+
+/* Empty & Loading */
+.aluno-empty {
+  text-align: center;
+  padding: 3rem 1rem;
+  color: var(--aluno-text-secondary);
+}
+.aluno-empty .empty-icon {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+  color: var(--aluno-text-muted);
+}
+.aluno-empty h5 {
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+.aluno-empty p {
+  font-size: 0.9rem;
+  max-width: 400px;
+  margin: 0 auto;
+}
+.aluno-loading {
+  text-align: center;
+  padding: 3rem 1rem;
+  color: var(--aluno-text-secondary);
+}
+
+/* Responsive */
+@media (max-width: 767.98px) {
+  .aluno-hero {
+    padding: 1.5rem 1.25rem;
+    border-radius: var(--aluno-radius-lg);
+  }
+  .aluno-hero h1 { font-size: 1.35rem; }
+  .aluno-card-grid { grid-template-columns: 1fr; }
+  .aluno-filter-pills {
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    padding-bottom: 0.25rem;
+  }
+  .aluno-filter-pills .filter-pill {
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+  .aluno-section-header { flex-direction: column; align-items: flex-start; }
+}
+@media (min-width: 768px) and (max-width: 991.98px) {
+  .aluno-card-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+/* Modal overrides */
+#modalTermo .modal-content {
+  border: none;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+}
+#modalTermo .modal-header {
+  background: var(--aluno-primary);
+  color: #fff;
+  border-bottom: none;
+}
 ';
 
 include 'componentes/head.php';
 
-// Navegação Lateral/Inferior
 $paginaAtiva = 'home';
 include 'componentes/nav.php';
-
-// Banner Superior
-$mostrarSino = true;
-$mostrarVoltar = false;
-$titulo = 'Interclasses';
 ?>
 
-<main class="container py-4 flex-grow-1">
-    <h1 class="visually-hidden">Painel do Aluno - Interclasses</h1>
-    
-    <!-- Subtítulo -->
-    <div class="text-center mb-4">
-        <h2 class="text-secondary fs-5 fw-normal">Inscreva-se ou visualize resultados das competições</h2>
-        <hr class="w-25 mx-auto border-danger opacity-50 my-3">
-    </div>
+<main class="aluno-page p-5  py-4">
+  <div class="row">
+    <div class=" w-100 d-flex flex-column gap-4">
 
-    <!-- Lista de Interclasses -->
-    <section class="row g-3 g-md-4 justify-content-center" id="listaInterclassesAluno" aria-live="polite">
-        <div class="col-12 text-center text-muted py-5">
-            <div class="spinner-border spinner-border-sm text-danger me-2" role="status">
-                <span class="visually-hidden">Carregando...</span>
-            </div>
-            Carregando competições...
+      <div class="aluno-hero mb-4">
+        <h1>Olá, <?= htmlspecialchars($_SESSION['nome'] ?? 'Aluno', ENT_QUOTES) ?>!   </h1>
+        <p>Confira as competições disponíveis e participe!</p>
+      </div>
+
+      <!-- <div class="aluno-section-header">
+        <h2><i class="bi bi-trophy"></i>Interclasses</h2>
+        <div class="d-flex gap-2 flex-wrap align-items-center">
+          <div class="aluno-search" style="min-width:220px">
+            <i class="bi bi-search search-icon"></i>
+            <input type="text" class="form-control" id="searchInput" placeholder="Pesquisar...">
+          </div>
         </div>
-    </section>
+      </div> -->
+
+      <div class="aluno-filter-pills mb-4" id="filterPills">
+        <span class="filter-pill active" data-filter="all">Todos</span>
+        <span class="filter-pill" data-filter="active">Em Andamento</span>
+        <span class="filter-pill" data-filter="inactive">Encerrados</span>
+      </div>
+
+      <section id="listaInterclassesAluno">
+        <div class="aluno-loading">
+          <div class="spinner-border spinner-border-sm text-danger me-2" role="status">
+            <span class="visually-hidden">Carregando...</span>
+          </div>
+          Carregando competições...
+        </div>
+      </section>
+
+    </div>
+  </div>
 </main>
 
-<!-- Modal do Termo de Responsabilidade -->
 <div class="modal fade" id="modalTermo" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
-        <div class="modal-content border-0 shadow-lg">
-            <div class="modal-header bg-danger text-white border-0">
+        <div class="modal-content">
+            <div class="modal-header">
                 <h5 class="modal-title fw-bold">
                     <i class="bi bi-file-earmark-text me-2"></i>Termo de Responsabilidade e Regulamento
                 </h5>
@@ -65,7 +405,6 @@ $titulo = 'Interclasses';
                     <li class="mb-2"><strong>Pontuação:</strong> Aceito o sistema de pontuação e classificação estabelecido, bem como as penalidades previstas no regulamento.</li>
                 </ol>
 
-                <!-- Área de Download/Visualização do PDF do Regulamento (Agora no Final) -->
                 <div id="containerPdfRegulamento" class="card border-danger-subtle bg-danger-subtle bg-opacity-10 mb-3">
                     <div class="card-body p-3 d-flex align-items-center justify-content-between flex-wrap gap-2">
                         <div class="d-flex align-items-center gap-2">
@@ -95,179 +434,212 @@ $titulo = 'Interclasses';
 </div>
 
 <script>
-    function escaparHTML(string) {
-        const mapa = {
-            '&': '&amp;',
-            '<': '&lt;',
-            '>': '&gt;',
-            '"': '&quot;',
-            "'": '&#x27;'
-        };
-        return String(string || '').replace(/[&<>"']/g, (s) => mapa[s]);
+function escapeHTML(string) {
+    const mapa = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#x27;' };
+    return String(string || '').replace(/[&<>"']/g, (s) => mapa[s]);
+}
+
+let allInterclasses = [];
+
+function renderCards(items) {
+    const container = document.getElementById('listaInterclassesAluno');
+
+    if (!items || items.length === 0) {
+        container.innerHTML = `
+            <div class="aluno-empty">
+                <div class="empty-icon"><i class="bi bi-folder-x"></i></div>
+                <h5>Nenhum interclasse encontrado</h5>
+                <p>No momento não há competições disponíveis com os filtros selecionados.</p>
+            </div>`;
+        return;
     }
 
-    function cardInterclasse(interclasse, ativo) {
-        const nomeSanitizado = escaparHTML(interclasse.nome_interclasse);
-        const ano = interclasse.ano_interclasse ? escaparHTML(String(interclasse.ano_interclasse).split('-')[0]) : 'N/A';
+    container.innerHTML = `<div class="aluno-card-grid">${
+        items.map(item => {
+            const nome = escapeHTML(item.nome_interclasse);
+            const ano = item.ano_interclasse ? escapeHTML(String(item.ano_interclasse).split('-')[0]) : 'N/A';
+            const isAtivo = String(item.status_interclasse) === '1';
+            const statusLabel = isAtivo ? 'Em Andamento' : 'Encerrado';
+            const statusClass = isAtivo ? 'active' : 'inactive';
+            const iconClass = isAtivo ? 'active' : 'inactive';
+            const href = isAtivo ? `./modalidade.php?id=${item.id_interclasse}` : `./ranking.php?id=${item.id_interclasse}`;
+            const btnLabel = isAtivo ? 'Ver Detalhes <i class="bi bi-arrow-right"></i>' : 'Ver Ranking <i class="bi bi-bar-chart"></i>';
 
-        const status = ativo ? 'Em andamento' : 'Inativo';
-        const classeCard = ativo ? 'bg-white' : 'bg-white opacity-75';
-        const href = ativo ? `./modalidade.php?id=${interclasse.id_interclasse}` : `./ranking.php?id=${interclasse.id_interclasse}`;
-
-        return `
-            <div class="col-12 col-md-6 col-lg-5 col-xl-4">
-                <a href="${href}" class="text-decoration-none text-dark card-link d-block h-100">
-                    <div class="shadow-sm d-flex justify-content-between align-items-center p-4 rounded-3 ${classeCard} h-100 style-card">
-                        <div>
-                            <h3 class="fs-5 mb-2 text-dark fw-bold">${nomeSanitizado}</h3>
-                            <p class="m-0 text-secondary small d-flex align-items-center gap-2">
-                                <span class="badge ${ativo ? 'bg-success-subtle text-success border border-success-subtle' : 'bg-secondary-subtle text-secondary border border-secondary-subtle'}">${status}</span> 
-                                <span class="fw-semibold text-muted">• ${ano}</span>
-                            </p>
+            return `
+                <div class="aluno-card" data-status="${statusClass}">
+                    <div class="card-accent ${statusClass}"></div>
+                    <div class="d-flex align-items-start gap-3">
+                        <div class="card-icon ${iconClass}">
+                            <i class="bi bi-trophy-fill"></i>
                         </div>
-                        <i class="bi bi-chevron-right text-danger fs-4 ms-3"></i>
+                        <div class="card-body">
+                            <div class="card-title">${nome}</div>
+                            <div class="card-meta">
+                                <span><i class="bi bi-calendar3"></i>${ano}</span>
+                                <span class="aluno-status-badge ${statusClass}">
+                                    <i class="bi bi-circle-fill" style="font-size:0.4rem"></i>
+                                    ${statusLabel}
+                                </span>
+                            </div>
+                            <div class="card-footer">
+                                <a href="${href}" class="btn-card">${btnLabel}</a>
+                            </div>
+                        </div>
                     </div>
-                </a>
-            </div>
-        `;
+                </div>`;
+        }).join('')
+    }</div>`;
+}
+
+function filterAndRender() {
+    const activeFilter = document.querySelector('.filter-pill.active')?.dataset?.filter || 'all';
+    const searchTerm = (document.getElementById('searchInput')?.value || '').toLowerCase().trim();
+
+    let filtered = allInterclasses;
+
+    if (activeFilter === 'active') {
+        filtered = filtered.filter(item => String(item.status_interclasse) === '1');
+    } else if (activeFilter === 'inactive') {
+        filtered = filtered.filter(item => String(item.status_interclasse) !== '1');
     }
 
-    async function carregarInterclassesAluno() {
-        const container = document.getElementById('listaInterclassesAluno');
+    if (searchTerm) {
+        filtered = filtered.filter(item =>
+            (item.nome_interclasse || '').toLowerCase().includes(searchTerm)
+        );
+    }
 
-        try {
-            const res = await fetch('../../../../api/interclasse.php?regulamento=true');
+    renderCards(filtered);
+}
 
-            if (!res.ok) throw new Error('Resposta do servidor não amigável.');
+async function carregarInterclassesAluno() {
+    try {
+        const res = await fetch('../../../../api/interclasse.php?regulamento=true');
+        if (!res.ok) throw new Error('Resposta do servidor não amigável.');
+        const lista = await res.json();
 
-            const lista = await res.json();
-
-            if (!Array.isArray(lista) || lista.length === 0) {
-                container.innerHTML = `
-                    <div class="col-12 text-center text-muted py-5">
-                        <i class="bi bi-folder-x fs-1 d-block text-secondary mb-2"></i>
-                        Nenhum interclasse encontrado no momento.
-                    </div>`;
-                return;
-            }
-            container.innerHTML = lista.map((item) => {
-                const isAtivo = item && String(item.status_interclasse) === '1';
-                return cardInterclasse(item, isAtivo);
-            }).join('');
-
-        } catch (error) {
-            console.error('Erro ao buscar dados:', error);
-            container.innerHTML = `
-                <div class="col-12 text-center text-danger py-5">
-                    <i class="bi bi-exclamation-triangle-fill fs-1 d-block mb-2"></i>
-                    Erro ao carregar interclasses. Por favor, tente novamente mais tarde.
-                </div>
-            `;
+        if (!Array.isArray(lista) || lista.length === 0) {
+            allInterclasses = [];
+            renderCards([]);
+            return;
         }
+
+        allInterclasses = lista.sort((a, b) => {
+            if (a.ano_interclasse > b.ano_interclasse) return -1;
+            if (a.ano_interclasse < b.ano_interclasse) return 1;
+            return (b.id_interclasse || 0) - (a.id_interclasse || 0);
+        });
+        filterAndRender();
+    } catch (error) {
+        console.error('Erro ao buscar dados:', error);
+        document.getElementById('listaInterclassesAluno').innerHTML = `
+            <div class="aluno-empty">
+                <div class="empty-icon"><i class="bi bi-exclamation-triangle-fill"></i></div>
+                <h5>Erro ao carregar</h5>
+                <p>Não foi possível carregar as competições. Tente novamente mais tarde.</p>
+            </div>`;
     }
+}
 
-    // Carrega o PDF do Regulamento no Modal
-    async function carregarRegulamentoModal() {
-        const btnPdf = document.getElementById('btnBaixarPdf');
-        const btnAceitar = document.getElementById('btnAceitarTermo');
+async function carregarRegulamentoModal() {
+    const btnPdf = document.getElementById('btnBaixarPdf');
+    const btnAceitar = document.getElementById('btnAceitarTermo');
 
-        try {
-            const res = await fetch('../../../../api/interclasse.php?status_interclasse=1&regulamento=true');
-            const data = await res.json();
-            const ativo = Array.isArray(data) ? data[0] : data;
+    try {
+        const res = await fetch('../../../../api/interclasse.php?status_interclasse=1&regulamento=true');
+        const data = await res.json();
+        const ativo = Array.isArray(data) ? data[0] : data;
 
-            if (ativo && ativo.regulamento_interclasse && ativo.regulamento_interclasse.trim() !== '') {
-                btnPdf.href = `../../../../uploads/regulamentos/${ativo.regulamento_interclasse}`;
-                btnPdf.classList.remove('disabled');
-
-                // Quando o aluno clicar no PDF, libera o botão de aceite
-                btnPdf.addEventListener('click', () => {
-                    btnAceitar.disabled = false;
-                    btnAceitar.removeAttribute('title');
-                });
-            } else {
-                // Caso não haja PDF cadastrado, libera o botão diretamente
-                btnPdf.textContent = 'Sem PDF anexado';
-                btnPdf.classList.add('btn-secondary', 'disabled');
-                btnPdf.classList.remove('btn-danger');
+        if (ativo && ativo.regulamento_interclasse && ativo.regulamento_interclasse.trim() !== '') {
+            btnPdf.href = `../../../../uploads/regulamentos/${ativo.regulamento_interclasse}`;
+            btnPdf.classList.remove('disabled');
+            btnPdf.addEventListener('click', () => {
                 btnAceitar.disabled = false;
                 btnAceitar.removeAttribute('title');
-            }
-        } catch (e) {
-            console.error("Erro ao carregar PDF do regulamento:", e);
+            });
+        } else {
+            btnPdf.textContent = 'Sem PDF anexado';
+            btnPdf.classList.add('btn-secondary', 'disabled');
+            btnPdf.classList.remove('btn-danger');
             btnAceitar.disabled = false;
+            btnAceitar.removeAttribute('title');
         }
+    } catch (e) {
+        console.error("Erro ao carregar PDF do regulamento:", e);
+        btnAceitar.disabled = false;
+    }
+}
+
+async function initModalTermo() {
+    const modalElement = document.getElementById('modalTermo');
+    const modalTermo = new bootstrap.Modal(modalElement, { backdrop: 'static', keyboard: false });
+    const btnAceitar = document.getElementById('btnAceitarTermo');
+    const btnRecusar = document.getElementById('btnRecusarTermo');
+    const avisoRecusa = document.getElementById('avisoRecusa');
+
+    try {
+        const checagem = await fetch('../../../../api/concordarTermos.php', { method: 'GET' });
+        if (checagem.status === 401) return;
+        const resCheck = await checagem.json();
+        if (resCheck.success && resCheck.termo_aceito === true) return;
+    } catch (e) {
+        console.error("Erro ao verificar status dos termos:", e);
     }
 
-    async function initModalTermo() {
-        const modalElement = document.getElementById('modalTermo');
-        const modalTermo = new bootstrap.Modal(modalElement, { backdrop: 'static', keyboard: false });
+    await carregarRegulamentoModal();
+    modalTermo.show();
 
-        const btnAceitar = document.getElementById('btnAceitarTermo');
-        const btnRecusar = document.getElementById('btnRecusarTermo');
-        const avisoRecusa = document.getElementById('avisoRecusa');
-
+    btnAceitar.addEventListener('click', async function() {
+        btnAceitar.disabled = true;
+        btnRecusar.disabled = true;
+        btnAceitar.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status"></span>Salvando...';
         try {
-            const checagem = await fetch('../../../../api/concordarTermos.php', { method: 'GET' });
-            if (checagem.status === 401) return;
-
-            const resCheck = await checagem.json();
-            if (resCheck.success && resCheck.termo_aceito === true) return;
-        } catch (e) {
-            console.error("Erro ao verificar status dos termos:", e);
-        }
-
-        // Carrega o PDF do Regulamento e exibe o Modal
-        await carregarRegulamentoModal();
-        modalTermo.show();
-
-        btnAceitar.addEventListener('click', async function() {
-            btnAceitar.disabled = true;
-            btnRecusar.disabled = true;
-            btnAceitar.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status"></span>Salvando...';
-
-            try {
-                const res = await fetch('../../../../api/concordarTermos.php', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' }
-                });
-
-                if (res.status === 401) {
-                    window.location.href = '../../../..';
-                    return;
-                }
-
-                const data = await res.json();
-                if (data.success) {
-                    avisoRecusa.classList.add('d-none');
-                    modalTermo.hide();
-                } else {
-                    avisoRecusa.textContent = data.message || 'Erro ao salvar aceite. Tente novamente.';
-                    avisoRecusa.classList.remove('d-none');
-                }
-            } catch (error) {
-                avisoRecusa.textContent = 'Erro de conexão. Verifique sua internet e tente novamente.';
+            const res = await fetch('../../../../api/concordarTermos.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+            });
+            if (res.status === 401) { window.location.href = '../../../..'; return; }
+            const data = await res.json();
+            if (data.success) {
+                avisoRecusa.classList.add('d-none');
+                modalTermo.hide();
+            } else {
+                avisoRecusa.textContent = data.message || 'Erro ao salvar aceite. Tente novamente.';
                 avisoRecusa.classList.remove('d-none');
-            } finally {
-                btnAceitar.disabled = false;
-                btnRecusar.disabled = false;
-                btnAceitar.textContent = 'Aceitar e Continuar';
             }
-        });
-
-        btnRecusar.addEventListener('click', function() {
-            avisoRecusa.innerHTML = `
-                <i class="bi bi-exclamation-triangle-fill me-1"></i>
-                <strong>Acesso bloqueado:</strong> É necessário aceitar os termos de responsabilidade para participar e utilizar o painel.
-            `;
+        } catch (error) {
+            avisoRecusa.textContent = 'Erro de conexão. Verifique sua internet e tente novamente.';
             avisoRecusa.classList.remove('d-none');
-        });
-    }
-
-    document.addEventListener('DOMContentLoaded', function() {
-        carregarInterclassesAluno();
-        initModalTermo();
+        } finally {
+            btnAceitar.disabled = false;
+            btnRecusar.disabled = false;
+            btnAceitar.textContent = 'Aceitar e Continuar';
+        }
     });
+
+    btnRecusar.addEventListener('click', function() {
+        avisoRecusa.innerHTML = `
+            <i class="bi bi-exclamation-triangle-fill me-1"></i>
+            <strong>Acesso bloqueado:</strong> É necessário aceitar os termos de responsabilidade para participar e utilizar o painel.
+        `;
+        avisoRecusa.classList.remove('d-none');
+    });
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    carregarInterclassesAluno();
+    initModalTermo();
+
+    document.getElementById('searchInput')?.addEventListener('input', filterAndRender);
+
+    document.querySelectorAll('.filter-pill').forEach(pill => {
+        pill.addEventListener('click', function() {
+            document.querySelectorAll('.filter-pill').forEach(p => p.classList.remove('active'));
+            this.classList.add('active');
+            filterAndRender();
+        });
+    });
+});
 </script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
 </body>

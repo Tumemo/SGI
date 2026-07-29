@@ -1,8 +1,83 @@
 <?php
 $tituloPagina = 'SGI - Equipes';
-$titulo = 'Equipes';
-$mostrarVoltar = true;
-$urlVoltar = './dashboard.php';
+$cssExtra = '
+:root {
+  --aluno-primary: #dc3545;
+  --aluno-primary-dark: #b02a37;
+  --aluno-primary-light: #fce4e6;
+  --aluno-primary-subtle: #fff0f0;
+  --aluno-success: #198754;
+  --aluno-bg: #f5f6fa;
+  --aluno-surface: #ffffff;
+  --aluno-border: #e9ecef;
+  --aluno-text: #1a1a2e;
+  --aluno-text-secondary: #6c757d;
+  --aluno-text-muted: #adb5bd;
+  --aluno-radius-sm: 8px;
+  --aluno-radius-md: 12px;
+  --aluno-radius-lg: 16px;
+  --aluno-radius-xl: 24px;
+  --aluno-shadow-sm: 0 1px 3px rgba(0,0,0,0.06);
+  --aluno-shadow-md: 0 4px 12px rgba(0,0,0,0.08);
+  --aluno-shadow-lg: 0 8px 24px rgba(0,0,0,0.12);
+  --aluno-shadow-hover: 0 12px 28px rgba(0,0,0,0.15);
+  --aluno-transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.aluno-page { font-family: "Segoe UI", system-ui, -apple-system, sans-serif; color: var(--aluno-text); }
+.aluno-page-header {
+  display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem;
+  margin-bottom: 1.5rem; padding-bottom: 1rem; border-bottom: 2px solid var(--aluno-border);
+}
+.aluno-page-header .header-left { display: flex; align-items: center; gap: 1rem; }
+.aluno-page-header h1 { font-size: 1.5rem; font-weight: 700; margin: 0; color: var(--aluno-text); }
+.aluno-page-header .back-link {
+  width: 40px; height: 40px; border-radius: var(--aluno-radius-md);
+  display: flex; align-items: center; justify-content: center;
+  background: var(--aluno-surface); border: 1px solid var(--aluno-border);
+  color: var(--aluno-text); text-decoration: none;
+  transition: all var(--aluno-transition); flex-shrink: 0;
+}
+.aluno-page-header .back-link:hover { background: var(--aluno-primary); color: #fff; border-color: var(--aluno-primary); }
+.aluno-card {
+  background: var(--aluno-surface); border-radius: var(--aluno-radius-lg);
+  border: 1px solid var(--aluno-border); overflow: hidden;
+  box-shadow: var(--aluno-shadow-sm); margin-bottom: 1rem;
+}
+.aluno-card .card-header-custom {
+  padding: 1rem 1.25rem; font-weight: 500; font-size: 0.95rem;
+  border-bottom: 1px solid var(--aluno-border); background: #fafafa;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.aluno-card .card-body-custom { padding: 1rem 1.25rem; }
+.aluno-table { width: 100%; border-collapse: collapse; }
+.aluno-table td { padding: 0.75rem 0; border-bottom: 1px solid var(--aluno-border); vertical-align: middle; }
+.aluno-table tr:last-child td { border-bottom: none; }
+.aluno-table tbody tr { transition: background var(--aluno-transition); }
+.aluno-table tbody tr:hover td { background: #f8f9fa; }
+.btn-aluno { background: var(--aluno-primary); color: #fff; border: none; border-radius: var(--aluno-radius-md); padding: 0.5rem 1.25rem; font-weight: 500; transition: all var(--aluno-transition); text-decoration: none; display: inline-flex; align-items: center; gap: 0.5rem; }
+.btn-aluno:hover { background: var(--aluno-primary-dark); color: #fff; }
+.btn-aluno-outline { background: transparent; color: var(--aluno-primary); border: 1.5px solid var(--aluno-primary); border-radius: var(--aluno-radius-md); padding: 0.4rem 1rem; font-weight: 500; transition: all var(--aluno-transition); text-decoration: none; display: inline-flex; align-items: center; gap: 0.35rem; font-size: 0.85rem; }
+.btn-aluno-outline:hover { background: var(--aluno-primary); color: #fff; }
+.btn-filter-cat {
+  padding: 0.35rem 1rem; border-radius: 50px;
+  border: 1.5px solid var(--aluno-border); background: var(--aluno-surface);
+  color: var(--aluno-text-secondary); font-size: 0.85rem; font-weight: 500;
+  cursor: pointer; transition: all var(--aluno-transition);
+}
+.btn-filter-cat:hover { border-color: var(--aluno-primary); color: var(--aluno-primary); background: var(--aluno-primary-subtle); }
+.btn-filter-cat.active { background: var(--aluno-primary); border-color: var(--aluno-primary); color: #fff; }
+.aluno-empty { text-align: center; padding: 3rem 1rem; color: var(--aluno-text-secondary); }
+.aluno-empty .empty-icon { font-size: 3rem; margin-bottom: 1rem; color: var(--aluno-text-muted); }
+.aluno-empty h5 { font-weight: 600; margin-bottom: 0.5rem; }
+.aluno-card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+  gap: 1.25rem;
+  width: 100%;
+}
+.aluno-empty p { font-size: 0.9rem; max-width: 400px; margin: 0 auto; }
+';
+
 include 'componentes/head.php';
 include 'componentes/header.php';
 $nivelUsuario = (int)($_SESSION['nivel'] ?? -1);
@@ -10,66 +85,71 @@ $isAdmin = $nivelUsuario === 0;
 $paginaAtiva = 'dashboard';
 ?>
 
-<main class="d-md-none p-3" style="padding-top: 5rem; padding-bottom: 5rem;">
-    <a href="./dashboard.php" id="btnVoltarEquipesMobile" class="btn btn-danger btn-sm mb-3 d-inline-flex align-items-center gap-1">
-        <i class="bi bi-arrow-left-circle"></i> Voltar
+<main class="d-md-none p-3" style="padding-bottom: 5rem;">
+    <a href="./dashboard.php" id="btnVoltarEquipesMobile" class="btn btn-aluno btn-sm mb-3 d-inline-flex align-items-center gap-1">
+        <i class="bi bi-arrow-left"></i> Voltar
     </a>
     <p class="text-secondary text-center small mb-3">Equipes por modalidade e categoria desta edição.</p>
 
     <div id="filtroCategoriaMobile" class="d-flex flex-nowrap overflow-auto gap-2 pb-2 mb-3"></div>
 
-    <button id="btnCriarEquipeMob" class="btn btn-danger w-100 fw-semibold mb-3 border-0 shadow-sm" style="background-color: #ed1c24; border-radius: 6px;" data-bs-toggle="modal" data-bs-target="#modalCriarEquipe">
-        <i class="bi bi-plus-lg me-1"></i> Criar equipe
+    <?php if ($isAdmin): ?>
+    <button id="btnCriarEquipeMob" class="btn btn-aluno w-100 fw-semibold mb-3" data-bs-toggle="modal" data-bs-target="#modalCriarEquipe">
+        <i class="bi bi-plus-lg"></i>
     </button>
+    <?php endif; ?>
     <div id="listaEquipesMobile" class="d-flex flex-column gap-3"></div>
 </main>
 
 <main class="d-none d-md-block main-desktop-layout">
-    <div class="container-fluid px-4 py-4">
-        <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
-            <div>
-                <a href="./dashboard.php" id="btnVoltarEquipesDesk" class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold mb-2 px-3 py-2 border-0 text-decoration-none shadow-sm" style="background-color: #ed1c24; border-radius: 6px;">
-                    <i class="bi bi-arrow-left-circle fs-5"></i>
-                    <span id="nomeInterclasseEquipes" style="font-weight: 400;">Interclasse</span>
-                </a>
+    <div class="aluno-page container-fluid py-4 px-4">
+        <div class="aluno-page-header">
+            <div class="header-left">
+                <a href="./dashboard.php" id="btnVoltarEquipesDesk" class="back-link"><i class="bi bi-arrow-left"></i></a>
+                <h1 id="nomeInterclasseEquipes">Equipes</h1>
             </div>
-            <button id="btnCriarEquipeDesk" class="btn btn-danger fw-semibold border-0 shadow-sm px-3 py-2" style="background-color: #ed1c24; border-radius: 6px;" data-bs-toggle="modal" data-bs-target="#modalCriarEquipe">
-                    <i class="bi bi-plus-lg me-1"></i> Criar equipe
-                </button>
-            </div>
-            <div id="filtroCategoria" class="d-flex flex-wrap gap-2 mb-4"></div>
-            <div id="listaEquipesDesktop"></div>
+            <?php if ($isAdmin): ?>
+            <button id="btnCriarEquipeDesk" class="btn btn-aluno" data-bs-toggle="modal" data-bs-target="#modalCriarEquipe">
+                <i class="bi bi-plus-lg"></i>
+            </button>
+            <?php endif; ?>
         </div>
+
+        <div id="filtroCategoria" class="d-flex flex-wrap gap-2 mb-4"></div>
+
+        <div id="listaEquipesDesktop">
+            <div class="aluno-loading text-center py-4 text-muted">Carregando...</div>
+        </div>
+    </div>
 </main>
 
 <div class="modal fade" id="modalCriarEquipe" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header border-0">
-                <h5 class="modal-title text-danger">Criar nova equipe</h5>
+        <div class="modal-content" style="border-radius:var(--aluno-radius-lg);border:none;box-shadow:var(--aluno-shadow-lg);">
+            <div class="modal-header border-0" style="padding:1.25rem 1.5rem 0;">
+                <h5 class="modal-title" style="color:var(--aluno-primary);font-weight:600;"><i class="bi bi-plus-circle me-2"></i>Criar nova equipe</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
-            <div class="modal-body">
+            <div class="modal-body" style="padding:1rem 1.5rem 1.5rem;">
                 <form id="formCriarEquipe">
-                    <label for="selectModalidadeEquipe" class="form-label">Modalidade</label>
-                    <select id="selectModalidadeEquipe" class="form-select mb-3" required>
+                    <label for="selectModalidadeEquipe" class="form-label small text-muted fw-semibold">Modalidade</label>
+                    <select id="selectModalidadeEquipe" class="form-select mb-3" style="border-radius:var(--aluno-radius-md);border-color:var(--aluno-border);" required>
                         <option value="" selected disabled>Carregando modalidades...</option>
                     </select>
-                    <label for="selectTurmaEquipe" class="form-label">Turma</label>
-                    <select id="selectTurmaEquipe" class="form-select mb-3" required>
+                    <label for="selectTurmaEquipe" class="form-label small text-muted fw-semibold">Turma</label>
+                    <select id="selectTurmaEquipe" class="form-select mb-3" style="border-radius:var(--aluno-radius-md);border-color:var(--aluno-border);" required>
                         <option value="" selected disabled>Carregando turmas...</option>
                     </select>
-                    <div id="msgCriarEquipe" class="text-center mb-2"></div>
-                    <div class="d-flex justify-content-end gap-2">
-                        <button type="button" class="btn btn-outline-danger" data-bs-dismiss="modal">Cancelar</button>
-                        <button type="submit" class="btn btn-danger" id="btnSalvarEquipe">Criar equipe</button>
+                    <div id="msgCriarEquipe" class="text-center mb-2 small"></div>
+                    <div class="d-flex justify-content-end gap-2 pt-2">
+                        <button type="button" class="btn btn-aluno-outline" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-aluno" id="btnSalvarEquipe"><i class="bi bi-check-lg"></i></button>
                     </div>
                 </form>
             </div>
         </div>
     </div>
 </div>
-
 
 <script>
     const API = '../../../api/';
@@ -115,7 +195,9 @@ $paginaAtiva = 'dashboard';
             const cats = await res.json();
             const lista = Array.isArray(cats) ? cats : [];
 
-            const btns = lista.map((c, i) => `<button class="btn btn-filter-cat${i === 0 ? ' active' : ''}" data-id="${c.id_categoria}">${esc(c.nome_categoria)}</button>`).join('');
+            const btns = lista.map((c, i) =>
+                `<button class="btn-filter-cat${i === 0 ? ' active' : ''}" data-id="${c.id_categoria}">${esc(c.nome_categoria)}</button>`
+            ).join('');
 
             const desk = document.getElementById('filtroCategoria');
             const mob = document.getElementById('filtroCategoriaMobile');
@@ -130,9 +212,8 @@ $paginaAtiva = 'dashboard';
         const mob = document.getElementById('listaEquipesMobile');
         const desk = document.getElementById('listaEquipesDesktop');
         if (!idInterclasseEq) {
-            const msg = '<p class="text-muted text-center">Nenhuma edição selecionada.</p>';
-            mob.innerHTML = msg;
-            desk.innerHTML = msg;
+            mob.innerHTML = '<p class="text-muted text-center">Nenhuma edição selecionada.</p>';
+            desk.innerHTML = '<div class="aluno-empty"><div class="empty-icon"><i class="bi bi-folder-x"></i></div><h5>Nenhuma edição</h5><p>Selecione um interclasse para ver as equipes.</p></div>';
             return;
         }
 
@@ -143,7 +224,7 @@ $paginaAtiva = 'dashboard';
         }
 
         mob.innerHTML = '<p class="text-muted text-center">Carregando…</p>';
-        desk.innerHTML = '<p class="text-muted">Carregando…</p>';
+        desk.innerHTML = '<div class="aluno-loading text-center py-4 text-muted">Carregando...</div>';
 
         const idCategoriaFiltro = obterIdCategoriaFiltro();
 
@@ -165,14 +246,13 @@ $paginaAtiva = 'dashboard';
             let mods = Array.isArray(modsRaw) ? modsRaw : [];
 
             if (!mods.length) {
-                const msg = '<p class="text-muted text-center w-100">Nenhuma modalidade encontrada para o filtro selecionado.</p>';
-                mob.innerHTML = msg;
-                desk.innerHTML = msg;
+                mob.innerHTML = '<p class="text-muted text-center w-100">Nenhuma modalidade encontrada para o filtro selecionado.</p>';
+                desk.innerHTML = '<div class="aluno-empty"><div class="empty-icon"><i class="bi bi-folder-x"></i></div><h5>Nenhuma modalidade</h5><p>Nenhuma modalidade encontrada para o filtro selecionado.</p></div>';
                 return;
             }
 
             const porCategoria = {};
-            mods.forEach((m) => {
+            mods.forEach(m => {
                 const cat = m.nome_categoria || 'Categoria';
                 if (!porCategoria[cat]) porCategoria[cat] = [];
                 porCategoria[cat].push(m);
@@ -187,15 +267,15 @@ $paginaAtiva = 'dashboard';
                     const equipes = await rEq.json();
                     const arr = Array.isArray(equipes) ? equipes : [];
 
-                    htmlMob += `<div class="card border-0 shadow-sm rounded-3 mb-2">
-                        <div class="card-body py-2 px-3">
-                            <div class="small text-muted">${esc(m.nome_modalidade)}</div>`;
+                    htmlMob += `<div class="aluno-card">
+                        <div class="card-header-custom">${esc(m.nome_modalidade)}</div>
+                        <div class="card-body-custom">`;
 
                     if (!arr.length) {
-                        htmlMob += '<p class="text-muted small mb-0">Nenhuma equipe.</p></div></div>';
+                        htmlMob += '<p class="text-muted small mb-0">Nenhuma equipe.</p>';
                     } else {
-                        htmlMob += '<ul class="list-group list-group-flush">';
-                        arr.forEach((eq) => {
+                        htmlMob += '<div class="d-flex flex-column gap-1">';
+                        arr.forEach(eq => {
                             const qElenco = new URLSearchParams({
                                 id: idInterclasseEq,
                                 id_equipe: String(eq.id_equipe),
@@ -205,29 +285,29 @@ $paginaAtiva = 'dashboard';
                                 nome_modalidade: m.nome_modalidade || ''
                             });
                             const hrefElenco = `./elenco_equipe.php?${qElenco.toString()}`;
-                            const hrefTurma = `./equipes.php?id=${encodeURIComponent(idInterclasseEq)}&id_categoria=${encodeURIComponent(m.categorias_id_categoria)}&id_turma=${encodeURIComponent(eq.turmas_id_turma)}`;
-                            htmlMob += `<li class="list-group-item px-0">
-                                <div class="d-flex justify-content-between align-items-center gap-2">
-                                    <a class="text-decoration-none text-dark flex-grow-1" href="${hrefTurma}"><span>${esc(eq.nome_turma || 'Turma')}</span></a>
+                            htmlMob += `
+                                <div class="d-flex justify-content-between align-items-center py-1">
+                                    <span>${esc(eq.nome_turma || 'Turma')}</span>
                                     <div class="d-flex gap-1">
-                                        ${isAdmin ? `<button class="btn btn-sm btn-outline-danger rounded-3"
-                                            onclick="excluirEquipe(${eq.id_equipe}, '${esc(eq.nome_turma || 'Turma')}')"><i class="bi bi-trash"></i> Excluir</button>` : ''}
-                                        <a class="btn btn-sm btn-danger rounded-3" href="${hrefElenco}">Elenco</a>
+                                        ${isAdmin ? `<button class="btn btn-aluno-outline btn-sm" onclick="excluirEquipe(${eq.id_equipe}, '${esc(eq.nome_turma || 'Turma')}')"><i class="bi bi-trash"></i></button>` : ''}
+                                        <a class="btn btn-aluno-outline btn-sm" href="${hrefElenco}"><i class="bi bi-people-fill"></i></a>
                                     </div>
-                                </div>
-                            </li>`;
+                                </div>`;
                         });
-                        htmlMob += '</ul></div></div>';
+                        htmlMob += '</div>';
                     }
 
-                    htmlDesk += `<div class="card border-0 shadow-sm rounded-4 mb-4"><div class="card-body p-4">`;
-                    htmlDesk += `<h6 class="mb-3" style="font-weight:400;">${esc(m.nome_modalidade)}</h6>`;
+                    htmlMob += `</div></div>`;
+
+                    htmlDesk += `<div class="aluno-card">
+                        <div class="card-header-custom">${esc(m.nome_modalidade)}</div>
+                        <div class="card-body-custom" style="padding:0;">`;
 
                     if (!arr.length) {
-                        htmlDesk += '<p class="text-muted small mb-0">Nenhuma equipe cadastrada nesta modalidade.</p>';
+                        htmlDesk += '<p class="text-muted small mb-0 px-3 py-3">Nenhuma equipe cadastrada nesta modalidade.</p>';
                     } else {
-                        htmlDesk += '<div class="table-responsive"><table class="table table-borderless align-middle mb-0"><tbody>';
-                        arr.forEach((eq) => {
+                        htmlDesk += '<table class="aluno-table"><tbody>';
+                        arr.forEach(eq => {
                             const qElenco = new URLSearchParams({
                                 id: idInterclasseEq,
                                 id_equipe: String(eq.id_equipe),
@@ -237,25 +317,23 @@ $paginaAtiva = 'dashboard';
                                 nome_modalidade: m.nome_modalidade || ''
                             });
                             const hrefElenco = `./elenco_equipe.php?${qElenco.toString()}`;
-                            const hrefTurma = `./equipes.php?id=${encodeURIComponent(idInterclasseEq)}&id_categoria=${encodeURIComponent(m.categorias_id_categoria)}&id_turma=${encodeURIComponent(eq.turmas_id_turma)}`;
                             htmlDesk += `<tr>
-                                <td><a class="text-decoration-none text-dark" href="${hrefTurma}">${esc(eq.nome_turma || 'Turma')}</a></td>
-                                <td class="text-end">
-                                    ${isAdmin ? `<button class="btn btn-sm btn-outline-danger rounded-3 me-1"
-                                        onclick="excluirEquipe(${eq.id_equipe}, '${esc(eq.nome_turma || 'Turma')}')"><i class="bi bi-trash"></i> Excluir</button>` : ''}
-                                    <a class="btn btn-sm btn-outline-danger rounded-3" href="${hrefElenco}">Elenco</a>
+                                <td style="padding-left:1.25rem">${esc(eq.nome_turma || 'Turma')}</td>
+                                <td class="text-end" style="padding-right:1.25rem">
+                                    ${isAdmin ? `<button class="btn btn-aluno-outline btn-sm me-1" onclick="excluirEquipe(${eq.id_equipe}, '${esc(eq.nome_turma || 'Turma')}')"><i class="bi bi-trash"></i></button>` : ''}
+                                    <a class="btn btn-aluno-outline btn-sm" href="${hrefElenco}"><i class="bi bi-people-fill"></i></a>
                                 </td>
                             </tr>`;
                         });
-                        htmlDesk += '</tbody></table></div>';
+                        htmlDesk += '</tbody></table>';
                     }
 
-                    htmlDesk += '</div></div>';
+                    htmlDesk += `</div></div>`;
                 }
             }
 
             mob.innerHTML = htmlMob;
-            desk.innerHTML = htmlDesk;
+            desk.innerHTML = htmlDesk ? `<div class="aluno-card-grid">${htmlDesk}</div>` : '';
         } catch (e) {
             console.error(e);
             mob.innerHTML = '<p class="text-danger text-center">Erro ao carregar equipes.</p>';
@@ -282,7 +360,7 @@ $paginaAtiva = 'dashboard';
             : turmasCache;
 
         selTurma.innerHTML = turmasFiltradas.length
-            ? '<option value="" selected disabled>Selecione a turma</option>' + turmasFiltradas.map((t) =>
+            ? '<option value="" selected disabled>Selecione a turma</option>' + turmasFiltradas.map(t =>
                 `<option value="${t.id_turma}">${esc(t.nome_turma)}</option>`
               ).join('')
             : '<option value="" selected disabled>Nenhuma turma nesta categoria</option>';
@@ -300,16 +378,16 @@ $paginaAtiva = 'dashboard';
             const turmas = await resTurmas.json();
 
             modalidadesCache = Array.isArray(modalidades) ? modalidades.filter(
-                (m) => String(m.interclasses_id_interclasse) === String(idInterclasseEq)
+                m => String(m.interclasses_id_interclasse) === String(idInterclasseEq)
             ) : [];
             turmasCache = Array.isArray(turmas) ? turmas : [];
 
             const selMod = document.getElementById('selectModalidadeEquipe');
             selMod.innerHTML = modalidadesCache.length
-                ? '<option value="" selected disabled>Selecione a modalidade</option>' + modalidadesCache.map((m) => {
+                ? '<option value="" selected disabled>Selecione a modalidade</option>' + modalidadesCache.map(m => {
                     const cat = m.nome_categoria ? ` — ${esc(m.nome_categoria)}` : '';
                     return `<option value="${m.id_modalidade}">${esc(m.nome_modalidade)}${cat} (${esc(m.genero_modalidade)})</option>`;
-                }).join('')
+                  }).join('')
                 : '<option value="" selected disabled>Nenhuma modalidade encontrada</option>';
             selMod.disabled = !modalidadesCache.length;
 
@@ -327,7 +405,7 @@ $paginaAtiva = 'dashboard';
         const btn = document.getElementById('btnSalvarEquipe');
 
         if (!idModalidade || !idTurma) {
-            msg.innerHTML = '<p class="text-danger small">Selecione a modalidade e a turma.</p>';
+            msg.innerHTML = '<span class="text-danger">Selecione a modalidade e a turma.</span>';
             return;
         }
 
@@ -353,7 +431,7 @@ $paginaAtiva = 'dashboard';
             this.reset();
             carregarEquipes();
         } catch (err) {
-            msg.innerHTML = `<p class="text-danger small">${esc(err.message)}</p>`;
+            msg.innerHTML = `<span class="text-danger">${esc(err.message)}</span>`;
         } finally {
             btn.disabled = false;
             btn.textContent = 'Criar equipe';
@@ -415,3 +493,4 @@ $paginaAtiva = 'dashboard';
 <?php
 include 'componentes/nav.php';
 require_once '../componentes/footer.php';
+?>
