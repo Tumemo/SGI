@@ -7,7 +7,7 @@ $fotoUsuario = $_SESSION['foto_usuario'] ?? null;
 $todosItens = [
     'perfil'            => ['label' => 'Perfil',          'icon' => 'bi-person',             'url' => './perfil.php',              'niveis' => [0, 1, 2]],
     'dashboard'         => ['label' => 'Dashboard',       'icon' => 'bi-house-door',         'url' => './dashboard.php',           'niveis' => [0, 1]],
-    'ocorrencias'        => ['label' => 'Ocorrências',      'icon' => 'bi-exclamation-triangle',          'url' => './ocorrencias.php',          'niveis' => [0, 1, 2]],
+    'ocorrencias'        => ['label' => 'Ocorrências',    'icon' => 'bi-exclamation-triangle',          'url' => './ocorrencias.php',          'niveis' => [0, 1, 2]],
     'chaveamento'       => ['label' => 'Chaveamento',     'icon' => 'bi-diagram-3',          'url' => './chaveamento_arvore.php',  'niveis' => [0, 1]],
     'ranking'           => ['label' => 'Ranking',         'icon' => 'bi-trophy',             'url' => './ranking.php',             'niveis' => [0, 1]],
     'agenda'            => ['label' => 'Agenda',          'icon' => 'bi-calendar2-check',          'url' => './edicao_agenda.php',       'niveis' => [0, 1]],
