@@ -13,11 +13,13 @@ if ($fotoUsuario) {
 $nomeUsuario = $_SESSION['nome'] ?? $usuarioPerfil['nome_usuario'] ?? 'Usuário';
 $inicialNome = mb_strtoupper(mb_substr($nomeUsuario, 0, 1));
 
+// LISTA DE ITENS DO MENU (O menu Jogos foi adicionado aqui!)
 $navItens = [
-    'home'    => ['label' => 'Início',   'icon' => 'bi-house-door',   'url' => './home.php'],
-    'ranking' => ['label' => 'Ranking',  'icon' => 'bi-trophy',       'url' => './ranking.php'],
-    'perfil'  => ['label' => 'Perfil',   'icon' => 'bi-person-gear',  'url' => './perfil.php'],
-    'termos'  => ['label' => 'Termos',   'icon' => 'bi-file-text',    'url' => './termos.php'],
+    'perfil'  => ['label' => 'Perfil',   'icon' => 'bi-person-gear',    'url' => './perfil.php'],
+    'home'    => ['label' => 'Início',   'icon' => 'bi-house-door',     'url' => './home.php'],
+    'jogos'   => ['label' => 'Jogos',    'icon' => 'bi-calendar-event', 'url' => './jogos.php'],
+    'ranking' => ['label' => 'Ranking',  'icon' => 'bi-trophy',         'url' => './ranking.php'],
+    'termos'  => ['label' => 'Termos',   'icon' => 'bi-file-text',      'url' => './termos.php'],
 ];
 
 $classeLink = fn($key) => $key === $paginaAtiva ? 'text-white fw-bold' : 'text-white-50';

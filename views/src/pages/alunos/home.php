@@ -354,6 +354,13 @@ include 'componentes/nav.php';
       <div class="aluno-hero mb-4">
         <h1>Olá, <?= htmlspecialchars($_SESSION['nome'] ?? 'Aluno', ENT_QUOTES) ?>!   </h1>
         <p>Confira as competições disponíveis e participe!</p>
+        
+        <!-- NOVO BOTÃO DE ACESSO AOS JOGOS -->
+        <div class="mt-3">
+            <a href="jogos.php" class="btn btn-light fw-bold text-danger rounded-pill px-4 shadow-sm" style="transition: transform 0.2s;">
+                <i class="bi bi-calendar-check me-2"></i> Ver Tabela de Jogos
+            </a>
+        </div>
       </div>
 
       <!-- <div class="aluno-section-header">

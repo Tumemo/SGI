@@ -266,7 +266,7 @@ $paginaAtiva = 'categorias';
 
             // Correção crucial: uso de aspas simples externas no onclick do botão para blindar a renderização do HTML
             const btnEditDelete = (turma) => NIVEL_USUARIO === 0
-                ? `<button type="button" class="btn btn-link text-primary p-0" title="Editar turma" onclick='editarTurma(${turma.id_turma})'>
+                ? `<button type="button" class="btn btn-link text-danger p-0" title="Editar turma" onclick='editarTurma(${turma.id_turma})'>
                         <i class="bi bi-pencil-square fs-5"></i>
                    </button>
                    <button type="button" class="btn btn-link text-danger p-0" title="Excluir turma" onclick='excluirTurma(${turma.id_turma}, "${turma.nome_turma}")'>
@@ -290,7 +290,7 @@ $paginaAtiva = 'categorias';
             `).join('');
 
             const btnEditDeleteDesk = (turma) => NIVEL_USUARIO === 0
-                ? `<button type="button" class="btn btn-link text-primary p-0 me-2" title="Editar turma" onclick='editarTurma(${turma.id_turma})'>
+                ? `<button type="button" class="btn btn-link text-danger p-0 me-2" title="Editar turma" onclick='editarTurma(${turma.id_turma})'>
                         <i class="bi bi-pencil-square fs-4"></i>
                    </button>
                    <button type="button" class="btn btn-link text-danger p-0" title="Excluir turma" onclick='excluirTurma(${turma.id_turma}, "${turma.nome_turma}")'>

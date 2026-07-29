@@ -1289,6 +1289,13 @@ $paginaAtiva = 'chaveamento';
 
     function formatarNomePartida(jogo) {
         const tag = jogo.nome_jogo || '';
+        if (/^IND:\d+$/.test(tag)) {
+            const equipes = (jogo.equipes_nomes || '').trim();
+            if (equipes) {
+                return `Competição Individual: ${equipes}`;
+            }
+            return 'Competição Individual';
+        }
         const mm = tag.match(/^MM:(\d+):(\d+):([NB])$/);
         if (mm) {
             const largura = parseInt(mm[1], 10);
@@ -1641,7 +1648,8 @@ $paginaAtiva = 'chaveamento';
             let statsJogos = Array.isArray(statsData) ? statsData : [];
             statsJogos = statsJogos.filter(function(j) {
                 var nomes = (j.equipes_nomes || '').trim();
-                return nomes.indexOf(' vs ') !== -1;
+                var isInd = j.tipos_modalidades_id_tipo_modalidade == 2 || /^IND:\d+$/.test(j.nome_jogo || '');
+                return isInd || (nomes.indexOf(' vs ') !== -1);
             });
             atualizarStats(statsJogos);
 
@@ -1661,7 +1669,8 @@ $paginaAtiva = 'chaveamento';
 
             jogos = jogos.filter(function(j) {
                 var nomes = (j.equipes_nomes || '').trim();
-                return nomes.indexOf(' vs ') !== -1;
+                var isInd = j.tipos_modalidades_id_tipo_modalidade == 2 || /^IND:\d+$/.test(j.nome_jogo || '');
+                return isInd || (nomes.indexOf(' vs ') !== -1) || (nomes.length > 0);
             });
 
             jogosCache = jogos;
@@ -2406,32 +2415,24 @@ $paginaAtiva = 'chaveamento';
 
         const mod = modalidadesCache.find(m => String(m.id_modalidade) === idModalidade);
         const tipoId = mod ? Number(mod.id_tipo_modalidade) : 0;
+        const tipoModalidadeParam = tipoId === 2 ? 'individual' : 'mata_mata';
 
-        if (tipoId === 2) {
-            msgEl.innerHTML = '<div class="kv-alert kv-alert--info">Modalidades individuais não possuem chaveamento. Use o formulário abaixo para registrar o ranking.</div>';
-            return;
-        }
-
-        msgEl.innerHTML = '<div class="kv-alert kv-alert--info">Gerando chaveamento...</div>';
+        msgEl.innerHTML = '<div class="kv-alert kv-alert--info">' + (tipoId === 2 ? 'Gerando jogo da modalidade para a agenda...' : 'Gerando chaveamento...') + '</div>';
 
         try {
             btn.disabled = true;
             btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Gerando...';
             const resp = await fetch('../../../api/chaveamento.php', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    id_modalidade: Number(idModalidade),
-                    tipo_modalidade: 'mata_mata'
-                })
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id_modalidade: Number(idModalidade), tipo_modalidade: tipoModalidadeParam, acao: 'gerar' })
             });
             const data = await resp.json();
 
             if (data.success === false) throw new Error(data.message || 'Erro ao gerar chaveamento.');
 
-            msgEl.innerHTML = `<div class="kv-alert kv-alert--success">${data.message} (${data.jogos_criados} jogos criados).</div>`;
+            const msgDet = data.jogos_criados ? ` (${data.jogos_criados} jogo(s) gerado(s))` : '';
+            msgEl.innerHTML = `<div class="kv-alert kv-alert--success">${data.message}${msgDet}.</div>`;
             const linkArvore = document.getElementById('linkVerArvore');
             linkArvore.classList.remove('d-none');
             document.getElementById('btnVerArvore').href = `./chaveamento_arvore.php?id=${idInterclasse}`;

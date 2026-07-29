@@ -253,6 +253,9 @@ $paginaAtiva = 'agenda';
     let filtroData = null;
 
     function formatNomeJogo(nomeJogo) {
+        if (/^IND:\d+$/.test(nomeJogo || '')) {
+            return 'Competição Individual';
+        }
         const mm = (nomeJogo || '').match(/^MM:(\d+):(\d+):([NB])$/);
         if (mm) {
             const largura = parseInt(mm[1], 10);
