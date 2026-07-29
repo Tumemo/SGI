@@ -1,0 +1,23 @@
+anotações sgi
+
+no lugar de ser ensino médio e ensino fundamental, colocar por categoria (categoria 1, do sexto ao oitavo) (categoria 2, 
+
+aluno antes de finalizar a inscrição, visualizar o regulamento, com uma marcação, (Li e concordo) sendo obrigatória
+não colocar limite de inscrição de alunos, pois a professora ira filtrar os alunos
+
+professora poder editar a modalidade da outra pessoa
+aluno poder ver as modalidades que ele está
+aluno poder visualizar os rankings
+fechar visualização de ranking para o aluno, quando o interclasse estiver acabando
+mostrar para o aluno porque ele foi punido
+mostrar o destaque da partida - por modalidade
+enquanto rola a partida, mostra os participantes, e ela poderá mudar o status(ex: fulano fez gol, fulano tomou cartão)
+so no futsal ira anotar artilheiro
+se o aluno levou penalidade, não pode ser destaque
+ao clicar na modalidades ver alunos inscritos na modalidade, dividido por categoria
+filtrar turmas, modalidades, alunos, 
+
+botão adicionar em uma cor padrão
+ranking, não ter degrade no fundo, e sim as medalhas ser na cor de cada podio
+
+

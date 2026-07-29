@@ -2,6 +2,7 @@
 require_once '../config/db.php';
 require_once 'filtros.php';
 require_once 'auth.php';
+
 header('Content-Type: application/json');
 header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: POST, OPTIONS');
@@ -29,7 +30,8 @@ if ($idInterclasse <= 0) {
 }
 
 try {
-    $sqlTurmas = "SELECT id_turma, categorias_id_categoria FROM turmas WHERE status_turma = '1' AND interclasses_id_interclasse = ?";
+    // 1. Busca id, categoria e O NOME da turma
+    $sqlTurmas = "SELECT id_turma, nome_turma, categorias_id_categoria FROM turmas WHERE status_turma = '1' AND interclasses_id_interclasse = ?";
     $stmtTurmas = $conn->prepare($sqlTurmas);
     if (!$stmtTurmas) throw new RuntimeException('Erro ao preparar consulta de turmas: ' . $conn->error);
     $stmtTurmas->bind_param("i", $idInterclasse);
@@ -37,7 +39,8 @@ try {
     $resultTurmas = $stmtTurmas->get_result()->fetch_all(MYSQLI_ASSOC);
     $stmtTurmas->close();
 
-    $sqlModalidades = "SELECT id_modalidade, categorias_id_categoria FROM modalidades WHERE status_modalidade = '1' AND interclasses_id_interclasse = ?";
+    // 2. Busca id, categoria e O NOME da modalidade
+    $sqlModalidades = "SELECT id_modalidade, nome_modalidade, categorias_id_categoria FROM modalidades WHERE status_modalidade = '1' AND interclasses_id_interclasse = ?";
     $stmtModalidades = $conn->prepare($sqlModalidades);
     if (!$stmtModalidades) throw new RuntimeException('Erro ao preparar consulta de modalidades: ' . $conn->error);
     $stmtModalidades->bind_param("i", $idInterclasse);
@@ -56,25 +59,31 @@ try {
 
             $idTurma = $turma['id_turma'];
             $idModalidade = $modalidade['id_modalidade'];
+            $nomeTurma = $turma['nome_turma'];
+            $nomeModalidade = $modalidade['nome_modalidade'];
 
-            $sqlCheck = "SELECT id_equipe FROM equipes WHERE modalidades_id_modalidade = ? AND turmas_id_turma = ? LIMIT 1";
-            $stmtCheck = $conn->prepare($sqlCheck);
-            if (!$stmtCheck) continue;
-            $stmtCheck->bind_param("ii", $idModalidade, $idTurma);
-            $stmtCheck->execute();
-            $stmtCheck->store_result();
-            $existe = $stmtCheck->num_rows > 0;
-            $stmtCheck->close();
+            // 3. Conta quantas equipes já existem para essa turma nesta modalidade
+            $sqlCount = "SELECT COUNT(*) as total FROM equipes WHERE modalidades_id_modalidade = ? AND turmas_id_turma = ?";
+            $stmtCount = $conn->prepare($sqlCount);
+            if (!$stmtCount) continue;
+            $stmtCount->bind_param("ii", $idModalidade, $idTurma);
+            $stmtCount->execute();
+            $resCount = $stmtCount->get_result()->fetch_assoc();
+            $proximoNumero = ((int) $resCount['total']) + 1;
+            $stmtCount->close();
 
-            if ($existe) continue;
+            // 4. Monta o nome padronizado (Ex: "9º Ano A Xadrez Equipe 1")
+            $nomeEquipe = trim("{$nomeTurma} {$nomeModalidade} Equipe {$proximoNumero}");
 
-            $sqlInsert = "INSERT INTO equipes (status_equipe, modalidades_id_modalidade, turmas_id_turma) VALUES ('1', ?, ?)";
+            // 5. Insere a equipe com o nome preenchido
+            $sqlInsert = "INSERT INTO equipes (status_equipe, modalidades_id_modalidade, turmas_id_turma, nome_equipe) VALUES ('1', ?, ?, ?)";
             $stmtInsert = $conn->prepare($sqlInsert);
             if (!$stmtInsert) {
                 $erros[] = "Erro ao preparar inserção para turma $idTurma / modalidade $idModalidade";
                 continue;
             }
-            $stmtInsert->bind_param("ii", $idModalidade, $idTurma);
+            $stmtInsert->bind_param("iis", $idModalidade, $idTurma, $nomeEquipe);
+            
             if ($stmtInsert->execute()) {
                 $equipesGeradas++;
             } else {

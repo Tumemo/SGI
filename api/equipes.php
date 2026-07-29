@@ -25,6 +25,7 @@ switch ($method) {
         $filtro = aplicarFiltrosEquipes();
         $sql = "SELECT 
                     equipes.id_equipe, 
+                    equipes.nome_equipe,
                     equipes.status_equipe,
                     equipes.modalidades_id_modalidade,
                     equipes.turmas_id_turma,
@@ -73,19 +74,51 @@ switch ($method) {
                 break;
             }
 
-            $modalidade = $data->modalidades_id_modalidade;
-            $turma = $data->turmas_id_turma;
+            $modalidade = intval($data->modalidades_id_modalidade);
+            $turma = intval($data->turmas_id_turma);
             $status = isset($data->status_equipe) ? (string)$data->status_equipe : '1';
 
-            $sql = "INSERT INTO equipes (modalidades_id_modalidade, turmas_id_turma, status_equipe) VALUES (?, ?, ?)";
+            // Permite customizar o nome ou gera automaticamente caso não informado
+            if (!empty($data->nome_equipe)) {
+                $nomeEquipe = trim($data->nome_equipe);
+            } else {
+                // Busca nome da turma
+                $stmtT = $conn->prepare("SELECT nome_turma FROM turmas WHERE id_turma = ?");
+                $stmtT->bind_param("i", $turma);
+                $stmtT->execute();
+                $resT = $stmtT->get_result()->fetch_assoc();
+                $nomeTurma = $resT['nome_turma'] ?? '';
+                $stmtT->close();
+
+                // Busca nome da modalidade
+                $stmtM = $conn->prepare("SELECT nome_modalidade FROM modalidades WHERE id_modalidade = ?");
+                $stmtM->bind_param("i", $modalidade);
+                $stmtM->execute();
+                $resM = $stmtM->get_result()->fetch_assoc();
+                $nomeModalidade = $resM['nome_modalidade'] ?? '';
+                $stmtM->close();
+
+                // Conta equipes para definir o sequencial
+                $stmtC = $conn->prepare("SELECT COUNT(*) as total FROM equipes WHERE modalidades_id_modalidade = ? AND turmas_id_turma = ?");
+                $stmtC->bind_param("ii", $modalidade, $turma);
+                $stmtC->execute();
+                $resC = $stmtC->get_result()->fetch_assoc();
+                $numEquipe = ((int) ($resC['total'] ?? 0)) + 1;
+                $stmtC->close();
+
+                $nomeEquipe = trim("{$nomeTurma} {$nomeModalidade} Equipe {$numEquipe}");
+            }
+
+            $sql = "INSERT INTO equipes (modalidades_id_modalidade, turmas_id_turma, status_equipe, nome_equipe) VALUES (?, ?, ?, ?)";
             $stmt = $conn->prepare($sql);
-            $stmt->bind_param("iis", $modalidade, $turma, $status);
+            $stmt->bind_param("iiss", $modalidade, $turma, $status, $nomeEquipe);
 
             if ($stmt->execute()) {
                 echo json_encode([
                     "success" => true, 
                     "message" => "Equipe criada com sucesso!", 
-                    "id_equipe" => $conn->insert_id
+                    "id_equipe" => $conn->insert_id,
+                    "nome_equipe" => $nomeEquipe
                 ]);
             } else {
                 http_response_code(500);
@@ -155,6 +188,7 @@ switch ($method) {
             echo json_encode(["success" => false, "message" => "Ação inválida ou não informada."]);
         }
         break;
+
     case 'PUT':
         requerEscrita();
         $data = json_decode(file_get_contents("php://input"));
@@ -169,6 +203,11 @@ switch ($method) {
         $params = [];
         $types = "";
 
+        if (isset($data->nome_equipe)) {
+            $campos[] = "nome_equipe = ?";
+            $params[] = trim((string)$data->nome_equipe);
+            $types .= "s";
+        }
         if (isset($data->modalidades_id_modalidade)) {
             $campos[] = "modalidades_id_modalidade = ?";
             $params[] = intval($data->modalidades_id_modalidade);
@@ -184,8 +223,6 @@ switch ($method) {
             $params[] = (string)$data->status_equipe;
             $types .= "s";
         }
-
-        // REMOVIDO: Bloco do usuarios_id_usuario1 que quebrava o banco.
 
         if (empty($campos)) {
             http_response_code(400);
