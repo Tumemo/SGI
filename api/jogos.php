@@ -83,7 +83,7 @@ switch ($method) {
                     modalidades.tipos_modalidades_id_tipo_modalidade,
                     locais.nome_local,
                     categorias.nome_categoria,
-                    GROUP_CONCAT(DISTINCT t.nome_turma ORDER BY p.id_partida SEPARATOR ' vs ') AS equipes_nomes,
+                    GROUP_CONCAT(DISTINCT COALESCE(e.nome_equipe, t.nome_turma) ORDER BY p.id_partida SEPARATOR ' vs ') AS equipes_nomes,
                     art_top.nome_usuario AS artilheiro_nome
                 FROM jogos 
                 INNER JOIN modalidades ON modalidades.id_modalidade = jogos.modalidades_id_modalidade 

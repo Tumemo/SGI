@@ -561,7 +561,8 @@ function sgi_mm_montar_json_arvore(mysqli $conn, int $idModalidade): array
 {
     $sql = 'SELECT j.id_jogo, j.nome_jogo, j.status_jogo, j.data_jogo, j.inicio_jogo,
                    p.id_partida, p.equipes_id_equipe, p.resultado_partida,
-                   t.nome_turma, t.nome_fantasia_turma
+                   t.nome_turma, t.nome_fantasia_turma,
+                   e.nome_equipe
             FROM jogos j
             INNER JOIN partidas p ON j.id_jogo = p.jogos_id_jogo
             INNER JOIN equipes e ON p.equipes_id_equipe = e.id_equipe
@@ -596,6 +597,7 @@ function sgi_mm_montar_json_arvore(mysqli $conn, int $idModalidade): array
             'resultado_partida' => (int) $row['resultado_partida'],
             'nome_turma' => $row['nome_turma'],
             'nome_fantasia_turma' => $row['nome_fantasia_turma'],
+            'nome_equipe' => $row['nome_equipe'],
         ];
     }
 
@@ -656,6 +658,7 @@ function sgi_mm_montar_json_arvore(mysqli $conn, int $idModalidade): array
                 'id_equipe' => $p['equipes_id_equipe'],
                 'nome_turma' => $p['nome_turma'],
                 'nome_fantasia' => $p['nome_fantasia_turma'],
+                'nome_equipe' => $p['nome_equipe'],
                 'gols' => $p['resultado_partida'],
             ];
         }
@@ -864,7 +867,8 @@ function sgi_mm_montar_historico(mysqli $conn, int $idModalidade): array
         'SELECT j.id_jogo, j.nome_jogo, j.status_jogo, j.data_jogo,
                 j.duracao_jogo, j.tempo_extra_jogo, j.inicio_jogo, j.termino_jogo,
                 p.id_partida, p.equipes_id_equipe, p.resultado_partida,
-                t.nome_turma, t.nome_fantasia_turma
+                t.nome_turma, t.nome_fantasia_turma,
+                e.nome_equipe
          FROM jogos j
          INNER JOIN partidas p ON j.id_jogo = p.jogos_id_jogo
          INNER JOIN equipes e ON p.equipes_id_equipe = e.id_equipe
@@ -900,6 +904,7 @@ function sgi_mm_montar_historico(mysqli $conn, int $idModalidade): array
             'gols' => (int) $row['resultado_partida'],
             'nome_turma' => $row['nome_turma'],
             'nome_fantasia' => $row['nome_fantasia_turma'],
+            'nome_equipe' => $row['nome_equipe'],
         ];
     }
 
@@ -942,9 +947,9 @@ function sgi_mm_montar_historico(mysqli $conn, int $idModalidade): array
 
         $confrontos[] = [
             'fase' => $nomeFase,
-            'vencedor_nome' => $vencedor['nome_fantasia'] ?: $vencedor['nome_turma'],
+            'vencedor_nome' => $vencedor['nome_equipe'] ?: $vencedor['nome_fantasia'] ?: $vencedor['nome_turma'],
             'vencedor_gols' => $vencedor['gols'],
-            'perdedor_nome' => $perdedor['nome_fantasia'] ?: $perdedor['nome_turma'],
+            'perdedor_nome' => $perdedor['nome_equipe'] ?: $perdedor['nome_fantasia'] ?: $perdedor['nome_turma'],
             'perdedor_gols' => $perdedor['gols'],
             'duracao_min' => $duracaoMin,
             'tempo_extra_min' => $extraMin,

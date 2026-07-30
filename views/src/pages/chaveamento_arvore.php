@@ -1355,7 +1355,7 @@ $paginaAtiva = 'chaveamento';
             teamsSection.style.display = 'block';
             let teamsHtml = '';
             eqs.forEach((eq, idx) => {
-                const nome = eq.nome_fantasia || eq.nome_turma || `Equipe #${eq.id_equipe}`;
+                const nome = eq.nome_equipe || eq.nome_fantasia || eq.nome_turma || `Equipe #${eq.id_equipe}`;
                 teamsHtml += `
                     <div class="team-row">
                         <div class="team-row__name">${nome}</div>
@@ -1370,7 +1370,7 @@ $paginaAtiva = 'chaveamento';
                 winnerSection.style.display = 'block';
                 let winnerHtml = '';
                 eqs.forEach(eq => {
-                    const nome = eq.nome_fantasia || eq.nome_turma || `Equipe #${eq.id_equipe}`;
+                    const nome = eq.nome_equipe || eq.nome_fantasia || eq.nome_turma || `Equipe #${eq.id_equipe}`;
                     const checked = jogo.equipe_vencedora_id == eq.id_equipe ? 'checked' : '';
                     winnerHtml += `
                         <div class="winner-radio">
@@ -1788,7 +1788,7 @@ $paginaAtiva = 'chaveamento';
                          <div class="bkt-team"><span class="bkt-team__name" style="color:#9ca3af;font-style:italic;">A definir</span><span class="bkt-team__score">-</span></div>`;
         } else {
             eqs.forEach(eq => {
-                const nome = eq.nome_fantasia || eq.nome_turma || `Equipe #${eq.id_equipe}`;
+                const nome = eq.nome_equipe || eq.nome_fantasia || eq.nome_turma || `Equipe #${eq.id_equipe}`;
                 const isWinner = isConcluido && vencId && eq.id_equipe == vencId;
                 const isLoser = isConcluido && vencId && eq.id_equipe != vencId && eqs.length > 1;
                 let teamCls = 'bkt-team';
@@ -1861,7 +1861,7 @@ $paginaAtiva = 'chaveamento';
         if (!final || !final.equipes || !final.equipe_vencedora_id) return null;
         const winner = final.equipes.find(eq => eq.id_equipe == final.equipe_vencedora_id);
         if (!winner) return null;
-        const nome = winner.nome_fantasia || winner.nome_turma || `Equipe #${winner.id_equipe}`;
+        const nome = winner.nome_equipe || winner.nome_fantasia || winner.nome_turma || `Equipe #${winner.id_equipe}`;
         const mod = modalidadesCache.find(m => String(m.id_modalidade) == _currentModalidade);
         const modName = mod ? `${mod.nome_modalidade}${mod.genero_modalidade ? ' ('+mod.genero_modalidade+')' : ''}${mod.nome_categoria ? ' ['+mod.nome_categoria+']' : ''}` : '';
         return {
