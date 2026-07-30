@@ -20,7 +20,6 @@ switch ($method) {
     case 'GET':
         $filtro = aplicarFiltrosTurmas();
 
-        // CORREÇÃO: Removido a referência à tabela inexistente 'ocorrencias_turmas'
         $sql = "SELECT 
                 turmas.id_turma, 
                 turmas.nome_turma, 
@@ -34,11 +33,18 @@ switch ($method) {
             INNER JOIN interclasses ON interclasses.id_interclasse = turmas.interclasses_id_interclasse
             INNER JOIN categorias ON categorias.id_categoria = turmas.categorias_id_categoria
             LEFT JOIN (
-                SELECT usuarios.turmas_id_turma, SUM(ocorrencias.penalidade) AS total_penalidades
-                FROM ocorrencias
-                INNER JOIN usuarios ON ocorrencias.usuarios_id_usuario = usuarios.id_usuario
-                WHERE ocorrencias.status_ocorrencia = '1'
-                GROUP BY usuarios.turmas_id_turma
+                SELECT turmas_id_turma, SUM(total) AS total_penalidades FROM (
+                    SELECT ot.turmas_id_turma, SUM(ot.pontos_descontados) AS total
+                    FROM ocorrencias_turmas ot
+                    GROUP BY ot.turmas_id_turma
+                    UNION ALL
+                    SELECT u.turmas_id_turma, SUM(o.penalidade) AS total
+                    FROM ocorrencias o
+                    INNER JOIN usuarios u ON o.usuarios_id_usuario = u.id_usuario
+                    WHERE o.status_ocorrencia = '1'
+                    GROUP BY u.turmas_id_turma
+                ) sub
+                GROUP BY turmas_id_turma
             ) penalidades ON penalidades.turmas_id_turma = turmas.id_turma
             WHERE 1=1";
 
