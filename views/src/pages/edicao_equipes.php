@@ -288,7 +288,7 @@ $paginaAtiva = 'dashboard';
                             const hrefElenco = `./elenco_equipe.php?${qElenco.toString()}`;
                             htmlMob += `
                                 <div class="d-flex justify-content-between align-items-center py-1">
-                                    <span>${esc(eq.nome_turma || 'Turma')}</span>
+                                    <span>${esc(eq.nome_equipe || eq.nome_turma)}</span>
                                     <div class="d-flex gap-1">
                                         <a class="btn btn-aluno btn-sm" href="${hrefElenco}"><i class="bi bi-people-fill"></i></a>
                                         ${isAdmin ? `<button class="btn btn-aluno btn-sm" onclick="excluirEquipe(${eq.id_equipe}, '${esc(eq.nome_turma || 'Turma')}')"><i class="bi bi-trash"></i></button>` : ''}
@@ -320,7 +320,7 @@ $paginaAtiva = 'dashboard';
                             });
                             const hrefElenco = `./elenco_equipe.php?${qElenco.toString()}`;
                             htmlDesk += `<tr>
-                                <td style="padding-left:1.25rem">${esc(eq.nome_turma || 'Turma')}</td>
+                                <td style="padding-left:1.25rem">${esc(eq.nome_equipe || eq.nome_turma)}</td>
                                 <td class="text-end" style="padding-right:1.25rem">
                                     <a class="btn btn-aluno btn-sm me-1" href="${hrefElenco}"><i class="bi bi-people-fill"></i></a>
                                     ${isAdmin ? `<button class="btn btn-aluno btn-sm" onclick="excluirEquipe(${eq.id_equipe}, '${esc(eq.nome_turma || 'Turma')}')"><i class="bi bi-trash"></i></button>` : ''}
