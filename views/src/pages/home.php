@@ -285,7 +285,7 @@ document.getElementById('formulario').addEventListener('submit', async (event) =
             document.getElementById('formulario').reset();
             listarInterclasses();
             setTimeout(() => {
-                window.location.href = `./edicao_categorias.php?id=${idCriado}&modo=create`;
+                window.location.href = `./dashboard.php?id=${idCriado}`;
             }, 800);
         } else {
             throw new Error(res.data ? res.data.message : "Erro interno no servidor ao salvar.");
