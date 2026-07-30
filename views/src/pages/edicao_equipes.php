@@ -155,6 +155,7 @@ $paginaAtiva = 'dashboard';
     const API = '../../../api/';
     const params = new URLSearchParams(window.location.search);
     let idInterclasseEq = params.get('id');
+    const idCategoriaUrl = params.get('id_categoria');
     const isAdmin = <?= $isAdmin ? 'true' : 'false' ?>;
 
     let modalidadesCache = [];
@@ -195,14 +196,19 @@ $paginaAtiva = 'dashboard';
             const cats = await res.json();
             const lista = Array.isArray(cats) ? cats : [];
 
-            const btns = lista.map((c, i) =>
-                `<button class="btn-filter-cat${i === 0 ? ' active' : ''}" data-id="${c.id_categoria}">${esc(c.nome_categoria)}</button>`
+            const btns = lista.map(c =>
+                `<button class="btn-filter-cat" data-id="${c.id_categoria}">${esc(c.nome_categoria)}</button>`
             ).join('');
 
             const desk = document.getElementById('filtroCategoria');
             const mob = document.getElementById('filtroCategoriaMobile');
             if (desk) desk.innerHTML = btns;
             if (mob) mob.innerHTML = btns;
+
+            const btnAlvo = document.querySelector(
+                `#filtroCategoria [data-id="${idCategoriaUrl}"], #filtroCategoriaMobile [data-id="${idCategoriaUrl}"]`
+            ) || document.querySelector('#filtroCategoria button, #filtroCategoriaMobile button');
+            if (btnAlvo) ativarCategoria(btnAlvo);
         } catch (e) {
             console.error('Erro ao carregar categorias:', e);
         }

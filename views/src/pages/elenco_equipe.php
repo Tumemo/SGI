@@ -137,6 +137,7 @@ function esc(s) {
 function montarVoltar() {
     const q = new URLSearchParams();
     if (idInterclasse) q.set('id', idInterclasse);
+    if (idCategoria) q.set('id_categoria', idCategoria);
     const hrefEq = `./edicao_equipes.php?${q.toString()}`;
     const mob = document.getElementById('btnVoltarElencoMob');
     const desk = document.getElementById('btnVoltarElencoDesk');
