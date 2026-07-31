@@ -6,6 +6,7 @@ $urlVoltar = './dashboard.php';
 include 'componentes/head.php';
 include 'componentes/header.php';
 $paginaAtiva = 'dashboard';
+$isAdmin = $nivelUsuario === 0;
 ?>
 
 <main class="d-md-none" style="margin-bottom: 120px;">
@@ -84,6 +85,7 @@ $paginaAtiva = 'dashboard';
 
 <script>
     let modalidadeAtual = null;
+    const PERMITE_EXCLUIR = <?= $isAdmin ? 'true' : 'false' ?>;
 
     async function carregarDetalhesModalidade() {
         const params = new URLSearchParams(window.location.search);
@@ -112,6 +114,7 @@ $paginaAtiva = 'dashboard';
 
             const turmasUnicas = [...new Set((equipes || []).map((item) => item.nome_turma).filter(Boolean))];
             const qtdEquipes = Array.isArray(equipes) ? equipes.length : 0;
+            const btnExcluir = PERMITE_EXCLUIR ? '<button class="btn btn-sm btn-outline-danger mb-2" onclick="excluirModalidade()">Excluir</button>' : '';
 
             const resumoHtml = `
                 <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
@@ -123,7 +126,9 @@ $paginaAtiva = 'dashboard';
                         <p class="text-muted mb-0">Tipo: <span id="tipoModalidadeDisplay">${modalidade.nome_tipo_modalidade || '-'}</span></p>
                     </div>
                     <div class="text-end">
-                        <button class="btn btn-sm btn-outline-primary mb-2" onclick="abrirModalEdicao()">Editar</button><br>
+                        <button class="btn btn-sm btn-outline-primary mb-2" onclick="abrirModalEdicao()">Editar</button>
+                        ${btnExcluir}
+                        <br>
                         <div class="badge bg-danger mb-2">${qtdEquipes} equipe(s)</div><br>
                         <div class="badge bg-secondary">${turmasUnicas.length} turma(s)</div>
                     </div>
@@ -196,6 +201,37 @@ $paginaAtiva = 'dashboard';
 
         const modal = new bootstrap.Modal(document.getElementById('modalEditarModalidade'));
         modal.show();
+    }
+
+    async function excluirModalidade() {
+        if (!modalidadeAtual) return;
+        if (!confirm(`Tem certeza que deseja excluir a modalidade "${modalidadeAtual.nome_modalidade}"?`)) return;
+
+        const btn = document.querySelector('.btn-outline-danger');
+        const originalText = btn?.innerHTML || '';
+        if (btn) { btn.disabled = true; btn.innerHTML = 'Excluindo...'; }
+
+        try {
+            const resp = await fetch('../../../api/modalidades.php', {
+                method: 'DELETE',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id_modalidade: modalidadeAtual.id_modalidade })
+            });
+            const data = await resp.json();
+
+            if (!resp.ok || data.success === false) {
+                alert(data.message || 'Erro ao excluir.');
+                return;
+            }
+
+            const params = new URLSearchParams(window.location.search);
+            const idInterclasse = params.get('id');
+            window.location.href = `./edicao_modalidades.php?id=${idInterclasse}&modo=view`;
+        } catch (e) {
+            alert('Erro de conexão.');
+        } finally {
+            if (btn) { btn.disabled = false; btn.innerHTML = originalText; }
+        }
     }
 
     document.getElementById('formEditarModalidade').addEventListener('submit', async (e) => {

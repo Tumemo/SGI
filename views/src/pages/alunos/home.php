@@ -577,6 +577,58 @@ async function carregarRegulamentoModal() {
     }
 }
 
+let modalTrocarSenhaInstance = null;
+
+function abrirModalTrocarSenha() {
+    const modalEl = document.getElementById('modalTrocarSenha');
+    if (!modalEl || modalTrocarSenhaInstance) return;
+    modalTrocarSenhaInstance = new bootstrap.Modal(modalEl, { backdrop: 'static', keyboard: false });
+    modalTrocarSenhaInstance.show();
+}
+
+async function salvarNovaSenha() {
+    const msgEl = document.getElementById('msgTrocarSenha');
+    const btn = document.getElementById('btnSalvarNovaSenha');
+    msgEl.innerHTML = '';
+
+    const novaSenha = document.getElementById('novaSenha').value;
+    const confirmarSenha = document.getElementById('confirmarNovaSenha').value;
+
+    if (novaSenha.length < 6) {
+        msgEl.innerHTML = '<span class="text-danger">A senha deve ter no mínimo 6 caracteres.</span>';
+        return;
+    }
+    if (novaSenha !== confirmarSenha) {
+        msgEl.innerHTML = '<span class="text-danger">As senhas não coincidem.</span>';
+        return;
+    }
+
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status"></span>Salvando...';
+
+    try {
+        const res = await fetch('../../../../api/trocar_senha.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ nova_senha: novaSenha, confirmar_senha: confirmarSenha })
+        });
+        if (res.status === 401) { window.location.href = '../../../..'; return; }
+        const data = await res.json();
+        if (data.success) {
+            msgEl.innerHTML = '<span class="text-success fw-semibold"><i class="bi bi-check-circle-fill me-1"></i>' + data.message + '</span>';
+            btn.disabled = true;
+            setTimeout(() => window.location.reload(), 1500);
+        } else {
+            msgEl.innerHTML = '<span class="text-danger">' + (data.message || 'Erro ao alterar a senha.') + '</span>';
+        }
+    } catch (error) {
+        msgEl.innerHTML = '<span class="text-danger">Erro de conexão. Tente novamente.</span>';
+    } finally {
+        btn.disabled = false;
+        btn.textContent = 'Salvar Senha';
+    }
+}
+
 async function initModalTermo() {
     const modalElement = document.getElementById('modalTermo');
     const modalTermo = new bootstrap.Modal(modalElement, { backdrop: 'static', keyboard: false });
@@ -584,11 +636,17 @@ async function initModalTermo() {
     const btnRecusar = document.getElementById('btnRecusarTermo');
     const avisoRecusa = document.getElementById('avisoRecusa');
 
+    let precisaTrocarSenha = false;
+
     try {
         const checagem = await fetch('../../../../api/concordarTermos.php', { method: 'GET' });
         if (checagem.status === 401) return;
         const resCheck = await checagem.json();
-        if (resCheck.success && resCheck.termo_aceito === true) return;
+        precisaTrocarSenha = !!resCheck.exige_troca_senha;
+        if (resCheck.success && resCheck.termo_aceito === true) {
+            if (precisaTrocarSenha) abrirModalTrocarSenha();
+            return;
+        }
     } catch (e) {
         console.error("Erro ao verificar status dos termos:", e);
     }
@@ -610,6 +668,7 @@ async function initModalTermo() {
             if (data.success) {
                 avisoRecusa.classList.add('d-none');
                 modalTermo.hide();
+                if (data.exige_troca_senha || precisaTrocarSenha) abrirModalTrocarSenha();
             } else {
                 avisoRecusa.textContent = data.message || 'Erro ao salvar aceite. Tente novamente.';
                 avisoRecusa.classList.remove('d-none');
@@ -637,6 +696,14 @@ document.addEventListener('DOMContentLoaded', function() {
     carregarInterclassesAluno();
     initModalTermo();
 
+    document.getElementById('formTrocarSenha')?.addEventListener('submit', function(e) {
+        e.preventDefault();
+        salvarNovaSenha();
+    });
+    document.getElementById('btnSalvarNovaSenha')?.addEventListener('click', function() {
+        document.getElementById('formTrocarSenha')?.requestSubmit();
+    });
+
     document.getElementById('searchInput')?.addEventListener('input', filterAndRender);
 
     document.querySelectorAll('.filter-pill').forEach(pill => {
@@ -648,6 +715,37 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 </script>
+<div class="modal fade" id="modalTrocarSenha" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title fw-bold">
+                    <i class="bi bi-shield-lock me-2"></i>Alterar Senha
+                </h5>
+            </div>
+            <div class="modal-body p-4">
+                <p class="text-muted mb-3">Por segurança, defina uma senha pessoal e confidencial. A senha padrão é a mesma para todos os alunos.</p>
+                <form id="formTrocarSenha" novalidate>
+                    <div class="mb-3">
+                        <label for="novaSenha" class="form-label small fw-semibold text-secondary">Nova Senha</label>
+                        <input type="password" class="form-control" id="novaSenha" name="nova_senha" minlength="6" maxlength="72" required autocomplete="new-password">
+                    </div>
+                    <div class="mb-3">
+                        <label for="confirmarNovaSenha" class="form-label small fw-semibold text-secondary">Confirmar Nova Senha</label>
+                        <input type="password" class="form-control" id="confirmarNovaSenha" name="confirmar_senha" minlength="6" maxlength="72" required autocomplete="new-password">
+                    </div>
+                    <div id="msgTrocarSenha" class="small mt-2 text-center"></div>
+                </form>
+            </div>
+            <div class="modal-footer border-0 justify-content-end gap-2 bg-light px-4 py-3">
+                <button type="button" class="btn btn-danger px-4 fw-semibold" id="btnSalvarNovaSenha">
+                    <i class="bi bi-check-lg me-1"></i>Salvar Senha
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
 </body>
 </html>

@@ -114,6 +114,9 @@ $cssExtra = '
 include 'componentes/head.php';
 include 'componentes/header.php';
 $paginaAtiva = 'colaboradores';
+
+// Verifica se o usuário logado é administrador (ajuste a variável de sessão conforme a lógica da sua aplicação)
+$usuarioEhAdmin = (isset($_SESSION['nivel_usuario']) && (string)$_SESSION['nivel_usuario'] === '0');
 ?>
 
 <!-- ═══ MOBILE ═══ -->
@@ -229,10 +232,15 @@ $paginaAtiva = 'colaboradores';
                             <option value="FEM">Feminino</option>
                         </select>
                     </div>
+
+                    <?php if ($usuarioEhAdmin): ?>
+                    <!-- Restrição: Exibido apenas se o usuário logado for Admin -->
                     <div class="form-check mb-2">
                         <input class="form-check-input" type="radio" name="tipoParticipante" id="novoAdminColaborador">
                         <label class="form-check-label" for="novoAdminColaborador">Administrador</label>
                     </div>
+                    <?php endif; ?>
+
                     <div class="form-check mb-2">
                         <input class="form-check-input" type="radio" name="tipoParticipante" id="novoMesarioColaborador" checked>
                         <label class="form-check-label" for="novoMesarioColaborador">Mesário</label>
@@ -293,6 +301,7 @@ $paginaAtiva = 'colaboradores';
 </div>
 
 <script>
+    const usuarioEhAdmin = <?php echo json_encode($usuarioEhAdmin); ?>;
     const paramsColab = new URLSearchParams(window.location.search);
     const idInterclasseColab = paramsColab.get('id');
     let colaboradoresData = [];
@@ -516,7 +525,15 @@ $paginaAtiva = 'colaboradores';
         const nome = document.getElementById('novoNomeColaborador').value.trim();
         const matricula = document.getElementById('novoNifColaborador').value.trim();
         const senha = document.getElementById('novaSenhaColaborador').value.trim();
-        const admin = document.getElementById('novoAdminColaborador').checked;
+        const adminInput = document.getElementById('novoAdminColaborador');
+        const admin = adminInput ? adminInput.checked : false;
+
+        // Validação extra de segurança no Front-end
+        if (admin && !usuarioEhAdmin) {
+            msg.innerHTML = '<p class="text-danger fw-bold mb-0">Apenas administradores podem cadastrar outros administradores.</p>';
+            return;
+        }
+
         const mesario = document.getElementById('novoMesarioColaborador').checked;
         const genero = document.getElementById('novoGeneroColaborador').value;
 

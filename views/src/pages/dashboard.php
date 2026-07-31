@@ -48,6 +48,14 @@ $isMesario = $nivelUsuario === 2;
                 <picture><img src="../../public/icons/arrow-right.svg" alt="Seta"></picture>
             </div>
         </a>
+        <a href="./ocorrencias.php" id="linkOcorrencias" class="text-decoration-none text-black">
+            <div class="d-flex m-auto justify-content-between align-items-center shadow py-3 px-4 mb-3 border border-1 rounded-3" style="width: 90%;">
+                <i class="bi bi-exclamation-triangle fs-2"></i>
+                <h2 class="m-0 fs-3 w-100 px-3">Ocorrências</h2>
+                <picture><img src="../../public/icons/arrow-right.svg" alt="Seta para direita"></picture>
+            </div>
+        </a>
+        
         <?php endif; ?>
 
         <?php if ($isColaborador || $isAdmin): ?>
@@ -179,6 +187,16 @@ $isMesario = $nivelUsuario === 2;
                         <h5 class="dash-card-title">RANKING</h5>
                     </div>
                     <p class="dash-card-text">Visualize o ranking geral de pontuações por categoria.</p>
+                </a>
+            </div>
+            <div class="col-12 col-md-6 col-lg-4">
+                <a href="ocorrencias.php" id="linkOcorrencias" class="dash-card">
+                    <div class="dash-card-red-corner"></div>
+                    <div class="dash-card-header">
+                        <div class="dash-card-icon"><i class="bi bi-exclamation-triangle"></i></div>
+                        <h5 class="dash-card-title">OCORRÊNCIAS</h5>
+                    </div>
+                    <p class="dash-card-text">Registre ocorrências e aplique descontos de pontos nas turmas.</p>
                 </a>
             </div>
             <?php endif; ?>
@@ -453,6 +471,7 @@ $isMesario = $nivelUsuario === 2;
     document.querySelectorAll('#linkAgenda').forEach(link => { link.href = `./agenda.php?id=${idInterclasse}&${modoParam}`; });
     document.querySelectorAll('#linkChaveamentos').forEach(link => { link.href = `./pontuacao.php?id=${idInterclasse}&${modoParam}`; });
     document.querySelectorAll('#linkRanking').forEach(link => { link.href = `./ranking.php?id=${idInterclasse}`; });
+    document.querySelectorAll('#linkOcorrencias').forEach(link => { link.href = `./ocorrencias.php?id=${idInterclasse}`; });
     <?php endif; ?>
 
     <?php if ($isColaborador): ?>
