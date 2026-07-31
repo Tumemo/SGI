@@ -17,7 +17,6 @@ $urlVoltar = './home.php';
 
     <main class="container py-4">
         <h1 class="visually-hidden">Ranking - Interclasses</h1>
-        <h2 class="text-secondary fs-6 text-center mb-4 fw-normal" id="nomeInterclasseRanking">Carregando...</h2>
 
         <div id="filtros" class="d-flex overflow-auto gap-2 pb-3 mb-4"></div>
 
@@ -36,6 +35,15 @@ include 'componentes/nav.php';
 
     <script>
         function esc(s) { const d = document.createElement('div'); d.textContent = s == null ? '' : String(s); return d.innerHTML; }
+
+        function numeroCategoria(nome) {
+            const romanos = { I: 1, II: 2, III: 3, IV: 4, V: 5, VI: 6, VII: 7, VIII: 8, IX: 9, X: 10 };
+            const partes = String(nome || '').trim().split(/\s+/);
+            const ultimo = partes[partes.length - 1] || '';
+            if (/^\d+$/.test(ultimo)) return parseInt(ultimo, 10);
+            if (romanos[ultimo.toUpperCase()]) return romanos[ultimo.toUpperCase()];
+            return Number.MAX_SAFE_INTEGER;
+        }
 
         const params = new URLSearchParams(window.location.search);
         let idInterclasse = params.get('id');
@@ -121,8 +129,7 @@ include 'componentes/nav.php';
                 }
 
                 dadosAPI = rankingArray;
-                categoriasUnicas = [...new Set(rankingArray.map(item => item.nome_categoria))];
-                document.getElementById('nomeInterclasseRanking').innerText = rankingArray[0].nome_interclasse || 'Ranking';
+                categoriasUnicas = [...new Set(rankingArray.map(item => item.nome_categoria))].sort((a, b) => numeroCategoria(a) - numeroCategoria(b));
 
                 renderizarFiltros();
                 if (categoriasUnicas.length > 0) filtrarCategoria(categoriasUnicas[0]);
@@ -137,7 +144,6 @@ include 'componentes/nav.php';
                         <p class="mb-0 text-break fw-bold text-danger" style="font-family: monospace;">${error.message}</p>
                     </div>
                 `;
-                document.getElementById('nomeInterclasseRanking').innerText = "Erro ao Carregar";
             }
         }
 
