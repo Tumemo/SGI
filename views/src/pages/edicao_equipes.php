@@ -108,7 +108,7 @@ $paginaAtiva = 'dashboard';
                 <a href="./dashboard.php" id="btnVoltarEquipesDesk" class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none" style="background-color:#E30613;border-radius:6px;padding:8px 16px;">
                     <i class="bi bi-arrow-left-circle fs-5"></i> <span id="nomeInterclasseEquipesDesk">Interclasse</span>
                 </a>
-                <h1 id="nomeInterclasseEquipes">Equipes</h1>
+                <h1 id="nomeInterclasseEquipes" style="display: none;">Equipes</h1>
             </div>
             <?php if ($isAdmin): ?>
             <button id="btnCriarEquipeDesk" class="btn btn-aluno" data-bs-toggle="modal" data-bs-target="#modalCriarEquipe">
