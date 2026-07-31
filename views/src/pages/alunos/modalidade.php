@@ -7,6 +7,14 @@ $genero_usuario = 'MASC';
 $categoria_usuario = 0;
 $modalidades_inscritas = [];
 
+$idInterclassePagina = isset($_GET['id']) ? (int) $_GET['id'] : 0;
+if ($idInterclassePagina <= 0) {
+    $resInt = $conn->query("SELECT id_interclasse FROM interclasses WHERE status_interclasse = '1' ORDER BY id_interclasse DESC LIMIT 1");
+    if ($resInt && $rowInt = $resInt->fetch_assoc()) {
+        $idInterclassePagina = (int) $rowInt['id_interclasse'];
+    }
+}
+
 if ($id_usuario) {
     $stmt = $conn->prepare("SELECT u.genero_usuario, t.categorias_id_categoria FROM usuarios u LEFT JOIN turmas t ON u.turmas_id_turma = t.id_turma WHERE u.id_usuario = ?");
     $stmt->bind_param('i', $id_usuario);
@@ -25,6 +33,9 @@ if ($id_usuario) {
             JOIN modalidades m ON e.modalidades_id_modalidade = m.id_modalidade
             JOIN categorias c ON m.categorias_id_categoria = c.id_categoria
             WHERE eu.usuarios_id_usuario = ? AND e.status_equipe = '1'";
+    if ($idInterclassePagina > 0) {
+        $sql .= " AND m.interclasses_id_interclasse = $idInterclassePagina";
+    }
     $stmt = $conn->prepare($sql);
     $stmt->bind_param('i', $id_usuario);
     $stmt->execute();
@@ -150,9 +161,33 @@ include 'componentes/head.php';
         border: 2px solid #fff;
         box-shadow: 0 1px 4px rgba(0,0,0,.12);
     }
+
+    .btn-ver-detalhes {
+        border-radius: 20px;
+        font-size: 0.8rem;
+        padding: 4px 16px;
+    }
+
+    .jogo-detalhe-item {
+        padding: 0.85rem 0;
+        border-bottom: 1px solid #e9ecef;
+    }
+    .jogo-detalhe-item:last-child {
+        border-bottom: none;
+    }
+    .jogo-detalhe-item .detalhe-data {
+        font-weight: 600;
+        color: #1a1a2e;
+    }
+    .jogo-detalhe-item .detalhe-meta {
+        font-size: 0.85rem;
+        color: #6c757d;
+    }
 </style>
 
 <main class="container py-4">
+
+    <div id="inscricoesAtuais" class="mb-4"></div>
 
     <div class="row row-cols-1 row-cols-md-3 g-3" id="modalidadesGrid">
         <div class="col text-center py-5">
@@ -169,6 +204,18 @@ include 'componentes/head.php';
         <p class="bottom-label text-muted small" id="msgFeedback"></p>
     </div>
 </main>
+
+<div class="modal fade" id="modalDetalhes" tabindex="-1" aria-labelledby="modalDetalhesTitle" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title fw-bold" id="modalDetalhesTitle">Detalhes</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+            </div>
+            <div class="modal-body" id="modalDetalhesCorpo"></div>
+        </div>
+    </div>
+</div>
 
 <?php
 $paginaAtiva = 'inscricao';
@@ -217,8 +264,9 @@ include 'componentes/nav.php';
             if (estaInscrito) {
                 renderizarInscricoes();
             } else {
-                renderizarSelecao();
+                document.getElementById('inscricoesAtuais').innerHTML = '';
             }
+            renderizarSelecao();
 
         } catch (e) {
             console.error(e);
@@ -226,23 +274,46 @@ include 'componentes/nav.php';
         }
     }
 
+    function atualizarContador() {
+        const inscritos = new Set(modalidadesInscritas.map(m => String(m.id_modalidade))).size;
+        const selecionados = document.querySelectorAll('.modalidade-card.selected').length;
+        const total = inscritos + selecionados;
+        const restantes = Math.max(0, 3 - inscritos);
+        document.getElementById('contador').textContent = `Você pode escolher até ${restantes} modalidade(s) (${total}/3)`;
+    }
+
     function renderizarSelecao() {
         const grid = document.getElementById('modalidadesGrid');
         const acoes = document.getElementById('acoesInscricao');
         grid.innerHTML = '';
-        acoes.classList.remove('d-none');
+
+        const inscritosIds = new Set(modalidadesInscritas.map(m => String(m.id_modalidade)));
+        const qtdInscritos = inscritosIds.size;
+
+        if (qtdInscritos >= 3) {
+            acoes.classList.add('d-none');
+            grid.innerHTML = '<div class="col-12 text-center text-success py-4"><i class="bi bi-check-circle-fill fs-1 d-block mb-2"></i>Você já está inscrito em 3 modalidades. Limite atingido.</div>';
+            return;
+        }
 
         const filtradas = modalidadesData.filter(mod =>
             (mod.genero_modalidade === 'MISTO' || mod.genero_modalidade === generoUsuario) &&
             parseInt(mod.categorias_id_categoria) === categoriaUsuario
         );
 
-        if (filtradas.length === 0) {
+        const disponiveis = filtradas.filter(mod => !inscritosIds.has(String(mod.id_modalidade)));
+
+        atualizarContador();
+
+        if (disponiveis.length === 0) {
+            acoes.classList.add('d-none');
             grid.innerHTML = '<div class="col-12 text-center text-muted py-5"><i class="bi bi-inbox fs-1 d-block mb-2"></i>Nenhuma modalidade disponível para sua categoria no momento.</div>';
             return;
         }
 
-        filtradas.forEach(mod => {
+        acoes.classList.remove('d-none');
+
+        disponiveis.forEach(mod => {
             const col = document.createElement('div');
             col.className = 'col';
             col.innerHTML = `
@@ -256,15 +327,19 @@ include 'componentes/nav.php';
     }
 
     function renderizarInscricoes() {
-        const grid = document.getElementById('modalidadesGrid');
-        const acoes = document.getElementById('acoesInscricao');
-        acoes.classList.add('d-none');
-        grid.innerHTML = '';
+        const container = document.getElementById('inscricoesAtuais');
+        container.innerHTML = '';
 
         if (modalidadesInscritas.length === 0) {
-            grid.innerHTML = '<div class="col-12 text-center text-muted py-5"><i class="bi bi-inbox fs-1 d-block mb-2"></i>Você ainda não está inscrito em nenhuma modalidade.</div>';
             return;
         }
+
+        container.innerHTML = `<h5 class="fs-6 fw-bold text-dark mb-3"><i class="bi bi-person-check text-success me-2"></i>Suas inscrições (${modalidadesInscritas.length}/3)</h5>`;
+
+        const wrapper = document.createElement('div');
+        wrapper.className = 'row row-cols-1 row-cols-md-3 g-3';
+
+        const equipesParaCarregar = [];
 
         modalidadesInscritas.forEach(mod => {
             const col = document.createElement('div');
@@ -285,11 +360,86 @@ include 'componentes/nav.php';
                             Carregando equipe...
                         </div>
                     </div>
+                    <div class="text-center mt-2">
+                        <button type="button" class="btn btn-outline-danger btn-sm btn-ver-detalhes"
+                            data-modalidade-id="${mod.id_modalidade}"
+                            data-modalidade-nome="${esc(mod.nome_modalidade)}"
+                            onclick="verDetalhesModalidade(this)">
+                            <i class="bi bi-calendar-event me-1"></i> Ver detalhes
+                        </button>
+                    </div>
                 </div>
             `;
-            grid.appendChild(col);
-            carregarMembros(mod.id_equipe);
+            wrapper.appendChild(col);
+            equipesParaCarregar.push(mod.id_equipe);
         });
+
+        container.appendChild(wrapper);
+
+        equipesParaCarregar.forEach(idEquipe => carregarMembros(idEquipe));
+    }
+
+    function formatarData(dataStr) {
+        if (!dataStr) return 'A definir';
+        const d = new Date(dataStr + 'T00:00:00');
+        if (isNaN(d.getTime())) return dataStr;
+        return d.toLocaleDateString('pt-BR');
+    }
+
+    async function verDetalhesModalidade(btn) {
+        const idModalidade = btn.dataset.modalidadeId;
+        const nomeModalidade = btn.dataset.modalidadeNome;
+        const corpo = document.getElementById('modalDetalhesCorpo');
+
+        document.getElementById('modalDetalhesTitle').textContent = nomeModalidade || 'Detalhes';
+        corpo.innerHTML = '<div class="text-center text-muted py-4"><div class="spinner-border spinner-border-sm me-2" role="status"></div>Carregando jogos...</div>';
+
+        const modal = new bootstrap.Modal(document.getElementById('modalDetalhes'));
+        modal.show();
+
+        try {
+            const res = await fetch(`../../../../api/jogos.php?id_modalidade=${idModalidade}&id_interclasse=${idInterclasse}`);
+            const jogos = await res.json();
+            const lista = Array.isArray(jogos) ? jogos : [];
+
+            if (lista.length === 0) {
+                corpo.innerHTML = '<div class="text-center text-muted py-4"><i class="bi bi-calendar-x fs-1 d-block mb-2"></i>Nenhum jogo agendado para esta modalidade ainda.</div>';
+                return;
+            }
+
+            corpo.innerHTML = lista.map(j => {
+                const status = j.status_jogo || 'Agendado';
+                const ehFinalizado = String(status).toLowerCase() === 'concluido';
+                const badgeCls = ehFinalizado ? 'bg-success-subtle text-success' : 'bg-warning-subtle text-dark';
+                const badgeTxt = ehFinalizado ? 'Finalizado' : (String(status).toLowerCase() === 'iniciado' ? 'Em andamento' : 'Agendado');
+
+                const hora = j.inicio_jogo ? String(j.inicio_jogo).substring(0, 5) : '--:--';
+                const horaFim = j.termino_jogo ? String(j.termino_jogo).substring(0, 5) : '';
+                const local = j.nome_local || 'A definir';
+                const confronto = j.equipes_nomes || 'A definir';
+
+                return `
+                    <div class="jogo-detalhe-item">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <span class="detalhe-data"><i class="bi bi-calendar-event me-2 text-danger"></i>${formatarData(j.data_jogo)}</span>
+                            <span class="badge rounded-pill ${badgeCls}">${badgeTxt}</span>
+                        </div>
+                        <div class="detalhe-meta">
+                            <i class="bi bi-clock me-1"></i>${hora}${horaFim ? ' - ' + horaFim : ''}
+                            <span class="mx-2">|</span>
+                            <i class="bi bi-geo-alt me-1"></i>${esc(local)}
+                        </div>
+                        <div class="detalhe-meta mt-1">
+                            <i class="bi bi-shield me-1"></i>${esc(confronto)}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+        } catch (e) {
+            console.error('Erro ao carregar jogos:', e);
+            corpo.innerHTML = '<div class="text-center text-danger py-4"><i class="bi bi-exclamation-triangle fs-1 d-block mb-2"></i>Erro ao carregar os jogos. Tente novamente.</div>';
+        }
     }
 
     async function carregarMembros(idEquipe) {
@@ -338,19 +488,20 @@ include 'componentes/nav.php';
     }
 
     function toggleModalidade(card) {
+        const inscritos = new Set(modalidadesInscritas.map(m => String(m.id_modalidade))).size;
         const selecionados = document.querySelectorAll('.modalidade-card.selected');
+
         if (card.classList.contains('selected')) {
             card.classList.remove('selected');
         } else {
-            if (selecionados.length >= 3) {
+            if (selecionados.length + inscritos >= 3) {
                 document.getElementById('msgFeedback').textContent = 'Você só pode escolher até 3 modalidades!';
                 setTimeout(() => document.getElementById('msgFeedback').textContent = '', 2000);
                 return;
             }
             card.classList.add('selected');
         }
-        const qtd = document.querySelectorAll('.modalidade-card.selected').length;
-        document.getElementById('contador').textContent = `Você pode escolher até 3 modalidades (${qtd}/3)`;
+        atualizarContador();
     }
 
     async function salvarEscolhas() {

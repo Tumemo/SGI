@@ -31,6 +31,9 @@ if ($usuario && password_verify($senha, $usuario['senha_usuario'])) {
     $_SESSION['matricula']    = $usuario['matricula_usuario'];
     $_SESSION['foto_usuario'] = $usuario['foto_usuario'] ?? null;
 
+    // Alunos (nível 3) que ainda usam a senha padrão precisam trocar no primeiro acesso
+    $_SESSION['exige_troca_senha'] = ((int)$usuario['nivel_usuario'] === 3 && password_verify('123', $usuario['senha_usuario']));
+
     // 3. Define o redirecionamento com base no nível de usuário retornado do banco
     $destino = match($_SESSION['nivel']) {
         3       => '../views/src/pages/alunos/home.php',        // Competidores

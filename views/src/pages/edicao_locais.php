@@ -3,6 +3,7 @@ $tituloPagina = 'SGI - Locais e Regulamento do Interclasse';
 $titulo = 'Locais e Regulamento do Interclasse';
 $mostrarVoltar = true;
 $urlVoltar = './dashboard.php';
+$cssExtra = '.local-card { border-radius: 12px; transition: transform .2s ease, box-shadow .2s ease; } .local-card:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,.07) !important; } .ta-action { width: 32px; height: 32px; border-radius: 10px; border: none; display: inline-flex; align-items: center; justify-content: center; font-size: .9rem; cursor: pointer; transition: all .18s ease; } .ta-action--edit { background: #f3f4f6; color: #4b5563; } .ta-action--edit:hover { background: #374151; color: #fff; transform: translateY(-1px); } .ta-action--delete { background: #feeaea; color: #dc2626; } .ta-action--delete:hover { background: #dc2626; color: #fff; transform: translateY(-1px); }';
 include 'componentes/head.php';
 include 'componentes/header.php';
 $paginaAtiva = 'dashboard';
@@ -14,7 +15,7 @@ $paginaAtiva = 'dashboard';
     <div class="card border-0 shadow-sm rounded-3 mb-3">
         <div class="card-body">
             <div class="d-flex align-items-center justify-content-between mb-2">
-                <h6 class="fw-bold mb-0 text-dark"><i class="bi bi-file-earmark-pdf text-danger me-1"></i> Regulamento</h6>
+                <h6 class="fw-bold mb-0 text-dark"><i class="bi bi-file-earmark-pdf-fill text-danger me-1"></i> Regulamento</h6>
                 <span id="badgeRegulamentoMob" class="badge bg-secondary">Buscando...</span>
             </div>
             <p id="infoRegulamentoMob" class="small text-muted mb-2">Carregando informações...</p>
@@ -23,7 +24,7 @@ $paginaAtiva = 'dashboard';
                     <i class="bi bi-eye"></i> Visualizar
                 </a>
                 <button type="button" class="btn btn-sm btn-danger w-100" data-bs-toggle="modal" data-bs-target="#modalRegulamento">
-                    <i class="bi bi-upload"></i> Enviar PDF
+                    <i class="bi bi-file-earmark-arrow-up"></i> Enviar PDF
                 </button>
             </div>
         </div>
@@ -46,14 +47,14 @@ $paginaAtiva = 'dashboard';
 
 <!-- ================= DESKTOP ================= -->
 <main class="d-none d-md-block main-desktop-layout my-4">
-    <div class="container-fluid px-0" style="max-width: 960px;">
+    <div class="container-fluid px-0" style="max-width: 100%;">
         <div class="mb-4 d-flex justify-content-between align-items-center">
             <a href="./dashboard.php" id="btnVoltarLocaisDesk" class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none" style="background-color:#E30613;border-radius:6px;padding:8px 16px;">
                 <i class="bi bi-arrow-left-circle fs-5"></i> <span id="nomeInterclasseLocais">Interclasse</span>
             </a>
 
             <button type="button" class="btn btn-danger fw-semibold rounded-3 px-4 py-2 shadow-sm d-inline-flex align-items-center gap-2" data-bs-toggle="modal" data-bs-target="#modalNovoLocal" style="background-color: #ed1c24; border: none;">
-                <i class="bi bi-plus-circle"></i> Novo local
+                <i class="bi bi-plus-lg"></i> Novo local
             </button>
         </div>
 
@@ -71,16 +72,16 @@ $paginaAtiva = 'dashboard';
                 </div>
                 <div class="d-flex gap-2">
                     <a id="btnVerPdfDesk" href="#" target="_blank" class="btn btn-outline-danger fw-semibold rounded-3 px-3 d-none">
-                        <i class="bi bi-file-earmark-pdf"></i> Visualizar PDF
+                        <i class="bi bi-file-earmark-pdf-fill"></i> Visualizar PDF
                     </a>
                     <button type="button" class="btn btn-danger fw-semibold rounded-3 px-3" data-bs-toggle="modal" data-bs-target="#modalRegulamento" style="background-color: #ed1c24; border: none;">
-                        <i class="bi bi-cloud-upload me-1"></i> Upload do Regulamento
+                        <i class="bi bi-cloud-arrow-up me-1"></i> Upload do Regulamento
                     </button>
                 </div>
             </div>
         </div>
 
-        <h5 class="fw-bold mb-3">Locais de Jogos</h5>
+        <h5 class="fw-bold mb-3"><i class="bi bi-geo-alt-fill text-danger me-2"></i>Locais de Jogos</h5>
         <div id="listaLocaisDesktop" class="row g-3">
             <p class="text-muted">Carregando…</p>
         </div>
@@ -307,7 +308,7 @@ $paginaAtiva = 'dashboard';
                     <p class="text-muted small mb-3 mt-auto">${carga}</p>
                     <div class="d-flex justify-content-end gap-2">
                         <button type="button" 
-                                class="btn btn-link text-primary p-0" 
+                                class="ta-action ta-action--edit" 
                                 title="Editar local"
                                 data-bs-toggle="modal" 
                                 data-bs-target="#modalEditarLocal"
@@ -315,13 +316,13 @@ $paginaAtiva = 'dashboard';
                                 data-nome="${esc(loc.nome_local)}" 
                                 data-disponivel="${isDisponivel ? '1' : '0'}"
                                 data-carga="${loc.carga_local || ''}">
-                            <i class="bi bi-pencil-square fs-4"></i>
+                            <i class="bi bi-pencil"></i>
                         </button>
                         <button type="button" 
-                                class="btn btn-link text-danger p-0" 
+                                class="ta-action ta-action--delete" 
                                 title="Excluir local"
                                 onclick='excluirLocal(${loc.id_local}, "${esc(loc.nome_local)}")'>
-                            <i class="bi bi-trash fs-4"></i>
+                            <i class="bi bi-trash"></i>
                         </button>
                     </div>
                 </div>
@@ -339,7 +340,7 @@ $paginaAtiva = 'dashboard';
                 </div>
                 <div class="d-flex align-items-center gap-2">
                     <button type="button" 
-                            class="btn btn-link text-primary p-0" 
+                            class="ta-action ta-action--edit" 
                             title="Editar local"
                             data-bs-toggle="modal" 
                             data-bs-target="#modalEditarLocal"
@@ -347,13 +348,13 @@ $paginaAtiva = 'dashboard';
                             data-nome="${esc(loc.nome_local)}" 
                             data-disponivel="${isDisponivel ? '1' : '0'}"
                             data-carga="${loc.carga_local || ''}">
-                        <i class="bi bi-pencil-square fs-5"></i>
+                        <i class="bi bi-pencil"></i>
                     </button>
                     <button type="button" 
-                            class="btn btn-link text-danger p-0" 
+                            class="ta-action ta-action--delete" 
                             title="Excluir local"
                             onclick='excluirLocal(${loc.id_local}, "${esc(loc.nome_local)}")'>
-                        <i class="bi bi-trash fs-5"></i>
+                        <i class="bi bi-trash"></i>
                     </button>
                     <i class="bi bi-geo-alt text-danger fs-4 flex-shrink-0"></i>
                 </div>

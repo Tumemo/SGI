@@ -129,13 +129,6 @@ $isMesario = $nivelUsuario === 2;
                 <picture><img src="../../public/icons/arrow-right.svg" alt="Seta"></picture>
             </div>
         </a>
-        <a href="./alunos/termos.php" id="linkRegulamento" class="text-decoration-none text-black">
-            <div class="d-flex m-auto justify-content-between align-items-center shadow py-3 px-4 mb-3 border border-1 rounded-3" style="width: 90%;">
-                <i class="bi bi-file-earmark-pdf fs-2"></i>
-                <h2 class="m-0 fs-3 w-100 px-3">Cadastrar regulamentos</h2>
-                <picture><img src="../../public/icons/arrow-right.svg" alt="Seta"></picture>
-            </div>
-        </a>
         <?php endif; ?>
     </section>
 </main>
@@ -309,7 +302,10 @@ $isMesario = $nivelUsuario === 2;
                     <p class="dash-card-text">Visualize o ranking geral de pontuações por categoria.</p>
                 </a>
             </div>
+<<<<<<< HEAD
             
+=======
+>>>>>>> 7151a277858a33f17493b1bb9c6cd296501b4066
             <?php endif; ?>
 
             <?php if ($isAdmin): ?>
@@ -493,7 +489,6 @@ $isMesario = $nivelUsuario === 2;
     document.querySelectorAll('#linkTurmas').forEach(link => { link.href = `./turmas.php?id=${idInterclasse}`; });
     document.querySelectorAll('#linkEquipes').forEach(link => { link.href = `./edicao_equipes.php?id=${idInterclasse}`; });
     document.querySelectorAll('#linkRanking').forEach(link => { link.href = `./ranking.php?id=${idInterclasse}`; });
-    document.querySelectorAll('#linkRegulamento').forEach(link => { link.href = `./cadastrarRegulamento.php?id=${idInterclasse}`; });
     <?php endif; ?>
 
     <?php if ($isAdmin): ?>
@@ -511,7 +506,6 @@ $isMesario = $nivelUsuario === 2;
     document.querySelectorAll('#linkEquipes').forEach(link => { link.href = `./edicao_equipes.php?id=${idInterclasse}`; });
     document.querySelectorAll('#linkChaveamento').forEach(link => { link.href = `./chaveamento_arvore.php?id=${idInterclasse}`; });
     document.querySelectorAll('#linkRanking').forEach(link => { link.href = `./ranking.php?id=${idInterclasse}`; });
-    document.querySelectorAll('#linkRegulamento').forEach(link => { link.href = `./cadastrarRegulamento.php?id=${idInterclasse}`; });
     <?php endif; ?>
 })();
 </script>
