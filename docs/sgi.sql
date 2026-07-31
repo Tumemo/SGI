@@ -279,7 +279,7 @@ CREATE TABLE `turmas` (
   `interclasses_id_interclasse` int(11) NOT NULL,
   `nome_turma` varchar(45) NOT NULL,
   `turno_turma` enum('manha','tarde','noite','integral') NOT NULL,
-  `nome_fantasia_turma` varchar(45) NOT NULL,
+  `nome_fantasia_turma` varchar(45),
   `status_turma` enum('1','0') NOT NULL,
   `categorias_id_categoria` int(11) NOT NULL,
   `pontuacao_turma` int(11) NOT NULL DEFAULT 0,
