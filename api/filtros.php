@@ -344,6 +344,12 @@ function aplicarFiltrosPartidas() {
         $params[] = intval($_GET['resultado_min']);
     }
 
+    if (!empty($_GET['id_interclasse'])) {
+        $sqlExtras .= " AND m.interclasses_id_interclasse = ?";
+        $types .= "i";
+        $params[] = intval($_GET['id_interclasse']);
+    }
+
     return [
         'sql' => $sqlExtras,
         'types' => $types,
