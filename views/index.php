@@ -19,8 +19,6 @@
         <form id="form_mobile" class="m-auto mt-3 text-center" style="width: 80%;">
             <input type="text" class="form-control mb-3 ipt-matricula" placeholder="Matrícula (RA ou NIF)" required>
             <input type="password" class="form-control mb-3 ipt-senha" placeholder="Senha" required>
-
-            <p class="small">Esqueci minha senha</p>
             <button type="submit" class="btn btn-danger w-100">Entrar</button>
             <div id="msg_erro_mobile" class="text-danger"></div>
         </form>
@@ -54,7 +52,6 @@
                     <input type="password" class="form-control ps-5 py-2 ipt-senha" placeholder="Senha" style="border-radius: 10px;" required>
                 </div>
 
-                <p class="small cursor-pointer">Esqueci minha senha</p>
                 <button type="submit" class="btn btn-danger w-50">Entrar</button>
                 <div id="msg_erro_desktop" class="text-danger mt-2"></div>
             </form>
