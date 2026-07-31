@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Tempo de geração: 29/05/2026 às 15:19
+-- Tempo de geração: 31/07/2026 às 14:23
 -- Versão do servidor: 10.4.32-MariaDB
 -- Versão do PHP: 8.2.12
 
@@ -57,7 +57,8 @@ CREATE TABLE `equipes` (
   `id_equipe` int(11) NOT NULL,
   `status_equipe` enum('1','0') NOT NULL,
   `modalidades_id_modalidade` int(11) NOT NULL,
-  `turmas_id_turma` int(11) NOT NULL
+  `turmas_id_turma` int(11) NOT NULL,
+  `nome_equipe` varchar(90) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci;
 
 -- --------------------------------------------------------
@@ -70,6 +71,23 @@ CREATE TABLE `equipes_has_usuarios` (
   `equipes_id_equipe` int(11) NOT NULL,
   `usuarios_id_usuario` int(11) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Estrutura para tabela `historico_arrecadacoes`
+--
+
+CREATE TABLE `historico_arrecadacoes` (
+  `id_historico` int(11) NOT NULL,
+  `id_turma` int(11) NOT NULL,
+  `id_interclasse` int(11) NOT NULL,
+  `quantidade` decimal(10,2) NOT NULL,
+  `pontos_adicionados` int(11) NOT NULL,
+  `data_registro` datetime NOT NULL DEFAULT current_timestamp(),
+  `registrado_por` int(11) DEFAULT NULL,
+  `status_historico` enum('1','0') NOT NULL DEFAULT '1'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
 
@@ -126,6 +144,10 @@ CREATE TABLE `jogos` (
   `inicio_jogo` time NOT NULL,
   `termino_jogo` time DEFAULT NULL,
   `status_jogo` enum('Agendado','Iniciado','Pausado','Concluido') NOT NULL,
+  `tempo_restante_jogo` int(11) DEFAULT NULL COMMENT 'Segundos restantes salvos no ultimo snapshot (pausa/save)',
+  `duracao_jogo` int(11) DEFAULT NULL COMMENT 'Duracao total programada em segundos',
+  `tempo_extra_jogo` int(11) NOT NULL DEFAULT 0 COMMENT 'Total de segundos extras (acrescimos/prorrogacao)',
+  `data_inicio_real` datetime DEFAULT NULL COMMENT 'Data/hora do inicio real da partida (iniciar ou retomar)',
   `modalidades_id_modalidade` int(11) NOT NULL,
   `locais_id_local` int(11) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci;
@@ -182,6 +204,24 @@ CREATE TABLE `ocorrencias` (
 -- --------------------------------------------------------
 
 --
+-- Estrutura para tabela `ocorrencias_turmas`
+--
+
+CREATE TABLE `ocorrencias_turmas` (
+  `id_ocorrencia_turma` int(11) NOT NULL,
+  `turmas_id_turma` int(11) NOT NULL,
+  `interclasses_id_interclasse` int(11) NOT NULL,
+  `titulo_ocorrencia` varchar(255) NOT NULL,
+  `descricao_ocorrencia` longtext DEFAULT NULL,
+  `pontos_descontados` int(11) NOT NULL DEFAULT 0,
+  `data_ocorrencia` date NOT NULL,
+  `usuarios_id_usuario` int(11) DEFAULT NULL,
+  `data_registro` timestamp NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
 -- Estrutura para tabela `partidas`
 --
 
@@ -189,6 +229,7 @@ CREATE TABLE `partidas` (
   `id_partida` int(11) NOT NULL,
   `jogos_id_jogo` int(11) NOT NULL,
   `equipes_id_equipe` int(11) NOT NULL,
+  `usuarios_id_usuario` int(11) DEFAULT NULL,
   `resultado_partida` int(11) NOT NULL DEFAULT 0,
   `status_partida` enum('1','0') NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci;
@@ -246,7 +287,7 @@ CREATE TABLE `turmas` (
 CREATE TABLE `usuarios` (
   `id_usuario` int(11) NOT NULL,
   `sigla_usuario` enum('RM','SS','SN') NOT NULL,
-  `matricula_usuario` varchar(20) NOT NULL,
+  `matricula_usuario` varchar(45) NOT NULL,
   `nome_usuario` varchar(45) NOT NULL,
   `senha_usuario` varchar(200) NOT NULL,
   `nivel_usuario` enum('0','1','2','3') NOT NULL DEFAULT '0',
@@ -255,8 +296,8 @@ CREATE TABLE `usuarios` (
   `foto_usuario` varchar(255) NOT NULL,
   `status_usuario` enum('0','1') NOT NULL,
   `turmas_id_turma` int(11) DEFAULT NULL,
-  `interclasses_id_interclasse` int(11) NOT NULL,
-  `chave_usuario_edicao` varchar(50) NOT NULL
+  `interclasses_id_interclasse` int(11) DEFAULT NULL,
+  `chave_usuario_edicao` varchar(50) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci;
 
 -- --------------------------------------------------------
@@ -290,7 +331,6 @@ ALTER TABLE `artilheiros`
 --
 ALTER TABLE `categorias`
   ADD PRIMARY KEY (`id_categoria`),
-  ADD UNIQUE KEY `nome_categoria_UNIQUE` (`nome_categoria`),
   ADD KEY `fk_categorias_interclasses1_idx` (`interclasses_id_interclasse`);
 
 --
@@ -310,11 +350,19 @@ ALTER TABLE `equipes_has_usuarios`
   ADD KEY `fk_equipes_has_usuarios_equipes1_idx` (`equipes_id_equipe`);
 
 --
+-- Índices de tabela `historico_arrecadacoes`
+--
+ALTER TABLE `historico_arrecadacoes`
+  ADD PRIMARY KEY (`id_historico`),
+  ADD KEY `fk_hist_arrec_turmas_idx` (`id_turma`),
+  ADD KEY `fk_hist_arrec_interclasses_idx` (`id_interclasse`),
+  ADD KEY `fk_hist_arrec_usuarios_idx` (`registrado_por`);
+
+--
 -- Índices de tabela `interclasses`
 --
 ALTER TABLE `interclasses`
-  ADD PRIMARY KEY (`id_interclasse`),
-  ADD UNIQUE KEY `nome_interclasse_UNIQUE` (`nome_interclasse`);
+  ADD PRIMARY KEY (`id_interclasse`);
 
 --
 -- Índices de tabela `jogos`
@@ -329,8 +377,6 @@ ALTER TABLE `jogos`
 --
 ALTER TABLE `locais`
   ADD PRIMARY KEY (`id_local`),
-  ADD UNIQUE KEY `uk_local_interclasse` (`nome_local`,`interclasses_id_interclasse`),
-  ADD UNIQUE KEY `nome_local_UNIQUE` (`nome_local`),
   ADD KEY `fk_locais_interclasses_idx` (`interclasses_id_interclasse`);
 
 --
@@ -350,12 +396,22 @@ ALTER TABLE `ocorrencias`
   ADD KEY `fk_ocorrencias_usuarios1_idx` (`usuarios_id_usuario`);
 
 --
+-- Índices de tabela `ocorrencias_turmas`
+--
+ALTER TABLE `ocorrencias_turmas`
+  ADD PRIMARY KEY (`id_ocorrencia_turma`),
+  ADD KEY `idx_turma` (`turmas_id_turma`),
+  ADD KEY `idx_interclasse` (`interclasses_id_interclasse`),
+  ADD KEY `fk_ot_usuarios` (`usuarios_id_usuario`);
+
+--
 -- Índices de tabela `partidas`
 --
 ALTER TABLE `partidas`
   ADD PRIMARY KEY (`id_partida`),
   ADD KEY `fk_jogos_has_equipes_equipes1_idx` (`equipes_id_equipe`),
-  ADD KEY `fk_jogos_has_equipes_jogos1_idx` (`jogos_id_jogo`);
+  ADD KEY `fk_jogos_has_equipes_jogos1_idx` (`jogos_id_jogo`),
+  ADD KEY `idx_partidas_usuarios` (`usuarios_id_usuario`);
 
 --
 -- Índices de tabela `pontuacoes`
@@ -376,7 +432,6 @@ ALTER TABLE `tipos_modalidades`
 --
 ALTER TABLE `turmas`
   ADD PRIMARY KEY (`id_turma`),
-  ADD UNIQUE KEY `nome_turma_UNIQUE` (`nome_turma`),
   ADD KEY `fk_turmas_interclasses1_idx` (`interclasses_id_interclasse`),
   ADD KEY `fk_turmas_categorias1_idx` (`categorias_id_categoria`);
 
@@ -385,7 +440,7 @@ ALTER TABLE `turmas`
 --
 ALTER TABLE `usuarios`
   ADD PRIMARY KEY (`id_usuario`),
-  ADD UNIQUE KEY `uk_chave_usuario_edicao` (`chave_usuario_edicao`),
+  ADD UNIQUE KEY `chave_usuario_edicao_UNIQUE` (`chave_usuario_edicao`),
   ADD KEY `fk_usuarios_turmas1_idx` (`turmas_id_turma`),
   ADD KEY `fk_usuarios_interclasses1_idx` (`interclasses_id_interclasse`);
 
@@ -419,6 +474,12 @@ ALTER TABLE `equipes`
   MODIFY `id_equipe` int(11) NOT NULL AUTO_INCREMENT;
 
 --
+-- AUTO_INCREMENT de tabela `historico_arrecadacoes`
+--
+ALTER TABLE `historico_arrecadacoes`
+  MODIFY `id_historico` int(11) NOT NULL AUTO_INCREMENT;
+
+--
 -- AUTO_INCREMENT de tabela `interclasses`
 --
 ALTER TABLE `interclasses`
@@ -447,6 +508,12 @@ ALTER TABLE `modalidades`
 --
 ALTER TABLE `ocorrencias`
   MODIFY `id_ocorrencia` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT de tabela `ocorrencias_turmas`
+--
+ALTER TABLE `ocorrencias_turmas`
+  MODIFY `id_ocorrencia_turma` int(11) NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT de tabela `partidas`
@@ -510,6 +577,14 @@ ALTER TABLE `equipes_has_usuarios`
   ADD CONSTRAINT `fk_equipes_has_usuarios_usuarios1` FOREIGN KEY (`usuarios_id_usuario`) REFERENCES `usuarios` (`id_usuario`) ON DELETE NO ACTION ON UPDATE NO ACTION;
 
 --
+-- Restrições para tabelas `historico_arrecadacoes`
+--
+ALTER TABLE `historico_arrecadacoes`
+  ADD CONSTRAINT `fk_hist_arrec_interclasses` FOREIGN KEY (`id_interclasse`) REFERENCES `interclasses` (`id_interclasse`) ON DELETE NO ACTION ON UPDATE NO ACTION,
+  ADD CONSTRAINT `fk_hist_arrec_turmas` FOREIGN KEY (`id_turma`) REFERENCES `turmas` (`id_turma`) ON DELETE NO ACTION ON UPDATE NO ACTION,
+  ADD CONSTRAINT `fk_hist_arrec_usuarios` FOREIGN KEY (`registrado_por`) REFERENCES `usuarios` (`id_usuario`) ON DELETE NO ACTION ON UPDATE NO ACTION;
+
+--
 -- Restrições para tabelas `jogos`
 --
 ALTER TABLE `jogos`
@@ -535,6 +610,14 @@ ALTER TABLE `modalidades`
 --
 ALTER TABLE `ocorrencias`
   ADD CONSTRAINT `fk_ocorrencias_usuarios1` FOREIGN KEY (`usuarios_id_usuario`) REFERENCES `usuarios` (`id_usuario`);
+
+--
+-- Restrições para tabelas `ocorrencias_turmas`
+--
+ALTER TABLE `ocorrencias_turmas`
+  ADD CONSTRAINT `fk_ot_interclasses` FOREIGN KEY (`interclasses_id_interclasse`) REFERENCES `interclasses` (`id_interclasse`),
+  ADD CONSTRAINT `fk_ot_turmas` FOREIGN KEY (`turmas_id_turma`) REFERENCES `turmas` (`id_turma`),
+  ADD CONSTRAINT `fk_ot_usuarios` FOREIGN KEY (`usuarios_id_usuario`) REFERENCES `usuarios` (`id_usuario`);
 
 --
 -- Restrições para tabelas `partidas`
