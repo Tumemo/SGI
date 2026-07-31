@@ -234,7 +234,7 @@ $isMesario = $nivelUsuario === 2;
                     <div class="dash-card-red-corner"></div>
                     <div class="dash-card-header">
                         <div class="dash-card-icon"><i class="bi bi-geo-alt"></i></div>
-                        <h5 class="dash-card-title">LOCAIS</h5>
+                        <h5 class="dash-card-title">LOCAIS E REGULAMENTO</h5>
                     </div>
                     <p class="dash-card-text">Cadastre e visualize os locais onde os jogos acontecem.</p>
                 </a>
@@ -309,16 +309,7 @@ $isMesario = $nivelUsuario === 2;
                     <p class="dash-card-text">Visualize o ranking geral de pontuações por categoria.</p>
                 </a>
             </div>
-            <div class="col-12 col-md-6 col-lg-4">
-                <a href="cadastrarRegulamento.php" id="linkRegulamento" class="dash-card">
-                    <div class="dash-card-red-corner"></div>
-                    <div class="dash-card-header">
-                        <div class="dash-card-icon"><i class="bi bi-file-earmark-pdf"></i></div>
-                        <h5 class="dash-card-title">REGULAMENTOS</h5>
-                    </div>
-                    <p class="dash-card-text">Cadastre e gerencie os regulamentos em PDF do evento.</p>
-                </a>
-            </div>
+            
             <?php endif; ?>
 
             <?php if ($isAdmin): ?>

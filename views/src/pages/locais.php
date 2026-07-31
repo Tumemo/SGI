@@ -3,28 +3,45 @@ $tituloPagina = 'SGI - Colaborador - Locais';
 $titulo = 'Locais';
 $mostrarVoltar = true;
 $urlVoltar = './dashboard.php';
-$cssExtra = '.local-card { border-radius: 12px; transition: box-shadow 0.2s ease; } .local-card:hover { box-shadow: 0 0.35rem 1rem rgba(0, 0, 0, 0.08) !important; }';
+
 include 'componentes/head.php';
 include 'componentes/header.php';
+
 $nivelUsuario = (int)($_SESSION['nivel'] ?? -1);
 $paginaAtiva = 'locais';
+
+$cssExtra = '
+    .local-card { border-radius: 12px; transition: box-shadow 0.2s ease; } 
+    .local-card:hover { box-shadow: 0 0.35rem 1rem rgba(0, 0, 0, 0.08) !important; }
+    .termo-clausula { border-left: 4px solid #dc3545; padding-left: 0.75rem; margin-bottom: 0.75rem; font-size: 0.9rem; }
+';
 ?>
 <script>const NIVEL_USUARIO = <?= $nivelUsuario ?>;</script>
 
+<!-- LAYOUT MOBILE -->
 <main class="d-md-none p-3" style="padding-top: 5rem; padding-bottom: 120px;">
     <div id="listaLocaisMobile" class="d-flex flex-column gap-3 mx-auto" style="max-width: 420px;">
         <p class="text-muted small text-center">Carregando…</p>
     </div>
-    <div class="position-fixed start-0 end-0 bottom-0 p-3 bg-light border-top shadow-sm d-flex gap-2" style="z-index: 1030;">
-        <button type="button" class="btn btn-danger flex-grow-1 fw-semibold rounded-3" data-bs-toggle="modal" data-bs-target="#modalNovoLocal">
+    
+    <div class="position-fixed start-0 end-0 bottom-0 p-3 bg-light border-top shadow-sm d-flex gap-2 align-items-center" style="z-index: 1030;">
+        <?php if ($nivelUsuario >= 0): ?>
+            <button type="button" class="btn btn-outline-danger fw-semibold rounded-3 p-2 d-flex align-items-center justify-content-center" data-bs-toggle="modal" data-bs-target="#modalTermosColaborador" title="Termos do Colaborador" style="height: 42px; width: 42px;">
+                <i class="bi bi-file-earmark-text fs-5"></i>
+            </button>
+        <?php endif; ?>
+
+        <button type="button" class="btn btn-danger flex-grow-1 fw-semibold rounded-3" data-bs-toggle="modal" data-bs-target="#modalNovoLocal" style="height: 42px;">
             <i class="bi bi-plus-lg me-1"></i> Adicionar local
         </button>
-        <a href="./dashboard.php" id="btnVoltarLocaisMobile" class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none" style="background-color:#E30613;border-radius:6px;padding:8px 16px;">
+        
+        <a href="./dashboard.php" id="btnVoltarLocaisMobile" class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold px-3 border-0 text-decoration-none" style="background-color:#E30613;border-radius:6px;height:42px;">
             <i class="bi bi-arrow-left-circle fs-5"></i> <span id="nomeInterclasseLocaisMob">Interclasse</span>
         </a>
     </div>
 </main>
 
+<!-- LAYOUT DESKTOP -->
 <main class="d-none d-md-block main-desktop-layout">
     <div class="container-fluid px-0" style="max-width: 960px;">
         <div class="mb-4">
@@ -33,7 +50,13 @@ $paginaAtiva = 'locais';
             </a>
         </div>
 
-        <div class="d-flex justify-content-end mb-3">
+        <div class="d-flex justify-content-end align-items-center gap-2 mb-3">
+            <?php if ($nivelUsuario >= 0): ?>
+                <button type="button" class="btn btn-outline-danger fw-semibold rounded-3 px-3 py-2 shadow-sm d-inline-flex align-items-center gap-2" data-bs-toggle="modal" data-bs-target="#modalTermosColaborador">
+                    <i class="bi bi-file-earmark-text"></i> Termos do Colaborador
+                </button>
+            <?php endif; ?>
+
             <button type="button" class="btn btn-danger fw-semibold rounded-3 px-4 py-2 shadow-sm d-inline-flex align-items-center gap-2" data-bs-toggle="modal" data-bs-target="#modalNovoLocal" style="background-color: #ed1c24; border: none;">
                 <i class="bi bi-plus-circle"></i> Adicionar local
             </button>
@@ -45,6 +68,7 @@ $paginaAtiva = 'locais';
     </div>
 </main>
 
+<!-- MODAL NOVO LOCAL -->
 <div class="modal fade" id="modalNovoLocal" tabindex="-1" aria-labelledby="tituloModalLocal" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content rounded-4 border-0 shadow">
@@ -73,6 +97,7 @@ $paginaAtiva = 'locais';
     </div>
 </div>
 
+<!-- MODAL EDITAR LOCAL -->
 <div class="modal fade" id="modalEditarLocal" tabindex="-1" aria-labelledby="modalEditarLocalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content rounded-4 border-0 shadow">
@@ -108,6 +133,84 @@ $paginaAtiva = 'locais';
                     <button type="submit" class="btn btn-danger rounded-3 fw-semibold px-4" id="btnAtualizarLocal">Salvar Alterações</button>
                 </div>
             </form>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL DE TERMOS E REGULAMENTO PARA COLABORADORES -->
+<div class="modal fade" id="modalTermosColaborador" tabindex="-1" aria-labelledby="modalTermosColaboradorLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
+        <div class="modal-content rounded-4 border-0 shadow">
+            
+            <div class="modal-header border-bottom">
+                <h5 class="modal-title fw-bold text-danger" id="modalTermosColaboradorLabel">
+                    <i class="bi bi-file-earmark-text me-2"></i>Termos e Regulamento do Colaborador
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+            </div>
+
+            <div class="modal-body p-4">
+                
+                <!-- Termo de Responsabilidade para Colaboradores -->
+                <section class="mb-4">
+                    <h2 class="fs-6 fw-bold text-dark mb-3 text-uppercase">Termo de Responsabilidade da Organização e Gestão</h2>
+                    <div class="bg-light rounded-3 p-3 border">
+                        <p class="text-secondary small mb-3">
+                            Declaro para os devidos fins que aceito e assumo inteira responsabilidade pelos termos e diretrizes abaixo para a organização, mediação e gestão do Interclasse:
+                        </p>
+                        
+                        <div class="termo-clausula mb-2">
+                            <strong>Conduta Profissional:</strong> Comprometo-me a atuar de forma ética, imparcial, respeitosa e zelosa no desempenho de minhas atribuições durante todas as etapas e eventos.
+                        </div>
+                        <div class="termo-clausula mb-2">
+                            <strong>Cumprimento das Regras:</strong> Declaro conhecer integralmente o Regulamento Geral do Interclasse, aplicando-o estritamente e garantindo o respeito às decisões oficiais do evento.
+                        </div>
+                        <div class="termo-clausula mb-2">
+                            <strong>Gestão de Materiais e Locais:</strong> Responsabilizo-me pelo uso adequado e supervisão dos materiais esportivos, espaços e instalações alocadas, zelando pela integridade do patrimônio institucional.
+                        </div>
+                        <div class="termo-clausula mb-2">
+                            <strong>Segurança e Bem-estar:</strong> Comprometo-me a zelar pela integridade e segurança dos alunos e participantes, acionando o suporte adequado e informando a organização imediatamente diante de eventuais incidentes.
+                        </div>
+                        <div class="termo-clausula mb-2">
+                            <strong>Uso de Imagem:</strong> Autorizo o uso de minha imagem e voz para fins institucionais e de divulgação oficial do evento nas mídias da instituição.
+                        </div>
+                        <div class="termo-clausula mb-2">
+                            <strong>Confidencialidade e Dados:</strong> Comprometo-me a manter a confidencialidade e integridade dos dados, pontuações, classificações e registros administrativos aos quais eu tiver acesso.
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Regulamento Geral (PDF) -->
+                <section>
+                    <h2 class="fs-6 fw-bold text-dark mb-3 text-uppercase">Regulamento Oficial</h2>
+                    <div class="regulamento-card border rounded-3 p-3">
+                        <p id="statusRegulamentoModal" class="text-muted mb-0 small">
+                            <span class="spinner-border spinner-border-sm me-2 text-danger" role="status"></span>Carregando regulamento...
+                        </p>
+                        
+                        <div id="containerPdfRegulamentoModal" class="card border-danger-subtle bg-danger-subtle bg-opacity-10 d-none">
+                            <div class="card-body p-3 d-flex align-items-center justify-content-between flex-wrap gap-2">
+                                <div class="d-flex align-items-center gap-2">
+                                    <i class="bi bi-file-earmark-pdf-fill fs-3 text-danger"></i>
+                                    <div>
+                                        <h6 class="fw-bold mb-0 text-dark">Regulamento Oficial (PDF)</h6>
+                                        <small class="text-muted">Consulte o documento oficial e as diretrizes do evento.</small>
+                                    </div>
+                                </div>
+                                <a id="btnBaixarPdfModal" href="#" target="_blank" class="btn btn-danger btn-sm rounded-3 fw-semibold d-inline-flex align-items-center gap-1">
+                                    <i class="bi bi-download"></i> Baixar / Ler PDF
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+            </div>
+
+            <div class="modal-footer border-top">
+                <button type="button" class="btn btn-secondary rounded-3 px-4" data-bs-dismiss="modal">Entendido / Fechar</button>
+            </div>
+
         </div>
     </div>
 </div>
@@ -357,6 +460,39 @@ $paginaAtiva = 'locais';
             }
         });
     });
+
+    // Função de Regulamento usando a rota exata da API já existente
+    async function carregarRegulamentoModal() {
+        const statusEl = document.getElementById('statusRegulamentoModal');
+        const containerPdf = document.getElementById('containerPdfRegulamentoModal');
+        const btnPdf = document.getElementById('btnBaixarPdfModal');
+
+        try {
+            const res = await fetch(`${API}interclasse.php?regulamento=true`);
+            if (!res.ok) throw new Error('Erro na resposta da API');
+
+            const data = await res.json();
+            const lista = Array.isArray(data) ? data : (data?.data || [data]);
+            const ativo = lista.find(i => String(i.status_interclasse) === '1') || lista[0];
+
+            const regulamentoPath = ativo?.regulamento_interclasse || ativo?.regulamento;
+
+            if (regulamentoPath && regulamentoPath.trim() !== '') {
+                btnPdf.href = `../../../uploads/regulamentos/${regulamentoPath}`;
+                statusEl.classList.add('d-none');
+                containerPdf.classList.remove('d-none');
+            } else {
+                statusEl.textContent = 'Nenhum regulamento disponível no momento.';
+                statusEl.className = 'text-muted mb-0 small';
+            }
+        } catch (error) {
+            console.error("Erro ao carregar regulamento:", error);
+            statusEl.textContent = 'Erro ao carregar regulamento. Tente novamente mais tarde.';
+            statusEl.className = 'text-danger mb-0 small';
+        }
+    }
+
+    document.getElementById('modalTermosColaborador')?.addEventListener('show.bs.modal', carregarRegulamentoModal);
 </script>
 
 <?php
