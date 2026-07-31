@@ -49,10 +49,12 @@ $cssExtra = '
 
 /* ── Calendar card ── */
 .ag-cal-card { background: #fff; border: 1px solid #ECEFF1; border-radius: 18px; box-shadow: 0 1px 3px rgba(0,0,0,.04), 0 4px 16px rgba(0,0,0,.03); overflow: hidden; }
-.ag-cal-header { display: flex; align-items: center; justify-content: space-between; padding: .9rem 1.15rem; background: #fff; border-bottom: 1px solid #F0F0F0; }
-.ag-cal-header span { font-size: .85rem; font-weight: 700; color: #1F2937; letter-spacing: .02em; }
-.ag-cal-nav { width: 32px; height: 32px; display: inline-flex; align-items: center; justify-content: center; border-radius: 8px; cursor: pointer; transition: all .15s; color: #6B7280; border: none; background: transparent; font-size: 1rem; }
-.ag-cal-nav:hover { background: #FEF2F2; color: #E30613; }
+.ag-cal-header { display: flex; align-items: center; justify-content: space-between; padding: .9rem 1.15rem; background: linear-gradient(135deg, #111827 0%, #1F2937 100%); color: #fff; }
+.ag-cal-header span { font-size: .8rem; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; }
+.ag-cal-header select { color: #fff; background: transparent; }
+.ag-cal-header select option { color: #111827; }
+.ag-cal-nav { width: 32px; height: 32px; display: inline-flex; align-items: center; justify-content: center; border-radius: 8px; cursor: pointer; transition: background .15s; color: rgba(255,255,255,.7); border: none; background: transparent; font-size: 1rem; }
+.ag-cal-nav:hover { background: rgba(255,255,255,.12); color: #fff; }
 .ag-cal-body { padding: .75rem 1rem 1rem; }
 .ag-cal-weekdays { display: flex; text-align: center; margin-bottom: .4rem; }
 .ag-cal-weekdays span { width: 14.28%; font-size: .7rem; font-weight: 700; color: #6B7280; text-transform: uppercase; letter-spacing: .06em; padding: .3rem 0; }
@@ -169,7 +171,7 @@ $nivelUsuarioAgenda = (int)($_SESSION['nivel'] ?? -1);
         <div class="ag-cal-header">
             <button type="button" id="btn-prev-mobile" class="ag-cal-nav"><i class="bi bi-chevron-left"></i></button>
             <div class="d-flex gap-2 align-items-center">
-                <select id="select-mes" class="form-select form-select-sm border-0 text-dark text-center" style="width:auto; font-size:.82rem; font-weight:700; letter-spacing:.04em; cursor:pointer; box-shadow:none;">
+                <select id="select-mes" class="form-select form-select-sm border-0 text-white text-center" style="width:auto; font-size:.82rem; font-weight:700; letter-spacing:.04em; cursor:pointer; box-shadow:none;">
                     <option value="0">Jan</option>
                     <option value="1">Fev</option>
                     <option value="2">Mar</option>
@@ -183,7 +185,7 @@ $nivelUsuarioAgenda = (int)($_SESSION['nivel'] ?? -1);
                     <option value="10">Nov</option>
                     <option value="11">Dez</option>
                 </select>
-                <select id="select-ano" class="form-select form-select-sm border-0 text-dark text-center" style="width:auto; font-size:.82rem; font-weight:700; letter-spacing:.04em; cursor:pointer; box-shadow:none;">
+                <select id="select-ano" class="form-select form-select-sm border-0 text-white text-center" style="width:auto; font-size:.82rem; font-weight:700; letter-spacing:.04em; cursor:pointer; box-shadow:none;">
                 </select>
             </div>
             <button type="button" id="btn-next-mobile" class="ag-cal-nav"><i class="bi bi-chevron-right"></i></button>
