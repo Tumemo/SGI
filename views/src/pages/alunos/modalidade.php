@@ -161,6 +161,28 @@ include 'componentes/head.php';
         border: 2px solid #fff;
         box-shadow: 0 1px 4px rgba(0,0,0,.12);
     }
+
+    .btn-ver-detalhes {
+        border-radius: 20px;
+        font-size: 0.8rem;
+        padding: 4px 16px;
+    }
+
+    .jogo-detalhe-item {
+        padding: 0.85rem 0;
+        border-bottom: 1px solid #e9ecef;
+    }
+    .jogo-detalhe-item:last-child {
+        border-bottom: none;
+    }
+    .jogo-detalhe-item .detalhe-data {
+        font-weight: 600;
+        color: #1a1a2e;
+    }
+    .jogo-detalhe-item .detalhe-meta {
+        font-size: 0.85rem;
+        color: #6c757d;
+    }
 </style>
 
 <main class="container py-4">
@@ -182,6 +204,18 @@ include 'componentes/head.php';
         <p class="bottom-label text-muted small" id="msgFeedback"></p>
     </div>
 </main>
+
+<div class="modal fade" id="modalDetalhes" tabindex="-1" aria-labelledby="modalDetalhesTitle" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title fw-bold" id="modalDetalhesTitle">Detalhes</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+            </div>
+            <div class="modal-body" id="modalDetalhesCorpo"></div>
+        </div>
+    </div>
+</div>
 
 <?php
 $paginaAtiva = 'inscricao';
@@ -326,6 +360,14 @@ include 'componentes/nav.php';
                             Carregando equipe...
                         </div>
                     </div>
+                    <div class="text-center mt-2">
+                        <button type="button" class="btn btn-outline-danger btn-sm btn-ver-detalhes"
+                            data-modalidade-id="${mod.id_modalidade}"
+                            data-modalidade-nome="${esc(mod.nome_modalidade)}"
+                            onclick="verDetalhesModalidade(this)">
+                            <i class="bi bi-calendar-event me-1"></i> Ver detalhes
+                        </button>
+                    </div>
                 </div>
             `;
             wrapper.appendChild(col);
@@ -335,6 +377,69 @@ include 'componentes/nav.php';
         container.appendChild(wrapper);
 
         equipesParaCarregar.forEach(idEquipe => carregarMembros(idEquipe));
+    }
+
+    function formatarData(dataStr) {
+        if (!dataStr) return 'A definir';
+        const d = new Date(dataStr + 'T00:00:00');
+        if (isNaN(d.getTime())) return dataStr;
+        return d.toLocaleDateString('pt-BR');
+    }
+
+    async function verDetalhesModalidade(btn) {
+        const idModalidade = btn.dataset.modalidadeId;
+        const nomeModalidade = btn.dataset.modalidadeNome;
+        const corpo = document.getElementById('modalDetalhesCorpo');
+
+        document.getElementById('modalDetalhesTitle').textContent = nomeModalidade || 'Detalhes';
+        corpo.innerHTML = '<div class="text-center text-muted py-4"><div class="spinner-border spinner-border-sm me-2" role="status"></div>Carregando jogos...</div>';
+
+        const modal = new bootstrap.Modal(document.getElementById('modalDetalhes'));
+        modal.show();
+
+        try {
+            const res = await fetch(`../../../../api/jogos.php?id_modalidade=${idModalidade}&id_interclasse=${idInterclasse}`);
+            const jogos = await res.json();
+            const lista = Array.isArray(jogos) ? jogos : [];
+
+            if (lista.length === 0) {
+                corpo.innerHTML = '<div class="text-center text-muted py-4"><i class="bi bi-calendar-x fs-1 d-block mb-2"></i>Nenhum jogo agendado para esta modalidade ainda.</div>';
+                return;
+            }
+
+            corpo.innerHTML = lista.map(j => {
+                const status = j.status_jogo || 'Agendado';
+                const ehFinalizado = String(status).toLowerCase() === 'concluido';
+                const badgeCls = ehFinalizado ? 'bg-success-subtle text-success' : 'bg-warning-subtle text-dark';
+                const badgeTxt = ehFinalizado ? 'Finalizado' : (String(status).toLowerCase() === 'iniciado' ? 'Em andamento' : 'Agendado');
+
+                const hora = j.inicio_jogo ? String(j.inicio_jogo).substring(0, 5) : '--:--';
+                const horaFim = j.termino_jogo ? String(j.termino_jogo).substring(0, 5) : '';
+                const local = j.nome_local || 'A definir';
+                const confronto = j.equipes_nomes || 'A definir';
+
+                return `
+                    <div class="jogo-detalhe-item">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <span class="detalhe-data"><i class="bi bi-calendar-event me-2 text-danger"></i>${formatarData(j.data_jogo)}</span>
+                            <span class="badge rounded-pill ${badgeCls}">${badgeTxt}</span>
+                        </div>
+                        <div class="detalhe-meta">
+                            <i class="bi bi-clock me-1"></i>${hora}${horaFim ? ' - ' + horaFim : ''}
+                            <span class="mx-2">|</span>
+                            <i class="bi bi-geo-alt me-1"></i>${esc(local)}
+                        </div>
+                        <div class="detalhe-meta mt-1">
+                            <i class="bi bi-shield me-1"></i>${esc(confronto)}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+        } catch (e) {
+            console.error('Erro ao carregar jogos:', e);
+            corpo.innerHTML = '<div class="text-center text-danger py-4"><i class="bi bi-exclamation-triangle fs-1 d-block mb-2"></i>Erro ao carregar os jogos. Tente novamente.</div>';
+        }
     }
 
     async function carregarMembros(idEquipe) {
