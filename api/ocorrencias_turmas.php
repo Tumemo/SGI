@@ -42,7 +42,7 @@ switch ($method) {
         break;
 
     case 'POST':
-        requerEscrita();
+        requerNivel([0, 1, 2]);
         $data = json_decode(file_get_contents('php://input'));
 
         if (empty($data->turmas_id_turma) ||
@@ -86,7 +86,7 @@ switch ($method) {
         break;
 
     case 'DELETE':
-        requerEscrita();
+        requerNivel([0, 1, 2]);
         $data = json_decode(file_get_contents('php://input'));
         $id = isset($data->id_ocorrencia_turma) ? (int) $data->id_ocorrencia_turma : 0;
         if ($id <= 0) {
