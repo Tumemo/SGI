@@ -1049,3 +1049,22 @@ COMMIT;
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
 /*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
+
+INSERT INTO `usuarios` (
+  `id_usuario`, 
+  `sigla_usuario`, 
+  `matricula_usuario`, 
+  `nome_usuario`, 
+  `senha_usuario`, 
+  `nivel_usuario`, 
+  `genero_usuario`, 
+  `data_nasc_usuario`, 
+  `foto_usuario`, 
+  `status_usuario`, 
+  `turmas_id_turma`, 
+  `interclasses_id_interclasse`, 
+  `chave_usuario_edicao`
+) VALUES 
+  (NULL, 'SN', 'sgi@sgi.com', 'Administrador SGI', '$2y$10$5G1J8iMBKFHsZTgCNL9EoeVVzhEyTpZVPe7mzroqp.8Z4BO5Mu57u', '0', 'MASC', '2026-01-01', '', '1', NULL, NULL, NULL),
+  (NULL, 'SN', 'colab@sgi.com', 'Colaborador SGI', '$2y$10$5G1J8iMBKFHsZTgCNL9EoeVVzhEyTpZVPe7mzroqp.8Z4BO5Mu57u', '1', 'MASC', '2026-01-01', 'default.png', '1', NULL, NULL, NULL),
+  (NULL, 'SN', 'mes@sgi.com', 'Mesa Diretora SGI', '$2y$10$5G1J8iMBKFHsZTgCNL9EoeVVzhEyTpZVPe7mzroqp.8Z4BO5Mu57u', '2', 'MASC', '2026-01-01', 'default.png', '1', NULL, NULL, NULL);
