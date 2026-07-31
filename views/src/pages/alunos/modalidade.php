@@ -292,7 +292,7 @@ include 'componentes/nav.php';
 
         if (qtdInscritos >= 3) {
             acoes.classList.add('d-none');
-            grid.innerHTML = '<div class="col-12 text-center text-success py-4"><i class="bi bi-check-circle-fill fs-1 d-block mb-2"></i>Você já está inscrito em 3 modalidades. Limite atingido.</div>';
+            grid.innerHTML = '<div class="col-12" style="flex-basis: 100%; width: 100%;"><div class="d-flex flex-column align-items-center justify-content-center text-center text-success py-5" style="min-height: 45vh;"><i class="bi bi-check-circle-fill fs-1 mb-2"></i><span>Você já está inscrito em 3 modalidades. Limite atingido.</span></div></div>';
             return;
         }
 
@@ -307,7 +307,7 @@ include 'componentes/nav.php';
 
         if (disponiveis.length === 0) {
             acoes.classList.add('d-none');
-            grid.innerHTML = '<div class="col-12 text-center text-muted py-5"><i class="bi bi-inbox fs-1 d-block mb-2"></i>Nenhuma modalidade disponível para sua categoria no momento.</div>';
+            grid.innerHTML = '<div class="col-12" style="flex-basis: 100%; width: 100%;"><div class="d-flex flex-column align-items-center justify-content-center text-center text-muted py-5" style="min-height: 45vh;"><i class="bi bi-inbox fs-1 mb-2"></i><span>Nenhuma modalidade disponível para sua categoria no momento.</span></div></div>';
             return;
         }
 

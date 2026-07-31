@@ -374,8 +374,8 @@ include 'componentes/nav.php';
       </div> -->
 
       <div class="aluno-filter-pills mb-4" id="filterPills">
-        <span class="filter-pill active" data-filter="all">Todos</span>
-        <span class="filter-pill" data-filter="active">Em Andamento</span>
+        <span class="filter-pill active" data-filter="active">Em Andamento</span>
+        <span class="filter-pill" data-filter="all">Todos</span>
         <span class="filter-pill" data-filter="inactive">Encerrados</span>
       </div>
 
