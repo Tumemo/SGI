@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Tempo de geração: 31/07/2026 às 15:10
+-- Tempo de geração: 31/07/2026 às 15:16
 -- Versão do servidor: 10.4.32-MariaDB
 -- Versão do PHP: 8.2.12
 
@@ -46,20 +46,6 @@ CREATE TABLE `categorias` (
   `status_categoria` enum('1','0') NOT NULL,
   `interclasses_id_interclasse` int(11) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
---
--- Despejando dados para a tabela `categorias`
---
-
-INSERT INTO `categorias` (`id_categoria`, `nome_categoria`, `status_categoria`, `interclasses_id_interclasse`) VALUES
-(1, 'Categoria I', '1', 1),
-(2, 'Categoria II', '1', 1),
-(3, 'Categoria I', '1', 2),
-(4, 'Categoria II', '1', 2),
-(5, 'Categoria I', '1', 3),
-(6, 'Categoria II', '1', 3),
-(7, 'Categoria I', '1', 4),
-(8, 'Categoria II', '1', 4);
 
 -- --------------------------------------------------------
 
@@ -322,6 +308,15 @@ CREATE TABLE `usuarios` (
   `chave_usuario_edicao` varchar(50) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci;
 
+--
+-- Despejando dados para a tabela `usuarios`
+--
+
+INSERT INTO `usuarios` (`id_usuario`, `sigla_usuario`, `matricula_usuario`, `nome_usuario`, `senha_usuario`, `nivel_usuario`, `genero_usuario`, `data_nasc_usuario`, `foto_usuario`, `status_usuario`, `turmas_id_turma`, `interclasses_id_interclasse`, `chave_usuario_edicao`) VALUES
+(1, 'SN', 'sgi@sgi.com', 'Administrador SGI', '$2y$10$5G1J8iMBKFHsZTgCNL9EoeVVzhEyTpZVPe7mzroqp.8Z4BO5Mu57u', '0', 'MASC', '2026-01-01', '', '1', NULL, NULL, NULL),
+(2, 'SN', 'colab@sgi.com', 'Colaborador SGI', '$2y$10$5G1J8iMBKFHsZTgCNL9EoeVVzhEyTpZVPe7mzroqp.8Z4BO5Mu57u', '1', 'MASC', '2026-01-01', 'default.png', '1', NULL, NULL, NULL),
+(3, 'SN', 'mes@sgi.com', 'Mesa Diretora SGI', '$2y$10$5G1J8iMBKFHsZTgCNL9EoeVVzhEyTpZVPe7mzroqp.8Z4BO5Mu57u', '2', 'MASC', '2026-01-01', 'default.png', '1', NULL, NULL, NULL);
+
 -- --------------------------------------------------------
 
 --
@@ -565,7 +560,7 @@ ALTER TABLE `turmas`
 -- AUTO_INCREMENT de tabela `usuarios`
 --
 ALTER TABLE `usuarios`
-  MODIFY `id_usuario` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id_usuario` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
 -- Restrições para tabelas despejadas
@@ -680,22 +675,3 @@ COMMIT;
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
 /*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
-
-INSERT INTO `usuarios` (
-  `id_usuario`, 
-  `sigla_usuario`, 
-  `matricula_usuario`, 
-  `nome_usuario`, 
-  `senha_usuario`, 
-  `nivel_usuario`, 
-  `genero_usuario`, 
-  `data_nasc_usuario`, 
-  `foto_usuario`, 
-  `status_usuario`, 
-  `turmas_id_turma`, 
-  `interclasses_id_interclasse`, 
-  `chave_usuario_edicao`
-) VALUES 
-  (NULL, 'SN', 'sgi@sgi.com', 'Administrador SGI', '$2y$10$5G1J8iMBKFHsZTgCNL9EoeVVzhEyTpZVPe7mzroqp.8Z4BO5Mu57u', '0', 'MASC', '2026-01-01', '', '1', NULL, NULL, NULL),
-  (NULL, 'SN', 'colab@sgi.com', 'Colaborador SGI', '$2y$10$5G1J8iMBKFHsZTgCNL9EoeVVzhEyTpZVPe7mzroqp.8Z4BO5Mu57u', '1', 'MASC', '2026-01-01', 'default.png', '1', NULL, NULL, NULL),
-  (NULL, 'SN', 'mes@sgi.com', 'Mesa Diretora SGI', '$2y$10$5G1J8iMBKFHsZTgCNL9EoeVVzhEyTpZVPe7mzroqp.8Z4BO5Mu57u', '2', 'MASC', '2026-01-01', 'default.png', '1', NULL, NULL, NULL);
