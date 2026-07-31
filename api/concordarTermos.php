@@ -20,7 +20,7 @@ if (!$id_usuario) {
 $metodo = $_SERVER['REQUEST_METHOD'];
 
 // Consulta dados do usuário
-$sql = "SELECT u.id_usuario, u.interclasses_id_interclasse, ui.aceito_termo 
+$sql = "SELECT u.id_usuario, u.interclasses_id_interclasse, u.senha_usuario, u.nivel_usuario, ui.aceito_termo 
         FROM usuarios u
         LEFT JOIN usuarios_has_interclasses ui 
                ON u.id_usuario = ui.usuarios_id_usuario 
@@ -42,12 +42,16 @@ if ($result->num_rows === 0) {
 
 $usuario = $result->fetch_assoc();
 
+// Flag usada pela tela do aluno: exige a troca enquanto ele ainda usa a senha padrão
+$exigeTrocaSenha = ((int)($usuario['nivel_usuario'] ?? -1) === 3 && password_verify('123', $usuario['senha_usuario'] ?? ''));
+
 // SE FOR GET: Apenas checa o aceite
 if ($metodo === 'GET') {
     $jaAceitou = ($usuario['aceito_termo'] === 'sim');
     echo json_encode([
         "success" => true,
-        "termo_aceito" => $jaAceitou
+        "termo_aceito" => $jaAceitou,
+        "exige_troca_senha" => $exigeTrocaSenha
     ]);
     exit;
 }
@@ -93,7 +97,8 @@ if ($metodo === 'POST') {
     if ($stmt_acao->execute()) {
         echo json_encode([
             "success" => true,
-            "message" => "Termos aceitos com sucesso!"
+            "message" => "Termos aceitos com sucesso!",
+            "exige_troca_senha" => $exigeTrocaSenha
         ]);
     } else {
         echo json_encode([
