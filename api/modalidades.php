@@ -201,40 +201,34 @@ switch ($method) {
 
         $idModalidade = intval($data->id_modalidade);
 
-        // Verificar se existem jogos ou equipes vinculados
-        $checkStmt = $conn->prepare("SELECT 
-            (SELECT COUNT(*) FROM jogos WHERE modalidades_id_modalidade = ?) AS qtd_jogos,
-            (SELECT COUNT(*) FROM equipes WHERE modalidades_id_modalidade = ?) AS qtd_equipes
-        ");
-        $checkStmt->bind_param("ii", $idModalidade, $idModalidade);
-        $checkStmt->execute();
-        $checks = $checkStmt->get_result()->fetch_assoc();
-        $checkStmt->close();
+        $checkSql = "SELECT status_modalidade FROM modalidades WHERE id_modalidade = ?";
+        $stmtCheck = $conn->prepare($checkSql);
+        $stmtCheck->bind_param("i", $idModalidade);
+        $stmtCheck->execute();
+        $res = $stmtCheck->get_result()->fetch_assoc();
 
-        if ($checks['qtd_jogos'] > 0 || $checks['qtd_equipes'] > 0) {
-            $motivos = [];
-            if ($checks['qtd_jogos'] > 0) $motivos[] = $checks['qtd_jogos'] . ' jogo(s)';
-            if ($checks['qtd_equipes'] > 0) $motivos[] = $checks['qtd_equipes'] . ' equipe(s)';
-            http_response_code(422);
-            echo json_encode(["success" => false, "message" => "Não é possível excluir. Existem " . implode(' e ', $motivos) . " vinculados a esta modalidade."]);
+        if (!$res) {
+            http_response_code(404);
+            echo json_encode(["success" => false, "message" => "Modalidade não encontrada."]);
             break;
         }
 
-        $stmt = $conn->prepare("DELETE FROM modalidades WHERE id_modalidade = ?");
+        $sql = "UPDATE modalidades SET status_modalidade = '0' WHERE id_modalidade = ?";
+        $stmt = $conn->prepare($sql);
         $stmt->bind_param("i", $idModalidade);
 
-        if ($stmt->execute()) {
-            if ($stmt->affected_rows > 0) {
-                echo json_encode(["success" => true, "message" => "Modalidade excluída com sucesso!"]);
-            } else {
-                http_response_code(404);
-                echo json_encode(["success" => false, "message" => "Modalidade não encontrada."]);
-            }
-        } else {
+        if (!$stmt->execute()) {
             http_response_code(500);
-            echo json_encode(["success" => false, "message" => "Erro ao excluir: " . $conn->error]);
+            echo json_encode(["success" => false, "message" => "Erro no servidor: " . $conn->error]);
+            break;
         }
+
+        $stmt = $conn->prepare("UPDATE equipes SET status_equipe = '0' WHERE modalidades_id_modalidade = ?");
+        $stmt->bind_param("i", $idModalidade);
+        $stmt->execute();
         $stmt->close();
+
+        echo json_encode(["success" => true, "message" => "Modalidade excluída com sucesso!"]);
         break;
 
     default:
