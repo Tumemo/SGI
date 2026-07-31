@@ -64,6 +64,43 @@ try {
         exit();
     }
 
+    $id_modalidades = array_values(array_unique(array_map('intval', $id_modalidades)));
+    $id_modalidades = array_values(array_filter($id_modalidades, fn($id) => $id > 0));
+
+    if (empty($id_modalidades)) {
+        http_response_code(400);
+        echo json_encode(["success" => false, "message" => "Nenhuma modalidade válida informada."]);
+        exit();
+    }
+
+    // Modalidades em que o usuário já está inscrito NESTE interclasse
+    $sqlJa = "SELECT m.id_modalidade
+              FROM equipes_has_usuarios eu
+              INNER JOIN equipes e ON eu.equipes_id_equipe = e.id_equipe
+              INNER JOIN modalidades m ON e.modalidades_id_modalidade = m.id_modalidade
+              WHERE eu.usuarios_id_usuario = ? AND e.status_equipe = '1' AND m.interclasses_id_interclasse = ?";
+    $stmtJa = $conn->prepare($sqlJa);
+    if (!$stmtJa) throw new RuntimeException('Erro ao preparar verificação de inscrições: ' . $conn->error);
+    $stmtJa->bind_param('ii', $id_usuario, $id_interclasse);
+    $stmtJa->execute();
+    $resJa = $stmtJa->get_result();
+    $idsJaInscritos = [];
+    while ($rowJa = $resJa->fetch_assoc()) {
+        $idsJaInscritos[(int) $rowJa['id_modalidade']] = true;
+    }
+    $stmtJa->close();
+
+    $novasModalidades = array_values(array_filter(
+        $id_modalidades,
+        fn($id) => !isset($idsJaInscritos[$id])
+    ));
+
+    if (count($idsJaInscritos) + count($novasModalidades) > 3) {
+        http_response_code(400);
+        echo json_encode(["success" => false, "message" => "Máximo de 3 modalidades permitidas por aluno."]);
+        exit();
+    }
+
     $insercoes = 0;
     $jaExistentes = 0;
     $erros = [];
