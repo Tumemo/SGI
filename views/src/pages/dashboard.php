@@ -121,7 +121,7 @@ $isMesario = $nivelUsuario === 2;
                 <picture><img src="../../public/icons/arrow-right.svg" alt="Seta"></picture>
             </div>
         </a>
-        <a href="./cadastrarRegulamento.php" id="linkRegulamento" class="text-decoration-none text-black">
+        <a href="./alunos/termos.php" id="linkRegulamento" class="text-decoration-none text-black">
             <div class="d-flex m-auto justify-content-between align-items-center shadow py-3 px-4 mb-3 border border-1 rounded-3" style="width: 90%;">
                 <i class="bi bi-file-earmark-pdf fs-2"></i>
                 <h2 class="m-0 fs-3 w-100 px-3">Cadastrar regulamentos</h2>

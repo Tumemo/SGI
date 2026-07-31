@@ -38,6 +38,9 @@ $paginaAtiva = 'agenda';
                     <i class="bi bi-chevron-right" style="font-size: 1.2rem;"></i>
                 </button>
             </div>
+            <select id="agenda-select-mod-mobile" class="form-select form-select-sm mb-3 border-0 bg-light" style="border-radius: 8px; box-shadow: none;">
+                <option value="">Todas as modalidades</option>
+            </select>
             <div class="d-flex justify-content-between text-muted mb-2 text-center" style="font-size: 0.85rem;">
                 <span style="width: 14%;">D</span><span style="width: 14%;">S</span><span style="width: 14%;">T</span>
                 <span style="width: 14%;">Q</span><span style="width: 14%;">Q</span><span style="width: 14%;">S</span>
@@ -58,6 +61,12 @@ $paginaAtiva = 'agenda';
     <a href="./dashboard.php" class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none" style="background-color:#E30613;border-radius:6px;padding:8px 16px;" id="btnVoltarAgendaDesk">
         <i class="bi bi-arrow-left-circle fs-5"></i> <span id="nomeInterclasseAgenda">Interclasse</span>
     </a>
+
+    <div class="mb-4">
+        <select id="agenda-select-mod" class="form-select form-select-sm border-0 bg-light" style="border-radius: 8px; max-width: 320px; box-shadow: none;">
+            <option value="">Todas as modalidades</option>
+        </select>
+    </div>
 
     <div class="row">
         <div class="col-lg-6 pe-lg-5">

@@ -31,7 +31,7 @@ $isMesario = $nivelUsuario === 2;
 
 <!-- main desktop -->
 <main class="d-none d-md-flex main-desktop-layout">
-    <section class="mt-4 container">
+    <section class="mt-4">
 
         <?php if ($isAdmin): ?>
         <button class="btn btn-outline-danger d-flex gap-2 mt-2 mb-4 align-items-center" data-bs-toggle="modal" data-bs-target="#exampleModal">

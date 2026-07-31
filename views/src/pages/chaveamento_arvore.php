@@ -863,14 +863,14 @@ $paginaAtiva = 'chaveamento';
             </div>
         </div>
         <div class="kv-stat">
-            <div class="kv-stat__icon kv-stat__icon--jogos"><i class="bi bi-game-controller"></i></div>
+            <div class="kv-stat__icon kv-stat__icon--jogos"><i class="bi bi-award"></div>
             <div class="kv-stat__info">
                 <div class="kv-stat__number" id="statJogosMob">0</div>
                 <div class="kv-stat__label">Jogos</div>
             </div>
         </div>
         <div class="kv-stat">
-            <div class="kv-stat__icon kv-stat__icon--campeoes"><i class="bi bi-award"></i></div>
+            <div class="kv-stat__icon kv-stat__icon--campeoes"></i></div>
             <div class="kv-stat__info">
                 <div class="kv-stat__number" id="statCampeoesMob">0</div>
                 <div class="kv-stat__label">Campeões</div>
