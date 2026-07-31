@@ -770,18 +770,9 @@ $nivelUsuarioAgenda = (int)($_SESSION['nivel'] ?? -1);
         
         let todosLocais = data && Array.isArray(data.data) ? data.data : Array.isArray(data) ? data : [];
         
-        // Filtra para manter apenas os do interclasse atual e que estejam 'Disponivel'
+        // A API já filtra por interclasse no servidor; aqui só mantém os locais disponíveis
         locaisLista = todosLocais.filter((loc) => {
-            const mesmoInterclasse = String(loc.interclasses_id_interclasse) === String(interclasseAtual.id_interclasse);
-            
-            const statusClean = (loc.status_local || loc.status || '')
-                .normalize("NFD")
-                .replace(/[\u0300-\u036f]/g, "")
-                .toLowerCase();
-                
-            const isDisponivel = statusClean === 'disponivel';
-            
-            return mesmoInterclasse && isDisponivel;
+            return String(loc.disponivel_local) === '1';
         });
 
         const sel = document.getElementById('edit-jogo-local');
