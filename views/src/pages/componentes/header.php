@@ -29,7 +29,7 @@ window.SGIInterclasse = (() => {
         locais: './locais.php',
         arrecadacoes: './edicao_arrecadacao.php',
         colaboradores: './colaboradores.php',
-        agenda: './agenda.php',
+        agenda: './edicao_agenda.php',
         chaveamentos: './pontuacao.php',
         ranking: './ranking.php'
     };

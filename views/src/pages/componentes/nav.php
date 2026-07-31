@@ -20,7 +20,7 @@ $todosItens = [
     'arrecadacoes'      => ['label' => 'Arrecadações',    'icon' => 'bi-basket',             'url' => './edicao_arrecadacao.php',  'niveis' => [0, 1]],
     'colaboradores'     => ['label' => 'Colaboradores',   'icon' => 'bi-people',             'url' => './colaboradores.php',       'niveis' => [0]],
     'chaveamentos_mesario' => ['label' => 'Chaveamentos', 'icon' => 'bi-diagram-3',          'url' => './pontuacao.php',           'niveis' => [2]],
-    'agenda_mesario'    => ['label' => 'Agenda',          'icon' => 'bi-calendar3',          'url' => './agenda.php',              'niveis' => [2]],
+    'agenda_mesario'    => ['label' => 'Agenda',          'icon' => 'bi-calendar3',          'url' => './edicao_agenda.php',       'niveis' => [2]],
 ];
 
 $navItens = [];

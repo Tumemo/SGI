@@ -105,6 +105,7 @@ $cssExtra = '
 include 'componentes/head.php';
 include 'componentes/header.php';
 $paginaAtiva = 'agenda';
+$nivelUsuarioAgenda = (int)($_SESSION['nivel'] ?? -1);
 ?>
 
 <!-- ═══ MOBILE ═══ -->
@@ -240,6 +241,7 @@ $paginaAtiva = 'agenda';
 <script>
 (function () {
     const API = '../../../api/';
+    const NIVEL_USUARIO = <?= $nivelUsuarioAgenda ?>;
     let dataNavegacao = new Date();
     const params = new URLSearchParams(window.location.search);
     const idInterclasseAgenda = params.get('id');
@@ -412,6 +414,7 @@ $paginaAtiva = 'agenda';
         const cardClass = statusMap[statusClass] || 'agendado';
         const chipClass = statusMap[statusClass] || 'agendado';
         const statusTxt = labelStatus(j.status_jogo);
+        const podeAjustar = NIVEL_USUARIO <= 1;
         const iniciarBtn = podeIniciar(j)
             ? `<button type="button" class="btn btn-sm btn-danger iniciar-jogo-btn" data-id-jogo="${j.id_jogo}" style="border-radius:8px;font-weight:600;font-size:.78rem;">Iniciar jogo</button>`
             : '';
@@ -424,7 +427,7 @@ $paginaAtiva = 'agenda';
                 ? `<a class="btn btn-sm btn-outline-secondary" href="${placarHref}" style="border-radius:8px;font-weight:600;font-size:.78rem;">Ver resultado</a>`
                 : '';
         const ajusteBtn =
-            j.status_jogo === 'Agendado'
+            podeAjustar && j.status_jogo === 'Agendado'
                 ? `<button type="button" class="btn btn-sm btn-outline-dark btn-ajuste-jogo" data-id-jogo="${j.id_jogo}" style="border-radius:8px;font-weight:600;font-size:.78rem;">Ajustar data e local</button>`
                 : '';
 
