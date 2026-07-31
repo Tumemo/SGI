@@ -54,7 +54,7 @@ $isAdmin = $nivelUsuario === 0;
 
 <main class="d-md-none ocr-mobile">
     <div class="px-3 mt-3">
-        <a href="./dashboard.php" id="btnVoltarArrecadacaoMob" class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none" style="background-color:#ed1c24;border-radius:6px;">
+        <a href="./dashboard.php" id="btnVoltarArrecadacaoMob" class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none" style="background-color:#E30613;border-radius:6px;padding:8px 16px;">
             <i class="bi bi-arrow-left-circle fs-5"></i> <span id="nomeInterclasseArrecadacaoMob">Interclasse</span>
         </a>
 
@@ -74,7 +74,7 @@ $isAdmin = $nivelUsuario === 0;
 <main class="d-none d-md-block main-desktop-layout ocr-page">
     <div class="ocr-container">
         <div class="mb-4">
-            <a href="./dashboard.php" id="btnVoltarArrecadacao" class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none" style="background-color:#ed1c24;border-radius:6px;">
+            <a href="./dashboard.php" id="btnVoltarArrecadacao" class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none" style="background-color:#E30613;border-radius:6px;padding:8px 16px;">
                 <i class="bi bi-arrow-left-circle fs-5"></i> <span id="nomeInterclasseArrecadacao">Interclasse</span>
             </a>
         </div>

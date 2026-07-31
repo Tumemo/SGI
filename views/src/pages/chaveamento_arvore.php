@@ -847,12 +847,11 @@ $paginaAtiva = 'chaveamento';
 ?>
 
 <main class="d-md-none kv-page" style="padding:20px;">
-    <div class="d-flex align-items-center gap-3 mb-4">
-        <a href="./dashboard.php" class="kv-back"><i class="bi bi-arrow-left"></i></a>
-        <div>
-            <h4 class="kv-title" style="font-size:1.2rem;">Chaveamento</h4>
-            <p class="kv-subtitle">Gerencie os chaveamentos do interclasse.</p>
-        </div>
+    <a href="./dashboard.php" id="btnVoltarChaveamentoMob" class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none" style="background-color:#E30613;border-radius:6px;padding:8px 16px;">
+        <i class="bi bi-arrow-left-circle fs-5"></i> <span id="nomeInterclasseChaveamentoMob">Interclasse</span>
+    </a>
+    <div class="mb-3">
+        <h4 class="kv-title" style="font-size:1.2rem;">Chaveamento</h4>
     </div>
 
     <div class="kv-stats" style="grid-template-columns:repeat(2,1fr);margin-bottom:20px;">
@@ -954,13 +953,9 @@ $paginaAtiva = 'chaveamento';
 
         <div class="kv-header">
             <div class="kv-header__left">
-                <a href="./dashboard.php" id="btnVoltar" class="kv-back">
-                    <i class="bi bi-arrow-left"></i>
+                <a href="./dashboard.php" id="btnVoltar" class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold px-3 py-2 border-0 text-decoration-none" style="background-color:#E30613;border-radius:6px;padding:8px 16px;">
+                    <i class="bi bi-arrow-left-circle fs-5"></i> <span id="nomeInterclasseChaveamento">Interclasse</span>
                 </a>
-                <div>
-                    <h1 class="kv-title">🏆 Chaveamentos</h1>
-                    <p class="kv-subtitle">Gerencie os chaveamentos de todas as modalidades do interclasse. <span id="nomeInterclasse" class="d-none"></span></p>
-                </div>
             </div>
             <div class="kv-header__right">
                 <button class="kv-btn-generate" id="btnGerarChaveamento">
@@ -1174,12 +1169,14 @@ $paginaAtiva = 'chaveamento';
             return null;
         }
         const dados = await window.SGIInterclasse.getInterclasseById(idInterclasse);
-        document.getElementById('nomeInterclasse').innerText = dados?.nome_interclasse || 'Interclasse';
-
-        const btnVoltar = document.getElementById('btnVoltar');
-        if (btnVoltar) {
-            btnVoltar.href = `./dashboard.php?id=${idInterclasse}`;
-        }
+        ['nomeInterclasseChaveamento', 'nomeInterclasseChaveamentoMob'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.innerText = dados?.nome_interclasse || 'Interclasse';
+        });
+        ['btnVoltar', 'btnVoltarChaveamentoMob'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.href = `./dashboard.php?id=${idInterclasse}`;
+        });
         return idInterclasse;
     }
 

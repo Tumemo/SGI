@@ -15,8 +15,8 @@ $isMesario = $nivelUsuario === 2;
 
 <!-- main mobile -->
 <main class="position-relative d-md-none" style="margin-bottom: 120px;">
-    <a href="./dashboard.php" id="btnVoltarCatMobile" class="btn btn-danger btn-sm mt-3 ms-3 d-inline-flex align-items-center gap-1">
-        <i class="bi bi-arrow-left-circle"></i> Voltar
+    <a href="./dashboard.php" id="btnVoltarCatMobile" class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none" style="background-color:#E30613;border-radius:6px;padding:8px 16px;">
+        <i class="bi bi-arrow-left-circle fs-5"></i> <span id="nomeInterclasseCatMob">Interclasse</span>
     </a>
 
     <div id="listaCategoriasMobile" class="d-flex flex-column align-items-center w-100">
@@ -41,7 +41,7 @@ $isMesario = $nivelUsuario === 2;
 <main class="d-none d-md-block main-desktop-layout">
     <div class="container-fluid px-0 position-relative">
         <div class="mb-5">
-            <a href="./dashboard.php" id="btnVoltarCatDesk" class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none" style="background-color: #ed1c24; border-radius: 6px;">
+            <a href="./dashboard.php" id="btnVoltarCatDesk" class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none" style="background-color:#E30613;border-radius:6px;padding:8px 16px;">
                 <i class="bi bi-arrow-left-circle fs-5"></i> <span id="nomeInterclasseCategoria">Interclasse</span>
             </a>
         </div>
@@ -231,7 +231,10 @@ $isMesario = $nivelUsuario === 2;
     } else {
         window.SGIInterclasse.getInterclasseById(idInterclasse).then((dados) => {
             if (dados?.nome_interclasse) {
-                document.getElementById('nomeInterclasseCategoria').innerText = dados.nome_interclasse;
+                ['nomeInterclasseCategoria', 'nomeInterclasseCatMob'].forEach(id => {
+                    const el = document.getElementById(id);
+                    if (el) el.innerText = dados.nome_interclasse;
+                });
                 window.SGIInterclasse.updatePageTitle(dados.nome_interclasse);
             }
         }).catch(console.error);

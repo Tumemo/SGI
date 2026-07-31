@@ -20,9 +20,8 @@ $paginaAtiva = 'dashboard';
 
 <main class="d-none d-md-block main-desktop-layout">
     <div class="container-fluid px-0" style="max-width: 960px;">
-        <a href="#" class="btn btn-danger d-inline-flex align-items-center gap-2 mb-4 border-0 shadow-sm text-decoration-none" style="border-radius: 6px; padding: 8px 15px;" id="btnVoltarDashboardDesktop">
-            <i class="bi bi-arrow-left-circle fs-5"></i>
-            <span id="nomeInterModalidadeDet" style="font-weight: 400;">Interclasse</span>
+        <a href="#" id="btnVoltarDashboardDesktop" class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none" style="background-color:#E30613;border-radius:6px;padding:8px 16px;">
+            <i class="bi bi-arrow-left-circle fs-5"></i> <span id="nomeInterModalidadeDet">Interclasse</span>
         </a>
         <div class="d-flex justify-content-between align-items-center mb-4">
             <h4 class="fw-bold mb-0">Detalhes da modalidade</h4>

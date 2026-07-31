@@ -119,8 +119,8 @@ $paginaAtiva = 'colaboradores';
 <!-- ═══ MOBILE ═══ -->
 <main class="d-md-none" style="padding-top:5.5rem;padding-bottom:6rem;">
     <div class="col-wrap">
-        <a href="./dashboard.php" id="btnVoltarColabMobile" class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none" style="background-color:#ed1c24;border-radius:6px;">
-            <i class="bi bi-arrow-left-circle fs-5"></i> Voltar
+        <a href="./dashboard.php" id="btnVoltarColabMobile" class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none" style="background-color:#E30613;border-radius:6px;padding:8px 16px;">
+            <i class="bi bi-arrow-left-circle fs-5"></i> <span id="nomeInterclasseColabMobile">Interclasse</span>
         </a>
 
         <div class="col-header">
@@ -161,8 +161,8 @@ $paginaAtiva = 'colaboradores';
 <!-- ═══ DESKTOP ═══ -->
 <main class="d-none d-md-block main-desktop-layout col-page">
     <div class="col-wrap">
-        <a href="./dashboard.php" id="btnVoltarColabDesk" class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none" style="background-color:#ed1c24;border-radius:6px;">
-            <i class="bi bi-arrow-left-circle fs-5"></i> Voltar
+        <a href="./dashboard.php" id="btnVoltarColabDesk" class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none" style="background-color:#E30613;border-radius:6px;padding:8px 16px;">
+            <i class="bi bi-arrow-left-circle fs-5"></i> <span id="nomeInterclasseColabDesk">Interclasse</span>
         </a>
 
         <div class="col-header">
@@ -304,14 +304,13 @@ $paginaAtiva = 'colaboradores';
             ? await window.SGIInterclasse.getInterclasseById(idInterclasseColab)
             : await window.SGIInterclasse.getActiveInterclasse();
         if (ic) {
-            const nome = ic.nome_interclasse || 'Voltar';
-            const href = `./dashboard.php?id=${ic.id_interclasse}`;
+            ['nomeInterclasseColabMobile', 'nomeInterclasseColabDesk'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.innerText = ic?.nome_interclasse || 'Interclasse';
+            });
             ['btnVoltarColabMobile', 'btnVoltarColabDesk'].forEach(id => {
                 const el = document.getElementById(id);
-                if (el) {
-                    el.href = href;
-                    el.innerHTML = `<i class="bi bi-arrow-left-circle fs-5"></i> ${nome}`;
-                }
+                if (el) el.href = `./dashboard.php?id=${ic.id_interclasse}`;
             });
         }
     })();

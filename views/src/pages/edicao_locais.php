@@ -38,7 +38,9 @@ $paginaAtiva = 'dashboard';
         <button type="button" class="btn btn-danger flex-grow-1 fw-semibold rounded-3" data-bs-toggle="modal" data-bs-target="#modalNovoLocal">
             <i class="bi bi-plus-lg me-1"></i> Novo local
         </button>
-        <a href="./dashboard.php" id="btnVoltarLocaisMobile" class="btn btn-outline-danger fw-semibold rounded-3">Voltar</a>
+        <a href="./dashboard.php" id="btnVoltarLocaisMobile" class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none" style="background-color:#E30613;border-radius:6px;padding:8px 16px;">
+            <i class="bi bi-arrow-left-circle fs-5"></i> <span id="nomeInterclasseLocaisMob">Interclasse</span>
+        </a>
     </div>
 </main>
 
@@ -46,9 +48,8 @@ $paginaAtiva = 'dashboard';
 <main class="d-none d-md-block main-desktop-layout my-4">
     <div class="container-fluid px-0" style="max-width: 960px;">
         <div class="mb-4 d-flex justify-content-between align-items-center">
-            <a href="./dashboard.php" id="btnVoltarLocaisDesk" class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold px-3 py-2 border-0 text-decoration-none shadow-sm" style="background-color: #ed1c24; border-radius: 6px;">
-                <i class="bi bi-arrow-left-circle fs-5"></i>
-                <span id="nomeInterclasseLocais">Interclasse</span>
+            <a href="./dashboard.php" id="btnVoltarLocaisDesk" class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none" style="background-color:#E30613;border-radius:6px;padding:8px 16px;">
+                <i class="bi bi-arrow-left-circle fs-5"></i> <span id="nomeInterclasseLocais">Interclasse</span>
             </a>
 
             <button type="button" class="btn btn-danger fw-semibold rounded-3 px-4 py-2 shadow-sm d-inline-flex align-items-center gap-2" data-bs-toggle="modal" data-bs-target="#modalNovoLocal" style="background-color: #ed1c24; border: none;">
@@ -211,8 +212,10 @@ $paginaAtiva = 'dashboard';
                 if (btnVoltarMob) btnVoltarMob.href = `./dashboard.php?id=${idInterclasse}`;
                 if (btnVoltarDesk) btnVoltarDesk.href = `./dashboard.php?id=${idInterclasse}`;
                 if (ativo.nome_interclasse) {
-                    const elNome = document.getElementById('nomeInterclasseLocais');
-                    if (elNome) elNome.textContent = ativo.nome_interclasse;
+                    ['nomeInterclasseLocais', 'nomeInterclasseLocaisMob'].forEach(id => {
+                        const el = document.getElementById(id);
+                        if (el) el.textContent = ativo.nome_interclasse;
+                    });
                 }
 
                 return idInterclasse;
@@ -224,8 +227,10 @@ $paginaAtiva = 'dashboard';
     }
 
     if (idInterclasse) {
-        document.getElementById('btnVoltarLocaisMobile').href = `./dashboard.php?id=${idInterclasse}`;
-        document.getElementById('btnVoltarLocaisDesk').href = `./dashboard.php?id=${idInterclasse}`;
+        ['btnVoltarLocaisMobile', 'btnVoltarLocaisDesk'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.href = `./dashboard.php?id=${idInterclasse}`;
+        });
     }
 
     function esc(s) {
@@ -410,10 +415,13 @@ $paginaAtiva = 'dashboard';
             try {
                 if (window.SGIInterclasse?.getInterclasseById) {
                     const d = await window.SGIInterclasse.getInterclasseById(idInterclasse);
-                    if (d?.nome_interclasse) {
-                        document.getElementById('nomeInterclasseLocais').textContent = d.nome_interclasse;
-                        window.SGIInterclasse.updatePageTitle(d.nome_interclasse);
-                    }
+                        if (d?.nome_interclasse) {
+                            ['nomeInterclasseLocais', 'nomeInterclasseLocaisMob'].forEach(id => {
+                                const el = document.getElementById(id);
+                                if (el) el.textContent = d.nome_interclasse;
+                            });
+                            window.SGIInterclasse.updatePageTitle(d.nome_interclasse);
+                        }
                 }
             } catch (_) {
                 /* ok */

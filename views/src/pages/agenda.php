@@ -55,9 +55,8 @@ $paginaAtiva = 'agenda';
 </main>
 
 <main class="d-none d-md-block main-desktop-layout" style="padding-bottom: 5rem;">
-    <a href="./dashboard.php" class="btn btn-danger d-inline-flex align-items-center mb-3 border-0 shadow-sm text-decoration-none" style="border-radius: 4px; padding: 8px 15px;" id="btnVoltarAgendaDesk">
-        <i class="bi bi-arrow-left-circle me-2"></i>
-        <span style="font-size: 0.9rem; font-weight: 400;" id="nomeInterclasseAgenda">Interclasse</span>
+    <a href="./dashboard.php" class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none" style="background-color:#E30613;border-radius:6px;padding:8px 16px;" id="btnVoltarAgendaDesk">
+        <i class="bi bi-arrow-left-circle fs-5"></i> <span id="nomeInterclasseAgenda">Interclasse</span>
     </a>
 
     <div class="row">

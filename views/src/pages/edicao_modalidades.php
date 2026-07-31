@@ -31,7 +31,7 @@ $paginaAtiva = 'dashboard';
     <div style="border-radius: 12px;">
 
         <div class="mb-5">
-            <a class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 shadow-sm text-decoration-none" style="background-color: #ed1c24; border-radius: 6px;" id="btnVoltarModalidades" href="./dashboard.php">
+            <a href="./dashboard.php" id="btnVoltarModalidades" class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none" style="background-color:#E30613;border-radius:6px;padding:8px 16px;">
                 <i class="bi bi-arrow-left-circle fs-5"></i> <span id="nomeInterclasseModalidades">Interclasse</span>
             </a>
         </div>
@@ -252,15 +252,17 @@ $paginaAtiva = 'dashboard';
 
             Object.keys(modalidadesPorCategoria).forEach((categoria, catIndex) => {
                 const mods = modalidadesPorCategoria[categoria];
+                const isFirstCat = catIndex === 0;
 
                 // Mobile: Seção por categoria
                 if (divMobile) {
                     divMobile.innerHTML += `<h5 class="mt-4 mb-3 text-muted">${categoria}</h5>`;
-                    mods.forEach((modalidade) => {
+                    mods.forEach((modalidade, modIndex) => {
                         const destinoDetalhes = `./modalidade_detalhes.php?id=${idInterclasse}&id_modalidade=${modalidade.id_modalidade}`;
+                        const firstModCls = isFirstCat && modIndex === 0 ? ' mt-3' : '';
 
                         divMobile.innerHTML += `
-                            <button type="button" class="modalidade-opcao bg-white d-flex justify-content-between align-items-center shadow py-3 px-4 mb-3 border border-1 rounded-3 w-100" style="max-width: 90%;" data-id="${modalidade.id_modalidade}" data-detalhes="${destinoDetalhes}">
+                            <button type="button" class="modalidade-opcao bg-white d-flex justify-content-between align-items-center shadow py-3 px-4 mb-3 border border-1 rounded-3 w-100${firstModCls}" style="max-width: 90%;" data-id="${modalidade.id_modalidade}" data-detalhes="${destinoDetalhes}">
                                 <i class="bi bi-trophy fs-4"></i>
                                 <div class="text-start px-3 w-100">
                                     <h2 class="m-0 fs-5 text-truncate">${modalidade.nome_modalidade}</h2>
@@ -273,11 +275,12 @@ $paginaAtiva = 'dashboard';
                 // Desktop: Seção por categoria
                 if (divDesktop) {
                     divDesktop.innerHTML += `<h4 class="mt-4 mb-3 text-muted">${categoria}</h4><div class="row g-4">`;
-                    mods.forEach((modalidade) => {
+                    mods.forEach((modalidade, modIndex) => {
                         const destinoDetalhes = `./modalidade_detalhes.php?id=${idInterclasse}&id_modalidade=${modalidade.id_modalidade}`;
+                        const firstModCls = isFirstCat && modIndex === 0 ? ' mt-3' : '';
 
                         divDesktop.innerHTML += `
-                            <div class="col-12 col-md-6 col-lg-4">
+                            <div class="col-12 col-md-6 col-lg-4${firstModCls}">
                                 <button type="button" class="modalidade-opcao card border border-light-subtle shadow-sm h-100 py-4 px-4 d-flex flex-row align-items-center justify-content-between transition-hover w-100 text-start bg-white" style="border-radius: 10px;" data-id="${modalidade.id_modalidade}" data-detalhes="${destinoDetalhes}">
                                     <div class="d-flex align-items-center gap-3">
                                         <i class="bi bi-trophy fs-4 text-dark"></i>

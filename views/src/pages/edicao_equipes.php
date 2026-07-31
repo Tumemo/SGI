@@ -86,8 +86,8 @@ $paginaAtiva = 'dashboard';
 ?>
 
 <main class="d-md-none p-3" style="padding-bottom: 5rem;">
-    <a href="./dashboard.php" id="btnVoltarEquipesMobile" class="btn btn-aluno btn-sm mb-3 d-inline-flex align-items-center gap-1">
-        <i class="bi bi-arrow-left"></i> Voltar
+    <a href="./dashboard.php" id="btnVoltarEquipesMobile" class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none" style="background-color:#E30613;border-radius:6px;padding:8px 16px;">
+        <i class="bi bi-arrow-left-circle fs-5"></i> <span id="nomeInterclasseEquipesMob">Interclasse</span>
     </a>
     <p class="text-secondary text-center small mb-3">Equipes por modalidade e categoria desta edição.</p>
 
@@ -105,7 +105,9 @@ $paginaAtiva = 'dashboard';
     <div class="aluno-page container-fluid py-4 px-4">
         <div class="aluno-page-header">
             <div class="header-left">
-                <a href="./dashboard.php" id="btnVoltarEquipesDesk" class="back-link"><i class="bi bi-arrow-left"></i></a>
+                <a href="./dashboard.php" id="btnVoltarEquipesDesk" class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none" style="background-color:#E30613;border-radius:6px;padding:8px 16px;">
+                    <i class="bi bi-arrow-left-circle fs-5"></i> <span id="nomeInterclasseEquipesDesk">Interclasse</span>
+                </a>
                 <h1 id="nomeInterclasseEquipes">Equipes</h1>
             </div>
             <?php if ($isAdmin): ?>
@@ -162,8 +164,10 @@ $paginaAtiva = 'dashboard';
     let turmasCache = [];
 
     if (idInterclasseEq) {
-        document.getElementById('btnVoltarEquipesMobile').href = `./dashboard.php?id=${idInterclasseEq}`;
-        document.getElementById('btnVoltarEquipesDesk').href = `./dashboard.php?id=${idInterclasseEq}`;
+        ['btnVoltarEquipesMobile', 'btnVoltarEquipesDesk'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.href = `./dashboard.php?id=${idInterclasseEq}`;
+        });
     }
 
     function esc(s) {
@@ -226,6 +230,10 @@ $paginaAtiva = 'dashboard';
         const dados = await window.SGIInterclasse.getInterclasseById(idInterclasseEq);
         if (dados?.nome_interclasse) {
             document.getElementById('nomeInterclasseEquipes').textContent = dados.nome_interclasse;
+            ['nomeInterclasseEquipesMob', 'nomeInterclasseEquipesDesk'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.textContent = dados.nome_interclasse;
+            });
             window.SGIInterclasse.updatePageTitle(dados.nome_interclasse);
         }
 
@@ -489,8 +497,10 @@ $paginaAtiva = 'dashboard';
             const resolved = await window.SGIInterclasse.resolveId();
             if (resolved) {
                 idInterclasseEq = resolved;
-                document.getElementById('btnVoltarEquipesMobile').href = `./dashboard.php?id=${idInterclasseEq}`;
-                document.getElementById('btnVoltarEquipesDesk').href = `./dashboard.php?id=${idInterclasseEq}`;
+                ['btnVoltarEquipesMobile', 'btnVoltarEquipesDesk'].forEach(id => {
+                    const el = document.getElementById(id);
+                    if (el) el.href = `./dashboard.php?id=${idInterclasseEq}`;
+                });
             }
         }
         await carregarCategorias();

@@ -160,9 +160,8 @@ $paginaAtiva = 'agenda';
 <!-- ═══ DESKTOP ═══ -->
 <main class="d-none d-md-block main-desktop-layout ag-page">
     <div class="ag-desktop-layout" class="p-5">
-        <a href="./dashboard.php" class="btn btn-danger d-inline-flex align-items-center gap-2 mb-4 border-0 text-decoration-none" style="border-radius: 10px; padding: .55rem 1.15rem; font-size: .85rem; font-weight: 600;" id="btnVoltarAgendaDesk">
-            <i class="bi bi-arrow-left-circle"></i>
-            <span id="nomeInterclasseAgenda">Interclasse</span>
+        <a href="./dashboard.php" class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none" style="background-color:#E30613;border-radius:6px;padding:8px 16px;" id="btnVoltarAgendaDesk">
+            <i class="bi bi-arrow-left-circle fs-5"></i> <span id="nomeInterclasseAgenda">Interclasse</span>
         </a>
 
         <div class="ag-desktop-grid">

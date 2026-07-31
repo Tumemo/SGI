@@ -225,9 +225,8 @@ $paginaAtiva = 'dashboard';
 
         <div class="mc-header">
             <div class="mc-match-info">
-                <a href="./edicao_agenda.php" class="mc-back-link" data-back-link="true">
-                    <i class="bi bi-arrow-left"></i>
-                    <span>Voltar</span>
+                <a href="./edicao_agenda.php" class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none" style="background-color:#E30613;border-radius:6px;padding:8px 16px;">
+                    <i class="bi bi-arrow-left-circle fs-5"></i> <span>Voltar</span>
                 </a>
                 <h1 id="placar-titulo-jogo" class="mc-match-title">Placar</h1>
                 <span id="placar-meta" class="mc-match-meta"></span>

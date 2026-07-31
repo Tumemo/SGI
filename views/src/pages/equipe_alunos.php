@@ -71,7 +71,9 @@ $paginaAtiva = 'dashboard';
 
 <main class="d-md-none" style="margin-bottom: 120px;">
     <div class="container mt-3">
-        <a href="#" class="btn btn-outline-danger w-100 mb-3" id="btnVoltarEquipesMobile">Voltar</a>
+        <a href="#" class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none" id="btnVoltarEquipesMobile" style="background-color:#E30613;border-radius:6px;padding:8px 16px;">
+            <i class="bi bi-arrow-left-circle fs-5"></i> <span id="nomeInterclasseEquipeAlunosMob">Interclasse</span>
+        </a>
         <div id="listaAlunosMobile" style="display:grid;grid-template-columns:repeat(2,1fr);gap:0.75rem">
             <p class="text-muted text-center">(Carregando alunos...)</p>
         </div>
@@ -82,7 +84,9 @@ $paginaAtiva = 'dashboard';
 <main class="d-none d-md-block main-desktop-layout">
     <div class="aluno-page container-fluid py-4 px-4">
         <div class="aluno-page-header">
-            <a href="#" id="btnVoltarEquipesDesktop" class="back-link"><i class="bi bi-arrow-left"></i></a>
+            <a href="#" id="btnVoltarEquipesDesktop" class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none" style="background-color:#E30613;border-radius:6px;padding:8px 16px;">
+                <i class="bi bi-arrow-left-circle fs-5"></i> <span id="nomeInterclasseEquipeAlunosDesk">Interclasse</span>
+            </a>
             <h1>Adicionar alunos à equipe</h1>
             <div class="ms-auto d-flex gap-2">
                 <button id="btnSalvarAlunosDesktop" class="btn btn-aluno"><i class="bi bi-check-lg"></i></button>
@@ -164,6 +168,16 @@ function filtrar(termo) {
 async function carregar() {
     const params = new URLSearchParams(window.location.search);
     const idInterclasse = params.get('id');
+
+    if (idInterclasse) {
+        window.SGIInterclasse.getInterclasseById(idInterclasse).then(dados => {
+            const nome = dados?.nome_interclasse || 'Interclasse';
+            ['nomeInterclasseEquipeAlunosMob', 'nomeInterclasseEquipeAlunosDesk'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.innerText = nome;
+            });
+        }).catch(() => {});
+    }
     const idTurma = params.get('id_turma');
     _idEquipe = params.get('id_equipe');
     const idCategoria = params.get('id_categoria');

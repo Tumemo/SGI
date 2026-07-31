@@ -24,8 +24,8 @@ $paginaAtiva = 'modalidades';
 <main class="d-none d-md-block main-desktop-layout">
     <div style="border-radius: 12px;">
         <div class="mb-5">
-            <a class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 shadow-sm text-decoration-none" style="background-color: #ed1c24; border-radius: 6px;" href="./dashboard.php">
-                <i class="bi bi-arrow-left-circle fs-5"></i> Voltar
+            <a href="./dashboard.php" id="btnVoltarModalidades" class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none" style="background-color:#E30613;border-radius:6px;padding:8px 16px;">
+                <i class="bi bi-arrow-left-circle fs-5"></i> <span id="nomeInterclasseModalidades">Interclasse</span>
             </a>
         </div>
 
@@ -282,6 +282,11 @@ $paginaAtiva = 'modalidades';
             window.location.href = 'home.php';
             return;
         }
+        const ic = await window.SGIInterclasse.getInterclasseById(idInterclasse);
+        const nomeEl = document.getElementById('nomeInterclasseModalidades');
+        if (nomeEl) nomeEl.innerText = ic?.nome_interclasse || 'Interclasse';
+        const btnEl = document.getElementById('btnVoltarModalidades');
+        if (btnEl) btnEl.href = `./dashboard.php?id=${idInterclasse}`;
         await Promise.all([
             carregarModalidades(),
             carregarTiposModalidades(),

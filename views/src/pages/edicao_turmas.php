@@ -8,8 +8,8 @@ include 'componentes/header.php';
 $paginaAtiva = 'categorias';
 ?>
 <main class="d-md-none">
-    <a href="./dashboard.php" id="btnVoltarTurmasMobile" class="btn btn-danger btn-sm mt-3 ms-3 d-inline-flex align-items-center gap-1">
-        <i class="bi bi-arrow-left-circle"></i> Voltar
+    <a href="./dashboard.php" id="btnVoltarTurmasMobile" class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none" style="background-color:#E30613;border-radius:6px;padding:8px 16px;">
+        <i class="bi bi-arrow-left-circle fs-5"></i> <span id="nomeInterclasseTurmasMob">Interclasse</span>
     </a>
     <p class="text-secondary text-center my-3">Editar detalhes turmas</p>
 
@@ -22,8 +22,8 @@ $paginaAtiva = 'categorias';
 
 <main class="d-none d-md-block main-desktop-layout" id="viewTurmasGestaoDesk">
     <div class="container-fluid px-0">
-        <a href="./edicao_categorias.php" id="btnVoltarTurmasDesk" class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none" style="background-color: #ed1c24; border-radius: 6px;">
-            <i class="bi bi-arrow-left-circle fs-5"></i> Voltar
+        <a href="./edicao_categorias.php" id="btnVoltarTurmasDesk" class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none" style="background-color:#E30613;border-radius:6px;padding:8px 16px;">
+            <i class="bi bi-arrow-left-circle fs-5"></i> <span id="nomeInterclasseTurmasDesk">Interclasse</span>
         </a>
         <div class="row g-4 mx-0">
             <div class="col-md-4 px-0 px-md-2">
@@ -124,11 +124,17 @@ $paginaAtiva = 'categorias';
 
     // ─── BACK BUTTONS ────────────────────────────────────────────────
     if (idInterclasse) {
-        const backs = ['btnVoltarTurmasMobile', 'btnVoltarTurmasDesk'];
-        backs.forEach(id => {
+        ['btnVoltarTurmasMobile', 'btnVoltarTurmasDesk'].forEach(id => {
             const el = getEl(id);
             if (el) el.href = `./edicao_categorias.php?id=${idInterclasse}`;
         });
+        window.SGIInterclasse.getInterclasseById(idInterclasse).then(dados => {
+            const nome = dados?.nome_interclasse || 'Interclasse';
+            ['nomeInterclasseTurmasMob', 'nomeInterclasseTurmasDesk'].forEach(id => {
+                const el = getEl(id);
+                if (el) el.innerText = nome;
+            });
+        }).catch(() => {});
     }
 
     // ═══════════════════════════════════════════════════════════════════

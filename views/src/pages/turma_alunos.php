@@ -11,7 +11,9 @@ $podeGerenciar = in_array($nivelUsuario, [0, 1, 2], true);
 
 <!-- main mobile -->
 <main class="d-md-none p-3" style="padding-top: 5.5rem; padding-bottom: 5rem;">
-    <a href="#" class="btn btn-danger btn-sm mb-3 rounded-3" id="btnVoltarTurmaAlunosMob">Voltar</a>
+    <a href="#" class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none" id="btnVoltarTurmaAlunosMob" style="background-color:#E30613;border-radius:6px;padding:8px 16px;">
+        <i class="bi bi-arrow-left-circle fs-5"></i> <span id="nomeInterclasseTurmaAlunosMob">Interclasse</span>
+    </a>
 
     <?php if ($podeGerenciar): ?>
     <button class="btn btn-outline-danger btn-sm rounded-3 mb-3" onclick="abrirModalAluno()">
@@ -42,8 +44,8 @@ $podeGerenciar = in_array($nivelUsuario, [0, 1, 2], true);
 <!-- main desktop -->
 <main class="d-none d-md-block main-desktop-layout">
     <div class="container-fluid px-0">
-        <a href="#" id="btnVoltarTurmaAlunosDesk" class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none" style="background-color: #ed1c24; border-radius: 6px;">
-            <i class="bi bi-arrow-left-circle fs-5"></i> Voltar
+        <a href="#" id="btnVoltarTurmaAlunosDesk" class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none" style="background-color:#E30613;border-radius:6px;padding:8px 16px;">
+            <i class="bi bi-arrow-left-circle fs-5"></i> <span id="nomeInterclasseTurmaAlunosDesk">Interclasse</span>
         </a>
         <div class="d-flex align-items-center gap-3 mb-2">
             <?php if ($podeGerenciar): ?>
@@ -177,15 +179,28 @@ $podeGerenciar = in_array($nivelUsuario, [0, 1, 2], true);
         if (idCategoria) q.set('id_categoria', idCategoria);
         const pagina = idCategoria ? 'turmas' : 'edicao_turmas';
         const href = `./${pagina}.php?${q.toString()}`;
-        const a = document.getElementById('btnVoltarTurmaAlunosMob');
-        const b = document.getElementById('btnVoltarTurmaAlunosDesk');
-        if (a) a.href = href;
-        if (b) b.href = href;
+        ['btnVoltarTurmaAlunosMob', 'btnVoltarTurmaAlunosDesk'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.href = href;
+        });
+    }
+
+    async function carregarNomeInterclasseTurmaAlunos() {
+        if (!idInterclasse) return;
+        try {
+            const dados = await window.SGIInterclasse.getInterclasseById(idInterclasse);
+            const nome = dados?.nome_interclasse || 'Interclasse';
+            ['nomeInterclasseTurmaAlunosMob', 'nomeInterclasseTurmaAlunosDesk'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.innerText = nome;
+            });
+        } catch (e) {}
     }
 
     function atualizarNomeTurmaPdf() {}
 
     async function carregarAlunos() {
+        await carregarNomeInterclasseTurmaAlunos();
         setVoltar();
         if (!idTurma || isNaN(idTurma) || !idInterclasse || isNaN(idInterclasse)) {
             document.getElementById('listaAlunosTurmaMob').innerHTML = '<p class="text-muted">Parâmetros inválidos.</p>';

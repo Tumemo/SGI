@@ -19,15 +19,17 @@ $paginaAtiva = 'locais';
         <button type="button" class="btn btn-danger flex-grow-1 fw-semibold rounded-3" data-bs-toggle="modal" data-bs-target="#modalNovoLocal">
             <i class="bi bi-plus-lg me-1"></i> Adicionar local
         </button>
-        <a href="./dashboard.php" id="btnVoltarLocaisMobile" class="btn btn-outline-danger fw-semibold rounded-3">Voltar</a>
+        <a href="./dashboard.php" id="btnVoltarLocaisMobile" class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none" style="background-color:#E30613;border-radius:6px;padding:8px 16px;">
+            <i class="bi bi-arrow-left-circle fs-5"></i> <span id="nomeInterclasseLocaisMob">Interclasse</span>
+        </a>
     </div>
 </main>
 
 <main class="d-none d-md-block main-desktop-layout">
     <div class="container-fluid px-0" style="max-width: 960px;">
         <div class="mb-4">
-            <a href="./dashboard.php" id="btnVoltarLocaisDesk" class="btn btn-outline-danger btn-sm d-inline-flex align-items-center gap-1 mb-3 text-decoration-none">
-                <i class="bi bi-arrow-left"></i> Voltar
+            <a href="./dashboard.php" id="btnVoltarLocaisDesk" class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none" style="background-color:#E30613;border-radius:6px;padding:8px 16px;">
+                <i class="bi bi-arrow-left-circle fs-5"></i> <span id="nomeInterclasseLocais">Interclasse</span>
             </a>
         </div>
 
@@ -116,8 +118,16 @@ $paginaAtiva = 'locais';
     let idInterclasse = params.get('id');
 
     if (idInterclasse) {
-        document.getElementById('btnVoltarLocaisMobile').href = `./dashboard.php?id=${idInterclasse}`;
-        document.getElementById('btnVoltarLocaisDesk').href = `./dashboard.php?id=${idInterclasse}`;
+        ['btnVoltarLocaisMobile', 'btnVoltarLocaisDesk'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.href = `./dashboard.php?id=${idInterclasse}`;
+        });
+        window.SGIInterclasse.getInterclasseById(idInterclasse).then(dados => {
+            ['nomeInterclasseLocaisMob', 'nomeInterclasseLocais'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.innerText = dados?.nome_interclasse || 'Interclasse';
+            });
+        }).catch(() => {});
     }
 
     function esc(s) {
@@ -245,8 +255,17 @@ $paginaAtiva = 'locais';
             const resolved = await window.SGIInterclasse.resolveId();
             if (resolved) {
                 idInterclasse = resolved;
-                document.getElementById('btnVoltarLocaisMobile').href = `./dashboard.php?id=${idInterclasse}`;
-                document.getElementById('btnVoltarLocaisDesk').href = `./dashboard.php?id=${idInterclasse}`;
+                ['btnVoltarLocaisMobile', 'btnVoltarLocaisDesk'].forEach(id => {
+                    const el = document.getElementById(id);
+                    if (el) el.href = `./dashboard.php?id=${idInterclasse}`;
+                });
+                const dados = await window.SGIInterclasse.getInterclasseById(idInterclasse).catch(() => null);
+                if (dados?.nome_interclasse) {
+                    ['nomeInterclasseLocaisMob', 'nomeInterclasseLocais'].forEach(id => {
+                        const el = document.getElementById(id);
+                        if (el) el.innerText = dados.nome_interclasse;
+                    });
+                }
             }
         }
         await carregarLocais();

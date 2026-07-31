@@ -109,9 +109,8 @@ $paginaAtiva = 'perfil';
 
 
 <main class="perfil-page d-md-none p-3" style="padding-top: 5.5rem; padding-bottom: 5rem;">
-    <a href="<?= htmlspecialchars($urlVoltar) ?>" class="perfil-topbar" id="perfilBackMob">
-        <i class="bi bi-arrow-left-circle fs-5"></i>
-        <span id="perfilNomeInterMobile">Interclasse</span>
+    <a href="<?= htmlspecialchars($urlVoltar) ?>" id="perfilBackMob" class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none" style="background-color:#E30613;border-radius:6px;padding:8px 16px;">
+        <i class="bi bi-arrow-left-circle fs-5"></i> <span id="perfilNomeInterMobile">Interclasse</span>
     </a>
     <h2 class="d-flex align-items-center gap-2 text-dark mb-3" style="font-weight: 400; font-size: 1.1rem;">
         <i class="bi bi-person-gear"></i> Perfil
@@ -151,9 +150,8 @@ $paginaAtiva = 'perfil';
 
 <main class="perfil-page d-none d-md-block main-desktop-layout">
     <div class="container-fluid px-2 px-md-4 py-4">
-        <a href="<?= htmlspecialchars($urlVoltar) ?>" class="perfil-topbar" id="perfilBackDesk">
-            <i class="bi bi-arrow-left-circle fs-5"></i>
-            <span id="perfilNomeInterDesk">Interclasse</span>
+        <a href="<?= htmlspecialchars($urlVoltar) ?>" id="perfilBackDesk" class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none" style="background-color:#E30613;border-radius:6px;padding:8px 16px;">
+            <i class="bi bi-arrow-left-circle fs-5"></i> <span id="perfilNomeInterDesk">Interclasse</span>
         </a>
         <h2 class="d-flex align-items-center gap-2 text-dark mb-4" style="font-weight: 400;">
             <i class="bi bi-person-gear"></i> Perfil

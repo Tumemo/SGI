@@ -72,8 +72,8 @@ $paginaAtiva = 'dashboard';
 ?>
 
 <main class="d-md-none p-3" style="padding-bottom: 5rem;">
-    <a href="./edicao_equipes.php" class="btn btn-aluno btn-sm mb-3" id="btnVoltarElencoMob">
-        <i class="bi bi-arrow-left"></i> Voltar
+    <a href="./edicao_equipes.php" class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none" id="btnVoltarElencoMob" style="background-color:#E30613;border-radius:6px;padding:8px 16px;">
+        <i class="bi bi-arrow-left-circle fs-5"></i> <span id="nomeInterclasseElencoMob">Interclasse</span>
     </a>
     <div id="listaElencoMob" class="d-flex flex-column gap-2"></div>
     <?php if ($isAdmin): ?>
@@ -86,7 +86,9 @@ $paginaAtiva = 'dashboard';
 <main class="d-none d-md-block main-desktop-layout">
     <div class="aluno-page container-fluid py-4 px-4">
         <div class="aluno-page-header">
-            <a href="./edicao_equipes.php" id="btnVoltarElencoDesk" class="back-link"><i class="bi bi-arrow-left"></i></a>
+            <a href="./edicao_equipes.php" id="btnVoltarElencoDesk" class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none" style="background-color:#E30613;border-radius:6px;padding:8px 16px;">
+                <i class="bi bi-arrow-left-circle fs-5"></i> <span id="nomeInterclasseElencoDesk">Interclasse</span>
+            </a>
             <h1>Elenco da equipe</h1>
             <?php if ($isAdmin): ?>
             <div class="ms-auto">
@@ -139,10 +141,22 @@ function montarVoltar() {
     if (idInterclasse) q.set('id', idInterclasse);
     if (idCategoria) q.set('id_categoria', idCategoria);
     const hrefEq = `./edicao_equipes.php?${q.toString()}`;
-    const mob = document.getElementById('btnVoltarElencoMob');
-    const desk = document.getElementById('btnVoltarElencoDesk');
-    if (mob) mob.href = hrefEq;
-    if (desk) desk.href = hrefEq;
+    ['btnVoltarElencoMob', 'btnVoltarElencoDesk'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.href = hrefEq;
+    });
+}
+
+async function carregarNomeInterclasse() {
+    if (!idInterclasse) return;
+    try {
+        const dados = await window.SGIInterclasse.getInterclasseById(idInterclasse);
+        const nome = dados?.nome_interclasse || 'Interclasse';
+        ['nomeInterclasseElencoMob', 'nomeInterclasseElencoDesk'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.innerText = nome;
+        });
+    } catch (e) {}
 }
 
 function montarGerenciar() {
@@ -162,6 +176,7 @@ function montarGerenciar() {
 }
 
 async function carregar() {
+    await carregarNomeInterclasse();
     montarVoltar();
     montarGerenciar();
     const mob = document.getElementById('listaElencoMob');

@@ -8,26 +8,53 @@ include 'componentes/header.php';
 $paginaAtiva = 'categorias';
 ?>
 
+<!-- Toast -->
+<div class="toast-wrapper" id="toastWrapper"></div>
+
+<!-- Mobile -->
 <main class="position-relative d-md-none" style="margin-bottom: 120px;">
-    <section id="listaTurmasMobile">
-        <p class="text-center text-muted mt-4">(Carregando...)</p>
-    </section>
+    <div class="p-3">
+        <div class="d-flex align-items-center gap-2 mb-3">
+            <a href="./dashboard.php" id="btnVoltarCatMob" class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none" style="background-color:#E30613;border-radius:6px;padding:8px 16px;">
+                <i class="bi bi-arrow-left-circle fs-5"></i> <span id="nomeInterclasseCatMob">Interclasse</span>
+            </a>
+            <div class="turma-search-wrapper flex-grow-1">
+                <i class="bi bi-search turma-search-icon"></i>
+                <input type="text" id="buscaTurmaMob" placeholder="Buscar turma..." oninput="filtrarTurmas()">
+            </div>
+        </div>
+        <div id="listaTurmasMobile"></div>
+    </div>
 
     <?php if ($nivelUsuario === 0): ?>
-    <button class="border border-none bg-danger rounded-circle p-3 fs-2 d-flex align-items-center justify-content-center position-fixed position-absolute" style="height: 60px; width: 60px; top: 80%; left: 80%; z-index: 10; cursor: pointer;" data-bs-toggle="modal" data-bs-target="#exampleModal">
-        <i class="bi bi-plus text-white" style="font-size: 1.4em;"></i>
+    <button class="border border-none bg-danger rounded-circle p-3 fs-2 d-flex align-items-center justify-content-center position-fixed" style="height: 60px; width: 60px; bottom: 100px; right: 20px; z-index: 10; cursor: pointer; box-shadow: 0 4px 16px rgba(227,6,19,0.4);" data-bs-toggle="modal" data-bs-target="#exampleModal">
+        <i class="bi bi-plus-lg text-white"></i>
     </button>
     <?php endif; ?>
 </main>
 
+<!-- Desktop -->
 <main class="d-none d-md-flex flex-column main-desktop-layout">
-        <div class="mb-5">
-            <a href="./dashboard.php" id="btnVoltarCatDesk" class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none" style="background-color: #ed1c24; border-radius: 6px;">
+    <div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-3">
+        <div class="d-flex align-items-center gap-3">
+            <a href="./dashboard.php" id="btnVoltarCatDesk" class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none" style="background-color:#E30613;border-radius:6px;padding:8px 16px;">
                 <i class="bi bi-arrow-left-circle fs-5"></i> <span id="nomeInterclasseCategoria">Interclasse</span>
             </a>
         </div>
+        <div class="d-flex align-items-center gap-3 flex-shrink-0">
+            <div class="turma-search-wrapper">
+                <i class="bi bi-search turma-search-icon"></i>
+                <input type="text" id="buscaTurmaDesk" placeholder="Buscar turma..." oninput="filtrarTurmas()">
+            </div>
+            <?php if ($nivelUsuario === 0): ?>
+            <button class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold px-3 py-2 border-0" style="border-radius: 8px;" data-bs-toggle="modal" data-bs-target="#exampleModal">
+                <i class="bi bi-plus-lg"></i> Nova Turma
+            </button>
+            <?php endif; ?>
+        </div>
+    </div>
 
-    <div class="row row-cols-1 row-cols-md-2 row-cols-xl-4 g-4" id="listaTurmasDesktop"></div>
+    <div id="listaTurmasDesktop"></div>
 </main>
 
 <div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
@@ -126,6 +153,28 @@ $paginaAtiva = 'categorias';
     </div>
 </div>
 
+<!-- Modal de Exclusão -->
+<div class="modal fade" id="modalExcluirTurma" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+        <div class="modal-content" style="border-radius: 16px;">
+            <div class="modal-body text-center py-4">
+                <div class="modal-excluir-icon">
+                    <i class="bi bi-exclamation-triangle"></i>
+                </div>
+                <h5 class="fw-bold mb-1">Excluir Turma</h5>
+                <p class="text-muted small mb-3">
+                    Tem certeza que deseja excluir <strong class="modal-excluir-nome" id="excluirTurmaNome"></strong>?
+                    <br>Esta ação não pode ser desfeita.
+                </p>
+                <div class="d-flex justify-content-center gap-3">
+                    <button type="button" class="btn btn-outline-secondary px-4" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-danger px-4" id="btnConfirmarExclusao">Sim, excluir</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
     let turmasData = [];
     let editTurmaId = null;
@@ -134,6 +183,21 @@ $paginaAtiva = 'categorias';
     const urlParams = new URLSearchParams(window.location.search);
     const idInterclasse = urlParams.get('id');
 
+    /* ── TOAST ── */
+    function mostrarToast(mensagem, tipo) {
+        const wrapper = document.getElementById('toastWrapper');
+        const icones = { success: 'bi-check-circle-fill', error: 'bi-x-circle-fill', info: 'bi-info-circle-fill' };
+        const el = document.createElement('div');
+        el.className = `toast-sgi toast-sgi--${tipo}`;
+        el.innerHTML = `<i class="bi ${icones[tipo] || icones.info} toast-sgi-icon"></i> ${mensagem}`;
+        wrapper.appendChild(el);
+        setTimeout(() => {
+            el.classList.add('toast-sgi--out');
+            setTimeout(() => el.remove(), 300);
+        }, 3500);
+    }
+
+    /* ── HELPERS ── */
     async function resolverInterclasse() {
         if (idInterclasse) {
             const dados = await window.SGIInterclasse.getInterclasseById(idInterclasse);
@@ -142,17 +206,200 @@ $paginaAtiva = 'categorias';
         return window.SGIInterclasse.getActiveInterclasse();
     }
 
+    function esc(s) {
+        const d = document.createElement('div');
+        d.textContent = s == null ? '' : String(s);
+        return d.innerHTML;
+    }
+
     function mostrarNomeArquivo() {
         const input = document.getElementById('arquivoUpload');
         const span = document.getElementById('nomeArquivo');
+        span.textContent = input.files?.length ? input.files[0].name : 'Nenhum arquivo selecionado';
+    }
 
-        if (input.files && input.files.length > 0) {
-            span.textContent = input.files[0].name;
-        } else {
-            span.textContent = "Nenhum arquivo selecionado";
+    /* ── SKELETON ── */
+    function renderizarSkeleton() {
+        const html = Array.from({ length: 6 }, () => `
+            <div class="col">
+                <div class="skeleton-card skeleton-shimmer">
+                    <div class="skeleton-card-top">
+                        <div class="skeleton-avatar"></div>
+                        <div class="skeleton-lines">
+                            <div class="skeleton-line skeleton-line--sm"></div>
+                            <div class="skeleton-line skeleton-line--xs"></div>
+                        </div>
+                    </div>
+                    <div class="skeleton-meta">
+                        <div class="skeleton-badge"></div>
+                        <div class="skeleton-badge"></div>
+                    </div>
+                    <div class="skeleton-actions"></div>
+                </div>
+            </div>
+        `).join('');
+        document.getElementById('listaTurmasMobile').innerHTML = `<div class="row g-3">${html}</div>`;
+        document.getElementById('listaTurmasDesktop').innerHTML = `<div class="row row-cols-1 row-cols-md-2 row-cols-xl-4 g-4">${html}</div>`;
+    }
+
+    /* ── EMPTY STATE ── */
+    function renderizarEmptyState(mensagem, botao) {
+        const html = `
+            <div class="empty-state">
+                <div class="empty-state-icon"><i class="bi bi-people"></i></div>
+                <h3>${mensagem || 'Nenhuma turma encontrada'}</h3>
+                <p>${botao || 'Nenhuma turma cadastrada neste interclasse ainda.'}</p>
+                ${NIVEL_USUARIO === 0 ? '<button class="btn btn-danger px-4" data-bs-toggle="modal" data-bs-target="#exampleModal"><i class="bi bi-plus-lg me-1"></i>Criar Turma</button>' : ''}
+            </div>`;
+        document.getElementById('listaTurmasMobile').innerHTML = html;
+        document.getElementById('listaTurmasDesktop').innerHTML = html;
+    }
+
+    /* ── RENDER CARD ── */
+    function renderizarCard(turma, interclasse) {
+        const avatarLetra = turma.nome_turma.charAt(0).toUpperCase();
+        const turno = turma.turno_turma || '';
+
+        const adminBtns = NIVEL_USUARIO === 0 ? `
+            <div class="turma-card-admin">
+                <button class="btn-icon" title="Editar" onclick='editarTurma(${turma.id_turma})'>
+                    <i class="bi bi-pencil"></i>
+                </button>
+                <button class="btn-icon btn-icon--delete" title="Excluir" onclick='abrirModalExcluir(${turma.id_turma}, "${esc(turma.nome_turma)}")'>
+                    <i class="bi bi-trash"></i>
+                </button>
+            </div>` : '';
+
+        return `
+            <div class="col">
+                <div class="turma-card">
+                    <div class="turma-card-top">
+                        <div class="turma-avatar" style="background:#e30613;">${avatarLetra}</div>
+                        <div class="turma-card-info">
+                            <div class="turma-card-name">${esc(turma.nome_turma)}</div>
+                            ${turma.nome_fantasia_turma ? `<div class="turma-card-fantasy">${esc(turma.nome_fantasia_turma)}</div>` : ''}
+                        </div>
+                    </div>
+                    <div class="turma-card-meta">
+                        ${turno ? `<span class="turma-badge"><i class="bi bi-clock"></i> ${turno}</span>` : ''}
+                        <span class="turma-badge"><i class="bi bi-bookmark"></i> ${esc(turma.nome_categoria || 'Categoria')}</span>
+                        <span class="turma-badge"><i class="bi bi-people"></i> ${turma.qtd_alunos || 0}</span>
+                    </div>
+                    <div class="turma-card-actions">
+                        ${adminBtns}
+                        <a href="./turma_alunos.php?id=${interclasse.id_interclasse}&id_turma=${turma.id_turma}&id_categoria=${turma.categorias_id_categoria}" class="turma-card-btn-detalhes ms-auto">
+                            Ver detalhes <i class="bi bi-arrow-right"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>`;
+    }
+
+    /* ── RENDER BY CATEGORY ── */
+    function renderizarTurmas(turmas, interclasse) {
+        if (!turmas.length) {
+            renderizarEmptyState();
+            return;
+        }
+
+        const grupos = {};
+        turmas.forEach(t => {
+            const chave = t.nome_categoria || 'Sem categoria';
+            if (!grupos[chave]) grupos[chave] = [];
+            grupos[chave].push(t);
+        });
+
+        let html = '';
+        Object.entries(grupos).forEach(([catNome, lista]) => {
+            const cardsHtml = lista.map(t => renderizarCard(t, interclasse)).join('');
+            html += `
+                <div class="turma-section mb-5">
+                    <div class="turma-section-header">
+                        <h2>${esc(catNome)}</h2>
+                        <span class="turma-section-count">${lista.length} turma${lista.length !== 1 ? 's' : ''}</span>
+                    </div>
+                    <div class="row row-cols-1 row-cols-md-2 row-cols-xl-4 g-4">
+                        ${cardsHtml}
+                    </div>
+                </div>`;
+        });
+
+        document.getElementById('listaTurmasMobile').innerHTML = html;
+        document.getElementById('listaTurmasDesktop').innerHTML = html;
+    }
+
+    /* ── FILTER ── */
+    function filtrarTurmas() {
+        const termo = (document.getElementById('buscaTurmaDesk').value || document.getElementById('buscaTurmaMob').value || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+        const interclasse = window._interclasseCache;
+
+        if (!termo) {
+            renderizarTurmas(turmasData, interclasse);
+            return;
+        }
+
+        const filtradas = turmasData.filter(t =>
+            (t.nome_turma || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').includes(termo) ||
+            (t.nome_fantasia_turma || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').includes(termo) ||
+            (t.nome_categoria || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').includes(termo)
+        );
+
+        if (!filtradas.length) {
+            renderizarEmptyState(`Nenhum resultado para "${document.getElementById('buscaTurmaDesk').value || document.getElementById('buscaTurmaMob').value}"`, 'Tente buscar por nome, fantasia ou categoria.');
+            return;
+        }
+        renderizarTurmas(filtradas, interclasse);
+    }
+
+    /* ── SYNC SEARCH ── */
+    document.addEventListener('DOMContentLoaded', () => {
+        const desk = document.getElementById('buscaTurmaDesk');
+        const mob = document.getElementById('buscaTurmaMob');
+        desk?.addEventListener('input', () => { mob.value = desk.value; filtrarTurmas(); });
+        mob?.addEventListener('input', () => { desk.value = mob.value; filtrarTurmas(); });
+    });
+
+    /* ── MAIN LOAD ── */
+    async function carregarTurmasAtivas() {
+        renderizarSkeleton();
+
+        try {
+            const interclasse = await resolverInterclasse();
+            if (!interclasse) {
+                renderizarEmptyState('Nenhum interclasse ativo.', 'Selecione um interclasse para ver as turmas.');
+                return;
+            }
+
+            window._interclasseCache = interclasse;
+
+            ['nomeInterclasseCategoria', 'nomeInterclasseCatMob'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.innerText = interclasse.nome_interclasse;
+            });
+            ['btnVoltarCatDesk', 'btnVoltarCatMob'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.href = `./dashboard.php?id=${interclasse.id_interclasse}`;
+            });
+            window.SGIInterclasse.updatePageTitle(interclasse.nome_interclasse);
+
+            const turmasRes = await fetch(`../../../api/turmas.php?id_interclasse=${interclasse.id_interclasse}`);
+            const listaFinal = await turmasRes.json();
+
+            turmasData = Array.isArray(listaFinal) ? listaFinal : [];
+
+            if (!turmasData.length) {
+                renderizarEmptyState();
+                return;
+            }
+
+            renderizarTurmas(turmasData, interclasse);
+        } catch (error) {
+            console.error(error);
+            renderizarEmptyState('Erro ao carregar turmas.', 'Não foi possível conectar ao servidor.');
         }
     }
 
+    /* ── CATEGORIAS MODAL ── */
     async function carregarCategoriasModal() {
         try {
             const interclasse = await resolverInterclasse();
@@ -179,7 +426,7 @@ $paginaAtiva = 'categorias';
         try {
             const interclasse = await resolverInterclasse();
             if (!interclasse) {
-                alert('Nenhum interclasse disponível.');
+                mostrarToast('Nenhum interclasse disponível.', 'error');
                 return;
             }
 
@@ -192,137 +439,52 @@ $paginaAtiva = 'categorias';
                 status_turma: '1'
             };
 
+            if (!body.categorias_id_categoria) {
+                mostrarToast('Selecione uma categoria.', 'error');
+                return;
+            }
+
             const res = await fetch('../../../api/turmas.php', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(body)
             });
 
             const data = await res.json();
-            if (data.success) {
-                const pdf = document.getElementById('arquivoUpload').files?.[0];
-                if (pdf) {
-                    const formData = new FormData();
-                    formData.append('pdf_arquivo', pdf);
-                    formData.append('nome_turma', body.nome_turma);
-                    formData.append('id_interclasse', String(interclasse.id_interclasse));
-                    formData.append('id_categoria', String(body.categorias_id_categoria));
-                    formData.append('id_turma', String(data.id_turma));
-                    const up = await fetch('../../../api/upload_turma_pdf.php', {
-                        method: 'POST',
-                        body: formData
-                    });
-                    const upJson = await up.json().catch(() => ({}));
-                    if (!up.ok || upJson.success === false) {
-                        alert('Turma criada, mas falha ao processar PDF: ' + (upJson.message || 'Erro desconhecido'));
-                    } else {
-                        alert('Turma criada e PDF processado com sucesso!');
-                    }
+            if (!data.success) throw new Error(data.message || 'Erro ao criar turma.');
+
+            const pdf = document.getElementById('arquivoUpload').files?.[0];
+            if (pdf) {
+                const formData = new FormData();
+                formData.append('pdf_arquivo', pdf);
+                formData.append('nome_turma', body.nome_turma);
+                formData.append('id_interclasse', String(interclasse.id_interclasse));
+                formData.append('id_categoria', String(body.categorias_id_categoria));
+                formData.append('id_turma', String(data.id_turma));
+                const up = await fetch('../../../api/upload_turma_pdf.php', {
+                    method: 'POST',
+                    body: formData
+                });
+                const upJson = await up.json().catch(() => ({}));
+                if (!up.ok || upJson.success === false) {
+                    mostrarToast('Turma criada, mas falha ao processar PDF.', 'info');
                 } else {
-                    alert('Turma criada com sucesso!');
+                    mostrarToast('Turma criada e PDF processado com sucesso!', 'success');
                 }
-                bootstrap.Modal.getInstance(document.getElementById('exampleModal')).hide();
-                document.getElementById('formNovaTurma').reset();
-                carregarTurmasAtivas();
             } else {
-                alert('Erro: ' + data.message);
+                mostrarToast('Turma criada com sucesso!', 'success');
             }
+
+            bootstrap.Modal.getInstance(document.getElementById('exampleModal')).hide();
+            document.getElementById('formNovaTurma').reset();
+            document.getElementById('nomeArquivo').textContent = '';
+            carregarTurmasAtivas();
         } catch (error) {
-            console.error(error);
-            alert('Erro ao criar turma.');
+            mostrarToast(error.message, 'error');
         }
     });
-</script>
 
-<script>
-    async function carregarTurmasAtivas() {
-        const listaMobile = document.getElementById('listaTurmasMobile');
-        const listaDesktop = document.getElementById('listaTurmasDesktop');
-
-        try {
-            const interclasse = await resolverInterclasse();
-            if (!interclasse) {
-                listaMobile.innerHTML = '<p class="text-center text-muted mt-4">Nenhum interclasse ativo.</p>';
-                listaDesktop.innerHTML = '<p class="text-center text-muted mt-4">Nenhum interclasse ativo.</p>';
-                return;
-            }
-
-            document.getElementById('nomeInterclasseCategoria').innerText = interclasse.nome_interclasse;
-            document.getElementById('btnVoltarCatDesk').href = `./dashboard.php?id=${interclasse.id_interclasse}`;
-            window.SGIInterclasse.updatePageTitle(interclasse.nome_interclasse);
-
-            const turmasRes = await fetch(`../../../api/turmas.php?id_interclasse=${interclasse.id_interclasse}`);
-            const listaFinal = await turmasRes.json();
-
-            turmasData = Array.isArray(listaFinal) ? listaFinal : [];
-
-            if (!listaFinal || !listaFinal.length) {
-                listaMobile.innerHTML = '<p class="text-center text-muted mt-4">Nenhuma turma cadastrada.</p>';
-                listaDesktop.innerHTML = '<p class="text-center text-muted mt-4">Nenhuma turma cadastrada.</p>';
-                return;
-            }
-
-            // Correção crucial: uso de aspas simples externas no onclick do botão para blindar a renderização do HTML
-            const btnEditDelete = (turma) => NIVEL_USUARIO === 0
-                ? `<button type="button" class="btn btn-link text-danger p-0" title="Editar turma" onclick='editarTurma(${turma.id_turma})'>
-                        <i class="bi bi-pencil-square fs-5"></i>
-                   </button>
-                   <button type="button" class="btn btn-link text-danger p-0" title="Excluir turma" onclick='excluirTurma(${turma.id_turma}, "${turma.nome_turma}")'>
-                        <i class="bi bi-trash fs-5"></i>
-                   </button>`
-                : '';
-
-            listaMobile.innerHTML = listaFinal.map((turma) => `
-                <div class="d-flex m-auto justify-content-between align-items-center shadow py-4 px-4 mb-3 border border-1 rounded-3" style="width: 90%;">
-                    <a href="./turma_alunos.php?id=${interclasse.id_interclasse}&id_turma=${turma.id_turma}&id_categoria=${turma.categorias_id_categoria}" class="text-decoration-none text-dark flex-grow-1">
-                        <h2 class="m-0 fs-5">${turma.nome_turma}</h2>
-                        <small class="text-muted">${turma.nome_categoria || 'Categoria vinculada'}</small>
-                    </a>
-                    <div class="d-flex align-items-center gap-2">
-                        ${btnEditDelete(turma)}
-                        <a href="./turma_alunos.php?id=${interclasse.id_interclasse}&id_turma=${turma.id_turma}&id_categoria=${turma.categorias_id_categoria}">
-                            <img src="../../public/icons/arrow-right.svg" alt="Ver detalhes">
-                        </a>
-                    </div>
-                </div>
-            `).join('');
-
-            const btnEditDeleteDesk = (turma) => NIVEL_USUARIO === 0
-                ? `<button type="button" class="btn btn-link text-danger p-0 me-2" title="Editar turma" onclick='editarTurma(${turma.id_turma})'>
-                        <i class="bi bi-pencil-square fs-4"></i>
-                   </button>
-                   <button type="button" class="btn btn-link text-danger p-0" title="Excluir turma" onclick='excluirTurma(${turma.id_turma}, "${turma.nome_turma}")'>
-                        <i class="bi bi-trash fs-4"></i>
-                   </button>`
-                : '';
-
-            listaDesktop.innerHTML = listaFinal.map((turma) => `
-                <div class="col">
-                    <div class="card border-0 shadow-sm rounded-4 h-100 p-3 bg-white">
-                        <div class="d-flex justify-content-between align-items-center mb-4">
-                            <h5 class="fw-bold mb-0 text-dark" style="font-size: 1.3rem;">${turma.nome_turma}</h5>
-                            <div>${btnEditDeleteDesk(turma)}</div>
-                        </div>
-                        <div class="mb-4 text-muted">${turma.nome_categoria || 'Categoria vinculada'}</div>
-                        <div class="mt-auto">
-                            <a href="./turma_alunos.php?id=${interclasse.id_interclasse}&id_turma=${turma.id_turma}&id_categoria=${turma.categorias_id_categoria}" class="text-decoration-none">
-                                <button type="button" class="btn btn-danger w-100 fw-bold shadow-sm d-flex justify-content-center align-items-center gap-1" style="font-size: 0.85rem; padding: 12px; border-radius: 6px;">
-                                    VER DETALHES <i class="bi bi-arrow-right"></i>
-                                </button>
-                            </a>
-                        </div>
-                    </div>
-                </div>
-            `).join('');
-        } catch (error) {
-            console.error(error);
-            listaMobile.innerHTML = '<p class="text-center text-danger mt-4">Erro ao carregar turmas.</p>';
-            listaDesktop.innerHTML = '<p class="text-center text-danger mt-4">Erro ao carregar turmas.</p>';
-        }
-    }
-
+    /* ── CATEGORIAS EDIÇÃO ── */
     async function carregarCategoriasEdicao(selectedId) {
         try {
             const interclasse = await resolverInterclasse();
@@ -332,8 +494,7 @@ $paginaAtiva = 'categorias';
             const sel = document.getElementById('editCategoriaTurma');
             sel.innerHTML = '<option value="">Selecione...</option>';
             (cats || []).forEach(cat => {
-                const selAttr = cat.id_categoria == selectedId ? 'selected' : '';
-                sel.innerHTML += `<option value="${cat.id_categoria}" ${selAttr}>${cat.nome_categoria}</option>`;
+                sel.innerHTML += `<option value="${cat.id_categoria}" ${cat.id_categoria == selectedId ? 'selected' : ''}>${cat.nome_categoria}</option>`;
             });
         } catch (e) {
             console.error('Erro ao carregar categorias:', e);
@@ -392,9 +553,7 @@ $paginaAtiva = 'categorias';
 
             const resp = await fetch('../../../api/turmas.php', {
                 method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(body)
             });
             const data = await resp.json();
@@ -414,40 +573,50 @@ $paginaAtiva = 'categorias';
         }
     });
 
-    // Declaração única vinculada ao escopo do objeto global window
-    window.excluirTurma = async function(idTurma, nomeTurma) {
-        if (!confirm(`Deseja excluir a turma "${nomeTurma}"?\nEsta ação não pode ser desfeita.`)) {
-            return;
-        }
+    /* ── EXCLUSÃO COM MODAL ── */
+    let excluirIdPendente = null;
+
+    window.abrirModalExcluir = function(idTurma, nomeTurma) {
+        excluirIdPendente = idTurma;
+        document.getElementById('excluirTurmaNome').textContent = nomeTurma;
+        const modal = new bootstrap.Modal(document.getElementById('modalExcluirTurma'));
+        modal.show();
+    };
+
+    document.getElementById('btnConfirmarExclusao').addEventListener('click', async () => {
+        if (!excluirIdPendente) return;
+
+        const btn = document.getElementById('btnConfirmarExclusao');
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Excluindo...';
+
         try {
-            const res = await fetch(`../../../api/turmas.php?id_turma=${parseInt(idTurma)}`, {
-                method: 'DELETE'
-            });
-
-            const textoResposta = await res.text();
+            const res = await fetch(`../../../api/turmas.php?id_turma=${excluirIdPendente}`, { method: 'DELETE' });
+            const texto = await res.text();
             let data = null;
-
-            try {
-                data = JSON.parse(textoResposta);
-            } catch (e) {
-                console.error("Resposta não pôde ser convertida em JSON:", textoResposta);
-            }
+            try { data = JSON.parse(texto); } catch (_) {}
 
             if (!res.ok || !data || data.success === false) {
-                const mensagemErro = (data && data.message) ?
-                    data.message :
-                    'Não é possível excluir esta turma porque existem registros vinculados a ela (alunos, modalidades ou jogos).';
-
-                throw new Error(mensagemErro);
+                throw new Error(data?.message || 'Não é possível excluir esta turma pois existem registros vinculados a ela.');
             }
 
-            alert('Turma excluída com sucesso!');
+            bootstrap.Modal.getInstance(document.getElementById('modalExcluirTurma')).hide();
+            mostrarToast('Turma excluída com sucesso!', 'success');
+            excluirIdPendente = null;
             await carregarTurmasAtivas();
         } catch (error) {
-            alert(error.message);
+            mostrarToast(error.message, 'error');
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = 'Sim, excluir';
         }
-    }
+    });
 
+    document.getElementById('modalExcluirTurma').addEventListener('hidden.bs.modal', () => {
+        excluirIdPendente = null;
+    });
+
+    /* ── INIT ── */
     window.addEventListener('load', carregarTurmasAtivas);
 </script>
 

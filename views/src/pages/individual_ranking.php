@@ -14,10 +14,8 @@ $paginaAtiva = 'dashboard';
     <div class="container-fluid" style="max-width: 720px;">
 
         <div class="mb-4">
-            <a href="./home.php"
-               class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold mb-3 px-3 py-2 border-0 shadow-sm text-decoration-none rounded-3">
-                <i class="bi bi-arrow-left-circle"></i>
-                <span id="nomeInterclasseIndividual">Interclasse</span>
+            <a href="./dashboard.php" id="btnVoltarIndividual" class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold mb-3 px-3 py-2 border-0 text-decoration-none" style="background-color:#E30613;border-radius:6px;padding:8px 16px;">
+                <i class="bi bi-arrow-left-circle fs-5"></i> <span id="nomeInterclasseIndividual">Interclasse</span>
             </a>
         </div>
 
@@ -96,7 +94,10 @@ $paginaAtiva = 'dashboard';
             return null;
         }
         const dados = await window.SGIInterclasse.getInterclasseById(idInterclasse);
-        document.getElementById('nomeInterclasseIndividual').innerText = dados?.nome_interclasse || 'Interclasse';
+        const nomeEl = document.getElementById('nomeInterclasseIndividual');
+        if (nomeEl) nomeEl.innerText = dados?.nome_interclasse || 'Interclasse';
+        const btnEl = document.getElementById('btnVoltarIndividual');
+        if (btnEl) btnEl.href = `./dashboard.php?id=${idInterclasse}`;
         return idInterclasse;
     }
 

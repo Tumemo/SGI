@@ -35,10 +35,17 @@ switch ($method) {
                     turmas.nome_fantasia_turma, 
                     turmas.categorias_id_categoria,
                     interclasses.nome_interclasse,
-                    categorias.nome_categoria
+                    categorias.nome_categoria,
+                    COALESCE(alunos.qtd, 0) AS qtd_alunos
                 FROM turmas 
                 INNER JOIN interclasses ON interclasses.id_interclasse = turmas.interclasses_id_interclasse
                 INNER JOIN categorias ON categorias.id_categoria = turmas.categorias_id_categoria
+                LEFT JOIN (
+                    SELECT turmas_id_turma, COUNT(*) AS qtd
+                    FROM usuarios
+                    WHERE status_usuario = '1' AND nivel_usuario = '3'
+                    GROUP BY turmas_id_turma
+                ) alunos ON alunos.turmas_id_turma = turmas.id_turma
                 WHERE turmas.interclasses_id_interclasse = ? AND categorias.interclasses_id_interclasse = ?"
                 . $filtro['sql'];
 
