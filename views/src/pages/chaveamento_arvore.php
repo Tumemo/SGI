@@ -2001,69 +2001,6 @@ $paginaAtiva = 'chaveamento';
         });
     }
 
-    async function salvarIndRanking(idModalidade) {
-        const selects1 = document.querySelectorAll('#indSelectPrimeiro');
-        const selects2 = document.querySelectorAll('#indSelectSegundo');
-        const selects3 = document.querySelectorAll('#indSelectTerceiro');
-
-        function getVisibleValue(els) {
-            for (const el of els) {
-                if (el.offsetParent !== null) return Number(el.value);
-            }
-            return Number(els[0]?.value || 0);
-        }
-        const primeiro = getVisibleValue(selects1);
-        const segundo = getVisibleValue(selects2);
-        const terceiro = getVisibleValue(selects3);
-        const msg = document.getElementById('msgIndRanking');
-        const btns = document.querySelectorAll('#btnSalvarIndRanking');
-        const btn = btns[0];
-
-        if (!primeiro || !segundo || !terceiro) {
-            document.querySelectorAll('#msgIndRanking').forEach(m => m.innerHTML = '<span style="color:#dc2626;font-weight:700;">Selecione 1º, 2º e 3º lugar.</span>');
-            return;
-        }
-        if (primeiro === segundo || primeiro === terceiro || segundo === terceiro) {
-            document.querySelectorAll('#msgIndRanking').forEach(m => m.innerHTML = '<span style="color:#dc2626;font-weight:700;">Os participantes devem ser diferentes.</span>');
-            return;
-        }
-
-        btns.forEach(b => {
-            b.disabled = true;
-            b.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Salvando...';
-        });
-        document.querySelectorAll('#msgIndRanking').forEach(m => m.innerHTML = '');
-
-        try {
-            const resp = await fetch('../../../api/chaveamento.php', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    tipo_modalidade: 'individual',
-                    id_modalidade: idModalidade,
-                    ranking: {
-                        primeiro,
-                        segundo,
-                        terceiro
-                    }
-                })
-            });
-            const data = await resp.json();
-            if (!data.success) throw new Error(data.message || 'Erro ao salvar.');
-            document.querySelectorAll('#msgIndRanking').forEach(m => m.innerHTML = '<span style="color:#16a34a;font-weight:700;">Ranking salvo com sucesso!</span>');
-            await carregarArvore(String(idModalidade));
-        } catch (e) {
-            document.querySelectorAll('#msgIndRanking').forEach(m => m.innerHTML = `<span style="color:#dc2626;font-weight:700;">${esc(e.message)}</span>`);
-        } finally {
-            btns.forEach(b => {
-                b.disabled = false;
-                b.innerHTML = '<i class="bi bi-check-lg"></i> Salvar Ranking';
-            });
-        }
-    }
-
     let _jogoIndividualCache = null;
 
     async function editarJogoIndividual(e) {
@@ -2149,24 +2086,10 @@ $paginaAtiva = 'chaveamento';
             if (areaMob) areaMob.innerHTML = loadingHtml;
 
             try {
-                const [resPart, resRank] = await Promise.all([
-                    fetch(`../../../api/chaveamento.php?tipo_modalidade=individual&acao=participantes&id_modalidade=${idModalidade}`),
-                    fetch(`../../../api/chaveamento.php?tipo_modalidade=individual&acao=ranking&id_modalidade=${idModalidade}`)
-                ]);
-                const dadosPart = await resPart.json();
+                const resRank = await fetch(`../../../api/chaveamento.php?tipo_modalidade=individual&acao=ranking&id_modalidade=${idModalidade}`);
                 const dadosRank = await resRank.json();
-                const participantes = (dadosPart.success && dadosPart.participantes) ? dadosPart.participantes : [];
                 const rankingAtual = (dadosRank.success && dadosRank.ranking) ? dadosRank.ranking : [];
                 const jogoIndividual = dadosRank.jogo || null;
-
-                const selectOpts = participantes.map(p =>
-                    `<option value="${p.id_usuario}">${esc(p.nome_usuario)} — ${esc(p.nome_turma)}</option>`
-                ).join('');
-                const selectEmpty = '<option value="">Selecione...</option>';
-
-                const primeiroAtual = rankingAtual.find(r => r.posicao === 1);
-                const segundoAtual = rankingAtual.find(r => r.posicao === 2);
-                const terceiroAtual = rankingAtual.find(r => r.posicao === 3);
 
                 let rankingDisplay = '';
                 if (rankingAtual.length > 0) {
@@ -2186,18 +2109,13 @@ $paginaAtiva = 'chaveamento';
                     });
                     rankingDisplay += '</div>';
                 } else {
-                    rankingDisplay = '<div class="kv-empty" style="padding:24px;"><div class="kv-empty__icon"><i class="bi bi-award"></i></div><div class="kv-empty__title">Nenhum ranking registrado</div><div class="kv-empty__desc">Selecione os colocados abaixo para registrar o resultado.</div></div>';
-                }
-
-                let partOptsHtml = selectEmpty;
-                if (participantes.length > 0) {
-                    partOptsHtml = selectOpts;
+                    rankingDisplay = '<div class="kv-empty" style="padding:24px;"><div class="kv-empty__icon"><i class="bi bi-award"></i></div><div class="kv-empty__title">Nenhum ranking registrado</div><div class="kv-empty__desc">Registre os colocados (1º, 2º e 3º lugar) na página do jogo.</div></div>';
                 }
 
                 const individualHtml = `
-                    <div class="kv-history-card" style="margin-bottom:20px;">
+                    <div class="kv-history-card">
                         <div class="kv-history-card__header" style="display:flex;justify-content:space-between;align-items:center;">
-                            <div class="kv-history-card__title"><i class="bi bi-trophy-fill"></i> Registrar Resultado Individual</div>
+                            <div class="kv-history-card__title"><i class="bi bi-award-fill"></i> Ranking Atual</div>
                             ${jogoIndividual ? `
                             <div class="dropdown">
                                 <button class="kv-action" type="button" data-bs-toggle="dropdown" aria-expanded="false" title="Mais opções">
@@ -2209,63 +2127,16 @@ $paginaAtiva = 'chaveamento';
                             </div>` : ''}
                         </div>
                         <div class="kv-history-card__body">
-                            <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;">
-                                <div>
-                                    <label class="form-label fw-semibold" style="font-size:0.8rem;color:#6b7280;">🥇 1º Lugar</label>
-                                    <select class="form-select" id="indSelectPrimeiro" style="border-radius:10px;font-size:0.88rem;">${partOptsHtml}</select>
-                                </div>
-                                <div>
-                                    <label class="form-label fw-semibold" style="font-size:0.8rem;color:#6b7280;">🥈 2º Lugar</label>
-                                    <select class="form-select" id="indSelectSegundo" style="border-radius:10px;font-size:0.88rem;">${partOptsHtml}</select>
-                                </div>
-                                <div>
-                                    <label class="form-label fw-semibold" style="font-size:0.8rem;color:#6b7280;">🥉 3º Lugar</label>
-                                    <select class="form-select" id="indSelectTerceiro" style="border-radius:10px;font-size:0.88rem;">${partOptsHtml}</select>
-                                </div>
-                            </div>
-                            <div style="margin-top:16px;display:flex;align-items:center;gap:12px;">
-                                <button type="button" class="kv-btn-generate" id="btnSalvarIndRanking" style="font-size:0.88rem;padding:10px 22px;">
-                                    <i class="bi bi-check-lg"></i> Salvar Ranking
-                                </button>
-                                <span id="msgIndRanking" style="font-size:0.85rem;"></span>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="kv-history-card">
-                        <div class="kv-history-card__header">
-                            <div class="kv-history-card__title"><i class="bi bi-award-fill"></i> Ranking Atual</div>
-                        </div>
-                        <div class="kv-history-card__body">
                             ${rankingDisplay}
                         </div>
+                    </div>
+                    <div class="kv-alert kv-alert--info" style="margin-top:20px;display:flex;align-items:center;gap:8px;">
+                        <i class="bi bi-info-circle"></i> Os colocados (1º, 2º e 3º lugar) são registrados na página do jogo.
                     </div>`;
 
                 _jogoIndividualCache = jogoIndividual;
                 area.innerHTML = individualHtml;
                 if (areaMob) areaMob.innerHTML = individualHtml;
-
-                if (primeiroAtual) {
-                    const el1 = document.getElementById('indSelectPrimeiro');
-                    const el1m = document.getElementById('bracketAreaMob')?.querySelector('#indSelectPrimeiro');
-                    if (el1) el1.value = primeiroAtual.id_usuario;
-                    if (el1m) el1m.value = primeiroAtual.id_usuario;
-                }
-                if (segundoAtual) {
-                    const el2 = document.getElementById('indSelectSegundo');
-                    const el2m = document.getElementById('bracketAreaMob')?.querySelector('#indSelectSegundo');
-                    if (el2) el2.value = segundoAtual.id_usuario;
-                    if (el2m) el2m.value = segundoAtual.id_usuario;
-                }
-                if (terceiroAtual) {
-                    const el3 = document.getElementById('indSelectTerceiro');
-                    const el3m = document.getElementById('bracketAreaMob')?.querySelector('#indSelectTerceiro');
-                    if (el3) el3.value = terceiroAtual.id_usuario;
-                    if (el3m) el3m.value = terceiroAtual.id_usuario;
-                }
-
-                document.querySelectorAll('#btnSalvarIndRanking').forEach(btn => {
-                    btn.addEventListener('click', () => salvarIndRanking(idModalidade));
-                });
 
             } catch (e) {
                 console.error("Erro ao carregar ranking individual:", e);

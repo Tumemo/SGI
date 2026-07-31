@@ -398,6 +398,9 @@ $paginaAtiva = 'dashboard';
     let saveTimers = {};
     let tempoEsgotado = false;
     let equipesCache = {};
+    let ehIndividual = false;
+    let indParticipantes = [];
+    let indRankingAtual = [];
 
     function formatNomeJogo(nomeJogo) {
         const mm = (nomeJogo || '').match(/^MM:(\d+):(\d+):([NB])$/);
@@ -796,6 +799,11 @@ $paginaAtiva = 'dashboard';
         grid.innerHTML = '';
         grid.classList.remove('score-blocked');
 
+        if (ehIndividual) {
+            renderIndividual();
+            return;
+        }
+
         var emAndamento = st === 'Iniciado' || st === 'Pausado';
         var encerrado = st === 'Concluido' || st === 'Finalizado';
 
@@ -936,6 +944,155 @@ $paginaAtiva = 'dashboard';
         return parseInt(estadoJogo.tipos_modalidades_id_tipo_modalidade, 10) === 1;
     }
 
+    async function carregarIndDados() {
+        var idModalidade = estadoJogo ? estadoJogo.modalidades_id_modalidade : null;
+        if (!idModalidade) {
+            indParticipantes = [];
+            indRankingAtual = [];
+            return;
+        }
+        try {
+            var resPart = await fetch(API + 'chaveamento.php?tipo_modalidade=individual&acao=participantes&id_modalidade=' + idModalidade);
+            var resRank = await fetch(API + 'chaveamento.php?tipo_modalidade=individual&acao=ranking&id_modalidade=' + idModalidade);
+            var dadosPart = await resPart.json();
+            var dadosRank = await resRank.json();
+            indParticipantes = (dadosPart.success && Array.isArray(dadosPart.participantes)) ? dadosPart.participantes : [];
+            indRankingAtual = (dadosRank.success && Array.isArray(dadosRank.ranking)) ? dadosRank.ranking : [];
+        } catch (e) {
+            indParticipantes = [];
+            indRankingAtual = [];
+        }
+    }
+
+    function renderIndividual() {
+        var grid = document.getElementById('placar-grid');
+        if (indParticipantes.length === 0) {
+            grid.innerHTML = '<div class="mc-empty"><i class="bi bi-inbox" style="font-size:2rem;display:block;margin-bottom:.5rem;color:#d1d5db"></i>Não há participantes vinculados a esta modalidade.</div>';
+            return;
+        }
+
+        var gruposTurma = {};
+        indParticipantes.forEach(function(p) {
+            var turma = p.nome_fantasia_turma || p.nome_turma || 'Sem turma';
+            if (!gruposTurma[turma]) gruposTurma[turma] = [];
+            gruposTurma[turma].push(p);
+        });
+        var partOpts = '<option value="">Selecione...</option>' + Object.keys(gruposTurma).sort().map(function(turma) {
+            return '<optgroup label="' + esc(turma) + '">' +
+                gruposTurma[turma].sort(function(a, b) {
+                    return (a.nome_usuario || '').localeCompare(b.nome_usuario || '');
+                }).map(function(p) {
+                    return '<option value="' + p.id_usuario + '">' + esc(p.nome_usuario) + '</option>';
+                }).join('') +
+                '</optgroup>';
+        }).join('');
+
+        var primeiroAtual = indRankingAtual.find(function(r) { return r.posicao === 1; });
+        var segundoAtual = indRankingAtual.find(function(r) { return r.posicao === 2; });
+        var terceiroAtual = indRankingAtual.find(function(r) { return r.posicao === 3; });
+
+        var podiumHtml = '';
+        if (indRankingAtual.length > 0) {
+            var posLabels = ['1º Lugar', '2º Lugar', '3º Lugar'];
+            var posIcons = ['🥇', '🥈', '🥉'];
+            var posBg = ['#fef9c3', '#f3f4f6', '#fde8e8'];
+            var posBd = ['#fde68a', '#e5e7eb', '#fecaca'];
+            podiumHtml = '<div style="display:flex;gap:16px;flex-wrap:wrap;justify-content:center;margin-top:12px;">';
+            indRankingAtual.forEach(function(r, idx) {
+                podiumHtml += '<div style="flex:1;min-width:160px;text-align:center;padding:16px 12px;border-radius:14px;background:' + (posBg[idx] || '#fff') + ';border:1px solid ' + (posBd[idx] || '#e5e7eb') + ';">' +
+                    '<div style="font-size:1.6rem;">' + (posIcons[idx] || '') + '</div>' +
+                    '<div style="font-weight:700;margin-top:6px;">' + (posLabels[idx] || '') + '</div>' +
+                    '<div style="font-weight:600;margin-top:4px;">' + esc(r.nome_usuario || 'Desconhecido') + '</div>' +
+                    '<div style="font-size:.78rem;color:#6b7280;margin-top:4px;">' + esc(r.nome_fantasia_turma || r.nome_turma || '') + '</div>' +
+                '</div>';
+            });
+            podiumHtml += '</div>';
+        } else {
+            podiumHtml = '<div class="text-center py-4 text-muted" style="font-size:.9rem;"><i class="bi bi-award d-block mb-2" style="font-size:2rem;color:#d1d5db;"></i>Nenhum resultado registrado ainda.</div>';
+        }
+
+        grid.innerHTML =
+            '<div style="width:100%;max-width:760px;background:#fff;border-radius:24px;border:1px solid #f3f4f6;box-shadow:0 4px 24px rgba(0,0,0,.06);padding:1.5rem;">' +
+                '<div style="display:flex;align-items:center;gap:.5rem;font-weight:800;color:#111827;font-size:1.05rem;">' +
+                    '<i class="bi bi-trophy-fill text-warning"></i> Registrar Resultado Individual' +
+                '</div>' +
+                '<div class="row g-3 mt-1">' +
+                    '<div class="col-md-4">' +
+                        '<label class="form-label fw-semibold" style="font-size:.8rem;color:#6b7280;">🥇 1º Lugar</label>' +
+                        '<select class="form-select" id="indSelectPrimeiro" style="font-size:.88rem;">' + partOpts + '</select>' +
+                    '</div>' +
+                    '<div class="col-md-4">' +
+                        '<label class="form-label fw-semibold" style="font-size:.8rem;color:#6b7280;">🥈 2º Lugar</label>' +
+                        '<select class="form-select" id="indSelectSegundo" style="font-size:.88rem;">' + partOpts + '</select>' +
+                    '</div>' +
+                    '<div class="col-md-4">' +
+                        '<label class="form-label fw-semibold" style="font-size:.8rem;color:#6b7280;">🥉 3º Lugar</label>' +
+                        '<select class="form-select" id="indSelectTerceiro" style="font-size:.88rem;">' + partOpts + '</select>' +
+                    '</div>' +
+                '</div>' +
+                '<div style="display:flex;align-items:center;gap:12px;margin-top:1rem;">' +
+                    '<button type="button" class="mc-action-btn mc-action-btn--start" id="btnSalvarIndRanking"><i class="bi bi-check-lg"></i> Salvar Ranking</button>' +
+                    '<span id="msgIndRanking" class="small"></span>' +
+                '</div>' +
+                '<div style="margin-top:1.5rem;">' +
+                    '<div style="font-weight:800;font-size:.9rem;color:#111827;"><i class="bi bi-award-fill me-1"></i>Ranking Atual</div>' +
+                    podiumHtml +
+                '</div>' +
+            '</div>';
+
+        if (primeiroAtual) document.getElementById('indSelectPrimeiro').value = primeiroAtual.id_usuario;
+        if (segundoAtual) document.getElementById('indSelectSegundo').value = segundoAtual.id_usuario;
+        if (terceiroAtual) document.getElementById('indSelectTerceiro').value = terceiroAtual.id_usuario;
+
+        document.getElementById('btnSalvarIndRanking').addEventListener('click', function() {
+            salvarIndRanking();
+        });
+    }
+
+    async function salvarIndRanking() {
+        var primeiro = parseInt(document.getElementById('indSelectPrimeiro').value, 10);
+        var segundo = parseInt(document.getElementById('indSelectSegundo').value, 10);
+        var terceiro = parseInt(document.getElementById('indSelectTerceiro').value, 10);
+        var msg = document.getElementById('msgIndRanking');
+        var btn = document.getElementById('btnSalvarIndRanking');
+
+        if (!primeiro || !segundo || !terceiro) {
+            msg.innerHTML = '<span class="text-danger fw-bold">Selecione 1º, 2º e 3º lugar.</span>';
+            return;
+        }
+        if (primeiro === segundo || primeiro === terceiro || segundo === terceiro) {
+            msg.innerHTML = '<span class="text-danger fw-bold">Os participantes devem ser diferentes.</span>';
+            return;
+        }
+
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Salvando...';
+        msg.innerHTML = '';
+
+        try {
+            var resp = await fetch(API + 'chaveamento.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    tipo_modalidade: 'individual',
+                    id_modalidade: parseInt(estadoJogo.modalidades_id_modalidade, 10),
+                    ranking: { primeiro: primeiro, segundo: segundo, terceiro: terceiro }
+                })
+            });
+            var data = await resp.json();
+            if (!data.success) throw new Error(data.message || 'Erro ao salvar.');
+            msg.innerHTML = '<span class="text-success fw-bold">Ranking salvo com sucesso!</span>';
+            estadoJogo.status_jogo = 'Concluido';
+            await carregarIndDados();
+            renderTudo();
+        } catch (e) {
+            msg.innerHTML = '<span class="text-danger fw-bold">' + esc(e.message) + '</span>';
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="bi bi-check-lg"></i> Salvar Ranking';
+        }
+    }
+
     async function carregarDados() {
         var err = document.getElementById('placar-erro');
         var load = document.getElementById('placar-loading');
@@ -962,6 +1119,11 @@ $paginaAtiva = 'dashboard';
 
             partidasLista = await fetchJson(API + 'partidas.php?id_jogo=' + idJogo);
             if (!Array.isArray(partidasLista)) partidasLista = [];
+
+            ehIndividual = /^IND:\d+$/.test(estadoJogo.nome_jogo || '') || parseInt(estadoJogo.tipos_modalidades_id_tipo_modalidade, 10) === 2;
+            if (ehIndividual) {
+                await carregarIndDados();
+            }
 
             // Restaurar duração do jogo do servidor
             if (estadoJogo.duracao_jogo) {

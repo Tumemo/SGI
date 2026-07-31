@@ -118,6 +118,8 @@ function sgi_ind_criar_jogo(mysqli $conn, int $idModalidade): int
 
 /**
  * Salva o ranking (1º, 2º, 3º lugar) para uma modalidade individual.
+ * Na primeira finalização do jogo, soma os pontos (ponto_1/2/3_lugar do interclasse)
+ * na `pontuacao_turma` das turmas dos 3 colocados.
  *
  * @param array{primeiro:int, segundo:int, terceiro:int} $ranking IDs dos usuários
  */
@@ -148,8 +150,10 @@ function sgi_ind_salvar_ranking(mysqli $conn, int $idModalidade, array $ranking)
     $jogo = sgi_ind_buscar_jogo_existente($conn, $idModalidade);
     if ($jogo === null) {
         $idJogo = sgi_ind_criar_jogo($conn, $idModalidade);
+        $jaConcluido = false;
     } else {
         $idJogo = $jogo['id_jogo'];
+        $jaConcluido = $jogo['status_jogo'] === 'Concluido' || $jogo['status_jogo'] === 'Finalizado';
         // Limpa partidas existentes
         $stDel = $conn->prepare('DELETE FROM partidas WHERE jogos_id_jogo = ?');
         $stDel->bind_param('i', $idJogo);
@@ -169,6 +173,8 @@ function sgi_ind_salvar_ranking(mysqli $conn, int $idModalidade, array $ranking)
          VALUES (?, ?, ?, ?, '1')"
     );
 
+    $equipesPorPosicao = [];
+
     foreach ($posicoes as $posicao => $idUsuario) {
         // Busca a equipe do usuário para esta modalidade
         $equipe = sgi_ind_buscar_equipe_usuario($conn, $idUsuario, $idModalidade);
@@ -176,10 +182,16 @@ function sgi_ind_salvar_ranking(mysqli $conn, int $idModalidade, array $ranking)
             throw new RuntimeException("Usuário {$idUsuario} não possui equipe nesta modalidade.");
         }
 
+        $equipesPorPosicao[$posicao] = $equipe;
         $stIns->bind_param('iiii', $idJogo, $equipe, $idUsuario, $posicao);
         $stIns->execute();
     }
     $stIns->close();
+
+    // Soma os pontos no ranking geral (turmas) apenas na primeira finalização do jogo
+    if (!$jaConcluido) {
+        sgi_ind_aplicar_pontos($conn, $idModalidade, $equipesPorPosicao);
+    }
 
     // Atualiza status do jogo para Concluído
     $stUpd = $conn->prepare("UPDATE jogos SET status_jogo = 'Concluido' WHERE id_jogo = ?");
@@ -192,6 +204,56 @@ function sgi_ind_salvar_ranking(mysqli $conn, int $idModalidade, array $ranking)
         'message' => 'Ranking registrado com sucesso.',
         'id_jogo' => $idJogo,
     ];
+}
+
+/**
+ * Soma os pontos dos 3 colocados à pontuação das turmas no ranking geral.
+ * Espelha o comportamento de `lancar_resultado.php`: só roda na primeira finalização.
+ *
+ * @param array{1:int, 2:int, 3:int} $equipesPorPosicao id_equipe de cada posição
+ */
+function sgi_ind_aplicar_pontos(mysqli $conn, int $idModalidade, array $equipesPorPosicao): void
+{
+    $stM = $conn->prepare('SELECT interclasses_id_interclasse FROM modalidades WHERE id_modalidade = ? LIMIT 1');
+    $stM->bind_param('i', $idModalidade);
+    $stM->execute();
+    $modRow = $stM->get_result()->fetch_assoc();
+    $stM->close();
+
+    if (!$modRow) {
+        return;
+    }
+
+    $stI = $conn->prepare('SELECT ponto_1_lugar, ponto_2_lugar, ponto_3_lugar FROM interclasses WHERE id_interclasse = ? LIMIT 1');
+    $idInterclasse = (int) $modRow['interclasses_id_interclasse'];
+    $stI->bind_param('i', $idInterclasse);
+    $stI->execute();
+    $ptRow = $stI->get_result()->fetch_assoc();
+    $stI->close();
+
+    if (!$ptRow) {
+        return;
+    }
+
+    $pontos = [
+        1 => (int) ($ptRow['ponto_1_lugar'] ?? 0),
+        2 => (int) ($ptRow['ponto_2_lugar'] ?? 0),
+        3 => (int) ($ptRow['ponto_3_lugar'] ?? 0),
+    ];
+
+    $stUpd = $conn->prepare(
+        'UPDATE turmas SET pontuacao_turma = pontuacao_turma + ?
+         WHERE id_turma = (SELECT turmas_id_turma FROM equipes WHERE id_equipe = ? LIMIT 1) LIMIT 1'
+    );
+
+    foreach ($pontos as $posicao => $pts) {
+        if ($pts <= 0 || empty($equipesPorPosicao[$posicao])) {
+            continue;
+        }
+        $stUpd->bind_param('ii', $pts, $equipesPorPosicao[$posicao]);
+        $stUpd->execute();
+    }
+    $stUpd->close();
 }
 
 /**
@@ -236,6 +298,7 @@ function sgi_ind_montar_json_ranking(mysqli $conn, int $idModalidade): array
             INNER JOIN equipes e ON e.id_equipe = p.equipes_id_equipe
             INNER JOIN turmas t ON t.id_turma = e.turmas_id_turma
             WHERE p.jogos_id_jogo = ?
+              AND p.resultado_partida BETWEEN 1 AND 3
             ORDER BY p.resultado_partida ASC';
 
     $st = $conn->prepare($sql);
