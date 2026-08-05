@@ -835,6 +835,122 @@ $cssExtra = '
     .kv-classificacao-geral__podium { grid-template-columns: 1fr 1fr; }
 }
 
+/* ── Custom Select (KVS) ── */
+.kvs { position: relative; flex: 1; min-width: 220px; }
+.kvs-wrap { flex: 1; min-width: 0; }
+.kvs__trigger {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 12px 16px;
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    font-family: "Inter", sans-serif;
+    font-size: 0.9rem;
+    color: #9ca3af;
+    cursor: pointer;
+    text-align: left;
+    transition: border-color .2s, box-shadow .2s;
+}
+.kvs__trigger:hover { border-color: #f0c1c4; }
+.kvs--aberto .kvs__trigger { border-color: #e30613; box-shadow: 0 0 0 3px rgba(227,6,19,0.1); }
+.kvs__trigger-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.kvs__trigger-label--preenchido { color: #111827; font-weight: 600; }
+.kvs__chevron { color: #9ca3af; transition: transform .2s; flex-shrink: 0; }
+.kvs--aberto .kvs__chevron { transform: rotate(180deg); color: #e30613; }
+.kvs__panel {
+    position: absolute;
+    top: calc(100% + 6px);
+    left: 0;
+    right: 0;
+    z-index: 1050;
+    background: #fff;
+    border: 1px solid #eef0f5;
+    border-radius: 14px;
+    box-shadow: 0 18px 40px rgba(17,24,39,.16);
+    overflow: hidden;
+    max-height: 380px;
+    display: flex;
+    flex-direction: column;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-6px);
+    transition: opacity .18s ease, transform .18s ease, visibility .18s;
+}
+.kvs--aberto .kvs__panel { opacity: 1; visibility: visible; transform: translateY(0); }
+.kvs__search-box { position: relative; padding: 12px; border-bottom: 1px solid #f1f5f9; }
+.kvs__search-icone { position: absolute; left: 24px; top: 50%; transform: translateY(-50%); color: #9ca3af; font-size: .85rem; pointer-events: none; }
+.kvs__search {
+    width: 100%;
+    padding: 10px 12px 10px 36px;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    font-family: "Inter", sans-serif;
+    font-size: .85rem;
+    outline: none;
+    background: #f8f9fc;
+    transition: border-color .2s, background .2s;
+}
+.kvs__search:focus { border-color: #e30613; background: #fff; box-shadow: 0 0 0 3px rgba(227,6,19,0.08); }
+.kvs__groups { overflow-y: auto; padding: 6px 8px 10px; }
+.kvs__grupo { margin-top: 8px; }
+.kvs__grupo:first-child { margin-top: 2px; }
+.kvs__grupo-titulo {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    padding: 7px 10px 6px;
+    font-size: .72rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: .05em;
+    color: #6b7280;
+}
+.kvs__grupo-titulo i { color: #e30613; font-size: .8rem; }
+.kvs__grupo-qtd {
+    margin-left: auto;
+    background: #f3f4f6;
+    color: #6b7280;
+    border-radius: 999px;
+    padding: 1px 8px;
+    font-size: .68rem;
+    font-weight: 700;
+}
+.kvs__opcao {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 9px 12px;
+    border: none;
+    background: transparent;
+    border-radius: 9px;
+    font-family: "Inter", sans-serif;
+    font-size: .86rem;
+    color: #1f2937;
+    cursor: pointer;
+    text-align: left;
+    transition: background .15s;
+}
+.kvs__opcao:hover { background: #fef2f2; }
+.kvs__opcao--ativa { background: #fef2f2; color: #e30613; font-weight: 700; }
+.kvs__opcao-nome { min-width: 0; }
+.kvs__opcao-tipo {
+    flex-shrink: 0;
+    font-size: .66rem;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 999px;
+    letter-spacing: .02em;
+}
+.kvs__opcao-tipo--coletiva { background: #fee2e2; color: #dc2626; }
+.kvs__opcao-tipo--individual { background: #f3e8ff; color: #7c3aed; }
+.kvs__vazio { padding: 22px 10px; text-align: center; color: #9ca3af; font-size: .85rem; }
+
 /* ── Animations ── */
 @keyframes kv-fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
 .kv-animate { animation: kv-fadeIn 0.35s ease-out; }
@@ -891,7 +1007,8 @@ $paginaAtiva = 'chaveamento';
             <div class="kv-gen-card__desc">Selecione uma modalidade para gerar automaticamente o chaveamento.</div>
         </div>
         <div class="kv-gen-card__row">
-            <select class="kv-gen-card__select" id="selectModalidadeMob">
+            <div id="kvs-wrap-selectModalidadeMob" class="kvs-wrap" style="width:100%;min-width:0;"></div>
+            <select class="kv-gen-card__select d-none" id="selectModalidadeMob">
                 <option value="">Selecione uma modalidade</option>
             </select>
             <button class="kv-btn-generate" id="btnGerarChaveamentoMob">
@@ -914,7 +1031,8 @@ $paginaAtiva = 'chaveamento';
                 <div class="kv-table-card__desc">Histórico de partidas concluídas.</div>
             </div>
             <div class="kv-filters" style="flex-direction:column;">
-                <select class="kv-filter-select" id="filtroModalidadeJogosMob" style="width:100%;">
+                <div id="kvs-wrap-filtroModalidadeJogosMob" class="kvs-wrap" style="width:100%;min-width:0;"></div>
+                <select class="kv-filter-select d-none" id="filtroModalidadeJogosMob" style="width:100%;">
                     <option value="">Todas modalidades</option>
                 </select>
                 <select class="kv-filter-select" id="filtroCategoriaJogosMob" style="width:100%;">
@@ -1001,7 +1119,8 @@ $paginaAtiva = 'chaveamento';
                 <div class="kv-gen-card__desc">Selecione uma modalidade para gerar automaticamente o chaveamento.</div>
             </div>
             <div class="kv-gen-card__row">
-                <select class="kv-gen-card__select" id="selectModalidade">
+                <div id="kvs-wrap-selectModalidade" class="kvs-wrap"></div>
+                <select class="kv-gen-card__select d-none" id="selectModalidade">
                     <option value="">Selecione uma modalidade</option>
                 </select>
             </div>
@@ -1021,7 +1140,7 @@ $paginaAtiva = 'chaveamento';
                 <div class="kv-empty__icon"><i class="bi bi-diagram-3"></i></div>
                 <div class="kv-empty__title">Nenhum chaveamento disponível</div>
                 <div class="kv-empty__desc">Selecione uma modalidade acima para gerar ou visualizar um chaveamento.</div>
-                <button class="kv-empty__btn" onclick="document.getElementById('selectModalidade').focus();">
+                <button class="kv-empty__btn" onclick="kvs_focus('selectModalidade');">
                     <i class="bi bi-diagram-3-fill"></i> Gerar Chaveamento
                 </button>
             </div>
@@ -1035,7 +1154,8 @@ $paginaAtiva = 'chaveamento';
                 </div>
                 <div class="kv-filters">
                     <input type="text" class="kv-filter-input" placeholder="Buscar partida..." id="inputBuscaJogo">
-                    <select class="kv-filter-select" id="filtroModalidadeJogos">
+                    <div id="kvs-wrap-filtroModalidadeJogos" class="kvs-wrap"></div>
+                    <select class="kv-filter-select d-none" id="filtroModalidadeJogos">
                         <option value="">Todas modalidades</option>
                     </select>
                     <select class="kv-filter-select" id="filtroCategoriaJogos">
@@ -1158,6 +1278,184 @@ $paginaAtiva = 'chaveamento';
         return d.innerHTML;
     }
 
+    /* ── Select customizado (KVS): busca + grupos por categoria ── */
+    let kvs_grupos = [];
+    let kvs_instanciaAtiva = null;
+
+    document.addEventListener('click', () => {
+        if (kvs_instanciaAtiva) {
+            kvs_instanciaAtiva.classList.remove('kvs--aberto');
+            kvs_instanciaAtiva = null;
+        }
+    });
+
+    function kvs_montarGrupos() {
+        const grupos = {};
+        modalidadesCache.forEach(mod => {
+            const chave = mod.nome_categoria || 'Outras';
+            if (!grupos[chave]) grupos[chave] = [];
+            grupos[chave].push({
+                valor: String(mod.id_modalidade),
+                nome: mod.nome_modalidade,
+                tipo: Number(mod.id_tipo_modalidade) === 2 ? 'Individual' : 'Coletiva'
+            });
+        });
+        kvs_grupos = Object.keys(grupos).map(chave => ({ nome: chave, opcoes: grupos[chave] }));
+    }
+
+    function kvs_sincronizar(select, label, placeholder) {
+        let opt = null;
+        kvs_grupos.forEach(g => g.opcoes.forEach(o => {
+            if (o.valor === String(select.value)) opt = o;
+        }));
+        label.textContent = opt ? opt.nome : placeholder;
+        label.classList.toggle('kvs__trigger-label--preenchido', !!opt);
+    }
+
+    function kvs_montar(opts) {
+        const wrap = document.getElementById(opts.wrapId);
+        const select = document.getElementById(opts.selectId);
+        if (!wrap || !select) return;
+
+        wrap.innerHTML = `
+            <div class="kvs">
+                <button type="button" class="kvs__trigger">
+                    <span class="kvs__trigger-label">${esc(opts.placeholder)}</span>
+                    <i class="bi bi-chevron-down kvs__chevron"></i>
+                </button>
+                <div class="kvs__panel">
+                    <div class="kvs__search-box">
+                        <i class="bi bi-search kvs__search-icone"></i>
+                        <input type="text" class="kvs__search" placeholder="Buscar modalidade..." autocomplete="off" spellcheck="false">
+                    </div>
+                    <div class="kvs__groups"></div>
+                </div>
+            </div>`;
+
+        const root = wrap.querySelector('.kvs');
+        const trigger = root.querySelector('.kvs__trigger');
+        const label = root.querySelector('.kvs__trigger-label');
+        const search = root.querySelector('.kvs__search');
+        const groupsEl = root.querySelector('.kvs__groups');
+
+        function renderizar(termo) {
+            const t = (termo || '').toLowerCase().trim();
+            let html = '';
+
+            if (opts.incluirTodas) {
+                const showTudo = !t || 'todas modalidades'.includes(t);
+                if (showTudo) {
+                    const ativa = select.value === '' ? ' kvs__opcao--ativa' : '';
+                    html += `<button type="button" class="kvs__opcao${ativa}" data-value="">
+                        <span class="kvs__opcao-nome">Todas modalidades</span>
+                        <span class="kvs__opcao-tipo kvs__opcao-tipo--coletiva" style="opacity:.55">Mostrar tudo</span>
+                    </button>`;
+                }
+            }
+
+            kvs_grupos.forEach(g => {
+                const opcoes = g.opcoes.filter(o => !t || o.nome.toLowerCase().includes(t) || g.nome.toLowerCase().includes(t));
+                if (!opcoes.length) return;
+                html += `<div class="kvs__grupo">
+                    <div class="kvs__grupo-titulo"><i class="bi bi-trophy-fill"></i>${esc(g.nome)}<span class="kvs__grupo-qtd">${opcoes.length}</span></div>`;
+                opcoes.forEach(o => {
+                    const ativa = String(select.value) === o.valor ? ' kvs__opcao--ativa' : '';
+                    const tipoCls = o.tipo === 'Individual' ? 'kvs__opcao-tipo--individual' : 'kvs__opcao-tipo--coletiva';
+                    html += `<button type="button" class="kvs__opcao${ativa}" data-value="${o.valor}">
+                        <span class="kvs__opcao-nome">${esc(o.nome)}</span>
+                        <span class="kvs__opcao-tipo ${tipoCls}">${o.tipo}</span>
+                    </button>`;
+                });
+                html += '</div>';
+            });
+
+            groupsEl.innerHTML = html || '<div class="kvs__vazio">Nenhuma modalidade encontrada.</div>';
+            groupsEl.querySelectorAll('.kvs__opcao').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    select.value = btn.dataset.value;
+                    kvs_sincronizar(select, label, opts.placeholder);
+                    fechar();
+                    select.dispatchEvent(new Event('change'));
+                });
+            });
+        }
+
+        function posicionarPainel() {
+            const panel = root.querySelector('.kvs__panel');
+            const trig = trigger.getBoundingClientRect();
+            const W = Math.max(trig.width, 240);
+            let left = Math.max(8, trig.left);
+            if (left + W > window.innerWidth - 8) left = Math.max(8, window.innerWidth - W - 8);
+
+            const espacoBaixo = window.innerHeight - trig.bottom - 8;
+            const espacoCima = trig.top - 8;
+            const paraCima = espacoBaixo < 200 && espacoCima > espacoBaixo;
+            const altH = Math.max(180, Math.min(380, paraCima ? espacoCima : espacoBaixo));
+
+            panel.style.position = 'fixed';
+            panel.style.left = left + 'px';
+            panel.style.width = W + 'px';
+            panel.style.maxHeight = altH + 'px';
+            panel.style.top = (paraCima ? trig.top - altH - 6 : trig.bottom + 6) + 'px';
+            panel.style.bottom = 'auto';
+        }
+
+        function abrir() {
+            search.value = '';
+            renderizar('');
+            root.classList.add('kvs--aberto');
+            if (kvs_instanciaAtiva && kvs_instanciaAtiva !== root) {
+                kvs_instanciaAtiva.classList.remove('kvs--aberto');
+            }
+            kvs_instanciaAtiva = root;
+            posicionarPainel();
+            try { search.focus({ preventScroll: true }); } catch (e) { search.focus(); }
+        }
+
+        function fechar() {
+            root.classList.remove('kvs--aberto');
+            if (kvs_instanciaAtiva === root) kvs_instanciaAtiva = null;
+            const panel = root.querySelector('.kvs__panel');
+            panel.style.position = '';
+            panel.style.left = '';
+            panel.style.width = '';
+            panel.style.maxHeight = '';
+            panel.style.top = '';
+            panel.style.bottom = '';
+        }
+
+        trigger.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (root.classList.contains('kvs--aberto')) fechar();
+            else abrir();
+        });
+
+        root.addEventListener('click', (e) => e.stopPropagation());
+
+        search.addEventListener('input', () => renderizar(search.value));
+        search.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') { fechar(); trigger.focus(); }
+            e.stopPropagation();
+        });
+
+        kvs_sincronizar(select, label, opts.placeholder);
+    }
+
+    function kvs_focus(idSelect) {
+        const wrap = document.getElementById('kvs-wrap-' + idSelect);
+        if (wrap) {
+            const trigger = wrap.querySelector('.kvs__trigger');
+            if (trigger) trigger.click();
+        }
+    }
+
+    window.addEventListener('scroll', () => {
+        if (kvs_instanciaAtiva) { kvs_instanciaAtiva.classList.remove('kvs--aberto'); kvs_instanciaAtiva = null; }
+    }, { passive: true });
+    window.addEventListener('resize', () => {
+        if (kvs_instanciaAtiva) { kvs_instanciaAtiva.classList.remove('kvs--aberto'); kvs_instanciaAtiva = null; }
+    });
+
     async function resolverInterclasse() {
         if (!idInterclasse) {
             const ativo = await window.SGIInterclasse.getActiveInterclasse();
@@ -1259,6 +1557,12 @@ $paginaAtiva = 'chaveamento';
                 if (selectMob) selectMob.innerHTML += `<option value="${mod.id_modalidade}">${label}</option>`;
                 if (selectJogosMob) selectJogosMob.innerHTML += `<option value="${mod.id_modalidade}">${label}</option>`;
             });
+
+            kvs_montarGrupos();
+            kvs_montar({ wrapId: 'kvs-wrap-selectModalidade', selectId: 'selectModalidade', placeholder: 'Selecione uma modalidade', incluirTodas: false });
+            kvs_montar({ wrapId: 'kvs-wrap-selectModalidadeMob', selectId: 'selectModalidadeMob', placeholder: 'Selecione uma modalidade', incluirTodas: false });
+            kvs_montar({ wrapId: 'kvs-wrap-filtroModalidadeJogos', selectId: 'filtroModalidadeJogos', placeholder: 'Todas modalidades', incluirTodas: true });
+            kvs_montar({ wrapId: 'kvs-wrap-filtroModalidadeJogosMob', selectId: 'filtroModalidadeJogosMob', placeholder: 'Todas modalidades', incluirTodas: true });
 
             atualizarStats(jogosCache);
         } catch (e) {
@@ -2056,7 +2360,7 @@ $paginaAtiva = 'chaveamento';
                     </div>
                     <div class="kv-empty__title" style="font-size:1.4rem;">Nenhum chaveamento gerado</div>
                     <div class="kv-empty__desc" style="max-width:450px;">Selecione uma modalidade acima para gerar automaticamente o chaveamento do torneio.</div>
-                    <button class="kv-empty__btn" onclick="document.getElementById('selectModalidade').focus();" style="padding:12px 28px;font-size:0.95rem;">
+                    <button class="kv-empty__btn" onclick="kvs_focus('selectModalidade');" style="padding:12px 28px;font-size:0.95rem;">
                         <i class="bi bi-diagram-3-fill"></i> Gerar Chaveamento
                     </button>
                 </div>`;
@@ -2266,7 +2570,10 @@ $paginaAtiva = 'chaveamento';
     });
 
     async function gerarChaveamento(btnEl, msgId) {
-        const idModalidade = document.getElementById('selectModalidade').value;
+        const kvsMob = document.getElementById('kvs-wrap-selectModalidadeMob');
+        const idModalidade = (kvsMob && kvsMob.offsetParent !== null)
+            ? document.getElementById('selectModalidadeMob').value
+            : document.getElementById('selectModalidade').value;
         const msgEl = document.getElementById(msgId);
         const btn = btnEl;
 
