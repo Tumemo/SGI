@@ -29,7 +29,9 @@ switch ($method) {
                     tipos_modalidades.id_tipo_modalidade,
                     categorias.nome_categoria,
                     modalidades.interclasses_id_interclasse,
-                    interclasses.nome_interclasse 
+                    interclasses.nome_interclasse,
+                    (SELECT COUNT(*) FROM equipes e2 WHERE e2.modalidades_id_modalidade = modalidades.id_modalidade AND e2.status_equipe = '1') AS qtd_equipes,
+                    (SELECT COUNT(*) FROM turmas t2 WHERE t2.categorias_id_categoria = modalidades.categorias_id_categoria) AS max_turmas
                     FROM modalidades
                     INNER JOIN tipos_modalidades 
                     ON tipos_modalidades.id_tipo_modalidade = modalidades.tipos_modalidades_id_tipo_modalidade

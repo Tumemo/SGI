@@ -73,11 +73,11 @@ include 'componentes/head.php';
         max-width: 1500px;
         width: calc(100% - 2.5rem);
         margin: 0 auto;
-        padding: 1.25rem 0 2.5rem;
+        padding: 2rem 0 3rem;
     }
     @media (min-width: 1400px) {
         main.modalidade-layout {
-            padding: 1.5rem 0 3rem;
+            padding: 2.5rem 0 3.5rem;
         }
     }
     @media (max-width: 575.98px) {
@@ -169,6 +169,83 @@ include 'componentes/head.php';
         left: 0;
         color: var(--md-primary);
         font-weight: 700;
+    }
+
+    /* ==================== TÍTULOS DE SEÇÃO ==================== */
+    .secao {
+        margin-bottom: 1.75rem;
+    }
+    .secao-titulo {
+        display: flex;
+        align-items: center;
+        gap: 0.9rem;
+        margin-bottom: 1rem;
+    }
+    .secao-titulo-icone {
+        flex-shrink: 0;
+        width: 42px;
+        height: 42px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.2rem;
+        background: var(--md-primary-light);
+        color: var(--md-primary);
+    }
+    .secao-titulo-texto { flex: 1; min-width: 0; }
+    .secao-titulo-texto h2 {
+        font-size: 1.05rem;
+        font-weight: 800;
+        color: var(--md-text);
+        margin: 0;
+        letter-spacing: -0.01em;
+    }
+    .secao-titulo-texto p {
+        font-size: 0.85rem;
+        color: var(--md-text-secondary);
+        margin: 0;
+    }
+    .secao-badge {
+        flex-shrink: 0;
+        font-size: 0.85rem;
+        font-weight: 800;
+        color: var(--md-primary);
+        background: var(--md-primary-light);
+        padding: 0.35rem 0.9rem;
+        border-radius: 50px;
+        white-space: nowrap;
+    }
+
+    /* ==================== STATUS DE VAGAS ==================== */
+    .card-vagas {
+        position: absolute;
+        top: 10px;
+        left: 10px;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        font-size: 0.68rem;
+        font-weight: 700;
+        letter-spacing: 0.02em;
+        padding: 0.3rem 0.7rem;
+        border-radius: 50px;
+        text-transform: uppercase;
+    }
+    .card-vagas.vagas-livre {
+        background: #d1e7dd;
+        color: #0a5a33;
+    }
+    .card-vagas.vagas-poucas {
+        background: #fff3cd;
+        color: #8a6d1a;
+    }
+    .card-vagas.vagas-lotado {
+        background: #f8d7da;
+        color: #842029;
+    }
+    .modalidade-card.selected .card-vagas {
+        background: #fff;
     }
 
     /* ==================== GRID DE MODALIDADES ==================== */
@@ -319,7 +396,18 @@ include 'componentes/head.php';
     #acoesInscricao {
         display: grid;
         gap: 0.75rem;
-        margin-top: 1.5rem;
+        margin-top: 2rem;
+        position: sticky;
+        bottom: 0;
+        z-index: 1015;
+        background: rgba(248, 249, 250, 0.92);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        padding: 1rem 0 0.25rem;
+        border-top: 1px solid rgba(233, 236, 239, 0.9);
+    }
+    @media (max-width: 767.98px) {
+        #acoesInscricao { bottom: 68px; }
     }
     .resumo-selecao {
         display: grid;
@@ -466,6 +554,7 @@ include 'componentes/head.php';
         box-shadow: none;
         cursor: not-allowed;
         transform: none;
+        opacity: 0.55;
     }
     .btn-save:disabled::after { display: none; }
 
@@ -535,8 +624,6 @@ include 'componentes/head.php';
 
 <main class="modalidade-layout">
 
-    <div id="inscricoesAtuais" class="mb-4"></div>
-
     <header class="page-header">
         <div class="page-header-inner">
             <span class="trophy-icon"><i class="bi bi-trophy-fill"></i></span>
@@ -559,12 +646,33 @@ include 'componentes/head.php';
         </div>
     </div>
 
-    <div class="modalidades-grid" id="modalidadesGrid">
-        <div class="col-12 text-center py-5">
-            <div class="spinner-border spinner-border-sm me-2" role="status"></div>
-            Carregando modalidades...
+    <section class="secao d-none" id="secaoInscricoes">
+        <div class="secao-titulo">
+            <span class="secao-titulo-icone"><i class="bi bi-person-check-fill"></i></span>
+            <div class="secao-titulo-texto">
+                <h2>Suas inscrições</h2>
+                <p>Modalidades em que você já está confirmado.</p>
+            </div>
+            <span class="secao-badge" id="badgeInscricoes">0/3</span>
         </div>
-    </div>
+        <div id="inscricoesAtuais"></div>
+    </section>
+
+    <section class="secao" id="secaoDisponiveis">
+        <div class="secao-titulo">
+            <span class="secao-titulo-icone"><i class="bi bi-grid-1x2-fill"></i></span>
+            <div class="secao-titulo-texto">
+                <h2>Disponíveis para escolha</h2>
+                <p>Selecione até 3 modalidades para participar.</p>
+            </div>
+        </div>
+        <div class="modalidades-grid" id="modalidadesGrid">
+            <div class="col-12 text-center py-5">
+                <div class="spinner-border spinner-border-sm me-2" role="status"></div>
+                Carregando modalidades...
+            </div>
+        </div>
+    </section>
 
     <div id="acoesInscricao" class="d-none">
         <div class="resumo-selecao">
@@ -677,6 +785,8 @@ include 'componentes/nav.php';
                 renderizarInscricoes();
             } else {
                 document.getElementById('inscricoesAtuais').innerHTML = '';
+                const secao = document.getElementById('secaoInscricoes');
+                if (secao) secao.classList.add('d-none');
             }
             renderizarSelecao();
 
@@ -738,6 +848,20 @@ include 'componentes/nav.php';
             .observe(grid, { attributes: true, childList: true, subtree: true, attributeFilter: ['class'] });
     }
 
+    // Define o status de vagas de uma modalidade com base nas equipes inscritas
+    function statusVagas(mod) {
+        const maxTurmas = parseInt(mod.max_turmas) || 0;
+        const ocupadas = parseInt(mod.qtd_equipes) || 0;
+        const restantes = maxTurmas - ocupadas;
+        if (maxTurmas <= 0 || restantes > 2) {
+            return { cls: 'vagas-livre', icon: 'bi-check-circle-fill', label: 'Vagas disponíveis' };
+        }
+        if (restantes <= 0) {
+            return { cls: 'vagas-lotado', icon: 'bi-x-circle-fill', label: 'Lotado' };
+        }
+        return { cls: 'vagas-poucas', icon: 'bi-exclamation-triangle-fill', label: 'Poucas vagas' };
+    }
+
     function renderizarSelecao() {
         const grid = document.getElementById('modalidadesGrid');
         const acoes = document.getElementById('acoesInscricao');
@@ -772,9 +896,11 @@ include 'componentes/nav.php';
         disponiveis.forEach(mod => {
             const col = document.createElement('div');
             col.className = 'col';
+            const vagas = statusVagas(mod);
             col.innerHTML = `
                 <div class="modalidade-card" data-id="${mod.id_modalidade}" onclick="toggleModalidade(this)">
                     <span class="card-check"><i class="bi bi-check-lg"></i></span>
+                    <span class="card-vagas ${vagas.cls}"><i class="bi ${vagas.icon}"></i>${vagas.label}</span>
                     <div class="card-icon-wrap"><i class="bi ${iconeModalidade(mod.nome_modalidade)}"></i></div>
                     <div class="card-info">
                         <span class="card-nome">${esc(mod.nome_modalidade)}</span>
@@ -791,10 +917,13 @@ include 'componentes/nav.php';
         container.innerHTML = '';
 
         if (modalidadesInscritas.length === 0) {
+            document.getElementById('secaoInscricoes').classList.add('d-none');
             return;
         }
 
-        container.innerHTML = `<h5 class="fs-6 fw-bold text-dark mb-3"><i class="bi bi-person-check text-success me-2"></i>Suas inscrições (${modalidadesInscritas.length}/3)</h5>`;
+        document.getElementById('secaoInscricoes').classList.remove('d-none');
+        const badge = document.getElementById('badgeInscricoes');
+        if (badge) badge.textContent = `${modalidadesInscritas.length}/3`;
 
         const wrapper = document.createElement('div');
         wrapper.className = 'row row-cols-1 row-cols-md-3 g-3';

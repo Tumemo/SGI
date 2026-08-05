@@ -4,6 +4,17 @@ require_once '../../../../config/db.php';
 
 $id_usuario = (int)($_SESSION['id'] ?? 0);
 
+$categoria_usuario = 0;
+if ($id_usuario) {
+    $stmtCat = $conn->prepare("SELECT u.genero_usuario, t.categorias_id_categoria FROM usuarios u LEFT JOIN turmas t ON u.turmas_id_turma = t.id_turma WHERE u.id_usuario = ?");
+    $stmtCat->bind_param('i', $id_usuario);
+    $stmtCat->execute();
+    $resCat = $stmtCat->get_result();
+    if ($rowCat = $resCat->fetch_assoc()) {
+        $categoria_usuario = (int)($rowCat['categorias_id_categoria'] ?? 0);
+    }
+}
+
 $tituloPagina = 'SGI - Jogos';
 $titulo = 'Tabela de Jogos';
 $mostrarVoltar = true;
@@ -593,7 +604,7 @@ include 'componentes/nav.php';
     let todosOsJogos = [];
     let filtroStatus = 'all';
     let filtroModalidade = 'all';
-    let filtroCategoria = 'all';
+    let filtroCategoria = '<?= $categoria_usuario > 0 ? (string) $categoria_usuario : 'all' ?>';
     let anoInterclasse = new Date().getFullYear();
     let idInterclasse = null;
 
@@ -808,6 +819,13 @@ include 'componentes/nav.php';
 
         select.innerHTML = '<option value="all">Todas</option>' +
             categorias.map(c => `<option value="${esc(c.id)}">${esc(c.nome)}</option>`).join('');
+
+        if (filtroCategoria !== 'all' && vistos.has(String(filtroCategoria))) {
+            select.value = String(filtroCategoria);
+        } else {
+            filtroCategoria = 'all';
+            select.value = 'all';
+        }
     }
 
     function renderizarJogos() {
