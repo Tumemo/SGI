@@ -54,92 +54,442 @@ include 'componentes/head.php';
 ?>
 
 <style>
-    .modalidade-card {
-        background-color: #ffffff;
-        border-radius: 12px;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-        min-height: 70px;
+    :root {
+        --md-primary: #e30613;
+        --md-primary-dark: #c82333;
+        --md-primary-light: #fce4e6;
+        --md-primary-subtle: #fff5f5;
+        --md-success: #198754;
+        --md-surface: #ffffff;
+        --md-border: #e9ecef;
+        --md-text: #1a1a2e;
+        --md-text-secondary: #6c757d;
+        --md-shadow: 0 6px 20px rgba(30, 30, 60, 0.08);
+        --md-shadow-hover: 0 14px 32px rgba(30, 30, 60, 0.15);
+    }
+
+    /* ==================== LAYOUT GERAL ==================== */
+    main.modalidade-layout {
+        max-width: 1500px;
+        width: calc(100% - 2.5rem);
+        margin: 0 auto;
+        padding: 1.25rem 0 2.5rem;
+    }
+    @media (min-width: 1400px) {
+        main.modalidade-layout {
+            padding: 1.5rem 0 3rem;
+        }
+    }
+    @media (max-width: 575.98px) {
+        main.modalidade-layout {
+            width: calc(100% - 2rem);
+        }
+    }
+
+    /* ==================== CABEÇALHO ==================== */
+    .page-header {
+        margin-bottom: 1.5rem;
+    }
+    .page-header-inner {
+        display: flex;
+        align-items: center;
+        gap: 1.1rem;
+    }
+    .page-header .trophy-icon {
+        flex-shrink: 0;
+        width: 60px;
+        height: 60px;
+        border-radius: 16px;
         display: flex;
         align-items: center;
         justify-content: center;
-        gap: 10px;
-        cursor: pointer;
-        font-size: 1rem;
-        font-weight: 500;
-        color: #000;
+        background: linear-gradient(135deg, #e30613, #ff5560);
+        color: #fff;
+        font-size: 1.8rem;
+        box-shadow: 0 10px 24px rgba(227, 6, 19, 0.35);
+        animation: floatIcon 4s ease-in-out infinite;
+    }
+    @keyframes floatIcon {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-5px); }
+    }
+    .page-header h1 {
+        font-size: clamp(1.5rem, 3vw, 2.1rem);
+        font-weight: 800;
+        color: var(--md-text);
+        letter-spacing: -0.02em;
+        margin: 0 0 0.25rem;
+    }
+    .page-header .subtitle {
+        font-size: clamp(0.95rem, 1.4vw, 1.05rem);
+        color: var(--md-text-secondary);
+        margin: 0;
+    }
+
+    /* ==================== CAIXA DE INFORMAÇÕES ==================== */
+    .info-box {
+        width: 100%;
+        margin-bottom: 1.75rem;
+        background: var(--md-primary-subtle);
+        border: 1px solid #ffd9dc;
+        border-left: 5px solid var(--md-primary);
+        border-radius: 14px;
+        padding: 0.9rem 1.15rem;
+        display: flex;
+        gap: 0.8rem;
+        align-items: flex-start;
+    }
+    .info-box .info-icon { font-size: 1.25rem; line-height: 1.3; }
+    .info-box .info-content { flex: 1; }
+    .info-box .info-title {
+        font-weight: 700;
+        font-size: 0.85rem;
+        color: var(--md-primary-dark);
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        margin-bottom: 0.3rem;
+    }
+    .info-box ul {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.25rem 1.75rem;
+        margin: 0;
+        padding: 0;
+        list-style: none;
+    }
+    .info-box li {
+        font-size: 0.85rem;
+        color: #6d2a2f;
         position: relative;
+        padding-left: 1.1rem;
+    }
+    .info-box li::before {
+        content: '•';
+        position: absolute;
+        left: 0;
+        color: var(--md-primary);
+        font-weight: 700;
+    }
+
+    /* ==================== GRID DE MODALIDADES ==================== */
+    .modalidades-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+        gap: 1.1rem;
+    }
+    .modalidades-grid > .col {
+        width: auto;
+        flex: none;
+        padding: 0;
+        display: flex;
+    }
+    .modalidades-grid > .col-12 {
+        grid-column: 1 / -1;
+        width: 100%;
+        padding: 0;
+    }
+    @media (min-width: 576px) and (max-width: 991.98px) {
+        .modalidades-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (min-width: 992px) and (max-width: 1399.98px) {
+        .modalidades-grid { grid-template-columns: repeat(3, 1fr); }
+    }
+
+    .modalidade-card {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 0.65rem;
+        width: 100%;
+        min-height: 150px;
+        background: var(--md-surface);
+        border: 2px solid var(--md-border);
+        border-radius: 16px;
+        padding: 1.35rem 1rem;
+        cursor: pointer;
         user-select: none;
-        transition: transform 0.15s, background-color 0.2s, color 0.2s;
-        padding: 1rem 0.75rem;
+        text-align: center;
+        box-shadow: var(--md-shadow);
+        transition: transform 0.22s ease, box-shadow 0.22s ease, border-color 0.22s ease, background-color 0.22s ease;
     }
     .modalidade-card:hover {
-        transform: translateY(-2px);
+        transform: translateY(-5px);
+        box-shadow: var(--md-shadow-hover);
+        border-color: #f5b9be;
+        background-color: #fffdfd;
     }
-    .modalidade-card.selected {
-        background-color: #5cb85c;
-        color: #fff;
-    }
-    .modalidade-card.selected i {
-        color: #fff;
-    }
-    .modalidade-card.selected::after {
-        content: "✓";
-        position: absolute;
-        top: -6px;
-        right: -6px;
-        width: 22px;
-        height: 22px;
-        background-color: #5cb85c;
-        border: 2px solid #fff;
-        color: white;
-        border-radius: 50%;
-        font-size: 12px;
+    .modalidade-card .card-icon-wrap {
+        width: 52px;
+        height: 52px;
+        border-radius: 14px;
         display: flex;
         align-items: center;
         justify-content: center;
-        font-weight: bold;
+        font-size: 1.6rem;
+        background: var(--md-primary-subtle);
+        color: var(--md-primary);
+        transition: transform 0.22s ease, background-color 0.22s ease, color 0.22s ease;
+    }
+    .modalidade-card:hover .card-icon-wrap { transform: scale(1.08); }
+    .modalidade-card .card-info {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.3rem;
+    }
+    .modalidade-card .card-nome {
+        font-weight: 600;
+        font-size: 1.05rem;
+        color: var(--md-text);
+        line-height: 1.2;
+    }
+    .modalidade-card .card-categoria {
+        font-size: 0.7rem;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        color: var(--md-text-secondary);
+        background: #f2f4f8;
+        padding: 0.22rem 0.65rem;
+        border-radius: 50px;
+        text-transform: uppercase;
+    }
+
+    /* Estado selecionado */
+    .modalidade-card.selected {
+        border-color: var(--md-primary);
+        background: var(--md-primary-subtle);
+        box-shadow: 0 0 0 4px rgba(227, 6, 19, 0.12), 0 10px 24px rgba(227, 6, 19, 0.15);
+        animation: popIn 0.25s ease;
+    }
+    @keyframes popIn {
+        0% { transform: scale(0.97); }
+        60% { transform: scale(1.02); }
+        100% { transform: scale(1); }
+    }
+    .modalidade-card.selected .card-icon-wrap {
+        background: var(--md-primary);
+        color: #fff;
+    }
+    .modalidade-card.selected .card-nome { color: var(--md-primary-dark); }
+    .modalidade-card.selected .card-categoria {
+        background: #fff;
+        color: var(--md-primary);
+    }
+
+    /* Check animado no canto */
+    .card-check {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        width: 26px;
+        height: 26px;
+        border-radius: 50%;
+        background: var(--md-primary);
+        color: #fff;
+        font-size: 0.9rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        opacity: 0;
+        transform: scale(0.4) rotate(-90deg);
+        transition: opacity 0.2s ease, transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        box-shadow: 0 4px 10px rgba(227, 6, 19, 0.35);
+    }
+    .modalidade-card.selected .card-check {
+        opacity: 1;
+        transform: scale(1) rotate(0deg);
+    }
+
+    /* Feedback de limite atingido */
+    @keyframes shake {
+        0%, 100% { transform: translateX(0); }
+        20% { transform: translateX(-6px); }
+        40% { transform: translateX(6px); }
+        60% { transform: translateX(-4px); }
+        80% { transform: translateX(4px); }
+    }
+    .modalidade-card.shake {
+        animation: shake 0.45s ease;
+        border-color: #ffb3ba;
+    }
+
+    /* ==================== ÁREA INFERIOR / RESUMO ==================== */
+    #acoesInscricao {
+        display: grid;
+        gap: 0.75rem;
+        margin-top: 1.5rem;
+    }
+    .resumo-selecao {
+        display: grid;
+        grid-template-columns: auto minmax(0, 1fr) auto;
+        align-items: center;
+        gap: 1.5rem 2rem;
+        padding: 1.25rem 1.5rem;
+        background: var(--md-surface);
+        border: 1px solid var(--md-border);
+        border-radius: 16px;
+        box-shadow: var(--md-shadow);
+        transition: border-color 0.3s ease;
+    }
+    .resumo-selecao.atingiu { border-color: #b7e0c8; }
+
+    .counter-box {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.1rem;
+        white-space: nowrap;
+    }
+    .counter-label {
+        font-size: 0.72rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: var(--md-text-secondary);
+    }
+    .counter-value {
+        font-size: 2.1rem;
+        font-weight: 800;
+        color: var(--md-primary);
+        line-height: 1.1;
+        transition: color 0.3s ease;
+    }
+    .counter-value .counter-total {
+        color: #c4c9d4;
+        font-weight: 600;
+        font-size: 1.3rem;
+    }
+    .resumo-selecao.atingiu .counter-value { color: var(--md-success); }
+    .limite-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        background: #d1e7dd;
+        color: #0a5a33;
+        font-size: 0.78rem;
+        font-weight: 700;
+        padding: 0.3rem 0.85rem;
+        border-radius: 50px;
+        animation: popIn 0.3s ease;
+        white-space: nowrap;
+    }
+    .status-default {
+        font-size: 0.8rem;
+        font-weight: 600;
+        color: var(--md-text-secondary);
+    }
+
+    .resumo-progress {
+        width: 100%;
+        max-width: 640px;
+        justify-self: center;
+    }
+    .resumo-progress .progress-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 0.82rem;
+        color: var(--md-text-secondary);
+        font-weight: 500;
+        margin-bottom: 0.45rem;
+    }
+    .resumo-progress .progress-header .progress-count {
+        font-weight: 700;
+        color: var(--md-primary);
+    }
+    .progress-track {
+        display: flex;
+        gap: 0.5rem;
+        background: #eef0f5;
+        border-radius: 12px;
+        padding: 0.4rem;
+    }
+    .progress-seg {
+        flex: 1;
+        height: 10px;
+        border-radius: 8px;
+        background: #dde1ea;
+        transition: background-color 0.3s ease, transform 0.25s ease;
+    }
+    .progress-seg.active {
+        background: var(--md-primary);
+        transform: scaleY(1.2);
+    }
+
+    .resumo-actions {
+        display: flex;
+        justify-content: flex-end;
     }
     .btn-save {
-        background: linear-gradient(135deg, #e60012, #ff3344);
-        color: white;
+        background: linear-gradient(135deg, #e30613, #ff3344);
+        color: #fff;
         border: none;
-        padding: 14px 28px;
-        min-width: 220px;
-        border-radius: 12px;
-        font-size: 15px;
-        font-weight: 600;
+        padding: 15px 40px;
+        min-width: 250px;
+        border-radius: 14px;
+        font-size: 1rem;
+        font-weight: 700;
+        letter-spacing: 0.02em;
         cursor: pointer;
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        gap: 10px;
-        box-shadow: 0 10px 25px rgba(230,0,18,.25);
-        transition: all .25s ease;
+        gap: 0.6rem;
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 12px 28px rgba(227, 6, 19, 0.32);
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    .btn-save::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -120%;
+        width: 60%;
+        height: 100%;
+        background: linear-gradient(120deg, transparent, rgba(255, 255, 255, 0.35), transparent);
+        transform: skewX(-20deg);
+        transition: left 0.5s ease;
     }
     .btn-save:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 14px 30px rgba(230,0,18,.35);
-        color: white;
+        transform: translateY(-3px);
+        box-shadow: 0 18px 36px rgba(227, 6, 19, 0.42);
+        color: #fff;
     }
-    .btn-save:active {
-        transform: scale(.98);
-    }
+    .btn-save:hover::after { left: 130%; }
+    .btn-save:active { transform: scale(0.96); }
     .btn-save:disabled {
-        opacity: 0.6;
+        background: linear-gradient(135deg, #f2b3b8, #f6c6c9);
+        color: #fff;
+        box-shadow: none;
         cursor: not-allowed;
         transform: none;
     }
+    .btn-save:disabled::after { display: none; }
 
+    .bottom-label {
+        min-height: 1.2rem;
+        margin: 0;
+        font-size: 0.88rem;
+        font-weight: 600;
+        justify-self: center;
+    }
+
+    /* ==================== INSCRIÇÕES ATUAIS ==================== */
     .card-inscrito {
         background-color: #ffffff;
-        border-radius: 12px;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        border-radius: 16px;
+        box-shadow: var(--md-shadow);
         padding: 1.25rem;
-        border-left: 4px solid #28a745;
-        transition: transform 0.15s;
+        border-left: 4px solid var(--md-success);
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+        height: 100%;
     }
     .card-inscrito:hover {
-        transform: translateY(-2px);
+        transform: translateY(-3px);
+        box-shadow: var(--md-shadow-hover);
     }
     .membro-equipe {
         display: flex;
@@ -149,7 +499,7 @@ include 'componentes/head.php';
     }
     .membro-equipe .voce {
         font-weight: 600;
-        color: #28a745;
+        color: var(--md-success);
     }
     .btn-ver-equipe {
         font-size: 0.85rem;
@@ -159,15 +509,13 @@ include 'componentes/head.php';
     .membro-foto {
         flex-shrink: 0;
         border: 2px solid #fff;
-        box-shadow: 0 1px 4px rgba(0,0,0,.12);
+        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.12);
     }
-
     .btn-ver-detalhes {
         border-radius: 20px;
         font-size: 0.8rem;
         padding: 4px 16px;
     }
-
     .jogo-detalhe-item {
         padding: 0.85rem 0;
         border-bottom: 1px solid #e9ecef;
@@ -185,24 +533,72 @@ include 'componentes/head.php';
     }
 </style>
 
-<main class="container py-4">
+<main class="modalidade-layout">
 
     <div id="inscricoesAtuais" class="mb-4"></div>
 
-    <div class="row row-cols-1 row-cols-md-3 g-3" id="modalidadesGrid">
-        <div class="col text-center py-5">
+    <header class="page-header">
+        <div class="page-header-inner">
+            <span class="trophy-icon"><i class="bi bi-trophy-fill"></i></span>
+            <div>
+                <h1>Escolha suas modalidades</h1>
+                <p class="subtitle">Selecione até 3 modalidades para participar do Interclasse.</p>
+            </div>
+        </div>
+    </header>
+
+    <div class="info-box">
+        <span class="info-icon">📌</span>
+        <div class="info-content">
+            <div class="info-title">Importante</div>
+            <ul>
+                <li>Escolha até 3 modalidades.</li>
+                <li>Após salvar, sua inscrição será enviada.</li>
+                <li>Algumas modalidades podem possuir limite de vagas.</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="modalidades-grid" id="modalidadesGrid">
+        <div class="col-12 text-center py-5">
             <div class="spinner-border spinner-border-sm me-2" role="status"></div>
             Carregando modalidades...
         </div>
     </div>
 
-    <div id="acoesInscricao" class="d-none d-flex flex-column align-items-center gap-3 mt-4 pt-3">
-        <p class="counter-text text-muted small mb-0" id="contador">Você pode escolher até 3 modalidades</p>
-        <button type="button" class="btn-save" id="btnSalvar" onclick="salvarEscolhas()">
-            <i class="bi bi-check-lg"></i> Salvar
-        </button>
-        <p class="bottom-label text-muted small" id="msgFeedback"></p>
+    <div id="acoesInscricao" class="d-none">
+        <div class="resumo-selecao">
+            <div class="counter-box">
+                <span class="counter-label">Modalidades escolhidas</span>
+                <div class="counter-value"><span id="counterNum">0</span>&nbsp;<span class="counter-total">/ 3</span></div>
+                <span id="statusDefault" class="status-default">Em andamento</span>
+                <span id="limiteBadge" class="limite-badge d-none"><i class="bi bi-check-circle-fill"></i> Limite atingido</span>
+            </div>
+
+            <div class="resumo-progress">
+                <div class="progress-header">
+                    <span>Modalidades selecionadas</span>
+                    <span id="progressCount" class="progress-count">0 de 3</span>
+                </div>
+                <div class="progress-track" id="progressTrack">
+                    <div class="progress-seg"></div>
+                    <div class="progress-seg"></div>
+                    <div class="progress-seg"></div>
+                </div>
+            </div>
+
+            <div class="resumo-actions">
+                <button type="button" class="btn-save" id="btnSalvar" onclick="salvarEscolhas()" disabled>
+                    <i class="bi bi-check-lg"></i> Salvar
+                </button>
+            </div>
+        </div>
+
+        <p class="bottom-label small text-secondary" id="msgFeedback"></p>
+
+        <p id="contador" class="visually-hidden"></p>
     </div>
+
 </main>
 
 <div class="modal fade" id="modalDetalhes" tabindex="-1" aria-labelledby="modalDetalhesTitle" aria-hidden="true">
@@ -235,6 +631,22 @@ include 'componentes/nav.php';
     let modalidadesData = [];
 
     function esc(s) { const d = document.createElement('div'); d.textContent = s == null ? '' : String(s); return d.innerHTML; }
+
+    // Mapa de ícones por modalidade (visual)
+    function iconeModalidade(nome) {
+        const n = (nome || '').toLowerCase();
+        if (n.includes('futebol')) return 'bi-dribbble';
+        if (n.includes('volei')) return 'bi-people-fill';
+        if (n.includes('queimada')) return 'bi-bullseye';
+        if (n.includes('basquet')) return 'bi-basket-fill';
+        if (n.includes('handebol') || n.includes('handball')) return 'bi-person-arms-up';
+        if (n.includes('corrida')) return 'bi-lightning-charge-fill';
+        if (n.includes('atletis')) return 'bi-lightning-charge-fill';
+        if (n.includes('xadrez')) return 'bi-puzzle-fill';
+        if (n.includes('nata')) return 'bi-droplet-fill';
+        if (n.includes('judo') || n.includes('judô') || n.includes('luta')) return 'bi-shield-fill';
+        return 'bi-trophy-fill';
+    }
 
     async function carregarDados() {
         try {
@@ -282,6 +694,50 @@ include 'componentes/nav.php';
         document.getElementById('contador').textContent = `Você pode escolher até ${restantes} modalidade(s) (${total}/3)`;
     }
 
+    // Atualiza o painel visual de progresso (contador grande, barra e botão)
+    function atualizarProgresso() {
+        const inscritos = new Set(modalidadesInscritas.map(m => String(m.id_modalidade))).size;
+        const selecionados = document.querySelectorAll('.modalidade-card.selected').length;
+        const total = Math.min(3, inscritos + selecionados);
+
+        const numEl = document.getElementById('counterNum');
+        if (numEl) numEl.textContent = total;
+
+        const badge = document.getElementById('limiteBadge');
+        const statusDefault = document.getElementById('statusDefault');
+        if (badge && statusDefault) {
+            const atingiu = total >= 3;
+            badge.classList.toggle('d-none', !atingiu);
+            statusDefault.classList.toggle('d-none', atingiu);
+        }
+
+        const resumo = document.querySelector('.resumo-selecao');
+        if (resumo) resumo.classList.toggle('atingiu', total >= 3);
+
+        const countEl = document.getElementById('progressCount');
+        if (countEl) countEl.textContent = `${total} de 3`;
+
+        const segs = document.querySelectorAll('#progressTrack .progress-seg');
+        segs.forEach((seg, i) => {
+            if (i < total) seg.classList.add('active');
+            else seg.classList.remove('active');
+        });
+
+        const btn = document.getElementById('btnSalvar');
+        if (btn && btn.innerHTML.indexOf('Salvando') === -1) {
+            btn.disabled = selecionados === 0;
+        }
+    }
+
+    // Observa as mudanças de seleção dos cards para manter o progresso em dia
+    function inicializarProgresso() {
+        atualizarProgresso();
+        const grid = document.getElementById('modalidadesGrid');
+        if (!grid) return;
+        new MutationObserver(() => atualizarProgresso())
+            .observe(grid, { attributes: true, childList: true, subtree: true, attributeFilter: ['class'] });
+    }
+
     function renderizarSelecao() {
         const grid = document.getElementById('modalidadesGrid');
         const acoes = document.getElementById('acoesInscricao');
@@ -318,8 +774,12 @@ include 'componentes/nav.php';
             col.className = 'col';
             col.innerHTML = `
                 <div class="modalidade-card" data-id="${mod.id_modalidade}" onclick="toggleModalidade(this)">
-                    <i class="bi bi-trophy"></i>
-                    ${esc(mod.nome_modalidade)}
+                    <span class="card-check"><i class="bi bi-check-lg"></i></span>
+                    <div class="card-icon-wrap"><i class="bi ${iconeModalidade(mod.nome_modalidade)}"></i></div>
+                    <div class="card-info">
+                        <span class="card-nome">${esc(mod.nome_modalidade)}</span>
+                        <span class="card-categoria">${esc(mod.nome_categoria || 'Categoria')}</span>
+                    </div>
                 </div>
             `;
             grid.appendChild(col);
@@ -495,8 +955,10 @@ include 'componentes/nav.php';
             card.classList.remove('selected');
         } else {
             if (selecionados.length + inscritos >= 3) {
-                document.getElementById('msgFeedback').textContent = 'Você só pode escolher até 3 modalidades!';
-                setTimeout(() => document.getElementById('msgFeedback').textContent = '', 2000);
+                document.getElementById('msgFeedback').textContent = 'Você já selecionou o número máximo de modalidades.';
+                card.classList.add('shake');
+                setTimeout(() => card.classList.remove('shake'), 500);
+                setTimeout(() => document.getElementById('msgFeedback').textContent = '', 2500);
                 return;
             }
             card.classList.add('selected');
@@ -547,6 +1009,7 @@ include 'componentes/nav.php';
     }
 
     document.addEventListener('DOMContentLoaded', carregarDados);
+    document.addEventListener('DOMContentLoaded', inicializarProgresso);
 </script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
 </body>
