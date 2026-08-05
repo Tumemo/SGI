@@ -1992,17 +1992,9 @@ $paginaAtiva = 'chaveamento';
             larguras.sort(function(a, b) {
                 return b - a;
             });
-            var labelsLarguras = {};
-            var nomesPos = {
-                1: 'Final',
-                2: 'Semifinal',
-                3: 'Quartas de final',
-                4: 'Oitavas de final',
-                5: 'Primeira fase'
-            };
-            larguras.forEach(function(l, i) {
-                var pos = larguras.length - i;
-                labelsLarguras[l] = nomesPos[pos] || 'Fase ' + l;
+             var labelsLarguras = {};
+            larguras.forEach(function(l) {
+                labelsLarguras[l] = fasesLabel[l] || ('Fase ' + l);
             });
 
             const html = jogos.map(j => renderizarLinhaJogo(j, labelsLarguras)).join('');
@@ -2029,19 +2021,8 @@ $paginaAtiva = 'chaveamento';
     }
 
     function computarLabelsFases(niveis) {
-        const total = niveis.length;
-        const nomes = {
-            1: 'Final',
-            2: 'Semifinal',
-            3: 'Quartas de final',
-            4: 'Oitavas de final',
-            5: 'Primeira fase'
-        };
         const labels = {};
-        niveis.forEach((n, i) => {
-            const pos = total - i;
-            labels[n] = nomes[pos] || `Fase ${n}`;
-        });
+        niveis.forEach(n => { labels[n] = formatFase(n); });
         return labels;
     }
 
