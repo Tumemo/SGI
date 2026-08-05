@@ -225,7 +225,7 @@ $paginaAtiva = 'dashboard';
 
         <div class="mc-header">
             <div class="mc-match-info">
-                <a href="./edicao_agenda.php" class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none" style="background-color:#E30613;border-radius:6px;padding:8px 16px;">
+                <a href="./edicao_agenda.php" id="btnVoltarPlacar" class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none" style="background-color:#E30613;border-radius:6px;padding:8px 16px;">
                     <i class="bi bi-arrow-left-circle fs-5"></i> <span>Voltar</span>
                 </a>
                 <h1 id="placar-titulo-jogo" class="mc-match-title">Placar</h1>
@@ -388,6 +388,37 @@ $paginaAtiva = 'dashboard';
     const API = '../../../api/';
     const params = new URLSearchParams(window.location.search);
     const idJogo = params.get('id_jogo') ? parseInt(params.get('id_jogo'), 10) : null;
+
+    function paginaOrigem() {
+        try {
+            const ref = new URL(document.referrer);
+            return ref.pathname.split('/').pop() || '';
+        } catch (_) {
+            return '';
+        }
+    }
+
+    function definirLinkVoltar() {
+        const origem = params.get('origem');
+        const refPagina = paginaOrigem();
+        const refURL = (refPagina && document.referrer) ? document.referrer : null;
+        let href = './edicao_agenda.php';
+
+        if (origem === 'ranking' || refPagina === 'ranking.php') {
+            href = refURL || './ranking.php';
+        } else if (origem === 'agenda' || refPagina === 'agenda.php') {
+            href = refURL || './agenda.php';
+        } else if (origem === 'agenda_edit' || refPagina === 'edicao_agenda.php') {
+            href = refURL || './edicao_agenda.php';
+        }
+
+        const btn = document.getElementById('btnVoltarPlacar');
+        if (btn) btn.href = href;
+        const seta = document.querySelector('section.position-relative > a.bi-arrow-left');
+        if (seta) seta.href = href;
+    }
+
+    document.addEventListener('DOMContentLoaded', definirLinkVoltar);
 
     let estadoJogo = null;
     let partidasLista = [];

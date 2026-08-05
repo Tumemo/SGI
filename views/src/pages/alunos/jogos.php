@@ -155,11 +155,11 @@ include 'componentes/head.php';
     /* ==================== CARTÕES DE JOGO ==================== */
     .jogos-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(440px, 1fr));
+        grid-template-columns: repeat(auto-fill, minmax(440px, 1fr));
         gap: 1.1rem;
     }
     @media (max-width: 575.98px) {
-        .jogos-grid { grid-template-columns: repeat(auto-fit, minmax(100%, 1fr)); }
+        .jogos-grid { grid-template-columns: 1fr; }
     }
     .jogo-card {
         display: flex;

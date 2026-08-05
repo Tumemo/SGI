@@ -280,7 +280,6 @@ document.getElementById('formulario').addEventListener('submit', async (event) =
         if (res.data && res.data.success) {
             document.getElementById('caixaMensagem').innerHTML = '<p class="text-success text-center mt-3 mb-0 fw-bold">Criado com sucesso!</p>';
             const idCriado = res.data.id;
-            await atualizarStatusInterclasse(idCriado, false);
             await window.SGIInterclasse.refreshNavigation();
             document.getElementById('formulario').reset();
             listarInterclasses();

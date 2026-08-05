@@ -261,7 +261,7 @@ $paginaAtiva = 'agenda';
         const hi = formatarHora(j.inicio_jogo);
         const hf = formatarHora(j.termino_jogo || j.terminno_jogo);
         const horario = hi && hf ? `${hi} – ${hf}` : hi || 'Horário a definir';
-        const placarHref = `./jogos.php?id_jogo=${encodeURIComponent(j.id_jogo)}`;
+        const placarHref = `./jogos.php?id_jogo=${encodeURIComponent(j.id_jogo)}&origem=agenda`;
         const statusTxt = labelStatus(j.status_jogo);
 
         let acoesHtml = '';

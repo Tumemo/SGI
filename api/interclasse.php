@@ -137,6 +137,14 @@ switch ($method) {
             if ($stmt->execute()) {
                 $new_interclass_id = $conn->insert_id;
 
+                // CORREÇÃO: O novo interclasse já é criado ativo ('1'); desativa os demais
+                $deactivate = $conn->prepare(
+                    "UPDATE interclasses SET status_interclasse = '0' WHERE id_interclasse != ? AND status_interclasse = '1'"
+                );
+                $deactivate->bind_param("i", $new_interclass_id);
+                $deactivate->execute();
+                $deactivate->close();
+
                 $conn->begin_transaction();
 
                 $categoria_i_id = null;
