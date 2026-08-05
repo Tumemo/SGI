@@ -15,7 +15,7 @@ $mostrarVoltar = true;
 $urlVoltar = './home.php';
 ?>
 
-    <main class="container py-4">
+    <main class=" py-4" style="width: 95%; margin:0px auto">
         <h1 class="visually-hidden">Ranking - Interclasses</h1>
 
         <div id="filtros" class="d-flex overflow-auto gap-2 pb-3 mb-4"></div>

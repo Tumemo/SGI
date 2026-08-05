@@ -136,7 +136,7 @@ include 'componentes/head.php';
     }
     .filtro-modalidade select {
         border: 1.5px solid var(--aluno-border);
-        border-radius: 50px;
+        border-radius: 7px;
         padding: 0.42rem 2.1rem 0.42rem 1rem;
         font-size: 0.85rem;
         font-weight: 500;
@@ -553,14 +553,14 @@ include 'componentes/head.php';
         </div>
 
         <div class="filtro-modalidade">
-            <span class="mod-label"><i class="bi bi-funnel me-1"></i>Modalidade</span>
+            <span class="mod-label">Modalidade</span>
             <select id="filtroModalidade" aria-label="Filtrar por modalidade">
                 <option value="all">Todas</option>
             </select>
         </div>
 
         <div class="filtro-modalidade">
-            <span class="mod-label"><i class="bi bi-tags me-1"></i>Categoria</span>
+            <span class="mod-label">Categoria</span>
             <select id="filtroCategoria" aria-label="Filtrar por categoria">
                 <option value="all">Todas</option>
             </select>
