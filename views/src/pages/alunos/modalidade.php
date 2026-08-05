@@ -634,18 +634,6 @@ include 'componentes/head.php';
         </div>
     </header>
 
-    <div class="info-box">
-        <span class="info-icon">📌</span>
-        <div class="info-content">
-            <div class="info-title">Importante</div>
-            <ul>
-                <li>Escolha até 3 modalidades.</li>
-                <li>Após salvar, sua inscrição será enviada.</li>
-                <li>Algumas modalidades podem possuir limite de vagas.</li>
-            </ul>
-        </div>
-    </div>
-
     <section class="secao d-none" id="secaoInscricoes">
         <div class="secao-titulo">
             <span class="secao-titulo-icone"><i class="bi bi-person-check-fill"></i></span>

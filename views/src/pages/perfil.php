@@ -165,7 +165,7 @@ $paginaAtiva = 'perfil';
     <div class="card border-0 shadow-sm rounded-4 mb-3">
         <div class="card-body">
             <h6 class="perfil-card-title mb-3"><i class="bi bi-shield-lock me-2"></i>Segurança e Acesso</h6>
-            <div class="perfil-field"><span class="perfil-field-label"><i class="bi bi-lock"></i> Senha</span><span class="perfil-field-value"><span id="perfilSenhaMob">********</span><button class="perfil-eye-btn" id="perfilEyeMob" aria-label="Mostrar senha"><i class="bi bi-eye-slash"></i></button></span></div>
+            <div class="perfil-field"><span class="perfil-field-label"><i class="bi bi-lock"></i> Senha</span><span class="perfil-field-value"><span class="perfil-mask">&#8226;&#8226;&#8226;&#8226;&#8226;&#8226;&#8226;&#8226;</span></span></div>
             <div class="perfil-field"><span class="perfil-field-label"><i class="bi bi-shield-check"></i> Nível</span><span class="perfil-field-value"><span class="perfil-badge-nivel perfil-badge-nivel--sm" style="--nivel-color:<?= $nivelInfo['color'] ?>"><i class="<?= $nivelInfo['icon'] ?>"></i> <?= $nivelInfo['label'] ?></span></span></div>
             <div class="perfil-field mb-0"><span class="perfil-field-label"><i class="bi bi-key"></i> Alterar</span><span class="perfil-field-value"><button class="btn btn-link btn-sm text-decoration-none p-0 text-danger fw-semibold" data-bs-toggle="modal" data-bs-target="#modalAlterarSenha">Alterar senha</button></span></div>
         </div>
@@ -264,8 +264,7 @@ $paginaAtiva = 'perfil';
                             <div class="perfil-info-item">
                                 <span class="perfil-info-label"><i class="bi bi-lock"></i> Senha</span>
                                 <span class="perfil-info-value">
-                                    <span id="perfilSenhaDesk">********</span>
-                                    <button class="perfil-eye-btn" id="perfilEyeDesk" aria-label="Mostrar senha"><i class="bi bi-eye-slash"></i></button>
+                                    <span class="perfil-mask">&#8226;&#8226;&#8226;&#8226;&#8226;&#8226;&#8226;&#8226;</span>
                                     <button class="btn btn-link btn-sm text-decoration-none p-0 ms-2 text-danger fw-semibold" data-bs-toggle="modal" data-bs-target="#modalAlterarSenha">Alterar senha</button>
                                 </span>
                             </div>
@@ -331,15 +330,24 @@ $paginaAtiva = 'perfil';
                 <div class="modal-body px-4">
                     <div class="mb-3">
                         <label class="form-label small text-muted fw-semibold">Senha Atual</label>
-                        <input type="password" name="senha_atual" class="form-control rounded-3 perfil-input" id="editarSenhaAtual" required>
+                        <div class="perfil-password-input">
+                            <input type="password" name="senha_atual" class="form-control rounded-3 perfil-input pe-5" id="editarSenhaAtual" required autocomplete="current-password">
+                            <button type="button" class="perfil-password-eye" data-target="editarSenhaAtual" tabindex="-1" aria-label="Mostrar senha"><i class="bi bi-eye-slash"></i></button>
+                        </div>
                     </div>
                     <div class="mb-3">
                         <label class="form-label small text-muted fw-semibold">Nova Senha</label>
-                        <input type="password" name="nova_senha" class="form-control rounded-3 perfil-input" id="editarNovaSenha" required minlength="6">
+                        <div class="perfil-password-input">
+                            <input type="password" name="nova_senha" class="form-control rounded-3 perfil-input pe-5" id="editarNovaSenha" required minlength="6" autocomplete="new-password">
+                            <button type="button" class="perfil-password-eye" data-target="editarNovaSenha" tabindex="-1" aria-label="Mostrar senha"><i class="bi bi-eye-slash"></i></button>
+                        </div>
                     </div>
                     <div class="mb-3">
                         <label class="form-label small text-muted fw-semibold">Confirmar Nova Senha</label>
-                        <input type="password" name="confirmar_senha" class="form-control rounded-3 perfil-input" id="editarConfirmarSenha" required>
+                        <div class="perfil-password-input">
+                            <input type="password" name="confirmar_senha" class="form-control rounded-3 perfil-input pe-5" id="editarConfirmarSenha" required autocomplete="new-password">
+                            <button type="button" class="perfil-password-eye" data-target="editarConfirmarSenha" tabindex="-1" aria-label="Mostrar senha"><i class="bi bi-eye-slash"></i></button>
+                        </div>
                     </div>
                     <div id="msgAlterarSenha" class="small text-center mt-2"></div>
                 </div>
@@ -432,21 +440,13 @@ $paginaAtiva = 'perfil';
         }, 3000);
     }
 
-    function toggleSenha(suf) {
-        const span = document.getElementById('perfilSenha' + suf);
-        const btn = document.getElementById('perfilEye' + suf);
-        if (!span || !btn) return;
-        if (span.dataset.revealed === 'true') {
-            span.textContent = '********';
-            span.dataset.revealed = 'false';
-            btn.innerHTML = '<i class="bi bi-eye-slash"></i>';
-            btn.setAttribute('aria-label', 'Mostrar senha');
-        } else {
-            span.textContent = '\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022';
-            span.dataset.revealed = 'true';
-            btn.innerHTML = '<i class="bi bi-eye"></i>';
-            btn.setAttribute('aria-label', 'Esconder senha');
-        }
+    function toggleCampoSenha(inputId, btn) {
+        const input = document.getElementById(inputId);
+        if (!input) return;
+        const mostrar = input.type === 'password';
+        input.type = mostrar ? 'text' : 'password';
+        btn.innerHTML = '<i class="bi bi-' + (mostrar ? 'eye' : 'eye-slash') + '"></i>';
+        btn.setAttribute('aria-label', mostrar ? 'Esconder senha' : 'Mostrar senha');
     }
 
     document.addEventListener('DOMContentLoaded', async () => {
@@ -468,8 +468,9 @@ $paginaAtiva = 'perfil';
 
         preencherPerfil();
 
-        document.getElementById('perfilEyeMob')?.addEventListener('click', () => toggleSenha('Mob'));
-        document.getElementById('perfilEyeDesk')?.addEventListener('click', () => toggleSenha('Desk'));
+        document.querySelectorAll('.perfil-password-eye').forEach(btn => {
+            btn.addEventListener('click', () => toggleCampoSenha(btn.dataset.target, btn));
+        });
 
         const input = document.getElementById('fotoUploadInput');
         ['btnCameraMob', 'btnCameraDesk'].forEach(btnId => {
