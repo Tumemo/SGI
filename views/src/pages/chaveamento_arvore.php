@@ -1650,12 +1650,6 @@ $paginaAtiva = 'chaveamento';
             });
             atualizarStats(statsJogos);
 
-            if (!idModalidade && !idCategoria) {
-                const msg = '<tr><td colspan="8" class="text-center text-muted py-4">Selecione uma modalidade ou categoria para ver os jogos.</td></tr>';
-                tbody.innerHTML = msg;
-                if (tbodyMob) tbodyMob.innerHTML = msg;
-                return;
-            }
             let url = `../../../api/jogos.php?id_interclasse=${idInterclasse}`;
             if (idModalidade) url += `&id_modalidade=${idModalidade}`;
             if (idCategoria) url += `&id_categoria=${idCategoria}`;
