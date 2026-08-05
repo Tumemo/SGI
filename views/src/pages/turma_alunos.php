@@ -156,6 +156,14 @@ $podeGerenciar = in_array($nivelUsuario, [0, 1, 2], true);
     }
     .ta-badge-genero--fem { background: #fce7f3; color: #be185d; }
 
+    .ta-badge-sem-inscricao {
+        display: inline-block; background: var(--ta-red); color: #fff;
+        font-size: .66rem; font-weight: 600; padding: 2px 8px;
+        border-radius: 50px; margin-left: .5rem; vertical-align: middle;
+    }
+    .ta-tr-sem-inscricao td { background: #fff7f7; }
+    .ta-tr-sem-inscricao td:first-child { box-shadow: inset 3px 0 0 var(--ta-red); }
+
     .ta-action {
         width: 32px; height: 32px; border-radius: 10px; border: none;
         display: inline-flex; align-items: center; justify-content: center;
@@ -191,6 +199,7 @@ $podeGerenciar = in_array($nivelUsuario, [0, 1, 2], true);
         transition: border-color .2s, box-shadow .2s;
     }
     .ta-student-card:hover { border-color: #f1c4c7; box-shadow: var(--ta-shadow-hover); }
+    .ta-student-card.sem-inscricao { border-color: var(--ta-red); background: #fff7f7; }
     .ta-student-avatar {
         width: 40px; height: 40px; border-radius: 12px; background: #fdecec; color: var(--ta-red);
         font-weight: 600; display: flex; align-items: center; justify-content: center;
@@ -629,10 +638,10 @@ $podeGerenciar = in_array($nivelUsuario, [0, 1, 2], true);
                 </div>`;
 
             mob.innerHTML = pagina.map((u) => `
-                <div class="ta-student-card">
+                <div class="ta-student-card${Number(u.inscrito || 0) === 0 ? ' sem-inscricao' : ''}">
                     <div class="ta-student-avatar">${esc((u.nome_usuario || 'A').charAt(0)).toUpperCase()}</div>
                     <div class="ta-student-info">
-                        <div class="ta-student-name">${esc(u.nome_usuario)}</div>
+                        <div class="ta-student-name">${esc(u.nome_usuario)}${Number(u.inscrito || 0) === 0 ? '<span class="ta-badge-sem-inscricao">Sem inscrição</span>' : ''}</div>
                         <div class="ta-student-meta">${esc(u.matricula_usuario || '—')} · ${esc(generoLabel(u.genero_usuario))}</div>
                     </div>
                     ${acoesMob(u)}
@@ -653,9 +662,9 @@ $podeGerenciar = in_array($nivelUsuario, [0, 1, 2], true);
                 </div>`;
 
             desk.innerHTML = pagina.map((u) => `
-                <tr>
+                <tr class="${Number(u.inscrito || 0) === 0 ? 'ta-tr-sem-inscricao' : ''}">
                     <td class="ta-cell-nome">
-                        <span class="ta-table-avatar">${esc((u.nome_usuario || 'A').charAt(0)).toUpperCase()}</span>${esc(u.nome_usuario)}
+                        <span class="ta-table-avatar">${esc((u.nome_usuario || 'A').charAt(0)).toUpperCase()}</span>${esc(u.nome_usuario)}${Number(u.inscrito || 0) === 0 ? '<span class="ta-badge-sem-inscricao">Sem inscrição</span>' : ''}
                     </td>
                     <td>${esc(u.matricula_usuario)}</td>
                     <td>
