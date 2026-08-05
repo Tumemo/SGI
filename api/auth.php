@@ -25,6 +25,10 @@ function requerEscrita() {
     requerNivel([0, 1]);
 }
 
+function requerOperacaoJogo() {
+    requerNivel([0, 1, 2]);
+}
+
 function requerExclusao() {
     requerNivel([0]);
 }

@@ -91,7 +91,14 @@ switch ($metodo) {
             }
 
             $generoFiltro = isset($_GET['genero']) ? strtoupper(trim($_GET['genero'])) : '';
-            $sql = "SELECT id_usuario, nome_usuario, matricula_usuario, genero_usuario, nivel_usuario, data_nasc_usuario
+            $sql = "SELECT id_usuario, nome_usuario, matricula_usuario, genero_usuario, nivel_usuario, data_nasc_usuario,
+                    CASE WHEN EXISTS (
+                        SELECT 1
+                        FROM equipes_has_usuarios eu
+                        INNER JOIN equipes eq ON eq.id_equipe = eu.equipes_id_equipe
+                        WHERE eu.usuarios_id_usuario = usuarios.id_usuario
+                          AND eq.turmas_id_turma = usuarios.turmas_id_turma
+                    ) THEN 1 ELSE 0 END AS inscrito
                     FROM usuarios WHERE turmas_id_turma = ? AND interclasses_id_interclasse = ? AND nivel_usuario = '3' AND status_usuario = '1'";
             if ($generoFiltro === 'FEM') {
                 $sql .= " AND genero_usuario = 'FEM'";

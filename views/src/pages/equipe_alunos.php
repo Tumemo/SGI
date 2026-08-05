@@ -56,6 +56,9 @@ $cssExtra = '
 .aluno-card-item:hover { border-color: var(--aluno-primary); box-shadow: var(--aluno-shadow-sm); }
 .aluno-card-item .form-check-input { cursor: pointer; width: 1.2rem; height: 1.2rem; }
 .aluno-card-item .form-check-input:checked { background-color: var(--aluno-primary); border-color: var(--aluno-primary); }
+.aluno-card-item.sem-inscricao { border: 2px solid var(--aluno-primary); background: var(--aluno-primary-subtle); }
+.aluno-card-item.sem-inscricao:hover { border-color: var(--aluno-primary); }
+.aluno-card-item .badge-sem-inscricao { display: inline-block; background: var(--aluno-primary); color: #fff; font-size: 0.68rem; font-weight: 600; padding: 2px 8px; border-radius: 999px; margin-left: 0.5rem; vertical-align: middle; }
 .aluno-empty { text-align: center; padding: 3rem 1rem; color: var(--aluno-text-secondary); }
 .aluno-empty .empty-icon { font-size: 3rem; margin-bottom: 1rem; color: var(--aluno-text-muted); }
 .aluno-empty h5 { font-weight: 600; margin-bottom: 0.5rem; }
@@ -129,10 +132,12 @@ function mostrarToast(tipo, texto) {
 
 function cardAluno(aluno) {
     const estaNaEquipe = alunosNaEquipe.some(a => a.id_usuario === aluno.id_usuario);
+    const semInscricao = Number(aluno.inscrito || 0) === 0;
+    const badge = semInscricao ? '<span class="badge-sem-inscricao">Sem inscrição</span>' : '';
     return `
-        <label class="aluno-card-item">
+        <label class="aluno-card-item ${semInscricao ? 'sem-inscricao' : ''}">
             <div>
-                <strong>${esc(aluno.nome_usuario)}</strong>
+                <strong>${esc(aluno.nome_usuario)}</strong>${badge}
                 <div class="text-muted small">${esc(aluno.matricula_usuario)} (${aluno.genero_usuario || 'Não informado'})</div>
             </div>
             <input class="form-check-input aluno-check" type="checkbox" value="${aluno.id_usuario}" ${estaNaEquipe ? 'checked' : ''}>
