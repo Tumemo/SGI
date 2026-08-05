@@ -1812,9 +1812,9 @@ body > main {
 
 /* ===== Wrapper full-width ===== */
 .perfil-wrapper {
-    width: 90%;
+    width: 100%;
     max-width: 100%;
-    margin: 0 auto;
+    margin: 0;
 }
 
 /* ===== Topbar ===== */
