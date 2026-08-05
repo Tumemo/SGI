@@ -13,7 +13,9 @@ switch ($method) {
         $filtro = aplicarFiltrosArtilharia();
 
         $sql = "SELECT 
+                    usuarios.id_usuario,
                     usuarios.nome_usuario, 
+                    usuarios.foto_usuario,
                     SUM(artilheiros.num_gol) AS total_gols, 
                     modalidades.nome_modalidade,
                     turmas.nome_turma,

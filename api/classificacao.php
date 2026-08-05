@@ -45,41 +45,49 @@ try {
     $campeao = $equipesFinal[0] ?? null;
     $vice = $equipesFinal[1] ?? null;
 
-    // 3. Buscar o 3º Lugar (Quem perdeu para o Campeão no jogo anterior)
-    // Procuramos um jogo onde o campeão participou, que não seja a final, e pegamos o adversário
-    $id_campeao = $campeao['id_equipe'];
-    $sqlTerceiro = "SELECT t.nome_turma, t.nome_fantasia_turma
-                    FROM partidas p
-                    INNER JOIN jogos j ON p.jogos_id_jogo = j.id_jogo
-                    INNER JOIN equipes e ON p.equipes_id_equipe = e.id_equipe
-                    INNER JOIN turmas t ON e.turmas_id_turma = t.id_turma
-                    WHERE j.modalidades_id_modalidade = ? 
-                    AND j.id_jogo != ? 
-                    AND j.status_jogo = 'Concluido'
-                    AND j.id_jogo IN (SELECT jogos_id_jogo FROM partidas WHERE equipes_id_equipe = ?)
-                    AND p.equipes_id_equipe != ?
-                    ORDER BY j.id_jogo DESC LIMIT 1";
-
-    $stmtT = $conn->prepare($sqlTerceiro);
-    $stmtT->bind_param("iiii", $id_modalidade, $id_final, $id_campeao, $id_campeao);
-    $stmtT->execute();
-    $terceiro = $stmtT->get_result()->fetch_assoc();
-
     // Montar o pódio
-    $classificacao = [
-        [
+    $classificacao = [];
+
+    if ($campeao) {
+        $classificacao[] = [
             "posicao" => 1,
             "equipe" => $campeao['nome_turma'],
             "fantasia" => $campeao['nome_fantasia_turma'],
             "status" => "Campeão"
-        ],
-        [
+        ];
+    }
+
+    if ($vice) {
+        $classificacao[] = [
             "posicao" => 2,
             "equipe" => $vice['nome_turma'],
             "fantasia" => $vice['nome_fantasia_turma'],
             "status" => "Vice-Campeão"
-        ]
-    ];
+        ];
+    }
+
+    // 3. Buscar o 3º Lugar (Quem perdeu para o Campeão no jogo anterior)
+    // Procuramos um jogo onde o campeão participou, que não seja a final, e pegamos o adversário
+    $terceiro = null;
+    if ($campeao && isset($campeao['id_equipe'])) {
+        $id_campeao = $campeao['id_equipe'];
+        $sqlTerceiro = "SELECT t.nome_turma, t.nome_fantasia_turma
+                        FROM partidas p
+                        INNER JOIN jogos j ON p.jogos_id_jogo = j.id_jogo
+                        INNER JOIN equipes e ON p.equipes_id_equipe = e.id_equipe
+                        INNER JOIN turmas t ON e.turmas_id_turma = t.id_turma
+                        WHERE j.modalidades_id_modalidade = ? 
+                        AND j.id_jogo != ? 
+                        AND j.status_jogo = 'Concluido'
+                        AND j.id_jogo IN (SELECT jogos_id_jogo FROM partidas WHERE equipes_id_equipe = ?)
+                        AND p.equipes_id_equipe != ?
+                        ORDER BY j.id_jogo DESC LIMIT 1";
+
+        $stmtT = $conn->prepare($sqlTerceiro);
+        $stmtT->bind_param("iiii", $id_modalidade, $id_final, $id_campeao, $id_campeao);
+        $stmtT->execute();
+        $terceiro = $stmtT->get_result()->fetch_assoc();
+    }
 
     if ($terceiro) {
         $classificacao[] = [

@@ -19,15 +19,24 @@ switch ($method) {
                     j.id_jogo,
                     j.nome_jogo, 
                     j.status_jogo,
+                    j.data_jogo,
+                    j.inicio_jogo,
+                    j.termino_jogo,
+                    j.modalidades_id_modalidade,
                     t.id_turma,
                     t.nome_turma,
                     t.nome_fantasia_turma,
-                    m.nome_modalidade
+                    m.nome_modalidade,
+                    m.categorias_id_categoria,
+                    c.nome_categoria,
+                    l.nome_local
                 FROM partidas p
                 INNER JOIN jogos j ON p.jogos_id_jogo = j.id_jogo
                 INNER JOIN equipes e ON p.equipes_id_equipe = e.id_equipe
                 INNER JOIN turmas t ON e.turmas_id_turma = t.id_turma
                 INNER JOIN modalidades m ON j.modalidades_id_modalidade = m.id_modalidade
+                INNER JOIN categorias c ON c.id_categoria = m.categorias_id_categoria
+                LEFT JOIN locais l ON l.id_local = j.locais_id_local
                 WHERE 1=1" . $filtro['sql'];
 
         $stmt = $conn->prepare($sql);
