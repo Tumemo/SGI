@@ -260,7 +260,7 @@ try {
                 if ($meta['posicao'] !== null) {
                     $classificacao[$meta['posicao']]       = $ps[0]['equipe'];
                     $classificacao[$meta['posicao'] + 1]   = $ps[1]['equipe'];
-                } elseif ($meta['largura'] === 1) {
+                } elseif ($meta['largura'] === 2) {
                     $classificacao[1] = $ps[0]['equipe'];
                     $classificacao[2] = $ps[1]['equipe'];
                 }
@@ -275,14 +275,17 @@ try {
                 }
             }
 
-            /* Pontos por jogo concluído (venceu = ponto_1_lugar, perdeu = ponto_2_lugar) */
+            /* Pontos de pódio só nos jogos decisivos:
+               Grande Final (MM:2) → vencedor = ponto_1_lugar, perdedor = ponto_2_lugar
+               Disputa de 3º lugar (POS:3) → vencedor = ponto_3_lugar
+               Demais fases (MM:4 semis, MM:8 quartas, etc.) não pontuam pódio. */
             foreach ($porJogo as $gj) {
                 $meta = $gj['meta'];
                 if ($meta === null || $meta['kind'] === 'B') {
                     continue;
                 }
                 $ps = $gj['partidas'];
-                if (count($ps) < 2 && !($meta['largura'] === 1 && count($ps) === 1)) {
+                if (count($ps) < 2) {
                     continue;
                 }
                 usort($ps, static fn (array $a, array $b): int => $b['gols'] <=> $a['gols']);
@@ -291,7 +294,26 @@ try {
                 $losId = $ps[1]['equipe'] ?? null;
                 $losGols = $ps[1]['gols'] ?? null;
 
-                $fase = $meta['largura'] === 1 ? 'Final' : (sgi_hist_nome_fase($meta['largura']) ?? 'Jogo');
+                $ptsWin = 0;
+                $ptsLos = 0;
+                $fase = 'Jogo';
+
+                if ($meta['posicao'] !== null) {
+                    if ((int) $meta['posicao'] === 3) {
+                        $ptsWin = $podio[3] ?? 0;
+                        $fase = 'Disputa de 3º lugar';
+                    }
+                } elseif ($meta['largura'] === 2) {
+                    $ptsWin = $podio[1] ?? 0;
+                    $ptsLos = $podio[2] ?? 0;
+                    $fase = 'Final';
+                } else {
+                    continue;
+                }
+
+                if ($ptsWin <= 0) {
+                    continue;
+                }
 
                 foreach ($eqIds as $eq) {
                     $ehVitoria = ($eq === $winId);
@@ -300,7 +322,7 @@ try {
                         continue;
                     }
 
-                    $pts = $ehVitoria ? ($podio[1] ?? 0) : ($podio[2] ?? 0);
+                    $pts = $ehVitoria ? $ptsWin : $ptsLos;
                     if ($pts <= 0) {
                         continue;
                     }

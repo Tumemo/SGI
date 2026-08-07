@@ -11,23 +11,32 @@ if (!$id_modalidade) {
 }
 
 try {
-    // 1. Identificar a Grande Final e o Campeão/Vice
-    // O último jogo concluído da modalidade é considerado a Final
-    $sqlFinal = "SELECT j.id_jogo 
-                 FROM jogos j 
-                 WHERE j.modalidades_id_modalidade = ? AND j.status_jogo = 'Concluido' 
+    // 1. Identificar a Grande Final (jogo MM:2) concluída
+    $sqlFinal = "SELECT j.id_jogo
+                 FROM jogos j
+                 WHERE j.modalidades_id_modalidade = ?
+                   AND j.nome_jogo LIKE 'MM:2:%'
+                   AND j.status_jogo IN ('Concluido', 'Finalizado')
                  ORDER BY j.id_jogo DESC LIMIT 1";
-    
+
     $stmtF = $conn->prepare($sqlFinal);
     $stmtF->bind_param("i", $id_modalidade);
     $stmtF->execute();
     $resFinal = $stmtF->get_result()->fetch_assoc();
 
+    $classificacao = [];
+
+    // Sem Final concluída ainda, o pódio não existe
     if (!$resFinal) {
-        throw new Exception("Nenhum jogo concluído encontrado para esta modalidade.");
+        echo json_encode([
+            "success" => true,
+            "modalidade_id" => $id_modalidade,
+            "podio" => []
+        ]);
+        exit;
     }
 
-    $id_final = $resFinal['id_jogo'];
+    $id_final = (int) $resFinal['id_jogo'];
 
     // 2. Buscar 1º e 2º Lugares (da Final)
     $sqlPosicoesFinais = "SELECT t.nome_turma, t.nome_fantasia_turma, p.resultado_partida, e.id_equipe
@@ -36,7 +45,7 @@ try {
                           INNER JOIN turmas t ON e.turmas_id_turma = t.id_turma
                           WHERE p.jogos_id_jogo = ?
                           ORDER BY p.resultado_partida DESC";
-    
+
     $stmtP = $conn->prepare($sqlPosicoesFinais);
     $stmtP->bind_param("i", $id_final);
     $stmtP->execute();
@@ -44,9 +53,6 @@ try {
 
     $campeao = $equipesFinal[0] ?? null;
     $vice = $equipesFinal[1] ?? null;
-
-    // Montar o pódio
-    $classificacao = [];
 
     if ($campeao) {
         $classificacao[] = [
@@ -66,28 +72,22 @@ try {
         ];
     }
 
-    // 3. Buscar o 3º Lugar (Quem perdeu para o Campeão no jogo anterior)
-    // Procuramos um jogo onde o campeão participou, que não seja a final, e pegamos o adversário
+    // 3. Buscar o 3º Lugar: vencedor da Disputa de 3º lugar (POS:3) concluída
     $terceiro = null;
-    if ($campeao && isset($campeao['id_equipe'])) {
-        $id_campeao = $campeao['id_equipe'];
-        $sqlTerceiro = "SELECT t.nome_turma, t.nome_fantasia_turma
-                        FROM partidas p
-                        INNER JOIN jogos j ON p.jogos_id_jogo = j.id_jogo
-                        INNER JOIN equipes e ON p.equipes_id_equipe = e.id_equipe
-                        INNER JOIN turmas t ON e.turmas_id_turma = t.id_turma
-                        WHERE j.modalidades_id_modalidade = ? 
-                        AND j.id_jogo != ? 
-                        AND j.status_jogo = 'Concluido'
-                        AND j.id_jogo IN (SELECT jogos_id_jogo FROM partidas WHERE equipes_id_equipe = ?)
-                        AND p.equipes_id_equipe != ?
-                        ORDER BY j.id_jogo DESC LIMIT 1";
+    $sqlTerceiro = "SELECT t.nome_turma, t.nome_fantasia_turma, p.resultado_partida, e.id_equipe
+                    FROM partidas p
+                    INNER JOIN jogos j ON p.jogos_id_jogo = j.id_jogo
+                    INNER JOIN equipes e ON p.equipes_id_equipe = e.id_equipe
+                    INNER JOIN turmas t ON e.turmas_id_turma = t.id_turma
+                    WHERE j.modalidades_id_modalidade = ?
+                      AND j.nome_jogo = 'POS:3:0:N'
+                      AND j.status_jogo IN ('Concluido', 'Finalizado')
+                    ORDER BY p.resultado_partida DESC LIMIT 1";
 
-        $stmtT = $conn->prepare($sqlTerceiro);
-        $stmtT->bind_param("iiii", $id_modalidade, $id_final, $id_campeao, $id_campeao);
-        $stmtT->execute();
-        $terceiro = $stmtT->get_result()->fetch_assoc();
-    }
+    $stmtT = $conn->prepare($sqlTerceiro);
+    $stmtT->bind_param("i", $id_modalidade);
+    $stmtT->execute();
+    $terceiro = $stmtT->get_result()->fetch_assoc();
 
     if ($terceiro) {
         $classificacao[] = [

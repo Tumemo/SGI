@@ -94,38 +94,47 @@ try {
                 if ($ptRow) {
                     $p1 = (int) ($ptRow['ponto_1_lugar'] ?? 0);
                     $p2 = (int) ($ptRow['ponto_2_lugar'] ?? 0);
+                    $p3 = (int) ($ptRow['ponto_3_lugar'] ?? 0);
 
                     $partidas = sgi_mm_carregar_partidas_jogo($conn, $idJogo);
 
-                    if (count($partidas) >= 2) {
+                    // Pontos de pódio só são aplicados em jogos decisivos:
+                    //  - Grande Final (MM:2): vencedor = 1º lugar, perdedor = 2º lugar
+                    //  - Disputa de 3º lugar (POS:3): vencedor = 3º lugar
+                    // Semifinais, quartas, oitavas e o jogo do "Campeão" (MM:1) não pontuam pódio.
+                    if ($meta !== null && count($partidas) >= 2) {
                         usort($partidas, static fn($a, $b) => $b['resultado_partida'] <=> $a['resultado_partida']);
                         $vencedorEquipe = (int) $partidas[0]['equipes_id_equipe'];
-                        $perdedorEquipe = (int) $partidas[1]['equipes_id_equipe'];
 
-                        $stW = $conn->prepare(
-                            'UPDATE turmas SET pontuacao_turma = pontuacao_turma + ?
-                             WHERE id_turma = (SELECT turmas_id_turma FROM equipes WHERE id_equipe = ? LIMIT 1) LIMIT 1'
-                        );
-                        $stW->bind_param('ii', $p1, $vencedorEquipe);
-                        $stW->execute();
-                        $stW->close();
+                        if (isset($meta['posicao'])) {
+                            if ((int) $meta['posicao'] === 3 && $p3 > 0) {
+                                $stT = $conn->prepare(
+                                    'UPDATE turmas SET pontuacao_turma = pontuacao_turma + ?
+                                     WHERE id_turma = (SELECT turmas_id_turma FROM equipes WHERE id_equipe = ? LIMIT 1) LIMIT 1'
+                                );
+                                $stT->bind_param('ii', $p3, $vencedorEquipe);
+                                $stT->execute();
+                                $stT->close();
+                            }
+                        } elseif ($meta['largura'] === 2) {
+                            $perdedorEquipe = (int) $partidas[1]['equipes_id_equipe'];
 
-                        $stL = $conn->prepare(
-                            'UPDATE turmas SET pontuacao_turma = pontuacao_turma + ?
-                             WHERE id_turma = (SELECT turmas_id_turma FROM equipes WHERE id_equipe = ? LIMIT 1) LIMIT 1'
-                        );
-                        $stL->bind_param('ii', $p2, $perdedorEquipe);
-                        $stL->execute();
-                        $stL->close();
-                    } elseif (count($partidas) === 1 && $meta && $meta['largura'] === 1) {
-                        $campeaoEquipe = (int) $partidas[0]['equipes_id_equipe'];
-                        $stC = $conn->prepare(
-                            'UPDATE turmas SET pontuacao_turma = pontuacao_turma + ?
-                             WHERE id_turma = (SELECT turmas_id_turma FROM equipes WHERE id_equipe = ? LIMIT 1) LIMIT 1'
-                        );
-                        $stC->bind_param('ii', $p1, $campeaoEquipe);
-                        $stC->execute();
-                        $stC->close();
+                            $stW = $conn->prepare(
+                                'UPDATE turmas SET pontuacao_turma = pontuacao_turma + ?
+                                 WHERE id_turma = (SELECT turmas_id_turma FROM equipes WHERE id_equipe = ? LIMIT 1) LIMIT 1'
+                            );
+                            $stW->bind_param('ii', $p1, $vencedorEquipe);
+                            $stW->execute();
+                            $stW->close();
+
+                            $stL = $conn->prepare(
+                                'UPDATE turmas SET pontuacao_turma = pontuacao_turma + ?
+                                 WHERE id_turma = (SELECT turmas_id_turma FROM equipes WHERE id_equipe = ? LIMIT 1) LIMIT 1'
+                            );
+                            $stL->bind_param('ii', $p2, $perdedorEquipe);
+                            $stL->execute();
+                            $stL->close();
+                        }
                     }
                 }
             }
