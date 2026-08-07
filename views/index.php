@@ -24,7 +24,7 @@
         </form>
 
         <picture class="d-flex justify-content-center mt-5">
-            <img src="./public/images/logo-sesi.png" alt="Logo do sesi">
+            <img src="./public/images/logo-SGI-SESI.png" alt="Logo do sesi">
         </picture>
     </main>
 
@@ -36,7 +36,7 @@
 
         <section class="w-50">
             <picture class="d-flex justify-content-center my-5 py-5">
-                <img src="./public/images/logo-sesi.png" alt="Logo do sesi">
+                <img src="./public/images/logo-SGI-SESI.png" alt="Logo do sesi" width="500" >
             </picture>
 
             <form id="form_desktop" class="m-auto mt-3 text-center d-flex flex-column align-items-center bg-light p-4" style="width: 80%; border-radius: 15px;">
