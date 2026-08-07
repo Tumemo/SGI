@@ -26,6 +26,7 @@ if ($tipoModalidade === 'individual') {
             $acao = $_GET['acao'] ?? 'ranking';
 
             if ($acao === 'participantes') {
+                // Retorna os participantes aptos para salvar offline
                 $participantes = sgi_ind_buscar_participantes($conn, $idModalidade);
                 echo json_encode(['success' => true, 'participantes' => $participantes], JSON_UNESCAPED_UNICODE);
             } else {
@@ -35,7 +36,7 @@ if ($tipoModalidade === 'individual') {
             break;
 
         case 'POST':
-            requerEscrita();
+            // Na arquitetura Offline-First, o POST entrega os dados limpos para preenchimento local
             $idModalidade = isset($data->id_modalidade) ? (int) $data->id_modalidade : 0;
             if ($idModalidade <= 0) {
                 http_response_code(400);
@@ -43,33 +44,17 @@ if ($tipoModalidade === 'individual') {
                 break;
             }
 
-            $ranking = $data->ranking ?? null;
-            if ($ranking && isset($ranking->primeiro, $ranking->segundo, $ranking->terceiro)) {
-                $conn->begin_transaction();
-                try {
-                    $resultado = sgi_ind_salvar_ranking($conn, $idModalidade, [
-                        'primeiro' => (int) $ranking->primeiro,
-                        'segundo' => (int) $ranking->segundo,
-                        'terceiro' => (int) $ranking->terceiro,
-                    ]);
-                    $conn->commit();
-                    echo json_encode($resultado, JSON_UNESCAPED_UNICODE);
-                } catch (Throwable $e) {
-                    $conn->rollback();
-                    http_response_code(400);
-                    echo json_encode(['success' => false, 'message' => $e->getMessage()], JSON_UNESCAPED_UNICODE);
-                }
-            } else {
-                $conn->begin_transaction();
-                try {
-                    $resultado = sgi_ind_criar_jogo_agenda($conn, $idModalidade);
-                    $conn->commit();
-                    echo json_encode($resultado, JSON_UNESCAPED_UNICODE);
-                } catch (Throwable $e) {
-                    $conn->rollback();
-                    http_response_code(400);
-                    echo json_encode(['success' => false, 'message' => $e->getMessage()], JSON_UNESCAPED_UNICODE);
-                }
+            try {
+                $participantes = sgi_ind_buscar_participantes($conn, $idModalidade);
+                echo json_encode([
+                    'success' => true,
+                    'message' => 'Carga de participantes gerada para processamento offline.',
+                    'id_modalidade' => $idModalidade,
+                    'participantes' => $participantes,
+                ], JSON_UNESCAPED_UNICODE);
+            } catch (Throwable $e) {
+                http_response_code(400);
+                echo json_encode(['success' => false, 'message' => $e->getMessage()], JSON_UNESCAPED_UNICODE);
             }
             break;
 
@@ -80,82 +65,60 @@ if ($tipoModalidade === 'individual') {
     }
 } else {
 
-switch ($method) {
-    case 'GET':
-        $idModalidade = isset($_GET['id_modalidade']) ? (int) $_GET['id_modalidade'] : 0;
-        if ($idModalidade <= 0) {
-            http_response_code(400);
-            echo json_encode(['success' => false, 'message' => 'ID da modalidade é obrigatório.'], JSON_UNESCAPED_UNICODE);
+    switch ($method) {
+        case 'GET':
+            $idModalidade = isset($_GET['id_modalidade']) ? (int) $_GET['id_modalidade'] : 0;
+            if ($idModalidade <= 0) {
+                http_response_code(400);
+                echo json_encode(['success' => false, 'message' => 'ID da modalidade é obrigatório.'], JSON_UNESCAPED_UNICODE);
+                break;
+            }
+            $acao = $_GET['acao'] ?? 'arvore';
+            if ($acao === 'historico') {
+                $resultado = sgi_mm_montar_historico($conn, $idModalidade);
+            } elseif ($acao === 'classificacao') {
+                $resultado = sgi_mm_montar_historico($conn, $idModalidade);
+                unset($resultado['confrontos']);
+            } else {
+                $resultado = sgi_mm_montar_json_arvore($conn, $idModalidade);
+            }
+            echo json_encode($resultado, JSON_UNESCAPED_UNICODE);
             break;
-        }
-        $acao = $_GET['acao'] ?? 'arvore';
-        if ($acao === 'historico') {
-            $resultado = sgi_mm_montar_historico($conn, $idModalidade);
-        } elseif ($acao === 'classificacao') {
-            $resultado = sgi_mm_montar_historico($conn, $idModalidade);
-            unset($resultado['confrontos']);
-        } else {
-            $resultado = sgi_mm_montar_json_arvore($conn, $idModalidade);
-        }
-        echo json_encode($resultado, JSON_UNESCAPED_UNICODE);
-        break;
 
-    case 'POST':
-        requerEscrita();
-        $idModalidade = isset($data->id_modalidade) ? (int) $data->id_modalidade : 0;
+        case 'POST':
+            $idModalidade = isset($data->id_modalidade) ? (int) $data->id_modalidade : 0;
 
-        if ($idModalidade <= 0) {
-            http_response_code(400);
-            echo json_encode(['success' => false, 'message' => 'Informe o ID da modalidade.'], JSON_UNESCAPED_UNICODE);
-            break;
-        }
-
-        // Verificar o tipo real da modalidade
-        $stMod = $conn->prepare('SELECT tipos_modalidades_id_tipo_modalidade FROM modalidades WHERE id_modalidade = ? LIMIT 1');
-        $stMod->bind_param('i', $idModalidade);
-        $stMod->execute();
-        $rowMod = $stMod->get_result()->fetch_assoc();
-        $stMod->close();
-
-        $isIndividual = $rowMod && ((int) $rowMod['tipos_modalidades_id_tipo_modalidade'] === 2);
-
-        $conn->begin_transaction();
-        try {
-            if ($isIndividual) {
-                $resultado = sgi_ind_criar_jogo_agenda($conn, $idModalidade);
-                $conn->commit();
-                echo json_encode($resultado, JSON_UNESCAPED_UNICODE);
+            if ($idModalidade <= 0) {
+                http_response_code(400);
+                echo json_encode(['success' => false, 'message' => 'Informe o ID da modalidade.'], JSON_UNESCAPED_UNICODE);
                 break;
             }
 
-            $equipes = sgi_mm_buscar_equipes_validadas($conn, $idModalidade);
-            if (count($equipes) < 2) {
-                throw new RuntimeException('É necessário ao menos duas equipes ativas com competidores vinculados (elenco).');
+            try {
+                // 1. Busca equipes validadas no banco de dados (Apenas Leitura)
+                $equipes = sgi_mm_buscar_equipes_validadas($conn, $idModalidade);
+                if (count($equipes) < 2) {
+                    throw new RuntimeException('É necessário ao menos duas equipes ativas com competidores vinculados.');
+                }
+
+                // 2. Retorna os dados para hidratação offline do cliente
+                echo json_encode([
+                    'success' => true,
+                    'message' => 'Carga de equipes obtida com sucesso. Gerenciamento de chaveamento liberado.',
+                    'id_modalidade' => $idModalidade,
+                    'total_equipes' => count($equipes),
+                    'equipes' => $equipes,
+                ], JSON_UNESCAPED_UNICODE);
+
+            } catch (Throwable $e) {
+                http_response_code(400);
+                echo json_encode(['success' => false, 'message' => $e->getMessage()], JSON_UNESCAPED_UNICODE);
             }
+            break;
 
-            $res = sgi_mm_criar_chaveamento_inicial($conn, $idModalidade, $equipes);
-
-            foreach ($res['bye_jogos'] as $idBye) {
-                sgi_chaveamento_processar_avanco($conn, (int) $idBye);
-            }
-
-            $conn->commit();
-            echo json_encode([
-                'success' => true,
-                'message' => 'Chaveamento mata-mata gerado.',
-                'jogos_criados' => $res['jogos_criados'],
-                'bye_inicial' => count($res['bye_jogos']),
-            ], JSON_UNESCAPED_UNICODE);
-        } catch (Throwable $e) {
-            $conn->rollback();
-            http_response_code(400);
-            echo json_encode(['success' => false, 'message' => $e->getMessage()], JSON_UNESCAPED_UNICODE);
-        }
-        break;
-
-    default:
-        http_response_code(405);
-        echo json_encode(['message' => 'Método não permitido'], JSON_UNESCAPED_UNICODE);
-        break;
-}
+        default:
+            http_response_code(405);
+            echo json_encode(['message' => 'Método não permitido'], JSON_UNESCAPED_UNICODE);
+            break;
+    }
 }
