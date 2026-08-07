@@ -170,7 +170,12 @@ include 'componentes/head.php';
         border: 1px solid var(--aluno-border);
         padding: 1.15rem 1.25rem;
         box-shadow: var(--aluno-shadow);
+        cursor: pointer;
         transition: transform 0.22s ease, box-shadow 0.22s ease, border-color 0.22s ease;
+    }
+    .jogo-card:focus-visible {
+        outline: 3px solid rgba(227, 6, 19, 0.4);
+        outline-offset: 2px;
     }
     .jogo-card:hover {
         transform: translateY(-3px);
@@ -246,19 +251,10 @@ include 'componentes/head.php';
         gap: 0.45rem;
         padding: 0.38rem 0.9rem;
         border-radius: 50px;
-        border: none;
         background: var(--aluno-primary-soft);
         color: var(--aluno-primary);
         font-size: 0.82rem;
         font-weight: 700;
-        cursor: pointer;
-        transition: all var(--aluno-transition);
-    }
-    .modalidade-chip:hover {
-        background: var(--aluno-primary);
-        color: #fff;
-        transform: translateY(-1px);
-        box-shadow: 0 6px 14px rgba(227, 6, 19, 0.28);
     }
     .modalidade-chip i { font-size: 0.9rem; }
     .fase-tag {
@@ -876,19 +872,18 @@ include 'componentes/nav.php';
             const dot = status.dot ? '<span class="status-dot"></span>' : '';
 
             return `
-                <div class="jogo-card">
+                <div class="jogo-card" data-modalidade-id="${esc(jogo.id_modalidade)}"
+                     data-modalidade-nome="${esc(jogo.nome_modalidade)}"
+                     onclick="abrirDetalhesModalidade(this)" role="button" tabindex="0">
                     <div class="jogo-top">
                         <div class="jogo-meta">${metaInfo}</div>
                         <span class="status-badge ${status.classe}">${dot}${esc(status.texto)}</span>
                     </div>
 
                     <div class="modalidade-row">
-                        <button type="button" class="modalidade-chip"
-                            data-modalidade-id="${esc(jogo.id_modalidade)}"
-                            data-modalidade-nome="${esc(jogo.nome_modalidade)}"
-                            onclick="abrirDetalhesModalidade(this)">
+                        <span class="modalidade-chip">
                             <i class="bi ${iconeModalidade(jogo.nome_modalidade)}"></i>${esc(jogo.nome_modalidade)}
-                        </button>
+                        </span>
                         <span class="fase-tag"><i class="bi bi-diagram-3 me-1"></i>${esc(jogo.nome_jogo)}</span>
                     </div>
 
