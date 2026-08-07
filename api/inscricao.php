@@ -152,7 +152,7 @@ try {
     $jaExistentes = 0;
     $erros = [];
 
-    foreach ($id_modalidades as $id_modalidade) {
+    foreach ($novasModalidades as $id_modalidade) {
         $id_modalidade = (int) $id_modalidade;
         if ($id_modalidade <= 0) continue;
 

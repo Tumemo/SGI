@@ -33,7 +33,9 @@ switch ($method) {
                     modalidades.nome_modalidade, 
                     modalidades.max_inscrito_modalidade AS limite_maximo,
                     turmas.nome_turma,
-                    interclasses.nome_interclasse
+                    interclasses.nome_interclasse,
+                    (SELECT COUNT(*) FROM equipes_has_usuarios eu WHERE eu.equipes_id_equipe = equipes.id_equipe) AS total_alunos,
+                    (SELECT COUNT(*) FROM equipes_has_usuarios eu2 WHERE eu2.equipes_id_equipe = equipes.id_equipe) AS qtd_membros
                 FROM equipes 
                 INNER JOIN modalidades ON modalidades.id_modalidade = equipes.modalidades_id_modalidade 
                 INNER JOIN turmas ON turmas.id_turma = equipes.turmas_id_turma

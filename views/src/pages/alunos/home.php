@@ -4,7 +4,7 @@ $cssExtra = '
 
 /* ==================== DESIGN SYSTEM ==================== */
 :root {
-  --aluno-primary: #e30613;
+  --aluno-primary: #dc3545;
   --aluno-primary-dark: #b02a37;
   --aluno-primary-light: #fce4e6;
   --aluno-primary-subtle: #fff0f0;
