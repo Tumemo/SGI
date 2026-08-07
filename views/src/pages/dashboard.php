@@ -62,7 +62,7 @@ $isMesario = $nivelUsuario === 2;
                 <a href="ranking.php" id="linkRanking" class="dash-card">
                     <div class="dash-card-red-corner"></div>
                     <div class="dash-card-header">
-                        <div class="dash-card-icon"><i class="bi bi-trophy-fill"></i></div>
+                        <div class="dash-card-icon"><i class="bi bi-trophy"></i></div>
                         <h5 class="dash-card-title">RANKING</h5>
                     </div>
                     <p class="dash-card-text">Visualize o ranking geral de pontuações por categoria.</p>
@@ -175,7 +175,7 @@ $isMesario = $nivelUsuario === 2;
                 <a href="ranking.php" id="linkRanking" class="dash-card">
                     <div class="dash-card-red-corner"></div>
                     <div class="dash-card-header">
-                        <div class="dash-card-icon"><i class="bi bi-trophy-fill"></i></div>
+                        <div class="dash-card-icon"><i class="bi bi-trophy"></i></div>
                         <h5 class="dash-card-title">RANKING</h5>
                     </div>
                     <p class="dash-card-text">Visualize o ranking geral de pontuações por categoria.</p>
@@ -302,7 +302,7 @@ $isMesario = $nivelUsuario === 2;
                 <a href="ranking.php" id="linkRanking" class="dash-card">
                     <div class="dash-card-red-corner"></div>
                     <div class="dash-card-header">
-                        <div class="dash-card-icon"><i class="bi bi-trophy-fill"></i></div>
+                        <div class="dash-card-icon"><i class="bi bi-trophy"></i></div>
                         <h5 class="dash-card-title">RANKING</h5>
                     </div>
                     <p class="dash-card-text">Visualize o ranking geral de pontuações por categoria.</p>
