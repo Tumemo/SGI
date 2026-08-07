@@ -1187,24 +1187,32 @@ include 'componentes/nav.php';
             const dados = await res.json();
             const equipes = Array.isArray(dados) ? dados : [];
 
-            let equipeAlvo = equipes.find(e => e.nome_equipe && (e.nome_equipe.endsWith('- 1') || e.nome_equipe.includes('- 1')));
+            if (chip) chip.textContent = '';
 
-            if (!equipeAlvo && equipes.length > 0) {
-                equipeAlvo = equipes[0];
-            }
-
-            if (!equipeAlvo) {
-                if (chip) chip.textContent = '';
+            if (equipes.length === 0) {
                 document.getElementById('msgFeedback').textContent = 'Nenhuma equipe disponível para esta modalidade.';
                 setTimeout(() => document.getElementById('msgFeedback').textContent = '', 2500);
                 return;
             }
 
-            card.classList.add('selected');
-            card.dataset.equipe = equipeAlvo.id_equipe;
-            card.dataset.equipeNome = equipeAlvo.nome_equipe;
-            if (chip) chip.textContent = 'Equipe: ' + equipeAlvo.nome_equipe;
-            atualizarContador();
+            document.getElementById('modalEquipesTitle').textContent = `Escolha a equipe`;
+            document.getElementById('modalEquipesSubtitulo').textContent = nomeModalidade;
+            
+            const corpo = document.getElementById('modalEquipesCorpo');
+            corpo.innerHTML = equipes.map(e => `
+                <div class="equipe-pick-row" data-equipe="${e.id_equipe}" data-equipe-nome="${esc(e.nome_equipe)}" onclick="selecionarEquipe(this, '${idModalidade}')">
+                    <div class="equipe-pick-icon"><i class="bi bi-people-fill"></i></div>
+                    <div class="equipe-pick-info">
+                        <div class="equipe-pick-nome">${esc(e.nome_equipe)}</div>
+                        <div class="equipe-pick-sub">Equipe da turma</div>
+                    </div>
+                    <div class="equipe-pick-check d-none"><i class="bi bi-check-lg"></i></div>
+                </div>
+            `).join('');
+            
+            const modal = new bootstrap.Modal(document.getElementById('modalEquipes'));
+            modal.show();
+
         } catch (e) {
             console.error(e);
             if (chip) chip.textContent = 'Erro ao carregar';
