@@ -16,13 +16,14 @@ if ($idInterclassePagina <= 0) {
 }
 
 if ($id_usuario) {
-    $stmt = $conn->prepare("SELECT u.genero_usuario, t.categorias_id_categoria FROM usuarios u LEFT JOIN turmas t ON u.turmas_id_turma = t.id_turma WHERE u.id_usuario = ?");
+    $stmt = $conn->prepare("SELECT u.genero_usuario, t.categorias_id_categoria, t.id_turma AS turmas_id_turma FROM usuarios u LEFT JOIN turmas t ON u.turmas_id_turma = t.id_turma WHERE u.id_usuario = ?");
     $stmt->bind_param('i', $id_usuario);
     $stmt->execute();
     $result = $stmt->get_result();
     if ($row = $result->fetch_assoc()) {
         $genero_usuario = $row['genero_usuario'];
         $categoria_usuario = (int)($row['categorias_id_categoria'] ?? 0);
+        $turma_usuario = (int)($row['turmas_id_turma'] ?? 0);
     }
 
     $sql = "SELECT m.id_modalidade, m.nome_modalidade, m.genero_modalidade, 
@@ -332,6 +333,21 @@ include 'componentes/head.php';
         border-radius: 50px;
         text-transform: uppercase;
     }
+    .modalidade-card .card-equipe {
+        display: none;
+        font-size: 0.72rem;
+        font-weight: 700;
+        color: var(--md-primary-dark);
+        background: var(--md-primary-light);
+        border: 1px dashed var(--md-primary);
+        padding: 0.22rem 0.7rem;
+        border-radius: 50px;
+        max-width: 100%;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    .modalidade-card.selected .card-equipe { display: inline-block; }
 
     /* Estado selecionado */
     .modalidade-card.selected {
@@ -390,6 +406,58 @@ include 'componentes/head.php';
     .modalidade-card.shake {
         animation: shake 0.45s ease;
         border-color: #ffb3ba;
+    }
+
+    /* ==================== MODAL DE ESCOLHA DE EQUIPE ==================== */
+    .equipe-pick-row {
+        display: flex;
+        align-items: center;
+        gap: 0.85rem;
+        padding: 0.85rem 1rem;
+        border: 1.5px solid var(--md-border);
+        border-radius: 14px;
+        background: var(--md-surface);
+        cursor: pointer;
+        margin-bottom: 0.6rem;
+        transition: transform 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease, background-color 0.18s ease;
+    }
+    .equipe-pick-row:hover {
+        transform: translateY(-2px);
+        border-color: #f5b9be;
+        box-shadow: var(--md-shadow);
+    }
+    .equipe-pick-row.selected {
+        border-color: var(--md-primary);
+        background: var(--md-primary-subtle);
+        box-shadow: 0 0 0 3px rgba(227, 6, 19, 0.12);
+    }
+    .equipe-pick-icon {
+        flex-shrink: 0;
+        width: 42px;
+        height: 42px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.2rem;
+        background: var(--md-primary-light);
+        color: var(--md-primary);
+    }
+    .equipe-pick-info { flex: 1; min-width: 0; }
+    .equipe-pick-nome { font-weight: 700; font-size: 0.95rem; color: var(--md-text); line-height: 1.2; }
+    .equipe-pick-sub { font-size: 0.78rem; color: var(--md-text-secondary); }
+    .equipe-pick-check {
+        flex-shrink: 0;
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        background: var(--md-primary);
+        color: #fff;
+        font-size: 0.9rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 4px 10px rgba(227, 6, 19, 0.3);
     }
 
     /* ==================== ÁREA INFERIOR / RESUMO ==================== */
@@ -709,6 +777,26 @@ include 'componentes/head.php';
     </div>
 </div>
 
+<div class="modal fade" id="modalEquipes" tabindex="-1" aria-labelledby="modalEquipesTitle" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div>
+                    <h5 class="modal-title fw-bold" id="modalEquipesTitle">Escolha a equipe</h5>
+                    <small class="text-muted" id="modalEquipesSubtitulo"></small>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+            </div>
+            <div class="modal-body" id="modalEquipesCorpo">
+                <div class="text-center text-muted py-4">
+                    <div class="spinner-border spinner-border-sm me-2" role="status"></div>
+                    Carregando equipes...
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <?php
 $paginaAtiva = 'inscricao';
 include 'componentes/nav.php';
@@ -722,6 +810,7 @@ include 'componentes/nav.php';
     
     const generoUsuario = '<?= $genero_usuario ?>';
     const categoriaUsuario = <?= $categoria_usuario ?>;
+    const idTurmaUsuario = <?= (int)($turma_usuario ?? 0) ?>;
     const modalidadesInscritas = <?= json_encode($modalidades_inscritas) ?>;
     const estaInscrito = modalidadesInscritas.length > 0;
     let modalidadesData = [];
@@ -886,13 +975,14 @@ include 'componentes/nav.php';
             col.className = 'col';
             const vagas = statusVagas(mod);
             col.innerHTML = `
-                <div class="modalidade-card" data-id="${mod.id_modalidade}" onclick="toggleModalidade(this)">
+                <div class="modalidade-card" data-id="${mod.id_modalidade}" data-nome="${esc(mod.nome_modalidade)}" onclick="abrirEquipesModalidade(this)">
                     <span class="card-check"><i class="bi bi-check-lg"></i></span>
                     <span class="card-vagas ${vagas.cls}"><i class="bi ${vagas.icon}"></i>${vagas.label}</span>
                     <div class="card-icon-wrap"><i class="bi ${iconeModalidade(mod.nome_modalidade)}"></i></div>
                     <div class="card-info">
                         <span class="card-nome">${esc(mod.nome_modalidade)}</span>
                         <span class="card-categoria">${esc(mod.nome_categoria || 'Categoria')}</span>
+                        <span class="card-equipe"></span>
                     </div>
                 </div>
             `;
@@ -1064,22 +1154,97 @@ include 'componentes/nav.php';
         }
     }
 
-    function toggleModalidade(card) {
+    async function abrirEquipesModalidade(card) {
+        const idModalidade = card.dataset.id;
+        const nomeModalidade = card.dataset.nome;
+        const selecionados = document.querySelectorAll('.modalidade-card.selected').length;
         const inscritos = new Set(modalidadesInscritas.map(m => String(m.id_modalidade))).size;
-        const selecionados = document.querySelectorAll('.modalidade-card.selected');
 
-        if (card.classList.contains('selected')) {
-            card.classList.remove('selected');
-        } else {
-            if (selecionados.length + inscritos >= 3) {
-                document.getElementById('msgFeedback').textContent = 'Você já selecionou o número máximo de modalidades.';
-                card.classList.add('shake');
-                setTimeout(() => card.classList.remove('shake'), 500);
-                setTimeout(() => document.getElementById('msgFeedback').textContent = '', 2500);
+        if (!card.classList.contains('selected') && selecionados + inscritos >= 3) {
+            document.getElementById('msgFeedback').textContent = 'Você já selecionou o número máximo de modalidades.';
+            card.classList.add('shake');
+            setTimeout(() => card.classList.remove('shake'), 500);
+            setTimeout(() => document.getElementById('msgFeedback').textContent = '', 2500);
+            return;
+        }
+
+        const modal = new bootstrap.Modal(document.getElementById('modalEquipes'));
+        document.getElementById('modalEquipesTitle').textContent = nomeModalidade || 'Escolha a equipe';
+        document.getElementById('modalEquipesSubtitulo').textContent = 'Selecione em qual equipe da sua turma você vai jogar.';
+        document.getElementById('modalEquipesCorpo').innerHTML = '<div class="text-center text-muted py-4"><div class="spinner-border spinner-border-sm me-2" role="status"></div>Carregando equipes...</div>';
+        modal.show();
+
+        try {
+            const res = await fetch(`../../../../api/equipes.php?id_modalidade=${idModalidade}&id_turma=${idTurmaUsuario}`);
+            const dados = await res.json();
+            const equipes = Array.isArray(dados) ? dados : [];
+
+            if (equipes.length === 0) {
+                document.getElementById('modalEquipesCorpo').innerHTML = `
+                    <div class="text-center text-muted py-4">
+                        <i class="bi bi-people fs-1 d-block mb-2"></i>
+                        Nenhuma equipe disponível para a sua turma nesta modalidade.
+                    </div>`;
                 return;
             }
-            card.classList.add('selected');
+
+            const equipeAtual = card.dataset.equipe || '';
+            const jaSelecionada = card.classList.contains('selected');
+
+            const botoesTopo = jaSelecionada
+                ? `<button type="button" class="btn btn-outline-danger btn-sm w-100 mb-3" onclick="removerEquipeSelecionada(${idModalidade})">
+                       <i class="bi bi-x-lg me-1"></i>Remover esta modalidade da seleção
+                   </button>`
+                : '';
+
+            document.getElementById('modalEquipesCorpo').innerHTML = botoesTopo + equipes.map(e => `
+                <div class="equipe-pick-row ${String(e.id_equipe) === equipeAtual ? 'selected' : ''}"
+                     onclick="selecionarEquipe(this, ${idModalidade})"
+                     data-equipe="${esc(e.id_equipe)}"
+                     data-equipe-nome="${esc(e.nome_equipe)}">
+                    <span class="equipe-pick-icon"><i class="bi bi-people-fill"></i></span>
+                    <div class="equipe-pick-info">
+                        <div class="equipe-pick-nome">${esc(e.nome_equipe)}</div>
+                        <div class="equipe-pick-sub">${esc(e.nome_turma)} · ${parseInt(e.qtd_membros) || 0} membro(s)</div>
+                    </div>
+                    ${String(e.id_equipe) === equipeAtual ? '<span class="equipe-pick-check"><i class="bi bi-check-lg"></i></span>' : ''}
+                </div>`).join('');
+        } catch (e) {
+            console.error(e);
+            document.getElementById('modalEquipesCorpo').innerHTML = '<div class="text-danger small text-center py-4">Erro ao carregar equipes. Tente novamente.</div>';
         }
+    }
+
+    function selecionarEquipe(row, idModalidade) {
+        const equipe = row.dataset.equipe;
+        const equipeNome = row.dataset.equipeNome;
+
+        document.querySelectorAll('.modalidade-card').forEach(card => {
+            if (String(card.dataset.id) === String(idModalidade)) {
+                card.classList.add('selected');
+                card.dataset.equipe = equipe;
+                card.dataset.equipeNome = equipeNome;
+                const chip = card.querySelector('.card-equipe');
+                if (chip) chip.textContent = 'Equipe: ' + equipeNome;
+            }
+        });
+
+        bootstrap.Modal.getInstance(document.getElementById('modalEquipes'))?.hide();
+        atualizarContador();
+    }
+
+    function removerEquipeSelecionada(idModalidade) {
+        document.querySelectorAll('.modalidade-card').forEach(card => {
+            if (String(card.dataset.id) === String(idModalidade)) {
+                card.classList.remove('selected');
+                delete card.dataset.equipe;
+                delete card.dataset.equipeNome;
+                const chip = card.querySelector('.card-equipe');
+                if (chip) chip.textContent = '';
+            }
+        });
+
+        bootstrap.Modal.getInstance(document.getElementById('modalEquipes'))?.hide();
         atualizarContador();
     }
 
@@ -1095,7 +1260,17 @@ include 'componentes/nav.php';
         btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status"></span> Salvando...';
 
         const ids = [];
-        selecionados.forEach(card => ids.push(parseInt(card.dataset.id)));
+        selecionados.forEach(card => {
+            const equipe = parseInt(card.dataset.equipe || 0);
+            if (equipe > 0) ids.push(equipe);
+        });
+
+        if (ids.length === 0) {
+            document.getElementById('msgFeedback').textContent = 'Escolha uma equipe para cada modalidade selecionada.';
+            btn.disabled = false;
+            btn.innerHTML = '<i class="bi bi-check-lg"></i> Salvar';
+            return;
+        }
 
         try {
             const res = await fetch('../../../../api/inscricao.php', {
@@ -1103,7 +1278,7 @@ include 'componentes/nav.php';
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     id_interclasse: parseInt(idInterclasse),
-                    id_modalidades: ids
+                    id_equipes: ids
                 })
             });
             const result = await res.json();

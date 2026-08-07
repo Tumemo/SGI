@@ -31,12 +31,14 @@ switch ($method) {
                     equipes.turmas_id_turma,
                     modalidades.nome_modalidade, 
                     turmas.nome_turma,
-                    interclasses.nome_interclasse
+                    interclasses.nome_interclasse,
+                    (SELECT COUNT(*) FROM equipes_has_usuarios eu WHERE eu.equipes_id_equipe = equipes.id_equipe) AS qtd_membros
                 FROM equipes 
                 INNER JOIN modalidades ON modalidades.id_modalidade = equipes.modalidades_id_modalidade 
                 INNER JOIN turmas ON turmas.id_turma = equipes.turmas_id_turma
                 INNER JOIN interclasses ON interclasses.id_interclasse = turmas.interclasses_id_interclasse
-                WHERE 1=1" . $filtro['sql'];
+                WHERE 1=1" . $filtro['sql'] . "
+                ORDER BY equipes.id_equipe ASC";
 
         $stmt = $conn->prepare($sql);
         if (!$stmt) {
