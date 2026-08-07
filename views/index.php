@@ -7,7 +7,6 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
     <link rel="stylesheet" href="./src/styles/style.css">
     <title>SGI - Login</title>
-
 </head>
 <body>
     <main class="d-md-none">
@@ -23,8 +22,8 @@
             <div id="msg_erro_mobile" class="text-danger"></div>
         </form>
 
-        <picture class="d-flex justify-content-center mt-5">
-            <img src="./public/images/logo-SGI-SESI.png" alt="Logo do sesi">
+        <picture class="d-flex justify-content-center mt-5 position-relative overflow-hidden">
+            <img src="./public/images/logo-SGI-SESI.png" alt="Logo do sesi" class="position-relative img-fluid" style="max-width: 280px; height: auto;">
         </picture>
     </main>
 
@@ -34,9 +33,10 @@
             <img src="./public/images/borda-banner-login-desktop.png" class="position-absolute top-0 start-0 w-100 h-100 object-fit-cover" style="z-index: 2;">
         </picture>
 
-        <section class="w-50">
-            <picture class="d-flex justify-content-center my-5 py-5">
-                <img src="./public/images/logo-SGI-SESI.png" alt="Logo do sesi" width="500" >
+        <section class="w-50 position-relative">
+            <!-- Margem superior aumentada (mt-5 pt-3) para posicionar a logo mais para baixo -->
+            <picture class="d-flex justify-content-center mt-5 pt-3 mb-3 position-relative">
+                <img src="./public/images/logo-SGI-SESI.png" alt="Logo do sesi" class="position-relative" style="z-index: 3; max-width: 320px; width: 100%; height: auto;">
             </picture>
 
             <form id="form_desktop" class="m-auto mt-3 text-center d-flex flex-column align-items-center bg-light p-4" style="width: 80%; border-radius: 15px;">
@@ -59,28 +59,23 @@
     </main>
 
     <script>
-        // Função unificada e corrigida para processar o envio dos dados
         async function realizarLogin(e) {
             e.preventDefault();
             
-            const form = e.target; // Captura exatamente o formulário enviado (evita misturar mobile com desktop)
+            const form = e.target;
             const msgErro = form.querySelector('[id^="msg_erro"]');
             
-            // Limpa mensagens de erro antigas
             msgErro.innerText = ""; 
 
-            // Captura os elementos de input especificamente de DENTRO do formulário atual
             const matriculaInput = form.querySelector('.ipt-matricula');
             const senhaInput = form.querySelector('.ipt-senha');
 
-            // Monta os dados limpando espaços vazios acidentais nas pontas (.trim())
             const payload = {
                 matricula: matriculaInput.value.trim(),
                 senha: senhaInput.value.trim()
             };
 
             try {
-                // Utilizando a rota absoluta corrigida que encontrou o arquivo com sucesso
                 const response = await fetch('../api/login.php', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -90,10 +85,8 @@
                 const data = await response.json();
 
                 if (response.ok && data.status === 'sucesso') {
-                    // Redireciona para a página correspondente ao nível devolvida pelo PHP
                     window.location.href = data.redirect;
                 } else {
-                    // Mostra a mensagem exata retornada pelo PHP (ex: "Matrícula ou Senha incorretos.")
                     msgErro.innerText = data.mensagem || "Erro ao realizar o login.";
                 }
             } catch (err) {
@@ -101,7 +94,6 @@
             }
         }
 
-        // Registra os eventos de escuta nos dois formulários da página
         document.getElementById('form_mobile').addEventListener('submit', realizarLogin);
         document.getElementById('form_desktop').addEventListener('submit', realizarLogin);
     </script>
