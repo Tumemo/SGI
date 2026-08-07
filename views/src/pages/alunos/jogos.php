@@ -153,6 +153,66 @@ include 'componentes/head.php';
     }
 
     /* ==================== CARTÕES DE JOGO ==================== */
+    /* ==================== CAMPEÕES ==================== */
+    .campeoes-section {
+        margin-bottom: 1.75rem;
+        padding: 1.4rem 1.5rem;
+        border-radius: var(--aluno-radius);
+        background: linear-gradient(135deg, #fff7e0, #fffdf5);
+        border: 1.5px solid #f5c04a;
+        box-shadow: 0 10px 30px rgba(245, 192, 74, 0.16);
+    }
+    .campeoes-title {
+        display: flex;
+        align-items: center;
+        gap: 0.6rem;
+        font-size: 1.05rem;
+        font-weight: 800;
+        color: #92400e;
+        margin-bottom: 1.1rem;
+        letter-spacing: -0.01em;
+    }
+    .campeoes-title i { color: #d97706; font-size: 1.3rem; }
+    .campeoes-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        gap: 1rem;
+    }
+    .campeao-card {
+        background: linear-gradient(135deg, #fef3c7 0%, #fffbeb 50%, #fef9c3 100%);
+        border: 2px solid #f59e0b;
+        border-radius: 14px;
+        padding: 1.25rem 1.15rem;
+        text-align: center;
+        box-shadow: 0 8px 24px rgba(245, 158, 11, 0.18);
+        transition: transform 0.22s ease, box-shadow 0.22s ease;
+    }
+    .campeao-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 14px 30px rgba(245, 158, 11, 0.28);
+    }
+    .campeao-card__icon { font-size: 2.1rem; margin-bottom: 8px; }
+    .campeao-card__label {
+        font-size: 0.7rem;
+        font-weight: 700;
+        color: #92400e;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        margin-bottom: 6px;
+    }
+    .campeao-card__name {
+        font-size: 1.05rem;
+        font-weight: 800;
+        color: #78350f;
+        line-height: 1.3;
+    }
+    .campeao-card__mod {
+        font-size: 0.8rem;
+        color: #b45309;
+        margin-top: 6px;
+        font-weight: 500;
+    }
+
     .jogos-grid {
         display: grid;
         grid-template-columns: repeat(auto-fill, minmax(440px, 1fr));
@@ -567,6 +627,12 @@ include 'componentes/head.php';
         </div>
     </div>
 
+    <!-- Container dos Campeões -->
+    <div id="campeoesSection" class="campeoes-section" hidden>
+        <div class="campeoes-title"><i class="bi bi-trophy-fill"></i>Campeões</div>
+        <div id="campeoesGrid" class="campeoes-grid"></div>
+    </div>
+
     <!-- Container dos Jogos -->
     <div id="listaJogos" class="jogos-grid">
         <div class="empty-state">
@@ -674,15 +740,71 @@ include 'componentes/nav.php';
 
         let nomeFase = 'Eliminatórias';
 
-        if (fase === '16') nomeFase = '16-avos de Final';
-        else if (fase === '8') nomeFase = 'Oitavas de Final';
-        else if (fase === '4') nomeFase = 'Quartas de Final';
-        else if (fase === '2') nomeFase = 'Semifinal';
-        else if (fase === '1') {
-            return partes[2] === '1' ? 'Disputa de 3º Lugar' : 'Final';
-        }
+        if (fase === '16') nomeFase = 'Oitavas de Final';
+        else if (fase === '8') nomeFase = 'Quartas de Final';
+        else if (fase === '4') nomeFase = 'Semifinal';
+        else if (fase === '2') nomeFase = 'Final';
+        else if (fase === '1') nomeFase = 'Campeão';
 
         return `${nomeFase} (Jogo ${indexJogo})`;
+    }
+
+    // Jogo de campeão = código MM:1 (largura 1, última fase da chave)
+    function eJogoCampeao(codigo) {
+        return typeof codigo === 'string' && /^MM:1:/i.test(codigo.trim());
+    }
+
+    // Monta a seção de campeões (um card por modalidade/categoria)
+    function renderizarCampeoes() {
+        const section = document.getElementById('campeoesSection');
+        const grid = document.getElementById('campeoesGrid');
+        if (!section || !grid) return;
+
+        const campeoes = [];
+        const vistos = new Set();
+
+        todosOsJogos.forEach(j => {
+            if (!eJogoCampeao(j.nome_jogo_raw)) return;
+            if (String(j.status_jogo).toLowerCase() !== 'concluido') return;
+
+            const chave = `${j.id_modalidade}|${j.id_categoria}`;
+            if (vistos.has(chave)) return;
+            vistos.add(chave);
+
+            const eqA = j.equipes[0];
+            const eqB = j.equipes[1];
+
+            // O jogo de campeão só tem um time (o vencedor da final), sem adversário
+            let campeao;
+            if (eqB) {
+                campeao = (Number(eqA.placar) || 0) >= (Number(eqB.placar) || 0) ? eqA : eqB;
+            } else if (eqA) {
+                campeao = eqA;
+            } else {
+                return;
+            }
+
+            campeoes.push({
+                nome: campeao.nome,
+                tag: campeao.tag,
+                modalidade: j.nome_modalidade,
+                categoria: j.nome_categoria
+            });
+        });
+
+        if (campeoes.length === 0) {
+            section.hidden = true;
+            return;
+        }
+
+        section.hidden = false;
+        grid.innerHTML = campeoes.map(c => `
+            <div class="campeao-card">
+                <div class="campeao-card__icon">🏆</div>
+                <div class="campeao-card__label">Campeão</div>
+                <div class="campeao-card__name">${esc(c.nome)}</div>
+                <div class="campeao-card__mod">${esc(c.modalidade)}${c.categoria ? ' · ' + esc(c.categoria) : ''}</div>
+            </div>`).join('');
     }
 
     // Mapa de badge de status (EM ANDAMENTO / AGUARDANDO / FINALIZADO)
@@ -745,6 +867,7 @@ include 'componentes/nav.php';
                     jogosAgrupados[row.id_jogo] = {
                         id_jogo: row.id_jogo,
                         nome_jogo: traduzirNomeJogo(row.nome_jogo),
+                        nome_jogo_raw: row.nome_jogo,
                         status_jogo: row.status_jogo,
                         nome_modalidade: row.nome_modalidade,
                         id_modalidade: row.modalidades_id_modalidade,
@@ -775,6 +898,7 @@ include 'componentes/nav.php';
             preencherFiltroModalidades();
             preencherFiltroCategorias();
 
+            renderizarCampeoes();
             renderizarJogos();
 
         } catch (error) {
@@ -831,12 +955,13 @@ include 'componentes/nav.php';
     function renderizarJogos() {
         const container = document.getElementById('listaJogos');
 
-        let jogosFiltrados = todosOsJogos;
+        // Jogos de campeão (MM:1) não entram na lista — eles aparecem na seção "Campeões"
+        let jogosFiltrados = todosOsJogos.filter(j => !eJogoCampeao(j.nome_jogo_raw));
 
         if (filtroStatus === 'agendado') {
-            jogosFiltrados = todosOsJogos.filter(j => String(j.status_jogo).toLowerCase() !== 'concluido');
+            jogosFiltrados = jogosFiltrados.filter(j => String(j.status_jogo).toLowerCase() !== 'concluido');
         } else if (filtroStatus === 'finalizado') {
-            jogosFiltrados = todosOsJogos.filter(j => String(j.status_jogo).toLowerCase() === 'concluido');
+            jogosFiltrados = jogosFiltrados.filter(j => String(j.status_jogo).toLowerCase() === 'concluido');
         }
 
         if (filtroModalidade !== 'all') {
