@@ -91,6 +91,10 @@ $paginaAtiva = 'dashboard';
                         <input type="number" class="form-control" placeholder="Ex: 12" id="inputMaxInscritos" min="0">
                     </div>
                     <div class="mb-3">
+                        <label class="form-label fw-medium">Máx. de Equipes por Turma (Opcional):</label>
+                        <input type="number" class="form-control" placeholder="Ex: 3" id="inputMaxEquipes" min="1">
+                    </div>
+                    <div class="mb-3">
                         <label class="form-label fw-medium">Tipo de Modalidade:</label>
                         <select class="form-select" id="inputTipoModalidade" required>
                             <option value="" disabled selected>Carregando tipos...</option>
@@ -137,6 +141,10 @@ $paginaAtiva = 'dashboard';
                     <div class="mb-3">
                         <label class="form-label fw-medium">Máx. de Inscritos (Opcional):</label>
                         <input type="number" class="form-control" id="editMaxInscritos" min="0">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-medium">Máx. de Equipes por Turma (Opcional):</label>
+                        <input type="number" class="form-control" id="editMaxEquipes" min="1">
                     </div>
                     <div class="mb-3">
                         <label class="form-label fw-medium">Tipo de Modalidade:</label>
@@ -378,6 +386,7 @@ $paginaAtiva = 'dashboard';
         document.getElementById('editNomeModalidade').value = mod.nome_modalidade || '';
         document.getElementById('editGeneroModalidade').value = mod.genero_modalidade || 'MISTO';
         document.getElementById('editMaxInscritos').value = mod.max_inscrito_modalidade || '';
+        document.getElementById('editMaxEquipes').value = mod.max_equipes || '';
         document.getElementById('caixaMensagemEditarModalidade').innerHTML = '';
 
         // Preencher selects de tipo e categoria
@@ -409,6 +418,7 @@ $paginaAtiva = 'dashboard';
             nome_modalidade: document.getElementById('editNomeModalidade').value.trim(),
             genero_modalidade: document.getElementById('editGeneroModalidade').value,
             max_inscrito_modalidade: parseInt(document.getElementById('editMaxInscritos').value) || 0,
+            max_equipes: (() => { const v = document.getElementById('editMaxEquipes').value; return v === '' ? null : parseInt(v); })(),
             tipos_modalidades_id_tipo_modalidade: document.getElementById('editTipoModalidade').value,
             categorias_id_categoria: document.getElementById('editCategoriaModalidade').value
         };
@@ -478,6 +488,7 @@ $paginaAtiva = 'dashboard';
             nome_modalidade: document.getElementById('inputNomeModalidade').value.trim(),
             genero_modalidade: document.getElementById('inputGeneroModalidade').value,
             max_inscrito_modalidade: parseInt(document.getElementById('inputMaxInscritos').value) || 0,
+            max_equipes: (() => { const v = document.getElementById('inputMaxEquipes').value; return v === '' ? null : parseInt(v); })(),
             tipos_modalidades_id_tipo_modalidade: document.getElementById('inputTipoModalidade').value,
             categorias_id_categoria: document.getElementById('inputCategoriaModalidade').value
         };

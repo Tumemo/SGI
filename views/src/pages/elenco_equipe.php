@@ -75,6 +75,7 @@ $paginaAtiva = 'dashboard';
     <a href="./edicao_equipes.php" class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none" id="btnVoltarElencoMob" style="background-color:#E30613;border-radius:6px;padding:8px 16px;">
         <i class="bi bi-arrow-left-circle fs-5"></i> <span id="nomeInterclasseElencoMob">Interclasse</span>
     </a>
+    <div id="alertaLimiteMob" class="alert alert-danger d-none d-flex flex-wrap align-items-center gap-2 small"></div>
     <div id="listaElencoMob" class="d-flex flex-column gap-2"></div>
     <?php if ($isAdmin): ?>
     <a class="btn btn-aluno w-100 mt-4" id="linkGerenciarMob" href="#">
@@ -100,6 +101,7 @@ $paginaAtiva = 'dashboard';
         </div>
 
         <div class="aluno-card">
+            <div id="alertaLimiteDesk" class="alert alert-danger d-none d-flex flex-wrap align-items-center gap-2 small mx-3 mt-3 mb-0"></div>
             <div class="table-responsive">
                 <table class="aluno-table">
                     <thead>
@@ -175,10 +177,73 @@ function montarGerenciar() {
     if (b) b.href = href;
 }
 
+async function carregarAlertaLimite() {
+    const mob = document.getElementById('alertaLimiteMob');
+    const desk = document.getElementById('alertaLimiteDesk');
+    const ocultar = () => {
+        if (mob) { mob.innerHTML = ''; mob.classList.add('d-none'); }
+        if (desk) { desk.innerHTML = ''; desk.classList.add('d-none'); }
+    };
+
+    if (!idEquipe || !idTurma || !idModalidade) {
+        ocultar();
+        return;
+    }
+
+    try {
+        const r = await fetch(`${API}equipes.php?id_turma=${encodeURIComponent(idTurma)}&id_modalidade=${encodeURIComponent(idModalidade)}&_t=${Date.now()}`);
+        const lista = await r.json();
+        const arr = Array.isArray(lista) ? lista : [];
+        const eq = arr.find(e => String(e.id_equipe) === String(idEquipe));
+        const excedeu = eq && (eq.excedeu_limite === true || eq.excedeu_limite === '1' || eq.excedeu_limite === 1);
+
+        if (!eq || !excedeu) {
+            ocultar();
+            return;
+        }
+
+        const total = Number(eq.total_alunos) || 0;
+        const limite = Number(eq.limite_maximo) || 0;
+
+        let msg = `<i class="bi bi-exclamation-triangle-fill"></i>`;
+        msg += `<span class="flex-grow-1"><strong>Limite excedido:</strong> esta equipe possui <strong>${total}</strong> inscritos e o limite da modalidade é <strong>${limite}</strong>.</span>`;
+        if (isAdmin) {
+            msg += `<button type="button" class="btn btn-aluno btn-sm flex-shrink-0" onclick="redistribuirElenco()"><i class="bi bi-shuffle"></i> Enviar alunos para as outras equipes</button>`;
+        }
+
+        if (mob) { mob.innerHTML = msg; mob.classList.remove('d-none'); }
+        if (desk) { desk.innerHTML = msg; desk.classList.remove('d-none'); }
+    } catch (e) {
+        ocultar();
+    }
+}
+
+async function redistribuirElenco() {
+    if (!confirm('Enviar os alunos excedentes para as outras equipes desta turma?')) return;
+    try {
+        const resp = await fetch(`${API}equipes.php`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                acao: 'redistribuir',
+                modalidades_id_modalidade: Number(idModalidade),
+                turmas_id_turma: Number(idTurma)
+            })
+        });
+        const data = await resp.json();
+        if (data.success === false) throw new Error(data.message || 'Falha ao redistribuir.');
+        alert(data.message || 'Redistribuição concluída.');
+        carregar();
+    } catch (err) {
+        alert(err.message || 'Erro de conexão ao redistribuir.');
+    }
+}
+
 async function carregar() {
     await carregarNomeInterclasse();
     montarVoltar();
     montarGerenciar();
+    carregarAlertaLimite();
     const mob = document.getElementById('listaElencoMob');
     const tbody = document.getElementById('tbodyElencoDesk');
 

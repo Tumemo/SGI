@@ -23,6 +23,7 @@ switch ($method) {
                     modalidades.nome_modalidade, 
                     modalidades.genero_modalidade,
                     modalidades.max_inscrito_modalidade, 
+                    modalidades.max_equipes,
                     modalidades.status_modalidade,
                     modalidades.categorias_id_categoria,
                     tipos_modalidades.nome_tipo_modalidade,
@@ -78,18 +79,22 @@ switch ($method) {
 
         $genero = strtoupper(trim($data->genero_modalidade));
         $max_inscritos = $data->max_inscrito_modalidade ?? 0;
+        $max_equipes = isset($data->max_equipes) && $data->max_equipes !== '' && $data->max_equipes !== null && (int) $data->max_equipes !== 0
+            ? (int) $data->max_equipes
+            : null;
 
-        $sql = "INSERT INTO modalidades (nome_modalidade, genero_modalidade, max_inscrito_modalidade, tipos_modalidades_id_tipo_modalidade, status_modalidade, categorias_id_categoria, interclasses_id_interclasse) 
-                VALUES (?, ?, ?, ?, ?, ?, ?)";
+        $sql = "INSERT INTO modalidades (nome_modalidade, genero_modalidade, max_inscrito_modalidade, max_equipes, tipos_modalidades_id_tipo_modalidade, status_modalidade, categorias_id_categoria, interclasses_id_interclasse) 
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
 
                 $status = $data->status_modalidade ?? '1'; 
 
         $stmt = $conn->prepare($sql);
 
-        $stmt->bind_param("ssiisii", 
+        $stmt->bind_param("ssiisiii", 
             $data->nome_modalidade,
             $genero,
             $max_inscritos,
+            $max_equipes,
             $data->tipos_modalidades_id_tipo_modalidade,
             $status, 
             $data->categorias_id_categoria,
@@ -138,6 +143,14 @@ switch ($method) {
         if (isset($data->max_inscrito_modalidade)) {
             $campos[] = "max_inscrito_modalidade = ?";
             $params[] = $data->max_inscrito_modalidade;
+            $types .= "i";
+        }
+
+        if (array_key_exists('max_equipes', (array) $data)) {
+            $campos[] = "max_equipes = ?";
+            $params[] = ($data->max_equipes !== null && $data->max_equipes !== '' && $data->max_equipes !== 0)
+                ? (int) $data->max_equipes
+                : null;
             $types .= "i";
         }
 

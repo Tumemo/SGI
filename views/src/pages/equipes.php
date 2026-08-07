@@ -73,6 +73,18 @@ $paginaAtiva = 'equipes';
         // Pode ser expandida no futuro
     }
 
+    function equipeFlag(eq) {
+        const excedeu = eq.excedeu_limite === true || eq.excedeu_limite === '1' || eq.excedeu_limite === 1;
+        const total = Number(eq.total_alunos) || 0;
+        const limite = Number(eq.limite_maximo) || 0;
+        let badge = '';
+        if (limite > 0) {
+            const cls = excedeu ? 'text-danger' : 'text-muted';
+            badge = `<span class="small fw-semibold ${cls}"><i class="bi bi-people-fill me-1"></i>${total}/${limite}</span>`;
+        }
+        return { excedeu, border: excedeu ? 'border border-danger bg-danger-subtle' : '', badge };
+    }
+
     async function carregarModalidadesParaEquipe(idInterclasseRef, idCategoriaRef) {
         const select = document.getElementById('selectModalidadeEquipe');
         if (!idInterclasseRef) {
@@ -140,27 +152,33 @@ $paginaAtiva = 'equipes';
             equipesDisponiveis = equipes;
             atualizarSelectEquipe();
 
-            listaMobile.innerHTML = equipes.map((equipe) => `
-                <div class="bg-white rounded-3 shadow-sm p-3 mb-3 d-flex justify-content-between">
+            listaMobile.innerHTML = equipes.map((equipe) => {
+                const fl = equipeFlag(equipe);
+                return `
+                <div class="bg-white rounded-3 shadow-sm p-3 mb-3 d-flex justify-content-between ${fl.border}">
                     <div>
                         <span class="fw-semibold d-block">${equipe.nome_modalidade || `Equipe #${equipe.id_equipe}`}</span>
                         <span class="text-muted small">${equipe.nome_turma || ''}</span>
+                        <div class="mt-1">${fl.badge}</div>
                     </div>
                     <a class="btn btn-sm btn-danger" href="./equipe_alunos.php?id=${idInterclasse}&id_turma=${idTurma}&id_equipe=${equipe.id_equipe}&id_modalidade=${equipe.modalidades_id_modalidade}${idCategoria ? `&id_categoria=${idCategoria}` : ''}"><i class="bi bi-person-plus"></i></a>
                     <a class="btn btn-sm btn-danger" href="./elenco_equipe.php?id=${idInterclasse}&id_turma=${idTurma}&id_categoria=${idCategoria || ''}&id_equipe=${equipe.id_equipe}&id_modalidade=${equipe.modalidades_id_modalidade}&nome_turma=${encodeURIComponent(equipe.nome_turma || '')}&nome_modalidade=${encodeURIComponent(equipe.nome_modalidade || '')}"><i class="bi bi-people-fill"></i></a>
-                </div>
-            `).join('');
+                </div>`;
+            }).join('');
 
-            listaDesktop.innerHTML = equipes.map((equipe) => `
+            listaDesktop.innerHTML = equipes.map((equipe) => {
+                const fl = equipeFlag(equipe);
+                return `
                 <div class="col-md-6 col-lg-4">
-                    <div class="bg-white rounded-3 shadow-sm p-4 h-100">
+                    <div class="bg-white rounded-3 shadow-sm p-4 h-100 ${fl.border}">
                         <h6 class="fw-bold mb-2">${equipe.nome_modalidade || `Equipe #${equipe.id_equipe}`}</h6>
                         <p class="text-muted mb-3">${equipe.nome_turma || ''}</p>
+                        <div class="mb-3">${fl.badge}</div>
                         <a class="btn btn-danger btn-sm" href="./equipe_alunos.php?id=${idInterclasse}&id_turma=${idTurma}&id_equipe=${equipe.id_equipe}&id_modalidade=${equipe.modalidades_id_modalidade}${idCategoria ? `&id_categoria=${idCategoria}` : ''}"><i class="bi bi-person-plus"></i></a>
                         <a class="btn btn-danger btn-sm" href="./elenco_equipe.php?id=${idInterclasse}&id_turma=${idTurma}&id_categoria=${idCategoria || ''}&id_equipe=${equipe.id_equipe}&id_modalidade=${equipe.modalidades_id_modalidade}&nome_turma=${encodeURIComponent(equipe.nome_turma || '')}&nome_modalidade=${encodeURIComponent(equipe.nome_modalidade || '')}"><i class="bi bi-people-fill"></i></a>
                     </div>
-                </div>
-            `).join('');
+                </div>`;
+            }).join('');
         } catch (error) {
             console.error(error);
             listaMobile.innerHTML = '<p class="text-center text-danger mt-4">Erro ao carregar equipes.</p>';

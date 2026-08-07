@@ -66,6 +66,10 @@ $cssExtra = '
 }
 .btn-filter-cat:hover { border-color: var(--aluno-primary); color: var(--aluno-primary); background: var(--aluno-primary-subtle); }
 .btn-filter-cat.active { background: var(--aluno-primary); border-color: var(--aluno-primary); color: #fff; }
+.equipe-excedida { background: #fff5f5; }
+.aluno-table tbody tr.equipe-excedida td { background: #fff5f5; color: #842029; }
+.aluno-table tbody tr.equipe-excedida td:first-child { font-weight: 700; }
+.aluno-equipe-contador { font-size: 0.75rem; font-weight: 600; white-space: nowrap; }
 .aluno-empty { text-align: center; padding: 3rem 1rem; color: var(--aluno-text-secondary); }
 .aluno-empty .empty-icon { font-size: 3rem; margin-bottom: 1rem; color: var(--aluno-text-muted); }
 .aluno-empty h5 { font-weight: 600; margin-bottom: 0.5rem; }
@@ -174,6 +178,18 @@ $paginaAtiva = 'dashboard';
         const d = document.createElement('div');
         d.textContent = s == null ? '' : String(s);
         return d.innerHTML;
+    }
+
+    function infoEquipe(eq) {
+        const excedeu = eq.excedeu_limite === true || eq.excedeu_limite === '1' || eq.excedeu_limite === 1;
+        const total = Number(eq.total_alunos) || 0;
+        const limite = Number(eq.limite_maximo) || 0;
+        let contador = '';
+        if (limite > 0) {
+            const cor = excedeu ? 'text-danger' : 'text-success';
+            contador = `<span class="aluno-equipe-contador ${cor}"><i class="bi bi-people-fill me-1"></i>${total}/${limite}</span>`;
+        }
+        return { excedeu, contador };
     }
 
     function obterIdCategoriaFiltro() {
@@ -290,6 +306,7 @@ $paginaAtiva = 'dashboard';
                     } else {
                         htmlMob += '<div class="d-flex flex-column gap-1">';
                         arr.forEach(eq => {
+                            const info = infoEquipe(eq);
                             const qElenco = new URLSearchParams({
                                 id: idInterclasseEq,
                                 id_equipe: String(eq.id_equipe),
@@ -301,8 +318,11 @@ $paginaAtiva = 'dashboard';
                             });
                             const hrefElenco = `./elenco_equipe.php?${qElenco.toString()}`;
                             htmlMob += `
-                                <div class="d-flex justify-content-between align-items-center py-1">
-                                    <span>${esc(eq.nome_equipe || eq.nome_turma)}</span>
+                                <div class="d-flex justify-content-between align-items-center py-1 ${info.excedeu ? 'equipe-excedida' : ''}" ${info.excedeu ? 'style="padding-left:0.5rem;padding-right:0.5rem;border-radius:8px;"' : ''}>
+                                    <div>
+                                        <div>${esc(eq.nome_equipe || eq.nome_turma)}</div>
+                                        ${info.contador}
+                                    </div>
                                     <div class="d-flex gap-1">
                                         <a class="btn btn-aluno btn-sm" href="${hrefElenco}"><i class="bi bi-people-fill"></i></a>
                                         ${isAdmin ? `<button class="btn btn-aluno btn-sm" onclick="excluirEquipe(${eq.id_equipe}, '${esc(eq.nome_turma || 'Turma')}')"><i class="bi bi-trash"></i></button>` : ''}
@@ -323,6 +343,7 @@ $paginaAtiva = 'dashboard';
                     } else {
                         htmlDesk += '<table class="aluno-table"><tbody>';
                         arr.forEach(eq => {
+                            const info = infoEquipe(eq);
                             const qElenco = new URLSearchParams({
                                 id: idInterclasseEq,
                                 id_equipe: String(eq.id_equipe),
@@ -333,8 +354,11 @@ $paginaAtiva = 'dashboard';
                                 nome_modalidade: m.nome_modalidade || ''
                             });
                             const hrefElenco = `./elenco_equipe.php?${qElenco.toString()}`;
-                            htmlDesk += `<tr>
-                                <td style="padding-left:1.25rem">${esc(eq.nome_equipe || eq.nome_turma)}</td>
+                            htmlDesk += `<tr class="${info.excedeu ? 'equipe-excedida' : ''}">
+                                <td style="padding-left:1.25rem">
+                                    ${esc(eq.nome_equipe || eq.nome_turma)}
+                                    <div>${info.contador}</div>
+                                </td>
                                 <td class="text-end" style="padding-right:1.25rem">
                                     <a class="btn btn-aluno btn-sm me-1" href="${hrefElenco}"><i class="bi bi-people-fill"></i></a>
                                     ${isAdmin ? `<button class="btn btn-aluno btn-sm" onclick="excluirEquipe(${eq.id_equipe}, '${esc(eq.nome_turma || 'Turma')}')"><i class="bi bi-trash"></i></button>` : ''}

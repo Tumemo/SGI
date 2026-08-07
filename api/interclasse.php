@@ -3,6 +3,7 @@ require_once '../config/db.php';
 require_once 'filtros.php';
 require_once 'auth.php';
 require_once __DIR__ . '/includes/locais_padrao.php';
+require_once __DIR__ . '/includes/equipes_helper.php';
 header('Content-Type: application/json');
 
 $method = $_SERVER['REQUEST_METHOD'];
@@ -200,18 +201,18 @@ switch ($method) {
                 }
 
                 $modalidades_sql = "INSERT INTO modalidades
-                (nome_modalidade, genero_modalidade, max_inscrito_modalidade, status_modalidade, tipos_modalidades_id_tipo_modalidade, categorias_id_categoria, interclasses_id_interclasse)
+                (nome_modalidade, genero_modalidade, max_inscrito_modalidade, max_equipes, status_modalidade, tipos_modalidades_id_tipo_modalidade, categorias_id_categoria, interclasses_id_interclasse)
                 VALUES
-                ('Futsal - MA', 'MASC', 12, '1', $tipo_mata_mata_id, $categoria_i_id, $new_interclass_id),
-                ('Queimada - MI', 'MISTO', 15, '1', $tipo_mata_mata_id, $categoria_i_id, $new_interclass_id),
-                ('Volei - MI', 'MISTO', 10, '1', $tipo_mata_mata_id, $categoria_i_id, $new_interclass_id),
-                ('Corrida - FE', 'FEM', 2, '1', $tipo_individual_id, $categoria_i_id, $new_interclass_id),
-                ('Corrida - MA', 'MASC', 2, '1', $tipo_individual_id, $categoria_i_id, $new_interclass_id),
-                ('Futsal - MA', 'MASC', 12, '1', $tipo_mata_mata_id, $categoria_ii_id, $new_interclass_id),
-                ('Queimada - MI', 'MISTO', 15, '1', $tipo_mata_mata_id, $categoria_ii_id, $new_interclass_id),
-                ('Volei - MI', 'MISTO', 10, '1', $tipo_mata_mata_id, $categoria_ii_id, $new_interclass_id),
-                ('Corrida - FE', 'FEM', 2, '1', $tipo_individual_id, $categoria_ii_id, $new_interclass_id),
-                ('Corrida - MA', 'MASC', 2, '1', $tipo_individual_id, $categoria_ii_id, $new_interclass_id)";
+                ('Futsal - MA', 'MASC', 10, NULL, '1', $tipo_mata_mata_id, $categoria_i_id, $new_interclass_id),
+                ('Queimada - MI', 'MISTO', 20, NULL, '1', $tipo_mata_mata_id, $categoria_i_id, $new_interclass_id),
+                ('Volei - MI', 'MISTO', 12, NULL, '1', $tipo_mata_mata_id, $categoria_i_id, $new_interclass_id),
+                ('Corrida - FE', 'FEM', 2, NULL, '1', $tipo_individual_id, $categoria_i_id, $new_interclass_id),
+                ('Corrida - MA', 'MASC', 2, NULL, '1', $tipo_individual_id, $categoria_i_id, $new_interclass_id),
+                ('Futsal - MA', 'MASC', 10, NULL, '1', $tipo_mata_mata_id, $categoria_ii_id, $new_interclass_id),
+                ('Queimada - MI', 'MISTO', 20, NULL, '1', $tipo_mata_mata_id, $categoria_ii_id, $new_interclass_id),
+                ('Volei - MI', 'MISTO', 12, NULL, '1', $tipo_mata_mata_id, $categoria_ii_id, $new_interclass_id),
+                ('Corrida - FE', 'FEM', 2, NULL, '1', $tipo_individual_id, $categoria_ii_id, $new_interclass_id),
+                ('Corrida - MA', 'MASC', 2, NULL, '1', $tipo_individual_id, $categoria_ii_id, $new_interclass_id)";
                 
                 if (!$conn->query($modalidades_sql)) {
                     $conn->rollback();
@@ -222,9 +223,17 @@ switch ($method) {
                 if (function_exists('sgi_criar_locais_padrao_interclasse')) {
                     sgi_criar_locais_padrao_interclasse($conn, $new_interclass_id);
                 }
+
+                // RF01/RF03: garante a Equipe Padrão ("{Modalidade} - 1") de cada turma/modalidade.
+                $equipesPadrao = sgi_gerar_equipes_padrao_interclasse($conn, $new_interclass_id);
                 
                 $conn->commit();
-                echo json_encode(["success" => true, "id" => $new_interclass_id]);
+                echo json_encode([
+                    "success" => true,
+                    "id" => $new_interclass_id,
+                    "equipes_padrao_garantidas" => $equipesPadrao['criadas'],
+                    "erros_equipes" => $equipesPadrao['erros']
+                ]);
             } else {
                 echo json_encode(["success" => false, "message" => $stmt->error]);
             }

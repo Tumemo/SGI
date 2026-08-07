@@ -2,6 +2,7 @@
 require_once '../config/db.php';
 require_once 'filtros.php';
 require_once 'auth.php';
+require_once __DIR__ . '/includes/equipes_helper.php';
 
 header('Content-Type: application/json');
 $method = $_SERVER['REQUEST_METHOD'];
@@ -30,9 +31,9 @@ switch ($method) {
                     equipes.modalidades_id_modalidade,
                     equipes.turmas_id_turma,
                     modalidades.nome_modalidade, 
+                    modalidades.max_inscrito_modalidade AS limite_maximo,
                     turmas.nome_turma,
-                    interclasses.nome_interclasse,
-                    (SELECT COUNT(*) FROM equipes_has_usuarios eu WHERE eu.equipes_id_equipe = equipes.id_equipe) AS qtd_membros
+                    interclasses.nome_interclasse
                 FROM equipes 
                 INNER JOIN modalidades ON modalidades.id_modalidade = equipes.modalidades_id_modalidade 
                 INNER JOIN turmas ON turmas.id_turma = equipes.turmas_id_turma
@@ -57,7 +58,19 @@ switch ($method) {
             echo json_encode(["success" => false, "message" => "Erro ao obter resultados."]);
             break;
         }
-        echo json_encode($res->fetch_all(MYSQLI_ASSOC));
+        $equipes = $res->fetch_all(MYSQLI_ASSOC);
+
+        // RF05/RF03: expõe total de inscritos, limite da modalidade e a flag excedeu_limite.
+        foreach ($equipes as &$equipe) {
+            $total = (int) ($equipe['total_alunos'] ?? 0);
+            $limite = (int) ($equipe['limite_maximo'] ?? 0);
+            $equipe['total_alunos'] = $total;
+            $equipe['limite_maximo'] = $limite;
+            $equipe['excedeu_limite'] = $limite > 0 && $total > $limite;
+        }
+        unset($equipe);
+
+        echo json_encode($equipes);
         break;
 
     case 'POST':
@@ -84,15 +97,7 @@ switch ($method) {
             if (!empty($data->nome_equipe)) {
                 $nomeEquipe = trim($data->nome_equipe);
             } else {
-                // Busca nome da turma
-                $stmtT = $conn->prepare("SELECT nome_turma FROM turmas WHERE id_turma = ?");
-                $stmtT->bind_param("i", $turma);
-                $stmtT->execute();
-                $resT = $stmtT->get_result()->fetch_assoc();
-                $nomeTurma = $resT['nome_turma'] ?? '';
-                $stmtT->close();
-
-                // Busca nome da modalidade
+                // Busca nome da modalidade e da turma
                 $stmtM = $conn->prepare("SELECT nome_modalidade FROM modalidades WHERE id_modalidade = ?");
                 $stmtM->bind_param("i", $modalidade);
                 $stmtM->execute();
@@ -100,15 +105,30 @@ switch ($method) {
                 $nomeModalidade = $resM['nome_modalidade'] ?? '';
                 $stmtM->close();
 
-                // Conta equipes para definir o sequencial
-                $stmtC = $conn->prepare("SELECT COUNT(*) as total FROM equipes WHERE modalidades_id_modalidade = ? AND turmas_id_turma = ?");
+                $stmtT = $conn->prepare("SELECT nome_turma FROM turmas WHERE id_turma = ?");
+                $stmtT->bind_param("i", $turma);
+                $stmtT->execute();
+                $resT = $stmtT->get_result()->fetch_assoc();
+                $nomeTurma = $resT['nome_turma'] ?? '';
+                $stmtT->close();
+
+                // Conta equipes para definir o sequencial ("- 2", "- 3", ...)
+                $stmtC = $conn->prepare("SELECT COUNT(*) as total FROM equipes WHERE modalidades_id_modalidade = ? AND turmas_id_turma = ? AND status_equipe = '1'");
                 $stmtC->bind_param("ii", $modalidade, $turma);
                 $stmtC->execute();
                 $resC = $stmtC->get_result()->fetch_assoc();
                 $numEquipe = ((int) ($resC['total'] ?? 0)) + 1;
                 $stmtC->close();
 
-                $nomeEquipe = trim("{$nomeTurma} {$nomeModalidade} Equipe {$numEquipe}");
+                // Limite máximo de equipes por turma/modalidade (max_equipes)
+                $maxEquipes = $resM['max_equipes'] ?? null;
+                if ($maxEquipes !== null && $maxEquipes !== '' && (int) $maxEquipes > 0 && $numEquipe > (int) $maxEquipes) {
+                    http_response_code(400);
+                    echo json_encode(["success" => false, "message" => "Limite de " . $maxEquipes . " equipes por turma atingido para esta modalidade."]);
+                    break;
+                }
+
+                $nomeEquipe = $nomeModalidade !== '' ? sgi_nome_equipe_turma($nomeTurma, $nomeModalidade, $numEquipe) : null;
             }
 
             $sql = "INSERT INTO equipes (modalidades_id_modalidade, turmas_id_turma, status_equipe, nome_equipe) VALUES (?, ?, ?, ?)";
@@ -184,6 +204,23 @@ switch ($method) {
                 http_response_code(500);
                 echo json_encode(["success" => false, "message" => "Erro ao remover aluno: " . $conn->error]);
             }
+
+        } elseif ($acao === 'redistribuir') {
+            $modalidadeId = intval($data->modalidades_id_modalidade ?? $_POST['modalidades_id_modalidade'] ?? 0);
+            $turmaId = intval($data->turmas_id_turma ?? $_POST['turmas_id_turma'] ?? 0);
+
+            if ($modalidadeId <= 0 || $turmaId <= 0) {
+                http_response_code(400);
+                echo json_encode(["success" => false, "message" => "modalidades_id_modalidade e turmas_id_turma são obrigatórios."]);
+                break;
+            }
+
+            $resultado = sgi_redistribuir_equipe($conn, $modalidadeId, $turmaId);
+            if (!$resultado['success']) {
+                http_response_code(400);
+            }
+            echo json_encode($resultado);
+            break;
 
         } else {
             http_response_code(400);

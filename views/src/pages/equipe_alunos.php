@@ -195,6 +195,7 @@ async function carregar() {
     if (idTurma) qVoltar.set('id_turma', idTurma);
     if (_idEquipe) qVoltar.set('id_equipe', _idEquipe);
     if (idCategoria) qVoltar.set('id_categoria', idCategoria);
+    if (idModalidade) qVoltar.set('id_modalidade', idModalidade);
     if (nomeTurma) qVoltar.set('nome_turma', nomeTurma);
     if (nomeModalidade) qVoltar.set('nome_modalidade', nomeModalidade);
     const voltar = `./elenco_equipe.php?${qVoltar.toString()}`;

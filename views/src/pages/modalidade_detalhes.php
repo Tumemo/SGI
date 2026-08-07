@@ -61,6 +61,14 @@ $isAdmin = $nivelUsuario === 0;
                         <input type="text" class="form-control" id="editNomeModalidade" required>
                     </div>
                     <div class="mb-3">
+                        <label class="form-label fw-medium">Máx. de Inscritos (Opcional):</label>
+                        <input type="number" class="form-control" id="editMaxInscritos" min="0">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-medium">Máx. de Equipes por Turma (Opcional):</label>
+                        <input type="number" class="form-control" id="editMaxEquipes" min="1">
+                    </div>
+                    <div class="mb-3">
                         <label class="form-label fw-medium">Tipo de Modalidade:</label>
                         <select class="form-select" id="editTipoModalidade" required>
                             <option value="" disabled selected>Carregando...</option>
@@ -123,7 +131,9 @@ $isAdmin = $nivelUsuario === 0;
                             <span id="nomeModalidadeDisplay">${modalidade.nome_modalidade}</span>
                         </h5>
                         <p class="text-muted mb-1">Categoria: <span id="catModalidadeDisplay">${modalidade.nome_categoria || '-'}</span></p>
-                        <p class="text-muted mb-0">Tipo: <span id="tipoModalidadeDisplay">${modalidade.nome_tipo_modalidade || '-'}</span></p>
+                        <p class="text-muted mb-1">Tipo: <span id="tipoModalidadeDisplay">${modalidade.nome_tipo_modalidade || '-'}</span></p>
+                        <p class="text-muted mb-1">Limite de inscritos: <span id="maxInscritosDisplay">${modalidade.max_inscrito_modalidade || 'Ilimitado'}</span></p>
+                        <p class="text-muted mb-0">Máx. de equipes por turma: <span id="maxEquipesDisplay">${modalidade.max_equipes || 'Ilimitado'}</span></p>
                     </div>
                     <div class="text-end">
                         <button class="btn btn-sm btn-outline-primary mb-2" onclick="abrirModalEdicao()">Editar</button>
@@ -192,6 +202,8 @@ $isAdmin = $nivelUsuario === 0;
         if (!modalidadeAtual) return;
 
         document.getElementById('editNomeModalidade').value = modalidadeAtual.nome_modalidade;
+        document.getElementById('editMaxInscritos').value = modalidadeAtual.max_inscrito_modalidade || '';
+        document.getElementById('editMaxEquipes').value = modalidadeAtual.max_equipes || '';
         document.getElementById('msgEditarModalidade').innerHTML = '';
 
         await Promise.all([
@@ -244,6 +256,8 @@ $isAdmin = $nivelUsuario === 0;
         const dados = {
             id_modalidade: modalidadeAtual.id_modalidade,
             nome_modalidade: document.getElementById('editNomeModalidade').value.trim(),
+            max_inscrito_modalidade: parseInt(document.getElementById('editMaxInscritos').value) || 0,
+            max_equipes: (() => { const v = document.getElementById('editMaxEquipes').value; return v === '' ? null : parseInt(v); })(),
             tipos_modalidades_id_tipo_modalidade: parseInt(document.getElementById('editTipoModalidade').value),
             categorias_id_categoria: parseInt(document.getElementById('editCategoriaModalidade').value)
         };

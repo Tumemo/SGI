@@ -178,6 +178,7 @@ CREATE TABLE `modalidades` (
   `nome_modalidade` varchar(45) NOT NULL,
   `genero_modalidade` enum('FEM','MASC','MISTO') NOT NULL,
   `max_inscrito_modalidade` int(11) DEFAULT NULL,
+  `max_equipes` int(11) DEFAULT NULL,
   `status_modalidade` enum('1','0') NOT NULL,
   `tipos_modalidades_id_tipo_modalidade` int(11) NOT NULL,
   `categorias_id_categoria` int(11) NOT NULL,
