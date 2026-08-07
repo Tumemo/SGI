@@ -1107,12 +1107,14 @@ include 'componentes/nav.php';
         const artilheiros = Array.isArray(destaques) ? destaques : [];
         const artilheiroTop = artilheiros[0];
         if (artilheiroTop) {
-            const foto = artilheiroTop.foto_usuario ? `../../../../uploads/fotosUsuarios/${encodeURIComponent(artilheiroTop.foto_usuario)}` : '';
+            const temFotoReal = artilheiroTop.foto_usuario && !/^default\.(jpg|jpeg|png|gif|webp)$/i.test(artilheiroTop.foto_usuario);
+            const foto = temFotoReal ? `../../../../uploads/fotosUsuarios/${encodeURIComponent(artilheiroTop.foto_usuario)}` : '';
             html += `
                 <div class="destaque-card">
                     ${foto
-                        ? `<img class="destaque-foto" src="${foto}" alt="${esc(artilheiroTop.nome_usuario)}">`
-                        : `<span class="destaque-icone"><i class="bi bi-award-fill"></i></span>`}
+                        ? `<img class="destaque-foto" src="${foto}" alt="${esc(artilheiroTop.nome_usuario)}" onerror="this.classList.add('d-none');this.nextElementSibling.classList.remove('d-none');">`
+                        : ''}
+                    <span class="destaque-icone ${foto ? 'd-none' : ''}"><i class="bi bi-award-fill"></i></span>
                     <div>
                         <div class="destaque-nome">${esc(artilheiroTop.nome_usuario)} <i class="bi bi-star-fill text-warning"></i></div>
                         <div class="destaque-sub">${esc(artilheiroTop.nome_fantasia_turma || artilheiroTop.nome_turma || '')}</div>
