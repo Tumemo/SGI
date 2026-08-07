@@ -249,7 +249,7 @@ $isMesario = $nivelUsuario === 2;
                         <div class="dash-card-icon"><i class="bi bi-basket"></i></div>
                         <h5 class="dash-card-title">ARRECADAÇÕES</h5>
                     </div>
-                    <p class="dash-card-text">Adicione e acompanhe os itens arrecadados na gincana.</p>
+                    <p class="dash-card-text">Adicione e acompanhe os kg arrecadados na gincana.</p>
                 </a>
             </div>
             <div class="col-12 col-md-6 col-lg-4">
@@ -356,7 +356,7 @@ $isMesario = $nivelUsuario === 2;
                         <div class="dash-card-icon"><i class="bi bi-basket"></i></div>
                         <h5 class="dash-card-title">ARRECADAÇÕES</h5>
                     </div>
-                    <p class="dash-card-text">Gerencie os itens arrecadados na gincana, metas, pontos de entrega e o impacto das doações.</p>
+                    <p class="dash-card-text">Gerencie os kg arrecadados na gincana, metas, pontos de entrega e o impacto das doações.</p>
                 </a>
             </div>
             <div class="col-12 col-md-6 col-lg-4">

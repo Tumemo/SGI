@@ -162,7 +162,7 @@ $isAdmin = $nivelUsuario === 0;
                     <input type="number" step="0.1" min="0" class="ocr-card__input arrec-input"
                         data-id-turma="${turma.id_turma}"
                         value="${getQuantidadePendente(turma)}" placeholder="0">
-                    <span class="ocr-card__input-suffix">Qtd</span>
+                    <span class="ocr-card__input-suffix">Kg</span>
                 </div>
                 <button type="button" class="ocr-card__hist" onclick="abrirHistoricoTurma(${turma.id_turma}, '${nomeJs}')" title="Ver histórico">
                     <i class="bi bi-clock-history"></i>
@@ -273,7 +273,7 @@ $isAdmin = $nivelUsuario === 0;
         const quantidade = getQuantidadeAtual(idTurma);
 
         if (!quantidade || quantidade <= 0) {
-            alert('Informe a quantidade de itens a adicionar.');
+            alert('Informe a quantidade em kg a adicionar.');
             return;
         }
 
@@ -428,7 +428,7 @@ $isAdmin = $nivelUsuario === 0;
         }
 
         let html = '<div class="table-responsive"><table class="table table-hover align-middle">';
-        html += '<thead><tr class="table-light"><th>Data</th><th class="text-center">Qtd</th><th class="text-center">Pts</th>';
+        html += '<thead><tr class="table-light"><th>Data</th><th class="text-center">Kg</th><th class="text-center">Pts</th>';
 
         if (isAdminPage && filtroHistoricoAtual === 'adicionados') {
             html += '<th class="text-center">Ação</th>';

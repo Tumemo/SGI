@@ -50,7 +50,7 @@ $ptcCards = [
         'badge'   => 'Especial',
         'label'   => 'Multiplicador',
         'valor'   => 2,
-        'desc'    => 'Fator aplicado sobre os itens arrecadados pela turma.'
+        'desc'    => 'Fator aplicado sobre os kg arrecadados pela turma.'
     ],
 ];
 ?>

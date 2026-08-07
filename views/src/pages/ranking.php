@@ -357,14 +357,14 @@ $paginaAtiva = 'ranking';
                 html += `
                     <div class="htr-linha">
                         <div class="htr-linha__info">
-                            <div class="htr-linha__titulo">${r.quantidade} item(s)</div>
+                            <div class="htr-linha__titulo">${r.quantidade} kg</div>
                             <div class="htr-linha__sub">${fmtDataHora(r.data)} · por ${esc(r.registrado_por)}</div>
                         </div>
                         <span class="htr-linha__pts htr-pts--mais">+${r.pontos}</span>
                     </div>`;
             });
             html += '</div>';
-            html += `<div class="htr-secao-total">Total: <b>${d.arrecadacao.itens} itens</b> × ${d.interclasse.valor_item_arrecadacao} pts = <b>+${d.arrecadacao.pontos} pts</b></div>`;
+            html += `<div class="htr-secao-total">Total: <b>${d.arrecadacao.itens} kg</b> × ${d.interclasse.valor_item_arrecadacao} pts = <b>+${d.arrecadacao.pontos} pts</b></div>`;
         } else {
             html += '<div class="htr-vazio">Nenhuma arrecadação registrada.</div>';
         }
