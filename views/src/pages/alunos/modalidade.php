@@ -1157,10 +1157,21 @@ include 'componentes/nav.php';
     async function abrirEquipesModalidade(card) {
         const idModalidade = card.dataset.id;
         const nomeModalidade = card.dataset.nome;
+
+        if (card.classList.contains('selected')) {
+            card.classList.remove('selected');
+            delete card.dataset.equipe;
+            delete card.dataset.equipeNome;
+            const chip = card.querySelector('.card-equipe');
+            if (chip) chip.textContent = '';
+            atualizarContador();
+            return;
+        }
+
         const selecionados = document.querySelectorAll('.modalidade-card.selected').length;
         const inscritos = new Set(modalidadesInscritas.map(m => String(m.id_modalidade))).size;
 
-        if (!card.classList.contains('selected') && selecionados + inscritos >= 3) {
+        if (selecionados + inscritos >= 3) {
             document.getElementById('msgFeedback').textContent = 'Você já selecionou o número máximo de modalidades.';
             card.classList.add('shake');
             setTimeout(() => card.classList.remove('shake'), 500);
@@ -1168,50 +1179,35 @@ include 'componentes/nav.php';
             return;
         }
 
-        const modal = new bootstrap.Modal(document.getElementById('modalEquipes'));
-        document.getElementById('modalEquipesTitle').textContent = nomeModalidade || 'Escolha a equipe';
-        document.getElementById('modalEquipesSubtitulo').textContent = 'Selecione em qual equipe da sua turma você vai jogar.';
-        document.getElementById('modalEquipesCorpo').innerHTML = '<div class="text-center text-muted py-4"><div class="spinner-border spinner-border-sm me-2" role="status"></div>Carregando equipes...</div>';
-        modal.show();
+        const chip = card.querySelector('.card-equipe');
+        if (chip) chip.textContent = 'Carregando...';
 
         try {
             const res = await fetch(`../../../../api/equipes.php?id_modalidade=${idModalidade}&id_turma=${idTurmaUsuario}`);
             const dados = await res.json();
             const equipes = Array.isArray(dados) ? dados : [];
 
-            if (equipes.length === 0) {
-                document.getElementById('modalEquipesCorpo').innerHTML = `
-                    <div class="text-center text-muted py-4">
-                        <i class="bi bi-people fs-1 d-block mb-2"></i>
-                        Nenhuma equipe disponível para a sua turma nesta modalidade.
-                    </div>`;
+            let equipeAlvo = equipes.find(e => e.nome_equipe && (e.nome_equipe.endsWith('- 1') || e.nome_equipe.includes('- 1')));
+
+            if (!equipeAlvo && equipes.length > 0) {
+                equipeAlvo = equipes[0];
+            }
+
+            if (!equipeAlvo) {
+                if (chip) chip.textContent = '';
+                document.getElementById('msgFeedback').textContent = 'Nenhuma equipe disponível para esta modalidade.';
+                setTimeout(() => document.getElementById('msgFeedback').textContent = '', 2500);
                 return;
             }
 
-            const equipeAtual = card.dataset.equipe || '';
-            const jaSelecionada = card.classList.contains('selected');
-
-            const botoesTopo = jaSelecionada
-                ? `<button type="button" class="btn btn-outline-danger btn-sm w-100 mb-3" onclick="removerEquipeSelecionada(${idModalidade})">
-                       <i class="bi bi-x-lg me-1"></i>Remover esta modalidade da seleção
-                   </button>`
-                : '';
-
-            document.getElementById('modalEquipesCorpo').innerHTML = botoesTopo + equipes.map(e => `
-                <div class="equipe-pick-row ${String(e.id_equipe) === equipeAtual ? 'selected' : ''}"
-                     onclick="selecionarEquipe(this, ${idModalidade})"
-                     data-equipe="${esc(e.id_equipe)}"
-                     data-equipe-nome="${esc(e.nome_equipe)}">
-                    <span class="equipe-pick-icon"><i class="bi bi-people-fill"></i></span>
-                    <div class="equipe-pick-info">
-                        <div class="equipe-pick-nome">${esc(e.nome_equipe)}</div>
-                        <div class="equipe-pick-sub">${esc(e.nome_turma)} · ${parseInt(e.qtd_membros) || 0} membro(s)</div>
-                    </div>
-                    ${String(e.id_equipe) === equipeAtual ? '<span class="equipe-pick-check"><i class="bi bi-check-lg"></i></span>' : ''}
-                </div>`).join('');
+            card.classList.add('selected');
+            card.dataset.equipe = equipeAlvo.id_equipe;
+            card.dataset.equipeNome = equipeAlvo.nome_equipe;
+            if (chip) chip.textContent = 'Equipe: ' + equipeAlvo.nome_equipe;
+            atualizarContador();
         } catch (e) {
             console.error(e);
-            document.getElementById('modalEquipesCorpo').innerHTML = '<div class="text-danger small text-center py-4">Erro ao carregar equipes. Tente novamente.</div>';
+            if (chip) chip.textContent = 'Erro ao carregar';
         }
     }
 

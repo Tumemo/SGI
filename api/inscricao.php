@@ -156,36 +156,10 @@ try {
         $id_modalidade = (int) $id_modalidade;
         if ($id_modalidade <= 0) continue;
 
-        $sqlEquipe = "SELECT id_equipe FROM equipes WHERE modalidades_id_modalidade = ? AND turmas_id_turma = ? LIMIT 1";
-        $stmtEquipe = $conn->prepare($sqlEquipe);
-        if (!$stmtEquipe) {
-            $erros[] = "Erro ao preparar consulta de equipe para modalidade $id_modalidade";
+        $id_equipe = sgi_buscar_ou_criar_equipe_padrao($conn, $id_modalidade, $id_turma);
+        if ($id_equipe === null) {
+            $erros[] = "Erro ao localizar ou criar a equipe padrão para a modalidade $id_modalidade";
             continue;
-        }
-        $stmtEquipe->bind_param('ii', $id_modalidade, $id_turma);
-        $stmtEquipe->execute();
-        $stmtEquipe->store_result();
-
-        if ($stmtEquipe->num_rows > 0) {
-            $stmtEquipe->bind_result($id_equipe);
-            $stmtEquipe->fetch();
-            $stmtEquipe->close();
-        } else {
-            $stmtEquipe->close();
-            $sqlInsertEquipe = "INSERT INTO equipes (status_equipe, modalidades_id_modalidade, turmas_id_turma) VALUES ('1', ?, ?)";
-            $stmtInsertEquipe = $conn->prepare($sqlInsertEquipe);
-            if (!$stmtInsertEquipe) {
-                $erros[] = "Erro ao criar equipe para modalidade $id_modalidade";
-                continue;
-            }
-            $stmtInsertEquipe->bind_param('ii', $id_modalidade, $id_turma);
-            if (!$stmtInsertEquipe->execute()) {
-                $erros[] = "Erro ao inserir equipe para modalidade $id_modalidade: " . $stmtInsertEquipe->error;
-                $stmtInsertEquipe->close();
-                continue;
-            }
-            $id_equipe = $stmtInsertEquipe->insert_id;
-            $stmtInsertEquipe->close();
         }
 
         $sqlCheckVinculo = "SELECT 1 FROM equipes_has_usuarios WHERE equipes_id_equipe = ? AND usuarios_id_usuario = ?";

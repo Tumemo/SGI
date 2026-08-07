@@ -23,6 +23,14 @@ switch ($method) {
             break;
         }
         
+        if (!empty($_GET['id_modalidade']) && !empty($_GET['id_turma'])) {
+            $id_modalidade_get = intval($_GET['id_modalidade']);
+            $id_turma_get = intval($_GET['id_turma']);
+            if ($id_modalidade_get > 0 && $id_turma_get > 0) {
+                sgi_buscar_ou_criar_equipe_padrao($conn, $id_modalidade_get, $id_turma_get);
+            }
+        }
+        
         $filtro = aplicarFiltrosEquipes();
         $sql = "SELECT 
                     equipes.id_equipe, 
