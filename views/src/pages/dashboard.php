@@ -12,127 +12,6 @@ $isColaborador = $nivelUsuario === 1;
 $isMesario = $nivelUsuario === 2;
 ?>
 
-<!-- main mobile -->
-<main class="d-md-none" style="margin-bottom: 120px;">
-    <a href="./home.php" class="btn btn-outline-danger btn-sm ms-3 mt-3 d-inline-flex align-items-center gap-1">
-        <i class="bi bi-house"></i> Voltar ao início
-    </a>
-    
-    <section>
-        <?php if ($isMesario): ?>
-        <a href="./categorias.php" id="linkCategorias" class="text-decoration-none text-black">
-            <div class="d-flex m-auto justify-content-between align-items-center shadow py-3 px-4 mb-3 border border-1 rounded-3" style="width: 90%;">
-                <i class="bi bi-bookmarks fs-2"></i>
-                <h2 class="m-0 fs-3 w-100 px-3">Categorias</h2>
-                <picture><img src="../../public/icons/arrow-right.svg" alt="Seta para direita"></picture>
-            </div>
-        </a>
-        <a href="./agenda.php" id="linkAgenda" class="text-decoration-none text-black">
-            <div class="d-flex m-auto justify-content-between align-items-center shadow py-3 px-4 mb-3 border border-1 rounded-3" style="width: 90%;">
-                <i class="bi bi-calendar fs-2"></i>
-                <h2 class="m-0 fs-3 w-100 px-3">Agenda</h2>
-                <picture><img src="../../public/icons/arrow-right.svg" alt="Seta para direita"></picture>
-            </div>
-        </a>
-        <a href="./pontuacao.php" id="linkChaveamentos" class="text-decoration-none text-black">
-            <div class="d-flex m-auto justify-content-between align-items-center shadow py-3 px-4 mb-3 border border-1 rounded-3" style="width: 90%;">
-                <i class="bi bi-diagram-3 fs-2"></i>
-                <h2 class="m-0 fs-3 w-100 px-3">Chaveamentos</h2>
-                <picture><img src="../../public/icons/arrow-right.svg" alt="Seta para direita"></picture>
-            </div>
-        </a>
-        <a href="./ranking.php" id="linkRanking" class="text-decoration-none text-black">
-            <div class="d-flex m-auto justify-content-between align-items-center shadow py-3 px-4 mb-3 border border-1 rounded-3" style="width: 90%;">
-                <i class="bi bi-trophy-fill fs-2"></i>
-                <h2 class="m-0 fs-3 w-100 px-3">Ranking</h2>
-                <picture><img src="../../public/icons/arrow-right.svg" alt="Seta"></picture>
-            </div>
-        </a>
-        <a href="./ocorrencias.php" id="linkOcorrencias" class="text-decoration-none text-black">
-            <div class="d-flex m-auto justify-content-between align-items-center shadow py-3 px-4 mb-3 border border-1 rounded-3" style="width: 90%;">
-                <i class="bi bi-exclamation-triangle fs-2"></i>
-                <h2 class="m-0 fs-3 w-100 px-3">Ocorrências</h2>
-                <picture><img src="../../public/icons/arrow-right.svg" alt="Seta para direita"></picture>
-            </div>
-        </a>
-        
-        <?php endif; ?>
-
-        <?php if ($isColaborador || $isAdmin): ?>
-        <a href="./modalidades.php" id="linkModalidades" class="text-decoration-none text-black">
-            <div class="d-flex m-auto justify-content-between align-items-center shadow py-3 px-4 mb-3 border border-1 rounded-3" style="width: 90%;">
-                <i class="bi bi-trophy fs-2"></i>
-                <h2 class="m-0 fs-3 w-100 px-3">Modalidades</h2>
-                <picture><img src="../../public/icons/arrow-right.svg" alt="Seta"></picture>
-            </div>
-        </a>
-        <a href="./pontuacoes.php" id="linkPontuacoes" class="text-decoration-none text-black">
-            <div class="d-flex m-auto justify-content-between align-items-center shadow py-3 px-4 mb-3 border border-1 rounded-3" style="width: 90%;">
-                <i class="bi bi-award fs-2"></i>
-                <h2 class="m-0 fs-3 w-100 px-3">Pontuações</h2>
-                <picture><img src="../../public/icons/arrow-right.svg" alt="Seta"></picture>
-            </div>
-        </a>
-        <a href="./locais.php" id="linkLocais" class="text-decoration-none text-black">
-            <div class="d-flex m-auto justify-content-between align-items-center shadow py-3 px-4 mb-3 border border-1 rounded-3" style="width: 90%;">
-                <i class="bi bi-geo-alt fs-2"></i>
-                <h2 class="m-0 fs-3 w-100 px-3">Locais</h2>
-                <picture><img src="../../public/icons/arrow-right.svg" alt="Seta"></picture>
-            </div>
-        </a>
-        <a href="./colaboradores.php" id="linkColaboradores" class="text-decoration-none text-black">
-            <div class="d-flex m-auto justify-content-between align-items-center shadow py-3 px-4 mb-3 border border-1 rounded-3" style="width: 90%;">
-                <i class="bi bi-people fs-2"></i>
-                <h2 class="m-0 fs-3 w-100 px-3">Colaboradores</h2>
-                <picture><img src="../../public/icons/arrow-right.svg" alt="Seta"></picture>
-            </div>
-        </a>
-        <a href="./edicao_arrecadacao.php" id="linkArrecadacoes" class="text-decoration-none text-black">
-            <div class="d-flex m-auto justify-content-between align-items-center shadow py-3 px-4 mb-3 border border-1 rounded-3" style="width: 90%;">
-                <i class="bi bi-basket fs-2"></i>
-                <h2 class="m-0 fs-3 w-100 px-3">Arrecadações</h2>
-                <picture><img src="../../public/icons/arrow-right.svg" alt="Seta para direita"></picture>
-            </div>
-        </a>
-        <a href="./ocorrencias.php" id="linkOcorrencias" class="text-decoration-none text-black">
-            <div class="d-flex m-auto justify-content-between align-items-center shadow py-3 px-4 mb-3 border border-1 rounded-3" style="width: 90%;">
-                <i class="bi bi-exclamation-triangle fs-2"></i>
-                <h2 class="m-0 fs-3 w-100 px-3">Ocorrências</h2>
-                <picture><img src="../../public/icons/arrow-right.svg" alt="Seta para direita"></picture>
-            </div>
-        </a>
-        <a href="./categorias.php" id="linkCategorias" class="text-decoration-none text-black">
-            <div class="d-flex m-auto justify-content-between align-items-center shadow py-3 px-4 mb-3 border border-1 rounded-3" style="width: 90%;">
-                <i class="bi bi-bookmarks fs-2"></i>
-                <h2 class="m-0 fs-3 w-100 px-3">Categorias</h2>
-                <picture><img src="../../public/icons/arrow-right.svg" alt="Seta"></picture>
-            </div>
-        </a>
-        <a href="./turmas.php" id="linkTurmas" class="text-decoration-none text-black">
-            <div class="d-flex m-auto justify-content-between align-items-center shadow py-3 px-4 mb-3 border border-1 rounded-3" style="width: 90%;">
-                <i class="bi bi-backpack fs-2"></i>
-                <h2 class="m-0 fs-3 w-100 px-3">Turmas</h2>
-                <picture><img src="../../public/icons/arrow-right.svg" alt="Seta"></picture>
-            </div>
-        </a>
-        <a href="./equipes.php" id="linkEquipes" class="text-decoration-none text-black">
-            <div class="d-flex m-auto justify-content-between align-items-center shadow py-3 px-4 mb-3 border border-1 rounded-3" style="width: 90%;">
-                <i class="bi bi-diagram-3 fs-2"></i>
-                <h2 class="m-0 fs-3 w-100 px-3">Equipes</h2>
-                <picture><img src="../../public/icons/arrow-right.svg" alt="Seta"></picture>
-            </div>
-        </a>
-        <a href="./ranking.php" id="linkRanking" class="text-decoration-none text-black">
-            <div class="d-flex m-auto justify-content-between align-items-center shadow py-3 px-4 mb-3 border border-1 rounded-3" style="width: 90%;">
-                <i class="bi bi-trophy-fill fs-2"></i>
-                <h2 class="m-0 fs-3 w-100 px-3">Ranking</h2>
-                <picture><img src="../../public/icons/arrow-right.svg" alt="Seta"></picture>
-            </div>
-        </a>
-        <?php endif; ?>
-    </section>
-</main>
-
 <!-- main desktop -->
 <main class="d-none d-md-block main-desktop-layout">
     <div class="container-fluid px-0">
@@ -160,7 +39,7 @@ $isMesario = $nivelUsuario === 2;
                 </a>
             </div>
             <div class="col-12 col-md-6 col-lg-4">
-                <a href="agenda.php" id="linkAgenda" class="dash-card">
+                <a href="edicao_agenda.php" id="linkAgenda" class="dash-card">
                     <div class="dash-card-red-corner"></div>
                     <div class="dash-card-header">
                         <div class="dash-card-icon"><i class="bi bi-calendar3"></i></div>
@@ -383,7 +262,7 @@ $isMesario = $nivelUsuario === 2;
                 <a href="colaboradores.php" id="linkColaboradores" class="dash-card">
                     <div class="dash-card-red-corner"></div>
                     <div class="dash-card-header">
-                        <div class="dash-card-icon"><i class="bi bi-people"></i></div>
+                        <div class="dash-card-icon"><img src="../../public/icons/icon_equipes.png" alt="Icone de equipe"></div>
                         <h5 class="dash-card-title">COLABORADORES</h5>
                     </div>
                     <p class="dash-card-text">Gerencie a equipe de organização, voluntários, comissão técnica e juízes do evento.</p>
@@ -403,7 +282,7 @@ $isMesario = $nivelUsuario === 2;
                 <a href="edicao_equipes.php" id="linkEquipes" class="dash-card">
                     <div class="dash-card-red-corner"></div>
                     <div class="dash-card-header">
-                        <div class="dash-card-icon"><i class="bi bi-diagram-3"></i></div>
+                        <div class="dash-card-icon"><i class="bi bi-people"></i></div>
                         <h5 class="dash-card-title">EQUIPES</h5>
                     </div>
                     <p class="dash-card-text">Visualize equipes por categoria e modalidade e abra o elenco de cada turma.</p>
@@ -413,7 +292,7 @@ $isMesario = $nivelUsuario === 2;
                 <a href="chaveamento_arvore.php" id="linkChaveamento" class="dash-card">
                     <div class="dash-card-red-corner"></div>
                     <div class="dash-card-header">
-                        <div class="dash-card-icon"><i class="bi bi-diagram-3-fill"></i></div>
+                        <div class="dash-card-icon"><i class="bi bi-diagram-3"></i></div>
                         <h5 class="dash-card-title">CHAVEAMENTO</h5>
                     </div>
                     <p class="dash-card-text">Visualize a árvore completa do chaveamento mata-mata: confrontos, resultados e avanço das equipes.</p>
