@@ -80,6 +80,44 @@ $cssExtra = '
   width: 100%;
 }
 .aluno-empty p { font-size: 0.9rem; max-width: 400px; margin: 0 auto; }
+.aluno-card-view { display: none; }
+.aluno-card-view.active { display: block; animation: alunoCardFadeIn 0.3s ease; }
+@keyframes alunoCardFadeIn {
+  from { opacity: 0; transform: translateX(16px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+.aluno-turma-item {
+  display: flex; align-items: center; justify-content: space-between; gap: 0.75rem;
+  padding: 0.7rem 0.85rem; margin-bottom: 0.6rem;
+  border: 1px solid var(--aluno-border); border-radius: var(--aluno-radius-md);
+  background: var(--aluno-surface);
+  transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1),
+              box-shadow 0.35s cubic-bezier(0.22, 1, 0.36, 1),
+              border-color 0.35s cubic-bezier(0.22, 1, 0.36, 1),
+              background 0.35s ease;
+}
+.aluno-turma-item:last-child { margin-bottom: 0; }
+.aluno-turma-item:hover {
+  border-color: var(--aluno-primary);
+  background: var(--aluno-primary-subtle);
+  box-shadow: var(--aluno-shadow-sm);
+  transform: translateY(-2px);
+}
+.aluno-turma-alerta { color: #ef4444; font-size: 0.75rem; }
+.aluno-turma-contador { display: inline-flex; align-items: center; gap: 0.35rem; font-size: 0.75rem; color: var(--aluno-text-secondary); font-weight: 600; }
+.aluno-equipe-item {
+  display: flex; align-items: center; justify-content: space-between; gap: 0.75rem;
+  padding: 0.6rem 0.85rem; margin-bottom: 0.5rem;
+  border: 1px solid var(--aluno-border); border-radius: var(--aluno-radius-md);
+  background: var(--aluno-surface);
+  transition: background 0.35s ease, border-color 0.35s ease, transform 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.aluno-equipe-item:last-child { margin-bottom: 0; }
+.aluno-equipe-item:hover { background: #f8f9fa; border-color: #e2e6ea; }
+.aluno-equipe-item.equipe-excedida { background: #fff5f5; color: #842029; }
+.aluno-equipe-item.equipe-excedida .aluno-equipe-nome { font-weight: 700; color: #842029; }
+.aluno-voltar-btn { display: none; }
+.aluno-card.equipes-aberta .aluno-voltar-btn { display: inline-flex; }
 ';
 
 include 'componentes/head.php';
@@ -166,6 +204,7 @@ $paginaAtiva = 'dashboard';
 
     let modalidadesCache = [];
     let turmasCache = [];
+    const cardsAbertos = new Map();
 
     if (idInterclasseEq) {
         ['btnVoltarEquipesMobile', 'btnVoltarEquipesDesk'].forEach(id => {
@@ -234,6 +273,131 @@ $paginaAtiva = 'dashboard';
         }
     }
 
+    function montarCard(m, turmas, equipesPorTurma) {
+        let htmlTurmas = '';
+
+        if (!turmas.length) {
+            htmlTurmas = '<p class="text-muted small mb-0">Nenhuma turma vinculada a esta modalidade.</p>';
+        } else {
+            htmlTurmas = turmas.map(t => {
+                const idTurma = String(t.id_turma);
+                const eqsTurma = equipesPorTurma[idTurma] || [];
+                const qtd = eqsTurma.length;
+                const temExcedida = eqsTurma.some(eq => infoEquipe(eq).excedeu);
+                return `<div class="aluno-turma-item">
+                        <div>
+                            <div class="fw-semibold">${esc(t.nome_turma)}</div>
+                            <div class="aluno-turma-contador"><i class="bi bi-people-fill me-1"></i>${qtd} equipe${qtd === 1 ? '' : 's'}${temExcedida ? '<i class="fas fa-exclamation-triangle aluno-turma-alerta" title="Esta turma possui equipe com alunos acima do limite"></i>' : ''}</div>
+                        </div>
+                        <button type="button" class="btn btn-aluno btn-sm ver-equipes-btn" data-mod="${m.id_modalidade}" data-turma="${idTurma}" data-turma-nome="${esc(t.nome_turma)}" title="Ver equipes">
+                            <i class="fas fa-users-cog"></i>
+                        </button>
+                    </div>`;
+            }).join('');
+        }
+
+        return `<div class="aluno-card" data-mod="${m.id_modalidade}" data-mod-cat="${m.categorias_id_categoria}" data-mod-nome="${esc(m.nome_modalidade)}">
+            <div class="card-header-custom">
+                <span>${esc(m.nome_modalidade)}</span>
+                <button type="button" class="btn btn-aluno btn-sm aluno-voltar-btn voltar-btn" title="Voltar às turmas">
+                    <i class="bi bi-arrow-left"></i>
+                </button>
+            </div>
+            <div class="card-body-custom">
+                <div class="aluno-card-view turmas-view active">${htmlTurmas}</div>
+                <div class="aluno-card-view equipes-view">
+                    <div class="aluno-equipes-content"></div>
+                </div>
+            </div>
+        </div>`;
+    }
+
+    function montarEquipesHtml(eqs, card) {
+        if (!eqs.length) {
+            return '<p class="text-muted small text-center py-3">Nenhuma equipe nesta turma.</p>';
+        }
+        const modId = card.dataset.mod;
+        const modCat = card.dataset.modCat;
+        const modNome = card.dataset.modNome;
+        return eqs.map(eq => {
+            const info = infoEquipe(eq);
+            const qElenco = new URLSearchParams({
+                id: idInterclasseEq,
+                id_equipe: String(eq.id_equipe),
+                id_turma: String(eq.turmas_id_turma),
+                id_modalidade: String(modId),
+                id_categoria: String(modCat),
+                nome_turma: eq.nome_turma || '',
+                nome_modalidade: modNome || ''
+            });
+            const hrefElenco = `./elenco_equipe.php?${qElenco.toString()}`;
+            return `<div class="aluno-equipe-item ${info.excedeu ? 'equipe-excedida' : ''}">
+                    <div>
+                        <div class="aluno-equipe-nome">${esc(eq.nome_equipe || eq.nome_turma)}</div>
+                        <div>${info.contador}</div>
+                    </div>
+                    <div class="d-flex gap-1">
+                        <a class="btn btn-aluno btn-sm" href="${hrefElenco}" title="Ver elenco"><i class="bi bi-people-fill"></i></a>
+                        ${isAdmin ? `<button class="btn btn-aluno btn-sm" onclick="excluirEquipe(${eq.id_equipe}, '${esc(eq.nome_turma || 'Turma')}')" title="Excluir equipe"><i class="bi bi-trash"></i></button>` : ''}
+                    </div>
+                </div>`;
+        }).join('');
+    }
+
+    async function abrirEquipes(cardEl, modId, turmaId) {
+        if (!cardEl) return;
+        const turmasView = cardEl.querySelector('.turmas-view');
+        const equipesView = cardEl.querySelector('.equipes-view');
+        const content = cardEl.querySelector('.aluno-equipes-content');
+        if (!equipesView || !content) return;
+
+        cardsAbertos.set(String(modId), String(turmaId));
+        cardEl.classList.add('equipes-aberta');
+        if (turmasView) turmasView.classList.remove('active');
+        equipesView.classList.add('active');
+
+        content.innerHTML = '<p class="text-muted small text-center py-3"><i class="bi bi-hourglass-split me-1"></i>Carregando equipes…</p>';
+        try {
+            const rEq = await fetch(`${API}equipes.php?id_modalidade=${encodeURIComponent(modId)}&id_turma=${encodeURIComponent(turmaId)}&_t=${Date.now()}`);
+            const equipes = await rEq.json();
+            const arr = Array.isArray(equipes) ? equipes : [];
+            content.innerHTML = montarEquipesHtml(arr, cardEl);
+        } catch (e) {
+            console.error(e);
+            content.innerHTML = '<p class="text-danger small text-center py-3">Erro ao carregar as equipes.</p>';
+        }
+    }
+
+    function voltarTurmas(cardEl) {
+        if (!cardEl) return;
+        const turmasView = cardEl.querySelector('.turmas-view');
+        const equipesView = cardEl.querySelector('.equipes-view');
+        if (turmasView) turmasView.classList.add('active');
+        if (equipesView) equipesView.classList.remove('active');
+        cardEl.classList.remove('equipes-aberta');
+        cardsAbertos.delete(String(cardEl.dataset.mod));
+    }
+
+    function restaurarCardsAbertos(container) {
+        if (!container) return;
+        cardsAbertos.forEach((turmaId, modId) => {
+            const cardEl = container.querySelector(`.aluno-card[data-mod="${modId}"]`);
+            if (cardEl) abrirEquipes(cardEl, modId, turmaId);
+        });
+    }
+
+    function handleCardClick(e) {
+        const btnEquipes = e.target.closest('.ver-equipes-btn');
+        if (btnEquipes) {
+            abrirEquipes(btnEquipes.closest('.aluno-card'), btnEquipes.dataset.mod, btnEquipes.dataset.turma);
+            return;
+        }
+        const btnVoltar = e.target.closest('.voltar-btn');
+        if (btnVoltar) {
+            voltarTurmas(btnVoltar.closest('.aluno-card'));
+        }
+    }
+
     async function carregarEquipes() {
         const mob = document.getElementById('listaEquipesMobile');
         const desk = document.getElementById('listaEquipesDesktop');
@@ -267,13 +431,21 @@ $paginaAtiva = 'dashboard';
                 });
             }
 
+            let urlTurmas = `${API}turmas.php?id_interclasse=${encodeURIComponent(idInterclasseEq)}`;
+            if (idCategoriaFiltro) {
+                urlTurmas += `&id_categoria=${encodeURIComponent(idCategoriaFiltro)}`;
+            }
+            const resTurmas = await fetch(urlTurmas);
+            const turmasRaw = await resTurmas.json();
+            const turmas = Array.isArray(turmasRaw) ? turmasRaw : [];
+
             let urlMod = `${API}modalidades.php?id_interclasse=${encodeURIComponent(idInterclasseEq)}`;
             if (idCategoriaFiltro) {
                 urlMod += `&id_categoria=${encodeURIComponent(idCategoriaFiltro)}`;
             }
             const resMod = await fetch(urlMod);
             const modsRaw = await resMod.json();
-            let mods = Array.isArray(modsRaw) ? modsRaw : [];
+            const mods = Array.isArray(modsRaw) ? modsRaw : [];
 
             if (!mods.length) {
                 mob.innerHTML = '<p class="text-muted text-center w-100">Nenhuma modalidade encontrada para o filtro selecionado.</p>';
@@ -291,89 +463,34 @@ $paginaAtiva = 'dashboard';
             let htmlMob = '';
             let htmlDesk = '';
 
-            for (const [nomeCat, listaMod] of Object.entries(porCategoria)) {
+            for (const [, listaMod] of Object.entries(porCategoria)) {
                 for (const m of listaMod) {
                     const rEq = await fetch(`${API}equipes.php?id_modalidade=${encodeURIComponent(m.id_modalidade)}&_t=${Date.now()}`);
                     const equipes = await rEq.json();
                     const arr = Array.isArray(equipes) ? equipes : [];
 
-                    htmlMob += `<div class="aluno-card">
-                        <div class="card-header-custom">${esc(m.nome_modalidade)}</div>
-                        <div class="card-body-custom">`;
+                    const equipesPorTurma = {};
+                    arr.forEach(eq => {
+                        const chave = String(eq.turmas_id_turma);
+                        if (!equipesPorTurma[chave]) equipesPorTurma[chave] = [];
+                        equipesPorTurma[chave].push(eq);
+                    });
 
-                    if (!arr.length) {
-                        htmlMob += '<p class="text-muted small mb-0">Nenhuma equipe.</p>';
-                    } else {
-                        htmlMob += '<div class="d-flex flex-column gap-1">';
-                        arr.forEach(eq => {
-                            const info = infoEquipe(eq);
-                            const qElenco = new URLSearchParams({
-                                id: idInterclasseEq,
-                                id_equipe: String(eq.id_equipe),
-                                id_turma: String(eq.turmas_id_turma),
-                                id_modalidade: String(m.id_modalidade),
-                                id_categoria: String(m.categorias_id_categoria),
-                                nome_turma: eq.nome_turma || '',
-                                nome_modalidade: m.nome_modalidade || ''
-                            });
-                            const hrefElenco = `./elenco_equipe.php?${qElenco.toString()}`;
-                            htmlMob += `
-                                <div class="d-flex justify-content-between align-items-center py-1 ${info.excedeu ? 'equipe-excedida' : ''}" ${info.excedeu ? 'style="padding-left:0.5rem;padding-right:0.5rem;border-radius:8px;"' : ''}>
-                                    <div>
-                                        <div>${esc(eq.nome_equipe || eq.nome_turma)}</div>
-                                        ${info.contador}
-                                    </div>
-                                    <div class="d-flex gap-1">
-                                        <a class="btn btn-aluno btn-sm" href="${hrefElenco}"><i class="bi bi-people-fill"></i></a>
-                                        ${isAdmin ? `<button class="btn btn-aluno btn-sm" onclick="excluirEquipe(${eq.id_equipe}, '${esc(eq.nome_turma || 'Turma')}')"><i class="bi bi-trash"></i></button>` : ''}
-                                    </div>
-                                </div>`;
-                        });
-                        htmlMob += '</div>';
-                    }
+                    const turmasDaModalidade = turmas.filter(
+                        t => String(t.categorias_id_categoria) === String(m.categorias_id_categoria)
+                    );
 
-                    htmlMob += `</div></div>`;
-
-                    htmlDesk += `<div class="aluno-card">
-                        <div class="card-header-custom">${esc(m.nome_modalidade)}</div>
-                        <div class="card-body-custom" style="padding:0;">`;
-
-                    if (!arr.length) {
-                        htmlDesk += '<p class="text-muted small mb-0 px-3 py-3">Nenhuma equipe cadastrada nesta modalidade.</p>';
-                    } else {
-                        htmlDesk += '<table class="aluno-table"><tbody>';
-                        arr.forEach(eq => {
-                            const info = infoEquipe(eq);
-                            const qElenco = new URLSearchParams({
-                                id: idInterclasseEq,
-                                id_equipe: String(eq.id_equipe),
-                                id_turma: String(eq.turmas_id_turma),
-                                id_modalidade: String(m.id_modalidade),
-                                id_categoria: String(m.categorias_id_categoria),
-                                nome_turma: eq.nome_turma || '',
-                                nome_modalidade: m.nome_modalidade || ''
-                            });
-                            const hrefElenco = `./elenco_equipe.php?${qElenco.toString()}`;
-                            htmlDesk += `<tr class="${info.excedeu ? 'equipe-excedida' : ''}">
-                                <td style="padding-left:1.25rem">
-                                    ${esc(eq.nome_equipe || eq.nome_turma)}
-                                    <div>${info.contador}</div>
-                                </td>
-                                <td class="text-end" style="padding-right:1.25rem">
-                                    <a class="btn btn-aluno btn-sm me-1" href="${hrefElenco}"><i class="bi bi-people-fill"></i></a>
-                                    ${isAdmin ? `<button class="btn btn-aluno btn-sm" onclick="excluirEquipe(${eq.id_equipe}, '${esc(eq.nome_turma || 'Turma')}')"><i class="bi bi-trash"></i></button>` : ''}
-                                </td>
-                            </tr>`;
-                        });
-                        htmlDesk += '</tbody></table>';
-                    }
-
-                    htmlDesk += `</div></div>`;
+                    const card = montarCard(m, turmasDaModalidade, equipesPorTurma);
+                    htmlMob += card;
+                    htmlDesk += card;
                 }
             }
 
             mob.innerHTML = htmlMob;
             desk.innerHTML = htmlDesk ? `<div class="aluno-card-grid">${htmlDesk}</div>` : '';
+
+            restaurarCardsAbertos(mob);
+            restaurarCardsAbertos(desk);
         } catch (e) {
             console.error(e);
             mob.innerHTML = '<p class="text-danger text-center">Erro ao carregar equipes.</p>';
@@ -492,6 +609,11 @@ $paginaAtiva = 'dashboard';
         if (!btn) return;
         ativarCategoria(btn);
         carregarEquipes();
+    });
+
+    ['listaEquipesMobile', 'listaEquipesDesktop'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.addEventListener('click', handleCardClick);
     });
 
     window.excluirEquipe = async function(id, nome) {
