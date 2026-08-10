@@ -399,7 +399,7 @@ switch ($metodo) {
 
         if ($acao === 'criar_aluno') {
             require_once __DIR__ . '/auth.php';
-            requerNivel([0, 1, 2]);
+            requerNivel([0, 1]);
 
             $idInterclasseAtivo = buscarInterclasseAtivo($conn);
             if ($idInterclasseAtivo === null) {
@@ -477,7 +477,7 @@ switch ($metodo) {
 
         if ($acao === 'editar_aluno') {
             require_once __DIR__ . '/auth.php';
-            requerNivel([0, 1, 2]);
+            requerNivel([0, 1]);
 
             $idInterclasseAtivo = buscarInterclasseAtivo($conn);
             if ($idInterclasseAtivo === null) {
@@ -550,7 +550,7 @@ switch ($metodo) {
 
         if ($acao === 'excluir_aluno') {
             require_once __DIR__ . '/auth.php';
-            requerNivel([0, 1, 2]);
+            requerNivel([0]);
 
             $dados = !empty($_POST) ? $_POST : $inputData;
             $idUsuario = (int) ($dados['id_usuario'] ?? 0);

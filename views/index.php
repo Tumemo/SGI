@@ -32,7 +32,7 @@
 
     <!-- VERSÃO DESKTOP CENTRALIZADA -->
     <main class="d-none d-md-flex vh-100">
-        <picture class="w-50 vh-100 position-relative d-block shadow-lg">
+        <picture class="w-75 vh-100 position-relative d-block shadow-lg">
             <img src="./public/images/banner-login-desktop2.png" class="position-absolute top-0 start-0 w-100 h-100 object-fit-cover" style="z-index: 1;">
             <img src="./public/images/borda-banner-login-desktop.png" class="position-absolute top-0 start-0 w-100 h-100 object-fit-cover" style="z-index: 2;">
         </picture>

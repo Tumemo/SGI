@@ -6,7 +6,8 @@ $urlVoltar = './dashboard.php';
 include 'componentes/head.php';
 include 'componentes/header.php';
 $paginaAtiva = 'turmas';
-$podeGerenciar = in_array($nivelUsuario, [0, 1, 2], true);
+$podeGerenciar = in_array($nivelUsuario, [0, 1], true);
+$podeExcluir   = in_array($nivelUsuario, [0], true);
 ?>
 
 <style>
@@ -495,6 +496,7 @@ $podeGerenciar = in_array($nivelUsuario, [0, 1, 2], true);
     const idCategoria = Number(params.get('id_categoria') || 0);
     const idTurma = Number(params.get('id_turma') || 0);
     const podeGerenciar = <?= $podeGerenciar ? 'true' : 'false' ?>;
+    const podeExcluir   = <?= $podeExcluir ? 'true' : 'false' ?>;
 
     const POR_PAGINA = 10;
     let alunosTodos = [];
@@ -631,7 +633,8 @@ $podeGerenciar = in_array($nivelUsuario, [0, 1, 2], true);
                     ${podeGerenciar ? `
                     <button type="button" class="ta-action ta-action--edit" data-bs-toggle="tooltip" title="Editar" onclick="abrirModalAlunoId(${u.id_usuario})">
                         <i class="bi bi-pencil"></i>
-                    </button>
+                    </button>` : ''}
+                    ${podeExcluir ? `
                     <button type="button" class="ta-action ta-action--delete" data-bs-toggle="tooltip" title="Excluir" onclick="confirmarExcluir(${u.id_usuario})">
                         <i class="bi bi-trash"></i>
                     </button>` : ''}
@@ -655,7 +658,8 @@ $podeGerenciar = in_array($nivelUsuario, [0, 1, 2], true);
                     ${podeGerenciar ? `
                     <button type="button" class="ta-action ta-action--edit" data-bs-toggle="tooltip" title="Editar" onclick="abrirModalAlunoId(${u.id_usuario})">
                         <i class="bi bi-pencil"></i>
-                    </button>
+                    </button>` : ''}
+                    ${podeExcluir ? `
                     <button type="button" class="ta-action ta-action--delete" data-bs-toggle="tooltip" title="Excluir" onclick="confirmarExcluir(${u.id_usuario})">
                         <i class="bi bi-trash"></i>
                     </button>` : ''}
