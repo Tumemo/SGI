@@ -102,7 +102,7 @@ $isMesario = $nivelUsuario === 2;
                 </a>
             </div>
             <div class="col-12 col-md-6 col-lg-4">
-                <a href="locais.php" id="linkLocais" class="dash-card">
+                <a href="edicao_locais.php" id="linkLocais" class="dash-card">
                     <div class="dash-card-red-corner"></div>
                     <div class="dash-card-header">
                         <div class="dash-card-icon"><i class="bi bi-geo-alt"></i></div>
@@ -360,7 +360,7 @@ $isMesario = $nivelUsuario === 2;
     <?php if ($isColaborador): ?>
     document.querySelectorAll('#linkModalidades').forEach(link => { link.href = `./modalidades.php?id=${idInterclasse}`; });
     document.querySelectorAll('#linkPontuacoes').forEach(link => { link.href = `./pontuacoes.php?id=${idInterclasse}`; });
-    document.querySelectorAll('#linkLocais').forEach(link => { link.href = `./locais.php?id=${idInterclasse}`; });
+    document.querySelectorAll('#linkLocais').forEach(link => { link.href = `./edicao_locais.php?id=${idInterclasse}`; });
     document.querySelectorAll('#linkColaboradores').forEach(link => { link.href = `./colaboradores.php?id=${idInterclasse}`; });
     document.querySelectorAll('#linkArrecadacoes').forEach(link => { link.href = `./edicao_arrecadacao.php?id=${idInterclasse}`; });
     document.querySelectorAll('#linkOcorrencias').forEach(link => { link.href = `./ocorrencias.php?id=${idInterclasse}`; });
