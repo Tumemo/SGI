@@ -162,7 +162,7 @@ $isMesario = $nivelUsuario === 2;
                 </a>
             </div>
             <div class="col-12 col-md-6 col-lg-4">
-                <a href="equipes.php" id="linkEquipes" class="dash-card">
+                <a href="edicao_equipes.php" id="linkEquipes" class="dash-card">
                     <div class="dash-card-red-corner"></div>
                     <div class="dash-card-header">
                         <div class="dash-card-icon"><i class="bi bi-diagram-3"></i></div>
