@@ -298,6 +298,22 @@ include 'componentes/head.php';
         border-color: #f5b9be;
         background-color: #fffdfd;
     }
+    .modalidade-card.lotado {
+        opacity: .55;
+        cursor: not-allowed;
+        filter: grayscale(.35);
+    }
+    .modalidade-card.lotado:hover {
+        transform: none;
+        box-shadow: var(--md-shadow);
+        border-color: var(--md-border);
+        background-color: var(--md-surface);
+    }
+    .modalidade-card.lotado .card-icon-wrap {
+        transform: none;
+        background: #f3f4f6;
+        color: #9ca3af;
+    }
     .modalidade-card .card-icon-wrap {
         width: 52px;
         height: 52px;
@@ -854,7 +870,9 @@ include 'componentes/nav.php';
                 const msg = estaInscrito ? ' — Suas inscrições' : ' — Selecione até 3 modalidades';
             }
 
-            const res = await fetch(`../../../../api/modalidades.php?id_interclasse=${idInterclasse}`);
+            let urlMod = `../../../../api/modalidades.php?id_interclasse=${idInterclasse}`;
+            if (idTurmaUsuario > 0) urlMod += `&id_turma=${idTurmaUsuario}`;
+            const res = await fetch(urlMod);
             const lista = await res.json();
             modalidadesData = Array.isArray(lista) ? lista.filter(m => String(m.status_modalidade) === '1') : [];
 
@@ -925,18 +943,24 @@ include 'componentes/nav.php';
             .observe(grid, { attributes: true, childList: true, subtree: true, attributeFilter: ['class'] });
     }
 
-    // Define o status de vagas de uma modalidade com base nas equipes inscritas
+    // Define o status de vagas de uma modalidade com base na capacidade da turma do aluno.
+    // Capacidade por turma = max_inscrito_modalidade x max_equipes (ilimitado se algum for ilimitado).
     function statusVagas(mod) {
-        const maxTurmas = parseInt(mod.max_turmas) || 0;
-        const ocupadas = parseInt(mod.qtd_equipes) || 0;
-        const restantes = maxTurmas - ocupadas;
-        if (maxTurmas <= 0 || restantes > 2) {
-            return { cls: 'vagas-livre', icon: 'bi-check-circle-fill', label: 'Vagas disponíveis' };
+        const maxInscrito = parseInt(mod.max_inscrito_modalidade) || 0;
+        const maxEquipes = mod.max_equipes ? parseInt(mod.max_equipes) || 0 : 0;
+        const capacidade = (maxInscrito > 0 && maxEquipes > 0) ? maxInscrito * maxEquipes : 0;
+        if (capacidade <= 0) {
+            return { cls: '', icon: '', label: '' };
         }
+        const inscritos = parseInt(mod.qtd_inscritos_turma) || 0;
+        const restantes = capacidade - inscritos;
         if (restantes <= 0) {
             return { cls: 'vagas-lotado', icon: 'bi-x-circle-fill', label: 'Lotado' };
         }
-        return { cls: 'vagas-poucas', icon: 'bi-exclamation-triangle-fill', label: 'Poucas vagas' };
+        if (restantes <= 2) {
+            return { cls: 'vagas-poucas', icon: 'bi-exclamation-triangle-fill', label: 'Poucas vagas' };
+        }
+        return { cls: '', icon: '', label: '' };
     }
 
     function renderizarSelecao() {
@@ -974,10 +998,11 @@ include 'componentes/nav.php';
             const col = document.createElement('div');
             col.className = 'col';
             const vagas = statusVagas(mod);
+            const lotado = vagas.cls === 'vagas-lotado';
             col.innerHTML = `
-                <div class="modalidade-card" data-id="${mod.id_modalidade}" data-nome="${esc(mod.nome_modalidade)}" onclick="abrirEquipesModalidade(this)">
+                <div class="modalidade-card${lotado ? ' lotado' : ''}" data-id="${mod.id_modalidade}" data-nome="${esc(mod.nome_modalidade)}" onclick="abrirEquipesModalidade(this)">
                     <span class="card-check"><i class="bi bi-check-lg"></i></span>
-                    <span class="card-vagas ${vagas.cls}"><i class="bi ${vagas.icon}"></i>${vagas.label}</span>
+                    ${vagas.label ? `<span class="card-vagas ${vagas.cls}"><i class="bi ${vagas.icon}"></i>${vagas.label}</span>` : ''}
                     <div class="card-icon-wrap"><i class="bi ${iconeModalidade(mod.nome_modalidade)}"></i></div>
                     <div class="card-info">
                         <span class="card-nome">${esc(mod.nome_modalidade)}</span>
@@ -1158,6 +1183,14 @@ include 'componentes/nav.php';
         const idModalidade = card.dataset.id;
         const nomeModalidade = card.dataset.nome;
 
+        if (card.classList.contains('lotado')) {
+            document.getElementById('msgFeedback').textContent = 'Modalidade lotada. Não é possível se inscrever.';
+            card.classList.add('shake');
+            setTimeout(() => card.classList.remove('shake'), 500);
+            setTimeout(() => document.getElementById('msgFeedback').textContent = '', 2500);
+            return;
+        }
+
         if (card.classList.contains('selected')) {
             card.classList.remove('selected');
             delete card.dataset.equipe;
@@ -1259,6 +1292,22 @@ include 'componentes/nav.php';
             setTimeout(() => document.getElementById('msgFeedback').textContent = '', 2000);
             return;
         }
+
+        const lotados = Array.from(selecionados).filter(c => c.classList.contains('lotado'));
+        if (lotados.length > 0) {
+            document.getElementById('msgFeedback').textContent = 'Uma ou mais modalidades selecionadas ficaram lotadas. Remova-as e tente novamente.';
+            lotados.forEach(c => {
+                c.classList.remove('selected');
+                delete c.dataset.equipe;
+                delete c.dataset.equipeNome;
+                const chip = c.querySelector('.card-equipe');
+                if (chip) chip.textContent = '';
+            });
+            atualizarContador();
+            setTimeout(() => document.getElementById('msgFeedback').textContent = '', 3000);
+            return;
+        }
+
         const btn = document.getElementById('btnSalvar');
         btn.disabled = true;
         btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status"></span> Salvando...';

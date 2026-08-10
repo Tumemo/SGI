@@ -17,6 +17,18 @@ if ($method === 'OPTIONS') {
 switch ($method) {
     case 'GET':
         $filtro = aplicarFiltrosModalidades();
+        $idTurmaFiltro = isset($_GET['id_turma']) ? intval($_GET['id_turma']) : 0;
+
+        $qtdInscritosTurmaSql = '';
+        if ($idTurmaFiltro > 0) {
+            $qtdInscritosTurmaSql = ", (SELECT COUNT(DISTINCT eu.usuarios_id_usuario)
+                    FROM equipes_has_usuarios eu
+                    INNER JOIN equipes e2 ON e2.id_equipe = eu.equipes_id_equipe
+                    INNER JOIN usuarios u2 ON u2.id_usuario = eu.usuarios_id_usuario
+                    WHERE e2.modalidades_id_modalidade = modalidades.id_modalidade
+                      AND e2.turmas_id_turma = ?
+                      AND e2.status_equipe = '1' AND u2.status_usuario = '1') AS qtd_inscritos_turma";
+        }
 
         $sql = "SELECT DISTINCT 
                     modalidades.id_modalidade, 
@@ -32,7 +44,8 @@ switch ($method) {
                     modalidades.interclasses_id_interclasse,
                     interclasses.nome_interclasse,
                     (SELECT COUNT(*) FROM equipes e2 WHERE e2.modalidades_id_modalidade = modalidades.id_modalidade AND e2.status_equipe = '1') AS qtd_equipes,
-                    (SELECT COUNT(*) FROM turmas t2 WHERE t2.categorias_id_categoria = modalidades.categorias_id_categoria) AS max_turmas
+                    (SELECT COUNT(*) FROM turmas t2 WHERE t2.categorias_id_categoria = modalidades.categorias_id_categoria) AS max_turmas"
+                    . $qtdInscritosTurmaSql . "
                     FROM modalidades
                     INNER JOIN tipos_modalidades 
                     ON tipos_modalidades.id_tipo_modalidade = modalidades.tipos_modalidades_id_tipo_modalidade
@@ -52,7 +65,13 @@ switch ($method) {
             echo json_encode(["success" => false, "message" => "Erro ao preparar consulta: " . $conn->error]);
             break;
         }
-        if (!empty($filtro['params'])) {
+        if ($idTurmaFiltro > 0) {
+            if (!empty($filtro['params'])) {
+                $stmt->bind_param('i' . $filtro['types'], $idTurmaFiltro, ...$filtro['params']);
+            } else {
+                $stmt->bind_param('i', $idTurmaFiltro);
+            }
+        } elseif (!empty($filtro['params'])) {
             $stmt->bind_param($filtro['types'], ...$filtro['params']);
         }
         if (!$stmt->execute()) {

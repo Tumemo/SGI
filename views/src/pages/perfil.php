@@ -278,7 +278,7 @@ $paginaAtiva = 'perfil';
                             </div>
                             <div class="perfil-info-item mb-0">
                                 <span class="perfil-info-label"><i class="bi bi-shield-plus"></i> Autenticação</span>
-                                <span class="perfil-info-value" style="color:#888;font-size:0.85rem;">Senha criptografada (bcrypt)</span>
+                                <span class="perfil-info-value" style="color:#888;font-size:0.85rem;">Senha criptografada</span>
                             </div>
                         </div>
                     </div>

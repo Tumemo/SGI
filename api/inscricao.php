@@ -156,6 +156,45 @@ try {
         $id_modalidade = (int) $id_modalidade;
         if ($id_modalidade <= 0) continue;
 
+        // Capacidade por turma: max_inscrito_modalidade x max_equipes (ilimitado se algum for ilimitado).
+        $stmtMod = $conn->prepare('SELECT max_inscrito_modalidade, max_equipes FROM modalidades WHERE id_modalidade = ? LIMIT 1');
+        if (!$stmtMod) {
+            $erros[] = "Erro ao consultar limites da modalidade $id_modalidade";
+            continue;
+        }
+        $stmtMod->bind_param('i', $id_modalidade);
+        $stmtMod->execute();
+        $dadosMod = $stmtMod->get_result()->fetch_assoc();
+        $stmtMod->close();
+
+        $maxInscrito = (int) ($dadosMod['max_inscrito_modalidade'] ?? 0);
+        $maxEquipes = isset($dadosMod['max_equipes']) && $dadosMod['max_equipes'] !== null
+            ? (int) $dadosMod['max_equipes']
+            : 0;
+        $capacidade = ($maxInscrito > 0 && $maxEquipes > 0) ? $maxInscrito * $maxEquipes : 0;
+
+        if ($capacidade > 0) {
+            $stmtCount = $conn->prepare('SELECT COUNT(DISTINCT eu.usuarios_id_usuario) AS total
+                FROM equipes_has_usuarios eu
+                INNER JOIN equipes e ON e.id_equipe = eu.equipes_id_equipe
+                INNER JOIN usuarios u ON u.id_usuario = eu.usuarios_id_usuario
+                WHERE e.modalidades_id_modalidade = ? AND e.turmas_id_turma = ?
+                  AND e.status_equipe = \'1\' AND u.status_usuario = \'1\'');
+            if (!$stmtCount) {
+                $erros[] = "Erro ao consultar ocupação da modalidade $id_modalidade";
+                continue;
+            }
+            $stmtCount->bind_param('ii', $id_modalidade, $id_turma);
+            $stmtCount->execute();
+            $ocupacao = (int) ($stmtCount->get_result()->fetch_assoc()['total'] ?? 0);
+            $stmtCount->close();
+
+            if ($ocupacao >= $capacidade) {
+                $erros[] = "A modalidade $id_modalidade está lotada.";
+                continue;
+            }
+        }
+
         $id_equipe = sgi_buscar_ou_criar_equipe_padrao($conn, $id_modalidade, $id_turma);
         if ($id_equipe === null) {
             $erros[] = "Erro ao localizar ou criar a equipe padrão para a modalidade $id_modalidade";
