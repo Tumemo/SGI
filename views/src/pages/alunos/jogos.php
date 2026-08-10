@@ -872,9 +872,8 @@ include 'componentes/nav.php';
             const dot = status.dot ? '<span class="status-dot"></span>' : '';
 
             return `
-                <div class="jogo-card" data-modalidade-id="${esc(jogo.id_modalidade)}"
-                     data-modalidade-nome="${esc(jogo.nome_modalidade)}"
-                     onclick="abrirDetalhesModalidade(this)" role="button" tabindex="0">
+                <div class="jogo-card" data-jogo-id="${esc(jogo.id_jogo)}"
+                     onclick="abrirDetalhesJogo(this)" role="button" tabindex="0">
                     <div class="jogo-top">
                         <div class="jogo-meta">${metaInfo}</div>
                         <span class="status-badge ${status.classe}">${dot}${esc(status.texto)}</span>
@@ -911,13 +910,13 @@ include 'componentes/nav.php';
 
     // ============================ MODAL DE DETALHES ============================
 
-    async function abrirDetalhesModalidade(btn) {
-        const idModalidade = btn.dataset.modalidadeId;
-        const nomeModalidade = btn.dataset.modalidadeNome;
+    async function abrirDetalhesJogo(btn) {
+        const idJogo = btn.dataset.jogoId;
+        const jogo = todosOsJogos.find(j => String(j.id_jogo) === String(idJogo));
         const corpo = document.getElementById('modalModalidadeCorpo');
 
         document.getElementById('modalModalidadeTitle').innerHTML =
-            `<i class="bi bi-trophy-fill me-2"></i>${esc(nomeModalidade)}`;
+            '<i class="bi bi-trophy-fill me-2"></i>Resumo da Partida';
 
         corpo.innerHTML = `
             <div class="text-center text-muted py-4">
@@ -928,56 +927,77 @@ include 'componentes/nav.php';
         const modal = new bootstrap.Modal(document.getElementById('modalModalidade'));
         modal.show();
 
-        try {
-            const [resPodio, resDestaques, resFases, resEquipes] = await Promise.all([
-                fetch(`../../../../api/classificacao.php?id_modalidade=${idModalidade}`),
-                fetch(`../../../../api/artilheiro.php?id_modalidade=${idModalidade}&ano=${anoInterclasse}`),
-                fetch(`../../../../api/chaveamento.php?id_modalidade=${idModalidade}&acao=arvore`),
-                fetch(`../../../../api/equipes.php?id_modalidade=${idModalidade}`)
-            ]);
-
-            const dadosPodio = await resPodio.json();
-            const destaques = await resDestaques.json();
-            const dadosFases = await resFases.json();
-            const equipes = await resEquipes.json();
-
-            corpo.innerHTML = montarHTMLModal(dadosPodio, destaques, dadosFases, equipes);
-            inicializarAcordeoes();
-        } catch (e) {
-            console.error('Erro ao carregar detalhes da modalidade:', e);
+        if (!jogo) {
             corpo.innerHTML = `
                 <div class="modal-empty">
                     <i class="bi bi-exclamation-triangle fs-1 d-block mb-2 text-danger"></i>
-                    Erro ao carregar os detalhes. Tente novamente.
+                    Partida não encontrada.
+                </div>`;
+            return;
+        }
+
+        try {
+            const [resPartidas, resDestaques] = await Promise.all([
+                fetch(`../../../../api/partidas.php?id_jogo=${idJogo}`),
+                fetch(`../../../../api/artilheiro.php?id_jogo=${idJogo}&ano=${anoInterclasse}`)
+            ]);
+
+            const partidas = await resPartidas.json();
+            const destaques = await resDestaques.json();
+
+            corpo.innerHTML = montarHTMLResumoJogo(jogo, partidas, destaques);
+            inicializarAcordeoes();
+        } catch (e) {
+            console.error('Erro ao carregar resumo da partida:', e);
+            corpo.innerHTML = `
+                <div class="modal-empty">
+                    <i class="bi bi-exclamation-triangle fs-1 d-block mb-2 text-danger"></i>
+                    Erro ao carregar o resumo da partida. Tente novamente.
                 </div>`;
         }
     }
 
-    function montarHTMLModal(dadosPodio, destaques, dadosFases, equipes) {
+    function montarHTMLResumoJogo(jogo, partidas, destaques) {
+        const status = badgeStatus(jogo.status_jogo);
+        const isFinalizado = String(jogo.status_jogo).toLowerCase() === 'concluido';
+
+        const eqA = jogo.equipes[0] || { nome: 'A Definir', tag: '??', placar: '-' };
+        const eqB = jogo.equipes[1] || { nome: 'A Definir', tag: '??', placar: '-' };
+
+        const placarA = isFinalizado ? (eqA.placar ?? '0') : '-';
+        const placarB = isFinalizado ? (eqB.placar ?? '0') : '-';
+        const dot = status.dot ? '<span class="status-dot"></span>' : '';
+
         let html = '';
 
-        // ===== SALA VENCEDORA =====
+        // ===== CONFRONTO =====
         html += '<div class="modal-section">';
-        html += '<div class="modal-section-title"><i class="bi bi-trophy-fill"></i>Sala Vencedora</div>';
-
-        const podio = (dadosPodio && dadosPodio.success && Array.isArray(dadosPodio.podio)) ? dadosPodio.podio : [];
-        const campeao = podio.find(p => parseInt(p.posicao) === 1) || null;
-
-        if (campeao) {
-            html += `
-                <div class="podio-item podio-1 vencedor-card">
-                    <span class="medalha"><i class="bi bi-trophy-fill"></i></span>
-                    <span class="podio-turma">${esc(campeao.fantasia || campeao.equipe)}</span>
-                    <span class="podio-status">${esc(campeao.status || 'Campeão')}</span>
-                </div>`;
-        } else {
-            html += '<div class="modal-empty"><i class="bi bi-hourglass-split d-block mb-1"></i>A sala vencedora será definida após a final.</div>';
-        }
+        html += '<div class="modal-section-title"><i class="bi bi-shield-fill"></i>Partida</div>';
+        html += `
+            <div class="confronto-area mb-3">
+                <div class="equipe">
+                    <span class="turma-tag">${esc(eqA.tag)}</span>
+                    <span class="equipe-nome">${esc(eqA.nome)}</span>
+                </div>
+                <div class="placar-box">
+                    <span class="${isFinalizado ? 'placar-num' : 'placar-pendente'}">${esc(placarA)}</span>
+                    <span class="vs-text mx-1">x</span>
+                    <span class="${isFinalizado ? 'placar-num' : 'placar-pendente'}">${esc(placarB)}</span>
+                </div>
+                <div class="equipe">
+                    <span class="turma-tag">${esc(eqB.tag)}</span>
+                    <span class="equipe-nome">${esc(eqB.nome)}</span>
+                </div>
+            </div>
+            <div class="text-center">
+                <span class="status-badge ${status.classe}">${dot}${esc(status.texto)}</span>
+            </div>
+        `;
         html += '</div>';
 
-        // ===== DESTAQUE / ARTILHEIRO =====
+        // ===== DESTAQUE DA PARTIDA =====
         html += '<div class="modal-section">';
-        html += '<div class="modal-section-title"><i class="bi bi-lightning-charge-fill"></i>Destaque & Artilharia</div>';
+        html += '<div class="modal-section-title"><i class="bi bi-lightning-charge-fill"></i>Destaque da Partida</div>';
 
         const artilheiros = Array.isArray(destaques) ? destaques : [];
         const artilheiroTop = artilheiros[0];
@@ -997,46 +1017,30 @@ include 'componentes/nav.php';
                     <div class="destaque-valor">${esc(artilheiroTop.total_gols)}<small>gols</small></div>
                 </div>`;
         } else {
-            html += '<div class="modal-empty"><i class="bi bi-person-dash d-block mb-1"></i>Ainda não há artilharia registrada para esta modalidade.</div>';
+            html += '<div class="modal-empty"><i class="bi bi-person-dash d-block mb-1"></i>Ainda não há destaque registrado para esta partida.</div>';
         }
         html += '</div>';
 
-        // ===== CHAVEAMENTO / FASE =====
+        // ===== EQUIPES DA PARTIDA =====
         html += '<div class="modal-section">';
-        html += '<div class="modal-section-title"><i class="bi bi-diagram-3-fill"></i>Chaveamento & Fases</div>';
+        html += '<div class="modal-section-title"><i class="bi bi-people-fill"></i>Equipes da Partida</div>';
 
-        const jogosFases = (dadosFases && dadosFases.success && Array.isArray(dadosFases.jogos)) ? dadosFases.jogos : [];
-        const fases = agruparFases(jogosFases);
+        const equipesMap = {};
+        (Array.isArray(partidas) ? partidas : []).forEach(row => {
+            if (!row.equipes_id_equipe) return;
+            if (!equipesMap[row.equipes_id_equipe]) {
+                equipesMap[row.equipes_id_equipe] = {
+                    id_equipe: row.equipes_id_equipe,
+                    nome: row.nome_fantasia_turma || row.nome_turma || 'Equipe',
+                    tag: abreviarTurma(row.nome_turma, row.nome_fantasia_turma)
+                };
+            }
+        });
+        const equipesLista = Object.values(equipesMap);
 
-        if (fases.length > 0) {
-            const indiceAtual = fases.findIndex(f => f.pendentes > 0);
-            const faseAtual = indiceAtual >= 0 ? indiceAtual : fases.length - 1;
-
-            html += fases.map((f, i) => {
-                const atual = i === faseAtual && indiceAtual >= 0;
-                const concluida = f.pendentes === 0;
-                return `
-                    <div class="fase-item ${atual ? 'fase-atual' : ''}">
-                        <span class="fase-nome">${esc(f.nome)}</span>
-                        <span class="text-muted small">${f.concluidos}/${f.total} jogos</span>
-                        <span class="fase-status ${concluida ? 'text-success' : (atual ? 'text-danger' : 'text-muted')}">
-                            ${concluida ? 'Concluída' : (atual ? 'Em andamento' : 'Aguardando')}
-                        </span>
-                    </div>`;
-            }).join('');
-        } else {
-            html += '<div class="modal-empty"><i class="bi bi-diagram-3 d-block mb-1"></i>Chaveamento ainda não gerado para esta modalidade.</div>';
-        }
-        html += '</div>';
-
-        // ===== EQUIPES (acordeão) =====
-        html += '<div class="modal-section">';
-        html += '<div class="modal-section-title"><i class="bi bi-people-fill"></i>Equipes Participantes</div>';
-
-        const equipesLista = Array.isArray(equipes) ? equipes : [];
         if (equipesLista.length > 0) {
             html += '<div class="accordion accordion-soft" id="accordionEquipes">';
-            html += equipesLista.map((e, i) => `
+            html += equipesLista.map(e => `
                 <div class="accordion-item">
                     <h2 class="accordion-header">
                         <button class="accordion-button collapsed" type="button"
@@ -1044,8 +1048,8 @@ include 'componentes/nav.php';
                             data-bs-target="#equipe-${e.id_equipe}"
                             aria-expanded="false"
                             aria-controls="equipe-${e.id_equipe}">
-                            <i class="bi bi-shield-fill me-2 text-danger"></i>
-                            ${esc(e.nome_equipe || e.nome_turma || `Equipe ${i + 1}`)}
+                            <span class="turma-tag me-2">${esc(e.tag)}</span>
+                            <span class="flex-grow-1 text-start">${esc(e.nome)}</span>
                         </button>
                     </h2>
                     <div id="equipe-${e.id_equipe}" class="accordion-collapse collapse"
@@ -1061,8 +1065,30 @@ include 'componentes/nav.php';
             `).join('');
             html += '</div>';
         } else {
-            html += '<div class="modal-empty"><i class="bi bi-people d-block mb-1"></i>Nenhuma equipe vinculada ainda.</div>';
+            html += '<div class="modal-empty"><i class="bi bi-people d-block mb-1"></i>Nenhuma equipe vinculada a esta partida.</div>';
         }
+        html += '</div>';
+
+        // ===== INFORMAÇÕES DA PARTIDA =====
+        html += '<div class="modal-section">';
+        html += '<div class="modal-section-title"><i class="bi bi-info-circle-fill"></i>Informações</div>';
+
+        const itens = [
+            { icone: 'bi-calendar3', rotulo: 'Data', valor: formatarData(jogo.data_jogo) },
+            { icone: 'bi-clock', rotulo: 'Horário', valor: formatarHora(jogo.inicio_jogo) + (jogo.termino_jogo ? ' às ' + formatarHora(jogo.termino_jogo) : '') },
+            { icone: 'bi-geo-alt', rotulo: 'Local', valor: jogo.nome_local || 'A definir' },
+            { icone: 'bi-trophy', rotulo: 'Modalidade', valor: jogo.nome_modalidade || '—' },
+            { icone: 'bi-tags', rotulo: 'Categoria', valor: jogo.nome_categoria || '—' },
+            { icone: 'bi-diagram-3', rotulo: 'Fase', valor: jogo.nome_jogo || '—' }
+        ];
+
+        html += itens.map(item => `
+            <div class="fase-item">
+                <i class="bi ${item.icone} text-danger"></i>
+                <span class="text-muted">${esc(item.rotulo)}:</span>
+                <span class="fase-nome">${esc(item.valor)}</span>
+            </div>
+        `).join('');
         html += '</div>';
 
         return html;

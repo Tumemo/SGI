@@ -960,6 +960,10 @@ $cssExtra = '
 include 'componentes/head.php';
 include 'componentes/header.php';
 $paginaAtiva = 'chaveamento';
+$nivelUsuario = (int)($_SESSION['nivel'] ?? -1);
+$isNivel3 = $nivelUsuario === 3;
+$isNivel2 = $nivelUsuario === 2;
+$podeGerar = !$isNivel2 && !$isNivel3;
 ?>
 
 <main class="d-md-none kv-page" style="padding:20px;">
@@ -1001,6 +1005,7 @@ $paginaAtiva = 'chaveamento';
         </div>
     </div>
 
+    <?php if ($podeGerar): ?>
     <div class="kv-gen-card">
         <div class="kv-gen-card__header">
             <div class="kv-gen-card__title"><i class="bi bi-diagram-3 me-2" style="color:#e30613;"></i>Gerar novo chaveamento</div>
@@ -1017,12 +1022,15 @@ $paginaAtiva = 'chaveamento';
         </div>
         <div id="msgChaveamentoMob" class="kv-alert" style="display:none;"></div>
     </div>
+    <?php endif; ?>
 
+    <?php if ($podeGerar): ?>
     <div id="bracketAreaMob" class="kv-empty">
         <div class="kv-empty__icon"><i class="bi bi-diagram-3"></i></div>
         <div class="kv-empty__title">Nenhum chaveamento disponível</div>
         <div class="kv-empty__desc">Selecione uma modalidade acima para gerar ou visualizar um chaveamento.</div>
     </div>
+    <?php endif; ?>
 
     <div id="secaoJogosMob" style="margin-top:24px;">
         <div class="kv-table-card">
@@ -1076,9 +1084,11 @@ $paginaAtiva = 'chaveamento';
                 </a>
             </div>
             <div class="kv-header__right">
+                <?php if ($podeGerar): ?>
                 <button class="kv-btn-generate" id="btnGerarChaveamento">
                     <i class="bi bi-diagram-3-fill"></i> Gerar Chaveamento
                 </button>
+                <?php endif; ?>
             </div>
         </div>
 
@@ -1113,6 +1123,7 @@ $paginaAtiva = 'chaveamento';
             </div>
         </div>
 
+        <?php if ($podeGerar): ?>
         <div class="kv-gen-card">
             <div class="kv-gen-card__header">
                 <div class="kv-gen-card__title"><i class="bi bi-diagram-3 me-2" style="color:#e30613;"></i>Gerar novo chaveamento</div>
@@ -1132,9 +1143,11 @@ $paginaAtiva = 'chaveamento';
                 </a>
             </div>
         </div>
+        <?php endif; ?>
 
         <div id="faseTimeline" class="kv-phase-timeline d-none"></div>
 
+        <?php if ($podeGerar): ?>
         <div id="bracketArea">
             <div class="kv-empty">
                 <div class="kv-empty__icon"><i class="bi bi-diagram-3"></i></div>
@@ -1145,6 +1158,7 @@ $paginaAtiva = 'chaveamento';
                 </button>
             </div>
         </div>
+        <?php endif; ?>
 
         <div id="secaoJogos" style="margin-top:24px;">
             <div class="kv-table-card">
@@ -1271,6 +1285,7 @@ $paginaAtiva = 'chaveamento';
     let idInterclasse = urlParams.get('id');
     let modalidadesCache = [];
     let jogosCache = [];
+    const NIVEL_USUARIO = <?= $nivelUsuario ?>;
 
     function esc(s) {
         const d = document.createElement('div');
@@ -1539,7 +1554,7 @@ $paginaAtiva = 'chaveamento';
             const data = await resp.json();
             modalidadesCache = Array.isArray(data) ? data : [];
             const select = document.getElementById('selectModalidade');
-            select.innerHTML = '<option value="">Selecione uma modalidade</option>';
+            if (select) select.innerHTML = '<option value="">Selecione uma modalidade</option>';
             const selectJogos = document.getElementById('filtroModalidadeJogos');
             selectJogos.innerHTML = '<option value="">Todas modalidades</option>';
 
@@ -1552,7 +1567,7 @@ $paginaAtiva = 'chaveamento';
                 const genero = mod.genero_modalidade ? ` (${mod.genero_modalidade})` : '';
                 const categoria = mod.nome_categoria ? ` [${mod.nome_categoria}]` : '';
                 const label = `${mod.nome_modalidade}${genero}${categoria}`;
-                select.innerHTML += `<option value="${mod.id_modalidade}">${label}</option>`;
+                if (select) select.innerHTML += `<option value="${mod.id_modalidade}">${label}</option>`;
                 selectJogos.innerHTML += `<option value="${mod.id_modalidade}">${label}</option>`;
                 if (selectMob) selectMob.innerHTML += `<option value="${mod.id_modalidade}">${label}</option>`;
                 if (selectJogosMob) selectJogosMob.innerHTML += `<option value="${mod.id_modalidade}">${label}</option>`;
@@ -2324,7 +2339,7 @@ $paginaAtiva = 'chaveamento';
         const linkArvore = document.getElementById('linkVerArvore');
         const timeline = document.getElementById('faseTimeline');
 
-        linkArvore.classList.add('d-none');
+        if (linkArvore) linkArvore.classList.add('d-none');
         timeline.classList.add('d-none');
 
         if (!idModalidade) {
@@ -2341,9 +2356,11 @@ $paginaAtiva = 'chaveamento';
                     </div>
                     <div class="kv-empty__title" style="font-size:1.4rem;">Nenhum chaveamento gerado</div>
                     <div class="kv-empty__desc" style="max-width:450px;">Selecione uma modalidade acima para gerar automaticamente o chaveamento do torneio.</div>
+                    <?php if ($podeGerar): ?>
                     <button class="kv-empty__btn" onclick="kvs_focus('selectModalidade');" style="padding:12px 28px;font-size:0.95rem;">
                         <i class="bi bi-diagram-3-fill"></i> Gerar Chaveamento
                     </button>
+                    <?php endif; ?>
                 </div>`;
             area.innerHTML = emptyHtml;
             if (areaMob) areaMob.innerHTML = emptyHtml;
@@ -2520,14 +2537,16 @@ $paginaAtiva = 'chaveamento';
         }
     }
 
-    document.getElementById('selectModalidade').addEventListener('change', function() {
+    const selectDesk = document.getElementById('selectModalidade');
+    if (selectDesk) selectDesk.addEventListener('change', function() {
         document.getElementById('msgChaveamento').innerHTML = '';
         document.getElementById('faseTimeline').classList.add('d-none');
         pararPolling();
         carregarArvore(this.value);
     });
 
-    document.getElementById('selectModalidadeMob').addEventListener('change', function() {
+    const selectMob = document.getElementById('selectModalidadeMob');
+    if (selectMob) selectMob.addEventListener('change', function() {
         const msgMob = document.getElementById('msgChaveamentoMob');
         if (msgMob) msgMob.style.display = 'none';
         pararPolling();
@@ -2540,23 +2559,31 @@ $paginaAtiva = 'chaveamento';
     document.getElementById('filtroModalidadeJogosMob').addEventListener('change', carregarJogos);
     document.getElementById('filtroCategoriaJogosMob').addEventListener('change', carregarJogos);
 
-    document.getElementById('btnGerarChaveamento').addEventListener('click', async function() {
+    const btnGerarDesk = document.getElementById('btnGerarChaveamento');
+    if (btnGerarDesk) btnGerarDesk.addEventListener('click', async function() {
         await gerarChaveamento(this, 'msgChaveamento');
     });
 
-    document.getElementById('btnGerarChaveamentoMob').addEventListener('click', async function() {
+    const btnGerarMob = document.getElementById('btnGerarChaveamentoMob');
+    if (btnGerarMob) btnGerarMob.addEventListener('click', async function() {
         const msgEl = document.getElementById('msgChaveamentoMob');
         if (msgEl) msgEl.style.display = 'block';
         await gerarChaveamento(this, 'msgChaveamentoMob');
     });
 
     async function gerarChaveamento(btnEl, msgId) {
+        const msgEl = document.getElementById(msgId);
+        const btn = btnEl;
+
+        if (NIVEL_USUARIO === 2 || NIVEL_USUARIO === 3) {
+            if (msgEl) msgEl.innerHTML = '<div class="kv-alert kv-alert--error">Você não tem permissão para gerar chaveamento.</div>';
+            return;
+        }
+
         const kvsMob = document.getElementById('kvs-wrap-selectModalidadeMob');
         const idModalidade = (kvsMob && kvsMob.offsetParent !== null)
             ? document.getElementById('selectModalidadeMob').value
             : document.getElementById('selectModalidade').value;
-        const msgEl = document.getElementById(msgId);
-        const btn = btnEl;
 
         if (!idModalidade) {
             msgEl.innerHTML = '<div class="kv-alert kv-alert--error">Selecione uma modalidade primeiro.</div>';
@@ -2584,8 +2611,9 @@ $paginaAtiva = 'chaveamento';
             const msgDet = data.jogos_criados ? ` (${data.jogos_criados} jogo(s) gerado(s))` : '';
             msgEl.innerHTML = `<div class="kv-alert kv-alert--success">${data.message}${msgDet}.</div>`;
             const linkArvore = document.getElementById('linkVerArvore');
-            linkArvore.classList.remove('d-none');
-            document.getElementById('btnVerArvore').href = `./chaveamento_arvore.php?id=${idInterclasse}`;
+            if (linkArvore) linkArvore.classList.remove('d-none');
+            const btnArvore = document.getElementById('btnVerArvore');
+            if (btnArvore) btnArvore.href = `./chaveamento_arvore.php?id=${idInterclasse}`;
             carregarArvore(idModalidade);
             carregarJogos();
         } catch (err) {
