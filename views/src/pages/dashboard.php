@@ -49,7 +49,7 @@ $isMesario = $nivelUsuario === 2;
                 </a>
             </div>
             <div class="col-12 col-md-6 col-lg-4">
-                <a href="pontuacao.php" id="linkChaveamentos" class="dash-card">
+                <a href="edicao_pontuacao.php" id="linkChaveamentos" class="dash-card">
                     <div class="dash-card-red-corner"></div>
                     <div class="dash-card-header">
                         <div class="dash-card-icon"><i class="bi bi-diagram-3"></i></div>
@@ -92,7 +92,7 @@ $isMesario = $nivelUsuario === 2;
                 </a>
             </div>
             <div class="col-12 col-md-6 col-lg-4">
-                <a href="pontuacoes.php" id="linkPontuacoes" class="dash-card">
+                <a href="edicao_pontuacao.php" id="linkPontuacoes" class="dash-card">
                     <div class="dash-card-red-corner"></div>
                     <div class="dash-card-header">
                         <div class="dash-card-icon"><i class="bi bi-award"></i></div>
@@ -102,7 +102,7 @@ $isMesario = $nivelUsuario === 2;
                 </a>
             </div>
             <div class="col-12 col-md-6 col-lg-4">
-                <a href="locais.php" id="linkLocais" class="dash-card">
+                <a href="edicao_locais.php" id="linkLocais" class="dash-card">
                     <div class="dash-card-red-corner"></div>
                     <div class="dash-card-header">
                         <div class="dash-card-icon"><i class="bi bi-geo-alt"></i></div>
@@ -162,7 +162,7 @@ $isMesario = $nivelUsuario === 2;
                 </a>
             </div>
             <div class="col-12 col-md-6 col-lg-4">
-                <a href="equipes.php" id="linkEquipes" class="dash-card">
+                <a href="edicao_equipes.php" id="linkEquipes" class="dash-card">
                     <div class="dash-card-red-corner"></div>
                     <div class="dash-card-header">
                         <div class="dash-card-icon"><i class="bi bi-diagram-3"></i></div>
@@ -181,10 +181,6 @@ $isMesario = $nivelUsuario === 2;
                     <p class="dash-card-text">Visualize o ranking geral de pontuações por categoria.</p>
                 </a>
             </div>
-<<<<<<< HEAD
-            
-=======
->>>>>>> 7151a277858a33f17493b1bb9c6cd296501b4066
             <?php endif; ?>
 
             <?php if ($isAdmin): ?>
@@ -360,7 +356,7 @@ $isMesario = $nivelUsuario === 2;
     <?php if ($isColaborador): ?>
     document.querySelectorAll('#linkModalidades').forEach(link => { link.href = `./modalidades.php?id=${idInterclasse}`; });
     document.querySelectorAll('#linkPontuacoes').forEach(link => { link.href = `./pontuacoes.php?id=${idInterclasse}`; });
-    document.querySelectorAll('#linkLocais').forEach(link => { link.href = `./locais.php?id=${idInterclasse}`; });
+    document.querySelectorAll('#linkLocais').forEach(link => { link.href = `./edicao_locais.php?id=${idInterclasse}`; });
     document.querySelectorAll('#linkColaboradores').forEach(link => { link.href = `./colaboradores.php?id=${idInterclasse}`; });
     document.querySelectorAll('#linkArrecadacoes').forEach(link => { link.href = `./edicao_arrecadacao.php?id=${idInterclasse}`; });
     document.querySelectorAll('#linkOcorrencias').forEach(link => { link.href = `./ocorrencias.php?id=${idInterclasse}`; });

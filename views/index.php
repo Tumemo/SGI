@@ -19,7 +19,7 @@
         </picture>
 
         <form id="form_mobile" class="w-100 my-auto" style="max-width: 360px;">
-            <input type="text" class="form-control mb-3 ipt-matricula" placeholder="Matrícula (RA ou NIF)" required>
+            <input type="text" class="form-control mb-3 ipt-matricula" placeholder="Matrícula (RM ou NIF)" required>
             <input type="password" class="form-control mb-3 ipt-senha" placeholder="Senha" required>
             <button type="submit" class="btn btn-danger w-100">Entrar</button>
             <div id="msg_erro_mobile" class="text-danger mt-2"></div>
