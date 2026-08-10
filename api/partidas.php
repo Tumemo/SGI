@@ -61,8 +61,9 @@ switch ($method) {
         echo json_encode($res->fetch_all(MYSQLI_ASSOC));
         break;
 
-    case 'POST':
-        requerEscrita();
+case 'POST':
+        // Permite Master, Admin e Mesário (níveis 0, 1 e 2)
+        requerOperacaoJogo();
         $data = json_decode(file_get_contents("php://input"));
 
         if (!isset($data->id_partida, $data->resultado_final)) {
@@ -110,7 +111,8 @@ switch ($method) {
         break;
 
     case 'PUT':
-        requerEscrita();
+        // Permite Master, Admin e Mesário (níveis 0, 1 e 2)
+        requerOperacaoJogo();
         $data = json_decode(file_get_contents("php://input"));
 
         if (!isset($data->id_partida)) {

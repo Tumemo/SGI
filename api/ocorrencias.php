@@ -86,8 +86,9 @@ switch ($method) {
         echo json_encode($res->fetch_all(MYSQLI_ASSOC));
         break;
 
-    case 'POST':
-        requerEscrita();
+   case 'POST':
+        // Permite Admin e Mesário registrarem ocorrências (cartões/punições)
+        requerOperacaoJogo();
         $data = json_decode(file_get_contents("php://input"));
 
         if (!isset($data->titulo_ocorrencia, $data->descricao_ocorrencia, $data->data_ocorrencia, $data->usuarios_id_usuario)) {
@@ -162,7 +163,7 @@ switch ($method) {
         break;
 
     case 'PUT':
-        requerEscrita();
+        requerOperacaoJogo();
         $data = json_decode(file_get_contents("php://input"));
 
         // Apenas o ID é estritamente obrigatório para localizar o registro

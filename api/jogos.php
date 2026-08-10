@@ -4,7 +4,8 @@ require_once 'filtros.php';
 require_once 'auth.php';
 header('Content-Type: application/json');
 
-function sgi_validar_horario_turmas($conn, $id_jogo, $inicio, $termino) {
+function sgi_validar_horario_turmas($conn, $id_jogo, $inicio, $termino)
+{
     $turnos = [
         'manha'    => ['07:00', '12:00'],
         'tarde'    => ['13:00', '18:00'],
@@ -160,7 +161,8 @@ switch ($method) {
                 VALUES (?, ?, ?, ?, ?, ?, ?)";
 
         $stmt = $conn->prepare($sql);
-        $stmt->bind_param("ssssiis",
+        $stmt->bind_param(
+            "ssssiis",
             $data->nome_jogo,
             $data->data_jogo,
             $inicio,
@@ -190,12 +192,22 @@ switch ($method) {
         break;
 
     case 'PUT':
-        requerEscrita();
+        // Usa a função nativa do seu auth.php que permite níveis 0, 1 e 2 (Mesário)
+        requerOperacaoJogo();
+
+        $nivel = (int)$_SESSION['nivel'];
         $data = json_decode(file_get_contents("php://input"));
 
         if (!isset($data->id_jogo)) {
             http_response_code(400);
             echo json_encode(["success" => false, "message" => "O ID do jogo é obrigatório."]);
+            break;
+        }
+
+        // Trava de segurança: Se for Mesário (nível 2) e tentar alterar data, local ou modalidade, bloqueia
+        if ($nivel === 2 && (isset($data->data_jogo) || isset($data->locais_id_local) || isset($data->modalidades_id_modalidade))) {
+            http_response_code(403);
+            echo json_encode(["success" => false, "message" => "Mesários só podem alterar o status ou placar do jogo."]);
             break;
         }
 
