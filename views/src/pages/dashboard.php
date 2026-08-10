@@ -181,10 +181,6 @@ $isMesario = $nivelUsuario === 2;
                     <p class="dash-card-text">Visualize o ranking geral de pontuações por categoria.</p>
                 </a>
             </div>
-<<<<<<< HEAD
-            
-=======
->>>>>>> 7151a277858a33f17493b1bb9c6cd296501b4066
             <?php endif; ?>
 
             <?php if ($isAdmin): ?>
