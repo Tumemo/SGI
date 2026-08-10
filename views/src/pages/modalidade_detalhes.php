@@ -197,11 +197,11 @@ $isAdmin = $nivelUsuario === 0;
                         <input type="text" class="form-control" id="editNomeModalidade" required>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label fw-medium">Máx. de Inscritos (Opcional):</label>
+                        <label class="form-label fw-medium">Máx. de Inscritos:</label>
                         <input type="number" class="form-control" id="editMaxInscritos" min="0">
                     </div>
                     <div class="mb-3">
-                        <label class="form-label fw-medium">Máx. de Equipes por Turma (Opcional):</label>
+                        <label class="form-label fw-medium">Máx. de Equipes por Turma:</label>
                         <input type="number" class="form-control" id="editMaxEquipes" min="1">
                     </div>
                     <div class="mb-3">
