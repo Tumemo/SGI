@@ -586,6 +586,49 @@ switch ($metodo) {
             break;
         }
 
+        if ($acao === 'resetar_senha_aluno') {
+            require_once __DIR__ . '/auth.php';
+            requerNivel([0]);
+
+            $dados = !empty($_POST) ? $_POST : $inputData;
+            $idUsuario = (int) ($dados['id_usuario'] ?? 0);
+            if ($idUsuario <= 0) {
+                sgi_json_saida(['status' => 'erro', 'mensagem' => 'ID do aluno inválido.']);
+                break;
+            }
+
+            $checkStmt = $conn->prepare('SELECT nivel_usuario FROM usuarios WHERE id_usuario = ? AND nivel_usuario = \'3\'');
+            if (!$checkStmt) {
+                sgi_json_saida(['status' => 'erro', 'mensagem' => $conn->error]);
+                break;
+            }
+            $checkStmt->bind_param('i', $idUsuario);
+            $checkStmt->execute();
+            $target = $checkStmt->get_result()->fetch_assoc();
+            $checkStmt->close();
+
+            if (!$target) {
+                sgi_json_saida(['status' => 'erro', 'mensagem' => 'Aluno não encontrado ou não pode ter a senha resetada.']);
+                break;
+            }
+
+            $senhaHash = password_hash('123', PASSWORD_DEFAULT);
+            $sql = "UPDATE usuarios SET senha_usuario = ? WHERE id_usuario = ? AND nivel_usuario = '3'";
+            $stmt = $conn->prepare($sql);
+            if (!$stmt) {
+                sgi_json_saida(['status' => 'erro', 'mensagem' => $conn->error]);
+                break;
+            }
+            $stmt->bind_param('si', $senhaHash, $idUsuario);
+            if ($stmt->execute()) {
+                sgi_json_saida(['status' => 'sucesso', 'mensagem' => 'Senha do aluno resetada para o padrão (123).']);
+            } else {
+                sgi_json_saida(['status' => 'erro', 'mensagem' => $stmt->error]);
+            }
+            $stmt->close();
+            break;
+        }
+
         if ($acao === 'excluir_colaborador') {
             if (session_status() === PHP_SESSION_NONE) {
                 session_start();

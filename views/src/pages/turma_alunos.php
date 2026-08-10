@@ -8,6 +8,7 @@ include 'componentes/header.php';
 $paginaAtiva = 'turmas';
 $podeGerenciar = in_array($nivelUsuario, [0, 1], true);
 $podeExcluir   = in_array($nivelUsuario, [0], true);
+$podeResetarSenha = in_array($nivelUsuario, [0], true);
 ?>
 
 <style>
@@ -176,6 +177,8 @@ $podeExcluir   = in_array($nivelUsuario, [0], true);
     .ta-action--edit:hover { background: #374151; color: #fff; transform: translateY(-1px); }
     .ta-action--delete { background: #feeaea; color: #dc2626; }
     .ta-action--delete:hover { background: #dc2626; color: #fff; transform: translateY(-1px); }
+    .ta-action--reset { background: #fef3c7; color: #b45309; }
+    .ta-action--reset:hover { background: #b45309; color: #fff; transform: translateY(-1px); }
 
     .ta-table-footer {
         display: flex; align-items: center; justify-content: space-between;
@@ -489,6 +492,24 @@ $podeExcluir   = in_array($nivelUsuario, [0], true);
     </div>
 </div>
 
+<!-- Modal confirmar reset de senha -->
+<div class="modal fade" id="modalResetarSenha" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+        <div class="modal-content rounded-4">
+            <div class="modal-body text-center py-4">
+                <i class="bi bi-key-fill text-warning fs-1"></i>
+                <p class="mt-3 mb-1 fw-medium">Resetar senha do aluno?</p>
+                <p class="text-muted small mb-1" id="nomeAlunoResetar"></p>
+                <p class="text-muted small">A senha voltará para o padrão <strong>123</strong> e o aluno deverá trocá-la no próximo acesso.</p>
+            </div>
+            <div class="modal-footer justify-content-center border-0 pt-0">
+                <button type="button" class="btn btn-secondary btn-sm rounded-3" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-warning btn-sm rounded-3" id="btnConfirmarResetar">Resetar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
     const API = '../../../api/';
     const params = new URLSearchParams(window.location.search);
@@ -497,6 +518,7 @@ $podeExcluir   = in_array($nivelUsuario, [0], true);
     const idTurma = Number(params.get('id_turma') || 0);
     const podeGerenciar = <?= $podeGerenciar ? 'true' : 'false' ?>;
     const podeExcluir   = <?= $podeExcluir ? 'true' : 'false' ?>;
+    const podeResetarSenha = <?= $podeResetarSenha ? 'true' : 'false' ?>;
 
     const POR_PAGINA = 10;
     let alunosTodos = [];
@@ -638,6 +660,10 @@ $podeExcluir   = in_array($nivelUsuario, [0], true);
                     <button type="button" class="ta-action ta-action--delete" data-bs-toggle="tooltip" title="Excluir" onclick="confirmarExcluir(${u.id_usuario})">
                         <i class="bi bi-trash"></i>
                     </button>` : ''}
+                    ${podeResetarSenha ? `
+                    <button type="button" class="ta-action ta-action--reset" data-bs-toggle="tooltip" title="Resetar senha" onclick="resetarSenha(${u.id_usuario})">
+                        <i class="bi bi-key-fill"></i>
+                    </button>` : ''}
                 </div>`;
 
             mob.innerHTML = pagina.map((u) => `
@@ -662,6 +688,10 @@ $podeExcluir   = in_array($nivelUsuario, [0], true);
                     ${podeExcluir ? `
                     <button type="button" class="ta-action ta-action--delete" data-bs-toggle="tooltip" title="Excluir" onclick="confirmarExcluir(${u.id_usuario})">
                         <i class="bi bi-trash"></i>
+                    </button>` : ''}
+                    ${podeResetarSenha ? `
+                    <button type="button" class="ta-action ta-action--reset" data-bs-toggle="tooltip" title="Resetar senha" onclick="resetarSenha(${u.id_usuario})">
+                        <i class="bi bi-key-fill"></i>
                     </button>` : ''}
                 </div>`;
 
@@ -846,6 +876,37 @@ $podeExcluir   = in_array($nivelUsuario, [0], true);
         }
     }
 
+    let idAlunoResetar = 0;
+    function resetarSenha(id) {
+        const aluno = alunosMap[id];
+        idAlunoResetar = id;
+        document.getElementById('nomeAlunoResetar').textContent = aluno ? aluno.nome_usuario : '';
+        new bootstrap.Modal(document.getElementById('modalResetarSenha')).show();
+    }
+
+    async function executarResetar() {
+        const btn = document.getElementById('btnConfirmarResetar');
+        try {
+            btn.disabled = true;
+            const fd = new FormData();
+            fd.append('acao', 'resetar_senha_aluno');
+            fd.append('id_usuario', idAlunoResetar);
+            const r = await fetch(`${API}usuarios.php`, { method: 'POST', body: fd, credentials: 'include' });
+            const js = await r.json();
+            bootstrap.Modal.getInstance(document.getElementById('modalResetarSenha')).hide();
+            if (js.status === 'sucesso') {
+                alert(js.mensagem || 'Senha resetada.');
+                carregarAlunos();
+            } else {
+                alert(js.mensagem || 'Erro ao resetar a senha.');
+            }
+        } catch (_) {
+            alert('Falha de conexão.');
+        } finally {
+            btn.disabled = false;
+        }
+    }
+
     /* ── Upload de PDF com progresso ── */
     function setBtnLoading(btn, carregando) {
         if (!btn) return;
@@ -974,6 +1035,7 @@ $podeExcluir   = in_array($nivelUsuario, [0], true);
 
         document.getElementById('formAluno').addEventListener('submit', salvarAluno);
         document.getElementById('btnConfirmarExcluir').addEventListener('click', executarExcluir);
+        document.getElementById('btnConfirmarResetar').addEventListener('click', executarResetar);
 
         const buscaDesk = document.getElementById('buscaAlunoDesk');
         const buscaMob = document.getElementById('buscaAlunoMob');
