@@ -1,4 +1,18 @@
 <?php
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
+// Resgata o nível buscando principalmente por 'nivel_usuario' da tabela
+$nivelRaw = $_SESSION['nivel_usuario'] ?? $_SESSION['nivel'] ?? $_SESSION['usuario_nivel'] ?? $_SESSION['nivel_acesso'] ?? $_SESSION['perfil'] ?? 99;
+
+if (is_numeric($nivelRaw)) {
+    $nivelNum = (int)$nivelRaw;
+    $eAdmin = ($nivelNum === 0 || $nivelNum === 1);
+} else {
+    $eAdmin = (strtolower((string)$nivelRaw) === 'admin');
+}
+
 $tituloPagina = 'SGI - Ranking Geral';
 $titulo = 'Ranking de Turmas';
 $mostrarVoltar = true;
@@ -52,6 +66,23 @@ $cssExtra = '
 .htr-aluno { font-size: .72rem; background: #f3f4f6; color: #374151; border-radius: 999px; padding: 2px 9px; font-weight: 600; }
 .htr-lista--mod .htr-aluno { background: #fff; border: 1px solid #eef2f7; }
 @media (max-width: 575.98px) { .htr-resumo { grid-template-columns: 1fr; } .htr-titulo { flex-direction: column; align-items: flex-start; } }
+
+@media print {
+    header, nav, footer, .rk-mobile-header, #filtrosMob, #filtrosDesk, .btn-imprimir, .rk-hist-footer {
+        display: none !important;
+    }
+    body, main {
+        background: #fff !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+    .rk-rank-card {
+        border: 1px solid #ccc !important;
+        box-shadow: none !important;
+        break-inside: avoid;
+        margin-bottom: 15px !important;
+    }
+}
 ';
 include 'componentes/head.php';
 include 'componentes/header.php';
@@ -62,13 +93,21 @@ $paginaAtiva = 'ranking';
 <main class="d-md-none py-3 px-3" style="margin-bottom: 100px;">
     <div id="msgMob"></div>
 
-    <header class="rk-mobile-header">
+    <header class="rk-mobile-header mb-2">
         <div>
             <h1 class="rk-mobile-header__title d-none" id="nomeInterclasse"></h1>
         </div>
-        <div class="rk-stat-chip">
-            <span>&#x1F465;</span>
-            <span id="totalTurmas">0 Turmas</span>
+        <div class="d-flex align-items-center gap-2">
+            <?php if ($eAdmin): ?>
+                <button type="button" class="btn btn-sm btn-outline-dark btn-imprimir" onclick="window.print()">
+                    <i class="bi bi-printer"></i> Imprimir
+                </button>
+            <?php endif; ?>
+
+            <div class="rk-stat-chip">
+                <span>&#x1F465;</span>
+                <span id="totalTurmas">0 Turmas</span>
+            </div>
         </div>
     </header>
 
@@ -81,9 +120,18 @@ $paginaAtiva = 'ranking';
     <div class="container-fluid px-4 py-4">
         <div class="d-flex align-items-center justify-content-between mb-3 gap-3 flex-wrap">
             <div id="filtrosDesk" class="d-flex overflow-auto gap-2"></div>
-            <div class="rk-stat-chip flex-shrink-0">
-                <span>&#x1F465;</span>
-                <span id="totalTurmasDesk">0 Turmas</span>
+            
+            <div class="d-flex align-items-center gap-3">
+                <?php if ($eAdmin): ?>
+                    <button type="button" class="btn btn-outline-dark fw-bold btn-imprimir" onclick="window.print()">
+                        <i class="bi bi-printer"></i> Imprimir Ranking
+                    </button>
+                <?php endif; ?>
+
+                <div class="rk-stat-chip flex-shrink-0">
+                    <span>&#x1F465;</span>
+                    <span id="totalTurmasDesk">0 Turmas</span>
+                </div>
             </div>
         </div>
 
@@ -108,6 +156,7 @@ $paginaAtiva = 'ranking';
 </div>
 
 <script>
+    const IS_ADMIN = <?= $eAdmin ? 'true' : 'false' ?>;
     const urlParams = new URLSearchParams(window.location.search);
     const idInterclasse = urlParams.get('id');
 
@@ -115,6 +164,11 @@ $paginaAtiva = 'ranking';
     let categoriasUnicas = [];
 
     async function init() {
+        if (!IS_ADMIN) {
+            bloquearAcessoRanking();
+            return;
+        }
+
         if (!idInterclasse) {
             try {
                 const ativo = await window.SGIInterclasse.getActiveInterclasse();
@@ -129,7 +183,26 @@ $paginaAtiva = 'ranking';
         await carregarDados();
     }
 
+    function bloquearAcessoRanking() {
+        const mensagemOculta = `
+            <div class="text-center py-5">
+                <i class="bi bi-lock-fill text-warning display-1"></i>
+                <h3 class="fw-bold mt-3">Ranking Oculto</h3>
+                <p class="text-muted fs-6">O ranking deste interclasse está restrito apenas para os administradores!</p>
+            </div>
+        `;
+        const mob = document.getElementById('listaMob');
+        const desk = document.getElementById('listaDesk');
+        if (mob) mob.innerHTML = mensagemOculta;
+        if (desk) desk.innerHTML = mensagemOculta;
+    }
+
     async function carregarDados() {
+        if (!IS_ADMIN) {
+            bloquearAcessoRanking();
+            return;
+        }
+
         const loading = '<div class="rk-loading"><div class="spinner-border text-danger"></div></div>';
         document.getElementById('listaMob').innerHTML = loading;
         document.getElementById('listaDesk').innerHTML = loading;
@@ -138,7 +211,13 @@ $paginaAtiva = 'ranking';
             const response = await fetch(`../../../api/ranking.php?id_interclasse=${idInterclasse}`);
             const data = await response.json();
 
-            if (!data || data.length === 0) {
+            // Trata o bloqueio retornado de forma limpa pela API
+            if (data && data.bloqueado) {
+                bloquearAcessoRanking();
+                return;
+            }
+
+            if (!data || !Array.isArray(data) || data.length === 0) {
                 exibirMensagem("Nenhum dado encontrado para este interclasse.", "warning");
                 return;
             }
@@ -209,7 +288,6 @@ $paginaAtiva = 'ranking';
         }
 
         const maxPontos = Math.max(...turmas.map(t => t.pontuacao_sem_penalidade || t.pontuacao_turma)) || 1;
-
         const medals = ['&#x1F947;', '&#x1F948;', '&#x1F949;'];
 
         turmas.forEach((t, index) => {
@@ -419,7 +497,7 @@ $paginaAtiva = 'ranking';
             html += '</div>';
             html += `<div class="htr-secao-total">Total descontado: <b>-${d.penalidades.pontos_total} pts</b></div>`;
         } else {
-            html += '<div class="htr-vazio">Nenhuma penalidade aplicada.</div>';
+            html += '<div class="htr-vazio">Nenhuma penalidade applied.</div>';
         }
         html += '</div>';
 

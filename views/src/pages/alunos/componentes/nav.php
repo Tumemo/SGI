@@ -18,7 +18,6 @@ $navItens = [
     'perfil'  => ['label' => 'Perfil',   'icon' => 'bi-person-gear',    'url' => './perfil.php'],
     'home'    => ['label' => 'Início',   'icon' => 'bi-house-door',     'url' => './home.php'],
     'jogos'   => ['label' => 'Jogos',    'icon' => 'bi-calendar-event', 'url' => './jogos.php'],
-    'ranking' => ['label' => 'Ranking',  'icon' => 'bi-trophy',         'url' => './ranking.php'],
     'termos'  => ['label' => 'Termos',   'icon' => 'bi-file-text',      'url' => './termos.php'],
 ];
 

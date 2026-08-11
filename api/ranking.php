@@ -4,6 +4,10 @@ header("Access-Control-Allow-Origin: *");
 header("Access-Control-Allow-Methods: GET, PUT, OPTIONS");
 header("Access-Control-Allow-Headers: Content-Type, Authorization");
 
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
 require_once '../config/db.php';
 require_once 'filtros.php';
 require_once 'auth.php';
@@ -18,6 +22,17 @@ if ($method === 'OPTIONS') {
 switch ($method) {
 
     case 'GET':
+        // Mapeia todas as chaves possíveis de sessão, incluindo nivel_usuario da sua tabela
+        $nivelRaw = $_SESSION['nivel_usuario'] ?? $_SESSION['nivel'] ?? $_SESSION['usuario_nivel'] ?? $_SESSION['nivel_acesso'] ?? $_SESSION['perfil'] ?? 99;
+
+        // No seu BD o Admin é nível '0' ou '1'
+        if (is_numeric($nivelRaw)) {
+            $nivelUsuario = (int)$nivelRaw;
+            $eAdmin = ($nivelUsuario === 0 || $nivelUsuario === 1);
+        } else {
+            $eAdmin = (strtolower((string)$nivelRaw) === 'admin');
+        }
+
         $filtro = aplicarFiltrosTurmas();
 
         $sql = "SELECT 
@@ -28,6 +43,7 @@ switch ($method) {
                 turmas.pontuacao_turma AS pontuacao_sem_penalidade,
                 (turmas.pontuacao_turma - COALESCE(penalidades.total_penalidades, 0)) AS pontuacao_turma,
                 interclasses.nome_interclasse,
+                interclasses.status_interclasse AS status_interclasse,
                 categorias.nome_categoria
             FROM turmas 
             INNER JOIN interclasses ON interclasses.id_interclasse = turmas.interclasses_id_interclasse
@@ -66,7 +82,21 @@ switch ($method) {
 
         $stmt->execute();
         $res = $stmt->get_result();
-        echo json_encode($res->fetch_all(MYSQLI_ASSOC));
+        $dados = $res->fetch_all(MYSQLI_ASSOC);
+
+        // Se for um usuário comum e o interclasse estiver ativo, retorna aviso amigável sem quebrar o servidor
+        if (!empty($dados) && !$eAdmin) {
+            $status = $dados[0]['status_interclasse'] ?? 'ativo';
+            if ($status === 'ativo' || $status === '1' || $status === 1 || $status === true) {
+                echo json_encode([
+                    "bloqueado" => true,
+                    "message" => "O ranking deste interclasse está restrito apenas para os administradores."
+                ]);
+                exit();
+            }
+        }
+
+        echo json_encode($dados);
         break;
 
     case 'PUT':
@@ -81,7 +111,6 @@ switch ($method) {
         $params = [];
         $types = "";
 
-        // Mapeamento dinâmico de campos para o UPDATE
         $mapeamento = [
             'interclasses_id_interclasse' => 'i',
             'nome_turma'                  => 's',
@@ -130,8 +159,6 @@ switch ($method) {
         responderErro(405, "Método $method não permitido.");
         break;
 }
-
-// --- Funções Auxiliares ---
 
 function responderErro($codigo, $mensagem) {
     http_response_code($codigo);
