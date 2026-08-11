@@ -24,7 +24,10 @@ $usuario = $stmt->get_result()->fetch_assoc();
 
 // 2. Verifica se o usuário existe e se a senha (criptografada) é válida
 if ($usuario && password_verify($senha, $usuario['senha_usuario'])) {
-    
+    // Novo PHPSESSID por login: isola o cache HTTP (Vary: Cookie) e o cache
+    // IndexedDB (offline-core) entre usuários no mesmo navegador.
+    session_regenerate_id(true);
+
     $_SESSION['id']           = $usuario['id_usuario'];
     $_SESSION['nivel']        = (int)$usuario['nivel_usuario'];
     $_SESSION['nome']         = $usuario['nome_usuario'];

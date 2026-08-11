@@ -115,8 +115,8 @@ include 'componentes/head.php';
 include 'componentes/header.php';
 $paginaAtiva = 'colaboradores';
 
-// Verifica se o usuário logado é administrador (ajuste a variável de sessão conforme a lógica da sua aplicação)
-$usuarioEhAdmin = (isset($_SESSION['nivel_usuario']) && (string)$_SESSION['nivel_usuario'] === '0');
+// Verifica se o usuário logado é administrador
+$usuarioEhAdmin = (isset($_SESSION['nivel']) && (string)$_SESSION['nivel'] === '0');
 ?>
 
 <!-- ═══ MOBILE ═══ -->

@@ -53,6 +53,10 @@ function sgi_validar_inscricao_rf05(mysqli $conn, array $dados): array
         return ['status' => 'erro', 'mensagem' => 'Não foi possível validar os dados informados.'];
     }
 
+    // Novo PHPSESSID por login: isola o cache HTTP (Vary: Cookie) e o cache
+    // IndexedDB (offline-core) entre usuários no mesmo navegador.
+    session_regenerate_id(true);
+
     $_SESSION['logado'] = true;
     $_SESSION['id_usuario'] = (int) $usuario['id_usuario'];
     $_SESSION['nivel'] = $usuario['nivel_usuario'];

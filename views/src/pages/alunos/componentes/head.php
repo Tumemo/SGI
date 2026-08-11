@@ -1,5 +1,18 @@
-<?php (session_status() === PHP_SESSION_NONE) && session_start();
-if ((int)($_SESSION['nivel'] ?? -1) !== 3) { header('Location: ../../index.php'); exit; } ?>
+<?php
+if (session_status() === PHP_SESSION_NONE) {
+    session_cache_limiter('private_no_expire');
+    session_start();
+}
+if ((int)($_SESSION['nivel'] ?? -1) !== 3) { header('Location: ../../index.php'); exit; }
+// Cache de página POR USUÁRIO: cada login recebe um PHPSESSID novo
+// (session_regenerate_id no login), então Vary: Cookie isola o cache entre
+// competidores no mesmo navegador — sem vazamento. max-age +
+// stale-while-revalidate permitem navegar offline nas páginas já visitadas;
+// os dados dinâmicos continuam via offline-core.js (IndexedDB, por sessão).
+if (!headers_sent()) {
+    header('Cache-Control: private, max-age=10800, stale-while-revalidate=86400');
+    header('Vary: Cookie');
+} ?>
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
@@ -12,6 +25,9 @@ if ((int)($_SESSION['nivel'] ?? -1) !== 3) { header('Location: ../../index.php')
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <!-- SGI Aluno Shared Styles -->
     <link rel="stylesheet" href="assets/aluno.css">
+    <script>window.SGI_SESSION_ID = <?= (int)($_SESSION['id_usuario'] ?? $_SESSION['id'] ?? 0) ?>;</script>
+    <script src="../../componentes/offline-core.js"></script>
+    <script src="../../componentes/Comandooffline.js"></script>
     
     <style>
         body { 

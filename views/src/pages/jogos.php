@@ -1151,6 +1151,8 @@ $paginaAtiva = 'dashboard';
             partidasLista = await fetchJson(API + 'partidas.php?id_jogo=' + idJogo);
             if (!Array.isArray(partidasLista)) partidasLista = [];
 
+            precarregarDadosOffline();
+
             ehIndividual = /^IND:\d+$/.test(estadoJogo.nome_jogo || '') || parseInt(estadoJogo.tipos_modalidades_id_tipo_modalidade, 10) === 2;
             if (ehIndividual) {
                 await carregarIndDados();
@@ -1195,6 +1197,27 @@ $paginaAtiva = 'dashboard';
         section.classList.remove('d-none');
         carregarOcorrencias();
         carregarTurmasOcorrencia();
+    }
+
+    // Pré-carrega os dados que o mesário precisa OFFLINE: lista de atletas por
+    // turma (usada no modal "quem fez o ponto" e no de ocorrências), artilharia
+    // e ocorrências do dia. Enquanto online, cada GET é guardado no IndexedDB
+    // pelo offline-core.js, ficando disponível quando a conexão cair.
+    function precarregarDadosOffline() {
+        if (!navigator.onLine) return;
+        var urls = [];
+        var vistas = {};
+        partidasLista.forEach(function (p) {
+            var idTurma = parseInt(p.id_turma, 10);
+            if (!idTurma || vistas[idTurma]) return;
+            vistas[idTurma] = true;
+            urls.push(API + 'ocorrencias.php?acao=listar_atletas&id_jogo=' + idJogo + '&id_turma=' + idTurma);
+        });
+        urls.push(API + 'artilheiro.php?id_jogo=' + idJogo);
+        urls.push(API + 'ocorrencias.php?id_jogo=' + idJogo + '&data=' + (estadoJogo.data_jogo || ''));
+        urls.forEach(function (u) {
+            fetch(u).then(function (r) { return r.text(); }).catch(function () { /* offline pre-cache é best-effort */ });
+        });
     }
 
     function carregarTurmasOcorrencia() {

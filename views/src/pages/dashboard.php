@@ -347,8 +347,8 @@ $isMesario = $nivelUsuario === 2;
 
     <?php if ($isMesario): ?>
     document.querySelectorAll('#linkCategorias').forEach(link => { link.href = `./categorias.php?id=${idInterclasse}&${modoParam}`; });
-    document.querySelectorAll('#linkAgenda').forEach(link => { link.href = `./agenda.php?id=${idInterclasse}&${modoParam}`; });
-    document.querySelectorAll('#linkChaveamentos').forEach(link => { link.href = `./chaveamento_arvore.php  ?id=${idInterclasse}&${modoParam}`; });
+    document.querySelectorAll('#linkAgenda').forEach(link => { link.href = `./edicao_agenda.php?id=${idInterclasse}&${modoParam}`; });
+    document.querySelectorAll('#linkChaveamentos').forEach(link => { link.href = `./chaveamento_arvore.php?id=${idInterclasse}&${modoParam}`; });
     document.querySelectorAll('#linkRanking').forEach(link => { link.href = `./ranking.php?id=${idInterclasse}`; });
     document.querySelectorAll('#linkOcorrencias').forEach(link => { link.href = `./ocorrencias.php?id=${idInterclasse}`; });
     <?php endif; ?>
