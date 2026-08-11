@@ -47,6 +47,14 @@ $cssExtra = '
 }
 .ag-filter-bar select:focus { border-color: #E30613; box-shadow: 0 0 0 3px rgba(227,6,19,.08); outline: none; }
 
+.ag-btn-auto {
+    display: inline-flex; align-items: center; gap: .4rem;
+    background: #111827; color: #fff; font-size: .82rem; font-weight: 600;
+    border-radius: 10px; padding: .5rem .9rem; border: none;
+    transition: background .15s ease, transform .15s ease;
+}
+.ag-btn-auto:hover { background: #1F2937; color: #fff; transform: translateY(-1px); }
+
 /* ── Calendar card ── */
 .ag-cal-card { background: #fff; border: 1px solid #ECEFF1; border-radius: 18px; box-shadow: 0 1px 3px rgba(0,0,0,.04), 0 4px 16px rgba(0,0,0,.03); overflow: hidden; }
 .ag-cal-header { display: flex; align-items: center; justify-content: space-between; padding: .9rem 1.15rem; background: linear-gradient(135deg, #111827 0%, #1F2937 100%); color: #fff; }
@@ -210,6 +218,11 @@ $nivelUsuarioAgenda = (int)($_SESSION['nivel'] ?? -1);
             <option value="andamento">Em andamento</option>
             <option value="Agendado">Agendados</option>
         </select>
+        <?php if ($nivelUsuarioAgenda <= 1): ?>
+            <button type="button" class="ag-btn-auto w-100 justify-content-center mt-1 btn-trigger-datas-auto">
+                <i class="bi bi-magic"></i> Datas Automáticas
+            </button>
+        <?php endif; ?>
     </div>
 
     <div id="lista-eventos-mobile" class="ag-event-list"></div>
@@ -254,6 +267,11 @@ $nivelUsuarioAgenda = (int)($_SESSION['nivel'] ?? -1);
                 <option value="andamento">Em andamento</option>
                 <option value="Agendado">Agendados</option>
             </select>
+            <?php if ($nivelUsuarioAgenda <= 1): ?>
+                <button type="button" class="ag-btn-auto ms-auto btn-trigger-datas-auto">
+                    <i class="bi bi-magic"></i> Datas Automáticas
+                </button>
+            <?php endif; ?>
         </div>
 
         <div class="ag-desktop-grid">
@@ -285,7 +303,7 @@ $nivelUsuarioAgenda = (int)($_SESSION['nivel'] ?? -1);
     </div>
 </main>
 
-<!-- ═══ MODAL ═══ -->
+<!-- ═══ MODAL EDITAR JOGO INDIVIDUAL ═══ -->
 <div class="modal fade ag-modal" id="modalEditarJogoAgenda" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
@@ -321,6 +339,50 @@ $nivelUsuarioAgenda = (int)($_SESSION['nivel'] ?? -1);
         </div>
     </div>
 </div>
+
+<!-- ═══ MODAL DATAS AUTOMÁTICAS (LOTE) ═══ -->
+<div class="modal fade ag-modal" id="modalDatasAutomaticas" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="bi bi-magic text-danger me-2"></i>Agendamento Automático</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+            </div>
+            <div class="modal-body">
+                <p class="small text-muted mb-3">Defina a data e o horário inicial. O sistema agendará em sequência todos os jogos da modalidade de acordo com a ordem do chaveamento.</p>
+                <div class="mb-3">
+                    <label class="form-label">Modalidade</label>
+                    <select class="form-select" id="auto-modalidade"></select>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Data dos jogos</label>
+                    <input type="date" class="form-control" id="auto-data">
+                </div>
+                <div class="row g-2 mb-3">
+                    <div class="col-6">
+                        <label class="form-label">Horário de Início (1º Jogo)</label>
+                        <input type="time" class="form-control" id="auto-inicio" value="08:00">
+                    </div>
+                    <div class="col-6">
+                        <label class="form-label">Duração/Jogo (Minutos)</label>
+                        <input type="number" class="form-control" id="auto-duracao" min="5" step="5" value="60">
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Local das Partidas</label>
+                    <select class="form-select" id="auto-local"></select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal" style="border-radius: 10px; font-weight: 600; font-size: .85rem;">Cancelar</button>
+                <button type="button" class="btn btn-danger" id="auto-salvar-btn" style="border-radius: 10px; font-weight: 600; font-size: .85rem;">
+                    <i class="bi bi-check-lg me-1"></i>Gerar e Aplicar Datas
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
 (function () {
     const API = '../../../api/';
@@ -732,36 +794,50 @@ $nivelUsuarioAgenda = (int)($_SESSION['nivel'] ?? -1);
     function preencherSelectModalidades() {
         const desk = document.getElementById('agenda-select-mod');
         const mob = document.getElementById('agenda-select-mod-mobile');
-        if (!desk || !mob) return;
-        const cur = desk.value;
-        desk.innerHTML = '';
-        mob.innerHTML = '';
-        const o0 = document.createElement('option');
-        o0.value = '';
-        o0.textContent = 'Todas as modalidades';
-        desk.appendChild(o0);
-        const o0m = document.createElement('option');
-        o0m.value = '';
-        o0m.textContent = 'Todas';
-        mob.appendChild(o0m);
-        modalidadesLista.forEach((m) => {
-            const t = `${m.nome_modalidade || ''} (${m.nome_categoria || ''})`;
-            const o1 = document.createElement('option');
-            o1.value = String(m.id_modalidade);
-            o1.textContent = t;
-            desk.appendChild(o1);
-            const o2 = document.createElement('option');
-            o2.value = String(m.id_modalidade);
-            o2.textContent = t;
-            mob.appendChild(o2);
-        });
-        if (cur && [...desk.options].some((op) => op.value === cur)) {
-            desk.value = cur;
-            mob.value = cur;
+        const autoSel = document.getElementById('auto-modalidade');
+
+        if (desk && mob) {
+            const cur = desk.value;
+            desk.innerHTML = '';
+            mob.innerHTML = '';
+            const o0 = document.createElement('option');
+            o0.value = '';
+            o0.textContent = 'Todas as modalidades';
+            desk.appendChild(o0);
+            const o0m = document.createElement('option');
+            o0m.value = '';
+            o0m.textContent = 'Todas';
+            mob.appendChild(o0m);
+
+            modalidadesLista.forEach((m) => {
+                const t = `${m.nome_modalidade || ''} (${m.nome_categoria || ''})`;
+                const o1 = document.createElement('option');
+                o1.value = String(m.id_modalidade);
+                o1.textContent = t;
+                desk.appendChild(o1);
+                const o2 = document.createElement('option');
+                o2.value = String(m.id_modalidade);
+                o2.textContent = t;
+                mob.appendChild(o2);
+            });
+            if (cur && [...desk.options].some((op) => op.value === cur)) {
+                desk.value = cur;
+                mob.value = cur;
+            }
+        }
+
+        if (autoSel) {
+            autoSel.innerHTML = '';
+            modalidadesLista.forEach((m) => {
+                const t = `${m.nome_modalidade || ''} (${m.nome_categoria || ''})`;
+                const opt = document.createElement('option');
+                opt.value = String(m.id_modalidade);
+                opt.textContent = t;
+                autoSel.appendChild(opt);
+            });
         }
     }
 
-    /* ── FUNÇÃO DE LOCAIS ATUALIZADA COM OS FILTROS ── */
     async function carregarLocais() {
         if (!interclasseAtual || !interclasseAtual.id_interclasse) return;
 
@@ -770,28 +846,48 @@ $nivelUsuarioAgenda = (int)($_SESSION['nivel'] ?? -1);
         
         let todosLocais = data && Array.isArray(data.data) ? data.data : Array.isArray(data) ? data : [];
         
-        // A API já filtra por interclasse no servidor; aqui só mantém os locais disponíveis
-        locaisLista = todosLocais.filter((loc) => {
-            return String(loc.disponivel_local) === '1';
-        });
+        locaisLista = todosLocais.filter((loc) => String(loc.disponivel_local) === '1');
 
         const sel = document.getElementById('edit-jogo-local');
-        sel.innerHTML = '';
+        const autoLoc = document.getElementById('auto-local');
+
+        if (sel) sel.innerHTML = '';
+        if (autoLoc) autoLoc.innerHTML = '';
 
         if (locaisLista.length === 0) {
-            sel.innerHTML = '<option value="">Nenhum local disponível</option>';
+            if (sel) sel.innerHTML = '<option value="">Nenhum local disponível</option>';
+            if (autoLoc) autoLoc.innerHTML = '<option value="">Nenhum local disponível</option>';
             return;
         }
 
         locaisLista.forEach((loc) => {
-            sel.innerHTML += `<option value="${loc.id_local}">${escapeHtml(loc.nome_local || 'Local')}</option>`;
+            const optionHtml = `<option value="${loc.id_local}">${escapeHtml(loc.nome_local || 'Local')}</option>`;
+            if (sel) sel.innerHTML += optionHtml;
+            if (autoLoc) autoLoc.innerHTML += optionHtml;
         });
     }
 
-    /* ── ORDEM DE EXECUÇÃO AJUSTADA NO DOMCONTENTLOADED ── */
+    /* Helper para cálculo e ordenação dos jogos pelo chaveamento */
+    function ordenarJogosChaveamento(jogos) {
+        return jogos.sort((a, b) => {
+            const mmA = (a.nome_jogo || '').match(/^MM:(\d+):(\d+):([NB])$/);
+            const mmB = (b.nome_jogo || '').match(/^MM:(\d+):(\d+):([NB])$/);
+
+            if (mmA && mmB) {
+                const largA = parseInt(mmA[1], 10);
+                const largB = parseInt(mmB[1], 10);
+                const slotA = parseInt(mmA[2], 10);
+                const slotB = parseInt(mmB[2], 10);
+
+                if (largA !== largB) return largB - largA; // Maior largura primeiro (ex: 16 -> 8 -> 4 -> 2)
+                return slotA - slotB;
+            }
+            return (a.id_jogo || 0) - (b.id_jogo || 0);
+        });
+    }
+
     document.addEventListener('DOMContentLoaded', async function () {
         try {
-            // 1. Obtém primeiro o interclasse selecionado
             interclasseAtual = await getInterclasseParaAgenda();
             if (interclasseAtual) {
                 document.getElementById('nomeInterclasseAgenda').innerText = interclasseAtual.nome_interclasse;
@@ -805,7 +901,6 @@ $nivelUsuarioAgenda = (int)($_SESSION['nivel'] ?? -1);
         inicializarAnos();
         
         try {
-            // 2. Carrega locais e jogos SOMENTE após o interclasseAtual ter sido definido
             await carregarLocais();
             await carregarJogosDoInterclasse();
             preencherSelectModalidades();
@@ -910,6 +1005,7 @@ $nivelUsuarioAgenda = (int)($_SESSION['nivel'] ?? -1);
             atualizarTelas();
         });
 
+        /* ── SALVAR EDIÇÃO INDIVIDUAL ── */
         const elSalvar = document.getElementById('edit-jogo-salvar');
         if (elSalvar) elSalvar.addEventListener('click', async () => {
             if (!jogoEmEdicao) return;
@@ -943,6 +1039,140 @@ $nivelUsuarioAgenda = (int)($_SESSION['nivel'] ?? -1);
                 alert(e.message || 'Erro ao salvar.');
             }
         });
+
+        /* ── ABRIR MODAL DATAS AUTOMÁTICAS ── */
+        document.querySelectorAll('.btn-trigger-datas-auto').forEach((btn) => {
+            btn.addEventListener('click', () => {
+                const autoData = document.getElementById('auto-data');
+                if (autoData) {
+                    autoData.value = hojeISO();
+                    autoData.min = hojeISO();
+                }
+                const modalMod = document.getElementById('auto-modalidade');
+                const selModGlobal = modalidadeSelecionadaId();
+                if (modalMod && selModGlobal) {
+                    modalMod.value = selModGlobal;
+                }
+                const modal = new bootstrap.Modal(document.getElementById('modalDatasAutomaticas'));
+                modal.show();
+            });
+        });
+
+       /* ── GERAR E APLICAR DATAS AUTOMÁTICAS (EM LOTE) ── */
+const btnAutoSalvar = document.getElementById('auto-salvar-btn');
+if (btnAutoSalvar) {
+    btnAutoSalvar.addEventListener('click', async () => {
+        const idMod = document.getElementById('auto-modalidade').value;
+        const dataSel = document.getElementById('auto-data').value;
+        const horaInicio = document.getElementById('auto-inicio').value;
+        const duracaoMin = parseInt(document.getElementById('auto-duracao').value, 10);
+        const idLocal = parseInt(document.getElementById('auto-local').value, 10);
+
+        if (!idMod) {
+            alert('Por favor, selecione uma modalidade.');
+            return;
+        }
+        if (!dataSel || dataSel < hojeISO()) {
+            alert('Por favor, escolha uma data válida (de hoje em diante).');
+            return;
+        }
+        if (!horaInicio) {
+            alert('Por favor, informe o horário inicial.');
+            return;
+        }
+        if (isNaN(duracaoMin) || duracaoMin <= 0) {
+            alert('Por favor, informe uma duração válida em minutos.');
+            return;
+        }
+
+        // Filtrar jogos agendados da modalidade
+        let jogosMod = jogosCache.filter(j => 
+            String(j.modalidades_id_modalidade) === String(idMod) &&
+            j.status_jogo === 'Agendado' &&
+            !isJogoCampeao(j.nome_jogo)
+        );
+
+        if (jogosMod.length === 0) {
+            alert('Nenhum jogo agendado encontrado para esta modalidade.');
+            return;
+        }
+
+        jogosMod = ordenarJogosChaveamento(jogosMod);
+
+        btnAutoSalvar.disabled = true;
+        btnAutoSalvar.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Processando...';
+
+        try {
+            let [h, m] = horaInicio.split(':').map(Number);
+            let dataAtual = new Date(`${dataSel}T${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:00`);
+            
+            let alteradosComSucesso = 0;
+            let houveErroTurno = false;
+            let errosOutros = [];
+
+            // Executa requisições em sequência
+            for (const jogo of jogosMod) {
+                const inicioStr = `${String(dataAtual.getHours()).padStart(2, '0')}:${String(dataAtual.getMinutes()).padStart(2, '0')}:00`;
+                
+                dataAtual.setMinutes(dataAtual.getMinutes() + duracaoMin);
+                const terminoStr = `${String(dataAtual.getHours()).padStart(2, '0')}:${String(dataAtual.getMinutes()).padStart(2, '0')}:00`;
+
+                const body = {
+                    id_jogo: Number(jogo.id_jogo),
+                    data_jogo: dataSel,
+                    inicio_jogo: inicioStr,
+                    termino_jogo: terminoStr,
+                    locais_id_local: idLocal
+                };
+
+                const resp = await fetch(`${API}jogos.php`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(body)
+                });
+                
+                const resJson = await resp.json();
+                if (resp.ok && resJson.success !== false) {
+                    alteradosComSucesso++;
+                } else {
+                    // Trata mensagens vindas da validação de turno da API
+                    const msgErro = resJson.message || '';
+                    if (resp.status === 422 && (msgErro.includes('excede o turno') || msgErro.includes('turno'))) {
+                        houveErroTurno = true;
+                    } else if (msgErro) {
+                        errosOutros.push(msgErro);
+                    }
+                }
+            }
+
+            bootstrap.Modal.getInstance(document.getElementById('modalDatasAutomaticas')).hide();
+            await carregarJogosDoInterclasse();
+            
+            // Navega para o mês selecionado e remove filtro por dia
+            const [anoA, mesA] = dataSel.split('-').map(Number);
+            dataNavegacao.setFullYear(anoA);
+            dataNavegacao.setMonth(mesA - 1);
+            filtroData = null; 
+
+            atualizarTelas();
+
+            // Montagem da mensagem personalizada
+            if (houveErroTurno) {
+                alert(`⚠️ Não foi possível agendar todas as partidas dessa forma porque o horário total ultrapassa o período de aula/turno das turmas envolvidas.\n\n${alteradosComSucesso} de ${jogosMod.length} jogo(s) puderam ser agendados. Tente reduzir o tempo de partida ou iniciar mais cedo.`);
+            } else if (errosOutros.length > 0) {
+                alert(`Aviso: ${alteradosComSucesso} de ${jogosMod.length} jogo(s) foram reagendados.\nMotivo: ${errosOutros[0]}`);
+            } else {
+                alert(`Sucesso! Todos os ${alteradosComSucesso} jogos foram reagendados para ${dataSel}!`);
+            }
+
+        } catch (e) {
+            alert('Ocorreu um erro ao atualizar os jogos: ' + (e.message || e));
+        } finally {
+            btnAutoSalvar.disabled = false;
+            btnAutoSalvar.innerHTML = '<i class="bi bi-check-lg me-1"></i>Gerar e Aplicar Datas';
+        }
+    });
+}
     });
 })();
 </script>

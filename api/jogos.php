@@ -4,8 +4,23 @@ require_once 'filtros.php';
 require_once 'auth.php';
 header('Content-Type: application/json');
 
+/**
+ * Auxiliar para garantir formato HH:MM:SS
+ */
+function sgi_formatar_hora($hora)
+{
+    if (empty($hora) || $hora === '00:00' || $hora === '00:00:00') {
+        return '00:00:00';
+    }
+    return strlen($hora) === 5 ? $hora . ':00' : $hora;
+}
+
 function sgi_validar_horario_turmas($conn, $id_jogo, $inicio, $termino)
 {
+    if ($inicio === '00:00:00' || $termino === '00:00:00') {
+        return null;
+    }
+
     $turnos = [
         'manha'    => ['07:00', '12:00'],
         'tarde'    => ['13:00', '18:00'],
@@ -58,6 +73,46 @@ function sgi_validar_horario_turmas($conn, $id_jogo, $inicio, $termino)
             return "O horário do jogo excede o turno <b>{$nome_turno}</b> de uma ou mais turmas participantes. Ajuste o horário ou contate a coordenação.";
         }
     }
+    return null;
+}
+
+function sgi_validar_conflito_local_horario($conn, $data, $local_id, $inicio, $termino, $id_jogo_atual = null)
+{
+    // Ignora checagem se o horário não foi preenchido corretamente
+    if ($inicio === '00:00:00' || $termino === '00:00:00') {
+        return null;
+    }
+
+    // Interseção correta: $inicio <= termino_jogo AND $termino >= inicio_jogo
+    $sql = "SELECT id_jogo, nome_jogo FROM jogos 
+            WHERE data_jogo = ? 
+              AND locais_id_local = ? 
+              AND status_jogo != 'Cancelado'
+              AND ? < termino_jogo 
+              AND ? > inicio_jogo";
+
+    if ($id_jogo_atual) {
+        $sql .= " AND id_jogo != ?";
+    }
+
+    $stmt = $conn->prepare($sql);
+
+    // Ordem exata dos parâmetros: data, local_id, inicio, termino
+    if ($id_jogo_atual) {
+        $stmt->bind_param("sissi", $data, $local_id, $inicio, $termino, $id_jogo_atual);
+    } else {
+        $stmt->bind_param("siss", $data, $local_id, $inicio, $termino);
+    }
+
+    $stmt->execute();
+    $res = $stmt->get_result();
+    $conflito = $res->fetch_assoc();
+    $stmt->close();
+
+    if ($conflito) {
+        return "Já existe um jogo agendado neste mesmo local com conflito de horário ({$conflito['nome_jogo']}).";
+    }
+
     return null;
 }
 
@@ -126,7 +181,6 @@ switch ($method) {
 
         $jogos = $res->fetch_all(MYSQLI_ASSOC);
 
-        // Calcular tempo restante no servidor para jogos em andamento
         foreach ($jogos as &$jogo) {
             if ($jogo['status_jogo'] === 'Iniciado' && $jogo['data_inicio_real'] && $jogo['duracao_jogo']) {
                 $inicioTs = strtotime($jogo['data_inicio_real']);
@@ -153,9 +207,23 @@ switch ($method) {
             break;
         }
 
-        $inicio = $data->inicio_jogo ?? '00:00:00';
-        $termino = $data->termino_jogo ?? $data->terminno_jogo ?? '00:00:00';
-        $status = $data->status_jogo ?? 'Agendado';
+        $inicio  = sgi_formatar_hora($data->inicio_jogo ?? '00:00:00');
+        $termino = sgi_formatar_hora($data->termino_jogo ?? $data->terminno_jogo ?? '00:00:00');
+        $status  = $data->status_jogo ?? 'Agendado';
+
+        $erro_conflito = sgi_validar_conflito_local_horario(
+            $conn,
+            $data->data_jogo,
+            $data->locais_id_local,
+            $inicio,
+            $termino
+        );
+
+        if ($erro_conflito) {
+            http_response_code(422);
+            echo json_encode(["success" => false, "message" => $erro_conflito]);
+            break;
+        }
 
         $sql = "INSERT INTO jogos (nome_jogo, data_jogo, inicio_jogo, termino_jogo, modalidades_id_modalidade, locais_id_local, status_jogo) 
                 VALUES (?, ?, ?, ?, ?, ?, ?)";
@@ -182,7 +250,7 @@ switch ($method) {
                 ]);
             }
         } catch (mysqli_sql_exception $e) {
-            http_response_code(400); // Bad Request
+            http_response_code(400);
             echo json_encode([
                 "success" => false,
                 "message" => "Erro de integridade: Verifique se o ID da Modalidade ou do Local existem.",
@@ -192,7 +260,6 @@ switch ($method) {
         break;
 
     case 'PUT':
-        // Usa a função nativa do seu auth.php que permite níveis 0, 1 e 2 (Mesário)
         requerOperacaoJogo();
 
         $nivel = (int)$_SESSION['nivel'];
@@ -204,10 +271,60 @@ switch ($method) {
             break;
         }
 
-        // Trava de segurança: Se for Mesário (nível 2) e tentar alterar data, local ou modalidade, bloqueia
         if ($nivel === 2 && (isset($data->data_jogo) || isset($data->locais_id_local) || isset($data->modalidades_id_modalidade))) {
             http_response_code(403);
             echo json_encode(["success" => false, "message" => "Mesários só podem alterar o status ou placar do jogo."]);
+            break;
+        }
+
+        // Buscar estado atual do jogo
+        $id_jogo_val = (int)$data->id_jogo;
+        $ck = $conn->prepare("SELECT data_jogo, inicio_jogo, termino_jogo, locais_id_local, duracao_jogo, tempo_extra_jogo, data_inicio_real FROM jogos WHERE id_jogo = ?");
+        $ck->bind_param("i", $id_jogo_val);
+        $ck->execute();
+        $cur = $ck->get_result()->fetch_assoc();
+        $ck->close();
+
+        if (!$cur) {
+            http_response_code(404);
+            echo json_encode(["success" => false, "message" => "Jogo não encontrado."]);
+            break;
+        }
+
+        // Normalização dos valores enviados ou fallback para o valor do banco
+        $data_val    = $data->data_jogo ?? $cur['data_jogo'];
+        $inicio_raw  = $data->inicio_jogo ?? $cur['inicio_jogo'];
+        $termino_raw = $data->termino_jogo ?? $data->terminno_jogo ?? $cur['termino_jogo'];
+        
+        $inicio_val  = sgi_formatar_hora($inicio_raw);
+        $termino_val = sgi_formatar_hora($termino_raw);
+        $local_val   = $data->locais_id_local ?? $cur['locais_id_local'];
+
+        // 1. Validação de conflito de Local e Horário
+        if (isset($data->data_jogo) || isset($data->inicio_jogo) || isset($data->termino_jogo) || isset($data->terminno_jogo) || isset($data->locais_id_local)) {
+            $erro_conflito = sgi_validar_conflito_local_horario($conn, $data_val, $local_val, $inicio_val, $termino_val, $id_jogo_val);
+            if ($erro_conflito) {
+                http_response_code(422);
+                echo json_encode(["success" => false, "message" => $erro_conflito]);
+                break;
+            }
+        }
+
+        // 2. Validação do horário do turno das turmas
+        $time_changed = $inicio_val !== $cur['inicio_jogo'] || $termino_val !== $cur['termino_jogo'];
+        if ($time_changed) {
+            $erro_turno = sgi_validar_horario_turmas($conn, $id_jogo_val, $inicio_val, $termino_val);
+            if ($erro_turno) {
+                http_response_code(422);
+                echo json_encode(["success" => false, "message" => $erro_turno]);
+                break;
+            }
+        }
+
+        // 3. Validação de data passada
+        if (isset($data->data_jogo) && $data->data_jogo < date('Y-m-d')) {
+            http_response_code(422);
+            echo json_encode(["success" => false, "message" => "Não é permitido agendar um jogo para uma data passada."]);
             break;
         }
 
@@ -227,12 +344,12 @@ switch ($method) {
         }
         if (isset($data->inicio_jogo)) {
             $campos[] = "inicio_jogo = ?";
-            $params[] = $data->inicio_jogo;
+            $params[] = $inicio_val;
             $types .= "s";
         }
-        if (isset($data->termino_jogo)) {
+        if (isset($data->termino_jogo) || isset($data->terminno_jogo)) {
             $campos[] = "termino_jogo = ?";
-            $params[] = $data->termino_jogo;
+            $params[] = $termino_val;
             $types .= "s";
         }
         if (isset($data->tempo_restante_jogo)) {
@@ -266,24 +383,13 @@ switch ($method) {
             $types .= "i";
         }
 
-        // Gerenciamento automático de data_inicio_real baseado na transição de status
         $novoStatus = $data->status_jogo ?? null;
-        $idJogoPut = (int) $data->id_jogo;
 
         if ($novoStatus === 'Iniciado' && !isset($data->data_inicio_real)) {
-            // Iniciar ou retomar: registrar data_inicio_real = NOW()
             $campos[] = "data_inicio_real = NOW()";
         } elseif ($novoStatus === 'Pausado' || $novoStatus === 'Concluido') {
-            // Pausar ou concluir: calcular e salvar tempo_restante, limpar data_inicio_real
             if (!isset($data->tempo_restante_jogo)) {
-                // Buscar estado atual para calcular
-                $ck = $conn->prepare("SELECT duracao_jogo, tempo_extra_jogo, data_inicio_real FROM jogos WHERE id_jogo = ?");
-                $ck->bind_param('i', $idJogoPut);
-                $ck->execute();
-                $cur = $ck->get_result()->fetch_assoc();
-                $ck->close();
-
-                if ($cur && $cur['data_inicio_real'] && $cur['duracao_jogo']) {
+                if ($cur['data_inicio_real'] && $cur['duracao_jogo']) {
                     $inicioTs = strtotime($cur['data_inicio_real']);
                     $agoraTs = time();
                     $decorrido = $agoraTs - $inicioTs;
@@ -302,40 +408,8 @@ switch ($method) {
             break;
         }
 
-        if (isset($data->inicio_jogo) || isset($data->termino_jogo)) {
-            $id_jogo_val = (int)$data->id_jogo;
-            $inicio_val = $data->inicio_jogo ?? '00:00:00';
-            $termino_val = $data->termino_jogo ?? '00:00:00';
-
-            $ck_sql = "SELECT inicio_jogo, termino_jogo FROM jogos WHERE id_jogo = ?";
-            $ck_stmt = $conn->prepare($ck_sql);
-            $ck_stmt->bind_param("i", $id_jogo_val);
-            $ck_stmt->execute();
-            $cur = $ck_stmt->get_result()->fetch_assoc();
-            $ck_stmt->close();
-
-            $time_changed = !$cur || $inicio_val !== $cur['inicio_jogo'] || $termino_val !== $cur['termino_jogo'];
-            if ($time_changed) {
-                $erro_turno = sgi_validar_horario_turmas($conn, $id_jogo_val, $inicio_val, $termino_val);
-                if ($erro_turno) {
-                    http_response_code(422);
-                    echo json_encode(["success" => false, "message" => $erro_turno]);
-                    break;
-                }
-            }
-        }
-
-        if (isset($data->data_jogo)) {
-            $hoje = date('Y-m-d');
-            if ($data->data_jogo < $hoje) {
-                http_response_code(422);
-                echo json_encode(["success" => false, "message" => "Não é permitido agendar um jogo para uma data passada."]);
-                break;
-            }
-        }
-
         $sql = "UPDATE jogos SET " . implode(", ", $campos) . " WHERE id_jogo = ?";
-        $params[] = $data->id_jogo;
+        $params[] = $id_jogo_val;
         $types .= "i";
 
         $stmt = $conn->prepare($sql);
@@ -351,6 +425,6 @@ switch ($method) {
 
     default:
         http_response_code(405);
-        echo json_encode(["message" => "Metodo não permitido"]);
+        echo json_encode(["message" => "Método não permitido"]);
         break;
 }
