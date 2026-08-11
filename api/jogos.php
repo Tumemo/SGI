@@ -96,7 +96,7 @@ function sgi_validar_conflito_local_horario($conn, $data, $local_id, $inicio, $t
     }
 
     $stmt = $conn->prepare($sql);
-
+  
     // Ordem exata dos parâmetros: data, local_id, inicio, termino
     if ($id_jogo_atual) {
         $stmt->bind_param("sissi", $data, $local_id, $inicio, $termino, $id_jogo_atual);

@@ -1153,7 +1153,7 @@ if (btnAutoSalvar) {
             dataNavegacao.setFullYear(anoA);
             dataNavegacao.setMonth(mesA - 1);
             filtroData = null; 
-
+  
             atualizarTelas();
 
             // Montagem da mensagem personalizada
