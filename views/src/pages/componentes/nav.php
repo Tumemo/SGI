@@ -35,6 +35,41 @@ $iconeNav = fn($icon, $key) => $key === $paginaAtiva ? $icon . '-fill' : $icon;
 $onclickSair = "onclick=\"return confirm('Deseja realmente sair?')\"";
 ?>
 <style>
+    .mobile-nav {
+        height: 64px;
+    }
+    .mobile-nav .nav {
+        flex-wrap: nowrap;
+        height: 100%;
+    }
+    .mobile-nav ul li {
+        flex: 1 1 0;
+        min-width: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .sidebar-nav {
+        overflow-y: auto;
+        scrollbar-width: none;
+    }
+    .sidebar-nav::-webkit-scrollbar {
+        display: none;
+    }
+    .sidebar-nav .sidebar-nav-list {
+        justify-content: flex-start;
+    }
+    .sidebar-nav .sidebar-nav-list li {
+        margin: auto 0;
+        flex-shrink: 1;
+        min-height: 0;
+    }
+    @media (max-height: 700px) {
+        .sidebar-nav .sidebar-nav-list {
+            gap: 0.5rem !important;
+            font-size: 1.25rem !important;
+        }
+    }
     .nav-avatar-img {
         width: 32px;
         height: 32px;
@@ -87,8 +122,8 @@ $onclickSair = "onclick=\"return confirm('Deseja realmente sair?')\"";
     }
 </style>
 <!-- navbar mobile -->
-<nav class="d-md-none fixed-bottom py-1 bg-danger shadow-lg">
-    <ul class="nav justify-content-around flex-wrap fs-5 list-unstyled mb-0 gap-0 px-1">
+<nav class="d-md-none fixed-bottom bg-danger shadow-lg mobile-nav" style="z-index: 1040; height: 64px;">
+    <ul class="nav justify-content-around flex-nowrap fs-5 list-unstyled mb-0 gap-0 px-1 align-items-center h-100">
         <?php foreach ($navItens as $key => $item): ?>
         <li>
             <a href="<?= $item['url'] ?>" class="<?= $classeLink($key) ?> nav-link p-1 <?= $key === $paginaAtiva ? 'active-nav-icon' : '' ?>" aria-label="<?= $item['label'] ?>">
@@ -109,10 +144,28 @@ $onclickSair = "onclick=\"return confirm('Deseja realmente sair?')\"";
         </li>
     </ul>
 </nav>
+<script>
+(function () {
+    var nav = document.querySelector('.mobile-nav');
+    if (!nav || !window.visualViewport) return;
+    var baseline = window.innerHeight;
+    function pin() {
+        var shrink = baseline - window.innerHeight;
+        nav.style.bottom = shrink > 0 ? shrink + 'px' : '0';
+    }
+    window.addEventListener('resize', pin);
+    window.visualViewport.addEventListener('resize', pin);
+    window.visualViewport.addEventListener('scroll', pin);
+    window.addEventListener('orientationchange', function () {
+        baseline = window.innerHeight;
+        nav.style.bottom = '0';
+    });
+})();
+</script>
 
 <!-- navbar desktop -->
-<nav class="d-none d-md-flex flex-column position-fixed vh-100 start-0 shadow-lg bg-danger" style="width: 80px; top: 0; z-index: 1040;">
-    <ul class="nav flex-column align-items-center justify-content-around h-100 py-4 gap-4 fs-3">
+<nav class="d-none d-md-flex flex-column position-fixed start-0 shadow-lg bg-danger sidebar-nav" style="width: 80px; top: 0; bottom: 0; z-index: 1040;">
+    <ul class="nav flex-column align-items-center h-100 py-4 gap-4 fs-3 sidebar-nav-list">
         <?php foreach ($navItens as $key => $item): ?>
         <li>
             <a href="<?= $item['url'] ?>" class="text-white d-flex align-items-center justify-content-center position-relative <?= $key === $paginaAtiva ? 'active-nav-icon' : '' ?>" title="<?= $item['label'] ?>">

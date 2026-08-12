@@ -29,13 +29,13 @@ $isMesario = $nivelUsuario === 2;
         <div class="row g-4 mt-2">
             <?php if ($isMesario): ?>
             <div class="col-12 col-md-6 col-lg-4">
-                <a href="categorias.php" id="linkCategorias" class="dash-card">
+                <a href="turmas.php" id="linkCategorias" class="dash-card">
                     <div class="dash-card-red-corner"></div>
                     <div class="dash-card-header">
-                        <div class="dash-card-icon"><i class="bi bi-bookmark"></i></div>
-                        <h5 class="dash-card-title">CATEGORIAS</h5>
+                        <div class="dash-card-icon"><i class="bi bi-backpack"></i></div>
+                        <h5 class="dash-card-title">Turmas</h5>
                     </div>
-                    <p class="dash-card-text">Visualize as categorias da competição, suas turmas, equipes e partidas.</p>
+                    <p class="dash-card-text">Visualize as turmas participantes e acesse os alunos.</p>
                 </a>
             </div>
             <div class="col-12 col-md-6 col-lg-4">
