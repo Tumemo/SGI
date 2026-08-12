@@ -892,7 +892,6 @@ $nivelUsuarioAgenda = (int)($_SESSION['nivel'] ?? -1);
             if (interclasseAtual) {
                 document.getElementById('nomeInterclasseAgenda').innerText = interclasseAtual.nome_interclasse;
                 document.getElementById('btnVoltarAgendaDesk').href = `./dashboard.php?id=${interclasseAtual.id_interclasse}`;
-                window.SGIInterclasse.updatePageTitle(interclasseAtual.nome_interclasse);
             }
         } catch (e) {
             console.error(e);
