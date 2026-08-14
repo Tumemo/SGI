@@ -107,6 +107,13 @@
         var url = typeof input === 'string' ? input : input.url;
         var method = String((init && init.method) || (input && input.method) || 'GET').toUpperCase();
         if (method === 'GET' && navigator.onLine === false) {
+            var info = urlInfo(url);
+            if (info.file === 'jogos.php' && window.SGIOffline && window.SGIOffline.hasPending && window.SGIOffline.hasPending()) {
+                return localGet(url).then(function (res) {
+                    if (res) return res;
+                    return baseFetch(input, init);
+                });
+            }
             // A resposta completa por URL é a fonte principal: ela preserva
             // exatamente o formato esperado por cada tela. Só recorremos às
             // tabelas estruturadas quando a rota ainda não possui snapshot.

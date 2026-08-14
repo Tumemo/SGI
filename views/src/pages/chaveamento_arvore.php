@@ -2658,13 +2658,15 @@ $podeGerar = !$isNivel2 && !$isNivel3;
         });
     });
 
-    window.addEventListener('load', async () => {
+    async function iniciarChaveamento() {
         const idOk = await resolverInterclasse();
         if (!idOk) return;
         await carregarModalidades();
         await carregarCategorias();
         await carregarJogos();
-    });
+    }
+
+    iniciarChaveamento();
 
     window.addEventListener('beforeunload', pararPolling);
 </script>

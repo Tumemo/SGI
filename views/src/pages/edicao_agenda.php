@@ -688,6 +688,15 @@ $nivelUsuarioAgenda = (int)($_SESSION['nivel'] ?? -1);
                     });
                     const js = await r.json();
                     if (!r.ok || js.success === false) throw new Error(js.message || 'Falha ao iniciar');
+                    if (js.offline && js.queued) {
+                        const jogo = jogosCache.find((item) => String(item.id_jogo) === String(id));
+                        if (jogo) {
+                            jogo.status_jogo = 'Iniciado';
+                            jogo._pendente = true;
+                        }
+                        atualizarTelas();
+                        return;
+                    }
                     await carregarJogosDoInterclasse();
                     atualizarTelas();
                 } catch (e) {

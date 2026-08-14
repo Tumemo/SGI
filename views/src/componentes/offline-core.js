@@ -280,6 +280,21 @@
         var absUrl = resolveUrl(url);
 
         if (method === 'GET') {
+            // Não tente a rede quando o navegador já informou que está
+            // desconectado. Além de evitar ERR_INTERNET_DISCONNECTED no
+            // console, isso devolve imediatamente o snapshot exato que foi
+            // baixado durante o preload do mesário.
+            if (navigator.onLine === false) {
+                return idbGet(absUrl).then(function (cached) {
+                    if (cached) {
+                        return new Response(cached.text, {
+                            status: cached.status || 200,
+                            headers: { 'Content-Type': cached.contentType || 'application/json' }
+                        });
+                    }
+                    throw new Error('Dados não disponíveis offline para esta consulta.');
+                });
+            }
             return originalFetch(input, init).then(function (res) {
                 if (res && res.ok) {
                     var clone = res.clone();

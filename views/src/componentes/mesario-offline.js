@@ -505,7 +505,7 @@
             var raiz = document.createElement('div');
             raiz.setAttribute('data-sgi-screen', 'dashboard');
             raiz.innerHTML = state.dashHtml;
-            state.montadas['dashboard'] = { root: raiz, inits: [] };
+            state.montadas['dashboard'] = { root: raiz, inits: [], css: '' };
             state.registros['dashboard'] = { tela: 'dashboard', url: construirUrl('dashboard', params) };
             ativarMontagem('dashboard', 'dashboard', params);
             return;
@@ -535,6 +535,12 @@
 
         state.registros[key] = { tela: tela, url: rec.url || construirUrl(tela, params) };
 
+        // Os scripts das telas usam window.location.search na declaração
+        // inicial (especialmente o chaveamento, que lê ?id=). A URL precisa
+        // estar correta antes de executá-los, não somente depois de montar a
+        // tela na casca SPA.
+        pushEstado(tela, key, rec.url || construirUrl(tela, params));
+
         if (rec.css) aplicarCss(rec.css);
 
         state.montando = key;
@@ -544,15 +550,20 @@
         state.pendentesInit = [];
         state.montando = null;
 
-        state.montadas[key] = { root: raiz, inits: inits };
-        ativarMontagem(key, tela, params);
+        state.montadas[key] = { root: raiz, inits: inits, css: rec.css || '' };
+        ativarMontagem(key, tela, params, true);
     }
 
-    function ativarMontagem(key, tela, params) {
+    function ativarMontagem(key, tela, params, historicoJaAtualizado) {
         var m = state.montadas[key];
         var conteudo = document.getElementById('conteudo-principal');
         if (!m || !conteudo) return;
         conteudo.replaceChildren(m.root);
+
+        // Cada página baixada possui seu próprio bloco <style>. Sem restaurar
+        // esse bloco ao voltar para uma montagem já existente, o CSS da última
+        // página aberta substitui o da atual e a tela fica sem formatação.
+        aplicarCss(m.css || '');
 
         var rec = state.registros[key] || {};
         tela = tela || rec.tela || 'dashboard';
@@ -562,7 +573,7 @@
         } else {
             url = rec.url || construirUrl(tela, {});
         }
-        pushEstado(tela, key, url);
+        if (!historicoJaAtualizado) pushEstado(tela, key, url);
         document.title = TELA_TITULO[tela] || 'SGI';
 
         if (m.inits) m.inits.forEach(function (fn) { runSafe(fn); });
@@ -640,13 +651,26 @@
                 urls.push(b + 'chaveamento.php?tipo_modalidade=individual&acao=participantes&id_modalidade=' + idMod);
                 urls.push(b + 'chaveamento.php?tipo_modalidade=individual&acao=ranking&id_modalidade=' + idMod);
             }
-            return fetchJson(b + 'partidas.php?id_jogo=' + j.id_jogo).then(function (partidas) {
+            // Algumas ações do placar (como editar uma ocorrência) consultam
+            // um registro individual. Baixamos também essas URLs exatas, pois
+            // o cache offline é indexado pela URL completa da requisição.
+            return Promise.all([
+                fetchJson(b + 'partidas.php?id_jogo=' + j.id_jogo).catch(function () { return []; }),
+                fetchJson(b + 'ocorrencias.php?id_jogo=' + j.id_jogo + '&data=' + encodeURIComponent(jogo.data_jogo || j.data_jogo || '')).catch(function () { return []; })
+            ]).then(function (resultados) {
+                var partidas = resultados[0];
+                var ocorrencias = resultados[1];
                 var vistas = {};
                 (Array.isArray(partidas) ? partidas : []).forEach(function (p) {
                     var t = parseInt(p.id_turma, 10);
                     if (!t || vistas[t]) return;
                     vistas[t] = true;
                     urls.push(b + 'ocorrencias.php?acao=listar_atletas&id_jogo=' + j.id_jogo + '&id_turma=' + t);
+                });
+                (Array.isArray(ocorrencias) ? ocorrencias : []).forEach(function (o) {
+                    if (o && o.id_ocorrencia) {
+                        urls.push(b + 'ocorrencias.php?id_ocorrencia=' + o.id_ocorrencia);
+                    }
                 });
                 return urls;
             });
@@ -678,6 +702,14 @@
         telasBase.forEach(function (t) {
             jobs.push(function () { return baixarTela(t, {}); });
         });
+        // A foto é carregada pelo perfil via API depois que a tela é montada.
+        // Incluí-la aqui mantém o perfil completo já na primeira abertura
+        // offline, sem depender de uma visita anterior à página.
+        if (SESSION !== 'anon' && SESSION !== '0') {
+            jobs.push(function () {
+                return aquecer(apiBase() + 'foto.php?user_id=' + encodeURIComponent(SESSION));
+            });
+        }
 
         obterIdAtivo().then(function (id) {
             if (!id) {
@@ -718,14 +750,25 @@
                 modalidades.filter(function (m) {
                     return String(m.interclasses_id_interclasse) === String(id);
                 }).forEach(function (m) {
+                    var idModalidade = encodeURIComponent(m.id_modalidade);
                     jobs.push(function () {
-                        return aquecer(apiBase() + 'jogos.php?id_modalidade=' + encodeURIComponent(m.id_modalidade));
+                        return aquecer(apiBase() + 'jogos.php?id_modalidade=' + idModalidade);
                     });
                     // A árvore de chaveamento consulta esta rota para cada
                     // modalidade, inclusive nas modalidades coletivas.
                     jobs.push(function () {
-                        return aquecer(apiBase() + 'chaveamento.php?id_modalidade=' + encodeURIComponent(m.id_modalidade));
+                        return aquecer(apiBase() + 'chaveamento.php?id_modalidade=' + idModalidade);
                     });
+                    // Modalidades individuais consultam ranking e participantes
+                    // mesmo antes de existir um jogo na agenda.
+                    if (parseInt(m.id_tipo_modalidade, 10) === 2) {
+                        jobs.push(function () {
+                            return aquecer(apiBase() + 'chaveamento.php?tipo_modalidade=individual&acao=participantes&id_modalidade=' + idModalidade);
+                        });
+                        jobs.push(function () {
+                            return aquecer(apiBase() + 'chaveamento.php?tipo_modalidade=individual&acao=ranking&id_modalidade=' + idModalidade);
+                        });
+                    }
                 });
                 categorias.forEach(function (categoria) {
                     if (!categoria.id_categoria) return;
@@ -794,7 +837,7 @@
                 aviso(mensagem);
                 return;
             }
-            idbGet(chaveTela('agenda', {})).then(function (rec) {
+            idbFindTela('agenda').then(function (rec) {
                 if (rec) {
                     state.pronto = true;
                     marcarPronto();
@@ -817,7 +860,7 @@
     function verificarPronto() {
         var flag = false;
         try { flag = localStorage.getItem('sgi_pronto_' + SESSION) === '1'; } catch (e) {}
-        return idbGet(chaveTela('agenda', {})).then(function (rec) {
+        return idbFindTela('agenda').then(function (rec) {
             if (rec || flag) {
                 state.pronto = true;
                 mostrarBadge();
