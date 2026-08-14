@@ -12,12 +12,16 @@ $isColaborador = $nivelUsuario === 1;
 $isMesario = $nivelUsuario === 2;
 ?>
 
-<!-- main desktop -->
-<main class="d-none d-md-block main-desktop-layout">
-    <div class="container-fluid px-0">
-        <a href="./home.php" class="btn btn-outline-danger btn-sm mb-3 d-inline-flex align-items-center gap-1">
-            <i class="bi bi-house"></i> Voltar ao início
-        </a>
+<!-- Casca fixa do SPA do mesário: o conteúdo desta div é trocado
+     dinamicamente pelas telas baixadas pelo mesario-offline.js.
+     Header/Nav/Footer (componentes) permanecem fixos na página. -->
+<div id="conteudo-principal" data-sgi-shell="1">
+    <!-- main desktop -->
+    <main class="d-none d-md-block main-desktop-layout">
+        <div class="container-fluid px-0">
+            <a href="./home.php" class="btn btn-outline-danger btn-sm mb-3 d-inline-flex align-items-center gap-1">
+                <i class="bi bi-house"></i> Voltar ao início
+            </a>
 
         <?php if ($isAdmin): ?>
         <div id="avisoFinalizacaoInterclasse" class="d-none alert alert-warning d-flex justify-content-between align-items-center mb-4">
@@ -28,16 +32,7 @@ $isMesario = $nivelUsuario === 2;
 
         <div class="row g-4 mt-2">
             <?php if ($isMesario): ?>
-            <div class="col-12 col-md-6 col-lg-4">
-                <a href="turmas.php" id="linkCategorias" class="dash-card">
-                    <div class="dash-card-red-corner"></div>
-                    <div class="dash-card-header">
-                        <div class="dash-card-icon"><i class="bi bi-backpack"></i></div>
-                        <h5 class="dash-card-title">Turmas</h5>
-                    </div>
-                    <p class="dash-card-text">Visualize as turmas participantes e acesse os alunos.</p>
-                </a>
-            </div>
+
             <div class="col-12 col-md-6 col-lg-4">
                 <a href="edicao_agenda.php" id="linkAgenda" class="dash-card">
                     <div class="dash-card-red-corner"></div>
@@ -298,7 +293,8 @@ $isMesario = $nivelUsuario === 2;
              <?php endif; ?>
         </div>
     </div>
-</main>
+    </main>
+</div><!-- /conteudo-principal -->
 
 <script>
 (async function() {
@@ -311,16 +307,21 @@ $isMesario = $nivelUsuario === 2;
     }
 
     if (!idInterclasse) {
-        document.getElementById('subtituloMobile').textContent = 'Nenhum interclasse selecionado.';
-        document.getElementById('subtituloDesktop').textContent = 'Nenhum interclasse selecionado.';
+        const subtituloMobile = document.getElementById('subtituloMobile');
+        const subtituloDesktop = document.getElementById('subtituloDesktop');
+        if (subtituloMobile) subtituloMobile.textContent = 'Nenhum interclasse selecionado.';
+        if (subtituloDesktop) subtituloDesktop.textContent = 'Nenhum interclasse selecionado.';
         return;
     }
 
     const dados = await window.SGIInterclasse.getInterclasseById(idInterclasse);
     if (dados) {
-        document.getElementById('tituloDashboard').textContent = <?= $isMesario ? 'dados.nome_interclasse' : '"Dashboard"' ?>;
-        document.getElementById('subtituloMobile').textContent = 'Selecione uma opção';
-        document.getElementById('subtituloDesktop').textContent = 'Selecione uma opção';
+        const tituloDashboard = document.getElementById('tituloDashboard');
+        if (tituloDashboard) tituloDashboard.textContent = <?= $isMesario ? 'dados.nome_interclasse' : '"Dashboard"' ?>;
+        const subtituloMobile = document.getElementById('subtituloMobile');
+        const subtituloDesktop = document.getElementById('subtituloDesktop');
+        if (subtituloMobile) subtituloMobile.textContent = 'Selecione uma opção';
+        if (subtituloDesktop) subtituloDesktop.textContent = 'Selecione uma opção';
         window.SGIInterclasse.updatePageTitle(dados.nome_interclasse);
 
         <?php if ($isAdmin): ?>

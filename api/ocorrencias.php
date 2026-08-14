@@ -150,7 +150,7 @@ switch ($method) {
                 }
             }
 
-            $response = ["success" => true, "message" => "Ocorrência registrada com sucesso!"];
+            $response = ["success" => true, "message" => "Ocorrência registrada com sucesso!", "id" => $conn->insert_id];
             if ($evento) {
                 $response['evento'] = $evento;
             }

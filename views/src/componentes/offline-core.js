@@ -196,7 +196,7 @@
             storedBody = JSON.stringify(body);
         }
 
-        return idbQueueAdd({
+        var item = {
             method: method,
             url: url,
             body: storedBody,
@@ -204,7 +204,12 @@
             createdAt: Date.now(),
             tries: 0,
             needsReview: false
-        }).then(function () {
+        };
+        return idbQueueAdd(item).then(function (id) {
+            item.id = id;
+            if (window.SGIDataLayer && window.SGIDataLayer.onQueued) {
+                window.SGIDataLayer.onQueued(item);
+            }
             state.pending += 1;
             notify();
         });
@@ -232,7 +237,16 @@
                         body: item.body == null ? undefined : item.body
                     });
                 }).then(function (res) {
-                    if (res && res.ok) return idbQueueDelete(item.id);
+                    if (res && res.ok) {
+                        var resposta = res.clone ? res.clone() : null;
+                        return Promise.resolve(resposta ? resposta.text() : '').catch(function () { return ''; })
+                            .then(function (texto) {
+                                if (window.SGIDataLayer && window.SGIDataLayer.onSynced) {
+                                    window.SGIDataLayer.onSynced(item, texto);
+                                }
+                                return idbQueueDelete(item.id);
+                            });
+                    }
                     item.tries = (item.tries || 0) + 1;
                     if (item.tries >= MAX_TRIES) item.needsReview = true;
                     return idbQueueUpdate(item);
@@ -269,16 +283,17 @@
             return originalFetch(input, init).then(function (res) {
                 if (res && res.ok) {
                     var clone = res.clone();
-                    clone.text().then(function (text) {
-                        idbPut({
+                    // O preload só é considerado concluído depois que a
+                    // resposta exata da API estiver persistida no IndexedDB.
+                    return clone.text().then(function (text) {
+                        return idbPut({
                             url: absUrl,
                             text: text,
                             status: res.status,
                             contentType: res.headers.get('content-type') || 'application/json',
                             savedAt: Date.now()
-                        }).catch(noop);
-                    }).catch(noop);
-                    return res;
+                        }).catch(noop).then(function () { return res; });
+                    }).catch(function () { return res; });
                 }
                 if (res && res.status >= 500) {
                     return idbGet(absUrl).then(function (cached) {

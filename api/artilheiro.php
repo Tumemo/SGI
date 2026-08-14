@@ -169,7 +169,7 @@ switch ($method) {
         $stmt->bind_param("iii", $data->usuarios_id_usuario, $data->jogos_id_jogo, $data->num_gol);
 
         if ($stmt->execute()) {
-            echo json_encode(["success" => true, "message" => "Gols registrados com sucesso!"]);
+            echo json_encode(["success" => true, "message" => "Gols registrados com sucesso!", "id" => $conn->insert_id]);
         } else {
             http_response_code(500);
             echo json_encode(["success" => false, "message" => "Erro ao salvar: " . $conn->error]);
