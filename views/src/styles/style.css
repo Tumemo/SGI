@@ -2884,6 +2884,382 @@ body > main {
 }
 
 /* ==========================================================================
+    23b. MODALIDADES (edicao_modalidades.php) - Design System
+    ========================================================================== */
+
+/* ── Toolbar superior (botões alinhados à margem do grid) ── */
+.modalidades-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-bottom: 28px;
+}
+
+.modalidades-toolbar--mobile {
+    margin-bottom: 16px;
+}
+
+/* ── Cabeçalho da página ── */
+.modalidades-head {
+    margin-bottom: 30px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid #eef0f3;
+}
+
+.modalidades-head__title {
+    font-size: 1.7rem;
+    font-weight: 800;
+    color: #1a1a2e;
+    margin: 0 0 6px 0;
+    line-height: 1.2;
+}
+
+.modalidades-head__sub {
+    margin: 0;
+    font-size: 0.95rem;
+    color: #6b7280;
+    max-width: 640px;
+}
+
+.modalidades-head--mobile {
+    margin-bottom: 20px;
+    padding-bottom: 14px;
+}
+
+.modalidades-head--mobile .modalidades-head__title {
+    font-size: 1.35rem;
+}
+
+.modalidades-head--mobile .modalidades-head__sub {
+    font-size: 0.85rem;
+}
+
+/* ── Card de modalidade (âncora clicável - Full Card Click) ── */
+.modalidade-card-simples {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    padding: 22px 20px;
+    background: #fff;
+    border: 1.5px solid #eef0f3;
+    border-radius: 14px;
+    text-decoration: none;
+    color: inherit;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    cursor: pointer;
+    transition: transform 0.22s ease, box-shadow 0.22s ease, border-color 0.22s ease;
+}
+
+.modalidade-card-simples:hover,
+.modalidade-card-simples:focus-visible {
+    transform: translateY(-4px);
+    border-color: #E30613;
+    box-shadow: 0 16px 32px rgba(227, 6, 19, 0.14);
+    text-decoration: none;
+    color: inherit;
+}
+
+.modalidade-card-simples:focus-visible {
+    outline: 3px solid rgba(227, 6, 19, 0.45);
+    outline-offset: 2px;
+}
+
+.modalidade-card-simples.is-selected {
+    border-color: #E30613;
+    box-shadow: 0 6px 16px rgba(227, 6, 19, 0.15);
+}
+
+/* ── Topo do card: ícone + título + subtítulo ── */
+.modalidade-card-topo {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    margin-bottom: 16px;
+}
+
+.modalidade-titulo {
+    flex: 1;
+    min-width: 0;
+    padding-top: 3px;
+}
+
+.modalidade-nome {
+    margin: 0;
+    font-size: 1.1rem;
+    font-weight: 800;
+    color: #1a1a2e;
+    line-height: 1.3;
+    letter-spacing: 0.01em;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.modalidade-card-simples:hover .modalidade-nome {
+    color: #E30613;
+}
+
+.modalidade-sub {
+    display: block;
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: #6b7280;
+    margin-top: 3px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* ── Ícone da modalidade ── */
+.modalidade-icone {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    background: #fde8ea;
+    color: #E30613;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.3rem;
+    flex-shrink: 0;
+}
+
+/* ── Badges informativas (pílulas alinhadas) ── */
+.modalidade-badges {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 7px;
+    margin-bottom: 20px;
+}
+
+.modalidade-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 5px 12px;
+    border-radius: 999px;
+    font-size: 0.76rem;
+    font-weight: 600;
+    background: #f3f4f6;
+    color: #374151;
+    border: 1px solid transparent;
+    white-space: nowrap;
+}
+
+.modalidade-badge--accent {
+    background: #fde8ea;
+    color: #bb0812;
+    border-color: #f5c2c7;
+}
+
+/* ── CTA "Ver detalhes" (canto inferior direito, acende no hover) ── */
+.modalidade-cta {
+    display: inline-flex;
+    align-items: center;
+    align-self: flex-end;
+    gap: 7px;
+    margin-top: auto;
+    padding: 6px 12px;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: #E30613;
+    transition: background 0.22s ease, color 0.22s ease;
+}
+
+.modalidade-cta .bi-arrow-right {
+    transition: transform 0.22s ease;
+}
+
+.modalidade-card-simples:hover .modalidade-cta,
+.modalidade-card-simples:focus-visible .modalidade-cta {
+    background: #E30613;
+    color: #fff;
+}
+
+.modalidade-card-simples:hover .modalidade-cta .bi-arrow-right,
+.modalidade-card-simples:focus-visible .modalidade-cta .bi-arrow-right {
+    transform: translateX(3px);
+}
+
+/* ── Cabeçalho de categoria (seção com divisória e badge em círculo) ── */
+.modalidade-categoria-header {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 20px;
+    padding-bottom: 14px;
+}
+
+.modalidade-categoria-header::before {
+    content: "";
+    width: 5px;
+    height: 22px;
+    border-radius: 4px;
+    background: #E30613;
+    flex-shrink: 0;
+}
+
+.modalidade-categoria-header::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 1px;
+    background: linear-gradient(90deg, #f5c2c7 0%, #eef0f3 40%, #eef0f3 100%);
+}
+
+.modalidade-categoria-nome {
+    margin: 0;
+    font-size: 1.05rem;
+    font-weight: 800;
+    color: #1a1a2e;
+    letter-spacing: 0.01em;
+}
+
+.modalidade-categoria-count {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 28px;
+    height: 28px;
+    padding: 0 9px;
+    border-radius: 999px;
+    background: #fde8ea;
+    color: #E30613;
+    border: 1px solid #f5c2c7;
+    font-size: 0.8rem;
+    font-weight: 800;
+}
+
+/* ── Botão Alunos Destaques ── */
+.btn-destaques {
+    background: #fff;
+    color: #1a1a2e;
+    border: 1.5px solid #e9ecef;
+    border-radius: 8px;
+    transition: border-color 0.2s ease, background 0.2s ease, transform 0.15s ease;
+}
+
+.btn-destaques:hover {
+    border-color: #f5b301;
+    background: #fffbf0;
+    color: #1a1a2e;
+    transform: translateY(-1px);
+}
+
+.btn-destaques:focus {
+    box-shadow: 0 0 0 3px rgba(245, 179, 1, 0.2);
+}
+
+/* ── Modal Alunos Destaques ── */
+.destaque-group-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.8rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #6c757d;
+    margin: 18px 0 10px;
+}
+
+.destaque-group-title i {
+    color: #E30613;
+}
+
+.destaque-item {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 14px 16px;
+    border: 1px solid #eef0f3;
+    border-radius: 14px;
+    background: #fff;
+    margin-bottom: 10px;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.destaque-item:hover {
+    border-color: #f5c2c7;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.destaque-avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    background: #fde8ea;
+    color: #E30613;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    font-size: 1.15rem;
+    box-shadow: 0 0 0 3px #fff, 0 0 0 4px #fde8ea;
+}
+
+.destaque-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.destaque-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.destaque-nome {
+    font-weight: 700;
+    color: #1a1a2e;
+    font-size: 0.95rem;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.destaque-nome i {
+    font-size: 0.8rem;
+    color: #f5b301;
+    flex-shrink: 0;
+}
+
+.destaque-sub {
+    font-size: 0.78rem;
+    color: #6c757d;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.destaque-gols {
+    flex-shrink: 0;
+    text-align: right;
+    font-weight: 800;
+    color: #E30613;
+    font-size: 1.15rem;
+    line-height: 1;
+}
+
+.destaque-gols small {
+    display: block;
+    font-size: 0.62rem;
+    color: #adb5bd;
+    font-weight: 600;
+}
+
+/* ==========================================================================
    SGI OFFLINE — Banner de status (modo offline / sincronização)
    ========================================================================== */
 .sgi-hidden {

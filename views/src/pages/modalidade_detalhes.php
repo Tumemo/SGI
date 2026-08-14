@@ -229,20 +229,13 @@ $isAdmin = $nivelUsuario === 0;
 
 <script>
     let modalidadeAtual = null;
+    let idInterclasseAtual = null;
     const PERMITE_EXCLUIR = <?= $isAdmin ? 'true' : 'false' ?>;
 
     async function carregarDetalhesModalidade() {
         const params = new URLSearchParams(window.location.search);
-        const idInterclasse = params.get('id');
-        const idModalidade = params.get('id_modalidade');
-        if (!idInterclasse || !idModalidade) return;
-
-        document.getElementById('btnVoltarDashboardDesktop').href = `./dashboard.php?id=${idInterclasse}`;
-        const ic = await window.SGIInterclasse.getInterclasseById(idInterclasse);
-        if (ic?.nome_interclasse) {
-            const el = document.getElementById('nomeInterModalidadeDet');
-            if (el) el.textContent = ic.nome_interclasse;
-        }
+        const idModalidade = params.get('id_modalidade') || params.get('id');
+        if (!idModalidade) return;
 
         try {
             const [resModalidade, resEquipes] = await Promise.all([
@@ -255,6 +248,16 @@ $isAdmin = $nivelUsuario === 0;
             if (!modalidade) throw new Error('Modalidade não encontrada.');
 
             modalidadeAtual = modalidade;
+            idInterclasseAtual = modalidade.interclasses_id_interclasse || params.get('id') || null;
+
+            if (idInterclasseAtual) {
+                document.getElementById('btnVoltarDashboardDesktop').href = `./dashboard.php?id=${idInterclasseAtual}`;
+                const ic = await window.SGIInterclasse.getInterclasseById(idInterclasseAtual);
+                if (ic?.nome_interclasse) {
+                    const el = document.getElementById('nomeInterModalidadeDet');
+                    if (el) el.textContent = ic.nome_interclasse;
+                }
+            }
 
             const turmasUnicas = [...new Set((equipes || []).map((item) => item.nome_turma).filter(Boolean))];
             const qtdEquipes = Array.isArray(equipes) ? equipes.length : 0;
@@ -388,8 +391,7 @@ $isAdmin = $nivelUsuario === 0;
     }
 
     async function carregarCategoriasEdicao(selectedId) {
-        const params = new URLSearchParams(window.location.search);
-        const idInterclasse = params.get('id');
+        const idInterclasse = idInterclasseAtual || new URLSearchParams(window.location.search).get('id');
         const select = document.getElementById('editCategoriaModalidade');
         try {
             const resp = await fetch(`../../../api/categorias.php?id_interclasse=${idInterclasse}`);
@@ -442,9 +444,10 @@ $isAdmin = $nivelUsuario === 0;
                 return;
             }
 
-            const params = new URLSearchParams(window.location.search);
-            const idInterclasse = params.get('id');
-            window.location.href = `./edicao_modalidades.php?id=${idInterclasse}&modo=view`;
+            const idInterclasse = idInterclasseAtual;
+            window.location.href = idInterclasse
+                ? `./edicao_modalidades.php?id=${idInterclasse}&modo=view`
+                : './edicao_modalidades.php';
         } catch (e) {
             alert('Erro de conexão.');
         } finally {

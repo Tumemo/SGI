@@ -7,6 +7,55 @@ header('Content-Type: application/json');
 
 $method = $_SERVER['REQUEST_METHOD'];
 
+// Função para buscar o aluno destaque (maior artilheiro) de cada modalidade
+function revelarDestaquesPorModalidade($conn, $idInterclasse = null) {
+    $where = $idInterclasse
+        ? " AND i.id_interclasse = ?"
+        : " AND i.status_interclasse = '1'";
+
+    $sql = "SELECT 
+                m.id_modalidade,
+                m.nome_modalidade,
+                c.id_categoria,
+                c.nome_categoria,
+                u.id_usuario,
+                u.nome_usuario,
+                u.foto_usuario,
+                t.id_turma,
+                t.nome_turma,
+                t.nome_fantasia_turma,
+                SUM(a.num_gol) AS total_gols
+            FROM artilheiros a
+            INNER JOIN usuarios u ON a.usuarios_id_usuario = u.id_usuario
+            INNER JOIN turmas t ON u.turmas_id_turma = t.id_turma
+            INNER JOIN jogos j ON a.jogos_id_jogo = j.id_jogo
+            INNER JOIN modalidades m ON j.modalidades_id_modalidade = m.id_modalidade
+            INNER JOIN categorias c ON m.categorias_id_categoria = c.id_categoria
+            INNER JOIN interclasses i ON c.interclasses_id_interclasse = i.id_interclasse
+            WHERE 1=1" . $where . "
+            GROUP BY m.id_modalidade, u.id_usuario
+            HAVING total_gols = (
+                SELECT MAX(sub_total)
+                FROM (
+                    SELECT SUM(a2.num_gol) AS sub_total
+                    FROM artilheiros a2
+                    INNER JOIN jogos j2 ON a2.jogos_id_jogo = j2.id_jogo
+                    INNER JOIN modalidades m2 ON j2.modalidades_id_modalidade = m2.id_modalidade
+                    WHERE m2.id_modalidade = m.id_modalidade
+                    GROUP BY a2.usuarios_id_usuario
+                ) AS sub
+            )
+            ORDER BY c.nome_categoria ASC, m.nome_modalidade ASC, total_gols DESC";
+
+    $stmt = $conn->prepare($sql);
+    if ($idInterclasse) {
+        $stmt->bind_param("i", $idInterclasse);
+    }
+    $stmt->execute();
+    $res = $stmt->get_result();
+    return $res->fetch_all(MYSQLI_ASSOC);
+}
+
 // Função para buscar o aluno com maior pontuação/gols por categoria no Interclasse Ativo
 function revelarDestaque($conn) {
     $sql = "SELECT 
@@ -48,6 +97,17 @@ function revelarDestaque($conn) {
 
 switch ($method) {
     case 'GET':
+        // Verifica se a requisição é específica para listar os destaques por modalidade
+        if (isset($_GET['acao']) && $_GET['acao'] === 'destaques_modalidades') {
+            $idInterclasse = !empty($_GET['id_interclasse']) ? intval($_GET['id_interclasse']) : null;
+            $destaques = revelarDestaquesPorModalidade($conn, $idInterclasse);
+            echo json_encode([
+                "success" => true,
+                "data" => $destaques
+            ]);
+            break;
+        }
+
         // Verifica se a requisição é específica para revelar o destaque
         if (isset($_GET['acao']) && $_GET['acao'] === 'destaques') {
             $destaques = revelarDestaque($conn);
