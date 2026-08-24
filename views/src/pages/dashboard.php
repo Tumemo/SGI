@@ -16,15 +16,14 @@ $isMesario = $nivelUsuario === 2;
      dinamicamente pelas telas baixadas pelo mesario-offline.js.
      Header/Nav/Footer (componentes) permanecem fixos na página. -->
 <div id="conteudo-principal" data-sgi-shell="1">
-    <!-- main desktop -->
-    <main class="d-none d-md-block main-desktop-layout">
+    <main class="main-desktop-layout main-dashboard-layout">
         <div class="container-fluid px-0">
             <a href="./home.php" class="btn btn-outline-danger btn-sm mb-3 d-inline-flex align-items-center gap-1">
                 <i class="bi bi-house"></i> Voltar ao início
             </a>
 
         <?php if ($isAdmin): ?>
-        <div id="avisoFinalizacaoInterclasse" class="d-none alert alert-warning d-flex justify-content-between align-items-center mb-4">
+        <div id="avisoFinalizacaoInterclasse" class="d-none alert alert-warning d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-2 mb-4">
             <span>Esta edição ainda não foi finalizada. Conclua as etapas para ativá-la.</span>
             <a id="linkConcluirInterclasse" class="btn btn-sm btn-danger" href="#">Concluir criação</a>
         </div>

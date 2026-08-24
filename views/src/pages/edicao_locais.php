@@ -3,7 +3,6 @@ $tituloPagina = 'SGI - Locais e Regulamento do Interclasse';
 $titulo = 'Locais e Regulamento do Interclasse';
 $mostrarVoltar = true;
 $urlVoltar = './dashboard.php';
-$cssExtra = '.local-card { border-radius: 12px; transition: transform .2s ease, box-shadow .2s ease; } .local-card:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,.07) !important; } .ta-action { width: 32px; height: 32px; border-radius: 10px; border: none; display: inline-flex; align-items: center; justify-content: center; font-size: .9rem; cursor: pointer; transition: all .18s ease; } .ta-action--edit { background: #f3f4f6; color: #4b5563; } .ta-action--edit:hover { background: #374151; color: #fff; transform: translateY(-1px); } .ta-action--delete { background: #feeaea; color: #dc2626; } .ta-action--delete:hover { background: #dc2626; color: #fff; transform: translateY(-1px); } .termo-clausula { border-left: 4px solid #dc3545; padding-left: 0.75rem; margin-bottom: 0.75rem; font-size: 0.9rem; }';
 include 'componentes/head.php';
 include 'componentes/header.php';
 $paginaAtiva = 'dashboard';
@@ -11,51 +10,9 @@ $nivelUsuario = (int)($_SESSION['nivel'] ?? -1);
 $isColaborador = $nivelUsuario === 1;
 ?>
 
-<!-- ================= MOBILE ================= -->
-<main class="d-md-none p-3" style="padding-top: 5rem; padding-bottom: 6rem;">
-    <!-- Seção Regulamento Mobile -->
-    <div class="card border-0 shadow-sm rounded-3 mb-3">
-        <div class="card-body">
-            <div class="d-flex align-items-center justify-content-between mb-2">
-                <h6 class="fw-bold mb-0 text-dark"><i class="bi bi-file-earmark-pdf-fill text-danger me-1"></i> Regulamento</h6>
-                <span id="badgeRegulamentoMob" class="badge bg-secondary">Buscando...</span>
-            </div>
-            <p id="infoRegulamentoMob" class="small text-muted mb-2">Carregando informações...</p>
-            <div class="d-flex gap-2">
-                <a id="btnVerPdfMob" href="#" target="_blank" class="btn btn-sm btn-outline-danger w-100 d-none">
-                    <i class="bi bi-eye"></i> Visualizar
-                </a>
-                <button type="button" class="btn btn-sm btn-danger w-100" data-bs-toggle="modal" data-bs-target="#modalRegulamento">
-                    <i class="bi bi-file-earmark-arrow-up"></i> Enviar PDF
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Lista Locais Mobile -->
-    <div id="listaLocaisMobile" class="d-flex flex-column gap-3 mx-auto" style="max-width: 420px;">
-        <p class="text-muted small text-center">Carregando…</p>
-    </div>
-
-    <div class="position-fixed start-0 end-0 bottom-0 p-3 bg-light border-top shadow-sm d-flex gap-2 align-items-center" style="z-index: 1030;">
-        <?php if ($isColaborador): ?>
-            <button type="button" class="btn btn-outline-danger fw-semibold rounded-3 p-2 d-flex align-items-center justify-content-center" data-bs-toggle="modal" data-bs-target="#modalTermosColaborador" title="Termos do Colaborador" style="height: 42px; width: 42px;">
-                <i class="bi bi-file-earmark-text fs-5"></i>
-            </button>
-        <?php endif; ?>
-        <button type="button" class="btn btn-danger flex-grow-1 fw-semibold rounded-3" data-bs-toggle="modal" data-bs-target="#modalNovoLocal">
-            <i class="bi bi-plus-lg me-1"></i> Novo local
-        </button>
-        <a href="./dashboard.php" id="btnVoltarLocaisMobile" class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none" style="background-color:#E30613;border-radius:6px;padding:8px 16px;">
-            <i class="bi bi-arrow-left-circle fs-5"></i> <span id="nomeInterclasseLocaisMob">Interclasse</span>
-        </a>
-    </div>
-</main>
-
-<!-- ================= DESKTOP ================= -->
-<main class="d-none d-md-block main-desktop-layout my-4">
+<main class="main-desktop-layout main-locais-layout my-4">
     <div class="container-fluid px-0" style="max-width: 100%;">
-        <div class="mb-4 d-flex justify-content-between align-items-center">
+        <div class="mb-4 d-flex flex-column flex-lg-row justify-content-between align-items-start align-items-lg-center gap-3">
             <a href="./dashboard.php" id="btnVoltarLocaisDesk" class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none" style="background-color:#E30613;border-radius:6px;padding:8px 16px;">
                 <i class="bi bi-arrow-left-circle fs-5"></i> <span id="nomeInterclasseLocais">Interclasse</span>
             </a>
@@ -74,7 +31,7 @@ $isColaborador = $nivelUsuario === 1;
 
         <!-- Seção do Regulamento em Destaque Desktop -->
         <div class="card border-0 shadow-sm rounded-4 mb-4">
-            <div class="card-body p-4 d-flex justify-content-between align-items-center">
+            <div class="card-body p-4 d-flex flex-column flex-lg-row justify-content-between align-items-start align-items-lg-center gap-3">
                 <div class="d-flex align-items-center gap-3">
                     <div class="rounded-circle bg-danger-subtle p-3 d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
                         <i class="bi bi-file-earmark-pdf-fill fs-3 text-danger"></i>
@@ -300,12 +257,10 @@ $isColaborador = $nivelUsuario === 1;
             if (ativo && ativo.id_interclasse) {
                 idInterclasse = ativo.id_interclasse;
 
-                const btnVoltarMob = document.getElementById('btnVoltarLocaisMobile');
                 const btnVoltarDesk = document.getElementById('btnVoltarLocaisDesk');
-                if (btnVoltarMob) btnVoltarMob.href = `./dashboard.php?id=${idInterclasse}`;
                 if (btnVoltarDesk) btnVoltarDesk.href = `./dashboard.php?id=${idInterclasse}`;
                 if (ativo.nome_interclasse) {
-                    ['nomeInterclasseLocais', 'nomeInterclasseLocaisMob'].forEach(id => {
+                    ['nomeInterclasseLocais'].forEach(id => {
                         const el = document.getElementById(id);
                         if (el) el.textContent = ativo.nome_interclasse;
                     });
@@ -320,7 +275,7 @@ $isColaborador = $nivelUsuario === 1;
     }
 
     if (idInterclasse) {
-        ['btnVoltarLocaisMobile', 'btnVoltarLocaisDesk'].forEach(id => {
+        ['btnVoltarLocaisDesk'].forEach(id => {
             const el = document.getElementById(id);
             if (el) el.href = `./dashboard.php?id=${idInterclasse}`;
         });
@@ -345,41 +300,21 @@ $isColaborador = $nivelUsuario === 1;
             const item = Array.isArray(data) ? data[0] : data;
 
             const pdfName = item?.regulamento_interclasse;
-            const badgeMob = document.getElementById('badgeRegulamentoMob');
-            const infoMob = document.getElementById('infoRegulamentoMob');
             const infoDesk = document.getElementById('infoRegulamentoDesk');
             const btnVerDesk = document.getElementById('btnVerPdfDesk');
-            const btnVerMob = document.getElementById('btnVerPdfMob');
 
             if (pdfName && pdfName.trim() !== '') {
                 const pdfUrl = `../../../uploads/regulamentos/${pdfName}`;
 
-                if (badgeMob) {
-                    badgeMob.textContent = 'Cadastrado';
-                    badgeMob.className = 'badge bg-success';
-                }
-                if (infoMob) infoMob.textContent = 'Regulamento disponível em PDF.';
                 if (infoDesk) infoDesk.textContent = 'O regulamento em PDF está atualizado e disponível para consulta.';
 
                 if (btnVerDesk) {
                     btnVerDesk.href = pdfUrl;
                     btnVerDesk.classList.remove('d-none');
                 }
-
-                if (btnVerMob) {
-                    btnVerMob.href = pdfUrl;
-                    btnVerMob.classList.remove('d-none');
-                }
             } else {
-                if (badgeMob) {
-                    badgeMob.textContent = 'Pendente';
-                    badgeMob.className = 'badge bg-warning text-dark';
-                }
-                if (infoMob) infoMob.textContent = 'Nenhum regulamento enviado.';
                 if (infoDesk) infoDesk.textContent = 'Nenhum arquivo de regulamento foi enviado até o momento.';
-
                 if (btnVerDesk) btnVerDesk.classList.add('d-none');
-                if (btnVerMob) btnVerMob.classList.add('d-none');
             }
         } catch (e) {
             console.error('Erro ao buscar regulamento:', e);
@@ -421,38 +356,6 @@ $isColaborador = $nivelUsuario === 1;
             </div>`;
     }
 
-    function linhaLocalMobile(loc) {
-        const isDisponivel = Number(loc.disponivel_local) === 1;
-        const disp = isDisponivel ? 'Disponível' : 'Indisponível';
-        return `
-            <div class="local-card bg-white border-0 shadow-sm rounded-3 p-3 d-flex justify-content-between align-items-center">
-                <div class="min-w-0 flex-grow-1">
-                    <div class="fw-bold text-dark text-truncate">${esc(loc.nome_local)}</div>
-                    <div class="text-muted small">${disp}</div>
-                </div>
-                <div class="d-flex align-items-center gap-2">
-                    <button type="button" 
-                            class="ta-action ta-action--edit" 
-                            title="Editar local"
-                            data-bs-toggle="modal" 
-                            data-bs-target="#modalEditarLocal"
-                            data-id="${loc.id_local}" 
-                            data-nome="${esc(loc.nome_local)}" 
-                            data-disponivel="${isDisponivel ? '1' : '0'}"
-                            data-carga="${loc.carga_local || ''}">
-                        <i class="bi bi-pencil"></i>
-                    </button>
-                    <button type="button" 
-                            class="ta-action ta-action--delete" 
-                            title="Excluir local"
-                            onclick='excluirLocal(${loc.id_local}, "${esc(loc.nome_local)}")'>
-                        <i class="bi bi-trash"></i>
-                    </button>
-                    <i class="bi bi-geo-alt text-danger fs-4 flex-shrink-0"></i>
-                </div>
-            </div>`;
-    }
-
     window.excluirLocal = async function(idLocal, nomeLocal) {
         if (!confirm(`Deseja excluir o local "${nomeLocal}"?\nEsta ação não pode ser desfeita.`)) {
             return;
@@ -472,7 +375,6 @@ $isColaborador = $nivelUsuario === 1;
     };
 
     async function carregarLocais() {
-        const mob = document.getElementById('listaLocaisMobile');
         const desk = document.getElementById('listaLocaisDesktop');
 
         if (!idInterclasse) await obterInterclasseAtivo();
@@ -486,15 +388,12 @@ $isColaborador = $nivelUsuario === 1;
 
             if (lista.length === 0) {
                 const msg = '<p class="text-muted text-center w-100 mb-0">Nenhum local cadastrado. Toque em &quot;Novo local&quot;.</p>';
-                mob.innerHTML = msg;
                 desk.innerHTML = `<div class="col-12">${msg}</div>`;
                 return;
             }
-            mob.innerHTML = lista.map(linhaLocalMobile).join('');
             desk.innerHTML = lista.map(cardLocal).join('');
         } catch (e) {
             console.error(e);
-            mob.innerHTML = '<p class="text-danger small text-center">Erro ao carregar locais.</p>';
             desk.innerHTML = '<p class="text-danger">Erro ao carregar locais.</p>';
         }
     }
@@ -509,7 +408,7 @@ $isColaborador = $nivelUsuario === 1;
                 if (window.SGIInterclasse?.getInterclasseById) {
                     const d = await window.SGIInterclasse.getInterclasseById(idInterclasse);
                         if (d?.nome_interclasse) {
-                            ['nomeInterclasseLocais', 'nomeInterclasseLocaisMob'].forEach(id => {
+                            ['nomeInterclasseLocais'].forEach(id => {
                                 const el = document.getElementById(id);
                                 if (el) el.textContent = d.nome_interclasse;
                             });

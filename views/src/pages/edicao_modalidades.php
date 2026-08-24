@@ -1,6 +1,6 @@
 <?php
 $tituloPagina = 'SGI - Modalidades';
-$titulo = 'Modalidades';
+$titulo = 'Modalidade';
 $mostrarVoltar = true;
 $urlVoltar = './dashboard.php';
 include 'componentes/head.php';
@@ -8,43 +8,7 @@ include 'componentes/header.php';
 $paginaAtiva = 'dashboard';
 ?>
 
-<!-- main mobile -->
-<main class="position-relative d-md-none" style="margin-bottom: 90px;">
-    <div class="p-3">
-        <div class="modalidades-toolbar modalidades-toolbar--mobile">
-            <a href="./dashboard.php" id="btnVoltarModalidadesMobile" class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold px-3 py-2 border-0 text-decoration-none" style="background-color:#E30613;border-radius:6px;padding:8px 16px;">
-                <i class="bi bi-arrow-left-circle fs-5"></i> <span id="nomeInterclasseModalidadesMob">Interclasse</span>
-            </a>
-            <div class="d-flex align-items-center gap-2 flex-shrink-0">
-                <button type="button" class="btn btn-destaques d-inline-flex align-items-center justify-content-center fw-bold px-3 py-2" style="font-size: 1rem;" data-bs-toggle="modal" data-bs-target="#modalDestaques" title="Alunos Destaques">
-                    <span>⭐</span>
-                </button>
-                <?php if ($nivelUsuario === 0): ?>
-                <button type="button" class="btn btn-danger d-inline-flex align-items-center justify-content-center fw-bold px-3 py-2 border-0" style="border-radius: 8px;" data-bs-toggle="modal" data-bs-target="#exampleModal" title="Nova Modalidade">
-                    <i class="bi bi-plus-lg"></i>
-                </button>
-                <?php endif; ?>
-            </div>
-        </div>
-
-        <header class="modalidades-head modalidades-head--mobile">
-            <h1 class="modalidades-head__title">Modalidades</h1>
-            <p class="modalidades-head__sub">Gerencie as modalidades do interclasse e navegue para os detalhes de cada uma.</p>
-        </header>
-
-        <div id="listaModalidadesMobile">
-            <p class="text-muted text-center mt-4">(Carregando modalidades...)</p>
-        </div>
-    </div>
-
-    <div class="position-fixed bottom-0 start-0 w-100 p-3 d-none" id="barraContinuarMobile" style="z-index: 20; background: linear-gradient(transparent, #f8f9fa 35%);">
-        <a href="#" id="btnContinuarMobile" class="btn btn-danger w-100 fw-bold text-white disabled" aria-disabled="true">Continuar</a>
-    </div>
-</main>
-
-
-<!-- main desktop -->
-<main class="d-none d-md-block main-desktop-layout">
+<main class="main-desktop-layout main-modalidades-layout">
 
     <div class="modalidades-toolbar">
             <a href="./dashboard.php" id="btnVoltarModalidades" class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold px-3 py-2 border-0 text-decoration-none" style="background-color:#E30613;border-radius:6px;padding:8px 16px;">
@@ -170,14 +134,13 @@ $paginaAtiva = 'dashboard';
         }
         if (!idInterclasse) {
             const msg = '<p class="text-muted mt-4 text-center w-100">Nenhum interclasse ativo.</p>';
-            document.getElementById('listaModalidadesMobile').innerHTML = msg;
             document.getElementById('listaModalidadesDesktop').innerHTML = msg;
             window.location.href = "home.php";
             return null;
         }
         const dados = await window.SGIInterclasse.getInterclasseById(idInterclasse);
         const nome = dados?.nome_interclasse || 'Interclasse';
-        ['nomeInterclasseModalidades', 'nomeInterclasseModalidadesMob'].forEach(id => {
+        ['nomeInterclasseModalidades'].forEach(id => {
             const el = document.getElementById(id);
             if (el) el.innerText = nome;
         });
@@ -188,27 +151,20 @@ $paginaAtiva = 'dashboard';
 
     function atualizarBotaoContinuar() {
         const botaoDesktop = document.getElementById('btnContinuarDesktop');
-        const botaoMobile = document.getElementById('btnContinuarMobile');
-        const barraMobile = document.getElementById('barraContinuarMobile');
 
-        [botaoDesktop, botaoMobile].forEach((botao) => {
-            if (!botao) return;
-            botao.href = `./edicao_pontuacao.php?id=${idInterclasse}&modo=create${modalidadeSelecionada ? `&id_modalidade=${modalidadeSelecionada}` : ''}`;
+        if (botaoDesktop) {
+            botaoDesktop.href = `./edicao_pontuacao.php?id=${idInterclasse}&modo=create${modalidadeSelecionada ? `&id_modalidade=${modalidadeSelecionada}` : ''}`;
             const disabled = !modalidadeSelecionada;
-            botao.classList.toggle('disabled', disabled);
-            botao.setAttribute('aria-disabled', disabled ? 'true' : 'false');
-        });
-
-        if (botaoDesktop) botaoDesktop.classList.toggle('d-none', modo === 'view');
-        if (barraMobile) barraMobile.classList.toggle('d-none', modo === 'view');
+            botaoDesktop.classList.toggle('disabled', disabled);
+            botaoDesktop.setAttribute('aria-disabled', disabled ? 'true' : 'false');
+            botaoDesktop.classList.toggle('d-none', modo === 'view');
+        }
 
         const destinoVoltar = modo === 'view'
             ? `./dashboard.php?id=${idInterclasse}`
             : `./edicao_categorias.php?id=${idInterclasse}&modo=create`;
-        ['btnVoltarModalidades', 'btnVoltarModalidadesMobile'].forEach(id => {
-            const el = document.getElementById(id);
-            if (el) el.href = destinoVoltar;
-        });
+        const btnVoltar = document.getElementById('btnVoltarModalidades');
+        if (btnVoltar) btnVoltar.href = destinoVoltar;
     }
 
     /* ── RENDER CARD ── */
@@ -242,14 +198,11 @@ $paginaAtiva = 'dashboard';
 
     /* ── RENDER POR CATEGORIA ── */
     function renderizarModalidades(modalidades) {
-        const divMobile = document.getElementById('listaModalidadesMobile');
         const divDesktop = document.getElementById('listaModalidadesDesktop');
-        if (!divMobile || !divDesktop) return;
+        if (!divDesktop) return;
 
         if (!modalidades.length) {
-            const msgVazia = '<p class="text-muted mt-4 text-center w-100">Nenhuma modalidade encontrada.</p>';
-            divMobile.innerHTML = msgVazia;
-            divDesktop.innerHTML = msgVazia;
+            divDesktop.innerHTML = '<p class="text-muted mt-4 text-center w-100">Nenhuma modalidade encontrada.</p>';
             return;
         }
 
@@ -274,7 +227,6 @@ $paginaAtiva = 'dashboard';
                 </section>`;
         });
 
-        divMobile.innerHTML = html;
         divDesktop.innerHTML = html;
         ligarEventosCards();
     }
@@ -311,7 +263,6 @@ $paginaAtiva = 'dashboard';
         } catch (error) {
             console.error("Erro ao carregar lista:", error);
             const msgErro = '<p class="text-muted mt-4 text-center w-100">Erro ao carregar modalidades.</p>';
-            document.getElementById('listaModalidadesMobile').innerHTML = msgErro;
             document.getElementById('listaModalidadesDesktop').innerHTML = msgErro;
         }
     }
