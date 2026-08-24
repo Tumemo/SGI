@@ -1746,6 +1746,16 @@ $podeGerar = !$isNivel2 && !$isNivel3;
     }
 
     function editarJogoBracket(btn) {
+        /* Partidas geradas localmente (offline) recebem id negativo temporário:
+           ainda não existem no servidor, então não podem ser editadas aqui.
+           Elas serão materializadas pelo PHP durante a sincronização. */
+        try {
+            var dados = JSON.parse(btn.getAttribute('data-jogo'));
+            if (dados && Number(dados.id_jogo) < 0) {
+                alert('Esta partida foi gerada offline e será criada no servidor após a sincronização.');
+                return;
+            }
+        } catch (e) { /* segue o fluxo normal */ }
         editarJogo(btn);
     }
 
@@ -2058,6 +2068,15 @@ $podeGerar = !$isNivel2 && !$isNivel3;
     let _lastBracketData = null;
     let _pollingTimer = null;
     let _currentModalidade = null;
+    let _fonteDadosAtual = null;
+
+    /* Selo visual quando a árvore foi calculada localmente (modo offline). */
+    function _badgeFonteLocal() {
+        return `<div class="kv-alert kv-alert--info" style="margin-top:16px;display:flex;align-items:center;gap:8px;">
+            <i class="bi bi-wifi-off"></i> Offline: árvore avançada localmente com os resultados deste dispositivo.
+            Será sincronizada automaticamente quando a conexão voltar.
+        </div>`;
+    }
 
     function _renderBracketMatch(jogo) {
         const eqs = jogo.equipes || [];
@@ -2452,17 +2471,12 @@ $podeGerar = !$isNivel2 && !$isNivel3;
         if (areaMob) areaMob.innerHTML = loadingHtml;
 
         try {
-            const resp = await fetch(`../../../api/chaveamento.php?id_modalidade=${idModalidade}`);
-            const data = await resp.json();
-
-            if (!data.success) {
-                const errHtml = `<div class="kv-empty kv-animate"><div class="kv-empty__icon"><i class="bi bi-exclamation-triangle" style="color:#f59e0b;"></i></div><div class="kv-empty__title">Erro</div><div class="kv-empty__desc">${data.message || 'Erro ao carregar chaveamento.'}</div></div>`;
-                area.innerHTML = errHtml;
-                if (areaMob) areaMob.innerHTML = errHtml;
-                return;
-            }
-
-            const jogos = data.jogos || [];
+            /* Camada híbrida: 1º tenta a API PHP; sem conexão, usa o snapshot
+               do IndexedDB e processa o avanço da árvore no frontend com os
+               resultados gravados no banco JS temporário. */
+            const resultado = await SGIChaveamento.carregarArvore(idModalidade);
+            const jogos = resultado.jogos || [];
+            _fonteDadosAtual = resultado.fonte;
             _lastBracketData = jogos;
 
             if (jogos.length === 0) {
@@ -2477,7 +2491,7 @@ $podeGerar = !$isNivel2 && !$isNivel3;
                 return;
             }
 
-            const modernHtml = _renderModernBracket(jogos);
+            const modernHtml = _renderModernBracket(jogos) + (_fonteDadosAtual !== 'remota' ? _badgeFonteLocal() : '');
             area.innerHTML = modernHtml;
             if (areaMob) areaMob.innerHTML = modernHtml;
 
@@ -2504,17 +2518,19 @@ $podeGerar = !$isNivel2 && !$isNivel3;
         _pollingTimer = setInterval(async () => {
             if (!_currentModalidade) return;
             try {
-                const resp = await fetch(`../../../api/chaveamento.php?id_modalidade=${_currentModalidade}`);
-                const data = await resp.json();
-                if (!data.success) return;
-                const jogos = data.jogos || [];
+                /* Mesma camada híbrida do carregamento inicial: online consulta
+                   o PHP; offline recalcula a árvore a partir do banco JS local. */
+                const resultado = await SGIChaveamento.carregarArvore(_currentModalidade);
+                const jogos = resultado.jogos || [];
+                if (!jogos.length) return;
 
                 const oldStatuses = (_lastBracketData || []).map(j => `${j.id_jogo}:${j.status_jogo}`).join(',');
                 const newStatuses = jogos.map(j => `${j.id_jogo}:${j.status_jogo}`).join(',');
 
-                if (oldStatuses !== newStatuses) {
+                if (oldStatuses !== newStatuses || _fonteDadosAtual !== resultado.fonte) {
+                    _fonteDadosAtual = resultado.fonte;
                     _lastBracketData = jogos;
-                    const modernHtml = _renderModernBracket(jogos);
+                    const modernHtml = _renderModernBracket(jogos) + (_fonteDadosAtual !== 'remota' ? _badgeFonteLocal() : '');
                     const area = document.getElementById('bracketArea');
                     const areaMob = document.getElementById('bracketAreaMob');
                     if (area) area.innerHTML = modernHtml;
@@ -2528,6 +2544,22 @@ $podeGerar = !$isNivel2 && !$isNivel3;
             } catch (e) {
                 /* silent */ }
         }, 8000);
+    }
+
+    /* Sincronização de volta ao PHP: quando a conexão retorna e a árvore exibida
+       foi calculada localmente, envia os dados pendentes do banco JS temporário
+       (a fila reproduz os POSTs originais e o servidor refaz o avanço). */
+    if (window.SGIOffline && typeof window.SGIOffline.onStateChange === 'function') {
+        window.SGIOffline.onStateChange(function (estado) {
+            if (!estado.online) return;
+            if (_fonteDadosAtual && _fonteDadosAtual !== 'remota') {
+                SGIChaveamento.sincronizar().catch(function () { /* noop */ }).then(function () {
+                    if (_currentModalidade) carregarArvore(_currentModalidade);
+                });
+            } else if (SGIOffline.hasPending()) {
+                SGIChaveamento.sincronizar();
+            }
+        });
     }
 
     function pararPolling() {
