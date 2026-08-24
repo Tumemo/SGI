@@ -781,6 +781,15 @@ $paginaAtiva = 'dashboard';
             alert('O jogo não pode terminar empatado! Registre o placar correto antes de finalizar.');
             return;
         }
+
+        /* Híbrido: offline grava no banco temporário JS e libera a UI na hora;
+           online envia à API PHP normalmente. */
+        var offline = !navigator.onLine || (window.SGIOffline && typeof window.SGIOffline.isOnline === 'function' && !window.SGIOffline.isOnline());
+        if (offline) {
+            finalizarLocalmente(resultados);
+            return;
+        }
+
         try {
             var res = await fetch(API + 'lancar_resultado.php', {
                 method: 'POST',
@@ -794,6 +803,106 @@ $paginaAtiva = 'dashboard';
             await carregarDados();
         } catch (e) {
             alert(e.message || 'Erro ao finalizar.');
+        }
+    }
+
+    /* ── Finalização OFFLINE ─────────────────────────────────────────────
+       1) Aplica o término imediatamente na memória (status 'Concluido' +
+          placar) e re-renderiza a tela, sem esperar servidor.
+       2) Enfileira a MESMA requisição original (POST lancar_resultado.php)
+          na mutation queue do offline-core. O hook SGIDataLayer.onQueued
+          projeta o placar e o novo status no IndexedDB local, e quando a
+          conexão voltar a fila reenvia tudo ao PHP, que refaz as validações
+          e avança o chaveamento nativamente.
+       3) Dispara o Bracket Engine local (SGIChaveamento.promoverVencedorLocal),
+          que promove o vencedor na árvore do banco JS: cria/libera a próxima
+          partida ou marca "aguardando adversário", recursivamente até o
+          campeão — sem nenhuma chamada ao PHP. */
+    function finalizarLocalmente(resultados) {
+        var totalGols = resultados.reduce(function(s, r) { return s + r.gols; }, 0);
+        if (totalGols === 0) {
+            alert('Não é possível finalizar um jogo com placar 0x0. Registre o placar correto.');
+            return;
+        }
+
+        // 1) Estado imediato na interface
+        resultados.forEach(function(r) {
+            var p = partidasLista.filter(function(x) {
+                return parseInt(x.equipes_id_equipe, 10) === r.id_equipe;
+            })[0];
+            if (p) p.resultado_partida = String(r.gols);
+        });
+        estadoJogo.status_jogo = 'Concluido';
+        pararTimer();
+        renderTudo();
+
+        // 2) Persistência local + fila de sincronização
+        if (!(window.SGIOffline && typeof window.SGIOffline.queueMutation === 'function')) {
+            alert('Sem conexão com o servidor. Tente novamente quando estiver online.');
+            return;
+        }
+        var urlAbsoluta;
+        try { urlAbsoluta = new URL(API + 'lancar_resultado.php', location.href).href; }
+        catch (_) { urlAbsoluta = API + 'lancar_resultado.php'; }
+
+        window.SGIOffline.queueMutation(
+            'POST',
+            urlAbsoluta,
+            JSON.stringify({ id_jogo: idJogo, resultados: resultados }),
+            { 'Content-Type': 'application/json' }
+        ).then(function() {
+            // 3) Avanço imediato da árvore no banco JS temporário
+            if (window.SGIChaveamento && typeof window.SGIChaveamento.promoverVencedorLocal === 'function') {
+                return window.SGIChaveamento.promoverVencedorLocal(idJogo).then(function(r) {
+                    if (!r || !r.promoveu || !r.pai) {
+                        alert('Jogo encerrado offline! Resultado salvo neste dispositivo e será enviado ao servidor quando a conexão voltar.');
+                        return;
+                    }
+                    if (r.pai.eh_campeao && r.pai.status_jogo === 'Concluido') {
+                        alert('Campeão definido offline: a árvore foi concluída neste dispositivo. Tudo será sincronizado com o servidor.');
+                    } else if (r.pai.formada) {
+                        alert('Vencedor avançou! Nova partida liberada: ' + r.pai.nome_display + '.');
+                    } else {
+                        alert('Vencedor aguardando adversário em: ' + r.pai.nome_display + '.');
+                    }
+                }).catch(function() {
+                    alert('Jogo encerrado offline! (Não foi possível calcular a próxima fase agora.)');
+                });
+            }
+            alert('Jogo encerrado offline! O resultado foi salvo neste dispositivo e será enviado ao servidor automaticamente quando a conexão voltar.');
+        }).catch(function() {
+            alert('Resultado aplicado na tela, mas não foi possível registrar no armazenamento local.');
+        });
+    }
+
+    /* Carrega do banco JS temporário uma partida derivada offline (id < 0),
+       tornando-a jogável no placar sem qualquer contato com o servidor. */
+    async function carregarJogoLocalTemporario() {
+        var DL = window.SGIDataLayer;
+        if (!DL || typeof DL.read !== 'function') return false;
+        try {
+            var jogos = await DL.read('jogos');
+            var row = jogos.filter(function(j) { return Number(j.id_jogo) === idJogo; })[0];
+            if (!row) return false;
+
+            estadoJogo = Object.assign({}, row);
+            if (!estadoJogo.nome_modalidade) estadoJogo.nome_modalidade = '';
+
+            var todasPartidas = await DL.read('partidas');
+            partidasLista = todasPartidas.filter(function(p) {
+                return String(p.jogos_id_jogo) === String(idJogo);
+            });
+
+            ehIndividual = false;
+            duracaoJogo = parseInt(estadoJogo.duracao_jogo, 10) || (20 * 60);
+            tempoRestante = duracaoJogo;
+
+            document.getElementById('placar-loading').classList.add('d-none');
+            document.getElementById('placar-conteudo').classList.remove('d-none');
+            renderTudo();
+            return true;
+        } catch (e) {
+            return false;
         }
     }
 
@@ -1136,6 +1245,20 @@ $paginaAtiva = 'dashboard';
             load.classList.add('d-none');
             err.textContent = 'Informe o jogo na URL (?id_jogo=…).';
             err.classList.remove('d-none');
+            return;
+        }
+
+        /* ID temporário: partidas geradas OFFLINE pelo motor de chaveamento
+           recebem id negativo provisório. Elas EXISTEM no banco JS temporário
+           e podem ser jogadas normalmente — carregamos direto das tabelas
+           locais. Só não há dados auxiliares (ocorrências/artilheiro). */
+        if (idJogo < 0) {
+            var carregou = await carregarJogoLocalTemporario();
+            if (!carregou) {
+                load.classList.add('d-none');
+                err.textContent = 'Esta partida foi gerada offline, mas ainda não está disponível neste dispositivo. Sincronize para receber o jogo definitivo.';
+                err.classList.remove('d-none');
+            }
             return;
         }
 

@@ -75,12 +75,33 @@
     function project(item) {
         var info = urlInfo(item.url), data = bodyOf(item), file = info.file, temporary = 'temp_' + item.id;
         if (file === 'jogos.php' && data.id_jogo) return get('jogos', data.id_jogo).then(function (old) { return put('jogos', data.id_jogo, Object.assign({}, old || { id_jogo: data.id_jogo }, data, { _pendente: true })); });
-        if (file === 'lancar_resultado.php' && data.id_jogo) return all('partidas').then(function (partidas) {
-            return Promise.all((data.resultados || []).map(function (r, i) {
-                var old = partidas.filter(function (p) { return String(p.jogos_id_jogo) === String(data.id_jogo) && String(p.equipes_id_equipe) === String(r.id_equipe); })[0];
-                return put('partidas', (old && old.id_partida) || ('temp_partida_' + item.id + '_' + i), Object.assign({}, old || {}, { jogos_id_jogo: data.id_jogo, equipes_id_equipe: r.id_equipe, resultado_partida: r.gols, _pendente: true }));
-            }));
+        // Placar ao vivo (botões +/- do placar): atualiza a partida no banco
+        // local, inclusive em partidas criadas offline (id "mm_local_…").
+        if (file === 'partidas.php' && item.method === 'PUT' && data.id_partida != null) return all('partidas').then(function (ps) {
+            var old = ps.filter(function (p) { return String(p.id_partida) === String(data.id_partida); })[0];
+            return put('partidas', data.id_partida, Object.assign({}, old || { id_partida: data.id_partida }, data, { _pendente: true }));
         });
+        if (file === 'lancar_resultado.php' && data.id_jogo) return Promise.all([
+            all('partidas').then(function (partidas) {
+                return Promise.all((data.resultados || []).map(function (r, i) {
+                    var old = partidas.filter(function (p) { return String(p.jogos_id_jogo) === String(data.id_jogo) && String(p.equipes_id_equipe) === String(r.id_equipe); })[0];
+                    return put('partidas', (old && old.id_partida) || ('temp_partida_' + item.id + '_' + i), Object.assign({}, old || {}, { jogos_id_jogo: data.id_jogo, equipes_id_equipe: r.id_equipe, resultado_partida: r.gols, _pendente: true }));
+                }));
+            }),
+            // Espelha lancar_resultado.php: ao concluir um jogo, o status passa
+            // para 'Concluido' TAMBÉM no banco temporário JS. Sem isto, a tela
+            // do placar recarregava offline com o status antigo ("Iniciado") e
+            // o mesário não conseguia finalizar a partida.
+            get('jogos', data.id_jogo).then(function (jogo) {
+                var rs = data.resultados || [];
+                var total = rs.reduce(function (s, r) { return s + (parseInt(r.gols, 10) || 0); }, 0);
+                var empate = rs.length >= 2 && (parseInt(rs[0].gols, 10) || 0) === (parseInt(rs[1].gols, 10) || 0);
+                if (!jogo) jogo = { id_jogo: data.id_jogo };
+                if (total > 0 && !empate) jogo.status_jogo = 'Concluido';
+                jogo._pendente = true;
+                return put('jogos', data.id_jogo, jogo);
+            })
+        ]);
         if (file === 'artilheiro.php' && item.method === 'POST') return put('atletas', temporary, Object.assign({ id_artilheiro: temporary, _pendente: true }, data));
         if (file === 'ocorrencias.php' && item.method === 'POST') return put('ocorrencias', temporary, Object.assign({ id_ocorrencia: temporary, _pendente: true }, data));
         if (file === 'ocorrencias_turmas.php' && item.method === 'POST') return put('ocorrencias_turmas', temporary, Object.assign({ id_ocorrencia: temporary, _pendente: true }, data));
@@ -108,7 +129,10 @@
         var method = String((init && init.method) || (input && input.method) || 'GET').toUpperCase();
         if (method === 'GET' && navigator.onLine === false) {
             var info = urlInfo(url);
-            if (info.file === 'jogos.php' && window.SGIOffline && window.SGIOffline.hasPending && window.SGIOffline.hasPending()) {
+            // jogos.php e partidas.php priorizam as tabelas locais quando há
+            // mutações pendentes: assim o placar reflete na hora o que foi
+            // lançado/finalizado offline, e não o snapshot antigo por URL.
+            if ((info.file === 'jogos.php' || info.file === 'partidas.php') && window.SGIOffline && window.SGIOffline.hasPending && window.SGIOffline.hasPending()) {
                 return localGet(url).then(function (res) {
                     if (res) return res;
                     return baseFetch(input, init);
@@ -147,6 +171,12 @@
         },
         capture: capture,
         read: function (store) { return all(store); },
-        localGet: localGet
+        localGet: localGet,
+        /* Primitivas usadas pelo motor de chaveamento local:
+           upsert grava/mergeia uma linha em qualquer store; removeRecord
+           exclui uma linha por id (ex.: limpeza de derivados locais após a
+           sincronização, quando o servidor passa a ser a fonte da verdade). */
+        upsert: put,
+        removeRecord: remove
     };
 })();

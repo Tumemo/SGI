@@ -37,6 +37,8 @@ if (!headers_sent()) {
     <script src="../componentes/Comandooffline.js?v=<?= filemtime(__DIR__ . '/../../componentes/Comandooffline.js') ?>"></script>
     <script src="../componentes/mesario-offline.js?v=<?= filemtime(__DIR__ . '/../../componentes/mesario-offline.js') ?>"></script>
     <?php endif; ?>
+    <!-- Motor híbrido de chaveamento (avança a árvore localmente quando offline). -->
+    <script src="../componentes/chaveamento-engine.js?v=<?= @filemtime(__DIR__ . '/../../componentes/chaveamento-engine.js') ?: time() ?>"></script>
     <style>
         body { background-color: #f8f9fa; }
         <?= $cssExtra ?>

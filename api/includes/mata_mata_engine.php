@@ -809,7 +809,10 @@ function sgi_mm_gerar_disputa_3_lugar(mysqli $conn, int $idModalidade): void
     }
     $existente->close();
 
-    $st = $conn->prepare("SELECT id_jogo, status_jogo, nome_jogo FROM jogos WHERE modalidades_id_modalidade = ? AND nome_jogo LIKE 'MM:2:%'");
+    // Os perdedores que disputam o 3º lugar são os das SEMIFINAIS (MM:4:%).
+    // A verificação de gatilho continua sendo a conclusão da fase MM:2 (final),
+    // momento em que ambas as semifinais já estão necessariamente encerradas.
+    $st = $conn->prepare("SELECT id_jogo, status_jogo, nome_jogo FROM jogos WHERE modalidades_id_modalidade = ? AND nome_jogo LIKE 'MM:4:%'");
     $st->bind_param('i', $idModalidade);
     $st->execute();
     $semifinals = $st->get_result()->fetch_all(MYSQLI_ASSOC);
