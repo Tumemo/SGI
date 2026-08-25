@@ -110,8 +110,12 @@
 
                 if (/lancar_resultado\.php/.test(url)) {
                     ops.push({ tipo: 'resultado', quando: item.createdAt || 0, dados: dados });
+                } else if (/\/partidas\.php/.test(url) && String(item.method || '').toUpperCase() === 'POST') {
+                    ops.push({ tipo: 'partida_resultado', quando: item.createdAt || 0, dados: dados });
                 } else if (/\/jogos\.php/.test(url) && String(item.method || '').toUpperCase() === 'PUT') {
                     ops.push({ tipo: 'jogo_update', quando: item.createdAt || 0, dados: dados });
+                } else if (/\/chaveamento\.php/.test(url) && String(item.method || '').toUpperCase() === 'POST' && dados.tipo_modalidade === 'individual') {
+                    ops.push({ tipo: 'ind_ranking', quando: item.createdAt || 0, dados: dados });
                 }
             });
             ops.sort(function (a, b) { return a.quando - b.quando; });
@@ -150,6 +154,39 @@
                 } else {
                     alterou = true; // placar de jogo já concluído pode ter mudado o vencedor
                 }
+            } else if (op.tipo === 'partida_resultado') {
+                var idPart = op.dados.id_partida;
+                var golsNovos = Number(op.dados.resultado_final) || 0;
+                var jogoAlvo = null;
+                for (var k in mapaPorId) {
+                    var candidato = mapaPorId[k];
+                    if ((candidato.equipes || []).some(function (e) {
+                        return String(e.id_partida) === String(idPart);
+                    })) {
+                        jogoAlvo = candidato;
+                        break;
+                    }
+                }
+                if (!jogoAlvo) return;
+                (jogoAlvo.equipes || []).forEach(function (e) {
+                    if (String(e.id_partida) === String(idPart)) {
+                        if ((Number(e.gols) || 0) !== golsNovos) {
+                            e.gols = golsNovos;
+                            alterou = true;
+                        }
+                    }
+                });
+                if (!jogoEncerrado(jogoAlvo.status_jogo)) {
+                    var totalPR = (jogoAlvo.equipes || []).reduce(function (s, e) { return s + (Number(e.gols) || 0); }, 0);
+                    var empatePR = (jogoAlvo.equipes || []).length >= 2 &&
+                        (Number(jogoAlvo.equipes[0].gols) || 0) === (Number(jogoAlvo.equipes[1].gols) || 0);
+                    if (totalPR > 0 && !empatePR) {
+                        jogoAlvo.status_jogo = 'Concluido';
+                        alterou = true;
+                    }
+                } else {
+                    alterou = true;
+                }
             } else if (op.tipo === 'jogo_update') {
                 var j2 = mapaPorId[op.dados.id_jogo];
                 if (!j2) return;
@@ -159,6 +196,16 @@
                         alterou = true;
                     }
                 });
+            } else if (op.tipo === 'ind_ranking') {
+                var tagInd = 'IND:' + op.dados.id_modalidade;
+                for (var kId in mapaPorId) {
+                    var ji = mapaPorId[kId];
+                    if (ji.nome_jogo === tagInd && !jogoEncerrado(ji.status_jogo)) {
+                        ji.status_jogo = 'Concluido';
+                        alterou = true;
+                        break;
+                    }
+                }
             }
         });
         return alterou;
@@ -287,13 +334,15 @@
             var tagIrmaoB = mmTag(meta.largura, slotIrmao(meta.slot), 'B');
             var irmao = mapaTag[tagIrmaoA] || mapaTag[tagIrmaoB];
 
+            if (irmao && !jogoEncerrado(irmao.status_jogo)) return;
+
             var tagPai = mmTag(proximaLargura(meta.largura), slotPai(meta.slot), 'N');
             var pai = garantirJogoPorTag(tagPai, { largura: proximaLargura(meta.largura), slot: slotPai(meta.slot) });
             garantirEquipe(pai, w1);
 
             if (!irmao) {
                 if (tentarAutoConcluir(pai)) fila.push(pai);
-            } else if (jogoEncerrado(irmao.status_jogo)) {
+            } else {
                 var metaIrmao = mmParse(irmao.nome_jogo) || { kind: 'N' };
                 var w2 = (metaIrmao.kind === 'B')
                     ? ((irmao.equipes && irmao.equipes[0]) ? Number(irmao.equipes[0].id_equipe) : null)

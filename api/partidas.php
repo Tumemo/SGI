@@ -72,38 +72,111 @@ case 'POST':
             break;
         }
 
-        // Inicia uma transação para garantir que o resultado e o status do jogo mudem juntos
+        $idPartidaPost = (int) $data->id_partida;
+        $golsPost = (int) $data->resultado_final;
+
         $conn->begin_transaction();
 
         try {
-            // 1. Atualiza o placar da partida específica
-            $sqlPlacar = "UPDATE partidas SET resultado_partida = ? WHERE id_partida = ?";
-            $stmt1 = $conn->prepare($sqlPlacar);
-            $stmt1->bind_param("ii", $data->resultado_final, $data->id_partida);
-            $stmt1->execute();
-
-            // 2. Status do jogo (ENUM do schema: Concluido)
-            $sqlJogo = 'SELECT jogos_id_jogo FROM partidas WHERE id_partida = ? LIMIT 1';
-            $stJ = $conn->prepare($sqlJogo);
-            $stJ->bind_param('i', $data->id_partida);
+            // 1. Descobre o jogo associado a esta partida
+            $stJ = $conn->prepare('SELECT jogos_id_jogo FROM partidas WHERE id_partida = ? LIMIT 1');
+            $stJ->bind_param('i', $idPartidaPost);
             $stJ->execute();
             $rowJ = $stJ->get_result()->fetch_assoc();
             $stJ->close();
             $idJogoPart = (int) ($rowJ['jogos_id_jogo'] ?? 0);
 
-            $sqlStatus = "UPDATE jogos SET status_jogo = 'Concluido' WHERE id_jogo = ?";
-            $stmt2 = $conn->prepare($sqlStatus);
-            $stmt2->bind_param('i', $idJogoPart);
-            $stmt2->execute();
-            $stmt2->close();
+            if ($idJogoPart <= 0) {
+                $conn->rollback();
+                http_response_code(400);
+                echo json_encode(["success" => false, "message" => "Partida não associada a nenhum jogo."]);
+                break;
+            }
 
-            if ($idJogoPart > 0) {
+            // 2. Verifica se o jogo já estava concluído (para detectar mudança de vencedor)
+            $stStatus = $conn->prepare("SELECT status_jogo FROM jogos WHERE id_jogo = ?");
+            $stStatus->bind_param('i', $idJogoPart);
+            $stStatus->execute();
+            $rowStatus = $stStatus->get_result()->fetch_assoc();
+            $stStatus->close();
+            $jaConcluidoPost = $rowStatus && ($rowStatus['status_jogo'] === 'Concluido' || $rowStatus['status_jogo'] === 'Finalizado');
+
+            $winnerAntigoPost = null;
+            if ($jaConcluidoPost) {
+                $partidasAntigasPost = sgi_mm_carregar_partidas_jogo($conn, $idJogoPart);
+                $winnerAntigoPost = sgi_mm_vencedor_de_partidas($partidasAntigasPost);
+            }
+
+            // 3. Atualiza o placar desta partida específica
+            $sqlPlacar = "UPDATE partidas SET resultado_partida = ? WHERE id_partida = ?";
+            $stmt1 = $conn->prepare($sqlPlacar);
+            $stmt1->bind_param("ii", $golsPost, $idPartidaPost);
+            $stmt1->execute();
+            $stmt1->close();
+
+            // 4. Validações (espelham lancar_resultado.php)
+            $partidasJogoPost = sgi_mm_carregar_partidas_jogo($conn, $idJogoPart);
+            $totalGolsPost = 0;
+            $golsArrayPost = [];
+            foreach ($partidasJogoPost as $pj) {
+                $totalGolsPost += $pj['resultado_partida'];
+                $golsArrayPost[] = $pj['resultado_partida'];
+            }
+
+            if (!$jaConcluidoPost) {
+                if ($totalGolsPost === 0) {
+                    $conn->rollback();
+                    echo json_encode(['success' => false, 'message' => 'Não é possível finalizar um jogo com placar 0x0. Registre o placar correto.'], JSON_UNESCAPED_UNICODE);
+                    exit;
+                }
+                if (count($golsArrayPost) >= 2 && $golsArrayPost[0] === $golsArrayPost[1]) {
+                    $conn->rollback();
+                    echo json_encode(['success' => false, 'message' => 'O jogo não pode terminar empatado! Registre o placar correto.'], JSON_UNESCAPED_UNICODE);
+                    exit;
+                }
+
+                // Primeira finalização: marca Concluido e avança o chaveamento
+                $stmtStatusUpd = $conn->prepare("UPDATE jogos SET status_jogo = 'Concluido' WHERE id_jogo = ?");
+                $stmtStatusUpd->bind_param('i', $idJogoPart);
+                $stmtStatusUpd->execute();
+                $stmtStatusUpd->close();
+
                 sgi_chaveamento_processar_avanco($conn, $idJogoPart);
+            } else {
+                // Já estava concluído: valida novo placar e detecta mudança de vencedor
+                if ($totalGolsPost === 0) {
+                    $conn->rollback();
+                    echo json_encode(['success' => false, 'message' => 'Não é possível alterar o placar de um jogo finalizado para 0x0.'], JSON_UNESCAPED_UNICODE);
+                    exit;
+                }
+                if (count($golsArrayPost) >= 2 && $golsArrayPost[0] === $golsArrayPost[1]) {
+                    $conn->rollback();
+                    echo json_encode(['success' => false, 'message' => 'O jogo não pode terminar empatado! Registre o placar correto.'], JSON_UNESCAPED_UNICODE);
+                    exit;
+                }
+
+                $winnerNovoPost = sgi_mm_vencedor_de_partidas($partidasJogoPost);
+
+                if ($winnerAntigoPost !== null && $winnerNovoPost !== null && (int) $winnerAntigoPost !== (int) $winnerNovoPost) {
+                    $stGPost = $conn->prepare('SELECT nome_jogo, modalidades_id_modalidade FROM jogos WHERE id_jogo = ? LIMIT 1');
+                    $stGPost->bind_param('i', $idJogoPart);
+                    $stGPost->execute();
+                    $jogoInfoPost = $stGPost->get_result()->fetch_assoc();
+                    $stGPost->close();
+
+                    if ($jogoInfoPost) {
+                        $metaPost = sgi_mm_parse($jogoInfoPost['nome_jogo'] ?? '');
+                        $idModalidadePost = (int) $jogoInfoPost['modalidades_id_modalidade'];
+                        if ($metaPost && $metaPost['largura'] > 1) {
+                            sgi_chaveamento_rebuild_from_round($conn, $idModalidadePost, $metaPost['largura']);
+                        }
+                    }
+                }
             }
 
             $conn->commit();
             echo json_encode(["success" => true, "message" => "Resultado salvo e jogo finalizado!"]);
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             $conn->rollback();
             http_response_code(500);
             echo json_encode(["success" => false, "message" => "Erro ao processar: " . $e->getMessage()]);

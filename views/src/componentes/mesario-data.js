@@ -105,6 +105,18 @@
         if (file === 'artilheiro.php' && item.method === 'POST') return put('atletas', temporary, Object.assign({ id_artilheiro: temporary, _pendente: true }, data));
         if (file === 'ocorrencias.php' && item.method === 'POST') return put('ocorrencias', temporary, Object.assign({ id_ocorrencia: temporary, _pendente: true }, data));
         if (file === 'ocorrencias_turmas.php' && item.method === 'POST') return put('ocorrencias_turmas', temporary, Object.assign({ id_ocorrencia: temporary, _pendente: true }, data));
+        if (file === 'chaveamento.php' && item.method === 'POST' && data.tipo_modalidade === 'individual' && data.ranking && data.id_modalidade) {
+            var tagInd = 'IND:' + data.id_modalidade;
+            return all('jogos').then(function (jogos) {
+                var indJogo = jogos.filter(function (j) { return j.nome_jogo === tagInd; })[0];
+                if (!indJogo) {
+                    indJogo = { id_jogo: tagInd, nome_jogo: tagInd, modalidades_id_modalidade: data.id_modalidade };
+                }
+                indJogo.status_jogo = 'Concluido';
+                indJogo._pendente = true;
+                return put('jogos', indJogo.id_jogo, indJogo);
+            });
+        }
         return Promise.resolve();
     }
     function localGet(url) {

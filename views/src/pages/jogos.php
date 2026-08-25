@@ -819,8 +819,25 @@ $paginaAtiva = 'dashboard';
           partida ou marca "aguardando adversário", recursivamente até o
           campeão — sem nenhuma chamada ao PHP. */
     function finalizarLocalmente(resultados) {
+        // --- Lock contra finalização duplicada (multi-abas / duplo-clique) ---
+        var lockKey = 'sgi_finalizando_' + idJogo;
+        var agora = Date.now();
+        function liberarLock() { try { localStorage.removeItem(lockKey); } catch (e) {} }
+        try {
+            var lockData = localStorage.getItem(lockKey);
+            if (lockData) {
+                var lock = JSON.parse(lockData);
+                if (agora - lock.ts < 60000) {
+                    alert('Este jogo está sendo finalizado. Aguarde um momento.');
+                    return;
+                }
+            }
+        } catch (e) { /* localStorage indisponível, ignora lock */ }
+        try { localStorage.setItem(lockKey, JSON.stringify({ ts: agora })); } catch (e) {}
+
         var totalGols = resultados.reduce(function(s, r) { return s + r.gols; }, 0);
         if (totalGols === 0) {
+            liberarLock();
             alert('Não é possível finalizar um jogo com placar 0x0. Registre o placar correto.');
             return;
         }
@@ -838,6 +855,7 @@ $paginaAtiva = 'dashboard';
 
         // 2) Persistência local + fila de sincronização
         if (!(window.SGIOffline && typeof window.SGIOffline.queueMutation === 'function')) {
+            liberarLock();
             alert('Sem conexão com o servidor. Tente novamente quando estiver online.');
             return;
         }
@@ -851,6 +869,8 @@ $paginaAtiva = 'dashboard';
             JSON.stringify({ id_jogo: idJogo, resultados: resultados }),
             { 'Content-Type': 'application/json' }
         ).then(function() {
+            // Lock liberado — mutação já está na fila
+            liberarLock();
             // 3) Avanço imediato da árvore no banco JS temporário
             if (window.SGIChaveamento && typeof window.SGIChaveamento.promoverVencedorLocal === 'function') {
                 return window.SGIChaveamento.promoverVencedorLocal(idJogo).then(function(r) {
@@ -871,6 +891,7 @@ $paginaAtiva = 'dashboard';
             }
             alert('Jogo encerrado offline! O resultado foi salvo neste dispositivo e será enviado ao servidor automaticamente quando a conexão voltar.');
         }).catch(function() {
+            liberarLock();
             alert('Resultado aplicado na tela, mas não foi possível registrar no armazenamento local.');
         });
     }
@@ -1223,6 +1244,9 @@ $paginaAtiva = 'dashboard';
             if (!data.success) throw new Error(data.message || 'Erro ao salvar.');
             msg.innerHTML = '<span class="text-success fw-bold">Ranking salvo com sucesso!</span>';
             estadoJogo.status_jogo = 'Concluido';
+            if (window.SGIDataLayer && window.SGIDataLayer.upsert) {
+                await window.SGIDataLayer.upsert('jogos', estadoJogo.id_jogo, Object.assign({}, estadoJogo, { _pendente: true }));
+            }
             await carregarIndDados();
             renderTudo();
         } catch (e) {

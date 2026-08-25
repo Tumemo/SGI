@@ -130,6 +130,26 @@ try {
             $jogosProcessados++;
         }
 
+        // --- PASSO 2: Processar avanço do chaveamento para jogos concluídos ---
+        // Após inserir/atualizar todos os jogos e partidas, percorre os jogos
+        // concluídos e dispara o avanço recursivo (pai → bye → campeão),
+        // espelhando o comportamento de lancar_resultado.php.
+        $stAvanco = $conn->prepare(
+            "SELECT id_jogo FROM jogos
+             WHERE modalidades_id_modalidade = ?
+               AND nome_jogo LIKE 'MM:%'
+               AND (status_jogo = 'Concluido' OR status_jogo = 'Finalizado')
+             ORDER BY id_jogo ASC"
+        );
+        $stAvanco->bind_param('i', $idModalidade);
+        $stAvanco->execute();
+        $jogosConcluidosAvanco = $stAvanco->get_result()->fetch_all(MYSQLI_ASSOC);
+        $stAvanco->close();
+
+        foreach ($jogosConcluidosAvanco as $jc) {
+            sgi_chaveamento_processar_avanco($conn, (int) $jc['id_jogo']);
+        }
+
         // Confirma a transação
         $conn->commit();
 
