@@ -208,6 +208,19 @@
         });
     }
 
+    function isLoginHtml(html) {
+        if (!html || typeof html !== 'string') return false;
+        var h = html.toLowerCase();
+        return h.indexOf('ipt-matricula') > -1 ||
+            h.indexOf('form_mobile') > -1 ||
+            h.indexOf('form_desktop') > -1 ||
+            h.indexOf('api/login.php') > -1 ||
+            h.indexOf('acesso ao sistema') > -1 ||
+            h.indexOf('painel de acesso') > -1 ||
+            h.indexOf('sgi - login') > -1 ||
+            (h.indexOf('matricula') > -1 && h.indexOf('senha') > -1);
+    }
+
     function purgarPaginasInvalidas() {
         return openDB().then(function (db) {
             return new Promise(function (resolve) {
@@ -217,7 +230,7 @@
                 req.onsuccess = function () {
                     var rows = req.result || [];
                     rows.forEach(function (r) {
-                        if (r && r.html && (r.html.indexOf('ipt-matricula') > -1 || r.html.indexOf('form_mobile') > -1 || r.html.indexOf('Acesso ao sistema') > -1)) {
+                        if (r && isLoginHtml(r.html)) {
                             store.delete(r.key);
                         }
                     });
@@ -238,8 +251,7 @@
                 r.onsuccess = function () {
                     var prefixo = SESSION + '|';
                     var itens = (r.result || []).filter(function (item) {
-                        return item && item.key.indexOf(prefixo) === 0 && item.tela === tela &&
-                            !(item.html && (item.html.indexOf('ipt-matricula') > -1 || item.html.indexOf('form_mobile') > -1 || item.html.indexOf('Acesso ao sistema') > -1));
+                        return item && item.key.indexOf(prefixo) === 0 && item.tela === tela && !isLoginHtml(item.html);
                     }).sort(function (a, b) { return (b.savedAt || 0) - (a.savedAt || 0); });
                     resolve(itens[0] || null);
                 };
@@ -393,11 +405,11 @@
     /* ==================== Captura / download das telas ==================== */
 
     function extrairScreen(html) {
-        if (typeof html === 'string' && (html.indexOf('ipt-matricula') > -1 || html.indexOf('form_mobile') > -1 || html.indexOf('Acesso ao sistema') > -1)) {
+        if (isLoginHtml(html)) {
             throw new Error('Página de login capturada indevidamente.');
         }
         var doc = new DOMParser().parseFromString(html, 'text/html');
-        if (doc.querySelector('.ipt-matricula') || doc.querySelector('#form_mobile') || doc.querySelector('#form_desktop')) {
+        if (doc.querySelector('.ipt-matricula, #form_mobile, #form_desktop, form[action*="login"]')) {
             throw new Error('Página de login capturada indevidamente.');
         }
         var partes = [];
@@ -464,13 +476,13 @@
     function obterRegistro(tela, params) {
         var key = chaveTela(tela, params);
         return idbGet(key).then(function (rec) {
-            if (rec && rec.html && (rec.html.indexOf('ipt-matricula') > -1 || rec.html.indexOf('form_mobile') > -1 || rec.html.indexOf('Acesso ao sistema') > -1)) {
+            if (rec && isLoginHtml(rec.html)) {
                 return idbRemove(key).then(function () { return null; });
             }
             if (rec) return rec;
             function alternativaOuErro() {
                 return idbFindTela(tela).then(function (alternativa) {
-                    if (alternativa && alternativa.html && (alternativa.html.indexOf('ipt-matricula') > -1 || alternativa.html.indexOf('form_mobile') > -1 || alternativa.html.indexOf('Acesso ao sistema') > -1)) {
+                    if (alternativa && isLoginHtml(alternativa.html)) {
                         return null;
                     }
                     if (alternativa) return alternativa;

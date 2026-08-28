@@ -347,7 +347,11 @@
                 var w2 = (metaIrmao.kind === 'B')
                     ? ((irmao.equipes && irmao.equipes[0]) ? Number(irmao.equipes[0].id_equipe) : null)
                     : vencedorDeEquipes(irmao.equipes);
-                if (w2 !== null) garantirEquipe(pai, w2);
+                if (w2 !== null) {
+                    pai.equipes = [];
+                    garantirEquipe(pai, w1);
+                    garantirEquipe(pai, w2);
+                }
             }
 
             if (meta.largura === 2) verificarDisputaTerceiro();
@@ -521,6 +525,9 @@
                     });
                 }
                 var fonteRede = navigator.onLine ? 'remota' : 'cache';
+                if (navigator.onLine) {
+                    purgarDerivadosLocais();
+                }
                 return finalizar(data.jogos || [], fonteRede);
             });
 
@@ -602,9 +609,11 @@
 
     function sincronizar() {
         if (!window.SGIOffline || typeof window.SGIOffline.syncNow !== 'function') {
-            return Promise.resolve(0);
+            return purgarDerivadosLocais().then(function () { return 0; });
         }
-        return window.SGIOffline.syncNow();
+        return window.SGIOffline.syncNow().then(function (res) {
+            return purgarDerivadosLocais().then(function () { return res; });
+        });
     }
 
     /* ================= PROMOÇÃO DE FASE LOCAL (Bracket Engine) =================
@@ -791,21 +800,50 @@
     }
 
     /* Após sincronizar, o servidor reconstrói a árvore com IDs definitivos.
-       As partidas derivadas locais (_local) então viram lixo — remove-as para
-       evitar duplicidade nas leituras locais. */
+       As partidas derivadas locais (_local ou id_jogo < 0) então viram lixo — remove-as para
+       evitar duplicidade nas leituras locais e expurga os arquivos temporários de sgi_pages. */
     function purgarDerivadosLocais() {
         var DL = window.SGIDataLayer;
-        if (!DL || typeof DL.read !== 'function' || typeof DL.removeRecord !== 'function') {
-            return Promise.resolve();
+        var pLimpeza = Promise.resolve();
+        if (DL && typeof DL.read === 'function' && typeof DL.removeRecord === 'function') {
+            pLimpeza = Promise.all(['jogos', 'partidas'].map(function (store) {
+                return DL.read(store).then(function (rows) {
+                    return Promise.all((rows || []).filter(function (r) {
+                        return r && (r._local || Number(r.id_jogo) < 0 || String(r.id_partida || '').indexOf('mm_local_') === 0);
+                    }).map(function (r) {
+                        var id = (store === 'partidas') ? r.id_partida : r.id_jogo;
+                        return DL.removeRecord(store, id);
+                    }));
+                });
+            }));
         }
-        return Promise.all(['jogos', 'partidas'].map(function (store) {
-            return DL.read(store).then(function (rows) {
-                return Promise.all(rows.filter(function (r) { return r._local; }).map(function (r) {
-                    var id = (store === 'partidas') ? r.id_partida : r.id_jogo;
-                    return DL.removeRecord(store, id);
-                }));
-            });
-        })).catch(function () { /* noop */ });
+
+        return pLimpeza.then(function () {
+            if (window.indexedDB) {
+                return new Promise(function (resolve) {
+                    try {
+                        var req = indexedDB.open('sgi_pages', 1);
+                        req.onsuccess = function (e) {
+                            var db = e.target.result;
+                            if (!db.objectStoreNames.contains('paginas')) return resolve();
+                            var tx = db.transaction('paginas', 'readwrite');
+                            var store = tx.objectStore('paginas');
+                            var rAll = store.getAll();
+                            rAll.onsuccess = function () {
+                                (rAll.result || []).forEach(function (row) {
+                                    if (row && row.key && (row.key.indexOf('jogos:-') > -1 || row.key.indexOf('id_jogo=-') > -1)) {
+                                        store.delete(row.key);
+                                    }
+                                });
+                            };
+                            tx.oncomplete = resolve;
+                            tx.onerror = resolve;
+                        };
+                        req.onerror = resolve;
+                    } catch (err) { resolve(); }
+                });
+            }
+        }).catch(function () { /* noop */ });
     }
 
     /* Volta de conexão: envia a fila ao PHP e limpa os derivados locais. */

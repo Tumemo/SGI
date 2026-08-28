@@ -496,6 +496,21 @@ $paginaAtiva = 'dashboard';
                     if (!p.nome_fantasia_turma) p.nome_fantasia_turma = t.nome_fantasia_turma || t.nome_turma;
                 }
             });
+
+            if (!ehIndividual && Array.isArray(partidasLista) && partidasLista.length > 2) {
+                var vistasEq = {};
+                var filtradas = [];
+                for (var i = partidasLista.length - 1; i >= 0; i--) {
+                    var item = partidasLista[i];
+                    var idEq = String(item.equipes_id_equipe || '');
+                    if (idEq && !vistasEq[idEq]) {
+                        vistasEq[idEq] = true;
+                        filtradas.unshift(item);
+                        if (filtradas.length === 2) break;
+                    }
+                }
+                if (filtradas.length > 0) partidasLista = filtradas;
+            }
         } catch (_) {}
     }
 

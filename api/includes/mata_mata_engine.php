@@ -544,6 +544,11 @@ function sgi_chaveamento_processar_avanco(mysqli $conn, int $idJogo): void
     }
 
     $idPai = (int) $existente['id_jogo'];
+    $stClean = $conn->prepare("DELETE FROM partidas WHERE jogos_id_jogo = ? AND equipes_id_equipe NOT IN (?, ?)");
+    $stClean->bind_param('iii', $idPai, $w1, $w2);
+    $stClean->execute();
+    $stClean->close();
+
     sgi_mm_garantir_partida_equipe($conn, $idPai, $w1);
     sgi_mm_garantir_partida_equipe($conn, $idPai, $w2);
 
