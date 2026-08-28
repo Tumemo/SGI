@@ -317,11 +317,19 @@ $isMesario = $nivelUsuario === 2;
         return;
     }
 
-    if (idInterclasse && String(idInterclasse) !== idAtivoMesario) {
-        window.location.replace('./dashboard.php?id=' + idAtivoMesario);
-        return;
+    if (!idInterclasse || String(idInterclasse) !== idAtivoMesario) {
+        try {
+            window.history.replaceState(null, '', './dashboard.php?id=' + idAtivoMesario);
+        } catch (_) {}
     }
     idInterclasse = idAtivoMesario;
+
+    const linkAgenda = document.getElementById('linkAgenda');
+    if (linkAgenda) linkAgenda.href = 'edicao_agenda.php?id=' + idAtivoMesario;
+    const linkChaveamentos = document.getElementById('linkChaveamentos');
+    if (linkChaveamentos) linkChaveamentos.href = 'chaveamento_arvore.php?id=' + idAtivoMesario;
+    const linkOcorrencias = document.getElementById('linkOcorrencias');
+    if (linkOcorrencias) linkOcorrencias.href = 'ocorrencias.php?id=' + idAtivoMesario;
     <?php else: ?>
     if (!idInterclasse) {
         const ativo = await window.SGIInterclasse.getActiveInterclasse();

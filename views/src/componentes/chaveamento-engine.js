@@ -751,8 +751,9 @@
                                 jogos_id_jogo: b.id_jogo,
                                 equipes_id_equipe: eq.id_equipe,
                                 resultado_partida: eq.gols || 0,
-                                nome_turma: eq.nome_turma || '',
-                                nome_fantasia_turma: eq.nome_fantasia || eq.nome_equipe || '',
+                                id_turma: eq.id_turma || eq.turmas_id_turma || (eq.turma && eq.turma.id_turma) || null,
+                                nome_turma: eq.nome_turma || (eq.turma && eq.turma.nome_turma) || '',
+                                nome_fantasia_turma: eq.nome_fantasia || eq.nome_fantasia_turma || eq.nome_equipe || '',
                                 nome_equipe: eq.nome_equipe || '',
                                 _local: true,
                                 _pendente: true

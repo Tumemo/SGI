@@ -10,9 +10,30 @@ switch ($method) {
         if (!empty($_GET['acao']) && $_GET['acao'] === 'listar_atletas') {
             $idJogo = isset($_GET['id_jogo']) ? intval($_GET['id_jogo']) : 0;
             $idTurma = isset($_GET['id_turma']) ? intval($_GET['id_turma']) : 0;
-            if ($idJogo <= 0 || $idTurma <= 0) {
+            if ($idTurma <= 0) {
                 http_response_code(400);
-                echo json_encode(["success" => false, "message" => "id_jogo e id_turma são obrigatórios."]);
+                echo json_encode(["success" => false, "message" => "id_turma é obrigatório."]);
+                break;
+            }
+            if ($idJogo <= 0) {
+                $sql = "SELECT DISTINCT u.id_usuario, u.nome_usuario, u.matricula_usuario
+                        FROM usuarios u
+                        INNER JOIN equipes_has_usuarios ehu ON ehu.usuarios_id_usuario = u.id_usuario
+                        INNER JOIN equipes e ON e.id_equipe = ehu.equipes_id_equipe
+                        WHERE e.turmas_id_turma = ?
+                          AND u.status_usuario = '1' AND u.nivel_usuario = '3'
+                          AND u.id_usuario NOT IN (
+                            SELECT o2.usuarios_id_usuario
+                            FROM ocorrencias o2
+                            WHERE o2.titulo_ocorrencia = 'Suspensao'
+                              AND o2.status_ocorrencia = '1'
+                          )
+                        ORDER BY u.nome_usuario ASC";
+                $stmt = $conn->prepare($sql);
+                $stmt->bind_param("i", $idTurma);
+                $stmt->execute();
+                $res = $stmt->get_result();
+                echo json_encode(["success" => true, "atletas" => $res->fetch_all(MYSQLI_ASSOC)]);
                 break;
             }
             $likeJogo = '%[JOGO:' . $idJogo . ']%';

@@ -120,6 +120,10 @@ $method = $_SERVER['REQUEST_METHOD'];
 
 switch ($method) {
     case 'GET':
+        if (isset($_GET['id_jogo']) && (int)$_GET['id_jogo'] < 0) {
+            echo json_encode([]);
+            break;
+        }
         $filtro = aplicarFiltrosJogos();
 
         $sql = "SELECT 
@@ -273,6 +277,12 @@ switch ($method) {
             break;
         }
 
+        $id_jogo_val = (int)$data->id_jogo;
+        if ($id_jogo_val < 0) {
+            echo json_encode(["success" => true, "offline" => true, "message" => "Jogo temporário offline registrado."]);
+            break;
+        }
+
         if ($nivel === 2 && (isset($data->data_jogo) || isset($data->locais_id_local) || isset($data->modalidades_id_modalidade))) {
             http_response_code(403);
             echo json_encode(["success" => false, "message" => "Mesários só podem alterar o status ou placar do jogo."]);
@@ -280,7 +290,6 @@ switch ($method) {
         }
 
         // Buscar estado atual do jogo
-        $id_jogo_val = (int)$data->id_jogo;
         $ck = $conn->prepare("SELECT data_jogo, inicio_jogo, termino_jogo, locais_id_local, duracao_jogo, tempo_extra_jogo, data_inicio_real FROM jogos WHERE id_jogo = ?");
         $ck->bind_param("i", $id_jogo_val);
         $ck->execute();
@@ -288,8 +297,7 @@ switch ($method) {
         $ck->close();
 
         if (!$cur) {
-            http_response_code(404);
-            echo json_encode(["success" => false, "message" => "Jogo não encontrado."]);
+            echo json_encode(["success" => true, "offline" => true, "message" => "Jogo temporário registrado localmente."]);
             break;
         }
 

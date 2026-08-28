@@ -33,10 +33,22 @@
     }
 
     var dbPromise = null;
-    var state = { online: navigator.onLine !== false, pending: 0 };
+    var state = { online: navigator.onLine !== false, softOffline: false, softOfflineUntil: 0, pending: 0 };
     var listeners = [];
 
     function noop() {}
+
+    function marcarSoftOffline() {
+        state.softOffline = true;
+        state.softOfflineUntil = Date.now() + 15000;
+    }
+
+    function estaSoftOffline() {
+        if (state.softOffline && Date.now() > state.softOfflineUntil) {
+            state.softOffline = false;
+        }
+        return state.softOffline;
+    }
 
     function resolveUrl(url) {
         try { return new URL(url, window.location.href).href; } catch (e) { return String(url); }
@@ -83,6 +95,39 @@
                 var req = tx.objectStore(STORE_GET).get(key);
                 req.onsuccess = function () { resolve(req.result || null); };
                 req.onerror = function () { reject(req.error); };
+            });
+        });
+    }
+
+    function idbFindUrl(url) {
+        var pathQuery = '';
+        var idTurmaMatch = null;
+        try {
+            var parsed = new URL(url);
+            pathQuery = parsed.pathname + parsed.search;
+            if (pathQuery.indexOf('acao=listar_atletas') > -1) {
+                var matchT = parsed.searchParams.get('id_turma');
+                if (matchT) idTurmaMatch = 'id_turma=' + matchT;
+            }
+        } catch (e) {
+            pathQuery = String(url);
+        }
+        return openDB().then(function (db) {
+            return new Promise(function (resolve) {
+                var tx = db.transaction(STORE_GET, 'readonly');
+                var req = tx.objectStore(STORE_GET).getAll();
+                req.onsuccess = function () {
+                    var rows = req.result || [];
+                    var prefix = SESSION_KEY + '|';
+                    var match = rows.find(function (r) {
+                        if (!r || !r.url || r.url.indexOf(prefix) !== 0) return false;
+                        if (r.url.indexOf(pathQuery) > -1) return true;
+                        if (idTurmaMatch && r.url.indexOf('acao=listar_atletas') > -1 && r.url.indexOf(idTurmaMatch) > -1) return true;
+                        return false;
+                    });
+                    resolve(match || null);
+                };
+                req.onerror = function () { resolve(null); };
             });
         });
     }
@@ -276,15 +321,20 @@
         var url = typeof input === 'string' ? input : (input && input.url) || '';
         var method = (init.method || (input && input.method) || 'GET').toUpperCase();
 
-        if (!isSameOrigin(url)) return originalFetch(input, init);
+        if (!isSameOrigin(url)) {
+            if (navigator.onLine === false || estaSoftOffline()) {
+                return Promise.resolve(new Response('', { status: 200, headers: { 'Content-Type': 'text/plain' } }));
+            }
+            return originalFetch(input, init).catch(function () {
+                return new Response('', { status: 200, headers: { 'Content-Type': 'text/plain' } });
+            });
+        }
         var absUrl = resolveUrl(url);
 
         if (method === 'GET') {
             // Não tente a rede quando o navegador já informou que está
-            // desconectado. Além de evitar ERR_INTERNET_DISCONNECTED no
-            // console, isso devolve imediatamente o snapshot exato que foi
-            // baixado durante o preload do mesário.
-            if (navigator.onLine === false) {
+            // desconectado ou quando a rede está inalcançável (softOffline).
+            if (navigator.onLine === false || estaSoftOffline()) {
                 return idbGet(absUrl).then(function (cached) {
                     if (cached) {
                         return new Response(cached.text, {
@@ -292,10 +342,19 @@
                             headers: { 'Content-Type': cached.contentType || 'application/json' }
                         });
                     }
-                    throw new Error('Dados não disponíveis offline para esta consulta.');
+                    return idbFindUrl(absUrl).then(function (alt) {
+                        if (alt) {
+                            return new Response(alt.text, {
+                                status: alt.status || 200,
+                                headers: { 'Content-Type': alt.contentType || 'application/json' }
+                            });
+                        }
+                        throw new Error('Dados não disponíveis offline para esta consulta.');
+                    });
                 });
             }
             return originalFetch(input, init).then(function (res) {
+                state.softOffline = false;
                 if (res && res.ok) {
                     var clone = res.clone();
                     // O preload só é considerado concluído depois que a
@@ -323,6 +382,7 @@
                 }
                 return res;
             }).catch(function (err) {
+                marcarSoftOffline();
                 return idbGet(absUrl).then(function (cached) {
                     if (cached) {
                         return new Response(cached.text, {
@@ -330,18 +390,35 @@
                             headers: { 'Content-Type': cached.contentType || 'application/json' }
                         });
                     }
-                    throw err;
+                    return idbFindUrl(absUrl).then(function (alt) {
+                        if (alt) {
+                            return new Response(alt.text, {
+                                status: alt.status || 200,
+                                headers: { 'Content-Type': alt.contentType || 'application/json' }
+                            });
+                        }
+                        throw err;
+                    });
                 });
             });
         }
 
         if (isMutation(method)) {
-            if (!state.online) {
+            var bodyStr = init.body ? String(init.body) : '';
+            var ehNegativo = bodyStr.indexOf('"id_jogo":-') > -1 || absUrl.indexOf('id_jogo=-') > -1;
+            if (!state.online || ehNegativo) {
                 return queueMutation(method, absUrl, init.body, init.headers).then(function () {
                     return fakeResponse({ success: true, offline: true, queued: true, mensagem: 'Salvo localmente. Sera sincronizado quando houver conexao.' });
                 });
             }
-            return originalFetch(input, init).catch(function () {
+            return originalFetch(input, init).then(function (res) {
+                if (res && res.status === 404) {
+                    return queueMutation(method, absUrl, init.body, init.headers).then(function () {
+                        return fakeResponse({ success: true, offline: true, queued: true, mensagem: 'Salvo localmente.' });
+                    });
+                }
+                return res;
+            }).catch(function () {
                 return queueMutation(method, absUrl, init.body, init.headers).then(function () {
                     return fakeResponse({ success: true, offline: true, queued: true, mensagem: 'Salvo localmente. Sera sincronizado quando houver conexao.' });
                 });
@@ -606,8 +683,9 @@
     /* ------------------------- Eventos ------------------------- */
     window.addEventListener('online', function () {
         state.online = true;
+        state.softOffline = false;
         notify();
-        syncQueue();
+        flushQueue();
     });
     window.addEventListener('offline', function () {
         state.online = false;

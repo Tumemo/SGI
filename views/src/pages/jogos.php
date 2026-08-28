@@ -385,9 +385,18 @@ $paginaAtiva = 'dashboard';
 </div>
 
 <script>
-    const API = '../../../api/';
-    const params = new URLSearchParams(window.location.search);
-    const idJogo = params.get('id_jogo') ? parseInt(params.get('id_jogo'), 10) : null;
+    var params = new URLSearchParams(window.location.search);
+    var idJogo = params.get('id_jogo') ? parseInt(params.get('id_jogo'), 10) : null;
+
+    function obterIdJogoAtual() {
+        var p = new URLSearchParams(window.location.search);
+        var val = p.get('id_jogo');
+        if (val != null && val !== '') {
+            var parsed = parseInt(val, 10);
+            if (!isNaN(parsed)) return parsed;
+        }
+        return (typeof idJogo !== 'undefined' && idJogo != null) ? idJogo : null;
+    }
 
     function paginaOrigem() {
         try {
@@ -418,7 +427,14 @@ $paginaAtiva = 'dashboard';
         if (seta) seta.href = href;
     }
 
-    document.addEventListener('DOMContentLoaded', definirLinkVoltar);
+    var API = window.API || (function() {
+        var path = window.location.pathname;
+        var idx = path.indexOf('/views/src/pages/');
+        if (idx !== -1) {
+            return path.substring(0, idx) + '/api/';
+        }
+        return '../../../api/';
+    })();
 
     let estadoJogo = null;
     let partidasLista = [];
@@ -448,7 +464,39 @@ $paginaAtiva = 'dashboard';
     }
 
     function nomeEquipe(p) {
-        return p.nome_fantasia_turma || p.nome_turma || 'Equipe ' + p.equipes_id_equipe;
+        if (!p) return 'Equipe';
+        if (p.nome_fantasia_turma && String(p.nome_fantasia_turma).trim()) return p.nome_fantasia_turma;
+        if (p.nome_turma && String(p.nome_turma).trim()) return p.nome_turma;
+        if (p.nome_equipe && String(p.nome_equipe).trim()) return p.nome_equipe;
+        return 'Equipe ' + (p.equipes_id_equipe || '');
+    }
+
+    async function enriquecerPartidasComTurmas() {
+        var DL = window.SGIDataLayer;
+        if (!DL || typeof DL.read !== 'function') return;
+        try {
+            var turmas = await DL.read('turmas').catch(function() { return []; });
+            var equipes = await DL.read('equipes').catch(function() { return []; });
+            var mapTurma = {};
+            (Array.isArray(turmas) ? turmas : []).forEach(function(t) { if (t && t.id_turma) mapTurma[t.id_turma] = t; });
+            var mapEquipe = {};
+            (Array.isArray(equipes) ? equipes : []).forEach(function(e) { if (e && e.id_equipe) mapEquipe[e.id_equipe] = e; });
+
+            (partidasLista || []).forEach(function(p) {
+                var eq = mapEquipe[p.equipes_id_equipe];
+                if (eq) {
+                    if (!p.id_turma) p.id_turma = eq.turmas_id_turma || eq.id_turma;
+                    if (!p.nome_equipe) p.nome_equipe = eq.nome_equipe;
+                }
+                var idT = p.id_turma || p.turmas_id_turma || (eq && (eq.turmas_id_turma || eq.id_turma));
+                if (idT && mapTurma[idT]) {
+                    var t = mapTurma[idT];
+                    p.id_turma = idT;
+                    if (!p.nome_turma) p.nome_turma = t.nome_turma;
+                    if (!p.nome_fantasia_turma) p.nome_fantasia_turma = t.nome_fantasia_turma || t.nome_turma;
+                }
+            });
+        } catch (_) {}
     }
 
     function esc(s) {
@@ -767,7 +815,13 @@ $paginaAtiva = 'dashboard';
     }
 
     async function iniciarJogoServidor() {
-        duracaoJogo = parseInt(document.getElementById('select-duracao').value, 10) * 60;
+        if (!idJogo) idJogo = obterIdJogoAtual();
+        var selDur = document.getElementById('select-duracao');
+        if (selDur && selDur.value) {
+            var valM = parseInt(selDur.value, 10);
+            if (!isNaN(valM) && valM > 0) duracaoJogo = valM * 60;
+        }
+        if (!duracaoJogo || isNaN(duracaoJogo)) duracaoJogo = 20 * 60;
         tempoRestante = duracaoJogo;
         await fetchJson(API + 'jogos.php', {
             method: 'PUT',
@@ -780,6 +834,7 @@ $paginaAtiva = 'dashboard';
                 tempo_extra_jogo: 0
             })
         });
+        if (!estadoJogo) estadoJogo = { id_jogo: idJogo };
         estadoJogo.status_jogo = 'Iniciado';
         estadoJogo.duracao_jogo = duracaoJogo;
         estadoJogo.tempo_extra_jogo = 0;
@@ -953,6 +1008,7 @@ $paginaAtiva = 'dashboard';
                 return String(p.jogos_id_jogo) === String(idJogo);
             });
 
+            await enriquecerPartidasComTurmas();
             ehIndividual = false;
             duracaoJogo = parseInt(estadoJogo.duracao_jogo, 10) || (20 * 60);
             tempoRestante = duracaoJogo;
@@ -1300,6 +1356,7 @@ $paginaAtiva = 'dashboard';
     }
 
     async function carregarDados() {
+        idJogo = obterIdJogoAtual();
         var err = document.getElementById('placar-erro');
         var load = document.getElementById('placar-loading');
         var cont = document.getElementById('placar-conteudo');
@@ -1339,7 +1396,7 @@ $paginaAtiva = 'dashboard';
 
             partidasLista = await fetchJson(API + 'partidas.php?id_jogo=' + idJogo);
             if (!Array.isArray(partidasLista)) partidasLista = [];
-
+            await enriquecerPartidasComTurmas();
             precarregarDadosOffline();
 
             ehIndividual = /^IND:\d+$/.test(estadoJogo.nome_jogo || '') || parseInt(estadoJogo.tipos_modalidades_id_tipo_modalidade, 10) === 2;
@@ -1375,9 +1432,12 @@ $paginaAtiva = 'dashboard';
             }
             iniciarOcorrencias();
         } catch (e) {
-            load.classList.add('d-none');
-            err.textContent = e.message || 'Erro ao carregar.';
-            err.classList.remove('d-none');
+            var okLocal = await carregarJogoLocalTemporario();
+            if (!okLocal) {
+                load.classList.add('d-none');
+                err.textContent = e.message || 'Erro ao carregar.';
+                err.classList.remove('d-none');
+            }
         }
     }
 

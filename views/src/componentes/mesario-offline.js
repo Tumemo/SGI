@@ -66,6 +66,10 @@
 
     function apiBase() {
         var path = window.location.pathname || '';
+        var idx = path.indexOf('/views/src/pages/');
+        if (idx !== -1) {
+            return path.substring(0, idx) + '/api/';
+        }
         return path.replace(/\/views\/src\/pages\/[^/]*$/, '/api/');
     }
 
@@ -81,16 +85,20 @@
     }
 
     function obterIdAtivo() {
-        // O mesário só opera na edição ativa no momento: garante que ?id= de
-        // edições inativas nunca prevaleça sobre o interclasse ativo.
+        var p = new URLSearchParams(window.location.search);
+        var id = p.get('id');
+        if (id) return Promise.resolve(String(id));
+
+        if (window.SGI_SESSION_INTERCLASSE_ATIVO) {
+            return Promise.resolve(String(window.SGI_SESSION_INTERCLASSE_ATIVO));
+        }
+
         if (window.SGIInterclasse && typeof window.SGIInterclasse.getActiveInterclasse === 'function') {
             return window.SGIInterclasse.getActiveInterclasse().then(function (a) {
                 return (a && a.id_interclasse) ? String(a.id_interclasse) : null;
             }).catch(function () { return null; });
         }
-        var p = new URLSearchParams(window.location.search);
-        var id = p.get('id');
-        return Promise.resolve(id || null);
+        return Promise.resolve(null);
     }
 
     function chaveTela(tela, params) {
@@ -188,6 +196,38 @@
         });
     }
 
+    function idbRemove(chave) {
+        var key = SESSION + '|' + chave;
+        return openDB().then(function (db) {
+            return new Promise(function (resolve, reject) {
+                var tx = db.transaction('paginas', 'readwrite');
+                tx.objectStore('paginas').delete(key);
+                tx.oncomplete = resolve;
+                tx.onerror = function () { reject(tx.error); };
+            });
+        });
+    }
+
+    function purgarPaginasInvalidas() {
+        return openDB().then(function (db) {
+            return new Promise(function (resolve) {
+                var tx = db.transaction('paginas', 'readwrite');
+                var store = tx.objectStore('paginas');
+                var req = store.getAll();
+                req.onsuccess = function () {
+                    var rows = req.result || [];
+                    rows.forEach(function (r) {
+                        if (r && r.html && (r.html.indexOf('ipt-matricula') > -1 || r.html.indexOf('form_mobile') > -1 || r.html.indexOf('Acesso ao sistema') > -1)) {
+                            store.delete(r.key);
+                        }
+                    });
+                };
+                tx.oncomplete = resolve;
+                tx.onerror = resolve;
+            });
+        }).catch(function () {});
+    }
+
     // Quando a conexão cai antes de a edição ativa ser resolvida, ainda é
     // possível abrir a última cópia já baixada daquela tela para a sessão.
     function idbFindTela(tela) {
@@ -198,7 +238,8 @@
                 r.onsuccess = function () {
                     var prefixo = SESSION + '|';
                     var itens = (r.result || []).filter(function (item) {
-                        return item && item.key.indexOf(prefixo) === 0 && item.tela === tela;
+                        return item && item.key.indexOf(prefixo) === 0 && item.tela === tela &&
+                            !(item.html && (item.html.indexOf('ipt-matricula') > -1 || item.html.indexOf('form_mobile') > -1 || item.html.indexOf('Acesso ao sistema') > -1));
                     }).sort(function (a, b) { return (b.savedAt || 0) - (a.savedAt || 0); });
                     resolve(itens[0] || null);
                 };
@@ -352,7 +393,13 @@
     /* ==================== Captura / download das telas ==================== */
 
     function extrairScreen(html) {
+        if (typeof html === 'string' && (html.indexOf('ipt-matricula') > -1 || html.indexOf('form_mobile') > -1 || html.indexOf('Acesso ao sistema') > -1)) {
+            throw new Error('Página de login capturada indevidamente.');
+        }
         var doc = new DOMParser().parseFromString(html, 'text/html');
+        if (doc.querySelector('.ipt-matricula') || doc.querySelector('#form_mobile') || doc.querySelector('#form_desktop')) {
+            throw new Error('Página de login capturada indevidamente.');
+        }
         var partes = [];
         var css = '';
         var scripts = [];
@@ -417,9 +464,15 @@
     function obterRegistro(tela, params) {
         var key = chaveTela(tela, params);
         return idbGet(key).then(function (rec) {
+            if (rec && rec.html && (rec.html.indexOf('ipt-matricula') > -1 || rec.html.indexOf('form_mobile') > -1 || rec.html.indexOf('Acesso ao sistema') > -1)) {
+                return idbRemove(key).then(function () { return null; });
+            }
             if (rec) return rec;
             function alternativaOuErro() {
                 return idbFindTela(tela).then(function (alternativa) {
+                    if (alternativa && alternativa.html && (alternativa.html.indexOf('ipt-matricula') > -1 || alternativa.html.indexOf('form_mobile') > -1 || alternativa.html.indexOf('Acesso ao sistema') > -1)) {
+                        return null;
+                    }
                     if (alternativa) return alternativa;
                     throw new Error('sem cache offline');
                 });
@@ -630,6 +683,8 @@
             b + 'locais.php?id_interclasse=' + id,
             b + 'categorias.php?id_interclasse=' + id,
             b + 'turmas.php?id_interclasse=' + id,
+            b + 'equipes.php',
+            b + 'equipes.php?id_interclasse=' + id,
             b + 'jogos.php?id_interclasse=' + id,
             b + 'jogos.php?x=1&id_interclasse=' + id
         ];
@@ -679,10 +734,13 @@
     }
 
     function aquecer(url) {
+        if (!url || url.indexOf('undefined') > -1 || url.indexOf('null') > -1) {
+            return Promise.resolve('');
+        }
         return fetch(url).then(function (r) {
             if (!r.ok) throw new Error('HTTP ' + r.status);
             return r.text();
-        });
+        }).catch(function () { return ''; });
     }
 
     function preload() {
@@ -766,9 +824,15 @@
                 });
                 turmas.forEach(function (turma) {
                     if (!turma.id_turma) return;
+                    var tId = encodeURIComponent(turma.id_turma);
                     jobs.push(function () {
-                        return aquecer(apiBase() + 'ocorrencias_turmas.php?id_interclasse=' + id +
-                            '&id_turma=' + encodeURIComponent(turma.id_turma));
+                        return aquecer(apiBase() + 'ocorrencias_turmas.php?id_interclasse=' + id + '&id_turma=' + tId);
+                    });
+                    jobs.push(function () {
+                        return aquecer(apiBase() + 'ocorrencias.php?acao=listar_atletas&id_jogo=0&id_turma=' + tId);
+                    });
+                    jobs.push(function () {
+                        return aquecer(apiBase() + 'equipes.php?id_turma=' + tId);
                     });
                 });
                 lista.forEach(function (j) {
@@ -791,10 +855,17 @@
                 return null;
             }
             contagem.total = jobs.length;
+            var falhasConsecutivas = 0;
             return jobs.reduce(function (p, job) {
                 return p.then(function () {
-                    return Promise.resolve(job()).catch(function (e) {
+                    if (falhasConsecutivas >= 3 || navigator.onLine === false) {
+                        return Promise.resolve();
+                    }
+                    return Promise.resolve(job()).then(function () {
+                        falhasConsecutivas = 0;
+                    }).catch(function (e) {
                         contagem.falhas++;
+                        falhasConsecutivas++;
                         if (window.console) console.warn('[SGI Mesario SPA] preload', e);
                     }).then(function () {
                         contagem.feito++;
@@ -970,8 +1041,10 @@
             } catch (e) {}
         });
 
-        verificarPronto().then(function () {
-            preload();
+        purgarPaginasInvalidas().then(function () {
+            verificarPronto().then(function () {
+                preload();
+            });
         });
     }
 
