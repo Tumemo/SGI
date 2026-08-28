@@ -695,6 +695,7 @@ $paginaAtiva = 'dashboard';
                 body: JSON.stringify({ id_jogo: idJogo, status_jogo: 'Pausado' })
             }).catch(function() {});
             estadoJogo.status_jogo = 'Pausado';
+            persistirJogoLocal().catch(function() {});
         } else {
             // Retomar: servidor define data_inicio_real = NOW()
             fetchJson(API + 'jogos.php', {
@@ -703,6 +704,7 @@ $paginaAtiva = 'dashboard';
                 body: JSON.stringify({ id_jogo: idJogo, status_jogo: 'Iniciado' })
             }).catch(function() {});
             estadoJogo.status_jogo = 'Iniciado';
+            persistirJogoLocal().catch(function() {});
             if (!timerId) {
                 timerId = setInterval(function() {
                     if (tempoRestante > 0) {
@@ -748,6 +750,22 @@ $paginaAtiva = 'dashboard';
         }
     }
 
+    /* Espelha o estado do jogo (Iniciado/Pausado/duração) na store local de
+       jogos. Sem isto, iniciar o jogo online nunca atualizava o banco JS e,
+       recarregando o placar offline sem mutações pendentes, o snapshot por URL
+       mostrava 'Agendado' e o botão de finalizar sumia. */
+    function persistirJogoLocal() {
+        if (window.SGIDataLayer && window.SGIDataLayer.upsert) {
+            return window.SGIDataLayer.upsert('jogos', idJogo, Object.assign({}, estadoJogo, { _pendente: false }));
+        }
+        return Promise.resolve();
+    }
+
+    function jogoEncerrado() {
+        var st = estadoJogo ? estadoJogo.status_jogo : '';
+        return st === 'Concluido' || st === 'Finalizado';
+    }
+
     async function iniciarJogoServidor() {
         duracaoJogo = parseInt(document.getElementById('select-duracao').value, 10) * 60;
         tempoRestante = duracaoJogo;
@@ -765,6 +783,7 @@ $paginaAtiva = 'dashboard';
         estadoJogo.status_jogo = 'Iniciado';
         estadoJogo.duracao_jogo = duracaoJogo;
         estadoJogo.tempo_extra_jogo = 0;
+        await persistirJogoLocal();
         renderTudo();
         iniciarTimerDisplay();
     }
@@ -798,6 +817,19 @@ $paginaAtiva = 'dashboard';
             });
             var js = await res.json();
             if (!res.ok || js.success === false) throw new Error(js.message || 'Falha ao finalizar');
+
+            /* Soft-offline: o wrapper do offline-core enfileirou a requisição
+               e devolveu sucesso local (offline:true). Aplica a finalização na
+               UI SEM recarregar do servidor — o snapshot por URL estaria
+               desatualizado e faria a tela "voltar" para Iniciado a cada
+               clique, além de duplicar o POST na fila de sincronização. */
+            if (js.offline === true) {
+                aplicarFinalizacaoUI(resultados);
+                if (window.SGIChaveamento && typeof window.SGIChaveamento.promoverVencedorLocal === 'function') {
+                    window.SGIChaveamento.promoverVencedorLocal(idJogo).catch(function() {});
+                }
+                return;
+            }
             estadoJogo.status_jogo = 'Concluido';
             pararTimer();
             await carregarDados();
@@ -818,6 +850,21 @@ $paginaAtiva = 'dashboard';
           que promove o vencedor na árvore do banco JS: cria/libera a próxima
           partida ou marca "aguardando adversário", recursivamente até o
           campeão — sem nenhuma chamada ao PHP. */
+    /* Aplica o término do jogo na interface (placar final + status Concluido
+       + timer parado), sem enfileirar nem consultar o servidor. Usada pelos
+       caminhos offline e soft-offline. */
+    function aplicarFinalizacaoUI(resultados) {
+        resultados.forEach(function(r) {
+            var p = partidasLista.filter(function(x) {
+                return parseInt(x.equipes_id_equipe, 10) === r.id_equipe;
+            })[0];
+            if (p) p.resultado_partida = String(r.gols);
+        });
+        estadoJogo.status_jogo = 'Concluido';
+        pararTimer();
+        renderTudo();
+    }
+
     function finalizarLocalmente(resultados) {
         // --- Lock contra finalização duplicada (multi-abas / duplo-clique) ---
         var lockKey = 'sgi_finalizando_' + idJogo;
@@ -843,15 +890,7 @@ $paginaAtiva = 'dashboard';
         }
 
         // 1) Estado imediato na interface
-        resultados.forEach(function(r) {
-            var p = partidasLista.filter(function(x) {
-                return parseInt(x.equipes_id_equipe, 10) === r.id_equipe;
-            })[0];
-            if (p) p.resultado_partida = String(r.gols);
-        });
-        estadoJogo.status_jogo = 'Concluido';
-        pararTimer();
-        renderTudo();
+        aplicarFinalizacaoUI(resultados);
 
         // 2) Persistência local + fila de sincronização
         if (!(window.SGIOffline && typeof window.SGIOffline.queueMutation === 'function')) {
@@ -967,6 +1006,9 @@ $paginaAtiva = 'dashboard';
 
         var emAndamento = st === 'Iniciado' || st === 'Pausado';
         var encerrado = st === 'Concluido' || st === 'Finalizado';
+
+        var fab = document.getElementById('btnNovaOcorrencia');
+        if (fab) fab.style.display = encerrado ? 'none' : '';
 
         if (st === 'Agendado') {
             var b = document.createElement('button');
@@ -1436,6 +1478,14 @@ $paginaAtiva = 'dashboard';
                 var ptsHtml = pts > 0 ? '<span class="tl-badge">-' + pts + ' pts</span>' : '';
                 var isLast = i === lista.length - 1;
 
+                var acoesHtml = '';
+                if (!jogoEncerrado()) {
+                    acoesHtml = '<div class="tl-event-actions">' +
+                        '<button type="button" class="tl-action-btn tl-action-btn--edit" onclick="editarOcorrencia(' + o.id_ocorrencia + ')" title="Editar"><i class="bi bi-pencil-square"></i></button>' +
+                        '<button type="button" class="tl-action-btn tl-action-btn--delete" onclick="excluirOcorrencia(' + o.id_ocorrencia + ')" title="Excluir"><i class="bi bi-trash3"></i></button>' +
+                        '</div>';
+                }
+
                 return '<div class="tl-event tl-event--' + cls + (isLast ? ' tl-event--last' : '') + '">' +
                     '<div class="tl-event-track">' +
                         '<div class="tl-event-dot"></div>' +
@@ -1449,10 +1499,7 @@ $paginaAtiva = 'dashboard';
                         '</div>' +
                         '<div class="tl-event-player">' + esc(o.nome_usuario) + '</div>' +
                         '<div class="tl-event-desc">' + esc(limparDescricaoOcorrencia(o.descricao_ocorrencia)) + '</div>' +
-                        '<div class="tl-event-actions">' +
-                            '<button type="button" class="tl-action-btn tl-action-btn--edit" onclick="editarOcorrencia(' + o.id_ocorrencia + ')" title="Editar"><i class="bi bi-pencil-square"></i></button>' +
-                            '<button type="button" class="tl-action-btn tl-action-btn--delete" onclick="excluirOcorrencia(' + o.id_ocorrencia + ')" title="Excluir"><i class="bi bi-trash3"></i></button>' +
-                        '</div>' +
+                        acoesHtml +
                     '</div>' +
                 '</div>';
             }).join('');
@@ -1464,6 +1511,10 @@ $paginaAtiva = 'dashboard';
     var _editandoOcorrenciaId = null;
 
     function abrirModalOcorrencia() {
+        if (jogoEncerrado()) {
+            alert('O jogo já foi encerrado. Não é possível registrar ocorrências.');
+            return;
+        }
         _editandoOcorrenciaId = null;
         document.getElementById('formOcorrencia').reset();
         document.getElementById('msgOcorrencia').innerHTML = '';
@@ -1479,6 +1530,10 @@ $paginaAtiva = 'dashboard';
     }
 
     async function editarOcorrencia(id) {
+        if (jogoEncerrado()) {
+            alert('O jogo já foi encerrado. Não é possível editar ocorrências.');
+            return;
+        }
         _editandoOcorrenciaId = id;
         document.getElementById('formOcorrencia').reset();
         document.getElementById('msgOcorrencia').innerHTML = '';
@@ -1528,6 +1583,10 @@ $paginaAtiva = 'dashboard';
     }
 
     async function excluirOcorrencia(id) {
+        if (jogoEncerrado()) {
+            alert('O jogo já foi encerrado. Não é possível excluir ocorrências.');
+            return;
+        }
         if (!confirm('Tem certeza que deseja excluir esta ocorrência?')) return;
         try {
             await fetchJson(API + 'ocorrencias.php', {
@@ -1543,6 +1602,10 @@ $paginaAtiva = 'dashboard';
 
     async function salvarOcorrencia(e) {
         e.preventDefault();
+        if (jogoEncerrado()) {
+            alert('O jogo já foi encerrado. Não é possível salvar ocorrências.');
+            return;
+        }
         var btn = document.getElementById('btnSalvarOcorrencia');
         var msg = document.getElementById('msgOcorrencia');
         msg.innerHTML = '';
@@ -1700,6 +1763,10 @@ $paginaAtiva = 'dashboard';
     var _artilheiroEquipeAtual = null;
 
     function abrirModalArtilheiro(idEquipe) {
+        if (jogoEncerrado()) {
+            alert('O jogo já foi encerrado. Não é possível registrar artilharia.');
+            return;
+        }
         _artilheiroEquipeAtual = idEquipe;
         document.getElementById('formArtilheiro').reset();
         document.getElementById('msgArtilheiro').innerHTML = '';
@@ -1714,6 +1781,10 @@ $paginaAtiva = 'dashboard';
 
     async function salvarArtilheiro(e) {
         e.preventDefault();
+        if (jogoEncerrado()) {
+            alert('O jogo já foi encerrado. Não é possível salvar artilharia.');
+            return;
+        }
         var btn = document.getElementById('btnSalvarArtilheiro');
         var msg = document.getElementById('msgArtilheiro');
         msg.innerHTML = '';

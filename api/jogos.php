@@ -136,6 +136,7 @@ switch ($method) {
                     jogos.modalidades_id_modalidade,
                     jogos.locais_id_local,
                     modalidades.nome_modalidade,
+                    modalidades.interclasses_id_interclasse AS id_interclasse,
                     modalidades.tipos_modalidades_id_tipo_modalidade,
                     locais.nome_local,
                     categorias.nome_categoria,
@@ -261,6 +262,7 @@ switch ($method) {
 
     case 'PUT':
         requerOperacaoJogo();
+        garantirInterclasseAtivo($conn);
 
         $nivel = (int)$_SESSION['nivel'];
         $data = json_decode(file_get_contents("php://input"));

@@ -81,15 +81,16 @@
     }
 
     function obterIdAtivo() {
-        var p = new URLSearchParams(window.location.search);
-        var id = p.get('id');
-        if (id) return Promise.resolve(id);
+        // O mesário só opera na edição ativa no momento: garante que ?id= de
+        // edições inativas nunca prevaleça sobre o interclasse ativo.
         if (window.SGIInterclasse && typeof window.SGIInterclasse.getActiveInterclasse === 'function') {
             return window.SGIInterclasse.getActiveInterclasse().then(function (a) {
                 return (a && a.id_interclasse) ? String(a.id_interclasse) : null;
             }).catch(function () { return null; });
         }
-        return Promise.resolve(null);
+        var p = new URLSearchParams(window.location.search);
+        var id = p.get('id');
+        return Promise.resolve(id || null);
     }
 
     function chaveTela(tela, params) {
@@ -721,20 +722,6 @@
             });
             dataUrls(id).forEach(function (u) {
                 jobs.push(function () { return aquecer(u); });
-            });
-            // Algumas telas usam a edição ativa, mesmo quando o Dashboard foi
-            // aberto com ?id=. Baixa as consultas-base de todas as edições que
-            // o mesário recebeu para não deixar a UI vazia nesse cenário.
-            jobs.push(function () {
-                return fetchJson(apiBase() + 'interclasse.php?regulamento=true').then(function (edicoes) {
-                    return Promise.all((Array.isArray(edicoes) ? edicoes : []).map(function (edicao) {
-                        var outroId = edicao && edicao.id_interclasse;
-                        if (!outroId || String(outroId) === String(id)) return null;
-                        return Promise.all(dataUrls(outroId).filter(function (url) {
-                            return url.indexOf('interclasse.php') === -1;
-                        }).map(function (url) { return aquecer(url); }));
-                    }));
-                });
             });
             return Promise.all([
                 fetchJson(apiBase() + 'jogos.php?id_interclasse=' + id),

@@ -45,6 +45,15 @@ switch ($method) {
         requerNivel([0, 1, 2]);
         $data = json_decode(file_get_contents('php://input'));
 
+        // Mesário só pode registrar ocorrência na edição ativa no momento.
+        $ativoOperacao = garantirInterclasseAtivo($conn);
+        if ((int) $_SESSION['nivel'] === 2 &&
+            (!empty($data->interclasses_id_interclasse) && (int) $data->interclasses_id_interclasse !== $ativoOperacao)) {
+            http_response_code(403);
+            echo json_encode(["success" => false, "message" => "Mesários só podem registrar ocorrências na edição ativa."]);
+            break;
+        }
+
         if (empty($data->turmas_id_turma) ||
             empty($data->interclasses_id_interclasse) || empty($data->titulo_ocorrencia) ||
             empty($data->data_ocorrencia)) {
@@ -87,6 +96,7 @@ switch ($method) {
 
     case 'DELETE':
         requerNivel([0, 1, 2]);
+        garantirInterclasseAtivo($conn);
         $data = json_decode(file_get_contents('php://input'));
         $id = isset($data->id_ocorrencia_turma) ? (int) $data->id_ocorrencia_turma : 0;
         if ($id <= 0) {

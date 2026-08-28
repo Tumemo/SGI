@@ -156,6 +156,7 @@ switch ($method) {
     case 'POST':
         // Permite Admin e Mesário lançarem gols (níveis 0, 1 e 2)
         requerOperacaoJogo();
+        garantirInterclasseAtivo($conn);
         $data = json_decode(file_get_contents("php://input"));
 
         if (!isset($data->usuarios_id_usuario, $data->jogos_id_jogo, $data->num_gol)) {
@@ -179,6 +180,7 @@ switch ($method) {
     case 'PUT':
         // Permite Admin e Mesário alterarem lançamentos de gols (níveis 0, 1 e 2)
         requerOperacaoJogo();
+        garantirInterclasseAtivo($conn);
         $data = json_decode(file_get_contents("php://input"));
 
         if (!isset($data->usuarios_id_usuario, $data->jogos_id_jogo, $data->num_gol)) {

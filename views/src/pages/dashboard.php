@@ -300,10 +300,34 @@ $isMesario = $nivelUsuario === 2;
     const urlParams = new URLSearchParams(window.location.search);
     let idInterclasse = urlParams.get('id');
 
+    <?php if ($isMesario): ?>
+    // Mesário só pode operar na edição ativa no momento.
+    const ativoAtual = await window.SGIInterclasse.getActiveInterclasse();
+    const idAtivoMesario = ativoAtual ? String(ativoAtual.id_interclasse) : null;
+
+    const exibirSemAtivo = () => {
+        ['subtituloMobile', 'subtituloDesktop'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.textContent = 'Nenhuma edição de interclasse está ativa no momento.';
+        });
+    };
+
+    if (!idAtivoMesario) {
+        exibirSemAtivo();
+        return;
+    }
+
+    if (idInterclasse && String(idInterclasse) !== idAtivoMesario) {
+        window.location.replace('./dashboard.php?id=' + idAtivoMesario);
+        return;
+    }
+    idInterclasse = idAtivoMesario;
+    <?php else: ?>
     if (!idInterclasse) {
         const ativo = await window.SGIInterclasse.getActiveInterclasse();
         idInterclasse = ativo?.id_interclasse || null;
     }
+    <?php endif; ?>
 
     if (!idInterclasse) {
         const subtituloMobile = document.getElementById('subtituloMobile');

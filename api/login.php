@@ -1,6 +1,7 @@
 <?php
 session_start();
 require_once '../config/db.php';
+require_once __DIR__ . '/includes/interclasse_helper.php';
 
 header('Content-Type: application/json');
 
@@ -33,6 +34,12 @@ if ($usuario && password_verify($senha, $usuario['senha_usuario'])) {
     $_SESSION['nome']         = $usuario['nome_usuario'];
     $_SESSION['matricula']    = $usuario['matricula_usuario'];
     $_SESSION['foto_usuario'] = $usuario['foto_usuario'] ?? null;
+
+    // Mesário (nível 2) só opera na edição ativa no momento: fixa o id na
+    // sessão para orientar o redirecionamento e as verificações de operação.
+    if ($_SESSION['nivel'] === 2) {
+        $_SESSION['id_interclasse'] = buscarInterclasseAtivo($conn);
+    }
 
     // Alunos (nível 3) que ainda usam a senha padrão precisam trocar no primeiro acesso
     $_SESSION['exige_troca_senha'] = ((int)$usuario['nivel_usuario'] === 3 && password_verify('123', $usuario['senha_usuario']));

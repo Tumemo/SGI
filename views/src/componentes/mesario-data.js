@@ -139,31 +139,49 @@
     if (baseFetch) window.fetch = function (input, init) {
         var url = typeof input === 'string' ? input : input.url;
         var method = String((init && init.method) || (input && input.method) || 'GET').toUpperCase();
-        if (method === 'GET' && navigator.onLine === false) {
+        if (method === 'GET') {
             var info = urlInfo(url);
-            // jogos.php e partidas.php priorizam as tabelas locais quando há
-            // mutações pendentes: assim o placar reflete na hora o que foi
-            // lançado/finalizado offline, e não o snapshot antigo por URL.
-            if ((info.file === 'jogos.php' || info.file === 'partidas.php') && window.SGIOffline && window.SGIOffline.hasPending && window.SGIOffline.hasPending()) {
+            // jogos.php e partidas.php priorizam as tabelas locais sempre que o
+            // dispositivo está offline OU há mutações pendentes: com pendências
+            // a tabela local é a fonte mais nova (vale inclusive no "soft-offline",
+            // quando navigator.onLine segue true e o snapshot por URL estaria
+            // defasado — permitindo finalizar e depois "reiniciar" o mesmo jogo).
+            var usarLocal = navigator.onLine === false ||
+                (info.file === 'jogos.php' || info.file === 'partidas.php') &&
+                window.SGIOffline && window.SGIOffline.hasPending && window.SGIOffline.hasPending();
+            if (usarLocal) {
                 return localGet(url).then(function (res) {
-                    if (res) return res;
-                    return baseFetch(input, init);
+                    if (!res) return baseFetch(input, init);
+                    return res.text().then(function (t) {
+                        var arr = [];
+                        try { arr = JSON.parse(t); } catch (_) {}
+                        // Rede "presente" mas sem linhas locais p/ este filtro
+                        // (ex.: pendências de outro jogo/interclasse): não trocar
+                        // uma resposta legítima do servidor por lista vazia.
+                        if (navigator.onLine !== false && Array.isArray(arr) && arr.length === 0) {
+                            return baseFetch(input, init);
+                        }
+                        return new Response(t, { status: 200, headers: { 'Content-Type': 'application/json' } });
+                    });
                 });
             }
-            // A resposta completa por URL é a fonte principal: ela preserva
-            // exatamente o formato esperado por cada tela. Só recorremos às
-            // tabelas estruturadas quando a rota ainda não possui snapshot.
-            return baseFetch(input, init).catch(function () {
-                return localGet(url).then(function (res) {
-                    if (res) return res;
-                    throw new Error('Dados não disponíveis offline para esta consulta.');
+            if (navigator.onLine === false) {
+                // A resposta completa por URL é a fonte principal: ela preserva
+                // exatamente o formato esperado por cada tela. Só recorremos às
+                // tabelas estruturadas quando a rota ainda não possui snapshot.
+                return baseFetch(input, init).catch(function () {
+                    return localGet(url).then(function (res) {
+                        if (res) return res;
+                        throw new Error('Dados não disponíveis offline para esta consulta.');
+                    });
                 });
+            }
+            return baseFetch(input, init).then(function (res) {
+                if (res.ok) return res.clone().text().then(function (text) { return capture(url, text); }).catch(function () {}).then(function () { return res; });
+                return res;
             });
         }
-        return baseFetch(input, init).then(function (res) {
-            if (method === 'GET' && res.ok) return res.clone().text().then(function (text) { return capture(url, text); }).catch(function () {}).then(function () { return res; });
-            return res;
-        });
+        return baseFetch(input, init);
     };
 
     window.SGIDataLayer = {

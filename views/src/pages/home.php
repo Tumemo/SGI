@@ -146,8 +146,8 @@ async function listarInterclasses() {
         if (typeof estadoInterclasses !== 'undefined') estadoInterclasses.lista = listaOrdenada;
 <?php endif; ?>
 
-        <?php if ($isColaborador): ?>
-        // Colaborador: mostra apenas o ativo
+        <?php if ($isColaborador || $isMesario): ?>
+        // Colaborador e Mesário: mostram apenas o ativo
         const ativo = listaOrdenada.find(item => String(item.status_interclasse) === '1');
         if (!ativo) {
             const msg = '<p class="text-center text-muted mt-5">Nenhum interclasse ativo no momento.</p>';
@@ -300,22 +300,36 @@ document.getElementById('formulario').addEventListener('submit', async (event) =
 <?php endif; ?>
 
 <?php if ($isMesario): ?>
-async function redirecionarParaUltimoInterclasse() {
+async function redirecionarParaInterclasseAtivo() {
+    const semAtivo = () => {
+        const msg = '<p class="text-center text-muted mt-5">Nenhuma edição de interclasse está ativa no momento.</p>';
+        document.getElementById('caixaListar').innerHTML = msg;
+        document.getElementById('listaDesktop').innerHTML = msg;
+    };
     try {
         const res = await fetch('../../../api/interclasse.php?regulamento=true');
         const lista = await res.json();
-        if (Array.isArray(lista) && lista.length > 0) {
-            const ultimo = lista.sort((a, b) => Number(b.id_interclasse) - Number(a.id_interclasse))[0];
-            window.location.replace('./dashboard.php?id=' + ultimo.id_interclasse);
-            return;
+        if (Array.isArray(lista)) {
+            const ativos = lista.filter(item => String(item.status_interclasse) === '1');
+            if (ativos.length > 0) {
+                const ativo = ativos.sort((a, b) => Number(b.id_interclasse) - Number(a.id_interclasse))[0];
+                window.location.replace('./dashboard.php?id=' + ativo.id_interclasse);
+                return;
+            }
         }
     } catch (e) {
         console.error('Erro ao redirecionar:', e);
+        // Offline: usa o id ativo gravado na sessão no login, se houver.
+        const idSessao = window.SGI_SESSION_INTERCLASSE_ATIVO;
+        if (idSessao) {
+            window.location.replace('./dashboard.php?id=' + idSessao);
+            return;
+        }
     }
-    listarInterclasses();
+    semAtivo();
 }
 
-document.addEventListener('DOMContentLoaded', redirecionarParaUltimoInterclasse);
+document.addEventListener('DOMContentLoaded', redirecionarParaInterclasseAtivo);
 <?php else: ?>
 window.addEventListener('load', listarInterclasses);
 <?php endif; ?>

@@ -64,6 +64,7 @@ switch ($method) {
 case 'POST':
         // Permite Master, Admin e Mesário (níveis 0, 1 e 2)
         requerOperacaoJogo();
+        garantirInterclasseAtivo($conn);
         $data = json_decode(file_get_contents("php://input"));
 
         if (!isset($data->id_partida, $data->resultado_final)) {
@@ -186,6 +187,7 @@ case 'POST':
     case 'PUT':
         // Permite Master, Admin e Mesário (níveis 0, 1 e 2)
         requerOperacaoJogo();
+        garantirInterclasseAtivo($conn);
         $data = json_decode(file_get_contents("php://input"));
 
         if (!isset($data->id_partida)) {

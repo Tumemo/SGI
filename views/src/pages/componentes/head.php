@@ -29,7 +29,7 @@ if (!headers_sent()) {
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer">
     <link rel="stylesheet" href="../styles/style.css">
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
-    <script>window.SGI_SESSION_ID = <?= (int)($_SESSION['id'] ?? $_SESSION['id_usuario'] ?? 0) ?>; window.SGI_SESSION_NIVEL = <?= (int)$nivelUsuario ?>;</script>
+    <script>window.SGI_SESSION_ID = <?= (int)($_SESSION['id'] ?? $_SESSION['id_usuario'] ?? 0) ?>; window.SGI_SESSION_NIVEL = <?= (int)$nivelUsuario ?>; window.SGI_SESSION_INTERCLASSE_ATIVO = <?= (int)($_SESSION['id_interclasse'] ?? 0) ?>;</script>
     <?php if ($nivelUsuario === 2): ?>
     <!-- A camada SPA/offline pertence exclusivamente ao fluxo do mesário. -->
     <script src="../componentes/offline-core.js?v=<?= filemtime(__DIR__ . '/../../componentes/offline-core.js') ?>"></script>

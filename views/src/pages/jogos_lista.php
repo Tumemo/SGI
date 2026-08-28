@@ -33,8 +33,11 @@ $paginaAtiva = 'dashboard';
         }
 
         try {
+            // O título é secundário: se o snapshot de interclasse não estiver
+            // mais em cache offline, a lista de jogos (por URL/localGet) não
+            // pode deixar de renderizar por causa disso.
             const [dadosInter, resJogos] = await Promise.all([
-                window.SGIInterclasse.getInterclasseById(idInterclasse),
+                window.SGIInterclasse.getInterclasseById(idInterclasse).catch(() => null),
                 fetch(`../../../api/jogos.php?x=1&id_interclasse=${idInterclasse}`)
             ]);
 
