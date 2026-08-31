@@ -125,7 +125,8 @@ CREATE TRIGGER `tr_sincroniza_status_usuarios` AFTER UPDATE ON `interclasses` FO
     IF NEW.status_interclasse <> OLD.status_interclasse THEN
         UPDATE usuarios
         SET status_usuario = NEW.status_interclasse
-        WHERE interclasses_id_interclasse = NEW.id_interclasse;
+        WHERE interclasses_id_interclasse = NEW.id_interclasse
+          AND nivel_usuario = '3';
     END IF;
 END
 $$
@@ -314,9 +315,9 @@ CREATE TABLE `usuarios` (
 --
 
 INSERT INTO `usuarios` (`id_usuario`, `sigla_usuario`, `matricula_usuario`, `nome_usuario`, `senha_usuario`, `nivel_usuario`, `genero_usuario`, `data_nasc_usuario`, `foto_usuario`, `status_usuario`, `turmas_id_turma`, `interclasses_id_interclasse`, `chave_usuario_edicao`) VALUES
-(1, 'SN', 'sgi@sgi.com', 'Administrador SGI', '$2y$10$5G1J8iMBKFHsZTgCNL9EoeVVzhEyTpZVPe7mzroqp.8Z4BO5Mu57u', '0', 'MASC', '2026-01-01', '', '1', NULL, NULL, NULL),
-(2, 'SN', 'colab@sgi.com', 'Colaborador SGI', '$2y$10$5G1J8iMBKFHsZTgCNL9EoeVVzhEyTpZVPe7mzroqp.8Z4BO5Mu57u', '1', 'MASC', '2026-01-01', 'default.png', '1', NULL, NULL, NULL),
-(3, 'SN', 'mes@sgi.com', 'Mesa Diretora SGI', '$2y$10$5G1J8iMBKFHsZTgCNL9EoeVVzhEyTpZVPe7mzroqp.8Z4BO5Mu57u', '2', 'MASC', '2026-01-01', 'default.png', '1', NULL, NULL, NULL);
+(1, 'ADM', 'admin', 'Administrador SGI', '$2y$10$nhy/mXtKiIPYIESlZjowk.m6Y.RNAO4qwmn7GMy42yxVVfWondStq', '0', 'MASC', '2000-01-01', '', '1', NULL, NULL, NULL),
+(2, 'COL', 'colab', 'Colaborador SGI', '$2y$10$nhy/mXtKiIPYIESlZjowk.m6Y.RNAO4qwmn7GMy42yxVVfWondStq', '1', 'MASC', '2000-01-01', 'default.png', '1', NULL, NULL, NULL),
+(3, 'MES', 'mesario', 'Mesário SGI', '$2y$10$nhy/mXtKiIPYIESlZjowk.m6Y.RNAO4qwmn7GMy42yxVVfWondStq', '2', 'MASC', '2000-01-01', 'default.png', '1', NULL, NULL, NULL);
 
 -- --------------------------------------------------------
 
