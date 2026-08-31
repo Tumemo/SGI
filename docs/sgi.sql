@@ -20,6 +20,28 @@ SET time_zone = "+00:00";
 --
 -- Banco de dados: `sgi`
 --
+DROP DATABASE IF EXISTS `sgi`;
+CREATE DATABASE `sgi` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;
+USE `sgi`;
+
+SET FOREIGN_KEY_CHECKS = 0;
+DROP TABLE IF EXISTS `artilheiros`;
+DROP TABLE IF EXISTS `categorias`;
+DROP TABLE IF EXISTS `equipes`;
+DROP TABLE IF EXISTS `equipes_has_usuarios`;
+DROP TABLE IF EXISTS `historico_arrecadacoes`;
+DROP TABLE IF EXISTS `interclasses`;
+DROP TABLE IF EXISTS `jogos`;
+DROP TABLE IF EXISTS `locais`;
+DROP TABLE IF EXISTS `modalidades`;
+DROP TABLE IF EXISTS `ocorrencias`;
+DROP TABLE IF EXISTS `ocorrencias_turmas`;
+DROP TABLE IF EXISTS `partidas`;
+DROP TABLE IF EXISTS `pontuacoes`;
+DROP TABLE IF EXISTS `tipos_modalidades`;
+DROP TABLE IF EXISTS `turmas`;
+DROP TABLE IF EXISTS `usuarios`;
+DROP TABLE IF EXISTS `usuarios_has_interclasses`;
 
 -- --------------------------------------------------------
 
@@ -317,7 +339,8 @@ CREATE TABLE `usuarios` (
 INSERT INTO `usuarios` (`id_usuario`, `sigla_usuario`, `matricula_usuario`, `nome_usuario`, `senha_usuario`, `nivel_usuario`, `genero_usuario`, `data_nasc_usuario`, `foto_usuario`, `status_usuario`, `turmas_id_turma`, `interclasses_id_interclasse`, `chave_usuario_edicao`) VALUES
 (1, 'ADM', 'admin', 'Administrador SGI', '$2y$10$nhy/mXtKiIPYIESlZjowk.m6Y.RNAO4qwmn7GMy42yxVVfWondStq', '0', 'MASC', '2000-01-01', '', '1', NULL, NULL, NULL),
 (2, 'COL', 'colab', 'Colaborador SGI', '$2y$10$nhy/mXtKiIPYIESlZjowk.m6Y.RNAO4qwmn7GMy42yxVVfWondStq', '1', 'MASC', '2000-01-01', 'default.png', '1', NULL, NULL, NULL),
-(3, 'MES', 'mesario', 'Mesário SGI', '$2y$10$nhy/mXtKiIPYIESlZjowk.m6Y.RNAO4qwmn7GMy42yxVVfWondStq', '2', 'MASC', '2000-01-01', 'default.png', '1', NULL, NULL, NULL);
+(3, 'MES', 'mesario', 'Mesário SGI', '$2y$10$nhy/mXtKiIPYIESlZjowk.m6Y.RNAO4qwmn7GMy42yxVVfWondStq', '2', 'MASC', '2000-01-01', 'default.png', '1', NULL, NULL, NULL),
+(4, 'RM', '2879', 'Aluno Competidor Teste', '$2y$10$nhy/mXtKiIPYIESlZjowk.m6Y.RNAO4qwmn7GMy42yxVVfWondStq', '3', 'MASC', '2010-05-15', 'default.png', '1', NULL, NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -672,6 +695,8 @@ ALTER TABLE `usuarios`
 ALTER TABLE `usuarios_has_interclasses`
   ADD CONSTRAINT `fk_usuarios_has_interclasses_interclasses1` FOREIGN KEY (`interclasses_id_interclasse`) REFERENCES `interclasses` (`id_interclasse`),
   ADD CONSTRAINT `fk_usuarios_has_interclasses_usuarios1` FOREIGN KEY (`usuarios_id_usuario`) REFERENCES `usuarios` (`id_usuario`);
+
+SET FOREIGN_KEY_CHECKS = 1;
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;

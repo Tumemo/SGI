@@ -59,11 +59,18 @@ if ($metodo === 'GET') {
 // SE FOR POST: Processa a gravação
 if ($metodo === 'POST') {
     if (empty($usuario['interclasses_id_interclasse'])) {
-        echo json_encode([
-            "success" => false,
-            "message" => "Aluno não possui um Interclasse vinculado."
-        ]);
-        exit;
+        $qAtivo = $conn->query("SELECT id_interclasse FROM interclasses WHERE status_interclasse = '1' ORDER BY id_interclasse DESC LIMIT 1");
+        if ($qAtivo && ($rAtivo = $qAtivo->fetch_assoc())) {
+            $idAtivo = (int)$rAtivo['id_interclasse'];
+            $conn->query("UPDATE usuarios SET interclasses_id_interclasse = $idAtivo WHERE id_usuario = $id_usuario");
+            $usuario['interclasses_id_interclasse'] = $idAtivo;
+        } else {
+            echo json_encode([
+                "success" => false,
+                "message" => "Aluno não possui um Interclasse vinculado e não há edição ativa."
+            ]);
+            exit;
+        }
     }
 
     if ($usuario['aceito_termo'] === 'sim') {

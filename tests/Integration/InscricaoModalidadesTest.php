@@ -28,6 +28,13 @@ class InscricaoModalidadesTest
         $idTurmaAluno = (int) ($turmas[0]['id_turma'] ?? 0);
 
         // Atualiza a turma do aluno para este interclasse de teste para garantir vínculo
+        if ($idAluno > 0 && $idTurmaAluno > 0) {
+            $admin->postJson('api/usuarios.php?id=' . $idAluno, [
+                'turmas_id_turma' => $idTurmaAluno,
+                'interclasses_id_interclasse' => $idEdicao
+            ]);
+        }
+
         $resEqTurma = $admin->get("api/equipes.php?id_interclasse=$idEdicao&id_turma=$idTurmaAluno");
         $eqsTurma = $resEqTurma['json'] ?? [];
 
