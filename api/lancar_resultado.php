@@ -23,6 +23,20 @@ $conn->begin_transaction();
 try {
     // Resolução de partidas derivadas geradas offline com ID temporário negativo
     if ($idJogo <= 0) {
+        if ($idModalidade <= 0 && !empty($data->resultados) && is_array($data->resultados)) {
+            $firstEq = (int) ($data->resultados[0]->id_equipe ?? 0);
+            if ($firstEq > 0) {
+                $stMod = $conn->prepare("SELECT modalidades_id_modalidade FROM equipes WHERE id_equipe = ? LIMIT 1");
+                $stMod->bind_param('i', $firstEq);
+                $stMod->execute();
+                $rowMod = $stMod->get_result()->fetch_assoc();
+                $stMod->close();
+                if ($rowMod && !empty($rowMod['modalidades_id_modalidade'])) {
+                    $idModalidade = (int) $rowMod['modalidades_id_modalidade'];
+                }
+            }
+        }
+
         if (!empty($nomeJogo) && $idModalidade > 0) {
             $jogoReal = sgi_mm_buscar_jogo_por_tag($conn, $idModalidade, (string) $nomeJogo);
             if ($jogoReal) {
@@ -54,6 +68,20 @@ try {
             }
         }
 
+        // Se o jogo ainda não foi materializado no MySQL pela rodada anterior, cria-o sob demanda
+        if ($idJogo <= 0 && !empty($nomeJogo) && $idModalidade > 0) {
+            $idLocal = sgi_mm_resolver_id_local($conn);
+            $stCreate = $conn->prepare(
+                "INSERT INTO jogos (nome_jogo, data_jogo, inicio_jogo, status_jogo, modalidades_id_modalidade, locais_id_local)
+                 VALUES (?, CURDATE(), '08:00:00', 'Agendado', ?, ?)"
+            );
+            $stCreate->bind_param('sii', $nomeJogo, $idModalidade, $idLocal);
+            if ($stCreate->execute()) {
+                $idJogo = (int) $conn->insert_id;
+            }
+            $stCreate->close();
+        }
+
         if ($idJogo <= 0) {
             throw new RuntimeException("Não foi possível identificar o jogo no servidor para o ID provisório {$data->id_jogo}.");
         }
@@ -73,9 +101,14 @@ try {
     }
 
     foreach ($data->resultados as $res) {
-        $stmt = $conn->prepare('UPDATE partidas SET resultado_partida = ? WHERE jogos_id_jogo = ? AND equipes_id_equipe = ?');
-        $gols = (int) $res->gols;
         $idEquipe = (int) $res->id_equipe;
+        $gols = (int) $res->gols;
+        if ($idEquipe <= 0) continue;
+
+        // Garante que a partida exista no jogo para a equipe
+        sgi_mm_garantir_partida_equipe($conn, $idJogo, $idEquipe);
+
+        $stmt = $conn->prepare('UPDATE partidas SET resultado_partida = ? WHERE jogos_id_jogo = ? AND equipes_id_equipe = ?');
         $stmt->bind_param('iii', $gols, $idJogo, $idEquipe);
         $stmt->execute();
         $stmt->close();

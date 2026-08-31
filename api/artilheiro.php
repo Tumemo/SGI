@@ -165,9 +165,36 @@ switch ($method) {
             break;
         }
 
+        $idJogoArt = (int) $data->jogos_id_jogo;
+        if ($idJogoArt <= 0) {
+            if (!empty($data->nome_jogo) && !empty($data->id_modalidade)) {
+                require_once __DIR__ . '/includes/mata_mata_engine.php';
+                $jReal = sgi_mm_buscar_jogo_por_tag($conn, (int)$data->id_modalidade, (string)$data->nome_jogo);
+                if ($jReal) $idJogoArt = (int)$jReal['id_jogo'];
+            }
+            if ($idJogoArt <= 0 && !empty($data->usuarios_id_usuario)) {
+                $stA = $conn->prepare(
+                    "SELECT p.jogos_id_jogo FROM partidas p
+                     INNER JOIN equipes_has_usuarios ehu ON ehu.equipes_id_equipe = p.equipes_id_equipe
+                     WHERE ehu.usuarios_id_usuario = ?
+                     ORDER BY p.jogos_id_jogo DESC LIMIT 1"
+                );
+                $stA->bind_param('i', $data->usuarios_id_usuario);
+                $stA->execute();
+                $rowA = $stA->get_result()->fetch_assoc();
+                $stA->close();
+                if ($rowA) $idJogoArt = (int)$rowA['jogos_id_jogo'];
+            }
+        }
+
+        if ($idJogoArt <= 0) {
+            echo json_encode(["success" => true, "offline" => true, "message" => "Artilharia registrada localmente"]);
+            break;
+        }
+
         $sql = "INSERT INTO artilheiros (usuarios_id_usuario, jogos_id_jogo, num_gol) VALUES (?, ?, ?)";
         $stmt = $conn->prepare($sql);
-        $stmt->bind_param("iii", $data->usuarios_id_usuario, $data->jogos_id_jogo, $data->num_gol);
+        $stmt->bind_param("iii", $data->usuarios_id_usuario, $idJogoArt, $data->num_gol);
 
         if ($stmt->execute()) {
             echo json_encode(["success" => true, "message" => "Gols registrados com sucesso!", "id" => $conn->insert_id]);
@@ -189,9 +216,15 @@ switch ($method) {
             break;
         }
 
+        $idJogoArt = (int) $data->jogos_id_jogo;
+        if ($idJogoArt <= 0) {
+            echo json_encode(["success" => true, "offline" => true, "message" => "Artilharia atualizada localmente"]);
+            break;
+        }
+
         $sql = "UPDATE artilheiros SET num_gol = ? WHERE usuarios_id_usuario = ? AND jogos_id_jogo = ?";
         $stmt = $conn->prepare($sql);
-        $stmt->bind_param("iii", $data->num_gol, $data->usuarios_id_usuario, $data->jogos_id_jogo);
+        $stmt->bind_param("iii", $data->num_gol, $data->usuarios_id_usuario, $idJogoArt);
 
         if ($stmt->execute()) {
             echo json_encode(["success" => true, "message" => "Artilharia atualizada!"]);

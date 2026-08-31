@@ -228,6 +228,14 @@
         var criouJogo = false;
         var hojeISO = new Date().toISOString().substring(0, 10);
 
+        var primeiroJogo = jogos[0] || {};
+        var defaultModId = primeiroJogo.modalidades_id_modalidade || primeiroJogo.id_modalidade || null;
+        var defaultModNome = primeiroJogo.nome_modalidade || '';
+        var defaultModTipo = primeiroJogo.tipos_modalidades_id_tipo_modalidade || 1;
+        var defaultLocalId = primeiroJogo.locais_id_local || null;
+        var defaultLocalNome = primeiroJogo.nome_local || '';
+        var defaultDuracao = primeiroJogo.duracao_jogo || 1200;
+
         jogos.forEach(function (j) {
             if (mmParse(j.nome_jogo)) mapaTag[j.nome_jogo] = j;
             mapaId[Number(j.id_jogo)] = j;
@@ -243,8 +251,9 @@
             jogo.equipes.push({
                 id_partida: null,
                 id_equipe: Number(idEquipe),
+                id_turma: info.id_turma || info.turmas_id_turma || null,
                 nome_turma: info.nome_turma || '',
-                nome_fantasia: info.nome_fantasia || '',
+                nome_fantasia: info.nome_fantasia || info.nome_fantasia_turma || '',
                 nome_equipe: info.nome_equipe || '',
                 gols: 0,
                 _local: true
@@ -261,6 +270,14 @@
                 status_jogo: 'Agendado',
                 data_jogo: hojeISO,
                 inicio_jogo: '08:00:00',
+                modalidades_id_modalidade: defaultModId,
+                nome_modalidade: defaultModNome,
+                tipos_modalidades_id_tipo_modalidade: defaultModTipo,
+                locais_id_local: defaultLocalId,
+                nome_local: defaultLocalNome,
+                duracao_jogo: defaultDuracao,
+                tempo_restante_jogo: defaultDuracao,
+                tempo_extra_jogo: 0,
                 equipes: [],
                 _local: true,
                 _meta_ref: metaRef || null
@@ -647,11 +664,38 @@
         return Promise.all([
             DL.read('jogos'),
             DL.read('partidas'),
-            coletarPendencias()
+            coletarPendencias(),
+            DL.read('equipes').catch(function () { return []; }),
+            DL.read('turmas').catch(function () { return []; }),
+            DL.read('modalidades').catch(function () { return []; }),
+            DL.read('locais').catch(function () { return []; })
         ]).then(function (dados) {
             var jogosLocais = dados[0] || [];
             var partidasLocais = dados[1] || [];
             var ops = dados[2] || [];
+            var equipesStore = dados[3] || [];
+            var turmasStore = dados[4] || [];
+            var modalidadesStore = dados[5] || [];
+            var locaisStore = dados[6] || [];
+
+            var mapTurmas = {};
+            (Array.isArray(turmasStore) ? turmasStore : []).forEach(function (t) {
+                if (t && t.id_turma) mapTurmas[t.id_turma] = t;
+            });
+            var dirEquipes = {};
+            (Array.isArray(equipesStore) ? equipesStore : []).forEach(function (eq) {
+                if (eq && eq.id_equipe) {
+                    var idT = eq.turmas_id_turma || eq.id_turma;
+                    var tObj = idT ? mapTurmas[idT] : null;
+                    dirEquipes[Number(eq.id_equipe)] = {
+                        id_equipe: Number(eq.id_equipe),
+                        id_turma: idT || null,
+                        nome_turma: (tObj && tObj.nome_turma) || '',
+                        nome_fantasia: (tObj && (tObj.nome_fantasia_turma || tObj.nome_turma)) || eq.nome_equipe || '',
+                        nome_equipe: eq.nome_equipe || ''
+                    };
+                }
+            });
 
             /* 1) O jogo recém-finalizado */
             var alvo = jogosLocais.filter(function (j) { return Number(j.id_jogo) === idJogoAlvo; })[0];
@@ -691,13 +735,16 @@
                     });
                     if (!ps.length) return;
                     b.equipes = ps.map(function (p) {
+                        var idEq = Number(p.equipes_id_equipe);
+                        var info = dirEquipes[idEq] || {};
                         return {
                             id_partida: p.id_partida != null ? p.id_partida : null,
-                            id_equipe: Number(p.equipes_id_equipe),
+                            id_equipe: idEq,
                             gols: Number(p.resultado_partida) || 0,
-                            nome_turma: p.nome_turma || '',
-                            nome_fantasia: p.nome_fantasia_turma || p.nome_fantasia || '',
-                            nome_equipe: p.nome_equipe || ''
+                            id_turma: p.id_turma || info.id_turma || null,
+                            nome_turma: p.nome_turma || info.nome_turma || '',
+                            nome_fantasia: p.nome_fantasia_turma || p.nome_fantasia || info.nome_fantasia || p.nome_equipe || info.nome_equipe || '',
+                            nome_equipe: p.nome_equipe || info.nome_equipe || ''
                         };
                     });
                 });
@@ -708,14 +755,14 @@
                 aplicarPendencias(base, ops, mapaPorId);
 
                 /* 4b) Motor de avanço recursivo (pai → bye implícito → campeão) */
-                var dirEquipes = {};
                 base.forEach(function (b) {
                     (b.equipes || []).forEach(function (e) {
-                        if (e.id_equipe != null) dirEquipes[Number(e.id_equipe)] = e;
+                        if (e && e.id_equipe != null) {
+                            var idEq = Number(e.id_equipe);
+                            dirEquipes[idEq] = Object.assign({}, dirEquipes[idEq] || {}, e);
+                        }
                     });
                 });
-                var idsAntes = {};
-                base.forEach(function (b) { idsAntes[Number(b.id_jogo)] = true; });
 
                 /* Menor id já ocupado (snapshot + linhas locais persistidas):
                    o motor criará novos ids temporários ABAIXO dele. */
@@ -737,33 +784,45 @@
                 /* 5) Persistência no banco JS temporário */
                 var escritas = [];
                 base.forEach(function (b) {
-                    var novo = !idsAntes[Number(b.id_jogo)];
                     var linhaLocal = jogosLocais.filter(function (j) {
                         return Number(j.id_jogo) === Number(b.id_jogo);
                     })[0];
 
-                    if (novo && b.id_jogo < 0) {
-                        // Partida derivada: grava em "jogos" com id temporário
-                        // negativo ESTÁVEL (determinístico pela ordem do motor)
-                        // e libera as equipes como partidas jogáveis.
+                    if (Number(b.id_jogo) < 0) {
+                        // Partida derivada offline: SEMPRE garante o jogo e TODAS as suas equipes em 'partidas'
                         var rowJogo = JSON.parse(JSON.stringify(b));
                         rowJogo._local = true;
                         rowJogo._pendente = true;
                         if (!rowJogo.modalidades_id_modalidade && idModalidade) {
                             rowJogo.modalidades_id_modalidade = idModalidade;
                         }
+                        if (Array.isArray(modalidadesStore) && rowJogo.modalidades_id_modalidade) {
+                            var mObj = modalidadesStore.find(function (m) {
+                                return Number(m.id_modalidade) === Number(rowJogo.modalidades_id_modalidade);
+                            });
+                            if (mObj) {
+                                if (!rowJogo.nome_modalidade) rowJogo.nome_modalidade = mObj.nome_modalidade;
+                                if (!rowJogo.tipos_modalidades_id_tipo_modalidade) rowJogo.tipos_modalidades_id_tipo_modalidade = mObj.tipos_modalidades_id_tipo_modalidade;
+                            }
+                        }
+                        if (Array.isArray(locaisStore) && locaisStore.length > 0) {
+                            if (!rowJogo.locais_id_local) rowJogo.locais_id_local = locaisStore[0].id_local;
+                            if (!rowJogo.nome_local) rowJogo.nome_local = locaisStore[0].nome_local;
+                        }
                         escritas.push(DL.upsert('jogos', b.id_jogo, rowJogo));
+
                         (b.equipes || []).forEach(function (eq, i) {
-                            var idPartida = 'mm_local_' + b.id_jogo + '_' + i;
+                            var idPartida = 'mm_local_' + b.id_jogo + '_' + (eq.id_equipe || i);
+                            var info = dirEquipes[Number(eq.id_equipe)] || {};
                             escritas.push(DL.upsert('partidas', idPartida, {
                                 id_partida: idPartida,
                                 jogos_id_jogo: b.id_jogo,
-                                equipes_id_equipe: eq.id_equipe,
+                                equipes_id_equipe: Number(eq.id_equipe),
                                 resultado_partida: eq.gols || 0,
-                                id_turma: eq.id_turma || eq.turmas_id_turma || (eq.turma && eq.turma.id_turma) || null,
-                                nome_turma: eq.nome_turma || (eq.turma && eq.turma.nome_turma) || '',
-                                nome_fantasia_turma: eq.nome_fantasia || eq.nome_fantasia_turma || eq.nome_equipe || '',
-                                nome_equipe: eq.nome_equipe || '',
+                                id_turma: eq.id_turma || info.id_turma || null,
+                                nome_turma: eq.nome_turma || info.nome_turma || '',
+                                nome_fantasia_turma: eq.nome_fantasia || eq.nome_fantasia_turma || info.nome_fantasia || eq.nome_equipe || info.nome_equipe || '',
+                                nome_equipe: eq.nome_equipe || info.nome_equipe || '',
                                 _local: true,
                                 _pendente: true
                             }));

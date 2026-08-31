@@ -801,6 +801,17 @@ $paginaAtiva = 'dashboard';
     }
 
     async function salvarPartida(idPartida, gols) {
+        if (!idPartida || isNaN(Number(idPartida)) || Number(idPartida) <= 0 || String(idPartida).indexOf('mm_local_') === 0 || (estadoJogo && Number(estadoJogo.id_jogo) < 0)) {
+            // Partida offline ou derivada local: grava APENAS no banco local IndexedDB
+            if (window.SGIDataLayer && window.SGIDataLayer.upsert) {
+                var rowPartida = (partidasLista || []).find(function(p) { return String(p.id_partida) === String(idPartida); });
+                if (rowPartida) {
+                    rowPartida.resultado_partida = gols;
+                    await window.SGIDataLayer.upsert('partidas', idPartida, rowPartida).catch(function() {});
+                }
+            }
+            return;
+        }
         try {
             await fetchJson(API + 'partidas.php', {
                 method: 'PUT',
@@ -809,7 +820,6 @@ $paginaAtiva = 'dashboard';
             });
         } catch (e) {
             console.error(e);
-            alert('Não foi possível salvar o placar. Verifique a conexão.');
         }
     }
 
@@ -1030,6 +1040,25 @@ $paginaAtiva = 'dashboard';
 
             estadoJogo = Object.assign({}, row);
             if (!estadoJogo.nome_modalidade) estadoJogo.nome_modalidade = '';
+
+            var modalidades = await DL.read('modalidades').catch(function() { return []; });
+            if (Array.isArray(modalidades) && estadoJogo.modalidades_id_modalidade) {
+                var mod = modalidades.find(function(m) { return Number(m.id_modalidade) === Number(estadoJogo.modalidades_id_modalidade); });
+                if (mod) {
+                    if (!estadoJogo.nome_modalidade) estadoJogo.nome_modalidade = mod.nome_modalidade;
+                    if (!estadoJogo.tipos_modalidades_id_tipo_modalidade) estadoJogo.tipos_modalidades_id_tipo_modalidade = mod.tipos_modalidades_id_tipo_modalidade;
+                }
+            }
+            var locais = await DL.read('locais').catch(function() { return []; });
+            if (Array.isArray(locais)) {
+                if (estadoJogo.locais_id_local) {
+                    var loc = locais.find(function(l) { return Number(l.id_local) === Number(estadoJogo.locais_id_local); });
+                    if (loc && !estadoJogo.nome_local) estadoJogo.nome_local = loc.nome_local;
+                } else if (locais.length > 0 && !estadoJogo.nome_local) {
+                    estadoJogo.locais_id_local = locais[0].id_local;
+                    estadoJogo.nome_local = locais[0].nome_local;
+                }
+            }
 
             var todasPartidas = await DL.read('partidas');
             partidasLista = todasPartidas.filter(function(p) {

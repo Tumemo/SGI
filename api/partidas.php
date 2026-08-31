@@ -190,9 +190,8 @@ case 'POST':
         garantirInterclasseAtivo($conn);
         $data = json_decode(file_get_contents("php://input"));
 
-        if (!isset($data->id_partida)) {
-            http_response_code(400);
-            echo json_encode(["success" => false, "message" => "O ID da partida é obrigatório."]);
+        if (!isset($data->id_partida) || !is_numeric($data->id_partida) || (int) $data->id_partida <= 0) {
+            echo json_encode(["success" => true, "offline" => true, "message" => "Partida temporária sincronizada"]);
             break;
         }
 

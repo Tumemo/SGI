@@ -292,10 +292,15 @@
                                 return idbQueueDelete(item.id);
                             });
                     }
+                    if (res && res.status >= 400 && res.status < 500) {
+                        console.warn('sgi: descartando mutação cliente obsoleta da fila:', item.url, res.status);
+                        return idbQueueDelete(item.id);
+                    }
                     item.tries = (item.tries || 0) + 1;
                     if (item.tries >= MAX_TRIES) item.needsReview = true;
                     return idbQueueUpdate(item);
-                }).catch(function () {
+                }).catch(function (err) {
+                    console.warn('sgi: erro de rede na sincronização:', item.url, err);
                     item.tries = (item.tries || 0) + 1;
                     if (item.tries >= MAX_TRIES) item.needsReview = true;
                     return idbQueueUpdate(item).then(function () {
