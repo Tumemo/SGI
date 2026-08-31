@@ -7,7 +7,7 @@
     window.__SGI_MESARIO_DATA__ = true;
 
     var DB = 'sgi_mesario_dados', VERSION = 1;
-    var STORES = ['jogos', 'partidas', 'atletas', 'turmas', 'modalidades', 'categorias', 'locais',
+    var STORES = ['jogos', 'partidas', 'atletas', 'turmas', 'modalidades', 'categorias', 'locais', 'equipes',
         'ocorrencias', 'ocorrencias_turmas', 'chaveamentos', 'fila_sincronizacao'];
     var session = String(window.SGI_SESSION_ID || 'anon');
     var dbPromise;
@@ -56,14 +56,14 @@
     }
     function urlInfo(url) { try { var u = new URL(url, location.href); return { file: u.pathname.split('/').pop(), q: u.searchParams }; } catch (_) { return {}; } }
     function idFor(file, row, fallback) {
-        var fields = { jogos: 'id_jogo', partidas: 'id_partida', turmas: 'id_turma', modalidades: 'id_modalidade', categorias: 'id_categoria', locais: 'id_local', artilheiro: 'id_artilheiro', ocorrencias: 'id_ocorrencia', ocorrencias_turmas: 'id_ocorrencia_turma' };
+        var fields = { jogos: 'id_jogo', partidas: 'id_partida', turmas: 'id_turma', modalidades: 'id_modalidade', categorias: 'id_categoria', locais: 'id_local', equipes: 'id_equipe', artilheiro: 'id_artilheiro', ocorrencias: 'id_ocorrencia', ocorrencias_turmas: 'id_ocorrencia_turma' };
         return row && (row[fields[file]] || row.id || fallback);
     }
     function capture(url, text) {
         var info = urlInfo(url), file = info.file, data;
         try { data = JSON.parse(text); } catch (_) { return Promise.resolve(); }
         var rows = Array.isArray(data) ? data : (data && (data.dados || data.ranking || data.participantes));
-        var store = { 'jogos.php': 'jogos', 'partidas.php': 'partidas', 'turmas.php': 'turmas', 'modalidades.php': 'modalidades', 'categorias.php': 'categorias', 'locais.php': 'locais', 'artilheiro.php': 'atletas', 'ocorrencias.php': 'ocorrencias', 'ocorrencias_turmas.php': 'ocorrencias_turmas', 'chaveamento.php': 'chaveamentos' }[file];
+        var store = { 'jogos.php': 'jogos', 'partidas.php': 'partidas', 'turmas.php': 'turmas', 'modalidades.php': 'modalidades', 'categorias.php': 'categorias', 'locais.php': 'locais', 'equipes.php': 'equipes', 'artilheiro.php': 'atletas', 'ocorrencias.php': 'ocorrencias', 'ocorrencias_turmas.php': 'ocorrencias_turmas', 'chaveamento.php': 'chaveamentos' }[file];
         if (!store) return Promise.resolve();
         if (!Array.isArray(rows)) rows = [data];
         return Promise.all(rows.filter(function (r) { return r && typeof r === 'object'; }).map(function (r, i) {
@@ -74,7 +74,18 @@
     function bodyOf(item) { try { return typeof item.body === 'string' ? JSON.parse(item.body || '{}') : (item.body || {}); } catch (_) { return {}; } }
     function project(item) {
         var info = urlInfo(item.url), data = bodyOf(item), file = info.file, temporary = 'temp_' + item.id;
-        if (file === 'jogos.php' && data.id_jogo) return get('jogos', data.id_jogo).then(function (old) { return put('jogos', data.id_jogo, Object.assign({}, old || { id_jogo: data.id_jogo }, data, { _pendente: true })); });
+        if (file === 'jogos.php' && data.id_jogo) return get('jogos', data.id_jogo).then(function (old) {
+            var merged = Object.assign({}, old || {}, data, { _pendente: true });
+            if (old) {
+                if (!merged.nome_jogo && old.nome_jogo) merged.nome_jogo = old.nome_jogo;
+                if (!merged.modalidades_id_modalidade && old.modalidades_id_modalidade) merged.modalidades_id_modalidade = old.modalidades_id_modalidade;
+                if (!merged.nome_modalidade && old.nome_modalidade) merged.nome_modalidade = old.nome_modalidade;
+                if (!merged.tipos_modalidades_id_tipo_modalidade && old.tipos_modalidades_id_tipo_modalidade) merged.tipos_modalidades_id_tipo_modalidade = old.tipos_modalidades_id_tipo_modalidade;
+                if (!merged.locais_id_local && old.locais_id_local) merged.locais_id_local = old.locais_id_local;
+                if (!merged.nome_local && old.nome_local) merged.nome_local = old.nome_local;
+            }
+            return put('jogos', data.id_jogo, merged);
+        });
         // Placar ao vivo (botões +/- do placar): atualiza a partida no banco
         // local, inclusive em partidas criadas offline (id "mm_local_…").
         if (file === 'partidas.php' && item.method === 'PUT' && data.id_partida != null) return all('partidas').then(function (ps) {
@@ -120,7 +131,7 @@
         return Promise.resolve();
     }
     function localGet(url) {
-        var info = urlInfo(url), file = info.file, store = { 'jogos.php': 'jogos', 'partidas.php': 'partidas', 'turmas.php': 'turmas', 'modalidades.php': 'modalidades', 'categorias.php': 'categorias', 'locais.php': 'locais', 'artilheiro.php': 'atletas', 'ocorrencias.php': 'ocorrencias', 'ocorrencias_turmas.php': 'ocorrencias_turmas', 'chaveamento.php': 'chaveamentos' }[file];
+        var info = urlInfo(url), file = info.file, store = { 'jogos.php': 'jogos', 'partidas.php': 'partidas', 'turmas.php': 'turmas', 'modalidades.php': 'modalidades', 'categorias.php': 'categorias', 'locais.php': 'locais', 'equipes.php': 'equipes', 'artilheiro.php': 'atletas', 'ocorrencias.php': 'ocorrencias', 'ocorrencias_turmas.php': 'ocorrencias_turmas', 'chaveamento.php': 'chaveamentos' }[file];
         // Endpoints com "acao" possuem formatos especiais; o cache por URL
         // da camada base preserva exatamente a resposta original nesses casos.
         if (!store || info.q.get('acao')) return Promise.resolve(null);

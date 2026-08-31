@@ -241,20 +241,21 @@
             mapaId[Number(j.id_jogo)] = j;
         });
 
-        function garantirEquipe(jogo, idEquipe) {
+        function garantirEquipe(jogo, idEquipe, teamMeta) {
             var existe = (jogo.equipes || []).some(function (e) {
                 return Number(e.id_equipe) === Number(idEquipe);
             });
             if (existe) return false;
             var info = dirEquipes[Number(idEquipe)] || {};
+            var meta = teamMeta || {};
             jogo.equipes = jogo.equipes || [];
             jogo.equipes.push({
                 id_partida: null,
                 id_equipe: Number(idEquipe),
-                id_turma: info.id_turma || info.turmas_id_turma || null,
-                nome_turma: info.nome_turma || '',
-                nome_fantasia: info.nome_fantasia || info.nome_fantasia_turma || '',
-                nome_equipe: info.nome_equipe || '',
+                id_turma: meta.id_turma || info.id_turma || info.turmas_id_turma || null,
+                nome_turma: meta.nome_turma || info.nome_turma || '',
+                nome_fantasia: meta.nome_fantasia || meta.nome_fantasia_turma || info.nome_fantasia || info.nome_fantasia_turma || meta.nome_equipe || info.nome_equipe || '',
+                nome_equipe: meta.nome_equipe || info.nome_equipe || '',
                 gols: 0,
                 _local: true
             });
@@ -347,6 +348,8 @@
                 : vencedorDeEquipes(jogo.equipes);
             if (w1 === null) return;
 
+            var w1Obj = (jogo.equipes || []).find(function(e) { return Number(e.id_equipe) === Number(w1); });
+
             var tagIrmaoA = mmTag(meta.largura, slotIrmao(meta.slot), 'N');
             var tagIrmaoB = mmTag(meta.largura, slotIrmao(meta.slot), 'B');
             var irmao = mapaTag[tagIrmaoA] || mapaTag[tagIrmaoB];
@@ -355,7 +358,7 @@
 
             var tagPai = mmTag(proximaLargura(meta.largura), slotPai(meta.slot), 'N');
             var pai = garantirJogoPorTag(tagPai, { largura: proximaLargura(meta.largura), slot: slotPai(meta.slot) });
-            garantirEquipe(pai, w1);
+            garantirEquipe(pai, w1, w1Obj);
 
             if (!irmao) {
                 if (tentarAutoConcluir(pai)) fila.push(pai);
@@ -364,10 +367,11 @@
                 var w2 = (metaIrmao.kind === 'B')
                     ? ((irmao.equipes && irmao.equipes[0]) ? Number(irmao.equipes[0].id_equipe) : null)
                     : vencedorDeEquipes(irmao.equipes);
+                var w2Obj = (irmao.equipes || []).find(function(e) { return Number(e.id_equipe) === Number(w2); });
                 if (w2 !== null) {
                     pai.equipes = [];
-                    garantirEquipe(pai, w1);
-                    garantirEquipe(pai, w2);
+                    garantirEquipe(pai, w1, w1Obj);
+                    garantirEquipe(pai, w2, w2Obj);
                 }
             }
 

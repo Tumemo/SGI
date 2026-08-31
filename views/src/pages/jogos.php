@@ -1065,6 +1065,21 @@ $paginaAtiva = 'dashboard';
                 return String(p.jogos_id_jogo) === String(idJogo);
             });
 
+            if ((!partidasLista || partidasLista.length === 0) && Array.isArray(row.equipes) && row.equipes.length > 0) {
+                partidasLista = row.equipes.map(function(eq, idx) {
+                    return {
+                        id_partida: eq.id_partida || ('mm_local_' + row.id_jogo + '_' + (eq.id_equipe || idx)),
+                        jogos_id_jogo: row.id_jogo,
+                        equipes_id_equipe: eq.id_equipe,
+                        resultado_partida: eq.gols || 0,
+                        id_turma: eq.id_turma || null,
+                        nome_turma: eq.nome_turma || '',
+                        nome_fantasia_turma: eq.nome_fantasia || eq.nome_fantasia_turma || eq.nome_equipe || '',
+                        nome_equipe: eq.nome_equipe || ''
+                    };
+                });
+            }
+
             await enriquecerPartidasComTurmas();
             ehIndividual = false;
             duracaoJogo = parseInt(estadoJogo.duracao_jogo, 10) || (20 * 60);
@@ -1089,12 +1104,12 @@ $paginaAtiva = 'dashboard';
         var titulo = document.getElementById('placar-titulo-jogo');
         var statusEl = document.getElementById('mc-status-badge');
 
-        titulo.textContent = formatNomeJogo(estadoJogo.nome_jogo) || 'Placar';
+        titulo.textContent = formatNomeJogo(estadoJogo ? estadoJogo.nome_jogo : '') || 'Placar';
         meta.textContent = [
-            estadoJogo.nome_modalidade,
-            estadoJogo.nome_local,
-            estadoJogo.data_jogo,
-            estadoJogo.inicio_jogo ? estadoJogo.inicio_jogo.slice(0, 5) : ''
+            estadoJogo ? estadoJogo.nome_modalidade : '',
+            estadoJogo ? estadoJogo.nome_local : '',
+            estadoJogo ? estadoJogo.data_jogo : '',
+            (estadoJogo && estadoJogo.inicio_jogo) ? String(estadoJogo.inicio_jogo).slice(0, 5) : ''
         ].filter(Boolean).join('  ·  ');
 
         var st = estadoJogo.status_jogo;
