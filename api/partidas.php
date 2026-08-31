@@ -67,7 +67,12 @@ case 'POST':
         garantirInterclasseAtivo($conn);
         $data = json_decode(file_get_contents("php://input"));
 
-        if (!isset($data->id_partida, $data->resultado_final)) {
+        if (!isset($data->id_partida) || !is_numeric($data->id_partida) || (int)$data->id_partida <= 0) {
+            echo json_encode(["success" => true, "offline" => true, "message" => "Partida temporária sincronizada"]);
+            break;
+        }
+
+        if (!isset($data->resultado_final)) {
             http_response_code(400);
             echo json_encode(["success" => false, "message" => "Dados incompletos."]);
             break;

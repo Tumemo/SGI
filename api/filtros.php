@@ -91,10 +91,11 @@ function aplicarFiltrosInterclasse() {
     $types = "";
     $params = [];
 
-    if (!empty($_GET['id_interclasse'])) {
+    $idGet = !empty($_GET['id_interclasse']) ? intval($_GET['id_interclasse']) : (!empty($_GET['id']) ? intval($_GET['id']) : 0);
+    if ($idGet > 0) {
         $sqlExtras .= " AND id_interclasse = ?";
         $types .= "i";
-        $params[] = intval($_GET['id_interclasse']);
+        $params[] = $idGet;
     }
 
     if (!empty($_GET['ano'])) {

@@ -25,7 +25,7 @@ switch ($method) {
     case 'GET':
         $filtro = aplicarFiltrosInterclasse();
         $querRegulamento = isset($_GET['regulamento']) && $_GET['regulamento'] === 'true';
-        $detalheEdicao = !empty($_GET['id_interclasse']);
+        $detalheEdicao = !empty($_GET['id_interclasse']) || !empty($_GET['id']);
         $colunas = ($querRegulamento || $detalheEdicao) ? '*' : 'id_interclasse, nome_interclasse, ano_interclasse';
         $sql = "SELECT $colunas FROM interclasses WHERE 1=1" . $filtro['sql'] . " ORDER BY ano_interclasse DESC";
         $stmt = $conn->prepare($sql);
@@ -39,8 +39,8 @@ switch ($method) {
         $id = $_GET['id'] ?? null;
 
         if ($id) {
-            // CORREÇÃO: Coleta os dados de $_POST de forma consistente para formulários multipart/form-data
-            $dados = $_POST; 
+            $inputJson = json_decode(file_get_contents("php://input"), true);
+            $dados = is_array($inputJson) ? array_merge($_POST, $inputJson) : $_POST; 
 
             $campos = [];
             $params = [];
