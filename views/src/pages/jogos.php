@@ -880,10 +880,16 @@ $paginaAtiva = 'dashboard';
         }
 
         try {
+            var payloadFin = {
+                id_jogo: idJogo,
+                nome_jogo: (estadoJogo && estadoJogo.nome_jogo) || null,
+                id_modalidade: (estadoJogo && (estadoJogo.modalidades_id_modalidade || estadoJogo.id_modalidade)) || null,
+                resultados: resultados
+            };
             var res = await fetch(API + 'lancar_resultado.php', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ id_jogo: idJogo, resultados: resultados })
+                body: JSON.stringify(payloadFin)
             });
             var js = await res.json();
             if (!res.ok || js.success === false) throw new Error(js.message || 'Falha ao finalizar');
@@ -972,10 +978,17 @@ $paginaAtiva = 'dashboard';
         try { urlAbsoluta = new URL(API + 'lancar_resultado.php', location.href).href; }
         catch (_) { urlAbsoluta = API + 'lancar_resultado.php'; }
 
+        var payloadLocal = {
+            id_jogo: idJogo,
+            nome_jogo: (estadoJogo && estadoJogo.nome_jogo) || null,
+            id_modalidade: (estadoJogo && (estadoJogo.modalidades_id_modalidade || estadoJogo.id_modalidade)) || null,
+            resultados: resultados
+        };
+
         window.SGIOffline.queueMutation(
             'POST',
             urlAbsoluta,
-            JSON.stringify({ id_jogo: idJogo, resultados: resultados }),
+            JSON.stringify(payloadLocal),
             { 'Content-Type': 'application/json' }
         ).then(function() {
             // Lock liberado — mutação já está na fila
@@ -1371,6 +1384,7 @@ $paginaAtiva = 'dashboard';
     }
 
     async function carregarDados() {
+        pararTimer();
         idJogo = obterIdJogoAtual();
         var err = document.getElementById('placar-erro');
         var load = document.getElementById('placar-loading');

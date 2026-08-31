@@ -48,7 +48,7 @@ if ($usuario && password_verify($senha, $usuario['senha_usuario'])) {
     $destino = match($_SESSION['nivel']) {
         3       => '../views/src/pages/alunos/home.php',        // Competidores
         0, 1, 2 => '../views/src/pages/home.php',               // Admin, Colaborador, Mesário
-        default => '../login.html'
+        default => '../views/index.php'
     };
 
     echo json_encode([

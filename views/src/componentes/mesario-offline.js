@@ -329,6 +329,50 @@
                 if (c === '`') tpl = false;
                 out += c; i++; continue;
             }
+            // Detecção de Regex literal: evita que aspas dentro de regexes (ex.: /[&<>"']/g) abram blocos de string
+            if (c === '/' && nx !== '/' && nx !== '*') {
+                var prevToken = out.trim();
+                var lastChar = prevToken.slice(-1);
+                var isRegex = !prevToken || /[(=,:;!&|?~^%*+\-\[{]/.test(lastChar) ||
+                    /\b(return|typeof|void|delete|case|throw|in|instanceof)$/.test(prevToken);
+                if (isRegex) {
+                    var regStr = c;
+                    var rIdx = i + 1;
+                    var inClass = false;
+                    var fechouRegex = false;
+                    while (rIdx < n) {
+                        var rc = src[rIdx];
+                        regStr += rc;
+                        if (rc === '\\') {
+                            if (rIdx + 1 < n) {
+                                rIdx++;
+                                regStr += src[rIdx];
+                            }
+                        } else if (rc === '[') {
+                            inClass = true;
+                        } else if (rc === ']' && inClass) {
+                            inClass = false;
+                        } else if (rc === '/' && !inClass) {
+                            rIdx++;
+                            while (rIdx < n && /[a-z]/i.test(src[rIdx])) {
+                                regStr += src[rIdx];
+                                rIdx++;
+                            }
+                            fechouRegex = true;
+                            break;
+                        } else if (rc === '\n') {
+                            break;
+                        }
+                        rIdx++;
+                    }
+                    if (fechouRegex) {
+                        out += regStr;
+                        i = rIdx;
+                        continue;
+                    }
+                }
+            }
+
             // Remove comentários inteiros: manter apenas uma barra criava
             // expressões regulares inválidas no script reexecutado.
             if (c === '/' && nx === '/') { line = true; i += 2; continue; }

@@ -685,7 +685,7 @@
         state.online = true;
         state.softOffline = false;
         notify();
-        flushQueue();
+        syncQueue();
     });
     window.addEventListener('offline', function () {
         state.online = false;

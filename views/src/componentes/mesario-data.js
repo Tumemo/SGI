@@ -56,7 +56,7 @@
     }
     function urlInfo(url) { try { var u = new URL(url, location.href); return { file: u.pathname.split('/').pop(), q: u.searchParams }; } catch (_) { return {}; } }
     function idFor(file, row, fallback) {
-        var fields = { jogos: 'id_jogo', partidas: 'id_partida', turmas: 'id_turma', modalidades: 'id_modalidade', categorias: 'id_categoria', locais: 'id_local', artilheiro: 'id_artilheiro', ocorrencias: 'id_ocorrencia' };
+        var fields = { jogos: 'id_jogo', partidas: 'id_partida', turmas: 'id_turma', modalidades: 'id_modalidade', categorias: 'id_categoria', locais: 'id_local', artilheiro: 'id_artilheiro', ocorrencias: 'id_ocorrencia', ocorrencias_turmas: 'id_ocorrencia_turma' };
         return row && (row[fields[file]] || row.id || fallback);
     }
     function capture(url, text) {

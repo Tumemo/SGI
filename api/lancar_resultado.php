@@ -15,10 +15,50 @@ if (!isset($data->id_jogo, $data->resultados)) {
 }
 
 $idJogo = (int) $data->id_jogo;
+$nomeJogo = $data->nome_jogo ?? null;
+$idModalidade = isset($data->id_modalidade) ? (int) $data->id_modalidade : 0;
 
 $conn->begin_transaction();
 
 try {
+    // Resolução de partidas derivadas geradas offline com ID temporário negativo
+    if ($idJogo <= 0) {
+        if (!empty($nomeJogo) && $idModalidade > 0) {
+            $jogoReal = sgi_mm_buscar_jogo_por_tag($conn, $idModalidade, (string) $nomeJogo);
+            if ($jogoReal) {
+                $idJogo = (int) $jogoReal['id_jogo'];
+            }
+        }
+
+        if ($idJogo <= 0 && !empty($data->resultados) && is_array($data->resultados)) {
+            $equipesIds = array_values(array_filter(
+                array_map(static fn($r) => (int) ($r->id_equipe ?? 0), $data->resultados),
+                static fn($id) => $id > 0
+            ));
+            if (count($equipesIds) >= 2) {
+                $eq1 = $equipesIds[0];
+                $eq2 = $equipesIds[1];
+                $stMatch = $conn->prepare(
+                    "SELECT p1.jogos_id_jogo FROM partidas p1
+                     INNER JOIN partidas p2 ON p1.jogos_id_jogo = p2.jogos_id_jogo
+                     WHERE p1.equipes_id_equipe = ? AND p2.equipes_id_equipe = ?
+                     ORDER BY p1.jogos_id_jogo DESC LIMIT 1"
+                );
+                $stMatch->bind_param('ii', $eq1, $eq2);
+                $stMatch->execute();
+                $rowMatch = $stMatch->get_result()->fetch_assoc();
+                $stMatch->close();
+                if ($rowMatch) {
+                    $idJogo = (int) $rowMatch['jogos_id_jogo'];
+                }
+            }
+        }
+
+        if ($idJogo <= 0) {
+            throw new RuntimeException("Não foi possível identificar o jogo no servidor para o ID provisório {$data->id_jogo}.");
+        }
+    }
+
     $stStatusAtual = $conn->prepare("SELECT status_jogo FROM jogos WHERE id_jogo = ?");
     $stStatusAtual->bind_param('i', $idJogo);
     $stStatusAtual->execute();

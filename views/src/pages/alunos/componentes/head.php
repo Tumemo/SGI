@@ -3,7 +3,7 @@ if (session_status() === PHP_SESSION_NONE) {
     session_cache_limiter('private_no_expire');
     session_start();
 }
-if ((int)($_SESSION['nivel'] ?? -1) !== 3) { header('Location: ../../index.php'); exit; }
+if ((int)($_SESSION['nivel'] ?? -1) !== 3) { header('Location: ../../../index.php'); exit; }
 // Cache de página POR USUÁRIO: cada login recebe um PHPSESSID novo
 // (session_regenerate_id no login), então Vary: Cookie isola o cache entre
 // competidores no mesmo navegador — sem vazamento. max-age +
