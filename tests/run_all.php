@@ -12,10 +12,14 @@ require_once __DIR__ . '/Integration/AuthAndRbacTest.php';
 require_once __DIR__ . '/Integration/InterclasseLifecycleTest.php';
 require_once __DIR__ . '/Integration/TurmasAndPdfImportTest.php';
 require_once __DIR__ . '/Integration/ModalidadesAndEquipesTest.php';
+require_once __DIR__ . '/Integration/InscricaoModalidadesTest.php';
 require_once __DIR__ . '/Integration/JogosAndConflitosTest.php';
 require_once __DIR__ . '/Integration/PlacarAndArtilhariaTest.php';
 require_once __DIR__ . '/Integration/OcorrenciasAndRankingTest.php';
+require_once __DIR__ . '/Integration/HistoricoTurmaAndClassificacaoTest.php';
+require_once __DIR__ . '/Integration/FotoPerfilAndUsuariosTest.php';
 require_once __DIR__ . '/Integration/AlunosPortalTest.php';
+require_once __DIR__ . '/Unit/MataMataEdgeCasesTest.php';
 require_once __DIR__ . '/E2E/FullOfflineTournamentTest.php';
 
 use SGITests\Support\Assertions;
@@ -23,10 +27,14 @@ use SGITests\Integration\AuthAndRbacTest;
 use SGITests\Integration\InterclasseLifecycleTest;
 use SGITests\Integration\TurmasAndPdfImportTest;
 use SGITests\Integration\ModalidadesAndEquipesTest;
+use SGITests\Integration\InscricaoModalidadesTest;
 use SGITests\Integration\JogosAndConflitosTest;
 use SGITests\Integration\PlacarAndArtilhariaTest;
 use SGITests\Integration\OcorrenciasAndRankingTest;
+use SGITests\Integration\HistoricoTurmaAndClassificacaoTest;
+use SGITests\Integration\FotoPerfilAndUsuariosTest;
 use SGITests\Integration\AlunosPortalTest;
+use SGITests\Unit\MataMataEdgeCasesTest;
 use SGITests\E2E\FullOfflineTournamentTest;
 
 $inicio = microtime(true);
@@ -52,22 +60,34 @@ try {
     $equipes = $dadosMod['equipes'];
     $idModalidade = (int) $mod['id_modalidade'];
 
-    // 5. Agendamento e Conflitos
+    // 5. Inscrição em Modalidades e Limites
+    InscricaoModalidadesTest::run($idEdicao, $equipes);
+
+    // 6. Agendamento e Conflitos
     $dadosJogos = JogosAndConflitosTest::run($idEdicao, $idModalidade, $equipes);
     $idJogo1 = $dadosJogos['id_jogo_1'];
     $idJogo2 = $dadosJogos['id_jogo_2'];
     $equipesIds = $dadosJogos['equipes_ids'];
 
-    // 6. Placar e Artilharia
+    // 7. Placar e Artilharia
     PlacarAndArtilhariaTest::run($idJogo1, $idModalidade, $equipesIds);
 
-    // 7. Ocorrências e Ranking
+    // 8. Ocorrências e Ranking
     OcorrenciasAndRankingTest::run($idEdicao, $idTurma);
 
-    // 8. Portal do Aluno
+    // 9. Histórico de Turma e Pódios
+    HistoricoTurmaAndClassificacaoTest::run($idEdicao, $idTurma, $idModalidade);
+
+    // 10. Gestão de Fotos e Perfil
+    FotoPerfilAndUsuariosTest::run();
+
+    // 11. Portal do Aluno
     AlunosPortalTest::run();
 
-    // 9. Torneio Completo e Sincronização Offline
+    // 12. Casos Limites do Motor de Chaveamento
+    MataMataEdgeCasesTest::run($idEdicao);
+
+    // 13. Torneio Completo e Sincronização Offline
     FullOfflineTournamentTest::run($idEdicao, $idModalidade, $idJogo2, $equipesIds);
 
 } catch (Throwable $e) {

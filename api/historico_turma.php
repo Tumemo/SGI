@@ -180,7 +180,8 @@ try {
                 "SELECT p.resultado_partida, u.id_usuario, u.nome_usuario
                  FROM partidas p
                  INNER JOIN jogos j ON j.id_jogo = p.jogos_id_jogo
-                 LEFT JOIN usuarios u ON u.id_usuario = p.usuarios_id_usuario
+                 LEFT JOIN equipes_has_usuarios ehu ON ehu.equipes_id_equipe = p.equipes_id_equipe
+                 LEFT JOIN usuarios u ON u.id_usuario = ehu.usuarios_id_usuario
                  WHERE j.modalidades_id_modalidade = ? AND j.nome_jogo = ?
                    AND p.equipes_id_equipe IN ($inPlace)
                    AND p.resultado_partida BETWEEN 1 AND 3
