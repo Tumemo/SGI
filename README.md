@@ -104,5 +104,19 @@ SGI/
 
 ---
 
+## 🧪 Testes Automatizados e Auditoria
+
+O projeto conta com uma suite completa de testes automatizados modulares:
+
+```bash
+# Executar toda a suite de testes automatizados (87 asserções):
+php tests/run_all.php
+
+# Inicializar/resetar dados de demonstração (Edição ativa, turmas, equipes e alunos):
+php tests/seed_interclasse_demo.php
+```
+
+---
+
 ## 📄 Licença e Direitos
 Desenvolvido para uso educacional e institucional no **SESI**. Todos os direitos reservados.

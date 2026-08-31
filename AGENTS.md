@@ -82,3 +82,17 @@ O subsistema offline está localizado em `views/src/componentes/` e opera em con
 - **Unicidade de Matrículas:** Alunos utilizam a chave composta `uk_matricula_interclasse` (`matricula_usuario`, `interclasses_id_interclasse`), permitindo que a mesma matrícula participe em anos diferentes.
 - **Senhas:** Sempre utilize `password_hash($senha, PASSWORD_DEFAULT)` e `password_verify($senha, $hash)`.
 - **Rotas Relativas:** Mantenha os caminhos relativos consistentes com a profundidade da pasta (ex: `views/src/pages/alunos/` está a 4 níveis da raiz `/SGI/`).
+
+---
+
+## 6. Testes Automatizados e Rede de Segurança
+
+Antes e após qualquer refatoração, execute a suite completa de testes automatizados:
+
+```bash
+# Executar todas as 13 suites de testes automatizados (87 asserções):
+php tests/run_all.php
+
+# Inicializar ou resetar a base com dados de demonstração:
+php tests/seed_interclasse_demo.php
+```
