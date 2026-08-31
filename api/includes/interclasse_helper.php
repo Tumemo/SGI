@@ -7,7 +7,7 @@ declare(strict_types=1);
  */
 function buscarInterclasseAtivo(mysqli $conn): ?int
 {
-    $res = $conn->query("SELECT id_interclasse FROM interclasses WHERE status_interclasse = '1' LIMIT 1");
+    $res = $conn->query("SELECT id_interclasse FROM interclasses WHERE status_interclasse = '1' ORDER BY id_interclasse DESC LIMIT 1");
     if (!$res || $res->num_rows === 0) {
         return null;
     }

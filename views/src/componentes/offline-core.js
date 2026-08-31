@@ -233,8 +233,17 @@
         } else if (typeof body === 'string') {
             storedBody = body;
         } else if (isFormData) {
-            storedBody = body;
-            delete storedHeaders['Content-Type'];
+            var plainObj = {};
+            body.forEach(function (v, k) {
+                if (plainObj[k] !== undefined) {
+                    if (!Array.isArray(plainObj[k])) plainObj[k] = [plainObj[k]];
+                    plainObj[k].push(v);
+                } else {
+                    plainObj[k] = v;
+                }
+            });
+            storedBody = JSON.stringify(plainObj);
+            storedHeaders['Content-Type'] = 'application/json';
         } else if (body instanceof URLSearchParams || body instanceof Blob || body instanceof ArrayBuffer || ArrayBuffer.isView(body)) {
             storedBody = body;
         } else {

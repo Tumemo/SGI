@@ -44,6 +44,11 @@ echo "\033[1;36m================================================================
 echo "\033[1;36m       SGI — SUITE COMPLETA DE TESTES AUTOMATIZADOS E AUDITORIA       \033[0m\n";
 echo "\033[1;36m====================================================================\033[0m\n";
 
+// Reset atômico do banco com schema oficial antes dos testes
+$sqlFile = str_replace('\\', '/', dirname(__DIR__) . '/docs/sgi.sql');
+$mysqlBin = file_exists('C:/xampp/mysql/bin/mysql.exe') ? 'C:/xampp/mysql/bin/mysql.exe' : 'mysql';
+exec("\"$mysqlBin\" -u root -e \"source $sqlFile\"");
+
 try {
     // 1. Autenticação e RBAC
     AuthAndRbacTest::run();
