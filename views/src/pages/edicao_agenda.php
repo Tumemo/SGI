@@ -693,10 +693,24 @@ $nivelUsuarioAgenda = (int)($_SESSION['nivel'] ?? -1);
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
                             id_jogo: Number(id),
-                            // Mantém no registro projetado offline os dados da
-                            // modalidade que não são colunas alteráveis pelo
-                            // mesário, mas são necessários para artilharia e
-                            // outras regras da tela do placar.
+                            // Contexto usado somente pela projeção IndexedDB.
+                            // Fica aninhado para não tentar alterar no MySQL os
+                            // campos que o perfil mesário não pode editar.
+                            _contexto_offline: jogoAtual ? {
+                                id_jogo: Number(id),
+                                nome_jogo: jogoAtual.nome_jogo || null,
+                                data_jogo: jogoAtual.data_jogo || null,
+                                inicio_jogo: jogoAtual.inicio_jogo || null,
+                                termino_jogo: jogoAtual.termino_jogo || jogoAtual.terminno_jogo || null,
+                                modalidades_id_modalidade: jogoAtual.modalidades_id_modalidade || null,
+                                id_interclasse: jogoAtual.id_interclasse || jogoAtual.interclasses_id_interclasse || null,
+                                locais_id_local: jogoAtual.locais_id_local || null,
+                                nome_modalidade: jogoAtual.nome_modalidade || null,
+                                nome_categoria: jogoAtual.nome_categoria || null,
+                                nome_local: jogoAtual.nome_local || null,
+                                equipes_nomes: jogoAtual.equipes_nomes || null,
+                                tipos_modalidades_id_tipo_modalidade: jogoAtual.tipos_modalidades_id_tipo_modalidade || null
+                            } : null,
                             nome_jogo: jogoAtual && jogoAtual.nome_jogo ? jogoAtual.nome_jogo : null,
                             nome_modalidade: jogoAtual && jogoAtual.nome_modalidade ? jogoAtual.nome_modalidade : null,
                             tipos_modalidades_id_tipo_modalidade: jogoAtual && jogoAtual.tipos_modalidades_id_tipo_modalidade ? jogoAtual.tipos_modalidades_id_tipo_modalidade : null,

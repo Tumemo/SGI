@@ -116,6 +116,7 @@ async function criarPartidaFixture(request) {
     return {
         idJogo,
         nomeJogo,
+        idModalidade: Number(modalidade.id_modalidade),
         idInterclasse
     };
 }
@@ -202,7 +203,46 @@ test.describe('Mesário — fluxo visual completo offline', () => {
         await expect(page.locator('#mc-status-badge')).toContainText('Encerrado');
         await expect(page.locator('#sgi-offline-banner')).toContainText('alteracao', { timeout: 10_000 });
         await expect.poll(() => page.evaluate(() => window.SGIOffline.getState().pending), { timeout: 20_000 }).toBeGreaterThanOrEqual(4);
+        await expect.poll(() => page.evaluate(async (id) => {
+            const jogos = await window.SGIDataLayer.read('jogos');
+            return jogos.find((jogo) => Number(jogo.id_jogo) === Number(id))?.status_jogo || null;
+        }, fixture.idJogo)).toBe('Concluido');
+        await expect.poll(() => page.evaluate(async (id) => {
+            const jogos = await window.SGIDataLayer.read('jogos');
+            return Number(jogos.find((jogo) => Number(jogo.id_jogo) === Number(id))?.modalidades_id_modalidade || 0);
+        }, fixture.idJogo)).toBe(fixture.idModalidade);
+        await expect.poll(() => page.evaluate(async (id) => {
+            const response = await fetch(`../../../api/jogos.php?id_jogo=${id}`);
+            const jogos = await response.json();
+            return jogos[0]?.status_jogo || null;
+        }, fixture.idJogo)).toBe('Concluido');
+        await expect.poll(() => page.evaluate(async ({ idJogo, idModalidade }) => {
+            const response = await fetch(`../../../api/jogos.php?id_modalidade=${idModalidade}`);
+            const jogos = await response.json();
+            return jogos.find((jogo) => Number(jogo.id_jogo) === Number(idJogo))?.status_jogo || null;
+        }, fixture)).toBe('Concluido');
         await capturarTela(page, testInfo, '04-partida-finalizada-offline');
+
+        // Regressão: assim que o placar mostra "Encerrado", a persistência
+        // local já precisa estar concluída. Ao voltar para a agenda ainda sem
+        // rede, o mesmo jogo deve aparecer como concluído e nunca oferecer o
+        // botão de iniciar novamente.
+        await page.locator('#btnVoltarPlacar').click();
+        await expect(page.locator('#lista-eventos')).toBeVisible();
+        const fixtureConcluido = page.locator('#lista-eventos .ag-event-card').filter({ hasText: fixture.nomeJogo }).first();
+        await expect(fixtureConcluido).toBeVisible();
+        await expect(fixtureConcluido.locator('.ag-status-chip')).toContainText('Concluído');
+        await expect(fixtureConcluido.locator('.iniciar-jogo-btn')).toHaveCount(0);
+        await expect(fixtureConcluido.getByRole('link', { name: /Ver resultado/i })).toBeVisible();
+        await capturarTela(page, testInfo, '05-agenda-concluida-offline');
+
+        // Abrir novamente é permitido somente em modo de consulta; a tela não
+        // pode reativar cronômetro nem oferecer nova finalização.
+        await fixtureConcluido.getByRole('link', { name: /Ver resultado/i }).click();
+        await expect(page.locator('#placar-conteudo')).toBeVisible();
+        await expect(page.locator('#mc-status-badge')).toContainText('Encerrado');
+        await expect(page.locator('button.mc-action-btn--finish')).toHaveCount(0);
+        expect(pageErrors).toEqual([]);
 
         const offlineState = await page.evaluate(() => window.SGIOffline.getState());
         expect(offlineState.online).toBe(false);
@@ -237,6 +277,6 @@ test.describe('Mesário — fluxo visual completo offline', () => {
         expect(dialogs.some((message) => /erro|falha/i.test(message))).toBeFalsy();
         expect(pageErrors).toEqual([]);
 
-        await capturarTela(page, testInfo, '05-sincronizado-online');
+        await capturarTela(page, testInfo, '06-sincronizado-online');
     });
 });

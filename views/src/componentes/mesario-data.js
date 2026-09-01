@@ -80,7 +80,15 @@
     function project(item) {
         var info = urlInfo(item.url), data = bodyOf(item), file = info.file, temporary = 'temp_' + item.id;
         if (file === 'jogos.php' && data.id_jogo) return get('jogos', data.id_jogo).then(function (old) {
-            var merged = Object.assign({}, old || {}, data, { _pendente: true });
+            // O PUT de início só pode enviar ao servidor os campos permitidos
+            // ao mesário. Os dados usados pela agenda/placar seguem dentro de
+            // `_contexto_offline` e são aplicados apenas ao IndexedDB.
+            var contexto = data._contexto_offline && typeof data._contexto_offline === 'object'
+                ? data._contexto_offline
+                : {};
+            var dadosMutacao = Object.assign({}, data);
+            delete dadosMutacao._contexto_offline;
+            var merged = Object.assign({}, contexto, old || {}, dadosMutacao, { _pendente: true });
             if (old) {
                 if (!merged.nome_jogo && old.nome_jogo) merged.nome_jogo = old.nome_jogo;
                 if (!merged.modalidades_id_modalidade && old.modalidades_id_modalidade) merged.modalidades_id_modalidade = old.modalidades_id_modalidade;
@@ -112,7 +120,17 @@
                 var rs = data.resultados || [];
                 var total = rs.reduce(function (s, r) { return s + (parseInt(r.gols, 10) || 0); }, 0);
                 var empate = rs.length >= 2 && (parseInt(rs[0].gols, 10) || 0) === (parseInt(rs[1].gols, 10) || 0);
-                if (!jogo) jogo = { id_jogo: data.id_jogo };
+                var contexto = data._contexto_offline && typeof data._contexto_offline === 'object'
+                    ? data._contexto_offline
+                    : {};
+                jogo = Object.assign({}, contexto, jogo || { id_jogo: data.id_jogo });
+                // `lancar_resultado.php` recebe id_modalidade para resolver
+                // jogos temporários. Espelhamos o mesmo valor no nome de
+                // coluna usado pelos filtros locais da agenda.
+                if (!jogo.modalidades_id_modalidade && data.id_modalidade) {
+                    jogo.modalidades_id_modalidade = data.id_modalidade;
+                }
+                if (!jogo.nome_jogo && data.nome_jogo) jogo.nome_jogo = data.nome_jogo;
                 if (total > 0 && !empate) jogo.status_jogo = 'Concluido';
                 jogo._pendente = true;
                 return put('jogos', data.id_jogo, jogo);
@@ -196,6 +214,15 @@
         });
     }
 
+    function capturarResposta(url, resposta) {
+        if (!resposta || !resposta.ok) return Promise.resolve(resposta);
+        return resposta.clone().text().then(function (texto) {
+            return capture(url, texto);
+        }).catch(function () {}).then(function () {
+            return resposta;
+        });
+    }
+
     // A UI existente continua usando fetch; esta ponte faz as leituras offline
     // virem das tabelas locais e espelha cada GET online nelas.
     var baseFetch = window.fetch && window.fetch.bind(window);
@@ -214,7 +241,18 @@
                 info.file === 'ocorrencias_turmas.php';
             if (priorizarLocal) {
                 return temPendenciaRelevante(url).then(function (haPendencia) {
-                    if (!haPendencia) return null;
+                    if (!haPendencia) {
+                        // Jogos e partidas também precisam alimentar as
+                        // tabelas estruturadas enquanto a rede está disponível.
+                        // Antes este ramo devolvia a resposta sem capturá-la;
+                        // a primeira mutação criava então um registro parcial,
+                        // sem modalidade, equipes, local ou interclasse.
+                        return baseFetch(input, init).then(function (resposta) {
+                            return navigator.onLine === false
+                                ? resposta
+                                : capturarResposta(url, resposta);
+                        });
+                    }
                     return respostaLocalComDados(url);
                 }).then(function (respostaLocal) {
                     if (respostaLocal) return respostaLocal;
@@ -239,10 +277,7 @@
                     });
                 });
             }
-            return baseFetch(input, init).then(function (res) {
-                if (res.ok) return res.clone().text().then(function (text) { return capture(url, text); }).catch(function () {}).then(function () { return res; });
-                return res;
-            });
+            return baseFetch(input, init).then(function (res) { return capturarResposta(url, res); });
         }
         return baseFetch(input, init);
     };

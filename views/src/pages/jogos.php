@@ -885,7 +885,7 @@ $paginaAtiva = 'dashboard';
            online envia à API PHP normalmente. */
         var offline = !navigator.onLine || (window.SGIOffline && typeof window.SGIOffline.isOnline === 'function' && !window.SGIOffline.isOnline());
         if (offline) {
-            finalizarLocalmente(resultados);
+            await finalizarLocalmente(resultados);
             return;
         }
 
@@ -951,7 +951,7 @@ $paginaAtiva = 'dashboard';
         renderTudo();
     }
 
-    function finalizarLocalmente(resultados) {
+    async function finalizarLocalmente(resultados) {
         // --- Lock contra finalização duplicada (multi-abas / duplo-clique) ---
         var lockKey = 'sgi_finalizando_' + idJogo;
         var agora = Date.now();
@@ -975,10 +975,9 @@ $paginaAtiva = 'dashboard';
             return;
         }
 
-        // 1) Estado imediato na interface
-        aplicarFinalizacaoUI(resultados);
-
-        // 2) Persistência local + fila de sincronização
+        // A interface só pode anunciar "Encerrado" depois que a projeção no
+        // IndexedDB terminou. Assim, voltar imediatamente para a agenda nunca
+        // reabre a versão antiga Agendado/Iniciado do mesmo jogo.
         if (!(window.SGIOffline && typeof window.SGIOffline.queueMutation === 'function')) {
             liberarLock();
             alert('Sem conexão com o servidor. Tente novamente quando estiver online.');
@@ -992,40 +991,60 @@ $paginaAtiva = 'dashboard';
             id_jogo: idJogo,
             nome_jogo: (estadoJogo && estadoJogo.nome_jogo) || null,
             id_modalidade: (estadoJogo && (estadoJogo.modalidades_id_modalidade || estadoJogo.id_modalidade)) || null,
+            _contexto_offline: estadoJogo ? {
+                id_jogo: idJogo,
+                nome_jogo: estadoJogo.nome_jogo || null,
+                data_jogo: estadoJogo.data_jogo || null,
+                inicio_jogo: estadoJogo.inicio_jogo || null,
+                termino_jogo: estadoJogo.termino_jogo || estadoJogo.terminno_jogo || null,
+                modalidades_id_modalidade: estadoJogo.modalidades_id_modalidade || estadoJogo.id_modalidade || null,
+                id_interclasse: estadoJogo.id_interclasse || estadoJogo.interclasses_id_interclasse || null,
+                locais_id_local: estadoJogo.locais_id_local || null,
+                nome_modalidade: estadoJogo.nome_modalidade || null,
+                nome_categoria: estadoJogo.nome_categoria || null,
+                nome_local: estadoJogo.nome_local || null,
+                equipes_nomes: estadoJogo.equipes_nomes || null,
+                tipos_modalidades_id_tipo_modalidade: estadoJogo.tipos_modalidades_id_tipo_modalidade || null
+            } : null,
             resultados: resultados
         };
 
-        window.SGIOffline.queueMutation(
-            'POST',
-            urlAbsoluta,
-            JSON.stringify(payloadLocal),
-            { 'Content-Type': 'application/json' }
-        ).then(function() {
-            // Lock liberado — mutação já está na fila
+        try {
+            await window.SGIOffline.queueMutation(
+                'POST',
+                urlAbsoluta,
+                JSON.stringify(payloadLocal),
+                { 'Content-Type': 'application/json' }
+            );
+
+            // A mutação e sua projeção já estão persistidas. Agora é seguro
+            // liberar a navegação e renderizar o estado final.
+            aplicarFinalizacaoUI(resultados);
             liberarLock();
-            // 3) Avanço imediato da árvore no banco JS temporário
+
+            // Avanço imediato da árvore no banco JS temporário.
             if (window.SGIChaveamento && typeof window.SGIChaveamento.promoverVencedorLocal === 'function') {
-                return window.SGIChaveamento.promoverVencedorLocal(idJogo).then(function(r) {
+                try {
+                    var r = await window.SGIChaveamento.promoverVencedorLocal(idJogo);
                     if (!r || !r.promoveu || !r.pai) {
                         alert('Jogo encerrado offline! Resultado salvo neste dispositivo e será enviado ao servidor quando a conexão voltar.');
-                        return;
-                    }
-                    if (r.pai.eh_campeao && r.pai.status_jogo === 'Concluido') {
+                    } else if (r.pai.eh_campeao && r.pai.status_jogo === 'Concluido') {
                         alert('Campeão definido offline: a árvore foi concluída neste dispositivo. Tudo será sincronizado com o servidor.');
                     } else if (r.pai.formada) {
                         alert('Vencedor avançou! Nova partida liberada: ' + r.pai.nome_display + '.');
                     } else {
                         alert('Vencedor aguardando adversário em: ' + r.pai.nome_display + '.');
                     }
-                }).catch(function() {
+                } catch (_) {
                     alert('Jogo encerrado offline! (Não foi possível calcular a próxima fase agora.)');
-                });
+                }
+                return;
             }
             alert('Jogo encerrado offline! O resultado foi salvo neste dispositivo e será enviado ao servidor automaticamente quando a conexão voltar.');
-        }).catch(function() {
+        } catch (_) {
             liberarLock();
-            alert('Resultado aplicado na tela, mas não foi possível registrar no armazenamento local.');
-        });
+            alert('Não foi possível registrar o resultado no armazenamento local. O jogo permanece em andamento para evitar perda de dados.');
+        }
     }
 
     /* Carrega do banco JS temporário uma partida derivada offline (id < 0),
