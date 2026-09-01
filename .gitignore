@@ -1,3 +1,7 @@
 uploads
 docs/lista_Alunos
 docs/turmas
+tests/browser/node_modules
+tests/browser/test-results
+tests/browser/playwright-report
+/test-results

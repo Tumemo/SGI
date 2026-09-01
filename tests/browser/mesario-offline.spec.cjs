@@ -1,0 +1,242 @@
+const { test, expect, request: playwrightRequest } = require('@playwright/test');
+
+async function jsonOrThrow(response, label) {
+    if (!response.ok()) {
+        throw new Error(`${label}: HTTP ${response.status()} ${await response.text()}`);
+    }
+    return response.json();
+}
+
+async function capturarTela(page, testInfo, nome) {
+    const caminho = testInfo.outputPath(`${nome}.png`);
+    await page.screenshot({ path: caminho, fullPage: true });
+    await testInfo.attach(`${nome}.png`, { path: caminho, contentType: 'image/png' });
+}
+
+async function criarPartidaFixture(request) {
+    const adminLogin = await request.post('api/login.php', {
+        data: { matricula: 'admin', senha: '123' }
+    });
+    await jsonOrThrow(adminLogin, 'login administrativo');
+
+    const interclassesResponse = await request.get('api/interclasse.php?regulamento=true');
+    const interclasses = await jsonOrThrow(interclassesResponse, 'edições');
+    const edicao = interclasses.find((item) => String(item.status_interclasse) === '1');
+    if (!edicao) throw new Error('Nenhuma edição ativa disponível para o teste visual.');
+    const idInterclasse = Number(edicao.id_interclasse);
+
+    const [equipesResponse, modalidadesResponse] = await Promise.all([
+        request.get(`api/equipes.php?id_interclasse=${idInterclasse}`),
+        request.get(`api/modalidades.php?id_interclasse=${idInterclasse}`)
+    ]);
+
+    const equipes = await jsonOrThrow(equipesResponse, 'equipes');
+    const modalidades = await jsonOrThrow(modalidadesResponse, 'modalidades');
+
+    const modalidade = modalidades.find((item) =>
+        String(item.nome_tipo_modalidade || '').toLowerCase().includes('mata') &&
+        String(item.nome_modalidade || '').toLowerCase().includes('futsal')
+    );
+    if (!modalidade) throw new Error('Nenhuma modalidade de futsal mata-mata disponível.');
+
+    const equipesDaModalidade = equipes.filter((item) =>
+        String(item.modalidades_id_modalidade) === String(modalidade.id_modalidade)
+    );
+    if (equipesDaModalidade.length < 2) {
+        throw new Error('A modalidade do fixture precisa de duas equipes.');
+    }
+
+    const equipe1 = equipesDaModalidade[0];
+    const equipe2 = equipesDaModalidade.find((item) => String(item.id_equipe) !== String(equipe1.id_equipe)) || equipesDaModalidade[1];
+
+    const nomeJogo = `E2E Visual Offline ${Date.now()}`;
+    // Cria um atleta efêmero pela própria API administrativa e faz a inscrição
+    // real no fluxo do portal. Assim o modal de artilharia tem dados locais
+    // suficientes para ser exercitado visualmente.
+    const matriculaAtleta = String(900000000 + (Date.now() % 100000));
+    const alunoResponse = await request.post('api/usuarios.php?acao=criar_aluno', {
+        data: {
+            nome_usuario: 'Atleta E2E Offline',
+            matricula_usuario: matriculaAtleta,
+            genero_usuario: 'MASC',
+            data_nasc_usuario: '2008-01-01',
+            turmas_id_turma: Number(equipe1.turmas_id_turma)
+        }
+    });
+    const aluno = await jsonOrThrow(alunoResponse, 'criação do atleta fixture');
+    if (aluno.status !== 'sucesso') {
+        throw new Error(`criação do atleta fixture: ${aluno.mensagem || JSON.stringify(aluno)}`);
+    }
+
+    const alunoApi = await playwrightRequest.newContext({
+        baseURL: process.env.SGI_BASE_URL || 'http://localhost/SGI/'
+    });
+    try {
+        const alunoLogin = await alunoApi.post('api/login.php', {
+            data: { matricula: matriculaAtleta, senha: '123' }
+        });
+        await jsonOrThrow(alunoLogin, 'login do atleta fixture');
+        const inscricao = await alunoApi.post('api/inscricao.php', {
+            data: {
+                id_interclasse: idInterclasse,
+                id_equipes: [Number(equipe1.id_equipe)]
+            }
+        });
+        const inscricaoPayload = await jsonOrThrow(inscricao, 'inscrição do atleta fixture');
+        if (inscricaoPayload.success === false) {
+            throw new Error(`inscrição do atleta fixture: ${inscricaoPayload.message || JSON.stringify(inscricaoPayload)}`);
+        }
+    } finally {
+        await alunoApi.dispose();
+    }
+
+    // Esta rota de sincronização também cria as linhas de partidas, algo que a
+    // tela de agendamento deixa para o gerador de chaveamento.
+    const jogoResponse = await request.post('api/sincronizar_chaveamento.php', {
+        data: {
+            id_modalidade: Number(modalidade.id_modalidade),
+            tipo_modalidade: 'mata_mata',
+            jogos: [{
+                nome_jogo: nomeJogo,
+                status_jogo: 'Agendado',
+                partidas: [
+                    { id_equipe: Number(equipe1.id_equipe), resultado: 0 },
+                    { id_equipe: Number(equipe2.id_equipe), resultado: 0 }
+                ]
+            }]
+        }
+    });
+    await jsonOrThrow(jogoResponse, 'criação do jogo fixture');
+    const jogosResponse = await request.get(`api/jogos.php?id_modalidade=${Number(modalidade.id_modalidade)}`);
+    const jogos = await jsonOrThrow(jogosResponse, 'consulta do jogo fixture');
+    const jogo = jogos.find((item) => String(item.nome_jogo) === nomeJogo);
+    const idJogo = Number(jogo && jogo.id_jogo);
+    if (!idJogo) throw new Error(`A API não retornou o ID do jogo: ${JSON.stringify(jogo)}`);
+
+    return {
+        idJogo,
+        nomeJogo,
+        idInterclasse
+    };
+}
+
+test.describe('Mesário — fluxo visual completo offline', () => {
+    test('prepara, opera, enfileira e sincroniza uma partida sem rede', async ({ page, context, request }, testInfo) => {
+        test.setTimeout(180_000);
+        const fixture = await criarPartidaFixture(request);
+        const dialogs = [];
+        const pageErrors = [];
+        page.on('pageerror', (error) => pageErrors.push(error.message));
+        page.on('dialog', async (dialog) => {
+            dialogs.push(dialog.message());
+            await dialog.accept();
+        });
+
+        await page.goto('views/index.php', { waitUntil: 'domcontentloaded' });
+        await expect(page.locator('#form_desktop')).toBeVisible();
+        await expect(page.locator('#form_desktop h2')).toHaveText('Acesso ao sistema');
+        await capturarTela(page, testInfo, '01-login');
+
+        await page.locator('#form_desktop .ipt-matricula').fill('mesario');
+        await page.locator('#form_desktop .ipt-senha').fill('123');
+        await page.locator('#form_desktop button[type="submit"]').click();
+        await page.waitForURL(/\/dashboard\.php\?id=\d+/, { waitUntil: 'domcontentloaded' });
+        await expect(page.locator('body')).not.toContainText('Download parcial');
+
+        // O preload é sequencial por desenho: aguardamos o indicador verde que
+        // confirma que as telas e os dados do confronto estão no IndexedDB.
+        await expect(page.locator('#sgi-offline-ok')).toBeVisible({ timeout: 120_000 });
+        await expect(page.locator('#sgi-offline-ok')).toContainText('Pronto para uso offline');
+        await capturarTela(page, testInfo, '02-pronto-offline');
+
+        await context.setOffline(true);
+        await expect.poll(() => page.evaluate(() => navigator.onLine)).toBe(false);
+        await expect(page.locator('#sgi-offline-banner')).toContainText('OFFLINE');
+
+        // A navegação abaixo é SPA e deve sair do cache de tela, sem request.
+        await page.locator('#linkAgenda:visible').first().click();
+        await expect(page.locator('#lista-eventos')).toBeVisible();
+        await expect(page.locator('#lista-eventos .ag-event-card').filter({ hasText: 'E2E Visual Offline' }).first()).toBeVisible();
+        await capturarTela(page, testInfo, '03-agenda-offline');
+
+        const fixtureCard = page.locator('#lista-eventos .ag-event-card').filter({ hasText: fixture.nomeJogo }).first();
+        await expect(fixtureCard).toBeVisible();
+        await fixtureCard.locator('.iniciar-jogo-btn').click();
+        await expect.poll(() => page.evaluate(() => window.SGIOffline.getState().pending)).toBeGreaterThan(0);
+
+        // O botão de placar nasce depois que o estado local passa a Iniciado.
+        await expect(fixtureCard.locator('a[href*="jogos.php"]')).toBeVisible();
+        await fixtureCard.locator('a[href*="jogos.php"]').click();
+        await expect(page.locator('#placar-conteudo')).toBeVisible();
+        await expect(page.locator('#placar-grid')).toBeVisible();
+        await expect(page.locator('#mc-status-badge')).toContainText('Em andamento');
+
+        // Registra um gol e um artilheiro; o modal também é servido do cache.
+        await page.locator('.btn-score-plus').first().click();
+        await expect(page.locator('#modalArtilheiro')).toBeVisible();
+        await expect.poll(() => page.locator('#selectAlunoArtilheiro option').count()).toBeGreaterThan(1);
+        await page.locator('#selectAlunoArtilheiro').selectOption({ index: 1 });
+        await page.locator('#btnSalvarArtilheiro').click();
+        await expect(page.locator('#msgArtilheiro')).toContainText('Gol registrado', { timeout: 10_000 });
+        await expect(page.locator('#modalArtilheiro')).toBeHidden({ timeout: 10_000 });
+        await expect(page.locator('.score-number').first()).toHaveText('01');
+
+        // Registra uma ocorrência disciplinar usando as listas locais.
+        await page.locator('#btnNovaOcorrencia').click();
+        await expect(page.locator('#modalOcorrencia')).toBeVisible();
+        await page.locator('label[data-tipo="Amarelo"]').click();
+        await expect.poll(() => page.locator('#filtroTurmaOcorrencia option').count()).toBeGreaterThan(1);
+        await page.locator('#filtroTurmaOcorrencia').selectOption({ index: 1 });
+        await expect(page.locator('#selectAlunoOcorrencia')).toBeEnabled();
+        await expect.poll(() => page.locator('#selectAlunoOcorrencia option').count()).toBeGreaterThan(1);
+        await page.locator('#selectAlunoOcorrencia').selectOption({ index: 1 });
+        await page.locator('#penalidadeOcorrencia').selectOption('2');
+        await page.locator('#descricaoOcorrencia').fill('Registro visual offline');
+        await page.locator('#btnSalvarOcorrencia').click();
+        await expect(page.locator('#msgOcorrencia')).toContainText('Ocorrência registrada', { timeout: 10_000 });
+        await expect(page.locator('#modalOcorrencia')).toBeHidden({ timeout: 10_000 });
+
+        // Finaliza 1x0 localmente: a UI muda imediatamente e a mesma mutação
+        // fica na fila para o servidor, junto com início, placar e ocorrência.
+        await page.locator('button.mc-action-btn--finish').click();
+        await expect(page.locator('#mc-status-badge')).toContainText('Encerrado');
+        await expect(page.locator('#sgi-offline-banner')).toContainText('alteracao', { timeout: 10_000 });
+        await expect.poll(() => page.evaluate(() => window.SGIOffline.getState().pending), { timeout: 20_000 }).toBeGreaterThanOrEqual(4);
+        await capturarTela(page, testInfo, '04-partida-finalizada-offline');
+
+        const offlineState = await page.evaluate(() => window.SGIOffline.getState());
+        expect(offlineState.online).toBe(false);
+        expect(offlineState.pending).toBeGreaterThanOrEqual(4);
+
+        // Reconexão: o evento online dispara a sincronização automática.
+        await context.setOffline(false);
+        await expect.poll(() => page.evaluate(() => navigator.onLine)).toBe(true);
+        await expect.poll(() => page.evaluate(() => window.SGIOffline.getState().pending), { timeout: 45_000 }).toBe(0);
+        await expect(page.locator('#sgi-offline-banner')).toHaveClass(/sgi-hidden/);
+        await expect(page.locator('#artilheiro-cards')).toContainText('Atleta E2E Offline', { timeout: 10_000 });
+        await expect(page.locator('#artilheiro-cards')).toContainText('1 gol', { timeout: 10_000 });
+        await expect(page.locator('#lista-ocorrencias')).toContainText('Registro visual offline', { timeout: 10_000 });
+
+        const servidor = await page.evaluate(async (id) => {
+            const response = await fetch(`../../../api/jogos.php?id_jogo=${id}`);
+            return response.json();
+        }, fixture.idJogo);
+        expect(servidor[0].status_jogo).toMatch(/Concluido|Finalizado/);
+        expect(Number(servidor[0].id_jogo)).toBe(fixture.idJogo);
+        const artilhariaServidor = await page.evaluate(async (id) => {
+            const response = await fetch(`../../../api/artilheiro.php?id_jogo=${id}`);
+            return response.json();
+        }, fixture.idJogo);
+        expect(artilhariaServidor.some((item) => Number(item.total_gols || item.num_gol) >= 1)).toBeTruthy();
+        const ocorrenciasServidor = await page.evaluate(async (id) => {
+            const response = await fetch(`../../../api/ocorrencias.php?id_jogo=${id}`);
+            return response.json();
+        }, fixture.idJogo);
+        expect(ocorrenciasServidor.some((item) => /Registro visual offline/i.test(item.descricao_ocorrencia || ''))).toBeTruthy();
+        expect(dialogs.some((message) => /Jogo encerrado offline/i.test(message))).toBeTruthy();
+        expect(dialogs.some((message) => /erro|falha/i.test(message))).toBeFalsy();
+        expect(pageErrors).toEqual([]);
+
+        await capturarTela(page, testInfo, '05-sincronizado-online');
+    });
+});

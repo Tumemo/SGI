@@ -41,14 +41,19 @@ class FullOfflineTournamentTest
         ]);
         Assertions::assert("Tratamento seguro de mutação temporária de partida", ($resPartidaLocal['json']['success'] ?? false) === true || $resPartidaLocal['code'] === 200);
 
-        $resArtLocal = $mesario->postJson('api/artilheiro.php', [
+        $payloadArtilhariaTemporaria = [
             'usuarios_id_usuario' => 1,
             'jogos_id_jogo' => -1,
             'nome_jogo' => 'MM:2:0:N',
             'id_modalidade' => $idModalidade,
             'num_gol' => 3
-        ]);
-        Assertions::assert("Tratamento seguro de artilharia offline em jogo temporário", ($resArtLocal['json']['success'] ?? false) === true);
+        ];
+        $resArtLocal = $mesario->postJson('api/artilheiro.php', $payloadArtilhariaTemporaria);
+        Assertions::assert(
+            "Artilharia temporária é resolvida com segurança ou mantida pendente",
+            ($resArtLocal['json']['success'] ?? false) === true ||
+            ($resArtLocal['code'] === 409 && ($resArtLocal['json']['success'] ?? true) === false)
+        );
 
         // 9.3 Concluir Grande Final jogada offline com ID Provisório Negativo (-1)
         // Equipe 1 vence Equipe 3 por 4x2 e torna-se Campeã
@@ -62,6 +67,14 @@ class FullOfflineTournamentTest
             ]
         ]);
         Assertions::assertJsonSuccess("Sincronização da Grande Final (ID -1) gerada offline", $resFinal);
+
+        // Se ainda não havia um jogo real no primeiro envio, a fila do
+        // navegador envia o resultado antes da artilharia do mesmo ID
+        // temporário. O segundo envio abaixo simula essa retomada.
+        if (($resArtLocal['json']['success'] ?? false) !== true) {
+            $resArtSincronizado = $mesario->postJson('api/artilheiro.php', $payloadArtilhariaTemporaria);
+            Assertions::assertJsonSuccess("Artilharia vinculada à final materializada", $resArtSincronizado);
+        }
 
         // 9.4 Verificar consolidação da árvore no servidor
         $resArvore = $admin->get("api/chaveamento.php?id_modalidade=$idModalidade");
