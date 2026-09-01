@@ -2,6 +2,7 @@
 require_once '../config/db.php';
 require_once 'filtros.php';
 require_once 'auth.php';
+require_once __DIR__ . '/includes/idempotencia.php';
 
 header('Content-Type: application/json');
 
@@ -95,6 +96,28 @@ function revelarDestaque($conn) {
     return $res->fetch_all(MYSQLI_ASSOC);
 }
 
+/**
+ * Resolve o jogo de uma linha criada offline usando a tag do mata-mata. Não
+ * use o "último jogo do atleta" como aproximação: ele pode apontar para outra
+ * partida e transferir gols para a equipe errada.
+ */
+function sgi_resolver_jogo_temporario_artilharia(mysqli $conn, object $data): int {
+    $idJogo = (int) ($data->jogos_id_jogo ?? 0);
+    if ($idJogo >= 0) {
+        return $idJogo;
+    }
+
+    $nomeJogo = trim((string) ($data->nome_jogo ?? ''));
+    $idModalidade = (int) ($data->id_modalidade ?? 0);
+    if ($nomeJogo === '' || $idModalidade <= 0) {
+        return 0;
+    }
+
+    require_once __DIR__ . '/includes/mata_mata_engine.php';
+    $jogo = sgi_mm_buscar_jogo_por_tag($conn, $idModalidade, $nomeJogo);
+    return $jogo ? (int) $jogo['id_jogo'] : 0;
+}
+
 switch ($method) {
     case 'GET':
         // Verifica se a requisição é específica para listar os destaques por modalidade
@@ -157,6 +180,12 @@ switch ($method) {
         // Permite Admin e Mesário lançarem gols (níveis 0, 1 e 2)
         requerOperacaoJogo();
         garantirInterclasseAtivo($conn);
+        $respostaAnterior = sgi_buscar_resposta_idempotente($conn, 'artilheiro.post');
+        if ($respostaAnterior !== null) {
+            http_response_code($respostaAnterior['status']);
+            echo json_encode($respostaAnterior['payload'], JSON_UNESCAPED_UNICODE);
+            break;
+        }
         $data = json_decode(file_get_contents("php://input"));
 
         if (!isset($data->usuarios_id_usuario, $data->jogos_id_jogo, $data->num_gol)) {
@@ -167,28 +196,15 @@ switch ($method) {
 
         $idJogoArt = (int) $data->jogos_id_jogo;
         if ($idJogoArt <= 0) {
-            if (!empty($data->nome_jogo) && !empty($data->id_modalidade)) {
-                require_once __DIR__ . '/includes/mata_mata_engine.php';
-                $jReal = sgi_mm_buscar_jogo_por_tag($conn, (int)$data->id_modalidade, (string)$data->nome_jogo);
-                if ($jReal) $idJogoArt = (int)$jReal['id_jogo'];
-            }
-            if ($idJogoArt <= 0 && !empty($data->usuarios_id_usuario)) {
-                $stA = $conn->prepare(
-                    "SELECT p.jogos_id_jogo FROM partidas p
-                     INNER JOIN equipes_has_usuarios ehu ON ehu.equipes_id_equipe = p.equipes_id_equipe
-                     WHERE ehu.usuarios_id_usuario = ?
-                     ORDER BY p.jogos_id_jogo DESC LIMIT 1"
-                );
-                $stA->bind_param('i', $data->usuarios_id_usuario);
-                $stA->execute();
-                $rowA = $stA->get_result()->fetch_assoc();
-                $stA->close();
-                if ($rowA) $idJogoArt = (int)$rowA['jogos_id_jogo'];
-            }
+            $idJogoArt = sgi_resolver_jogo_temporario_artilharia($conn, $data);
         }
 
         if ($idJogoArt <= 0) {
-            echo json_encode(["success" => true, "offline" => true, "message" => "Artilharia registrada localmente"]);
+            http_response_code(409);
+            echo json_encode([
+                "success" => false,
+                "message" => "A partida temporária ainda não foi materializada. O gol continuará na fila para evitar perda de dados."
+            ]);
             break;
         }
 
@@ -197,7 +213,11 @@ switch ($method) {
         $stmt->bind_param("iii", $data->usuarios_id_usuario, $idJogoArt, $data->num_gol);
 
         if ($stmt->execute()) {
-            echo json_encode(["success" => true, "message" => "Gols registrados com sucesso!", "id" => $conn->insert_id]);
+            sgi_enviar_resposta_idempotente($conn, 'artilheiro.post', 200, [
+                "success" => true,
+                "message" => "Gols registrados com sucesso!",
+                "id" => $conn->insert_id
+            ]);
         } else {
             http_response_code(500);
             echo json_encode(["success" => false, "message" => "Erro ao salvar: " . $conn->error]);
@@ -218,8 +238,15 @@ switch ($method) {
 
         $idJogoArt = (int) $data->jogos_id_jogo;
         if ($idJogoArt <= 0) {
-            echo json_encode(["success" => true, "offline" => true, "message" => "Artilharia atualizada localmente"]);
-            break;
+            $idJogoArt = sgi_resolver_jogo_temporario_artilharia($conn, $data);
+            if ($idJogoArt <= 0) {
+                http_response_code(409);
+                echo json_encode([
+                    "success" => false,
+                    "message" => "A partida temporária ainda não foi materializada. A alteração continuará na fila para evitar perda de dados."
+                ]);
+                break;
+            }
         }
 
         $sql = "UPDATE artilheiros SET num_gol = ? WHERE usuarios_id_usuario = ? AND jogos_id_jogo = ?";
@@ -238,4 +265,4 @@ switch ($method) {
         http_response_code(405);
         echo json_encode(["message" => "Método não suportado."]);
         break;
-}   
+}

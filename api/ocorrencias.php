@@ -2,8 +2,32 @@
 require_once '../config/db.php';
 require_once 'filtros.php';
 require_once 'auth.php';
+require_once __DIR__ . '/includes/idempotencia.php';
 header('Content-Type: application/json');
 $method = $_SERVER['REQUEST_METHOD'];
+
+/**
+ * Converte o identificador negativo de uma partida criada no IndexedDB para o
+ * jogo definitivo. A resolução é pela tag da chave e pela modalidade, nunca
+ * pelo último jogo do atleta (que poderia pertencer a outra partida).
+ */
+function sgi_resolver_jogo_temporario_ocorrencia(mysqli $conn, object $data): int
+{
+    $idJogo = (int) ($data->id_jogo ?? 0);
+    if ($idJogo >= 0) {
+        return $idJogo;
+    }
+
+    $nomeJogo = trim((string) ($data->nome_jogo ?? ''));
+    $idModalidade = (int) ($data->id_modalidade ?? 0);
+    if ($nomeJogo === '' || $idModalidade <= 0) {
+        return 0;
+    }
+
+    require_once __DIR__ . '/includes/mata_mata_engine.php';
+    $jogo = sgi_mm_buscar_jogo_por_tag($conn, $idModalidade, $nomeJogo);
+    return $jogo ? (int) $jogo['id_jogo'] : 0;
+}
 
 switch ($method) {
     case 'GET':
@@ -111,6 +135,12 @@ switch ($method) {
         // Permite Admin e Mesário registrarem ocorrências (cartões/punições)
         requerOperacaoJogo();
         garantirInterclasseAtivo($conn);
+        $respostaAnterior = sgi_buscar_resposta_idempotente($conn, 'ocorrencias.post');
+        if ($respostaAnterior !== null) {
+            http_response_code($respostaAnterior['status']);
+            echo json_encode($respostaAnterior['payload'], JSON_UNESCAPED_UNICODE);
+            break;
+        }
         $data = json_decode(file_get_contents("php://input"));
 
         if (!isset($data->titulo_ocorrencia, $data->descricao_ocorrencia, $data->data_ocorrencia, $data->usuarios_id_usuario)) {
@@ -124,6 +154,18 @@ switch ($method) {
         $descricao = $data->descricao_ocorrencia;
         $idJogo = isset($data->id_jogo) ? intval($data->id_jogo) : 0;
         $idTurma = isset($data->id_turma) ? intval($data->id_turma) : 0;
+        if ($idJogo < 0) {
+            $idJogoResolvido = sgi_resolver_jogo_temporario_ocorrencia($conn, $data);
+            if ($idJogoResolvido <= 0) {
+                http_response_code(409);
+                echo json_encode([
+                    "success" => false,
+                    "message" => "A partida temporária ainda não foi materializada. O registro continuará na fila para evitar perda de dados."
+                ]);
+                break;
+            }
+            $idJogo = $idJogoResolvido;
+        }
         if ($idJogo > 0) {
             $descricao = '[JOGO:' . $idJogo . ']' . ($idTurma > 0 ? '[TURMA:' . $idTurma . ']' : '') . $data->descricao_ocorrencia;
         }
@@ -176,8 +218,7 @@ switch ($method) {
             if ($evento) {
                 $response['evento'] = $evento;
             }
-            http_response_code(201);
-            echo json_encode($response);
+            sgi_enviar_resposta_idempotente($conn, 'ocorrencias.post', 201, $response);
         } else {
             http_response_code(500);
             echo json_encode(["success" => false, "message" => $conn->error]);

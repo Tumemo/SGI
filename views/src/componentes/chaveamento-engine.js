@@ -226,9 +226,15 @@
            anteriormente no banco JS temporário. */
         var contadorLocal = (typeof contadorInicial === 'number') ? contadorInicial : 0;
         var criouJogo = false;
-        var hojeISO = new Date().toISOString().substring(0, 10);
-
         var primeiroJogo = jogos[0] || {};
+        var hoje = new Date();
+        var hojeISO = hoje.getFullYear() + '-' + String(hoje.getMonth() + 1).padStart(2, '0') + '-' + String(hoje.getDate()).padStart(2, '0');
+        // Partidas derivadas pertencem ao mesmo evento dos jogos de origem.
+        // Reaproveitar a data do primeiro jogo evita que a conversão UTC do
+        // toISOString() faça a final aparecer no dia seguinte ao restante da
+        // chave quando o navegador está em um fuso negativo.
+        var dataJogoPadrao = primeiroJogo.data_jogo || hojeISO;
+
         var defaultModId = primeiroJogo.modalidades_id_modalidade || primeiroJogo.id_modalidade || null;
         var defaultModNome = primeiroJogo.nome_modalidade || '';
         var defaultModTipo = primeiroJogo.tipos_modalidades_id_tipo_modalidade || 1;
@@ -269,7 +275,7 @@
                 id_jogo: contadorLocal,                 // id temporário negativo (só existe localmente)
                 nome_jogo: tag,
                 status_jogo: 'Agendado',
-                data_jogo: hojeISO,
+                data_jogo: dataJogoPadrao,
                 inicio_jogo: '08:00:00',
                 modalidades_id_modalidade: defaultModId,
                 nome_modalidade: defaultModNome,
@@ -546,9 +552,6 @@
                     });
                 }
                 var fonteRede = navigator.onLine ? 'remota' : 'cache';
-                if (navigator.onLine) {
-                    purgarDerivadosLocais();
-                }
                 return finalizar(data.jogos || [], fonteRede);
             });
 
@@ -628,11 +631,19 @@
        modo online (lancar_resultado.php → sgi_chaveamento_processar_avanco),
        garantindo a reconstrução fiel da árvore no servidor. */
 
+    function sincronizacaoConfirmada(resposta) {
+        return !!resposta && Number(resposta.pending || 0) === 0 &&
+            Number(resposta.failed || 0) === 0 && Number(resposta.needsReview || 0) === 0;
+    }
+
     function sincronizar() {
         if (!window.SGIOffline || typeof window.SGIOffline.syncNow !== 'function') {
-            return purgarDerivadosLocais().then(function () { return 0; });
+            // Sem a fila não há confirmação de que o PHP materializou os
+            // confrontos temporários. Mantê-los é mais seguro que apagá-los.
+            return Promise.resolve({ pending: 1, failed: 1, needsReview: 0 });
         }
         return window.SGIOffline.syncNow().then(function (res) {
+            if (!sincronizacaoConfirmada(res)) return res;
             return purgarDerivadosLocais().then(function () { return res; });
         });
     }
@@ -893,8 +904,12 @@
                             var store = tx.objectStore('paginas');
                             var rAll = store.getAll();
                             rAll.onsuccess = function () {
+                                var chaveCache = (typeof window !== 'undefined' && window.SGI_CACHE_KEY)
+                                    ? String(window.SGI_CACHE_KEY) + '|'
+                                    : '';
                                 (rAll.result || []).forEach(function (row) {
-                                    if (row && row.key && (row.key.indexOf('jogos:-') > -1 || row.key.indexOf('id_jogo=-') > -1)) {
+                                    if (chaveCache && row && row.key && row.key.indexOf(chaveCache) === 0 &&
+                                        (row.key.indexOf('jogos:-') > -1 || row.key.indexOf('id_jogo=-') > -1)) {
                                         store.delete(row.key);
                                     }
                                 });
@@ -912,7 +927,7 @@
     /* Volta de conexão: envia a fila ao PHP e limpa os derivados locais. */
     if (typeof window.addEventListener === 'function') {
         window.addEventListener('online', function () {
-            sincronizar().then(purgarDerivadosLocais);
+            sincronizar();
         });
     }
 

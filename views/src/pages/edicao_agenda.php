@@ -681,18 +681,41 @@ $nivelUsuarioAgenda = (int)($_SESSION['nivel'] ?? -1);
                 ev.stopPropagation();
                 const id = btn.getAttribute('data-id-jogo');
                 try {
+                    const jogoAtual = jogosCache.find((item) => String(item.id_jogo) === String(id));
+                    const duracao = Number(jogoAtual && jogoAtual.duracao_jogo) > 0
+                        ? Number(jogoAtual.duracao_jogo)
+                        : 20 * 60;
+                    const restante = Number(jogoAtual && (jogoAtual.tempo_restante_jogo ?? jogoAtual.tempo_restante_calculado)) > 0
+                        ? Number(jogoAtual.tempo_restante_jogo ?? jogoAtual.tempo_restante_calculado)
+                        : duracao;
                     const r = await fetch(`${API}jogos.php`, {
                         method: 'PUT',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ id_jogo: Number(id), status_jogo: 'Iniciado' })
+                        body: JSON.stringify({
+                            id_jogo: Number(id),
+                            // Mantém no registro projetado offline os dados da
+                            // modalidade que não são colunas alteráveis pelo
+                            // mesário, mas são necessários para artilharia e
+                            // outras regras da tela do placar.
+                            nome_jogo: jogoAtual && jogoAtual.nome_jogo ? jogoAtual.nome_jogo : null,
+                            nome_modalidade: jogoAtual && jogoAtual.nome_modalidade ? jogoAtual.nome_modalidade : null,
+                            tipos_modalidades_id_tipo_modalidade: jogoAtual && jogoAtual.tipos_modalidades_id_tipo_modalidade ? jogoAtual.tipos_modalidades_id_tipo_modalidade : null,
+                            status_jogo: 'Iniciado',
+                            duracao_jogo: duracao,
+                            tempo_restante_jogo: restante,
+                            tempo_extra_jogo: Number(jogoAtual && jogoAtual.tempo_extra_jogo) || 0
+                        })
                     });
                     const js = await r.json();
                     if (!r.ok || js.success === false) throw new Error(js.message || 'Falha ao iniciar');
                     if (js.offline && js.queued) {
-                        const jogo = jogosCache.find((item) => String(item.id_jogo) === String(id));
-                        if (jogo) {
-                            jogo.status_jogo = 'Iniciado';
-                            jogo._pendente = true;
+                        if (jogoAtual) {
+                            jogoAtual.status_jogo = 'Iniciado';
+                            jogoAtual.duracao_jogo = duracao;
+                            jogoAtual.tempo_restante_jogo = restante;
+                            jogoAtual.tempo_restante_calculado = restante;
+                            jogoAtual.tempo_extra_jogo = Number(jogoAtual.tempo_extra_jogo) || 0;
+                            jogoAtual._pendente = true;
                         }
                         atualizarTelas();
                         return;

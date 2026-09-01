@@ -9,7 +9,8 @@
     var DB = 'sgi_mesario_dados', VERSION = 1;
     var STORES = ['jogos', 'partidas', 'atletas', 'turmas', 'modalidades', 'categorias', 'locais', 'equipes',
         'ocorrencias', 'ocorrencias_turmas', 'chaveamentos', 'fila_sincronizacao'];
-    var session = String(window.SGI_SESSION_ID || 'anon');
+    // Namespace opaco por usuário; não usar o ID persistente diretamente.
+    var session = String(window.SGI_CACHE_KEY || 'anon');
     var dbPromise;
 
     function open() {
@@ -62,7 +63,11 @@
     function capture(url, text) {
         var info = urlInfo(url), file = info.file, data;
         try { data = JSON.parse(text); } catch (_) { return Promise.resolve(); }
-        var rows = Array.isArray(data) ? data : (data && (data.dados || data.ranking || data.participantes));
+        // Algumas APIs do SGI (por exemplo locais.php) encapsulam a lista em
+        // { success: true, data: [...] }. Sem reconhecer `data`, os locais
+        // nunca entravam no IndexedDB e as partidas derivadas offline perdiam
+        // o nome da quadra/local no placar.
+        var rows = Array.isArray(data) ? data : (data && (data.dados || data.data || data.ranking || data.participantes));
         var store = { 'jogos.php': 'jogos', 'partidas.php': 'partidas', 'turmas.php': 'turmas', 'modalidades.php': 'modalidades', 'categorias.php': 'categorias', 'locais.php': 'locais', 'equipes.php': 'equipes', 'artilheiro.php': 'atletas', 'ocorrencias.php': 'ocorrencias', 'ocorrencias_turmas.php': 'ocorrencias_turmas', 'chaveamento.php': 'chaveamentos' }[file];
         if (!store) return Promise.resolve();
         if (!Array.isArray(rows)) rows = [data];
@@ -144,6 +149,53 @@
         });
     }
 
+    function itemAfetaLeitura(item, info) {
+        var mutacao = urlInfo(item && item.url), dados = bodyOf(item || {});
+        var arquivo = mutacao.file;
+        var idJogoConsulta = info.q && info.q.get('id_jogo');
+        var idJogoMutacao = dados.id_jogo != null ? dados.id_jogo : dados.jogos_id_jogo;
+
+        if (info.file === 'jogos.php') {
+            if (arquivo !== 'jogos.php' && arquivo !== 'partidas.php' && arquivo !== 'lancar_resultado.php') return false;
+        } else if (info.file === 'partidas.php') {
+            if (arquivo !== 'partidas.php' && arquivo !== 'lancar_resultado.php') return false;
+        } else if (info.file === 'artilheiro.php') {
+            if (arquivo !== 'artilheiro.php') return false;
+        } else if (info.file === 'ocorrencias.php') {
+            if (arquivo !== 'ocorrencias.php') return false;
+        } else if (info.file === 'ocorrencias_turmas.php') {
+            if (arquivo !== 'ocorrencias_turmas.php') return false;
+        } else {
+            return false;
+        }
+
+        return !idJogoConsulta || String(idJogoConsulta) === String(idJogoMutacao);
+    }
+
+    function temPendenciaRelevante(url) {
+        var info = urlInfo(url);
+        if (!window.SGIOffline || !window.SGIOffline.getPendingList ||
+            !(window.SGIOffline.hasPending && window.SGIOffline.hasPending())) {
+            return Promise.resolve(false);
+        }
+        return window.SGIOffline.getPendingList().then(function (fila) {
+            return (fila || []).some(function (item) { return itemAfetaLeitura(item, info); });
+        }).catch(function () { return false; });
+    }
+
+    function respostaLocalComDados(url) {
+        return localGet(url).then(function (resposta) {
+            if (!resposta) return null;
+            return resposta.clone().text().then(function (texto) {
+                var dados = null;
+                try { dados = JSON.parse(texto); } catch (_) {}
+                if (Array.isArray(dados) && dados.length === 0) return null;
+                if (dados == null) return null;
+                return resposta;
+            }).catch(function () { return null; });
+        });
+    }
+
     // A UI existente continua usando fetch; esta ponte faz as leituras offline
     // virem das tabelas locais e espelha cada GET online nelas.
     var baseFetch = window.fetch && window.fetch.bind(window);
@@ -152,27 +204,27 @@
         var method = String((init && init.method) || (input && input.method) || 'GET').toUpperCase();
         if (method === 'GET') {
             var info = urlInfo(url);
-            // jogos.php e partidas.php priorizam as tabelas locais sempre que o
-            // dispositivo está offline OU há mutações pendentes: com pendências
-            // a tabela local é a fonte mais nova (vale inclusive no "soft-offline",
-            // quando navigator.onLine segue true e o snapshot por URL estaria
-            // defasado — permitindo finalizar e depois "reiniciar" o mesmo jogo).
-            var usarLocal = navigator.onLine === false ||
-                (info.file === 'jogos.php' || info.file === 'partidas.php') &&
-                window.SGIOffline && window.SGIOffline.hasPending && window.SGIOffline.hasPending();
-            if (usarLocal) {
-                return localGet(url).then(function (res) {
-                    if (!res) return baseFetch(input, init);
-                    return res.text().then(function (t) {
-                        var arr = [];
-                        try { arr = JSON.parse(t); } catch (_) {}
-                        // Rede "presente" mas sem linhas locais p/ este filtro
-                        // (ex.: pendências de outro jogo/interclasse): não trocar
-                        // uma resposta legítima do servidor por lista vazia.
-                        if (navigator.onLine !== false && Array.isArray(arr) && arr.length === 0) {
-                            return baseFetch(input, init);
-                        }
-                        return new Response(t, { status: 200, headers: { 'Content-Type': 'application/json' } });
+            // O snapshot exato por URL é a fonte padrão no modo offline. As
+            // tabelas estruturadas só assumem a leitura quando existe uma
+            // pendência para a mesma entidade; isso evita que um store ainda
+            // vazio esconda uma resposta válida em cache com uma lista vazia.
+            var priorizarLocal = navigator.onLine === false ||
+                info.file === 'jogos.php' || info.file === 'partidas.php' ||
+                info.file === 'artilheiro.php' || info.file === 'ocorrencias.php' ||
+                info.file === 'ocorrencias_turmas.php';
+            if (priorizarLocal) {
+                return temPendenciaRelevante(url).then(function (haPendencia) {
+                    if (!haPendencia) return null;
+                    return respostaLocalComDados(url);
+                }).then(function (respostaLocal) {
+                    if (respostaLocal) return respostaLocal;
+                    return baseFetch(input, init);
+                }).catch(function (erro) {
+                    // Sem snapshot HTTP, a tabela local ainda é uma última
+                    // alternativa útil para uma tela já usada pelo mesário.
+                    return respostaLocalComDados(url).then(function (respostaLocal) {
+                        if (respostaLocal) return respostaLocal;
+                        throw erro;
                     });
                 });
             }

@@ -18,11 +18,23 @@
     if (window.__SGI_MESARIO_SPA__) return;
     window.__SGI_MESARIO_SPA__ = true;
 
-    var SESSION = (typeof window !== 'undefined' && window.SGI_SESSION_ID)
-        ? String(window.SGI_SESSION_ID) : 'anon';
+    // Namespace opaco por usuário. O ID persistente não é usado diretamente
+    // como chave de cache e a fila continua acessível após novo login.
+    var SESSION = (typeof window !== 'undefined' && window.SGI_CACHE_KEY)
+        ? String(window.SGI_CACHE_KEY) : 'anon';
+    var USER_ID = (typeof window !== 'undefined' && window.SGI_SESSION_ID)
+        ? String(window.SGI_SESSION_ID) : '';
     var SEP = '\n/*__SGI_SEP__*/\n';
     var DB_NAME = 'sgi_pages';
     var DB_VERSION = 1;
+    // O timeout evita que uma requisição presa deixe a preparação offline
+    // bloqueada para sempre. A espera para retomar é maior que a janela de
+    // "soft offline" do offline-core (15s), para a próxima tentativa voltar
+    // a consultar a rede de verdade.
+    var PRELOAD_TIMEOUT_MS = 15000;
+    var PRELOAD_RETRY_DELAY_MS = 16000;
+    var PRELOAD_MAX_AUTO_RETRIES = 3;
+    var PRONTO_STORAGE_KEY = 'sgi_pronto_v2_' + SESSION;
 
     var ARQ_TELA = {
         'perfil.php': 'perfil',
@@ -53,7 +65,11 @@
         montadas: {},
         registros: {},
         pendentesInit: [],
-        montando: null
+        montando: null,
+        retryTimer: null,
+        retryAttempts: 0,
+        retryPendente: false,
+        ultimaFalha: null
     };
 
     /* ============================ Util ============================ */
@@ -78,9 +94,90 @@
         catch (e) { return urlRel; }
     }
 
+    function criarErroPreload(tipo, mensagem, causa) {
+        var erro = new Error(mensagem || 'Falha ao preparar dados para uso offline.');
+        erro.sgiPreloadTipo = tipo || 'desconhecido';
+        erro.causa = causa || null;
+        return erro;
+    }
+
+    function tipoErroPreload(erro) {
+        if (erro && erro.sgiPreloadTipo) return erro.sgiPreloadTipo;
+        if (navigator.onLine === false) return 'rede';
+        var nome = String((erro && erro.name) || '').toLowerCase();
+        var mensagem = String((erro && erro.message) || '').toLowerCase();
+        if (nome === 'aborterror' || mensagem.indexOf('timeout') > -1) return 'timeout';
+        if (mensagem.indexOf('dados não disponíveis offline') > -1 ||
+            mensagem.indexOf('dados nao disponiveis offline') > -1 ||
+            mensagem.indexOf('failed to fetch') > -1 ||
+            mensagem.indexOf('network') > -1 ||
+            mensagem.indexOf('load failed') > -1) return 'rede';
+        return 'desconhecido';
+    }
+
+    function validarRespostaPreload(resposta, url) {
+        if (resposta && resposta.ok) return resposta;
+        var status = resposta ? Number(resposta.status || 0) : 0;
+        var destino = url ? ' (' + url + ')' : '';
+        if (status === 401 || status === 403) {
+            throw criarErroPreload('sessao', 'Sua sessão não permite concluir o download' + destino + '.');
+        }
+        if (status >= 500) {
+            throw criarErroPreload('servidor', 'O servidor respondeu com erro ' + status + destino + '.');
+        }
+        throw criarErroPreload('http', 'A resposta HTTP ' + (status || 'desconhecida') + destino + ' não pôde ser usada.');
+    }
+
+    function buscarComTimeout(url) {
+        var controller = typeof AbortController !== 'undefined' ? new AbortController() : null;
+        var opcoes = controller ? { signal: controller.signal } : {};
+        return new Promise(function (resolve, reject) {
+            var concluido = false;
+            var timeout = setTimeout(function () {
+                if (concluido) return;
+                concluido = true;
+                try { if (controller) controller.abort(); } catch (e) {}
+                reject(criarErroPreload('timeout', 'A solicitação demorou mais que o esperado (' + PRELOAD_TIMEOUT_MS / 1000 + ' s).'));
+            }, PRELOAD_TIMEOUT_MS);
+
+            fetch(url, opcoes).then(function (resposta) {
+                if (concluido) return;
+                concluido = true;
+                clearTimeout(timeout);
+                resolve(resposta);
+            }).catch(function (erro) {
+                if (concluido) return;
+                concluido = true;
+                clearTimeout(timeout);
+                reject(criarErroPreload(tipoErroPreload(erro), (erro && erro.message) || 'Falha de rede ao baixar dados.', erro));
+            });
+        });
+    }
+
+    function requisitarTexto(url) {
+        return buscarComTimeout(url).then(function (resposta) {
+            return validarRespostaPreload(resposta, url).text();
+        }).then(function (texto) {
+            if (isLoginHtml(texto)) {
+                throw criarErroPreload('sessao', 'A solicitação foi redirecionada para a tela de login.');
+            }
+            return texto;
+        });
+    }
+
     function fetchJson(url) {
-        return fetch(url).then(function (r) { return r.text(); }).then(function (t) {
-            try { return t ? JSON.parse(t) : {}; } catch (e) { return {}; }
+        return requisitarTexto(url).then(function (texto) {
+            if (!texto) return {};
+            var dados;
+            try {
+                dados = JSON.parse(texto);
+            } catch (e) {
+                throw criarErroPreload('resposta', 'O servidor devolveu uma resposta inválida para ' + url + '.', e);
+            }
+            if (dados && dados.success === false) {
+                throw criarErroPreload('servidor', dados.message || dados.mensagem || 'O servidor recusou a solicitação.');
+            }
+            return dados;
         });
     }
 
@@ -218,7 +315,7 @@
             h.indexOf('acesso ao sistema') > -1 ||
             h.indexOf('painel de acesso') > -1 ||
             h.indexOf('sgi - login') > -1 ||
-            (h.indexOf('matricula') > -1 && h.indexOf('senha') > -1);
+            (h.indexOf('name="matricula"') > -1 && h.indexOf('name="senha"') > -1);
     }
 
     function purgarPaginasInvalidas() {
@@ -503,11 +600,16 @@
     function baixarTela(tela, params) {
         var url = construirUrl(tela, params || {});
         var abs = resolverAbs(url);
-        return fetch(abs).then(function (res) {
-            if (!res.ok) throw new Error('HTTP ' + res.status);
-            return res.text();
-        }).then(function (html) {
-            var rec = extrairScreen(html);
+        return requisitarTexto(abs).then(function (html) {
+            var rec;
+            try {
+                rec = extrairScreen(html);
+            } catch (erro) {
+                if (isLoginHtml(html)) {
+                    throw criarErroPreload('sessao', 'A tela ' + (TELA_TITULO[tela] || tela) + ' foi redirecionada para o login.', erro);
+                }
+                throw criarErroPreload('resposta', 'Não foi possível preparar a tela ' + (TELA_TITULO[tela] || tela) + ' para uso offline.', erro);
+            }
             rec.url = url;
             rec.tela = tela;
             rec.titulo = TELA_TITULO[tela] || 'SGI';
@@ -529,7 +631,21 @@
                     if (alternativa && isLoginHtml(alternativa.html)) {
                         return null;
                     }
-                    if (alternativa) return alternativa;
+                    if (alternativa) {
+                        // Partidas criadas pelo motor de chaveamento offline
+                        // usam IDs negativos e não possuem uma página própria
+                        // no cache de telas. Reaproveitamos o shell de jogos
+                        // já baixado, mas preservamos a URL solicitada para
+                        // que jogos.php leia o ID temporário e carregue o jogo
+                        // diretamente do SGIDataLayer (em vez de reabrir o
+                        // último jogo positivo armazenado).
+                        if (tela === 'jogos' && params && Number(params.id_jogo) < 0) {
+                            alternativa = Object.assign({}, alternativa, {
+                                url: construirUrl(tela, params)
+                            });
+                        }
+                        return alternativa;
+                    }
                     throw new Error('sem cache offline');
                 });
             }
@@ -793,23 +909,62 @@
         if (!url || url.indexOf('undefined') > -1 || url.indexOf('null') > -1) {
             return Promise.resolve('');
         }
-        return fetch(url).then(function (r) {
-            if (!r.ok) throw new Error('HTTP ' + r.status);
-            return r.text();
-        }).catch(function () { return ''; });
+        return requisitarTexto(url).then(function (texto) {
+            // APIs do SGI usam { success: false } para erros de domínio mesmo
+            // com HTTP 200. Não considerar isso como cache pronto evita um
+            // "Download parcial" sem explicação após uma resposta inválida.
+            try {
+                var dados = JSON.parse(texto);
+                if (dados && !Array.isArray(dados) && dados.success === false) {
+                    throw criarErroPreload('servidor', dados.message || dados.mensagem || 'O servidor recusou a solicitação.');
+                }
+            } catch (erro) {
+                if (erro && erro.sgiPreloadTipo) throw erro;
+            }
+            return texto;
+        });
     }
 
-    function preload() {
+    function limparRetentativaPreload() {
+        if (state.retryTimer) {
+            clearTimeout(state.retryTimer);
+            state.retryTimer = null;
+        }
+        state.retryPendente = false;
+    }
+
+    function agendarRetentativaPreload() {
+        if (state.retryPendente || state.retryAttempts >= PRELOAD_MAX_AUTO_RETRIES || navigator.onLine === false) {
+            return false;
+        }
+        state.retryAttempts++;
+        state.retryPendente = true;
+        state.retryTimer = setTimeout(function () {
+            state.retryTimer = null;
+            state.retryPendente = false;
+            preload(true);
+        }, PRELOAD_RETRY_DELAY_MS);
+        return true;
+    }
+
+    function preload(automatico) {
         if (state.nivel !== 2 || !state.temCasca) return;
         if (state.preloading) return;
-        if (navigator.onLine === false) return;
+        if (!automatico) {
+            limparRetentativaPreload();
+            state.retryAttempts = 0;
+        }
+        if (navigator.onLine === false) {
+            aviso('Conecte-se à internet para preparar os dados de uso offline.');
+            return;
+        }
 
         state.preloading = true;
         ocultarBadge();
         mostrarProgresso(0, 'Iniciando download para uso offline...');
 
         var jobs = [];
-        var contagem = { total: 0, feito: 0, falhas: 0 };
+        var contagem = { total: 0, feito: 0, falhas: 0, interrompido: false, primeiraFalha: null };
         var semInterclasse = false;
         // Perfil não depende da edição. As demais telas são adicionadas abaixo
         // já com o id correto, para a chave local ser a mesma da navegação.
@@ -820,9 +975,9 @@
         // A foto é carregada pelo perfil via API depois que a tela é montada.
         // Incluí-la aqui mantém o perfil completo já na primeira abertura
         // offline, sem depender de uma visita anterior à página.
-        if (SESSION !== 'anon' && SESSION !== '0') {
+        if (USER_ID) {
             jobs.push(function () {
-                return aquecer(apiBase() + 'foto.php?user_id=' + encodeURIComponent(SESSION));
+                return aquecer(apiBase() + 'foto.php?user_id=' + encodeURIComponent(USER_ID));
             });
         }
 
@@ -902,6 +1057,8 @@
                 });
                 return chain;
             }).catch(function (e) {
+                contagem.falhas++;
+                contagem.primeiraFalha = contagem.primeiraFalha || e;
                 if (window.console) console.warn('[SGI Mesario SPA] lista de jogos', e);
                 return null;
             });
@@ -915,13 +1072,16 @@
             return jobs.reduce(function (p, job) {
                 return p.then(function () {
                     if (falhasConsecutivas >= 3 || navigator.onLine === false) {
+                        contagem.interrompido = true;
                         return Promise.resolve();
                     }
                     return Promise.resolve(job()).then(function () {
                         falhasConsecutivas = 0;
                     }).catch(function (e) {
                         contagem.falhas++;
+                        contagem.primeiraFalha = contagem.primeiraFalha || e;
                         falhasConsecutivas++;
+                        if (tipoErroPreload(e) === 'sessao') falhasConsecutivas = 3;
                         if (window.console) console.warn('[SGI Mesario SPA] preload', e);
                     }).then(function () {
                         contagem.feito++;
@@ -931,10 +1091,34 @@
                 });
             }, Promise.resolve());
         }).then(function () {
-            if (!semInterclasse) terminarPreload(contagem.falhas === 0);
+            if (semInterclasse) return;
+            if (contagem.falhas === 0 && !contagem.interrompido) {
+                state.retryAttempts = 0;
+                state.ultimaFalha = null;
+                terminarPreload(true);
+                return;
+            }
+
+            var erro = contagem.primeiraFalha || criarErroPreload('rede', 'O download foi interrompido.');
+            var tipo = tipoErroPreload(erro);
+            state.ultimaFalha = erro;
+            if (tipo !== 'sessao' && agendarRetentativaPreload()) {
+                terminarPreload(false, 'Alguns dados não puderam ser atualizados. Nova tentativa automática em instantes.');
+                return;
+            }
+            if (tipo === 'sessao') {
+                terminarPreload(false, 'Sua sessão precisa ser atualizada antes de concluir o download. Recarregue a página e entre novamente se necessário.');
+                return;
+            }
+            terminarPreload(false);
         }).catch(function (e) {
             if (window.console) console.error('[SGI Mesario SPA] preload', e);
-            terminarPreload(false);
+            state.ultimaFalha = e;
+            if (tipoErroPreload(e) !== 'sessao' && agendarRetentativaPreload()) {
+                terminarPreload(false, 'Não foi possível concluir a preparação agora. Nova tentativa automática em instantes.');
+            } else {
+                terminarPreload(false);
+            }
         });
     }
 
@@ -966,14 +1150,14 @@
 
     function marcarPronto() {
         try {
-            if (state.pronto) localStorage.setItem('sgi_pronto_' + SESSION, '1');
-            else localStorage.removeItem('sgi_pronto_' + SESSION);
+            if (state.pronto) localStorage.setItem(PRONTO_STORAGE_KEY, '1');
+            else localStorage.removeItem(PRONTO_STORAGE_KEY);
         } catch (e) {}
     }
 
     function verificarPronto() {
         var flag = false;
-        try { flag = localStorage.getItem('sgi_pronto_' + SESSION) === '1'; } catch (e) {}
+        try { flag = localStorage.getItem(PRONTO_STORAGE_KEY) === '1'; } catch (e) {}
         return idbFindTela('agenda').then(function (rec) {
             if (rec || flag) {
                 state.pronto = true;
@@ -1054,7 +1238,11 @@
 
     function mostrarBadge() {
         var b = document.getElementById(BADGE_ID);
-        if (b) { b.style.display = 'inline-flex'; }
+        // Uma atualização pode estar em andamento enquanto o cache anterior
+        // ainda marca a sessão como pronta. Nesse intervalo, não exibir o
+        // selo verde evita induzir o mesário a desligar a rede antes de todas
+        // as telas e partidas terminarem de ser baixadas.
+        if (b) { b.style.display = state.preloading ? 'none' : 'inline-flex'; }
     }
 
     function ocultarBadge() {

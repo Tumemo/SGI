@@ -4,13 +4,26 @@ declare(strict_types=1);
 
 require_once dirname(__DIR__) . '/config/db.php';
 require_once __DIR__ . '/includes/mata_mata_engine.php';
+require_once __DIR__ . '/auth.php';
+require_once __DIR__ . '/includes/idempotencia.php';
 
 header('Content-Type: application/json; charset=utf-8');
 
 $data = json_decode(file_get_contents('php://input') ?: '{}');
 
 if (!isset($data->id_jogo, $data->resultados)) {
+    http_response_code(400);
     echo json_encode(['success' => false, 'message' => 'Dados insuficientes.'], JSON_UNESCAPED_UNICODE);
+    exit;
+}
+
+requerOperacaoJogo();
+garantirInterclasseAtivo($conn);
+
+$respostaAnterior = sgi_buscar_resposta_idempotente($conn, 'lancar_resultado');
+if ($respostaAnterior !== null) {
+    http_response_code($respostaAnterior['status']);
+    echo json_encode($respostaAnterior['payload'], JSON_UNESCAPED_UNICODE);
     exit;
 }
 
@@ -92,6 +105,9 @@ try {
     $stStatusAtual->execute();
     $statusAtual = $stStatusAtual->get_result()->fetch_assoc();
     $stStatusAtual->close();
+    if (!$statusAtual) {
+        throw new RuntimeException('Jogo não encontrado.');
+    }
     $jaConcluido = $statusAtual && ($statusAtual['status_jogo'] === 'Concluido' || $statusAtual['status_jogo'] === 'Finalizado');
 
     $winnerAntigo = null;
@@ -124,11 +140,13 @@ try {
         }
         if ($totalGols === 0) {
             $conn->rollback();
+            http_response_code(422);
             echo json_encode(['success' => false, 'message' => 'Não é possível finalizar um jogo com placar 0x0. Registre o placar correto.'], JSON_UNESCAPED_UNICODE);
             exit;
         }
         if (count($golsArray) >= 2 && $golsArray[0] === $golsArray[1]) {
             $conn->rollback();
+            http_response_code(422);
             echo json_encode(['success' => false, 'message' => 'O jogo não pode terminar empatado! Registre o placar correto.'], JSON_UNESCAPED_UNICODE);
             exit;
         }
@@ -222,11 +240,13 @@ try {
         }
         if ($totalGols === 0) {
             $conn->rollback();
+            http_response_code(422);
             echo json_encode(['success' => false, 'message' => 'Não é possível alterar o placar de um jogo finalizado para 0x0.'], JSON_UNESCAPED_UNICODE);
             exit;
         }
         if (count($golsArray2) >= 2 && $golsArray2[0] === $golsArray2[1]) {
             $conn->rollback();
+            http_response_code(422);
             echo json_encode(['success' => false, 'message' => 'O jogo não pode terminar empatado! Registre o placar correto.'], JSON_UNESCAPED_UNICODE);
             exit;
         }
@@ -252,8 +272,12 @@ try {
     }
 
     $conn->commit();
-    echo json_encode(['success' => true, 'message' => 'Resultado lançado!'], JSON_UNESCAPED_UNICODE);
+    sgi_enviar_resposta_idempotente($conn, 'lancar_resultado', 200, [
+        'success' => true,
+        'message' => 'Resultado lançado!'
+    ]);
 } catch (Throwable $e) {
     $conn->rollback();
+    http_response_code($e instanceof RuntimeException && $e->getMessage() === 'Jogo não encontrado.' ? 404 : 500);
     echo json_encode(['success' => false, 'message' => $e->getMessage()], JSON_UNESCAPED_UNICODE);
 }

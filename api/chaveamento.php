@@ -35,12 +35,30 @@ if ($tipoModalidade === 'individual') {
             break;
 
         case 'POST':
-            requerEscrita();
+            // O ranking de modalidades individuais é uma operação de campo;
+            // o mesário precisa conseguir registrá-lo tanto online quanto na
+            // fila offline. A criação estrutural de chaveamentos coletivos
+            // continua restrita a administrador/colaborador abaixo.
+            requerOperacaoJogo();
+            $idInterclasseAtiva = garantirInterclasseAtivo($conn);
             $idModalidade = isset($data->id_modalidade) ? (int) $data->id_modalidade : 0;
             if ($idModalidade <= 0) {
                 http_response_code(400);
                 echo json_encode(['success' => false, 'message' => 'Informe o ID da modalidade.'], JSON_UNESCAPED_UNICODE);
                 break;
+            }
+
+            if ((int) ($_SESSION['nivel'] ?? -1) === 2) {
+                $stEdicao = $conn->prepare('SELECT interclasses_id_interclasse FROM modalidades WHERE id_modalidade = ? LIMIT 1');
+                $stEdicao->bind_param('i', $idModalidade);
+                $stEdicao->execute();
+                $modalidadeEdicao = $stEdicao->get_result()->fetch_assoc();
+                $stEdicao->close();
+                if (!$modalidadeEdicao || (int) $modalidadeEdicao['interclasses_id_interclasse'] !== (int) $idInterclasseAtiva) {
+                    http_response_code(403);
+                    echo json_encode(['success' => false, 'message' => 'Mesários só podem registrar resultados da edição ativa.'], JSON_UNESCAPED_UNICODE);
+                    break;
+                }
             }
 
             $ranking = $data->ranking ?? null;

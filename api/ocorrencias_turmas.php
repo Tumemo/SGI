@@ -1,6 +1,7 @@
 <?php
 require_once '../config/db.php';
 require_once 'auth.php';
+require_once __DIR__ . '/includes/idempotencia.php';
 header('Content-Type: application/json');
 header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: GET, POST, DELETE, OPTIONS');
@@ -43,6 +44,12 @@ switch ($method) {
 
     case 'POST':
         requerNivel([0, 1, 2]);
+        $respostaAnterior = sgi_buscar_resposta_idempotente($conn, 'ocorrencias_turmas.post');
+        if ($respostaAnterior !== null) {
+            http_response_code($respostaAnterior['status']);
+            echo json_encode($respostaAnterior['payload'], JSON_UNESCAPED_UNICODE);
+            break;
+        }
         $data = json_decode(file_get_contents('php://input'));
 
         // Mesário só pode registrar ocorrência na edição ativa no momento.
@@ -86,8 +93,11 @@ switch ($method) {
         $stmt->bind_param($types, ...$params);
 
         if ($stmt->execute()) {
-            http_response_code(201);
-            echo json_encode(["success" => true, "message" => "Ocorrência registrada!", "id" => $conn->insert_id]);
+            sgi_enviar_resposta_idempotente($conn, 'ocorrencias_turmas.post', 201, [
+                "success" => true,
+                "message" => "Ocorrência registrada!",
+                "id" => $conn->insert_id
+            ]);
         } else {
             http_response_code(500);
             echo json_encode(["success" => false, "message" => $stmt->error]);

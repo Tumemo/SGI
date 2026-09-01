@@ -21,20 +21,74 @@
     var STORE_GET = 'api_get_cache';
     var STORE_QUEUE = 'mutation_queue';
     var MAX_TRIES = 5;
+    var RETRY_BASE_MS = 3000;
+    var RETRY_MAX_MS = 60000;
 
-    // Cache GET separado por sessão: evita que dados de um admin (ou outro
-    // usuário) vazem para quem usar o mesmo navegador depois. A página expõe
-    // window.SGI_SESSION_ID (definido no head.php); 'anon' para quem não tem.
-    var SESSION_KEY = (typeof window !== 'undefined' && window.SGI_SESSION_ID)
-        ? String(window.SGI_SESSION_ID) : 'anon';
+    // Cache GET separado por usuário autenticado: a chave opaca é derivada no
+    // servidor e não expõe o PHPSESSID nem reutiliza o ID fixo diretamente.
+    // Ela permanece estável no relogin do mesmo operador para recuperar a
+    // fila pendente, mas muda entre usuários e na troca de senha.
+    var SESSION_KEY = (typeof window !== 'undefined' && window.SGI_CACHE_KEY)
+        ? String(window.SGI_CACHE_KEY) : 'anon';
 
     function cacheKey(url) {
         return SESSION_KEY + '|' + url;
     }
 
+    function copiarCabecalhos(headers) {
+        var copia = {};
+        if (!headers) return copia;
+        if (typeof headers.forEach === 'function') {
+            headers.forEach(function (valor, nome) { copia[nome] = valor; });
+            return copia;
+        }
+        for (var nome in headers) {
+            if (Object.prototype.hasOwnProperty.call(headers, nome)) copia[nome] = headers[nome];
+        }
+        return copia;
+    }
+
+    function localizarCabecalho(headers, nome) {
+        var alvo = String(nome || '').toLowerCase();
+        for (var atual in (headers || {})) {
+            if (String(atual).toLowerCase() === alvo) return atual;
+        }
+        return null;
+    }
+
+    function garantirIdMutacao(headers) {
+        headers = copiarCabecalhos(headers);
+        if (!localizarCabecalho(headers, 'X-SGI-Mutation-Id')) {
+            headers['X-SGI-Mutation-Id'] = SESSION_KEY + '-' + Date.now().toString(36) + '-' +
+                Math.random().toString(36).slice(2, 10);
+        }
+        return headers;
+    }
+
+    function pareceTelaLogin(texto, url) {
+        var textoNormalizado = String(texto || '').toLowerCase();
+        var urlNormalizada = String(url || '').toLowerCase();
+        return urlNormalizada.indexOf('/views/index.php') > -1 ||
+            textoNormalizado.indexOf('id="form_mobile"') > -1 ||
+            textoNormalizado.indexOf('id="form_desktop"') > -1 ||
+            textoNormalizado.indexOf('class="ipt-matricula"') > -1 ||
+            textoNormalizado.indexOf('sgi - login') > -1;
+    }
+
     var dbPromise = null;
-    var state = { online: navigator.onLine !== false, softOffline: false, softOfflineUntil: 0, pending: 0 };
+    var state = {
+        online: navigator.onLine !== false,
+        softOffline: false,
+        softOfflineUntil: 0,
+        pending: 0,
+        needsReview: 0,
+        retryablePending: 0,
+        lastSyncError: '',
+        nextRetryAt: 0
+    };
     var listeners = [];
+    var retryTimer = null;
+    var retryDelay = RETRY_BASE_MS;
 
     function noop() {}
 
@@ -204,27 +258,71 @@
     }
 
     /* ------------------------- Estado e notificacao ------------------------- */
+    function stateSnapshot() {
+        return {
+            online: state.online,
+            pending: state.pending,
+            needsReview: state.needsReview,
+            retryablePending: state.retryablePending,
+            syncing: syncing,
+            lastSyncError: state.lastSyncError,
+            nextRetryAt: state.nextRetryAt
+        };
+    }
+
     function notify() {
         updateBanner();
         for (var i = 0; i < listeners.length; i++) {
-            try { listeners[i]({ online: state.online, pending: state.pending }); } catch (e) { /* noop */ }
+            try { listeners[i](stateSnapshot()); } catch (e) { /* noop */ }
         }
     }
 
     function refreshPending() {
-        return idbQueueAll().then(function (q) { state.pending = q.length; });
+        return idbQueueAll().then(function (q) {
+            state.pending = q.length;
+            state.needsReview = q.filter(function (item) { return item && item.needsReview; }).length;
+            // Uma mutação que exige revisão pode depender das anteriores. Para
+            // preservar a ordem, a retomada automática para até o usuário
+            // revisar ou pedir uma nova tentativa manual.
+            state.retryablePending = state.needsReview ? 0 : q.length;
+            if (!state.pending) {
+                state.lastSyncError = '';
+                clearSyncRetry();
+            }
+            return q;
+        });
+    }
+
+    function clearSyncRetry() {
+        if (retryTimer) {
+            clearTimeout(retryTimer);
+            retryTimer = null;
+        }
+        retryDelay = RETRY_BASE_MS;
+        state.nextRetryAt = 0;
+    }
+
+    function scheduleSyncRetry() {
+        if (retryTimer || !state.online || state.retryablePending <= 0) return;
+        var delay = retryDelay;
+        retryDelay = Math.min(RETRY_MAX_MS, retryDelay * 2);
+        state.nextRetryAt = Date.now() + delay;
+        retryTimer = setTimeout(function () {
+            retryTimer = null;
+            state.nextRetryAt = 0;
+            if (navigator.onLine === false) {
+                state.online = false;
+                notify();
+                return;
+            }
+            syncQueue();
+        }, delay);
+        notify();
     }
 
     /* ------------------------- Fila de mutacoes ------------------------- */
     function queueMutation(method, url, body, headers) {
-        var storedHeaders = {};
-        if (headers) {
-            if (typeof headers.forEach === 'function') {
-                headers.forEach(function (v, k) { storedHeaders[k] = v; });
-            } else if (typeof headers === 'object') {
-                for (var k in headers) storedHeaders[k] = headers[k];
-            }
-        }
+        var storedHeaders = garantirIdMutacao(headers);
 
         var isFormData = typeof FormData !== 'undefined' && body instanceof FormData;
         var storedBody = body;
@@ -233,18 +331,28 @@
         } else if (typeof body === 'string') {
             storedBody = body;
         } else if (isFormData) {
-            var plainObj = {};
+            var formCodificado = new URLSearchParams();
+            var possuiArquivo = false;
             body.forEach(function (v, k) {
-                if (plainObj[k] !== undefined) {
-                    if (!Array.isArray(plainObj[k])) plainObj[k] = [plainObj[k]];
-                    plainObj[k].push(v);
-                } else {
-                    plainObj[k] = v;
+                if (typeof Blob !== 'undefined' && v instanceof Blob) {
+                    possuiArquivo = true;
+                    return;
                 }
+                formCodificado.append(k, String(v));
             });
-            storedBody = JSON.stringify(plainObj);
-            storedHeaders['Content-Type'] = 'application/json';
-        } else if (body instanceof URLSearchParams || body instanceof Blob || body instanceof ArrayBuffer || ArrayBuffer.isView(body)) {
+            if (possuiArquivo) {
+                return Promise.reject(new Error('Envios com arquivo não podem ser salvos offline. Conecte-se antes de enviar a foto.'));
+            }
+            storedBody = formCodificado.toString();
+            var contentTypeForm = localizarCabecalho(storedHeaders, 'Content-Type');
+            if (contentTypeForm) delete storedHeaders[contentTypeForm];
+            storedHeaders['Content-Type'] = 'application/x-www-form-urlencoded;charset=UTF-8';
+        } else if (body instanceof URLSearchParams) {
+            storedBody = body.toString();
+            var contentTypeParams = localizarCabecalho(storedHeaders, 'Content-Type');
+            if (contentTypeParams) delete storedHeaders[contentTypeParams];
+            storedHeaders['Content-Type'] = 'application/x-www-form-urlencoded;charset=UTF-8';
+        } else if (body instanceof Blob || body instanceof ArrayBuffer || ArrayBuffer.isView(body)) {
             storedBody = body;
         } else {
             storedBody = JSON.stringify(body);
@@ -257,73 +365,249 @@
             headers: storedHeaders,
             createdAt: Date.now(),
             tries: 0,
-            needsReview: false
+            needsReview: false,
+            projectionPending: true
         };
         return idbQueueAdd(item).then(function (id) {
             item.id = id;
-            if (window.SGIDataLayer && window.SGIDataLayer.onQueued) {
-                window.SGIDataLayer.onQueued(item);
-            }
-            state.pending += 1;
+            var projection = (window.SGIDataLayer && window.SGIDataLayer.onQueued)
+                ? window.SGIDataLayer.onQueued(item)
+                : null;
+            // A projeção precisa terminar antes de liberar a UI para que o
+            // chaveamento local não leia um estado parcialmente gravado.
+            return Promise.resolve(projection).then(function () {
+                item.projectionPending = false;
+                delete item.projectionError;
+                return idbQueueUpdate(item);
+            }).catch(function (err) {
+                // A mutação principal continua protegida na fila. Guardamos a
+                // falha para reexecutá-la antes do envio ao servidor.
+                item.projectionError = String((err && err.message) || err || 'Falha ao projetar os dados locais.');
+                return idbQueueUpdate(item).catch(noop);
+            });
+        }).then(function () {
+            return refreshPending();
+        }).then(function () {
             notify();
+            scheduleSyncRetry();
+            return item;
         });
     }
 
     /* ------------------------- Sincronizacao ------------------------- */
     var syncing = false;
 
-    function syncQueue() {
-        if (!state.online || syncing) return Promise.resolve(0);
+    function bodyAsJson(item) {
+        try { return typeof item.body === 'string' ? JSON.parse(item.body || '{}') : (item.body || {}); }
+        catch (e) { return {}; }
+    }
+
+    function fileFromUrl(url) {
+        try { return new URL(url, window.location.href).pathname.split('/').pop(); }
+        catch (e) { return String(url || '').split('?')[0].split('/').pop(); }
+    }
+
+    // Resultados de uma partida derivada materializam o jogo temporário. Gols,
+    // cartões e demais registros desse mesmo jogo precisam ser enviados depois
+    // para que a API consiga resolver o ID definitivo.
+    function tempGameKey(item) {
+        var file = fileFromUrl(item.url);
+        var data = bodyAsJson(item);
+        var id = null;
+        if (file === 'lancar_resultado.php') id = data.id_jogo;
+        else if (file === 'artilheiro.php') id = data.jogos_id_jogo;
+        else if (file === 'ocorrencias.php') id = data.id_jogo;
+        else if (file === 'partidas.php') id = data.jogos_id_jogo;
+        if (Number(id) >= 0 || id == null) return null;
+        return String(data.id_modalidade || '') + '|' + String(id);
+    }
+
+    function materializaJogoTemporario(item) {
+        return fileFromUrl(item.url) === 'lancar_resultado.php' && Number(bodyAsJson(item).id_jogo) < 0;
+    }
+
+    function ordenarFila(queue) {
+        return (queue || []).slice().sort(function (a, b) {
+            var ka = tempGameKey(a);
+            var kb = tempGameKey(b);
+            if (ka && ka === kb) {
+                var aMaterializa = materializaJogoTemporario(a);
+                var bMaterializa = materializaJogoTemporario(b);
+                if (aMaterializa !== bMaterializa) return aMaterializa ? -1 : 1;
+            }
+            var criadoA = Number(a.createdAt) || 0;
+            var criadoB = Number(b.createdAt) || 0;
+            if (criadoA !== criadoB) return criadoA - criadoB;
+            return (Number(a.id) || 0) - (Number(b.id) || 0);
+        });
+    }
+
+    function lerRespostaSincronizacao(res) {
+        var copia = res && res.clone ? res.clone() : res;
+        return Promise.resolve(copia ? copia.text() : '').catch(function () { return ''; }).then(function (texto) {
+            var json = null;
+            try { json = texto ? JSON.parse(texto) : null; } catch (e) { json = null; }
+            var redirecionouParaLogin = pareceTelaLogin(texto, (res && res.url) || '');
+            return {
+                response: res,
+                text: texto,
+                json: json,
+                httpOk: !!(res && res.ok),
+                // Uma API que devolve a página de login após redirecionamento
+                // também não confirmou a alteração, mesmo que o HTTP seja 200.
+                semanticOk: !redirecionouParaLogin && (!json || json.success !== false)
+            };
+        });
+    }
+
+    function mensagemResposta(info) {
+        if (info && info.json) {
+            return info.json.message || info.json.mensagem || info.json.error || '';
+        }
+        if (info && info.response) return 'HTTP ' + info.response.status;
+        return 'Não foi possível alcançar o servidor.';
+    }
+
+    function erroInterrompeFila(retryable, message) {
+        var erro = new Error(message || 'Sincronização interrompida.');
+        erro.__sgiSyncHalt = true;
+        erro.retryable = !!retryable;
+        return erro;
+    }
+
+    function registrarFalha(item, summary, options) {
+        options = options || {};
+        item.tries = (item.tries || 0) + 1;
+        item.lastError = options.message || 'Falha ao sincronizar a alteração.';
+        item.lastStatus = options.status || 0;
+        item.lastFailedAt = Date.now();
+        item.needsReview = !!options.needsReview || item.tries >= MAX_TRIES;
+        item.retryable = !item.needsReview;
+        state.lastSyncError = item.lastError;
+        if (item.needsReview) summary.needsReview += 1;
+        else summary.failed += 1;
+        return idbQueueUpdate(item).then(function () {
+            throw erroInterrompeFila(!item.needsReview, item.lastError);
+        });
+    }
+
+    function confirmarProjecaoRemota(item, text, json, summary) {
+        var projection = (window.SGIDataLayer && window.SGIDataLayer.onSynced)
+            ? window.SGIDataLayer.onSynced(item, text, json || {})
+            : null;
+        return Promise.resolve(projection).then(function () {
+            return idbQueueDelete(item.id);
+        }).then(function () {
+            summary.synced += 1;
+            state.softOffline = false;
+            state.lastSyncError = '';
+        }).catch(function (err) {
+            // O servidor já confirmou a mutação. Mantemos a entrada com a
+            // resposta recebida para concluir somente a projeção local, sem
+            // reenviar uma operação que poderia duplicar dados.
+            item.remoteCommitted = true;
+            item.serverResponse = text || '';
+            item.projectionError = String((err && err.message) || err || 'Falha ao atualizar o banco local.');
+            item.lastError = item.projectionError;
+            item.lastFailedAt = Date.now();
+            state.lastSyncError = item.lastError;
+            summary.failed += 1;
+            return idbQueueUpdate(item).then(function () {
+                throw erroInterrompeFila(true, item.lastError);
+            });
+        });
+    }
+
+    function concluirConfirmacaoRemotaPendente(item, summary) {
+        var json = null;
+        try { json = item.serverResponse ? JSON.parse(item.serverResponse) : {}; } catch (e) { json = {}; }
+        return confirmarProjecaoRemota(item, item.serverResponse || '', json, summary);
+    }
+
+    function prepararProjecaoPendente(item) {
+        if (!item.projectionPending || !(window.SGIDataLayer && window.SGIDataLayer.onQueued)) {
+            return Promise.resolve();
+        }
+        return Promise.resolve(window.SGIDataLayer.onQueued(item)).then(function () {
+            item.projectionPending = false;
+            delete item.projectionError;
+            return idbQueueUpdate(item);
+        });
+    }
+
+    function processarItemDaFila(item, summary) {
+        if (item.remoteCommitted) {
+            return concluirConfirmacaoRemotaPendente(item, summary);
+        }
+        return prepararProjecaoPendente(item).then(function () {
+            var headers = {};
+            for (var k in (item.headers || {})) headers[k] = item.headers[k];
+            return originalFetch(item.url, {
+                method: item.method,
+                headers: headers,
+                body: item.body == null ? undefined : item.body,
+                credentials: 'same-origin'
+            });
+        }).then(lerRespostaSincronizacao).then(function (info) {
+            if (info.httpOk && info.semanticOk) {
+                return confirmarProjecaoRemota(item, info.text, info.json, summary);
+            }
+            var status = info.response ? info.response.status : 0;
+            var needsReview = (status >= 400 && status < 500) || (info.httpOk && !info.semanticOk);
+            return registrarFalha(item, summary, {
+                status: status,
+                needsReview: needsReview,
+                message: pareceTelaLogin(info.text, (info.response && info.response.url) || '')
+                    ? 'A sessão expirou antes de confirmar esta alteração. Entre novamente e use “Sincronizar agora”.'
+                    : (mensagemResposta(info) || (needsReview ? 'O servidor recusou a alteração.' : 'Erro temporário do servidor.'))
+            });
+        }).catch(function (err) {
+            if (err && err.__sgiSyncHalt) throw err;
+            marcarSoftOffline();
+            return registrarFalha(item, summary, {
+                message: String((err && err.message) || err || 'Erro de rede durante a sincronização.')
+            });
+        });
+    }
+
+    function syncQueue(force) {
+        var vazio = { synced: 0, failed: 0, needsReview: 0, pending: state.pending };
+        if (!state.online || syncing) return Promise.resolve(vazio);
         syncing = true;
 
         function done(v) { syncing = false; return v; }
 
+        var summary = { synced: 0, failed: 0, needsReview: 0, pending: 0 };
         var run = idbQueueAll().then(function (queue) {
             if (!queue.length) return;
+            if (!force && queue.some(function (item) { return item.needsReview; })) return;
+            queue = ordenarFila(queue);
             var chain = Promise.resolve();
             queue.forEach(function (item) {
                 chain = chain.then(function () {
-                    var headers = {};
-                    for (var k in (item.headers || {})) headers[k] = item.headers[k];
-                    return originalFetch(item.url, {
-                        method: item.method,
-                        headers: headers,
-                        body: item.body == null ? undefined : item.body
-                    });
-                }).then(function (res) {
-                    if (res && res.ok) {
-                        var resposta = res.clone ? res.clone() : null;
-                        return Promise.resolve(resposta ? resposta.text() : '').catch(function () { return ''; })
-                            .then(function (texto) {
-                                if (window.SGIDataLayer && window.SGIDataLayer.onSynced) {
-                                    window.SGIDataLayer.onSynced(item, texto);
-                                }
-                                return idbQueueDelete(item.id);
-                            });
-                    }
-                    if (res && res.status >= 400 && res.status < 500) {
-                        console.warn('sgi: descartando mutação cliente obsoleta da fila:', item.url, res.status);
-                        return idbQueueDelete(item.id);
-                    }
-                    item.tries = (item.tries || 0) + 1;
-                    if (item.tries >= MAX_TRIES) item.needsReview = true;
-                    return idbQueueUpdate(item);
-                }).catch(function (err) {
-                    console.warn('sgi: erro de rede na sincronização:', item.url, err);
-                    item.tries = (item.tries || 0) + 1;
-                    if (item.tries >= MAX_TRIES) item.needsReview = true;
-                    return idbQueueUpdate(item).then(function () {
-                        throw new Error('sgi: sync interrompido');
-                    });
+                    return processarItemDaFila(item, summary);
                 });
             });
             return chain;
         });
 
         return run
+            .catch(function (err) {
+                if (!(err && err.__sgiSyncHalt) && window.console) {
+                    console.warn('sgi: erro inesperado na sincronização:', err);
+                }
+            })
             .then(function () { return refreshPending(); })
-            .catch(function () { return refreshPending(); })
-            .then(function () { notify(); return done(0); });
+            .then(function () {
+                summary.pending = state.pending;
+                if (state.retryablePending > 0) scheduleSyncRetry();
+                notify();
+                return done(summary);
+            }).catch(function (err) {
+                syncing = false;
+                if (window.console) console.warn('sgi: não foi possível atualizar o estado da fila:', err);
+                return summary;
+            });
     }
 
     /* ------------------------- Wrapper do fetch ------------------------- */
@@ -334,6 +618,14 @@
         init = init || {};
         var url = typeof input === 'string' ? input : (input && input.url) || '';
         var method = (init.method || (input && input.method) || 'GET').toUpperCase();
+
+        // O mesmo identificador acompanha a tentativa online e uma eventual
+        // entrada posterior na fila. Assim a API pode reconhecer tentativas
+        // repetidas sem confundir um reenvio com uma nova ação do mesário.
+        if (isMutation(method)) {
+            init = Object.assign({}, init);
+            init.headers = garantirIdMutacao(init.headers || (input && input.headers));
+        }
 
         if (!isSameOrigin(url)) {
             if (navigator.onLine === false || estaSoftOffline()) {
@@ -374,6 +666,7 @@
                     // O preload só é considerado concluído depois que a
                     // resposta exata da API estiver persistida no IndexedDB.
                     return clone.text().then(function (text) {
+                        if (pareceTelaLogin(text, res.url || absUrl)) return res;
                         return idbPut({
                             url: absUrl,
                             text: text,
@@ -425,14 +718,7 @@
                     return fakeResponse({ success: true, offline: true, queued: true, mensagem: 'Salvo localmente. Sera sincronizado quando houver conexao.' });
                 });
             }
-            return originalFetch(input, init).then(function (res) {
-                if (res && res.status === 404) {
-                    return queueMutation(method, absUrl, init.body, init.headers).then(function () {
-                        return fakeResponse({ success: true, offline: true, queued: true, mensagem: 'Salvo localmente.' });
-                    });
-                }
-                return res;
-            }).catch(function () {
+            return originalFetch(input, init).catch(function () {
                 return queueMutation(method, absUrl, init.body, init.headers).then(function () {
                     return fakeResponse({ success: true, offline: true, queued: true, mensagem: 'Salvo localmente. Sera sincronizado quando houver conexao.' });
                 });
@@ -654,10 +940,16 @@
         if (state.online) {
             b.classList.remove('sgi-offline-banner--offline');
             b.classList.add('sgi-offline-banner--syncing');
-            if (tag) tag.textContent = 'SINCRONIZANDO';
-            if (text) text.textContent = state.pending === 1
-                ? '1 alteracao aguardando envio.'
-                : state.pending + ' alteracoes aguardando envio.';
+            if (state.needsReview > 0) {
+                if (tag) tag.textContent = 'REVISAR';
+                if (text) text.textContent = state.lastSyncError ||
+                    'Há alteração(ões) que precisam ser confirmadas antes de reenviar.';
+            } else {
+                if (tag) tag.textContent = 'SINCRONIZANDO';
+                if (text) text.textContent = state.pending === 1
+                    ? '1 alteração aguardando envio.'
+                    : state.pending + ' alterações aguardando envio.';
+            }
             if (btn) btn.classList.remove('sgi-hidden');
         } else {
             b.classList.add('sgi-offline-banner--offline');
@@ -715,7 +1007,7 @@
     /* ------------------------- API publica ------------------------- */
     window.SGIOffline = {
         isOnline: function () { return state.online; },
-        getState: function () { return { online: state.online, pending: state.pending }; },
+        getState: stateSnapshot,
         hasPending: function () { return state.pending > 0; },
         onStateChange: function (cb) {
             listeners.push(cb);
@@ -724,7 +1016,9 @@
                 if (i > -1) listeners.splice(i, 1);
             };
         },
-        syncNow: function () { return syncQueue(); },
+        // A ação explícita do usuário pode tentar novamente uma entrada que
+        // ficou em revisão; o envio automático nunca a descarta silenciosamente.
+        syncNow: function () { return syncQueue(true); },
         queueMutation: queueMutation,
         submit: submit,
         getCached: idbGet,

@@ -1272,7 +1272,11 @@ $paginaAtiva = 'dashboard';
     }
 
     function ehFutsal() {
-        return parseInt(estadoJogo.tipos_modalidades_id_tipo_modalidade, 10) === 1;
+        // O cache offline de instalações antigas pode não conter o tipo
+        // numérico, embora ainda preserve o nome da modalidade.
+        var tipo = parseInt(estadoJogo.tipos_modalidades_id_tipo_modalidade, 10);
+        if (tipo === 1) return true;
+        return /futsal/i.test(String(estadoJogo.nome_modalidade || ''));
     }
 
     async function carregarIndDados() {
@@ -1483,17 +1487,33 @@ $paginaAtiva = 'dashboard';
                 if (!isNaN(d) && d > 0) duracaoJogo = d;
             }
 
+            var tempoRestanteInformado = false;
             if (estadoJogo.tempo_restante_calculado != null) {
                 var v = parseInt(estadoJogo.tempo_restante_calculado, 10);
                 if (!isNaN(v) && v > 0) {
                     tempoRestante = v;
+                    tempoRestanteInformado = true;
                 } else if (v <= 0 && (estadoJogo.status_jogo === 'Iniciado' || estadoJogo.status_jogo === 'Pausado')) {
                     tempoRestante = 0;
                     tempoEsgotado = true;
+                    tempoRestanteInformado = true;
                 }
             } else if (estadoJogo.tempo_restante_jogo != null) {
                 var v2 = parseInt(estadoJogo.tempo_restante_jogo, 10);
-                if (!isNaN(v2) && v2 > 0) tempoRestante = v2;
+                if (!isNaN(v2) && v2 > 0) {
+                    tempoRestante = v2;
+                    tempoRestanteInformado = true;
+                }
+            }
+            // Um jogo iniciado offline pela agenda pode ter sido projetado no
+            // IndexedDB apenas com o novo status (bases antigas do cache). Sem
+            // um tempo informado pelo servidor, ele ainda deve começar com a
+            // duração padrão, e não aparecer imediatamente como esgotado.
+            if (!tempoRestanteInformado &&
+                (estadoJogo.status_jogo === 'Iniciado' || estadoJogo.status_jogo === 'Pausado') &&
+                !estadoJogo.data_inicio_real) {
+                tempoRestante = duracaoJogo;
+                tempoEsgotado = false;
             }
 
             load.classList.add('d-none');
@@ -1504,6 +1524,7 @@ $paginaAtiva = 'dashboard';
                 iniciarArtilheiro();
             }
             iniciarOcorrencias();
+            acompanharSincronizacaoPlacar();
         } catch (e) {
             var okLocal = await carregarJogoLocalTemporario();
             if (!okLocal) {
@@ -1786,6 +1807,10 @@ $paginaAtiva = 'dashboard';
         } else {
             payload.id_jogo = idJogo;
             payload.id_turma = parseInt(idTurma, 10);
+            // Necessário para que uma ocorrência de jogo criado localmente
+            // seja vinculada ao confronto definitivo durante a sincronização.
+            payload.nome_jogo = (estadoJogo && estadoJogo.nome_jogo) || null;
+            payload.id_modalidade = (estadoJogo && (estadoJogo.modalidades_id_modalidade || estadoJogo.id_modalidade)) || null;
         }
 
         try {
@@ -1827,6 +1852,26 @@ $paginaAtiva = 'dashboard';
         document.getElementById('artilheiro-section').classList.remove('d-none');
         carregarEquipesArtilheiro();
         carregarArtilheiros();
+    }
+
+    // Quando uma mutação offline é confirmada pelo servidor, atualiza as
+    // listas que exibem dados agregados (artilharia e timeline). Sem essa
+    // atualização a fila ficava vazia, mas a tela permanecia com o registro
+    // temporário "Desconhecido / 0 gol" até um reload manual.
+    function acompanharSincronizacaoPlacar() {
+        if (!window.SGIOffline || typeof window.SGIOffline.onStateChange !== 'function') return;
+        if (window.__SGI_PLACAR_SYNC_UNSUB__) {
+            try { window.__SGI_PLACAR_SYNC_UNSUB__(); } catch (_) {}
+        }
+        var pendentesAntes = Number(window.SGIOffline.getState && window.SGIOffline.getState().pending) || 0;
+        window.__SGI_PLACAR_SYNC_UNSUB__ = window.SGIOffline.onStateChange(function (snapshot) {
+            var pendentesAgora = Number(snapshot && snapshot.pending) || 0;
+            if (snapshot && snapshot.online && pendentesAntes > 0 && pendentesAgora === 0) {
+                carregarArtilheiros();
+                carregarOcorrencias();
+            }
+            pendentesAntes = pendentesAgora;
+        });
     }
 
     async function carregarArtilheiros() {
@@ -1938,6 +1983,11 @@ $paginaAtiva = 'dashboard';
                 body: JSON.stringify({
                     usuarios_id_usuario: parseInt(idAluno, 10),
                     jogos_id_jogo: idJogo,
+                    // Em jogos derivados offline, o ID ainda é negativo. A tag
+                    // e a modalidade permitem resolver o jogo definitivo na
+                    // sincronização, depois que o resultado materializá-lo.
+                    nome_jogo: (estadoJogo && estadoJogo.nome_jogo) || null,
+                    id_modalidade: (estadoJogo && (estadoJogo.modalidades_id_modalidade || estadoJogo.id_modalidade)) || null,
                     num_gol: 1
                 })
             });

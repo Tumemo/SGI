@@ -483,6 +483,7 @@ ALTER TABLE `turmas`
 ALTER TABLE `usuarios`
   ADD PRIMARY KEY (`id_usuario`),
   ADD UNIQUE KEY `chave_usuario_edicao_UNIQUE` (`chave_usuario_edicao`),
+  ADD UNIQUE KEY `uk_matricula_interclasse` (`matricula_usuario`,`interclasses_id_interclasse`),
   ADD KEY `fk_usuarios_turmas1_idx` (`turmas_id_turma`),
   ADD KEY `fk_usuarios_interclasses1_idx` (`interclasses_id_interclasse`);
 
@@ -695,6 +696,23 @@ ALTER TABLE `usuarios`
 ALTER TABLE `usuarios_has_interclasses`
   ADD CONSTRAINT `fk_usuarios_has_interclasses_interclasses1` FOREIGN KEY (`interclasses_id_interclasse`) REFERENCES `interclasses` (`id_interclasse`),
   ADD CONSTRAINT `fk_usuarios_has_interclasses_usuarios1` FOREIGN KEY (`usuarios_id_usuario`) REFERENCES `usuarios` (`id_usuario`);
+
+--
+-- Registro idempotente das mutações sincronizadas pelo mesário.
+-- Evita duplicar uma ação quando o servidor gravou o dado, mas a resposta se
+-- perdeu antes de chegar ao navegador.
+--
+CREATE TABLE `sincronizacoes_idempotentes` (
+  `id_sincronizacao` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+  `rota` varchar(80) NOT NULL,
+  `chave_mutacao` varchar(180) NOT NULL,
+  `status_http` smallint(5) UNSIGNED NOT NULL DEFAULT 200,
+  `resposta_json` longtext NOT NULL,
+  `criado_em` timestamp NOT NULL DEFAULT current_timestamp(),
+  PRIMARY KEY (`id_sincronizacao`),
+  UNIQUE KEY `uk_sincronizacao_rota_chave` (`rota`, `chave_mutacao`),
+  KEY `idx_sincronizacao_criado` (`criado_em`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 SET FOREIGN_KEY_CHECKS = 1;
 COMMIT;

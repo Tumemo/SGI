@@ -131,7 +131,7 @@ $paginaAtiva = 'perfil';
         <div class="card-body text-center py-4">
             <div class="perfil-avatar-ring mx-auto" id="fotoCircleMob">
                 <div class="perfil-avatar-inner">
-                    <?php $fotoPath = $usuarioPerfil['foto_usuario'] ? '../../uploads/fotosUsuarios/' . rawurlencode($usuarioPerfil['foto_usuario']) : ''; ?>
+                    <?php $fotoPath = $usuarioPerfil['foto_usuario'] ? '../../../uploads/fotosUsuarios/' . rawurlencode($usuarioPerfil['foto_usuario']) : ''; ?>
                     <img src="<?= $fotoPath ?>" id="fotoImgMob" class="w-100 h-100 object-fit-cover <?= $fotoPath ? '' : 'd-none' ?>" alt="Foto" onerror="this.classList.add('d-none');document.getElementById('fotoIconMob')?.classList.remove('d-none');">
                     <i class="bi bi-person-fill <?= $fotoPath ? 'd-none' : '' ?>" id="fotoIconMob"></i>
                     <div class="perfil-avatar-skeleton" id="fotoSkeletonMob">
@@ -199,7 +199,7 @@ $paginaAtiva = 'perfil';
                     <div class="card-body text-center py-5 px-4">
                         <div class="perfil-avatar-ring mx-auto" id="fotoCircleDesk">
                             <div class="perfil-avatar-inner">
-                                <?php $fotoPathDesk = $usuarioPerfil['foto_usuario'] ? '../../uploads/fotosUsuarios/' . rawurlencode($usuarioPerfil['foto_usuario']) : ''; ?>
+                                <?php $fotoPathDesk = $usuarioPerfil['foto_usuario'] ? '../../../uploads/fotosUsuarios/' . rawurlencode($usuarioPerfil['foto_usuario']) : ''; ?>
                                 <img src="<?= $fotoPathDesk ?>" id="fotoImgDesk" class="w-100 h-100 object-fit-cover <?= $fotoPathDesk ? '' : 'd-none' ?>" alt="Foto" onerror="this.classList.add('d-none');document.getElementById('fotoIconDesk')?.classList.remove('d-none');">
                                 <i class="bi bi-person-fill <?= $fotoPathDesk ? 'd-none' : '' ?>" id="fotoIconDesk"></i>
                                 <div class="perfil-avatar-skeleton" id="fotoSkeletonDesk">
@@ -363,13 +363,21 @@ $paginaAtiva = 'perfil';
 <input type="file" id="fotoUploadInput" accept="image/jpeg,image/png,image/gif,image/webp" style="display:none">
 
 <script>
+    var API_BASE = (function() {
+        var path = window.location.pathname || '';
+        var idx = path.indexOf('/views/src/');
+        if (idx !== -1) {
+            return path.substring(0, idx) + '/';
+        }
+        return '../../../';
+    })();
     const DADOS_PERFIL = {
         nome: <?= json_encode($usuarioPerfil['nome_usuario'] ?? '') ?>,
         matricula: <?= json_encode($usuarioPerfil['matricula_usuario'] ?? '') ?>,
         id: <?= json_encode($sessionId ?? 0) ?>,
         nivel: <?= json_encode((int)($nivelUsuario ?? 0)) ?>
     };
-    const API_FOTO = '../../../api/foto.php';
+    const API_FOTO = API_BASE + 'api/foto.php';
 
     let fotoPreviewFile = null;
     let temFotoAtual = false;
@@ -475,7 +483,7 @@ $paginaAtiva = 'perfil';
         const input = document.getElementById('fotoUploadInput');
         ['btnCameraMob', 'btnCameraDesk'].forEach(btnId => {
             const btn = document.getElementById(btnId);
-            if (btn) btn.addEventListener('click', () => input.click());
+            if (btn && input) btn.addEventListener('click', () => input.click());
         });
 
         (async () => {
@@ -484,7 +492,7 @@ $paginaAtiva = 'perfil';
                 const data = await resp.json();
                 if (data.success && data.foto_usuario) {
                     temFotoAtual = true;
-                    mostrarFoto('../../../uploads/fotosUsuarios/' + data.foto_usuario);
+                    mostrarFoto(API_BASE + 'uploads/fotosUsuarios/' + data.foto_usuario);
                     atualizarBotoesFoto();
                 } else {
                     ['Mob', 'Desk'].forEach(esconderSkeleton);
@@ -494,15 +502,17 @@ $paginaAtiva = 'perfil';
             }
         })();
 
-        input.addEventListener('change', () => {
-            const file = input.files?.[0];
-            if (!file) return;
-            const url = URL.createObjectURL(file);
-            mostrarFoto(url);
-            fotoPreviewFile = file;
-            atualizarBotoesFoto();
-            input.value = '';
-        });
+        if (input) {
+            input.addEventListener('change', () => {
+                const file = input.files?.[0];
+                if (!file) return;
+                const url = URL.createObjectURL(file);
+                mostrarFoto(url);
+                fotoPreviewFile = file;
+                atualizarBotoesFoto();
+                input.value = '';
+            });
+        }
 
         document.querySelectorAll('[id^="btnSalvarFoto"]').forEach(btn => {
             btn.addEventListener('click', async () => {

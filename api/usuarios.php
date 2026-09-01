@@ -6,6 +6,7 @@ require_once dirname(__DIR__) . '/config/db.php';
 require_once __DIR__ . '/includes/usuario_validacao.php';
 require_once __DIR__ . '/includes/importador_competidores.php';
 require_once __DIR__ . '/includes/interclasse_helper.php';
+require_once __DIR__ . '/includes/cache_offline.php';
 
 header('Content-Type: application/json; charset=utf-8');
 
@@ -53,14 +54,18 @@ function sgi_validar_inscricao_rf05(mysqli $conn, array $dados): array
         return ['status' => 'erro', 'mensagem' => 'Não foi possível validar os dados informados.'];
     }
 
-    // Novo PHPSESSID por login: isola o cache HTTP (Vary: Cookie) e o cache
-    // IndexedDB (offline-core) entre usuários no mesmo navegador.
+    // Novo PHPSESSID por login. O namespace IndexedDB é estável somente para
+    // este competidor, preservando uma fila pendente caso a sessão precise ser
+    // renovada no mesmo dispositivo.
     session_regenerate_id(true);
+    $_SESSION = [];
 
     $_SESSION['logado'] = true;
+    $_SESSION['id'] = (int) $usuario['id_usuario'];
     $_SESSION['id_usuario'] = (int) $usuario['id_usuario'];
     $_SESSION['nivel'] = $usuario['nivel_usuario'];
     $_SESSION['id_interclasse'] = $idInterclasseAtivo;
+    sgi_definir_chave_cache_offline_usuario((int) $usuario['id_usuario'], (string) $usuario['senha_usuario']);
 
     return [
         'status' => 'sucesso',
