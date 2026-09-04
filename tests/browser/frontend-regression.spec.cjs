@@ -20,11 +20,12 @@ async function obterContexto(request) {
         await request.get('api/interclasse.php?regulamento=true'),
         'edições do frontend'
     );
-    const edicao = (Array.isArray(edicoes) ? edicoes : []).find((item) => String(item.status_interclasse) === '1') || edicoes[0];
+    const listaEdicoes = Array.isArray(edicoes) ? edicoes : [];
+    let edicao = listaEdicoes.find((item) => String(item.status_interclasse) === '1') || listaEdicoes[0];
     if (!edicao) throw new Error('Nenhuma edição disponível para a regressão visual.');
 
-    const idInterclasse = Number(edicao.id_interclasse);
-    const [categorias, modalidades, turmas, equipes, jogos] = await Promise.all([
+    let idInterclasse = Number(edicao.id_interclasse);
+    let [categorias, modalidades, turmas, equipes, jogos] = await Promise.all([
         jsonOrThrow(await request.get(`api/categorias.php?id_interclasse=${idInterclasse}`), 'categorias do frontend'),
         jsonOrThrow(await request.get(`api/modalidades.php?id_interclasse=${idInterclasse}`), 'modalidades do frontend'),
         jsonOrThrow(await request.get(`api/turmas.php?id_interclasse=${idInterclasse}`), 'turmas do frontend'),
@@ -32,10 +33,33 @@ async function obterContexto(request) {
         jsonOrThrow(await request.get(`api/jogos.php?id_interclasse=${idInterclasse}`), 'jogos do frontend')
     ]);
 
+    let listaJogos = Array.isArray(jogos) ? jogos : [];
+    if (!listaJogos.some((j) => Number(j.id_jogo) > 0)) {
+        for (const outra of listaEdicoes) {
+            if (Number(outra.id_interclasse) === idInterclasse) continue;
+            const fallbackJogos = await jsonOrThrow(await request.get(`api/jogos.php?id_interclasse=${outra.id_interclasse}`), 'jogos de fallback');
+            if (Array.isArray(fallbackJogos) && fallbackJogos.some((j) => Number(j.id_jogo) > 0)) {
+                edicao = outra;
+                idInterclasse = Number(outra.id_interclasse);
+                await request.post(`api/interclasse.php?id=${idInterclasse}`, {
+                    data: { status_interclasse: '1' }
+                });
+                [categorias, modalidades, turmas, equipes, jogos] = await Promise.all([
+                    jsonOrThrow(await request.get(`api/categorias.php?id_interclasse=${idInterclasse}`), 'categorias do frontend'),
+                    jsonOrThrow(await request.get(`api/modalidades.php?id_interclasse=${idInterclasse}`), 'modalidades do frontend'),
+                    jsonOrThrow(await request.get(`api/turmas.php?id_interclasse=${idInterclasse}`), 'turmas do frontend'),
+                    jsonOrThrow(await request.get(`api/equipes.php?id_interclasse=${idInterclasse}`), 'equipes do frontend'),
+                    Promise.resolve(fallbackJogos)
+                ]);
+                listaJogos = fallbackJogos;
+                break;
+            }
+        }
+    }
+
     const listaModalidades = Array.isArray(modalidades) ? modalidades : [];
     const listaTurmas = Array.isArray(turmas) ? turmas : [];
     const listaEquipes = Array.isArray(equipes) ? equipes : [];
-    const listaJogos = Array.isArray(jogos) ? jogos : [];
     const modalidade = listaModalidades.find((item) => Number(item.id_modalidade) > 0) || {};
     const equipe = listaEquipes.find((item) => Number(item.id_equipe) > 0 && Number(item.turmas_id_turma || item.id_turma) > 0) || {};
     const turma = listaTurmas.find((item) => Number(item.id_turma) > 0) || {};
