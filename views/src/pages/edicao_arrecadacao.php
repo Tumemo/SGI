@@ -2,49 +2,6 @@
 $tituloPagina = 'SGI - Arrecadação';
 $mostrarVoltar = true;
 $urlVoltar = './dashboard.php';
-$cssExtra = '
-.ocr-page{padding-bottom:5rem}
-.ocr-container{width:100%;padding:0 2rem}
-.ocr-header{margin-bottom:2rem}
-.ocr-header__top{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem;flex-wrap:wrap;gap:1rem}
-.ocr-header__title{font-size:1.75rem;font-weight:800;color:#111827;letter-spacing:-.03em;margin:0;line-height:1.2}
-.ocr-header__sub{font-size:.9rem;color:#6B7280;margin:.35rem 0 0;font-weight:400}
-
-.ocr-card__hist{width:38px;height:38px;border-radius:50%;border:1.5px solid #E5E7EB;background:#fff;color:#6B7280;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .2s;flex-shrink:0;font-size:1rem}
-.ocr-card__hist:hover{border-color:#D1D5DB;background:#F9FAFB;color:#374151;transform:scale(1.1)}
-
-.ocr-card__save{width:38px;height:38px;border-radius:50%;border:2px dashed #D1D5DB;background:transparent;color:#9CA3AF;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .2s;flex-shrink:0;font-size:1.1rem}
-.ocr-card__save:hover{border-color:#E30613;color:#E30613;background:#FEF2F2;transform:scale(1.1)}
-.ocr-card__save:disabled{opacity:.5;cursor:not-allowed;transform:none}
-
-.ocr-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:1rem;margin-bottom:2rem}
-@media(max-width:991.98px){.ocr-grid{grid-template-columns:1fr}}
-@media(max-width:575.98px){.ocr-container{padding:0 1rem}}
-
-.ocr-card{background:#fff;border:1px solid #F0F0F0;border-radius:16px;padding:1.25rem 1.5rem;transition:transform .2s,box-shadow .2s;display:flex;align-items:center;gap:1rem;overflow:hidden}
-.ocr-card:hover{transform:translateY(-2px);box-shadow:0 4px 16px rgba(0,0,0,.06)}
-.ocr-card__icon{width:44px;height:44px;border-radius:12px;background:linear-gradient(135deg,#FEF2F2,#FEE2E2);display:flex;align-items:center;justify-content:center;flex-shrink:0}
-.ocr-card__icon i{font-size:1.15rem;color:#E30613}
-.ocr-card__info{flex:1;min-width:0}
-.ocr-card__name{font-size:.95rem;font-weight:700;color:#111827;margin:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.ocr-card__badge{display:inline-flex;align-items:center;font-size:.7rem;font-weight:600;background:#F3F4F6;color:#6B7280;border-radius:6px;padding:.15rem .5rem;margin-top:.25rem;border:1px solid #F0F0F0}
-
-.ocr-card__input-wrap{flex-shrink:0;position:relative;width:96px}
-.ocr-card__input{width:100%;border:1.5px solid #E5E7EB;border-radius:10px;font-size:.95rem;font-weight:700;color:#111827;text-align:center;padding:.5rem .4rem;padding-right:2.1rem;transition:all .15s;background:#FAFAFA}
-.ocr-card__input:focus{border-color:#E30613;box-shadow:0 0 0 3px rgba(227,6,19,.08);outline:none;background:#fff}
-.ocr-card__input::placeholder{color:#D1D5DB;font-weight:400}
-.ocr-card__input-suffix{position:absolute;right:.55rem;top:50%;transform:translateY(-50%);font-size:.65rem;font-weight:700;color:#9CA3AF;text-transform:uppercase;letter-spacing:.04em;pointer-events:none}
-
-.ocr-modal .modal-content{border:none;border-radius:16px;box-shadow:0 20px 60px rgba(0,0,0,.15)}
-.ocr-modal .modal-header{border:none;padding:1.25rem 1.5rem .5rem}
-.ocr-modal .modal-title{font-size:1.05rem;font-weight:700}
-.ocr-modal .modal-body{padding:.5rem 1.5rem 1.25rem}
-
-.ocr-mobile{padding-top:5.5rem;padding-bottom:6rem}
-.ocr-mobile .ocr-card{padding:1rem}
-.ocr-mobile .ocr-card__input-wrap{width:84px}
-.ocr-mobile .ocr-card__input{font-size:.9rem;padding:.45rem .35rem;padding-right:1.9rem}
-';
 include 'componentes/head.php';
 include 'componentes/header.php';
 $paginaAtiva = 'arrecadacoes';
@@ -54,7 +11,7 @@ $isAdmin = $nivelUsuario === 0;
 
 <main class="d-md-none ocr-mobile">
     <div class="px-3 mt-3">
-        <a href="./dashboard.php" id="btnVoltarArrecadacaoMob" class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none" style="background-color:#E30613;border-radius:6px;padding:8px 16px;">
+        <a href="./dashboard.php" id="btnVoltarArrecadacaoMob" class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none sgi-inline-e1bcebb6" >
             <i class="bi bi-arrow-left-circle fs-5"></i> <span id="nomeInterclasseArrecadacaoMob">Interclasse</span>
         </a>
 
@@ -65,7 +22,7 @@ $isAdmin = $nivelUsuario === 0;
     </div>
 
     <div class="px-3">
-        <div class="ocr-grid" id="listaArrecadacaoMobile" style="grid-template-columns:1fr;">
+        <div class="ocr-grid sgi-inline-98d53286" id="listaArrecadacaoMobile" >
             <div class="text-center text-muted py-5"><div class="spinner-border spinner-border-sm me-2"></div>Carregando...</div>
         </div>
     </div>
@@ -74,7 +31,7 @@ $isAdmin = $nivelUsuario === 0;
 <main class="d-none d-md-block main-desktop-layout ocr-page">
     <div class="ocr-container">
         <div class="mb-4">
-            <a href="./dashboard.php" id="btnVoltarArrecadacao" class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none" style="background-color:#E30613;border-radius:6px;padding:8px 16px;">
+            <a href="./dashboard.php" id="btnVoltarArrecadacao" class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none sgi-inline-e1bcebb6" >
                 <i class="bi bi-arrow-left-circle fs-5"></i> <span id="nomeInterclasseArrecadacao">Interclasse</span>
             </a>
         </div>
@@ -89,7 +46,7 @@ $isAdmin = $nivelUsuario === 0;
         </div>
 
         <div class="ocr-grid" id="listaArrecadacaoDesktop">
-            <div class="text-center text-muted py-5" style="grid-column:1/-1"><div class="spinner-border spinner-border-sm me-2"></div>Carregando...</div>
+            <div class="text-center text-muted py-5 sgi-inline-c5f53f82" ><div class="spinner-border spinner-border-sm me-2"></div>Carregando...</div>
         </div>
     </div>
 </main>
@@ -108,10 +65,10 @@ $isAdmin = $nivelUsuario === 0;
             <div class="modal-body">
                 <?php if ($isAdmin): ?>
                 <div class="d-flex gap-2 mb-3">
-                    <button type="button" id="btnFiltroAdicionados" class="btn btn-sm rounded-3 px-3 py-1 fw-semibold active" style="background-color:var(--vermelho);color:white;border:1px solid var(--vermelho);font-size:0.8rem;" onclick="filtrarHistorico('adicionados')">
+                    <button type="button" id="btnFiltroAdicionados" class="btn btn-sm rounded-3 px-3 py-1 fw-semibold active sgi-inline-882a3ecc"  onclick="filtrarHistorico('adicionados')">
                         <i class="bi bi-plus-circle me-1"></i>Adicionados
                     </button>
-                    <button type="button" id="btnFiltroExcluidos" class="btn btn-sm rounded-3 px-3 py-1 fw-semibold" style="background-color:#f0f0f0;color:#555;border:1px solid #e0e0e0;font-size:0.8rem;" onclick="filtrarHistorico('excluidos')">
+                    <button type="button" id="btnFiltroExcluidos" class="btn btn-sm rounded-3 px-3 py-1 fw-semibold sgi-inline-dc96eb94"  onclick="filtrarHistorico('excluidos')">
                         <i class="bi bi-trash me-1"></i>Excluídos
                     </button>
                 </div>
@@ -179,7 +136,7 @@ $isAdmin = $nivelUsuario === 0;
         const listaDesktop = document.getElementById('listaArrecadacaoDesktop');
 
         if (todasAsTurmas.length === 0) {
-            const msg = '<div class="text-center text-muted py-5" style="grid-column:1/-1"><i class="bi bi-inbox" style="font-size:2rem;display:block;margin-bottom:.5rem;color:#D1D5DB"></i>Nenhuma turma encontrada.</div>';
+            const msg = '<div class="text-center text-muted py-5 sgi-inline-c5f53f82" ><i class="bi bi-inbox sgi-inline-43389611" ></i>Nenhuma turma encontrada.</div>';
             listaMobile.innerHTML = msg;
             listaDesktop.innerHTML = msg;
             return;

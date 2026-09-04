@@ -9,22 +9,22 @@ include 'componentes/header.php';
 $paginaAtiva = 'modalidades';
 ?>
 
-<main class="position-relative d-md-none" style="margin-bottom: 120px;">
+<main class="position-relative d-md-none sgi-inline-80857b05" >
     <section id="listaModalidadesMobile" class="d-flex flex-column align-items-center w-100 mt-4">
         <p class="text-muted small">(Carregando modalidades...)</p>
     </section>
 
-    <div class="position-fixed" style="bottom: 92px; right: 16px; z-index: 20;">
-        <button class="btn btn-danger rounded-circle d-flex align-items-center justify-content-center shadow" style="width: 56px; height: 56px; background-color: #ed1c24; border: none;" data-bs-toggle="modal" data-bs-target="#modalCriarModalidade">
+    <div class="position-fixed sgi-inline-39903530" >
+        <button class="btn btn-danger rounded-circle d-flex align-items-center justify-content-center shadow sgi-inline-33e75484"  data-bs-toggle="modal" data-bs-target="#modalCriarModalidade">
             <i class="bi bi-plus-lg text-white fs-4"></i>
         </button>
     </div>
 </main>
 
 <main class="d-none d-md-block main-desktop-layout">
-    <div style="border-radius: 12px;">
+    <div class="sgi-inline-93f2597a">
         <div class="mb-5">
-            <a href="./dashboard.php" id="btnVoltarModalidades" class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none" style="background-color:#E30613;border-radius:6px;padding:8px 16px;">
+            <a href="./dashboard.php" id="btnVoltarModalidades" class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none sgi-inline-e1bcebb6" >
                 <i class="bi bi-arrow-left-circle fs-5"></i> <span id="nomeInterclasseModalidades">Interclasse</span>
             </a>
         </div>
@@ -34,10 +34,10 @@ $paginaAtiva = 'modalidades';
         </div>
     </div>
 
-    <div class="position-fixed d-flex flex-row align-items-center gap-4 py-3 px-5" style="bottom: 0; right: 0; z-index: 1050; background: transparent;">
+    <div class="position-fixed d-flex flex-row align-items-center gap-4 py-3 px-5 sgi-inline-06a722df" >
         <span class="text-muted small fw-medium">Não tem a modalidade que você quer?</span>
 
-        <button type="button" class="btn bg-white fw-bold px-4 py-2 d-flex align-items-center justify-content-center gap-2 shadow-sm" style="color: #ed1c24; border: 2px solid #ed1c24; border-radius: 8px;" data-bs-toggle="modal" data-bs-target="#modalCriarModalidade">
+        <button type="button" class="btn bg-white fw-bold px-4 py-2 d-flex align-items-center justify-content-center gap-2 shadow-sm sgi-inline-035ae517"  data-bs-toggle="modal" data-bs-target="#modalCriarModalidade">
             <i class="bi bi-plus-circle"></i> Adicionar
         </button>
     </div>
@@ -140,7 +140,7 @@ $paginaAtiva = 'modalidades';
                                 + '</div>'
                             : '';
                         divMobile.innerHTML +=
-                            '<div class="bg-white d-flex align-items-center shadow py-3 px-4 mb-3 border border-1 rounded-3 w-100" style="max-width: 90%;">'
+                            '<div class="bg-white d-flex align-items-center shadow py-3 px-4 mb-3 border border-1 rounded-3 w-100 sgi-inline-d29e2b0b" >'
                                 + '<i class="bi bi-trophy fs-4"></i>'
                                 + '<div class="text-start px-3 w-100">'
                                     + '<h2 class="m-0 fs-5 text-truncate">' + esc(modalidade.nome_modalidade) + '</h2>'
@@ -161,7 +161,7 @@ $paginaAtiva = 'modalidades';
                             : '';
                         divDesktop.innerHTML +=
                             '<div class="col-12 col-md-6 col-lg-4">'
-                                + '<div class="card border border-light-subtle shadow-sm h-100 py-4 px-4 d-flex flex-row align-items-center" style="border-radius: 10px;">'
+                                + '<div class="card border border-light-subtle shadow-sm h-100 py-4 px-4 d-flex flex-row align-items-center sgi-inline-f70b441c" >'
                                     + '<div class="d-flex align-items-center gap-3 flex-grow-1">'
                                         + '<i class="bi bi-trophy fs-4 text-dark"></i>'
                                         + '<div>'

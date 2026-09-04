@@ -7,7 +7,6 @@ require_once dirname(__DIR__, 4) . '/api/includes/cache_offline.php';
 $nivelUsuario = (int)($_SESSION['nivel'] ?? -1);
 if (!in_array($nivelUsuario, [0, 1, 2], true)) { header('Location: ../../index.php'); exit; }
 $tituloPagina = $tituloPagina ?? 'SGI';
-$cssExtra = $cssExtra ?? '';
 // Cache de página por sessão: o PHPSESSID protege a resposta HTTP e uma chave
 // opaca por usuário separa os bancos IndexedDB no navegador.
 // max-age + stale-while-revalidate permitem navegar offline nas páginas já
@@ -29,6 +28,7 @@ if (!headers_sent()) {
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer">
     <link rel="stylesheet" href="../styles/style.css">
+    <link rel="stylesheet" href="../styles/style-utilities.css">
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <script>window.SGI_SESSION_ID = <?= (int)($_SESSION['id'] ?? $_SESSION['id_usuario'] ?? 0) ?>; window.SGI_CACHE_KEY = <?= json_encode($chaveCacheOffline, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>; window.SGI_SESSION_NIVEL = <?= (int)$nivelUsuario ?>; window.SGI_SESSION_INTERCLASSE_ATIVO = <?= (int)($_SESSION['id_interclasse'] ?? 0) ?>;</script>
     <?php if ($nivelUsuario === 2): ?>
@@ -40,9 +40,5 @@ if (!headers_sent()) {
     <?php endif; ?>
     <!-- Motor híbrido de chaveamento (avança a árvore localmente quando offline). -->
     <script src="../componentes/chaveamento-engine.js?v=<?= @filemtime(__DIR__ . '/../../componentes/chaveamento-engine.js') ?: time() ?>"></script>
-    <style>
-        body { background-color: #f8f9fa; }
-        <?= $cssExtra ?>
-    </style>
 </head>
 <body class="bg-light">

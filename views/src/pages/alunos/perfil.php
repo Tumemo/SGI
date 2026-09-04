@@ -115,496 +115,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     exit;
 }
 
-$cssExtra = '
-/* ==================== PERFIL (alunos/perfil.php) ==================== */
-.perfil-page {
-    font-weight: 300;
-}
-
-.perfil-desktop {
-    padding: 2rem 2.5rem 3rem;
-}
-
-/* Wrapper full-width */
-.perfil-wrapper {
-    width: 100%;
-    max-width: 100%;
-    margin: 0;
-}
-
-/* Topbar */
-.perfil-topbar {
-    display: flex;
-    align-items: center;
-    gap: 1.5rem;
-    margin-bottom: 1.75rem;
-    flex-wrap: wrap;
-}
-
-.perfil-topbar-title h1 {
-    font-size: 1.6rem;
-    font-weight: 700;
-    margin: 0;
-    color: #1a1a1a;
-}
-
-.perfil-topbar-subtitle {
-    font-size: 0.85rem;
-    color: #888;
-    margin: 0.1rem 0 0;
-}
-
-/* Grid 260px + 1fr */
-.perfil-grid {
-    display: grid;
-    grid-template-columns: 260px 1fr;
-    gap: 1.75rem;
-    align-items: start;
-}
-
-.perfil-grid-left {
-    min-width: 0;
-}
-
-.perfil-grid-right {
-    display: flex;
-    flex-direction: column;
-    gap: 1.25rem;
-    min-width: 0;
-}
-
-.perfil-card-identity {
-    position: sticky;
-    top: 6rem;
-}
-
-.perfil-card-identity .card-body {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-}
-
-/* Avatar ring com gradiente */
-.perfil-avatar-ring {
-    position: relative;
-    width: 150px;
-    height: 150px;
-    border-radius: 50%;
-    padding: 4px;
-    background: linear-gradient(135deg, #E30613, #ff6b6b);
-    box-shadow: 0 4px 16px rgba(227, 6, 19, 0.25);
-    flex-shrink: 0;
-}
-
-.perfil-avatar-inner {
-    width: 100%;
-    height: 100%;
-    border-radius: 50%;
-    overflow: hidden;
-    background: #e8e8e8;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    position: relative;
-}
-
-.perfil-avatar-inner i {
-    font-size: 3.5rem;
-    color: #999;
-}
-
-/* Botão câmera no avatar — hover reveal */
-.perfil-btn-camera {
-    position: absolute;
-    bottom: 4px;
-    right: 4px;
-    width: 38px;
-    height: 38px;
-    border-radius: 50%;
-    background: #E30613;
-    border: 2.5px solid #fff;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: #fff;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
-    z-index: 3;
-    padding: 0;
-    line-height: 1;
-    cursor: pointer;
-    transition: transform 0.25s ease, background-color 0.2s ease, opacity 0.2s ease;
-}
-
-.perfil-btn-camera i {
-    font-size: 1.1rem;
-}
-
-.perfil-btn-camera:hover {
-    transform: scale(1.1);
-    background: #c00510;
-}
-
-@media (hover: hover) {
-    .perfil-avatar-ring .perfil-btn-camera {
-        opacity: 0;
-        transform: scale(0.85);
-    }
-    .perfil-avatar-ring:hover .perfil-btn-camera {
-        opacity: 1;
-        transform: scale(1);
-    }
-}
-
-/* Badge de nível de acesso */
-.perfil-badge-nivel {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.4rem;
-    font-size: 0.8rem;
-    font-weight: 600;
-    color: var(--nivel-color, #E30613);
-    background: color-mix(in srgb, var(--nivel-color, #E30613) 12%, transparent);
-    padding: 0.25rem 0.75rem;
-    border-radius: 100px;
-    letter-spacing: 0.3px;
-}
-
-.perfil-badge-nivel--sm {
-    font-size: 0.7rem;
-    padding: 0.15rem 0.5rem;
-}
-
-/* Status online dot */
-.perfil-status-dot {
-    display: inline-block;
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    flex-shrink: 0;
-}
-
-.perfil-status-online {
-    background: #198754;
-    box-shadow: 0 0 0 2px rgba(25, 135, 84, 0.2);
-}
-
-/* Skeleton loading */
-.perfil-avatar-skeleton {
-    position: absolute;
-    inset: 0;
-    border-radius: 50%;
-    background: #e0e0e0;
-    overflow: hidden;
-    z-index: 1;
-}
-
-.perfil-skeleton-pulse {
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.5), transparent);
-    animation: perfilSkeletonShimmer 1.4s infinite;
-}
-
-@keyframes perfilSkeletonShimmer {
-    0%   { transform: translateX(-100%); }
-    100% { transform: translateX(100%); }
-}
-
-/* Título dos cards internos */
-.perfil-card-title {
-    font-size: 0.75rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.6px;
-    color: #888;
-    display: flex;
-    align-items: center;
-    border-bottom: 1px solid #f0f0f0;
-    padding-bottom: 0.75rem;
-}
-
-.perfil-card-title i {
-    font-size: 0.9rem;
-    color: #aaa;
-}
-
-/* Grid de informações (Informações Pessoais) */
-.perfil-info-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 0.75rem 1.5rem;
-}
-
-.perfil-security-grid {
-    display: flex;
-    flex-direction: column;
-    gap: 0.75rem;
-}
-
-.perfil-info-item {
-    padding: 0.5rem 0;
-    border-bottom: 1px solid #f5f5f5;
-}
-
-.perfil-info-item.mb-0,
-.perfil-info-item:last-child {
-    border-bottom: none;
-}
-
-.perfil-info-label {
-    display: flex;
-    align-items: center;
-    gap: 0.4rem;
-    font-size: 0.7rem;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.4px;
-    color: #999;
-    margin-bottom: 0.2rem;
-}
-
-.perfil-info-label i {
-    font-size: 0.8rem;
-    color: #bbb;
-}
-
-.perfil-info-value {
-    font-size: 0.92rem;
-    font-weight: 500;
-    color: #1a1a1a;
-    display: flex;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 0.25rem;
-}
-
-/* Field rows (mobile) */
-.perfil-field {
-    display: flex;
-    align-items: baseline;
-    padding: 0.6rem 0;
-    border-bottom: 1px solid #f0f0f0;
-}
-
-.perfil-field:last-of-type,
-.perfil-field.mb-0 {
-    border-bottom: none;
-}
-
-.perfil-field-label {
-    width: 100px;
-    min-width: 100px;
-    font-size: 0.75rem;
-    font-weight: 600;
-    color: #888;
-    text-transform: uppercase;
-    letter-spacing: 0.4px;
-    display: flex;
-    align-items: center;
-    gap: 0.4rem;
-}
-
-.perfil-field-label i {
-    font-size: 0.85rem;
-    color: #bbb;
-}
-
-.perfil-field-value {
-    flex: 1;
-    font-size: 0.9rem;
-    font-weight: 500;
-    color: #1a1a1a;
-    display: flex;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 0.25rem;
-}
-
-/* Eye toggle senha */
-.perfil-eye-btn {
-    background: none;
-    border: none;
-    color: #999;
-    cursor: pointer;
-    padding: 0 0 0 0.5rem;
-    font-size: 0.95rem;
-    line-height: 1;
-    transition: color 0.2s;
-}
-
-.perfil-eye-btn:hover {
-    color: #E30613;
-}
-
-/* Máscara de senha (somente leitura) */
-.perfil-mask {
-    letter-spacing: 0.15em;
-    font-weight: 600;
-    color: #555;
-}
-
-/* Grupo de input de senha com olhinho */
-.perfil-password-input {
-    position: relative;
-}
-
-.perfil-password-eye {
-    position: absolute;
-    top: 50%;
-    right: 0.6rem;
-    transform: translateY(-50%);
-    background: none;
-    border: none;
-    color: #999;
-    cursor: pointer;
-    padding: 0.25rem;
-    font-size: 1rem;
-    line-height: 1;
-    transition: color 0.2s;
-    z-index: 2;
-}
-
-.perfil-password-eye:hover {
-    color: #E30613;
-}
-
-/* Botão editar */
-.perfil-btn-editar {
-    background-color: #E30613;
-    color: #fff;
-    border: none;
-    border-radius: 10px;
-    padding: 0.6rem 1.75rem;
-    font-weight: 500;
-    font-size: 0.88rem;
-    transition: background-color 0.2s ease, transform 0.15s ease;
-    display: inline-flex;
-    align-items: center;
-}
-
-.perfil-btn-editar:hover {
-    background-color: #c00510;
-    color: #fff;
-    transform: translateY(-1px);
-}
-
-.perfil-btn-editar:active {
-    transform: translateY(0);
-}
-
-.perfil-btn-excluir:disabled {
-    opacity: 0.35;
-    cursor: not-allowed;
-    pointer-events: none;
-}
-
-/* Input padrão */
-.perfil-input {
-    background: #f5f5f5 !important;
-    border: none !important;
-    border-radius: 10px !important;
-    font-weight: 300;
-}
-
-.perfil-input:focus {
-    background: #fff !important;
-    box-shadow: 0 0 0 2px rgba(227, 6, 19, 0.15) !important;
-}
-
-/* Toast container */
-.perfil-toast-container {
-    position: fixed;
-    bottom: 2rem;
-    right: 2rem;
-    z-index: 9999;
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-    pointer-events: none;
-}
-
-.perfil-toast {
-    display: flex;
-    align-items: center;
-    padding: 0.75rem 1.25rem;
-    border-radius: 12px;
-    font-size: 0.85rem;
-    font-weight: 500;
-    color: #fff;
-    box-shadow: 0 6px 20px rgba(0,0,0,0.15);
-    pointer-events: auto;
-    transform: translateX(120%);
-    transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
-    max-width: 360px;
-}
-
-.perfil-toast--show {
-    transform: translateX(0);
-}
-
-.perfil-toast--success {
-    background: #198754;
-}
-
-.perfil-toast--error {
-    background: #E30613;
-}
-
-/* Responsivo */
-@media (max-width: 767.98px) {
-    .perfil-avatar-ring {
-        width: 130px;
-        height: 130px;
-    }
-
-    .perfil-avatar-inner i {
-        font-size: 3rem;
-    }
-
-    .perfil-btn-camera {
-        width: 34px;
-        height: 34px;
-        bottom: 2px;
-        right: 2px;
-    }
-
-    .perfil-btn-camera i {
-        font-size: 0.95rem;
-    }
-
-    .perfil-toast-container {
-        bottom: 5rem;
-        right: 1rem;
-        left: 1rem;
-    }
-
-    .perfil-toast {
-        max-width: 100%;
-    }
-}
-
-@media (max-width: 991.98px) {
-    .perfil-grid {
-        grid-template-columns: 1fr;
-    }
-
-    .perfil-card-identity {
-        position: static;
-    }
-
-    .perfil-card-identity .card-body {
-        flex-direction: row;
-        flex-wrap: wrap;
-        justify-content: center;
-        gap: 0.5rem 1.5rem;
-    }
-
-    .perfil-info-grid {
-        grid-template-columns: 1fr;
-    }
-}
-';
-
 include 'componentes/head.php';
 
 $paginaAtiva = 'perfil';
@@ -613,8 +123,8 @@ include 'componentes/nav.php';
 ?>
 
 <!-- ===================== MOBILE ===================== -->
-<main class="perfil-page d-md-none p-3" style="padding-top:1.25rem;padding-bottom:5rem;">
-    <a href="<?= htmlspecialchars($urlVoltar) ?>" id="perfilBackMob" class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold mb-3 px-3 py-2 border-0 text-decoration-none" style="background-color:#E30613;border-radius:6px;">
+<main class="perfil-page d-md-none p-3 sgi-inline-6663e3de" >
+    <a href="<?= htmlspecialchars($urlVoltar) ?>" id="perfilBackMob" class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold mb-3 px-3 py-2 border-0 text-decoration-none sgi-inline-c865b3d3" >
         <i class="bi bi-arrow-left-circle fs-5"></i> <span>Início</span>
     </a>
 
@@ -636,7 +146,7 @@ include 'componentes/nav.php';
                 </button>
             </div>
             <h5 class="fw-bold mt-3 mb-1" id="perfilNomeMob"><?= htmlspecialchars($usuarioPerfil['nome_usuario'] ?? '', ENT_QUOTES) ?></h5>
-            <span class="perfil-badge-nivel" style="--nivel-color:<?= $nivelInfo['color'] ?>">
+            <span class="perfil-badge-nivel nivel-cor-<?= (int)$nivelUsuario ?>">
                 <i class="<?= $nivelInfo['icon'] ?>"></i> <?= $nivelInfo['label'] ?>
             </span>
             <div class="d-flex justify-content-center gap-2 mt-3">
@@ -659,7 +169,7 @@ include 'componentes/nav.php';
         <div class="card-body">
             <h6 class="perfil-card-title mb-3"><i class="bi bi-shield-lock me-2"></i>Segurança e Acesso</h6>
             <div class="perfil-field"><span class="perfil-field-label"><i class="bi bi-lock"></i> Senha</span><span class="perfil-field-value"><span class="perfil-mask">&#8226;&#8226;&#8226;&#8226;&#8226;&#8226;&#8226;&#8226;</span></span></div>
-            <div class="perfil-field"><span class="perfil-field-label"><i class="bi bi-shield-check"></i> Nível</span><span class="perfil-field-value"><span class="perfil-badge-nivel perfil-badge-nivel--sm" style="--nivel-color:<?= $nivelInfo['color'] ?>"><i class="<?= $nivelInfo['icon'] ?>"></i> <?= $nivelInfo['label'] ?></span></span></div>
+            <div class="perfil-field"><span class="perfil-field-label"><i class="bi bi-shield-check"></i> Nível</span><span class="perfil-field-value"><span class="perfil-badge-nivel perfil-badge-nivel--sm nivel-cor-<?= (int)$nivelUsuario ?>"><i class="<?= $nivelInfo['icon'] ?>"></i> <?= $nivelInfo['label'] ?></span></span></div>
             <div class="perfil-field mb-0"><span class="perfil-field-label"><i class="bi bi-key"></i> Alterar</span><span class="perfil-field-value"><button class="btn btn-link btn-sm text-decoration-none p-0 text-danger fw-semibold" data-bs-toggle="modal" data-bs-target="#modalAlterarSenha">Alterar senha</button></span></div>
         </div>
     </div>
@@ -675,11 +185,11 @@ include 'componentes/nav.php';
     <div class="perfil-wrapper">
         <!-- Topbar -->
         <div class="perfil-topbar">
-            <a href="<?= htmlspecialchars($urlVoltar) ?>" id="perfilBackDesk" class="perfil-btn-voltar btn btn-danger d-inline-flex align-items-center gap-2 fw-bold px-3 py-2 border-0 text-decoration-none" style="background-color:#E30613;border-radius:6px;">
+            <a href="<?= htmlspecialchars($urlVoltar) ?>" id="perfilBackDesk" class="perfil-btn-voltar btn btn-danger d-inline-flex align-items-center gap-2 fw-bold px-3 py-2 border-0 text-decoration-none sgi-inline-c865b3d3" >
                 <i class="bi bi-arrow-left-circle fs-5"></i> <span>Início</span>
             </a>
             <div class="perfil-topbar-title">
-                <h1><i class="bi bi-person-circle me-2" style="color:#E30613"></i>Meu Perfil</h1>
+                <h1><i class="bi bi-person-circle me-2 sgi-inline-86de2c51" ></i>Meu Perfil</h1>
                 <p class="perfil-topbar-subtitle">Gerencie suas informações, segurança e acompanhe sua participação</p>
             </div>
         </div>
@@ -705,11 +215,11 @@ include 'componentes/nav.php';
                         </div>
 
                         <h5 class="fw-bold mt-3 mb-1" id="perfilNomeDesk"><?= htmlspecialchars($usuarioPerfil['nome_usuario'] ?? '', ENT_QUOTES) ?></h5>
-                        <span class="perfil-badge-nivel" style="--nivel-color:<?= $nivelInfo['color'] ?>">
+                        <span class="perfil-badge-nivel nivel-cor-<?= (int)$nivelUsuario ?>">
                             <i class="<?= $nivelInfo['icon'] ?>"></i> <?= $nivelInfo['label'] ?>
                         </span>
 
-                        <div class="d-flex align-items-center justify-content-center gap-1 mt-2" style="font-size:0.8rem;color:#888;">
+                        <div class="d-flex align-items-center justify-content-center gap-1 mt-2 sgi-inline-a730c39c" >
                             <span class="perfil-status-dot perfil-status-online"></span> Online
                         </div>
 
@@ -764,14 +274,14 @@ include 'componentes/nav.php';
                             <div class="perfil-info-item">
                                 <span class="perfil-info-label"><i class="bi bi-shield-check"></i> Nível de Acesso</span>
                                 <span class="perfil-info-value">
-                                    <span class="perfil-badge-nivel perfil-badge-nivel--sm" style="--nivel-color:<?= $nivelInfo['color'] ?>">
+                                    <span class="perfil-badge-nivel perfil-badge-nivel--sm nivel-cor-<?= (int)$nivelUsuario ?>">
                                         <i class="<?= $nivelInfo['icon'] ?>"></i> <?= $nivelInfo['label'] ?>
                                     </span>
                                 </span>
                             </div>
                             <div class="perfil-info-item mb-0">
                                 <span class="perfil-info-label"><i class="bi bi-shield-plus"></i> Autenticação</span>
-                                <span class="perfil-info-value" style="color:#888;font-size:0.85rem;">Senha criptografada</span>
+                                <span class="perfil-info-value sgi-inline-8484a423" >Senha criptografada</span>
                             </div>
                         </div>
                     </div>
@@ -788,7 +298,7 @@ include 'componentes/nav.php';
     </div>
 </main>
 
-<div class="modal fade" id="modalEditarPerfil" tabindex="-1" aria-hidden="true" style="width:100%;">
+<div class="modal fade sgi-inline-cf2d16e2" id="modalEditarPerfil" tabindex="-1" aria-hidden="true" >
     <div class="modal-dialog modal-dialog-centered modal-sm">
         <div class="modal-content rounded-4 border-0 shadow">
             <div class="modal-header border-0 pt-4 px-4 pb-0">
@@ -853,7 +363,7 @@ include 'componentes/nav.php';
     </div>
 </div>
 
-<input type="file" id="fotoUploadInput" accept="image/jpeg,image/png,image/gif,image/webp" style="display:none">
+<input type="file" id="fotoUploadInput" accept="image/jpeg,image/png,image/gif,image/webp" class="sgi-inline-6f9051e3">
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
 <script>

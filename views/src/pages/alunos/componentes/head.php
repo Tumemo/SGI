@@ -26,34 +26,11 @@ if (!headers_sent()) {
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <!-- SGI Aluno Shared Styles -->
     <link rel="stylesheet" href="assets/aluno.css">
+    <link rel="stylesheet" href="../../styles/style-migrated.css">
+    <link rel="stylesheet" href="assets/aluno-page.css">
     <script>window.SGI_SESSION_ID = <?= (int)($_SESSION['id_usuario'] ?? $_SESSION['id'] ?? 0) ?>; window.SGI_CACHE_KEY = <?= json_encode($chaveCacheOffline, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;</script>
     <script src="../../componentes/offline-core.js?v=<?= filemtime(dirname(__DIR__, 3) . '/componentes/offline-core.js') ?>"></script>
     <script src="../../componentes/Comandooffline.js?v=<?= filemtime(dirname(__DIR__, 3) . '/componentes/Comandooffline.js') ?>"></script>
     
-    <style>
-        body { 
-            background-color: #f8f9fa;
-            padding-bottom: 70px; /* Margem para menu mobile inferior */
-        }
-
-        /* Deslocamento no Desktop para o menu lateral de 80px */
-        @media (min-width: 768px) {
-            body { 
-                padding-bottom: 0;
-                margin-left: 80px; /* Evita que o conteúdo fique sob a sidebar */
-            }
-        }
-
-        .header-banner-container {
-            max-height: 180px;
-            overflow: hidden;
-        }
-        .header-banner-img {
-            object-fit: cover;
-            height: 180px;
-        }
-
-        <?= $cssExtra ?? '' ?>
-    </style>
 </head>
 <body class="bg-light d-flex flex-column min-vh-100">

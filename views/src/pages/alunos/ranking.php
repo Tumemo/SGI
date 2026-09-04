@@ -17,80 +17,13 @@ $tituloPagina = 'SGI - Ranking';
 $titulo = 'Ranking de Turmas';
 $mostrarVoltar = true;
 $urlVoltar = './home.php';
-$cssExtra = '
-.btn-categoria { transition: all 0.2s; border-radius: 50px !important; min-width: 100px; border: 1.5px solid #E5E7EB; background: #fff; color: #4B5563; font-weight: 600; font-size: .9rem; padding: .55rem 1.3rem; white-space: nowrap; }
-.rk-stat-chip { font-size: .9rem; padding: .55rem 1.1rem; }
-.btn-categoria:hover { border-color: #dc3545 !important; color: #dc3545 !important; background: #fff5f5 !important; }
-.btn-categoria.ativo { background: #dc3545 !important; color: #fff !important; border-color: #dc3545 !important; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-.rk-hist-btn { border: 1px solid #E5E7EB; background: #fff; color: #4B5563; font-weight: 600; font-size: .8rem; border-radius: 10px; padding: .45rem .8rem; transition: all .2s; }
-.rk-hist-btn:hover { border-color: #dc3545 !important; color: #dc3545 !important; background: #fff5f5 !important; }
-.rk-hist-footer { margin-top: .9rem; position: relative; z-index: 1; }
-.htr-modal-body { padding: 0; }
-.htr-titulo { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 18px 22px; background: linear-gradient(135deg, #1F2937, #111827); color: #fff; }
-.htr-turma-nome { font-size: 1.25rem; font-weight: 800; }
-.htr-turma-sub { font-size: .78rem; opacity: .7; }
-.htr-total { text-align: right; font-size: 1.8rem; font-weight: 900; color: #ffd166; line-height: 1; }
-.htr-total small { display: block; font-size: .7rem; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; opacity: .7; }
-.htr-resumo { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; padding: 14px 18px; }
-.htr-chip { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 10px 8px; border-radius: 12px; font-weight: 700; }
-.htr-chip i { font-size: 1rem; }
-.htr-chip__valor { font-size: .95rem; }
-.htr-chip__rotulo { font-size: .68rem; text-transform: uppercase; letter-spacing: .05em; opacity: .8; font-weight: 600; }
-.htr-chip--verde { background: #ecfdf5; color: #047857; }
-.htr-chip--roxo { background: #f3e8ff; color: #7c3aed; }
-.htr-chip--vermelho { background: #fef2f2; color: #dc2626; }
-.htr-aviso { margin: 0 18px 10px; padding: 8px 12px; border-radius: 10px; background: #fffbeb; color: #b45309; font-size: .78rem; }
-.htr-secao { padding: 6px 18px 16px; }
-.htr-secao__head { display: flex; align-items: center; gap: 8px; font-weight: 800; color: #374151; padding: 8px 0 10px; border-bottom: 1px solid #f1f5f9; margin-bottom: 10px; }
-.htr-secao__head i { color: #dc3545; }
-.htr-secao__count { margin-left: auto; font-size: .72rem; background: #f3f4f6; color: #6b7280; border-radius: 999px; padding: 2px 10px; font-weight: 700; }
-.htr-lista { display: flex; flex-direction: column; }
-.htr-lista--mod { border: 1px solid #f1f5f9; border-radius: 12px; overflow: hidden; }
-.htr-linha { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 9px 12px; border-bottom: 1px solid #f8fafc; }
-.htr-linha:last-child { border-bottom: none; }
-.htr-linha__titulo { font-weight: 600; font-size: .85rem; color: #1f2937; }
-.htr-linha__sub { font-size: .74rem; color: #9ca3af; }
-.htr-linha__pts { font-weight: 800; font-size: .9rem; flex-shrink: 0; }
-.htr-pts--mais { color: #16a34a; }
-.htr-pts--menos { color: #dc2626; }
-.htr-secao-total { margin-top: 8px; font-size: .8rem; color: #6b7280; text-align: right; }
-.htr-vazio { padding: 18px; text-align: center; color: #9ca3af; font-size: .85rem; border: 1px dashed #e5e7eb; border-radius: 12px; }
-.htr-mods { display: flex; flex-direction: column; gap: 12px; }
-.htr-mod { border: 1px solid #eef2f7; border-radius: 14px; padding: 12px 14px; background: #fbfcfe; }
-.htr-mod__head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
-.htr-mod__nome { display: flex; align-items: center; gap: 6px; font-size: .92rem; flex-wrap: wrap; }
-.htr-mod__tipo { font-size: .72rem; color: #9ca3af; font-weight: 600; }
-.htr-mod__pts { font-weight: 800; color: #16a34a; flex-shrink: 0; }
-.htr-mod__alunos { display: flex; flex-wrap: wrap; gap: 5px; margin: 9px 0 4px; }
-.htr-colocacao { font-size: .78rem; font-weight: 800; color: #7c3aed; background: #f3e8ff; border-radius: 999px; padding: 2px 9px; white-space: nowrap; }
-.htr-aluno { font-size: .72rem; background: #f3f4f6; color: #374151; border-radius: 999px; padding: 2px 9px; font-weight: 600; }
-.htr-lista--mod .htr-aluno { background: #fff; border: 1px solid #eef2f7; }
-@media (max-width: 575.98px) { .htr-resumo { grid-template-columns: 1fr; } .htr-titulo { flex-direction: column; align-items: flex-start; } }
-
-@media print {
-    header, nav, footer, .rk-mobile-header, #filtrosMob, #filtrosDesk, .btn-imprimir, .rk-hist-footer {
-        display: none !important;
-    }
-    body, main {
-        background: #fff !important;
-        margin: 0 !important;
-        padding: 0 !important;
-    }
-    .rk-rank-card {
-        border: 1px solid #ccc !important;
-        box-shadow: none !important;
-        break-inside: avoid;
-        margin-bottom: 15px !important;
-    }
-}
-';
 include 'componentes/head.php';
 $paginaAtiva = 'ranking';
 ?>
 <link rel="stylesheet" href="../../styles/style.css">
 
 <!-- ======================== MOBILE ======================== -->
-<main class="d-md-none py-3 px-3" style="margin-bottom: 100px;">
+<main class="d-md-none py-3 px-3 sgi-inline-9f1598af" >
     <div id="msgMob"></div>
 
     <header class="rk-mobile-header mb-2">
@@ -143,7 +76,7 @@ $paginaAtiva = 'ranking';
 <!-- Modal: histórico de pontuações da turma -->
 <div class="modal fade" id="modalHistoricoTurma" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
-        <div class="modal-content border-0 shadow" style="border-radius: 18px;">
+        <div class="modal-content border-0 shadow sgi-inline-0e984564" >
             <div class="modal-header border-0 pb-0 px-4 pt-3">
                 <h5 class="modal-title fw-bold" id="htrTitulo">Histórico de Pontos</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
@@ -308,7 +241,7 @@ $paginaAtiva = 'ranking';
             const isTop3 = posicao <= 3;
 
             const html = `
-                <div class="rk-card-wrapper ${isTop3 ? 'rk-card-wrapper--top' : ''}" style="animation-delay: ${index * 0.07}s">
+                <div class="rk-card-wrapper ${isTop3 ? 'rk-card-wrapper--top' : ''} sgi-inline-666499cd"  data-sgi-index="${index}">
                     <div class="card card-turma rk-rank-card ${classeDestaque} ${isTop3 ? 'rk-rank-card--podium' : ''}">
                         ${isTop3 ? `<div class="rk-rank-card__medal">${medals[posicao - 1]}</div>` : ''}
 
@@ -330,8 +263,8 @@ $paginaAtiva = 'ranking';
                                     <span><i class="bi bi-star"></i> Pontuação esperada</span>
                                     <span class="rk-bar-group__val">${ptsSemPenalidade} pts</span>
                                 </div>
-                                <div class="barra-fundo" style="height: 8px;">
-                                    <div class="barra-progresso rk-bar--expected" style="width: ${porcentagemSem}%;"></div>
+                                <div class="barra-fundo sgi-inline-65fd1499" >
+                                    <div class="barra-progresso rk-bar--expected sgi-inline-95b73db3"  data-sgi-width="${porcentagemSem}"></div>
                                 </div>
                             </div>
                             <div class="rk-bar-group">
@@ -339,8 +272,8 @@ $paginaAtiva = 'ranking';
                                     <span class="text-danger fw-semibold"><i class="bi bi-flag-fill"></i> Pontuação final</span>
                                     <span class="rk-bar-group__val fw-bold">${ptsComPenalidade} pts${perdeu > 0 ? ` <span class="text-danger">(-${perdeu})</span>` : ''}</span>
                                 </div>
-                                <div class="barra-fundo" style="height: 12px;">
-                                    <div class="barra-progresso rk-bar--final" style="width: ${porcentagemCom}%;"></div>
+                                <div class="barra-fundo sgi-inline-9d3cb190" >
+                                    <div class="barra-progresso rk-bar--final sgi-inline-f2316fc1"  data-sgi-width="${porcentagemCom}"></div>
                                 </div>
                             </div>
                         </div>

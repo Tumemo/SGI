@@ -28,96 +28,10 @@ $onclickSair = "onclick=\"return confirm('Deseja realmente sair?')\"";
 ?>
 
 <!-- Estilos para a foto redonda no menu de navegação -->
-<style>
-    .mobile-nav {
-        height: 64px;
-    }
-    .mobile-nav .nav {
-        flex-wrap: nowrap;
-        height: 100%;
-    }
-    .mobile-nav ul li {
-        flex: 1 1 0;
-        min-width: 0;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
-    .sidebar-nav {
-        overflow-y: auto;
-        scrollbar-width: none;
-    }
-    .sidebar-nav::-webkit-scrollbar {
-        display: none;
-    }
-    .sidebar-nav .sidebar-nav-list {
-        justify-content: flex-start;
-    }
-    .sidebar-nav .sidebar-nav-list li {
-        margin: auto 0;
-        flex-shrink: 1;
-        min-height: 0;
-    }
-    @media (max-height: 700px) {
-        .sidebar-nav .sidebar-nav-list {
-            gap: 0.5rem !important;
-            font-size: 1.25rem !important;
-        }
-    }
-    .nav-avatar-img {
-        width: 32px;
-        height: 32px;
-        object-fit: cover;
-        border-radius: 50%;
-        border: 2px solid #fff;
-        transition: transform 0.2s ease, border-color 0.2s ease;
-    }
-    .nav-avatar-img-mobile {
-        width: 26px;
-        height: 26px;
-        object-fit: cover;
-        border-radius: 50%;
-        border: 1.5px solid #fff;
-    }
-    .nav-avatar-fallback {
-        width: 32px;
-        height: 32px;
-        border-radius: 50%;
-        background: #fff;
-        color: #dc3545;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-weight: 600;
-        font-size: 0.85rem;
-        border: 2px solid #fff;
-    }
-    .nav-avatar-fallback-mobile {
-        width: 26px;
-        height: 26px;
-        border-radius: 50%;
-        background: #fff;
-        color: #dc3545;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-weight: 600;
-        font-size: 0.75rem;
-        border: 1.5px solid #fff;
-    }
-    .active-nav-icon .nav-avatar-img {
-        border-color: #ffe6e6;
-        box-shadow: 0 0 8px rgba(255, 255, 255, 0.8);
-        transform: scale(1.1);
-    }
-    .active-nav-icon .nav-avatar-fallback {
-        box-shadow: 0 0 8px rgba(255, 255, 255, 0.8);
-        transform: scale(1.1);
-    }
-</style>
+
 
 <!-- Navbar Mobile (Fixo na parte inferior) -->
-<nav class="d-md-none fixed-bottom bg-danger shadow-lg mobile-nav" style="z-index: 1040; height: 64px;">
+<nav class="d-md-none fixed-bottom bg-danger shadow-lg mobile-nav sgi-inline-cf687978" >
     <ul class="nav justify-content-around flex-nowrap fs-5 list-unstyled mb-0 gap-0 px-1 align-items-center h-100">
         <?php foreach ($navItens as $key => $item): ?>
         <li>
@@ -159,7 +73,7 @@ $onclickSair = "onclick=\"return confirm('Deseja realmente sair?')\"";
 </script>
 
 <!-- Navbar Desktop (Barra lateral esquerda) -->
-<nav class="d-none d-md-flex flex-column position-fixed start-0 shadow-lg sidebar-nav" style="width: 80px; top: 0; bottom: 0; z-index: 1040; background-color: #e30613;">
+<nav class="d-none d-md-flex flex-column position-fixed start-0 shadow-lg sidebar-nav sgi-inline-cff1f685" >
     <ul class="nav flex-column align-items-center h-100 py-4 gap-4 fs-3 sidebar-nav-list">
         <?php foreach ($navItens as $key => $item): ?>
         <li>

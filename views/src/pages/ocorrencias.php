@@ -2,44 +2,6 @@
 $tituloPagina = 'SGI - Ocorrências';
 $mostrarVoltar = true;
 $urlVoltar = './dashboard.php';
-$cssExtra = '
-.ocr-page{padding-bottom:5rem}
-.ocr-container{width:100%;padding:0 2rem}
-.ocr-header{margin-bottom:2rem}
-.ocr-header__top{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem;flex-wrap:wrap;gap:1rem}
-.ocr-header__title{font-size:1.75rem;font-weight:800;color:#111827;letter-spacing:-.03em;margin:0;line-height:1.2}
-.ocr-header__sub{font-size:.9rem;color:#6B7280;margin:.35rem 0 0;font-weight:400}
-
-.ocr-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:1rem;margin-bottom:2rem}
-@media(max-width:991.98px){.ocr-grid{grid-template-columns:1fr}}
-@media(max-width:575.98px){.ocr-container{padding:0 1rem}}
-
-.ocr-card{background:#fff;border:1px solid #F0F0F0;border-radius:16px;padding:1.25rem 1.5rem;transition:transform .2s,box-shadow .2s;display:flex;align-items:center;gap:1rem;overflow:hidden}
-.ocr-card:hover{transform:translateY(-2px);box-shadow:0 4px 16px rgba(0,0,0,.06)}
-.ocr-card__icon{width:44px;height:44px;border-radius:12px;background:linear-gradient(135deg,#FEF2F2,#FEE2E2);display:flex;align-items:center;justify-content:center;flex-shrink:0}
-.ocr-card__icon i{font-size:1.15rem;color:#E30613}
-.ocr-card__info{flex:1;min-width:0}
-.ocr-card__name{font-size:.95rem;font-weight:700;color:#111827;margin:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.ocr-card__badge{display:inline-flex;align-items:center;font-size:.7rem;font-weight:600;background:#F3F4F6;color:#6B7280;border-radius:6px;padding:.15rem .5rem;margin-top:.25rem;border:1px solid #F0F0F0}
-
-.ocr-card__hist{width:38px;height:38px;border-radius:50%;border:1.5px solid #E5E7EB;background:#fff;color:#6B7280;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .2s;flex-shrink:0;font-size:1rem}
-.ocr-card__hist:hover{border-color:#D1D5DB;background:#F9FAFB;color:#374151;transform:scale(1.1)}
-
-.ocr-card__add{width:38px;height:38px;border-radius:50%;border:2px dashed #D1D5DB;background:transparent;color:#9CA3AF;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .2s;flex-shrink:0;font-size:1.1rem}
-.ocr-card__add:hover{border-color:#E30613;color:#E30613;background:#FEF2F2;transform:scale(1.1)}
-
-.ocr-badge{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:999px;font-size:.7rem;font-weight:600}
-.ocr-badge--pontos{background:#FEE2E2;color:#991B1B}
-
-.ocr-modal .modal-content{border:none;border-radius:16px;box-shadow:0 20px 60px rgba(0,0,0,.15)}
-.ocr-modal .modal-header{border:none;padding:1.25rem 1.5rem .5rem}
-.ocr-modal .modal-title{font-size:1.05rem;font-weight:700}
-.ocr-modal .modal-body{padding:.5rem 1.5rem 1.25rem}
-
-.ocr-mobile{padding-top:5.5rem;padding-bottom:6rem}
-.ocr-mobile .ocr-card{padding:1rem}
-';
-
 include 'componentes/head.php';
 include 'componentes/header.php';
 $paginaAtiva = 'ocorrencias';
@@ -49,7 +11,7 @@ $isAdmin = $nivelUsuario === 0;
 
 <main class="d-md-none ocr-mobile">
     <div class="px-3 mt-3">
-        <a href="./dashboard.php" id="btnVoltarOcrMob" class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none" style="background-color:#E30613;border-radius:6px;padding:8px 16px;">
+        <a href="./dashboard.php" id="btnVoltarOcrMob" class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none sgi-inline-e1bcebb6" >
             <i class="bi bi-arrow-left-circle fs-5"></i> <span id="nomeInterclasseOcrMob">Interclasse</span>
         </a>
 
@@ -60,7 +22,7 @@ $isAdmin = $nivelUsuario === 0;
     </div>
 
     <div class="px-3">
-        <div class="ocr-grid" id="listaOcorrenciasMobile" style="grid-template-columns:1fr;">
+        <div class="ocr-grid sgi-inline-98d53286" id="listaOcorrenciasMobile" >
             <div class="text-center text-muted py-5"><div class="spinner-border spinner-border-sm me-2"></div>Carregando...</div>
         </div>
     </div>
@@ -69,7 +31,7 @@ $isAdmin = $nivelUsuario === 0;
 <main class="d-none d-md-block main-desktop-layout ocr-page">
     <div class="ocr-container">
         <div class="mb-4">
-            <a href="./dashboard.php" id="btnVoltarOcr" class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none" style="background-color:#E30613;border-radius:6px;padding:8px 16px;">
+            <a href="./dashboard.php" id="btnVoltarOcr" class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none sgi-inline-e1bcebb6" >
                 <i class="bi bi-arrow-left-circle fs-5"></i> <span id="nomeInterclasseOcr">Interclasse</span>
             </a>
         </div>
@@ -84,7 +46,7 @@ $isAdmin = $nivelUsuario === 0;
         </div>
 
         <div class="ocr-grid" id="listaOcorrenciasDesktop">
-            <div class="text-center text-muted py-5" style="grid-column:1/-1"><div class="spinner-border spinner-border-sm me-2"></div>Carregando...</div>
+            <div class="text-center text-muted py-5 sgi-inline-c5f53f82" ><div class="spinner-border spinner-border-sm me-2"></div>Carregando...</div>
         </div>
     </div>
 </main>
@@ -99,18 +61,18 @@ $isAdmin = $nivelUsuario === 0;
             </div>
             <div class="modal-body">
                 <div class="mb-3">
-                    <label class="form-label fw-semibold" style="font-size:.78rem;color:#6B7280;">Título</label>
-                    <input type="text" class="form-control" id="ocrTituloModal" placeholder="Ex: Conduta antidesportiva" style="border-radius:10px;">
+                    <label class="form-label fw-semibold sgi-inline-cef94cbe" >Título</label>
+                    <input type="text" class="form-control sgi-inline-74940e40" id="ocrTituloModal" placeholder="Ex: Conduta antidesportiva" >
                 </div>
                 <div class="mb-3">
-                    <label class="form-label fw-semibold" style="font-size:.78rem;color:#6B7280;">Pontos a descontar</label>
-                    <input type="number" min="0" class="form-control" id="ocrPontosModal" placeholder="0" style="border-radius:10px;">
+                    <label class="form-label fw-semibold sgi-inline-cef94cbe" >Pontos a descontar</label>
+                    <input type="number" min="0" class="form-control sgi-inline-74940e40" id="ocrPontosModal" placeholder="0" >
                 </div>
-                <div id="msgOcrModal" class="mt-3" style="font-size:.85rem;"></div>
+                <div id="msgOcrModal" class="mt-3 sgi-inline-abc60b0c" ></div>
             </div>
-            <div class="modal-footer" style="border:none;padding:0 1.5rem 1.25rem;">
-                <button type="button" class="ocr-btn-cancel" data-bs-dismiss="modal" style="border:1.5px solid #E5E7EB;background:#fff;color:#6B7280;border-radius:10px;padding:.6rem 1.25rem;font-size:.85rem;font-weight:600;cursor:pointer;">Cancelar</button>
-                <button type="button" class="ocr-btn-primary" id="btnSalvarOcrModal" onclick="salvarOcorrenciaModal()" style="background:#E30613;border:none;color:#fff;border-radius:10px;padding:.6rem 1.5rem;font-size:.85rem;font-weight:700;cursor:pointer;box-shadow:0 2px 8px rgba(227,6,19,.25);">
+            <div class="modal-footer sgi-inline-052b34ec" >
+                <button type="button" class="ocr-btn-cancel sgi-inline-32a9b88c" data-bs-dismiss="modal" >Cancelar</button>
+                <button type="button" class="ocr-btn-primary sgi-inline-40033629" id="btnSalvarOcrModal" onclick="salvarOcorrenciaModal()" >
                     <i class="bi bi-check-lg me-1"></i>Registrar
                 </button>
             </div>
@@ -217,7 +179,7 @@ $isAdmin = $nivelUsuario === 0;
         const turmas = turmasFiltradas();
 
         if (turmas.length === 0) {
-            const msg = '<div class="text-center text-muted py-5" style="grid-column:1/-1"><i class="bi bi-inbox" style="font-size:2rem;display:block;margin-bottom:.5rem;color:#D1D5DB"></i>Nenhuma turma encontrada.</div>';
+            const msg = '<div class="text-center text-muted py-5 sgi-inline-c5f53f82" ><i class="bi bi-inbox sgi-inline-43389611" ></i>Nenhuma turma encontrada.</div>';
             listaDesk.innerHTML = msg;
             listaMob.innerHTML = msg;
         } else {
@@ -245,7 +207,7 @@ $isAdmin = $nivelUsuario === 0;
         const btnEl = document.getElementById('btnSalvarOcrModal');
 
         if (!titulo || !modalTurmaId) {
-            msgEl.innerHTML = '<span style="color:#dc2626;font-weight:700;">Preencha o título.</span>';
+            msgEl.innerHTML = '<span class="sgi-inline-bb8f15e7">Preencha o título.</span>';
             return;
         }
 
@@ -268,17 +230,17 @@ $isAdmin = $nivelUsuario === 0;
             const result = await resp.json();
 
             if (result.success) {
-                msgEl.innerHTML = '<span style="color:#16a34a;font-weight:700;">Ocorrência registrada!</span>';
+                msgEl.innerHTML = '<span class="sgi-inline-fc3b2320">Ocorrência registrada!</span>';
                 setTimeout(() => {
                     const modal = bootstrap.Modal.getInstance(document.getElementById('modalNovaOcorrencia'));
                     if (modal) modal.hide();
                     msgEl.innerHTML = '';
                 }, 1000);
             } else {
-                msgEl.innerHTML = '<span style="color:#dc2626;font-weight:700;">' + esc(result.message || 'Erro ao salvar.') + '</span>';
+                msgEl.innerHTML = '<span class="sgi-inline-bb8f15e7">' + esc(result.message || 'Erro ao salvar.') + '</span>';
             }
         } catch (e) {
-            msgEl.innerHTML = '<span style="color:#dc2626;font-weight:700;">Erro de conexão.</span>';
+            msgEl.innerHTML = '<span class="sgi-inline-bb8f15e7">Erro de conexão.</span>';
         } finally {
             btnEl.disabled = false;
             btnEl.innerHTML = originalText;

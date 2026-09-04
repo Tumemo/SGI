@@ -1,125 +1,5 @@
 <?php
 $tituloPagina = 'SGI - Equipes';
-$cssExtra = '
-:root {
-  --aluno-primary: #dc3545;
-  --aluno-primary-dark: #b02a37;
-  --aluno-primary-light: #fce4e6;
-  --aluno-primary-subtle: #fff0f0;
-  --aluno-success: #198754;
-  --aluno-bg: #f5f6fa;
-  --aluno-surface: #ffffff;
-  --aluno-border: #e9ecef;
-  --aluno-text: #1a1a2e;
-  --aluno-text-secondary: #6c757d;
-  --aluno-text-muted: #adb5bd;
-  --aluno-radius-sm: 8px;
-  --aluno-radius-md: 12px;
-  --aluno-radius-lg: 16px;
-  --aluno-radius-xl: 24px;
-  --aluno-shadow-sm: 0 1px 3px rgba(0,0,0,0.06);
-  --aluno-shadow-md: 0 4px 12px rgba(0,0,0,0.08);
-  --aluno-shadow-lg: 0 8px 24px rgba(0,0,0,0.12);
-  --aluno-shadow-hover: 0 12px 28px rgba(0,0,0,0.15);
-  --aluno-transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-.aluno-page { font-family: "Segoe UI", system-ui, -apple-system, sans-serif; color: var(--aluno-text); }
-.aluno-page-header {
-  display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem;
-  margin-bottom: 1.5rem; padding-bottom: 1rem; border-bottom: 2px solid var(--aluno-border);
-}
-.aluno-page-header .header-left { display: flex; align-items: center; gap: 1rem; }
-.aluno-page-header h1 { font-size: 1.5rem; font-weight: 700; margin: 0; color: var(--aluno-text); }
-.aluno-page-header .back-link {
-  width: 40px; height: 40px; border-radius: var(--aluno-radius-md);
-  display: flex; align-items: center; justify-content: center;
-  background: var(--aluno-surface); border: 1px solid var(--aluno-border);
-  color: var(--aluno-text); text-decoration: none;
-  transition: all var(--aluno-transition); flex-shrink: 0;
-}
-.aluno-page-header .back-link:hover { background: var(--aluno-primary); color: #fff; border-color: var(--aluno-primary); }
-.aluno-card {
-  background: var(--aluno-surface); border-radius: var(--aluno-radius-lg);
-  border: 1px solid var(--aluno-border); overflow: hidden;
-  box-shadow: var(--aluno-shadow-sm); margin-bottom: 1rem;
-}
-.aluno-card .card-header-custom {
-  padding: 1rem 1.25rem; font-weight: 500; font-size: 0.95rem;
-  border-bottom: 1px solid var(--aluno-border); background: #fafafa;
-  display: flex; align-items: center; justify-content: space-between;
-}
-.aluno-card .card-body-custom { padding: 1rem 1.25rem; }
-.aluno-table { width: 100%; border-collapse: collapse; }
-.aluno-table td { padding: 0.75rem 0; border-bottom: 1px solid var(--aluno-border); vertical-align: middle; }
-.aluno-table tr:last-child td { border-bottom: none; }
-.aluno-table tbody tr { transition: background var(--aluno-transition); }
-.aluno-table tbody tr:hover td { background: #f8f9fa; }
-.btn-aluno { background: var(--aluno-primary); color: #fff; border: none; border-radius: var(--aluno-radius-md); padding: 0.5rem 1.25rem; font-weight: 500; transition: all var(--aluno-transition); text-decoration: none; display: inline-flex; align-items: center; gap: 0.5rem; }
-.btn-aluno:hover { background: var(--aluno-primary-dark); color: #fff; }
-.btn-aluno { background: transparent; color: var(--aluno-primary); border: 1.5px solid var(--aluno-primary); border-radius: var(--aluno-radius-md); padding: 0.4rem 1rem; font-weight: 500; transition: all var(--aluno-transition); text-decoration: none; display: inline-flex; align-items: center; gap: 0.35rem; font-size: 0.85rem; }
-.btn-aluno:hover { background: var(--aluno-primary); color: #fff; }
-.btn-filter-cat {
-  padding: 0.55rem 1.3rem; border-radius: 50px;
-  border: 1.5px solid var(--aluno-border); background: var(--aluno-surface);
-  color: var(--aluno-text-secondary); font-size: 0.9rem; font-weight: 600;
-  cursor: pointer; transition: all var(--aluno-transition);
-}
-.btn-filter-cat:hover { border-color: var(--aluno-primary); color: var(--aluno-primary); background: var(--aluno-primary-subtle); }
-.btn-filter-cat.active { background: var(--aluno-primary); border-color: var(--aluno-primary); color: #fff; }
-.equipe-excedida { background: #fff5f5; }
-.aluno-table tbody tr.equipe-excedida td { background: #fff5f5; color: #842029; }
-.aluno-table tbody tr.equipe-excedida td:first-child { font-weight: 700; }
-.aluno-equipe-contador { font-size: 0.75rem; font-weight: 600; white-space: nowrap; }
-.aluno-empty { text-align: center; padding: 3rem 1rem; color: var(--aluno-text-secondary); }
-.aluno-empty .empty-icon { font-size: 3rem; margin-bottom: 1rem; color: var(--aluno-text-muted); }
-.aluno-empty h5 { font-weight: 600; margin-bottom: 0.5rem; }
-.aluno-card-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
-  gap: 1.25rem;
-  width: 100%;
-}
-.aluno-empty p { font-size: 0.9rem; max-width: 400px; margin: 0 auto; }
-.aluno-card-view { display: none; }
-.aluno-card-view.active { display: block; animation: alunoCardFadeIn 0.3s ease; }
-@keyframes alunoCardFadeIn {
-  from { opacity: 0; transform: translateX(16px); }
-  to { opacity: 1; transform: translateX(0); }
-}
-.aluno-turma-item {
-  display: flex; align-items: center; justify-content: space-between; gap: 0.75rem;
-  padding: 0.7rem 0.85rem; margin-bottom: 0.6rem;
-  border: 1px solid var(--aluno-border); border-radius: var(--aluno-radius-md);
-  background: var(--aluno-surface);
-  transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1),
-              box-shadow 0.35s cubic-bezier(0.22, 1, 0.36, 1),
-              border-color 0.35s cubic-bezier(0.22, 1, 0.36, 1),
-              background 0.35s ease;
-}
-.aluno-turma-item:last-child { margin-bottom: 0; }
-.aluno-turma-item:hover {
-  border-color: var(--aluno-primary);
-  background: var(--aluno-primary-subtle);
-  box-shadow: var(--aluno-shadow-sm);
-  transform: translateY(-2px);
-}
-.aluno-turma-alerta { color: #ef4444; font-size: 0.75rem; }
-.aluno-turma-contador { display: inline-flex; align-items: center; gap: 0.35rem; font-size: 0.75rem; color: var(--aluno-text-secondary); font-weight: 600; }
-.aluno-equipe-item {
-  display: flex; align-items: center; justify-content: space-between; gap: 0.75rem;
-  padding: 0.6rem 0.85rem; margin-bottom: 0.5rem;
-  border: 1px solid var(--aluno-border); border-radius: var(--aluno-radius-md);
-  background: var(--aluno-surface);
-  transition: background 0.35s ease, border-color 0.35s ease, transform 0.35s cubic-bezier(0.22, 1, 0.36, 1);
-}
-.aluno-equipe-item:last-child { margin-bottom: 0; }
-.aluno-equipe-item:hover { background: #f8f9fa; border-color: #e2e6ea; }
-.aluno-equipe-item.equipe-excedida { background: #fff5f5; color: #842029; }
-.aluno-equipe-item.equipe-excedida .aluno-equipe-nome { font-weight: 700; color: #842029; }
-.aluno-voltar-btn { display: none; }
-.aluno-card.equipes-aberta .aluno-voltar-btn { display: inline-flex; }
-';
-
 include 'componentes/head.php';
 include 'componentes/header.php';
 $nivelUsuario = (int)($_SESSION['nivel'] ?? -1);
@@ -127,8 +7,8 @@ $isAdmin = $nivelUsuario === 0;
 $paginaAtiva = 'dashboard';
 ?>
 
-<main class="d-md-none p-3" style="padding-bottom: 5rem;">
-    <a href="./dashboard.php" id="btnVoltarEquipesMobile" class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none" style="background-color:#E30613;border-radius:6px;padding:8px 16px;">
+<main class="d-md-none p-3 sgi-inline-d6522d52" >
+    <a href="./dashboard.php" id="btnVoltarEquipesMobile" class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none sgi-inline-e1bcebb6" >
         <i class="bi bi-arrow-left-circle fs-5"></i> <span id="nomeInterclasseEquipesMob">Interclasse</span>
     </a>
     <p class="text-secondary text-center small mb-3">Equipes por modalidade e categoria desta edição.</p>
@@ -147,10 +27,10 @@ $paginaAtiva = 'dashboard';
     <div class="aluno-page container-fluid py-4 px-4">
         <div class="aluno-page-header">
             <div class="header-left">
-                <a href="./dashboard.php" id="btnVoltarEquipesDesk" class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none" style="background-color:#E30613;border-radius:6px;padding:8px 16px;">
+                <a href="./dashboard.php" id="btnVoltarEquipesDesk" class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none sgi-inline-e1bcebb6" >
                     <i class="bi bi-arrow-left-circle fs-5"></i> <span id="nomeInterclasseEquipesDesk">Interclasse</span>
                 </a>
-                <h1 id="nomeInterclasseEquipes" style="display: none;">Equipes</h1>
+                <h1 id="nomeInterclasseEquipes" class="sgi-inline-12a59c06">Equipes</h1>
             </div>
             <?php if ($isAdmin): ?>
             <button id="btnCriarEquipeDesk" class="btn btn-aluno" data-bs-toggle="modal" data-bs-target="#modalCriarEquipe">
@@ -169,19 +49,19 @@ $paginaAtiva = 'dashboard';
 
 <div class="modal fade" id="modalCriarEquipe" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content" style="border-radius:var(--aluno-radius-lg);border:none;box-shadow:var(--aluno-shadow-lg);">
-            <div class="modal-header border-0" style="padding:1.25rem 1.5rem 0;">
-                <h5 class="modal-title" style="color:var(--aluno-primary);font-weight:600;"><i class="bi bi-plus-circle me-2"></i>Criar nova equipe</h5>
+        <div class="modal-content sgi-inline-910958c1" >
+            <div class="modal-header border-0 sgi-inline-d4384255" >
+                <h5 class="modal-title sgi-inline-919e66cc" ><i class="bi bi-plus-circle me-2"></i>Criar nova equipe</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
-            <div class="modal-body" style="padding:1rem 1.5rem 1.5rem;">
+            <div class="modal-body sgi-inline-e7df035e" >
                 <form id="formCriarEquipe">
                     <label for="selectModalidadeEquipe" class="form-label small text-muted fw-semibold">Modalidade</label>
-                    <select id="selectModalidadeEquipe" class="form-select mb-3" style="border-radius:var(--aluno-radius-md);border-color:var(--aluno-border);" required>
+                    <select id="selectModalidadeEquipe" class="form-select mb-3 sgi-inline-0fd5584e"  required>
                         <option value="" selected disabled>Carregando modalidades...</option>
                     </select>
                     <label for="selectTurmaEquipe" class="form-label small text-muted fw-semibold">Turma</label>
-                    <select id="selectTurmaEquipe" class="form-select mb-3" style="border-radius:var(--aluno-radius-md);border-color:var(--aluno-border);" required>
+                    <select id="selectTurmaEquipe" class="form-select mb-3 sgi-inline-0fd5584e"  required>
                         <option value="" selected disabled>Carregando turmas...</option>
                     </select>
                     <div id="msgCriarEquipe" class="text-center mb-2 small"></div>

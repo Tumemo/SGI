@@ -1,9 +1,5 @@
 <?php
 $tituloPagina = 'SGI - Termos';
-$cssExtra = '
-        .termo-clausula { border-left: 4px solid #dc3545; padding-left: 1rem; margin-bottom: 1rem; }
-        .regulamento-card { background: #fff; border-radius: 12px; padding: 1.5rem; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
-';
 include 'componentes/head.php';
 $titulo = 'Termos';
 $mostrarVoltar = true;

@@ -4,11 +4,11 @@ $urlVoltar = $urlVoltar ?? './home.php';
 $titulo = $titulo ?? '';
 $nivelUsuario = (int)($_SESSION['nivel'] ?? -1);
 ?>
-<section class="d-md-none position-relative" style="height: 120px;">
+<section class="d-md-none position-relative sgi-inline-c89f451e" >
     <?php if ($mostrarVoltar): ?>
-    <a href="<?= htmlspecialchars($urlVoltar) ?>" class="bi bi-arrow-left position-absolute text-white fs-3 text-decoration-none" style="top: 20px; left: 20px; z-index: 10;"></a>
+    <a href="<?= htmlspecialchars($urlVoltar) ?>" class="bi bi-arrow-left position-absolute text-white fs-3 text-decoration-none sgi-inline-138c2dcc" ></a>
     <?php endif; ?>
-    <img src="../../public/images/banner-global.png" alt="Banner" class="w-100 object-fit-cover" style="height: 100%;">
+    <img src="../../public/images/banner-global.png" alt="Banner" class="w-100 object-fit-cover sgi-inline-e8d2328b" >
     <?php if (!empty($titulo)): ?>
     <h2 class="position-absolute top-50 start-50 translate-middle text-white m-0 fw-bold"><?= htmlspecialchars($titulo) ?></h2>
     <?php endif; ?>

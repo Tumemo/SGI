@@ -14,8 +14,8 @@ $isMesario = $nivelUsuario === 2;
 
 
 <!-- main mobile -->
-<main class="position-relative d-md-none" style="margin-bottom: 120px;">
-    <a href="./dashboard.php" id="btnVoltarCatMobile" class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none" style="background-color:#E30613;border-radius:6px;padding:8px 16px;">
+<main class="position-relative d-md-none sgi-inline-80857b05" >
+    <a href="./dashboard.php" id="btnVoltarCatMobile" class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none sgi-inline-e1bcebb6" >
         <i class="bi bi-arrow-left-circle fs-5"></i> <span id="nomeInterclasseCatMob">Interclasse</span>
     </a>
 
@@ -24,7 +24,7 @@ $isMesario = $nivelUsuario === 2;
     </div>
 
     <?php if ($isAdmin): ?>
-    <section class="d-flex gap-3 mt-3 position-fixed translate-middle flex-wrap justify-content-center" style="width: max-content; max-width: 96vw; top: 85%; left: 50%; z-index: 10;">
+    <section class="d-flex gap-3 mt-3 position-fixed translate-middle flex-wrap justify-content-center sgi-inline-1ab1658d" >
         <button type="button" id="btnEditarCategoriaMobile" class="btn btn-outline-primary d-none" onclick="abrirModalEditarCategoria()">Editar</button>
         <button type="button" id="btnExcluirCategoriaMobile" class="btn btn-danger d-none" onclick="excluirCategoria()">Excluir</button>
         <button data-bs-toggle="modal" data-bs-target="#modalCriarCategoria" class="btn btn-outline-danger">Adicionar Categoria</button>
@@ -41,7 +41,7 @@ $isMesario = $nivelUsuario === 2;
 <main class="d-none d-md-block main-desktop-layout">
     <div class="container-fluid px-0 position-relative">
         <div class="mb-5">
-            <a href="./dashboard.php" id="btnVoltarCatDesk" class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none" style="background-color:#E30613;border-radius:6px;padding:8px 16px;">
+            <a href="./dashboard.php" id="btnVoltarCatDesk" class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none sgi-inline-e1bcebb6" >
                 <i class="bi bi-arrow-left-circle fs-5"></i> <span id="nomeInterclasseCategoria">Interclasse</span>
             </a>
         </div>
@@ -51,22 +51,22 @@ $isMesario = $nivelUsuario === 2;
         </div>
 
         <?php if ($isAdmin): ?>
-        <div class="position-fixed d-flex flex-row gap-3" style="bottom: 40px; right: 5%; z-index: 1050;">
+        <div class="position-fixed d-flex flex-row gap-3 sgi-inline-ddd60826" >
             <button type="button" id="btnEditarCategoriaDesktop" class="btn btn-outline-primary fw-semibold rounded-3 px-4 py-2 d-flex align-items-center justify-content-center gap-2 shadow-lg d-none" onclick="abrirModalEditarCategoria()">
                 <i class="bi bi-pencil-square"></i> Editar
             </button>
             <button type="button" id="btnExcluirCategoriaDesktop" class="btn btn-danger fw-semibold rounded-3 px-4 py-2 d-flex align-items-center justify-content-center gap-2 shadow-lg d-none" onclick="excluirCategoria()">
                 <i class="bi bi-trash"></i> Excluir
             </button>
-            <button type="button" class="btn bg-white fw-semibold rounded-3 px-4 py-2 d-flex align-items-center justify-content-center gap-2 shadow-lg" style="color: #ed1c24; border: 2px solid #ed1c24;" data-bs-toggle="modal" data-bs-target="#modalCriarCategoria">
+            <button type="button" class="btn bg-white fw-semibold rounded-3 px-4 py-2 d-flex align-items-center justify-content-center gap-2 shadow-lg sgi-inline-f825f7e3"  data-bs-toggle="modal" data-bs-target="#modalCriarCategoria">
                 <i class="bi bi-plus-circle"></i> Adicionar
             </button>
-            <a href="#" id="btnContinuarDesktop" class="btn fw-semibold rounded-3 px-5 py-2 text-white text-decoration-none shadow-lg d-flex align-items-center justify-content-center" style="background-color: #ed1c24; border: 2px solid #ed1c24;">
+            <a href="#" id="btnContinuarDesktop" class="btn fw-semibold rounded-3 px-5 py-2 text-white text-decoration-none shadow-lg d-flex align-items-center justify-content-center sgi-inline-aec0cf4e" >
                 Continuar
             </a>
         </div>
         <?php elseif ($isColaborador): ?>
-        <button type="button" class="btn bg-white fw-semibold rounded-3 px-4 py-2 d-flex align-items-center justify-content-center gap-2 shadow-lg mt-4" style="color: #ed1c24; border: 2px solid #ed1c24;" data-bs-toggle="modal" data-bs-target="#modalCriarCategoria">
+        <button type="button" class="btn bg-white fw-semibold rounded-3 px-4 py-2 d-flex align-items-center justify-content-center gap-2 shadow-lg mt-4 sgi-inline-f825f7e3"  data-bs-toggle="modal" data-bs-target="#modalCriarCategoria">
             <i class="bi bi-plus-circle"></i> Adicionar categoria
         </button>
         <?php endif; ?>
@@ -103,8 +103,8 @@ $isMesario = $nivelUsuario === 2;
                     </div>
                     <div class="mb-3 d-flex align-items-center gap-2 flex-column">
                         <input type="file" id="arquivoUpload" class="d-none" accept=".pdf" onchange="mostrarNomeArquivo()">
-                        <p class="text-center" style="font-size: 13px;">Adicione aqui o pdf dos alunos da turma criada</p>
-                        <label for="arquivoUpload" class="btn btn-light border rounded-circle p-3" style="cursor:pointer;">
+                        <p class="text-center sgi-inline-346a5ee5" >Adicione aqui o pdf dos alunos da turma criada</p>
+                        <label for="arquivoUpload" class="btn btn-light border rounded-circle p-3 sgi-inline-f649ae05" >
                             <i class="bi bi-upload fs-4"></i>
                         </label>
                         <span id="nomeArquivo" class="text-muted mt-2"></span>
@@ -314,7 +314,7 @@ $isMesario = $nivelUsuario === 2;
 
                 if (isAdmin) {
                     divMobile.innerHTML += `
-                        <button type="button" class="categoria-item bg-white d-flex m-auto justify-content-between align-items-center shadow-sm py-3 px-4 mb-3 border border-1 rounded-3" style="width: 90%;" data-id="${cId}">
+                        <button type="button" class="categoria-item bg-white d-flex m-auto justify-content-between align-items-center shadow-sm py-3 px-4 mb-3 border border-1 rounded-3 sgi-inline-8dd04718"  data-id="${cId}">
                             <i class="bi bi-trophy fs-3"></i>
                             <h2 class="m-0 fs-5 text-truncate px-3 w-100 text-start">${esc(categoria.nome_categoria)}</h2>
                             <picture><img src="../../public/icons/arrow-right.svg" alt="Seta para direita"></picture>
@@ -322,7 +322,7 @@ $isMesario = $nivelUsuario === 2;
                     `;
                 } else {
                     divMobile.innerHTML += `
-                        <a href="./turmas.php?id=${idInterclasse}&id_categoria=${cId}" class="categoria-item text-decoration-none text-dark bg-white d-flex m-auto justify-content-between align-items-center shadow-sm py-3 px-4 mb-3 border border-1 rounded-3" style="width: 90%;">
+                        <a href="./turmas.php?id=${idInterclasse}&id_categoria=${cId}" class="categoria-item text-decoration-none text-dark bg-white d-flex m-auto justify-content-between align-items-center shadow-sm py-3 px-4 mb-3 border border-1 rounded-3 sgi-inline-8dd04718" >
                             <i class="bi bi-trophy fs-3"></i>
                             <h2 class="m-0 fs-5 text-truncate px-3 w-100 text-start">${esc(categoria.nome_categoria)}</h2>
                             <picture><img src="../../public/icons/arrow-right.svg" alt="Seta para direita"></picture>
@@ -334,20 +334,20 @@ $isMesario = $nivelUsuario === 2;
 
                 divDesktop.innerHTML += `
                     <div class="col-12 col-md-6 col-lg-5 col-xl-4">
-                        <div class="categoria-item card border-0 shadow-sm h-100 p-4" style="border-radius: 12px;${isAdmin ? ' cursor: pointer;' : ''}" data-id="${cId}">
+                        <div class="categoria-item card border-0 shadow-sm h-100 p-4 sgi-inline-904ca252"  data-id="${cId}">
                             <div class="card-body p-0 d-flex flex-column">
                                 <h4 class="fw-bold text-dark mb-4 pb-2 text-truncate" title="${esc(categoria.nome_categoria)}">${esc(categoria.nome_categoria)}</h4>
                                 <div class="d-flex gap-3 mb-4">
-                                    <div class="rounded-3 p-2 px-3 flex-fill border border-light-subtle shadow-sm" style="background-color: #f8f9fc;">
-                                        <div class="text-dark fw-medium mb-1" style="font-size: 0.65rem;">EQUIPES</div>
+                                    <div class="rounded-3 p-2 px-3 flex-fill border border-light-subtle shadow-sm sgi-inline-3255edaf" >
+                                        <div class="text-dark fw-medium mb-1 sgi-inline-67736efe" >EQUIPES</div>
                                         <div class="fs-5 text-dark">${eq}</div>
                                     </div>
-                                    <div class="rounded-3 p-2 px-3 flex-fill border border-light-subtle shadow-sm" style="background-color: #f8f9fc;">
-                                        <div class="text-dark fw-medium mb-1" style="font-size: 0.65rem;">PARTIDAS</div>
+                                    <div class="rounded-3 p-2 px-3 flex-fill border border-light-subtle shadow-sm sgi-inline-3255edaf" >
+                                        <div class="text-dark fw-medium mb-1 sgi-inline-67736efe" >PARTIDAS</div>
                                         <div class="fs-5 text-dark">${pt}</div>
                                     </div>
                                 </div>
-                                <a class="btn btn-danger w-100 fw-semibold text-uppercase mt-auto border-0" style="background-color: #ed1c24; border-radius: 6px; font-size: 0.8rem; padding: 0.75rem;" href="${linkTarget}?id=${idInterclasse}&id_categoria=${cId}">
+                                <a class="btn btn-danger w-100 fw-semibold text-uppercase mt-auto border-0 sgi-inline-55d15a66"  href="${linkTarget}?id=${idInterclasse}&id_categoria=${cId}">
                                     ${btnLabel} <i class="bi bi-arrow-right"></i>
                                 </a>
                             </div>

@@ -120,8 +120,8 @@ $paginaAtiva = 'perfil';
 
 
 <!-- ===================== MOBILE ===================== -->
-<main class="perfil-page d-md-none p-3" style="padding-top:5.5rem;padding-bottom:5rem;">
-    <a href="<?= htmlspecialchars($urlVoltar) ?>" id="perfilBackMob" class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold mb-3 px-3 py-2 border-0 text-decoration-none" style="background-color:#E30613;border-radius:6px;padding:8px 16px;">
+<main class="perfil-page d-md-none p-3 sgi-inline-8b740e72" >
+    <a href="<?= htmlspecialchars($urlVoltar) ?>" id="perfilBackMob" class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold mb-3 px-3 py-2 border-0 text-decoration-none sgi-inline-e1bcebb6" >
         <i class="bi bi-arrow-left-circle fs-5"></i> <span id="perfilNomeInterMobile">Interclasse</span>
     </a>
 
@@ -143,7 +143,7 @@ $paginaAtiva = 'perfil';
                 </button>
             </div>
             <h5 class="fw-bold mt-3 mb-1" id="perfilNomeMob"><?= htmlspecialchars($usuarioPerfil['nome_usuario'] ?? '', ENT_QUOTES) ?></h5>
-            <span class="perfil-badge-nivel" style="--nivel-color:<?= $nivelInfo['color'] ?>">
+            <span class="perfil-badge-nivel nivel-cor-<?= (int)$nivelUsuario ?>">
                 <i class="<?= $nivelInfo['icon'] ?>"></i> <?= $nivelInfo['label'] ?>
             </span>
             <div class="d-flex justify-content-center gap-2 mt-3">
@@ -166,7 +166,7 @@ $paginaAtiva = 'perfil';
         <div class="card-body">
             <h6 class="perfil-card-title mb-3"><i class="bi bi-shield-lock me-2"></i>Segurança e Acesso</h6>
             <div class="perfil-field"><span class="perfil-field-label"><i class="bi bi-lock"></i> Senha</span><span class="perfil-field-value"><span class="perfil-mask">&#8226;&#8226;&#8226;&#8226;&#8226;&#8226;&#8226;&#8226;</span></span></div>
-            <div class="perfil-field"><span class="perfil-field-label"><i class="bi bi-shield-check"></i> Nível</span><span class="perfil-field-value"><span class="perfil-badge-nivel perfil-badge-nivel--sm" style="--nivel-color:<?= $nivelInfo['color'] ?>"><i class="<?= $nivelInfo['icon'] ?>"></i> <?= $nivelInfo['label'] ?></span></span></div>
+            <div class="perfil-field"><span class="perfil-field-label"><i class="bi bi-shield-check"></i> Nível</span><span class="perfil-field-value"><span class="perfil-badge-nivel perfil-badge-nivel--sm nivel-cor-<?= (int)$nivelUsuario ?>"><i class="<?= $nivelInfo['icon'] ?>"></i> <?= $nivelInfo['label'] ?></span></span></div>
             <div class="perfil-field mb-0"><span class="perfil-field-label"><i class="bi bi-key"></i> Alterar</span><span class="perfil-field-value"><button class="btn btn-link btn-sm text-decoration-none p-0 text-danger fw-semibold" data-bs-toggle="modal" data-bs-target="#modalAlterarSenha">Alterar senha</button></span></div>
         </div>
     </div>
@@ -182,11 +182,11 @@ $paginaAtiva = 'perfil';
     <div class="perfil-wrapper">
         <!-- Topbar -->
         <div class="perfil-topbar mt-5">
-            <a href="<?= htmlspecialchars($urlVoltar) ?>" id="perfilBackDesk" class="perfil-btn-voltar btn btn-danger d-inline-flex align-items-center gap-2 fw-bold px-3 py-2 border-0 text-decoration-none" style="background-color:#E30613;border-radius:6px;padding:8px 16px;">
+            <a href="<?= htmlspecialchars($urlVoltar) ?>" id="perfilBackDesk" class="perfil-btn-voltar btn btn-danger d-inline-flex align-items-center gap-2 fw-bold px-3 py-2 border-0 text-decoration-none sgi-inline-e1bcebb6" >
                 <i class="bi bi-arrow-left-circle fs-5"></i> <span id="perfilNomeInterDesk">Interclasse</span>
             </a>
             <div class="perfil-topbar-title">
-                <h1><i class="bi bi-person-circle me-2" style="color:#E30613"></i>Meu Perfil</h1>
+                <h1><i class="bi bi-person-circle me-2 sgi-inline-86de2c51" ></i>Meu Perfil</h1>
                 <p class="perfil-topbar-subtitle">Gerencie suas informações, segurança e acompanhe sua participação</p>
             </div>
         </div>
@@ -212,11 +212,11 @@ $paginaAtiva = 'perfil';
                         </div>
 
                         <h5 class="fw-bold mt-3 mb-1" id="perfilNomeDesk"><?= htmlspecialchars($usuarioPerfil['nome_usuario'] ?? '', ENT_QUOTES) ?></h5>
-                        <span class="perfil-badge-nivel" style="--nivel-color:<?= $nivelInfo['color'] ?>">
+                        <span class="perfil-badge-nivel nivel-cor-<?= (int)$nivelUsuario ?>">
                             <i class="<?= $nivelInfo['icon'] ?>"></i> <?= $nivelInfo['label'] ?>
                         </span>
 
-                        <div class="d-flex align-items-center justify-content-center gap-1 mt-2" style="font-size:0.8rem;color:#888;">
+                        <div class="d-flex align-items-center justify-content-center gap-1 mt-2 sgi-inline-a730c39c" >
                             <span class="perfil-status-dot perfil-status-online"></span> Online
                         </div>
 
@@ -271,14 +271,14 @@ $paginaAtiva = 'perfil';
                             <div class="perfil-info-item">
                                 <span class="perfil-info-label"><i class="bi bi-shield-check"></i> Nível de Acesso</span>
                                 <span class="perfil-info-value">
-                                    <span class="perfil-badge-nivel perfil-badge-nivel--sm" style="--nivel-color:<?= $nivelInfo['color'] ?>">
+                                    <span class="perfil-badge-nivel perfil-badge-nivel--sm nivel-cor-<?= (int)$nivelUsuario ?>">
                                         <i class="<?= $nivelInfo['icon'] ?>"></i> <?= $nivelInfo['label'] ?>
                                     </span>
                                 </span>
                             </div>
                             <div class="perfil-info-item mb-0">
                                 <span class="perfil-info-label"><i class="bi bi-shield-plus"></i> Autenticação</span>
-                                <span class="perfil-info-value" style="color:#888;font-size:0.85rem;">Senha criptografada</span>
+                                <span class="perfil-info-value sgi-inline-8484a423" >Senha criptografada</span>
                             </div>
                         </div>
                     </div>
@@ -360,7 +360,7 @@ $paginaAtiva = 'perfil';
     </div>
 </div>
 
-<input type="file" id="fotoUploadInput" accept="image/jpeg,image/png,image/gif,image/webp" style="display:none">
+<input type="file" id="fotoUploadInput" accept="image/jpeg,image/png,image/gif,image/webp" class="sgi-inline-6f9051e3">
 
 <script>
     var API_BASE = (function() {

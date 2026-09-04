@@ -14,7 +14,7 @@ $isMesario = $nivelUsuario === 2;
 
 
 <!-- main mobile -->
-<main class="d-md-none" style="<?= $isMesario ? '' : 'margin-bottom: 120px;' ?>">
+<main class="d-md-none <?= $isMesario ? '' : 'home-main--with-footer' ?>">
     <?php if ($isAdmin): ?>
     <button class="mx-4 btn btn-danger d-flex gap-2 mt-3 align-items-center" data-bs-toggle="modal" data-bs-target="#exampleModal">
         <i class="bi bi-plus-circle"></i>Criar Nova Edição
@@ -167,8 +167,8 @@ async function listarInterclasses() {
             const anoStr = item.ano_interclasse ? item.ano_interclasse.split('-')[0] : "N/A";
             const ativo = String(item.status_interclasse) === '1';
             const statusBadge = ativo
-                ? '<span class="bg-danger rounded-3 text-white px-3 py-1" style="font-size: 0.82rem;">Ativo</span>'
-                : '<span class="bg-secondary rounded-3 text-white px-3 py-1" style="font-size: 0.82rem;">Inativo</span>';
+                ? '<span class="bg-danger rounded-3 text-white px-3 py-1 sgi-inline-93638ebd" >Ativo</span>'
+                : '<span class="bg-secondary rounded-3 text-white px-3 py-1 sgi-inline-93638ebd" >Inativo</span>';
             <?php if ($isMesario): ?>
             const classeCard = ativo ? '' : 'opacity-75';
             <?php else: ?>
@@ -178,7 +178,7 @@ async function listarInterclasses() {
 
             htmlMobile += `
                 <a href="./dashboard.php?id=${item.id_interclasse}" class="text-decoration-none text-dark">
-                    <div class="m-auto shadow d-flex justify-content-between align-content-center px-3 py-3 rounded-3 my-3 border border-1 ${classeCard}" style="width: 90%;">
+                    <div class="m-auto shadow d-flex justify-content-between align-content-center px-3 py-3 rounded-3 my-3 border border-1 ${classeCard} sgi-inline-8dd04718" >
                         <div>
                             <h2 class="m-0 fs-4">${nome}</h2>
                             <p class="text-secondary m-0">${anoStr}</p>
@@ -198,8 +198,7 @@ async function listarInterclasses() {
             `;
 
             htmlDesktop += `
-                <div class="row bg-white shadow rounded-3 py-3 fs-5 mt-3 align-items-center px-2 border border-1 ${classeCard}"
-                     style="cursor: pointer; transition: background-color 0.2s ease;"
+                <div class="row bg-white shadow rounded-3 py-3 fs-5 mt-3 align-items-center px-2 border border-1 ${classeCard} sgi-inline-d9a72e84"
                      onmouseover="this.style.backgroundColor='#f8f9fa'"
                      onmouseout="this.style.backgroundColor='#ffffff'"
                      onclick="window.location.href='./dashboard.php?id=${item.id_interclasse}'">

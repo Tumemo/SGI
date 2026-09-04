@@ -3,170 +3,6 @@ $tituloPagina = 'SGI - Agenda';
 $titulo = 'Agenda';
 $mostrarVoltar = true;
 $urlVoltar = './dashboard.php';
-$cssExtra = '
-/* ── Agenda modern layout ── */
-.ag-page { padding-bottom: 5rem; }
-
-.ag-btn-interclasse {
-    display: inline-flex; align-items: center; gap: .5rem;
-    background: #E30613; color: #fff; font-weight: 600; text-decoration: none;
-    border-radius: 10px; padding: 9px 18px;
-    box-shadow: 0 3px 10px rgba(227,6,19,.28);
-    transition: background .2s ease, transform .15s ease, box-shadow .2s ease;
-    flex-shrink: 0;
-}
-.ag-btn-interclasse:hover { background: #B9050F; color: #fff; transform: translateY(-1px); box-shadow: 0 5px 16px rgba(227,6,19,.38); }
-
-.ag-header-row { display: flex; align-items: center; gap: 1.25rem; flex-wrap: wrap; margin-bottom: 1.5rem; }
-.ag-header__text { min-width: 0; flex: 1 1 240px; }
-.ag-header__text h2 { font-size: 1.6rem; font-weight: 700; color: #1F2937; margin: 0; letter-spacing: -0.02em; display: flex; align-items: center; gap: .55rem; }
-.ag-header__text h2 i { color: #E30613; }
-.ag-header__text p { font-size: .9rem; color: #6B7280; margin: .3rem 0 0; }
-.ag-badge-count {
-    display: inline-flex; align-items: center; gap: .4rem; margin-left: auto;
-    background: #FEF2F2; color: #B91C1C; border: 1px solid #FECACA;
-    font-size: .78rem; font-weight: 700; border-radius: 50px;
-    padding: .4rem .9rem; letter-spacing: .02em; white-space: nowrap;
-}
-.ag-badge-count i { font-size: .85rem; }
-
-/* ── Filter bar ── */
-.ag-filter-bar { display: flex; gap: .6rem; align-items: center; flex-wrap: wrap; margin-bottom: 1.5rem; }
-.ag-search { position: relative; flex: 1 1 220px; min-width: 200px; }
-.ag-search i { position: absolute; left: .8rem; top: 50%; transform: translateY(-50%); color: #9CA3AF; font-size: .9rem; pointer-events: none; }
-.ag-search input {
-    width: 100%; border: 1.5px solid #E5E7EB; border-radius: 10px;
-    font-size: .85rem; color: #374151; background: #fff; padding: .5rem .8rem .5rem 2.1rem;
-    transition: border-color .15s, box-shadow .15s;
-}
-.ag-search input:focus { border-color: #E30613; box-shadow: 0 0 0 3px rgba(227,6,19,.08); outline: none; }
-.ag-filter-bar select {
-    border: 1.5px solid #E5E7EB; border-radius: 10px; font-size: .82rem; font-weight: 500;
-    color: #374151; background: #fff; padding: .5rem .75rem;
-    transition: border-color .15s, box-shadow .15s; cursor: pointer;
-}
-.ag-filter-bar select:focus { border-color: #E30613; box-shadow: 0 0 0 3px rgba(227,6,19,.08); outline: none; }
-
-.ag-btn-auto {
-    display: inline-flex; align-items: center; gap: .4rem;
-    background: #111827; color: #fff; font-size: .82rem; font-weight: 600;
-    border-radius: 10px; padding: .5rem .9rem; border: none;
-    transition: background .15s ease, transform .15s ease;
-}
-.ag-btn-auto:hover { background: #1F2937; color: #fff; transform: translateY(-1px); }
-
-/* ── Calendar card ── */
-.ag-cal-card { background: #fff; border: 1px solid #ECEFF1; border-radius: 18px; box-shadow: 0 1px 3px rgba(0,0,0,.04), 0 4px 16px rgba(0,0,0,.03); overflow: hidden; }
-.ag-cal-header { display: flex; align-items: center; justify-content: space-between; padding: .9rem 1.15rem; background: linear-gradient(135deg, #111827 0%, #1F2937 100%); color: #fff; }
-.ag-cal-header span { font-size: .8rem; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; }
-.ag-cal-header select { color: #fff; background: transparent; }
-.ag-cal-header select option { color: #111827; }
-.ag-cal-nav { width: 32px; height: 32px; display: inline-flex; align-items: center; justify-content: center; border-radius: 8px; cursor: pointer; transition: background .15s; color: rgba(255,255,255,.7); border: none; background: transparent; font-size: 1rem; }
-.ag-cal-nav:hover { background: rgba(255,255,255,.12); color: #fff; }
-.ag-cal-body { padding: .75rem 1rem 1rem; }
-.ag-cal-weekdays { display: flex; text-align: center; margin-bottom: .4rem; }
-.ag-cal-weekdays span { width: 14.28%; font-size: .7rem; font-weight: 700; color: #6B7280; text-transform: uppercase; letter-spacing: .06em; padding: .3rem 0; }
-.ag-cal-grid { display: flex; flex-wrap: wrap; text-align: center; }
-.ag-cal-day { width: 14.28%; height: 38px; display: flex; align-items: center; justify-content: center; font-size: .85rem; font-weight: 500; color: #374151; cursor: pointer; border-radius: 10px; transition: all .15s; position: relative; }
-.ag-cal-day:hover { background: #F3F4F6; }
-.ag-cal-day--empty { cursor: default; }
-.ag-cal-day--empty:hover { background: transparent; }
-.ag-cal-day--today { color: #E30613; font-weight: 700; }
-.ag-cal-day--today::after { content: ""; position: absolute; bottom: 4px; left: 50%; transform: translateX(-50%); width: 4px; height: 4px; border-radius: 50%; background: #E30613; }
-.ag-cal-day--selected { background: #E30613 !important; color: #fff !important; font-weight: 700; }
-.ag-cal-day--selected::after { background: #fff !important; }
-.ag-cal-day--has-game { font-weight: 700; color: #B91C1C; }
-.ag-cal-day--has-game::before { content: ""; position: absolute; bottom: 3px; left: 50%; transform: translateX(-50%); width: 5px; height: 5px; border-radius: 50%; background: #E30613; }
-.ag-cal-day--selected.ag-cal-day--has-game { color: #fff; }
-.ag-cal-day--selected.ag-cal-day--has-game::before { background: #fff; }
-
-/* ── Event cards ── */
-.ag-event-list { display: flex; flex-direction: column; gap: .85rem; }
-.ag-event-card {
-    background: #fff; border: 1px solid #ECEFF1; border-radius: 16px; padding: 1rem 1.15rem;
-    transition: transform .2s, box-shadow .2s; position: relative; overflow: hidden;
-}
-.ag-event-card:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,.07); }
-.ag-event-card::before { content: ""; position: absolute; top: 0; left: 0; width: 4px; height: 100%; background: #9CA3AF; }
-.ag-event-card--andamento::before { background: #F59E0B; }
-.ag-event-card--pausado::before { background: #F97316; }
-.ag-event-card--concluido::before { background: #10B981; }
-.ag-event-card__top { display: flex; align-items: flex-start; justify-content: space-between; gap: .75rem; margin-bottom: .6rem; }
-.ag-event-card__chips { display: flex; gap: .45rem; flex-wrap: wrap; }
-.ag-meta-chip { display: inline-flex; align-items: center; gap: .35rem; font-size: .74rem; font-weight: 600; color: #4B5563; background: #F9FAFB; border: 1px solid #E5E7EB; border-radius: 8px; padding: .3rem .6rem; white-space: nowrap; }
-.ag-meta-chip i { font-size: .75rem; color: #E30613; }
-.ag-status-chip { display: inline-flex; align-items: center; gap: .3rem; font-size: .68rem; font-weight: 700; border-radius: 50px; padding: .3rem .7rem; letter-spacing: .03em; text-transform: uppercase; white-space: nowrap; }
-.ag-status-chip--agendado { background: #F3F4F6; color: #4B5563; }
-.ag-status-chip--andamento { background: #FEF3C7; color: #92400E; }
-.ag-status-chip--pausado { background: #FFEDD5; color: #C2410C; }
-.ag-status-chip--concluido { background: #D1FAE5; color: #065F46; }
-
-.ag-event-card__title { font-size: 1rem; font-weight: 700; color: #111827; line-height: 1.3; margin: 0; }
-.ag-event-card__subtitle { font-size: .82rem; color: #4B5563; margin: .25rem 0 0; display: flex; align-items: center; gap: .35rem; flex-wrap: wrap; }
-.ag-event-card__subtitle i { color: #E30613; }
-.ag-event-card__teams {
-    display: flex; align-items: center; gap: .6rem; flex-wrap: wrap;
-    margin-top: .6rem; padding: .55rem .8rem; background: #F9FAFB; border-radius: 10px;
-    font-size: .85rem; font-weight: 600; color: #1F2937; width: 100%;
-}
-.ag-event-card__teams .ag-vs { font-size: .65rem; font-weight: 800; color: #E30613; letter-spacing: .04em; }
-.ag-event-card__teams i { color: #9CA3AF; font-size: .8rem; }
-.ag-event-card__actions { display: flex; align-items: center; gap: .5rem; margin-top: .8rem; flex-wrap: wrap; }
-.ag-event-card__actions .btn { font-size: .8rem; font-weight: 600; border-radius: 9px; padding: .42rem .9rem; display: inline-flex; align-items: center; gap: .4rem; }
-.ag-icon-btn {
-    width: 34px; height: 34px; display: inline-flex; align-items: center; justify-content: center;
-    border-radius: 9px; border: 1px solid #E5E7EB; background: #fff; color: #6B7280; cursor: pointer;
-    transition: all .15s; margin-left: auto;
-}
-.ag-icon-btn:hover { background: #FEF2F2; border-color: #FECACA; color: #E30613; }
-
-/* ── Empty state ── */
-.ag-empty { text-align: center; padding: 3rem 1.5rem; color: #9CA3AF; }
-.ag-empty i { font-size: 2.5rem; display: block; margin-bottom: .75rem; color: #D1D5DB; }
-.ag-empty p { margin: 0; font-size: .9rem; }
-
-/* ── Show all button ── */
-.ag-show-all { display: flex; justify-content: center; margin-top: 1rem; }
-.ag-show-all .btn { border-radius: 10px; font-weight: 600; font-size: .82rem; padding: .45rem 1rem; }
-
-/* ── Google Calendar link ── */
-.ag-gcal { display: flex; justify-content: center; margin-top: 1.25rem; }
-.ag-gcal .btn { border-radius: 10px; font-size: .82rem; font-weight: 500; }
-
-/* ── Desktop layout ── */
-.ag-desktop { display: none; }
-@media (min-width: 768px) {
-    .ag-desktop { display: block; }
-    .ag-mobile { display: none !important; }
-    .ag-desktop-layout { width: 100%; }
-    .ag-desktop-grid { display: grid; grid-template-columns: minmax(0,1fr) 380px; gap: 2rem; align-items: start; }
-    .ag-cal-sticky { position: sticky; top: 24px; }
-}
-@media (min-width: 1200px) {
-    .ag-desktop-grid { gap: 2.75rem; }
-}
-@media (min-width: 992px) and (max-width: 1199.98px) {
-    .ag-desktop-grid { grid-template-columns: minmax(0,1fr) 340px; gap: 1.75rem; }
-}
-
-/* ── Mobile refinements ── */
-@media (max-width: 767.98px) {
-    .ag-mobile { padding-top: 5.5rem; padding-bottom: 5rem; }
-    .ag-cal-card { max-width: 420px; margin: 0 auto 1.25rem; }
-    .ag-event-list { max-width: 420px; margin: 0 auto; }
-    .ag-event-card { padding: .9rem 1rem; }
-}
-
-/* ── Modal improvements ── */
-.ag-modal .modal-content { border: none; border-radius: 16px; box-shadow: 0 20px 60px rgba(0,0,0,.15); }
-.ag-modal .modal-header { border: none; padding: 1.25rem 1.5rem .5rem; }
-.ag-modal .modal-title { font-size: 1.05rem; font-weight: 700; color: #111827; }
-.ag-modal .modal-body { padding: .5rem 1.5rem 1.25rem; }
-.ag-modal .modal-footer { border: none; padding: .5rem 1.5rem 1.25rem; }
-.ag-modal .form-label { font-size: .75rem; text-transform: uppercase; letter-spacing: .05em; color: #6B7280; font-weight: 600; margin-bottom: .3rem; }
-.ag-modal .form-control, .ag-modal .form-select { border-radius: 10px; border: 1.5px solid #E5E7EB; font-size: .875rem; padding: .55rem .85rem; transition: border-color .15s, box-shadow .15s; }
-.ag-modal .form-control:focus, .ag-modal .form-select:focus { border-color: #E30613; box-shadow: 0 0 0 3px rgba(227,6,19,.08); }
-';
 include 'componentes/head.php';
 include 'componentes/header.php';
 $paginaAtiva = 'agenda';
@@ -179,7 +15,7 @@ $nivelUsuarioAgenda = (int)($_SESSION['nivel'] ?? -1);
         <div class="ag-cal-header">
             <button type="button" id="btn-prev-mobile" class="ag-cal-nav"><i class="bi bi-chevron-left"></i></button>
             <div class="d-flex gap-2 align-items-center">
-                <select id="select-mes" class="form-select form-select-sm border-0 text-white text-center" style="width:auto; font-size:.82rem; font-weight:700; letter-spacing:.04em; cursor:pointer; box-shadow:none;">
+                <select id="select-mes" class="form-select form-select-sm border-0 text-white text-center sgi-inline-6eb73c6d" >
                     <option value="0">Jan</option>
                     <option value="1">Fev</option>
                     <option value="2">Mar</option>
@@ -193,7 +29,7 @@ $nivelUsuarioAgenda = (int)($_SESSION['nivel'] ?? -1);
                     <option value="10">Nov</option>
                     <option value="11">Dez</option>
                 </select>
-                <select id="select-ano" class="form-select form-select-sm border-0 text-white text-center" style="width:auto; font-size:.82rem; font-weight:700; letter-spacing:.04em; cursor:pointer; box-shadow:none;">
+                <select id="select-ano" class="form-select form-select-sm border-0 text-white text-center sgi-inline-6eb73c6d" >
                 </select>
             </div>
             <button type="button" id="btn-next-mobile" class="ag-cal-nav"><i class="bi bi-chevron-right"></i></button>
@@ -207,12 +43,12 @@ $nivelUsuarioAgenda = (int)($_SESSION['nivel'] ?? -1);
     </div>
 
     <div class="ag-filter-bar justify-content-center">
-        <div class="ag-search" style="max-width: 260px;">
+        <div class="ag-search sgi-inline-4273f5af" >
             <i class="bi bi-search"></i>
             <input type="text" id="agenda-busca-mobile" placeholder="Buscar time ou modalidade...">
         </div>
-        <select id="agenda-select-mod-mobile" class="form-select form-select-sm" style="max-width: 260px;"></select>
-        <select id="agenda-select-status-mobile" class="form-select form-select-sm" style="max-width: 260px;">
+        <select id="agenda-select-mod-mobile" class="form-select form-select-sm sgi-inline-4273f5af" ></select>
+        <select id="agenda-select-status-mobile" class="form-select form-select-sm sgi-inline-4273f5af" >
             <option value="">Todos os status</option>
             <option value="Concluido">Concluídos</option>
             <option value="andamento">Em andamento</option>
@@ -226,7 +62,7 @@ $nivelUsuarioAgenda = (int)($_SESSION['nivel'] ?? -1);
     </div>
 
     <div id="lista-eventos-mobile" class="ag-event-list"></div>
-    <div class="ag-show-all" id="container-mostrar-todos-mobile" style="display:none;">
+    <div class="ag-show-all sgi-inline-7830d708" id="container-mostrar-todos-mobile" >
         <button type="button" class="btn btn-outline-secondary" id="btn-mostrar-todos-mobile">
             <i class="bi bi-calendar3 me-1"></i>Mostrar Todos os Jogos
         </button>
@@ -250,7 +86,7 @@ $nivelUsuarioAgenda = (int)($_SESSION['nivel'] ?? -1);
                 <h2><i class="bi bi-calendar3"></i> Agenda de Jogos</h2>
                 <p>Calendário de confrontos e partidas do Interclasse</p>
             </div>
-            <span class="ag-badge-count" id="agenda-count-badge" style="display:none;">
+            <span class="ag-badge-count sgi-inline-7830d708" id="agenda-count-badge" >
                 <i class="bi bi-fire"></i> <span id="agenda-count-text">0 jogos</span>
             </span>
         </div>
@@ -260,7 +96,7 @@ $nivelUsuarioAgenda = (int)($_SESSION['nivel'] ?? -1);
                 <i class="bi bi-search"></i>
                 <input type="text" id="agenda-busca" placeholder="Buscar time ou modalidade...">
             </div>
-            <select id="agenda-select-mod" style="max-width: 280px;"></select>
+            <select id="agenda-select-mod" class="sgi-inline-5c041da1"></select>
             <select id="agenda-select-status">
                 <option value="">Todos os status</option>
                 <option value="Concluido">Concluídos</option>
@@ -277,7 +113,7 @@ $nivelUsuarioAgenda = (int)($_SESSION['nivel'] ?? -1);
         <div class="ag-desktop-grid">
             <div>
                 <div id="lista-eventos" class="ag-event-list"></div>
-                <div class="ag-show-all" id="container-mostrar-todos" style="display:none;">
+                <div class="ag-show-all sgi-inline-7830d708" id="container-mostrar-todos" >
                     <button type="button" class="btn btn-outline-secondary" id="btn-mostrar-todos">
                         <i class="bi bi-calendar3 me-1"></i>Mostrar Todos os Jogos
                     </button>
@@ -333,8 +169,8 @@ $nivelUsuarioAgenda = (int)($_SESSION['nivel'] ?? -1);
                 </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal" style="border-radius: 10px; font-weight: 600; font-size: .85rem;">Cancelar</button>
-                <button type="button" class="btn btn-danger" id="edit-jogo-salvar" style="border-radius: 10px; font-weight: 600; font-size: .85rem;">Salvar</button>
+                <button type="button" class="btn btn-outline-secondary sgi-inline-2add2726" data-bs-dismiss="modal" >Cancelar</button>
+                <button type="button" class="btn btn-danger sgi-inline-2add2726" id="edit-jogo-salvar" >Salvar</button>
             </div>
         </div>
     </div>
@@ -374,8 +210,8 @@ $nivelUsuarioAgenda = (int)($_SESSION['nivel'] ?? -1);
                 </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal" style="border-radius: 10px; font-weight: 600; font-size: .85rem;">Cancelar</button>
-                <button type="button" class="btn btn-danger" id="auto-salvar-btn" style="border-radius: 10px; font-weight: 600; font-size: .85rem;">
+                <button type="button" class="btn btn-outline-secondary sgi-inline-2add2726" data-bs-dismiss="modal" >Cancelar</button>
+                <button type="button" class="btn btn-danger sgi-inline-2add2726" id="auto-salvar-btn" >
                     <i class="bi bi-check-lg me-1"></i>Gerar e Aplicar Datas
                 </button>
             </div>
@@ -667,7 +503,7 @@ $nivelUsuarioAgenda = (int)($_SESSION['nivel'] ?? -1);
                 <h3 class="ag-event-card__title">${escapeHtml(formatNomeJogo(j.nome_jogo))}</h3>
                 <p class="ag-event-card__subtitle">
                     ${modalidadeTxt ? '<i class="bi bi-trophy-fill"></i> ' + escapeHtml(modalidadeTxt) : ''}
-                    ${localTxt ? `<span style="color:#D1D5DB;">•</span> ${localTxt}` : ''}
+                    ${localTxt ? `<span class="sgi-inline-d7556a02">•</span> ${localTxt}` : ''}
                 </p>
                 ${teamsHtml}
                 <div class="ag-event-card__actions">
