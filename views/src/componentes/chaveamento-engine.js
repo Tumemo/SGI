@@ -215,7 +215,8 @@
        Espelho de sgi_chaveamento_processar_avanco(): para cada jogo MM
        concluído, garante o vencedor no jogo-pai da fase seguinte (criando-o
        se necessário), autoconclui pais com bye implícito e gera a disputa
-       de 3º lugar quando as semifinais terminam. */
+       de 3º lugar quando as semifinais terminam. A final (MM:2) é o último
+       jogo operacional: seu vencedor é o campeão e não existe jogo MM:1. */
 
     function criarMotorAvanco(jogos, dirEquipes, contadorInicial) {
         var mapaTag = {};
@@ -247,6 +248,16 @@
             mapaId[Number(j.id_jogo)] = j;
         });
 
+        function nomeEquipeResumo(equipe) {
+            return String((equipe && (equipe.nome_equipe || equipe.nome_fantasia ||
+                equipe.nome_fantasia_turma || equipe.nome_turma)) || '').trim();
+        }
+
+        function atualizarResumoEquipes(jogo) {
+            var nomes = (jogo.equipes || []).map(nomeEquipeResumo).filter(Boolean);
+            jogo.equipes_nomes = nomes.join(' vs ');
+        }
+
         function garantirEquipe(jogo, idEquipe, teamMeta) {
             var existe = (jogo.equipes || []).some(function (e) {
                 return Number(e.id_equipe) === Number(idEquipe);
@@ -265,6 +276,7 @@
                 gols: 0,
                 _local: true
             });
+            atualizarResumoEquipes(jogo);
             return true;
         }
 
@@ -356,6 +368,14 @@
 
             var w1Obj = (jogo.equipes || []).find(function(e) { return Number(e.id_equipe) === Number(w1); });
 
+            // A grande final encerra o chaveamento. O campeão é derivado da
+            // própria final; criar MM:1 gerava uma partida solo sem ação do
+            // usuário e fazia a agenda oscilar entre offline/online.
+            if (meta.largura === 2) {
+                verificarDisputaTerceiro();
+                return;
+            }
+
             var tagIrmaoA = mmTag(meta.largura, slotIrmao(meta.slot), 'N');
             var tagIrmaoB = mmTag(meta.largura, slotIrmao(meta.slot), 'B');
             var irmao = mapaTag[tagIrmaoA] || mapaTag[tagIrmaoB];
@@ -375,13 +395,19 @@
                     : vencedorDeEquipes(irmao.equipes);
                 var w2Obj = (irmao.equipes || []).find(function(e) { return Number(e.id_equipe) === Number(w2); });
                 if (w2 !== null) {
-                    pai.equipes = [];
+                    /* Um pai já encerrado é uma partida disputada, não um
+                       contêiner para ser reconstruído a cada passagem pelos
+                       filhos. Rezerar suas equipes aqui apagava o placar
+                       lançado offline (os gols voltavam a 0x0) quando o
+                       motor era reexecutado ao reabrir a tela. A reconstrução
+                       explícita de uma fase usa `reconstruirAPartirDe` e
+                       continua podendo limpar esse pai quando necessário. */
+                    if (!jogoEncerrado(pai.status_jogo)) pai.equipes = [];
                     garantirEquipe(pai, w1, w1Obj);
                     garantirEquipe(pai, w2, w2Obj);
                 }
             }
 
-            if (meta.largura === 2) verificarDisputaTerceiro();
         }
 
         return {
@@ -576,6 +602,32 @@
                     var existente = jogosBase.filter(function (b) {
                         return b.nome_jogo === local.nome_jogo;
                     })[0];
+
+                    // Quando o servidor ainda só conhece o jogo positivo, a
+                    // linha negativa local é a fonte de verdade da partida
+                    // derivada. Sem esta substituição a árvore voltava a
+                    // apontar para o snapshot Agendado e escondia o placar
+                    // recém-lançado ao reabrir a tela offline.
+                    if (existente && Number(local.id_jogo) < 0) {
+                        var cloneLocal = JSON.parse(JSON.stringify(local));
+                        var partidasLocaisDoJogo = partidasLocais.filter(function (p) {
+                            return String(p.jogos_id_jogo) === String(local.id_jogo);
+                        });
+                        if (partidasLocaisDoJogo.length) {
+                            cloneLocal.equipes = partidasLocaisDoJogo.map(function (p) {
+                                return {
+                                    id_partida: p.id_partida != null ? p.id_partida : null,
+                                    id_equipe: Number(p.equipes_id_equipe),
+                                    gols: Number(p.resultado_partida) || 0,
+                                    nome_turma: p.nome_turma || '',
+                                    nome_fantasia: p.nome_fantasia_turma || p.nome_fantasia || '',
+                                    nome_equipe: p.nome_equipe || ''
+                                };
+                            });
+                        }
+                        jogosBase[jogosBase.indexOf(existente)] = cloneLocal;
+                        return;
+                    }
                     if (!existente) {
                         var clone = JSON.parse(JSON.stringify(local));
                         // Reanexa equipes/gols vindos das partidas locais
@@ -662,7 +714,8 @@
             concluídos RECURSIVAMENTE: insere o vencedor na chave-pai
             (MM:largura/2:floor(slot/2):N), cria o pai se não existir,
             autoconclui chaves com bye implícito, gera a disputa de 3º lugar
-            quando as semifinais terminam e segue até o nó Campeão (MM:1).
+            quando as semifinais terminam. A grande final (MM:2) é terminal:
+            o campeão é derivado dela e não há um jogo solo MM:1.
          5) PERSISTE no banco JS cada partida derivada que ainda não existia
             (id temporário negativo estável + partidas "mm_local_…", status
             'Agendado') para que a nova confrontação possa ser jogada offline.
@@ -737,6 +790,18 @@
                         base.push(JSON.parse(JSON.stringify(local)));
                         return;
                     }
+                    // Um derivado local negativo é a versão operacional mais
+                    // recente do confronto. Substituir o ID positivo do
+                    // snapshot evita que a finalização/placar seja aplicada
+                    // ao jogo remoto antigo e permite reabrir o mesmo jogo
+                    // offline com suas partidas textuais mm_local_*.
+                    if (Number(local.id_jogo) < 0) {
+                        var indiceLocal = base.indexOf(existente);
+                        base[indiceLocal] = Object.assign({}, existente, JSON.parse(JSON.stringify(local)), {
+                            id_jogo: local.id_jogo
+                        });
+                        return;
+                    }
                     existente.status_jogo = local.status_jogo || existente.status_jogo;
                     if (local.modalidades_id_modalidade != null) {
                         existente.modalidades_id_modalidade = local.modalidades_id_modalidade;
@@ -791,10 +856,14 @@
                 motor.processarConcluidos();
                 recalcularDerivados(base);
 
-                /* Próxima chave esperada do jogo finalizado */
-                var tagPai = mmTag(proximaLargura(metaAlvo.largura), slotPai(metaAlvo.slot), 'N');
-                var pai = base.filter(function (b) { return b.nome_jogo === tagPai; })[0];
-                if (!pai) return { promoveu: false, motivo: 'pai_indisponivel' };
+                /* A final é terminal: não materializar nem procurar MM:1. */
+                var ehFinal = metaAlvo.largura === 2;
+                var pai = null;
+                if (!ehFinal) {
+                    var tagPai = mmTag(proximaLargura(metaAlvo.largura), slotPai(metaAlvo.slot), 'N');
+                    pai = base.filter(function (b) { return b.nome_jogo === tagPai; })[0];
+                    if (!pai) return { promoveu: false, motivo: 'pai_indisponivel' };
+                }
 
                 /* 5) Persistência no banco JS temporário */
                 var escritas = [];
@@ -808,6 +877,15 @@
                         var rowJogo = JSON.parse(JSON.stringify(b));
                         rowJogo._local = true;
                         rowJogo._pendente = true;
+                        // A agenda renderiza o confronto pelo resumo textual,
+                        // enquanto o placar usa as linhas de `partidas`.
+                        // Persistir ambos mantém as duas telas coerentes.
+                        rowJogo.equipes_nomes = (b.equipes || []).map(function (eq) {
+                            var info = dirEquipes[Number(eq.id_equipe)] || {};
+                            return String(eq.nome_equipe || info.nome_equipe ||
+                                eq.nome_fantasia || eq.nome_fantasia_turma ||
+                                info.nome_fantasia || eq.nome_turma || info.nome_turma || '').trim();
+                        }).filter(Boolean).join(' vs ');
                         if (!rowJogo.modalidades_id_modalidade && idModalidade) {
                             rowJogo.modalidades_id_modalidade = idModalidade;
                         }
@@ -852,13 +930,23 @@
                 });
 
                 return Promise.all(escritas).then(function () {
+                    var jogoAlvoAtualizado = base.filter(function (b) { return Number(b.id_jogo) === idJogoAlvo; })[0];
+                    var vencedorFinal = vencedorDeEquipes(jogoAlvoAtualizado ? jogoAlvoAtualizado.equipes : []);
+                    if (ehFinal) {
+                        return {
+                            promoveu: true,
+                            encerrado: true,
+                            campeao: vencedorFinal,
+                            vencedor: vencedorFinal,
+                            pai: null
+                        };
+                    }
                     var displayPai = pai.eh_disputa_posicao
                         ? pai.nome_fase
                         : ((pai.nome_fase || 'Próxima fase') + ' — confronto ' + (pai.posicao_na_chave || (slotPai(metaAlvo.slot) + 1)));
-                    var jogoAlvoAtualizado = base.filter(function (b) { return Number(b.id_jogo) === idJogoAlvo; })[0];
                     return {
                         promoveu: true,
-                        vencedor: vencedorDeEquipes(jogoAlvoAtualizado ? jogoAlvoAtualizado.equipes : []),
+                        vencedor: vencedorFinal,
                         pai: {
                             id_jogo: pai.id_jogo,
                             nome_jogo: pai.nome_jogo,

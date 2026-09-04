@@ -385,6 +385,13 @@ $paginaAtiva = 'dashboard';
 </div>
 
 <script>
+    // A SPA pode remontar esta tela várias vezes. Descarte a instância
+    // anterior antes de registrar novos timers/listeners.
+    if (typeof window.__SGI_TELA_CLEANUP__ === 'function') {
+        try { window.__SGI_TELA_CLEANUP__(); } catch (_) {}
+        window.__SGI_TELA_CLEANUP__ = null;
+    }
+
     var params = new URLSearchParams(window.location.search);
     var idJogo = params.get('id_jogo') ? parseInt(params.get('id_jogo'), 10) : null;
 
@@ -448,6 +455,28 @@ $paginaAtiva = 'dashboard';
     let ehIndividual = false;
     let indParticipantes = [];
     let indRankingAtual = [];
+    var __sgiPlacarCiclo = 0;
+
+    var __sgiPlacarClickHandler = null;
+    var __sgiPlacarCleanup = function() {
+        // Invalida todas as leituras assíncronas da montagem que está saindo.
+        // Uma resposta antiga nunca poderá pintar a próxima tela.
+        __sgiPlacarCiclo++;
+        pararTimer();
+        Object.keys(saveTimers || {}).forEach(function(key) {
+            try { clearTimeout(saveTimers[key]); } catch (_) {}
+        });
+        saveTimers = {};
+        if (window.__SGI_PLACAR_SYNC_UNSUB__) {
+            try { window.__SGI_PLACAR_SYNC_UNSUB__(); } catch (_) {}
+            window.__SGI_PLACAR_SYNC_UNSUB__ = null;
+        }
+        if (__sgiPlacarClickHandler) {
+            document.removeEventListener('click', __sgiPlacarClickHandler);
+            __sgiPlacarClickHandler = null;
+        }
+    };
+    window.__SGI_TELA_CLEANUP__ = __sgiPlacarCleanup;
 
     function formatNomeJogo(nomeJogo) {
         const mm = (nomeJogo || '').match(/^MM:(\d+):(\d+):([NB])$/);
@@ -465,9 +494,11 @@ $paginaAtiva = 'dashboard';
 
     function nomeEquipe(p) {
         if (!p) return 'Equipe';
+        // Duas equipes diferentes podem pertencer à mesma turma. O placar
+        // precisa identificá-las pelo nome da equipe; a turma é apenas fallback.
+        if (p.nome_equipe && String(p.nome_equipe).trim()) return p.nome_equipe;
         if (p.nome_fantasia_turma && String(p.nome_fantasia_turma).trim()) return p.nome_fantasia_turma;
         if (p.nome_turma && String(p.nome_turma).trim()) return p.nome_turma;
-        if (p.nome_equipe && String(p.nome_equipe).trim()) return p.nome_equipe;
         return 'Equipe ' + (p.equipes_id_equipe || '');
     }
 
@@ -983,6 +1014,28 @@ $paginaAtiva = 'dashboard';
             alert('Sem conexão com o servidor. Tente novamente quando estiver online.');
             return;
         }
+
+        /* O botão +/- usa um debounce de 400 ms para reduzir gravações. Ao
+           encerrar imediatamente depois do último clique, esse timer ainda
+           pode estar pendente e uma escrita antiga (0x0) pode chegar depois
+           da projeção do POST de finalização. Drene o debounce e persista o
+           placar final antes de enfileirar/promover o jogo; assim a leitura
+           seguinte do mesmo jogo sempre parte do valor definitivo. */
+        Object.keys(saveTimers || {}).forEach(function(key) {
+            try { clearTimeout(saveTimers[key]); } catch (_) {}
+        });
+        saveTimers = {};
+        if (window.SGIDataLayer && typeof window.SGIDataLayer.upsert === 'function') {
+            await Promise.all(resultados.map(function(r) {
+                var partida = (partidasLista || []).find(function(p) {
+                    return parseInt(p.equipes_id_equipe, 10) === Number(r.id_equipe);
+                });
+                if (!partida || partida.id_partida == null) return Promise.resolve();
+                partida.resultado_partida = Number(r.gols) || 0;
+                return window.SGIDataLayer.upsert('partidas', partida.id_partida,
+                    Object.assign({}, partida, { resultado_partida: partida.resultado_partida, _pendente: true }));
+            }));
+        }
         var urlAbsoluta;
         try { urlAbsoluta = new URL(API + 'lancar_resultado.php', location.href).href; }
         catch (_) { urlAbsoluta = API + 'lancar_resultado.php'; }
@@ -1026,10 +1079,10 @@ $paginaAtiva = 'dashboard';
             if (window.SGIChaveamento && typeof window.SGIChaveamento.promoverVencedorLocal === 'function') {
                 try {
                     var r = await window.SGIChaveamento.promoverVencedorLocal(idJogo);
-                    if (!r || !r.promoveu || !r.pai) {
+                    if (!r || !r.promoveu) {
                         alert('Jogo encerrado offline! Resultado salvo neste dispositivo e será enviado ao servidor quando a conexão voltar.');
-                    } else if (r.pai.eh_campeao && r.pai.status_jogo === 'Concluido') {
-                        alert('Campeão definido offline: a árvore foi concluída neste dispositivo. Tudo será sincronizado com o servidor.');
+                    } else if (r.encerrado) {
+                        alert('Campeão definido offline: a final foi concluída neste dispositivo. Tudo será sincronizado com o servidor.');
                     } else if (r.pai.formada) {
                         alert('Vencedor avançou! Nova partida liberada: ' + r.pai.nome_display + '.');
                     } else {
@@ -1049,11 +1102,17 @@ $paginaAtiva = 'dashboard';
 
     /* Carrega do banco JS temporário uma partida derivada offline (id < 0),
        tornando-a jogável no placar sem qualquer contato com o servidor. */
-    async function carregarJogoLocalTemporario() {
+    function placarContinuaAtivo(ciclo) {
+        var grid = document.getElementById('placar-grid');
+        return ciclo === __sgiPlacarCiclo && !!(grid && grid.isConnected);
+    }
+
+    async function carregarJogoLocalTemporario(ciclo) {
         var DL = window.SGIDataLayer;
         if (!DL || typeof DL.read !== 'function') return false;
         try {
             var jogos = await DL.read('jogos');
+            if (!placarContinuaAtivo(ciclo)) return false;
             var row = jogos.filter(function(j) { return Number(j.id_jogo) === idJogo; })[0];
             if (!row) return false;
 
@@ -1061,6 +1120,7 @@ $paginaAtiva = 'dashboard';
             if (!estadoJogo.nome_modalidade) estadoJogo.nome_modalidade = '';
 
             var modalidades = await DL.read('modalidades').catch(function() { return []; });
+            if (!placarContinuaAtivo(ciclo)) return false;
             if (Array.isArray(modalidades) && estadoJogo.modalidades_id_modalidade) {
                 var mod = modalidades.find(function(m) { return Number(m.id_modalidade) === Number(estadoJogo.modalidades_id_modalidade); });
                 if (mod) {
@@ -1069,6 +1129,7 @@ $paginaAtiva = 'dashboard';
                 }
             }
             var locais = await DL.read('locais').catch(function() { return []; });
+            if (!placarContinuaAtivo(ciclo)) return false;
             if (Array.isArray(locais)) {
                 if (estadoJogo.locais_id_local) {
                     var loc = locais.find(function(l) { return Number(l.id_local) === Number(estadoJogo.locais_id_local); });
@@ -1080,6 +1141,7 @@ $paginaAtiva = 'dashboard';
             }
 
             var todasPartidas = await DL.read('partidas');
+            if (!placarContinuaAtivo(ciclo)) return false;
             partidasLista = todasPartidas.filter(function(p) {
                 return String(p.jogos_id_jogo) === String(idJogo);
             });
@@ -1100,6 +1162,7 @@ $paginaAtiva = 'dashboard';
             }
 
             await enriquecerPartidasComTurmas();
+            if (!placarContinuaAtivo(ciclo)) return false;
             ehIndividual = false;
             duracaoJogo = parseInt(estadoJogo.duracao_jogo, 10) || (20 * 60);
             tempoRestante = duracaoJogo;
@@ -1122,6 +1185,7 @@ $paginaAtiva = 'dashboard';
         var grid = document.getElementById('placar-grid');
         var titulo = document.getElementById('placar-titulo-jogo');
         var statusEl = document.getElementById('mc-status-badge');
+        if (!meta || !acoes || !grid || !titulo) return;
 
         titulo.textContent = formatNomeJogo(estadoJogo ? estadoJogo.nome_jogo : '') || 'Placar';
         meta.textContent = [
@@ -1282,7 +1346,10 @@ $paginaAtiva = 'dashboard';
             void el.offsetWidth;
             el.classList.add('score-animate');
         }
-        agendarSalvarPartida(parseInt(p.id_partida, 10), g);
+        // Partidas derivadas usam IDs textuais (mm_local_*). Preservar o
+        // identificador original evita transformá-lo em NaN e perder a
+        // alteração no IndexedDB.
+        agendarSalvarPartida(p.id_partida, g);
 
         if (delta > 0 && ehFutsal()) {
             var idEquipe = parseInt(p.equipes_id_equipe, 10);
@@ -1450,12 +1517,14 @@ $paginaAtiva = 'dashboard';
         }
     }
 
-    async function carregarDados() {
+    async function carregarDados(ciclo) {
+        if (ciclo == null) ciclo = ++__sgiPlacarCiclo;
         pararTimer();
         idJogo = obterIdJogoAtual();
         var err = document.getElementById('placar-erro');
         var load = document.getElementById('placar-loading');
         var cont = document.getElementById('placar-conteudo');
+        if (!err || !load || !cont || !placarContinuaAtivo(ciclo)) return;
         err.classList.add('d-none');
         load.classList.remove('d-none');
         cont.classList.add('d-none');
@@ -1472,7 +1541,8 @@ $paginaAtiva = 'dashboard';
            e podem ser jogadas normalmente — carregamos direto das tabelas
            locais. Só não há dados auxiliares (ocorrências/artilheiro). */
         if (idJogo < 0) {
-            var carregou = await carregarJogoLocalTemporario();
+            var carregou = await carregarJogoLocalTemporario(ciclo);
+            if (!placarContinuaAtivo(ciclo)) return;
             if (!carregou) {
                 load.classList.add('d-none');
                 err.textContent = 'Esta partida foi gerada offline, mas ainda não está disponível neste dispositivo. Sincronize para receber o jogo definitivo.';
@@ -1483,6 +1553,7 @@ $paginaAtiva = 'dashboard';
 
         try {
             var lista = await fetchJson(API + 'jogos.php?id_jogo=' + idJogo);
+            if (!placarContinuaAtivo(ciclo)) return;
             if (!Array.isArray(lista) || lista.length === 0) throw new Error('Jogo não encontrado.');
             estadoJogo = lista[0];
             if (!estadoJogo.nome_modalidade) estadoJogo.nome_modalidade = '';
@@ -1491,13 +1562,16 @@ $paginaAtiva = 'dashboard';
             }
 
             partidasLista = await fetchJson(API + 'partidas.php?id_jogo=' + idJogo);
+            if (!placarContinuaAtivo(ciclo)) return;
             if (!Array.isArray(partidasLista)) partidasLista = [];
             await enriquecerPartidasComTurmas();
+            if (!placarContinuaAtivo(ciclo)) return;
             precarregarDadosOffline();
 
             ehIndividual = /^IND:\d+$/.test(estadoJogo.nome_jogo || '') || parseInt(estadoJogo.tipos_modalidades_id_tipo_modalidade, 10) === 2;
             if (ehIndividual) {
                 await carregarIndDados();
+                if (!placarContinuaAtivo(ciclo)) return;
             }
 
             // Restaurar duração do jogo do servidor
@@ -1540,12 +1614,14 @@ $paginaAtiva = 'dashboard';
             renderTudo();
 
             if (ehFutsal()) {
-                iniciarArtilheiro();
+                iniciarArtilheiro(ciclo);
             }
-            iniciarOcorrencias();
+            iniciarOcorrencias(ciclo);
             acompanharSincronizacaoPlacar();
         } catch (e) {
-            var okLocal = await carregarJogoLocalTemporario();
+            if (!placarContinuaAtivo(ciclo)) return;
+            var okLocal = await carregarJogoLocalTemporario(ciclo);
+            if (!placarContinuaAtivo(ciclo)) return;
             if (!okLocal) {
                 load.classList.add('d-none');
                 err.textContent = e.message || 'Erro ao carregar.';
@@ -1554,10 +1630,11 @@ $paginaAtiva = 'dashboard';
         }
     }
 
-    function iniciarOcorrencias() {
+    function iniciarOcorrencias(ciclo) {
         var section = document.getElementById('ocorrencias-section');
+        if (!section || !section.isConnected) return;
         section.classList.remove('d-none');
-        carregarOcorrencias();
+        carregarOcorrencias(ciclo);
         carregarTurmasOcorrencia();
     }
 
@@ -1584,6 +1661,7 @@ $paginaAtiva = 'dashboard';
 
     function carregarTurmasOcorrencia() {
         var select = document.getElementById('filtroTurmaOcorrencia');
+        if (!select || !select.isConnected) return;
         select.innerHTML = '<option value="">Selecione a turma</option>';
         var vistas = {};
         partidasLista.forEach(function(p) {
@@ -1597,8 +1675,10 @@ $paginaAtiva = 'dashboard';
         });
     }
 
-    async function carregarAlunosOcorrencia() {
+    async function carregarAlunosOcorrencia(ciclo) {
+        var cicloLocal = ciclo == null ? __sgiPlacarCiclo : ciclo;
         var select = document.getElementById('selectAlunoOcorrencia');
+        if (!select || !select.isConnected || !placarContinuaAtivo(cicloLocal)) return;
         var idTurma = document.getElementById('filtroTurmaOcorrencia').value;
         if (!idTurma) {
             select.value = '';
@@ -1610,6 +1690,7 @@ $paginaAtiva = 'dashboard';
         select.innerHTML = '<option value="">Carregando...</option>';
         try {
             var data = await fetchJson(API + 'ocorrencias.php?acao=listar_atletas&id_jogo=' + idJogo + '&id_turma=' + idTurma);
+            if (!placarContinuaAtivo(cicloLocal) || !select.isConnected || document.getElementById('selectAlunoOcorrencia') !== select) return;
             var alunos = data.success && Array.isArray(data.atletas) ? data.atletas : [];
             select.innerHTML = '<option value="">Selecione o(a) aluno(a)</option>';
             alunos.forEach(function(a) {
@@ -1617,8 +1698,10 @@ $paginaAtiva = 'dashboard';
             });
             select.disabled = false;
         } catch (e) {
-            select.innerHTML = '<option value="">Erro ao carregar alunos</option>';
-            select.disabled = false;
+            if (placarContinuaAtivo(cicloLocal) && select && select.isConnected) {
+                select.innerHTML = '<option value="">Erro ao carregar alunos</option>';
+                select.disabled = false;
+            }
         }
     }
 
@@ -1626,10 +1709,13 @@ $paginaAtiva = 'dashboard';
         return (desc || '').replace(/\[JOGO:\d+\]/g, '').replace(/\[TURMA:\d+\]/g, '').trim();
     }
 
-    async function carregarOcorrencias() {
+    async function carregarOcorrencias(ciclo) {
+        var cicloLocal = ciclo == null ? __sgiPlacarCiclo : ciclo;
         var container = document.getElementById('lista-ocorrencias');
+        if (!container || !container.isConnected || !placarContinuaAtivo(cicloLocal)) return;
         try {
             var data = await fetchJson(API + 'ocorrencias.php?id_jogo=' + idJogo + '&data=' + (estadoJogo.data_jogo || ''));
+            if (!placarContinuaAtivo(cicloLocal) || !container.isConnected || document.getElementById('lista-ocorrencias') !== container) return;
             var lista = Array.isArray(data) ? data : [];
             var countEl = document.getElementById('mc-occ-count');
             if (countEl) countEl.textContent = lista.length;
@@ -1677,7 +1763,9 @@ $paginaAtiva = 'dashboard';
                 '</div>';
             }).join('');
         } catch (e) {
-            container.innerHTML = '<div class="mc-timeline-empty mc-timeline-empty--error"><i class="bi bi-exclamation-circle"></i><p>Erro ao carregar ocorrências.</p></div>';
+            if (placarContinuaAtivo(cicloLocal) && container && container.isConnected) {
+                container.innerHTML = '<div class="mc-timeline-empty mc-timeline-empty--error"><i class="bi bi-exclamation-circle"></i><p>Erro ao carregar ocorrências.</p></div>';
+            }
         }
     }
 
@@ -1867,10 +1955,12 @@ $paginaAtiva = 'dashboard';
         }
     }
 
-    function iniciarArtilheiro() {
-        document.getElementById('artilheiro-section').classList.remove('d-none');
+    function iniciarArtilheiro(ciclo) {
+        var section = document.getElementById('artilheiro-section');
+        if (!section || !section.isConnected) return;
+        section.classList.remove('d-none');
         carregarEquipesArtilheiro();
-        carregarArtilheiros();
+        carregarArtilheiros(ciclo);
     }
 
     // Quando uma mutação offline é confirmada pelo servidor, atualiza as
@@ -1893,11 +1983,13 @@ $paginaAtiva = 'dashboard';
         });
     }
 
-    async function carregarArtilheiros() {
+    async function carregarArtilheiros(ciclo) {
+        var cicloLocal = ciclo == null ? __sgiPlacarCiclo : ciclo;
         var cards = document.getElementById('artilheiro-cards');
-        if (!cards) return;
+        if (!cards || !cards.isConnected || !placarContinuaAtivo(cicloLocal)) return;
         try {
             var data = await fetchJson(API + 'artilheiro.php?id_jogo=' + idJogo);
+            if (!placarContinuaAtivo(cicloLocal) || !cards.isConnected || document.getElementById('artilheiro-cards') !== cards) return;
             if (!Array.isArray(data) || data.length === 0) {
                 cards.innerHTML = '<div class="mc-artilheiro-empty"><i class="bi bi-trophy"></i><p>Nenhum gol registrado ainda.</p></div>';
                 return;
@@ -1919,20 +2011,25 @@ $paginaAtiva = 'dashboard';
             });
             cards.innerHTML = html;
         } catch (e) {
-            cards.innerHTML = '<div class="mc-artilheiro-empty"><i class="bi bi-exclamation-circle"></i><p>Erro ao carregar artilharia.</p></div>';
+            if (placarContinuaAtivo(cicloLocal) && cards && cards.isConnected) {
+                cards.innerHTML = '<div class="mc-artilheiro-empty"><i class="bi bi-exclamation-circle"></i><p>Erro ao carregar artilharia.</p></div>';
+            }
         }
     }
 
     async function carregarEquipesArtilheiro() {
         var select = document.getElementById('selectEquipeArtilheiro');
+        if (!select || !select.isConnected) return;
         select.innerHTML = '<option value="">Selecione a equipe</option>';
         partidasLista.forEach(function(p) {
             select.innerHTML += '<option value="' + p.equipes_id_equipe + '">' + esc(nomeEquipe(p)) + '</option>';
         });
     }
 
-    async function carregarAlunosArtilheiro() {
+    async function carregarAlunosArtilheiro(ciclo) {
+        var cicloLocal = ciclo == null ? __sgiPlacarCiclo : ciclo;
         var select = document.getElementById('selectAlunoArtilheiro');
+        if (!select || !select.isConnected || !placarContinuaAtivo(cicloLocal)) return;
         var idEquipe = document.getElementById('selectEquipeArtilheiro').value;
         if (!idEquipe) {
             select.innerHTML = '<option value="">Selecione uma equipe primeiro</option>';
@@ -1944,6 +2041,7 @@ $paginaAtiva = 'dashboard';
             if (!p) throw new Error('Equipe não encontrada');
             var idTurma = p.id_turma;
             var data = await fetchJson(API + 'ocorrencias.php?acao=listar_atletas&id_jogo=' + idJogo + '&id_turma=' + idTurma);
+            if (!placarContinuaAtivo(cicloLocal) || !select.isConnected || document.getElementById('selectAlunoArtilheiro') !== select) return;
             var alunos = data.success && Array.isArray(data.atletas) ? data.atletas : [];
             select.innerHTML = '<option value="">Selecione o(a) jogador(a)</option>';
             alunos.forEach(function(a) {
@@ -1953,7 +2051,9 @@ $paginaAtiva = 'dashboard';
                 select.innerHTML = '<option value="">Nenhum jogador disponível</option>';
             }
         } catch (e) {
-            select.innerHTML = '<option value="">Erro ao carregar jogadores</option>';
+            if (placarContinuaAtivo(cicloLocal) && select && select.isConnected) {
+                select.innerHTML = '<option value="">Erro ao carregar jogadores</option>';
+            }
         }
     }
 
@@ -2056,21 +2156,46 @@ $paginaAtiva = 'dashboard';
         }, 8000);
     }
 
-    document.addEventListener('DOMContentLoaded', function() {
-        carregarDados();
-    });
-
-    document.addEventListener('click', function(e) {
-        var opt = e.target.closest('.ocorrencia-tipo-option');
-        if (opt) {
-            document.querySelectorAll('.ocorrencia-tipo-option').forEach(function(el) {
-                el.classList.remove('active');
+    function prepararFechamentoAcessivelModais() {
+        ['modalArtilheiro', 'modalOcorrencia'].forEach(function(idModal) {
+            var modal = document.getElementById(idModal);
+            if (!modal || modal.dataset.sgiFocoSeguro === '1') return;
+            modal.dataset.sgiFocoSeguro = '1';
+            modal.addEventListener('hide.bs.modal', function() {
+                var foco = document.activeElement;
+                if (foco && modal.contains(foco) && typeof foco.blur === 'function') {
+                    foco.blur();
+                }
             });
-            opt.classList.add('active');
-            var radio = opt.querySelector('input[type="radio"]');
-            if (radio) radio.checked = true;
+        });
+    }
+
+    function ativarTelaPlacar() {
+        prepararFechamentoAcessivelModais();
+
+        // A tela pode voltar de uma montagem já existente. Nesse caso o
+        // script não é reinjetado; reanexar o listener e registrar a limpeza
+        // aqui evita que a segunda saída deixe timers/callbacks ativos.
+        if (!__sgiPlacarClickHandler) {
+            __sgiPlacarClickHandler = function(e) {
+                var opt = e.target.closest('.ocorrencia-tipo-option');
+                if (opt) {
+                    document.querySelectorAll('.ocorrencia-tipo-option').forEach(function(el) {
+                        el.classList.remove('active');
+                    });
+                    opt.classList.add('active');
+                    var radio = opt.querySelector('input[type="radio"]');
+                    if (radio) radio.checked = true;
+                }
+            };
+            document.addEventListener('click', __sgiPlacarClickHandler);
         }
-    });
+        window.__SGI_TELA_CLEANUP__ = __sgiPlacarCleanup;
+        var ciclo = ++__sgiPlacarCiclo;
+        carregarDados(ciclo);
+    }
+
+    document.addEventListener('DOMContentLoaded', ativarTelaPlacar);
 </script>
 
 <?php

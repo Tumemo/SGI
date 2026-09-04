@@ -91,5 +91,9 @@ class FullOfflineTournamentTest
 
         Assertions::assert("Confronto da Grande Final (MM:2:0:N) presente no MySQL", $jogoFinal !== null);
         Assertions::assert("Grande Final marcada como Concluído no MySQL", ($jogoFinal['status_jogo'] ?? '') === 'Concluido' || ($jogoFinal['status_jogo'] ?? '') === 'Finalizado');
+        Assertions::assert("Campeão derivado diretamente da Grande Final", !empty($jogoFinal['equipe_vencedora_id']));
+
+        $jogosSolo = array_filter($jogos, static fn($j) => preg_match('/^MM:1:/', (string) ($j['nome_jogo'] ?? '')));
+        Assertions::assert("Nenhum jogo solo MM:1 criado automaticamente", count($jogosSolo) === 0);
     }
 }

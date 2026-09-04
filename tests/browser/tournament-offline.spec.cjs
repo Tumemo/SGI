@@ -14,8 +14,15 @@ async function capturarTela(page, testInfo, nome) {
 }
 
 function nomeEquipeExibida(partida) {
-    return [partida && partida.nome_fantasia_turma, partida && partida.nome_fantasia,
-        partida && partida.nome_turma, partida && partida.nome_equipe]
+    return [partida && partida.nome_equipe, partida && partida.nome_fantasia_turma,
+        partida && partida.nome_fantasia, partida && partida.nome_turma]
+        .map((valor) => String(valor || '').trim())
+        .find(Boolean) || '';
+}
+
+function nomeEquipeAgenda(partida) {
+    return [partida && partida.nome_equipe, partida && partida.nome_fantasia,
+        partida && partida.nome_fantasia_turma, partida && partida.nome_turma]
         .map((valor) => String(valor || '').trim())
         .find(Boolean) || '';
 }
@@ -51,8 +58,9 @@ async function criarChaveFixture(request) {
         data: { matricula: 'admin', senha: '123' }
     }), 'login administrativo do fixture');
 
-    // Uma edição nova mantém o cenário isolado dos jogos existentes e garante
-    // quatro equipes reais na modalidade escolhida.
+    // Uma edição nova mantém o cenário isolado dos jogos existentes. O teste
+    // completa a modalidade até oito equipes para exercitar quatro quartas,
+    // duas semifinais e a final (sete jogos operados).
     const nomeEdicao = `E2E Torneio Offline ${Date.now()}`;
     const edicao = await jsonOrThrow(await request.post('api/interclasse.php', {
         data: { nome_interclasse: nomeEdicao, ano_interclasse: new Date().toISOString().slice(0, 10) }
@@ -83,9 +91,34 @@ async function criarChaveFixture(request) {
         throw new Error('O fixture precisa de uma modalidade mata-mata com quatro equipes.');
     }
 
+    const equipesBase = equipes.slice();
+    while (equipes.length < 8) {
+        const origem = equipesBase[(equipes.length - equipesBase.length) % equipesBase.length];
+        const criada = await jsonOrThrow(await request.post('api/equipes.php', {
+            data: {
+                acao: 'criar_equipe',
+                modalidades_id_modalidade: Number(modalidade.id_modalidade),
+                turmas_id_turma: Number(origem.turmas_id_turma),
+                nome_equipe: `Equipe E2E ${equipes.length + 1} ${Date.now()}`,
+                status_equipe: '1'
+            }
+        }), `criação da equipe ${equipes.length + 1}`);
+        if (!criada.success || !Number(criada.id_equipe)) {
+            throw new Error(`Equipe adicional não foi criada: ${JSON.stringify(criada)}`);
+        }
+        equipes.push({
+            ...origem,
+            id_equipe: Number(criada.id_equipe),
+            nome_equipe: criada.nome_equipe
+        });
+    }
+    equipes = equipes.slice(0, 8);
+
     const jogos = [
-        { tag: 'MM:4:0:N', a: equipes[0], b: equipes[1] },
-        { tag: 'MM:4:1:N', a: equipes[2], b: equipes[3] }
+        { tag: 'MM:8:0:N', a: equipes[0], b: equipes[1] },
+        { tag: 'MM:8:1:N', a: equipes[2], b: equipes[3] },
+        { tag: 'MM:8:2:N', a: equipes[4], b: equipes[5] },
+        { tag: 'MM:8:3:N', a: equipes[6], b: equipes[7] }
     ];
     // Esta rota grava os jogos e suas partidas na mesma transação, exatamente
     // como o gerador de chaveamento da aplicação.
@@ -119,14 +152,21 @@ async function criarChaveFixture(request) {
             await request.get(`api/partidas.php?id_jogo=${idJogo}`),
             `partidas da fixture ${jogo.tag}`
         );
-        detalhes[jogo.tag] = { jogo: encontrado, partidas };
+        detalhes[jogo.tag] = {
+            jogo: encontrado,
+            partidas: partidas.map((partida) => {
+                const equipe = equipes.find((item) =>
+                    Number(item.id_equipe) === Number(partida.equipes_id_equipe)
+                );
+                return { ...partida, nome_equipe: partida.nome_equipe || equipe?.nome_equipe || '' };
+            })
+        };
     }
 
     return {
         idInterclasse,
         idModalidade: Number(modalidade.id_modalidade),
-        equipeSf1: Number(equipes[0].id_equipe),
-        equipeSf2: Number(equipes[2].id_equipe),
+        equipes,
         ids,
         detalhes
     };
@@ -139,7 +179,12 @@ async function abrirJogo(page, idJogo, esperado, opcoes = {}) {
         }
         window.__SGI_SPA__.navegarPara('jogos', { id_jogo: id, origem: 'agenda_edit' });
     }, idJogo);
+    await expect.poll(() => {
+        const atual = new URL(page.url());
+        return atual.searchParams.get('id_jogo');
+    }, { timeout: 20_000 }).toBe(String(idJogo));
     await expect(page.locator('#placar-grid')).toBeVisible({ timeout: 20_000 });
+    await expect(page.locator('#placar-titulo-jogo')).not.toHaveText('Placar', { timeout: 20_000 });
     if (esperado) await validarDadosJogoOffline(page, esperado, opcoes);
 }
 
@@ -153,6 +198,62 @@ async function esperarJogoLocal(page, tag, predicate) {
         if (regra === 'campeao') return Number(jogo.id_jogo) < 0 && /Concluido|Finalizado/.test(String(jogo.status_jogo));
         return true;
     }, { tag, predicate })).toBe(true);
+}
+
+async function obterJogoLocal(page, tag) {
+    return page.evaluate(async (nome) => {
+        const jogos = await window.SGIDataLayer.read('jogos');
+        return jogos.find((item) => String(item.nome_jogo) === String(nome)) || null;
+    }, tag);
+}
+
+async function esperarDetalheServidor(request, idModalidade, tag, equipes = []) {
+    let jogo = null;
+    await expect.poll(async () => {
+        const lista = await jsonOrThrow(
+            await request.get(`api/jogos.php?id_modalidade=${idModalidade}`),
+            `consulta online de ${tag}`
+        );
+        jogo = lista.find((item) => String(item.nome_jogo) === String(tag)) || null;
+        return Boolean(jogo && Number(jogo.id_jogo));
+    }, { timeout: 30_000 }).toBe(true);
+    const partidas = await jsonOrThrow(
+        await request.get(`api/partidas.php?id_jogo=${Number(jogo.id_jogo)}`),
+        `partidas online de ${tag}`
+    );
+    return {
+        jogo,
+        partidas: partidas.map((partida) => {
+            const equipe = equipes.find((item) =>
+                Number(item.id_equipe) === Number(partida.equipes_id_equipe)
+            );
+            return equipe ? { ...partida, nome_equipe: equipe.nome_equipe } : partida;
+        })
+    };
+}
+
+async function entrarComoMesario(page) {
+    await page.goto('views/index.php', { waitUntil: 'domcontentloaded' });
+    await expect(page.locator('#form_desktop')).toBeVisible();
+    await page.locator('#form_desktop .ipt-matricula').fill('mesario');
+    await page.locator('#form_desktop .ipt-senha').fill('123');
+    await page.locator('#form_desktop button[type="submit"]').click();
+    await page.waitForURL(/\/dashboard\.php\?id=\d+/, { waitUntil: 'domcontentloaded' });
+    await expect(page.locator('body')).not.toContainText('Download parcial');
+}
+
+async function validarConfrontoNaAgenda(page, idInterclasse, titulo, nomes) {
+    await page.evaluate(({ id }) => {
+        window.__SGI_SPA__.navegarPara('agenda', { id });
+    }, { id: idInterclasse });
+    await expect(page.locator('#lista-eventos')).toBeVisible({ timeout: 20_000 });
+    const card = page.locator('#lista-eventos .ag-event-card').filter({
+        has: page.getByRole('heading', { name: titulo, exact: true })
+    }).first();
+    await expect(card).toBeVisible();
+    for (const nome of nomes) await expect(card).toContainText(nome);
+    await expect(card.locator('.ag-event-card__teams')).toBeVisible();
+    return card;
 }
 
 async function marcarPartida(page, pontos) {
@@ -180,78 +281,210 @@ async function marcarPartida(page, pontos) {
     await expect(page.locator('#mc-status-badge')).toContainText('Encerrado');
 }
 
-test.describe('Mesário — torneio completo com vários jogos offline', () => {
-    test('joga duas semifinais e a final sem rede e sincroniza o campeão', async ({ page, context, request }, testInfo) => {
-        test.setTimeout(240_000);
+test.describe.serial('Mesário — torneio completo online e offline', () => {
+    test('conclui online quatro quartas, duas semifinais e a final', async ({ page, request }, testInfo) => {
+        test.setTimeout(300_000);
+        const fixture = await criarChaveFixture(request);
+        const pageErrors = [];
+        const ariaWarnings = [];
+        page.on('dialog', async (dialog) => dialog.accept());
+        page.on('pageerror', (error) => pageErrors.push(error.message));
+        page.on('console', (message) => {
+            if (/Blocked aria-hidden/i.test(message.text())) ariaWarnings.push(message.text());
+        });
+
+        await entrarComoMesario(page);
+        await expect(page.locator('#sgi-offline-ok')).toContainText('Pronto para uso offline', { timeout: 120_000 });
+        await expect.poll(() => page.evaluate(() => window.__SGI_SPA__ && window.__SGI_SPA__.status()), { timeout: 120_000 })
+            .toMatchObject({ pronto: true, preloading: false });
+        await capturarTela(page, testInfo, '01-online-preparado');
+
+        const quartas = ['MM:8:0:N', 'MM:8:1:N', 'MM:8:2:N', 'MM:8:3:N'];
+        for (let i = 0; i < quartas.length; i += 1) {
+            const tag = quartas[i];
+            await abrirJogo(page, fixture.ids[tag], fixture.detalhes[tag]);
+            await marcarPartida(page, (i % 2) + 1);
+        }
+
+        const semi1 = await esperarDetalheServidor(request, fixture.idModalidade, 'MM:4:0:N', fixture.equipes);
+        const semi2 = await esperarDetalheServidor(request, fixture.idModalidade, 'MM:4:1:N', fixture.equipes);
+        expect(semi1.partidas).toHaveLength(2);
+        expect(semi2.partidas).toHaveLength(2);
+        await abrirJogo(page, Number(semi1.jogo.id_jogo), semi1);
+        await marcarPartida(page, 1);
+        await abrirJogo(page, Number(semi2.jogo.id_jogo), semi2);
+        await marcarPartida(page, 2);
+
+        const final = await esperarDetalheServidor(request, fixture.idModalidade, 'MM:2:0:N', fixture.equipes);
+        expect(final.partidas).toHaveLength(2);
+        const campeaoOnlineEsperado = Number(final.partidas[0].equipes_id_equipe);
+        await abrirJogo(page, Number(final.jogo.id_jogo), final);
+        await marcarPartida(page, 3);
+        await capturarTela(page, testInfo, '02-online-campeao');
+
+        const arvore = await jsonOrThrow(
+            await request.get(`api/chaveamento.php?id_modalidade=${fixture.idModalidade}`),
+            'árvore final online'
+        );
+        const porTag = Object.fromEntries((arvore.jogos || []).map((jogo) => [jogo.nome_jogo, jogo]));
+        for (const tag of [...quartas, 'MM:4:0:N', 'MM:4:1:N', 'MM:2:0:N']) {
+            expect(porTag[tag]).toBeTruthy();
+            expect(porTag[tag].status_jogo).toMatch(/Concluido|Finalizado/);
+        }
+        expect(porTag['MM:1:0:N']).toBeUndefined();
+        expect(Number(porTag['MM:2:0:N'].equipe_vencedora_id)).toBe(campeaoOnlineEsperado);
+        expect(pageErrors).toEqual([]);
+        expect(ariaWarnings).toEqual([]);
+    });
+
+    test('joga sete partidas sem rede, mostra os times da final e sincroniza o campeão', async ({ page, context, request }, testInfo) => {
+        test.setTimeout(360_000);
         const fixture = await criarChaveFixture(request);
         const dialogs = [];
         const pageErrors = [];
+        const ariaWarnings = [];
         page.on('dialog', async (dialog) => {
             dialogs.push(dialog.message());
             await dialog.accept();
         });
         page.on('pageerror', (error) => pageErrors.push(error.message));
+        page.on('console', (message) => {
+            if (/Blocked aria-hidden/i.test(message.text())) ariaWarnings.push(message.text());
+        });
 
-        await page.goto('views/index.php', { waitUntil: 'domcontentloaded' });
-        await expect(page.locator('#form_desktop')).toBeVisible();
-        await page.locator('#form_desktop .ipt-matricula').fill('mesario');
-        await page.locator('#form_desktop .ipt-senha').fill('123');
-        await page.locator('#form_desktop button[type="submit"]').click();
-        await page.waitForURL(/\/dashboard\.php\?id=\d+/, { waitUntil: 'domcontentloaded' });
-        await expect(page.locator('body')).not.toContainText('Download parcial');
+        await entrarComoMesario(page);
         await expect(page.locator('#sgi-offline-ok')).toContainText('Pronto para uso offline', { timeout: 120_000 });
-        // O selo pode permanecer visível de uma sessão anterior enquanto uma
-        // nova atualização ainda está em andamento. Só desligamos a rede
-        // depois que o estado interno confirmar que o preload terminou.
         await expect.poll(() => page.evaluate(() => window.__SGI_SPA__ && window.__SGI_SPA__.status()), { timeout: 120_000 })
             .toMatchObject({ pronto: true, preloading: false });
-        await capturarTela(page, testInfo, '01-torneio-preparado-online');
+        await capturarTela(page, testInfo, '01-offline-preparado-online');
 
         await context.setOffline(true);
         await expect.poll(() => page.evaluate(() => navigator.onLine)).toBe(false);
         await expect(page.locator('#sgi-offline-banner')).toContainText('OFFLINE');
 
-        // Semifinal 1: o vencedor fica localmente aguardando o outro lado.
-        await abrirJogo(page, fixture.ids['MM:4:0:N'], fixture.detalhes['MM:4:0:N']);
-        await marcarPartida(page, 1);
-        await esperarJogoLocal(page, 'MM:4:0:N', 'concluido');
-        await capturarTela(page, testInfo, '02-semifinal-1-offline');
+        const quartas = ['MM:8:0:N', 'MM:8:1:N', 'MM:8:2:N', 'MM:8:3:N'];
+        for (let i = 0; i < quartas.length; i += 1) {
+            const tag = quartas[i];
+            await abrirJogo(page, fixture.ids[tag], fixture.detalhes[tag]);
+            await marcarPartida(page, (i % 2) + 1);
+            await esperarJogoLocal(page, tag, 'concluido');
+        }
 
-        // Semifinal 2: ao concluir, o motor local forma a final negativa.
-        await abrirJogo(page, fixture.ids['MM:4:1:N'], fixture.detalhes['MM:4:1:N']);
-        await marcarPartida(page, 2);
-        await esperarJogoLocal(page, 'MM:4:1:N', 'concluido');
-        await esperarJogoLocal(page, 'MM:2:0:N', 'final-formada');
-        await capturarTela(page, testInfo, '03-semifinal-2-offline');
-        const finalLocal = await page.evaluate(async () => {
-            const jogos = await window.SGIDataLayer.read('jogos');
-            const jogo = jogos.find((item) => item.nome_jogo === 'MM:2:0:N');
-            return { id: jogo && Number(jogo.id_jogo), equipes: jogo && jogo.equipes ? jogo.equipes.length : 0 };
-        });
-        expect(finalLocal.id).toBeLessThan(0);
-        expect(finalLocal.equipes).toBeGreaterThanOrEqual(2);
+        await esperarJogoLocal(page, 'MM:4:0:N', 'final-formada');
+        await esperarJogoLocal(page, 'MM:4:1:N', 'final-formada');
+        const semi1 = await obterJogoLocal(page, 'MM:4:0:N');
+        const semi2 = await obterJogoLocal(page, 'MM:4:1:N');
+        expect(Number(semi1.id_jogo)).toBeLessThan(0);
+        expect(Number(semi2.id_jogo)).toBeLessThan(0);
 
-        // Final derivada com ID temporário negativo: também é operada offline.
-        const finalEsperada = {
-            jogo: fixture.detalhes['MM:4:0:N'].jogo,
-            partidas: [fixture.detalhes['MM:4:0:N'].partidas[0], fixture.detalhes['MM:4:1:N'].partidas[0]]
+        await validarConfrontoNaAgenda(page, fixture.idInterclasse, 'Semifinal — Confronto 1', [
+            fixture.equipes[0].nome_equipe,
+            fixture.equipes[2].nome_equipe
+        ]);
+        await capturarTela(page, testInfo, '02-semifinais-com-times-offline');
+
+        const semi1Esperada = {
+            jogo: fixture.detalhes['MM:8:0:N'].jogo,
+            partidas: [fixture.detalhes['MM:8:0:N'].partidas[0], fixture.detalhes['MM:8:1:N'].partidas[0]]
         };
-        await abrirJogo(page, finalLocal.id, finalEsperada);
-        await expect(page.locator('#mc-status-badge')).toContainText('Agendado');
-        await capturarTela(page, testInfo, '04-final-formada-offline');
+        const semi2Esperada = {
+            jogo: fixture.detalhes['MM:8:2:N'].jogo,
+            partidas: [fixture.detalhes['MM:8:2:N'].partidas[0], fixture.detalhes['MM:8:3:N'].partidas[0]]
+        };
+        await abrirJogo(page, Number(semi1.id_jogo), semi1Esperada);
+        await marcarPartida(page, 1);
+        await abrirJogo(page, Number(semi2.id_jogo), semi2Esperada);
+        await marcarPartida(page, 2);
+
+        await esperarJogoLocal(page, 'MM:2:0:N', 'final-formada');
+        const finalLocal = await obterJogoLocal(page, 'MM:2:0:N');
+        expect(Number(finalLocal.id_jogo)).toBeLessThan(0);
+        expect(finalLocal.equipes).toHaveLength(2);
+        const finalistasEsperados = finalLocal.equipes.map((equipe) => Number(equipe.id_equipe));
+        const nomesFinalistas = finalLocal.equipes.map(nomeEquipeAgenda).filter(Boolean);
+        expect(nomesFinalistas).toHaveLength(2);
+        expect(new Set(nomesFinalistas).size).toBe(2);
+        for (const nome of nomesFinalistas) expect(String(finalLocal.equipes_nomes || '')).toContain(nome);
+
+        await validarConfrontoNaAgenda(page, fixture.idInterclasse, 'Final — Confronto 1', [
+            ...nomesFinalistas
+        ]);
+        await capturarTela(page, testInfo, '03-final-com-times-offline');
+
+        const finalEsperada = {
+            jogo: fixture.detalhes['MM:8:0:N'].jogo,
+            partidas: finalLocal.equipes.map((equipe) => ({
+                equipes_id_equipe: equipe.id_equipe,
+                nome_equipe: nomeEquipeAgenda(equipe)
+            }))
+        };
+        await abrirJogo(page, Number(finalLocal.id_jogo), finalEsperada);
         await marcarPartida(page, 3);
         await esperarJogoLocal(page, 'MM:2:0:N', 'concluido');
-        await esperarJogoLocal(page, 'MM:1:0:N', 'campeao');
+        const campeaoLocal = await obterJogoLocal(page, 'MM:2:0:N');
+        const campeaoOfflineEsperado = Number(
+            campeaoLocal.equipes.slice().sort((a, b) => Number(b.gols || 0) - Number(a.gols || 0))[0].id_equipe
+        );
+        const finalIdLocal = Number(finalLocal.id_jogo);
+        expect(await obterJogoLocal(page, 'MM:1:0:N')).toBeNull();
+
+        // Uma leitura assíncrona de ocorrências não pode tocar no DOM depois
+        // que a SPA desmontar a tela do placar.
+        await page.evaluate((id) => {
+            const fetchOriginal = window.fetch;
+            window.__sgiTesteOcorrenciasResolver = null;
+            window.fetch = function (input, init) {
+                const url = String(input && input.url ? input.url : input);
+                if (url.includes('ocorrencias.php?id_jogo=')) {
+                    return new Promise((resolve) => {
+                        window.__sgiTesteOcorrenciasResolver = () => resolve(new Response('[]', {
+                            status: 200,
+                            headers: { 'Content-Type': 'application/json' }
+                        }));
+                    });
+                }
+                return fetchOriginal.call(this, input, init);
+            };
+            window.carregarOcorrencias();
+            window.__SGI_SPA__.navegarPara('agenda', { id });
+            window.__sgiTesteOcorrenciasRestore = () => { window.fetch = fetchOriginal; };
+        }, fixture.idInterclasse);
+        await expect(page.locator('#lista-eventos')).toBeVisible({ timeout: 20_000 });
+        await page.evaluate(() => {
+            if (typeof window.__sgiTesteOcorrenciasResolver === 'function') {
+                window.__sgiTesteOcorrenciasResolver();
+            }
+            if (typeof window.__sgiTesteOcorrenciasRestore === 'function') {
+                window.__sgiTesteOcorrenciasRestore();
+            }
+            delete window.__sgiTesteOcorrenciasResolver;
+            delete window.__sgiTesteOcorrenciasRestore;
+        });
+
+        // O placar final deve sobreviver à desmontagem/remontagem da tela
+        // enquanto ainda estamos offline, sem depender do servidor.
+        await page.evaluate((id) => {
+            window.__SGI_SPA__.navegarPara('agenda', { id });
+        }, fixture.idInterclasse);
+        await expect(page.locator('#lista-eventos')).toBeVisible({ timeout: 20_000 });
+        await abrirJogo(page, finalIdLocal, {
+            jogo: finalLocal,
+            partidas: finalLocal.equipes.map((equipe) => ({
+                equipes_id_equipe: equipe.id_equipe,
+                nome_equipe: nomeEquipeAgenda(equipe)
+            }))
+        }, { placarInicial: false });
+        const placarFinalPersistido = (await page.locator('.score-number').allTextContents()).map((valor) => valor.trim());
+        expect(placarFinalPersistido).toEqual(['03', '00']);
+
         const estadoFilaOffline = await page.evaluate(() => window.SGIOffline.getState());
         expect(estadoFilaOffline.online).toBe(false);
-        expect(estadoFilaOffline.pending).toBeGreaterThanOrEqual(9);
-        await capturarTela(page, testInfo, '05-campeao-offline');
+        expect(estadoFilaOffline.pending).toBeGreaterThanOrEqual(18);
+        await capturarTela(page, testInfo, '04-sete-jogos-concluidos-offline');
 
-        // A reconexão descarrega todas as mutações em ordem, inclusive os
-        // resultados dos jogos derivados negativos.
         await context.setOffline(false);
         await expect.poll(() => page.evaluate(() => navigator.onLine)).toBe(true);
-        await expect.poll(() => page.evaluate(() => window.SGIOffline.getState().pending), { timeout: 60_000 }).toBe(0);
+        await expect.poll(() => page.evaluate(() => window.SGIOffline.getState().pending), { timeout: 90_000 }).toBe(0);
         await expect(page.locator('#sgi-offline-banner')).toHaveClass(/sgi-hidden/);
 
         const arvore = await page.evaluate(async (idModalidade) => {
@@ -260,18 +493,26 @@ test.describe('Mesário — torneio completo com vários jogos offline', () => {
         }, fixture.idModalidade);
         expect(arvore.success).toBe(true);
         const porTag = Object.fromEntries((arvore.jogos || []).map((jogo) => [jogo.nome_jogo, jogo]));
-        for (const tag of ['MM:4:0:N', 'MM:4:1:N', 'MM:2:0:N', 'MM:1:0:N']) {
+        for (const tag of [...quartas, 'MM:4:0:N', 'MM:4:1:N', 'MM:2:0:N']) {
             expect(porTag[tag]).toBeTruthy();
             expect(porTag[tag].status_jogo).toMatch(/Concluido|Finalizado/);
         }
-        expect(Number(porTag['MM:4:0:N'].equipe_vencedora_id)).toBe(fixture.equipeSf1);
-        expect(Number(porTag['MM:4:1:N'].equipe_vencedora_id)).toBe(fixture.equipeSf2);
-        expect(Number(porTag['MM:2:0:N'].equipe_vencedora_id)).toBe(fixture.equipeSf1);
-        expect(Number(porTag['MM:1:0:N'].equipe_vencedora_id)).toBe(fixture.equipeSf1);
+        expect(Number(porTag['MM:8:0:N'].equipe_vencedora_id)).toBe(Number(fixture.detalhes['MM:8:0:N'].partidas[0].equipes_id_equipe));
+        expect(Number(porTag['MM:8:1:N'].equipe_vencedora_id)).toBe(Number(fixture.detalhes['MM:8:1:N'].partidas[0].equipes_id_equipe));
+        expect(Number(porTag['MM:8:2:N'].equipe_vencedora_id)).toBe(Number(fixture.detalhes['MM:8:2:N'].partidas[0].equipes_id_equipe));
+        expect(Number(porTag['MM:8:3:N'].equipe_vencedora_id)).toBe(Number(fixture.detalhes['MM:8:3:N'].partidas[0].equipes_id_equipe));
+        const vencedoresSemisServidor = [
+            Number(porTag['MM:4:0:N'].equipe_vencedora_id),
+            Number(porTag['MM:4:1:N'].equipe_vencedora_id)
+        ];
+        expect(new Set(vencedoresSemisServidor)).toEqual(new Set(finalistasEsperados));
+        expect(Number(porTag['MM:2:0:N'].equipe_vencedora_id)).toBe(campeaoOfflineEsperado);
+        expect(porTag['MM:1:0:N']).toBeUndefined();
         expect(dialogs.some((message) => /Campeão definido offline/i.test(message))).toBeTruthy();
         expect(dialogs.some((message) => /erro|falha/i.test(message))).toBeFalsy();
         expect(pageErrors).toEqual([]);
+        expect(ariaWarnings).toEqual([]);
 
-        await capturarTela(page, testInfo, '06-campeao-sincronizado');
+        await capturarTela(page, testInfo, '05-campeao-sincronizado');
     });
 });

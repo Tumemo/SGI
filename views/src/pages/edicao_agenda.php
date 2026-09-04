@@ -385,6 +385,13 @@ $nivelUsuarioAgenda = (int)($_SESSION['nivel'] ?? -1);
 
 <script>
 (function () {
+    // A tela de agenda pode continuar aguardando respostas enquanto a SPA
+    // troca o conteúdo principal. Invalide a montagem anterior e permita que
+    // as rotinas de renderização reconheçam que seus nós já não existem.
+    if (typeof window.__SGI_TELA_CLEANUP__ === 'function') {
+        try { window.__SGI_TELA_CLEANUP__(); } catch (_) {}
+    }
+    window.__SGI_TELA_CLEANUP__ = function () {};
     const API = '../../../api/';
     const NIVEL_USUARIO = <?= $nivelUsuarioAgenda ?>;
     let dataNavegacao = new Date();
@@ -497,6 +504,41 @@ $nivelUsuarioAgenda = (int)($_SESSION['nivel'] ?? -1);
         return window.SGIInterclasse.getActiveInterclasse();
     }
 
+    function nomeEquipeLocal(item, mapaEquipes, mapaTurmas) {
+        const equipe = mapaEquipes.get(String(item.id_equipe ?? item.equipes_id_equipe)) || {};
+        const idTurma = item.id_turma ?? item.turmas_id_turma ?? equipe.turmas_id_turma;
+        const turma = mapaTurmas.get(String(idTurma)) || {};
+        return String(item.nome_equipe || equipe.nome_equipe || item.nome_fantasia ||
+            item.nome_fantasia_turma || turma.nome_fantasia_turma ||
+            item.nome_turma || turma.nome_turma || '').trim();
+    }
+
+    async function enriquecerNomesEquipesLocais(jogos) {
+        if (!window.SGIDataLayer || typeof window.SGIDataLayer.read !== 'function') return jogos;
+        try {
+            const [partidas, equipes, turmas] = await Promise.all([
+                window.SGIDataLayer.read('partidas'),
+                window.SGIDataLayer.read('equipes'),
+                window.SGIDataLayer.read('turmas')
+            ]);
+            const mapaEquipes = new Map((equipes || []).map((item) => [String(item.id_equipe), item]));
+            const mapaTurmas = new Map((turmas || []).map((item) => [String(item.id_turma), item]));
+            return jogos.map((jogo) => {
+                if (String(jogo.equipes_nomes || '').trim()) return jogo;
+                let fontes = Array.isArray(jogo.equipes) ? jogo.equipes : [];
+                if (!fontes.length) {
+                    fontes = (partidas || []).filter((item) =>
+                        String(item.jogos_id_jogo) === String(jogo.id_jogo)
+                    );
+                }
+                const nomes = fontes.map((item) => nomeEquipeLocal(item, mapaEquipes, mapaTurmas)).filter(Boolean);
+                return nomes.length ? { ...jogo, equipes_nomes: nomes.join(' vs ') } : jogo;
+            });
+        } catch (_) {
+            return jogos;
+        }
+    }
+
     async function carregarJogosDoInterclasse() {
         jogosCache = [];
         if (!interclasseAtual) return;
@@ -523,7 +565,7 @@ $nivelUsuarioAgenda = (int)($_SESSION['nivel'] ?? -1);
         batches.flat().forEach((j) => {
             if (j && j.id_jogo != null) map.set(String(j.id_jogo), j);
         });
-        jogosCache = Array.from(map.values());
+        jogosCache = await enriquecerNomesEquipesLocais(Array.from(map.values()));
     }
 
     function isJogoCampeao(nomeJogo) {
@@ -637,6 +679,7 @@ $nivelUsuarioAgenda = (int)($_SESSION['nivel'] ?? -1);
     function renderListaEventos() {
         const containerDesk = document.getElementById('lista-eventos');
         const containerMob = document.getElementById('lista-eventos-mobile');
+        if (!containerDesk || !containerMob || !containerDesk.isConnected || !containerMob.isConnected) return;
         const lista = jogosDoMesVisivel();
         const badge = document.getElementById('agenda-count-badge');
 
@@ -657,8 +700,10 @@ $nivelUsuarioAgenda = (int)($_SESSION['nivel'] ?? -1);
                 : '<div class="ag-empty"><i class="bi bi-calendar-x"></i><p>Nenhum jogo neste mês.</p></div>';
             containerDesk.innerHTML = msg;
             containerMob.innerHTML = msg;
-            document.getElementById('container-mostrar-todos').style.display = filtroData ? 'block' : 'none';
-            document.getElementById('container-mostrar-todos-mobile').style.display = filtroData ? 'block' : 'none';
+            const mostrarTodos = document.getElementById('container-mostrar-todos');
+            const mostrarTodosMobile = document.getElementById('container-mostrar-todos-mobile');
+            if (mostrarTodos) mostrarTodos.style.display = filtroData ? 'block' : 'none';
+            if (mostrarTodosMobile) mostrarTodosMobile.style.display = filtroData ? 'block' : 'none';
             if (badge) badge.style.display = 'none';
             return;
         }
@@ -742,8 +787,10 @@ $nivelUsuarioAgenda = (int)($_SESSION['nivel'] ?? -1);
             });
         });
 
-        document.getElementById('container-mostrar-todos').style.display = filtroData ? 'block' : 'none';
-        document.getElementById('container-mostrar-todos-mobile').style.display = filtroData ? 'block' : 'none';
+        const mostrarTodosInicial = document.getElementById('container-mostrar-todos');
+        const mostrarTodosMobileInicial = document.getElementById('container-mostrar-todos-mobile');
+        if (mostrarTodosInicial) mostrarTodosInicial.style.display = filtroData ? 'block' : 'none';
+        if (mostrarTodosMobileInicial) mostrarTodosMobileInicial.style.display = filtroData ? 'block' : 'none';
 
         document.querySelectorAll('.btn-ajuste-jogo').forEach((btn) => {
             btn.addEventListener('click', () => {
@@ -775,6 +822,7 @@ $nivelUsuarioAgenda = (int)($_SESSION['nivel'] ?? -1);
 
     function inicializarAnos() {
         const selectAno = document.getElementById('select-ano');
+        if (!selectAno || !selectAno.isConnected) return;
         const anoAtual = new Date().getFullYear();
         selectAno.innerHTML = '';
         for (let i = anoAtual - 2; i <= anoAtual + 3; i++) {
@@ -783,8 +831,10 @@ $nivelUsuarioAgenda = (int)($_SESSION['nivel'] ?? -1);
     }
 
     function atualizarSelects() {
-        document.getElementById('select-mes').value = dataNavegacao.getMonth();
-        document.getElementById('select-ano').value = dataNavegacao.getFullYear();
+        const selectMes = document.getElementById('select-mes');
+        const selectAno = document.getElementById('select-ano');
+        if (selectMes && selectMes.isConnected) selectMes.value = dataNavegacao.getMonth();
+        if (selectAno && selectAno.isConnected) selectAno.value = dataNavegacao.getFullYear();
     }
 
     function gerarCalendarioVisual() {
@@ -792,8 +842,10 @@ $nivelUsuarioAgenda = (int)($_SESSION['nivel'] ?? -1);
         const anoNavegacao = dataNavegacao.getFullYear();
         const hojeReal = new Date();
         const nomesMeses = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
-        document.getElementById('calendario-mes').innerText = nomesMeses[mesNavegacao] + ' ' + anoNavegacao;
+        const tituloMes = document.getElementById('calendario-mes');
         const grade = document.getElementById('calendario-grade');
+        if (!tituloMes || !grade || !tituloMes.isConnected || !grade.isConnected) return;
+        tituloMes.innerText = nomesMeses[mesNavegacao] + ' ' + anoNavegacao;
         grade.innerHTML = '';
         const primeiroDiaMes = new Date(anoNavegacao, mesNavegacao, 1).getDay();
         const diasNoMes = new Date(anoNavegacao, mesNavegacao + 1, 0).getDate();
@@ -818,6 +870,7 @@ $nivelUsuarioAgenda = (int)($_SESSION['nivel'] ?? -1);
         const anoNavegacao = dataNavegacao.getFullYear();
         const hojeReal = new Date();
         const grade = document.getElementById('calendario-grade-mobile');
+        if (!grade || !grade.isConnected) return;
         grade.innerHTML = '';
         const primeiroDiaMes = new Date(anoNavegacao, mesNavegacao, 1).getDay();
         const diasNoMes = new Date(anoNavegacao, mesNavegacao + 1, 0).getDate();
@@ -936,8 +989,14 @@ $nivelUsuarioAgenda = (int)($_SESSION['nivel'] ?? -1);
         try {
             interclasseAtual = await getInterclasseParaAgenda();
             if (interclasseAtual) {
-                document.getElementById('nomeInterclasseAgenda').innerText = interclasseAtual.nome_interclasse;
-                document.getElementById('btnVoltarAgendaDesk').href = `./dashboard.php?id=${interclasseAtual.id_interclasse}`;
+                const nomeInterclasse = document.getElementById('nomeInterclasseAgenda');
+                const btnVoltar = document.getElementById('btnVoltarAgendaDesk');
+                if (nomeInterclasse && nomeInterclasse.isConnected) {
+                    nomeInterclasse.innerText = interclasseAtual.nome_interclasse;
+                }
+                if (btnVoltar && btnVoltar.isConnected) {
+                    btnVoltar.href = `./dashboard.php?id=${interclasseAtual.id_interclasse}`;
+                }
             }
         } catch (e) {
             console.error(e);

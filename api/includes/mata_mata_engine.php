@@ -5,7 +5,8 @@ declare(strict_types=1);
 /**
  * Chaveamento mata-mata: metadados compactos em nome_jogo (VARCHAR 45).
  * Formato: MM:{largura_fase}:{slot}:{N|B}
- * - largura_fase: 8,4,2,1 (equivalente ao fase_nivel pedido: oitavas→8 … final→1)
+ * - largura_fase: 8,4,2 (oitavas→8 … final→2). O campeão é o vencedor da
+ *   final e não é modelado como uma partida solo MM:1.
  * - slot: 0-based dentro da fase
  * - N = confronto normal; B = bye (uma equipe, jogo já concluído)
  */
@@ -486,6 +487,13 @@ function sgi_chaveamento_processar_avanco(mysqli $conn, int $idJogo): void
         return;
     }
 
+    // A grande final é terminal. Seu vencedor é usado diretamente para
+    // classificação/pontuação; não criar um jogo solo MM:1.
+    if ($largura === 2) {
+        sgi_mm_verificar_gerar_disputas_posicao($conn, $idModalidade, 2);
+        return;
+    }
+
     $lPai = sgi_mm_proxima_largura($largura);
     $slotPai = sgi_mm_slot_pai($slot);
     $tagPai = sgi_mm_tag($lPai, $slotPai, 'N');
@@ -508,10 +516,6 @@ function sgi_chaveamento_processar_avanco(mysqli $conn, int $idJogo): void
             sgi_mm_garantir_partida_equipe($conn, $idPai, $w1);
         }
         sgi_mm_tentar_autoconcluir_pai_um_clube($conn, $idModalidade, $idPai);
-
-        if ($largura === 2) {
-            sgi_mm_verificar_gerar_disputas_posicao($conn, $idModalidade, 2);
-        }
 
         return;
     }
@@ -551,10 +555,6 @@ function sgi_chaveamento_processar_avanco(mysqli $conn, int $idJogo): void
 
     sgi_mm_garantir_partida_equipe($conn, $idPai, $w1);
     sgi_mm_garantir_partida_equipe($conn, $idPai, $w2);
-
-    if ($largura === 2) {
-        sgi_mm_verificar_gerar_disputas_posicao($conn, $idModalidade, 2);
-    }
 }
 
 /**

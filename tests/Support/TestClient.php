@@ -8,9 +8,13 @@ class TestClient
     private string $baseUrl;
     private ?string $cookieFile;
 
-    public function __construct(string $baseUrl = 'http://localhost/SGI', ?string $cookieFile = null)
+    public function __construct(?string $baseUrl = null, ?string $cookieFile = null)
     {
-        $this->baseUrl = rtrim($baseUrl, '/');
+        // Permite que a suíte seja executada contra o workspace (por exemplo,
+        // um servidor PHP embutido), sem depender de uma implantação Apache
+        // que possa estar desatualizada. Mantém o endereço legado como padrão.
+        $configuredBaseUrl = $baseUrl ?? getenv('SGI_TEST_BASE_URL') ?: 'http://localhost/SGI';
+        $this->baseUrl = rtrim($configuredBaseUrl, '/');
         $this->cookieFile = $cookieFile ?? (sys_get_temp_dir() . '/sgi_cookie_' . uniqid() . '.txt');
     }
 
@@ -90,6 +94,20 @@ class TestClient
         $json = null;
         if (is_string($raw) && $raw !== '') {
             $json = json_decode($raw, true);
+
+            // Alguns SAPI (principalmente o servidor embutido do PHP) podem
+            // prefixar avisos de inicialização ao corpo de uma resposta que
+            // continua sendo JSON válido. Tente decodificar apenas o objeto
+            // JSON para que o teste avalie o contrato da API, não o ruído do
+            // ambiente de transporte.
+            if ($json === null && json_last_error() !== JSON_ERROR_NONE) {
+                $posObjeto = strpos($raw, '{');
+                $posLista = strpos($raw, '[');
+                $posJson = $posObjeto === false ? $posLista : ($posLista === false ? $posObjeto : min($posObjeto, $posLista));
+                if ($posJson !== false) {
+                    $json = json_decode(substr($raw, $posJson), true);
+                }
+            }
         }
 
         return [

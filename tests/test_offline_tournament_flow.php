@@ -5,7 +5,7 @@ declare(strict_types=1);
  * Teste Especializado de Fluxo Offline e Avanço de Chaves com Sincronização
  */
 
-$baseUrl = 'http://localhost/SGI';
+$baseUrl = rtrim(getenv('SGI_TEST_BASE_URL') ?: 'http://localhost/SGI', '/');
 $cookieJarAdmin = sys_get_temp_dir() . '/sgi_test_admin.txt';
 $cookieJarMesario = sys_get_temp_dir() . '/sgi_test_mesario.txt';
 
@@ -183,18 +183,23 @@ $arvore = httpGetJson("$baseUrl/api/chaveamento.php?id_modalidade=$idModalidade"
 $jogosArvore = $arvore['json']['jogos'] ?? [];
 
 $finalJogo = null;
-$campeaoJogo = null;
 foreach ($jogosArvore as $j) {
     if (($j['nome_jogo'] ?? '') === 'MM:2:0:N') $finalJogo = $j;
-    if (($j['nome_jogo'] ?? '') === 'MM:1:0:N' || ($j['nome_jogo'] ?? '') === 'MM:1:0:B') $campeaoJogo = $j;
 }
 
 $sucessoFinal = $finalJogo && ($finalJogo['status_jogo'] === 'Concluido' || $finalJogo['status_jogo'] === 'Finalizado');
-$campeaoDefinido = !empty($finalJogo['vencedor']) || ($campeaoJogo && ($campeaoJogo['status_jogo'] === 'Concluido' || $campeaoJogo['status_jogo'] === 'Finalizado'));
+$campeaoDefinido = $sucessoFinal && !empty($finalJogo['equipe_vencedora_id']);
+$jogoSoloCriado = array_filter($jogosArvore, static fn($j) => preg_match('/^MM:1:/', (string) ($j['nome_jogo'] ?? '')));
 
 if ($sucessoFinal) {
     echo "  [OK] Jogo da Grande Final (MM:2:0:N) está marcado como CONCLUÍDO no MySQL.\n";
     echo "  [OK] Placar final e vencedor computados perfeitamente no servidor.\n";
+    if ($campeaoDefinido && !$jogoSoloCriado) {
+        echo "  [OK] Campeão derivado da final sem criação de jogo solo MM:1.\n";
+    } else {
+        echo "  [FALHA] Campeão não foi derivado corretamente ou houve criação de MM:1.\n";
+        exit(1);
+    }
     echo "\n>>> TESTE DE FLUXO OFFLINE CONCLUÍDO COM 100% DE SUCESSO! <<<\n";
     exit(0);
 } else {

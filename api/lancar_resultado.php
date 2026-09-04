@@ -192,7 +192,9 @@ try {
                     // Pontos de pódio só são aplicados em jogos decisivos:
                     //  - Grande Final (MM:2): vencedor = 1º lugar, perdedor = 2º lugar
                     //  - Disputa de 3º lugar (POS:3): vencedor = 3º lugar
-                    // Semifinais, quartas, oitavas e o jogo do "Campeão" (MM:1) não pontuam pódio.
+                    // Semifinais, quartas e oitavas não pontuam pódio. A
+                    // grande final (MM:2) já é o registro terminal; não há
+                    // uma partida operacional separada para o campeão.
                     if ($meta !== null && count($partidas) >= 2) {
                         usort($partidas, static fn($a, $b) => $b['resultado_partida'] <=> $a['resultado_partida']);
                         $vencedorEquipe = (int) $partidas[0]['equipes_id_equipe'];

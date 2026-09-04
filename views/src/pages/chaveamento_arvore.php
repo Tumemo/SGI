@@ -2167,7 +2167,10 @@ $podeGerar = !$isNivel2 && !$isNivel3;
     }
 
     function _detectarCampeao(jogos) {
-        const final = jogos.find(j => j.fase_nivel === 1 && (j.status_jogo === 'Concluido' || j.status_jogo === 'Finalizado'));
+        // O campeão é o vencedor da grande final (MM:2). MM:1 é aceito
+        // apenas como legado para não quebrar edições antigas.
+        const final = jogos.find(j => j.fase_nivel === 2 && (j.status_jogo === 'Concluido' || j.status_jogo === 'Finalizado')) ||
+            jogos.find(j => j.fase_nivel === 1 && (j.status_jogo === 'Concluido' || j.status_jogo === 'Finalizado'));
         if (!final || !final.equipes || !final.equipe_vencedora_id) return null;
         const winner = final.equipes.find(eq => eq.id_equipe == final.equipe_vencedora_id);
         if (!winner) return null;

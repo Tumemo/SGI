@@ -705,6 +705,22 @@
         }
     }
 
+    // Cada tela pode registrar uma limpeza própria. Ela é chamada antes da
+    // substituição do DOM para impedir que timers e callbacks assíncronos
+    // tentem atualizar elementos de uma tela já desmontada.
+    function desmontarTelaAtual(proximaRaiz) {
+        var conteudo = document.getElementById('conteudo-principal');
+        var atual = conteudo && conteudo.firstElementChild;
+        if (!atual || atual === proximaRaiz) return;
+        var cleanup = window.__SGI_TELA_CLEANUP__;
+        if (typeof cleanup === 'function') {
+            try { cleanup(); } catch (e) {
+                if (window.console) console.warn('[SGI SPA] limpeza da tela', e);
+            }
+        }
+        window.__SGI_TELA_CLEANUP__ = null;
+    }
+
     function navegarPara(tela, params) {
         params = params || {};
         var precisaId = (tela === 'ocorrencias' || tela === 'jogoslista' || tela === 'agenda' || tela === 'chaveamento');
@@ -757,6 +773,7 @@
         raiz.setAttribute('data-sgi-screen', key);
         raiz.innerHTML = rec.html;
 
+        desmontarTelaAtual(raiz);
         conteudo.replaceChildren(raiz);
 
         state.registros[key] = { tela: tela, url: rec.url || construirUrl(tela, params) };
@@ -784,6 +801,7 @@
         var m = state.montadas[key];
         var conteudo = document.getElementById('conteudo-principal');
         if (!m || !conteudo) return;
+        desmontarTelaAtual(m.root);
         conteudo.replaceChildren(m.root);
 
         // Cada página baixada possui seu próprio bloco <style>. Sem restaurar
