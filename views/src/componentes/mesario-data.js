@@ -161,7 +161,11 @@
         return all(store).then(function (rows) {
             var idJogo = info.q.get('id_jogo'), idInter = info.q.get('id_interclasse'), idMod = info.q.get('id_modalidade');
             if (idJogo) rows = rows.filter(function (r) { return String(r.jogos_id_jogo || r.id_jogo) === String(idJogo); });
-            if (idInter) rows = rows.filter(function (r) { return String(r.interclasses_id_interclasse || r.id_interclasse) === String(idInter); });
+            if (idInter) rows = rows.filter(function (r) {
+                var rInter = r.interclasses_id_interclasse || r.id_interclasse;
+                if (rInter != null) return String(rInter) === String(idInter);
+                return Number(r.id_jogo) < 0;
+            });
             if (idMod) rows = rows.filter(function (r) { return String(r.modalidades_id_modalidade || r.id_modalidade) === String(idMod); });
             return new Response(JSON.stringify(rows), { status: 200, headers: { 'Content-Type': 'application/json' } });
         });

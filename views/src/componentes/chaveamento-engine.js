@@ -237,6 +237,7 @@
         var dataJogoPadrao = primeiroJogo.data_jogo || hojeISO;
 
         var defaultModId = primeiroJogo.modalidades_id_modalidade || primeiroJogo.id_modalidade || null;
+        var defaultInterclasseId = primeiroJogo.id_interclasse || primeiroJogo.interclasses_id_interclasse || null;
         var defaultModNome = primeiroJogo.nome_modalidade || '';
         var defaultModTipo = primeiroJogo.tipos_modalidades_id_tipo_modalidade || 1;
         var defaultLocalId = primeiroJogo.locais_id_local || null;
@@ -290,6 +291,8 @@
                 data_jogo: dataJogoPadrao,
                 inicio_jogo: '08:00:00',
                 modalidades_id_modalidade: defaultModId,
+                id_interclasse: defaultInterclasseId,
+                interclasses_id_interclasse: defaultInterclasseId,
                 nome_modalidade: defaultModNome,
                 tipos_modalidades_id_tipo_modalidade: defaultModTipo,
                 locais_id_local: defaultLocalId,
@@ -546,7 +549,13 @@
                 }
             });
 
-            var motor = criarMotorAvanco(jogos, dirEquipes);
+            var menorId = 0;
+            jogos.forEach(function (b) {
+                var n = Number(b.id_jogo);
+                if (!isNaN(n) && n < menorId) menorId = n;
+            });
+
+            var motor = criarMotorAvanco(jogos, dirEquipes, menorId - 1);
             if (precisaRebuildLargura !== Infinity) {
                 motor.reconstruirAPartirDe(precisaRebuildLargura);
             } else {
@@ -564,6 +573,7 @@
        Em qualquer origem, aplica pendências locais e avança a árvore no front. */
 
     function buscarArvore(idModalidade) {
+        idModalidade = Number(idModalidade) || 0;
         var urlRel = apiBase() + 'chaveamento.php?id_modalidade=' + idModalidade;
 
         return fetch(urlRel, { headers: { 'Accept': 'application/json' } })
@@ -628,13 +638,32 @@
                         jogosBase[jogosBase.indexOf(existente)] = cloneLocal;
                         return;
                     }
+                    if (existente) {
+                        existente.status_jogo = local.status_jogo || existente.status_jogo;
+                        var psExistente = partidasLocais.filter(function (p) {
+                            return String(p.jogos_id_jogo) === String(local.id_jogo);
+                        });
+                        if (psExistente.length) {
+                            existente.equipes = psExistente.map(function (p) {
+                                return {
+                                    id_partida: p.id_partida != null ? p.id_partida : null,
+                                    id_equipe: Number(p.equipes_id_equipe),
+                                    gols: Number(p.resultado_partida) || 0,
+                                    nome_turma: p.nome_turma || '',
+                                    nome_fantasia: p.nome_fantasia_turma || p.nome_fantasia || '',
+                                    nome_equipe: p.nome_equipe || ''
+                                };
+                            });
+                        }
+                        return;
+                    }
                     if (!existente) {
                         var clone = JSON.parse(JSON.stringify(local));
                         // Reanexa equipes/gols vindos das partidas locais
                         var ps = partidasLocais.filter(function (p) {
                             return String(p.jogos_id_jogo) === String(local.id_jogo);
                         });
-                        if (ps.length && !(clone.equipes || []).length) {
+                        if (ps.length) {
                             clone.equipes = ps.map(function (p) {
                                 return {
                                     id_partida: p.id_partida != null ? p.id_partida : null,

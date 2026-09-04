@@ -983,14 +983,14 @@ $podeGerar = !$isNivel2 && !$isNivel3;
             </div>
         </div>
         <div class="kv-stat">
-            <div class="kv-stat__icon kv-stat__icon--jogos"><i class="bi bi-award"></div>
+            <div class="kv-stat__icon kv-stat__icon--jogos"><i class="fa-solid fa-volleyball"></i></div>
             <div class="kv-stat__info">
                 <div class="kv-stat__number" id="statJogosMob">0</div>
                 <div class="kv-stat__label">Jogos</div>
             </div>
         </div>
         <div class="kv-stat">
-            <div class="kv-stat__icon kv-stat__icon--campeoes"></i></div>
+            <div class="kv-stat__icon kv-stat__icon--campeoes"><i class="bi bi-award"></i></div>
             <div class="kv-stat__info">
                 <div class="kv-stat__number" id="statCampeoesMob">0</div>
                 <div class="kv-stat__label">Campeões</div>
@@ -1005,32 +1005,30 @@ $podeGerar = !$isNivel2 && !$isNivel3;
         </div>
     </div>
 
-    <?php if ($podeGerar): ?>
     <div class="kv-gen-card">
         <div class="kv-gen-card__header">
-            <div class="kv-gen-card__title"><i class="bi bi-diagram-3 me-2" style="color:#e30613;"></i>Gerar novo chaveamento</div>
-            <div class="kv-gen-card__desc">Selecione uma modalidade para gerar automaticamente o chaveamento.</div>
+            <div class="kv-gen-card__title"><i class="bi bi-diagram-3 me-2" style="color:#e30613;"></i><?php echo $podeGerar ? 'Gerar novo chaveamento' : 'Visualizar chaveamento'; ?></div>
+            <div class="kv-gen-card__desc"><?php echo $podeGerar ? 'Selecione uma modalidade para gerar automaticamente o chaveamento.' : 'Selecione uma modalidade para visualizar a árvore do torneio.'; ?></div>
         </div>
         <div class="kv-gen-card__row">
             <div id="kvs-wrap-selectModalidadeMob" class="kvs-wrap" style="width:100%;min-width:0;"></div>
             <select class="kv-gen-card__select d-none" id="selectModalidadeMob">
                 <option value="">Selecione uma modalidade</option>
             </select>
+            <?php if ($podeGerar): ?>
             <button class="kv-btn-generate" id="btnGerarChaveamentoMob">
                 <i class="bi bi-diagram-3-fill"></i> Gerar
             </button>
+            <?php endif; ?>
         </div>
         <div id="msgChaveamentoMob" class="kv-alert" style="display:none;"></div>
     </div>
-    <?php endif; ?>
 
-    <?php if ($podeGerar): ?>
     <div id="bracketAreaMob" class="kv-empty">
         <div class="kv-empty__icon"><i class="bi bi-diagram-3"></i></div>
         <div class="kv-empty__title">Nenhum chaveamento disponível</div>
-        <div class="kv-empty__desc">Selecione uma modalidade acima para gerar ou visualizar um chaveamento.</div>
+        <div class="kv-empty__desc">Selecione uma modalidade acima para <?php echo $podeGerar ? 'gerar ou ' : ''; ?>visualizar um chaveamento.</div>
     </div>
-    <?php endif; ?>
 
     <div id="secaoJogosMob" style="margin-top:24px;">
         <div class="kv-table-card">
@@ -1123,11 +1121,10 @@ $podeGerar = !$isNivel2 && !$isNivel3;
             </div>
         </div>
 
-        <?php if ($podeGerar): ?>
         <div class="kv-gen-card">
             <div class="kv-gen-card__header">
-                <div class="kv-gen-card__title"><i class="bi bi-diagram-3 me-2" style="color:#e30613;"></i>Gerar novo chaveamento</div>
-                <div class="kv-gen-card__desc">Selecione uma modalidade para gerar automaticamente o chaveamento.</div>
+                <div class="kv-gen-card__title"><i class="bi bi-diagram-3 me-2" style="color:#e30613;"></i><?php echo $podeGerar ? 'Gerar novo chaveamento' : 'Visualizar chaveamento'; ?></div>
+                <div class="kv-gen-card__desc"><?php echo $podeGerar ? 'Selecione uma modalidade para gerar automaticamente o chaveamento.' : 'Selecione uma modalidade para visualizar a árvore do torneio.'; ?></div>
             </div>
             <div class="kv-gen-card__row">
                 <div id="kvs-wrap-selectModalidade" class="kvs-wrap"></div>
@@ -1135,7 +1132,9 @@ $podeGerar = !$isNivel2 && !$isNivel3;
                     <option value="">Selecione uma modalidade</option>
                 </select>
             </div>
+            <?php if ($podeGerar): ?>
             <div class="kv-gen-card__note">⚠ Não há possibilidade de gerar um segundo chaveamento.Tome cuidado!</div>
+            <?php endif; ?>
             <div id="msgChaveamento"></div>
             <div id="linkVerArvore" class="d-none" style="margin-top:12px;">
                 <a href="#" id="btnVerArvore" class="kv-link-btn">
@@ -1143,22 +1142,21 @@ $podeGerar = !$isNivel2 && !$isNivel3;
                 </a>
             </div>
         </div>
-        <?php endif; ?>
 
         <div id="faseTimeline" class="kv-phase-timeline d-none"></div>
 
-        <?php if ($podeGerar): ?>
         <div id="bracketArea">
             <div class="kv-empty">
                 <div class="kv-empty__icon"><i class="bi bi-diagram-3"></i></div>
                 <div class="kv-empty__title">Nenhum chaveamento disponível</div>
-                <div class="kv-empty__desc">Selecione uma modalidade acima para gerar ou visualizar um chaveamento.</div>
+                <div class="kv-empty__desc">Selecione uma modalidade acima para <?php echo $podeGerar ? 'gerar ou ' : ''; ?>visualizar um chaveamento.</div>
+                <?php if ($podeGerar): ?>
                 <button class="kv-empty__btn" onclick="kvs_focus('selectModalidade');">
                     <i class="bi bi-diagram-3-fill"></i> Gerar Chaveamento
                 </button>
+                <?php endif; ?>
             </div>
         </div>
-        <?php endif; ?>
 
         <div id="secaoJogos" style="margin-top:24px;">
             <div class="kv-table-card">
@@ -1499,6 +1497,23 @@ $podeGerar = !$isNivel2 && !$isNivel3;
         const concluidos = Array.isArray(jogos) ? jogos.filter(j => j.status_jogo === 'Concluido' || j.status_jogo === 'Finalizado').length : 0;
         const pendentes = totalJogos - concluidos;
 
+        const modalidadesComCampeao = new Set();
+        if (Array.isArray(jogos)) {
+            jogos.forEach(j => {
+                const status = (j.status_jogo || '').toLowerCase();
+                const isConcluido = status === 'concluido' || status === 'finalizado';
+                if (!isConcluido) return;
+                const tag = j.nome_jogo || '';
+                const isFinalMM = /^MM:2:/.test(tag) || tag === 'MM:1:0:N';
+                const isInd = /^IND:\d+$/.test(tag) || Number(j.tipos_modalidades_id_tipo_modalidade) === 2;
+                if (isFinalMM || isInd) {
+                    const idMod = j.modalidades_id_modalidade || j.id_modalidade;
+                    if (idMod) modalidadesComCampeao.add(String(idMod));
+                }
+            });
+        }
+        const totalCampeoes = modalidadesComCampeao.size;
+
         ['statModalidades', 'statModalidadesMob'].forEach(id => {
             const el = document.getElementById(id);
             if (el) el.textContent = total;
@@ -1509,7 +1524,7 @@ $podeGerar = !$isNivel2 && !$isNivel3;
         });
         ['statCampeoes', 'statCampeoesMob'].forEach(id => {
             const el = document.getElementById(id);
-            if (el) el.textContent = concluidos;
+            if (el) el.textContent = totalCampeoes;
         });
         ['statPendentes', 'statPendentesMob'].forEach(id => {
             const el = document.getElementById(id);

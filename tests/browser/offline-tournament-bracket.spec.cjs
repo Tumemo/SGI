@@ -158,10 +158,22 @@ test.describe('Torneio Offline e Inspeção da Árvore de Chaveamento', () => {
             }, { idJogo: qf.id, eq1Gols: qf.eq1Gols, eq2Gols: qf.eq2Gols });
         }
 
-        // 5. Executa as 2 semifinais offline (-2 e -4)
+        // 5. Executa as 2 semifinais offline dinamicamente por tag
+        const semi1 = await page.evaluate(async () => {
+            const jogos = await window.SGIDataLayer.read('jogos');
+            return jogos.find(j => j.nome_jogo === 'MM:4:0:N');
+        });
+        const semi2 = await page.evaluate(async () => {
+            const jogos = await window.SGIDataLayer.read('jogos');
+            return jogos.find(j => j.nome_jogo === 'MM:4:1:N');
+        });
+
+        expect(semi1).toBeTruthy();
+        expect(semi2).toBeTruthy();
+
         const placaresSF = [
-            { idJogo: -2, eq1Gols: 1, eq2Gols: 0 },
-            { idJogo: -4, eq1Gols: 2, eq2Gols: 0 }
+            { idJogo: Number(semi1.id_jogo), eq1Gols: 1, eq2Gols: 0 },
+            { idJogo: Number(semi2.id_jogo), eq1Gols: 2, eq2Gols: 0 }
         ];
 
         for (const sf of placaresSF) {
@@ -183,9 +195,16 @@ test.describe('Torneio Offline e Inspeção da Árvore de Chaveamento', () => {
             }, { idJogo: sf.idJogo, eq1Gols: sf.eq1Gols, eq2Gols: sf.eq2Gols });
         }
 
-        // 6. Executa a Grande Final offline (-6)
-        await page.evaluate(async () => {
-            const partidasResp = await fetch(`../../../api/partidas.php?id_jogo=-6`);
+        // 6. Executa a Grande Final offline dinamicamente
+        const finalJogo = await page.evaluate(async () => {
+            const jogos = await window.SGIDataLayer.read('jogos');
+            return jogos.find(j => j.nome_jogo === 'MM:2:0:N');
+        });
+        expect(finalJogo).toBeTruthy();
+        const idFinal = Number(finalJogo.id_jogo);
+
+        await page.evaluate(async ({ idJogo }) => {
+            const partidasResp = await fetch(`../../../api/partidas.php?id_jogo=${idJogo}`);
             const partidas = await partidasResp.json();
             const resultados = [
                 { id_equipe: partidas[0].equipes_id_equipe, gols: 3 },
@@ -194,12 +213,12 @@ test.describe('Torneio Offline e Inspeção da Árvore de Chaveamento', () => {
             await fetch('../../../api/lancar_resultado.php', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ id_jogo: -6, resultados })
+                body: JSON.stringify({ id_jogo: idJogo, resultados })
             });
             if (window.SGIChaveamento && window.SGIChaveamento.promoverVencedorLocal) {
-                await window.SGIChaveamento.promoverVencedorLocal(-6);
+                await window.SGIChaveamento.promoverVencedorLocal(idJogo);
             }
-        });
+        }, { idJogo: idFinal });
 
         // 7. Avalia o estado retornado pelo SGIChaveamento.carregarArvore
         const resultadoArvore = await page.evaluate(async (idMod) => {
@@ -238,46 +257,38 @@ test.describe('Torneio Offline e Inspeção da Árvore de Chaveamento', () => {
             };
         });
 
-        // Inconsistência identificada: Mesário (nível 2) não recebe #bracketArea do PHP
-        expect(domInfo.temBracketArea).toBe(false);
-        expect(domInfo.temSelectModalidade).toBe(false);
+        // Agora, com as correções aplicadas, Mesário (nível 2) e Aluno (nível 3)
+        // têm acesso ao contêiner da árvore e ao seletor de modalidade nativamente:
+        expect(domInfo.temBracketArea).toBe(true);
+        expect(domInfo.temSelectModalidade).toBe(true);
 
-        // 10. Testa a renderização da árvore moderna com o card do campeão
-        const renderizacaoModerna = await page.evaluate(({ jogosOffline }) => {
-            if (typeof _renderModernBracket === 'function') {
-                const html = _renderModernBracket(jogosOffline);
-                const div = document.createElement('div');
-                div.innerHTML = html;
-                const elCampeao = div.querySelector('.bracket-champion-card');
-                const matchCards = Array.from(div.querySelectorAll('.bkt-match')).map(c => ({
-                    meta: c.querySelector('.bkt-match__meta')?.innerText?.trim(),
-                    teams: Array.from(c.querySelectorAll('.bkt-team')).map(t => ({
-                        text: t.innerText?.trim(),
-                        isWinner: t.classList.contains('bkt-team--winner'),
-                        isLoser: t.classList.contains('bkt-team--loser')
-                    })),
-                    status: c.querySelector('.bkt-match__status')?.innerText?.trim()
-                }));
-                return {
-                    temCampeaoCard: !!elCampeao,
-                    campeaoNome: elCampeao ? elCampeao.querySelector('.bracket-champion-card__name')?.innerText?.trim() : null,
-                    totalMatches: matchCards.length,
-                    matches: matchCards
-                };
+        // 10. Carrega a árvore da modalidade diretamente na tela do Mesário
+        await page.evaluate(async (idMod) => {
+            if (typeof carregarArvore === 'function') {
+                await carregarArvore(String(idMod));
             }
-            return { erro: '_renderModernBracket não disponível' };
-        }, { jogosOffline: resultadoArvore.jogos });
+        }, idModalidade);
 
-        // Valida que o motor de renderização produz o card de campeão com o time vencedor
-        expect(renderizacaoModerna.temCampeaoCard).toBe(true);
-        expect(renderizacaoModerna.campeaoNome).toBeTruthy();
-        expect(renderizacaoModerna.totalMatches).toBe(8);
+        await page.waitForSelector('#bracketArea .bracket-champion-card', { timeout: 10000 });
 
-        // Valida que todos os 8 cards de partidas têm seus dados exibidos corretamente
-        for (const match of renderizacaoModerna.matches) {
-            expect(match.teams.length).toBe(2);
-            expect(match.meta).toBeTruthy();
-            expect(match.status).toMatch(/FINALIZADO|AGENDADO/i);
+        // Valida que o card do campeão agora aparece nativamente na tela do Mesário!
+        const campeaoLoc = page.locator('#bracketArea .bracket-champion-card');
+        await expect(campeaoLoc).toBeVisible();
+        await expect(campeaoLoc.locator('.bracket-champion-card__label')).toHaveText(/campeão/i);
+        await expect(campeaoLoc.locator('.bracket-champion-card__name')).not.toBeEmpty();
+
+        // Valida que todos os 8 cards de partidas (.bkt-match) estão renderizados na árvore
+        const matchCards = page.locator('#bracketArea .bkt-match');
+        await expect(matchCards).toHaveCount(8);
+
+        for (let i = 0; i < 8; i++) {
+            const card = matchCards.nth(i);
+            await expect(card.locator('.bkt-team')).toHaveCount(2);
+            await expect(card.locator('.bkt-match__status')).toHaveText(/FINALIZADO|AGENDADO/i);
         }
+
+        // Valida a correção da métrica de campeões definidos (exatamente 1 modalidade com campeão definido)
+        const statCampeoesAtual = await page.locator('#statCampeoes').innerText();
+        expect(statCampeoesAtual.trim()).toBe('1');
     });
 });
