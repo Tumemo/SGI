@@ -27,9 +27,9 @@ class TurmasAndPdfImportTest
         Assertions::assert("ID válido para turma de teste", $idTurma > 0);
 
         // 3.2 Upload de PDF de alunos
-        $pdfPath = dirname(__DIR__, 2) . '/docs/lista_alunos/6EFB.pdf';
+        $pdfPath = dirname(__DIR__, 2) . '/tests/fixtures/6EFB.pdf';
         if (!file_exists($pdfPath)) {
-            $pdfPath = 'C:/xampp/htdocs/SGI/docs/lista_alunos/6EFB.pdf';
+            $pdfPath = 'C:/xampp/htdocs/SGI/tests/fixtures/6EFB.pdf';
         }
 
         if (file_exists($pdfPath) && $idTurma > 0) {
@@ -53,7 +53,7 @@ class TurmasAndPdfImportTest
             Assertions::assert("Aluno possui matrícula/RM", !empty($primeiro['matricula_usuario']));
             Assertions::assert("Aluno cadastrado com nível 3 (competidor)", (string)($primeiro['nivel_usuario'] ?? '') === '3');
         } else {
-            Assertions::assert("Arquivo de PDF disponível para teste", false, "6EFB.pdf não localizado");
+            Assertions::assert("Arquivo de PDF disponível para teste", false, "tests/fixtures/6EFB.pdf não localizado");
         }
 
         return $idTurma;

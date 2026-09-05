@@ -1,272 +1,82 @@
 <?php
-require_once '../config/db.php';
-require_once 'filtros.php';
-require_once 'auth.php';
-header('Content-Type: application/json');
-header('Access-Control-Allow-Origin: *');
-header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
-header('Access-Control-Allow-Headers: Content-Type');
 
-$method = $_SERVER['REQUEST_METHOD'];
+declare(strict_types=1);
+
+require_once dirname(__DIR__) . '/config/db.php';
+require_once __DIR__ . '/auth.php';
+
+use App\Interclasse\Application\ModalidadeNaoEncontradaException;
+use App\Interclasse\Application\ModalidadeService;
+use App\Interclasse\Infrastructure\MysqliModalidadeRepository;
+
+header('Content-Type: application/json; charset=utf-8');
+
+$service = new ModalidadeService(new MysqliModalidadeRepository($conn));
+$method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
 
 if ($method === 'OPTIONS') {
-    http_response_code(200);
-    exit();
+    http_response_code(204);
+    exit;
 }
 
-switch ($method) {
-    case 'GET':
-        $filtro = aplicarFiltrosModalidades();
-        $idTurmaFiltro = isset($_GET['id_turma']) ? intval($_GET['id_turma']) : 0;
+requerNivel([0, 1, 2, 3]);
 
-        $qtdInscritosTurmaSql = '';
-        if ($idTurmaFiltro > 0) {
-            $qtdInscritosTurmaSql = ", (SELECT COUNT(DISTINCT eu.usuarios_id_usuario)
-                    FROM equipes_has_usuarios eu
-                    INNER JOIN equipes e2 ON e2.id_equipe = eu.equipes_id_equipe
-                    INNER JOIN usuarios u2 ON u2.id_usuario = eu.usuarios_id_usuario
-                    WHERE e2.modalidades_id_modalidade = modalidades.id_modalidade
-                      AND e2.turmas_id_turma = ?
-                      AND e2.status_equipe = '1' AND u2.status_usuario = '1') AS qtd_inscritos_turma";
-        }
+/** @return array<string, mixed> */
+function modalidadePayload(): array
+{
+    $json = json_decode(file_get_contents('php://input'), true);
+    return is_array($json) ? array_merge($_POST, $json) : $_POST;
+}
 
-        $sql = "SELECT DISTINCT 
-                    modalidades.id_modalidade, 
-                    modalidades.nome_modalidade, 
-                    modalidades.genero_modalidade,
-                    modalidades.max_inscrito_modalidade, 
-                    modalidades.max_equipes,
-                    modalidades.status_modalidade,
-                    modalidades.categorias_id_categoria,
-                    tipos_modalidades.nome_tipo_modalidade,
-                    tipos_modalidades.id_tipo_modalidade,
-                    categorias.nome_categoria,
-                    modalidades.interclasses_id_interclasse,
-                    interclasses.nome_interclasse,
-                    (SELECT COUNT(*) FROM equipes e2 WHERE e2.modalidades_id_modalidade = modalidades.id_modalidade AND e2.status_equipe = '1') AS qtd_equipes,
-                    (SELECT COUNT(*) FROM turmas t2 WHERE t2.categorias_id_categoria = modalidades.categorias_id_categoria) AS max_turmas"
-                    . $qtdInscritosTurmaSql . "
-                    FROM modalidades
-                    INNER JOIN tipos_modalidades 
-                    ON tipos_modalidades.id_tipo_modalidade = modalidades.tipos_modalidades_id_tipo_modalidade
-                    INNER JOIN categorias 
-                    ON categorias.id_categoria = modalidades.categorias_id_categoria
-                    INNER JOIN interclasses 
-                    ON interclasses.id_interclasse = modalidades.interclasses_id_interclasse";
-
-        if (isset($_GET['ano'])) {
-            $sql .= " INNER JOIN jogos ON jogos.modalidades_id_modalidade = modalidades.id_modalidade";
-        }
-
-        $sql .= " WHERE 1=1" . $filtro['sql'];
-
-        $stmt = $conn->prepare($sql);
-        if (!$stmt) {
-            echo json_encode(["success" => false, "message" => "Erro ao preparar consulta: " . $conn->error]);
-            break;
-        }
-        if ($idTurmaFiltro > 0) {
-            if (!empty($filtro['params'])) {
-                $stmt->bind_param('i' . $filtro['types'], $idTurmaFiltro, ...$filtro['params']);
-            } else {
-                $stmt->bind_param('i', $idTurmaFiltro);
+try {
+    switch ($method) {
+        case 'GET':
+            $filters = [
+                'id_interclasse' => (int) ($_GET['id_interclasse'] ?? 0),
+                'id_modalidade' => (int) ($_GET['id_modalidade'] ?? 0),
+                'id_categoria' => (int) ($_GET['id_categoria'] ?? 0),
+                'id_tipo_modalidade' => (int) ($_GET['id_tipo_modalidade'] ?? 0),
+                'genero' => trim((string) ($_GET['genero'] ?? '')),
+                'id_turma' => (int) ($_GET['id_turma'] ?? 0),
+            ];
+            if (isset($_GET['ano'])) {
+                $filters['ano'] = $_GET['ano'];
             }
-        } elseif (!empty($filtro['params'])) {
-            $stmt->bind_param($filtro['types'], ...$filtro['params']);
-        }
-        if (!$stmt->execute()) {
-            echo json_encode(["success" => false, "message" => "Erro ao executar consulta: " . $stmt->error]);
+            echo json_encode($service->listar($filters), JSON_UNESCAPED_UNICODE);
             break;
-        }
-        $res = $stmt->get_result();
-        if (!$res) {
-            echo json_encode(["success" => false, "message" => "Erro ao obter resultados."]);
+
+        case 'POST':
+            requerEscrita();
+            $id = $service->criar(modalidadePayload());
+            http_response_code(201);
+            echo json_encode(['success' => true, 'message' => 'Modalidade criada!', 'id' => $id, 'id_modalidade' => $id], JSON_UNESCAPED_UNICODE);
             break;
-        }
-        echo json_encode($res->fetch_all(MYSQLI_ASSOC));
-        break;
 
-    case 'POST':
-        requerEscrita();
-        $data = json_decode(file_get_contents("php://input"));
-
-        if (!isset($data->nome_modalidade, $data->genero_modalidade, $data->tipos_modalidades_id_tipo_modalidade,  $data->categorias_id_categoria)) {
-            http_response_code(400);
-            echo json_encode(["success" => false, "message" => "Dados incompletos."]);
+        case 'PUT':
+            requerEscrita();
+            $service->atualizar(modalidadePayload());
+            echo json_encode(['success' => true, 'message' => 'Modalidade atualizada com sucesso!'], JSON_UNESCAPED_UNICODE);
             break;
-        }
 
-        $genero = strtoupper(trim($data->genero_modalidade));
-        $max_inscritos = $data->max_inscrito_modalidade ?? 0;
-        $max_equipes = isset($data->max_equipes) && $data->max_equipes !== '' && $data->max_equipes !== null && (int) $data->max_equipes !== 0
-            ? (int) $data->max_equipes
-            : null;
-
-        $sql = "INSERT INTO modalidades (nome_modalidade, genero_modalidade, max_inscrito_modalidade, max_equipes, tipos_modalidades_id_tipo_modalidade, status_modalidade, categorias_id_categoria, interclasses_id_interclasse) 
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
-
-                $status = $data->status_modalidade ?? '1'; 
-
-        $stmt = $conn->prepare($sql);
-
-        $stmt->bind_param("ssiisiii", 
-            $data->nome_modalidade,
-            $genero,
-            $max_inscritos,
-            $max_equipes,
-            $data->tipos_modalidades_id_tipo_modalidade,
-            $status, 
-            $data->categorias_id_categoria,
-            $data->interclasses_id_interclasse
-        );
-
-        try {
-            if ($stmt->execute()) {
-                http_response_code(201);
-                echo json_encode(["success" => true, "message" => "Modalidade criada!", "id" => $conn->insert_id]);
-            }
-        } catch (mysqli_sql_exception $e) {
-            http_response_code(400);
-            echo json_encode(["success" => false, "message" => "Erro de integridade (verifique IDs de categoria/tipo): " . $e->getMessage()]);
-        }
-        break;
-
-    case 'PUT':
-        requerEscrita();
-        $data = json_decode(file_get_contents("php://input"));
-
-        // O ID da modalidade é obrigatório para a atualização
-        if (!isset($data->id_modalidade)) {
-            http_response_code(400);
-            echo json_encode(["success" => false, "message" => "O ID da modalidade é obrigatório."]);
+        case 'DELETE':
+            requerEscrita();
+            $payload = modalidadePayload();
+            $service->excluir((int) ($payload['id_modalidade'] ?? $_GET['id_modalidade'] ?? 0));
+            echo json_encode(['success' => true, 'message' => 'Modalidade excluída com sucesso!'], JSON_UNESCAPED_UNICODE);
             break;
-        }
 
-        $campos = [];
-        $params = [];
-        $types = "";
-
-        // Verificação dinâmica de cada campo do seu SQL
-        if (isset($data->nome_modalidade)) {
-            $campos[] = "nome_modalidade = ?";
-            $params[] = $data->nome_modalidade;
-            $types .= "s";
-        }
-
-        if (isset($data->genero_modalidade)) {
-            $campos[] = "genero_modalidade = ?";
-            $params[] = $data->genero_modalidade;
-            $types .= "s";
-        }
-
-        if (isset($data->max_inscrito_modalidade)) {
-            $campos[] = "max_inscrito_modalidade = ?";
-            $params[] = $data->max_inscrito_modalidade;
-            $types .= "i";
-        }
-
-        if (array_key_exists('max_equipes', (array) $data)) {
-            $campos[] = "max_equipes = ?";
-            $params[] = ($data->max_equipes !== null && $data->max_equipes !== '' && $data->max_equipes !== 0)
-                ? (int) $data->max_equipes
-                : null;
-            $types .= "i";
-        }
-
-        if (isset($data->status_modalidade)) {
-            $campos[] = "status_modalidade = ?";
-            $params[] = $data->status_modalidade;
-            $types .= "s"; 
-        }
-
-        if (isset($data->tipos_modalidades_id_tipo_modalidade)) {
-            $campos[] = "tipos_modalidades_id_tipo_modalidade = ?";
-            $params[] = $data->tipos_modalidades_id_tipo_modalidade;
-            $types .= "i";
-        }
-
-        if (isset($data->categorias_id_categoria)) {
-            $campos[] = "categorias_id_categoria = ?";
-            $params[] = $data->categorias_id_categoria;
-            $types .= "i";
-        }
-
-        if (isset($data->interclasses_id_interclasse)) {
-            $campos[] = "interclasses_id_interclasse = ?";
-            $params[] = $data->interclasses_id_interclasse;
-            $types .= "i";
-        }
-
-        // Verifica se houve alguma alteração enviada
-        if (empty($campos)) {
-            echo json_encode(["success" => false, "message" => "Nenhum dado fornecido para atualização."]);
-            break;
-        }
-
-        // Monta a Query SQL
-        $sql = "UPDATE modalidades SET " . implode(", ", $campos) . " WHERE id_modalidade = ?";
-        
-        // Adiciona o ID para o WHERE
-        $params[] = $data->id_modalidade;
-        $types .= "i";
-
-        $stmt = $conn->prepare($sql);
-        
-        // Descompacta os parâmetros
-        $stmt->bind_param($types, ...$params);
-
-        if ($stmt->execute()) {
-            echo json_encode(["success" => true, "message" => "Modalidade atualizada com sucesso!"]);
-        } else {
-            http_response_code(500);
-            echo json_encode(["success" => false, "message" => "Erro no banco: " . $conn->error]);
-        }
-        break;
-
-    case 'DELETE':
-        requerEscrita();
-        $data = json_decode(file_get_contents("php://input"));
-
-        if (!isset($data->id_modalidade)) {
-            http_response_code(400);
-            echo json_encode(["success" => false, "message" => "O ID da modalidade é obrigatório."]);
-            break;
-        }
-
-        $idModalidade = intval($data->id_modalidade);
-
-        $checkSql = "SELECT status_modalidade FROM modalidades WHERE id_modalidade = ?";
-        $stmtCheck = $conn->prepare($checkSql);
-        $stmtCheck->bind_param("i", $idModalidade);
-        $stmtCheck->execute();
-        $res = $stmtCheck->get_result()->fetch_assoc();
-
-        if (!$res) {
-            http_response_code(404);
-            echo json_encode(["success" => false, "message" => "Modalidade não encontrada."]);
-            break;
-        }
-
-        $sql = "UPDATE modalidades SET status_modalidade = '0' WHERE id_modalidade = ?";
-        $stmt = $conn->prepare($sql);
-        $stmt->bind_param("i", $idModalidade);
-
-        if (!$stmt->execute()) {
-            http_response_code(500);
-            echo json_encode(["success" => false, "message" => "Erro no servidor: " . $conn->error]);
-            break;
-        }
-
-        $stmt = $conn->prepare("UPDATE equipes SET status_equipe = '0' WHERE modalidades_id_modalidade = ?");
-        $stmt->bind_param("i", $idModalidade);
-        $stmt->execute();
-        $stmt->close();
-
-        echo json_encode(["success" => true, "message" => "Modalidade excluída com sucesso!"]);
-        break;
-
-    default:
-        http_response_code(405);
-        echo json_encode(["message" => "Método não permitido"]);
-        break;
+        default:
+            http_response_code(405);
+            echo json_encode(['success' => false, 'message' => 'Método não permitido'], JSON_UNESCAPED_UNICODE);
+    }
+} catch (InvalidArgumentException $exception) {
+    http_response_code(400);
+    echo json_encode(['success' => false, 'message' => $exception->getMessage()], JSON_UNESCAPED_UNICODE);
+} catch (ModalidadeNaoEncontradaException $exception) {
+    http_response_code(404);
+    echo json_encode(['success' => false, 'message' => 'Modalidade não encontrada.'], JSON_UNESCAPED_UNICODE);
+} catch (Throwable $exception) {
+    error_log('Falha em modalidades.php: ' . $exception->getMessage());
+    http_response_code(500);
+    echo json_encode(['success' => false, 'message' => 'Não foi possível processar a modalidade.'], JSON_UNESCAPED_UNICODE);
 }

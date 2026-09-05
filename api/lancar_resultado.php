@@ -7,7 +7,12 @@ require_once __DIR__ . '/includes/mata_mata_engine.php';
 require_once __DIR__ . '/auth.php';
 require_once __DIR__ . '/includes/idempotencia.php';
 
+use App\Interclasse\Application\PlacarInvalidoException;
+use App\Interclasse\Application\PlacarService;
+
 header('Content-Type: application/json; charset=utf-8');
+
+$placarService = new PlacarService();
 
 $data = json_decode(file_get_contents('php://input') ?: '{}');
 
@@ -131,23 +136,17 @@ try {
     }
 
     if (!$jaConcluido) {
-        $totalGols = 0;
         $golsArray = [];
         foreach ($data->resultados as $res) {
             $g = (int) $res->gols;
-            $totalGols += $g;
             $golsArray[] = $g;
         }
-        if ($totalGols === 0) {
+        try {
+            $placarService->validarFinalizacao($golsArray);
+        } catch (PlacarInvalidoException $e) {
             $conn->rollback();
             http_response_code(422);
-            echo json_encode(['success' => false, 'message' => 'Não é possível finalizar um jogo com placar 0x0. Registre o placar correto.'], JSON_UNESCAPED_UNICODE);
-            exit;
-        }
-        if (count($golsArray) >= 2 && $golsArray[0] === $golsArray[1]) {
-            $conn->rollback();
-            http_response_code(422);
-            echo json_encode(['success' => false, 'message' => 'O jogo não pode terminar empatado! Registre o placar correto.'], JSON_UNESCAPED_UNICODE);
+            echo json_encode(['success' => false, 'message' => $e->getMessage()], JSON_UNESCAPED_UNICODE);
             exit;
         }
 
@@ -233,23 +232,17 @@ try {
             }
         }
     } else {
-        $totalGols = 0;
         $golsArray2 = [];
         foreach ($data->resultados as $res) {
             $g = (int) $res->gols;
-            $totalGols += $g;
             $golsArray2[] = $g;
         }
-        if ($totalGols === 0) {
+        try {
+            $placarService->validarAlteracao($golsArray2);
+        } catch (PlacarInvalidoException $e) {
             $conn->rollback();
             http_response_code(422);
-            echo json_encode(['success' => false, 'message' => 'Não é possível alterar o placar de um jogo finalizado para 0x0.'], JSON_UNESCAPED_UNICODE);
-            exit;
-        }
-        if (count($golsArray2) >= 2 && $golsArray2[0] === $golsArray2[1]) {
-            $conn->rollback();
-            http_response_code(422);
-            echo json_encode(['success' => false, 'message' => 'O jogo não pode terminar empatado! Registre o placar correto.'], JSON_UNESCAPED_UNICODE);
+            echo json_encode(['success' => false, 'message' => $e->getMessage()], JSON_UNESCAPED_UNICODE);
             exit;
         }
 

@@ -1,132 +1,98 @@
 <?php
+
+declare(strict_types=1);
+
 require_once '../config/db.php';
 require_once 'auth.php';
 require_once __DIR__ . '/includes/idempotencia.php';
-header('Content-Type: application/json');
-header('Access-Control-Allow-Origin: *');
+
+use App\Interclasse\Application\OcorrenciaTurmaNaoEncontradaException;
+use App\Interclasse\Application\OcorrenciaTurmaService;
+use App\Interclasse\Infrastructure\MysqliOcorrenciaTurmaRepository;
+
+header('Content-Type: application/json; charset=utf-8');
 header('Access-Control-Allow-Methods: GET, POST, DELETE, OPTIONS');
 header('Access-Control-Allow-Headers: Content-Type');
 
-$method = $_SERVER['REQUEST_METHOD'];
-if ($method === 'OPTIONS') { http_response_code(200); exit(); }
+$method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
+$service = new OcorrenciaTurmaService(new MysqliOcorrenciaTurmaRepository($conn));
 
-switch ($method) {
-    case 'GET':
-        $idInterclasse = isset($_GET['id_interclasse']) ? (int) $_GET['id_interclasse'] : 0;
-        if ($idInterclasse <= 0) {
-            echo json_encode([]);
+/** @return array<string, mixed> */
+function ocorrenciaTurmaPayload(): array
+{
+    $json = json_decode(file_get_contents('php://input'), true);
+    return is_array($json) ? array_merge($_POST, $json) : $_POST;
+}
+
+if ($method === 'OPTIONS') {
+    http_response_code(204);
+    exit;
+}
+
+requerNivel([0, 1, 2, 3]);
+
+try {
+    switch ($method) {
+        case 'GET':
+            $idInterclasse = (int) ($_GET['id_interclasse'] ?? 0);
+            if ($idInterclasse <= 0) {
+                echo json_encode([], JSON_UNESCAPED_UNICODE);
+                break;
+            }
+            echo json_encode($service->listar([
+                'id_interclasse' => $idInterclasse,
+                'id_turma' => (int) ($_GET['id_turma'] ?? 0),
+            ]), JSON_UNESCAPED_UNICODE);
             break;
-        }
 
-        $sql = "SELECT ot.*, t.nome_turma, t.nome_fantasia_turma,
-                       c.nome_categoria, u.nome_usuario
-                FROM ocorrencias_turmas ot
-                INNER JOIN turmas t ON t.id_turma = ot.turmas_id_turma
-                INNER JOIN categorias c ON c.id_categoria = t.categorias_id_categoria
-                LEFT JOIN usuarios u ON u.id_usuario = ot.usuarios_id_usuario
-                WHERE ot.interclasses_id_interclasse = ?";
-        $types = 'i';
-        $params = [$idInterclasse];
-
-        if (!empty($_GET['id_turma'])) {
-            $sql .= " AND ot.turmas_id_turma = ?";
-            $types .= 'i';
-            $params[] = (int) $_GET['id_turma'];
-        }
-
-        $sql .= " ORDER BY ot.data_registro DESC";
-
-        $stmt = $conn->prepare($sql);
-        $stmt->bind_param($types, ...$params);
-        $stmt->execute();
-        echo json_encode($stmt->get_result()->fetch_all(MYSQLI_ASSOC));
-        break;
-
-    case 'POST':
-        requerNivel([0, 1, 2]);
-        $respostaAnterior = sgi_buscar_resposta_idempotente($conn, 'ocorrencias_turmas.post');
-        if ($respostaAnterior !== null) {
-            http_response_code($respostaAnterior['status']);
-            echo json_encode($respostaAnterior['payload'], JSON_UNESCAPED_UNICODE);
-            break;
-        }
-        $data = json_decode(file_get_contents('php://input'));
-
-        // Mesário só pode registrar ocorrência na edição ativa no momento.
-        $ativoOperacao = garantirInterclasseAtivo($conn);
-        if ((int) $_SESSION['nivel'] === 2 &&
-            (!empty($data->interclasses_id_interclasse) && (int) $data->interclasses_id_interclasse !== $ativoOperacao)) {
-            http_response_code(403);
-            echo json_encode(["success" => false, "message" => "Mesários só podem registrar ocorrências na edição ativa."]);
-            break;
-        }
-
-        if (empty($data->turmas_id_turma) ||
-            empty($data->interclasses_id_interclasse) || empty($data->titulo_ocorrencia) ||
-            empty($data->data_ocorrencia)) {
-            http_response_code(400);
-            echo json_encode(["success" => false, "message" => "Dados incompletos."]);
-            break;
-        }
-
-        $pontos = isset($data->pontos_descontados) ? (int) $data->pontos_descontados : 0;
-        $descricao = $data->descricao_ocorrencia ?? '';
-        $idUsuario = $data->usuarios_id_usuario ?? $_SESSION['id_usuario'] ?? null;
-
-        $types = 'iissis';
-        $params = [$data->turmas_id_turma, $data->interclasses_id_interclasse,
-                   $data->titulo_ocorrencia, $descricao, $pontos, $data->data_ocorrencia];
-
-        if ($idUsuario === null) {
-            $types .= 's';
-            $params[] = null;
-        } else {
-            $types .= 'i';
-            $params[] = (int) $idUsuario;
-        }
-
-        $stmt = $conn->prepare(
-            "INSERT INTO ocorrencias_turmas (turmas_id_turma, interclasses_id_interclasse,
-             titulo_ocorrencia, descricao_ocorrencia, pontos_descontados, data_ocorrencia, usuarios_id_usuario)
-             VALUES (?, ?, ?, ?, ?, ?, ?)"
-        );
-        $stmt->bind_param($types, ...$params);
-
-        if ($stmt->execute()) {
+        case 'POST':
+            requerNivel([0, 1, 2]);
+            $previous = sgi_buscar_resposta_idempotente($conn, 'ocorrencias_turmas.post');
+            if ($previous !== null) {
+                http_response_code($previous['status']);
+                echo json_encode($previous['payload'], JSON_UNESCAPED_UNICODE);
+                break;
+            }
+            $data = ocorrenciaTurmaPayload();
+            $activeId = garantirInterclasseAtivo($conn);
+            if ((int) ($_SESSION['nivel'] ?? -1) === 2
+                && !empty($data['interclasses_id_interclasse'])
+                && (int) $data['interclasses_id_interclasse'] !== $activeId) {
+                http_response_code(403);
+                echo json_encode(['success' => false, 'message' => 'Mesários só podem registrar ocorrências na edição ativa.'], JSON_UNESCAPED_UNICODE);
+                break;
+            }
+            if (!isset($data['usuarios_id_usuario']) && isset($_SESSION['id_usuario'])) {
+                $data['usuarios_id_usuario'] = (int) $_SESSION['id_usuario'];
+            }
+            $id = $service->registrar($data);
             sgi_enviar_resposta_idempotente($conn, 'ocorrencias_turmas.post', 201, [
-                "success" => true,
-                "message" => "Ocorrência registrada!",
-                "id" => $conn->insert_id
+                'success' => true,
+                'message' => 'Ocorrência registrada!',
+                'id' => $id,
             ]);
-        } else {
-            http_response_code(500);
-            echo json_encode(["success" => false, "message" => $stmt->error]);
-        }
-        break;
-
-    case 'DELETE':
-        requerNivel([0, 1, 2]);
-        garantirInterclasseAtivo($conn);
-        $data = json_decode(file_get_contents('php://input'));
-        $id = isset($data->id_ocorrencia_turma) ? (int) $data->id_ocorrencia_turma : 0;
-        if ($id <= 0) {
-            http_response_code(400);
-            echo json_encode(["success" => false, "message" => "ID obrigatório."]);
             break;
-        }
 
-        $stmt = $conn->prepare("DELETE FROM ocorrencias_turmas WHERE id_ocorrencia_turma = ?");
-        $stmt->bind_param('i', $id);
-        if ($stmt->execute() && $stmt->affected_rows > 0) {
-            echo json_encode(["success" => true, "message" => "Ocorrência removida!"]);
-        } else {
-            http_response_code(404);
-            echo json_encode(["success" => false, "message" => "Ocorrência não encontrada."]);
-        }
-        break;
+        case 'DELETE':
+            requerNivel([0, 1, 2]);
+            garantirInterclasseAtivo($conn);
+            $data = ocorrenciaTurmaPayload();
+            $service->excluir((int) ($data['id_ocorrencia_turma'] ?? $_GET['id_ocorrencia_turma'] ?? 0));
+            echo json_encode(['success' => true, 'message' => 'Ocorrência removida!'], JSON_UNESCAPED_UNICODE);
+            break;
 
-    default:
-        http_response_code(405);
-        echo json_encode(["message" => "Método não permitido"]);
-        break;
+        default:
+            http_response_code(405);
+            echo json_encode(['success' => false, 'message' => 'Método não permitido'], JSON_UNESCAPED_UNICODE);
+    }
+} catch (OcorrenciaTurmaNaoEncontradaException) {
+    http_response_code(404);
+    echo json_encode(['success' => false, 'message' => 'Ocorrência não encontrada.'], JSON_UNESCAPED_UNICODE);
+} catch (InvalidArgumentException $exception) {
+    http_response_code(400);
+    echo json_encode(['success' => false, 'message' => $exception->getMessage()], JSON_UNESCAPED_UNICODE);
+} catch (Throwable $exception) {
+    error_log('Falha em ocorrencias_turmas.php: ' . $exception->getMessage());
+    http_response_code(500);
+    echo json_encode(['success' => false, 'message' => 'Não foi possível processar a ocorrência da turma.'], JSON_UNESCAPED_UNICODE);
 }

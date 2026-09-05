@@ -48,7 +48,7 @@ Para validar diretamente o workspace (sem depender de uma cópia Apache),
 aponte a base do Playwright para o servidor PHP em execução:
 
 ```powershell
-$env:SGI_BASE_URL = 'http://127.0.0.1:8083/'
+$env:SGI_BASE_URL = 'http://127.0.0.1:8099/'
 npm --prefix tests/browser test -- tournament-offline.spec.cjs
 ```
 
@@ -78,7 +78,7 @@ Screenshots em caso de falha, trace e relatório HTML ficam em
 
 A suíte PHP também aceita `SGI_TEST_BASE_URL` para usar o mesmo servidor do
 workspace (`C:/xampp/php/php.exe tests/run_all.php`), mantendo
-`http://localhost/SGI` como padrão compatível com instalações existentes.
+`http://127.0.0.1:8099` como padrão do servidor isolado.
 
 O mapa visual também salva as capturas aprovadas dentro da pasta de resultados
 de cada teste. Elas servem como linha de base para comparar as telas antes e

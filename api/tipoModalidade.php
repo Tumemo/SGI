@@ -1,115 +1,65 @@
 <?php
-require_once '../config/db.php';
-require_once 'filtros.php';
-require_once 'auth.php';
-header('Content-Type: application/json');
 
-$method = $_SERVER['REQUEST_METHOD'];
+declare(strict_types=1);
 
-switch ($method) {
-    case 'GET':
-        $filtro = aplicarFiltrosTiposModalidades();
+require_once dirname(__DIR__) . '/config/db.php';
+require_once __DIR__ . '/auth.php';
 
-        // SQL Base
-        $sql = "SELECT id_tipo_modalidade, nome_tipo_modalidade FROM tipos_modalidades WHERE 1=1" . $filtro['sql'];
-        $sql .= " ORDER BY nome_tipo_modalidade ASC";
+use App\Interclasse\Application\TipoModalidadeNaoEncontradoException;
+use App\Interclasse\Application\TipoModalidadeService;
+use App\Interclasse\Infrastructure\MysqliTipoModalidadeRepository;
 
-        $stmt = $conn->prepare($sql);
+header('Content-Type: application/json; charset=utf-8');
 
-        if (!empty($filtro['params'])) {
-            $stmt->bind_param($filtro['types'], ...$filtro['params']);
-        }
+$service = new TipoModalidadeService(new MysqliTipoModalidadeRepository($conn));
+$method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
+requerNivel([0, 1, 2, 3]);
 
-        $stmt->execute();
-        $res = $stmt->get_result();
-        $dados = $res->fetch_all(MYSQLI_ASSOC);
+/** @return array<string, mixed> */
+function tipoModalidadePayload(): array
+{
+    $json = json_decode(file_get_contents('php://input'), true);
+    return is_array($json) ? array_merge($_POST, $json) : $_POST;
+}
 
-        echo json_encode($dados);
-        break;
-
-    case 'POST':
-        requerEscrita();
-        $data = json_decode(file_get_contents("php://input"));
-
-        if (!isset($data->nome_tipo_modalidade) || empty(trim($data->nome_tipo_modalidade))) {
-            http_response_code(400);
-            echo json_encode([
-                "success" => false,
-                "message" => "O campo nome_tipo_modalidade é obrigatório."
-            ]);
+try {
+    switch ($method) {
+        case 'GET':
+            echo json_encode($service->listar([
+                'id_tipo_modalidade' => (int) ($_GET['id_tipo_modalidade'] ?? 0),
+                'busca' => trim((string) ($_GET['busca'] ?? '')),
+            ]), JSON_UNESCAPED_UNICODE);
             break;
-        }
 
-        $sql = "INSERT INTO tipos_modalidades (nome_tipo_modalidade, status_tipo_modalidade) VALUES (?, ?)";
-        $satus = $data->status_tipo_modalidade ?? 1;
-
-        $stmt = $conn->prepare($sql);
-        $stmt->bind_param("si", $data->nome_tipo_modalidade, $satus );
-
-        if ($stmt->execute()) {
-            http_response_code(201); // Created
+        case 'POST':
+            requerEscrita();
+            $id = $service->criar(tipoModalidadePayload());
+            http_response_code(201);
             echo json_encode([
-                "success" => true,
-                "message" => "Tipo de modalidade cadastrado com sucesso!",
-                "id_tipo_modalidade" => $conn->insert_id
-            ]);
-        } else {
-            http_response_code(500);
-            echo json_encode([
-                "success" => false,
-                "message" => "Erro ao salvar: " . $conn->error
-            ]);
-        }
-        break;
-case 'PUT':
-        requerEscrita();
-        $data = json_decode(file_get_contents("php://input"));
-
-        if (!isset($data->id_tipo_modalidade)) {
-            http_response_code(400);
-            echo json_encode(["success" => false, "message" => "O ID do tipo de modalidade é obrigatório."]);
+                'success' => true,
+                'message' => 'Tipo de modalidade cadastrado com sucesso!',
+                'id_tipo_modalidade' => $id,
+            ], JSON_UNESCAPED_UNICODE);
             break;
-        }
 
-        $campos = [];
-        $params = [];
-        $types = "";
-
-        if (isset($data->nome_tipo_modalidade)) {
-            $campos[] = "nome_tipo_modalidade = ?";
-            $params[] = $data->nome_tipo_modalidade;
-            $types .= "s"; 
-        }
-        
-        if (isset($data->status_tipo_modalidade)) {
-            $campos[] = "status_tipo_modalidade = ?";
-            $params[] = $data->status_tipo_modalidade;
-            $types .= "s"; 
-        }
-
-        if (empty($campos)) {
-            echo json_encode(["success" => false, "message" => "Nenhum dado enviado para atualização."]);
+        case 'PUT':
+            requerEscrita();
+            $service->atualizar(tipoModalidadePayload());
+            echo json_encode(['success' => true, 'message' => 'Tipo de modalidade atualizado com sucesso!'], JSON_UNESCAPED_UNICODE);
             break;
-        }
 
-        $sql = "UPDATE tipos_modalidades SET " . implode(", ", $campos) . " WHERE id_tipo_modalidade = ?";
-        
-        $params[] = $data->id_tipo_modalidade;
-        $types .= "i"; 
-
-        $stmt = $conn->prepare($sql);
-        
-        $stmt->bind_param($types, ...$params);
-
-        if ($stmt->execute()) {
-            echo json_encode(["success" => true, "message" => "Tipo de modalidade atualizado com sucesso!"]);
-        } else {
-            http_response_code(500);
-            echo json_encode(["success" => false, "message" => "Erro ao atualizar: " . $conn->error]);
-        }
-        break;
-    default:
-        http_response_code(405);
-        echo json_encode(["message" => "Método não permitido"]);
-        break;
+        default:
+            http_response_code(405);
+            echo json_encode(['success' => false, 'message' => 'Método não permitido'], JSON_UNESCAPED_UNICODE);
+    }
+} catch (InvalidArgumentException $exception) {
+    http_response_code(400);
+    echo json_encode(['success' => false, 'message' => $exception->getMessage()], JSON_UNESCAPED_UNICODE);
+} catch (TipoModalidadeNaoEncontradoException $exception) {
+    http_response_code(404);
+    echo json_encode(['success' => false, 'message' => 'Tipo de modalidade não encontrado.'], JSON_UNESCAPED_UNICODE);
+} catch (Throwable $exception) {
+    error_log('Falha em tipoModalidade.php: ' . $exception->getMessage());
+    http_response_code(500);
+    echo json_encode(['success' => false, 'message' => 'Não foi possível processar o tipo de modalidade.'], JSON_UNESCAPED_UNICODE);
 }

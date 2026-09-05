@@ -1,6 +1,10 @@
 <?php
+
+declare(strict_types=1);
+
 header('Content-Type: application/json; charset=utf-8');
-require_once '../config/db.php';
+require_once dirname(__DIR__) . '/config/db.php';
+require_once __DIR__ . '/auth.php';
 
 $idTurma = isset($_GET['id_turma']) ? (int) $_GET['id_turma'] : 0;
 $idInter = isset($_GET['id_interclasse']) ? (int) $_GET['id_interclasse'] : 0;
@@ -10,6 +14,8 @@ if ($idTurma <= 0 || $idInter <= 0) {
     echo json_encode(['success' => false, 'message' => 'id_turma e id_interclasse são obrigatórios.']);
     exit;
 }
+
+requerAcessoTurma($conn, $idTurma, $idInter);
 
 function sgi_hist_q(mysqli $conn, string $sql, string $types = '', array $params = []): array
 {

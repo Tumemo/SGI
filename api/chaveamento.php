@@ -10,6 +10,7 @@ require_once __DIR__ . '/auth.php';
 header('Content-Type: application/json; charset=utf-8');
 
 $method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
+requerNivel([0, 1, 2, 3]);
 $data = json_decode(file_get_contents('php://input') ?: '{}');
 $tipoModalidade = $data->tipo_modalidade ?? ($_GET['tipo_modalidade'] ?? null);
 

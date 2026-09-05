@@ -1,0 +1,3 @@
+# Arquivos enviados pelos usuários ficam fora do versionamento.
+*
+!.gitignore

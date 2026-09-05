@@ -1,10 +1,19 @@
 <?php
+
+declare(strict_types=1);
+
 require_once '../config/db.php';
 require_once 'filtros.php';
 require_once 'auth.php';
 require_once __DIR__ . '/includes/idempotencia.php';
+
+use App\Interclasse\Application\OcorrenciaService;
+use App\Interclasse\Infrastructure\MysqliOcorrenciaRepository;
+
 header('Content-Type: application/json');
-$method = $_SERVER['REQUEST_METHOD'];
+$method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
+$ocorrenciaService = new OcorrenciaService(new MysqliOcorrenciaRepository($conn));
+requerNivel([0, 1, 2, 3]);
 
 /**
  * Converte o identificador negativo de uma partida criada no IndexedDB para o
@@ -170,58 +179,32 @@ switch ($method) {
             $descricao = '[JOGO:' . $idJogo . ']' . ($idTurma > 0 ? '[TURMA:' . $idTurma . ']' : '') . $data->descricao_ocorrencia;
         }
 
-        $sql = "INSERT INTO ocorrencias (titulo_ocorrencia, descricao_ocorrencia, data_ocorrencia, usuarios_id_usuario, penalidade) 
-                VALUES (?, ?, ?, ?, ?)";
-
-        $stmt = $conn->prepare($sql);
-
-        $stmt->bind_param(
-            "sssii",
-            $data->titulo_ocorrencia,
-            $descricao,
-            $data->data_ocorrencia,
-            $data->usuarios_id_usuario,
-            $penalidade
-        );
-
-        if ($stmt->execute()) {
-            $evento = null;
-
-            // Detecta segundo cartão amarelo do mesmo aluno nesta partida
-            if ($data->titulo_ocorrencia === 'Amarelo' && $idJogo > 0) {
-                $likePattern = '%[JOGO:' . $idJogo . ']%';
-                $checkSql = "SELECT COUNT(*) as total FROM ocorrencias 
-                             WHERE titulo_ocorrencia = 'Amarelo' 
-                               AND usuarios_id_usuario = ? 
-                               AND descricao_ocorrencia LIKE ? 
-                               AND status_ocorrencia = '1'";
-                $checkStmt = $conn->prepare($checkSql);
-                $checkStmt->bind_param("is", $data->usuarios_id_usuario, $likePattern);
-                $checkStmt->execute();
-                $countResult = $checkStmt->get_result()->fetch_assoc();
-
-                if ((int)$countResult['total'] >= 2) {
-                    $evento = 'segundo_amarelo';
-
-                    // Registra automaticamente o Cartão Vermelho
-                    $redDesc = '[JOGO:' . $idJogo . ']' . ($idTurma > 0 ? '[TURMA:' . $idTurma . ']' : '')
-                               . 'Segundo cartão amarelo — expulso automático';
-                    $insertRed = "INSERT INTO ocorrencias (titulo_ocorrencia, descricao_ocorrencia, data_ocorrencia, usuarios_id_usuario, penalidade) 
-                                  VALUES ('Vermelho', ?, ?, ?, 1)";
-                    $redStmt = $conn->prepare($insertRed);
-                    $redStmt->bind_param("ssi", $redDesc, $data->data_ocorrencia, $data->usuarios_id_usuario);
-                    $redStmt->execute();
-                }
-            }
-
-            $response = ["success" => true, "message" => "Ocorrência registrada com sucesso!", "id" => $conn->insert_id];
-            if ($evento) {
-                $response['evento'] = $evento;
+        try {
+            $resultado = $ocorrenciaService->registrar([
+                'titulo_ocorrencia' => $data->titulo_ocorrencia,
+                'descricao_ocorrencia' => (string) $data->descricao_ocorrencia,
+                'data_ocorrencia' => $data->data_ocorrencia,
+                'usuarios_id_usuario' => (int) $data->usuarios_id_usuario,
+                'penalidade' => $penalidade,
+                'id_jogo' => $idJogo,
+                'id_turma' => $idTurma,
+            ]);
+            $response = [
+                "success" => true,
+                "message" => "Ocorrência registrada com sucesso!",
+                "id" => $resultado['id'],
+            ];
+            if ($resultado['evento'] !== null) {
+                $response['evento'] = $resultado['evento'];
             }
             sgi_enviar_resposta_idempotente($conn, 'ocorrencias.post', 201, $response);
-        } else {
+        } catch (InvalidArgumentException $exception) {
+            http_response_code(400);
+            echo json_encode(["success" => false, "message" => $exception->getMessage()], JSON_UNESCAPED_UNICODE);
+        } catch (Throwable $exception) {
+            error_log('Falha ao registrar ocorrência: ' . $exception->getMessage());
             http_response_code(500);
-            echo json_encode(["success" => false, "message" => $conn->error]);
+            echo json_encode(["success" => false, "message" => "Não foi possível registrar ocorrência."], JSON_UNESCAPED_UNICODE);
         }
         break;
 
@@ -230,61 +213,17 @@ switch ($method) {
         garantirInterclasseAtivo($conn);
         $data = json_decode(file_get_contents("php://input"));
 
-        // Apenas o ID é estritamente obrigatório para localizar o registro
-        if (!isset($data->id_ocorrencia)) {
+        $payload = is_object($data) ? get_object_vars($data) : [];
+        try {
+            $ocorrenciaService->atualizar($payload);
+            echo json_encode(["success" => true, "message" => "Ocorrência atualizada com sucesso!"], JSON_UNESCAPED_UNICODE);
+        } catch (InvalidArgumentException $exception) {
             http_response_code(400);
-            echo json_encode(["success" => false, "message" => "O ID da ocorrência é obrigatório."]);
-            break;
-        }
-
-        $campos = [];
-        $params = [];
-        $types = "";
-
-        // Verificação dinâmica de cada campo
-        if (isset($data->titulo_ocorrencia)) {
-            $campos[] = "titulo_ocorrencia = ?";
-            $params[] = $data->titulo_ocorrencia;
-            $types .= "s"; // string
-        }
-
-        if (isset($data->descricao_ocorrencia)) {
-            $campos[] = "descricao_ocorrencia = ?";
-            $params[] = $data->descricao_ocorrencia;
-            $types .= "s"; 
-        }
-        if (isset($data->status_ocorrencia)) {
-            $campos[] = "status_ocorrencia = ?";
-            $params[] = $data->status_ocorrencia;
-            $types .= "s"; 
-        }
-
-        if (isset($data->penalidade)) {
-            $campos[] = "penalidade = ?";
-            $params[] = $data->penalidade;
-            $types .= "i"; 
-        }
-
-        if (empty($campos)) {
-            echo json_encode(["success" => false, "message" => "Nenhum dado fornecido para atualização."]);
-            break;
-        }
-
-        $sql = "UPDATE ocorrencias SET " . implode(", ", $campos) . " WHERE id_ocorrencia = ?";
-        
-
-        $params[] = $data->id_ocorrencia;
-        $types .= "i";
-
-        $stmt = $conn->prepare($sql);
-    
-        $stmt->bind_param($types, ...$params);
-
-        if ($stmt->execute()) {
-            echo json_encode(["success" => true, "message" => "Ocorrência atualizada com sucesso!"]);
-        } else {
+            echo json_encode(["success" => false, "message" => $exception->getMessage()], JSON_UNESCAPED_UNICODE);
+        } catch (Throwable $exception) {
+            error_log('Falha ao atualizar ocorrência: ' . $exception->getMessage());
             http_response_code(500);
-            echo json_encode(["success" => false, "message" => "Erro ao atualizar: " . $conn->error]);
+            echo json_encode(["success" => false, "message" => "Não foi possível atualizar ocorrência."], JSON_UNESCAPED_UNICODE);
         }
         break;
 }

@@ -1,207 +1,79 @@
 <?php
-require_once '../config/db.php';
-require_once 'filtros.php';
-require_once 'auth.php';
-header('Content-Type: application/json');
 
-$method = $_SERVER['REQUEST_METHOD'];
+declare(strict_types=1);
 
-switch ($method) {
-    case 'GET':
-        $filtro = aplicarFiltrosCategorias();
+require_once dirname(__DIR__) . '/config/db.php';
+require_once __DIR__ . '/auth.php';
 
-        // REMOVIDO o ";" que estava após o WHERE 1=1
-        $sql = "SELECT 
-                    c.id_categoria, 
-                    c.nome_categoria, 
-                    i.nome_interclasse 
-                FROM categorias c
-                INNER JOIN interclasses i ON c.interclasses_id_interclasse = i.id_interclasse 
-                WHERE 1=1 " . $filtro['sql'];
+use App\Interclasse\Application\CategoriaInativaException;
+use App\Interclasse\Application\CategoriaNaoEncontradaException;
+use App\Interclasse\Application\CategoriaService;
+use App\Interclasse\Infrastructure\MysqliCategoriaRepository;
 
-        // Adicionado um espaço antes do ORDER BY para evitar que cole no texto anterior
-        $sql .= " ORDER BY c.nome_categoria ASC";
+header('Content-Type: application/json; charset=utf-8');
 
-        $stmt = $conn->prepare($sql);
-        if (!$stmt) {
-            echo json_encode(["success" => false, "message" => "Erro ao preparar consulta: " . $conn->error]);
+$service = new CategoriaService(new MysqliCategoriaRepository($conn));
+$method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
+requerNivel([0, 1, 2, 3]);
+
+/** @return array<string, mixed> */
+function categoriaPayload(): array
+{
+    $json = json_decode(file_get_contents('php://input'), true);
+    return is_array($json) ? array_merge($_POST, $json) : $_POST;
+}
+
+try {
+    switch ($method) {
+        case 'GET':
+            echo json_encode($service->listar([
+                'id_categoria' => (int) ($_GET['id_categoria'] ?? 0),
+                'id_interclasse' => (int) ($_GET['id_interclasse'] ?? 0),
+                'busca' => trim((string) ($_GET['busca'] ?? '')),
+            ]), JSON_UNESCAPED_UNICODE);
             break;
-        }
 
-        if (!empty($filtro['params'])) {
-            $stmt->bind_param($filtro['types'], ...$filtro['params']);
-        }
-
-        if (!$stmt->execute()) {
-            echo json_encode(["success" => false, "message" => "Erro ao executar consulta: " . $stmt->error]);
-            break;
-        }
-        $res = $stmt->get_result();
-        if (!$res) {
-            echo json_encode(["success" => false, "message" => "Erro ao obter resultados."]);
-            break;
-        }
-        echo json_encode($res->fetch_all(MYSQLI_ASSOC));
-        break;
-
-    case 'POST':
-        requerEscrita();
-        $data = json_decode(file_get_contents("php://input"));
-
-        if (!isset($data->nome_categoria) || empty(trim($data->nome_categoria))) {
-            http_response_code(400);
-            echo json_encode([
-                "success" => false,
-                "message" => "O campo nome_categoria é obrigatório."
-            ]);
-            break;
-        }
-
-        $sql = "INSERT INTO categorias (nome_categoria, status_categoria, interclasses_id_interclasse) VALUES (?, ?, ?)";
-        $stmt = $conn->prepare($sql);
-        $stmt->bind_param("sis", $data->nome_categoria, $data->status_categoria, $data->interclasses_id_interclasse);
-
-        if ($stmt->execute()) {
+        case 'POST':
+            requerEscrita();
+            $id = $service->criar(categoriaPayload());
             http_response_code(201);
             echo json_encode([
-                "success" => true,
-                "message" => "Categoria cadastrada com sucesso!",
-                "id_categoria" => $conn->insert_id
-            ]);
-        } else {
-            http_response_code(500);
-            echo json_encode([
-                "success" => false,
-                "message" => "Erro ao salvar: " . $conn->error
-            ]);
-        }
-        break;
-
-    case 'PUT':
-        requerEscrita();
-        $data = json_decode(file_get_contents("php://input"));
-
-        // Validação básica do ID
-        if (!isset($data->id_categoria)) {
-            http_response_code(400);
-            echo json_encode(["success" => false, "message" => "O ID da categoria é obrigatório."]);
+                'success' => true,
+                'message' => 'Categoria cadastrada com sucesso!',
+                'id_categoria' => $id,
+            ], JSON_UNESCAPED_UNICODE);
             break;
-        }
 
-        // 1. PRIMEIRO: Verificar o status atual no banco de dados
-        $checkSql = "SELECT status_categoria FROM categorias WHERE id_categoria = ?";
-        $stmtCheck = $conn->prepare($checkSql);
-        $stmtCheck->bind_param("i", $data->id_categoria);
-        $stmtCheck->execute();
-        $res = $stmtCheck->get_result()->fetch_assoc();
-
-        if (!$res) {
-            http_response_code(404);
-            echo json_encode(["success" => false, "message" => "Categoria não encontrada."]);
+        case 'PUT':
+            requerEscrita();
+            $service->atualizar(categoriaPayload());
+            echo json_encode(['success' => true, 'message' => 'Categoria atualizada com sucesso!'], JSON_UNESCAPED_UNICODE);
             break;
-        }
 
-        // 2. REGRA DE NEGÓCIO: Se o status já for '0', não permite alteração
-        // Isso impede "deletar" o que já está deletado ou editar dados históricos
-        if ($res['status_categoria'] === '0') {
-            http_response_code(403); // Proibido
-            echo json_encode([
-                "success" => false, 
-                "message" => "Esta categoria está desativada e não pode ser alterada."
-            ]);
+        case 'DELETE':
+            requerExclusao();
+            $service->excluir((int) (categoriaPayload()['id_categoria'] ?? $_GET['id_categoria'] ?? 0));
+            echo json_encode(['success' => true, 'message' => 'Categoria excluída com sucesso!'], JSON_UNESCAPED_UNICODE);
             break;
-        }
 
-        // 3. PREPARAÇÃO DA ATUALIZAÇÃO DINÂMICA
-        $campos = [];
-        $params = [];
-        $types = "";
-
-        if (isset($data->nome_categoria)) {
-            $campos[] = "nome_categoria = ?";
-            $params[] = trim($data->nome_categoria);
-            $types .= "s";
-        }
-
-        if (isset($data->status_categoria)) {
-            $campos[] = "status_categoria = ?";
-            $params[] = $data->status_categoria;
-            $types .= "s"; // Enum tratado como string
-        }
-
-        if (empty($campos)) {
-            http_response_code(400);
-            echo json_encode(["success" => false, "message" => "Nenhum dado enviado para atualizar."]);
-            break;
-        }
-
-        // Montagem final do SQL
-        $sql = "UPDATE categorias SET " . implode(", ", $campos) . " WHERE id_categoria = ?";
-        $params[] = $data->id_categoria;
-        $types .= "i";
-
-        $stmt = $conn->prepare($sql);
-        $stmt->bind_param($types, ...$params);
-
-        if ($stmt->execute()) {
-            echo json_encode(["success" => true, "message" => "Categoria atualizada com sucesso!"]);
-        } else {
-            http_response_code(500);
-            echo json_encode(["success" => false, "message" => "Erro no servidor: " . $conn->error]);
-        }
-        break;
-    case 'DELETE':
-        requerExclusao();
-        $data = json_decode(file_get_contents("php://input"));
-
-        if (!isset($data->id_categoria)) {
-            http_response_code(400);
-            echo json_encode(["success" => false, "message" => "O ID da categoria é obrigatório."]);
-            break;
-        }
-
-        $checkSql = "SELECT status_categoria FROM categorias WHERE id_categoria = ?";
-        $stmtCheck = $conn->prepare($checkSql);
-        $stmtCheck->bind_param("i", $data->id_categoria);
-        $stmtCheck->execute();
-        $res = $stmtCheck->get_result()->fetch_assoc();
-
-        if (!$res) {
-            http_response_code(404);
-            echo json_encode(["success" => false, "message" => "Categoria não encontrada."]);
-            break;
-        }
-
-        $sql = "UPDATE categorias SET status_categoria = '0' WHERE id_categoria = ?";
-        $stmt = $conn->prepare($sql);
-        $stmt->bind_param("i", $data->id_categoria);
-
-        if (!$stmt->execute()) {
-            http_response_code(500);
-            echo json_encode(["success" => false, "message" => "Erro no servidor: " . $conn->error]);
-            break;
-        }
-
-        $idCat = $data->id_categoria;
-
-        $updates = [
-            "UPDATE turmas SET status_turma = '0' WHERE categorias_id_categoria = ?" => "i",
-            "UPDATE modalidades SET status_modalidade = '0' WHERE categorias_id_categoria = ?" => "i",
-            "UPDATE equipes SET status_equipe = '0' WHERE modalidades_id_modalidade IN (SELECT id_modalidade FROM modalidades WHERE categorias_id_categoria = ?)" => "i",
-            "UPDATE equipes SET status_equipe = '0' WHERE turmas_id_turma IN (SELECT id_turma FROM turmas WHERE categorias_id_categoria = ?) AND status_equipe = '1'" => "i"
-        ];
-
-        foreach ($updates as $sqlUpd => $type) {
-            $st = $conn->prepare($sqlUpd);
-            $st->bind_param($type, $idCat);
-            $st->execute();
-            $st->close();
-        }
-
-        echo json_encode(["success" => true, "message" => "Categoria excluída com sucesso!"]);
-        break;
-    default:
-        http_response_code(405);
-        echo json_encode(["message" => "Método não permitido"]);
-        break;
+        default:
+            http_response_code(405);
+            echo json_encode(['success' => false, 'message' => 'Método não permitido'], JSON_UNESCAPED_UNICODE);
+    }
+} catch (InvalidArgumentException $exception) {
+    http_response_code(400);
+    echo json_encode(['success' => false, 'message' => $exception->getMessage()], JSON_UNESCAPED_UNICODE);
+} catch (CategoriaNaoEncontradaException $exception) {
+    http_response_code(404);
+    echo json_encode(['success' => false, 'message' => 'Categoria não encontrada.'], JSON_UNESCAPED_UNICODE);
+} catch (CategoriaInativaException $exception) {
+    http_response_code(403);
+    echo json_encode([
+        'success' => false,
+        'message' => 'Esta categoria está desativada e não pode ser alterada.',
+    ], JSON_UNESCAPED_UNICODE);
+} catch (Throwable $exception) {
+    error_log('Falha em categorias.php: ' . $exception->getMessage());
+    http_response_code(500);
+    echo json_encode(['success' => false, 'message' => 'Não foi possível processar a categoria.'], JSON_UNESCAPED_UNICODE);
 }

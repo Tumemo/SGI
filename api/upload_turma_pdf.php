@@ -1,4 +1,11 @@
 <?php
+declare(strict_types=1);
+
+require_once __DIR__ . '/../config/bootstrap.php';
+require_once __DIR__ . '/auth.php';
+
+use App\Shared\Storage\StoragePaths;
+
 ob_start();
 header('Content-Type: application/json');
 
@@ -8,6 +15,7 @@ $resposta = [
 ];
 
 try {
+    requerEscrita();
     if (!isset($_FILES['pdf_arquivo'])) {
         throw new Exception('Nenhum arquivo enviado. Campo esperado: pdf_arquivo');
     }
@@ -30,7 +38,6 @@ try {
         throw new Exception('Apenas arquivos PDF são permitidos.');
     }
 
-    require_once __DIR__ . '/../vendor/autoload.php';
     require_once __DIR__ . '/includes/pdf_helper.php';
 
     require_once __DIR__ . '/../config/db.php';
@@ -67,7 +74,11 @@ try {
         throw new Exception('Nenhum interclasse ativo encontrado. Informe id_interclasse no upload.');
     }
 
-    $destDir = dirname(__DIR__) . DIRECTORY_SEPARATOR . 'docs' . DIRECTORY_SEPARATOR . 'lista_alunos' . DIRECTORY_SEPARATOR;
+    // O diretório de upload não pode ser acoplado à documentação versionada.
+    // O fallback mantém compatibilidade com instalações antigas; ambientes
+    // novos devem informar SGI_UPLOAD_DIR (storage ou diretório temporário de
+    // testes) pelo ambiente.
+    $destDir = StoragePaths::turmaPdfs() . DIRECTORY_SEPARATOR;
     if (!is_dir($destDir)) {
         if (!mkdir($destDir, 0777, true)) {
             throw new Exception('Falha ao criar pasta de destino.');

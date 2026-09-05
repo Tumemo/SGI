@@ -1,29 +1,23 @@
 <?php
-require_once '../config/db.php';
+
+declare(strict_types=1);
+
+require_once __DIR__ . '/../config/db.php';
 require_once __DIR__ . '/includes/equipes_helper.php';
-session_start();
+require_once __DIR__ . '/auth.php';
+
+use App\Shared\Http\SessionManager;
+
+SessionManager::start();
 
 header('Content-Type: application/json');
-header('Access-Control-Allow-Origin: *');
-header('Access-Control-Allow-Methods: POST, OPTIONS');
-header('Access-Control-Allow-Headers: Content-Type');
-
-if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-    http_response_code(200);
-    exit();
-}
-
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405);
     echo json_encode(["success" => false, "message" => "Método não permitido."]);
     exit();
 }
 
-if (!isset($_SESSION['id'])) {
-    http_response_code(401);
-    echo json_encode(["success" => false, "message" => "Sessão expirada ou usuário não autenticado."]);
-    exit();
-}
+requerNivel([3]);
 
 $id_usuario = (int) $_SESSION['id'];
 $data = json_decode(file_get_contents("php://input"));

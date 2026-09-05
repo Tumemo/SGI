@@ -46,15 +46,15 @@
      ```
    - Importe o arquivo de schema localizado em `docs/sgi.sql`.
 
-3. **Verificar a Conexão (`config/db.php`):**
-   ```php
-   $host = "localhost";
-   $user = "root";
-   $pass = "";
-   $db   = "sgi";
-   ```
+3. **Configurar variáveis de ambiente:**
+   - Copie `.env.example` para `.env` (ou configure as mesmas variáveis no servidor).
+   - Informe `SGI_DB_HOST`, `SGI_DB_PORT`, `SGI_DB_NAME`, `SGI_DB_USER` e `SGI_DB_PASSWORD`.
+   - O arquivo `.env` não deve ser versionado; a aplicação não mantém credenciais no código.
 
 4. **Acessar a Aplicação:**
+   - Em Apache, configure `SGI/public` como **DocumentRoot**. O front controller
+     mantém as URLs `/api/...` e `/views/...` sem publicar `config/`, `src/`,
+     `tests/`, `vendor/` ou `storage/`.
    - Abra o navegador e acesse: [http://localhost/SGI/](http://localhost/SGI/)
    - Para acesso em outros computadores ou celulares na mesma rede Wi-Fi, utilize o IP da sua máquina (ex.: `http://10.141.117.2/SGI/`).
 
@@ -86,6 +86,7 @@
 
 ```
 SGI/
+├── public/                # Único DocumentRoot (front controller e regras HTTP)
 ├── api/                   # Endpoints REST e controladores PHP
 │   ├── includes/          # Regras de negócio (chaveamento, PDF, equipes, validações)
 │   ├── interclasse.php    # CRUD e gerenciamento de edições
@@ -93,9 +94,15 @@ SGI/
 │   ├── lancar_resultado.php # Finalização de jogos e cálculo de pódios
 │   ├── login.php          # Autenticação e controle de sessões
 │   └── ...
-├── config/                # Conexão com o banco de dados (db.php)
+├── config/                # Bootstrap e conexão com o banco
+├── src/                   # Domínio, casos de uso e adaptadores PSR-4
+│   ├── Autenticacao/      # Login e repositórios de usuários/edições
+│   ├── Interclasse/       # Edições, turmas, equipes, jogos e resultados
+│   ├── Usuarios/           # Casos administrativos de usuários
+│   └── Shared/             # Configuração, sessão e armazenamento
 ├── docs/                  # Scripts SQL (sgi.sql) e documentações
-├── uploads/               # Regulamentos em PDF e fotos de perfil
+├── storage/               # Arquivos de execução (uploads fora do Git)
+├── tools/                 # Lint, análise e servidor de testes
 └── views/                 # Interfaces do usuário
     ├── src/componentes/   # Motores JavaScript offline (IndexedDB, SPA, Chaveamento)
     ├── src/pages/         # Painéis administrativos, agenda, placar e ranking
@@ -109,7 +116,20 @@ SGI/
 O projeto conta com uma suite completa de testes automatizados modulares:
 
 ```bash
-# Executar toda a suite de testes automatizados (87 asserções):
+# Testes unitários, lint, estilo e análise estática:
+composer test
+composer lint
+composer analyse
+composer cs:check
+
+# O CI também executa a suíte HTTP em MySQL isolado a cada push/PR.
+
+# Testes HTTP completos (118 asserções) em banco isolado:
+# terminal 1
+powershell -ExecutionPolicy Bypass -File tools/start-test-server.ps1
+# terminal 2
+$env:SGI_TEST_BASE_URL = 'http://127.0.0.1:8099'
+$env:SGI_TEST_DB_NAME = 'sgi_test'
 php tests/run_all.php
 
 # Inicializar/resetar dados de demonstração (Edição ativa, turmas, equipes e alunos):

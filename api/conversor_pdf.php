@@ -1,6 +1,11 @@
 <?php
+declare(strict_types=1);
+
+require_once __DIR__ . '/../config/bootstrap.php';
+
+use App\Shared\Storage\StoragePaths;
+
 // 1. Inclusões essenciais para a automação
-require_once '../vendor/autoload.php';
 require_once '../config/db.php';
 require_once __DIR__ . '/includes/importador_competidores.php';
 require_once __DIR__ . '/includes/usuario_validacao.php';
@@ -18,7 +23,7 @@ $resposta = [
 
 try {
     $parser = new Parser();
-    $pasta_pdf     = dirname(__DIR__) . DIRECTORY_SEPARATOR . 'docs' . DIRECTORY_SEPARATOR . 'lista_alunos' . DIRECTORY_SEPARATOR; 
+    $pasta_pdf     = StoragePaths::turmaPdfs() . DIRECTORY_SEPARATOR;
     $pasta_destino = __DIR__ . DIRECTORY_SEPARATOR . 'json_turmas' . DIRECTORY_SEPARATOR;
     $arquivo_final = $pasta_destino . 'info_alunos.json';
 

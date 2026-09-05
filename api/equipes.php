@@ -1,13 +1,31 @@
 <?php
+
+declare(strict_types=1);
+
 require_once '../config/db.php';
 require_once 'filtros.php';
 require_once 'auth.php';
 require_once __DIR__ . '/includes/equipes_helper.php';
 
-header('Content-Type: application/json');
-$method = $_SERVER['REQUEST_METHOD'];
+use App\Interclasse\Application\EquipeLimiteException;
+use App\Interclasse\Application\EquipeNaoEncontradaException;
+use App\Interclasse\Application\EquipeService;
+use App\Interclasse\Infrastructure\MysqliEquipeRepository;
 
-switch ($method) {
+header('Content-Type: application/json');
+$method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
+$service = new EquipeService(new MysqliEquipeRepository($conn));
+requerNivel([0, 1, 2, 3]);
+
+/** @return array<string, mixed> */
+function equipePayload(): array
+{
+    $json = json_decode(file_get_contents('php://input'), true);
+    return is_array($json) ? array_merge($_POST, $json) : $_POST;
+}
+
+try {
+    switch ($method) {
     case 'GET':
         if (!empty($_GET['id_equipe']) && empty($_GET['id_turma'])) {
             $id_equipe = intval($_GET['id_equipe']);
@@ -22,7 +40,7 @@ switch ($method) {
             echo json_encode($res->fetch_all(MYSQLI_ASSOC));
             break;
         }
-        
+
         if (!empty($_GET['id_modalidade']) && !empty($_GET['id_turma'])) {
             $id_modalidade_get = intval($_GET['id_modalidade']);
             $id_turma_get = intval($_GET['id_turma']);
@@ -30,22 +48,22 @@ switch ($method) {
                 sgi_buscar_ou_criar_equipe_padrao($conn, $id_modalidade_get, $id_turma_get);
             }
         }
-        
+
         $filtro = aplicarFiltrosEquipes();
-        $sql = "SELECT 
-                    equipes.id_equipe, 
+        $sql = "SELECT
+                    equipes.id_equipe,
                     equipes.nome_equipe,
                     equipes.status_equipe,
                     equipes.modalidades_id_modalidade,
                     equipes.turmas_id_turma,
-                    modalidades.nome_modalidade, 
+                    modalidades.nome_modalidade,
                     modalidades.max_inscrito_modalidade AS limite_maximo,
                     turmas.nome_turma,
                     interclasses.nome_interclasse,
                     (SELECT COUNT(*) FROM equipes_has_usuarios eu WHERE eu.equipes_id_equipe = equipes.id_equipe) AS total_alunos,
                     (SELECT COUNT(*) FROM equipes_has_usuarios eu2 WHERE eu2.equipes_id_equipe = equipes.id_equipe) AS qtd_membros
-                FROM equipes 
-                INNER JOIN modalidades ON modalidades.id_modalidade = equipes.modalidades_id_modalidade 
+                FROM equipes
+                INNER JOIN modalidades ON modalidades.id_modalidade = equipes.modalidades_id_modalidade
                 INNER JOIN turmas ON turmas.id_turma = equipes.turmas_id_turma
                 INNER JOIN interclasses ON interclasses.id_interclasse = turmas.interclasses_id_interclasse
                 WHERE 1=1" . $filtro['sql'] . "
@@ -85,139 +103,34 @@ switch ($method) {
 
     case 'POST':
         requerEscrita();
-        
-        // Tenta ler JSON enviado via fetch body
-        $data = json_decode(file_get_contents("php://input"));
-        
-        // Pega a ação vinda de JSON ou de Formulário POST convencional
-        $acao = $data->acao ?? $_POST['acao'] ?? '';
+        $data = equipePayload();
+        $acao = (string) ($data['acao'] ?? '');
 
         if ($acao === 'criar_equipe') {
-            if (!isset($data->modalidades_id_modalidade, $data->turmas_id_turma)) {
-                http_response_code(400);
-                echo json_encode(["success" => false, "message" => "Dados incompletos: modalidade e turma são obrigatórios."]);
-                break;
-            }
-
-            $modalidade = intval($data->modalidades_id_modalidade);
-            $turma = intval($data->turmas_id_turma);
-            $status = isset($data->status_equipe) ? (string)$data->status_equipe : '1';
-
-            // Permite customizar o nome ou gera automaticamente caso não informado
-            if (!empty($data->nome_equipe)) {
-                $nomeEquipe = trim($data->nome_equipe);
-            } else {
-                // Busca nome da modalidade e da turma
-                $stmtM = $conn->prepare("SELECT nome_modalidade FROM modalidades WHERE id_modalidade = ?");
-                $stmtM->bind_param("i", $modalidade);
-                $stmtM->execute();
-                $resM = $stmtM->get_result()->fetch_assoc();
-                $nomeModalidade = $resM['nome_modalidade'] ?? '';
-                $stmtM->close();
-
-                $stmtT = $conn->prepare("SELECT nome_turma FROM turmas WHERE id_turma = ?");
-                $stmtT->bind_param("i", $turma);
-                $stmtT->execute();
-                $resT = $stmtT->get_result()->fetch_assoc();
-                $nomeTurma = $resT['nome_turma'] ?? '';
-                $stmtT->close();
-
-                // Conta equipes para definir o sequencial ("- 2", "- 3", ...)
-                $stmtC = $conn->prepare("SELECT COUNT(*) as total FROM equipes WHERE modalidades_id_modalidade = ? AND turmas_id_turma = ? AND status_equipe = '1'");
-                $stmtC->bind_param("ii", $modalidade, $turma);
-                $stmtC->execute();
-                $resC = $stmtC->get_result()->fetch_assoc();
-                $numEquipe = ((int) ($resC['total'] ?? 0)) + 1;
-                $stmtC->close();
-
-                // Limite máximo de equipes por turma/modalidade (max_equipes)
-                $maxEquipes = $resM['max_equipes'] ?? null;
-                if ($maxEquipes !== null && $maxEquipes !== '' && (int) $maxEquipes > 0 && $numEquipe > (int) $maxEquipes) {
-                    http_response_code(400);
-                    echo json_encode(["success" => false, "message" => "Limite de " . $maxEquipes . " equipes por turma atingido para esta modalidade."]);
-                    break;
-                }
-
-                $nomeEquipe = $nomeModalidade !== '' ? sgi_nome_equipe_turma($nomeTurma, $nomeModalidade, $numEquipe) : null;
-            }
-
-            $sql = "INSERT INTO equipes (modalidades_id_modalidade, turmas_id_turma, status_equipe, nome_equipe) VALUES (?, ?, ?, ?)";
-            $stmt = $conn->prepare($sql);
-            $stmt->bind_param("iiss", $modalidade, $turma, $status, $nomeEquipe);
-
-            if ($stmt->execute()) {
-                echo json_encode([
-                    "success" => true, 
-                    "message" => "Equipe criada com sucesso!", 
-                    "id_equipe" => $conn->insert_id,
-                    "nome_equipe" => $nomeEquipe
-                ]);
-            } else {
-                http_response_code(500);
-                echo json_encode(["success" => false, "message" => "Erro ao inserir: " . $conn->error]);
-            }
-
+            $criada = $service->criar($data);
+            echo json_encode([
+                'success' => true,
+                'message' => 'Equipe criada com sucesso!',
+                'id_equipe' => $criada['id_equipe'],
+                'nome_equipe' => $criada['nome_equipe'],
+            ], JSON_UNESCAPED_UNICODE);
         } elseif ($acao === 'adicionar_usuarios') {
-            if (!isset($data->id_equipe, $data->usuarios) || !is_array($data->usuarios)) {
+            if (!array_key_exists('id_equipe', $data) || !isset($data['usuarios']) || !is_array($data['usuarios'])) {
                 http_response_code(400);
-                echo json_encode(["success" => false, "message" => "ID da equipe e lista de IDs de usuários são obrigatórios."]);
+                echo json_encode(['success' => false, 'message' => 'ID da equipe e lista de IDs de usuários são obrigatórios.'], JSON_UNESCAPED_UNICODE);
                 break;
             }
-
-            $id_equipe = intval($data->id_equipe);
-            $usuarios = $data->usuarios;
-            $sucesso = true;
-
-            $conn->begin_transaction();
-
-            $sql = "INSERT IGNORE INTO equipes_has_usuarios (equipes_id_equipe, usuarios_id_usuario) VALUES (?, ?)";
-            $stmt = $conn->prepare($sql);
-            
-            $param_user_id = 0;
-            $stmt->bind_param("ii", $id_equipe, $param_user_id);
-
-            foreach ($usuarios as $id_usuario) {
-                $param_user_id = intval($id_usuario);
-                if (!$stmt->execute()) {
-                    $sucesso = false;
-                    break; 
-                }
-            }
-
-            if ($sucesso) {
-                $conn->commit(); 
-                echo json_encode(["success" => true, "message" => "Usuários vinculados à equipe com sucesso!"]);
-            } else {
-                $conn->rollback(); 
-                http_response_code(500);
-                echo json_encode(["success" => false, "message" => "Houve erro ao vincular os usuários. Alterações revertidas."]);
-            }
-
+            $service->adicionarUsuarios((int) $data['id_equipe'], $data['usuarios']);
+            echo json_encode(['success' => true, 'message' => 'Usuários vinculados à equipe com sucesso!'], JSON_UNESCAPED_UNICODE);
         } elseif ($acao === 'remover_aluno') {
-            // Suporta dados via JSON ou FormData
-            $id_equipe = intval($data->id_equipe ?? $_POST['id_equipe'] ?? 0);
-            $id_usuario = intval($data->id_usuario ?? $_POST['id_usuario'] ?? 0);
-
-            if ($id_equipe <= 0 || $id_usuario <= 0) {
-                http_response_code(400);
-                echo json_encode(["success" => false, "message" => "ID da equipe e ID do usuário são obrigatórios."]);
-                break;
-            }
-
-            $sql = "DELETE FROM equipes_has_usuarios WHERE equipes_id_equipe = ? AND usuarios_id_usuario = ?";
-            $stmt = $conn->prepare($sql);
-            $stmt->bind_param("ii", $id_equipe, $id_usuario);
-
-            if ($stmt->execute()) {
-                echo json_encode(["success" => true, "message" => "Aluno removido da equipe com sucesso!"]);
-            } else {
-                http_response_code(500);
-                echo json_encode(["success" => false, "message" => "Erro ao remover aluno: " . $conn->error]);
-            }
-
+            $service->removerUsuario(
+                (int) ($data['id_equipe'] ?? 0),
+                (int) ($data['id_usuario'] ?? 0),
+            );
+            echo json_encode(['success' => true, 'message' => 'Aluno removido da equipe com sucesso!'], JSON_UNESCAPED_UNICODE);
         } elseif ($acao === 'redistribuir') {
-            $modalidadeId = intval($data->modalidades_id_modalidade ?? $_POST['modalidades_id_modalidade'] ?? 0);
-            $turmaId = intval($data->turmas_id_turma ?? $_POST['turmas_id_turma'] ?? 0);
+            $modalidadeId = (int) ($data['modalidades_id_modalidade'] ?? 0);
+            $turmaId = (int) ($data['turmas_id_turma'] ?? 0);
 
             if ($modalidadeId <= 0 || $turmaId <= 0) {
                 http_response_code(400);
@@ -234,87 +147,39 @@ switch ($method) {
 
         } else {
             http_response_code(400);
-            echo json_encode(["success" => false, "message" => "Ação inválida ou não informada."]);
+            echo json_encode(['success' => false, 'message' => 'Ação inválida ou não informada.'], JSON_UNESCAPED_UNICODE);
         }
         break;
 
     case 'PUT':
         requerEscrita();
-        $data = json_decode(file_get_contents("php://input"));
-
-        if (!isset($data->id_equipe)) {
-            http_response_code(400);
-            echo json_encode(["success" => false, "message" => "O ID da equipe é obrigatório."]);
-            break;
-        }
-
-        $campos = [];
-        $params = [];
-        $types = "";
-
-        if (isset($data->nome_equipe)) {
-            $campos[] = "nome_equipe = ?";
-            $params[] = trim((string)$data->nome_equipe);
-            $types .= "s";
-        }
-        if (isset($data->modalidades_id_modalidade)) {
-            $campos[] = "modalidades_id_modalidade = ?";
-            $params[] = intval($data->modalidades_id_modalidade);
-            $types .= "i";
-        }
-        if (isset($data->turmas_id_turma)) {
-            $campos[] = "turmas_id_turma = ?";
-            $params[] = intval($data->turmas_id_turma);
-            $types .= "i";
-        }
-        if (isset($data->status_equipe)) {
-            $campos[] = "status_equipe = ?";
-            $params[] = (string)$data->status_equipe;
-            $types .= "s";
-        }
-
-        if (empty($campos)) {
-            http_response_code(400);
-            echo json_encode(["success" => false, "message" => "Nenhum campo válido enviado para atualização."]);
-            break;
-        }
-
-        $sql = "UPDATE equipes SET " . implode(", ", $campos) . " WHERE id_equipe = ?";
-        $params[] = intval($data->id_equipe);
-        $types .= "i";
-
-        $stmt = $conn->prepare($sql);
-        $stmt->bind_param($types, ...$params);
-
-        if ($stmt->execute()) {
-            echo json_encode(["success" => true, "message" => "Equipe atualizada com sucesso!"]);
-        } else {
-            http_response_code(500);
-            echo json_encode(["success" => false, "message" => $conn->error]);
-        }
+        $service->atualizar(equipePayload());
+        echo json_encode(['success' => true, 'message' => 'Equipe atualizada com sucesso!'], JSON_UNESCAPED_UNICODE);
         break;
 
     case 'DELETE':
         requerExclusao();
-        $data = json_decode(file_get_contents("php://input"));
-        $id = intval($data->id_equipe ?? 0);
-        if (!$id) {
-            http_response_code(400);
-            echo json_encode(["success" => false, "message" => "ID da equipe é obrigatório."]);
-            break;
-        }
-        $stmt = $conn->prepare("UPDATE equipes SET status_equipe = '0' WHERE id_equipe = ?");
-        $stmt->bind_param("i", $id);
-        if ($stmt->execute() && $stmt->affected_rows > 0) {
-            echo json_encode(["success" => true, "message" => "Equipe excluída com sucesso!"]);
-        } else {
-            http_response_code(404);
-            echo json_encode(["success" => false, "message" => "Equipe não encontrada."]);
-        }
+        $data = equipePayload();
+        $service->excluir((int) ($data['id_equipe'] ?? $_GET['id_equipe'] ?? 0));
+        echo json_encode(['success' => true, 'message' => 'Equipe excluída com sucesso!'], JSON_UNESCAPED_UNICODE);
         break;
 
     default:
         http_response_code(405);
         echo json_encode(["message" => "Método não permitido"]);
         break;
+    }
+} catch (EquipeLimiteException $exception) {
+    http_response_code(400);
+    echo json_encode(['success' => false, 'message' => $exception->getMessage()], JSON_UNESCAPED_UNICODE);
+} catch (EquipeNaoEncontradaException $exception) {
+    http_response_code(404);
+    echo json_encode(['success' => false, 'message' => 'Equipe não encontrada.'], JSON_UNESCAPED_UNICODE);
+} catch (InvalidArgumentException $exception) {
+    http_response_code(400);
+    echo json_encode(['success' => false, 'message' => $exception->getMessage()], JSON_UNESCAPED_UNICODE);
+} catch (Throwable $exception) {
+    error_log('Falha em equipes.php: ' . $exception->getMessage());
+    http_response_code(500);
+    echo json_encode(['success' => false, 'message' => 'Não foi possível processar a equipe.'], JSON_UNESCAPED_UNICODE);
 }

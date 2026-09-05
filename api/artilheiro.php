@@ -1,12 +1,20 @@
 <?php
+
+declare(strict_types=1);
+
 require_once '../config/db.php';
 require_once 'filtros.php';
 require_once 'auth.php';
 require_once __DIR__ . '/includes/idempotencia.php';
 
+use App\Interclasse\Application\ArtilheiroService;
+use App\Interclasse\Infrastructure\MysqliArtilheiroRepository;
+
 header('Content-Type: application/json');
 
 $method = $_SERVER['REQUEST_METHOD'];
+$artilheiroService = new ArtilheiroService(new MysqliArtilheiroRepository($conn));
+requerNivel([0, 1, 2, 3]);
 
 // Função para buscar o aluno destaque (maior artilheiro) de cada modalidade
 function revelarDestaquesPorModalidade($conn, $idInterclasse = null) {
@@ -208,19 +216,24 @@ switch ($method) {
             break;
         }
 
-        $sql = "INSERT INTO artilheiros (usuarios_id_usuario, jogos_id_jogo, num_gol) VALUES (?, ?, ?)";
-        $stmt = $conn->prepare($sql);
-        $stmt->bind_param("iii", $data->usuarios_id_usuario, $idJogoArt, $data->num_gol);
-
-        if ($stmt->execute()) {
+        try {
+            $idArtilharia = $artilheiroService->registrar(
+                (int) $data->usuarios_id_usuario,
+                $idJogoArt,
+                (int) $data->num_gol,
+            );
             sgi_enviar_resposta_idempotente($conn, 'artilheiro.post', 200, [
                 "success" => true,
                 "message" => "Gols registrados com sucesso!",
-                "id" => $conn->insert_id
+                "id" => $idArtilharia,
             ]);
-        } else {
+        } catch (InvalidArgumentException $exception) {
+            http_response_code(400);
+            echo json_encode(["success" => false, "message" => $exception->getMessage()], JSON_UNESCAPED_UNICODE);
+        } catch (Throwable $exception) {
+            error_log('Falha ao registrar artilharia: ' . $exception->getMessage());
             http_response_code(500);
-            echo json_encode(["success" => false, "message" => "Erro ao salvar: " . $conn->error]);
+            echo json_encode(["success" => false, "message" => "Não foi possível registrar artilharia."], JSON_UNESCAPED_UNICODE);
         }
         break;
 
@@ -249,15 +262,20 @@ switch ($method) {
             }
         }
 
-        $sql = "UPDATE artilheiros SET num_gol = ? WHERE usuarios_id_usuario = ? AND jogos_id_jogo = ?";
-        $stmt = $conn->prepare($sql);
-        $stmt->bind_param("iii", $data->num_gol, $data->usuarios_id_usuario, $idJogoArt);
-
-        if ($stmt->execute()) {
-            echo json_encode(["success" => true, "message" => "Artilharia atualizada!"]);
-        } else {
+        try {
+            $artilheiroService->atualizar(
+                (int) $data->usuarios_id_usuario,
+                $idJogoArt,
+                (int) $data->num_gol,
+            );
+            echo json_encode(["success" => true, "message" => "Artilharia atualizada!"], JSON_UNESCAPED_UNICODE);
+        } catch (InvalidArgumentException $exception) {
+            http_response_code(400);
+            echo json_encode(["success" => false, "message" => $exception->getMessage()], JSON_UNESCAPED_UNICODE);
+        } catch (Throwable $exception) {
+            error_log('Falha ao atualizar artilharia: ' . $exception->getMessage());
             http_response_code(500);
-            echo json_encode(["success" => false, "message" => $conn->error]);
+            echo json_encode(["success" => false, "message" => "Não foi possível atualizar artilharia."], JSON_UNESCAPED_UNICODE);
         }
         break;
 

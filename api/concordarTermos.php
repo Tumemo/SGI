@@ -1,116 +1,62 @@
 <?php
+
+declare(strict_types=1);
+
+require_once dirname(__DIR__) . '/config/db.php';
+require_once __DIR__ . '/auth.php';
+
+use App\Autenticacao\Application\TermosService;
+use App\Autenticacao\Infrastructure\MysqliTermosRepository;
+
 header('Content-Type: application/json; charset=utf-8');
-date_default_timezone_set('America/Sao_Paulo');
 
-require_once '../config/db.php';
-session_start();
+requerNivel([3]);
+iniciarSessao();
+$idUsuario = (int) ($_SESSION['id_usuario'] ?? $_SESSION['id'] ?? $_SESSION['usuario_id'] ?? 0);
+$service = new TermosService(new MysqliTermosRepository($conn));
+$method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
 
-// Aceita as chaves de sessão mais comuns para evitar 401 indevido
-$id_usuario = $_SESSION['id_usuario'] ?? $_SESSION['id'] ?? $_SESSION['usuario_id'] ?? null;
-
-if (!$id_usuario) {
-    http_response_code(401);
-    echo json_encode([
-        "success" => false,
-        "message" => "Sessão expirada ou usuário não autenticado."
-    ]);
-    exit;
-}
-
-$metodo = $_SERVER['REQUEST_METHOD'];
-
-// Consulta dados do usuário
-$sql = "SELECT u.id_usuario, u.interclasses_id_interclasse, u.senha_usuario, u.nivel_usuario, ui.aceito_termo 
-        FROM usuarios u
-        LEFT JOIN usuarios_has_interclasses ui 
-               ON u.id_usuario = ui.usuarios_id_usuario 
-              AND u.interclasses_id_interclasse = ui.interclasses_id_interclasse
-        WHERE u.id_usuario = ?";
-
-$stmt = $conn->prepare($sql);
-$stmt->bind_param('i', $id_usuario);
-$stmt->execute();
-$result = $stmt->get_result();
-
-if ($result->num_rows === 0) {
-    echo json_encode([
-        "success" => false,
-        "message" => "Aluno não cadastrado."
-    ]);
-    exit;
-}
-
-$usuario = $result->fetch_assoc();
-
-// Flag usada pela tela do aluno: exige a troca enquanto ele ainda usa a senha padrão
-$exigeTrocaSenha = ((int)($usuario['nivel_usuario'] ?? -1) === 3 && password_verify('123', $usuario['senha_usuario'] ?? ''));
-
-// SE FOR GET: Apenas checa o aceite
-if ($metodo === 'GET') {
-    $jaAceitou = ($usuario['aceito_termo'] === 'sim');
-    echo json_encode([
-        "success" => true,
-        "termo_aceito" => $jaAceitou,
-        "exige_troca_senha" => $exigeTrocaSenha
-    ]);
-    exit;
-}
-
-// SE FOR POST: Processa a gravação
-if ($metodo === 'POST') {
-    if (empty($usuario['interclasses_id_interclasse'])) {
-        $qAtivo = $conn->query("SELECT id_interclasse FROM interclasses WHERE status_interclasse = '1' ORDER BY id_interclasse DESC LIMIT 1");
-        if ($qAtivo && ($rAtivo = $qAtivo->fetch_assoc())) {
-            $idAtivo = (int)$rAtivo['id_interclasse'];
-            $conn->query("UPDATE usuarios SET interclasses_id_interclasse = $idAtivo WHERE id_usuario = $id_usuario");
-            $usuario['interclasses_id_interclasse'] = $idAtivo;
-        } else {
-            echo json_encode([
-                "success" => false,
-                "message" => "Aluno não possui um Interclasse vinculado e não há edição ativa."
-            ]);
+try {
+    if ($method === 'GET') {
+        $result = $service->consultar($idUsuario);
+        if ($result === null) {
+            echo json_encode(['success' => false, 'message' => 'Aluno não cadastrado.'], JSON_UNESCAPED_UNICODE);
             exit;
         }
-    }
-
-    if ($usuario['aceito_termo'] === 'sim') {
-        echo json_encode([
-            "success" => true,
-            "message" => "Usuário já aceitou os termos."
-        ]);
+        echo json_encode(['success' => true, ...$result], JSON_UNESCAPED_UNICODE);
         exit;
     }
 
-    $id_interclasse = $usuario['interclasses_id_interclasse'];
-    $data_hora_atual = date('Y-m-d H:i:s');
-    $status_termo = 'Ativo';
-
-    if (is_null($usuario['aceito_termo'])) {
-        $sql_acao = "INSERT INTO usuarios_has_interclasses 
-                     (usuarios_id_usuario, interclasses_id_interclasse, dt_hr_aceita, aceito_termo, status_termo) 
-                     VALUES (?, ?, ?, 'sim', ?)";
-        
-        $stmt_acao = $conn->prepare($sql_acao);
-        $stmt_acao->bind_param('iiss', $id_usuario, $id_interclasse, $data_hora_atual, $status_termo);
-    } else {
-        $sql_acao = "UPDATE usuarios_has_interclasses 
-                     SET aceito_termo = 'sim', dt_hr_aceita = ?, status_termo = ? 
-                     WHERE usuarios_id_usuario = ? AND interclasses_id_interclasse = ?";
-        
-        $stmt_acao = $conn->prepare($sql_acao);
-        $stmt_acao->bind_param('ssii', $data_hora_atual, $status_termo, $id_usuario, $id_interclasse);
+    if ($method === 'POST') {
+        $result = $service->aceitar($idUsuario);
+        $response = match ($result['status']) {
+            'accepted' => [
+                'success' => true,
+                'message' => 'Termos aceitos com sucesso!',
+                'exige_troca_senha' => $result['exige_troca_senha'] ?? false,
+            ],
+            'already_accepted' => [
+                'success' => true,
+                'message' => 'Usuário já aceitou os termos.',
+                'exige_troca_senha' => $result['exige_troca_senha'] ?? false,
+            ],
+            'no_edition' => [
+                'success' => false,
+                'message' => 'Aluno não possui um Interclasse vinculado e não há edição ativa.',
+            ],
+            default => ['success' => false, 'message' => 'Aluno não cadastrado.'],
+        };
+        echo json_encode($response, JSON_UNESCAPED_UNICODE);
+        exit;
     }
 
-    if ($stmt_acao->execute()) {
-        echo json_encode([
-            "success" => true,
-            "message" => "Termos aceitos com sucesso!",
-            "exige_troca_senha" => $exigeTrocaSenha
-        ]);
-    } else {
-        echo json_encode([
-            "success" => false,
-            "message" => "Erro ao salvar o aceite dos termos no banco de dados."
-        ]);
-    }
+    http_response_code(405);
+    echo json_encode(['success' => false, 'message' => 'Método não permitido.'], JSON_UNESCAPED_UNICODE);
+} catch (InvalidArgumentException $exception) {
+    http_response_code(401);
+    echo json_encode(['success' => false, 'message' => $exception->getMessage()], JSON_UNESCAPED_UNICODE);
+} catch (Throwable $exception) {
+    error_log('Falha em concordarTermos.php: ' . $exception->getMessage());
+    http_response_code(500);
+    echo json_encode(['success' => false, 'message' => 'Não foi possível processar os termos.'], JSON_UNESCAPED_UNICODE);
 }

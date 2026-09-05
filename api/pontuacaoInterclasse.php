@@ -1,62 +1,51 @@
 <?php
-require_once '../config/db.php';
-require_once 'filtros.php';
-require_once 'auth.php';
-header('Content-Type: application/json');
 
-$method = $_SERVER['REQUEST_METHOD'];
+declare(strict_types=1);
 
-switch ($method) {
-    case 'GET':
-        $sql = "SELECT 
-                    turmas.nome_turma,
-                    modalidades.nome_modalidade,
-                    SUM(pontuacao_interclasse.pontos) AS total_pontos
-                FROM pontuacao_interclasse
-                INNER JOIN turmas ON pontuacao_interclasse.turmas_id_turma = turmas.id_turma
-                INNER JOIN modalidades ON pontuacao_interclasse.modalidades_id_modalidade = modalidades.id_modalidade
-                GROUP BY turmas.id_turma, modalidades.id_modalidade
-                ORDER BY total_pontos DESC";
+require_once dirname(__DIR__) . '/config/db.php';
+require_once __DIR__ . '/auth.php';
 
-        $stmt = $conn->prepare($sql);
-        $stmt->execute();
-        $res = $stmt->get_result();
-        $pontuacao = $res->fetch_all(MYSQLI_ASSOC);
+use App\Interclasse\Application\PontuacaoNaoEncontradaException;
+use App\Interclasse\Application\PontuacaoService;
+use App\Interclasse\Infrastructure\MysqliPontuacaoRepository;
 
-        echo json_encode($pontuacao);
-        break;
+header('Content-Type: application/json; charset=utf-8');
 
-    case 'PUT':
-        requerEscrita();
-        $dados = json_decode(file_get_contents("php://input"), true);
+$service = new PontuacaoService(new MysqliPontuacaoRepository($conn));
+$method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
+requerNivel([0, 1, 2, 3]);
 
-        if (!isset($dados['id_pontuacao'], $dados['pontos'])) {
-            http_response_code(400);
-            echo json_encode(["success" => false, "message" => "Dados incompletos (id_pontuacao e pontos são obrigatórios)."]);
+/** @return array<string, mixed> */
+function pontuacaoPayload(): array
+{
+    $json = json_decode(file_get_contents('php://input'), true);
+    return is_array($json) ? array_merge($_POST, $json) : $_POST;
+}
+
+try {
+    switch ($method) {
+        case 'GET':
+            echo json_encode($service->ranking(), JSON_UNESCAPED_UNICODE);
             break;
-        }
 
-        $id = $dados['id_pontuacao'];
-        $novosPontos = $dados['pontos'];
+        case 'PUT':
+            requerEscrita();
+            $service->atualizar(pontuacaoPayload());
+            echo json_encode(['success' => true, 'message' => 'Pontuação atualizada com sucesso.'], JSON_UNESCAPED_UNICODE);
+            break;
 
-        $sql = "UPDATE pontuacao_interclasse SET pontos = ? WHERE id_pontuacao = ?";
-        $stmt = $conn->prepare($sql);
-        $stmt->bind_param("ii", $novosPontos, $id);
-
-        if ($stmt->execute()) {
-            if ($stmt->affected_rows > 0) {
-                echo json_encode(["success" => true, "message" => "Pontuação atualizada com sucesso."]);
-            } else {
-                echo json_encode(["success" => false, "message" => "Nenhum registro encontrado ou nenhuma alteração feita."]);
-            }
-        } else {
-            http_response_code(500);
-            echo json_encode(["success" => false, "message" => "Erro ao atualizar: " . $conn->error]);
-        }
-        break;
-
-    default:
-        http_response_code(405);
-        echo json_encode(["success" => false, "message" => "Método não permitido."]);
-        break;
+        default:
+            http_response_code(405);
+            echo json_encode(['success' => false, 'message' => 'Método não permitido.'], JSON_UNESCAPED_UNICODE);
+    }
+} catch (InvalidArgumentException $exception) {
+    http_response_code(400);
+    echo json_encode(['success' => false, 'message' => $exception->getMessage()], JSON_UNESCAPED_UNICODE);
+} catch (PontuacaoNaoEncontradaException $exception) {
+    http_response_code(404);
+    echo json_encode(['success' => false, 'message' => 'Pontuação não encontrada.'], JSON_UNESCAPED_UNICODE);
+} catch (Throwable $exception) {
+    error_log('Falha em pontuacaoInterclasse.php: ' . $exception->getMessage());
+    http_response_code(500);
+    echo json_encode(['success' => false, 'message' => 'Não foi possível processar a pontuação.'], JSON_UNESCAPED_UNICODE);
 }

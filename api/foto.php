@@ -1,17 +1,18 @@
 <?php
-header('Access-Control-Allow-Origin: *');
-header('Access-Control-Allow-Methods: GET, POST, DELETE, OPTIONS');
-header('Access-Control-Allow-Headers: Content-Type');
+declare(strict_types=1);
 
-if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-    http_response_code(204);
-    exit;
-}
+require_once __DIR__ . '/../config/bootstrap.php';
 
-session_start();
+use App\Shared\Http\SessionManager;
+use App\Shared\Storage\StoragePaths;
+
+SessionManager::start();
 require_once __DIR__ . '/../config/db.php';
+require_once __DIR__ . '/auth.php';
 
 $method = $_SERVER['REQUEST_METHOD'];
+
+requerNivel([0, 1, 2, 3]);
 
 if ($method === 'GET') {
     $userId = isset($_GET['user_id']) ? (int)$_GET['user_id'] : 0;
@@ -60,7 +61,7 @@ if ($method === 'POST') {
     }
 
     $nomeArquivo = 'user_' . $id . '_' . time() . '.' . $ext;
-    $uploadDir = __DIR__ . '/../uploads/fotosUsuarios';
+    $uploadDir = StoragePaths::fotosUsuarios();
     if (!is_dir($uploadDir)) mkdir($uploadDir, 0755, true);
     $destino = $uploadDir . '/' . $nomeArquivo;
 
@@ -100,7 +101,7 @@ if ($method === 'DELETE') {
     $st->close();
 
     if ($row && $row['foto_usuario']) {
-        $filePath = __DIR__ . '/../uploads/fotosUsuarios/' . $row['foto_usuario'];
+        $filePath = StoragePaths::fotosUsuarios() . DIRECTORY_SEPARATOR . basename((string) $row['foto_usuario']);
         if (file_exists($filePath)) @unlink($filePath);
     }
 

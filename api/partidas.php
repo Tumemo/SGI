@@ -1,23 +1,35 @@
 <?php
+
+declare(strict_types=1);
+
 require_once '../config/db.php';
 require_once __DIR__ . '/includes/mata_mata_engine.php';
 require_once 'filtros.php';
 require_once 'auth.php';
+
+use App\Interclasse\Application\PartidaService;
+use App\Interclasse\Application\PlacarInvalidoException;
+use App\Interclasse\Application\PlacarService;
+use App\Interclasse\Infrastructure\MysqliPartidaRepository;
+
 header('Content-Type: application/json');
 
 $method = $_SERVER['REQUEST_METHOD'];
+$partidaService = new PartidaService(new MysqliPartidaRepository($conn));
+$placarService = new PlacarService();
+requerNivel([0, 1, 2, 3]);
 
 switch ($method) {
     case 'GET':
         $filtro = aplicarFiltrosPartidas();
 
         // SQL robusto que traz os nomes das equipes e turmas envolvidas
-        $sql = "SELECT 
-                    p.id_partida, 
-                    p.equipes_id_equipe, 
+        $sql = "SELECT
+                    p.id_partida,
+                    p.equipes_id_equipe,
                     p.resultado_partida,
                     j.id_jogo,
-                    j.nome_jogo, 
+                    j.nome_jogo,
                     j.status_jogo,
                     j.data_jogo,
                     j.inicio_jogo,
@@ -130,14 +142,11 @@ case 'POST':
             }
 
             if (!$jaConcluidoPost) {
-                if ($totalGolsPost === 0) {
+                try {
+                    $placarService->validarFinalizacao($golsArrayPost);
+                } catch (PlacarInvalidoException $e) {
                     $conn->rollback();
-                    echo json_encode(['success' => false, 'message' => 'Não é possível finalizar um jogo com placar 0x0. Registre o placar correto.'], JSON_UNESCAPED_UNICODE);
-                    exit;
-                }
-                if (count($golsArrayPost) >= 2 && $golsArrayPost[0] === $golsArrayPost[1]) {
-                    $conn->rollback();
-                    echo json_encode(['success' => false, 'message' => 'O jogo não pode terminar empatado! Registre o placar correto.'], JSON_UNESCAPED_UNICODE);
+                    echo json_encode(['success' => false, 'message' => $e->getMessage()], JSON_UNESCAPED_UNICODE);
                     exit;
                 }
 
@@ -150,14 +159,11 @@ case 'POST':
                 sgi_chaveamento_processar_avanco($conn, $idJogoPart);
             } else {
                 // Já estava concluído: valida novo placar e detecta mudança de vencedor
-                if ($totalGolsPost === 0) {
+                try {
+                    $placarService->validarAlteracao($golsArrayPost);
+                } catch (PlacarInvalidoException $e) {
                     $conn->rollback();
-                    echo json_encode(['success' => false, 'message' => 'Não é possível alterar o placar de um jogo finalizado para 0x0.'], JSON_UNESCAPED_UNICODE);
-                    exit;
-                }
-                if (count($golsArrayPost) >= 2 && $golsArrayPost[0] === $golsArrayPost[1]) {
-                    $conn->rollback();
-                    echo json_encode(['success' => false, 'message' => 'O jogo não pode terminar empatado! Registre o placar correto.'], JSON_UNESCAPED_UNICODE);
+                    echo json_encode(['success' => false, 'message' => $e->getMessage()], JSON_UNESCAPED_UNICODE);
                     exit;
                 }
 
@@ -200,48 +206,19 @@ case 'POST':
             break;
         }
 
-        $campos = [];
-        $params = [];
-        $types = "";
-
-        if (isset($data->jogos_id_jogo)) {
-            $campos[] = "jogos_id_jogo = ?";
-            $params[] = $data->jogos_id_jogo;
-            $types .= "i";
+        $payload = json_decode(file_get_contents('php://input') ?: '{}', true);
+        if (!is_array($payload)) {
+            $payload = [];
         }
-        if (isset($data->equipes_id_equipe)) {
-            $campos[] = "equipes_id_equipe = ?";
-            $params[] = $data->equipes_id_equipe;
-            $types .= "i";
-        }
-        if (isset($data->resultado_partida)) {
-            $campos[] = "resultado_partida = ?";
-            $params[] = $data->resultado_partida;
-            $types .= "i";
-        }
-        if (isset($data->status_partida)) {
-            $campos[] = "status_partida = ?";
-            $params[] = $data->status_partida;
-            $types .= "s";
-        }
-
-        if (empty($campos)) {
-            echo json_encode(["success" => false, "message" => "Nenhum dado enviado para atualização."]);
-            break;
-        }
-
-        $sql = "UPDATE partidas SET " . implode(", ", $campos) . " WHERE id_partida = ?";
-        $params[] = $data->id_partida;
-        $types .= "i";
-
-        $stmt = $conn->prepare($sql);
-        $stmt->bind_param($types, ...$params);
-
-        if ($stmt->execute()) {
+        try {
+            $partidaService->atualizar($payload);
             echo json_encode(["success" => true, "message" => "Partida atualizada com sucesso!"]);
-        } else {
+        } catch (InvalidArgumentException $e) {
+            http_response_code(400);
+            echo json_encode(["success" => false, "message" => $e->getMessage()]);
+        } catch (Throwable $e) {
             http_response_code(500);
-            echo json_encode(["success" => false, "message" => $conn->error]);
+            echo json_encode(["success" => false, "message" => $e->getMessage()]);
         }
         break;
 

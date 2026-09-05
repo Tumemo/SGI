@@ -7,6 +7,11 @@ require_once __DIR__ . '/includes/usuario_validacao.php';
 require_once __DIR__ . '/includes/importador_competidores.php';
 require_once __DIR__ . '/includes/interclasse_helper.php';
 require_once __DIR__ . '/includes/cache_offline.php';
+require_once __DIR__ . '/auth.php';
+
+use App\Usuarios\Application\UsuarioAdministrativoService;
+use App\Usuarios\Infrastructure\MysqliUsuarioAdministrativoRepository;
+use App\Shared\Storage\StoragePaths;
 
 header('Content-Type: application/json; charset=utf-8');
 
@@ -18,6 +23,23 @@ if (!is_array($inputData)) {
 
 $metodo = $_SERVER['REQUEST_METHOD'] ?? 'GET';
 $acao = $_POST['acao'] ?? $inputData['acao'] ?? $_REQUEST['acao'] ?? '';
+$usuarioAdministrativoService = new UsuarioAdministrativoService(new MysqliUsuarioAdministrativoRepository($conn));
+
+if ($metodo === 'GET') {
+    requerEscrita();
+}
+
+if ($metodo === 'POST' && $acao !== 'validar_inscricao') {
+    if (in_array($acao, ['cadastrar_usuario', 'atualizar_colaborador', 'atualizar_dados_colaborador'], true)) {
+        requerExclusao();
+    } else {
+        requerEscrita();
+    }
+}
+
+if ($metodo === 'PUT') {
+    requerExclusao();
+}
 
 /**
  * @param array<string, mixed> $payload
@@ -207,10 +229,24 @@ switch ($metodo) {
             $nomeFotoBanco = 'default.jpg';
 
             if (isset($_FILES['foto']) && $_FILES['foto']['error'] === UPLOAD_ERR_OK) {
-                $ext = pathinfo((string) $_FILES['foto']['name'], PATHINFO_EXTENSION);
-                $nomeFotoBanco = 'user_' . $matricula . '_' . (string) time() . '.' . $ext;
-                $destino = dirname(__DIR__) . '/uploads/fotosUsuarios/' . $nomeFotoBanco;
-                move_uploaded_file($_FILES['foto']['tmp_name'], $destino);
+                $ext = strtolower(pathinfo((string) $_FILES['foto']['name'], PATHINFO_EXTENSION));
+                if (!in_array($ext, ['jpg', 'jpeg', 'png', 'gif', 'webp'], true)) {
+                    sgi_json_saida(['status' => 'erro', 'mensagem' => 'Formato de foto inválido. Use JPG, PNG, GIF ou WebP.']);
+                    break;
+                }
+
+                $uploadDir = StoragePaths::fotosUsuarios();
+                if (!is_dir($uploadDir) && !mkdir($uploadDir, 0755, true) && !is_dir($uploadDir)) {
+                    sgi_json_saida(['status' => 'erro', 'mensagem' => 'Não foi possível preparar o armazenamento da foto.']);
+                    break;
+                }
+
+                $nomeFotoBanco = 'user_' . bin2hex(random_bytes(12)) . '.' . $ext;
+                $destino = $uploadDir . DIRECTORY_SEPARATOR . $nomeFotoBanco;
+                if (!move_uploaded_file((string) $_FILES['foto']['tmp_name'], $destino)) {
+                    sgi_json_saida(['status' => 'erro', 'mensagem' => 'Não foi possível salvar a foto enviada.']);
+                    break;
+                }
             }
 
             if ($nome === '' || $matricula === '' || $senhaCrua === '') {
@@ -293,12 +329,12 @@ switch ($metodo) {
             $idInterclasseAtivo = buscarInterclasseAtivo($conn);
             $dados = !empty($_POST) ? $_POST : $inputData;
             $idUsuario = (int) ($dados['id_usuario'] ?? 0);
-            
+
             if ($idUsuario <= 0) {
                 sgi_json_saida(['status' => 'erro', 'mensagem' => 'ID do colaborador inválido.']);
                 break;
             }
-            
+
             $isAdmin = (($dados['is_admin_clicado'] ?? '0') === '1');
             $isMesario = (($dados['is_mesario_clicado'] ?? '0') === '1');
 
@@ -311,7 +347,7 @@ switch ($metodo) {
             }
 
             // Atualiza apenas a coluna unificada nivel_usuario
-            $sql = "UPDATE usuarios SET nivel_usuario = ? 
+            $sql = "UPDATE usuarios SET nivel_usuario = ?
                     WHERE id_usuario = ? AND (interclasses_id_interclasse = ? OR interclasses_id_interclasse IS NULL)";
             $stmt = $conn->prepare($sql);
             if (!$stmt) {
@@ -390,7 +426,7 @@ switch ($metodo) {
             $types .= "i";
 
             $sql = "UPDATE usuarios SET " . implode(", ", $campos) . " WHERE id_usuario = ? AND (interclasses_id_interclasse = ? OR interclasses_id_interclasse IS NULL)";
-            
+
             $stmt = $conn->prepare($sql);
             if (!$stmt) {
                 sgi_json_saida(['status' => 'erro', 'mensagem' => $conn->error]);
@@ -563,35 +599,15 @@ switch ($metodo) {
 
             $dados = !empty($_POST) ? $_POST : $inputData;
             $idUsuario = (int) ($dados['id_usuario'] ?? 0);
-            if ($idUsuario <= 0) {
-                sgi_json_saida(['status' => 'erro', 'mensagem' => 'ID do aluno inválido.']);
-                break;
-            }
-
-            $checkStmt = $conn->prepare('SELECT nivel_usuario FROM usuarios WHERE id_usuario = ? AND nivel_usuario = \'3\'');
-            $checkStmt->bind_param('i', $idUsuario);
-            $checkStmt->execute();
-            $target = $checkStmt->get_result()->fetch_assoc();
-            $checkStmt->close();
-
-            if (!$target) {
-                sgi_json_saida(['status' => 'erro', 'mensagem' => 'Aluno não encontrado ou não pode ser removido.']);
-                break;
-            }
-
-            $sql = "UPDATE usuarios SET status_usuario = '0' WHERE id_usuario = ? AND nivel_usuario = '3'";
-            $stmt = $conn->prepare($sql);
-            if (!$stmt) {
-                sgi_json_saida(['status' => 'erro', 'mensagem' => $conn->error]);
-                break;
-            }
-            $stmt->bind_param('i', $idUsuario);
-            if ($stmt->execute()) {
+            try {
+                $usuarioAdministrativoService->excluirAluno($idUsuario);
                 sgi_json_saida(['status' => 'sucesso', 'mensagem' => 'Aluno removido.']);
-            } else {
-                sgi_json_saida(['status' => 'erro', 'mensagem' => $stmt->error]);
+            } catch (InvalidArgumentException) {
+                sgi_json_saida(['status' => 'erro', 'mensagem' => 'ID do aluno inválido.']);
+            } catch (Throwable $exception) {
+                error_log('Falha ao remover aluno: ' . $exception->getMessage());
+                sgi_json_saida(['status' => 'erro', 'mensagem' => 'Aluno não encontrado ou não pode ser removido.']);
             }
-            $stmt->close();
             break;
         }
 
@@ -601,95 +617,37 @@ switch ($metodo) {
 
             $dados = !empty($_POST) ? $_POST : $inputData;
             $idUsuario = (int) ($dados['id_usuario'] ?? 0);
-            if ($idUsuario <= 0) {
-                sgi_json_saida(['status' => 'erro', 'mensagem' => 'ID do aluno inválido.']);
-                break;
-            }
-
-            $checkStmt = $conn->prepare('SELECT nivel_usuario FROM usuarios WHERE id_usuario = ? AND nivel_usuario = \'3\'');
-            if (!$checkStmt) {
-                sgi_json_saida(['status' => 'erro', 'mensagem' => $conn->error]);
-                break;
-            }
-            $checkStmt->bind_param('i', $idUsuario);
-            $checkStmt->execute();
-            $target = $checkStmt->get_result()->fetch_assoc();
-            $checkStmt->close();
-
-            if (!$target) {
-                sgi_json_saida(['status' => 'erro', 'mensagem' => 'Aluno não encontrado ou não pode ter a senha resetada.']);
-                break;
-            }
-
-            $senhaHash = password_hash('123', PASSWORD_DEFAULT);
-            $sql = "UPDATE usuarios SET senha_usuario = ? WHERE id_usuario = ? AND nivel_usuario = '3'";
-            $stmt = $conn->prepare($sql);
-            if (!$stmt) {
-                sgi_json_saida(['status' => 'erro', 'mensagem' => $conn->error]);
-                break;
-            }
-            $stmt->bind_param('si', $senhaHash, $idUsuario);
-            if ($stmt->execute()) {
+            try {
+                $usuarioAdministrativoService->resetarSenhaAluno($idUsuario);
                 sgi_json_saida(['status' => 'sucesso', 'mensagem' => 'Senha do aluno resetada para o padrão (123).']);
-            } else {
-                sgi_json_saida(['status' => 'erro', 'mensagem' => $stmt->error]);
+            } catch (InvalidArgumentException) {
+                sgi_json_saida(['status' => 'erro', 'mensagem' => 'ID do aluno inválido.']);
+            } catch (Throwable $exception) {
+                error_log('Falha ao resetar senha de aluno: ' . $exception->getMessage());
+                sgi_json_saida(['status' => 'erro', 'mensagem' => 'Aluno não encontrado ou não pode ter a senha resetada.']);
             }
-            $stmt->close();
             break;
         }
 
         if ($acao === 'excluir_colaborador') {
-            if (session_status() === PHP_SESSION_NONE) {
-                session_start();
-            }
-            if (!isset($_SESSION['nivel']) || (int)$_SESSION['nivel'] !== 0) {
-                sgi_json_saida(['status' => 'erro', 'mensagem' => 'Acesso negado. Apenas administradores podem remover colaboradores.']);
-                break;
-            }
-
+            require_once __DIR__ . '/auth.php';
+            requerNivel([0]);
             $idInterclasseAtivo = buscarInterclasseAtivo($conn);
             $dados = !empty($_POST) ? $_POST : $inputData;
             $idUsuario = (int) ($dados['id_usuario'] ?? 0);
-            if ($idUsuario <= 0) {
-                sgi_json_saida(['status' => 'erro', 'mensagem' => 'ID do colaborador inválido.']);
-                break;
-            }
-
-            $checkStmt = $conn->prepare('SELECT nivel_usuario FROM usuarios WHERE id_usuario = ?');
-            $checkStmt->bind_param('i', $idUsuario);
-            $checkStmt->execute();
-            $checkResult = $checkStmt->get_result();
-            $targetUser = $checkResult->fetch_assoc();
-            $checkStmt->close();
-
-            if (!$targetUser) {
-                sgi_json_saida(['status' => 'erro', 'mensagem' => 'Usuário não encontrado.']);
-                break;
-            }
-            if ($targetUser['nivel_usuario'] === '0') {
-                sgi_json_saida(['status' => 'erro', 'mensagem' => 'Não é possível remover um administrador.']);
-                break;
-            }
-
-            if (isset($_SESSION['id']) && (int)$_SESSION['id'] === $idUsuario) {
-                sgi_json_saida(['status' => 'erro', 'mensagem' => 'Você não pode remover a própria conta.']);
-                break;
-            }
-            
-            $sql = "UPDATE usuarios SET status_usuario = '0'
-                    WHERE id_usuario = ? AND (interclasses_id_interclasse = ? OR interclasses_id_interclasse IS NULL)";
-            $stmt = $conn->prepare($sql);
-            if (!$stmt) {
-                sgi_json_saida(['status' => 'erro', 'mensagem' => $conn->error]);
-                break;
-            }
-            $stmt->bind_param('ii', $idUsuario, $idInterclasseAtivo);
-            if ($stmt->execute()) {
+            try {
+                $usuarioAdministrativoService->excluirColaborador(
+                    $idUsuario,
+                    $idInterclasseAtivo,
+                    (int) ($_SESSION['id'] ?? 0),
+                );
                 sgi_json_saida(['status' => 'sucesso', 'mensagem' => 'Colaborador removido.']);
-            } else {
-                sgi_json_saida(['status' => 'erro', 'mensagem' => $stmt->error]);
+            } catch (InvalidArgumentException) {
+                sgi_json_saida(['status' => 'erro', 'mensagem' => 'ID do colaborador inválido.']);
+            } catch (Throwable $exception) {
+                error_log('Falha ao remover colaborador: ' . $exception->getMessage());
+                sgi_json_saida(['status' => 'erro', 'mensagem' => $exception->getMessage() !== '' ? $exception->getMessage() : 'Usuário não encontrado.']);
             }
-            $stmt->close();
             break;
         }
         break;

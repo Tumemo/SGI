@@ -1,7 +1,15 @@
 <?php
+
+declare(strict_types=1);
+
 require_once '../config/db.php';
 require_once 'filtros.php';
 require_once 'auth.php';
+
+use App\Interclasse\Application\JogoConflitoException;
+use App\Interclasse\Application\JogoService;
+use App\Interclasse\Infrastructure\MysqliJogoRepository;
+
 header('Content-Type: application/json');
 
 /**
@@ -117,6 +125,8 @@ function sgi_validar_conflito_local_horario($conn, $data, $local_id, $inicio, $t
 }
 
 $method = $_SERVER['REQUEST_METHOD'];
+$jogoService = new JogoService(new MysqliJogoRepository($conn));
+requerNivel([0, 1, 2, 3]);
 
 switch ($method) {
     case 'GET':
@@ -204,63 +214,28 @@ switch ($method) {
 
     case 'POST':
         requerEscrita();
-        $data = json_decode(file_get_contents("php://input"));
-
-        if (!isset($data->nome_jogo, $data->data_jogo, $data->modalidades_id_modalidade, $data->locais_id_local)) {
-            http_response_code(400);
-            echo json_encode(["success" => false, "message" => "Dados incompletos."]);
-            break;
+        $data = json_decode(file_get_contents('php://input'), true);
+        if (!is_array($data)) {
+            $data = [];
         }
-
-        $inicio  = sgi_formatar_hora($data->inicio_jogo ?? '00:00:00');
-        $termino = sgi_formatar_hora($data->termino_jogo ?? $data->terminno_jogo ?? '00:00:00');
-        $status  = $data->status_jogo ?? 'Agendado';
-
-        $erro_conflito = sgi_validar_conflito_local_horario(
-            $conn,
-            $data->data_jogo,
-            $data->locais_id_local,
-            $inicio,
-            $termino
-        );
-
-        if ($erro_conflito) {
-            http_response_code(422);
-            echo json_encode(["success" => false, "message" => $erro_conflito]);
-            break;
-        }
-
-        $sql = "INSERT INTO jogos (nome_jogo, data_jogo, inicio_jogo, termino_jogo, modalidades_id_modalidade, locais_id_local, status_jogo) 
-                VALUES (?, ?, ?, ?, ?, ?, ?)";
-
-        $stmt = $conn->prepare($sql);
-        $stmt->bind_param(
-            "ssssiis",
-            $data->nome_jogo,
-            $data->data_jogo,
-            $inicio,
-            $termino,
-            $data->modalidades_id_modalidade,
-            $data->locais_id_local,
-            $status
-        );
-
         try {
-            if ($stmt->execute()) {
-                http_response_code(201);
-                echo json_encode([
-                    "success" => true,
-                    "message" => "Jogo cadastrado com sucesso!",
-                    "id" => $conn->insert_id
-                ]);
-            }
-        } catch (mysqli_sql_exception $e) {
-            http_response_code(400);
+            $id = $jogoService->agendar($data);
+            http_response_code(201);
             echo json_encode([
-                "success" => false,
-                "message" => "Erro de integridade: Verifique se o ID da Modalidade ou do Local existem.",
-                "detalhes" => $e->getMessage()
-            ]);
+                'success' => true,
+                'message' => 'Jogo cadastrado com sucesso!',
+                'id' => $id,
+            ], JSON_UNESCAPED_UNICODE);
+        } catch (JogoConflitoException $exception) {
+            http_response_code(422);
+            echo json_encode(['success' => false, 'message' => $exception->getMessage()], JSON_UNESCAPED_UNICODE);
+        } catch (InvalidArgumentException $exception) {
+            http_response_code(400);
+            echo json_encode(['success' => false, 'message' => $exception->getMessage()], JSON_UNESCAPED_UNICODE);
+        } catch (Throwable $exception) {
+            error_log('Falha ao criar jogo: ' . $exception->getMessage());
+            http_response_code(500);
+            echo json_encode(['success' => false, 'message' => 'Não foi possível criar jogo.'], JSON_UNESCAPED_UNICODE);
         }
         break;
 

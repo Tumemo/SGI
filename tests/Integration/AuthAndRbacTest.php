@@ -51,21 +51,59 @@ class AuthAndRbacTest
         // O conteúdo não pode carregar o dashboard administrativo para anônimos
         Assertions::assert("Não expõe conteúdo de admin sem autenticação", !str_contains((string)$resSemSessao['body'], 'Total de Jogos'));
 
-        // 1.8 Troca de Senha - Validação de mínimo de 6 dígitos
+        $usuariosAnonimo = $clientAnon->get('api/usuarios.php?acao=listar_colaboradores');
+        Assertions::assertStatus('Bloqueio de consulta administrativa de usuários sem sessão', $usuariosAnonimo, 401);
+
+        $csrfInvalido = $client->postJson('api/trocar_senha.php', [
+            'nova_senha' => 'senhaSegura123',
+            'confirmar_senha' => 'senhaSegura123',
+        ], ['X-SGI-CSRF' => 'token-invalido']);
+        Assertions::assertStatus('Bloqueio de mutação com token CSRF inválido', $csrfInvalido, 403);
+
+        // Nenhuma leitura da API deve expor dados sem uma sessão autenticada.
+        $leiturasProtegidas = [
+            'api/arrecadacao.php',
+            'api/artilheiro.php',
+            'api/categorias.php',
+            'api/equipes.php',
+            'api/interclasse.php',
+            'api/jogos.php',
+            'api/locais.php',
+            'api/modalidades.php',
+            'api/ocorrencias.php',
+            'api/ocorrencias_turmas.php',
+            'api/partidas.php',
+            'api/pontuacaoInterclasse.php',
+            'api/ranking.php',
+            'api/tipoModalidade.php',
+            'api/turmas.php',
+        ];
+        foreach ($leiturasProtegidas as $endpoint) {
+            Assertions::assertStatus("Bloqueio de leitura sem sessão: {$endpoint}", $clientAnon->get($endpoint), 401);
+        }
+
+        $syncAnonimo = $clientAnon->postJson('api/sincronizar_chaveamento.php', [
+            'id_modalidade' => 1,
+            'tipo_modalidade' => 'mata_mata',
+            'jogos' => [],
+        ]);
+        Assertions::assertStatus('Bloqueio de sincronização de chaveamento sem sessão', $syncAnonimo, 401);
+
+        // 1.9 Troca de Senha - Validação de mínimo de 6 dígitos
         $resTrocaCurta = $client->postJson('api/trocar_senha.php', [
             'nova_senha' => '123',
             'confirmar_senha' => '123'
         ]);
         Assertions::assert("Rejeição de troca para senha com menos de 6 caracteres", ($resTrocaCurta['json']['success'] ?? false) === false);
 
-        // 1.9 Troca de Senha - Divergência na confirmação
+        // 1.10 Troca de Senha - Divergência na confirmação
         $resTrocaDiv = $client->postJson('api/trocar_senha.php', [
             'nova_senha' => 'senhaSegura123',
             'confirmar_senha' => 'senhaDiferente456'
         ]);
         Assertions::assert("Rejeição quando as senhas não coincidem", ($resTrocaDiv['json']['success'] ?? false) === false);
 
-        // 1.10 Logout
+        // 1.11 Logout
         $resLogout = $client->get('api/logout.php');
         Assertions::assert("Execução de logout limpo", $resLogout['code'] === 200 || $resLogout['code'] === 302);
     }

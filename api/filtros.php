@@ -1,9 +1,9 @@
 <?php
-// eu criei falando que ia facilitar, n sei c me arrependo desta decisão
 
-// 14/04/2026 TUDO APROVADO, está criação é incrivel
+declare(strict_types=1);
 
-function aplicarFiltrosArtilharia() {
+/** @return array{sql: string, types: string, params: list<mixed>} */
+function aplicarFiltrosArtilharia(): array {
     $sqlExtras = "";
     $types = "";
     $params = [];
@@ -55,8 +55,8 @@ function aplicarFiltrosArtilharia() {
         'params' => $params
     ];
 }
-// teste
-function aplicarFiltrosEquipes() {
+/** @return array{sql: string, types: string, params: list<mixed>} */
+function aplicarFiltrosEquipes(): array {
     $sqlExtras = " AND equipes.status_equipe = '1'";
     $types = "";
     $params = [];
@@ -86,7 +86,8 @@ function aplicarFiltrosEquipes() {
     ];
 }
 
-function aplicarFiltrosInterclasse() {
+/** @return array{sql: string, types: string, params: list<mixed>} */
+function aplicarFiltrosInterclasse(): array {
     $sqlExtras = "";
     $types = "";
     $params = [];
@@ -117,7 +118,8 @@ function aplicarFiltrosInterclasse() {
     ];
 }
 
-function aplicarFiltrosJogos() {
+/** @return array{sql: string, types: string, params: list<mixed>} */
+function aplicarFiltrosJogos(): array {
     $sqlExtras = "";
     $types = "";
     $params = [];
@@ -171,7 +173,8 @@ function aplicarFiltrosJogos() {
     ];
 }
 
-function aplicarFiltrosModalidades() {
+/** @return array{sql: string, types: string, params: list<mixed>} */
+function aplicarFiltrosModalidades(): array {
     $sqlExtras = " AND modalidades.status_modalidade = '1'";
     $types = "";
     $params = [];
@@ -213,7 +216,8 @@ function aplicarFiltrosModalidades() {
     ];
 }
 
-function aplicarFiltrosCategorias() {
+/** @return array{sql: string, types: string, params: list<mixed>} */
+function aplicarFiltrosCategorias(): array {
     $sqlExtras = " AND status_categoria = '1'";
     $types = "";
     $params = [];
@@ -243,7 +247,8 @@ function aplicarFiltrosCategorias() {
     ];
 }
 
-function aplicarFiltrosLocais() {
+/** @return array{sql: string, types: string, params: list<mixed>} */
+function aplicarFiltrosLocais(): array {
     $sqlExtras = "";
     $types = "";
     $params = [];
@@ -279,7 +284,8 @@ function aplicarFiltrosLocais() {
     ];
 }
 
-function aplicarFiltrosOcorrencias() {
+/** @return array{sql: string, types: string, params: list<mixed>} */
+function aplicarFiltrosOcorrencias(): array {
     $sqlExtras = "";
     $types = "";
     $params = [];
@@ -322,7 +328,8 @@ function aplicarFiltrosOcorrencias() {
     ];
 }
 
-function aplicarFiltrosPartidas() {
+/** @return array{sql: string, types: string, params: list<mixed>} */
+function aplicarFiltrosPartidas(): array {
     $sqlExtras = "";
     $types = "";
     $params = [];

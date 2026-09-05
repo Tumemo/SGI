@@ -1,242 +1,96 @@
 <?php
-require_once '../config/db.php';
-require_once 'filtros.php';
-require_once 'auth.php';
-require_once __DIR__ . '/includes/locais_padrao.php';
-require_once __DIR__ . '/includes/equipes_helper.php';
-header('Content-Type: application/json');
 
-$method = $_SERVER['REQUEST_METHOD'];
+declare(strict_types=1);
 
-function uploadRegulamento($file)
+require_once __DIR__ . '/../config/bootstrap.php';
+require_once __DIR__ . '/../config/db.php';
+require_once __DIR__ . '/auth.php';
+
+use App\Interclasse\Application\EdicaoService;
+use App\Interclasse\Infrastructure\MysqliEdicaoRepository;
+use App\Shared\Storage\StoragePaths;
+
+header('Content-Type: application/json; charset=utf-8');
+
+$method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
+$service = new EdicaoService(new MysqliEdicaoRepository($conn));
+requerNivel([0, 1, 2, 3]);
+
+/** @return array<string, mixed> */
+function edicaoPayload(): array
 {
-    $diretorioDestino = "../uploads/regulamentos/";
-    if (!is_dir($diretorioDestino)) mkdir($diretorioDestino, 0777, true);
-    $extensao = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
-    if ($extensao !== 'pdf') return ["success" => false, "message" => "O arquivo deve ser um PDF."];
-    $novoNome = "reg_" . uniqid() . "." . $extensao;
-    $caminhoCompleto = $diretorioDestino . $novoNome;
-    return move_uploaded_file($file['tmp_name'], $caminhoCompleto)
-        ? ["success" => true, "nome_arquivo" => $novoNome]
-        : ["success" => false, "message" => "Falha ao salvar arquivo."];
+    $json = json_decode(file_get_contents('php://input'), true);
+    return is_array($json) ? array_merge($_POST, $json) : $_POST;
 }
 
-switch ($method) {
-    case 'GET':
-        $filtro = aplicarFiltrosInterclasse();
-        $querRegulamento = isset($_GET['regulamento']) && $_GET['regulamento'] === 'true';
-        $detalheEdicao = !empty($_GET['id_interclasse']) || !empty($_GET['id']);
-        $colunas = ($querRegulamento || $detalheEdicao) ? '*' : 'id_interclasse, nome_interclasse, ano_interclasse';
-        $sql = "SELECT $colunas FROM interclasses WHERE 1=1" . $filtro['sql'] . " ORDER BY ano_interclasse DESC";
-        $stmt = $conn->prepare($sql);
-        if (!empty($filtro['params'])) $stmt->bind_param($filtro['types'], ...$filtro['params']);
-        $stmt->execute();
-        echo json_encode($stmt->get_result()->fetch_all(MYSQLI_ASSOC));
-        break;
+/** @param array<string, mixed> $file @return array{success:bool,nome_arquivo?:string,message?:string} */
+function uploadRegulamento(array $file): array
+{
+    $directory = StoragePaths::regulamentos();
+    if (!is_dir($directory) && !mkdir($directory, 0770, true) && !is_dir($directory)) {
+        return ['success' => false, 'message' => 'Falha ao preparar armazenamento do regulamento.'];
+    }
+    $extension = strtolower(pathinfo((string) ($file['name'] ?? ''), PATHINFO_EXTENSION));
+    if ($extension !== 'pdf') {
+        return ['success' => false, 'message' => 'O arquivo deve ser um PDF.'];
+    }
+    $newName = 'reg_' . bin2hex(random_bytes(12)) . '.pdf';
+    $path = $directory . DIRECTORY_SEPARATOR . $newName;
+    if (!move_uploaded_file((string) ($file['tmp_name'] ?? ''), $path)) {
+        return ['success' => false, 'message' => 'Falha ao salvar arquivo.'];
+    }
+    return ['success' => true, 'nome_arquivo' => $newName];
+}
 
-    case 'POST':
-        requerEscrita();
-        $id = $_GET['id'] ?? null;
+try {
+    switch ($method) {
+        case 'GET':
+            $details = isset($_GET['regulamento']) && $_GET['regulamento'] === 'true'
+                || !empty($_GET['id_interclasse']) || !empty($_GET['id']);
+            echo json_encode($service->listar([
+                'detalhes' => $details,
+                'id_interclasse' => (int) ($_GET['id_interclasse'] ?? $_GET['id'] ?? 0),
+                'ano' => (int) ($_GET['ano'] ?? 0),
+                'busca' => trim((string) ($_GET['busca'] ?? '')),
+            ]), JSON_UNESCAPED_UNICODE);
+            break;
 
-        if ($id) {
-            $inputJson = json_decode(file_get_contents("php://input"), true);
-            $dados = is_array($inputJson) ? array_merge($_POST, $inputJson) : $_POST; 
-
-            $campos = [];
-            $params = [];
-            $types = "";
-
-            if (isset($dados['nome_interclasse'])) {
-                $campos[] = "nome_interclasse = ?";
-                $params[] = $dados['nome_interclasse'];
-                $types .= "s";
-            }
-            if (isset($dados['ano_interclasse'])) {
-                $campos[] = "ano_interclasse = ?";
-                $params[] = $dados['ano_interclasse'];
-                $types .= "s";
-            }
-            if (isset($_FILES['pdf_regulamento']) && $_FILES['pdf_regulamento']['error'] === UPLOAD_ERR_OK) {
-                $upload = uploadRegulamento($_FILES['pdf_regulamento']);
-                if ($upload['success']) {
-                    $campos[] = "regulamento_interclasse = ?";
-                    $params[] = $upload['nome_arquivo'];
-                    $types .= "s";
+        case 'POST':
+            requerEscrita();
+            $payload = edicaoPayload();
+            $id = (int) ($_GET['id'] ?? 0);
+            if ($id > 0) {
+                if (isset($_FILES['pdf_regulamento']) && $_FILES['pdf_regulamento']['error'] === UPLOAD_ERR_OK) {
+                    $upload = uploadRegulamento($_FILES['pdf_regulamento']);
+                    if (!$upload['success']) {
+                        http_response_code(400);
+                        echo json_encode(['success' => false, 'message' => $upload['message']], JSON_UNESCAPED_UNICODE);
+                        break;
+                    }
+                    $payload['regulamento_interclasse'] = $upload['nome_arquivo'];
                 }
-            }
-            if (isset($dados['status_interclasse'])) {
-                $campos[] = "status_interclasse = ?";
-                $params[] = $dados['status_interclasse'];
-                $types .= "s";
-            }
-            if (isset($dados['status_interclasse']) && $dados['status_interclasse'] === '1') {
-                $deactivate = $conn->prepare(
-                    "UPDATE interclasses SET status_interclasse = '0' WHERE id_interclasse != ? AND status_interclasse = '1'"
-                );
-                if (!$deactivate) {
-                    echo json_encode(["success" => false, "message" => "Falha ao desativar interclasses anteriores: " . $conn->error]);
-                    break;
-                }
-                $deactivate->bind_param("i", $id);
-                if (!$deactivate->execute()) {
-                    echo json_encode(["success" => false, "message" => "Falha ao desativar interclasses anteriores: " . $deactivate->error]);
-                    $deactivate->close();
-                    break;
-                }
-                $deactivate->close();
-            }
-            if (isset($dados['valor_item_arrecadacao'])) {
-                $campos[] = "valor_item_arrecadacao = ?";
-                $params[] = $dados['valor_item_arrecadacao'];
-                $types .= "i";
-            }
-            if (isset($dados['ponto_1_lugar'])) {
-                $campos[] = "ponto_1_lugar = ?";
-                $params[] = (int) $dados['ponto_1_lugar'];
-                $types .= "i";
-            }
-            if (isset($dados['ponto_2_lugar'])) {
-                $campos[] = "ponto_2_lugar = ?";
-                $params[] = (int) $dados['ponto_2_lugar'];
-                $types .= "i";
-            }
-            if (isset($dados['ponto_3_lugar'])) {
-                $campos[] = "ponto_3_lugar = ?";
-                $params[] = (int) $dados['ponto_3_lugar'];
-                $types .= "i";
-            }
-
-            if (empty($campos)) {
-                echo json_encode(["success" => false, "message" => "Nenhum campo fornecido para atualização."]);
+                $service->atualizar($id, $payload);
+                echo json_encode(['success' => true, 'message' => 'Atualizado com sucesso!'], JSON_UNESCAPED_UNICODE);
                 break;
             }
+            $created = $service->criar($payload);
+            echo json_encode([
+                'success' => true,
+                'id' => $created['id'],
+                'equipes_padrao_garantidas' => $created['equipes_padrao_garantidas'],
+                'erros_equipes' => $created['erros_equipes'],
+            ], JSON_UNESCAPED_UNICODE);
+            break;
 
-            $sql = "UPDATE interclasses SET " . implode(", ", $campos) . " WHERE id_interclasse = ?";
-            $params[] = $id;
-            $types .= "i";
-            $stmt = $conn->prepare($sql);
-            $stmt->bind_param($types, ...$params);
-
-            if ($stmt->execute()) {
-                echo json_encode(["success" => true, "message" => "Atualizado com sucesso!"]);
-            } else {
-                echo json_encode(["success" => false, "message" => $stmt->error]);
-            }
-        } else {
-            $data = json_decode(file_get_contents("php://input"));
-            if (!isset($data->nome_interclasse, $data->ano_interclasse)) {
-                http_response_code(400);
-                echo json_encode(["success" => false, "message" => "Dados incompletos."]);
-                break;
-            }
-            
-            // CORREÇÃO: Inclusão das colunas obrigatórias 'regulamento_interclasse' e 'status_interclasse'
-            $sql = "INSERT INTO interclasses (nome_interclasse, ano_interclasse, regulamento_interclasse, status_interclasse) VALUES (?, ?, '', '1')";
-            $stmt = $conn->prepare($sql);
-            $stmt->bind_param("ss", $data->nome_interclasse, $data->ano_interclasse);
-            
-            if ($stmt->execute()) {
-                $new_interclass_id = $conn->insert_id;
-
-                // CORREÇÃO: O novo interclasse já é criado ativo ('1'); desativa os demais
-                $deactivate = $conn->prepare(
-                    "UPDATE interclasses SET status_interclasse = '0' WHERE id_interclasse != ? AND status_interclasse = '1'"
-                );
-                $deactivate->bind_param("i", $new_interclass_id);
-                $deactivate->execute();
-                $deactivate->close();
-
-                $conn->begin_transaction();
-
-                $categoria_i_id = null;
-                $categoria_ii_id = null;
-                
-                $categoria_insert = $conn->prepare("INSERT INTO categorias (nome_categoria, status_categoria, interclasses_id_interclasse) VALUES (?, '1', ?)");
-                
-                $cat_i_nome = "Categoria I";
-                $categoria_insert->bind_param("si", $cat_i_nome, $new_interclass_id);
-                if (!$categoria_insert->execute()) { $conn->rollback(); echo json_encode(["success" => false, "message" => "Falha Categoria I"]); break; }
-                $categoria_i_id = $conn->insert_id;
-
-                $cat_ii_nome = "Categoria II";
-                $categoria_insert->bind_param("si", $cat_ii_nome, $new_interclass_id);
-                if (!$categoria_insert->execute()) { $conn->rollback(); echo json_encode(["success" => false, "message" => "Falha Categoria II"]); break; }
-                $categoria_ii_id = $conn->insert_id;
-                $categoria_insert->close();
-
-                // Busca ou cria tipos de modalidade
-                $tipo_mata_mata_id = null;
-                $tipo_individual_id = null;
-                $tipo_select = $conn->query("SELECT id_tipo_modalidade, nome_tipo_modalidade FROM tipos_modalidades");
-                while ($row = $tipo_select->fetch_assoc()) {
-                    if ($row['nome_tipo_modalidade'] === 'Mata-Mata') $tipo_mata_mata_id = (int)$row['id_tipo_modalidade'];
-                    if ($row['nome_tipo_modalidade'] === 'Individual') $tipo_individual_id = (int)$row['id_tipo_modalidade'];
-                }
-
-                if (!$tipo_mata_mata_id) {
-                    $conn->query("INSERT INTO tipos_modalidades (nome_tipo_modalidade, status_tipo_modalidade) VALUES ('Mata-Mata', '1')");
-                    $tipo_mata_mata_id = $conn->insert_id;
-                }
-                if (!$tipo_individual_id) {
-                    $conn->query("INSERT INTO tipos_modalidades (nome_tipo_modalidade, status_tipo_modalidade) VALUES ('Individual', '1')");
-                    $tipo_individual_id = $conn->insert_id;
-                }
-
-                // CORREÇÃO: Adicionado 'nome_fantasia_turma' e tornado o 'nome_turma' dinâmico com o ID do interclasse para evitar erro de UNIQUE KEY do banco
-                $turmas_sql = "INSERT INTO turmas 
-                (nome_turma, turno_turma, nome_fantasia_turma, status_turma, interclasses_id_interclasse, categorias_id_categoria) 
-                VALUES 
-                ('6EF', 'manha', 'Sexto Ano', '1', $new_interclass_id, $categoria_i_id),
-                ('7EF', 'manha', 'Sétimo Ano', '1', $new_interclass_id, $categoria_i_id),
-                ('8EF', 'manha', 'Oitavo Ano', '1', $new_interclass_id, $categoria_i_id),
-                ('9EF', 'manha', 'Nono Ano', '1', $new_interclass_id, $categoria_ii_id),
-                ('1EMA', 'manha', '1º Ano Médio', '1', $new_interclass_id, $categoria_ii_id),
-                ('2EMA', 'manha', '2º Ano Médio', '1', $new_interclass_id, $categoria_ii_id),
-                ('3EMA', 'manha', '3º Ano Médio', '1', $new_interclass_id, $categoria_ii_id)";
-                
-                if (!$conn->query($turmas_sql)) {
-                    $conn->rollback();
-                    echo json_encode(["success" => false, "message" => "Falha ao inserir turmas: " . $conn->error]);
-                    break;
-                }
-
-                $modalidades_sql = "INSERT INTO modalidades
-                (nome_modalidade, genero_modalidade, max_inscrito_modalidade, max_equipes, status_modalidade, tipos_modalidades_id_tipo_modalidade, categorias_id_categoria, interclasses_id_interclasse)
-                VALUES
-                ('Futsal - MA', 'MASC', 10, NULL, '1', $tipo_mata_mata_id, $categoria_i_id, $new_interclass_id),
-                ('Queimada - MI', 'MISTO', 20, NULL, '1', $tipo_mata_mata_id, $categoria_i_id, $new_interclass_id),
-                ('Volei - MI', 'MISTO', 12, NULL, '1', $tipo_mata_mata_id, $categoria_i_id, $new_interclass_id),
-                ('Corrida - FE', 'FEM', 2, NULL, '1', $tipo_individual_id, $categoria_i_id, $new_interclass_id),
-                ('Corrida - MA', 'MASC', 2, NULL, '1', $tipo_individual_id, $categoria_i_id, $new_interclass_id),
-                ('Futsal - MA', 'MASC', 10, NULL, '1', $tipo_mata_mata_id, $categoria_ii_id, $new_interclass_id),
-                ('Queimada - MI', 'MISTO', 20, NULL, '1', $tipo_mata_mata_id, $categoria_ii_id, $new_interclass_id),
-                ('Volei - MI', 'MISTO', 12, NULL, '1', $tipo_mata_mata_id, $categoria_ii_id, $new_interclass_id),
-                ('Corrida - FE', 'FEM', 2, NULL, '1', $tipo_individual_id, $categoria_ii_id, $new_interclass_id),
-                ('Corrida - MA', 'MASC', 2, NULL, '1', $tipo_individual_id, $categoria_ii_id, $new_interclass_id)";
-                
-                if (!$conn->query($modalidades_sql)) {
-                    $conn->rollback();
-                    echo json_encode(["success" => false, "message" => "Falha ao inserir modalidades: " . $conn->error]);
-                    break;
-                }
-
-                if (function_exists('sgi_criar_locais_padrao_interclasse')) {
-                    sgi_criar_locais_padrao_interclasse($conn, $new_interclass_id);
-                }
-
-                // RF01/RF03: garante a Equipe Padrão ("{Modalidade} - 1") de cada turma/modalidade.
-                $equipesPadrao = sgi_gerar_equipes_padrao_interclasse($conn, $new_interclass_id);
-                
-                $conn->commit();
-                echo json_encode([
-                    "success" => true,
-                    "id" => $new_interclass_id,
-                    "equipes_padrao_garantidas" => $equipesPadrao['criadas'],
-                    "erros_equipes" => $equipesPadrao['erros']
-                ]);
-            } else {
-                echo json_encode(["success" => false, "message" => $stmt->error]);
-            }
-        }
-        break;
+        default:
+            http_response_code(405);
+            echo json_encode(['success' => false, 'message' => 'Método não permitido.'], JSON_UNESCAPED_UNICODE);
+    }
+} catch (InvalidArgumentException $exception) {
+    http_response_code(400);
+    echo json_encode(['success' => false, 'message' => $exception->getMessage()], JSON_UNESCAPED_UNICODE);
+} catch (Throwable $exception) {
+    error_log('Falha em interclasse.php: ' . $exception->getMessage());
+    http_response_code(500);
+    echo json_encode(['success' => false, 'message' => 'Não foi possível processar a edição.'], JSON_UNESCAPED_UNICODE);
 }

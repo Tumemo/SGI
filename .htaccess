@@ -1,0 +1,15 @@
+Options -Indexes
+
+# O DocumentRoot recomendado é /public. Quando a aplicação ainda é servida
+# pela raiz (instalações legadas), todas as requisições passam pelo mesmo
+# front controller sem alterar as URLs existentes.
+RewriteEngine On
+RewriteCond %{REQUEST_URI} !^/public(?:/|$)
+RewriteRule ^ public/index.php [END]
+
+# O código, a configuração, o schema e os artefatos de teste não são recursos públicos.
+RewriteRule ^(?:config|src|tests|docs|tools|storage|vendor)(?:/|$) - [F,END]
+
+<FilesMatch "^(?:\.env(?:\..*)?|composer\.(?:json|lock)|phpunit\.xml|phpstan\.neon|AGENTS\.md)$">
+    Require all denied
+</FilesMatch>

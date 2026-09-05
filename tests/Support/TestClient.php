@@ -7,13 +7,17 @@ class TestClient
 {
     private string $baseUrl;
     private ?string $cookieFile;
+    private ?string $csrfToken = null;
 
     public function __construct(?string $baseUrl = null, ?string $cookieFile = null)
     {
         // Permite que a suíte seja executada contra o workspace (por exemplo,
         // um servidor PHP embutido), sem depender de uma implantação Apache
         // que possa estar desatualizada. Mantém o endereço legado como padrão.
-        $configuredBaseUrl = $baseUrl ?? getenv('SGI_TEST_BASE_URL') ?: 'http://localhost/SGI';
+        // O padrão aponta para o servidor embutido de testes. Assim, executar
+        // a suíte sem configurar um ambiente nunca atinge o Apache de
+        // desenvolvimento por acidente.
+        $configuredBaseUrl = $baseUrl ?? getenv('SGI_TEST_BASE_URL') ?: 'http://127.0.0.1:8083';
         $this->baseUrl = rtrim($configuredBaseUrl, '/');
         $this->cookieFile = $cookieFile ?? (sys_get_temp_dir() . '/sgi_cookie_' . uniqid() . '.txt');
     }
@@ -51,6 +55,20 @@ class TestClient
             curl_setopt($ch, CURLOPT_COOKIEFILE, $this->cookieFile);
         }
 
+        $methodUpper = strtoupper($method);
+        if (in_array($methodUpper, ['POST', 'PUT', 'PATCH', 'DELETE'], true) && $this->csrfToken !== null) {
+            $hasCsrfHeader = false;
+            foreach (array_keys($headers) as $headerName) {
+                if (!is_int($headerName) && strcasecmp((string) $headerName, 'X-SGI-CSRF') === 0) {
+                    $hasCsrfHeader = true;
+                    break;
+                }
+            }
+            if (!$hasCsrfHeader) {
+                $headers['X-SGI-CSRF'] = $this->csrfToken;
+            }
+        }
+
         $formattedHeaders = [];
         $hasContentType = false;
         foreach ($headers as $k => $v) {
@@ -62,8 +80,6 @@ class TestClient
                 if (stripos($k, 'Content-Type') === 0) $hasContentType = true;
             }
         }
-
-        $methodUpper = strtoupper($method);
         if ($methodUpper === 'POST') {
             curl_setopt($ch, CURLOPT_POST, true);
             if (is_array($data) && $hasContentType) {
@@ -95,19 +111,6 @@ class TestClient
         if (is_string($raw) && $raw !== '') {
             $json = json_decode($raw, true);
 
-            // Alguns SAPI (principalmente o servidor embutido do PHP) podem
-            // prefixar avisos de inicialização ao corpo de uma resposta que
-            // continua sendo JSON válido. Tente decodificar apenas o objeto
-            // JSON para que o teste avalie o contrato da API, não o ruído do
-            // ambiente de transporte.
-            if ($json === null && json_last_error() !== JSON_ERROR_NONE) {
-                $posObjeto = strpos($raw, '{');
-                $posLista = strpos($raw, '[');
-                $posJson = $posObjeto === false ? $posLista : ($posLista === false ? $posObjeto : min($posObjeto, $posLista));
-                if ($posJson !== false) {
-                    $json = json_decode(substr($raw, $posJson), true);
-                }
-            }
         }
 
         return [
@@ -148,9 +151,13 @@ class TestClient
 
     public function login(string $matricula, string $senha): array
     {
-        return $this->postJson('api/login.php', [
+        $response = $this->postJson('api/login.php', [
             'matricula' => $matricula,
             'senha' => $senha
         ]);
+        $token = $response['json']['csrf_token'] ?? null;
+        $this->csrfToken = is_string($token) && $token !== '' ? $token : null;
+
+        return $response;
     }
 }

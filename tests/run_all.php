@@ -8,6 +8,7 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/Support/TestClient.php';
 require_once __DIR__ . '/Support/Assertions.php';
+require_once __DIR__ . '/Support/TestDatabase.php';
 require_once __DIR__ . '/Integration/AuthAndRbacTest.php';
 require_once __DIR__ . '/Integration/InterclasseLifecycleTest.php';
 require_once __DIR__ . '/Integration/TurmasAndPdfImportTest.php';
@@ -19,10 +20,12 @@ require_once __DIR__ . '/Integration/OcorrenciasAndRankingTest.php';
 require_once __DIR__ . '/Integration/HistoricoTurmaAndClassificacaoTest.php';
 require_once __DIR__ . '/Integration/FotoPerfilAndUsuariosTest.php';
 require_once __DIR__ . '/Integration/AlunosPortalTest.php';
+require_once __DIR__ . '/Integration/PublicBoundaryTest.php';
 require_once __DIR__ . '/Unit/MataMataEdgeCasesTest.php';
 require_once __DIR__ . '/E2E/FullOfflineTournamentTest.php';
 
 use SGITests\Support\Assertions;
+use SGITests\Support\TestDatabase;
 use SGITests\Integration\AuthAndRbacTest;
 use SGITests\Integration\InterclasseLifecycleTest;
 use SGITests\Integration\TurmasAndPdfImportTest;
@@ -34,21 +37,33 @@ use SGITests\Integration\OcorrenciasAndRankingTest;
 use SGITests\Integration\HistoricoTurmaAndClassificacaoTest;
 use SGITests\Integration\FotoPerfilAndUsuariosTest;
 use SGITests\Integration\AlunosPortalTest;
+use SGITests\Integration\PublicBoundaryTest;
 use SGITests\Unit\MataMataEdgeCasesTest;
 use SGITests\E2E\FullOfflineTournamentTest;
 
 $inicio = microtime(true);
 Assertions::reset();
 
+$testBaseUrl = getenv('SGI_TEST_BASE_URL');
+$testDatabase = getenv('SGI_TEST_DB_NAME') ?: 'sgi_test';
+
+if ($testBaseUrl === false || trim($testBaseUrl) === '') {
+    fwrite(STDERR, "SGI_TEST_BASE_URL é obrigatório. Inicie um servidor de teste separado antes da suíte.\n");
+    exit(2);
+}
+
+try {
+    TestDatabase::resetFromSchema($testDatabase);
+} catch (Throwable $e) {
+    fwrite(STDERR, "Falha ao preparar ambiente de teste: " . $e->getMessage() . "\n");
+    exit(2);
+}
+
 echo "\033[1;36m====================================================================\033[0m\n";
 echo "\033[1;36m       SGI — SUITE COMPLETA DE TESTES AUTOMATIZADOS E AUDITORIA       \033[0m\n";
 echo "\033[1;36m====================================================================\033[0m\n";
 
-// Reset atômico do banco com schema oficial antes dos testes
-$sqlFile = str_replace('\\', '/', dirname(__DIR__) . '/docs/sgi.sql');
-$mysqlBin = file_exists('C:/xampp/mysql/bin/mysql.exe') ? 'C:/xampp/mysql/bin/mysql.exe' : 'mysql';
-exec("\"$mysqlBin\" -u root -e \"source $sqlFile\"");
-
+$aborted = false;
 try {
     // 1. Autenticação e RBAC
     AuthAndRbacTest::run();
@@ -95,7 +110,11 @@ try {
     // 13. Torneio Completo e Sincronização Offline
     FullOfflineTournamentTest::run($idEdicao, $idModalidade, $idJogo2, $equipesIds);
 
+    // 14. Fronteira pública e proteção de arquivos internos
+    PublicBoundaryTest::run();
+
 } catch (Throwable $e) {
+    $aborted = true;
     echo "\n\033[31m[ERRO CRÍTICO NA EXECUÇÃO DOS TESTES]\033[0m " . $e->getMessage() . "\n";
     echo $e->getTraceAsString() . "\n";
 }
@@ -112,7 +131,7 @@ echo " Falhas:             " . ($stats['failed'] > 0 ? "\033[31m\033[1m{$stats['
 echo " Tempo de Execução:  \033[33m{$tempoTotal}s\033[0m\n";
 echo "\033[1;36m====================================================================\033[0m\n";
 
-if ($stats['failed'] > 0) {
+if ($stats['failed'] > 0 || $aborted) {
     echo "\n\033[31mAsserções que falharam:\033[0m\n";
     foreach ($stats['failures'] as $f) {
         echo " - $f\n";

@@ -1,7 +1,7 @@
 const { defineConfig } = require('@playwright/test');
 
-const chromePath = process.env.SGI_CHROME_PATH ||
-    'C:/Program Files/Google/Chrome/Application/chrome.exe';
+const chromePath = process.env.SGI_CHROME_PATH;
+const launchOptions = chromePath ? { executablePath: chromePath } : {};
 
 module.exports = defineConfig({
     testDir: __dirname,
@@ -20,7 +20,7 @@ module.exports = defineConfig({
         baseURL: process.env.SGI_BASE_URL || 'http://localhost/SGI/',
         viewport: { width: 1440, height: 900 },
         headless: process.env.SGI_HEADFUL !== '1',
-        launchOptions: { executablePath: chromePath },
+        launchOptions,
         trace: 'retain-on-failure',
         screenshot: 'only-on-failure'
     }

@@ -5,6 +5,7 @@ declare(strict_types=1);
 require_once dirname(__DIR__) . '/config/db.php';
 require_once __DIR__ . '/includes/mata_mata_engine.php';
 require_once __DIR__ . '/includes/individual_engine.php';
+require_once __DIR__ . '/auth.php';
 
 header('Content-Type: application/json; charset=utf-8');
 
@@ -25,6 +26,21 @@ if ($idModalidade <= 0 || !$tipoModalidade) {
     http_response_code(400);
     echo json_encode(['success' => false, 'message' => 'Informe o ID e o tipo da modalidade.'], JSON_UNESCAPED_UNICODE);
     exit;
+}
+
+requerOperacaoJogo();
+$idInterclasseAtiva = garantirInterclasseAtivo($conn);
+if ((int) ($_SESSION['nivel'] ?? -1) === 2) {
+    $modalidade = $conn->prepare('SELECT interclasses_id_interclasse FROM modalidades WHERE id_modalidade = ? LIMIT 1');
+    $modalidade->bind_param('i', $idModalidade);
+    $modalidade->execute();
+    $edicao = $modalidade->get_result()->fetch_assoc();
+    $modalidade->close();
+    if (!$edicao || (int) $edicao['interclasses_id_interclasse'] !== (int) $idInterclasseAtiva) {
+        http_response_code(403);
+        echo json_encode(['success' => false, 'message' => 'Mesários só podem sincronizar a edição ativa.'], JSON_UNESCAPED_UNICODE);
+        exit;
+    }
 }
 
 // Inicia a transação SQL atômica
