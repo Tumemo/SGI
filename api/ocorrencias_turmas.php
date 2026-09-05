@@ -6,9 +6,9 @@ require_once '../config/db.php';
 require_once 'auth.php';
 require_once __DIR__ . '/includes/idempotencia.php';
 
-use App\Interclasse\Application\OcorrenciaTurmaNaoEncontradaException;
-use App\Interclasse\Application\OcorrenciaTurmaService;
-use App\Interclasse\Infrastructure\MysqliOcorrenciaTurmaRepository;
+use App\Modules\Interclasses\Application\OcorrenciaTurmaNaoEncontradaException;
+use App\Modules\Interclasses\Application\OcorrenciaTurmaService;
+use App\Modules\Interclasses\Infrastructure\MysqliOcorrenciaTurmaRepository;
 
 header('Content-Type: application/json; charset=utf-8');
 header('Access-Control-Allow-Methods: GET, POST, DELETE, OPTIONS');

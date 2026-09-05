@@ -9,8 +9,8 @@ require_once __DIR__ . '/includes/interclasse_helper.php';
 require_once __DIR__ . '/includes/cache_offline.php';
 require_once __DIR__ . '/auth.php';
 
-use App\Usuarios\Application\UsuarioAdministrativoService;
-use App\Usuarios\Infrastructure\MysqliUsuarioAdministrativoRepository;
+use App\Modules\Acesso\Application\UsuarioAdministrativoService;
+use App\Modules\Acesso\Infrastructure\MysqliUsuarioAdministrativoRepository;
 use App\Shared\Storage\StoragePaths;
 
 header('Content-Type: application/json; charset=utf-8');

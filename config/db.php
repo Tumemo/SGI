@@ -26,3 +26,5 @@ if (!$conn->set_charset('utf8mb4')) {
     error_log('Não foi possível configurar o charset utf8mb4: ' . $conn->error);
     throw new RuntimeException('Serviço temporariamente indisponível.');
 }
+
+return $conn;

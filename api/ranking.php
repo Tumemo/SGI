@@ -5,8 +5,8 @@ declare(strict_types=1);
 require_once dirname(__DIR__) . '/config/db.php';
 require_once __DIR__ . '/auth.php';
 
-use App\Interclasse\Application\RankingService;
-use App\Interclasse\Infrastructure\MysqliRankingRepository;
+use App\Modules\Interclasses\Application\RankingService;
+use App\Modules\Interclasses\Infrastructure\MysqliRankingRepository;
 
 header('Content-Type: application/json; charset=utf-8');
 header('Access-Control-Allow-Methods: GET, PUT, OPTIONS');

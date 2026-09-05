@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Autenticacao;
 
-use App\Autenticacao\Application\TermosService;
-use App\Autenticacao\Domain\TermosRepository;
+use App\Modules\Acesso\Application\TermosService;
+use App\Modules\Acesso\Domain\TermosRepository;
 use InvalidArgumentException;
 use PHPUnit\Framework\TestCase;
 

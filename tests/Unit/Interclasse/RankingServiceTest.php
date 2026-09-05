@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Interclasse;
 
-use App\Interclasse\Application\RankingService;
-use App\Interclasse\Domain\RankingRepository;
+use App\Modules\Interclasses\Application\RankingService;
+use App\Modules\Interclasses\Domain\RankingRepository;
 use InvalidArgumentException;
 use PHPUnit\Framework\TestCase;
 

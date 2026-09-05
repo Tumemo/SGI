@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Interclasse;
 
-use App\Interclasse\Application\ClassificacaoService;
-use App\Interclasse\Domain\ClassificacaoRepository;
+use App\Modules\Interclasses\Application\ClassificacaoService;
+use App\Modules\Interclasses\Domain\ClassificacaoRepository;
 use InvalidArgumentException;
 use PHPUnit\Framework\TestCase;
 

@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Usuarios;
 
-use App\Usuarios\Application\UsuarioAdministrativoService;
-use App\Usuarios\Application\UsuarioNaoEncontradoException;
-use App\Usuarios\Application\UsuarioProtegidoException;
-use App\Usuarios\Domain\UsuarioAdministrativoRepository;
+use App\Modules\Acesso\Application\UsuarioAdministrativoService;
+use App\Modules\Acesso\Application\UsuarioNaoEncontradoException;
+use App\Modules\Acesso\Application\UsuarioProtegidoException;
+use App\Modules\Acesso\Domain\UsuarioAdministrativoRepository;
 use InvalidArgumentException;
 use PHPUnit\Framework\TestCase;
 

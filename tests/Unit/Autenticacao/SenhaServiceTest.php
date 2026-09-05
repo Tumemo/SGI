@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Autenticacao;
 
-use App\Autenticacao\Application\SenhaService;
-use App\Autenticacao\Domain\SenhaRepository;
+use App\Modules\Acesso\Application\SenhaService;
+use App\Modules\Acesso\Domain\SenhaRepository;
 use InvalidArgumentException;
 use PHPUnit\Framework\TestCase;
 

@@ -5,9 +5,9 @@ declare(strict_types=1);
 require_once dirname(__DIR__) . '/config/db.php';
 require_once __DIR__ . '/auth.php';
 
-use App\Interclasse\Application\TipoModalidadeNaoEncontradoException;
-use App\Interclasse\Application\TipoModalidadeService;
-use App\Interclasse\Infrastructure\MysqliTipoModalidadeRepository;
+use App\Modules\Interclasses\Application\TipoModalidadeNaoEncontradoException;
+use App\Modules\Interclasses\Application\TipoModalidadeService;
+use App\Modules\Interclasses\Infrastructure\MysqliTipoModalidadeRepository;
 
 header('Content-Type: application/json; charset=utf-8');
 

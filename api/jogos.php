@@ -6,9 +6,9 @@ require_once '../config/db.php';
 require_once 'filtros.php';
 require_once 'auth.php';
 
-use App\Interclasse\Application\JogoConflitoException;
-use App\Interclasse\Application\JogoService;
-use App\Interclasse\Infrastructure\MysqliJogoRepository;
+use App\Modules\Interclasses\Application\JogoConflitoException;
+use App\Modules\Interclasses\Application\JogoService;
+use App\Modules\Interclasses\Infrastructure\MysqliJogoRepository;
 
 header('Content-Type: application/json');
 

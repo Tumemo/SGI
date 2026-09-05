@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Autenticacao;
 
-use App\Autenticacao\Application\LoginService;
-use App\Autenticacao\Domain\InterclasseRepository;
-use App\Autenticacao\Domain\UsuarioRepository;
+use App\Modules\Acesso\Application\LoginService;
+use App\Modules\Acesso\Domain\InterclasseRepository;
+use App\Modules\Acesso\Domain\UsuarioRepository;
 use PHPUnit\Framework\TestCase;
 
 final class LoginServiceTest extends TestCase

@@ -7,10 +7,10 @@ require_once __DIR__ . '/includes/mata_mata_engine.php';
 require_once 'filtros.php';
 require_once 'auth.php';
 
-use App\Interclasse\Application\PartidaService;
-use App\Interclasse\Application\PlacarInvalidoException;
-use App\Interclasse\Application\PlacarService;
-use App\Interclasse\Infrastructure\MysqliPartidaRepository;
+use App\Modules\Interclasses\Application\PartidaService;
+use App\Modules\Interclasses\Application\PlacarInvalidoException;
+use App\Modules\Interclasses\Application\PlacarService;
+use App\Modules\Interclasses\Infrastructure\MysqliPartidaRepository;
 
 header('Content-Type: application/json');
 

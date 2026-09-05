@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Interclasse;
 
-use App\Interclasse\Application\TurmaDuplicadaException;
-use App\Interclasse\Application\TurmaNaoEncontradaException;
-use App\Interclasse\Application\TurmaService;
-use App\Interclasse\Domain\TurmaRepository;
+use App\Modules\Interclasses\Application\TurmaDuplicadaException;
+use App\Modules\Interclasses\Application\TurmaNaoEncontradaException;
+use App\Modules\Interclasses\Application\TurmaService;
+use App\Modules\Interclasses\Domain\TurmaRepository;
 use InvalidArgumentException;
 use PHPUnit\Framework\TestCase;
 

@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Interclasse;
 
-use App\Interclasse\Application\OcorrenciaTurmaNaoEncontradaException;
-use App\Interclasse\Application\OcorrenciaTurmaService;
-use App\Interclasse\Domain\OcorrenciaTurmaRepository;
+use App\Modules\Interclasses\Application\OcorrenciaTurmaNaoEncontradaException;
+use App\Modules\Interclasses\Application\OcorrenciaTurmaService;
+use App\Modules\Interclasses\Domain\OcorrenciaTurmaRepository;
 use InvalidArgumentException;
 use PHPUnit\Framework\TestCase;
 

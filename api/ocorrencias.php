@@ -7,8 +7,8 @@ require_once 'filtros.php';
 require_once 'auth.php';
 require_once __DIR__ . '/includes/idempotencia.php';
 
-use App\Interclasse\Application\OcorrenciaService;
-use App\Interclasse\Infrastructure\MysqliOcorrenciaRepository;
+use App\Modules\Interclasses\Application\OcorrenciaService;
+use App\Modules\Interclasses\Infrastructure\MysqliOcorrenciaRepository;
 
 header('Content-Type: application/json');
 $method = $_SERVER['REQUEST_METHOD'] ?? 'GET';

@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Interclasse;
 
-use App\Interclasse\Application\ArtilheiroService;
-use App\Interclasse\Domain\ArtilheiroRepository;
+use App\Modules\Interclasses\Application\ArtilheiroService;
+use App\Modules\Interclasses\Domain\ArtilheiroRepository;
 use InvalidArgumentException;
 use PHPUnit\Framework\TestCase;
 

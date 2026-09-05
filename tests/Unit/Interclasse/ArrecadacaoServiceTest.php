@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Interclasse;
 
-use App\Interclasse\Application\ArrecadacaoHistoricoJaRemovidoException;
-use App\Interclasse\Application\ArrecadacaoHistoricoNaoEncontradoException;
-use App\Interclasse\Application\ArrecadacaoService;
-use App\Interclasse\Domain\ArrecadacaoRepository;
+use App\Modules\Interclasses\Application\ArrecadacaoHistoricoJaRemovidoException;
+use App\Modules\Interclasses\Application\ArrecadacaoHistoricoNaoEncontradoException;
+use App\Modules\Interclasses\Application\ArrecadacaoService;
+use App\Modules\Interclasses\Domain\ArrecadacaoRepository;
 use InvalidArgumentException;
 use PHPUnit\Framework\TestCase;
 

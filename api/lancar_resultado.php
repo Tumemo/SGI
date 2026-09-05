@@ -7,8 +7,8 @@ require_once __DIR__ . '/includes/mata_mata_engine.php';
 require_once __DIR__ . '/auth.php';
 require_once __DIR__ . '/includes/idempotencia.php';
 
-use App\Interclasse\Application\PlacarInvalidoException;
-use App\Interclasse\Application\PlacarService;
+use App\Modules\Interclasses\Application\PlacarInvalidoException;
+use App\Modules\Interclasses\Application\PlacarService;
 
 header('Content-Type: application/json; charset=utf-8');
 

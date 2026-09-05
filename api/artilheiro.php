@@ -7,8 +7,8 @@ require_once 'filtros.php';
 require_once 'auth.php';
 require_once __DIR__ . '/includes/idempotencia.php';
 
-use App\Interclasse\Application\ArtilheiroService;
-use App\Interclasse\Infrastructure\MysqliArtilheiroRepository;
+use App\Modules\Interclasses\Application\ArtilheiroService;
+use App\Modules\Interclasses\Infrastructure\MysqliArtilheiroRepository;
 
 header('Content-Type: application/json');
 

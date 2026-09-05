@@ -5,10 +5,10 @@ declare(strict_types=1);
 require_once dirname(__DIR__) . '/config/db.php';
 require_once __DIR__ . '/auth.php';
 
-use App\Interclasse\Application\CategoriaInativaException;
-use App\Interclasse\Application\CategoriaNaoEncontradaException;
-use App\Interclasse\Application\CategoriaService;
-use App\Interclasse\Infrastructure\MysqliCategoriaRepository;
+use App\Modules\Interclasses\Application\CategoriaInativaException;
+use App\Modules\Interclasses\Application\CategoriaNaoEncontradaException;
+use App\Modules\Interclasses\Application\CategoriaService;
+use App\Modules\Interclasses\Infrastructure\MysqliCategoriaRepository;
 
 header('Content-Type: application/json; charset=utf-8');
 

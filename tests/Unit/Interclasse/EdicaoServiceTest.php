@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Interclasse;
 
-use App\Interclasse\Application\EdicaoService;
-use App\Interclasse\Domain\EdicaoRepository;
+use App\Modules\Interclasses\Application\EdicaoService;
+use App\Modules\Interclasses\Domain\EdicaoRepository;
 use InvalidArgumentException;
 use PHPUnit\Framework\TestCase;
 

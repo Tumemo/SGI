@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Interclasse;
 
-use App\Interclasse\Application\PartidaService;
-use App\Interclasse\Domain\PartidaRepository;
+use App\Modules\Interclasses\Application\PartidaService;
+use App\Modules\Interclasses\Domain\PartidaRepository;
 use InvalidArgumentException;
 use PHPUnit\Framework\TestCase;
 

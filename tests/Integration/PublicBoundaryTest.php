@@ -32,5 +32,30 @@ final class PublicBoundaryTest
 
         $publicSource = $client->get('public/index.php');
         Assertions::assertStatus('Código do front controller não é baixável', $publicSource, 404);
+
+        $health = $client->get('api/v1/health');
+        Assertions::assertStatus('Núcleo HTTP modular responde pelo namespace versionado', $health, 200);
+        Assertions::assert(
+            'Resposta de saúde possui payload JSON válido',
+            ($health['json']['status'] ?? null) === 'ok' && ($health['json']['service'] ?? null) === 'sgi',
+        );
+
+        $admin = new TestClient();
+        $login = $admin->login('admin', '123');
+        Assertions::assertStatus('Login para validar controlador modular', $login, 200);
+        $types = $admin->get('api/v1/tipos-modalidade');
+        Assertions::assertStatus('Endpoint modular de tipos de modalidade responde', $types, 200);
+        Assertions::assert('Controlador modular retorna uma lista', is_array($types['json']));
+
+        foreach ([
+            'api/v1/categorias' => 'categorias',
+            'api/v1/locais' => 'locais',
+            'api/v1/modalidades' => 'modalidades',
+            'api/v1/ranking' => 'ranking',
+        ] as $endpoint => $label) {
+            $response = $admin->get($endpoint);
+            Assertions::assertStatus("Endpoint modular de {$label} responde", $response, 200);
+            Assertions::assert("Endpoint modular de {$label} retorna JSON", is_array($response['json']));
+        }
     }
 }

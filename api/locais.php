@@ -5,10 +5,10 @@ declare(strict_types=1);
 require_once dirname(__DIR__) . '/config/db.php';
 require_once __DIR__ . '/auth.php';
 
-use App\Interclasse\Application\LocalNaoEncontradoException;
-use App\Interclasse\Application\LocalService;
-use App\Interclasse\Application\LocalVinculadoException;
-use App\Interclasse\Infrastructure\MysqliLocalRepository;
+use App\Modules\Interclasses\Application\LocalNaoEncontradoException;
+use App\Modules\Interclasses\Application\LocalService;
+use App\Modules\Interclasses\Application\LocalVinculadoException;
+use App\Modules\Interclasses\Infrastructure\MysqliLocalRepository;
 
 header('Content-Type: application/json; charset=utf-8');
 

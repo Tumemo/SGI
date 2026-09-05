@@ -5,11 +5,11 @@ declare(strict_types=1);
 require_once '../config/db.php';
 require_once 'auth.php';
 
-use App\Interclasse\Application\TurmaDuplicadaException;
-use App\Interclasse\Application\TurmaNaoEncontradaException;
-use App\Interclasse\Application\TurmaService;
-use App\Interclasse\Application\TurmaVinculadaException;
-use App\Interclasse\Infrastructure\MysqliTurmaRepository;
+use App\Modules\Interclasses\Application\TurmaDuplicadaException;
+use App\Modules\Interclasses\Application\TurmaNaoEncontradaException;
+use App\Modules\Interclasses\Application\TurmaService;
+use App\Modules\Interclasses\Application\TurmaVinculadaException;
+use App\Modules\Interclasses\Infrastructure\MysqliTurmaRepository;
 
 header('Content-Type: application/json; charset=utf-8');
 header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');

@@ -10,9 +10,9 @@ use App\Shared\Http\CsrfGuard;
 
 SessionManager::start();
 
-use App\Autenticacao\Application\LoginService;
-use App\Autenticacao\Infrastructure\MysqliInterclasseRepository;
-use App\Autenticacao\Infrastructure\MysqliUsuarioRepository;
+use App\Modules\Acesso\Application\LoginService;
+use App\Modules\Acesso\Infrastructure\MysqliInterclasseRepository;
+use App\Modules\Acesso\Infrastructure\MysqliUsuarioRepository;
 
 header('Content-Type: application/json');
 header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');

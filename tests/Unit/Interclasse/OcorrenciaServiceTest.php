@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Interclasse;
 
-use App\Interclasse\Application\OcorrenciaService;
-use App\Interclasse\Domain\OcorrenciaRepository;
+use App\Modules\Interclasses\Application\OcorrenciaService;
+use App\Modules\Interclasses\Domain\OcorrenciaRepository;
 use InvalidArgumentException;
 use PHPUnit\Framework\TestCase;
 

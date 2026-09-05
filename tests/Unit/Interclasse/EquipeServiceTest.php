@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Interclasse;
 
-use App\Interclasse\Application\EquipeNaoEncontradaException;
-use App\Interclasse\Application\EquipeService;
-use App\Interclasse\Domain\EquipeRepository;
+use App\Modules\Interclasses\Application\EquipeNaoEncontradaException;
+use App\Modules\Interclasses\Application\EquipeService;
+use App\Modules\Interclasses\Domain\EquipeRepository;
 use InvalidArgumentException;
 use PHPUnit\Framework\TestCase;
 

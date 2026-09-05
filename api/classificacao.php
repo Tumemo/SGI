@@ -7,8 +7,8 @@ require_once __DIR__ . '/auth.php';
 
 requerNivel([0, 1, 2, 3]);
 
-use App\Interclasse\Application\ClassificacaoService;
-use App\Interclasse\Infrastructure\MysqliClassificacaoRepository;
+use App\Modules\Interclasses\Application\ClassificacaoService;
+use App\Modules\Interclasses\Infrastructure\MysqliClassificacaoRepository;
 
 header('Content-Type: application/json; charset=utf-8');
 

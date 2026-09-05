@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Interclasse;
 
-use App\Interclasse\Application\JogoConflitoException;
-use App\Interclasse\Application\JogoService;
-use App\Interclasse\Domain\JogoRepository;
+use App\Modules\Interclasses\Application\JogoConflitoException;
+use App\Modules\Interclasses\Application\JogoService;
+use App\Modules\Interclasses\Domain\JogoRepository;
 use InvalidArgumentException;
 use PHPUnit\Framework\TestCase;
 

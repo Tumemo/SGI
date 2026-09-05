@@ -7,10 +7,10 @@ require_once 'filtros.php';
 require_once 'auth.php';
 require_once __DIR__ . '/includes/equipes_helper.php';
 
-use App\Interclasse\Application\EquipeLimiteException;
-use App\Interclasse\Application\EquipeNaoEncontradaException;
-use App\Interclasse\Application\EquipeService;
-use App\Interclasse\Infrastructure\MysqliEquipeRepository;
+use App\Modules\Interclasses\Application\EquipeLimiteException;
+use App\Modules\Interclasses\Application\EquipeNaoEncontradaException;
+use App\Modules\Interclasses\Application\EquipeService;
+use App\Modules\Interclasses\Infrastructure\MysqliEquipeRepository;
 
 header('Content-Type: application/json');
 $method = $_SERVER['REQUEST_METHOD'] ?? 'GET';

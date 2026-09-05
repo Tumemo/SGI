@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Interclasse;
 
-use App\Interclasse\Application\LocalNaoEncontradoException;
-use App\Interclasse\Application\LocalService;
-use App\Interclasse\Domain\LocalRepository;
+use App\Modules\Interclasses\Application\LocalNaoEncontradoException;
+use App\Modules\Interclasses\Application\LocalService;
+use App\Modules\Interclasses\Domain\LocalRepository;
 use InvalidArgumentException;
 use PHPUnit\Framework\TestCase;
 

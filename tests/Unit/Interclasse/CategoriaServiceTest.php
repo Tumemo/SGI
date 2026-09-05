@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Interclasse;
 
-use App\Interclasse\Application\CategoriaInativaException;
-use App\Interclasse\Application\CategoriaNaoEncontradaException;
-use App\Interclasse\Application\CategoriaService;
-use App\Interclasse\Domain\CategoriaRepository;
+use App\Modules\Interclasses\Application\CategoriaInativaException;
+use App\Modules\Interclasses\Application\CategoriaNaoEncontradaException;
+use App\Modules\Interclasses\Application\CategoriaService;
+use App\Modules\Interclasses\Domain\CategoriaRepository;
 use InvalidArgumentException;
 use PHPUnit\Framework\TestCase;
 

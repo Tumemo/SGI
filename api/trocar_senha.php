@@ -5,8 +5,8 @@ declare(strict_types=1);
 require_once dirname(__DIR__) . '/config/db.php';
 require_once __DIR__ . '/auth.php';
 
-use App\Autenticacao\Application\SenhaService;
-use App\Autenticacao\Infrastructure\MysqliSenhaRepository;
+use App\Modules\Acesso\Application\SenhaService;
+use App\Modules\Acesso\Infrastructure\MysqliSenhaRepository;
 
 header('Content-Type: application/json; charset=utf-8');
 

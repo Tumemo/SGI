@@ -5,9 +5,9 @@ declare(strict_types=1);
 require_once dirname(__DIR__) . '/config/db.php';
 require_once __DIR__ . '/auth.php';
 
-use App\Interclasse\Application\PontuacaoNaoEncontradaException;
-use App\Interclasse\Application\PontuacaoService;
-use App\Interclasse\Infrastructure\MysqliPontuacaoRepository;
+use App\Modules\Interclasses\Application\PontuacaoNaoEncontradaException;
+use App\Modules\Interclasses\Application\PontuacaoService;
+use App\Modules\Interclasses\Infrastructure\MysqliPontuacaoRepository;
 
 header('Content-Type: application/json; charset=utf-8');
 

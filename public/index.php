@@ -11,8 +11,7 @@ declare(strict_types=1);
  */
 
 $projectRoot = dirname(__DIR__);
-require_once $projectRoot . DIRECTORY_SEPARATOR . 'vendor' . DIRECTORY_SEPARATOR . 'autoload.php';
-\App\Shared\Config\EnvLoader::load($projectRoot . DIRECTORY_SEPARATOR . '.env');
+require_once $projectRoot . DIRECTORY_SEPARATOR . 'config' . DIRECTORY_SEPARATOR . 'bootstrap.php';
 
 $requestPath = parse_url((string) ($_SERVER['REQUEST_URI'] ?? '/'), PHP_URL_PATH);
 $requestPath = is_string($requestPath) ? rawurldecode($requestPath) : '/';
@@ -54,6 +53,17 @@ $segments = explode('/', $path);
 if (in_array('..', $segments, true) || in_array('.', $segments, true)) {
     http_response_code(400);
     exit('Requisição inválida.');
+}
+
+// O namespace versionado usa o núcleo HTTP modular. As URLs legadas abaixo
+// continuam sendo atendidas pelos adaptadores atuais durante a migração.
+if (str_starts_with($path, 'api/v1/')) {
+    $router = require $projectRoot . DIRECTORY_SEPARATOR . 'config' . DIRECTORY_SEPARATOR . 'routes.php';
+    $kernel = new \App\Shared\Http\MiddlewareStack([
+        new \App\Shared\Http\ExceptionMiddleware(),
+    ], $router);
+    $kernel->handle(\App\Shared\Http\Request::fromGlobals())->send();
+    exit;
 }
 
 /**

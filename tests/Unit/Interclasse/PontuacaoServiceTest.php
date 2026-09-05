@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Interclasse;
 
-use App\Interclasse\Application\PontuacaoNaoEncontradaException;
-use App\Interclasse\Application\PontuacaoService;
-use App\Interclasse\Domain\PontuacaoRepository;
+use App\Modules\Interclasses\Application\PontuacaoNaoEncontradaException;
+use App\Modules\Interclasses\Application\PontuacaoService;
+use App\Modules\Interclasses\Domain\PontuacaoRepository;
 use InvalidArgumentException;
 use PHPUnit\Framework\TestCase;
 

@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Interclasse;
 
-use App\Interclasse\Application\ModalidadeNaoEncontradaException;
-use App\Interclasse\Application\ModalidadeService;
-use App\Interclasse\Domain\ModalidadeRepository;
+use App\Modules\Interclasses\Application\ModalidadeNaoEncontradaException;
+use App\Modules\Interclasses\Application\ModalidadeService;
+use App\Modules\Interclasses\Domain\ModalidadeRepository;
 use InvalidArgumentException;
 use PHPUnit\Framework\TestCase;
 

@@ -5,8 +5,8 @@ declare(strict_types=1);
 require_once dirname(__DIR__) . '/config/db.php';
 require_once __DIR__ . '/auth.php';
 
-use App\Autenticacao\Application\TermosService;
-use App\Autenticacao\Infrastructure\MysqliTermosRepository;
+use App\Modules\Acesso\Application\TermosService;
+use App\Modules\Acesso\Infrastructure\MysqliTermosRepository;
 
 header('Content-Type: application/json; charset=utf-8');
 

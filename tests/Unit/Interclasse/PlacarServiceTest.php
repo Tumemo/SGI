@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Interclasse;
 
-use App\Interclasse\Application\PlacarInvalidoException;
-use App\Interclasse\Application\PlacarService;
+use App\Modules\Interclasses\Application\PlacarInvalidoException;
+use App\Modules\Interclasses\Application\PlacarService;
 use PHPUnit\Framework\TestCase;
 
 final class PlacarServiceTest extends TestCase
