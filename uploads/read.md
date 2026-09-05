@@ -1,1 +1,0 @@
-Fotos que estão na tabela de usuarios!
