@@ -46,7 +46,7 @@ final class PartidaController
                 return Response::json(['success' => false, 'message' => 'Dados incompletos.'], 400);
             }
             if ((int) ($_SESSION['nivel'] ?? -1) === 2
-                && !$this->belongsToActiveEdition((int) ($data['jogos_id_jogo'] ?? 0))) {
+                && !$this->belongsToActiveEdition((int) ($data['jogos_id_jogo'] ?? 0), (int) $id)) {
                 return Response::json(['success' => false, 'message' => 'A partida não pertence à edição ativa.'], 403);
             }
             try {
@@ -67,7 +67,7 @@ final class PartidaController
                 return Response::json(['success' => true, 'offline' => true, 'message' => 'Partida temporária sincronizada']);
             }
             if ((int) ($_SESSION['nivel'] ?? -1) === 2
-                && !$this->belongsToActiveEdition((int) ($data['jogos_id_jogo'] ?? 0))) {
+                && !$this->belongsToActiveEdition((int) ($data['jogos_id_jogo'] ?? 0), (int) $id)) {
                 return Response::json(['success' => false, 'message' => 'A partida não pertence à edição ativa.'], 403);
             }
             try {
@@ -83,10 +83,12 @@ final class PartidaController
         return Response::json(['message' => 'Método não permitido'], 405);
     }
 
-    private function belongsToActiveEdition(int $gameId): bool
+    private function belongsToActiveEdition(int $gameId, int $partidaId = 0): bool
     {
         $active = (int) ($_SESSION['id_interclasse'] ?? 0);
-        $edition = $gameId > 0 ? $this->queries->editionOfGame($gameId) : null;
+        $edition = $gameId > 0
+            ? $this->queries->editionOfGame($gameId)
+            : ($partidaId > 0 ? $this->queries->editionOfPartida($partidaId) : null);
         return $active > 0 && $edition !== null && $edition === $active;
     }
 }

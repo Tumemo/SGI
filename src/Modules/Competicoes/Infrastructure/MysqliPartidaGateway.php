@@ -55,6 +55,12 @@ final class MysqliPartidaGateway
         return $row === null ? null : (int) $row['edition_id'];
     }
 
+    public function editionOfPartida(int $id): ?int
+    {
+        $row = $this->one('SELECT m.interclasses_id_interclasse AS edition_id FROM partidas p INNER JOIN jogos j ON j.id_jogo = p.jogos_id_jogo INNER JOIN modalidades m ON m.id_modalidade = j.modalidades_id_modalidade WHERE p.id_partida = ? LIMIT 1', 'i', [$id]);
+        return $row === null ? null : (int) $row['edition_id'];
+    }
+
     /** @param list<array<string, mixed>> $results */
     public function launch(int $gameId, ?string $gameTag, int $modalityId, array $results): array
     {
