@@ -1,0 +1,50 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Tests\Unit\Modules\Competicoes;
+
+use App\Modules\Competicoes\Application\ChaveamentoService;
+use App\Modules\Competicoes\Domain\ChaveamentoManagement;
+use PHPUnit\Framework\TestCase;
+
+final class ChaveamentoServiceTest extends TestCase
+{
+    public function testRejectsMissingModalityBeforePersistence(): void
+    {
+        $repository = $this->createMock(ChaveamentoManagement::class);
+        $repository->expects(self::never())->method('createBracket');
+        $this->expectException(\InvalidArgumentException::class);
+        (new ChaveamentoService($repository))->gerar(0, false, null);
+    }
+
+    public function testActualIndividualTypeSchedulesWithoutCreatingKnockoutGames(): void
+    {
+        $repository = $this->createMock(ChaveamentoManagement::class);
+        $repository->method('modality')->with(7)->willReturn(['tipos_modalidades_id_tipo_modalidade' => 2]);
+        $repository->expects(self::never())->method('createBracket');
+        $repository->expects(self::once())->method('saveIndividual')->with(7, null)->willReturn(['success' => true]);
+        self::assertTrue((new ChaveamentoService($repository))->gerar(7, false, null)['success']);
+    }
+
+    public function testNormalizesIndividualPodiumIdentifiers(): void
+    {
+        $repository = $this->createMock(ChaveamentoManagement::class);
+        $repository->expects(self::once())->method('saveIndividual')->with(7, ['primeiro' => 1, 'segundo' => 2, 'terceiro' => 3])->willReturn(['success' => true]);
+        self::assertTrue((new ChaveamentoService($repository))->gerar(7, true, ['primeiro' => '1', 'segundo' => '2', 'terceiro' => '3'])['success']);
+    }
+
+    public function testIncompletePodiumPreservesScheduleOperation(): void
+    {
+        $repository = $this->createMock(ChaveamentoManagement::class);
+        $repository->expects(self::once())->method('saveIndividual')->with(7, null)->willReturn(['success' => true]);
+        self::assertTrue((new ChaveamentoService($repository))->gerar(7, true, ['primeiro' => 1])['success']);
+    }
+
+    public function testClassificationOmitsMatchesButPreservesThePodium(): void
+    {
+        $repository = $this->createMock(ChaveamentoManagement::class);
+        $repository->method('read')->with(7, false, 'historico')->willReturn(['confrontos' => [['id' => 1]], 'podio' => [1, 2, 3]]);
+        self::assertSame(['podio' => [1, 2, 3]], (new ChaveamentoService($repository))->consultar(7, false, 'classificacao'));
+    }
+}

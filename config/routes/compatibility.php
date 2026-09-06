@@ -5,6 +5,7 @@ declare(strict_types=1);
 // Stable URLs used by installed clients and pending offline mutations.
 return [
     'aliases' => [
+        '/api/chaveamento.php' => '/api/v1/chaveamentos',
         '/api/upload_turma_pdf.php' => '/api/v1/importacoes/turma-pdf',
         '/api/equipes.php' => '/api/v1/equipes',
         '/api/CriarEquipes.php' => '/api/v1/equipes/gerar',
@@ -28,7 +29,6 @@ return [
     '/api/foto.php' => '/api/v1/foto',
     ],
     'endpoints' => [
-        '/api/chaveamento.php',
         '/api/historico_turma.php',
         '/api/inscricao.php',
         '/api/jogos.php',

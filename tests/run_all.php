@@ -110,7 +110,7 @@ try {
     AlunosPortalTest::run();
 
     // 12. Casos Limites do Motor de Chaveamento
-    MataMataEdgeCasesTest::run($idEdicao);
+    MataMataEdgeCasesTest::run($idEdicao, $idTurma, $idJogo1, $idModalidade, $equipesIds);
 
     // 13. Torneio Completo e Sincronização Offline
     FullOfflineTournamentTest::run($idEdicao, $idModalidade, $idJogo2, $equipesIds);

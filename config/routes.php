@@ -139,4 +139,11 @@ $router->add(['GET', 'POST'], '/api/v1/importacoes/turma-pdf', $withDatabase(
     ),
 ));
 
+$router->add(['GET', 'POST'], '/api/v1/chaveamentos', $withDatabase(
+    static fn (mysqli $conn) => new \App\Modules\Competicoes\Presentation\Http\ChaveamentoController(
+        new \App\Modules\Competicoes\Application\ChaveamentoService(new \App\Modules\Competicoes\Infrastructure\MysqliChaveamentoManagement($conn)),
+        new \App\Modules\Acesso\Presentation\Http\CompetitionAccess(new \App\Modules\Acesso\Infrastructure\MysqliInterclasseRepository($conn)),
+    ),
+));
+
 return $router;

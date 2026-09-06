@@ -1,0 +1,76 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Modules\Competicoes\Infrastructure;
+
+use App\Modules\Competicoes\Domain\ChaveamentoManagement;
+use App\Shared\Database\Transaction;
+use mysqli;
+
+final class MysqliChaveamentoManagement implements ChaveamentoManagement
+{
+    public function __construct(private readonly mysqli $connection)
+    {
+    }
+
+    public function modality(int $id): ?array
+    {
+        $statement = $this->connection->prepare('SELECT interclasses_id_interclasse, tipos_modalidades_id_tipo_modalidade FROM modalidades WHERE id_modalidade = ? LIMIT 1');
+        $statement->bind_param('i', $id);
+        $statement->execute();
+        $row = $statement->get_result()->fetch_assoc();
+        $statement->close();
+        return $row;
+    }
+
+    public function read(int $id, bool $individual, string $action): array
+    {
+        if ($individual) {
+            return $action === 'participantes'
+                ? ['success' => true, 'participantes' => MysqliIndividualRepository::buscarParticipantes($this->connection, $id)]
+                : MysqliIndividualRepository::montarJsonRanking($this->connection, $id);
+        }
+        return $action === 'historico'
+            ? MysqliChaveamentoRepository::montarHistorico($this->connection, $id)
+            : MysqliChaveamentoRepository::montarJsonArvore($this->connection, $id);
+    }
+
+    public function saveIndividual(int $id, ?array $ranking): array
+    {
+        return $this->atomic(fn (): array => $ranking !== null
+            ? MysqliIndividualRepository::salvarRanking($this->connection, $id, $ranking)
+            : MysqliIndividualRepository::criarJogoAgenda($this->connection, $id));
+    }
+
+    public function createBracket(int $id): array
+    {
+        return $this->atomic(function () use ($id): array {
+            $teams = MysqliChaveamentoRepository::buscarEquipesValidadas($this->connection, $id);
+            if (count($teams) < 2) {
+                throw new \InvalidArgumentException('É necessário ao menos duas equipes ativas com competidores vinculados (elenco).');
+            }
+            $result = MysqliChaveamentoRepository::criarChaveamentoInicial($this->connection, $id, $teams);
+            foreach ($result['bye_jogos'] as $bye) {
+                MysqliChaveamentoRepository::chaveamentoProcessarAvanco($this->connection, (int) $bye);
+            }
+            return ['success' => true, 'message' => 'Chaveamento mata-mata gerado.', 'jogos_criados' => $result['jogos_criados'], 'bye_inicial' => count($result['bye_jogos'])];
+        });
+    }
+
+    /** @param callable():array<string, mixed> $action
+     * @return array<string, mixed>
+     */
+    private function atomic(callable $action): array
+    {
+        Transaction::begin($this->connection);
+        try {
+            $result = $action();
+            Transaction::commit($this->connection);
+            return $result;
+        } catch (\Throwable $exception) {
+            Transaction::rollback($this->connection);
+            throw $exception;
+        }
+    }
+}

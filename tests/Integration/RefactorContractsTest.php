@@ -48,6 +48,7 @@ final class RefactorContractsTest
             'ocorrencias.php' => 'ocorrencias',
             'ocorrencias_turmas.php' => 'ocorrencias-turmas',
             'equipes.php' => 'equipes',
+            'chaveamento.php' => 'chaveamentos',
         ] as $legacy => $resource) {
             $old = $admin->get('api/' . $legacy);
             $new = $admin->get('api/v1/' . $resource);
