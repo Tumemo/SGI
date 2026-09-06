@@ -129,4 +129,14 @@ $router->add(['POST', 'OPTIONS'], '/api/v1/equipes/gerar', $withDatabase(
     static fn (mysqli $conn) => [$teamController($conn), 'generate'],
 ));
 
+$router->add(['GET', 'POST'], '/api/v1/importacoes/turma-pdf', $withDatabase(
+    static fn (mysqli $conn) => new \App\Modules\Participantes\Presentation\Http\ImportacaoTurmaController(
+        new \App\Modules\Participantes\Application\ImportacaoTurmaService(
+            new \App\Modules\Participantes\Infrastructure\MysqliImportacaoTurmaRepository($conn),
+            new \App\Modules\Participantes\Infrastructure\CsvAlunoPdfReader(),
+        ),
+        new \App\Modules\Participantes\Infrastructure\TurmaPdfStorage(\App\Shared\Storage\StoragePaths::turmaPdfs()),
+    ),
+));
+
 return $router;

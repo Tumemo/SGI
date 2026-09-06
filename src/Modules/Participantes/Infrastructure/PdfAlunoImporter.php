@@ -35,9 +35,9 @@ final class PdfAlunoImporter
         if (!$fp) {
             return \false;
         }
-        \fputcsv($fp, ['nome', 'rm', 'data_nascimento', 'genero']);
+        \fputcsv($fp, ['nome', 'rm', 'data_nascimento', 'genero'], ',', '"', '\\');
         foreach ($alunos as $aluno) {
-            \fputcsv($fp, [$aluno['nome'], $aluno['rm'], $aluno['data_nascimento'], $aluno['genero']]);
+            \fputcsv($fp, [$aluno['nome'], $aluno['rm'], $aluno['data_nascimento'], $aluno['genero']], ',', '"', '\\');
         }
         \fclose($fp);
         return \true;
@@ -52,8 +52,8 @@ final class PdfAlunoImporter
         if (!$fp) {
             return $alunos;
         }
-        \fgetcsv($fp);
-        while (($row = \fgetcsv($fp)) !== \false) {
+        \fgetcsv($fp, null, ',', '"', '\\');
+        while (($row = \fgetcsv($fp, null, ',', '"', '\\')) !== \false) {
             if (\count($row) < 4) {
                 continue;
             }

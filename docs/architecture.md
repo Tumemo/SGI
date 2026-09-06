@@ -93,6 +93,8 @@ Cada programa de página roda em uma função própria. `page-runtime.js` regist
 
 ## Migrações e sincronização
 
+A importação por PDF usa `ImportacaoTurmaController`, `ImportacaoTurmaService`, um contrato de leitura e um repositório de persistência. As URLs antigas de upload encaminham para `/api/v1/importacoes/turma-pdf`, incluindo o campo legado `pdf`. A turma e a edição são validadas antes de salvar arquivos; o conteúdo precisa ter cabeçalho PDF. Um bloqueio de arquivo serializa importações da mesma turma para preservar o par PDF/CSV durante a extração. A deduplicação de matrículas por edição permanece no importador existente.
+
 `MigrationRunner` registra checksum, estado de conclusão e trava de execução. A adoção de uma base existente exige `--baseline`; a rotina valida parte da estrutura e não apaga seus dados. Veja [implantação](deployment.md).
 
 `MysqliMutationStore` serializa uma mesma chave, rejeita sua reutilização com outro conteúdo/operador e confirma resposta e dados na mesma transação. Transações aninhadas usam savepoints. Os testes provocam falha antes da confirmação e reenvios concorrentes. A fila mantém o identificador e atualiza o token CSRF da sessão ao reenviar.

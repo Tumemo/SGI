@@ -52,6 +52,36 @@ class TurmasAndPdfImportTest
             Assertions::assert("Aluno possui nome válido", !empty($primeiro['nome_usuario']));
             Assertions::assert("Aluno possui matrícula/RM", !empty($primeiro['matricula_usuario']));
             Assertions::assert("Aluno cadastrado com nível 3 (competidor)", (string)($primeiro['nivel_usuario'] ?? '') === '3');
+
+            $repeated = $admin->postForm('api/v1/importacoes/turma-pdf', [
+                'pdf_arquivo' => new CURLFile($pdfPath, 'application/pdf', '6EFB.pdf'),
+                'id_turma' => (string) $idTurma,
+            ]);
+            Assertions::assertJsonSuccess('Reimportação versionada usa a edição da turma', $repeated);
+            $legacyView = $admin->postForm('views/src/pages/upload_turma_pdf.php', [
+                'pdf' => new CURLFile($pdfPath, 'application/pdf', '6EFB.pdf'),
+                'id_turma' => (string) $idTurma,
+            ]);
+            Assertions::assertJsonSuccess('Upload antigo aceita campo pdf e preserva importação', $legacyView);
+            $wrongEdition = $admin->postForm('api/v1/importacoes/turma-pdf', [
+                'pdf_arquivo' => new CURLFile($pdfPath, 'application/pdf', '6EFB.pdf'),
+                'id_turma' => (string) $idTurma,
+                'id_interclasse' => (string) ($idEdicao + 999),
+            ]);
+            Assertions::assert('Upload rejeita edição diferente da turma', ($wrongEdition['json']['success'] ?? true) === false && str_contains($wrongEdition['json']['message'] ?? '', 'não pertence'));
+            $invalid = $admin->postForm('api/v1/importacoes/turma-pdf', [
+                'pdf_arquivo' => new CURLFile(dirname(__DIR__) . '/fixtures/not-a-pdf.txt', 'application/pdf', 'renomeado.pdf'),
+                'id_turma' => (string) $idTurma,
+            ]);
+            Assertions::assert('Upload verifica conteúdo do arquivo além da extensão', ($invalid['json']['success'] ?? true) === false && str_contains($invalid['json']['message'] ?? '', 'PDF válido'));
+            $afterUploads = $admin->get("api/usuarios.php?acao=listar_competidores&id_turma=$idTurma&id_interclasse=$idEdicao");
+            Assertions::assert('Reenvios e arquivos recusados não duplicam nem alteram alunos', ($afterUploads['json']['competidores'] ?? null) === $competidores);
+            $anonymous = new TestClient();
+            Assertions::assertStatus('Upload versionado exige autenticação', $anonymous->postForm('api/v1/importacoes/turma-pdf', []), 401);
+            $mesario = new TestClient();
+            $mesario->login('mesario', '123');
+            Assertions::assertStatus('Mesário não pode importar alunos', $mesario->postForm('api/v1/importacoes/turma-pdf', []), 403);
+            Assertions::assertStatus('Upload versionado exige token CSRF válido', $admin->postForm('api/v1/importacoes/turma-pdf', [], ['X-SGI-CSRF' => '']), 403);
         } else {
             Assertions::assert("Arquivo de PDF disponível para teste", false, "tests/fixtures/6EFB.pdf não localizado");
         }

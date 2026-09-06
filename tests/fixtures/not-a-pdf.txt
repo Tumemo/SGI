@@ -1,0 +1,1 @@
+This is deliberately plain text, used to verify rejection of a renamed PDF upload.
