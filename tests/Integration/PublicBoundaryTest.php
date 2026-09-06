@@ -15,7 +15,7 @@ final class PublicBoundaryTest
 
         $client = new TestClient();
 
-        foreach (['config/db.php', 'src/Shared/Config/Env.php', 'tests/run_all.php', 'vendor/autoload.php', 'composer.json', 'api/filtros.php', 'api/conversor_pdf.php'] as $path) {
+        foreach (['config/db.php', 'src/Shared/Config/Env.php', 'tests/run_all.php', 'vendor/autoload.php', 'composer.json', 'api/filtros.php', 'api/conversor_pdf.php', 'api/pontuacaoInterclasse.php'] as $path) {
             $response = $client->get($path);
             Assertions::assertStatus("Arquivo interno não exposto: {$path}", $response, 404);
         }

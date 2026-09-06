@@ -12,6 +12,11 @@ final class StoragePaths
     {
     }
 
+    public static function imports(): string
+    {
+        return self::normalizar(Env::get('SGI_IMPORT_DIR', self::projectRoot() . '/storage/imports'));
+    }
+
     public static function turmaPdfs(): string
     {
         $default = self::projectRoot()

@@ -48,6 +48,15 @@ class ModalidadesAndEquipesTest
         Assertions::assert("Equipe possui id_turma vinculado", !empty($eq1['turmas_id_turma']));
         Assertions::assert("Equipe possui nome de turma atribuído", !empty($eq1['nome_turma']));
 
+        $generated = $admin->postJson('api/v1/equipes/gerar', ['id_interclasse' => $idEdicao]);
+        Assertions::assertJsonSuccess('Geração de equipes pela rota versionada', $generated);
+        $beforeRepeat = $admin->get("api/equipes.php?id_interclasse=$idEdicao");
+        $repeated = $admin->postJson('api/CriarEquipes.php', ['id_interclasse' => $idEdicao]);
+        $afterRepeat = $admin->get("api/v1/equipes?id_interclasse=$idEdicao");
+        Assertions::assert('Repetir geração pela URL antiga não duplica equipes', ($repeated['json']['success'] ?? false) && $beforeRepeat['json'] === $afterRepeat['json']);
+        $anonymous = new TestClient();
+        Assertions::assertStatus('Geração de equipes exige autenticação', $anonymous->postJson('api/v1/equipes/gerar', ['id_interclasse' => $idEdicao]), 401);
+
         return [
             'modalidade' => $modEscolhida,
             'equipes' => $equipesEscolhidas

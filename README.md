@@ -9,7 +9,7 @@
 - 🏫 **Gestão Multi-Edições:** Crie e gerencie edições do Interclasse com geração automática de turmas, modalidades esportivas e equipes padrão.
 - 📄 **Importação Automática de Alunos via PDF:** Faça upload das listas de chamada em PDF e o sistema extrai e cadastra os alunos diretamente em suas respectivas turmas.
 - 📱 **Portal do Aluno (Mobile-First):** Alunos podem aceitar termos de responsabilidade, consultar a agenda de jogos da sua turma, visualizar o ranking geral e se inscrever em até 3 modalidades esportivas.
-- ⚡ **Operação 100% Offline do Mesário (Offline-First):** Mesários na quadra continuam operando o placar, cronômetro, faltas, gols, cartões e avanço do mata-mata mesmo sem conexão de internet (via IndexedDB). Na reconexão, todas as ações são sincronizadas atomicamente com o servidor MySQL.
+- ⚡ **Operação 100% Offline do Mesário (Offline-First):** Mesários na quadra continuam operando o placar, cronômetro, faltas, gols, cartões e avanço do mata-mata mesmo sem conexão de internet (via IndexedDB). Na reconexão, a fila reenvia as operações e confirma os resultados do servidor.
 - 🌳 **Árvore de Chaveamento Interativa:** Visualização em tempo real das chaves de mata-mata com avanço automático dos vencedores até a Grande Final.
 - 📊 **Ranking Geral em Tempo Real:** Pontuações calculadas automaticamente com base nos pódios (1º, 2º e 3º lugares), itens arrecadados na campanha solidária e descontos por ocorrências disciplinares.
 
@@ -20,7 +20,7 @@
 - **Backend:** PHP 8.2+ com MySQLi
 - **Banco de Dados:** MySQL / MariaDB
 - **Frontend:** HTML5, CSS3, JavaScript (ES6+), Bootstrap 5, Bootstrap Icons
-- **Armazenamento e Cache Offline:** IndexedDB, Cache Storage, Service Worker / SPA Shell
+- **Armazenamento e Cache Offline:** IndexedDB e SPA Shell
 - **Bibliotecas:** `Smalot\PdfParser` (leitura de PDF), `Axios`
 
 ---
@@ -28,39 +28,38 @@
 ## 🚀 Instalação e Execução Local
 
 ### Pré-requisitos
-- [XAMPP](https://www.apachefriends.org/) (com Apache e MySQL) ou ambiente equivalente com PHP 8.2+.
 
-### Passo a Passo
+PHP 8.2 ou 8.4 com MySQLi, mbstring, fileinfo, DOM e cURL; Composer; Node.js 22 para preparar os arquivos do navegador; MySQL/MariaDB.
 
-1. **Clonar ou copiar o projeto para o diretório web:**
-   ```bash
-   # Exemplo no XAMPP para Windows:
-   C:\xampp\htdocs\SGI
-   ```
+```bash
+composer install
+npm ci --ignore-scripts
+npm run build
+```
 
-2. **Configurar o Banco de Dados:**
-   - Inicie o módulo **MySQL** no XAMPP Control Panel.
-   - Crie o banco de dados `sgi` no phpMyAdmin (`http://localhost/phpmyadmin`) ou via terminal:
-     ```sql
-     CREATE DATABASE sgi CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;
-     ```
-   - Importe o arquivo de schema localizado em `docs/sgi.sql`.
+Copie `.env.example` para `.env` e configure a conexão com um banco previamente criado. Para uma base nova:
 
-3. **Configurar variáveis de ambiente:**
-   - Copie `.env.example` para `.env` (ou configure as mesmas variáveis no servidor).
-   - Informe `SGI_DB_HOST`, `SGI_DB_PORT`, `SGI_DB_NAME`, `SGI_DB_USER` e `SGI_DB_PASSWORD`.
-   - O arquivo `.env` não deve ser versionado; a aplicação não mantém credenciais no código.
+```bash
+php bin/sgi.php migrate
+```
 
-4. **Acessar a Aplicação:**
-   - Em Apache, configure `SGI/public` como **DocumentRoot**. O front controller
-     mantém as URLs `/api/...` e `/views/...` sem publicar `config/`, `src/`,
-     `tests/`, `vendor/` ou `storage/`.
-   - Abra o navegador e acesse: [http://localhost/SGI/](http://localhost/SGI/)
-   - Para acesso em outros computadores ou celulares na mesma rede Wi-Fi, utilize o IP da sua máquina (ex.: `http://10.141.117.2/SGI/`).
+As migrações não criam contas com senhas de demonstração. Para cadastrar o primeiro administrador, defina temporariamente `SGI_ADMIN_LOGIN`, `SGI_ADMIN_NAME` e `SGI_ADMIN_PASSWORD` no ambiente (senha de pelo menos 12 caracteres) e execute `php bin/sgi.php admin:create`. Remova essas variáveis depois. Esse comando recusa alterar uma instalação que já possui administrador.
+
+Para uma instalação existente, siga [atualização e recuperação](docs/deployment.md). O antigo dump em `database/archive/` é uma referência histórica e não é usado para atualizar dados.
+
+Configure o servidor web com **DocumentRoot em `public/`**. Para desenvolvimento local:
+
+```bash
+php -S 127.0.0.1:8080 -t public public/index.php
+```
+
+Acesse `http://127.0.0.1:8080/`. Em publicação sob `/SGI`, configure `SGI_BASE_PATH=/SGI`. Arquivos de sessão, uploads e importações permanecem fora de `public/`; mantenha `.env` fora do Git.
 
 ---
 
-## 👥 Credenciais de Teste Padrão
+## 👥 Credenciais somente do banco de testes
+
+Estas contas são carregadas exclusivamente por `tests/run_all.php` em uma base isolada.
 
 | Perfil | Matrícula / Login | Senha | Nível | Finalidade |
 | :--- | :--- | :--- | :---: | :--- |
@@ -78,63 +77,56 @@
 3. Desconecte a rede ou abra o DevTools (**F12**) -> aba **Network** -> selecione **Offline**.
 4. Navegue entre as partidas, inicie o jogo, pontue gols, aplique penalidades e finalize as partidas.
 5. Note que as chaves avançam automaticamente mesmo sem internet.
-6. Reconecte a rede (Network -> **Online**): todas as alterações locais serão enviadas e integradas no banco MySQL instantaneamente sem perda de dados.
+6. Reconecte a rede (Network -> **Online**): todas as alterações locais serão enviadas e integradas no banco MySQL. Operações recusadas permanecem na fila para revisão.
 
 ---
 
 ## 📂 Estrutura de Diretórios
 
-```
+```text
 SGI/
-├── public/                # Único DocumentRoot (front controller e regras HTTP)
-├── api/                   # Endpoints REST e controladores PHP
-│   ├── includes/          # Regras de negócio (chaveamento, PDF, equipes, validações)
-│   ├── interclasse.php    # CRUD e gerenciamento de edições
-│   ├── jogos.php          # Gerenciamento e agendamento de partidas
-│   ├── lancar_resultado.php # Finalização de jogos e cálculo de pódios
-│   ├── login.php          # Autenticação e controle de sessões
-│   └── ...
-├── config/                # Bootstrap e conexão com o banco
-├── src/                   # Domínio, casos de uso e adaptadores PSR-4
-│   ├── Autenticacao/      # Login e repositórios de usuários/edições
-│   ├── Interclasse/       # Edições, turmas, equipes, jogos e resultados
-│   ├── Usuarios/           # Casos administrativos de usuários
-│   └── Shared/             # Configuração, sessão e armazenamento
-├── docs/                  # Scripts SQL (sgi.sql) e documentações
-├── storage/               # Arquivos de execução (uploads fora do Git)
-├── tools/                 # Lint, análise e servidor de testes
-└── views/                 # Interfaces do usuário
-    ├── src/componentes/   # Motores JavaScript offline (IndexedDB, SPA, Chaveamento)
-    ├── src/pages/         # Painéis administrativos, agenda, placar e ranking
-    └── src/pages/alunos/  # Portal exclusivo dos competidores/alunos
+├── public/                 # DocumentRoot; index.php e assets gerados
+├── bootstrap/              # Autoload e composição da aplicação
+├── config/                 # Ambiente, rotas e aliases de compatibilidade
+├── src/Modules/            # Acesso, Eventos, Participantes, Competições,
+│                           # Resultados, Disciplina e Sincronização
+├── src/Shared/             # HTTP, conexão, transações, migrações e storage
+├── resources/views/        # Templates privados e componentes
+├── resources/js/           # Páginas, código compartilhado e motores offline
+├── resources/css/          # Fontes das folhas de estilo
+├── resources/images/       # Imagens e ícones da aplicação
+├── api/                    # Endpoints ainda em migração (lista pública explícita)
+├── database/migrations/    # Alterações versionadas do banco
+├── database/seeders/       # Dados exclusivos de testes
+├── database/archive/       # Dump histórico, não usado pelo instalador
+├── storage/                # Dados gerados em execução, fora do Git
+├── tests/                  # Unitários, integração, JavaScript e navegador
+├── tools/                  # Preparação de assets e verificações
+└── docs/                   # Arquitetura, implantação e requisitos
 ```
 
 ---
 
 ## 🧪 Testes Automatizados e Auditoria
 
-O projeto conta com uma suite completa de testes automatizados modulares:
+Os testes devem usar banco e servidor isolados. O reset exige um nome contendo `test`/`testing` e confere se o servidor HTTP aponta para a mesma base antes de alterar dados.
 
 ```bash
-# Testes unitários, lint, estilo e análise estática:
-composer test
-composer lint
-composer analyse
-composer cs:check
-
-# O CI também executa a suíte HTTP em MySQL isolado a cada push/PR.
-
-# Testes HTTP completos (118 asserções) em banco isolado:
-# terminal 1
-powershell -ExecutionPolicy Bypass -File tools/start-test-server.ps1
-# terminal 2
-$env:SGI_TEST_BASE_URL = 'http://127.0.0.1:8099'
-$env:SGI_TEST_DB_NAME = 'sgi_test'
-php tests/run_all.php
-
-# Inicializar/resetar dados de demonstração (Edição ativa, turmas, equipes e alunos):
-php tests/seed_interclasse_demo.php
+composer verify
+npm run check
+npm test
 ```
+
+Para os testes HTTP e de navegador, siga [o guia de testes](docs/testing.md). O fluxo completo executa:
+
+```bash
+php tests/run_all.php
+npm --prefix tests/browser test
+```
+
+Há testes de autenticação, CSRF, permissões, importação PDF, inscrições, agendamento, ranking, migrações, concorrência, rollback e torneios online/offline. As comparações de imagem usam referências aprovadas no Windows. O CI foi configurado para PHP 8.2/8.4, MySQL/MariaDB e Chromium; a execução remota depende do envio destas alterações ao repositório.
+
+Detalhes das camadas e da compatibilidade estão em [arquitetura](docs/architecture.md).
 
 ---
 

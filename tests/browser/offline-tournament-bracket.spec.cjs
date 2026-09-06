@@ -1,4 +1,4 @@
-const { test, expect } = require('@playwright/test');
+const { test, expect } = require('./fixtures.cjs');
 
 const BASE_URL = process.env.PLAYWRIGHT_BASE_URL || 'http://localhost/SGI';
 

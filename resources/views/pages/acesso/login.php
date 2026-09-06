@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="<?= \App\Shared\Http\Assets::url('vendor/bootstrap-login/css/bootstrap.min.css') ?>" rel="stylesheet">
+    <link rel="stylesheet" href="<?= \App\Shared\Http\Assets::url('vendor/bootstrap-icons-login/bootstrap-icons.css') ?>">
+    <link rel="stylesheet" href="./src/styles/style.css">
+    <link rel="stylesheet" href="./src/styles/style-utilities.css">
+    <title>SGI - Login</title>
+<script src="<?= \App\Shared\Http\Assets::url('js/shared/page-runtime.js') ?>"></script>
+</head>
+
+<body>
+    <!-- VERSÃO MOBILE CENTRALIZADA -->
+    <main class="d-md-none min-vh-100 d-flex flex-column justify-content-center align-items-center p-3 text-center">
+        <picture class="w-100 mb-3 text-center">
+            <img src="./public/images/banner-login.png" alt="Imagem dos desenvolvedores" class="img-fluid mb-2">
+            <img src="./public/images/borda-banner-login.png" alt="Borda do banner" class="img-fluid d-block mx-auto">
+        </picture>
+
+        <form id="form_mobile" class="w-100 my-auto sgi-inline-aa63dd82" >
+            <input type="text" class="form-control mb-3 ipt-matricula" placeholder="Matrícula (RM ou NIF)" required>
+            <input type="password" class="form-control mb-3 ipt-senha" placeholder="Senha" required>
+            <button type="submit" class="btn btn-danger w-100">Entrar</button>
+            <div id="msg_erro_mobile" class="text-danger mt-2"></div>
+        </form>
+
+        <picture class="mt-4 w-100 d-flex justify-content-center">
+            <img src="./public/images/logo-SGI-SESI.png" alt="Logo do sesi" class="img-fluid sgi-inline-823cf9b2" >
+        </picture>
+    </main>
+
+    <!-- VERSÃO DESKTOP CENTRALIZADA -->
+    <main class="d-none d-md-flex vh-100">
+        <picture class="w-75 vh-100 position-relative d-block shadow-lg">
+            <img src="./public/images/banner-login-desktop2.png" class="position-absolute top-0 start-0 w-100 h-100 object-fit-cover sgi-inline-5d2f5dfa" >
+            <img src="./public/images/borda-banner-login-desktop.png" class="position-absolute top-0 start-0 w-100 h-100 object-fit-cover sgi-inline-dd27d8b5" >
+        </picture>
+
+        <section class="w-50 h-100 d-flex flex-column justify-content-center align-items-center p-4">
+            <picture class="mb-4">
+                <img src="./public/images/logo-SGI-SESI.png" alt="Logo do sesi" class="img-fluid sgi-inline-5c041da1" >
+            </picture>
+
+            <form id="form_desktop" class="text-center d-flex flex-column align-items-center bg-light p-4 w-100 sgi-inline-b2bcbf7f" >
+                <h2 class="text-danger mb-4">Acesso ao sistema</h2>
+
+                <div class="position-relative mb-3 w-100">
+                    <i class="bi bi-person-circle position-absolute top-50 start-0 translate-middle-y ms-3 text-dark"></i>
+                    <input type="text" class="form-control ps-5 py-2 ipt-matricula sgi-inline-f70b441c" placeholder="Matrícula (RA/NIF)"  required>
+                </div>
+
+                <div class="position-relative mb-3 w-100">
+                    <i class="bi bi-lock position-absolute top-50 start-0 translate-middle-y ms-3 text-dark"></i>
+                    <input type="password" class="form-control ps-5 py-2 ipt-senha sgi-inline-f70b441c" placeholder="Senha"  required>
+                </div>
+
+                <button type="submit" class="btn btn-danger w-100 mt-2">Entrar</button>
+                <div id="msg_erro_desktop" class="text-danger mt-2"></div>
+            </form>
+        </section>
+    </main>
+
+    <script type="application/json" data-sgi-config="acesso/login"><?= json_encode([], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_THROW_ON_ERROR) ?></script>
+<script data-sgi-page src="<?= \App\Shared\Http\Assets::url('js/pages/acesso/login.js') ?>"></script>
+</body>
+
+</html>

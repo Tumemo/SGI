@@ -21,7 +21,11 @@ require_once __DIR__ . '/Integration/HistoricoTurmaAndClassificacaoTest.php';
 require_once __DIR__ . '/Integration/FotoPerfilAndUsuariosTest.php';
 require_once __DIR__ . '/Integration/AlunosPortalTest.php';
 require_once __DIR__ . '/Integration/PublicBoundaryTest.php';
-require_once __DIR__ . '/Unit/MataMataEdgeCasesTest.php';
+require_once __DIR__ . '/Integration/RefactorContractsTest.php';
+require_once __DIR__ . '/Integration/MigrationsTest.php';
+require_once __DIR__ . '/Integration/InitialAdminTest.php';
+require_once __DIR__ . '/Integration/AtomicMutationTest.php';
+require_once __DIR__ . '/Integration/MataMataEdgeCasesTest.php';
 require_once __DIR__ . '/E2E/FullOfflineTournamentTest.php';
 
 use SGITests\Support\Assertions;
@@ -38,7 +42,7 @@ use SGITests\Integration\HistoricoTurmaAndClassificacaoTest;
 use SGITests\Integration\FotoPerfilAndUsuariosTest;
 use SGITests\Integration\AlunosPortalTest;
 use SGITests\Integration\PublicBoundaryTest;
-use SGITests\Unit\MataMataEdgeCasesTest;
+use SGITests\Integration\MataMataEdgeCasesTest;
 use SGITests\E2E\FullOfflineTournamentTest;
 
 $inicio = microtime(true);
@@ -91,6 +95,7 @@ try {
 
     // 7. Placar e Artilharia
     PlacarAndArtilhariaTest::run($idJogo1, $idModalidade, $equipesIds);
+    \SGITests\Integration\AtomicMutationTest::run($idJogo1);
 
     // 8. Ocorrências e Ranking
     OcorrenciasAndRankingTest::run($idEdicao, $idTurma);
@@ -112,6 +117,9 @@ try {
 
     // 14. Fronteira pública e proteção de arquivos internos
     PublicBoundaryTest::run();
+    \SGITests\Integration\RefactorContractsTest::run();
+    \SGITests\Integration\MigrationsTest::run();
+    \SGITests\Integration\InitialAdminTest::run();
 
 } catch (Throwable $e) {
     $aborted = true;
@@ -139,6 +147,6 @@ if ($stats['failed'] > 0 || $aborted) {
     exit(1);
 } else {
     echo "\n\033[32m\033[1m>>> TODOS OS TESTES FORAM APROVADOS COM 100% DE SUCESSO! <<<\033[0m\n";
-    echo "\033[32mAmbiente totalmente seguro e validado para a refatoração.\033[0m\n\n";
+    echo "\033[32mCenários desta suíte aprovados. Execute também os testes unitários e de navegador.\033[0m\n\n";
     exit(0);
 }

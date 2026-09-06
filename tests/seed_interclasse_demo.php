@@ -6,7 +6,15 @@ declare(strict_types=1);
  * Cria uma edição ativa completa com turmas, modalidades, equipes e importa alunos do PDF.
  */
 
-$baseUrl = rtrim((string) (getenv('SGI_TEST_BASE_URL') ?: getenv('SGI_APP_URL') ?: 'http://localhost/SGI'), '/');
+require_once __DIR__ . '/Support/TestClient.php';
+require_once __DIR__ . '/Support/TestDatabase.php';
+$baseUrl = rtrim((string) getenv('SGI_TEST_BASE_URL'), '/');
+$testDatabase = (string) getenv('SGI_TEST_DB_NAME');
+\SGITests\Support\TestDatabase::assertSafeDatabaseName($testDatabase);
+if ($baseUrl === '' || ((new \SGITests\Support\TestClient($baseUrl))->get('api/v1/health')['json']['test_environment']['database'] ?? null) !== $testDatabase) {
+    fwrite(STDERR, "Configure um servidor isolado e SGI_TEST_BASE_URL/SGI_TEST_DB_NAME antes da carga de demonstração.\n");
+    exit(2);
+}
 $cookieJar = sys_get_temp_dir() . '/sgi_init_admin.txt';
 @unlink($cookieJar);
 

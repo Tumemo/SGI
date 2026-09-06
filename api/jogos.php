@@ -1,17 +1,11 @@
 <?php
 
-declare(strict_types=1);
-
+declare (strict_types=1);
 require_once '../config/db.php';
-require_once 'filtros.php';
-require_once 'auth.php';
-
-use App\Modules\Interclasses\Application\JogoConflitoException;
-use App\Modules\Interclasses\Application\JogoService;
-use App\Modules\Interclasses\Infrastructure\MysqliJogoRepository;
-
+use App\Modules\Competicoes\Application\JogoConflitoException;
+use App\Modules\Competicoes\Application\JogoService;
+use App\Modules\Competicoes\Infrastructure\MysqliJogoRepository;
 header('Content-Type: application/json');
-
 /**
  * Auxiliar para garantir formato HH:MM:SS
  */
@@ -22,26 +16,13 @@ function sgi_formatar_hora($hora)
     }
     return strlen($hora) === 5 ? $hora . ':00' : $hora;
 }
-
 function sgi_validar_horario_turmas($conn, $id_jogo, $inicio, $termino)
 {
     if ($inicio === '00:00:00' || $termino === '00:00:00') {
         return null;
     }
-
-    $turnos = [
-        'manha'    => ['07:00', '12:00'],
-        'tarde'    => ['13:00', '18:00'],
-        'noite'    => ['19:00', '22:30'],
-        'integral' => ['07:00', '18:00'],
-    ];
-
-    $sql = "SELECT DISTINCT t.turno_turma
-            FROM partidas p
-            INNER JOIN equipes e ON e.id_equipe = p.equipes_id_equipe
-            INNER JOIN turmas t ON t.id_turma = e.turmas_id_turma
-            WHERE p.jogos_id_jogo = ?";
-
+    $turnos = ['manha' => ['07:00', '12:00'], 'tarde' => ['13:00', '18:00'], 'noite' => ['19:00', '22:30'], 'integral' => ['07:00', '18:00']];
+    $sql = "SELECT DISTINCT t.turno_turma\n            FROM partidas p\n            INNER JOIN equipes e ON e.id_equipe = p.equipes_id_equipe\n            INNER JOIN turmas t ON t.id_turma = e.turmas_id_turma\n            WHERE p.jogos_id_jogo = ?";
     $stmt = $conn->prepare($sql);
     $stmt->bind_param("i", $id_jogo);
     $stmt->execute();
@@ -51,17 +32,14 @@ function sgi_validar_horario_turmas($conn, $id_jogo, $inicio, $termino)
         $turnos_turmas[] = $row['turno_turma'];
     }
     $stmt->close();
-
     if (empty($turnos_turmas)) {
         return null;
     }
-
     $inicio_ts = strtotime($inicio);
     $termino_ts = strtotime($termino);
     if ($inicio_ts === false || $termino_ts === false) {
         return "Horário inválido.";
     }
-
     foreach ($turnos_turmas as $turno) {
         if (!isset($turnos[$turno])) {
             continue;
@@ -69,112 +47,54 @@ function sgi_validar_horario_turmas($conn, $id_jogo, $inicio, $termino)
         list($limite_inicio, $limite_fim) = $turnos[$turno];
         $limite_inicio_ts = strtotime($limite_inicio);
         $limite_fim_ts = strtotime($limite_fim);
-
         if ($inicio_ts < $limite_inicio_ts || $termino_ts > $limite_fim_ts) {
-            $mapa_nomes = [
-                'manha' => 'Manhã (07:00-12:00)',
-                'tarde' => 'Tarde (13:00-18:00)',
-                'noite' => 'Noite (19:00-22:30)',
-                'integral' => 'Integral (07:00-18:00)',
-            ];
+            $mapa_nomes = ['manha' => 'Manhã (07:00-12:00)', 'tarde' => 'Tarde (13:00-18:00)', 'noite' => 'Noite (19:00-22:30)', 'integral' => 'Integral (07:00-18:00)'];
             $nome_turno = $mapa_nomes[$turno] ?? $turno;
             return "O horário do jogo excede o turno <b>{$nome_turno}</b> de uma ou mais turmas participantes. Ajuste o horário ou contate a coordenação.";
         }
     }
     return null;
 }
-
 function sgi_validar_conflito_local_horario($conn, $data, $local_id, $inicio, $termino, $id_jogo_atual = null)
 {
     // Ignora checagem se o horário não foi preenchido corretamente
     if ($inicio === '00:00:00' || $termino === '00:00:00') {
         return null;
     }
-
     // Interseção correta: $inicio <= termino_jogo AND $termino >= inicio_jogo
-    $sql = "SELECT id_jogo, nome_jogo FROM jogos 
-            WHERE data_jogo = ? 
-              AND locais_id_local = ? 
-              AND status_jogo != 'Cancelado'
-              AND ? < termino_jogo 
-              AND ? > inicio_jogo";
-
+    $sql = "SELECT id_jogo, nome_jogo FROM jogos \n            WHERE data_jogo = ? \n              AND locais_id_local = ? \n              AND status_jogo != 'Cancelado'\n              AND ? < termino_jogo \n              AND ? > inicio_jogo";
     if ($id_jogo_atual) {
         $sql .= " AND id_jogo != ?";
     }
-
     $stmt = $conn->prepare($sql);
-  
     // Ordem exata dos parâmetros: data, local_id, inicio, termino
     if ($id_jogo_atual) {
         $stmt->bind_param("sissi", $data, $local_id, $inicio, $termino, $id_jogo_atual);
     } else {
         $stmt->bind_param("siss", $data, $local_id, $inicio, $termino);
     }
-
     $stmt->execute();
     $res = $stmt->get_result();
     $conflito = $res->fetch_assoc();
     $stmt->close();
-
     if ($conflito) {
         return "Já existe um jogo agendado neste mesmo local com conflito de horário ({$conflito['nome_jogo']}).";
     }
-
     return null;
 }
-
 $method = $_SERVER['REQUEST_METHOD'];
 $jogoService = new JogoService(new MysqliJogoRepository($conn));
-requerNivel([0, 1, 2, 3]);
-
+\App\Modules\Acesso\Presentation\Http\LegacyAccess::requerNivel([0, 1, 2, 3]);
 switch ($method) {
     case 'GET':
-        if (isset($_GET['id_jogo']) && (int)$_GET['id_jogo'] < 0) {
+        if (isset($_GET['id_jogo']) && (int) $_GET['id_jogo'] < 0) {
             echo json_encode([]);
             break;
         }
-        $filtro = aplicarFiltrosJogos();
-
-        $sql = "SELECT 
-                    jogos.id_jogo, 
-                    jogos.nome_jogo, 
-                    jogos.data_jogo, 
-                    jogos.inicio_jogo, 
-                    jogos.termino_jogo, 
-                    jogos.status_jogo,
-                    jogos.tempo_restante_jogo,
-                    jogos.duracao_jogo,
-                    jogos.tempo_extra_jogo,
-                    jogos.data_inicio_real,
-                    jogos.modalidades_id_modalidade,
-                    jogos.locais_id_local,
-                    modalidades.nome_modalidade,
-                    modalidades.interclasses_id_interclasse AS id_interclasse,
-                    modalidades.tipos_modalidades_id_tipo_modalidade,
-                    locais.nome_local,
-                    categorias.nome_categoria,
-                    GROUP_CONCAT(DISTINCT COALESCE(e.nome_equipe, t.nome_turma) ORDER BY p.id_partida SEPARATOR ' vs ') AS equipes_nomes,
-                    art_top.nome_usuario AS artilheiro_nome
-                FROM jogos 
-                INNER JOIN modalidades ON modalidades.id_modalidade = jogos.modalidades_id_modalidade 
-                INNER JOIN locais ON locais.id_local = jogos.locais_id_local
-                INNER JOIN categorias ON categorias.id_categoria = modalidades.categorias_id_categoria
-                LEFT JOIN partidas p ON p.jogos_id_jogo = jogos.id_jogo
-                LEFT JOIN equipes e ON e.id_equipe = p.equipes_id_equipe
-                LEFT JOIN turmas t ON t.id_turma = e.turmas_id_turma
-                LEFT JOIN (
-                    SELECT a.jogos_id_jogo, u.nome_usuario,
-                           ROW_NUMBER() OVER (PARTITION BY a.jogos_id_jogo ORDER BY COUNT(*) DESC, u.nome_usuario ASC) AS rn
-                    FROM artilheiros a
-                    INNER JOIN usuarios u ON u.id_usuario = a.usuarios_id_usuario
-                    GROUP BY a.jogos_id_jogo, a.usuarios_id_usuario, u.nome_usuario
-                ) art_top ON art_top.jogos_id_jogo = jogos.id_jogo AND art_top.rn = 1
-                WHERE 1=1" . $filtro['sql'];
-
+        $filtro = \App\Shared\Database\SqlFilters::aplicarFiltrosJogos($_GET);
+        $sql = "SELECT \n                    jogos.id_jogo, \n                    jogos.nome_jogo, \n                    jogos.data_jogo, \n                    jogos.inicio_jogo, \n                    jogos.termino_jogo, \n                    jogos.status_jogo,\n                    jogos.tempo_restante_jogo,\n                    jogos.duracao_jogo,\n                    jogos.tempo_extra_jogo,\n                    jogos.data_inicio_real,\n                    jogos.modalidades_id_modalidade,\n                    jogos.locais_id_local,\n                    modalidades.nome_modalidade,\n                    modalidades.interclasses_id_interclasse AS id_interclasse,\n                    modalidades.tipos_modalidades_id_tipo_modalidade,\n                    locais.nome_local,\n                    categorias.nome_categoria,\n                    GROUP_CONCAT(DISTINCT COALESCE(e.nome_equipe, t.nome_turma) ORDER BY p.id_partida SEPARATOR ' vs ') AS equipes_nomes,\n                    art_top.nome_usuario AS artilheiro_nome\n                FROM jogos \n                INNER JOIN modalidades ON modalidades.id_modalidade = jogos.modalidades_id_modalidade \n                INNER JOIN locais ON locais.id_local = jogos.locais_id_local\n                INNER JOIN categorias ON categorias.id_categoria = modalidades.categorias_id_categoria\n                LEFT JOIN partidas p ON p.jogos_id_jogo = jogos.id_jogo\n                LEFT JOIN equipes e ON e.id_equipe = p.equipes_id_equipe\n                LEFT JOIN turmas t ON t.id_turma = e.turmas_id_turma\n                LEFT JOIN (\n                    SELECT a.jogos_id_jogo, u.nome_usuario,\n                           ROW_NUMBER() OVER (PARTITION BY a.jogos_id_jogo ORDER BY COUNT(*) DESC, u.nome_usuario ASC) AS rn\n                    FROM artilheiros a\n                    INNER JOIN usuarios u ON u.id_usuario = a.usuarios_id_usuario\n                    GROUP BY a.jogos_id_jogo, a.usuarios_id_usuario, u.nome_usuario\n                ) art_top ON art_top.jogos_id_jogo = jogos.id_jogo AND art_top.rn = 1\n                WHERE 1=1" . $filtro['sql'];
         $sql .= " GROUP BY jogos.id_jogo";
         $sql .= " ORDER BY jogos.data_jogo ASC, jogos.inicio_jogo ASC";
-
         $stmt = $conn->prepare($sql);
         if (!$stmt) {
             echo json_encode(["success" => false, "message" => "Erro ao preparar consulta: " . $conn->error]);
@@ -183,7 +103,6 @@ switch ($method) {
         if (!empty($filtro['params'])) {
             $stmt->bind_param($filtro['types'], ...$filtro['params']);
         }
-
         if (!$stmt->execute()) {
             echo json_encode(["success" => false, "message" => "Erro ao executar consulta: " . $stmt->error]);
             break;
@@ -193,9 +112,7 @@ switch ($method) {
             echo json_encode(["success" => false, "message" => "Erro ao obter resultados."]);
             break;
         }
-
         $jogos = $res->fetch_all(MYSQLI_ASSOC);
-
         foreach ($jogos as &$jogo) {
             if ($jogo['status_jogo'] === 'Iniciado' && $jogo['data_inicio_real'] && $jogo['duracao_jogo']) {
                 $inicioTs = strtotime($jogo['data_inicio_real']);
@@ -208,12 +125,10 @@ switch ($method) {
             }
         }
         unset($jogo);
-
         echo json_encode($jogos, JSON_UNESCAPED_UNICODE);
         break;
-
     case 'POST':
-        requerEscrita();
+        \App\Modules\Acesso\Presentation\Http\LegacyAccess::requerEscrita();
         $data = json_decode(file_get_contents('php://input'), true);
         if (!is_array($data)) {
             $data = [];
@@ -221,11 +136,7 @@ switch ($method) {
         try {
             $id = $jogoService->agendar($data);
             http_response_code(201);
-            echo json_encode([
-                'success' => true,
-                'message' => 'Jogo cadastrado com sucesso!',
-                'id' => $id,
-            ], JSON_UNESCAPED_UNICODE);
+            echo json_encode(['success' => true, 'message' => 'Jogo cadastrado com sucesso!', 'id' => $id], JSON_UNESCAPED_UNICODE);
         } catch (JogoConflitoException $exception) {
             http_response_code(422);
             echo json_encode(['success' => false, 'message' => $exception->getMessage()], JSON_UNESCAPED_UNICODE);
@@ -238,53 +149,43 @@ switch ($method) {
             echo json_encode(['success' => false, 'message' => 'Não foi possível criar jogo.'], JSON_UNESCAPED_UNICODE);
         }
         break;
-
     case 'PUT':
-        requerOperacaoJogo();
-        garantirInterclasseAtivo($conn);
-
-        $nivel = (int)$_SESSION['nivel'];
+        \App\Modules\Acesso\Presentation\Http\LegacyAccess::requerOperacaoJogo();
+        \App\Modules\Acesso\Presentation\Http\LegacyAccess::garantirInterclasseAtivo($conn);
+        $nivel = (int) $_SESSION['nivel'];
         $data = json_decode(file_get_contents("php://input"));
-
         if (!isset($data->id_jogo)) {
             http_response_code(400);
             echo json_encode(["success" => false, "message" => "O ID do jogo é obrigatório."]);
             break;
         }
-
-        $id_jogo_val = (int)$data->id_jogo;
+        $id_jogo_val = (int) $data->id_jogo;
         if ($id_jogo_val < 0) {
             echo json_encode(["success" => true, "offline" => true, "message" => "Jogo temporário offline registrado."]);
             break;
         }
-
         if ($nivel === 2 && (isset($data->data_jogo) || isset($data->locais_id_local) || isset($data->modalidades_id_modalidade))) {
             http_response_code(403);
             echo json_encode(["success" => false, "message" => "Mesários só podem alterar o status ou placar do jogo."]);
             break;
         }
-
         // Buscar estado atual do jogo
         $ck = $conn->prepare("SELECT data_jogo, inicio_jogo, termino_jogo, locais_id_local, duracao_jogo, tempo_extra_jogo, data_inicio_real FROM jogos WHERE id_jogo = ?");
         $ck->bind_param("i", $id_jogo_val);
         $ck->execute();
         $cur = $ck->get_result()->fetch_assoc();
         $ck->close();
-
         if (!$cur) {
             echo json_encode(["success" => true, "offline" => true, "message" => "Jogo temporário registrado localmente."]);
             break;
         }
-
         // Normalização dos valores enviados ou fallback para o valor do banco
-        $data_val    = $data->data_jogo ?? $cur['data_jogo'];
-        $inicio_raw  = $data->inicio_jogo ?? $cur['inicio_jogo'];
+        $data_val = $data->data_jogo ?? $cur['data_jogo'];
+        $inicio_raw = $data->inicio_jogo ?? $cur['inicio_jogo'];
         $termino_raw = $data->termino_jogo ?? $data->terminno_jogo ?? $cur['termino_jogo'];
-        
-        $inicio_val  = sgi_formatar_hora($inicio_raw);
+        $inicio_val = sgi_formatar_hora($inicio_raw);
         $termino_val = sgi_formatar_hora($termino_raw);
-        $local_val   = $data->locais_id_local ?? $cur['locais_id_local'];
-
+        $local_val = $data->locais_id_local ?? $cur['locais_id_local'];
         // 1. Validação de conflito de Local e Horário
         if (isset($data->data_jogo) || isset($data->inicio_jogo) || isset($data->termino_jogo) || isset($data->terminno_jogo) || isset($data->locais_id_local)) {
             $erro_conflito = sgi_validar_conflito_local_horario($conn, $data_val, $local_val, $inicio_val, $termino_val, $id_jogo_val);
@@ -294,7 +195,6 @@ switch ($method) {
                 break;
             }
         }
-
         // 2. Validação do horário do turno das turmas
         $time_changed = $inicio_val !== $cur['inicio_jogo'] || $termino_val !== $cur['termino_jogo'];
         if ($time_changed) {
@@ -305,18 +205,15 @@ switch ($method) {
                 break;
             }
         }
-
         // 3. Validação de data passada
         if (isset($data->data_jogo) && $data->data_jogo < date('Y-m-d')) {
             http_response_code(422);
             echo json_encode(["success" => false, "message" => "Não é permitido agendar um jogo para uma data passada."]);
             break;
         }
-
         $campos = [];
         $params = [];
         $types = "";
-
         if (isset($data->nome_jogo)) {
             $campos[] = "nome_jogo = ?";
             $params[] = $data->nome_jogo;
@@ -367,9 +264,7 @@ switch ($method) {
             $params[] = $data->locais_id_local;
             $types .= "i";
         }
-
         $novoStatus = $data->status_jogo ?? null;
-
         if ($novoStatus === 'Iniciado' && !isset($data->data_inicio_real)) {
             $campos[] = "data_inicio_real = NOW()";
         } elseif ($novoStatus === 'Pausado' || $novoStatus === 'Concluido') {
@@ -387,19 +282,15 @@ switch ($method) {
             }
             $campos[] = "data_inicio_real = NULL";
         }
-
         if (empty($campos)) {
             echo json_encode(["success" => false, "message" => "Nenhum dado enviado para atualização."]);
             break;
         }
-
         $sql = "UPDATE jogos SET " . implode(", ", $campos) . " WHERE id_jogo = ?";
         $params[] = $id_jogo_val;
         $types .= "i";
-
         $stmt = $conn->prepare($sql);
         $stmt->bind_param($types, ...$params);
-
         if ($stmt->execute()) {
             echo json_encode(["success" => true, "message" => "Jogo atualizado com sucesso!"]);
         } else {
@@ -407,7 +298,6 @@ switch ($method) {
             echo json_encode(["success" => false, "message" => "Erro ao atualizar: " . $conn->error]);
         }
         break;
-
     default:
         http_response_code(405);
         echo json_encode(["message" => "Método não permitido"]);

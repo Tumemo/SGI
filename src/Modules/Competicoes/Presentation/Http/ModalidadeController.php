@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Modules\Competicoes\Presentation\Http;
 
-use App\Modules\Interclasses\Application\ModalidadeNaoEncontradaException;
-use App\Modules\Interclasses\Application\ModalidadeService;
+use App\Modules\Competicoes\Application\ModalidadeNaoEncontradaException;
+use App\Modules\Competicoes\Application\ModalidadeService;
 use App\Shared\Http\AccessGuard;
 use App\Shared\Http\Request;
 use App\Shared\Http\Response;
@@ -41,7 +41,7 @@ final class ModalidadeController
             return Response::json(['success' => false, 'message' => $exception->getMessage()], 400);
         } catch (ModalidadeNaoEncontradaException) {
             return Response::json(['success' => false, 'message' => 'Modalidade não encontrada.'], 404);
-        } catch (Throwable $exception) {
+        } catch (\Throwable $exception) {
             error_log('Falha em ModalidadeController: ' . $exception->getMessage());
 
             return Response::json(['success' => false, 'message' => 'Não foi possível processar a modalidade.'], 500);

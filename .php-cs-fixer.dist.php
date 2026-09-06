@@ -6,9 +6,7 @@ use PhpCsFixer\Config;
 use PhpCsFixer\Finder;
 
 $finder = Finder::create()
-    ->in([__DIR__ . '/src', __DIR__ . '/config', __DIR__ . '/tests/Unit'])
-    ->exclude(['browser/node_modules'])
-    ->notPath('MataMataEdgeCasesTest.php');
+    ->in([__DIR__ . '/src', __DIR__ . '/config', __DIR__ . '/bootstrap', __DIR__ . '/bin', __DIR__ . '/tests/Unit']);
 
 return (new Config())
     ->setRiskyAllowed(true)

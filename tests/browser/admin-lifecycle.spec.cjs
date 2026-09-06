@@ -1,4 +1,4 @@
-const { test, expect } = require('@playwright/test');
+const { test, expect } = require('./fixtures.cjs');
 
 async function entrarComoAdmin(page) {
     await page.goto('views/index.php', { waitUntil: 'domcontentloaded' });
@@ -15,6 +15,8 @@ test.describe.serial('Gestão Administrativa Completa (Admin Lifecycle)', () => 
     const nomeEdicaoTeste = `Interclasse E2E Playwright ${Date.now()}`;
 
     test.beforeAll(async ({ request }) => {
+        const login = await request.post('api/login.php', { data: { matricula: 'admin', senha: '123' } });
+        expect(login.ok()).toBeTruthy();
         const res = await request.get('api/interclasse.php?regulamento=true');
         if (res.ok()) {
             const data = await res.json();
@@ -25,9 +27,11 @@ test.describe.serial('Gestão Administrativa Completa (Admin Lifecycle)', () => 
 
     test.afterAll(async ({ request }) => {
         if (idEdicaoOriginal) {
-            await request.post(`api/interclasse.php?id=${idEdicaoOriginal}`, {
+            await request.post('api/login.php', { data: { matricula: 'admin', senha: '123' } });
+            const restored = await request.post(`api/interclasse.php?id=${idEdicaoOriginal}`, {
                 data: { status_interclasse: '1' }
             });
+            expect((await restored.json()).success).toBe(true);
         }
     });
 

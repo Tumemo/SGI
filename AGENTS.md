@@ -52,7 +52,7 @@ O **SGI (Sistema de Gestão de Interclasses)** é uma aplicação web monolític
 
 ## 4. Arquitetura do Modo Offline (Perfil Mesário)
 
-O subsistema offline está localizado em `views/src/componentes/` e opera em conjunto com `api/lancar_resultado.php` e `views/src/pages/jogos.php`:
+O subsistema offline está localizado em `resources/js/offline/` e opera em conjunto com `api/lancar_resultado.php` e a URL compatível `views/src/pages/jogos.php` (template em `resources/views/pages/competicoes/placar.php`):
 
 1. **`offline-core.js`:**
    - Intercepta chamadas de rede (`fetch`, `XMLHttpRequest`, `axios`).
@@ -81,7 +81,7 @@ O subsistema offline está localizado em `views/src/componentes/` e opera em con
 - **Compatibilidade MySQL / MariaDB:** Nunca adicione triggers que executem `UPDATE` na mesma tabela que disparou o evento (evita Erro 1442).
 - **Unicidade de Matrículas:** Alunos utilizam a chave composta `uk_matricula_interclasse` (`matricula_usuario`, `interclasses_id_interclasse`), permitindo que a mesma matrícula participe em anos diferentes.
 - **Senhas:** Sempre utilize `password_hash($senha, PASSWORD_DEFAULT)` e `password_verify($senha, $hash)`.
-- **Rotas Relativas:** Mantenha os caminhos relativos consistentes com a profundidade da pasta (ex: `views/src/pages/alunos/` está a 4 níveis da raiz `/SGI/`).
+- **Rotas Relativas:** As URLs antigas permanecem em `config/routes/`. Templates físicos ficam em `resources/views`; use `SGI_ROOT` para includes e `Assets`/`Url` para novos links.
 
 ---
 
@@ -90,9 +90,18 @@ O subsistema offline está localizado em `views/src/componentes/` e opera em con
 Antes e após qualquer refatoração, execute a suite completa de testes automatizados:
 
 ```bash
-# Executar todas as 13 suites de testes automatizados (87 asserções):
+# Executar a suíte HTTP em servidor e banco isolados (docs/testing.md):
 php tests/run_all.php
 
-# Inicializar ou resetar a base com dados de demonstração:
+# Dados de demonstração apenas no mesmo ambiente de teste:
 php tests/seed_interclasse_demo.php
 ```
+
+## 7. Estrutura após a refatoração
+
+- A aplicação inicia em `bootstrap/app.php`; `public/index.php` contém somente a entrada HTTP e o tratamento final de falhas.
+- Os módulos são Acesso, Eventos, Participantes, Competicoes, Resultados, Disciplina e Sincronizacao. Não recrie o módulo genérico Interclasses.
+- Edite JavaScript, CSS e imagens em `resources/`; execute `npm run build` para preparar `public/assets/`.
+- Execute também `composer verify`, `npm run check`, `npm test` e `npm --prefix tests/browser test`. O guia completo está em `docs/testing.md`.
+- Migrações aplicadas não devem ser reescritas. Adicione uma nova em `database/migrations/` e teste atualização e repetição.
+- Preserve aliases, registros antigos de cache e identificadores das mutações enquanto houver clientes offline.

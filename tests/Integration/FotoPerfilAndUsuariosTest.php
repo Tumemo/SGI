@@ -20,7 +20,7 @@ class FotoPerfilAndUsuariosTest
         $resAuth = $admin->get('api/auth.php');
         Assertions::assertStatus("Consulta de sessão autenticada (HTTP 200)", $resAuth, 200);
         $user = $resAuth['json']['usuario'] ?? [];
-        $idUser = (int) ($user['id'] ?? 1);
+        $idUser = (int) ($user['id'] ?? 0);
         Assertions::assert("Identificação de usuário autenticado", $idUser > 0);
 
         // 12.2 Testar upload de foto de perfil
@@ -41,7 +41,9 @@ class FotoPerfilAndUsuariosTest
 
         // 12.4 Remover foto de perfil
         $resDelete = $admin->deleteJson('api/foto.php');
-        Assertions::assert("Exclusão de foto de perfil", in_array($resDelete['code'], [200, 204], true));
+        Assertions::assertJsonSuccess("Exclusão de foto de perfil retorna confirmação válida", $resDelete);
+        $after = $admin->get("api/foto.php?user_id=$idUser");
+        Assertions::assert('Foto removida não permanece referenciada no perfil', ($after['json']['foto_usuario'] ?? null) === '');
 
         @unlink($tmpImg);
     }

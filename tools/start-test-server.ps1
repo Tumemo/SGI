@@ -28,6 +28,7 @@ $env:SGI_APP_ENV = 'test'
 $env:SGI_UPLOAD_DIR = $uploads
 $env:SGI_REGULAMENTOS_DIR = $regulamentos
 $env:SGI_FOTOS_DIR = $fotos
+$env:SGI_IMPORT_DIR = Join-Path $runtime 'imports'
 $env:SGI_TEST_BASE_URL = "http://127.0.0.1:$Port"
 
 Write-Host "Servidor SGI de testes em $($env:SGI_TEST_BASE_URL) usando o banco '$Database'."

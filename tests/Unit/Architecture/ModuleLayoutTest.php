@@ -14,10 +14,12 @@ final class ModuleLayoutTest extends TestCase
 
         foreach ([
             'Acesso' => ['Application', 'Domain', 'Infrastructure'],
-            'Interclasses' => ['Application', 'Domain', 'Infrastructure'],
-            'Competicoes' => ['Presentation'],
-            'Eventos' => ['Presentation'],
-            'Resultados' => ['Presentation'],
+            'Participantes' => ['Application', 'Domain', 'Infrastructure'],
+            'Disciplina' => ['Application', 'Domain', 'Infrastructure'],
+            'Competicoes' => ['Application', 'Domain', 'Infrastructure', 'Presentation'],
+            'Eventos' => ['Application', 'Domain', 'Infrastructure', 'Presentation'],
+            'Resultados' => ['Application', 'Domain', 'Infrastructure', 'Presentation'],
+            'Sincronizacao' => ['Domain', 'Infrastructure', 'Presentation'],
         ] as $module => $layers) {
             foreach ($layers as $layer) {
                 self::assertDirectoryExists($root . DIRECTORY_SEPARATOR . 'src' . DIRECTORY_SEPARATOR . 'Modules' . DIRECTORY_SEPARATOR . $module . DIRECTORY_SEPARATOR . $layer);

@@ -75,6 +75,23 @@ final class Request
         return $this->path;
     }
 
+    public function withPath(string $path): self
+    {
+        return new self($this->method, $path, $this->query, $this->post, $this->files, $this->headers, $this->server, $this->rawBody);
+    }
+
+    /** @return array<string, mixed> */
+    public function allQuery(): array
+    {
+        return $this->query;
+    }
+
+    /** @return array<string, mixed> */
+    public function allFiles(): array
+    {
+        return $this->files;
+    }
+
     public function query(string $key, mixed $default = null): mixed
     {
         return $this->query[$key] ?? $default;
@@ -94,6 +111,11 @@ final class Request
     public function allInput(): array
     {
         return $this->body();
+    }
+
+    public function rawBody(): string
+    {
+        return $this->rawBody ?? '';
     }
 
     public function header(string $name, ?string $default = null): ?string

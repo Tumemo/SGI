@@ -7,7 +7,10 @@ $directories = [
     $root . DIRECTORY_SEPARATOR . 'src',
     $root . DIRECTORY_SEPARATOR . 'config',
     $root . DIRECTORY_SEPARATOR . 'api',
-    $root . DIRECTORY_SEPARATOR . 'views',
+    $root . DIRECTORY_SEPARATOR . 'resources',
+    $root . DIRECTORY_SEPARATOR . 'bootstrap',
+    $root . DIRECTORY_SEPARATOR . 'bin',
+    $root . DIRECTORY_SEPARATOR . 'tests',
     $root . DIRECTORY_SEPARATOR . 'public',
     $root . DIRECTORY_SEPARATOR . 'index.php',
 ];
@@ -16,7 +19,7 @@ $iterator = new RecursiveIteratorIterator(
     new RecursiveCallbackFilterIterator(
         new RecursiveDirectoryIterator($root, FilesystemIterator::SKIP_DOTS),
         static function (SplFileInfo $fileInfo): bool {
-            return $fileInfo->getFilename() !== 'vendor';
+            return !in_array($fileInfo->getFilename(), ['vendor', 'node_modules', 'test-results', '.git'], true);
         }
     )
 );
@@ -41,7 +44,7 @@ foreach ($iterator as $file) {
         continue;
     }
 
-    passthru(PHP_BINARY . ' -l ' . escapeshellarg($path), $exitCode);
+    passthru(escapeshellarg(PHP_BINARY) . ' -l ' . escapeshellarg($path), $exitCode);
     $failed = $failed || $exitCode !== 0;
 }
 

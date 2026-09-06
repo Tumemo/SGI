@@ -7,130 +7,127 @@ on:
 jobs:
   quality:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        php: ['8.2', '8.4']
     steps:
       - uses: actions/checkout@v4
-
-      - name: Configurar PHP
-        uses: shivammathur/setup-php@v2
+      - uses: shivammathur/setup-php@v2
         with:
-          php-version: '8.2'
-          extensions: mbstring, dom, curl, mysqli, pdo_mysql
+          php-version: ${{ matrix.php }}
+          extensions: mbstring, dom, curl, mysqli, fileinfo
           coverage: none
-
-      - name: Instalar dependências
-        run: composer install --no-interaction --prefer-dist --no-progress
-
-      - name: Validar manifesto
-        run: composer validate --no-check-publish
-
-      - name: Testes unitários
-        run: composer test
-
-      - name: Lint PHP
-        run: composer lint
-
-      - name: PHPStan
-        run: composer analyse
-
-      - name: Verificar estilo PHP
-        run: composer cs:check
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: composer install --no-interaction --prefer-dist --no-progress
+      - run: composer validate --no-check-publish
+      - run: composer verify
+      - run: npm ci --ignore-scripts
+      - run: npm run build
+      - run: npm run check
+      - run: npm test
 
   integration:
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        database: ['mysql:8.4', 'mariadb:10.11']
     services:
-      mysql:
-        image: mysql:8.0
+      database:
+        image: ${{ matrix.database }}
         env:
           MYSQL_ROOT_PASSWORD: root
           MYSQL_DATABASE: sgi_test
-        ports:
-          - 3306:3306
+        ports: ['3306:3306']
         options: >-
           --health-cmd="mysqladmin ping -h 127.0.0.1 -uroot -proot"
-          --health-interval=5s
-          --health-timeout=5s
-          --health-retries=20
+          --health-interval=5s --health-timeout=5s --health-retries=20
+    env:
+      SGI_DB_HOST: 127.0.0.1
+      SGI_DB_PORT: 3306
+      SGI_DB_NAME: sgi_test
+      SGI_DB_USER: root
+      SGI_DB_PASSWORD: root
+      SGI_APP_ENV: test
+      SGI_TEST_DB_NAME: sgi_test
+      SGI_TEST_BASE_URL: http://127.0.0.1:8099
+      SGI_BASE_URL: http://127.0.0.1:8099/
+      SGI_UPLOAD_DIR: ${{ github.workspace }}/test-results/uploads
+      SGI_REGULAMENTOS_DIR: ${{ github.workspace }}/test-results/uploads/regulamentos
+      SGI_FOTOS_DIR: ${{ github.workspace }}/test-results/uploads/fotos
     steps:
       - uses: actions/checkout@v4
-
-      - name: Configurar PHP
-        uses: shivammathur/setup-php@v2
+      - uses: shivammathur/setup-php@v2
         with:
-          php-version: '8.2'
-          extensions: mbstring, dom, curl, mysqli, pdo_mysql
+          php-version: '8.4'
+          extensions: mbstring, dom, curl, mysqli, fileinfo
           coverage: none
-
-      - name: Instalar dependências
-        run: composer install --no-interaction --prefer-dist --no-progress
-
-      - name: Instalar cliente MySQL
-        run: sudo apt-get update && sudo apt-get install -y mysql-client
-
-      - name: Iniciar servidor PHP isolado
-        env:
-          SGI_DB_HOST: 127.0.0.1
-          SGI_DB_PORT: 3306
-          SGI_DB_NAME: sgi_test
-          SGI_DB_USER: root
-          SGI_DB_PASSWORD: root
-          SGI_UPLOAD_DIR: ${{ github.workspace }}/test-results/uploads
-          SGI_REGULAMENTOS_DIR: ${{ github.workspace }}/test-results/uploads/regulamentos
-          SGI_FOTOS_DIR: ${{ github.workspace }}/test-results/uploads/fotos
-          SGI_APP_ENV: test
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            tests/browser/package-lock.json
+      - run: composer install --no-interaction --prefer-dist --no-progress
+      - run: npm ci --ignore-scripts && npm run build
+      - run: npm ci --prefix tests/browser
+      - run: npx --prefix tests/browser playwright install --with-deps chromium
+      - name: Servidor isolado
         run: |
-          mkdir -p "$SGI_UPLOAD_DIR" "$SGI_REGULAMENTOS_DIR" "$SGI_FOTOS_DIR"
-          nohup php -S 127.0.0.1:8099 -t public public/index.php > /tmp/sgi-test-server.log 2>&1 &
+          mkdir -p test-results
+          nohup php -S 127.0.0.1:8099 -t public public/index.php > test-results/server.log 2>&1 &
           for attempt in {1..20}; do
-            if curl --silent --fail http://127.0.0.1:8099/index.php > /dev/null; then
-              break
-            fi
+            if curl --silent --fail "$SGI_TEST_BASE_URL/api/v1/health" > /dev/null; then exit 0; fi
             sleep 1
           done
-
-      - name: Suíte HTTP e offline
-        env:
-          SGI_TEST_BASE_URL: http://127.0.0.1:8099
-          SGI_TEST_DB_NAME: sgi_test
-          SGI_MYSQL_BIN: mysql
-          SGI_DB_HOST: 127.0.0.1
-          SGI_DB_PORT: 3306
-          SGI_DB_NAME: sgi_test
-          SGI_DB_USER: root
-          SGI_DB_PASSWORD: root
-          SGI_UPLOAD_DIR: ${{ github.workspace }}/test-results/uploads
-          SGI_APP_ENV: test
-        run: php tests/run_all.php
-
-      - name: Configurar Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: npm
-          cache-dependency-path: tests/browser/package-lock.json
-
-      - name: Instalar dependências do navegador
-        run: npm ci --prefix tests/browser
-
-      - name: Instalar Chromium do Playwright
-        run: npx --prefix tests/browser playwright install --with-deps chromium
-
-      - name: Testes de navegador
-        env:
-          SGI_BASE_URL: http://127.0.0.1:8099/
-          SGI_E2E_RESET: '1'
-          SGI_PHP_PATH: php
-          SGI_TEST_BASE_URL: http://127.0.0.1:8099
-          SGI_TEST_DB_NAME: sgi_test
-          SGI_MYSQL_BIN: mysql
-          SGI_DB_HOST: 127.0.0.1
-          SGI_DB_PORT: 3306
-          SGI_DB_NAME: sgi_test
-          SGI_DB_USER: root
-          SGI_DB_PASSWORD: root
-          SGI_UPLOAD_DIR: ${{ github.workspace }}/test-results/uploads
-          SGI_APP_ENV: test
-        run: npm --prefix tests/browser test
-
-      - name: Log do servidor em caso de falha
+          exit 1
+      - run: composer test:integration
+      - name: Navegação, permissões e torneios online/offline
+        run: npm --prefix tests/browser test -- --grep-invert "contrato visual do acesso"
+      - uses: actions/upload-artifact@v4
         if: failure()
-        run: cat /tmp/sgi-test-server.log
+        with:
+          name: integration-${{ strategy.job-index }}
+          path: |
+            test-results/*.log
+            tests/browser/test-results/
+            tests/browser/playwright-report/
+
+  visual:
+    runs-on: windows-latest
+    env:
+      SGI_BASE_URL: http://127.0.0.1:8099/
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: mbstring, dom, curl, mysqli, fileinfo
+          coverage: none
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: composer install --no-interaction --prefer-dist --no-progress
+      - run: npm ci --ignore-scripts
+      - run: npm run build
+      - run: npm ci --prefix tests/browser
+      - run: npx --prefix tests/browser playwright install chromium
+      - name: Servidor para comparação visual
+        shell: pwsh
+        run: |
+          Start-Process php -ArgumentList '-S','127.0.0.1:8099','-t','public','public/index.php' -WindowStyle Hidden
+          for ($attempt = 0; $attempt -lt 20; $attempt++) {
+            try { Invoke-WebRequest 'http://127.0.0.1:8099/api/v1/health' | Out-Null; exit 0 } catch { Start-Sleep -Seconds 1 }
+          }
+          exit 1
+      - name: Comparar imagens aprovadas no Windows
+        run: npm --prefix tests/browser test -- visual-contract.spec.cjs
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: visual-differences
+          path: tests/browser/test-results/

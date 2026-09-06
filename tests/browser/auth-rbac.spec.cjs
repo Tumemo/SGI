@@ -1,4 +1,4 @@
-const { test, expect, request: playwrightRequest } = require('@playwright/test');
+const { test, expect, request: playwrightRequest } = require('./fixtures.cjs');
 
 async function jsonOrThrow(response, label) {
     if (!response.ok()) {

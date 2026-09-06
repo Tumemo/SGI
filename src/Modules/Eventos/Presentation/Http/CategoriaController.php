@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace App\Modules\Eventos\Presentation\Http;
 
-use App\Modules\Interclasses\Application\CategoriaInativaException;
-use App\Modules\Interclasses\Application\CategoriaNaoEncontradaException;
-use App\Modules\Interclasses\Application\CategoriaService;
+use App\Modules\Eventos\Application\CategoriaInativaException;
+use App\Modules\Eventos\Application\CategoriaNaoEncontradaException;
+use App\Modules\Eventos\Application\CategoriaService;
 use App\Shared\Http\AccessGuard;
 use App\Shared\Http\Request;
 use App\Shared\Http\Response;
@@ -47,7 +47,7 @@ final class CategoriaController
                 'success' => false,
                 'message' => 'Esta categoria está desativada e não pode ser alterada.',
             ], 403);
-        } catch (Throwable $exception) {
+        } catch (\Throwable $exception) {
             error_log('Falha em CategoriaController: ' . $exception->getMessage());
 
             return Response::json(['success' => false, 'message' => 'Não foi possível processar a categoria.'], 500);

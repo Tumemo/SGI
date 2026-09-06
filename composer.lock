@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "8565456fbd76647b5477ebe1b69a56cd",
+    "content-hash": "bb3eef19a9bc126f3379302282c9c6fe",
     "packages": [
         {
             "name": "smalot/pdfparser",
@@ -4568,7 +4568,10 @@
     "prefer-stable": false,
     "prefer-lowest": false,
     "platform": {
-        "php": ">=8.2"
+        "php": "^8.2",
+        "ext-mysqli": "*",
+        "ext-mbstring": "*",
+        "ext-fileinfo": "*"
     },
     "platform-dev": {},
     "platform-overrides": {

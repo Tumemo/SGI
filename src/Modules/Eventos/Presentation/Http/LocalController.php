@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace App\Modules\Eventos\Presentation\Http;
 
-use App\Modules\Interclasses\Application\LocalNaoEncontradoException;
-use App\Modules\Interclasses\Application\LocalService;
-use App\Modules\Interclasses\Application\LocalVinculadoException;
+use App\Modules\Eventos\Application\LocalNaoEncontradoException;
+use App\Modules\Eventos\Application\LocalService;
+use App\Modules\Eventos\Application\LocalVinculadoException;
 use App\Shared\Http\AccessGuard;
 use App\Shared\Http\Request;
 use App\Shared\Http\Response;
@@ -51,7 +51,7 @@ final class LocalController
                 'success' => false,
                 'message' => 'Não é possível excluir este local pois existem jogos vinculados a ele.',
             ], 409);
-        } catch (Throwable $exception) {
+        } catch (\Throwable $exception) {
             error_log('Falha em LocalController: ' . $exception->getMessage());
 
             return Response::json(['success' => false, 'message' => 'Não foi possível processar o local.'], 500);

@@ -73,7 +73,6 @@ class AuthAndRbacTest
             'api/ocorrencias.php',
             'api/ocorrencias_turmas.php',
             'api/partidas.php',
-            'api/pontuacaoInterclasse.php',
             'api/ranking.php',
             'api/tipoModalidade.php',
             'api/turmas.php',

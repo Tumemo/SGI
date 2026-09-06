@@ -37,6 +37,25 @@ class OcorrenciasAndRankingTest
         ]);
         Assertions::assert("Lançamento de ocorrência disciplinar na turma (-10 pontos)", ($resOcorrTurma['json']['success'] ?? false) === true);
 
+        $payload = [
+            'turmas_id_turma' => $idTurma,
+            'interclasses_id_interclasse' => $idEdicao,
+            'titulo_ocorrencia' => 'Contrato de sincronização',
+            'data_ocorrencia' => date('Y-m-d'),
+            'pontos_descontados' => 2,
+        ];
+        $headers = ['X-SGI-Mutation-Id' => 'occurrence-contract-' . bin2hex(random_bytes(8))];
+        $created = $admin->postJson('api/ocorrencias_turmas.php', $payload, $headers);
+        Assertions::assertStatus('Criação preserva HTTP 201', $created, 201);
+        $replayed = $admin->postJson('api/v1/ocorrencias-turmas', $payload, $headers);
+        Assertions::assertStatus('Reenvio pela rota nova preserva HTTP 201', $replayed, 201);
+        Assertions::assert('Reenvio entre rotas retorna a mesma ocorrência', $replayed['json'] === $created['json']);
+        $conflict = $admin->postJson('api/v1/ocorrencias-turmas', array_replace($payload, ['pontos_descontados' => 3]), $headers);
+        Assertions::assertStatus('Chave reutilizada com conteúdo diferente é rejeitada', $conflict, 409);
+        $oldList = $admin->get("api/ocorrencias_turmas.php?id_interclasse=$idEdicao&id_turma=$idTurma");
+        $newList = $admin->get("api/v1/ocorrencias-turmas?id_interclasse=$idEdicao&id_turma=$idTurma");
+        Assertions::assert('Consulta de ocorrências preserva dados entre rotas', $oldList['json'] === $newList['json']);
+
         // 7.3 Lançamento de arrecadação de alimentos em lote (40 itens)
         $resArrec = $admin->postJson('api/arrecadacao.php', [
             'id_interclasse' => $idEdicao,

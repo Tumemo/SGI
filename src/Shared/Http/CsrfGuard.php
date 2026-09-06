@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace App\Shared\Http;
 
-use App\Shared\Config\Env;
-
 /**
  * Proteção central para mutações autenticadas da API.
  *
@@ -34,7 +32,7 @@ final class CsrfGuard
     public static function protectCurrentApiMutation(): void
     {
         $method = strtoupper((string) ($_SERVER['REQUEST_METHOD'] ?? 'GET'));
-        if (in_array($method, ['GET', 'HEAD', 'OPTIONS'], true) || !self::isApiRequest() || self::isExemptRoute()) {
+        if (in_array($method, ['GET', 'HEAD', 'OPTIONS'], true) || self::isExemptRoute()) {
             return;
         }
 
@@ -51,27 +49,16 @@ final class CsrfGuard
         }
 
         $provided = trim((string) ($_SERVER['HTTP_X_SGI_CSRF'] ?? ''));
-        if ($provided === '' && Env::get('SGI_APP_ENV') === 'test') {
-            return;
-        }
-
         if ($provided === '' || !hash_equals(self::token(), $provided)) {
             self::reject('Token de segurança inválido ou ausente. Atualize a página e tente novamente.');
         }
-    }
-
-    private static function isApiRequest(): bool
-    {
-        $path = (string) (parse_url((string) ($_SERVER['REQUEST_URI'] ?? ''), PHP_URL_PATH) ?: '');
-
-        return str_contains('/' . ltrim($path, '/'), '/api/');
     }
 
     private static function isExemptRoute(): bool
     {
         $path = (string) (parse_url((string) ($_SERVER['REQUEST_URI'] ?? ''), PHP_URL_PATH) ?: '');
         $normalised = '/' . ltrim($path, '/');
-        if (str_ends_with($normalised, '/api/login.php')) {
+        if (str_ends_with($normalised, '/api/login.php') || str_ends_with($normalised, '/api/v1/login')) {
             return true;
         }
 

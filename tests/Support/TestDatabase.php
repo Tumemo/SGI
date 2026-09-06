@@ -4,98 +4,45 @@ declare(strict_types=1);
 
 namespace SGITests\Support;
 
+use App\Shared\Database\MigrationRunner;
+use App\Shared\Database\SqlScript;
+use mysqli;
 use RuntimeException;
 
 final class TestDatabase
 {
-    private function __construct()
-    {
-    }
-
     public static function resetFromSchema(string $databaseName): void
     {
+        require_once dirname(__DIR__, 2) . '/bootstrap/autoload.php';
         self::assertSafeDatabaseName($databaseName);
-
-        $schemaPath = dirname(__DIR__, 2) . '/docs/sgi.sql';
-        if (!is_file($schemaPath)) {
-            throw new RuntimeException('Schema de teste não encontrado: ' . $schemaPath);
+        $server = (new TestClient())->get('api/v1/health');
+        if (($server['json']['test_environment']['database'] ?? null) !== $databaseName) {
+            throw new RuntimeException('O servidor HTTP não confirmou o mesmo banco isolado de teste. Nenhum banco foi alterado.');
         }
-
-        $schema = file_get_contents($schemaPath);
-        if ($schema === false) {
-            throw new RuntimeException('Não foi possível ler o schema de teste.');
+        $connection = self::connect();
+        $connection->query('DROP DATABASE IF EXISTS `' . $databaseName . '`');
+        $connection->query('CREATE DATABASE `' . $databaseName . '` CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci');
+        $connection->select_db($databaseName);
+        $root = dirname(__DIR__, 2);
+        (new MigrationRunner($connection, $root . '/database/migrations'))->migrate();
+        foreach (SqlScript::statements((string) file_get_contents($root . '/database/seeders/test.sql')) as $sql) {
+            $connection->query($sql);
         }
-
-        // O dump legado usa um nome fixo. A substituição ocorre apenas na
-        // cópia em memória enviada ao cliente MySQL; o arquivo versionado não
-        // é alterado e o banco de desenvolvimento nunca é tocado.
-        $schema = preg_replace(
-            '/(`)(sgi)(`)/i',
-            '$1' . $databaseName . '$3',
-            $schema
-        );
-
-        if (!is_string($schema) || preg_match('/`sgi`/i', $schema) === 1) {
-            throw new RuntimeException('Não foi possível isolar o nome do banco no schema.');
-        }
-
-        $mysqlBin = getenv('SGI_MYSQL_BIN') ?: 'C:/xampp/mysql/bin/mysql.exe';
-        if (!is_file($mysqlBin)) {
-            $mysqlBin = 'mysql';
-        }
-
-        $user = getenv('SGI_DB_USER') ?: 'root';
-        $password = getenv('SGI_DB_PASSWORD');
-        $host = getenv('SGI_DB_HOST') ?: 'localhost';
-        $port = (int) (getenv('SGI_DB_PORT') ?: '3306');
-        $command = escapeshellarg($mysqlBin)
-            . ' --host=' . escapeshellarg($host)
-            . ' --port=' . $port
-            . ' --user=' . escapeshellarg($user);
-
-        if ($password !== false && $password !== '') {
-            $command .= ' --password=' . escapeshellarg($password);
-        }
-
-        $descriptorSpec = [
-            0 => ['pipe', 'r'],
-            1 => ['pipe', 'w'],
-            2 => ['pipe', 'w'],
-        ];
-        $process = proc_open($command, $descriptorSpec, $pipes);
-        if (!is_resource($process)) {
-            throw new RuntimeException('Não foi possível iniciar o cliente MySQL.');
-        }
-
-        fwrite($pipes[0], $schema);
-        fclose($pipes[0]);
-        $stdout = stream_get_contents($pipes[1]);
-        $stderr = stream_get_contents($pipes[2]);
-        fclose($pipes[1]);
-        fclose($pipes[2]);
-        $exitCode = proc_close($process);
-
-        if ($exitCode !== 0) {
-            throw new RuntimeException(sprintf(
-                "Falha ao recriar banco de teste (código %d): %s%s",
-                $exitCode,
-                trim((string) $stderr),
-                trim((string) $stdout) !== '' ? "\n" . trim((string) $stdout) : ''
-            ));
-        }
+        $connection->close();
     }
 
-    private static function assertSafeDatabaseName(string $databaseName): void
+    public static function connect(?string $database = null): mysqli
     {
-        if (!preg_match('/^[a-zA-Z0-9_]+$/', $databaseName)) {
-            throw new RuntimeException('Nome de banco de teste inválido.');
-        }
+        mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
+        $connection = new mysqli(getenv('SGI_DB_HOST') ?: '127.0.0.1', getenv('SGI_DB_USER') ?: 'root', getenv('SGI_DB_PASSWORD') ?: '', $database, (int) (getenv('SGI_DB_PORT') ?: 3306));
+        $connection->set_charset('utf8mb4');
+        return $connection;
+    }
 
-        if (!preg_match('/(^|_)(test|testing)(_|$)/i', $databaseName)) {
-            throw new RuntimeException(sprintf(
-                'Recusado reset de banco que não parece ser de teste: %s',
-                $databaseName
-            ));
+    public static function assertSafeDatabaseName(string $name): void
+    {
+        if (!preg_match('/^[a-zA-Z0-9_]+$/', $name) || !preg_match('/(^|_)(test|testing)(_|$)/i', $name)) {
+            throw new RuntimeException('Recusada operação destrutiva em banco que não é de teste: ' . $name);
         }
     }
 }

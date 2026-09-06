@@ -1,0 +1,27 @@
+services:
+  mysql:
+    image: mysql:8.4
+    profiles: [mysql]
+    environment:
+      MYSQL_ROOT_PASSWORD: sgi-test-only
+      MYSQL_DATABASE: sgi_test
+    ports: ["127.0.0.1:3307:3306"]
+    tmpfs: [/var/lib/mysql]
+    healthcheck:
+      test: [CMD, mysqladmin, ping, -h, localhost, -uroot, -psgi-test-only]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+  mariadb:
+    image: mariadb:10.11
+    profiles: [mariadb]
+    environment:
+      MARIADB_ROOT_PASSWORD: sgi-test-only
+      MARIADB_DATABASE: sgi_test
+    ports: ["127.0.0.1:3308:3306"]
+    tmpfs: [/var/lib/mysql]
+    healthcheck:
+      test: [CMD, healthcheck.sh, --connect, --innodb_initialized]
+      interval: 5s
+      timeout: 5s
+      retries: 20

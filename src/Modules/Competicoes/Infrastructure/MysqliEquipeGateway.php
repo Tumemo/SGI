@@ -1,0 +1,76 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Modules\Competicoes\Infrastructure;
+
+use mysqli;
+
+final class MysqliEquipeGateway
+{
+    public function __construct(private readonly mysqli $connection)
+    {
+    }
+
+    /** @param array<string, mixed> $filters
+     * @return array<mixed>
+     */
+    public function list(array $filters): array
+    {
+        if (!empty($filters['id_equipe']) && empty($filters['id_turma'])) {
+            $id_equipe = intval($filters['id_equipe']);
+            $sql = "SELECT u.id_usuario, u.nome_usuario, u.matricula_usuario\n                    FROM usuarios u\n                    INNER JOIN equipes_has_usuarios eu ON eu.usuarios_id_usuario = u.id_usuario\n                    WHERE eu.equipes_id_equipe = ? AND u.status_usuario = '1'";
+            $stmt = $this->connection->prepare($sql);
+            $stmt->bind_param('i', $id_equipe);
+            $stmt->execute();
+            $res = $stmt->get_result();
+            return $res->fetch_all(MYSQLI_ASSOC);
+        }
+        if (!empty($filters['id_modalidade']) && !empty($filters['id_turma'])) {
+            $id_modalidade_get = intval($filters['id_modalidade']);
+            $id_turma_get = intval($filters['id_turma']);
+            if ($id_modalidade_get > 0 && $id_turma_get > 0) {
+                \App\Modules\Competicoes\Infrastructure\MysqliEquipePadraoRepository::buscarOuCriarEquipePadrao($this->connection, $id_modalidade_get, $id_turma_get);
+            }
+        }
+        $filtro = \App\Shared\Database\SqlFilters::aplicarFiltrosEquipes($filters);
+        $sql = "SELECT\n                    equipes.id_equipe,\n                    equipes.nome_equipe,\n                    equipes.status_equipe,\n                    equipes.modalidades_id_modalidade,\n                    equipes.turmas_id_turma,\n                    modalidades.nome_modalidade,\n                    modalidades.max_inscrito_modalidade AS limite_maximo,\n                    turmas.nome_turma,\n                    interclasses.nome_interclasse,\n                    (SELECT COUNT(*) FROM equipes_has_usuarios eu WHERE eu.equipes_id_equipe = equipes.id_equipe) AS total_alunos,\n                    (SELECT COUNT(*) FROM equipes_has_usuarios eu2 WHERE eu2.equipes_id_equipe = equipes.id_equipe) AS qtd_membros\n                FROM equipes\n                INNER JOIN modalidades ON modalidades.id_modalidade = equipes.modalidades_id_modalidade\n                INNER JOIN turmas ON turmas.id_turma = equipes.turmas_id_turma\n                INNER JOIN interclasses ON interclasses.id_interclasse = turmas.interclasses_id_interclasse\n                WHERE 1=1" . $filtro['sql'] . "\n                ORDER BY equipes.id_equipe ASC";
+        $stmt = $this->connection->prepare($sql);
+        if (!$stmt) {
+            return ["success" => false, "message" => "Erro ao preparar consulta: " . $this->connection->error];
+        }
+        if (!empty($filtro['params'])) {
+            $stmt->bind_param($filtro['types'], ...$filtro['params']);
+        }
+        if (!$stmt->execute()) {
+            return ["success" => false, "message" => "Erro ao executar consulta: " . $stmt->error];
+        }
+        $res = $stmt->get_result();
+        if (!$res) {
+            return ["success" => false, "message" => "Erro ao obter resultados."];
+        }
+        $equipes = $res->fetch_all(MYSQLI_ASSOC);
+        // RF05/RF03: expõe total de inscritos, limite da modalidade e a flag excedeu_limite.
+        foreach ($equipes as &$equipe) {
+            $total = (int) ($equipe['total_alunos'] ?? 0);
+            $limite = (int) ($equipe['limite_maximo'] ?? 0);
+            $equipe['total_alunos'] = $total;
+            $equipe['limite_maximo'] = $limite;
+            $equipe['excedeu_limite'] = $limite > 0 && $total > $limite;
+        }
+        unset($equipe);
+        return $equipes;
+    }
+
+    /** @return array<string, mixed> */
+    public function redistribute(int $modality, int $class): array
+    {
+        return MysqliEquipePadraoRepository::redistribuirEquipe($this->connection, $modality, $class);
+    }
+
+    /** @return array<string, mixed> */
+    public function generate(int $edition): array
+    {
+        return MysqliEquipePadraoRepository::gerarEquipesPadraoInterclasse($this->connection, $edition);
+    }
+}

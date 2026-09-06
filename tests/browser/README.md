@@ -1,85 +1,14 @@
-# Fluxo visual do mesário offline
+# Testes do navegador
 
-O teste usa Playwright porque o cenário precisa alternar a rede do navegador,
-validar o IndexedDB e guardar screenshots das telas. Ele cobre login, preload,
-navegação SPA offline, início da partida, placar, artilharia, ocorrência,
-finalização local e sincronização automática ao reconectar.
+Consulte [o guia de execução](../../docs/testing.md) para preparar banco, servidor, Chromium e variáveis de ambiente.
 
-Há dois fluxos visuais:
+- `auth-rbac.spec.cjs`: autenticação, saída e permissões.
+- `admin-lifecycle.spec.cjs`: criação e configuração de uma edição.
+- `aluno-portal.spec.cjs`: termos, inscrições, agenda e perfil.
+- `frontend-regression.spec.cjs`: navegação, conteúdo e layout das telas de todos os perfis.
+- `mesario-offline.spec.cjs`: partida offline com gol, ocorrência e sincronização.
+- `tournament-offline.spec.cjs`: sete partidas online e sete sem rede, com confirmação do campeão.
+- `offline-tournament-bracket.spec.cjs`: projeções locais e árvore completa do torneio.
+- `visual-contract.spec.cjs`: comparação das imagens de login no Windows.
 
-- `mesario-offline.spec.cjs`: uma partida completa, incluindo artilharia e ocorrência.
-- `tournament-offline.spec.cjs`: quatro quartas, duas semifinais e a final
-  gerada pelo chaveamento; o cenário online valida a progressão completa e o
-  cenário offline joga todas as sete partidas sem rede, depois sincroniza em
-  uma única reconexão e valida o campeão no servidor. O teste também confere,
-  em cada partida positiva e nas fases negativas criadas localmente, título,
-  modalidade, local, data/horário, equipes e placar exibidos no placar offline.
-- `frontend-regression.spec.cjs`: mapa visual de todas as rotas de usuário do
-  frontend (login desktop/mobile, administrador, colaborador, mesário SPA e
-  portal do aluno), incluindo permissões, dados reais da edição ativa, layout
-  responsivo e captura de cada tela.
-
-## Instalação
-
-Na raiz do projeto:
-
-```powershell
-npm --prefix tests/browser install
-```
-
-O teste utiliza o Chrome instalado em `C:\Program Files\Google\Chrome\Application\chrome.exe`.
-Para indicar outro executável, defina `SGI_CHROME_PATH`.
-
-## Execução
-
-Com Apache/MySQL ativos e a base de desenvolvimento carregada:
-
-```powershell
-npm --prefix tests/browser test
-```
-
-Para executar somente o fluxo de torneio:
-
-```powershell
-npm --prefix tests/browser test -- tournament-offline.spec.cjs
-```
-
-Para validar diretamente o workspace (sem depender de uma cópia Apache),
-aponte a base do Playwright para o servidor PHP em execução:
-
-```powershell
-$env:SGI_BASE_URL = 'http://127.0.0.1:8099/'
-npm --prefix tests/browser test -- tournament-offline.spec.cjs
-```
-
-Para executar somente o mapa visual de regressão do frontend:
-
-```powershell
-npm --prefix tests/browser test -- frontend-regression.spec.cjs
-```
-
-Para recriar a base demo antes do teste (ação destrutiva somente para o ambiente
-de desenvolvimento):
-
-```powershell
-$env:SGI_E2E_RESET = '1'
-npm --prefix tests/browser test
-```
-
-Para acompanhar o navegador visivelmente:
-
-```powershell
-$env:SGI_HEADFUL = '1'
-npm --prefix tests/browser run test:headed
-```
-
-Screenshots em caso de falha, trace e relatório HTML ficam em
-`tests/browser/test-results` e `tests/browser/playwright-report`.
-
-A suíte PHP também aceita `SGI_TEST_BASE_URL` para usar o mesmo servidor do
-workspace (`C:/xampp/php/php.exe tests/run_all.php`), mantendo
-`http://127.0.0.1:8099` como padrão do servidor isolado.
-
-O mapa visual também salva as capturas aprovadas dentro da pasta de resultados
-de cada teste. Elas servem como linha de base para comparar as telas antes e
-depois da refatoração.
+As suítes compartilham uma base isolada e executam com um único worker. Não rode dois processos Playwright sobre a mesma base ou pasta de resultados. As preparações por API usam o token CSRF real da sessão.

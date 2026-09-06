@@ -45,6 +45,18 @@ class PlacarAndArtilhariaTest
         ]);
         Assertions::assertJsonSuccess("Lançamento de artilharia individual", $resArt);
 
+        $mutation = ['X-SGI-Mutation-Id' => 'regression-goal-' . bin2hex(random_bytes(8))];
+        $goal = ['usuarios_id_usuario' => 1, 'jogos_id_jogo' => $idJogo, 'num_gol' => 1];
+        $first = $mesario->postJson('api/artilheiro.php', $goal, $mutation);
+        $retry = $mesario->postJson('api/artilheiro.php', $goal, $mutation);
+        Assertions::assertJsonSuccess('Primeiro envio com identificador persistente', $first);
+        Assertions::assert('Reenvio devolve exatamente o mesmo registro', $first['json'] === $retry['json']);
+        $conflict = $mesario->postJson('api/artilheiro.php', array_replace($goal, ['num_gol' => 4]), $mutation);
+        Assertions::assertStatus('Identificador reutilizado com dados diferentes é rejeitado', $conflict, 409);
+        $otherActor = new TestClient();
+        $otherActor->login('admin', '123');
+        Assertions::assertStatus('Identificador não pode ser reutilizado por outro operador', $otherActor->postJson('api/artilheiro.php', $goal, $mutation), 409);
+
         // 6.4 Rejeição de finalização com placar 0x0
         $resZero = $mesario->postJson('api/lancar_resultado.php', [
             'id_jogo' => $idJogo,

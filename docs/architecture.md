@@ -8,49 +8,55 @@ sem transformar o monólito em um conjunto de dependências acidentais.
 ## Estrutura do projeto
 
 ```text
-public/index.php               front controller e fronteira HTTP
-config/bootstrap.php           inicialização única (autoload, ambiente e CSRF)
-config/routes.php              composição das rotas /api/v1
-api/                           adaptadores HTTP legados, sem regras de negócio
+public/index.php               entrada HTTP
+bootstrap/autoload.php         Composer, raiz do projeto e ambiente
+bootstrap/app.php              composição do Kernel
+config/routes.php              controladores e dependências das APIs versionadas
+config/routes/web.php          URLs anteriores para templates privados
+config/routes/compatibility.php aliases de API e endpoints ainda em migração
+config/assets.php              compatibilidade com URLs antigas de assets
 src/Modules/
-  Acesso/                      autenticação, sessão e usuários administrativos
-    Domain/                    contratos de acesso e usuários
-    Application/               casos de uso de login, senha e permissões
-    Infrastructure/            repositórios MySQLi
-  Interclasses/                núcleo do domínio do evento
-    Domain/                    contratos dos agregados e repositórios
-    Application/               casos de uso, validações e exceções
-    Infrastructure/            persistência e integração com motores legados
-  Competicoes/Presentation/    controladores HTTP de modalidades
-  Eventos/Presentation/        controladores HTTP de categorias e locais
-  Resultados/Presentation/     controladores HTTP de ranking e resultados
-src/Shared/                    HTTP, configuração, sessão e armazenamento
-views/                         páginas PHP e componentes JavaScript
-storage/                       arquivos gerados em execução (não versionados)
-tests/Unit/                    testes de contratos, casos de uso e arquitetura
-tests/Integration/             fluxos HTTP e persistência
-tests/browser/                 regressão visual e operação offline
+  Acesso/                      autenticação, perfil, fotos e usuários
+  Eventos/                     edições, categorias e locais
+  Participantes/               turmas, matrículas e importação de alunos
+  Competicoes/                 modalidades, equipes, jogos e chaveamento
+  Resultados/                  ranking, classificação e arrecadação
+  Disciplina/                  ocorrências individuais e de turma
+  Sincronizacao/               identidade, repetição e confirmação de mutações
+src/Shared/                    HTTP, configuração, banco e armazenamento
+resources/views/               templates privados e componentes
+resources/js/pages/            programas das telas, com estado isolado
+resources/js/shared/           cliente HTTP e ciclo de vida das páginas
+resources/js/offline/          IndexedDB, shell, fila e chaveamento local
+resources/css/                 estilos da aplicação
+resources/images/              imagens e ícones
+public/assets/                 saída reproduzível de npm run build
+api/                           endpoints procedurais ainda em migração
+storage/                       arquivos de execução, fora do Git
+bin/sgi.php                    migrações e configuração inicial por CLI
+database/migrations/           esquema versionado e histórico de execução
+tests/Unit/                    regras, contratos unitários e arquitetura
+tests/Integration/             HTTP, persistência, migrações e concorrência
+tests/javascript/              ciclo de vida de telas e modais
+tests/browser/                 navegação, comparação visual e operação offline
 ```
 
-`Interclasses` é o bounded context central do evento. Os módulos de
-apresentação expõem capacidades específicas sem duplicar regras ou SQL. O
-módulo `Acesso` permanece isolado do contexto esportivo e concentra tudo que
-envolve identidade, sessão e autorização.
+Cada módulo organiza contratos em `Domain`, casos de uso em `Application`, persistência em `Infrastructure` e controladores em `Presentation/Http`. Nem todo módulo precisa de todas as camadas. O antigo módulo genérico `Interclasses` foi distribuído conforme a responsabilidade de cada classe.
+
+Os serviços de domínio/aplicação não dependem de HTTP, sessão ou MySQLi; testes verificam essa fronteira. Os templates não contêm SQL nem programas JavaScript inline. Configurações de página são serializadas como JSON com escape de caracteres HTML.
 
 ## Fluxo HTTP
 
 1. O servidor aponta exclusivamente para `public/`.
-2. `public/index.php` carrega `config/bootstrap.php` uma única vez e rejeita
+2. `public/index.php` carrega `bootstrap/app.php`; o Kernel rejeita
    arquivos internos, traversal e caminhos fora da lista pública.
 3. URLs versionadas (`/api/v1/*`) passam por `MiddlewareStack`, tratamento
    uniforme de exceções e `Router`.
 4. Cada rota compõe explicitamente seu controlador, serviço e repositório em
    `config/routes.php`; não existe contêiner global ou descoberta implícita.
-5. As URLs legadas de `api/` continuam como adaptadores finos para as telas
-   existentes. Elas usam os mesmos serviços e repositórios dos módulos novos,
-   portanto a migração de uma tela pode ocorrer endpoint a endpoint.
+5. Os aliases encaminham URLs anteriores aos mesmos controladores versionados. Os endpoints restantes em `api/` são executados somente pela lista explícita de compatibilidade e pelo `LegacyEndpoint`; ainda contêm trechos de persistência que precisam de extração. Eles não devem ser usados como modelo para código novo.
 
-Controladores não executam SQL. Serviços recebem interfaces de domínio e são
+Os controladores novos não executam SQL. Serviços recebem interfaces de domínio e são
 testáveis sem banco. Repositórios concentram consultas, transações e detalhes
 do MySQL/MariaDB.
 
@@ -79,6 +85,18 @@ do MySQL/MariaDB.
    1442 em MySQL/MariaDB). Matrículas permanecem únicas por edição e senhas
    usam `password_hash`/`password_verify`.
 
+## Assets e ciclo de vida offline
+
+O build copia fontes e dependências fixadas no lockfile para `public/assets`, inclui licenças e gera um manifesto de checksums. URLs emitidas por `Assets` têm versão derivada do conteúdo. Os aliases de arquivos antigos continuam disponíveis.
+
+Cada programa de página roda em uma função própria. `page-runtime.js` registra inicialização e reativação, restaura as ações usadas pelo HTML e evita duplicar eventos. Ao sair de uma tela, os eventos globais são removidos; placar e chaveamento interrompem suas atualizações. O shell guarda HTML, JSON e fontes JavaScript juntos no registro de versão 2. O adaptador léxico é mantido apenas para os scripts legados e os caches de versões anteriores.
+
+## Migrações e sincronização
+
+`MigrationRunner` registra checksum, estado de conclusão e trava de execução. A adoção de uma base existente exige `--baseline`; a rotina valida parte da estrutura e não apaga seus dados. Veja [implantação](deployment.md).
+
+`MysqliMutationStore` serializa uma mesma chave, rejeita sua reutilização com outro conteúdo/operador e confirma resposta e dados na mesma transação. Transações aninhadas usam savepoints. Os testes provocam falha antes da confirmação e reenvios concorrentes. A fila mantém o identificador e atualiza o token CSRF da sessão ao reenviar.
+
 ## Rede de segurança
 
 ```text
@@ -94,3 +112,5 @@ As duas últimas suítes precisam de um servidor de teste e banco `sgi_test`.
 Elas cobrem autenticação, ciclo de edição, importação de PDF, modalidades,
 agendamento, placar, ranking, portal do aluno, fronteira pública, operação
 offline e chaveamento completo.
+
+O procedimento reproduzível está em [testes](testing.md). Não há exceção de CSRF baseada em `SGI_APP_ENV=test`.

@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Resultados\Presentation\Http;
 
-use App\Modules\Interclasses\Application\RankingService;
+use App\Modules\Resultados\Application\RankingService;
 use App\Shared\Http\AccessGuard;
 use App\Shared\Http\Request;
 use App\Shared\Http\Response;
@@ -39,7 +39,7 @@ final class RankingController
             };
         } catch (\InvalidArgumentException $exception) {
             return Response::json(['success' => false, 'message' => $exception->getMessage()], 400);
-        } catch (Throwable $exception) {
+        } catch (\Throwable $exception) {
             error_log('Falha em RankingController: ' . $exception->getMessage());
 
             return Response::json(['success' => false, 'message' => 'Não foi possível processar o ranking.'], 500);

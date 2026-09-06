@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Modules\Competicoes\Presentation\Http;
 
-use App\Modules\Interclasses\Application\TipoModalidadeNaoEncontradoException;
-use App\Modules\Interclasses\Application\TipoModalidadeService;
+use App\Modules\Competicoes\Application\TipoModalidadeNaoEncontradoException;
+use App\Modules\Competicoes\Application\TipoModalidadeService;
 use App\Shared\Http\AccessGuard;
 use App\Shared\Http\Request;
 use App\Shared\Http\Response;
@@ -45,7 +45,7 @@ final class TipoModalidadeController
                 'success' => false,
                 'message' => 'Tipo de modalidade não encontrado.',
             ], 404);
-        } catch (Throwable $exception) {
+        } catch (\Throwable $exception) {
             error_log('Falha em TipoModalidadeController: ' . $exception->getMessage());
 
             return Response::json([
