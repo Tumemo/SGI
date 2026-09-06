@@ -31,7 +31,7 @@ e regras de negócio continuam independentes de HTTP e MySQLi.
 | Verificação | Resultado |
 | --- | --- |
 | `composer verify` | 116 testes PHPUnit, 1.531 asserções; lint, PHPStan e CS Fixer aprovados |
-| `php tests/run_all.php` | 214/214 asserções HTTP aprovadas |
+| `php tests/run_all.php` | 224/224 asserções HTTP aprovadas |
 | `npm run check` | 39 arquivos JavaScript válidos |
 | `npm test` | 5/5 testes JavaScript aprovados |
 | `npm run build` | 230 assets preparados |
