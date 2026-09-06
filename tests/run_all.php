@@ -104,7 +104,7 @@ try {
     HistoricoTurmaAndClassificacaoTest::run($idEdicao, $idTurma, $idModalidade);
 
     // 10. Gestão de Fotos e Perfil
-    FotoPerfilAndUsuariosTest::run();
+    FotoPerfilAndUsuariosTest::run($idTurma, $idEdicao);
 
     // 11. Portal do Aluno
     AlunosPortalTest::run();

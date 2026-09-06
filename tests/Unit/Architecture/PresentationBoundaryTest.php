@@ -25,6 +25,24 @@ final class PresentationBoundaryTest extends TestCase
         self::assertGreaterThan(10, $count);
     }
 
+    public function testAllPresentationHelpersStayAtTheHttpBoundary(): void
+    {
+        $root = dirname(__DIR__, 3) . '/src/Modules';
+        $count = 0;
+        $files = new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($root));
+        foreach ($files as $file) {
+            $path = str_replace('\\', '/', $file->getPathname());
+            if (!$file->isFile() || $file->getExtension() !== 'php' || !str_contains($path, '/Presentation/')) {
+                continue;
+            }
+            $count++;
+            $source = (string) file_get_contents($file->getPathname());
+            self::assertDoesNotMatchRegularExpression('/->(?:prepare|execute|begin_transaction|commit|rollback)\s*\(|\bnew\s+mysqli\b/i', $source, $file->getPathname());
+            self::assertDoesNotMatchRegularExpression('/[\'\"]\s*(?:SELECT\s|INSERT\s+INTO\s|UPDATE\s+\w+\s+SET\s|DELETE\s+FROM\s)/i', $source, $file->getPathname());
+        }
+        self::assertGreaterThan(10, $count);
+    }
+
     public function testViewsContainNeitherDatabaseQueriesNorInlinePagePrograms(): void
     {
         $root = dirname(__DIR__, 3);

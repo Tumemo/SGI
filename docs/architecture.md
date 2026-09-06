@@ -13,7 +13,7 @@ bootstrap/autoload.php         Composer, raiz do projeto e ambiente
 bootstrap/app.php              composição do Kernel
 config/routes.php              controladores e dependências das APIs versionadas
 config/routes/web.php          URLs anteriores para templates privados
-config/routes/compatibility.php aliases de API e endpoints ainda em migração
+config/routes/compatibility.php aliases de API legadas
 config/assets.php              compatibilidade com URLs antigas de assets
 src/Modules/
   Acesso/                      autenticação, perfil, fotos e usuários
@@ -31,7 +31,7 @@ resources/js/offline/          IndexedDB, shell, fila e chaveamento local
 resources/css/                 estilos da aplicação
 resources/images/              imagens e ícones
 public/assets/                 saída reproduzível de npm run build
-api/                           endpoints procedurais ainda em migração
+api/                           arquivos internos não expostos; aliases permanecem em compatibility.php
 storage/                       arquivos de execução, fora do Git
 bin/sgi.php                    migrações e configuração inicial por CLI
 database/migrations/           esquema versionado e histórico de execução
@@ -54,7 +54,7 @@ Os serviços de domínio/aplicação não dependem de HTTP, sessão ou MySQLi; t
    uniforme de exceções e `Router`.
 4. Cada rota compõe explicitamente seu controlador, serviço e repositório em
    `config/routes.php`; não existe contêiner global ou descoberta implícita.
-5. Os aliases encaminham URLs anteriores aos mesmos controladores versionados. Os endpoints restantes em `api/` são executados somente pela lista explícita de compatibilidade e pelo `LegacyEndpoint`; ainda contêm trechos de persistência que precisam de extração. Eles não devem ser usados como modelo para código novo.
+5. Os aliases encaminham URLs anteriores aos mesmos controladores versionados. Arquivos históricos em `api/` não participam do fluxo HTTP; novas rotas devem ser registradas exclusivamente no namespace versionado.
 
 Os controladores novos não executam SQL. Serviços recebem interfaces de domínio e são
 testáveis sem banco. Repositórios concentram consultas, transações e detalhes
@@ -67,9 +67,7 @@ do MySQL/MariaDB.
   detalhe no log, sem vazar SQL ou caminhos locais.
 - `StoragePaths` resolve uploads fora do código (`storage/uploads/*` por
   padrão) e aceita diretórios configuráveis por `SGI_*_DIR`.
-- O modo offline do mesário continua usando IDs temporários negativos e a fila
-  IndexedDB; os adaptadores legados permanecem na fronteira até que o contrato
-  de sincronização seja totalmente coberto por controladores versionados.
+- O modo offline do mesário continua usando IDs temporários negativos e a fila IndexedDB; os aliases legados preservam as URLs dos clientes instalados enquanto os controladores versionados processam todas as operações.
 
 ## Regras para mudanças
 
@@ -79,8 +77,7 @@ do MySQL/MariaDB.
    o banco diretamente.
 3. Entradas são normalizadas e validadas antes do repositório. Mensagens
    internas de banco ficam no log.
-4. Rotas novas entram primeiro em `/api/v1`; o adaptador legado só é removido
-   depois que a regressão PHP e a suíte de navegador confirmarem paridade.
+4. Rotas novas entram primeiro em `/api/v1`; aliases antigos apontam para o controlador versionado e não executam arquivos procedurais.
 5. Não adicionar triggers que atualizem a própria tabela disparadora (erro
    1442 em MySQL/MariaDB). Matrículas permanecem únicas por edição e senhas
    usam `password_hash`/`password_verify`.

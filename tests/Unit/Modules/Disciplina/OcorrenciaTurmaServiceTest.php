@@ -65,4 +65,14 @@ final class InMemoryOcorrenciaTurmaRepository implements OcorrenciaTurmaReposito
     {
         return false;
     }
+
+    public function editionOf(int $id): ?int
+    {
+        return null;
+    }
+
+    public function teamBelongsToEdition(int $teamId, int $editionId): bool
+    {
+        return true;
+    }
 }

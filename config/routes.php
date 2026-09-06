@@ -27,7 +27,7 @@ $router->add(['GET', 'POST'], '/api/v1/logout', [new \App\Modules\Acesso\Present
 $withDatabase = static function (callable $factory): callable {
     return static function (\App\Shared\Http\Request $request, array $parameters) use ($factory): \App\Shared\Http\Response {
         /** @var mysqli $conn */
-        $conn = require dirname(__DIR__) . '/config/db.php';
+        $conn = \App\Shared\Database\ConnectionFactory::get();
         $controller = $factory($conn);
 
         return $controller($request, $parameters);
@@ -143,6 +143,54 @@ $router->add(['GET', 'POST'], '/api/v1/chaveamentos', $withDatabase(
     static fn (mysqli $conn) => new \App\Modules\Competicoes\Presentation\Http\ChaveamentoController(
         new \App\Modules\Competicoes\Application\ChaveamentoService(new \App\Modules\Competicoes\Infrastructure\MysqliChaveamentoManagement($conn)),
         new \App\Modules\Acesso\Presentation\Http\CompetitionAccess(new \App\Modules\Acesso\Infrastructure\MysqliInterclasseRepository($conn)),
+    ),
+));
+
+$router->post('/api/v1/inscricoes', $withDatabase(
+    static fn (mysqli $conn) => new \App\Modules\Participantes\Presentation\Http\InscricaoController(
+        new \App\Modules\Participantes\Application\InscricaoService(
+            new \App\Modules\Participantes\Infrastructure\MysqliInscricaoRepository($conn),
+        ),
+    ),
+));
+$router->add(['GET', 'POST', 'PUT'], '/api/v1/jogos', $withDatabase(
+    static fn (mysqli $conn) => new \App\Modules\Competicoes\Presentation\Http\JogoController(
+        new \App\Modules\Competicoes\Application\JogoService(new \App\Modules\Competicoes\Infrastructure\MysqliJogoRepository($conn)),
+        new \App\Modules\Competicoes\Infrastructure\MysqliJogoGateway($conn),
+        new \App\Modules\Acesso\Presentation\Http\CompetitionAccess(new \App\Modules\Acesso\Infrastructure\MysqliInterclasseRepository($conn)),
+    ),
+));
+$router->add(['GET', 'POST', 'PUT'], '/api/v1/partidas', $withDatabase(
+    static fn (mysqli $conn) => new \App\Modules\Competicoes\Presentation\Http\PartidaController(
+        new \App\Modules\Competicoes\Application\PartidaService(new \App\Modules\Competicoes\Infrastructure\MysqliPartidaRepository($conn)),
+        new \App\Modules\Competicoes\Infrastructure\MysqliPartidaGateway($conn),
+        new \App\Modules\Acesso\Presentation\Http\CompetitionAccess(new \App\Modules\Acesso\Infrastructure\MysqliInterclasseRepository($conn)),
+    ),
+));
+$router->post('/api/v1/resultados', $withDatabase(
+    static fn (mysqli $conn) => new \App\Modules\Competicoes\Presentation\Http\ResultadoController(
+        new \App\Modules\Competicoes\Infrastructure\MysqliPartidaGateway($conn),
+        new \App\Modules\Acesso\Presentation\Http\CompetitionAccess(new \App\Modules\Acesso\Infrastructure\MysqliInterclasseRepository($conn)),
+        new \App\Modules\Sincronizacao\Presentation\Http\MutationAction(new \App\Modules\Sincronizacao\Infrastructure\MysqliMutationStore($conn)),
+    ),
+));
+$router->get('/api/v1/historico-turma', $withDatabase(
+    static fn (mysqli $conn) => new \App\Modules\Resultados\Presentation\Http\HistoricoTurmaController(
+        new \App\Modules\Resultados\Infrastructure\MysqliHistoricoTurmaRepository($conn),
+    ),
+));
+$router->add(['GET', 'POST', 'PUT'], '/api/v1/usuarios', $withDatabase(
+    static fn (mysqli $conn) => new \App\Modules\Acesso\Presentation\Http\UsuarioController(
+        new \App\Modules\Acesso\Infrastructure\MysqliUsuarioGateway($conn),
+        $conn,
+        new \App\Modules\Acesso\Application\UsuarioAdministrativoService(new \App\Modules\Acesso\Infrastructure\MysqliUsuarioAdministrativoRepository($conn)),
+    ),
+));
+$router->post('/api/v1/sincronizacao/chaveamento', $withDatabase(
+    static fn (mysqli $conn) => new \App\Modules\Sincronizacao\Presentation\Http\ChaveamentoSyncController(
+        new \App\Modules\Sincronizacao\Infrastructure\MysqliChaveamentoSyncGateway($conn),
+        new \App\Modules\Acesso\Presentation\Http\CompetitionAccess(new \App\Modules\Acesso\Infrastructure\MysqliInterclasseRepository($conn)),
+        new \App\Modules\Sincronizacao\Presentation\Http\MutationAction(new \App\Modules\Sincronizacao\Infrastructure\MysqliMutationStore($conn)),
     ),
 ));
 

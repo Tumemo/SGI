@@ -43,10 +43,12 @@ final class OcorrenciaTurmaController
             if ($request->method() === 'POST') {
                 return $this->mutations->run($request, 'ocorrencias_turmas.post', function () use ($request): Response {
                     $data = $request->allInput();
-                    if ((int) $_SESSION['nivel'] === 2
-                        && !empty($data['interclasses_id_interclasse'])
-                        && (int) $data['interclasses_id_interclasse'] !== (int) $_SESSION['id_interclasse']) {
-                        return Response::json(['success' => false, 'message' => 'Mesários só podem registrar ocorrências na edição ativa.'], 403);
+                    if ((int) $_SESSION['nivel'] === 2) {
+                        $activeEdition = (int) ($_SESSION['id_interclasse'] ?? 0);
+                        if ($activeEdition <= 0 || (int) ($data['interclasses_id_interclasse'] ?? 0) !== $activeEdition
+                            || !$this->service->turmaPertenceAEdicao((int) ($data['turmas_id_turma'] ?? 0), $activeEdition)) {
+                            return Response::json(['success' => false, 'message' => 'Mesários só podem registrar ocorrências na edição ativa.'], 403);
+                        }
                     }
                     $data['usuarios_id_usuario'] ??= (int) ($_SESSION['id_usuario'] ?? 0);
                     $id = $this->service->registrar($data);
@@ -54,7 +56,12 @@ final class OcorrenciaTurmaController
                 });
             }
             if ($request->method() === 'DELETE') {
-                $this->service->excluir((int) $request->input('id_ocorrencia_turma', $request->query('id_ocorrencia_turma', 0)));
+                $id = (int) $request->input('id_ocorrencia_turma', $request->query('id_ocorrencia_turma', 0));
+                if ((int) $_SESSION['nivel'] === 2
+                    && !$this->service->pertenceAEdicao($id, (int) ($_SESSION['id_interclasse'] ?? 0))) {
+                    return Response::json(['success' => false, 'message' => 'Mesários só podem remover ocorrências da edição ativa.'], 403);
+                }
+                $this->service->excluir($id);
                 return Response::json(['success' => true, 'message' => 'Ocorrência removida!']);
             }
             return Response::json(['success' => false, 'message' => 'Método não permitido'], 405);

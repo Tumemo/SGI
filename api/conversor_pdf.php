@@ -3,8 +3,8 @@
 declare (strict_types=1);
 require_once __DIR__ . '/../config/bootstrap.php';
 use App\Shared\Storage\StoragePaths;
-// 1. Inclusões essenciais para a automação
-require_once '../config/db.php';
+// 1. Conexão criada pelo mesmo factory usado pelo fluxo modular.
+$conn = \App\Shared\Database\ConnectionFactory::get();
 use Smalot\PdfParser\Parser;
 // --- CONFIGURAÇÃO PARA AJAX ---
 ob_start();

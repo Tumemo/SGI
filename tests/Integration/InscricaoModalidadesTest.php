@@ -29,10 +29,11 @@ class InscricaoModalidadesTest
 
         // Atualiza a turma do aluno para este interclasse de teste para garantir vínculo
         if ($idAluno > 0 && $idTurmaAluno > 0) {
-            $admin->postJson('api/usuarios.php?id=' . $idAluno, [
+            $resAtualizacao = $admin->postJson('api/usuarios.php?id=' . $idAluno, [
                 'turmas_id_turma' => $idTurmaAluno,
                 'interclasses_id_interclasse' => $idEdicao
             ]);
+            Assertions::assertStatus('Vínculo do aluno com a edição de teste foi atualizado', $resAtualizacao, 200);
         }
 
         $resEqTurma = $admin->get("api/equipes.php?id_interclasse=$idEdicao&id_turma=$idTurmaAluno");
@@ -59,7 +60,19 @@ class InscricaoModalidadesTest
             'id_interclasse' => $idEdicao,
             'id_equipes' => [$idEq1, $idEq2]
         ]);
-        Assertions::assert("Processamento de inscrição em modalidades permitidas", in_array($resInscricao['code'], [200, 201, 400], true));
+        Assertions::assertStatus("Inscrição válida retorna sucesso", $resInscricao, 200);
+        Assertions::assert("Inscrição válida confirma sucesso no corpo", ($resInscricao['json']['success'] ?? false) === true);
+        foreach ([$idEq1, $idEq2] as $idEquipe) {
+            $membros = $admin->get('api/equipes.php?id_equipe=' . $idEquipe);
+            $encontrado = false;
+            foreach (($membros['json'] ?? []) as $membro) {
+                if ((int) ($membro['id_usuario'] ?? 0) === $idAluno) {
+                    $encontrado = true;
+                    break;
+                }
+            }
+            Assertions::assert("Inscrição persistida na equipe {$idEquipe}", $encontrado);
+        }
 
         // 10.3 Bloqueio de inscrição por usuário anônimo
         $anonimo = new TestClient();

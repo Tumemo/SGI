@@ -17,5 +17,4 @@ return new Kernel(
     new AssetResponder(SGI_ROOT, require SGI_ROOT . '/config/assets.php'),
     require SGI_ROOT . '/config/routes/web.php',
     $compatibility['aliases'],
-    $compatibility['endpoints'],
 );

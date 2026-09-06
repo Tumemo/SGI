@@ -18,4 +18,8 @@ interface OcorrenciaTurmaRepository
     public function create(array $data): int;
 
     public function delete(int $id): bool;
+
+    public function editionOf(int $id): ?int;
+
+    public function teamBelongsToEdition(int $teamId, int $editionId): bool;
 }

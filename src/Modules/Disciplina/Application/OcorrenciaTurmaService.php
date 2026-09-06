@@ -59,4 +59,14 @@ final class OcorrenciaTurmaService
             throw new OcorrenciaTurmaNaoEncontradaException();
         }
     }
+
+    public function pertenceAEdicao(int $id, int $editionId): bool
+    {
+        return $id > 0 && $editionId > 0 && $this->ocorrencias->editionOf($id) === $editionId;
+    }
+
+    public function turmaPertenceAEdicao(int $teamId, int $editionId): bool
+    {
+        return $teamId > 0 && $editionId > 0 && $this->ocorrencias->teamBelongsToEdition($teamId, $editionId);
+    }
 }

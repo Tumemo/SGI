@@ -9,14 +9,13 @@ use App\Shared\Config\Env;
 
 final class Kernel
 {
-    /** @param array<string,string> $webRoutes @param array<string,string> $apiAliases @param list<string> $legacyEndpoints */
+    /** @param array<string,string> $webRoutes @param array<string,string> $apiAliases */
     public function __construct(
         private readonly string $root,
         private readonly RequestHandler $api,
         private readonly AssetResponder $assets,
         private readonly array $webRoutes,
         private readonly array $apiAliases,
-        private readonly array $legacyEndpoints,
     ) {
     }
 
@@ -49,8 +48,6 @@ final class Kernel
             $this->api->handle($request)->send();
         } elseif (isset($this->webRoutes[$path])) {
             (new PageController())->show($request, $this->root . '/' . $this->webRoutes[$path])->send();
-        } elseif (in_array($path, $this->legacyEndpoints, true)) {
-            (new LegacyEndpoint())->execute($this->root . $path);
         } else {
             $this->assets->send($request);
         }

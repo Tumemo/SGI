@@ -19,6 +19,21 @@ test('optional elements do not interrupt registration of the remaining screen ac
     assert.equal(calls, 1);
 });
 
+test('different closures with the same source both receive their event', () => {
+    const window = {};
+    const document = { readyState: 'complete', querySelector: () => null };
+    const target = new EventTarget();
+    const calls = [];
+    vm.runInNewContext(source, { window, document });
+    window.SGIPage.mount('same-source', (_, scope) => {
+        const createHandler = value => () => calls.push(value);
+        scope.listen(target, 'click', createHandler('first'));
+        scope.listen(target, 'click', createHandler('second'));
+    });
+    target.dispatchEvent(new Event('click'));
+    assert.deepEqual(calls, ['first', 'second']);
+});
+
 test('screen actions retain isolated state and are restored on reactivation', () => {
     const inits = [];
     const window = { __SGI_SPA__: { registrarInit: fn => inits.push(fn) } };

@@ -549,11 +549,17 @@
             // A restored queue can outlive the session token that created it.
             // Refresh authentication headers, preserving its mutation identity.
             var headers = garantirIdMutacao(item.headers);
-            return originalFetch(item.url, {
-                method: item.method,
-                headers: headers,
-                body: item.body == null ? undefined : item.body,
-                credentials: 'same-origin'
+            // Older queue records may not have an identity. Persist the one
+            // generated here before sending so a lost response cannot create a
+            // different operation on the next retry.
+            item.headers = headers;
+            return idbQueueUpdate(item).then(function () {
+                return originalFetch(item.url, {
+                    method: item.method,
+                    headers: headers,
+                    body: item.body == null ? undefined : item.body,
+                    credentials: 'same-origin'
+                });
             });
         }).then(lerRespostaSincronizacao).then(function (info) {
             if (info.httpOk && info.semanticOk) {
@@ -975,19 +981,20 @@
         var absUrl = resolveUrl(url);
         var m = (method || 'POST').toUpperCase();
         var body = JSON.stringify(payload || {});
+        var headers = garantirIdMutacao({ 'Content-Type': 'application/json' });
         if (!state.online) {
-            return queueMutation(m, absUrl, body, { 'Content-Type': 'application/json' }).then(function () {
+            return queueMutation(m, absUrl, body, headers).then(function () {
                 return { success: true, offline: true, queued: true };
             });
         }
         return originalFetch(absUrl, {
             method: m,
-            headers: garantirIdMutacao({ 'Content-Type': 'application/json' }),
+            headers: headers,
             body: body
         }).then(function (res) {
             return res.json().catch(function () { return {}; });
         }).catch(function () {
-            return queueMutation(m, absUrl, body, { 'Content-Type': 'application/json' }).then(function () {
+            return queueMutation(m, absUrl, body, headers).then(function () {
                 return { success: true, offline: true, queued: true };
             });
         });

@@ -87,4 +87,30 @@ final class MysqliOcorrenciaTurmaRepository implements OcorrenciaTurmaRepository
         $statement->close();
         return $deleted;
     }
+
+    public function editionOf(int $id): ?int
+    {
+        $statement = $this->connection->prepare('SELECT interclasses_id_interclasse FROM ocorrencias_turmas WHERE id_ocorrencia_turma = ? LIMIT 1');
+        if ($statement === false) {
+            throw new RuntimeException('Não foi possível consultar ocorrência da turma.');
+        }
+        $statement->bind_param('i', $id);
+        $statement->execute();
+        $row = $statement->get_result()->fetch_assoc() ?: null;
+        $statement->close();
+        return $row === null ? null : (int) $row['interclasses_id_interclasse'];
+    }
+
+    public function teamBelongsToEdition(int $teamId, int $editionId): bool
+    {
+        $statement = $this->connection->prepare('SELECT 1 FROM turmas WHERE id_turma = ? AND interclasses_id_interclasse = ? LIMIT 1');
+        if ($statement === false) {
+            throw new RuntimeException('Não foi possível validar a turma da ocorrência.');
+        }
+        $statement->bind_param('ii', $teamId, $editionId);
+        $statement->execute();
+        $exists = $statement->get_result()->num_rows > 0;
+        $statement->close();
+        return $exists;
+    }
 }
