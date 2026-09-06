@@ -24,13 +24,14 @@ e regras de negócio continuam independentes de HTTP e MySQLi.
 - Proteção por edição real para jogos, resultados, partidas e ocorrências de turma quando operados pelo mesário.
 - Ciclo de vida JavaScript corrigido para não colidir closures nem acumular eventos ao reativar telas; a identidade de mutação é persistida antes do reenvio offline.
 - Teste arquitetural ampliado para todos os arquivos de `Presentation`.
+- Árvore física legada removida: `views/` e o redirecionador raiz `index.php` não fazem parte do pacote; as URLs antigas continuam sendo atendidas pelo front controller e pelos aliases configurados.
 - Documentação de arquitetura atualizada e aliases antigos preservados.
 
 ## Evidência local
 
 | Verificação | Resultado |
 | --- | --- |
-| `composer verify` | 116 testes PHPUnit, 1.531 asserções; lint, PHPStan e CS Fixer aprovados |
+| `composer verify` | 116 testes PHPUnit, 1.533 asserções; lint, PHPStan e CS Fixer aprovados |
 | `php tests/run_all.php` | 224/224 asserções HTTP aprovadas |
 | `npm run check` | 39 arquivos JavaScript válidos |
 | `npm test` | 5/5 testes JavaScript aprovados |

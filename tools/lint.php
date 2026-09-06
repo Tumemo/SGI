@@ -12,7 +12,6 @@ $directories = [
     $root . DIRECTORY_SEPARATOR . 'bin',
     $root . DIRECTORY_SEPARATOR . 'tests',
     $root . DIRECTORY_SEPARATOR . 'public',
-    $root . DIRECTORY_SEPARATOR . 'index.php',
 ];
 
 $iterator = new RecursiveIteratorIterator(

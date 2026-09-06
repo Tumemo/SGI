@@ -29,13 +29,15 @@ final class ModuleLayoutTest extends TestCase
         self::assertDirectoryExists($root . DIRECTORY_SEPARATOR . 'src' . DIRECTORY_SEPARATOR . 'Shared');
     }
 
-    public function testLegacyBusinessNamespacesAndDirectoriesWereRemoved(): void
+    public function testLegacyNamespacesAndArtifactsWereRemoved(): void
     {
         $root = dirname(__DIR__, 3);
 
         foreach (['Interclasse', 'Autenticacao', 'Usuarios'] as $legacyModule) {
             self::assertDirectoryDoesNotExist($root . DIRECTORY_SEPARATOR . 'src' . DIRECTORY_SEPARATOR . $legacyModule);
         }
+        self::assertDirectoryDoesNotExist($root . DIRECTORY_SEPARATOR . 'views');
+        self::assertFileDoesNotExist($root . DIRECTORY_SEPARATOR . 'index.php');
 
         $legacyNamespaces = [
             'App\\Interclasse',
