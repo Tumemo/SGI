@@ -158,12 +158,6 @@ final class UsuarioController
                 $this->gateway->assignStudent((int) $request->query('id'), (int) ($data['turmas_id_turma'] ?? 0), (int) ($data['interclasses_id_interclasse'] ?? $edition));
                 return Response::json(['status' => 'sucesso', 'mensagem' => 'Aluno atualizado.']);
             }
-            if ($action === 'cadastrar_competidores') {
-                if (($denied = AccessGuard::authorize([0, 1])) !== null) {
-                    return $denied;
-                }
-                return Response::json(\App\Modules\Participantes\Infrastructure\ImportacaoArquivo::importarCompetidores($this->connection));
-            }
             return Response::json(['status' => 'erro', 'mensagem' => 'Ação inválida.'], 400);
         } catch (\Throwable $exception) {
             error_log('Falha ao processar usuário: ' . $exception->getMessage());

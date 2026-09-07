@@ -37,6 +37,7 @@ final class ModuleLayoutTest extends TestCase
             self::assertDirectoryDoesNotExist($root . DIRECTORY_SEPARATOR . 'src' . DIRECTORY_SEPARATOR . $legacyModule);
         }
         self::assertDirectoryDoesNotExist($root . DIRECTORY_SEPARATOR . 'views');
+        self::assertDirectoryDoesNotExist($root . DIRECTORY_SEPARATOR . 'api');
         self::assertFileDoesNotExist($root . DIRECTORY_SEPARATOR . 'index.php');
 
         $legacyNamespaces = [
@@ -46,7 +47,7 @@ final class ModuleLayoutTest extends TestCase
         ];
 
         $files = [];
-        foreach (['api', 'config', 'public', 'src', 'tests'] as $directory) {
+        foreach (['config', 'public', 'src', 'tests'] as $directory) {
             $iterator = new \RecursiveIteratorIterator(
                 new \RecursiveDirectoryIterator(
                     $root . DIRECTORY_SEPARATOR . $directory,

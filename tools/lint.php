@@ -6,7 +6,6 @@ $root = dirname(__DIR__);
 $directories = [
     $root . DIRECTORY_SEPARATOR . 'src',
     $root . DIRECTORY_SEPARATOR . 'config',
-    $root . DIRECTORY_SEPARATOR . 'api',
     $root . DIRECTORY_SEPARATOR . 'resources',
     $root . DIRECTORY_SEPARATOR . 'bootstrap',
     $root . DIRECTORY_SEPARATOR . 'bin',

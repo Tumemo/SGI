@@ -31,7 +31,6 @@ resources/js/offline/          IndexedDB, shell, fila e chaveamento local
 resources/css/                 estilos da aplicação
 resources/images/              imagens e ícones
 public/assets/                 saída reproduzível de npm run build
-api/                           arquivos internos não expostos; aliases permanecem em compatibility.php
 storage/                       arquivos de execução, fora do Git
 bin/sgi.php                    migrações e configuração inicial por CLI
 database/migrations/           esquema versionado e histórico de execução
@@ -54,7 +53,7 @@ Os serviços de domínio/aplicação não dependem de HTTP, sessão ou MySQLi; t
    uniforme de exceções e `Router`.
 4. Cada rota compõe explicitamente seu controlador, serviço e repositório em
    `config/routes.php`; não existe contêiner global ou descoberta implícita.
-5. Os aliases encaminham URLs anteriores aos mesmos controladores versionados. Arquivos históricos em `api/` não participam do fluxo HTTP; novas rotas devem ser registradas exclusivamente no namespace versionado.
+5. Os aliases encaminham URLs anteriores aos mesmos controladores versionados. Não há executores PHP fora do front controller; novas rotas devem ser registradas exclusivamente no namespace versionado.
 
 Os controladores novos não executam SQL. Serviços recebem interfaces de domínio e são
 testáveis sem banco. Repositórios concentram consultas, transações e detalhes

@@ -95,7 +95,6 @@ SGI/
 ├── resources/js/           # Páginas, código compartilhado e motores offline
 ├── resources/css/          # Fontes das folhas de estilo
 ├── resources/images/       # Imagens e ícones da aplicação
-├── api/                    # Adaptador interno legado de importação PDF
 ├── database/migrations/    # Alterações versionadas do banco
 ├── database/seeders/       # Dados exclusivos de testes
 ├── database/archive/       # Dump histórico, não usado pelo instalador

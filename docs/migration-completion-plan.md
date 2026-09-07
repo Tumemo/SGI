@@ -25,13 +25,14 @@ e regras de negócio continuam independentes de HTTP e MySQLi.
 - Ciclo de vida JavaScript corrigido para não colidir closures nem acumular eventos ao reativar telas; a identidade de mutação é persistida antes do reenvio offline.
 - Teste arquitetural ampliado para todos os arquivos de `Presentation`.
 - Árvore física legada removida: `views/` e o redirecionador raiz `index.php` não fazem parte do pacote; as URLs antigas continuam sendo atendidas pelo front controller e pelos aliases configurados.
+- Adaptadores de importação e compatibilidade sem consumidores foram removidos: o diretório `api/`, seu conversor PDF, o bootstrap legado e classes auxiliares não fazem parte do pacote.
 - Documentação de arquitetura atualizada e aliases antigos preservados.
 
 ## Evidência local
 
 | Verificação | Resultado |
 | --- | --- |
-| `composer verify` | 116 testes PHPUnit, 1.533 asserções; lint, PHPStan e CS Fixer aprovados |
+| `composer verify` | 116 testes PHPUnit, 1.514 asserções; lint, PHPStan e CS Fixer aprovados |
 | `php tests/run_all.php` | 224/224 asserções HTTP aprovadas |
 | `npm run check` | 39 arquivos JavaScript válidos |
 | `npm test` | 5/5 testes JavaScript aprovados |
@@ -52,7 +53,7 @@ antes da publicação:
 1. Executar a matriz de CI em PHP 8.2 e 8.4, MySQL 8.4 e MariaDB 10.11, além do navegador Windows.
 2. Ensaiar instalação nova e atualização sobre uma cópia representativa da base anterior; conferir índices, senhas, matrículas por edição, triggers, arquivos persistentes e filas IndexedDB.
 3. Simular backup, restauração e retorno para a versão anterior, registrando o pacote, a configuração e as condições de rollback.
-4. Confirmar com a operação se `api/conversor_pdf.php` ainda é usado fora do fluxo web. Ele permanece inacessível pela fronteira pública; se não houver consumidor externo, pode ser substituído por comando de CLI em uma mudança posterior.
+4. Confirmar com a operação que nenhum consumidor externo dependia do conversor PDF removido; a rota oficial é `/api/v1/importacoes/turma-pdf` e seu alias `/api/upload_turma_pdf.php`.
 5. Publicar os commits desta etapa após a revisão do diff e guardar os relatórios das execuções acima junto ao registro de implantação.
 
 ## Critério de encerramento

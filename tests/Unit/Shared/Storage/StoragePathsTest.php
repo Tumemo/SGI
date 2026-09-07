@@ -57,7 +57,7 @@ final class StoragePathsTest extends TestCase
         $oldWorkingDirectory = getcwd();
 
         putenv('SGI_UPLOAD_DIR=storage/uploads/turmas');
-        chdir(dirname(__DIR__, 4) . DIRECTORY_SEPARATOR . 'api');
+        chdir(dirname(__DIR__, 4) . DIRECTORY_SEPARATOR . 'resources');
 
         try {
             self::assertSame(

@@ -2,7 +2,7 @@
 
 ## Artefato da aplicação
 
-Instale as dependências com `composer install --no-dev --optimize-autoloader` e execute `npm ci --ignore-scripts` seguido de `npm run build` durante a preparação do pacote. O servidor precisa de `vendor/`, `public/assets/`, `bootstrap/`, `config/`, `src/`, `resources/views/` e dos adaptadores ainda presentes em `api/`. Node.js não é necessário para atender requisições.
+Instale as dependências com `composer install --no-dev --optimize-autoloader` e execute `npm ci --ignore-scripts` seguido de `npm run build` durante a preparação do pacote. O servidor precisa de `vendor/`, `public/assets/`, `bootstrap/`, `config/`, `src/` e `resources/views/`. Node.js não é necessário para atender requisições.
 
 `public/assets/` é gerado e não é versionado. Edite as fontes em `resources/`. O build inclui versões fixadas das bibliotecas e suas licenças. `public/index.php` é a única entrada HTTP; não publique a raiz do repositório.
 

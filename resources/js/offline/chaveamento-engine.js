@@ -13,7 +13,7 @@
      4) Quando a conexão volta, os dados locais são sincronizados com o PHP
         (a fila original é reenviada e o servidor refaz o avanço nativamente).
 
-   Espelha em JavaScript a lógica de api/includes/mata_mata_engine.php:
+   Espelha em JavaScript a lógica do motor de mata-mata do servidor:
    tags "MM:{largura}:{slot}:{N|B}" e "POS:{posicao}:{slot}:{N|B}".
    ========================================================================== */
 (function () {
