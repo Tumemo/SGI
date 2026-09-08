@@ -5,6 +5,22 @@ const vm = require('node:vm');
 
 const source = fs.readFileSync('resources/js/offline/mesario-data.js', 'utf8');
 
+test('rotas v1 preservam cadastros e projetam o encerramento com placar offline', async () => {
+    const layer = await carregarDataLayer();
+    for (const [recurso, campo] of [['turmas', 'id_turma'], ['modalidades', 'id_modalidade'], ['categorias', 'id_categoria'], ['locais', 'id_local'], ['equipes', 'id_equipe']]) {
+        await layer.capture(`https://sgi.test/api/v1/${recurso}`, JSON.stringify([{ [campo]: 42, nome: recurso }]));
+        const resposta = await layer.localGet(`https://sgi.test/api/v1/${recurso}`);
+        assert.ok(resposta, recurso);
+        assert.equal((await resposta.json())[0][campo], 42);
+    }
+    await layer.upsert('jogos', 7, { id_jogo: 7, status_jogo: 'Iniciado' });
+    await layer.onQueued({ id: 1, method: 'POST', url: 'https://sgi.test/api/v1/resultados', body: JSON.stringify({
+        id_jogo: 7, resultados: [{ id_equipe: 1, gols: 2 }, { id_equipe: 2, gols: 1 }],
+    }) });
+    assert.equal((await layer.read('jogos'))[0].status_jogo, 'Concluido');
+    assert.deepEqual(Array.from(await layer.read('partidas'), p => p.resultado_partida), [2, 1]);
+});
+
 function criarIndexedDbFake() {
     const stores = new Map();
     const nomes = { contains: (nome) => stores.has(nome) };
