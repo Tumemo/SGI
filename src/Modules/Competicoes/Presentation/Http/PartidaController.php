@@ -97,6 +97,13 @@ final class PartidaController
             if (($invalid = $this->rejectDiscordantIdentifiers($data, $gameId, $teamId)) !== null) {
                 return $invalid;
             }
+            if (array_key_exists('resultado_partida', $data)
+                && in_array((string) ($partida['status_jogo'] ?? ''), ['Concluido', 'Finalizado'], true)) {
+                return Response::json([
+                    'success' => false,
+                    'message' => 'Partidas encerradas só podem ser retificadas pelo lançamento completo do resultado.',
+                ], 422);
+            }
             $data['jogos_id_jogo'] ??= $gameId;
             $data['equipes_id_equipe'] ??= $teamId;
             try {

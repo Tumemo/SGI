@@ -20,6 +20,7 @@ final class MysqliPartidaRepository implements PartidaRepository
         $statement = $this->connection->prepare(
             'SELECT p.id_partida, p.jogos_id_jogo, p.equipes_id_equipe,
                     p.resultado_partida, p.status_partida,
+                    j.status_jogo,
                     m.interclasses_id_interclasse AS edition_id
              FROM partidas p
              INNER JOIN jogos j ON j.id_jogo = p.jogos_id_jogo

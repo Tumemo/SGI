@@ -74,6 +74,12 @@ final class JogoController
                 && (isset($data['data_jogo']) || isset($data['locais_id_local']) || isset($data['modalidades_id_modalidade']))) {
                 return Response::json(['success' => false, 'message' => 'Mesários só podem alterar o status ou placar do jogo.'], 403);
             }
+            if ($this->isCronometroMutation($data) && $this->isScheduleMutation($data)) {
+                return Response::json([
+                    'success' => false,
+                    'message' => 'Atualizações de agenda e cronômetro devem ser enviadas separadamente.',
+                ], 422);
+            }
             try {
                 if ($this->isCronometroMutation($data)) {
                     return $this->mutations->run($request, 'jogos.put', function () use ($id, $data): Response {
@@ -106,6 +112,18 @@ final class JogoController
             || array_key_exists('tempo_restante_jogo', $data)
             || array_key_exists('tempo_extra_jogo', $data)
             || array_key_exists('duracao_jogo', $data);
+    }
+
+    /** @param array<string,mixed> $data */
+    private function isScheduleMutation(array $data): bool
+    {
+        foreach (['nome_jogo', 'data_jogo', 'inicio_jogo', 'termino_jogo', 'modalidades_id_modalidade', 'locais_id_local'] as $field) {
+            if (array_key_exists($field, $data)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private function resourceBelongsToActiveEdition(int $id, bool $game): bool

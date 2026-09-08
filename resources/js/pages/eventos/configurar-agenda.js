@@ -372,9 +372,6 @@ window.SGIPage.mount("eventos/configurar-agenda", function (pageConfig, pageScop
                                 equipes_nomes: jogoAtual.equipes_nomes || null,
                                 tipos_modalidades_id_tipo_modalidade: jogoAtual.tipos_modalidades_id_tipo_modalidade || null
                             } : null,
-                            nome_jogo: jogoAtual && jogoAtual.nome_jogo ? jogoAtual.nome_jogo : null,
-                            nome_modalidade: jogoAtual && jogoAtual.nome_modalidade ? jogoAtual.nome_modalidade : null,
-                            tipos_modalidades_id_tipo_modalidade: jogoAtual && jogoAtual.tipos_modalidades_id_tipo_modalidade ? jogoAtual.tipos_modalidades_id_tipo_modalidade : null,
                             status_jogo: 'Iniciado',
                             duracao_jogo: duracao,
                             tempo_restante_jogo: restante,

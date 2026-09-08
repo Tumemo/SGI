@@ -50,7 +50,11 @@ final class PartidaService
                 if (!is_numeric($data[$field])) {
                     throw new InvalidArgumentException("Valor inválido para {$field}.");
                 }
-                $fields[$field] = (int) $data[$field];
+                $value = (int) $data[$field];
+                if ($field === 'resultado_partida' && $value < 0) {
+                    throw new InvalidArgumentException('O resultado da partida não pode ser negativo.');
+                }
+                $fields[$field] = $value;
                 continue;
             }
             $value = trim((string) $data[$field]);

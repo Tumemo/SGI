@@ -46,6 +46,15 @@ final class PartidaServiceTest extends TestCase
             'resultado_partida' => 'abc',
         ]);
     }
+
+    public function testRejectsNegativeScore(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        (new PartidaService(new InMemoryPartidaRepository()))->atualizar([
+            'id_partida' => 7,
+            'resultado_partida' => -1,
+        ]);
+    }
 }
 
 final class InMemoryPartidaRepository implements PartidaRepository

@@ -37,6 +37,7 @@ require_once __DIR__ . '/Integration/RefactorContractsTest.php';
 require_once __DIR__ . '/Integration/MigrationsTest.php';
 require_once __DIR__ . '/Integration/LegacyUpgradeTest.php';
 require_once __DIR__ . '/Integration/RecoveryRehearsalTest.php';
+require_once __DIR__ . '/Integration/ConsistencyGuardsTest.php';
 require_once __DIR__ . '/Integration/InitialAdminTest.php';
 require_once __DIR__ . '/Integration/AtomicMutationTest.php';
 require_once __DIR__ . '/Integration/MataMataEdgeCasesTest.php';
@@ -161,6 +162,7 @@ try {
     \SGITests\Integration\MigrationsTest::run();
     \SGITests\Integration\LegacyUpgradeTest::run();
     \SGITests\Integration\RecoveryRehearsalTest::run();
+    \SGITests\Integration\ConsistencyGuardsTest::run();
     \SGITests\Integration\InitialAdminTest::run();
 
 } catch (Throwable $e) {

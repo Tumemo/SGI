@@ -55,18 +55,6 @@ final class MysqliPartidaGateway implements ResultadoRepository
         return $rows;
     }
 
-    public function editionOfGame(int $id): ?int
-    {
-        $row = $this->one('SELECT m.interclasses_id_interclasse AS edition_id FROM jogos j INNER JOIN modalidades m ON m.id_modalidade = j.modalidades_id_modalidade WHERE j.id_jogo = ? LIMIT 1', 'i', [$id]);
-        return $row === null ? null : (int) $row['edition_id'];
-    }
-
-    public function editionOfPartida(int $id): ?int
-    {
-        $row = $this->one('SELECT m.interclasses_id_interclasse AS edition_id FROM partidas p INNER JOIN jogos j ON j.id_jogo = p.jogos_id_jogo INNER JOIN modalidades m ON m.id_modalidade = j.modalidades_id_modalidade WHERE p.id_partida = ? LIMIT 1', 'i', [$id]);
-        return $row === null ? null : (int) $row['edition_id'];
-    }
-
     public function editionOfModality(int $id): ?int
     {
         $row = $this->one('SELECT interclasses_id_interclasse AS edition_id FROM modalidades WHERE id_modalidade = ? LIMIT 1', 'i', [$id]);
@@ -147,11 +135,6 @@ final class MysqliPartidaGateway implements ResultadoRepository
             ],
             $rows,
         );
-    }
-
-    public function reconciliarPodioConcluido(int $gameId): void
-    {
-        (new PontuacaoService(new MysqliPodioRepository($this->connection)))->reconciliarJogo($gameId);
     }
 
     /** @param list<array<string, mixed>> $results */
