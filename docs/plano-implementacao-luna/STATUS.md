@@ -6,6 +6,8 @@ Atualizado em: 08/09/2026, após a conclusão de T29.
 
 **Próxima tarefa:** nenhuma tarefa do plano. Antes de publicar, executar os alvos externos pendentes do CI e revisar o diff local; não houve publicação nesta execução.
 
+**Commits locais:** `c2a302d` implementação, `160b4b1` testes/recuperação e `7d83dc4` documentação final. O registro desta atualização será incluído no commit documental seguinte.
+
 Os resultados verdes registrados na auditoria pertencem ao código de referência. Não são evidência de correções ainda não implementadas.
 
 | Tarefa | Estado | Evidência / observação |
@@ -557,7 +559,7 @@ Próximo passo exato: concluir T29 lendo o diff final, repetir sequencialmente o
 
 Tarefa: T29 — Revisar implementação e entregar evidência final
 Estado: concluída.
-Referência do código: commit de referência `aedbc420ea34aa759db1b14a8307abe4eb478cfa`, branch `codex/refatoracao-arquitetura-limpeza`, sem commit criado nesta execução; arquivos locais relevantes: `resources/js/pages/competicoes/placar.js`, `public/assets/`, `tests/browser/occurrence-offline-edit.spec.cjs`, `tests/Integration/RecoveryRehearsalTest.php`, `docs/architecture.md`, `docs/testing.md`, `docs/deployment.md`, `docs/migration-completion-plan.md` e este `STATUS.md`.
+Referência do código: commit inicial `aedbc420ea34aa759db1b14a8307abe4eb478cfa`; commits locais `c2a302d`, `160b4b1` e `7d83dc4`; branch `codex/refatoracao-arquitetura-limpeza`; arquivos locais relevantes: `resources/js/pages/competicoes/placar.js`, `public/assets/`, `tests/browser/occurrence-offline-edit.spec.cjs`, `tests/Integration/RecoveryRehearsalTest.php`, `docs/architecture.md`, `docs/testing.md`, `docs/deployment.md`, `docs/migration-completion-plan.md` e este `STATUS.md`.
 Defeito reproduzido: a suíte completa `npm --prefix tests/browser test` reproduziu `1` falha em `32` testes no cenário `occurrence-offline-edit.spec.cjs`: após editar e sincronizar uma ocorrência, a edição offline de uma ocorrência temporária abria o modal, mas o callback de fechamento atrasado do primeiro salvamento fechava o novo modal; o clique em `#btnSalvarOcorrencia` aguardou 180 segundos e terminou com `Test timeout of 180000ms exceeded`. O screenshot confirmou a tela sem modal no instante da falha.
 Arquivos alterados: `placar.js` agora mantém o timer de fechamento do modal, cancela qualquer fechamento pendente ao iniciar nova ocorrência/edição e substitui o timer anterior antes de agendar outro; o callback limpa sua própria referência. `npm run build` regenerou `public/assets/` para que o bundle servido correspondesse à fonte. Nenhuma permissão, alias, fila/cache, ID de mutação, migração ou banco de trabalho foi alterado.
 Decisão aplicada: somente o ciclo de vida do modal foi serializado; a ordem e o conteúdo das mutações offline continuam os mesmos. O timer não é removido de forma global, apenas cancelado quando uma nova operação usa o mesmo modal, evitando que uma confirmação anterior feche uma edição posterior.
