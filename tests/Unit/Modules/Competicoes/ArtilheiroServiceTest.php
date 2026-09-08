@@ -42,4 +42,24 @@ final class InMemoryArtilheiroRepository implements ArtilheiroRepository
         $this->goals = $goals;
         return true;
     }
+
+    public function editionOfGame(int $gameId): ?int
+    {
+        return 1;
+    }
+
+    public function editionOfUser(int $userId): ?int
+    {
+        return 1;
+    }
+
+    public function roleOfUser(int $userId): ?int
+    {
+        return 3;
+    }
+
+    public function athleteParticipatesInGame(int $userId, int $gameId): bool
+    {
+        return true;
+    }
 }

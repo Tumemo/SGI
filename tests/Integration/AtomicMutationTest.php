@@ -6,7 +6,7 @@ namespace SGITests\Integration;
 
 use App\Modules\Sincronizacao\Domain\MutationIdentity;
 use App\Modules\Sincronizacao\Infrastructure\MysqliMutationStore;
-use App\Shared\Database\Transaction;
+use App\Shared\Database\MysqliTransactionRunner;
 use SGITests\Support\Assertions;
 use SGITests\Support\TestDatabase;
 
@@ -21,9 +21,9 @@ final class AtomicMutationTest
         $store = new MysqliMutationStore($connection);
         $identity = MutationIdentity::create('atomic-rollback-' . bin2hex(random_bytes(8)), 1, '{}');
         $store->begin('atomic.test', $identity);
-        Transaction::begin($connection);
-        $connection->query('INSERT INTO artilheiros (usuarios_id_usuario, jogos_id_jogo, num_gol) VALUES (1, ' . $gameId . ', 1)');
-        Transaction::commit($connection);
+        (new MysqliTransactionRunner($connection))->run(function () use ($connection, $gameId): void {
+            $connection->query('INSERT INTO artilheiros (usuarios_id_usuario, jogos_id_jogo, num_gol) VALUES (1, ' . $gameId . ', 1)');
+        });
         try {
             $store->complete('atomic.test', $identity, 200, ['invalid_utf8' => "\xB1\x31"]);
             Assertions::assert('Falha ao persistir resposta impede confirmação parcial', false);

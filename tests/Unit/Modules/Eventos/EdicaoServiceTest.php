@@ -28,6 +28,12 @@ final class EdicaoServiceTest extends TestCase
         $this->expectException(InvalidArgumentException::class);
         (new EdicaoService(new InMemoryEdicaoRepository()))->atualizar(1, ['ponto_1_lugar' => -1]);
     }
+
+    public function testRejectsInvalidEditionStatus(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        (new EdicaoService(new InMemoryEdicaoRepository()))->alterarStatus(1, '2');
+    }
 }
 
 final class InMemoryEdicaoRepository implements EdicaoRepository

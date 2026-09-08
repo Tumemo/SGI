@@ -56,4 +56,44 @@ final class InMemoryOcorrenciaRepository implements OcorrenciaRepository
     {
         return true;
     }
+
+    public function find(int $id): ?array
+    {
+        return null;
+    }
+
+    public function editionOfUser(int $userId): ?int
+    {
+        return 1;
+    }
+
+    public function roleOfUser(int $userId): ?int
+    {
+        return 3;
+    }
+
+    public function editionOfGame(int $gameId): ?int
+    {
+        return 1;
+    }
+
+    public function editionOfTurma(int $turmaId): ?int
+    {
+        return 1;
+    }
+
+    public function gameContainsTurma(int $gameId, int $turmaId): bool
+    {
+        return true;
+    }
+
+    public function userBelongsToTurma(int $userId, int $turmaId): bool
+    {
+        return true;
+    }
+
+    public function userParticipatesInGame(int $userId, int $gameId): bool
+    {
+        return true;
+    }
 }

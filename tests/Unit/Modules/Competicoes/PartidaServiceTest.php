@@ -55,6 +55,12 @@ final class InMemoryPartidaRepository implements PartidaRepository
     /** @var array<string, int|string> */
     public array $fields = [];
 
+    /** @return array<string, mixed>|null */
+    public function find(int $id): ?array
+    {
+        return null;
+    }
+
     /**
      * @param array<string, int|string> $fields
      */

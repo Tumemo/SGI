@@ -9,8 +9,20 @@ declare(strict_types=1);
 require_once __DIR__ . '/Support/TestClient.php';
 require_once __DIR__ . '/Support/Assertions.php';
 require_once __DIR__ . '/Support/TestDatabase.php';
+require_once __DIR__ . '/Support/AuditFixtures.php';
+require_once __DIR__ . '/Integration/AuditFixturesTest.php';
+require_once __DIR__ . '/Integration/MesarioResourceScopeTest.php';
+require_once __DIR__ . '/Integration/TemporaryResolutionScopeTest.php';
+require_once __DIR__ . '/Integration/ExceptionEnvelopeTest.php';
+require_once __DIR__ . '/Integration/CronometroPersistenceTest.php';
 require_once __DIR__ . '/Integration/AuthAndRbacTest.php';
 require_once __DIR__ . '/Integration/InterclasseLifecycleTest.php';
+require_once __DIR__ . '/Integration/PontuacaoReconciliationTest.php';
+require_once __DIR__ . '/Integration/ArrecadacaoConsistencyTest.php';
+require_once __DIR__ . '/Integration/PodiumCreditTest.php';
+require_once __DIR__ . '/Integration/IndividualSyncCreditTest.php';
+require_once __DIR__ . '/Integration/HistoryRankingReconciliationTest.php';
+require_once __DIR__ . '/Integration/ConcurrentInvariantsTest.php';
 require_once __DIR__ . '/Integration/TurmasAndPdfImportTest.php';
 require_once __DIR__ . '/Integration/ModalidadesAndEquipesTest.php';
 require_once __DIR__ . '/Integration/InscricaoModalidadesTest.php';
@@ -23,6 +35,8 @@ require_once __DIR__ . '/Integration/AlunosPortalTest.php';
 require_once __DIR__ . '/Integration/PublicBoundaryTest.php';
 require_once __DIR__ . '/Integration/RefactorContractsTest.php';
 require_once __DIR__ . '/Integration/MigrationsTest.php';
+require_once __DIR__ . '/Integration/LegacyUpgradeTest.php';
+require_once __DIR__ . '/Integration/RecoveryRehearsalTest.php';
 require_once __DIR__ . '/Integration/InitialAdminTest.php';
 require_once __DIR__ . '/Integration/AtomicMutationTest.php';
 require_once __DIR__ . '/Integration/MataMataEdgeCasesTest.php';
@@ -30,8 +44,19 @@ require_once __DIR__ . '/E2E/FullOfflineTournamentTest.php';
 
 use SGITests\Support\Assertions;
 use SGITests\Support\TestDatabase;
+use SGITests\Integration\AuditFixturesTest;
+use SGITests\Integration\MesarioResourceScopeTest;
+use SGITests\Integration\TemporaryResolutionScopeTest;
+use SGITests\Integration\ExceptionEnvelopeTest;
+use SGITests\Integration\CronometroPersistenceTest;
 use SGITests\Integration\AuthAndRbacTest;
 use SGITests\Integration\InterclasseLifecycleTest;
+use SGITests\Integration\PontuacaoReconciliationTest;
+use SGITests\Integration\ArrecadacaoConsistencyTest;
+use SGITests\Integration\PodiumCreditTest;
+use SGITests\Integration\IndividualSyncCreditTest;
+use SGITests\Integration\HistoryRankingReconciliationTest;
+use SGITests\Integration\ConcurrentInvariantsTest;
 use SGITests\Integration\TurmasAndPdfImportTest;
 use SGITests\Integration\ModalidadesAndEquipesTest;
 use SGITests\Integration\InscricaoModalidadesTest;
@@ -69,6 +94,12 @@ echo "\033[1;36m================================================================
 
 $aborted = false;
 try {
+    // 0. Fixtures sintéticas das regressões da auditoria
+    AuditFixturesTest::run();
+    MesarioResourceScopeTest::run();
+    TemporaryResolutionScopeTest::run();
+    ExceptionEnvelopeTest::run();
+
     // 1. Autenticação e RBAC
     AuthAndRbacTest::run();
 
@@ -77,6 +108,8 @@ try {
 
     // 3. Turmas e importação de PDF
     $idTurma = TurmasAndPdfImportTest::run($idEdicao);
+    PontuacaoReconciliationTest::run($idEdicao, $idTurma);
+    ArrecadacaoConsistencyTest::run($idEdicao, $idTurma);
 
     // 4. Modalidades e Equipes
     $dadosMod = ModalidadesAndEquipesTest::run($idEdicao);
@@ -92,6 +125,9 @@ try {
     $idJogo1 = $dadosJogos['id_jogo_1'];
     $idJogo2 = $dadosJogos['id_jogo_2'];
     $equipesIds = $dadosJogos['equipes_ids'];
+
+    // 6.1 Persistência e replay do cronômetro
+    CronometroPersistenceTest::run($idModalidade, $idJogo1);
 
     // 7. Placar e Artilharia
     PlacarAndArtilhariaTest::run($idJogo1, $idModalidade, $equipesIds);
@@ -114,11 +150,17 @@ try {
 
     // 13. Torneio Completo e Sincronização Offline
     FullOfflineTournamentTest::run($idEdicao, $idModalidade, $idJogo2, $equipesIds);
+    PodiumCreditTest::run($idEdicao, $idModalidade, $equipesIds);
+    IndividualSyncCreditTest::run($idEdicao, $idModalidade);
+    HistoryRankingReconciliationTest::run($idEdicao, $idTurma);
+    ConcurrentInvariantsTest::run($idEdicao, $idTurma);
 
     // 14. Fronteira pública e proteção de arquivos internos
     PublicBoundaryTest::run();
     \SGITests\Integration\RefactorContractsTest::run();
     \SGITests\Integration\MigrationsTest::run();
+    \SGITests\Integration\LegacyUpgradeTest::run();
+    \SGITests\Integration\RecoveryRehearsalTest::run();
     \SGITests\Integration\InitialAdminTest::run();
 
 } catch (Throwable $e) {
