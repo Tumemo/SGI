@@ -3708,7 +3708,9 @@ body > main {
     letter-spacing: 0.05em;
 }
 
-.sgi-offline-banner-btn {
+.sgi-offline-banner-btn,
+.sgi-offline-banner-export,
+.sgi-offline-banner-import {
     border: 1px solid #fff;
     background: transparent;
     color: #fff;
@@ -3720,7 +3722,9 @@ body > main {
     transition: background 0.2s, color 0.2s;
 }
 
-.sgi-offline-banner-btn:hover {
+.sgi-offline-banner-btn:hover,
+.sgi-offline-banner-export:hover,
+.sgi-offline-banner-import:hover {
     background: #fff;
     color: #b02a37;
 }

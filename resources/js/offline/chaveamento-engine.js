@@ -108,13 +108,13 @@
                 } catch (e) { dados = null; }
                 if (!dados) return;
 
-                if (/lancar_resultado\.php/.test(url)) {
+                if (/\/(?:lancar_resultado\.php|v1\/resultados)\/?(?:\?|$)/.test(url)) {
                     ops.push({ tipo: 'resultado', quando: item.createdAt || 0, dados: dados });
-                } else if (/\/partidas\.php/.test(url) && String(item.method || '').toUpperCase() === 'POST') {
+                } else if (/\/(?:partidas\.php|v1\/partidas)\/?(?:\?|$)/.test(url) && String(item.method || '').toUpperCase() === 'POST') {
                     ops.push({ tipo: 'partida_resultado', quando: item.createdAt || 0, dados: dados });
-                } else if (/\/jogos\.php/.test(url) && String(item.method || '').toUpperCase() === 'PUT') {
+                } else if (/\/(?:jogos\.php|v1\/jogos)\/?(?:\?|$)/.test(url) && String(item.method || '').toUpperCase() === 'PUT') {
                     ops.push({ tipo: 'jogo_update', quando: item.createdAt || 0, dados: dados });
-                } else if (/\/chaveamento\.php/.test(url) && String(item.method || '').toUpperCase() === 'POST' && dados.tipo_modalidade === 'individual') {
+                } else if (/\/(?:chaveamento\.php|v1\/chaveamentos)\/?(?:\?|$)/.test(url) && String(item.method || '').toUpperCase() === 'POST' && dados.tipo_modalidade === 'individual') {
                     ops.push({ tipo: 'ind_ranking', quando: item.createdAt || 0, dados: dados });
                 }
             });

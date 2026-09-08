@@ -64,6 +64,12 @@
             // caminhos sem inventar novas pluralizações.
             var recursos = {
                 'jogos': 'jogos.php',
+                'resultados': 'lancar_resultado.php',
+                'turmas': 'turmas.php',
+                'modalidades': 'modalidades.php',
+                'categorias': 'categorias.php',
+                'locais': 'locais.php',
+                'equipes': 'equipes.php',
                 'partidas': 'partidas.php',
                 'ocorrencias': 'ocorrencias.php',
                 'ocorrencias-turmas': 'ocorrencias_turmas.php',

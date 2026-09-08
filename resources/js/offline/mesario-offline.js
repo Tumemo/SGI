@@ -340,7 +340,9 @@
 
     // Quando a conexão cai antes de a edição ativa ser resolvida, ainda é
     // possível abrir a última cópia já baixada daquela tela para a sessão.
-    function idbFindTela(tela) {
+    function idbFindTela(tela, params) {
+        params = params || {};
+        var edicaoEsperada = params.id ? String(params.id) : '';
         return openDB().then(function (db) {
             return new Promise(function (resolve, reject) {
                 var tx = db.transaction('paginas', 'readonly');
@@ -348,7 +350,13 @@
                 r.onsuccess = function () {
                     var prefixo = SESSION + '|';
                     var itens = (r.result || []).filter(function (item) {
-                        return item && item.key.indexOf(prefixo) === 0 && item.tela === tela && !isLoginHtml(item.html);
+                        if (!item || item.key.indexOf(prefixo) !== 0 || item.tela !== tela || isLoginHtml(item.html)) return false;
+                        if (!edicaoEsperada) return true;
+                        if (item.interclasseId != null) return String(item.interclasseId) === edicaoEsperada;
+                        try {
+                            var url = new URL(item.url || '', window.location.href);
+                            return String(url.searchParams.get('id') || '') === edicaoEsperada;
+                        } catch (e) { return false; }
                     }).sort(function (a, b) { return (b.savedAt || 0) - (a.savedAt || 0); });
                     resolve(itens[0] || null);
                 };
@@ -622,6 +630,7 @@
             }
             rec.url = url;
             rec.tela = tela;
+            if (params && params.id != null) rec.interclasseId = String(params.id);
             rec.titulo = TELA_TITULO[tela] || 'SGI';
             rec.savedAt = Date.now();
             var key = chaveTela(tela, params);
@@ -647,7 +656,7 @@
             }
             if (rec) return rec;
             function alternativaOuErro() {
-                return idbFindTela(tela).then(function (alternativa) {
+                return idbFindTela(tela, params).then(function (alternativa) {
                     if (alternativa && isLoginHtml(alternativa.html)) {
                         return null;
                     }
@@ -990,6 +999,22 @@
     }
 
     function preload(automatico) {
+        if (window.SGIOffline && typeof window.SGIOffline.checkAccess === 'function') {
+            return window.SGIOffline.checkAccess(true).then(function (ok) {
+                if (!ok) {
+                    var estado = window.SGIOffline.getState ? window.SGIOffline.getState() : {};
+                    aviso(estado.session === 'expirada'
+                        ? 'A sessão expirou. Entre novamente para preparar ou atualizar o offline.'
+                        : 'Servidor local indisponível. Conecte-se à rede local para preparar ou atualizar o offline.');
+                    return false;
+                }
+                return iniciarPreload(automatico);
+            });
+        }
+        return iniciarPreload(automatico);
+    }
+
+    function iniciarPreload(automatico) {
         if (state.nivel !== 2 || !state.temCasca) return;
         if (state.preloading) return;
         if (!automatico) {
@@ -1177,11 +1202,10 @@
                 aviso(mensagem);
                 return;
             }
-            idbFindTela('agenda').then(function (rec) {
+            obterIdAtivo().then(function (id) { return idbFindTela('agenda', id ? { id: id } : {}); }).then(function (rec) {
                 if (rec) {
-                    state.pronto = true;
+                    state.pronto = false;
                     marcarPronto();
-                    mostrarBadge();
                     aviso('Download parcial. Conecte-se para completar.');
                 } else {
                     aviso('Não foi possível baixar as telas agora. Verifique a conexão.');
@@ -1200,13 +1224,30 @@
     function verificarPronto() {
         var flag = false;
         try { flag = localStorage.getItem(PRONTO_STORAGE_KEY) === '1'; } catch (e) {}
-        return idbFindTela('agenda').then(function (rec) {
-            if (rec || flag) {
-                state.pronto = true;
-                mostrarBadge();
+        var obrigatorias = ['agenda', 'chaveamento', 'ocorrencias', 'jogoslista'];
+        return obterIdAtivo().then(function (id) {
+            if (!id) {
+                state.pronto = false;
+                marcarPronto();
+                return false;
             }
+            return Promise.all(obrigatorias.map(function (tela) {
+                return idbFindTela(tela, { id: id }).then(function (rec) {
+                    // Caches antigos sem fontes de script podem exibir HTML, mas
+                    // não conseguem reativar a tela com segurança após a queda.
+                    return !!(rec && rec.schemaVersion >= 2 && Array.isArray(rec.pageSources) &&
+                        String(rec.interclasseId || id) === String(id));
+                });
+            })).then(function (resultado) {
+            var completo = resultado.every(function (valor) { return valor; });
+            state.pronto = completo && flag;
+            if (state.pronto) mostrarBadge();
             return state.pronto;
-        }).catch(function () { return false; });
+            });
+        }).catch(function () {
+            state.pronto = false;
+            return false;
+        });
     }
 
     /* ============================ Interface ============================ */
@@ -1343,7 +1384,9 @@
                 nivel: state.nivel,
                 temCasca: state.temCasca,
                 pronto: state.pronto,
-                preloading: state.preloading
+                preloading: state.preloading,
+                servidor: window.SGIOffline && typeof window.SGIOffline.getState === 'function'
+                    ? window.SGIOffline.getState().server : 'desconhecido'
             };
         }
     };

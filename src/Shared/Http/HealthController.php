@@ -16,6 +16,9 @@ final class HealthController
         if (\App\Shared\Config\Env::get('SGI_APP_ENV') === 'test') {
             $payload['test_environment'] = ['database' => \App\Shared\Config\Env::get('SGI_DB_NAME')];
         }
-        return Response::json($payload);
+        return Response::json($payload, 200, [
+            'Cache-Control' => 'no-store, no-cache, must-revalidate',
+            'Pragma' => 'no-cache',
+        ]);
     }
 }

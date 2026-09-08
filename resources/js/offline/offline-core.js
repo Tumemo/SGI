@@ -23,6 +23,15 @@
     var MAX_TRIES = 5;
     var RETRY_BASE_MS = 3000;
     var RETRY_MAX_MS = 60000;
+    var REQUEST_TIMEOUT_MS = 20000;
+    var HEALTH_TIMEOUT_MS = 5000;
+    var MAX_IMPORT_BYTES = 2 * 1024 * 1024;
+    var MAX_IMPORT_ITEMS = 1000;
+    var HEALTH_PATH = '/api/v1/health';
+    var COORD_DB_NAME = 'sgi_offline_coord';
+    var COORD_DB_VERSION = 1;
+    var COORD_STORE = 'leases';
+    var COORD_LEASE_MS = 30000;
 
     // Cache GET separado por usuário autenticado: a chave opaca é derivada no
     // servidor e não expõe o PHPSESSID nem reutiliza o ID fixo diretamente.
@@ -30,6 +39,13 @@
     // fila pendente, mas muda entre usuários e na troca de senha.
     var SESSION_KEY = (typeof window !== 'undefined' && window.SGI_CACHE_KEY)
         ? String(window.SGI_CACHE_KEY) : 'anon';
+    var COORD_LEASE_ID = 'sync|' + SESSION_KEY;
+    var TAB_ID = (function () {
+        try {
+            if (window.crypto && typeof window.crypto.randomUUID === 'function') return window.crypto.randomUUID();
+        } catch (e) {}
+        return 'tab-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2);
+    }());
 
     function cacheKey(url) {
         return SESSION_KEY + '|' + url;
@@ -84,6 +100,11 @@
     var dbPromise = null;
     var state = {
         online: navigator.onLine !== false,
+        server: 'desconhecido',
+        serverCheckedAt: 0,
+        serverError: '',
+        session: 'desconhecida',
+        sessionCheckedAt: 0,
         softOffline: false,
         softOfflineUntil: 0,
         pending: 0,
@@ -95,12 +116,30 @@
     var listeners = [];
     var retryTimer = null;
     var retryDelay = RETRY_BASE_MS;
+    var healthPromise = null;
+    var coordDbPromise = null;
+    var leaseGeneration = 0;
+    var channel = null;
+
+    try {
+        if (typeof BroadcastChannel === 'function') {
+            channel = new BroadcastChannel('sgi-offline-' + SESSION_KEY);
+            channel.onmessage = function (event) {
+                var data = event && event.data;
+                if (!data || data.owner === TAB_ID) return;
+                if (data.type === 'queue-changed' || data.type === 'server-online') {
+                    refreshPending().then(notify).catch(noop);
+                }
+            };
+        }
+    } catch (e) { channel = null; }
 
     function noop() {}
 
     function marcarSoftOffline() {
         state.softOffline = true;
         state.softOfflineUntil = Date.now() + 15000;
+        notify();
     }
 
     function estaSoftOffline() {
@@ -110,8 +149,46 @@
         return state.softOffline;
     }
 
+    function servidorIndisponivel() {
+        return state.server === 'indisponivel' || state.server === 'sessao' || estaSoftOffline();
+    }
+
+    function avisarAbas(type, extra) {
+        if (!channel) return;
+        try { channel.postMessage(Object.assign({ type: type, owner: TAB_ID }, extra || {})); } catch (e) {}
+    }
+
     function resolveUrl(url) {
         try { return new URL(url, window.location.href).href; } catch (e) { return String(url); }
+    }
+
+    function healthUrl() {
+        return aplicacaoUrl(HEALTH_PATH);
+    }
+
+    function aplicacaoBasePath() {
+        var base = '';
+        if (window.SGI_BASE_PATH) {
+            base = '/' + String(window.SGI_BASE_PATH).replace(/^\/+|\/+$/g, '');
+        } else {
+            var scripts = document.getElementsByTagName('script');
+            for (var i = 0; i < scripts.length; i++) {
+                var src = scripts[i].src || '';
+                var marker = '/assets/';
+                var pos = src.indexOf(marker);
+                if (pos > -1) {
+                    try {
+                        base = new URL(src, window.location.href).pathname.split(marker)[0];
+                    } catch (e) { base = ''; }
+                    break;
+                }
+            }
+        }
+        return base;
+    }
+
+    function aplicacaoUrl(path) {
+        return resolveUrl(aplicacaoBasePath() + path);
     }
 
     function isSameOrigin(url) {
@@ -122,6 +199,216 @@
 
     function isMutation(method) {
         return method === 'POST' || method === 'PUT' || method === 'PATCH' || method === 'DELETE';
+    }
+
+    function fetchComTimeout(input, init, timeoutMs) {
+        if (!originalFetch) return Promise.reject(new Error('fetch indisponivel'));
+        var controller = typeof AbortController === 'function' ? new AbortController() : null;
+        var opcoes = Object.assign({}, init || {});
+        var timer = null;
+        if (controller) {
+            opcoes.signal = controller.signal;
+            timer = setTimeout(function () {
+                try { controller.abort(); } catch (e) {}
+            }, timeoutMs || REQUEST_TIMEOUT_MS);
+        }
+        return originalFetch(input, opcoes).then(function (res) {
+            if (timer) clearTimeout(timer);
+            return res;
+        }, function (err) {
+            if (timer) clearTimeout(timer);
+            throw err;
+        });
+    }
+
+    function verificarServidor(force) {
+        if (navigator.onLine === false) {
+            state.server = 'indisponivel';
+            state.serverError = 'O dispositivo está sem conexão com a rede local.';
+            notify();
+            return Promise.resolve(false);
+        }
+        var agora = Date.now();
+        if (!force && state.server === 'acessivel' && agora - state.serverCheckedAt < 10000) {
+            return Promise.resolve(true);
+        }
+        if (healthPromise) return healthPromise;
+        healthPromise = fetchComTimeout(healthUrl(), {
+            method: 'GET',
+            cache: 'no-store',
+            credentials: 'same-origin',
+            headers: { 'Accept': 'application/json', 'X-SGI-Health-Check': '1' }
+        }, HEALTH_TIMEOUT_MS).then(function (res) {
+            return res.text().then(function (text) {
+                var json = null;
+                try { json = text ? JSON.parse(text) : null; } catch (e) {}
+                if (!res.ok || !json || json.success !== true || json.status !== 'ok' || json.service !== 'sgi') {
+                    throw new Error('O servidor local não confirmou o serviço SGI.');
+                }
+                state.server = 'acessivel';
+                state.serverCheckedAt = Date.now();
+                state.serverError = '';
+                state.softOffline = false;
+                avisarAbas('server-online');
+                notify();
+                return true;
+            });
+        }).catch(function (err) {
+            state.server = 'indisponivel';
+            state.serverCheckedAt = Date.now();
+            state.serverError = String((err && err.message) || 'Servidor local indisponível.');
+            notify();
+            return false;
+        }).then(function (result) {
+            healthPromise = null;
+            return result;
+        });
+        return healthPromise;
+    }
+
+    function verificarSessao(force) {
+        if (navigator.onLine === false || servidorIndisponivel()) return Promise.resolve(false);
+        var agora = Date.now();
+        if (!force && state.session === 'valida' && agora - state.sessionCheckedAt < 30000) {
+            return Promise.resolve(true);
+        }
+        return fetchComTimeout(aplicacaoUrl('/api/v1/session'), {
+            method: 'GET',
+            cache: 'no-store',
+            credentials: 'same-origin',
+            headers: { 'Accept': 'application/json', 'X-SGI-Session-Check': '1' }
+        }, HEALTH_TIMEOUT_MS).then(function (res) {
+            return res.text().then(function (text) {
+                var json = null;
+                try { json = text ? JSON.parse(text) : null; } catch (e) {}
+                var usuario = json && json.usuario;
+                var idAtual = window.SGI_SESSION_ID ? String(window.SGI_SESSION_ID) : '';
+                if (!res.ok || !json || json.success !== true || !usuario ||
+                    (idAtual && String(usuario.id || '') !== idAtual)) {
+                    throw new Error('A sessão do operador expirou ou mudou.');
+                }
+                state.session = 'valida';
+                state.sessionCheckedAt = Date.now();
+                if (state.server === 'sessao') state.server = 'acessivel';
+                state.serverError = '';
+                notify();
+                return true;
+            });
+        }).catch(function (err) {
+            state.session = 'expirada';
+            state.sessionCheckedAt = Date.now();
+            state.server = 'sessao';
+            state.serverError = String((err && err.message) || 'A sessão do operador não está disponível.');
+            notify();
+            return false;
+        });
+    }
+
+    function verificarAcesso(force) {
+        return verificarServidor(force).then(function (ok) {
+            return ok ? verificarSessao(force) : false;
+        });
+    }
+
+    function openCoordDB() {
+        if (coordDbPromise) return coordDbPromise;
+        coordDbPromise = new Promise(function (resolve, reject) {
+            try {
+                var req = indexedDB.open(COORD_DB_NAME, COORD_DB_VERSION);
+                req.onupgradeneeded = function (event) {
+                    var db = event.target.result;
+                    if (!db.objectStoreNames.contains(COORD_STORE)) db.createObjectStore(COORD_STORE, { keyPath: 'id' });
+                };
+                req.onsuccess = function () { resolve(req.result); };
+                req.onerror = function () { reject(req.error); };
+            } catch (e) { reject(e); }
+        });
+        return coordDbPromise;
+    }
+
+    function adquirirReservaSync() {
+        return openCoordDB().then(function (db) {
+            return new Promise(function (resolve, reject) {
+                var tx = db.transaction(COORD_STORE, 'readwrite');
+                var store = tx.objectStore(COORD_STORE);
+                var req = store.get(COORD_LEASE_ID);
+                var agora = Date.now();
+                var concedida = false;
+                req.onsuccess = function () {
+                    var atual = req.result;
+                    if (atual && atual.owner !== TAB_ID && Number(atual.expiresAt) > agora) return;
+                    leaseGeneration = (Number(atual && atual.generation) || 0) + 1;
+                    store.put({ id: COORD_LEASE_ID, owner: TAB_ID, generation: leaseGeneration, expiresAt: agora + COORD_LEASE_MS });
+                    concedida = true;
+                };
+                tx.oncomplete = function () { resolve(concedida); };
+                tx.onerror = function () { reject(tx.error); };
+                tx.onabort = function () { reject(tx.error || new Error('Reserva de sincronização abortada.')); };
+            });
+        }).catch(function () {
+            // A coordenação é uma proteção adicional. Se o banco auxiliar não
+            // puder ser aberto, a fila principal continua disponível na aba.
+            return true;
+        });
+    }
+
+    function liberarReservaSync() {
+        return openCoordDB().then(function (db) {
+            return new Promise(function (resolve) {
+                var tx = db.transaction(COORD_STORE, 'readwrite');
+                var store = tx.objectStore(COORD_STORE);
+                var req = store.get(COORD_LEASE_ID);
+                req.onsuccess = function () {
+                    var atual = req.result;
+                    if (atual && atual.owner === TAB_ID && Number(atual.generation) === leaseGeneration) store.delete(COORD_LEASE_ID);
+                };
+                tx.oncomplete = resolve;
+                tx.onerror = resolve;
+                tx.onabort = resolve;
+            });
+        }).catch(noop);
+    }
+
+    function verificarReservaSync() {
+        return openCoordDB().then(function (db) {
+            return new Promise(function (resolve) {
+                var tx = db.transaction(COORD_STORE, 'readonly');
+                var req = tx.objectStore(COORD_STORE).get(COORD_LEASE_ID);
+                req.onsuccess = function () {
+                    var atual = req.result;
+                    resolve(!!(atual && atual.owner === TAB_ID &&
+                        Number(atual.generation) === leaseGeneration &&
+                        Number(atual.expiresAt) > Date.now()));
+                };
+                req.onerror = function () { resolve(false); };
+            });
+        }).catch(function () {
+            // Se o banco auxiliar ficou indisponível, a idempotência do
+            // servidor continua sendo a última proteção contra replay.
+            return true;
+        });
+    }
+
+    function renovarReservaSync() {
+        return openCoordDB().then(function (db) {
+            return new Promise(function (resolve) {
+                var tx = db.transaction(COORD_STORE, 'readwrite');
+                var store = tx.objectStore(COORD_STORE);
+                var req = store.get(COORD_LEASE_ID);
+                var renovada = false;
+                req.onsuccess = function () {
+                    var atual = req.result;
+                    if (atual && atual.owner === TAB_ID && Number(atual.generation) === leaseGeneration) {
+                        store.put({ id: COORD_LEASE_ID, owner: TAB_ID, generation: leaseGeneration,
+                            expiresAt: Date.now() + COORD_LEASE_MS });
+                        renovada = true;
+                    }
+                };
+                tx.oncomplete = function () { resolve(renovada); };
+                tx.onerror = function () { resolve(false); };
+                tx.onabort = function () { resolve(false); };
+            });
+        }).catch(function () { return true; });
     }
 
     /* ------------------------- IndexedDB ------------------------- */
@@ -210,7 +497,10 @@
             return new Promise(function (resolve, reject) {
                 var tx = db.transaction(STORE_QUEUE, 'readwrite');
                 var req = tx.objectStore(STORE_QUEUE).add(item);
-                req.onsuccess = function () { resolve(req.result); };
+                // O sucesso do pedido ainda pode ser seguido por aborto da
+                // transação. Só confirme o salvamento depois do commit local.
+                tx.oncomplete = function () { resolve(req.result); };
+                tx.onabort = tx.onerror = function () { reject(tx.error || new Error('A gravação local foi interrompida.')); };
                 req.onerror = function () { reject(req.error); };
             });
         });
@@ -282,6 +572,13 @@
     function stateSnapshot() {
         return {
             online: state.online,
+            server: state.server,
+            serverCheckedAt: state.serverCheckedAt,
+            serverError: state.serverError,
+            session: state.session,
+            sessionCheckedAt: state.sessionCheckedAt,
+            softOffline: state.softOffline,
+            softOfflineUntil: state.softOfflineUntil,
             pending: state.pending,
             needsReview: state.needsReview,
             retryablePending: state.retryablePending,
@@ -311,6 +608,116 @@
                 clearSyncRetry();
             }
             return q;
+        });
+    }
+
+    function mutationId(item) {
+        var headers = copiarCabecalhos(item && item.headers);
+        var nome = localizarCabecalho(headers, 'X-SGI-Mutation-Id');
+        return nome ? String(headers[nome] || '') : '';
+    }
+
+    function exportPending() {
+        return idbQueueAll().then(function (items) {
+            return {
+                schemaVersion: 1,
+                exportedAt: new Date().toISOString(),
+                items: (items || []).map(function (item) {
+                    var safe = Object.assign({}, item);
+                    delete safe.id;
+                    delete safe.session;
+                    var headers = copiarCabecalhos(safe.headers);
+                    var safeHeaders = {};
+                    Object.keys(headers).forEach(function (name) {
+                        var lower = name.toLowerCase();
+                        if (lower === 'x-sgi-mutation-id' || lower === 'content-type' || lower === 'accept') {
+                            safeHeaders[name] = headers[name];
+                        }
+                    });
+                    safe.headers = safeHeaders;
+                    return safe;
+                })
+            };
+        });
+    }
+
+    function downloadPending() {
+        return exportPending().then(function (payload) {
+            var text = JSON.stringify(payload, null, 2);
+            if (typeof Blob === 'undefined' || !window.URL || typeof window.URL.createObjectURL !== 'function') return payload;
+            var blob = new Blob([text], { type: 'application/json;charset=utf-8' });
+            var url = window.URL.createObjectURL(blob);
+            var link = document.createElement('a');
+            link.href = url;
+            link.download = 'sgi-pendencias-' + new Date().toISOString().replace(/[:.]/g, '-') + '.json';
+            link.click();
+            setTimeout(function () {
+                if (typeof window.URL.revokeObjectURL === 'function') window.URL.revokeObjectURL(url);
+            }, 1000);
+            return payload;
+        });
+    }
+
+    function importarPendencias(input) {
+        if (typeof input === 'string' && input.length > MAX_IMPORT_BYTES) {
+            return Promise.reject(new Error('O arquivo de pendências excede o limite de 2 MB.'));
+        }
+        if (input && Number(input.size) > MAX_IMPORT_BYTES) {
+            return Promise.reject(new Error('O arquivo de pendências excede o limite de 2 MB.'));
+        }
+        var textoPromise = typeof input === 'string' ? Promise.resolve(input) :
+            (input && typeof input.text === 'function' ? input.text() : Promise.reject(new Error('Arquivo de pendências inválido.')));
+        return textoPromise.then(function (texto) {
+            var payload;
+            try { payload = JSON.parse(texto); } catch (e) { throw new Error('O arquivo de pendências não contém JSON válido.'); }
+            if (!payload || Number(payload.schemaVersion) !== 1 || !Array.isArray(payload.items)) {
+                throw new Error('Versão ou estrutura de pendências não reconhecida.');
+            }
+            if (payload.items.length > MAX_IMPORT_ITEMS) {
+                throw new Error('O arquivo de pendências contém itens demais.');
+            }
+            return idbQueueAll().then(function (atuais) {
+                var conhecidos = {};
+                (atuais || []).forEach(function (item) { var id = mutationId(item); if (id) conhecidos[id] = true; });
+                var aceitos = 0;
+                return payload.items.reduce(function (chain, original) {
+                    return chain.then(function () {
+                        var item = Object.assign({}, original || {});
+                        var id = mutationId(item);
+                        if (!id || (id !== SESSION_KEY && id.indexOf(SESSION_KEY + '-') !== 0)) {
+                            throw new Error('A pendência pertence a outro operador ou não possui identidade.');
+                        }
+                        item.method = String(item.method || '').toUpperCase();
+                        if (!isMutation(item.method)) throw new Error('O arquivo contém uma operação que não pode ser sincronizada.');
+                        if (!item.url || !isSameOrigin(item.url)) throw new Error('O arquivo contém uma URL fora do servidor SGI local.');
+                        var incomingHeaders = copiarCabecalhos(item.headers);
+                        var safeHeaders = {};
+                        Object.keys(incomingHeaders).forEach(function (name) {
+                            var lower = name.toLowerCase();
+                            if (lower === 'x-sgi-mutation-id' || lower === 'content-type' || lower === 'accept') {
+                                safeHeaders[name] = incomingHeaders[name];
+                            }
+                        });
+                        item.headers = safeHeaders;
+                        if (conhecidos[id]) return;
+                        delete item.id;
+                        item.session = SESSION_KEY;
+                        item.needsReview = !!item.needsReview;
+                        item.projectionPending = item.projectionPending !== false;
+                        item.tries = Number(item.tries) || 0;
+                        return idbQueueAdd(item).then(function () {
+                            conhecidos[id] = true;
+                            aceitos++;
+                        });
+                    });
+                }, Promise.resolve()).then(function () {
+                    return refreshPending().then(function () {
+                        notify();
+                        avisarAbas('queue-changed');
+                        return { imported: aceitos, pending: state.pending };
+                    });
+                });
+            });
         });
     }
 
@@ -426,6 +833,7 @@
             return refreshPending();
         }).then(function () {
             notify();
+            avisarAbas('queue-changed');
             scheduleSyncRetry();
             return item;
         });
@@ -457,7 +865,16 @@
     }
 
     function fileFromUrl(url) {
-        try { return new URL(url, window.location.href).pathname.split('/').pop(); }
+        try {
+            var file = new URL(url, window.location.href).pathname.replace(/\/+$/, '').split('/').pop();
+            var recursos = {
+                resultados: 'lancar_resultado.php',
+                artilheiros: 'artilheiro.php',
+                ocorrencias: 'ocorrencias.php',
+                partidas: 'partidas.php'
+            };
+            return recursos[file] || file;
+        }
         catch (e) { return String(url || '').split('?')[0].split('/').pop(); }
     }
 
@@ -481,19 +898,28 @@
     }
 
     function ordenarFila(queue) {
-        return (queue || []).slice().sort(function (a, b) {
-            var ka = tempGameKey(a);
-            var kb = tempGameKey(b);
-            if (ka && ka === kb) {
-                var aMaterializa = materializaJogoTemporario(a);
-                var bMaterializa = materializaJogoTemporario(b);
-                if (aMaterializa !== bMaterializa) return aMaterializa ? -1 : 1;
-            }
+        var pendentes = (queue || []).slice().sort(function (a, b) {
             var criadoA = Number(a.createdAt) || 0;
             var criadoB = Number(b.createdAt) || 0;
             if (criadoA !== criadoB) return criadoA - criadoB;
             return (Number(a.id) || 0) - (Number(b.id) || 0);
         });
+        var criacoes = {};
+        pendentes.forEach(function (item) {
+            var key = tempGameKey(item);
+            if (key && materializaJogoTemporario(item) && !criacoes[key]) criacoes[key] = item;
+        });
+        var ordenada = [];
+        // Ordenação por pares não é transitiva quando dois jogos se intercalam.
+        // Escolha a operação mais antiga cujas dependências já foram enviadas.
+        while (pendentes.length) {
+            var index = pendentes.findIndex(function (item) {
+                var criacao = criacoes[tempGameKey(item)];
+                return !criacao || materializaJogoTemporario(item) || pendentes.indexOf(criacao) === -1;
+            });
+            ordenada.push(pendentes.splice(index, 1)[0]);
+        }
+        return ordenada;
     }
 
     function lerRespostaSincronizacao(res) {
@@ -507,17 +933,21 @@
                 text: texto,
                 json: json,
                 httpOk: !!(res && res.ok),
-                // Uma API que devolve a página de login após redirecionamento
-                // também não confirmou a alteração, mesmo que o HTTP seja 200.
-                semanticOk: !redirecionouParaLogin && (!json || json.success !== false)
+                // HTTP 200 sozinho não confirma uma mutação: pode conter HTML,
+                // JSON incompleto ou o formato legado { status: 'erro' }.
+                semanticOk: !redirecionouParaLogin && !!json && typeof json === 'object' &&
+                    !Array.isArray(json) && json.success !== false && json.status !== 'erro' &&
+                    (json.success === true || json.status === 'sucesso')
             };
         });
     }
 
     function mensagemResposta(info) {
         if (info && info.json) {
-            return info.json.message || info.json.mensagem || info.json.error || '';
+            var mensagem = info.json.message || info.json.mensagem || info.json.error;
+            if (mensagem) return mensagem;
         }
+        if (info && info.httpOk && !info.semanticOk) return 'O servidor não confirmou o salvamento. A alteração foi mantida neste dispositivo para revisão.';
         if (info && info.response) return 'HTTP ' + info.response.status;
         return 'Não foi possível alcançar o servidor.';
     }
@@ -601,10 +1031,13 @@
     }
 
     function processarItemDaFila(item, summary) {
+        var reservaValida = verificarReservaSync().then(function (ok) {
+            if (!ok) throw erroInterrompeFila(true, 'A reserva desta sincronização foi assumida por outra aba.');
+        });
         if (item.remoteCommitted) {
-            return concluirConfirmacaoRemotaPendente(item, summary);
+            return reservaValida.then(function () { return concluirConfirmacaoRemotaPendente(item, summary); });
         }
-        return prepararProjecaoPendente(item).then(function () {
+        return reservaValida.then(function () { return prepararProjecaoPendente(item); }).then(function () {
             return corpoComDependenciaResolvida(item);
         }).then(function (corpo) {
             if (!corpo.ok) {
@@ -618,14 +1051,19 @@
             // different operation on the next retry.
             item.headers = headers;
             return idbQueueUpdate(item).then(function () {
-                return originalFetch(item.url, {
+                return fetchComTimeout(item.url, {
                     method: item.method,
                     headers: headers,
                     body: corpo.body == null ? undefined : corpo.body,
                     credentials: 'same-origin'
-                });
+                }, REQUEST_TIMEOUT_MS);
             });
         }).then(lerRespostaSincronizacao).then(function (info) {
+            return verificarReservaSync().then(function (ok) {
+                if (!ok) throw erroInterrompeFila(true, 'A reserva desta sincronização foi assumida por outra aba.');
+                return info;
+            });
+        }).then(function (info) {
             if (info.httpOk && info.semanticOk) {
                 return confirmarProjecaoRemota(item, info.text, info.json, summary);
             }
@@ -648,14 +1086,37 @@
     }
 
     function syncQueue(force) {
-        var vazio = { synced: 0, failed: 0, needsReview: 0, pending: state.pending };
+        var vazio = { synced: 0, failed: 0, needsReview: 0, pending: state.pending, busy: false };
         if (!state.online || syncing) return Promise.resolve(vazio);
+        if (servidorIndisponivel()) {
+            return verificarAcesso(false).then(function (ok) {
+                if (ok) return syncQueue(force);
+                vazio.blocked = true;
+                return vazio;
+            });
+        }
         syncing = true;
 
         function done(v) { syncing = false; return v; }
 
-        var summary = { synced: 0, failed: 0, needsReview: 0, pending: 0 };
-        var run = idbQueueAll().then(function (queue) {
+        var summary = { synced: 0, failed: 0, needsReview: 0, pending: 0, busy: false };
+        var reserva = false;
+        var renovacao = null;
+        var reservaPerdida = false;
+        var run = adquirirReservaSync().then(function (adquirida) {
+            if (!adquirida) {
+                summary.busy = true;
+                return null;
+            }
+            reserva = true;
+            renovacao = setInterval(function () {
+                renovarReservaSync().then(function (ok) {
+                    if (!ok) reservaPerdida = true;
+                });
+            }, Math.floor(COORD_LEASE_MS / 3));
+            return idbQueueAll();
+        }).then(function (queue) {
+            if (!queue) return;
             if (!queue.length) return;
             if (!force && queue.some(function (item) { return item.needsReview; })) return;
             queue = ordenarFila(queue);
@@ -689,9 +1150,23 @@
                 summary.pending = state.pending;
                 if (state.retryablePending > 0) scheduleSyncRetry();
                 notify();
-                return done(summary);
+                if (renovacao) clearInterval(renovacao);
+                if (reservaPerdida) {
+                    summary.failed += 1;
+                    summary.pending = state.pending;
+                    return (reserva ? liberarReservaSync() : Promise.resolve()).then(function () {
+                        avisarAbas('queue-changed');
+                        return done(summary);
+                    });
+                }
+                return (reserva ? liberarReservaSync() : Promise.resolve()).then(function () {
+                    avisarAbas('queue-changed');
+                    return done(summary);
+                });
             }).catch(function (err) {
                 syncing = false;
+                if (renovacao) clearInterval(renovacao);
+                if (reserva) liberarReservaSync();
                 if (window.console) console.warn('sgi: não foi possível atualizar o estado da fila:', err);
                 return summary;
             });
@@ -715,7 +1190,7 @@
         }
 
         if (!isSameOrigin(url)) {
-            if (navigator.onLine === false || estaSoftOffline()) {
+            if (navigator.onLine === false || estaSoftOffline() || servidorIndisponivel()) {
                 return Promise.resolve(new Response('', { status: 200, headers: { 'Content-Type': 'text/plain' } }));
             }
             return originalFetch(input, init).catch(function () {
@@ -727,7 +1202,7 @@
         if (method === 'GET') {
             // Não tente a rede quando o navegador já informou que está
             // desconectado ou quando a rede está inalcançável (softOffline).
-            if (navigator.onLine === false || estaSoftOffline()) {
+            if (navigator.onLine === false || estaSoftOffline() || servidorIndisponivel()) {
                 return idbGet(absUrl).then(function (cached) {
                     if (cached) {
                         return new Response(cached.text, {
@@ -746,7 +1221,7 @@
                     });
                 });
             }
-            return originalFetch(input, init).then(function (res) {
+            return fetchComTimeout(input, init, REQUEST_TIMEOUT_MS).then(function (res) {
                 state.softOffline = false;
                 if (res && res.ok) {
                     var clone = res.clone();
@@ -800,12 +1275,12 @@
         if (isMutation(method)) {
             var bodyStr = init.body ? String(init.body) : '';
             var ehNegativo = bodyStr.indexOf('"id_jogo":-') > -1 || absUrl.indexOf('id_jogo=-') > -1;
-            if (!state.online || ehNegativo) {
+            if (!state.online || navigator.onLine === false || estaSoftOffline() || servidorIndisponivel() || ehNegativo || state.pending > 0 || syncing) {
                 return queueMutation(method, absUrl, init.body, init.headers).then(function () {
                     return fakeResponse({ success: true, offline: true, queued: true, mensagem: 'Salvo localmente. Sera sincronizado quando houver conexao.' });
                 });
             }
-            return originalFetch(input, init).catch(function () {
+            return fetchComTimeout(input, init, REQUEST_TIMEOUT_MS).catch(function () {
                 return queueMutation(method, absUrl, init.body, init.headers).then(function () {
                     return fakeResponse({ success: true, offline: true, queued: true, mensagem: 'Salvo localmente. Sera sincronizado quando houver conexao.' });
                 });
@@ -871,7 +1346,7 @@
                     return send.call(xhr, body);
                 }
 
-                if (isMutation(_method) && !state.online) {
+                if (isMutation(_method) && (!state.online || state.pending > 0 || syncing || servidorIndisponivel())) {
                     queueMutation(_method, absUrl, _body, _headers).then(function () {
                         fakeXHRResponse(xhr);
                     });
@@ -983,6 +1458,9 @@
             '<span class="sgi-offline-banner-tag">OFFLINE</span>' +
             '<span class="sgi-offline-banner-text"></span>' +
             '<button type="button" class="sgi-offline-banner-btn sgi-hidden">Sincronizar agora</button>' +
+            '<button type="button" class="sgi-offline-banner-export sgi-hidden">Exportar pendências</button>' +
+            '<button type="button" class="sgi-offline-banner-import">Importar pendências</button>' +
+            '<input type="file" class="sgi-offline-banner-file sgi-hidden" accept="application/json,.json">' +
             '</div>';
         document.body.appendChild(b);
 
@@ -997,6 +1475,39 @@
                 });
             });
         }
+        var exportBtn = b.querySelector('.sgi-offline-banner-export');
+        if (exportBtn) {
+            exportBtn.addEventListener('click', function () {
+                exportBtn.disabled = true;
+                downloadPending().then(function () {
+                    exportBtn.disabled = false;
+                    notificarUsuario('Arquivo de pendências exportado.');
+                }).catch(function (err) {
+                    exportBtn.disabled = false;
+                    notificarUsuario((err && err.message) || 'Não foi possível exportar as pendências.');
+                });
+            });
+        }
+        var importBtn = b.querySelector('.sgi-offline-banner-import');
+        var importFile = b.querySelector('.sgi-offline-banner-file');
+        if (importBtn && importFile) {
+            importBtn.addEventListener('click', function () { importFile.click(); });
+            importFile.addEventListener('change', function () {
+                var file = importFile.files && importFile.files[0];
+                if (!file) return;
+                importBtn.disabled = true;
+                window.SGIOffline.importPending(file).then(function (result) {
+                    notificarUsuario(result.imported
+                        ? result.imported + ' pendência(s) importada(s).'
+                        : 'Nenhuma pendência nova foi importada.');
+                }).catch(function (err) {
+                    notificarUsuario((err && err.message) || 'Não foi possível importar as pendências.');
+                }).then(function () {
+                    importBtn.disabled = false;
+                    importFile.value = '';
+                });
+            });
+        }
     }
 
     function ensureBanner() {
@@ -1008,14 +1519,26 @@
         }
     }
 
+    function notificarUsuario(msg) {
+        var el = document.getElementById('sgi-aviso');
+        if (!el) {
+            if (window.console && console.info) console.info(msg);
+            return;
+        }
+        el.textContent = msg;
+        el.style.opacity = '1';
+        setTimeout(function () { el.style.opacity = '0'; }, 4200);
+    }
+
     function updateBanner() {
         var b = document.getElementById('sgi-offline-banner');
         if (!b) return;
         var tag = b.querySelector('.sgi-offline-banner-tag');
         var text = b.querySelector('.sgi-offline-banner-text');
         var btn = b.querySelector('.sgi-offline-banner-btn');
+        var exportBtn = b.querySelector('.sgi-offline-banner-export');
 
-        if (state.online && state.pending === 0) {
+        if (state.online && !servidorIndisponivel() && state.pending === 0) {
             b.classList.add('sgi-hidden');
             document.body.classList.remove('sgi-offline-active');
             return;
@@ -1024,7 +1547,7 @@
         b.classList.remove('sgi-hidden');
         document.body.classList.add('sgi-offline-active');
 
-        if (state.online) {
+        if (state.online && !servidorIndisponivel()) {
             b.classList.remove('sgi-offline-banner--offline');
             b.classList.add('sgi-offline-banner--syncing');
             if (state.needsReview > 0) {
@@ -1038,15 +1561,21 @@
                     : state.pending + ' alterações aguardando envio.';
             }
             if (btn) btn.classList.remove('sgi-hidden');
+            if (exportBtn) exportBtn.classList.toggle('sgi-hidden', state.pending === 0);
         } else {
             b.classList.add('sgi-offline-banner--offline');
             b.classList.remove('sgi-offline-banner--syncing');
             if (tag) tag.textContent = 'OFFLINE';
             if (text) {
-                text.textContent = 'Modo offline — os dados podem estar desatualizados.' +
+                text.textContent = (state.server === 'sessao' && state.serverError
+                    ? 'Sessão do operador indisponível — ' + state.serverError + ' '
+                    : state.server === 'indisponivel' && state.serverError
+                        ? 'Servidor local indisponível — ' + state.serverError + ' '
+                    : 'Modo offline — os dados podem estar desatualizados. ') +
                     (state.pending > 0 ? ' ' + state.pending + ' alteracao(oes) aguardando envio.' : '');
             }
             if (btn) btn.classList.toggle('sgi-hidden', state.pending === 0);
+            if (exportBtn) exportBtn.classList.toggle('sgi-hidden', state.pending === 0);
         }
     }
 
@@ -1056,40 +1585,38 @@
         var m = (method || 'POST').toUpperCase();
         var body = JSON.stringify(payload || {});
         var headers = garantirIdMutacao({ 'Content-Type': 'application/json' });
-        if (!state.online) {
-            return queueMutation(m, absUrl, body, headers).then(function () {
-                return { success: true, offline: true, queued: true };
-            });
-        }
-        return originalFetch(absUrl, {
+        return wrappedFetch(absUrl, {
             method: m,
             headers: headers,
             body: body
         }).then(function (res) {
             return res.json().catch(function () { return {}; });
-        }).catch(function () {
-            return queueMutation(m, absUrl, body, headers).then(function () {
-                return { success: true, offline: true, queued: true };
-            });
         });
     }
 
     /* ------------------------- Eventos ------------------------- */
     window.addEventListener('online', function () {
         state.online = true;
-        state.softOffline = false;
         notify();
-        syncQueue();
+        verificarAcesso(true).then(function (ok) {
+            if (ok) syncQueue();
+        });
     });
     window.addEventListener('offline', function () {
         state.online = false;
+        state.server = 'indisponivel';
+        state.serverError = 'O dispositivo está sem conexão com a rede local.';
         notify();
     });
     window.addEventListener('focus', function () {
-        if (navigator.onLine && state.pending > 0) syncQueue();
+        if (navigator.onLine) verificarAcesso(true).then(function (ok) {
+            if (ok && state.pending > 0) syncQueue();
+        });
     });
     document.addEventListener('visibilitychange', function () {
-        if (document.visibilityState === 'visible' && navigator.onLine && state.pending > 0) syncQueue();
+        if (document.visibilityState === 'visible' && navigator.onLine) verificarAcesso(true).then(function (ok) {
+            if (ok && state.pending > 0) syncQueue();
+        });
     });
 
     /* ------------------------- API publica ------------------------- */
@@ -1119,7 +1646,14 @@
         },
         submit: submit,
         getCached: idbGet,
-        getPendingList: function () { return idbQueueAll(); }
+        getPendingList: function () { return idbQueueAll(); },
+        checkServer: function (force) { return verificarServidor(force !== false); },
+        checkSession: function (force) { return verificarSessao(force !== false); },
+        checkAccess: function (force) { return verificarAcesso(force !== false); },
+        getTabId: function () { return TAB_ID; },
+        exportPending: exportPending,
+        downloadPending: downloadPending,
+        importPending: importarPendencias
     };
 
     /* ------------------------- Inicializacao ------------------------- */
@@ -1132,7 +1666,11 @@
         return refreshPending();
     }).then(function () {
         notify();
-        if (state.online && state.pending > 0) syncQueue();
+        if (state.online && state.pending > 0) {
+            verificarAcesso(true).then(function (ok) {
+                if (ok) syncQueue();
+            });
+        }
     }).catch(function (e) {
         if (window.console) console.warn('SGI Offline: IndexedDB indisponivel.', e);
     });
