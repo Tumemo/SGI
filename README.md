@@ -45,7 +45,7 @@ php bin/sgi.php migrate
 
 As migrações não criam contas com senhas de demonstração. Para cadastrar o primeiro administrador, defina temporariamente `SGI_ADMIN_LOGIN`, `SGI_ADMIN_NAME` e `SGI_ADMIN_PASSWORD` no ambiente (senha de pelo menos 12 caracteres) e execute `php bin/sgi.php admin:create`. Remova essas variáveis depois. Esse comando recusa alterar uma instalação que já possui administrador.
 
-Para uma instalação existente, siga [atualização e recuperação](docs/deployment.md). O antigo dump em `database/archive/` é uma referência histórica e não é usado para atualizar dados.
+Para uma instalação existente, siga [atualização e recuperação](docs/deployment.md). O pacote atual usa exclusivamente as migrações versionadas; a evolução do banco não depende de dumps históricos dentro do repositório.
 
 Configure o servidor web com **DocumentRoot em `public/`**. Para desenvolvimento local:
 
@@ -87,7 +87,7 @@ Estas contas são carregadas exclusivamente por `tests/run_all.php` em uma base 
 SGI/
 ├── public/                 # DocumentRoot; index.php e assets gerados
 ├── bootstrap/              # Autoload e composição da aplicação
-├── config/                 # Ambiente, rotas e aliases de compatibilidade
+├── config/                 # Ambiente e rotas
 ├── src/Modules/            # Acesso, Eventos, Participantes, Competições,
 │                           # Resultados, Disciplina e Sincronização
 ├── src/Shared/             # HTTP, conexão, transações, migrações e storage
@@ -97,7 +97,6 @@ SGI/
 ├── resources/images/       # Imagens e ícones da aplicação
 ├── database/migrations/    # Alterações versionadas do banco
 ├── database/seeders/       # Dados exclusivos de testes
-├── database/archive/       # Dump histórico, não usado pelo instalador
 ├── storage/                # Dados gerados em execução, fora do Git
 ├── tests/                  # Unitários, integração, JavaScript e navegador
 ├── tools/                  # Preparação de assets e verificações

@@ -17,10 +17,7 @@ for (const directory of ['js', 'css', 'images']) {
 }
 const vendors = {
     'bootstrap': 'bootstrap/dist',
-    'bootstrap-login': 'bootstrap-login/dist',
-    'bootstrap-pages': 'bootstrap-pages/dist',
     'bootstrap-icons': 'bootstrap-icons/font',
-    'bootstrap-icons-login': 'bootstrap-icons-login/font',
     'fontawesome': '@fortawesome/fontawesome-free',
     'axios': 'axios/dist'
 };

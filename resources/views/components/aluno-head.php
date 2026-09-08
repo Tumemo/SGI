@@ -30,7 +30,7 @@ if (!headers_sent()) {
 echo htmlspecialchars($tituloPagina ?? 'SGI');
 ?></title>
     <!-- Bootstrap CSS -->
-    <link href="<?= \App\Shared\Http\Assets::url('vendor/bootstrap-pages/css/bootstrap.min.css') ?>" rel="stylesheet" crossorigin="anonymous">
+    <link href="<?= \App\Shared\Http\Assets::url('vendor/bootstrap/css/bootstrap.min.css') ?>" rel="stylesheet" crossorigin="anonymous">
     <!-- Bootstrap Icons -->
     <link rel="stylesheet" href="<?= \App\Shared\Http\Assets::url('vendor/bootstrap-icons/bootstrap-icons.min.css') ?>">
     <!-- SGI Aluno Shared Styles -->

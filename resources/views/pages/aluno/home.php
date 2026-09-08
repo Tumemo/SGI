@@ -132,6 +132,6 @@ include SGI_ROOT . '/resources/views/components/aluno-nav.php';
     </div>
 </div>
 
-<script src="<?= \App\Shared\Http\Assets::url('vendor/bootstrap-pages/js/bootstrap.bundle.min.js') ?>" crossorigin="anonymous"></script>
+<script src="<?= \App\Shared\Http\Assets::url('vendor/bootstrap/js/bootstrap.bundle.min.js') ?>" crossorigin="anonymous"></script>
 </body>
 </html>

@@ -11,9 +11,6 @@
     "acorn": "8.15.0",
     "axios": "1.20.0",
     "bootstrap": "5.3.8",
-    "bootstrap-icons": "1.11.3",
-    "bootstrap-icons-login": "npm:bootstrap-icons@1.11.0",
-    "bootstrap-login": "npm:bootstrap@5.3.0",
-    "bootstrap-pages": "npm:bootstrap@5.3.3"
+    "bootstrap-icons": "1.11.3"
   }
 }

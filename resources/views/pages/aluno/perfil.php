@@ -264,7 +264,7 @@ include SGI_ROOT . '/resources/views/components/aluno-nav.php';
 
 <input type="file" id="fotoUploadInput" accept="image/jpeg,image/png,image/gif,image/webp" class="sgi-inline-6f9051e3">
 
-<script src="<?= \App\Shared\Http\Assets::url('vendor/bootstrap-pages/js/bootstrap.bundle.min.js') ?>" crossorigin="anonymous"></script>
+<script src="<?= \App\Shared\Http\Assets::url('vendor/bootstrap/js/bootstrap.bundle.min.js') ?>" crossorigin="anonymous"></script>
 <script type="application/json" data-sgi-config="aluno/perfil"><?= json_encode(['value2' => ($usuarioPerfil['nome_usuario'] ?? ''), 'value3' => ($usuarioPerfil['matricula_usuario'] ?? ''), 'value4' => ($sessionId ?? 0), 'value5' => ((int)($nivelUsuario ?? 3))], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_THROW_ON_ERROR) ?></script>
 <script data-sgi-page src="<?= \App\Shared\Http\Assets::url('js/pages/aluno/perfil.js') ?>"></script>
 </body>

@@ -32,7 +32,7 @@ if (!headers_sent()) {
     <title><?php
 echo htmlspecialchars($tituloPagina);
 ?></title>
-    <link href="<?= \App\Shared\Http\Assets::url('vendor/bootstrap-pages/css/bootstrap.min.css') ?>" rel="stylesheet" crossorigin="anonymous">
+    <link href="<?= \App\Shared\Http\Assets::url('vendor/bootstrap/css/bootstrap.min.css') ?>" rel="stylesheet" crossorigin="anonymous">
     <link rel="stylesheet" href="<?= \App\Shared\Http\Assets::url('vendor/bootstrap-icons/bootstrap-icons.min.css') ?>">
     <link rel="stylesheet" href="<?= \App\Shared\Http\Assets::url('vendor/fontawesome/css/all.min.css') ?>" crossorigin="anonymous" referrerpolicy="no-referrer">
     <link rel="stylesheet" href="../styles/style.css">
