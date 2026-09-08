@@ -36,17 +36,26 @@ final class ChaveamentoSyncController
         if ($modalityId <= 0 || $type === '') {
             return Response::json(['success' => false, 'message' => 'Informe o ID e o tipo da modalidade.'], 400);
         }
-        if ((int) ($_SESSION['nivel'] ?? -1) === 2) {
-            $active = (int) ($_SESSION['id_interclasse'] ?? 0);
-            if ($this->gateway->editionOfModality($modalityId) !== $active) {
-                return Response::json(['success' => false, 'message' => 'Mesários só podem sincronizar a edição ativa.'], 403);
-            }
+        $edition = $this->gateway->editionOfModality($modalityId);
+        if ($edition === null) {
+            return Response::json(['success' => false, 'message' => 'Modalidade não encontrada.'], 404);
+        }
+        if (($denied = $this->access->authorize($edition)) !== null) {
+            return $denied;
         }
         return $this->mutations->run($request, 'sincronizar_chaveamento', function () use ($modalityId, $type, $data): Response {
             try {
                 return Response::json($this->gateway->sync($modalityId, $type, $data));
-            } catch (\RuntimeException $exception) {
+            } catch (\InvalidArgumentException $exception) {
                 return Response::json(['success' => false, 'message' => 'Erro durante a sincronização: ' . $exception->getMessage()], 400);
+            } catch (\App\Modules\Competicoes\Application\ModalidadeNaoEncontradaException $exception) {
+                return Response::json(['success' => false, 'message' => $exception->getMessage()], 404);
+            } catch (\mysqli_sql_exception $exception) {
+                error_log('Falha de persistência na sincronização de chaveamento: ' . $exception->getMessage());
+                return Response::json(['success' => false, 'message' => 'Não foi possível sincronizar o chaveamento.'], 500);
+            } catch (\RuntimeException $exception) {
+                error_log('Falha na sincronização de chaveamento: ' . $exception->getMessage());
+                return Response::json(['success' => false, 'message' => 'Não foi possível sincronizar o chaveamento.'], 500);
             } catch (\Throwable $exception) {
                 error_log('Falha na sincronização de chaveamento: ' . $exception->getMessage());
                 return Response::json(['success' => false, 'message' => 'Não foi possível sincronizar o chaveamento.'], 500);

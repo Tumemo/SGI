@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Resultados\Presentation\Http;
 
+use App\Modules\Resultados\Application\TurmaHistoricoNaoEncontradaException;
 use App\Modules\Resultados\Infrastructure\MysqliHistoricoTurmaRepository;
 use App\Shared\Http\AccessGuard;
 use App\Shared\Http\Request;
@@ -36,8 +37,14 @@ final class HistoricoTurmaController
         }
         try {
             return Response::json($this->repository->find($classId, $editionId));
-        } catch (\RuntimeException $exception) {
+        } catch (TurmaHistoricoNaoEncontradaException $exception) {
             return Response::json(['success' => false, 'message' => $exception->getMessage()], 404);
+        } catch (\mysqli_sql_exception $exception) {
+            error_log('Falha de persistência ao consultar histórico da turma: ' . $exception->getMessage());
+            return Response::json(['success' => false, 'message' => 'Não foi possível consultar o histórico.'], 500);
+        } catch (\RuntimeException $exception) {
+            error_log('Falha ao consultar histórico da turma: ' . $exception->getMessage());
+            return Response::json(['success' => false, 'message' => 'Não foi possível consultar o histórico.'], 500);
         } catch (\Throwable $exception) {
             error_log('Falha ao consultar histórico da turma: ' . $exception->getMessage());
             return Response::json(['success' => false, 'message' => 'Não foi possível consultar o histórico.'], 500);

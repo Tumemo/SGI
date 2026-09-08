@@ -7,6 +7,11 @@ window.SGIPage.mount("eventos/configurar-pontuacao", function (pageConfig, pageS
     const PADRAO = { 'pontos-1': 10, 'pontos-2': 7, 'pontos-3': 5, 'pontos-arr': 2 };
     let VALORES_INICIAIS = {};
 
+    function habilitarControles(habilitado) {
+        document.querySelectorAll('.ptc-step-input, .ptc-step-btn, #btnRestaurarPadrao, #btnSalvarPontuacao')
+            .forEach((element) => { element.disabled = !habilitado; });
+    }
+
     function getPontos(id) {
         const el = document.getElementById(id);
         const v = parseInt(el ? el.value : '', 10);
@@ -56,6 +61,7 @@ window.SGIPage.mount("eventos/configurar-pontuacao", function (pageConfig, pageS
     }
 
     async function resolverInterclasse() {
+        habilitarControles(false);
         if (!idInterclasse) {
             const ativo = await window.SGIInterclasse.getActiveInterclasse();
             idInterclasse = ativo?.id_interclasse || null;
@@ -91,6 +97,7 @@ window.SGIPage.mount("eventos/configurar-pontuacao", function (pageConfig, pageS
             'pontos-arr': getPontos('pontos-arr')
         };
         marcarMudancas();
+        habilitarControles(true);
         return idInterclasse;
     }
 

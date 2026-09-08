@@ -235,6 +235,11 @@ final class SqlFilters
             $types .= "i";
             $params[] = \intval($filters['id_ocorrencia']);
         }
+        if (array_key_exists('status_ocorrencia', $filters) && $filters['status_ocorrencia'] !== '') {
+            $sqlExtras .= " AND ocorrencias.status_ocorrencia = ?";
+            $types .= "s";
+            $params[] = (string) $filters['status_ocorrencia'];
+        }
         if (isset($filters['penalidade'])) {
             $sqlExtras .= " AND ocorrencias.penalidade = ?";
             $types .= "i";

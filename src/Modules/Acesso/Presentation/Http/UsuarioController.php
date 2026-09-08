@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace App\Modules\Acesso\Presentation\Http;
 
-use App\Modules\Acesso\Infrastructure\MysqliUsuarioGateway;
 use App\Modules\Acesso\Application\UsuarioAdministrativoService;
-use App\Modules\Acesso\Infrastructure\MysqliUsuarioAdministrativoRepository;
+use App\Modules\Acesso\Application\UsuarioService;
+use App\Modules\Acesso\Domain\UsuarioConsultaRepository;
+use App\Modules\Eventos\Application\EdicaoService;
+use App\Modules\Eventos\Domain\EdicaoConsulta;
 use App\Modules\Eventos\Domain\EdicaoRules;
-use App\Modules\Eventos\Infrastructure\MysqliEdicaoConsulta;
-use App\Modules\Participantes\Domain\MatriculaRules;
 use App\Shared\Http\AccessGuard;
 use App\Shared\Http\Request;
 use App\Shared\Http\Response;
@@ -18,9 +18,11 @@ use App\Shared\Http\SessionManager;
 final class UsuarioController
 {
     public function __construct(
-        private readonly MysqliUsuarioGateway $gateway,
-        private readonly \mysqli $connection,
-        private readonly ?UsuarioAdministrativoService $administrative = null,
+        private readonly UsuarioConsultaRepository $consultas,
+        private readonly UsuarioService $usuarios,
+        private readonly UsuarioAdministrativoService $administrative,
+        private readonly EdicaoConsulta $edicoesConsulta,
+        private readonly EdicaoService $edicoes,
     ) {
     }
 
@@ -32,14 +34,14 @@ final class UsuarioController
                 if (($denied = AccessGuard::authorize([0, 1, 2])) !== null) {
                     return $denied;
                 }
-                $edition = $this->gateway->activeEdition();
+                $edition = $this->edicoesConsulta->findActiveId();
                 if ($edition === null) {
                     return Response::json(['status' => 'erro', 'mensagem' => 'Nenhuma edição ativa.']);
                 }
                 return match ($action) {
-                    'listar_competidores' => Response::json($this->gateway->competitors((int) $request->query('id_turma', 0), (int) $request->query('id_interclasse', $edition), (string) $request->query('genero', ''))),
-                    'listar_colaboradores' => Response::json($this->gateway->collaborators($edition)),
-                    default => Response::json($this->gateway->allUsers($edition)),
+                    'listar_competidores' => Response::json($this->consultas->competitors((int) $request->query('id_turma', 0), (int) $request->query('id_interclasse', $edition), (string) $request->query('genero', ''))),
+                    'listar_colaboradores' => Response::json($this->consultas->collaborators($edition)),
+                    default => Response::json($this->consultas->allUsers($edition)),
                 };
             }
             if ($request->method() === 'PUT') {
@@ -47,7 +49,7 @@ final class UsuarioController
                     return $denied;
                 }
                 $data = $request->allInput();
-                $this->gateway->setEditionStatus((int) ($data['id_interclasse'] ?? 0), (string) ($data['status_interclasse'] ?? ''));
+                $this->edicoes->alterarStatus((int) ($data['id_interclasse'] ?? 0), (string) ($data['status_interclasse'] ?? ''));
                 return Response::json(['status' => 'sucesso', 'mensagem' => 'Edição atualizada.']);
             }
             if ($request->method() !== 'POST') {
@@ -55,13 +57,12 @@ final class UsuarioController
             }
             $data = $request->allInput();
             if ($action === 'validar_inscricao') {
-                $edition = MysqliEdicaoConsulta::buscarInterclasseAtivo($this->connection);
+                $edition = $this->edicoesConsulta->findActiveId();
                 if ($edition === null) {
                     return Response::json(EdicaoRules::erroSemInterclasseAtivo());
                 }
-                $birth = MatriculaRules::parseDataNascimento((string) ($data['data_nasc_usuario'] ?? ''));
                 $registration = (string) ($data['matricula_usuario'] ?? $data['rm'] ?? $data['ra'] ?? '');
-                $user = $birth === null ? null : $this->gateway->findCompetitorForValidation($registration, $birth, $edition);
+                $user = $this->usuarios->validarInscricao($registration, (string) ($data['data_nasc_usuario'] ?? ''), $edition);
                 if ($user === null) {
                     return Response::json(['status' => 'erro', 'mensagem' => 'Não foi possível validar os dados informados.']);
                 }
@@ -86,34 +87,34 @@ final class UsuarioController
                 if (($denied = AccessGuard::authorize([0, 1])) !== null) {
                     return $denied;
                 }
-                $edition = $this->gateway->activeEdition();
+                $edition = $this->edicoesConsulta->findActiveId();
                 if ($edition === null) {
                     return Response::json(['status' => 'erro', 'mensagem' => 'Nenhuma edição ativa.']);
                 }
-                return Response::json($this->gateway->createStudent($data, $edition));
+                return Response::json($this->usuarios->criarAluno($data, $edition));
             }
             if ($action === 'cadastrar_usuario') {
                 if (($denied = AccessGuard::authorize([0])) !== null) {
                     return $denied;
                 }
-                $edition = $this->gateway->activeEdition();
+                $edition = $this->edicoesConsulta->findActiveId();
                 if ($edition === null) {
                     return Response::json(EdicaoRules::erroSemInterclasseAtivo());
                 }
-                return Response::json($this->gateway->createStaff($data, $edition, is_array($request->file('foto')) ? $request->file('foto') : null));
+                return Response::json($this->usuarios->cadastrarColaborador($data, $edition, self::temporaryPhotoPath($request->file('foto'))));
             }
             if ($action === 'atualizar_colaborador' || $action === 'atualizar_dados_colaborador') {
                 if (($denied = AccessGuard::authorize([0])) !== null) {
                     return $denied;
                 }
-                $edition = $this->gateway->activeEdition();
+                $edition = $this->edicoesConsulta->findActiveId();
                 if ($edition === null) {
                     return Response::json(EdicaoRules::erroSemInterclasseAtivo());
                 }
                 if ($action === 'atualizar_colaborador') {
-                    $this->gateway->updateStaffRole($data, $edition);
+                    $this->usuarios->atualizarColaborador($data, $edition);
                 } else {
-                    $this->gateway->updateStaffDetails($data, $edition);
+                    $this->usuarios->atualizarDadosColaborador($data, $edition);
                 }
                 return Response::json(['status' => 'sucesso', 'mensagem' => 'Colaborador atualizado.']);
             }
@@ -121,19 +122,16 @@ final class UsuarioController
                 if (($denied = AccessGuard::authorize([0, 1])) !== null) {
                     return $denied;
                 }
-                $edition = $this->gateway->activeEdition();
+                $edition = $this->edicoesConsulta->findActiveId();
                 if ($edition === null) {
                     return Response::json(EdicaoRules::erroSemInterclasseAtivo());
                 }
-                $this->gateway->updateStudent($data, $edition);
+                $this->usuarios->editarAluno($data, $edition);
                 return Response::json(['status' => 'sucesso', 'mensagem' => 'Aluno atualizado!']);
             }
             if (in_array($action, ['excluir_aluno', 'resetar_senha_aluno', 'excluir_colaborador'], true)) {
                 if (($denied = AccessGuard::authorize([0])) !== null) {
                     return $denied;
-                }
-                if ($this->administrative === null) {
-                    return Response::json(['status' => 'erro', 'mensagem' => 'Serviço administrativo indisponível.'], 500);
                 }
                 $id = (int) ($data['id_usuario'] ?? 0);
                 if ($action === 'excluir_aluno') {
@@ -144,25 +142,41 @@ final class UsuarioController
                     $this->administrative->resetarSenhaAluno($id);
                     return Response::json(['status' => 'sucesso', 'mensagem' => 'Senha do aluno resetada para o padrão (123).']);
                 }
-                $this->administrative->excluirColaborador($id, $this->gateway->activeEdition(), (int) ($_SESSION['id'] ?? $_SESSION['id_usuario'] ?? 0));
+                $this->administrative->excluirColaborador($id, $this->edicoesConsulta->findActiveId(), (int) ($_SESSION['id'] ?? $_SESSION['id_usuario'] ?? 0));
                 return Response::json(['status' => 'sucesso', 'mensagem' => 'Colaborador removido.']);
             }
             if ($request->query('id', null) !== null) {
                 if (($denied = AccessGuard::authorize([0, 1])) !== null) {
                     return $denied;
                 }
-                $edition = $this->gateway->activeEdition();
+                $edition = $this->edicoesConsulta->findActiveId();
                 if ($edition === null) {
                     return Response::json(['status' => 'erro', 'mensagem' => 'Nenhuma edição ativa.']);
                 }
-                $this->gateway->assignStudent((int) $request->query('id'), (int) ($data['turmas_id_turma'] ?? 0), (int) ($data['interclasses_id_interclasse'] ?? $edition));
+                $this->usuarios->atribuirAluno((int) $request->query('id'), (int) ($data['turmas_id_turma'] ?? 0), (int) ($data['interclasses_id_interclasse'] ?? $edition));
                 return Response::json(['status' => 'sucesso', 'mensagem' => 'Aluno atualizado.']);
             }
             return Response::json(['status' => 'erro', 'mensagem' => 'Ação inválida.'], 400);
+        } catch (\mysqli_sql_exception $exception) {
+            error_log('Falha ao processar usuário: ' . $exception->getMessage());
+            return Response::json(['status' => 'erro', 'mensagem' => 'Não foi possível processar usuário.'], 500);
+        } catch (\InvalidArgumentException|\RuntimeException $exception) {
+            return Response::json(['status' => 'erro', 'mensagem' => $exception->getMessage()], 400);
         } catch (\Throwable $exception) {
             error_log('Falha ao processar usuário: ' . $exception->getMessage());
-            return Response::json(['status' => 'erro', 'mensagem' => $exception->getMessage()], 400);
+            return Response::json(['status' => 'erro', 'mensagem' => 'Não foi possível processar usuário.'], 500);
         }
+    }
+
+    /** @param mixed $file */
+    private static function temporaryPhotoPath(mixed $file): ?string
+    {
+        if (!is_array($file) || (int) ($file['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK) {
+            return null;
+        }
+
+        $path = $file['tmp_name'] ?? null;
+        return is_string($path) && $path !== '' ? $path : null;
     }
 
 }

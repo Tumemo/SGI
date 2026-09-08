@@ -14,6 +14,32 @@ final class MysqliPartidaRepository implements PartidaRepository
     {
     }
 
+    /** @return array<string, mixed>|null */
+    public function find(int $id): ?array
+    {
+        $statement = $this->connection->prepare(
+            'SELECT p.id_partida, p.jogos_id_jogo, p.equipes_id_equipe,
+                    p.resultado_partida, p.status_partida,
+                    m.interclasses_id_interclasse AS edition_id
+             FROM partidas p
+             INNER JOIN jogos j ON j.id_jogo = p.jogos_id_jogo
+             INNER JOIN modalidades m ON m.id_modalidade = j.modalidades_id_modalidade
+             WHERE p.id_partida = ?
+             LIMIT 1',
+        );
+        if ($statement === false) {
+            throw new RuntimeException('Não foi possível consultar a partida.');
+        }
+        $statement->bind_param('i', $id);
+        if (!$statement->execute()) {
+            $statement->close();
+            throw new RuntimeException('Não foi possível consultar a partida.');
+        }
+        $row = $statement->get_result()->fetch_assoc() ?: null;
+        $statement->close();
+        return $row;
+    }
+
     /**
      * @param array<string, int|string> $fields
      */

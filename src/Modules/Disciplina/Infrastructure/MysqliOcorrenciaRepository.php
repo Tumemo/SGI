@@ -81,6 +81,76 @@ final class MysqliOcorrenciaRepository implements OcorrenciaRepository
         }
     }
 
+    public function find(int $id): ?array
+    {
+        $statement = $this->prepare('SELECT id_ocorrencia, usuarios_id_usuario, descricao_ocorrencia, status_ocorrencia FROM ocorrencias WHERE id_ocorrencia = ? LIMIT 1');
+        $statement->bind_param('i', $id);
+        $statement->execute();
+        $row = $statement->get_result()->fetch_assoc() ?: null;
+        $statement->close();
+        return $row;
+    }
+
+    public function editionOfUser(int $userId): ?int
+    {
+        return $this->scalar('SELECT interclasses_id_interclasse FROM usuarios WHERE id_usuario = ? LIMIT 1', $userId);
+    }
+
+    public function roleOfUser(int $userId): ?int
+    {
+        $value = $this->scalar('SELECT nivel_usuario FROM usuarios WHERE id_usuario = ? LIMIT 1', $userId);
+        return $value;
+    }
+
+    public function editionOfGame(int $gameId): ?int
+    {
+        return $this->scalar(
+            'SELECT m.interclasses_id_interclasse
+             FROM jogos j
+             INNER JOIN modalidades m ON m.id_modalidade = j.modalidades_id_modalidade
+             WHERE j.id_jogo = ?
+             LIMIT 1',
+            $gameId,
+        );
+    }
+
+    public function editionOfTurma(int $turmaId): ?int
+    {
+        return $this->scalar('SELECT interclasses_id_interclasse FROM turmas WHERE id_turma = ? LIMIT 1', $turmaId);
+    }
+
+    public function gameContainsTurma(int $gameId, int $turmaId): bool
+    {
+        return $this->exists(
+            'SELECT 1
+             FROM partidas p
+             INNER JOIN equipes e ON e.id_equipe = p.equipes_id_equipe
+             INNER JOIN turmas t ON t.id_turma = e.turmas_id_turma
+             WHERE p.jogos_id_jogo = ? AND t.id_turma = ?
+             LIMIT 1',
+            $gameId,
+            $turmaId,
+        );
+    }
+
+    public function userBelongsToTurma(int $userId, int $turmaId): bool
+    {
+        return $this->exists('SELECT 1 FROM usuarios WHERE id_usuario = ? AND turmas_id_turma = ? LIMIT 1', $userId, $turmaId);
+    }
+
+    public function userParticipatesInGame(int $userId, int $gameId): bool
+    {
+        return $this->exists(
+            'SELECT 1
+             FROM equipes_has_usuarios eu
+             INNER JOIN partidas p ON p.equipes_id_equipe = eu.equipes_id_equipe
+             WHERE eu.usuarios_id_usuario = ? AND p.jogos_id_jogo = ?
+             LIMIT 1',
+            $userId,
+            $gameId,
+        );
+    }
+
     public function update(int $id, array $data): bool
     {
         $fields = [];
@@ -117,5 +187,34 @@ final class MysqliOcorrenciaRepository implements OcorrenciaRepository
         $updated = $statement->affected_rows > 0;
         $statement->close();
         return $updated;
+    }
+
+    private function prepare(string $sql): \mysqli_stmt
+    {
+        $statement = $this->connection->prepare($sql);
+        if ($statement === false) {
+            throw new RuntimeException('Não foi possível consultar ocorrência.');
+        }
+        return $statement;
+    }
+
+    private function scalar(string $sql, int $id): ?int
+    {
+        $statement = $this->prepare($sql);
+        $statement->bind_param('i', $id);
+        $statement->execute();
+        $value = $statement->get_result()->fetch_column();
+        $statement->close();
+        return $value === null || $value === false ? null : (int) $value;
+    }
+
+    private function exists(string $sql, int $firstId, int $secondId): bool
+    {
+        $statement = $this->prepare($sql);
+        $statement->bind_param('ii', $firstId, $secondId);
+        $statement->execute();
+        $exists = $statement->get_result()->num_rows > 0;
+        $statement->close();
+        return $exists;
     }
 }

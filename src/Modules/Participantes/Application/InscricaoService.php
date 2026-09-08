@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Modules\Participantes\Application;
 
 use App\Modules\Participantes\Domain\InscricaoRepository;
+use App\Modules\Participantes\Domain\InscricaoRules;
 use InvalidArgumentException;
 
 final class InscricaoService
@@ -24,14 +25,10 @@ final class InscricaoService
         if ($editionId <= 0 || !is_array($teamIds) || $teamIds === []) {
             throw new InvalidArgumentException('id_interclasse e id_equipes são obrigatórios.');
         }
-        if (count($teamIds) > 3) {
+        $normalised = InscricaoRules::normalizarIds($teamIds);
+        if (count($normalised) > 3) {
             throw new InvalidArgumentException('Máximo de 3 modalidades permitidas.');
         }
-
-        $normalised = array_values(array_unique(array_filter(
-            array_map(static fn (mixed $id): int => (int) $id, $teamIds),
-            static fn (int $id): bool => $id > 0,
-        )));
         if ($normalised === []) {
             throw new InvalidArgumentException('Nenhuma equipe válida informada.');
         }

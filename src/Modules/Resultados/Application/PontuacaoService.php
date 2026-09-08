@@ -1,0 +1,72 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Modules\Resultados\Application;
+
+use App\Modules\Competicoes\Domain\ChaveamentoRules;
+use App\Modules\Resultados\Domain\PodioRepository;
+use RuntimeException;
+
+final class PontuacaoService
+{
+    public function __construct(private readonly PodioRepository $repository)
+    {
+    }
+
+    public function reconciliarJogo(int $gameId, bool $correction = false): void
+    {
+        $game = $this->repository->carregarContextoJogo($gameId);
+        if ($game === null) {
+            return;
+        }
+        $meta = ChaveamentoRules::parse($game['nome_jogo']);
+        if ($meta === null || ($meta['largura'] !== 2 && (int) ($meta['posicao'] ?? 0) !== 3)) {
+            return;
+        }
+        $positions = (int) ($meta['posicao'] ?? 0) === 3 ? [3] : [1, 2];
+        $old = $this->repository->carregarBloqueados($game['interclasse_id'], $game['modalidade_id']);
+        $oldRelevant = array_values(array_filter(
+            $old,
+            static fn (array $credit): bool => in_array((int) ($credit['posicao'] ?? 0), $positions, true),
+        ));
+        $oldByPosition = [];
+        foreach ($oldRelevant as $credit) {
+            $oldByPosition[(int) $credit['posicao']] = $credit;
+        }
+        $parts = $this->repository->carregarPartidasJogo($gameId);
+        usort($parts, static function (array $a, array $b): int {
+            $scoreOrder = (int) $b['resultado_partida'] <=> (int) $a['resultado_partida'];
+            return $scoreOrder !== 0 ? $scoreOrder : (int) $a['equipes_id_equipe'] <=> (int) $b['equipes_id_equipe'];
+        });
+        $new = [];
+        foreach ($positions as $index => $position) {
+            $teamId = (int) ($parts[$index]['equipes_id_equipe'] ?? 0);
+            $classId = $this->repository->turmaDaEquipe($teamId, $game['modalidade_id']);
+            if ($teamId <= 0 || $classId === null) {
+                throw new RuntimeException('Não foi possível identificar o beneficiário do pódio.');
+            }
+            if ($correction && !isset($oldByPosition[$position])) {
+                throw new RuntimeException('Pódio legado sem origem conferida; adote os créditos antes de retificar.');
+            }
+            $existing = $oldByPosition[$position] ?? null;
+            $new[] = [
+                'posicao' => $position,
+                'id_turma' => $classId,
+                'id_equipe' => $teamId,
+                'id_usuario' => null,
+                'id_jogo' => $gameId,
+                'pontos' => $existing !== null ? (int) $existing['pontos'] : $game['pontos'][$position],
+                'ativo' => 1,
+                'origem_registro' => $existing !== null ? (string) $existing['origem_registro'] : 'novo',
+            ];
+        }
+        $this->repository->substituirPosicoes($game['interclasse_id'], $game['modalidade_id'], $new);
+        $this->repository->aplicarDeltas(\App\Modules\Resultados\Domain\PodioRules::deltas($oldRelevant, $new));
+    }
+
+    public function invalidarSemOrigemAtual(int $editionId, int $modalityId): void
+    {
+        $this->repository->invalidarFontesSemOrigemAtual($editionId, $modalityId);
+    }
+}

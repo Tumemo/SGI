@@ -77,4 +77,45 @@ final class OcorrenciaService
         }
         return $this->ocorrencias->update($id, $updates);
     }
+
+    /** @return array<string, mixed>|null */
+    public function encontrar(int $id): ?array
+    {
+        return $this->ocorrencias->find($id);
+    }
+
+    public function editionOfUser(int $userId): ?int
+    {
+        return $this->ocorrencias->editionOfUser($userId);
+    }
+
+    public function roleOfUser(int $userId): ?int
+    {
+        return $this->ocorrencias->roleOfUser($userId);
+    }
+
+    public function editionOfGame(int $gameId): ?int
+    {
+        return $this->ocorrencias->editionOfGame($gameId);
+    }
+
+    public function editionOfTurma(int $turmaId): ?int
+    {
+        return $this->ocorrencias->editionOfTurma($turmaId);
+    }
+
+    public function gameContainsTurma(int $gameId, int $turmaId): bool
+    {
+        return $this->ocorrencias->gameContainsTurma($gameId, $turmaId);
+    }
+
+    public function userBelongsToTurma(int $userId, int $turmaId): bool
+    {
+        return $this->ocorrencias->userBelongsToTurma($userId, $turmaId);
+    }
+
+    public function userParticipatesInGame(int $userId, int $gameId): bool
+    {
+        return $this->ocorrencias->userParticipatesInGame($userId, $gameId);
+    }
 }

@@ -45,7 +45,10 @@ $router->get('/api/v1/classificacao', $withDatabase(
 ));
 $router->add(['GET', 'POST'], '/api/v1/edicoes', $withDatabase(
     static fn (mysqli $conn) => new \App\Modules\Eventos\Presentation\Http\EdicaoController(
-        new \App\Modules\Eventos\Application\EdicaoService(new \App\Modules\Eventos\Infrastructure\MysqliEdicaoRepository($conn)),
+        new \App\Modules\Eventos\Application\EdicaoService(new \App\Modules\Eventos\Infrastructure\MysqliEdicaoRepository(
+            $conn,
+            new \App\Modules\Competicoes\Infrastructure\MysqliEquipePadraoRepositoryAdapter($conn),
+        )),
         new \App\Modules\Eventos\Infrastructure\RegulamentoStorage(\App\Shared\Storage\StoragePaths::regulamentos()),
     ),
 ));
@@ -149,7 +152,10 @@ $router->add(['GET', 'POST'], '/api/v1/chaveamentos', $withDatabase(
 $router->post('/api/v1/inscricoes', $withDatabase(
     static fn (mysqli $conn) => new \App\Modules\Participantes\Presentation\Http\InscricaoController(
         new \App\Modules\Participantes\Application\InscricaoService(
-            new \App\Modules\Participantes\Infrastructure\MysqliInscricaoRepository($conn),
+            new \App\Modules\Participantes\Infrastructure\MysqliInscricaoRepository(
+                $conn,
+                new \App\Modules\Competicoes\Infrastructure\MysqliEquipePadraoRepositoryAdapter($conn),
+            ),
         ),
     ),
 ));
@@ -158,6 +164,8 @@ $router->add(['GET', 'POST', 'PUT'], '/api/v1/jogos', $withDatabase(
         new \App\Modules\Competicoes\Application\JogoService(new \App\Modules\Competicoes\Infrastructure\MysqliJogoRepository($conn)),
         new \App\Modules\Competicoes\Infrastructure\MysqliJogoGateway($conn),
         new \App\Modules\Acesso\Presentation\Http\CompetitionAccess(new \App\Modules\Acesso\Infrastructure\MysqliInterclasseRepository($conn)),
+        new \App\Modules\Competicoes\Application\CronometroService(new \App\Modules\Competicoes\Infrastructure\MysqliCronometroRepository($conn)),
+        new \App\Modules\Sincronizacao\Presentation\Http\MutationAction(new \App\Modules\Sincronizacao\Infrastructure\MysqliMutationStore($conn)),
     ),
 ));
 $router->add(['GET', 'POST', 'PUT'], '/api/v1/partidas', $withDatabase(
@@ -169,7 +177,13 @@ $router->add(['GET', 'POST', 'PUT'], '/api/v1/partidas', $withDatabase(
 ));
 $router->post('/api/v1/resultados', $withDatabase(
     static fn (mysqli $conn) => new \App\Modules\Competicoes\Presentation\Http\ResultadoController(
-        new \App\Modules\Competicoes\Infrastructure\MysqliPartidaGateway($conn),
+        new \App\Modules\Competicoes\Application\ResultadoService(
+            new \App\Modules\Competicoes\Infrastructure\MysqliPartidaGateway($conn),
+            new \App\Shared\Database\MysqliTransactionRunner($conn),
+            new \App\Modules\Resultados\Application\PontuacaoService(
+                new \App\Modules\Resultados\Infrastructure\MysqliPodioRepository($conn),
+            ),
+        ),
         new \App\Modules\Acesso\Presentation\Http\CompetitionAccess(new \App\Modules\Acesso\Infrastructure\MysqliInterclasseRepository($conn)),
         new \App\Modules\Sincronizacao\Presentation\Http\MutationAction(new \App\Modules\Sincronizacao\Infrastructure\MysqliMutationStore($conn)),
     ),
@@ -181,9 +195,18 @@ $router->get('/api/v1/historico-turma', $withDatabase(
 ));
 $router->add(['GET', 'POST', 'PUT'], '/api/v1/usuarios', $withDatabase(
     static fn (mysqli $conn) => new \App\Modules\Acesso\Presentation\Http\UsuarioController(
-        new \App\Modules\Acesso\Infrastructure\MysqliUsuarioGateway($conn),
-        $conn,
+        new \App\Modules\Acesso\Infrastructure\MysqliUsuarioConsultaRepository($conn),
+        new \App\Modules\Acesso\Application\UsuarioService(
+            new \App\Modules\Acesso\Infrastructure\MysqliUsuarioConsultaRepository($conn),
+            new \App\Modules\Acesso\Infrastructure\MysqliUsuarioManagementRepository($conn),
+            new \App\Modules\Acesso\Infrastructure\LocalFotoStorage(\App\Shared\Storage\StoragePaths::fotosUsuarios()),
+        ),
         new \App\Modules\Acesso\Application\UsuarioAdministrativoService(new \App\Modules\Acesso\Infrastructure\MysqliUsuarioAdministrativoRepository($conn)),
+        new \App\Modules\Eventos\Infrastructure\MysqliEdicaoConsultaRepository($conn),
+        new \App\Modules\Eventos\Application\EdicaoService(new \App\Modules\Eventos\Infrastructure\MysqliEdicaoRepository(
+            $conn,
+            new \App\Modules\Competicoes\Infrastructure\MysqliEquipePadraoRepositoryAdapter($conn),
+        )),
     ),
 ));
 $router->post('/api/v1/sincronizacao/chaveamento', $withDatabase(

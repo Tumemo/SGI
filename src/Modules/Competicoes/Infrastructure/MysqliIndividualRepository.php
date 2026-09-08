@@ -4,6 +4,9 @@ declare (strict_types=1);
 
 namespace App\Modules\Competicoes\Infrastructure;
 
+use App\Modules\Resultados\Domain\PodioRules;
+use App\Modules\Resultados\Infrastructure\MysqliPodioRepository;
+
 final class MysqliIndividualRepository
 {
     /**
@@ -112,14 +115,36 @@ final class MysqliIndividualRepository
         if (\count($idsUnicos) !== 3) {
             throw new \RuntimeException('Os participantes do 1º, 2º e 3º lugar devem ser diferentes.');
         }
+        $posicoes = [1 => (int) $ranking['primeiro'], 2 => (int) $ranking['segundo'], 3 => (int) $ranking['terceiro']];
+        $equipesPorPosicao = [];
+        foreach ($posicoes as $posicao => $idUsuario) {
+            $equipe = \App\Modules\Competicoes\Infrastructure\MysqliIndividualRepository::buscarEquipeUsuario($conn, $idUsuario, $idModalidade);
+            if ($equipe === null) {
+                throw new \RuntimeException("Usuário {$idUsuario} não possui equipe nesta modalidade.");
+            }
+            $equipesPorPosicao[$posicao] = $equipe;
+        }
         // Busca ou cria o jogo
         $jogo = \App\Modules\Competicoes\Infrastructure\MysqliIndividualRepository::buscarJogoExistente($conn, $idModalidade);
+        $creditosAnteriores = null;
         if ($jogo === \null) {
             $idJogo = \App\Modules\Competicoes\Infrastructure\MysqliIndividualRepository::criarJogo($conn, $idModalidade);
             $jaConcluido = \false;
         } else {
             $idJogo = $jogo['id_jogo'];
             $jaConcluido = $jogo['status_jogo'] === 'Concluido' || $jogo['status_jogo'] === 'Finalizado';
+            $editionStatement = $conn->prepare('SELECT interclasses_id_interclasse FROM modalidades WHERE id_modalidade = ? LIMIT 1');
+            $editionStatement->bind_param('i', $idModalidade);
+            $editionStatement->execute();
+            $editionId = (int) $editionStatement->get_result()->fetch_column();
+            $editionStatement->close();
+            if ($editionId <= 0) {
+                throw new \RuntimeException('Modalidade sem edição para reconciliação individual.');
+            }
+            $creditosAnteriores = (new MysqliPodioRepository($conn))->carregarBloqueados($editionId, $idModalidade);
+            if ($jaConcluido && \count(\array_filter($creditosAnteriores, static fn (array $credito): bool => (int) ($credito['posicao'] ?? 0) <= 3)) < 3) {
+                throw new \RuntimeException('Pódio individual legado sem origem conferida; adote os créditos antes de retificar.');
+            }
             // Limpa partidas existentes
             $stDel = $conn->prepare('DELETE FROM partidas WHERE jogos_id_jogo = ?');
             $stDel->bind_param('i', $idJogo);
@@ -127,24 +152,15 @@ final class MysqliIndividualRepository
             $stDel->close();
         }
         // Insere as 3 posições
-        $posicoes = [1 => $ranking['primeiro'], 2 => $ranking['segundo'], 3 => $ranking['terceiro']];
         $stIns = $conn->prepare("INSERT INTO partidas (jogos_id_jogo, equipes_id_equipe, usuarios_id_usuario, resultado_partida, status_partida)\r\n         VALUES (?, ?, ?, ?, '1')");
-        $equipesPorPosicao = [];
         foreach ($posicoes as $posicao => $idUsuario) {
-            // Busca a equipe do usuário para esta modalidade
-            $equipe = \App\Modules\Competicoes\Infrastructure\MysqliIndividualRepository::buscarEquipeUsuario($conn, $idUsuario, $idModalidade);
-            if ($equipe === \null) {
-                throw new \RuntimeException("Usuário {$idUsuario} não possui equipe nesta modalidade.");
-            }
-            $equipesPorPosicao[$posicao] = $equipe;
+            $equipe = $equipesPorPosicao[$posicao];
             $stIns->bind_param('iiii', $idJogo, $equipe, $idUsuario, $posicao);
             $stIns->execute();
         }
         $stIns->close();
-        // Soma os pontos no ranking geral (turmas) apenas na primeira finalização do jogo
-        if (!$jaConcluido) {
-            \App\Modules\Competicoes\Infrastructure\MysqliIndividualRepository::aplicarPontos($conn, $idModalidade, $equipesPorPosicao);
-        }
+        // O crédito de pódio é uma fonte própria e só é aplicado como diferença.
+        self::registrarCreditoPodio($conn, $idModalidade, $idJogo, $equipesPorPosicao, $posicoes, $jaConcluido, $creditosAnteriores);
         // Atualiza status do jogo para Concluído
         $stUpd = $conn->prepare("UPDATE jogos SET status_jogo = 'Concluido' WHERE id_jogo = ?");
         $stUpd->bind_param('i', $idJogo);
@@ -160,34 +176,65 @@ final class MysqliIndividualRepository
      */
     public static function aplicarPontos(\mysqli $conn, int $idModalidade, array $equipesPorPosicao): void
     {
-        $stM = $conn->prepare('SELECT interclasses_id_interclasse FROM modalidades WHERE id_modalidade = ? LIMIT 1');
-        $stM->bind_param('i', $idModalidade);
-        $stM->execute();
-        $modRow = $stM->get_result()->fetch_assoc();
-        $stM->close();
-        if (!$modRow) {
-            return;
+        $jogo = self::buscarJogoExistente($conn, $idModalidade);
+        if ($jogo !== null) {
+            self::registrarCreditoPodio($conn, $idModalidade, (int) $jogo['id_jogo'], $equipesPorPosicao, [], false);
         }
-        $stI = $conn->prepare('SELECT ponto_1_lugar, ponto_2_lugar, ponto_3_lugar FROM interclasses WHERE id_interclasse = ? LIMIT 1');
-        $idInterclasse = (int) $modRow['interclasses_id_interclasse'];
-        $stI->bind_param('i', $idInterclasse);
-        $stI->execute();
-        $ptRow = $stI->get_result()->fetch_assoc();
-        $stI->close();
-        if (!$ptRow) {
-            return;
+    }
+
+    /**
+     * @param array<int, int> $equipesPorPosicao
+     * @param array<int, int> $usuariosPorPosicao
+     */
+    /** @param list<array<string, mixed>>|null $creditosAnteriores */
+    private static function registrarCreditoPodio(\mysqli $conn, int $idModalidade, int $idJogo, array $equipesPorPosicao, array $usuariosPorPosicao, bool $jaConcluido, ?array $creditosAnteriores = null): void
+    {
+        $modality = $conn->prepare('SELECT interclasses_id_interclasse FROM modalidades WHERE id_modalidade = ? LIMIT 1');
+        $modality->bind_param('i', $idModalidade);
+        $modality->execute();
+        $editionId = (int) $modality->get_result()->fetch_column();
+        $modality->close();
+        if ($editionId <= 0) {
+            throw new \RuntimeException('Modalidade sem edição para crédito de pódio.');
         }
-        $pontos = [1 => (int) ($ptRow['ponto_1_lugar'] ?? 0), 2 => (int) ($ptRow['ponto_2_lugar'] ?? 0), 3 => (int) ($ptRow['ponto_3_lugar'] ?? 0)];
-        $stUpd = $conn->prepare('UPDATE turmas SET pontuacao_turma = pontuacao_turma + ?
-         WHERE id_turma = (SELECT turmas_id_turma FROM equipes WHERE id_equipe = ? LIMIT 1) LIMIT 1');
-        foreach ($pontos as $posicao => $pts) {
-            if ($pts <= 0 || empty($equipesPorPosicao[$posicao])) {
-                continue;
+        $repository = new MysqliPodioRepository($conn);
+        $old = $creditosAnteriores ?? $repository->carregarBloqueados($editionId, $idModalidade);
+        $oldByPosition = [];
+        foreach ($old as $credit) {
+            if ((int) $credit['posicao'] <= 3) {
+                $oldByPosition[(int) $credit['posicao']] = $credit;
             }
-            $stUpd->bind_param('ii', $pts, $equipesPorPosicao[$posicao]);
-            $stUpd->execute();
         }
-        $stUpd->close();
+        if ($jaConcluido && count($oldByPosition) < 3) {
+            throw new \RuntimeException('Pódio individual legado sem origem conferida; adote os créditos antes de retificar.');
+        }
+        $pointsStatement = $conn->prepare('SELECT ponto_1_lugar, ponto_2_lugar, ponto_3_lugar FROM interclasses WHERE id_interclasse = ? LIMIT 1');
+        $pointsStatement->bind_param('i', $editionId);
+        $pointsStatement->execute();
+        $points = $pointsStatement->get_result()->fetch_assoc() ?: [];
+        $pointsStatement->close();
+        $new = [];
+        foreach ([1, 2, 3] as $position) {
+            $teamId = (int) ($equipesPorPosicao[$position] ?? 0);
+            $classId = $repository->turmaDaEquipe($teamId, $idModalidade);
+            if ($teamId <= 0 || $classId === null) {
+                throw new \RuntimeException('Participante sem turma para crédito de pódio.');
+            }
+            $existing = $oldByPosition[$position] ?? null;
+            $new[] = [
+                'posicao' => $position,
+                'id_turma' => $classId,
+                'id_equipe' => $teamId,
+                'id_usuario' => $usuariosPorPosicao[$position] ?? null,
+                'id_jogo' => $idJogo,
+                'pontos' => $existing !== null ? (int) $existing['pontos'] : (int) ($points['ponto_' . $position . '_lugar'] ?? 0),
+                'ativo' => 1,
+                'origem_registro' => $existing !== null ? (string) $existing['origem_registro'] : 'novo',
+            ];
+        }
+        $deltas = PodioRules::deltas($old, $new);
+        $repository->substituirPosicoes($editionId, $idModalidade, $new);
+        $repository->aplicarDeltas($deltas);
     }
     /**
      * Busca a equipe de um usuário para uma modalidade específica.

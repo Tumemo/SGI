@@ -247,12 +247,13 @@ final class MysqliChaveamentoRepository
                 continue;
             }
             if ($meta['largura'] < $larguraInicial) {
+                $jogoId = (int) $j['id_jogo'];
                 $stD = $conn->prepare("DELETE FROM partidas WHERE jogos_id_jogo = ?");
-                $stD->bind_param('i', (int) $j['id_jogo']);
+                $stD->bind_param('i', $jogoId);
                 $stD->execute();
                 $stD->close();
                 $stU = $conn->prepare("UPDATE jogos SET status_jogo = 'Agendado' WHERE id_jogo = ?");
-                $stU->bind_param('i', (int) $j['id_jogo']);
+                $stU->bind_param('i', $jogoId);
                 $stU->execute();
                 $stU->close();
             }
@@ -263,12 +264,13 @@ final class MysqliChaveamentoRepository
         $posGames = $stPOS->get_result()->fetch_all(\MYSQLI_ASSOC);
         $stPOS->close();
         foreach ($posGames as $pg) {
+            $posGameId = (int) $pg['id_jogo'];
             $stDP = $conn->prepare("DELETE FROM partidas WHERE jogos_id_jogo = ?");
-            $stDP->bind_param('i', (int) $pg['id_jogo']);
+            $stDP->bind_param('i', $posGameId);
             $stDP->execute();
             $stDP->close();
             $stDJ = $conn->prepare("DELETE FROM jogos WHERE id_jogo = ?");
-            $stDJ->bind_param('i', (int) $pg['id_jogo']);
+            $stDJ->bind_param('i', $posGameId);
             $stDJ->execute();
             $stDJ->close();
         }

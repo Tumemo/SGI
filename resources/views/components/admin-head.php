@@ -62,7 +62,8 @@ if ($nivelUsuario === 2) {
 ?>
     <!-- Motor híbrido de chaveamento (avança a árvore localmente quando offline). -->
     <script src="<?= \App\Shared\Http\Assets::url('js/offline/chaveamento-engine.js') ?>"></script>
-    <script src="<?= \App\Shared\Http\Assets::url('js/shared/http-client.js') ?>"></script>
+<script src="<?= \App\Shared\Http\Assets::url('js/shared/http-client.js') ?>"></script>
+<script src="<?= \App\Shared\Http\Assets::url('js/shared/cronometro.js') ?>"></script>
 <script src="<?= \App\Shared\Http\Assets::url('js/shared/page-runtime.js') ?>"></script>
 </head>
 <body class="bg-light">

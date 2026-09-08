@@ -4,7 +4,10 @@ declare(strict_types=1);
 
 namespace App\Modules\Resultados\Infrastructure;
 
+use App\Modules\Resultados\Domain\ArrecadacaoQuantidadeInsuficienteException;
 use App\Modules\Resultados\Domain\ArrecadacaoRepository;
+use App\Modules\Resultados\Domain\PontuacaoRules;
+use App\Shared\Database\Transaction;
 use mysqli;
 use RuntimeException;
 
@@ -55,19 +58,19 @@ final class MysqliArrecadacaoRepository implements ArrecadacaoRepository
 
     public function addBatch(int $interclasseId, int $userId, array $items): void
     {
-        $this->connection->begin_transaction();
+        Transaction::begin($this->connection);
         try {
+            $value = $this->lockEdition($interclasseId);
+            $turmas = $this->lockTurmas($interclasseId, $items);
             $update = $this->connection->prepare(
-                'UPDATE turmas t
-                 INNER JOIN interclasses i ON t.interclasses_id_interclasse = i.id_interclasse
-                 SET t.qtd_itens_arrecadados = t.qtd_itens_arrecadados + ?,
-                     t.pontuacao_turma = t.pontuacao_turma + ROUND(? * i.valor_item_arrecadacao, 2)
-                 WHERE t.id_turma = ? AND i.id_interclasse = ?',
+                'UPDATE turmas
+                 SET qtd_itens_arrecadados = ?, pontuacao_turma = ?
+                 WHERE id_turma = ? AND interclasses_id_interclasse = ?',
             );
             $history = $this->connection->prepare(
                 'INSERT INTO historico_arrecadacoes
                     (id_turma, id_interclasse, quantidade, pontos_adicionados, registrado_por)
-                 VALUES (?, ?, ?, ROUND(? * (SELECT valor_item_arrecadacao FROM interclasses WHERE id_interclasse = ?)), ?)',
+                 VALUES (?, ?, ?, ?, ?)',
             );
             if ($update === false || $history === false) {
                 if ($update !== false) {
@@ -80,33 +83,47 @@ final class MysqliArrecadacaoRepository implements ArrecadacaoRepository
             }
 
             foreach ($items as $item) {
-                $quantity = $item['quantidade'];
-                $turmaId = $item['id_turma'];
-                $update->bind_param('ddii', $quantity, $quantity, $turmaId, $interclasseId);
-                if (!$update->execute() || $update->affected_rows === 0) {
-                    throw new RuntimeException('Turma não pertence à edição informada.');
+                $turmaId = (int) $item['id_turma'];
+                $quantity = self::quantityToken($item['quantidade']);
+                $before = $turmas[$turmaId];
+                $afterQuantity = PontuacaoRules::somarQuantidade($before['quantidade'], $quantity);
+                $delta = PontuacaoRules::doacao($afterQuantity, $value) - PontuacaoRules::doacao($before['quantidade'], $value);
+                $afterPoints = $before['pontos'] + $delta;
+                $update->bind_param('siii', $afterQuantity, $afterPoints, $turmaId, $interclasseId);
+                if (!$update->execute()) {
+                    throw new RuntimeException('Não foi possível atualizar a turma da arrecadação.');
                 }
-                $history->bind_param('iiddii', $turmaId, $interclasseId, $quantity, $quantity, $interclasseId, $userId);
+                $history->bind_param('iisii', $turmaId, $interclasseId, $quantity, $delta, $userId);
                 if (!$history->execute()) {
                     throw new RuntimeException('Não foi possível registrar o histórico da arrecadação.');
                 }
+                $turmas[$turmaId] = ['quantidade' => $afterQuantity, 'pontos' => $afterPoints];
             }
             $update->close();
             $history->close();
-            $this->connection->commit();
+            Transaction::commit($this->connection);
         } catch (\Throwable $exception) {
-            $this->connection->rollback();
+            Transaction::rollback($this->connection);
             throw $exception;
         }
     }
 
     public function remove(int $historicoId, int $interclasseId): string
     {
-        $this->connection->begin_transaction();
+        $turmaId = $this->findHistoryClass($historicoId, $interclasseId);
+        if ($turmaId === null) {
+            return 'not_found';
+        }
+
+        Transaction::begin($this->connection);
         try {
+            $value = $this->lockEdition($interclasseId);
+            $turma = $this->lockTurma($interclasseId, $turmaId);
             $find = $this->connection->prepare(
-                'SELECT id_turma, quantidade, pontos_adicionados, status_historico
-                 FROM historico_arrecadacoes WHERE id_historico = ? AND id_interclasse = ?',
+                'SELECT id_turma, quantidade, status_historico
+                 FROM historico_arrecadacoes
+                 WHERE id_historico = ? AND id_interclasse = ?
+                 FOR UPDATE',
             );
             if ($find === false) {
                 throw new RuntimeException('Não foi possível consultar o histórico.');
@@ -119,51 +136,146 @@ final class MysqliArrecadacaoRepository implements ArrecadacaoRepository
             $row = $find->get_result()->fetch_assoc();
             $find->close();
             if ($row === null) {
-                $this->connection->rollback();
+                Transaction::rollback($this->connection);
                 return 'not_found';
             }
             if ((string) $row['status_historico'] === '0') {
-                $this->connection->rollback();
+                Transaction::rollback($this->connection);
                 return 'already_removed';
             }
+            if ((int) $row['id_turma'] !== $turmaId) {
+                throw new RuntimeException('O histórico não pertence à turma travada.');
+            }
 
-            $turmaId = (int) $row['id_turma'];
-            $quantity = (float) $row['quantidade'];
-            $points = (int) $row['pontos_adicionados'];
-            $revert = $this->connection->prepare(
-                'UPDATE turmas t
-                 INNER JOIN interclasses i ON t.interclasses_id_interclasse = i.id_interclasse
-                 SET t.qtd_itens_arrecadados = t.qtd_itens_arrecadados - ?,
-                     t.pontuacao_turma = t.pontuacao_turma - ?
-                 WHERE t.id_turma = ? AND i.id_interclasse = ?',
-            );
+            $quantity = self::quantityToken((string) $row['quantidade']);
+            try {
+                $afterQuantity = PontuacaoRules::subtrairQuantidade($turma['quantidade'], $quantity);
+            } catch (\InvalidArgumentException $exception) {
+                throw new ArrecadacaoQuantidadeInsuficienteException($exception->getMessage(), 0, $exception);
+            }
+            $delta = PontuacaoRules::doacao($afterQuantity, $value) - PontuacaoRules::doacao($turma['quantidade'], $value);
+            $afterPoints = $turma['pontos'] + $delta;
+
             $mark = $this->connection->prepare(
-                "UPDATE historico_arrecadacoes SET status_historico = '0' WHERE id_historico = ?",
+                "UPDATE historico_arrecadacoes
+                 SET status_historico = '0'
+                 WHERE id_historico = ? AND id_interclasse = ? AND status_historico = '1'",
             );
-            if ($revert === false || $mark === false) {
-                if ($revert !== false) {
-                    $revert->close();
-                }
+            $update = $this->connection->prepare(
+                'UPDATE turmas
+                 SET qtd_itens_arrecadados = ?, pontuacao_turma = ?
+                 WHERE id_turma = ? AND interclasses_id_interclasse = ?',
+            );
+            if ($mark === false || $update === false) {
                 if ($mark !== false) {
                     $mark->close();
                 }
+                if ($update !== false) {
+                    $update->close();
+                }
                 throw new RuntimeException('Não foi possível reverter a arrecadação.');
             }
-            $revert->bind_param('ddii', $quantity, $points, $turmaId, $interclasseId);
-            if (!$revert->execute() || $revert->affected_rows === 0) {
-                throw new RuntimeException('Turma não pertence à edição informada.');
+            $mark->bind_param('ii', $historicoId, $interclasseId);
+            if (!$mark->execute() || $mark->affected_rows !== 1) {
+                $mark->close();
+                $update->close();
+                throw new RuntimeException('Não foi possível confirmar o estorno do histórico.');
             }
-            $mark->bind_param('i', $historicoId);
-            if (!$mark->execute()) {
-                throw new RuntimeException('Não foi possível atualizar o histórico.');
+            $update->bind_param('siii', $afterQuantity, $afterPoints, $turmaId, $interclasseId);
+            if (!$update->execute()) {
+                $mark->close();
+                $update->close();
+                throw new RuntimeException('Não foi possível atualizar a turma da arrecadação.');
             }
-            $revert->close();
             $mark->close();
-            $this->connection->commit();
+            $update->close();
+            Transaction::commit($this->connection);
             return 'removed';
         } catch (\Throwable $exception) {
-            $this->connection->rollback();
+            Transaction::rollback($this->connection);
             throw $exception;
         }
+    }
+
+    private function lockEdition(int $interclasseId): int
+    {
+        $statement = $this->connection->prepare('SELECT valor_item_arrecadacao FROM interclasses WHERE id_interclasse = ? FOR UPDATE');
+        if ($statement === false) {
+            throw new RuntimeException('Não foi possível travar a edição da arrecadação.');
+        }
+        $statement->bind_param('i', $interclasseId);
+        if (!$statement->execute()) {
+            $statement->close();
+            throw new RuntimeException('Não foi possível consultar a edição da arrecadação.');
+        }
+        $row = $statement->get_result()->fetch_assoc();
+        $statement->close();
+        if ($row === null) {
+            throw new RuntimeException('Edição não encontrada para a arrecadação.');
+        }
+        return (int) $row['valor_item_arrecadacao'];
+    }
+
+    /** @param list<array{id_turma: int, quantidade: float}> $items */
+    private function lockTurmas(int $interclasseId, array $items): array
+    {
+        $ids = [];
+        foreach ($items as $item) {
+            $ids[(int) $item['id_turma']] = true;
+        }
+        $ids = array_keys($ids);
+        sort($ids, SORT_NUMERIC);
+        $turmas = [];
+        foreach ($ids as $turmaId) {
+            $turmas[$turmaId] = $this->lockTurma($interclasseId, (int) $turmaId);
+        }
+        return $turmas;
+    }
+
+    /** @return array{quantidade: string, pontos: int} */
+    private function lockTurma(int $interclasseId, int $turmaId): array
+    {
+        $statement = $this->connection->prepare(
+            'SELECT qtd_itens_arrecadados, pontuacao_turma
+             FROM turmas WHERE id_turma = ? AND interclasses_id_interclasse = ? FOR UPDATE',
+        );
+        if ($statement === false) {
+            throw new RuntimeException('Não foi possível travar a turma da arrecadação.');
+        }
+        $statement->bind_param('ii', $turmaId, $interclasseId);
+        if (!$statement->execute()) {
+            $statement->close();
+            throw new RuntimeException('Não foi possível consultar a turma da arrecadação.');
+        }
+        $row = $statement->get_result()->fetch_assoc();
+        $statement->close();
+        if ($row === null) {
+            throw new RuntimeException('Turma não pertence à edição informada.');
+        }
+        return [
+            'quantidade' => self::quantityToken((string) $row['qtd_itens_arrecadados']),
+            'pontos' => (int) $row['pontuacao_turma'],
+        ];
+    }
+
+    private function findHistoryClass(int $historicoId, int $interclasseId): ?int
+    {
+        $statement = $this->connection->prepare('SELECT id_turma FROM historico_arrecadacoes WHERE id_historico = ? AND id_interclasse = ?');
+        if ($statement === false) {
+            throw new RuntimeException('Não foi possível consultar o histórico.');
+        }
+        $statement->bind_param('ii', $historicoId, $interclasseId);
+        if (!$statement->execute()) {
+            $statement->close();
+            throw new RuntimeException('Não foi possível consultar o histórico.');
+        }
+        $value = $statement->get_result()->fetch_column();
+        $statement->close();
+        return $value === null ? null : (int) $value;
+    }
+
+    private static function quantityToken(float|string|int $quantity): string
+    {
+        return number_format((float) $quantity, 2, '.', '');
     }
 }

@@ -216,6 +216,21 @@
         });
     }
 
+    function filaLegadaPertenceASessao(item) {
+        // Versões anteriores não gravavam `session`. Não atribua uma fila
+        // antiga a qualquer usuário autenticado: só é seguro adotá-la quando
+        // o identificador de mutação preserva o namespace opaco da sessão que
+        // está aberta. Em modo anônimo não há outro namespace para comparar.
+        if (item && Object.prototype.hasOwnProperty.call(item, 'session') && item.session != null) {
+            return String(item.session) === SESSION_KEY;
+        }
+        if (SESSION_KEY === 'anon') return true;
+        var headers = copiarCabecalhos(item && item.headers);
+        var nomeId = localizarCabecalho(headers, 'X-SGI-Mutation-Id');
+        var idMutacao = nomeId ? String(headers[nomeId] || '') : '';
+        return idMutacao === SESSION_KEY || idMutacao.indexOf(SESSION_KEY + '-') === 0;
+    }
+
     function idbQueueAll() {
         return openDB().then(function (db) {
             return new Promise(function (resolve, reject) {
@@ -224,7 +239,7 @@
                 req.onsuccess = function () {
                     var todos = req.result || [];
                     resolve(todos.filter(function (i) {
-                        return (i.session || 'anon') === SESSION_KEY;
+                        return filaLegadaPertenceASessao(i);
                     }));
                 };
                 req.onerror = function () { reject(req.error); };
@@ -374,7 +389,23 @@
             needsReview: false,
             projectionPending: true
         };
-        return idbQueueAdd(item).then(function (id) {
+        var bodyJson = null;
+        try { bodyJson = typeof storedBody === 'string' ? JSON.parse(storedBody || '{}') : storedBody; } catch (_) { bodyJson = null; }
+        var arquivo = fileFromUrl(url);
+        var idTemporario = bodyJson && bodyJson.id_ocorrencia != null ? String(bodyJson.id_ocorrencia) : '';
+        var precisaCriacaoOcorrencia = method === 'PUT' && arquivo === 'ocorrencias.php' && /^temp_\d+$/.test(idTemporario);
+        var dependencia = precisaCriacaoOcorrencia
+            ? idbQueueAll().then(function (fila) {
+                var idPai = Number(idTemporario.slice(5));
+                var criacao = (fila || []).filter(function (pendente) {
+                    return Number(pendente.id) === idPai && pendente.method === 'POST' && fileFromUrl(pendente.url) === 'ocorrencias.php';
+                })[0];
+                if (criacao) {
+                    item.dependsOn = { mutationId: criacao.id, tempId: idTemporario, field: 'id_ocorrencia' };
+                }
+            })
+            : Promise.resolve();
+        return dependencia.then(function () { return idbQueueAdd(item); }).then(function (id) {
             item.id = id;
             var projection = (window.SGIDataLayer && window.SGIDataLayer.onQueued)
                 ? window.SGIDataLayer.onQueued(item)
@@ -406,6 +437,23 @@
     function bodyAsJson(item) {
         try { return typeof item.body === 'string' ? JSON.parse(item.body || '{}') : (item.body || {}); }
         catch (e) { return {}; }
+    }
+
+    function corpoComDependenciaResolvida(item) {
+        var dependencia = item && item.dependsOn;
+        if (!dependencia) return Promise.resolve({ ok: true, body: item.body });
+        if (dependencia.resolvedId == null || dependencia.resolvedId === '') {
+            return Promise.resolve({
+                ok: false,
+                message: 'A ocorrência depende de uma criação que ainda não foi confirmada pelo servidor.'
+            });
+        }
+        var body = bodyAsJson(item);
+        if (!body || typeof body !== 'object') {
+            return Promise.resolve({ ok: false, message: 'O corpo da edição offline não pôde ser reconstituído.' });
+        }
+        body[dependencia.field || 'id_ocorrencia'] = dependencia.resolvedId;
+        return Promise.resolve({ ok: true, body: JSON.stringify(body) });
     }
 
     function fileFromUrl(url) {
@@ -501,7 +549,18 @@
         var projection = (window.SGIDataLayer && window.SGIDataLayer.onSynced)
             ? window.SGIDataLayer.onSynced(item, text, json || {})
             : null;
-        return Promise.resolve(projection).then(function () {
+        function resolverDependentes() {
+            if (fileFromUrl(item.url) !== 'ocorrencias.php' || item.method !== 'POST' || !json || !json.id) return Promise.resolve();
+            return idbQueueAll().then(function (fila) {
+                return Promise.all((fila || []).filter(function (pendente) {
+                    return pendente.dependsOn && Number(pendente.dependsOn.mutationId) === Number(item.id);
+                }).map(function (pendente) {
+                    pendente.dependsOn.resolvedId = json.id;
+                    return idbQueueUpdate(pendente);
+                }));
+            });
+        }
+        return Promise.resolve(projection).then(resolverDependentes).then(function () {
             return idbQueueDelete(item.id);
         }).then(function () {
             summary.synced += 1;
@@ -546,6 +605,11 @@
             return concluirConfirmacaoRemotaPendente(item, summary);
         }
         return prepararProjecaoPendente(item).then(function () {
+            return corpoComDependenciaResolvida(item);
+        }).then(function (corpo) {
+            if (!corpo.ok) {
+                return registrarFalha(item, summary, { status: 409, needsReview: true, message: corpo.message });
+            }
             // A restored queue can outlive the session token that created it.
             // Refresh authentication headers, preserving its mutation identity.
             var headers = garantirIdMutacao(item.headers);
@@ -557,7 +621,7 @@
                 return originalFetch(item.url, {
                     method: item.method,
                     headers: headers,
-                    body: item.body == null ? undefined : item.body,
+                    body: corpo.body == null ? undefined : corpo.body,
                     credentials: 'same-origin'
                 });
             });
@@ -598,7 +662,17 @@
             var chain = Promise.resolve();
             queue.forEach(function (item) {
                 chain = chain.then(function () {
-                    return processarItemDaFila(item, summary);
+                    // Uma criação pode resolver referências de uma mutação
+                    // dependente enquanto a fila já está em execução. Releia
+                    // o item antes de enviá-lo para não usar a cópia antiga
+                    // capturada pelo primeiro snapshot da fila.
+                    return idbQueueAll().then(function (atualizada) {
+                        return (atualizada || []).filter(function (pendente) {
+                            return Number(pendente.id) === Number(item.id);
+                        })[0] || item;
+                    }).then(function (atual) {
+                        return processarItemDaFila(atual, summary);
+                    });
                 });
             });
             return chain;
@@ -1033,7 +1107,16 @@
         // A ação explícita do usuário pode tentar novamente uma entrada que
         // ficou em revisão; o envio automático nunca a descarta silenciosamente.
         syncNow: function () { return syncQueue(true); },
+        // O cliente pode solicitar o envio automático depois de persistir uma
+        // mutação, sem ignorar entradas que exigem revisão humana.
+        sync: function () { return syncQueue(false); },
         queueMutation: queueMutation,
+        updatePending: function (item) {
+            return idbQueueUpdate(item).then(function () { return refreshPending(); }).then(function () {
+                notify();
+                return item;
+            });
+        },
         submit: submit,
         getCached: idbGet,
         getPendingList: function () { return idbQueueAll(); }

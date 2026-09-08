@@ -70,10 +70,10 @@ $ptcCards = [
                 <span class="ptc-unsaved d-none" id="ptcUnsaved">
                     <i class="bi bi-exclamation-circle-fill"></i> Alterações não salvas
                 </span>
-                <button type="button" class="btn ptc-btn-default" id="btnRestaurarPadrao" onclick="restaurarPadrao()">
+                <button type="button" class="btn ptc-btn-default" id="btnRestaurarPadrao" onclick="restaurarPadrao()" disabled>
                     <i class="bi bi-arrow-counterclockwise"></i> Restaurar Padrão
                 </button>
-                <button type="button" class="btn btn-danger ptc-btn-salvar" id="btnSalvarPontuacao" onclick="salvarPontuacao()">
+                <button type="button" class="btn btn-danger ptc-btn-salvar" id="btnSalvarPontuacao" onclick="salvarPontuacao()" disabled>
                     <i class="bi bi-check-lg"></i> Salvar
                 </button>
                 <a href="#" id="btnContinuarPontuacao" class="btn ptc-btn-continuar d-none">
@@ -99,12 +99,12 @@ $ptcCards = [
                     <div class="ptc-card-value">
                         <span class="ptc-card-label"><?= $c['label'] ?></span>
                         <div class="ptc-stepper">
-                            <button type="button" class="ptc-step-btn ptc-step-btn--minus" aria-label="Diminuir <?= $c['titulo'] ?>">
+                            <button type="button" class="ptc-step-btn ptc-step-btn--minus" aria-label="Diminuir <?= $c['titulo'] ?>" disabled>
                                 <i class="bi bi-dash-lg"></i>
                             </button>
                             <input type="number" class="ptc-step-input" id="pontos-<?= $c['key'] ?>"
-                                   value="<?= $c['valor'] ?>" min="0" step="1" inputmode="numeric">
-                            <button type="button" class="ptc-step-btn ptc-step-btn--plus" aria-label="Aumentar <?= $c['titulo'] ?>">
+                                   value="<?= $c['valor'] ?>" min="0" step="1" inputmode="numeric" disabled>
+                            <button type="button" class="ptc-step-btn ptc-step-btn--plus" aria-label="Aumentar <?= $c['titulo'] ?>" disabled>
                                 <i class="bi bi-plus-lg"></i>
                             </button>
                         </div>

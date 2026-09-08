@@ -4,14 +4,20 @@ declare(strict_types=1);
 
 namespace App\Modules\Competicoes\Infrastructure;
 
-use App\Modules\Competicoes\Application\PlacarService;
+use App\Modules\Competicoes\Application\JogoResolucaoAmbiguaException;
+use App\Modules\Competicoes\Application\JogoNaoEncontradoException;
+use App\Modules\Competicoes\Application\ModalidadeNaoEncontradaException;
+use App\Modules\Competicoes\Application\ResultadoService;
 use App\Modules\Competicoes\Domain\ChaveamentoRules;
-use App\Shared\Database\Transaction;
+use App\Modules\Competicoes\Domain\ResultadoRepository;
+use App\Modules\Resultados\Application\PontuacaoService;
+use App\Modules\Resultados\Infrastructure\MysqliPodioRepository;
+use App\Shared\Database\MysqliTransactionRunner;
 use App\Shared\Database\SqlFilters;
 use mysqli;
 use RuntimeException;
 
-final class MysqliPartidaGateway
+final class MysqliPartidaGateway implements ResultadoRepository
 {
     public function __construct(private readonly mysqli $connection)
     {
@@ -61,136 +67,321 @@ final class MysqliPartidaGateway
         return $row === null ? null : (int) $row['edition_id'];
     }
 
+    public function editionOfModality(int $id): ?int
+    {
+        $row = $this->one('SELECT interclasses_id_interclasse AS edition_id FROM modalidades WHERE id_modalidade = ? LIMIT 1', 'i', [$id]);
+        return $row === null ? null : (int) $row['edition_id'];
+    }
+
+    /** @return array{game_id:int,modality_id:int,edition_id:int,tag:?string} */
+    public function inspectResult(int $gameId, ?string $tag, int $modalityId): array
+    {
+        if ($gameId > 0) {
+            $game = $this->one(
+                'SELECT j.id_jogo, j.modalidades_id_modalidade AS modality_id,
+                        m.interclasses_id_interclasse AS edition_id
+                 FROM jogos j
+                 INNER JOIN modalidades m ON m.id_modalidade = j.modalidades_id_modalidade
+                 WHERE j.id_jogo = ?
+                 LIMIT 1',
+                'i',
+                [$gameId],
+            );
+            if ($game === null) {
+                throw new JogoNaoEncontradoException('Jogo não encontrado.');
+            }
+            $realModality = (int) $game['modality_id'];
+            if ($modalityId > 0 && $modalityId !== $realModality) {
+                throw new \InvalidArgumentException('A modalidade não pertence ao jogo informado.');
+            }
+            return [
+                'game_id' => $gameId,
+                'modality_id' => $realModality,
+                'edition_id' => (int) $game['edition_id'],
+                'tag' => null,
+            ];
+        }
+        if ($gameId === 0) {
+            throw new \InvalidArgumentException('Identificador de jogo temporário inválido.');
+        }
+        if ($modalityId <= 0) {
+            throw new \InvalidArgumentException('A modalidade é obrigatória para jogo temporário.');
+        }
+        $edition = $this->editionOfModality($modalityId);
+        if ($edition === null) {
+            throw new ModalidadeNaoEncontradaException('Modalidade não encontrada.');
+        }
+        $normalizedTag = trim((string) $tag);
+        if (ChaveamentoRules::parse($normalizedTag) === null || strlen($normalizedTag) > 45) {
+            throw new \InvalidArgumentException('A tag do jogo temporário é inválida.');
+        }
+        $existing = MysqliChaveamentoRepository::buscarJogoPorTag($this->connection, $modalityId, $normalizedTag);
+        return [
+            'game_id' => $existing === null ? 0 : (int) $existing['id_jogo'],
+            'modality_id' => $modalityId,
+            'edition_id' => $edition,
+            'tag' => $normalizedTag,
+        ];
+    }
+
+    /** @return list<array{id_equipe:int,gols:int}> */
+    public function scoresOfGame(int $gameId): array
+    {
+        $statement = $this->prepare(
+            'SELECT equipes_id_equipe, resultado_partida
+             FROM partidas
+             WHERE jogos_id_jogo = ?
+             ORDER BY id_partida',
+        );
+        $statement->bind_param('i', $gameId);
+        if (!$statement->execute()) {
+            $statement->close();
+            throw new RuntimeException('Não foi possível consultar o placar do jogo.');
+        }
+        $rows = $statement->get_result()->fetch_all(MYSQLI_ASSOC);
+        $statement->close();
+        return array_map(
+            static fn (array $row): array => [
+                'id_equipe' => (int) $row['equipes_id_equipe'],
+                'gols' => (int) $row['resultado_partida'],
+            ],
+            $rows,
+        );
+    }
+
+    public function reconciliarPodioConcluido(int $gameId): void
+    {
+        (new PontuacaoService(new MysqliPodioRepository($this->connection)))->reconciliarJogo($gameId);
+    }
+
+    /** @param list<array<string, mixed>> $results */
+    public function resolveAndValidate(int $gameId, ?string $gameTag, int $modalityId, array $results): int
+    {
+        return $this->resolveGame($gameId, $gameTag, $modalityId, $results);
+    }
+
+    /** @return array{status_jogo:string,nome_jogo:string,modalidade_id:int,interclasse_id:int} */
+    public function lockGame(int $gameId): array
+    {
+        $row = $this->one(
+            'SELECT j.status_jogo, j.nome_jogo, j.modalidades_id_modalidade AS modalidade_id,
+                    m.interclasses_id_interclasse AS interclasse_id
+             FROM jogos j
+             INNER JOIN modalidades m ON m.id_modalidade = j.modalidades_id_modalidade
+             WHERE j.id_jogo = ? LIMIT 1 FOR UPDATE',
+            'i',
+            [$gameId],
+        );
+        if ($row === null) {
+            throw new JogoNaoEncontradoException('Jogo não encontrado.');
+        }
+        return [
+            'status_jogo' => (string) $row['status_jogo'],
+            'nome_jogo' => (string) $row['nome_jogo'],
+            'modalidade_id' => (int) $row['modalidade_id'],
+            'interclasse_id' => (int) $row['interclasse_id'],
+        ];
+    }
+
+    /** @return list<array{equipes_id_equipe:int,resultado_partida:int}> */
+    public function carregarPartidas(int $gameId): array
+    {
+        return MysqliChaveamentoRepository::carregarPartidasJogo($this->connection, $gameId);
+    }
+
+    /** @param list<array<string, mixed>> $results */
+    public function persistirPlacar(int $gameId, array $results): void
+    {
+        foreach ($results as $result) {
+            $teamId = (int) ($result['id_equipe'] ?? 0);
+            MysqliChaveamentoRepository::garantirPartidaEquipe($this->connection, $gameId, $teamId);
+            $statement = $this->prepare('UPDATE partidas SET resultado_partida = ? WHERE jogos_id_jogo = ? AND equipes_id_equipe = ?');
+            $score = (int) ($result['gols'] ?? 0);
+            $statement->bind_param('iii', $score, $gameId, $teamId);
+            if (!$statement->execute()) {
+                $statement->close();
+                throw new RuntimeException('Não foi possível registrar o placar.');
+            }
+            $statement->close();
+        }
+    }
+
+    public function concluirJogo(int $gameId): void
+    {
+        $statement = $this->prepare("UPDATE jogos SET status_jogo = 'Concluido' WHERE id_jogo = ?");
+        $statement->bind_param('i', $gameId);
+        $statement->execute();
+        $statement->close();
+    }
+
+    public function avancarChaveamento(int $gameId): void
+    {
+        MysqliChaveamentoRepository::chaveamentoProcessarAvanco($this->connection, $gameId);
+    }
+
+    public function reconstruirChaveamento(int $modalityId, int $largura): void
+    {
+        MysqliChaveamentoRepository::chaveamentoRebuildFromRound($this->connection, $modalityId, $largura);
+    }
+
     /** @param list<array<string, mixed>> $results */
     public function launch(int $gameId, ?string $gameTag, int $modalityId, array $results): array
     {
-        Transaction::begin($this->connection);
-        try {
-            $gameId = $this->resolveGame($gameId, $gameTag, $modalityId, $results);
-            if ($gameId <= 0) {
-                throw new RuntimeException('Não foi possível identificar o jogo no servidor.');
-            }
-            $statusRow = $this->one('SELECT status_jogo, nome_jogo, modalidades_id_modalidade FROM jogos WHERE id_jogo = ? LIMIT 1', 'i', [$gameId]);
-            if ($statusRow === null) {
-                throw new RuntimeException('Jogo não encontrado.');
-            }
-            $closed = in_array((string) $statusRow['status_jogo'], ['Concluido', 'Finalizado'], true);
-            $oldWinner = $closed ? ChaveamentoRules::vencedorDePartidas(MysqliChaveamentoRepository::carregarPartidasJogo($this->connection, $gameId)) : null;
-            foreach ($results as $result) {
-                $teamId = (int) ($result['id_equipe'] ?? 0);
-                if ($teamId <= 0) {
-                    continue;
-                }
-                MysqliChaveamentoRepository::garantirPartidaEquipe($this->connection, $gameId, $teamId);
-                $statement = $this->prepare('UPDATE partidas SET resultado_partida = ? WHERE jogos_id_jogo = ? AND equipes_id_equipe = ?');
-                $score = (int) ($result['gols'] ?? 0);
-                $statement->bind_param('iii', $score, $gameId, $teamId);
-                if (!$statement->execute()) {
-                    $statement->close();
-                    throw new RuntimeException('Não foi possível registrar o placar.');
-                }
-                $statement->close();
-            }
-            $scores = array_map(static fn (array $row): int => (int) ($row['gols'] ?? 0), $results);
-            $placar = new PlacarService();
-            if ($closed) {
-                $placar->validarAlteracao($scores);
-            } else {
-                $placar->validarFinalizacao($scores);
-                $statement = $this->prepare("UPDATE jogos SET status_jogo = 'Concluido' WHERE id_jogo = ?");
-                $statement->bind_param('i', $gameId);
-                $statement->execute();
-                $statement->close();
-                MysqliChaveamentoRepository::chaveamentoProcessarAvanco($this->connection, $gameId);
-                $this->applyPodiumPoints($gameId);
-            }
-            if ($closed) {
-                $newWinner = ChaveamentoRules::vencedorDePartidas(MysqliChaveamentoRepository::carregarPartidasJogo($this->connection, $gameId));
-                if ($oldWinner !== null && $newWinner !== null && $oldWinner !== $newWinner) {
-                    $meta = ChaveamentoRules::parse((string) $statusRow['nome_jogo']);
-                    if ($meta !== null && $meta['largura'] > 1) {
-                        MysqliChaveamentoRepository::chaveamentoRebuildFromRound($this->connection, (int) $statusRow['modalidades_id_modalidade'], $meta['largura']);
-                    }
-                }
-            }
-            Transaction::commit($this->connection);
-            return ['success' => true, 'message' => 'Resultado lançado!', 'id_jogo' => $gameId];
-        } catch (\Throwable $exception) {
-            Transaction::rollback($this->connection);
-            throw $exception;
-        }
+        return (new ResultadoService(
+            $this,
+            new MysqliTransactionRunner($this->connection),
+            new PontuacaoService(new MysqliPodioRepository($this->connection)),
+        ))->lancar($gameId, $gameTag, $modalityId, $results);
     }
 
     private function resolveGame(int $gameId, ?string $tag, int $modalityId, array $results): int
     {
-        if ($gameId > 0) {
-            return $gameId;
+        $context = $this->inspectResult($gameId, $tag, $modalityId);
+        $this->validateResultParticipants(
+            $results,
+            $context['modality_id'],
+            $context['edition_id'],
+            $context['game_id'],
+        );
+        if ($context['game_id'] > 0) {
+            return $context['game_id'];
         }
-        if ($tag !== null && $modalityId > 0) {
-            $row = MysqliChaveamentoRepository::buscarJogoPorTag($this->connection, $modalityId, $tag);
-            if ($row !== null) {
-                return (int) $row['id_jogo'];
-            }
+
+        $teamIds = $this->teamIds($results);
+        $candidates = $this->findCandidateGames(
+            $context['modality_id'],
+            $context['edition_id'],
+            $teamIds,
+        );
+        if (count($candidates) > 1) {
+            throw new JogoResolucaoAmbiguaException('Há mais de um jogo compatível para a sincronização.');
         }
-        $teamIds = array_values(array_filter(array_map(static fn (array $row): int => (int) ($row['id_equipe'] ?? 0), $results), static fn (int $id): bool => $id > 0));
-        if (count($teamIds) >= 2) {
-            $row = $this->one(
-                'SELECT p1.jogos_id_jogo FROM partidas p1
-                 INNER JOIN partidas p2 ON p1.jogos_id_jogo = p2.jogos_id_jogo
-                 WHERE p1.equipes_id_equipe = ? AND p2.equipes_id_equipe = ?
-                 ORDER BY p1.jogos_id_jogo DESC LIMIT 1',
-                'ii',
-                [$teamIds[0], $teamIds[1]],
-            );
-            if ($row !== null) {
-                return (int) $row['jogos_id_jogo'];
-            }
+        if ($candidates !== []) {
+            return $candidates[0];
         }
-        if ($tag !== null && $tag !== '' && $modalityId > 0) {
-            $local = MysqliChaveamentoRepository::resolverIdLocal($this->connection);
-            $statement = $this->prepare("INSERT INTO jogos (nome_jogo, data_jogo, inicio_jogo, status_jogo, modalidades_id_modalidade, locais_id_local) VALUES (?, CURDATE(), '08:00:00', 'Agendado', ?, ?)");
-            $statement->bind_param('sii', $tag, $modalityId, $local);
-            $statement->execute();
-            $id = (int) $this->connection->insert_id;
+
+        $tagValue = $context['tag'];
+        if ($tagValue === null || $tagValue === '') {
+            throw new RuntimeException('Não foi possível identificar a tag do jogo temporário.');
+        }
+        $local = MysqliChaveamentoRepository::resolverIdLocal($this->connection);
+        if ($local <= 0) {
+            throw new RuntimeException('Não há local disponível para materializar o jogo.');
+        }
+        $materializedModality = $context['modality_id'];
+        $statement = $this->prepare("INSERT INTO jogos (nome_jogo, data_jogo, inicio_jogo, status_jogo, modalidades_id_modalidade, locais_id_local) VALUES (?, CURDATE(), '08:00:00', 'Agendado', ?, ?)");
+        $statement->bind_param('sii', $tagValue, $materializedModality, $local);
+        if (!$statement->execute()) {
             $statement->close();
-            return $id;
+            throw new RuntimeException('Não foi possível materializar o jogo temporário.');
         }
-        return 0;
+        $id = (int) $this->connection->insert_id;
+        $statement->close();
+        return $id;
     }
 
-    private function applyPodiumPoints(int $gameId): void
+    /** @param list<array<string, mixed>> $results */
+    private function validateResultParticipants(array $results, int $modalityId, int $editionId, int $gameId): void
     {
-        $game = $this->one('SELECT nome_jogo, modalidades_id_modalidade FROM jogos WHERE id_jogo = ? LIMIT 1', 'i', [$gameId]);
-        if ($game === null) {
-            return;
+        $teamIds = $this->teamIds($results);
+        if ($teamIds === []) {
+            throw new \InvalidArgumentException('Nenhuma equipe foi informada para o resultado.');
         }
-        $meta = ChaveamentoRules::parse((string) $game['nome_jogo']);
-        if ($meta === null || (!in_array($meta['largura'], [2], true) && ($meta['posicao'] ?? null) !== 3)) {
-            return;
-        }
-        $modality = (int) $game['modalidades_id_modalidade'];
-        $edition = $this->one('SELECT interclasses_id_interclasse FROM modalidades WHERE id_modalidade = ? LIMIT 1', 'i', [$modality]);
-        if ($edition === null) {
-            return;
-        }
-        $points = $this->one('SELECT ponto_1_lugar, ponto_2_lugar, ponto_3_lugar FROM interclasses WHERE id_interclasse = ? LIMIT 1', 'i', [(int) $edition['interclasses_id_interclasse']]);
-        if ($points === null) {
-            return;
-        }
-        $parts = MysqliChaveamentoRepository::carregarPartidasJogo($this->connection, $gameId);
-        usort($parts, static fn (array $a, array $b): int => $b['resultado_partida'] <=> $a['resultado_partida']);
-        $awards = ($meta['posicao'] ?? null) === 3 ? [[3, 0]] : [[1, 0], [2, 1]];
-        foreach ($awards as [$position, $index]) {
-            $team = (int) ($parts[$index]['equipes_id_equipe'] ?? 0);
-            $score = (int) ($points['ponto_' . $position . '_lugar'] ?? 0);
-            if ($team <= 0 || $score <= 0) {
-                continue;
-            }
-            $statement = $this->prepare('UPDATE turmas SET pontuacao_turma = pontuacao_turma + ? WHERE id_turma = (SELECT turmas_id_turma FROM equipes WHERE id_equipe = ? LIMIT 1) LIMIT 1');
-            $statement->bind_param('ii', $score, $team);
-            $statement->execute();
+        $placeholders = implode(',', array_fill(0, count($teamIds), '?'));
+        $types = 'ii' . str_repeat('i', count($teamIds));
+        $params = array_merge([$modalityId, $editionId], $teamIds);
+        $statement = $this->prepare(
+            'SELECT e.id_equipe
+             FROM equipes e
+             INNER JOIN modalidades m ON m.id_modalidade = e.modalidades_id_modalidade
+             WHERE e.modalidades_id_modalidade = ?
+               AND m.interclasses_id_interclasse = ?
+               AND e.id_equipe IN (' . $placeholders . ')',
+        );
+        $statement->bind_param($types, ...$params);
+        if (!$statement->execute()) {
             $statement->close();
+            throw new RuntimeException('Não foi possível validar as equipes do resultado.');
         }
+        $rows = $statement->get_result()->fetch_all(MYSQLI_ASSOC);
+        $statement->close();
+        $validIds = array_map(static fn (array $row): int => (int) $row['id_equipe'], $rows);
+        if (count($validIds) !== count($teamIds)) {
+            throw new \InvalidArgumentException('Todas as equipes devem pertencer à modalidade e à edição informadas.');
+        }
+        if ($gameId <= 0) {
+            return;
+        }
+        $countStatement = $this->prepare('SELECT COUNT(*) FROM partidas WHERE jogos_id_jogo = ?');
+        $countStatement->bind_param('i', $gameId);
+        if (!$countStatement->execute()) {
+            $countStatement->close();
+            throw new RuntimeException('Não foi possível consultar os participantes do jogo.');
+        }
+        $participantCount = (int) $countStatement->get_result()->fetch_column();
+        $countStatement->close();
+        if ($participantCount === 0) {
+            return;
+        }
+        $placeholders = implode(',', array_fill(0, count($teamIds), '?'));
+        $types = 'i' . str_repeat('i', count($teamIds));
+        $params = array_merge([$gameId], $teamIds);
+        $statement = $this->prepare(
+            'SELECT equipes_id_equipe FROM partidas WHERE jogos_id_jogo = ? AND equipes_id_equipe IN (' . $placeholders . ')',
+        );
+        $statement->bind_param($types, ...$params);
+        if (!$statement->execute()) {
+            $statement->close();
+            throw new RuntimeException('Não foi possível validar os participantes do jogo.');
+        }
+        $rows = $statement->get_result()->fetch_all(MYSQLI_ASSOC);
+        $statement->close();
+        $participants = array_map(static fn (array $row): int => (int) $row['equipes_id_equipe'], $rows);
+        if (count(array_unique($participants)) !== count($teamIds)) {
+            throw new \InvalidArgumentException('Todas as equipes informadas devem participar do jogo persistido.');
+        }
+    }
+
+    /** @param list<array<string, mixed>> $results @return list<int> */
+    private function teamIds(array $results): array
+    {
+        $teamIds = [];
+        foreach ($results as $result) {
+            $teamId = (int) ($result['id_equipe'] ?? 0);
+            if ($teamId <= 0 || in_array($teamId, $teamIds, true)) {
+                throw new \InvalidArgumentException('As equipes do resultado devem ser válidas e distintas.');
+            }
+            $teamIds[] = $teamId;
+        }
+        return $teamIds;
+    }
+
+    /** @param list<int> $teamIds @return list<int> */
+    private function findCandidateGames(int $modalityId, int $editionId, array $teamIds): array
+    {
+        if (count($teamIds) < 2) {
+            return [];
+        }
+        $statement = $this->prepare(
+            'SELECT DISTINCT p1.jogos_id_jogo
+             FROM partidas p1
+             INNER JOIN partidas p2 ON p2.jogos_id_jogo = p1.jogos_id_jogo
+             INNER JOIN jogos j ON j.id_jogo = p1.jogos_id_jogo
+             INNER JOIN modalidades m ON m.id_modalidade = j.modalidades_id_modalidade
+             WHERE p1.equipes_id_equipe = ?
+               AND p2.equipes_id_equipe = ?
+               AND j.modalidades_id_modalidade = ?
+               AND m.interclasses_id_interclasse = ?
+             ORDER BY p1.jogos_id_jogo DESC',
+        );
+        $statement->bind_param('iiii', $teamIds[0], $teamIds[1], $modalityId, $editionId);
+        if (!$statement->execute()) {
+            $statement->close();
+            throw new RuntimeException('Não foi possível localizar o jogo compatível.');
+        }
+        $rows = $statement->get_result()->fetch_all(MYSQLI_ASSOC);
+        $statement->close();
+        return array_map(static fn (array $row): int => (int) $row['jogos_id_jogo'], $rows);
     }
 
     /** @param list<int> $params @return array<string, mixed>|null */

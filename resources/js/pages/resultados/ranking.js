@@ -131,16 +131,16 @@ window.SGIPage.mount("resultados/ranking", function (pageConfig, pageScope) {
             return;
         }
 
-        const maxPontos = Math.max(...turmas.map(t => t.pontuacao_sem_penalidade || t.pontuacao_turma)) || 1;
+        const maxPontos = Math.max(...turmas.map(t => t.pontuacao_bruta ?? t.pontuacao_sem_penalidade ?? t.pontuacao_turma)) || 1;
         const medals = ['&#x1F947;', '&#x1F948;', '&#x1F949;'];
 
         turmas.forEach((t, index) => {
             const posicao = index + 1;
-            const ptsSemPenalidade = t.pontuacao_sem_penalidade ?? t.pontuacao_turma;
-            const ptsComPenalidade = t.pontuacao_turma;
-            const perdeu = ptsSemPenalidade - ptsComPenalidade;
-            const porcentagemSem = (ptsSemPenalidade / maxPontos) * 100;
-            const porcentagemCom = (ptsComPenalidade / maxPontos) * 100;
+            const ptsBrutos = t.pontuacao_bruta ?? t.pontuacao_sem_penalidade ?? t.pontuacao_turma;
+            const ptsLiquidos = t.pontuacao_liquida ?? t.pontuacao_turma;
+            const perdeu = ptsBrutos - ptsLiquidos;
+            const porcentagemSem = (ptsBrutos / maxPontos) * 100;
+            const porcentagemCom = (ptsLiquidos / maxPontos) * 100;
             const classeDestaque = posicao <= 3 ? `posicao-${posicao}` : '';
             const isTop3 = posicao <= 3;
 
@@ -156,7 +156,7 @@ window.SGIPage.mount("resultados/ranking", function (pageConfig, pageScope) {
                                 <div class="rk-rank-card__detail"><i class="bi bi-mortarboard-fill"></i> ${t.nome_fantasia_turma || t.turno_turma}</div>
                             </div>
                             <div class="rk-rank-card__badge badge-pontos ${isTop3 ? 'rk-rank-card__badge--podium' : ''}">
-                                <span class="rk-rank-card__pts">${ptsComPenalidade}</span>
+                                <span class="rk-rank-card__pts">${ptsLiquidos}</span>
                                 <span class="rk-rank-card__pts-label">pts</span>
                             </div>
                         </div>
@@ -164,8 +164,8 @@ window.SGIPage.mount("resultados/ranking", function (pageConfig, pageScope) {
                         <div class="rk-rank-card__bars">
                             <div class="rk-bar-group">
                                 <div class="rk-bar-group__header">
-                                    <span><i class="bi bi-star"></i> Pontuação esperada</span>
-                                    <span class="rk-bar-group__val">${ptsSemPenalidade} pts</span>
+                            <span><i class="bi bi-star"></i> Pontuação bruta</span>
+                            <span class="rk-bar-group__val">${ptsBrutos} pts</span>
                                 </div>
                                 <div class="barra-fundo sgi-inline-65fd1499" >
                                     <div class="barra-progresso rk-bar--expected sgi-inline-95b73db3"  data-sgi-width="${porcentagemSem}"></div>
@@ -173,8 +173,8 @@ window.SGIPage.mount("resultados/ranking", function (pageConfig, pageScope) {
                             </div>
                             <div class="rk-bar-group">
                                 <div class="rk-bar-group__header">
-                                    <span class="text-danger fw-semibold"><i class="bi bi-flag-fill"></i> Pontuação final</span>
-                                    <span class="rk-bar-group__val fw-bold">${ptsComPenalidade} pts${perdeu > 0 ? ` <span class="text-danger">(-${perdeu})</span>` : ''}</span>
+                            <span class="text-danger fw-semibold"><i class="bi bi-flag-fill"></i> Pontuação líquida</span>
+                            <span class="rk-bar-group__val fw-bold">${ptsLiquidos} pts${perdeu > 0 ? ` <span class="text-danger">(-${perdeu})</span>` : ''}</span>
                                 </div>
                                 <div class="barra-fundo sgi-inline-9d3cb190" >
                                     <div class="barra-progresso rk-bar--final sgi-inline-f2316fc1"  data-sgi-width="${porcentagemCom}"></div>
@@ -238,8 +238,11 @@ window.SGIPage.mount("resultados/ranking", function (pageConfig, pageScope) {
 
     function renderHistorico(d) {
         const t = d.turma;
-        const soma = d.resumo.arrecadacao_pontos + d.resumo.esportes_pontos - d.resumo.penalidades_pontos;
-        const difere = soma !== t.pontuacao_turma;
+        const bruto = t.pontuacao_bruta ?? t.pontuacao_turma;
+        const liquido = t.pontuacao_liquida ?? (bruto - d.resumo.penalidades_pontos);
+        const ajuste = d.resumo.ajuste_pontos ?? t.ajuste_pontuacao ?? 0;
+        const soma = d.resumo.arrecadacao_pontos + d.resumo.esportes_pontos + ajuste - d.resumo.penalidades_pontos;
+        const difere = soma !== liquido;
 
         let html = '';
 
@@ -249,7 +252,8 @@ window.SGIPage.mount("resultados/ranking", function (pageConfig, pageScope) {
                     <div class="htr-turma-nome">${esc(t.nome_turma)}</div>
                     <div class="htr-turma-sub">${esc(t.nome_fantasia_turma || '')} · ${esc(t.nome_categoria)} · ${esc(t.turno_turma || '')}</div>
                 </div>
-                <div class="htr-total">${t.pontuacao_turma}<small>pts</small></div>
+                <div class="htr-total">${liquido}<small>pts líquidos</small></div>
+                <div class="htr-turma-sub">Bruto registrado: ${bruto} pts</div>
             </div>
             <div class="htr-resumo">
                 <div class="htr-chip htr-chip--verde">
@@ -262,13 +266,15 @@ window.SGIPage.mount("resultados/ranking", function (pageConfig, pageScope) {
                     <span class="htr-chip__valor">+${d.esportes.pontos_total} pts</span>
                     <span class="htr-chip__rotulo">Esportes</span>
                 </div>
+                ${ajuste !== 0 ? `<div class="htr-chip htr-chip--amarelo"><i class="bi bi-question-circle"></i><span class="htr-chip__valor">${ajuste > 0 ? '+' : ''}${ajuste} pts</span><span class="htr-chip__rotulo">Ajuste legado</span></div>` : ''}
                 <div class="htr-chip htr-chip--vermelho">
                     <i class="bi bi-flag"></i>
                     <span class="htr-chip__valor">-${d.penalidades.pontos_total} pts</span>
                     <span class="htr-chip__rotulo">Penalidades</span>
                 </div>
             </div>
-            ${difere ? `<div class="htr-aviso"><i class="bi bi-info-circle"></i> Soma das origens: ${soma} pts. O total salvo na turma é ${t.pontuacao_turma} pts (diferença de ${Math.abs(soma - t.pontuacao_turma)} pts).</div>` : ''}
+            ${difere ? `<div class="htr-aviso"><i class="bi bi-info-circle"></i> Soma das parcelas líquidas: ${soma} pts. O total líquido é ${liquido} pts (diferença de ${Math.abs(soma - liquido)} pts).</div>` : ''}
+            ${d.ajuste?.pendente_origem ? `<div class="htr-aviso"><i class="bi bi-info-circle"></i> ${esc(d.ajuste.origem || 'Há saldo sem origem detalhada.')} (${ajuste} pts).</div>` : ''}
         `;
 
         /* Arrecadação */

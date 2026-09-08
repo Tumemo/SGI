@@ -25,6 +25,26 @@ final class ArtilheiroService
         return $this->artilheiros->update($userId, $gameId, $goals);
     }
 
+    public function editionOfGame(int $gameId): ?int
+    {
+        return $this->artilheiros->editionOfGame($gameId);
+    }
+
+    public function editionOfUser(int $userId): ?int
+    {
+        return $this->artilheiros->editionOfUser($userId);
+    }
+
+    public function roleOfUser(int $userId): ?int
+    {
+        return $this->artilheiros->roleOfUser($userId);
+    }
+
+    public function athleteParticipatesInGame(int $userId, int $gameId): bool
+    {
+        return $this->artilheiros->athleteParticipatesInGame($userId, $gameId);
+    }
+
     private function validate(int $userId, int $gameId, int $goals): void
     {
         if ($userId <= 0 || $gameId <= 0) {

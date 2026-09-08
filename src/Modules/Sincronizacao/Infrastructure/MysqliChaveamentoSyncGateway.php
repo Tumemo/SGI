@@ -4,16 +4,32 @@ declare(strict_types=1);
 
 namespace App\Modules\Sincronizacao\Infrastructure;
 
+use App\Modules\Competicoes\Application\ModalidadeNaoEncontradaException;
 use App\Modules\Competicoes\Infrastructure\MysqliChaveamentoRepository;
-use App\Modules\Competicoes\Infrastructure\MysqliIndividualRepository;
-use App\Shared\Database\Transaction;
+use App\Modules\Competicoes\Application\IndividualRankingService;
+use App\Modules\Competicoes\Infrastructure\MysqliIndividualRankingRepository;
+use App\Modules\Resultados\Application\PontuacaoService;
+use App\Modules\Resultados\Infrastructure\MysqliPodioRepository;
+use App\Shared\Application\TransactionRunner;
+use App\Shared\Database\MysqliTransactionRunner;
 use mysqli;
 use RuntimeException;
 
 final class MysqliChaveamentoSyncGateway
 {
-    public function __construct(private readonly mysqli $connection)
-    {
+    private readonly TransactionRunner $transactions;
+    private readonly PontuacaoService $pontuacao;
+    private readonly IndividualRankingService $individual;
+
+    public function __construct(
+        private readonly mysqli $connection,
+        ?TransactionRunner $transactions = null,
+        ?PontuacaoService $pontuacao = null,
+        ?IndividualRankingService $individual = null,
+    ) {
+        $this->transactions = $transactions ?? new MysqliTransactionRunner($connection);
+        $this->pontuacao = $pontuacao ?? new PontuacaoService(new MysqliPodioRepository($connection));
+        $this->individual = $individual ?? new IndividualRankingService(new MysqliIndividualRankingRepository($connection));
     }
 
     public function editionOfModality(int $modalityId): ?int
@@ -32,28 +48,27 @@ final class MysqliChaveamentoSyncGateway
     /** @param array<string, mixed> $data @return array<string, mixed> */
     public function sync(int $modalityId, string $type, array $data): array
     {
-        Transaction::begin($this->connection);
-        try {
+        return $this->transactions->run(function () use ($modalityId, $type, $data): array {
             if ($type === 'individual') {
                 $ranking = $data['ranking'] ?? null;
                 if (!is_array($ranking) || !isset($ranking['primeiro'], $ranking['segundo'], $ranking['terceiro'])) {
-                    throw new RuntimeException('Dados de ranking incompletos para modalidade individual.');
+                    throw new \InvalidArgumentException('Dados de ranking incompletos para modalidade individual.');
                 }
-                $result = MysqliIndividualRepository::salvarRanking($this->connection, $modalityId, [
+                $result = $this->individual->registrar($modalityId, [
                     'primeiro' => (int) $ranking['primeiro'],
                     'segundo' => (int) $ranking['segundo'],
                     'terceiro' => (int) $ranking['terceiro'],
                 ]);
-                Transaction::commit($this->connection);
                 return ['success' => true, 'message' => 'Sincronização de modalidade individual concluída com sucesso.', 'detalhes' => $result];
             }
             if ($type !== 'mata_mata') {
-                throw new RuntimeException('Tipo de modalidade não suportado.');
+                throw new \InvalidArgumentException('Tipo de modalidade não suportado.');
             }
             $games = $data['jogos'] ?? [];
             if (!is_array($games) || $games === []) {
-                throw new RuntimeException('Nenhum jogo enviado para sincronização de mata-mata.');
+                throw new \InvalidArgumentException('Nenhum jogo enviado para sincronização de mata-mata.');
             }
+            $this->validateMataMataPayload($modalityId, $games);
             $local = MysqliChaveamentoRepository::resolverIdLocal($this->connection);
             $processed = 0;
             foreach ($games as $game) {
@@ -105,13 +120,70 @@ final class MysqliChaveamentoSyncGateway
             $completed = $statement->get_result()->fetch_all(MYSQLI_ASSOC);
             $statement->close();
             foreach ($completed as $game) {
+                $this->pontuacao->reconciliarJogo((int) $game['id_jogo']);
                 MysqliChaveamentoRepository::chaveamentoProcessarAvanco($this->connection, (int) $game['id_jogo']);
             }
-            Transaction::commit($this->connection);
             return ['success' => true, 'message' => 'Sincronização de chaveamento Mata-Mata realizada com sucesso.', 'jogos_sincronizados' => $processed];
-        } catch (\Throwable $exception) {
-            Transaction::rollback($this->connection);
-            throw $exception;
+        });
+    }
+
+    /** @param list<mixed> $games */
+    private function validateMataMataPayload(int $modalityId, array $games): void
+    {
+        if ($this->editionOfModality($modalityId) === null) {
+            throw new ModalidadeNaoEncontradaException('Modalidade não encontrada.');
+        }
+        $validGames = 0;
+        foreach ($games as $game) {
+            if (!is_array($game) || trim((string) ($game['nome_jogo'] ?? '')) === '') {
+                throw new \InvalidArgumentException('Cada jogo precisa de um nome válido.');
+            }
+            $parts = $game['partidas'] ?? null;
+            if (!is_array($parts) || $parts === []) {
+                throw new \InvalidArgumentException('Cada jogo precisa informar suas partidas.');
+            }
+            $teamIds = [];
+            foreach ($parts as $part) {
+                if (!is_array($part)) {
+                    throw new \InvalidArgumentException('Partida inválida na sincronização.');
+                }
+                $teamId = (int) ($part['id_equipe'] ?? 0);
+                if ($teamId <= 0 || in_array($teamId, $teamIds, true)) {
+                    throw new \InvalidArgumentException('As equipes de cada jogo devem ser válidas e distintas.');
+                }
+                if (array_key_exists('resultado', $part) && !is_numeric($part['resultado'])) {
+                    throw new \InvalidArgumentException('O resultado da partida deve ser numérico.');
+                }
+                $teamIds[] = $teamId;
+            }
+            $this->validateTeamsForModality($modalityId, $teamIds);
+            $validGames++;
+        }
+        if ($validGames === 0) {
+            throw new \InvalidArgumentException('Nenhum jogo válido foi enviado para sincronização.');
+        }
+    }
+
+    /** @param list<int> $teamIds */
+    private function validateTeamsForModality(int $modalityId, array $teamIds): void
+    {
+        $placeholders = implode(',', array_fill(0, count($teamIds), '?'));
+        $types = 'i' . str_repeat('i', count($teamIds));
+        $params = array_merge([$modalityId], $teamIds);
+        $statement = $this->prepare(
+            'SELECT id_equipe FROM equipes
+             WHERE modalidades_id_modalidade = ?
+               AND id_equipe IN (' . $placeholders . ')',
+        );
+        $statement->bind_param($types, ...$params);
+        if (!$statement->execute()) {
+            $statement->close();
+            throw new RuntimeException('Não foi possível validar as equipes da sincronização.');
+        }
+        $rows = $statement->get_result()->fetch_all(MYSQLI_ASSOC);
+        $statement->close();
+        if (count($rows) !== count($teamIds)) {
+            throw new \InvalidArgumentException('Todas as equipes devem pertencer à modalidade sincronizada.');
         }
     }
 

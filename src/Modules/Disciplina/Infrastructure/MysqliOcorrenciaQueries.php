@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Modules\Disciplina\Infrastructure;
 
 use App\Modules\Competicoes\Infrastructure\MysqliChaveamentoRepository;
+use App\Modules\Competicoes\Domain\ChaveamentoRules;
 use mysqli;
 
 final class MysqliOcorrenciaQueries
@@ -41,7 +42,7 @@ final class MysqliOcorrenciaQueries
             return ["success" => true, "atletas" => $res->fetch_all(MYSQLI_ASSOC)];
         }
         $filtro = \App\Shared\Database\SqlFilters::aplicarFiltrosOcorrencias($filters);
-        $sql = "SELECT \n                    ocorrencias.id_ocorrencia, \n                    ocorrencias.titulo_ocorrencia, \n                    ocorrencias.descricao_ocorrencia, \n                    ocorrencias.data_ocorrencia, \n                    ocorrencias.hora_ocorrencia, \n                    ocorrencias.penalidade,\n                    usuarios.nome_usuario,\n                    usuarios.id_usuario,\n                    usuarios.turmas_id_turma\n                FROM ocorrencias \n                INNER JOIN usuarios ON ocorrencias.usuarios_id_usuario = usuarios.id_usuario \n                WHERE 1=1" . $filtro['sql'];
+        $sql = "SELECT \n                    ocorrencias.id_ocorrencia, \n                    ocorrencias.titulo_ocorrencia, \n                    ocorrencias.descricao_ocorrencia, \n                    ocorrencias.data_ocorrencia, \n                    ocorrencias.hora_ocorrencia, \n                    ocorrencias.penalidade,\n                    ocorrencias.status_ocorrencia,\n                    usuarios.nome_usuario,\n                    usuarios.id_usuario,\n                    usuarios.turmas_id_turma\n                FROM ocorrencias \n                INNER JOIN usuarios ON ocorrencias.usuarios_id_usuario = usuarios.id_usuario \n                WHERE 1=1" . $filtro['sql'];
         if (!empty($filters['id_jogo'])) {
             $buscaJogo = '%[JOGO:' . intval($filters['id_jogo']) . ']%';
             $sql .= " AND ocorrencias.descricao_ocorrencia LIKE ?";
@@ -71,7 +72,37 @@ final class MysqliOcorrenciaQueries
         if (trim($tag) === '' || $modality <= 0) {
             return 0;
         }
+        if ($this->editionOfModality($modality) === null || ChaveamentoRules::parse(trim($tag)) === null) {
+            return 0;
+        }
         $game = MysqliChaveamentoRepository::buscarJogoPorTag($this->connection, $modality, trim($tag));
         return (int) ($game['id_jogo'] ?? 0);
+    }
+
+    public function editionOfModality(int $modalityId): ?int
+    {
+        $statement = $this->connection->prepare('SELECT interclasses_id_interclasse FROM modalidades WHERE id_modalidade = ? LIMIT 1');
+        if ($statement === false) {
+            return null;
+        }
+        $statement->bind_param('i', $modalityId);
+        $statement->execute();
+        $value = $statement->get_result()->fetch_column();
+        $statement->close();
+        return $value === null || $value === false ? null : (int) $value;
+    }
+
+    /** @return array{gameId:int,classId:int} */
+    public function referencesFromDescription(string $description): array
+    {
+        $gameId = 0;
+        $classId = 0;
+        if (preg_match('/\[JOGO:(\d+)\]/', $description, $gameMatch) === 1) {
+            $gameId = (int) $gameMatch[1];
+        }
+        if (preg_match('/\[TURMA:(\d+)\]/', $description, $classMatch) === 1) {
+            $classId = (int) $classMatch[1];
+        }
+        return ['gameId' => $gameId, 'classId' => $classId];
     }
 }

@@ -4,6 +4,9 @@ declare (strict_types=1);
 
 namespace App\Modules\Competicoes\Infrastructure;
 
+use App\Modules\Competicoes\Domain\EquipeCapacityRules;
+use App\Shared\Database\Transaction;
+
 final class MysqliEquipePadraoRepository
 {
     /**
@@ -21,6 +24,62 @@ final class MysqliEquipePadraoRepository
         $stmt->close();
         return $row ? \trim((string) $row['nome_turma']) : \null;
     }
+
+    /** @return array{max_equipes:?int}|null */
+    private static function lockScope(\mysqli $conn, int $idModalidade, int $idTurma): ?array
+    {
+        $modality = $conn->prepare(
+            'SELECT categorias_id_categoria, interclasses_id_interclasse, max_equipes, status_modalidade
+             FROM modalidades WHERE id_modalidade = ? LIMIT 1 FOR UPDATE',
+        );
+        if (!$modality) {
+            return \null;
+        }
+        $modality->bind_param('i', $idModalidade);
+        $modality->execute();
+        $modalityRow = $modality->get_result()->fetch_assoc() ?: null;
+        $modality->close();
+        if ($modalityRow === null || (string) $modalityRow['status_modalidade'] !== '1') {
+            return \null;
+        }
+
+        $class = $conn->prepare(
+            'SELECT categorias_id_categoria, interclasses_id_interclasse, status_turma
+             FROM turmas WHERE id_turma = ? LIMIT 1 FOR UPDATE',
+        );
+        if (!$class) {
+            return \null;
+        }
+        $class->bind_param('i', $idTurma);
+        $class->execute();
+        $classRow = $class->get_result()->fetch_assoc() ?: null;
+        $class->close();
+        if ($classRow === null || (string) $classRow['status_turma'] !== '1') {
+            return \null;
+        }
+        if ((int) $modalityRow['interclasses_id_interclasse'] !== (int) $classRow['interclasses_id_interclasse']
+            || (int) $modalityRow['categorias_id_categoria'] !== (int) $classRow['categorias_id_categoria']) {
+            return \null;
+        }
+        return ['max_equipes' => $modalityRow['max_equipes'] === null ? null : (int) $modalityRow['max_equipes']];
+    }
+
+    private static function activeCount(\mysqli $conn, int $idModalidade, int $idTurma): int
+    {
+        $statement = $conn->prepare(
+            "SELECT COUNT(*) FROM equipes
+             WHERE modalidades_id_modalidade = ? AND turmas_id_turma = ? AND status_equipe = '1'",
+        );
+        if (!$statement) {
+            return 0;
+        }
+        $statement->bind_param('ii', $idModalidade, $idTurma);
+        $statement->execute();
+        $count = (int) $statement->get_result()->fetch_column();
+        $statement->close();
+        return $count;
+    }
+
     /**
      * Retorna dados básicos da modalidade: id, nome, max_inscrito_modalidade e max_equipes.
      */
@@ -43,7 +102,24 @@ final class MysqliEquipePadraoRepository
      */
     public static function buscarOuCriarEquipePadrao(\mysqli $conn, int $idModalidade, int $idTurma): ?int
     {
+        Transaction::begin($conn);
+        try {
+            $id = self::buscarOuCriarEquipePadraoSemTransacao($conn, $idModalidade, $idTurma);
+            Transaction::commit($conn);
+            return $id;
+        } catch (\Throwable) {
+            Transaction::rollback($conn);
+            return null;
+        }
+    }
+
+    private static function buscarOuCriarEquipePadraoSemTransacao(\mysqli $conn, int $idModalidade, int $idTurma): ?int
+    {
         if ($idModalidade <= 0 || $idTurma <= 0) {
+            return \null;
+        }
+        $scope = self::lockScope($conn, $idModalidade, $idTurma);
+        if ($scope === null) {
             return \null;
         }
         $mod = \App\Modules\Competicoes\Infrastructure\MysqliEquipePadraoRepository::dadosModalidade($conn, $idModalidade);
@@ -73,6 +149,9 @@ final class MysqliEquipePadraoRepository
         $stmt->close();
         if ($row) {
             return (int) $row['id_equipe'];
+        }
+        if (!EquipeCapacityRules::podeAtivar($scope['max_equipes'], self::activeCount($conn, $idModalidade, $idTurma))) {
+            return \null;
         }
         // 3. Cria a Equipe Padrão.
         $stmt = $conn->prepare("INSERT INTO equipes (status_equipe, modalidades_id_modalidade, turmas_id_turma, nome_equipe)\r\n         VALUES ('1', ?, ?, ?)");
@@ -160,6 +239,10 @@ final class MysqliEquipePadraoRepository
      */
     public static function proximaEquipeComVaga(\mysqli $conn, int $idModalidade, int $idTurma, int $idEquipePadrao, array &$secundarias, int $limite): ?int
     {
+        $scope = self::lockScope($conn, $idModalidade, $idTurma);
+        if ($scope === null) {
+            return \null;
+        }
         foreach ($secundarias as $id => $dados) {
             if ($dados['ocupados'] < $limite) {
                 $secundarias[$id]['ocupados']++;
@@ -169,8 +252,8 @@ final class MysqliEquipePadraoRepository
         // Nenhuma vaga: tenta criar uma nova equipe secundária, respeitando o
         // limite máximo de equipes da turma/modalidade (max_equipes), se definido.
         $mod = \App\Modules\Competicoes\Infrastructure\MysqliEquipePadraoRepository::dadosModalidade($conn, $idModalidade);
-        $maxEquipes = isset($mod['max_equipes']) ? (int) $mod['max_equipes'] : \null;
-        if ($maxEquipes !== \null && \count($secundarias) + 1 >= $maxEquipes) {
+        $maxEquipes = $scope['max_equipes'];
+        if (!EquipeCapacityRules::podeAtivar($maxEquipes, self::activeCount($conn, $idModalidade, $idTurma))) {
             return \null;
         }
         $numero = 2;

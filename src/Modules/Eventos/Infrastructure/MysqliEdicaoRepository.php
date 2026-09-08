@@ -4,14 +4,22 @@ declare (strict_types=1);
 
 namespace App\Modules\Eventos\Infrastructure;
 
+use App\Modules\Competicoes\Domain\EquipePadraoRepository;
 use App\Modules\Eventos\Domain\EdicaoRepository;
+use App\Shared\Database\Transaction;
 use mysqli;
 use RuntimeException;
 
 final class MysqliEdicaoRepository implements EdicaoRepository
 {
-    public function __construct(private readonly mysqli $connection)
+    private readonly mysqli $connection;
+
+    private readonly EquipePadraoRepository $equipesPadrao;
+
+    public function __construct(mysqli $connection, EquipePadraoRepository $equipesPadrao)
     {
+        $this->connection = $connection;
+        $this->equipesPadrao = $equipesPadrao;
     }
     public function list(array $filters): array
     {
@@ -52,8 +60,11 @@ final class MysqliEdicaoRepository implements EdicaoRepository
     }
     public function create(array $data): array
     {
-        $this->connection->begin_transaction();
+        $lockName = $this->acquireEditionLock();
+        $transactionOpen = false;
         try {
+            Transaction::begin($this->connection);
+            $transactionOpen = true;
             $interclasse = $this->connection->prepare("INSERT INTO interclasses (nome_interclasse, ano_interclasse, regulamento_interclasse, status_interclasse)\n                 VALUES (?, ?, '', '1')");
             if ($interclasse === false) {
                 throw new RuntimeException('Não foi possível criar edição.');
@@ -67,28 +78,24 @@ final class MysqliEdicaoRepository implements EdicaoRepository
             }
             $id = (int) $this->connection->insert_id;
             $interclasse->close();
-            $deactivate = $this->connection->prepare("UPDATE interclasses SET status_interclasse = '0' WHERE id_interclasse != ? AND status_interclasse = '1'");
-            if ($deactivate === false) {
-                throw new RuntimeException('Não foi possível alternar edição ativa.');
-            }
-            $deactivate->bind_param('i', $id);
-            if (!$deactivate->execute()) {
-                $deactivate->close();
-                throw new RuntimeException('Não foi possível alternar edição ativa.');
-            }
-            $deactivate->close();
+            $this->deactivateOtherEditions($id);
             $categoryI = $this->createCategory($id, 'Categoria I');
             $categoryII = $this->createCategory($id, 'Categoria II');
             [$mataMata, $individual] = $this->ensureModalityTypes();
             $this->createDefaultClasses($id, $categoryI, $categoryII);
             $this->createDefaultModalities($id, $categoryI, $categoryII, $mataMata, $individual);
             \App\Modules\Eventos\Infrastructure\MysqliLocalPadraoRepository::criarLocaisPadraoInterclasse($this->connection, $id);
-            $teams = \App\Modules\Competicoes\Infrastructure\MysqliEquipePadraoRepository::gerarEquipesPadraoInterclasse($this->connection, $id);
-            $this->connection->commit();
+            $teams = $this->equipesPadrao->generateForEdition($id);
+            Transaction::commit($this->connection);
+            $transactionOpen = false;
             return ['id' => $id, 'equipes_padrao_garantidas' => (int) $teams['criadas'], 'erros_equipes' => $teams['erros']];
         } catch (\Throwable $exception) {
-            $this->connection->rollback();
+            if ($transactionOpen) {
+                Transaction::rollback($this->connection);
+            }
             throw $exception;
+        } finally {
+            $this->releaseEditionLock($lockName);
         }
     }
     public function update(int $id, array $data): void
@@ -106,16 +113,17 @@ final class MysqliEdicaoRepository implements EdicaoRepository
         if ($fields === []) {
             throw new RuntimeException('Nenhum campo válido para atualizar edição.');
         }
-        $this->connection->begin_transaction();
+        if (array_key_exists('status_interclasse', $data) && !in_array((string) $data['status_interclasse'], ['0', '1'], true)) {
+            throw new RuntimeException('O status da edição deve ser 0 ou 1.');
+        }
+        $lockName = $this->acquireEditionLock();
+        $transactionOpen = false;
         try {
+            Transaction::begin($this->connection);
+            $transactionOpen = true;
+            $this->lockEditionScope($id);
             if (($data['status_interclasse'] ?? null) === '1') {
-                $deactivate = $this->connection->prepare("UPDATE interclasses SET status_interclasse = '0' WHERE id_interclasse != ? AND status_interclasse = '1'");
-                if ($deactivate === false) {
-                    throw new RuntimeException('Não foi possível alternar edição ativa.');
-                }
-                $deactivate->bind_param('i', $id);
-                $deactivate->execute();
-                $deactivate->close();
+                $this->deactivateOtherEditions($id);
             }
             $values[] = $id;
             $types .= 'i';
@@ -129,11 +137,87 @@ final class MysqliEdicaoRepository implements EdicaoRepository
                 throw new RuntimeException('Não foi possível atualizar edição.');
             }
             $statement->close();
-            $this->connection->commit();
+            Transaction::commit($this->connection);
+            $transactionOpen = false;
         } catch (\Throwable $exception) {
-            $this->connection->rollback();
+            if ($transactionOpen) {
+                Transaction::rollback($this->connection);
+            }
             throw $exception;
+        } finally {
+            $this->releaseEditionLock($lockName);
         }
+    }
+
+    private function acquireEditionLock(): string
+    {
+        $database = (string) ($this->connection->query('SELECT DATABASE()')->fetch_column() ?? '');
+        $name = sha1($database . ':edicao-ativa');
+        $statement = $this->connection->prepare('SELECT GET_LOCK(?, 10)');
+        if ($statement === false) {
+            throw new RuntimeException('Não foi possível reservar a trava da edição.');
+        }
+        $statement->bind_param('s', $name);
+        if (!$statement->execute()) {
+            $statement->close();
+            throw new RuntimeException('Não foi possível reservar a trava da edição.');
+        }
+        $acquired = (int) ($statement->get_result()->fetch_column() ?? 0);
+        $statement->close();
+        if ($acquired !== 1) {
+            throw new RuntimeException('A edição está ocupada por outra operação. Tente novamente.');
+        }
+        return $name;
+    }
+
+    private function releaseEditionLock(string $name): void
+    {
+        $statement = $this->connection->prepare('SELECT RELEASE_LOCK(?)');
+        if ($statement === false) {
+            return;
+        }
+        $statement->bind_param('s', $name);
+        $statement->execute();
+        $statement->close();
+    }
+
+    private function lockEditionScope(int $id): void
+    {
+        $statement = $this->connection->prepare(
+            "SELECT id_interclasse FROM interclasses
+             WHERE id_interclasse = ? OR status_interclasse = '1'
+             ORDER BY id_interclasse FOR UPDATE",
+        );
+        if ($statement === false) {
+            throw new RuntimeException('Não foi possível verificar a edição.');
+        }
+        $statement->bind_param('i', $id);
+        if (!$statement->execute()) {
+            $statement->close();
+            throw new RuntimeException('Não foi possível verificar a edição.');
+        }
+        $rows = $statement->get_result()->fetch_all(MYSQLI_ASSOC);
+        $statement->close();
+        foreach ($rows as $row) {
+            if ((int) ($row['id_interclasse'] ?? 0) === $id) {
+                return;
+            }
+        }
+        throw new RuntimeException('Edição não encontrada.');
+    }
+
+    private function deactivateOtherEditions(int $id): void
+    {
+        $deactivate = $this->connection->prepare("UPDATE interclasses SET status_interclasse = '0' WHERE id_interclasse != ? AND status_interclasse = '1'");
+        if ($deactivate === false) {
+            throw new RuntimeException('Não foi possível alternar edição ativa.');
+        }
+        $deactivate->bind_param('i', $id);
+        if (!$deactivate->execute()) {
+            $deactivate->close();
+            throw new RuntimeException('Não foi possível alternar edição ativa.');
+        }
+        $deactivate->close();
     }
     private function createCategory(int $interclasseId, string $name): int
     {

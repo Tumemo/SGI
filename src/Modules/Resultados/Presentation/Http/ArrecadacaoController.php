@@ -7,6 +7,7 @@ namespace App\Modules\Resultados\Presentation\Http;
 use App\Modules\Resultados\Application\ArrecadacaoHistoricoJaRemovidoException;
 use App\Modules\Resultados\Application\ArrecadacaoHistoricoNaoEncontradoException;
 use App\Modules\Resultados\Application\ArrecadacaoService;
+use App\Modules\Resultados\Domain\ArrecadacaoQuantidadeInsuficienteException;
 
 final class ArrecadacaoController
 {
@@ -59,6 +60,8 @@ final class ArrecadacaoController
             return \App\Shared\Http\Response::json(['success' => false, 'message' => 'Registro não encontrado.'], $status, $headers);
         } catch (ArrecadacaoHistoricoJaRemovidoException $exception) {
             return \App\Shared\Http\Response::json(['success' => false, 'message' => 'Este registro já foi removido anteriormente.'], $status, $headers);
+        } catch (ArrecadacaoQuantidadeInsuficienteException $exception) {
+            return \App\Shared\Http\Response::json(['success' => false, 'message' => 'A quantidade arrecadada é insuficiente para o estorno.'], 409, $headers);
         } catch (\Throwable $exception) {
             error_log('Falha em arrecadacao.php: ' . $exception->getMessage());
             $status = 500;

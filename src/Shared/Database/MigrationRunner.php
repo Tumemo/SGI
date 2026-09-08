@@ -82,7 +82,10 @@ final class MigrationRunner
             }
         }
         $index = $this->connection->query("SHOW INDEX FROM usuarios WHERE Key_name = 'uk_matricula_interclasse'")->fetch_all(MYSQLI_ASSOC);
-        if (array_column($index, 'Column_name') !== ['matricula_usuario', 'interclasses_id_interclasse']) {
+        usort($index, static fn (array $left, array $right): int => ((int) ($left['Seq_in_index'] ?? 0)) <=> ((int) ($right['Seq_in_index'] ?? 0)));
+        if ($index === []
+            || (int) ($index[0]['Non_unique'] ?? 1) !== 0
+            || array_column($index, 'Column_name') !== ['matricula_usuario', 'interclasses_id_interclasse']) {
             throw new RuntimeException('Índice de matrícula por edição não confere.');
         }
     }

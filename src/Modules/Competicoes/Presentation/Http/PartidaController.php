@@ -45,15 +45,34 @@ final class PartidaController
             if (!array_key_exists('resultado_final', $data)) {
                 return Response::json(['success' => false, 'message' => 'Dados incompletos.'], 400);
             }
-            if ((int) ($_SESSION['nivel'] ?? -1) === 2
-                && !$this->belongsToActiveEdition((int) ($data['jogos_id_jogo'] ?? 0), (int) $id)) {
-                return Response::json(['success' => false, 'message' => 'A partida não pertence à edição ativa.'], 403);
+            $partida = $this->service->encontrar((int) $id);
+            if ($partida === null) {
+                return Response::json(['success' => false, 'message' => 'Partida não encontrada.'], 404);
+            }
+            $gameId = (int) ($partida['jogos_id_jogo'] ?? 0);
+            $teamId = (int) ($partida['equipes_id_equipe'] ?? 0);
+            if (($denied = $this->access->authorize((int) ($partida['edition_id'] ?? 0))) !== null) {
+                return $denied;
+            }
+            if (($invalid = $this->rejectDiscordantIdentifiers($data, $gameId, $teamId)) !== null) {
+                return $invalid;
+            }
+            $results = $this->queries->scoresOfGame($gameId);
+            $targetFound = false;
+            foreach ($results as &$result) {
+                if ($result['id_equipe'] !== $teamId) {
+                    continue;
+                }
+                $result['gols'] = (int) $data['resultado_final'];
+                $targetFound = true;
+                break;
+            }
+            unset($result);
+            if (!$targetFound) {
+                return Response::json(['success' => false, 'message' => 'Partida não pertence ao jogo persistido.'], 422);
             }
             try {
-                $this->queries->launch((int) ($data['jogos_id_jogo'] ?? 0), null, 0, [[
-                    'id_equipe' => (int) ($data['equipes_id_equipe'] ?? 0),
-                    'gols' => (int) $data['resultado_final'],
-                ]]);
+                $this->queries->launch($gameId, null, 0, $results);
                 return Response::json(['success' => true, 'message' => 'Resultado salvo e jogo finalizado!']);
             } catch (\InvalidArgumentException $exception) {
                 return Response::json(['success' => false, 'message' => $exception->getMessage()], 422);
@@ -66,10 +85,20 @@ final class PartidaController
             if (!is_numeric($id) || (int) $id <= 0) {
                 return Response::json(['success' => true, 'offline' => true, 'message' => 'Partida temporária sincronizada']);
             }
-            if ((int) ($_SESSION['nivel'] ?? -1) === 2
-                && !$this->belongsToActiveEdition((int) ($data['jogos_id_jogo'] ?? 0), (int) $id)) {
-                return Response::json(['success' => false, 'message' => 'A partida não pertence à edição ativa.'], 403);
+            $partida = $this->service->encontrar((int) $id);
+            if ($partida === null) {
+                return Response::json(['success' => false, 'message' => 'Partida não encontrada.'], 404);
             }
+            $gameId = (int) ($partida['jogos_id_jogo'] ?? 0);
+            $teamId = (int) ($partida['equipes_id_equipe'] ?? 0);
+            if (($denied = $this->access->authorize((int) ($partida['edition_id'] ?? 0))) !== null) {
+                return $denied;
+            }
+            if (($invalid = $this->rejectDiscordantIdentifiers($data, $gameId, $teamId)) !== null) {
+                return $invalid;
+            }
+            $data['jogos_id_jogo'] ??= $gameId;
+            $data['equipes_id_equipe'] ??= $teamId;
             try {
                 $this->service->atualizar($data);
                 return Response::json(['success' => true, 'message' => 'Partida atualizada com sucesso!']);
@@ -83,12 +112,23 @@ final class PartidaController
         return Response::json(['message' => 'Método não permitido'], 405);
     }
 
-    private function belongsToActiveEdition(int $gameId, int $partidaId = 0): bool
+    /** @param array<string, mixed> $data */
+    private function rejectDiscordantIdentifiers(array $data, int $gameId, int $teamId): ?Response
     {
-        $active = (int) ($_SESSION['id_interclasse'] ?? 0);
-        $edition = $gameId > 0
-            ? $this->queries->editionOfGame($gameId)
-            : ($partidaId > 0 ? $this->queries->editionOfPartida($partidaId) : null);
-        return $active > 0 && $edition !== null && $edition === $active;
+        foreach ([
+            'jogos_id_jogo' => [$gameId, 'jogo'],
+            'equipes_id_equipe' => [$teamId, 'equipe'],
+        ] as $field => [$expected, $label]) {
+            if (!array_key_exists($field, $data) || !is_numeric($data[$field])) {
+                continue;
+            }
+            if ((int) $data[$field] !== $expected) {
+                return Response::json([
+                    'success' => false,
+                    'message' => "O {$label} da partida não pode ser alterado.",
+                ], 422);
+            }
+        }
+        return null;
     }
 }

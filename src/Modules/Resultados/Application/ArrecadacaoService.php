@@ -45,6 +45,9 @@ final class ArrecadacaoService
             if (!is_finite($quantidade)) {
                 throw new InvalidArgumentException('A quantidade da arrecadação é inválida.');
             }
+            if ($quantidade < 0) {
+                throw new InvalidArgumentException('A quantidade da arrecadação não pode ser negativa.');
+            }
             if ($quantidade == 0.0) {
                 continue;
             }

@@ -5,13 +5,23 @@ declare(strict_types=1);
 namespace App\Modules\Competicoes\Infrastructure;
 
 use App\Modules\Competicoes\Domain\ChaveamentoManagement;
-use App\Shared\Database\Transaction;
+use App\Modules\Competicoes\Application\IndividualRankingService;
+use App\Shared\Application\TransactionRunner;
+use App\Shared\Database\MysqliTransactionRunner;
 use mysqli;
 
 final class MysqliChaveamentoManagement implements ChaveamentoManagement
 {
-    public function __construct(private readonly mysqli $connection)
-    {
+    private readonly TransactionRunner $transactions;
+    private readonly IndividualRankingService $individual;
+
+    public function __construct(
+        private readonly mysqli $connection,
+        ?TransactionRunner $transactions = null,
+        ?IndividualRankingService $individual = null,
+    ) {
+        $this->transactions = $transactions ?? new MysqliTransactionRunner($connection);
+        $this->individual = $individual ?? new IndividualRankingService(new MysqliIndividualRankingRepository($connection));
     }
 
     public function modality(int $id): ?array
@@ -38,9 +48,7 @@ final class MysqliChaveamentoManagement implements ChaveamentoManagement
 
     public function saveIndividual(int $id, ?array $ranking): array
     {
-        return $this->atomic(fn (): array => $ranking !== null
-            ? MysqliIndividualRepository::salvarRanking($this->connection, $id, $ranking)
-            : MysqliIndividualRepository::criarJogoAgenda($this->connection, $id));
+        return $this->atomic(fn (): array => $this->individual->registrar($id, $ranking));
     }
 
     public function createBracket(int $id): array
@@ -63,14 +71,6 @@ final class MysqliChaveamentoManagement implements ChaveamentoManagement
      */
     private function atomic(callable $action): array
     {
-        Transaction::begin($this->connection);
-        try {
-            $result = $action();
-            Transaction::commit($this->connection);
-            return $result;
-        } catch (\Throwable $exception) {
-            Transaction::rollback($this->connection);
-            throw $exception;
-        }
+        return $this->transactions->run($action);
     }
 }

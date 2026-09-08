@@ -5,9 +5,11 @@ declare(strict_types=1);
 namespace App\Modules\Competicoes\Presentation\Http;
 
 use App\Modules\Acesso\Presentation\Http\CompetitionAccess;
+use App\Modules\Competicoes\Application\CronometroService;
 use App\Modules\Competicoes\Application\JogoConflitoException;
 use App\Modules\Competicoes\Application\JogoService;
 use App\Modules\Competicoes\Infrastructure\MysqliJogoGateway;
+use App\Modules\Sincronizacao\Presentation\Http\MutationAction;
 use App\Shared\Http\AccessGuard;
 use App\Shared\Http\Request;
 use App\Shared\Http\Response;
@@ -18,6 +20,8 @@ final class JogoController
         private readonly JogoService $service,
         private readonly MysqliJogoGateway $queries,
         private readonly CompetitionAccess $access,
+        private readonly CronometroService $cronometro,
+        private readonly MutationAction $mutations,
     ) {
     }
 
@@ -71,6 +75,15 @@ final class JogoController
                 return Response::json(['success' => false, 'message' => 'Mesários só podem alterar o status ou placar do jogo.'], 403);
             }
             try {
+                if ($this->isCronometroMutation($data)) {
+                    return $this->mutations->run($request, 'jogos.put', function () use ($id, $data): Response {
+                        $result = $this->cronometro->atualizar($id, $data);
+                        return Response::json(array_merge([
+                            'success' => true,
+                            'message' => 'Jogo atualizado com sucesso!',
+                        ], $this->cronometro->response($result)));
+                    });
+                }
                 if (!$this->queries->update($id, $data)) {
                     return Response::json(['success' => true, 'offline' => true, 'message' => 'Jogo temporário registrado localmente.']);
                 }
@@ -83,6 +96,16 @@ final class JogoController
             }
         }
         return Response::json(['success' => false, 'message' => 'Método não permitido'], 405);
+    }
+
+    /** @param array<string,mixed> $data */
+    private function isCronometroMutation(array $data): bool
+    {
+        return array_key_exists('status_jogo', $data)
+            || array_key_exists('cronometro', $data)
+            || array_key_exists('tempo_restante_jogo', $data)
+            || array_key_exists('tempo_extra_jogo', $data)
+            || array_key_exists('duracao_jogo', $data);
     }
 
     private function resourceBelongsToActiveEdition(int $id, bool $game): bool

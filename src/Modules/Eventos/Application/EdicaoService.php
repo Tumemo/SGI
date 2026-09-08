@@ -54,6 +54,9 @@ final class EdicaoService
                 if ($field === 'nome_interclasse' && $value === '') {
                     throw new InvalidArgumentException('O nome da edição não pode ser vazio.');
                 }
+                if ($field === 'status_interclasse' && !in_array($value, ['0', '1'], true)) {
+                    throw new InvalidArgumentException('O status da edição deve ser 0 ou 1.');
+                }
                 $updates[$field] = $value;
             }
         }
@@ -70,5 +73,16 @@ final class EdicaoService
             throw new InvalidArgumentException('Nenhum campo fornecido para atualização.');
         }
         $this->edicoes->update($id, $updates);
+    }
+
+    public function alterarStatus(int $id, string $status): void
+    {
+        if ($id <= 0) {
+            throw new InvalidArgumentException('O ID da edição é obrigatório.');
+        }
+        if (!in_array($status, ['0', '1'], true)) {
+            throw new InvalidArgumentException('O status da edição deve ser 0 ou 1.');
+        }
+        $this->edicoes->update($id, ['status_interclasse' => $status]);
     }
 }

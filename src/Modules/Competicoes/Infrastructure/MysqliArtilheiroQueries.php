@@ -4,6 +4,8 @@ declare (strict_types=1);
 
 namespace App\Modules\Competicoes\Infrastructure;
 
+use App\Modules\Competicoes\Domain\ChaveamentoRules;
+
 final class MysqliArtilheiroQueries
 {
     public function __construct(private readonly \mysqli $connection)
@@ -12,6 +14,19 @@ final class MysqliArtilheiroQueries
     public function resolveGame(object $data): int
     {
         return self::sgi_resolver_jogo_temporario_artilharia($this->connection, $data);
+    }
+
+    public function editionOfModality(int $modalityId): ?int
+    {
+        $statement = $this->connection->prepare('SELECT interclasses_id_interclasse FROM modalidades WHERE id_modalidade = ? LIMIT 1');
+        if ($statement === false) {
+            return null;
+        }
+        $statement->bind_param('i', $modalityId);
+        $statement->execute();
+        $value = $statement->get_result()->fetch_column();
+        $statement->close();
+        return $value === null || $value === false ? null : (int) $value;
     }
     private static function revelarDestaquesPorModalidade($conn, $idInterclasse = \null)
     {
@@ -42,6 +57,10 @@ final class MysqliArtilheiroQueries
         $nomeJogo = \trim((string) ($data->nome_jogo ?? ''));
         $idModalidade = (int) ($data->id_modalidade ?? 0);
         if ($nomeJogo === '' || $idModalidade <= 0) {
+            return 0;
+        }
+        $queries = new self($conn);
+        if ($queries->editionOfModality($idModalidade) === null || ChaveamentoRules::parse($nomeJogo) === null) {
             return 0;
         }
         $jogo = \App\Modules\Competicoes\Infrastructure\MysqliChaveamentoRepository::buscarJogoPorTag($conn, $idModalidade, $nomeJogo);

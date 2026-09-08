@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Competicoes\Infrastructure;
 
+use App\Modules\Competicoes\Domain\CronometroRules;
 use App\Shared\Database\SqlFilters;
 use mysqli;
 use RuntimeException;
@@ -25,6 +26,7 @@ final class MysqliJogoGateway
                        jogos.inicio_jogo, jogos.termino_jogo, jogos.status_jogo,
                        jogos.tempo_restante_jogo, jogos.duracao_jogo,
                        jogos.tempo_extra_jogo, jogos.data_inicio_real,
+                       UNIX_TIMESTAMP(jogos.data_inicio_real) AS data_inicio_epoch,
                        jogos.modalidades_id_modalidade, jogos.locais_id_local,
                        modalidades.nome_modalidade,
                        modalidades.interclasses_id_interclasse AS id_interclasse,
@@ -62,13 +64,23 @@ final class MysqliJogoGateway
         $statement->close();
         $now = time();
         foreach ($rows as &$row) {
-            if ($row['status_jogo'] === 'Iniciado' && $row['data_inicio_real'] && $row['duracao_jogo']) {
-                $elapsed = max(0, $now - (strtotime((string) $row['data_inicio_real']) ?: $now));
-                $total = (int) $row['duracao_jogo'] + (int) ($row['tempo_extra_jogo'] ?? 0);
-                $row['tempo_restante_calculado'] = max(0, $total - $elapsed);
+            if ($row['duracao_jogo'] === null || (int) $row['duracao_jogo'] <= 0) {
+                // Registros legados podem não ter duração; nesse caso só há
+                // saldo calculável quando um snapshot explícito foi salvo.
+                $row['tempo_restante_calculado'] = $row['tempo_restante_jogo'] === null
+                    ? null
+                    : max(0, (int) $row['tempo_restante_jogo']);
             } else {
-                $row['tempo_restante_calculado'] = $row['tempo_restante_jogo'];
+                $row['tempo_restante_calculado'] = CronometroRules::saldoAtual([
+                    'status_jogo' => (string) $row['status_jogo'],
+                    'duracao_jogo' => $row['duracao_jogo'],
+                    'tempo_extra_jogo' => $row['tempo_extra_jogo'] ?? 0,
+                    'tempo_restante_jogo' => $row['tempo_restante_jogo'],
+                    'data_inicio_real' => $row['data_inicio_epoch'] === null ? null : (int) $row['data_inicio_epoch'],
+                ], $now);
             }
+            $row['servidor_epoch_ms'] = $now * 1000;
+            unset($row['data_inicio_epoch']);
         }
         unset($row);
         return $rows;

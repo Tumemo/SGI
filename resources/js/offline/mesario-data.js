@@ -55,7 +55,24 @@
             r.onerror = function () { reject(r.error); };
         }); });
     }
-    function urlInfo(url) { try { var u = new URL(url, location.href); return { file: u.pathname.split('/').pop(), q: u.searchParams }; } catch (_) { return {}; } }
+    function urlInfo(url) {
+        try {
+            var u = new URL(url, location.href);
+            var file = u.pathname.replace(/\/+$/, '').split('/').pop();
+            // Os clientes antigos usam arquivos PHP; as rotas versionadas usam
+            // os nomes do recurso sem extensão. O adaptador conserva ambos os
+            // caminhos sem inventar novas pluralizações.
+            var recursos = {
+                'jogos': 'jogos.php',
+                'partidas': 'partidas.php',
+                'ocorrencias': 'ocorrencias.php',
+                'ocorrencias-turmas': 'ocorrencias_turmas.php',
+                'artilheiros': 'artilheiro.php',
+                'chaveamentos': 'chaveamento.php'
+            };
+            return { file: recursos[file] || file, q: u.searchParams };
+        } catch (_) { return {}; }
+    }
     function idFor(file, row, fallback) {
         var fields = { jogos: 'id_jogo', partidas: 'id_partida', turmas: 'id_turma', modalidades: 'id_modalidade', categorias: 'id_categoria', locais: 'id_local', equipes: 'id_equipe', artilheiro: 'id_artilheiro', ocorrencias: 'id_ocorrencia', ocorrencias_turmas: 'id_ocorrencia_turma' };
         return row && (row[fields[file]] || row.id || fallback);
@@ -77,6 +94,44 @@
         }));
     }
     function bodyOf(item) { try { return typeof item.body === 'string' ? JSON.parse(item.body || '{}') : (item.body || {}); } catch (_) { return {}; } }
+    function projetarCronometro(jogo, dados) {
+        var bloco = dados && dados.cronometro;
+        if (!bloco || typeof bloco !== 'object' || Number(bloco.versao) !== 2) return jogo;
+        var saldo = Number(bloco.saldo_segundos);
+        var referencia = bloco.referencia_epoch_ms == null ? null : Number(bloco.referencia_epoch_ms);
+        if (!Number.isInteger(saldo) || saldo < 0 || (referencia !== null && (!Number.isInteger(referencia) || referencia < 0))) return jogo;
+        jogo.tempo_restante_jogo = saldo;
+        jogo.tempo_restante_calculado = saldo;
+        jogo.cronometro_referencia_epoch_ms = referencia;
+        if (dados.status_jogo) jogo.status_jogo = dados.status_jogo;
+        if (dados.duracao_jogo != null) jogo.duracao_jogo = dados.duracao_jogo;
+        if (dados.tempo_extra_jogo != null) jogo.tempo_extra_jogo = dados.tempo_extra_jogo;
+        return jogo;
+    }
+    function aplicarRespostaCronometro(jogo, resposta) {
+        var bloco = resposta && resposta.cronometro;
+        if (!bloco || typeof bloco !== 'object' || Number(bloco.versao) !== 2) return jogo;
+        if (bloco.status_jogo) jogo.status_jogo = bloco.status_jogo;
+        if (bloco.duracao_jogo != null) jogo.duracao_jogo = bloco.duracao_jogo;
+        if (bloco.tempo_extra_jogo != null) jogo.tempo_extra_jogo = bloco.tempo_extra_jogo;
+        if (bloco.saldo_segundos != null) {
+            jogo.tempo_restante_jogo = bloco.saldo_segundos;
+            jogo.tempo_restante_calculado = bloco.saldo_segundos;
+        }
+        jogo.cronometro_referencia_epoch_ms = bloco.referencia_epoch_ms == null ? null : bloco.referencia_epoch_ms;
+        if (bloco.servidor_epoch_ms != null) jogo.servidor_epoch_ms = bloco.servidor_epoch_ms;
+        return jogo;
+    }
+    function preservarReferenciasOcorrencia(old, merged) {
+        if (!old || !old.descricao_ocorrencia || !merged.descricao_ocorrencia) return merged;
+        var refs = String(old.descricao_ocorrencia).match(/^(?:\[JOGO:-?\d+\])?(?:\[TURMA:-?\d+\])?/)[0];
+        if (refs && String(merged.descricao_ocorrencia).indexOf('[JOGO:') !== 0 &&
+            String(merged.descricao_ocorrencia).indexOf('[TURMA:') !== 0) {
+            merged.descricao_ocorrencia = refs + String(merged.descricao_ocorrencia);
+        }
+        return merged;
+    }
+
     function project(item) {
         var info = urlInfo(item.url), data = bodyOf(item), file = info.file, temporary = 'temp_' + item.id;
         if (file === 'jogos.php' && data.id_jogo) return get('jogos', data.id_jogo).then(function (old) {
@@ -89,6 +144,7 @@
             var dadosMutacao = Object.assign({}, data);
             delete dadosMutacao._contexto_offline;
             var merged = Object.assign({}, contexto, old || {}, dadosMutacao, { _pendente: true });
+            projetarCronometro(merged, data);
             if (old) {
                 if (!merged.nome_jogo && old.nome_jogo) merged.nome_jogo = old.nome_jogo;
                 if (!merged.modalidades_id_modalidade && old.modalidades_id_modalidade) merged.modalidades_id_modalidade = old.modalidades_id_modalidade;
@@ -104,6 +160,13 @@
         if (file === 'partidas.php' && item.method === 'PUT' && data.id_partida != null) return all('partidas').then(function (ps) {
             var old = ps.filter(function (p) { return String(p.id_partida) === String(data.id_partida); })[0];
             return put('partidas', data.id_partida, Object.assign({}, old || { id_partida: data.id_partida }, data, { _pendente: true }));
+        });
+        if (file === 'ocorrencias.php' && item.method === 'PUT' && data.id_ocorrencia != null) return all('ocorrencias').then(function (ocorrencias) {
+            var old = ocorrencias.filter(function (ocorrencia) {
+                return String(ocorrencia.id_ocorrencia) === String(data.id_ocorrencia);
+            })[0];
+            var merged = preservarReferenciasOcorrencia(old, Object.assign({}, old || { id_ocorrencia: data.id_ocorrencia }, data, { _pendente: true }));
+            return put('ocorrencias', data.id_ocorrencia, merged);
         });
         if (file === 'lancar_resultado.php' && data.id_jogo) return Promise.all([
             all('partidas').then(function (partidas) {
@@ -137,7 +200,13 @@
             })
         ]);
         if (file === 'artilheiro.php' && item.method === 'POST') return put('atletas', temporary, Object.assign({ id_artilheiro: temporary, _pendente: true }, data));
-        if (file === 'ocorrencias.php' && item.method === 'POST') return put('ocorrencias', temporary, Object.assign({ id_ocorrencia: temporary, _pendente: true }, data));
+        if (file === 'ocorrencias.php' && item.method === 'POST') return put('ocorrencias', temporary, Object.assign({
+            id_ocorrencia: temporary,
+            _pendente: true,
+            turmas_id_turma: data.id_turma || data.turmas_id_turma || 0,
+            id_usuario: data.usuarios_id_usuario || data.id_usuario || 0,
+            jogos_id_jogo: data.id_jogo || data.jogos_id_jogo || 0,
+        }, data));
         if (file === 'ocorrencias_turmas.php' && item.method === 'POST') return put('ocorrencias_turmas', temporary, Object.assign({ id_ocorrencia: temporary, _pendente: true }, data));
         if (file === 'chaveamento.php' && item.method === 'POST' && data.tipo_modalidade === 'individual' && data.ranking && data.id_modalidade) {
             var tagInd = 'IND:' + data.id_modalidade;
@@ -159,7 +228,19 @@
         // da camada base preserva exatamente a resposta original nesses casos.
         if (!store || info.q.get('acao')) return Promise.resolve(null);
         return all(store).then(function (rows) {
+            var idOcorrencia = file === 'ocorrencias.php' ? info.q.get('id_ocorrencia') : null;
+            var idOcorrenciaTurma = file === 'ocorrencias_turmas.php' ? info.q.get('id_ocorrencia_turma') : null;
+            var statusOcorrencia = file === 'ocorrencias.php' ? info.q.get('status_ocorrencia') : null;
             var idJogo = info.q.get('id_jogo'), idInter = info.q.get('id_interclasse'), idMod = info.q.get('id_modalidade');
+            if (idOcorrencia !== null && idOcorrencia !== '') {
+                rows = rows.filter(function (r) { return String(r.id_ocorrencia) === String(idOcorrencia); });
+            }
+            if (idOcorrenciaTurma !== null && idOcorrenciaTurma !== '') {
+                rows = rows.filter(function (r) { return String(r.id_ocorrencia_turma) === String(idOcorrenciaTurma); });
+            }
+            if (statusOcorrencia !== null && statusOcorrencia !== '') {
+                rows = rows.filter(function (r) { return String(r.status_ocorrencia) === String(statusOcorrencia); });
+            }
             if (idJogo) rows = rows.filter(function (r) { return String(r.jogos_id_jogo || r.id_jogo) === String(idJogo); });
             if (idInter) rows = rows.filter(function (r) {
                 var rInter = r.interclasses_id_interclasse || r.id_interclasse;
@@ -171,10 +252,12 @@
         });
     }
 
-    function itemAfetaLeitura(item, info) {
+    function itemAfetaLeitura(item, info, partidasLocais) {
         var mutacao = urlInfo(item && item.url), dados = bodyOf(item || {});
         var arquivo = mutacao.file;
         var idJogoConsulta = info.q && info.q.get('id_jogo');
+        var idOcorrenciaConsulta = info.q && info.q.get('id_ocorrencia');
+        var idOcorrenciaTurmaConsulta = info.q && info.q.get('id_ocorrencia_turma');
         var idJogoMutacao = dados.id_jogo != null ? dados.id_jogo : dados.jogos_id_jogo;
 
         if (info.file === 'jogos.php') {
@@ -191,6 +274,28 @@
             return false;
         }
 
+        if (info.file === 'ocorrencias.php' && idOcorrenciaConsulta !== null && idOcorrenciaConsulta !== '') {
+            return arquivo === 'ocorrencias.php' && dados.id_ocorrencia != null &&
+                String(idOcorrenciaConsulta) === String(dados.id_ocorrencia);
+        }
+
+        if (info.file === 'ocorrencias_turmas.php' && idOcorrenciaTurmaConsulta !== null && idOcorrenciaTurmaConsulta !== '') {
+            return arquivo === 'ocorrencias_turmas.php' && dados.id_ocorrencia_turma != null &&
+                String(idOcorrenciaTurmaConsulta) === String(dados.id_ocorrencia_turma);
+        }
+
+        if (info.file === 'partidas.php' && arquivo === 'partidas.php' && dados.id_partida != null) {
+            var partidaLocal = (partidasLocais || []).filter(function (partida) {
+                return String(partida.id_partida) === String(dados.id_partida);
+            })[0];
+            if (partidaLocal) {
+                var idJogoLocal = partidaLocal.jogos_id_jogo != null
+                    ? partidaLocal.jogos_id_jogo
+                    : partidaLocal.id_jogo;
+                return !idJogoConsulta || String(idJogoConsulta) === String(idJogoLocal);
+            }
+        }
+
         return !idJogoConsulta || String(idJogoConsulta) === String(idJogoMutacao);
     }
 
@@ -200,18 +305,24 @@
             !(window.SGIOffline.hasPending && window.SGIOffline.hasPending())) {
             return Promise.resolve(false);
         }
-        return window.SGIOffline.getPendingList().then(function (fila) {
-            return (fila || []).some(function (item) { return itemAfetaLeitura(item, info); });
+        var partidasLocais = info.file === 'partidas.php' ? all('partidas') : Promise.resolve(null);
+        return Promise.all([window.SGIOffline.getPendingList(), partidasLocais]).then(function (resultado) {
+            var fila = resultado[0];
+            var partidas = resultado[1];
+            return (fila || []).some(function (item) { return itemAfetaLeitura(item, info, partidas); });
         }).catch(function () { return false; });
     }
 
     function respostaLocalComDados(url) {
+        var info = urlInfo(url);
+        var consultaPorId = (info.file === 'ocorrencias.php' && info.q && info.q.get('id_ocorrencia') !== null) ||
+            (info.file === 'ocorrencias_turmas.php' && info.q && info.q.get('id_ocorrencia_turma') !== null);
         return localGet(url).then(function (resposta) {
             if (!resposta) return null;
             return resposta.clone().text().then(function (texto) {
                 var dados = null;
                 try { dados = JSON.parse(texto); } catch (_) {}
-                if (Array.isArray(dados) && dados.length === 0) return null;
+                if (Array.isArray(dados) && dados.length === 0 && !consultaPorId) return null;
                 if (dados == null) return null;
                 return resposta;
             }).catch(function () { return null; });
@@ -291,12 +402,47 @@
         onSynced: function (item, text) {
             var info = urlInfo(item.url), resposta = {};
             try { resposta = JSON.parse(text || '{}'); } catch (_) {}
+            var dados = bodyOf(item);
+            if (info.file === 'jogos.php' && item.method === 'PUT' && dados.id_jogo != null) {
+                return get('jogos', dados.id_jogo).then(function (jogo) {
+                    if (!jogo) return remove('fila_sincronizacao', item.id);
+                    aplicarRespostaCronometro(jogo, resposta);
+                    return Promise.all([
+                        put('jogos', dados.id_jogo, Object.assign({}, jogo, { _pendente: false })),
+                        remove('fila_sincronizacao', item.id)
+                    ]);
+                });
+            }
+            if (info.file === 'ocorrencias.php' && item.method === 'PUT' && dados.id_ocorrencia != null && !item.dependsOn) {
+                return get('ocorrencias', dados.id_ocorrencia).then(function (ocorrencia) {
+                    if (!ocorrencia) return remove('fila_sincronizacao', item.id);
+                    return Promise.all([
+                        put('ocorrencias', dados.id_ocorrencia, Object.assign({}, ocorrencia, { _pendente: false })),
+                        remove('fila_sincronizacao', item.id)
+                    ]);
+                });
+            }
             var store = info.file === 'artilheiro.php' ? 'atletas' : (info.file === 'ocorrencias.php' ? 'ocorrencias' : (info.file === 'ocorrencias_turmas.php' ? 'ocorrencias_turmas' : null));
             var temp = 'temp_' + item.id;
             if (store && item.method === 'POST' && resposta.id) {
                 return get(store, temp).then(function (row) {
                     if (!row) return remove('fila_sincronizacao', item.id);
-                    return Promise.all([put(store, resposta.id, Object.assign({}, row, { id: resposta.id, _pendente: false })), remove(store, temp), remove('fila_sincronizacao', item.id)]);
+                    var idReal = resposta.id;
+                    var identidade = store === 'ocorrencias'
+                        ? { id_ocorrencia: idReal }
+                        : (store === 'atletas' ? { id_artilheiro: idReal } : { id_ocorrencia_turma: idReal });
+                    return Promise.all([put(store, idReal, Object.assign({}, row, identidade, { _pendente: false })), remove(store, temp), remove('fila_sincronizacao', item.id)]);
+                });
+            }
+            if (info.file === 'ocorrencias.php' && item.method === 'PUT' && dados.id_ocorrencia != null && item.dependsOn && item.dependsOn.resolvedId != null) {
+                return get('ocorrencias', dados.id_ocorrencia).then(function (ocorrencia) {
+                    if (!ocorrencia) return remove('fila_sincronizacao', item.id);
+                    var idReal = item.dependsOn.resolvedId;
+                    return Promise.all([
+                        put('ocorrencias', idReal, Object.assign({}, ocorrencia, { id_ocorrencia: idReal, _pendente: false })),
+                        remove('ocorrencias', dados.id_ocorrencia),
+                        remove('fila_sincronizacao', item.id)
+                    ]);
                 });
             }
             return remove('fila_sincronizacao', item.id);

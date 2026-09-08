@@ -64,13 +64,15 @@ window.SGIPage.mount("competicoes/placar", function (pageConfig, pageScope) {
     let tempoRestante = 0;
     let duracaoJogo = 20 * 60;
     let pausado = false;
-    let saveTimers = {};
+    let saveChains = {};
     let tempoEsgotado = false;
     let equipesCache = {};
     let ehIndividual = false;
     let indParticipantes = [];
     let indRankingAtual = [];
     var __sgiPlacarCiclo = 0;
+    var relogioOffsetMs = 0;
+    var Cronometro = window.SGICronometro;
 
     var __sgiPlacarClickHandler = null;
     var __sgiPlacarCleanup = function() {
@@ -78,10 +80,6 @@ window.SGIPage.mount("competicoes/placar", function (pageConfig, pageScope) {
         // Uma resposta antiga nunca poderá pintar a próxima tela.
         __sgiPlacarCiclo++;
         pararTimer();
-        Object.keys(saveTimers || {}).forEach(function(key) {
-            try { clearTimeout(saveTimers[key]); } catch (_) {}
-        });
-        saveTimers = {};
         if (window.__SGI_PLACAR_SYNC_UNSUB__) {
             try { window.__SGI_PLACAR_SYNC_UNSUB__(); } catch (_) {}
             window.__SGI_PLACAR_SYNC_UNSUB__ = null;
@@ -173,6 +171,80 @@ window.SGIPage.mount("competicoes/placar", function (pageConfig, pageScope) {
         try { j = t ? JSON.parse(t) : {}; } catch (e) { j = {}; }
         if (!r.ok) throw new Error(j.message || 'Erro HTTP ' + r.status);
         return j;
+    }
+
+    function ajustarOffsetResposta(resposta) {
+        var servidorMs = resposta && resposta.cronometro && Number(resposta.cronometro.servidor_epoch_ms);
+        if (Number.isFinite(servidorMs) && servidorMs > 0) relogioOffsetMs = servidorMs - Date.now();
+        return Number.isFinite(servidorMs) && servidorMs > 0 ? servidorMs : agoraServidorMs();
+    }
+
+    function normalizarJogoRecebido(jogo) {
+        if (!jogo || typeof jogo !== 'object') return;
+        var servidorMs = Number(jogo.servidor_epoch_ms);
+        if (Number.isFinite(servidorMs) && servidorMs > 0) relogioOffsetMs = servidorMs - Date.now();
+        if (jogo.tempo_restante_calculado != null) jogo.tempo_restante_jogo = jogo.tempo_restante_calculado;
+        if (jogo.status_jogo === 'Iniciado' && jogo.tempo_restante_jogo != null && jogo.cronometro_referencia_epoch_ms == null) {
+            jogo.cronometro_referencia_epoch_ms = Number.isFinite(servidorMs) && servidorMs > 0 ? servidorMs : agoraServidorMs();
+        }
+        if (jogo.status_jogo !== 'Iniciado') jogo.cronometro_referencia_epoch_ms = null;
+    }
+
+    function agoraServidorMs() {
+        return Date.now() + relogioOffsetMs;
+    }
+
+    function estadoCronometroAtual() {
+        var jogo = estadoJogo || {};
+        var referencia = jogo.cronometro_referencia_epoch_ms;
+        if (referencia == null && jogo.status_jogo === 'Iniciado' && jogo.servidor_epoch_ms != null) {
+            referencia = Number(jogo.servidor_epoch_ms);
+        }
+        var saldo = jogo.tempo_restante_jogo;
+        if (saldo == null && jogo.tempo_restante_calculado != null) saldo = jogo.tempo_restante_calculado;
+        if (saldo == null) saldo = tempoRestante;
+        return {
+            status_jogo: jogo.status_jogo || 'Agendado',
+            duracao_jogo: parseInt(jogo.duracao_jogo, 10) || duracaoJogo,
+            tempo_extra_jogo: parseInt(jogo.tempo_extra_jogo, 10) || 0,
+            tempo_restante_jogo: Math.max(0, parseInt(saldo, 10) || 0),
+            data_inicio_real: referencia == null || !Number.isFinite(Number(referencia))
+                ? null
+                : Math.floor(Number(referencia) / 1000),
+        };
+    }
+
+    function saldoCronometroAgora() {
+        if (!Cronometro || !estadoJogo) return Math.max(0, tempoRestante);
+        try {
+            return Cronometro.saldoAtual(estadoCronometroAtual(), Math.floor(agoraServidorMs() / 1000));
+        } catch (_) {
+            return Math.max(0, tempoRestante);
+        }
+    }
+
+    function blocoCronometro(status, saldo, referenciaMs) {
+        return {
+            versao: 2,
+            saldo_segundos: Math.max(0, parseInt(saldo, 10) || 0),
+            referencia_epoch_ms: Math.max(0, parseInt(referenciaMs, 10) || 0),
+        };
+    }
+
+    function aplicarEstadoCronometro(next, servidorMs) {
+        estadoJogo = Object.assign({}, estadoJogo || {}, next);
+        tempoRestante = Math.max(0, next.tempo_restante_jogo == null ? 0 : Number(next.tempo_restante_jogo));
+        duracaoJogo = Number(next.duracao_jogo) > 0 ? Number(next.duracao_jogo) : duracaoJogo;
+        estadoJogo.tempo_restante_calculado = tempoRestante;
+        estadoJogo.servidor_epoch_ms = servidorMs;
+        estadoJogo.cronometro_referencia_epoch_ms = next.data_inicio_real == null ? null : Number(next.data_inicio_real) * 1000;
+    }
+
+    function atualizarTempoDoRelogio() {
+        if (!estadoJogo || estadoJogo.status_jogo !== 'Iniciado') return;
+        tempoRestante = saldoCronometroAgora();
+        atualizarDisplayTimer();
+        if (tempoRestante <= 0) bloquearPontuacao();
     }
 
     function pararTimer() {
@@ -298,19 +370,25 @@ window.SGIPage.mount("competicoes/placar", function (pageConfig, pageScope) {
     }
 
     async function adicionarTempoExtra(segundos) {
-        var novoTotal = (parseInt(estadoJogo.tempo_extra_jogo, 10) || 0) + segundos;
+        var agoraMs = agoraServidorMs();
+        var estado = estadoCronometroAtual();
+        var novoTotal = estado.tempo_extra_jogo + segundos;
         try {
-            await fetchJson(API + 'jogos.php', {
+            var next = Cronometro.transicionar(estado, 'acrescentar', Math.floor(agoraMs / 1000), {
+                tempo_extra_jogo: novoTotal,
+            });
+            var response = await fetchJson(API + 'jogos.php', {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     id_jogo: idJogo,
+                    status_jogo: next.status_jogo,
                     tempo_extra_jogo: novoTotal,
-                    tempo_restante_jogo: tempoRestante + segundos
+                    tempo_restante_jogo: next.tempo_restante_jogo,
+                    cronometro: blocoCronometro(next.status_jogo, next.tempo_restante_jogo, agoraMs),
                 })
             });
-            estadoJogo.tempo_extra_jogo = novoTotal;
-            tempoRestante = tempoRestante + segundos;
+            aplicarEstadoCronometro(next, ajustarOffsetResposta(response));
             tempoEsgotado = false;
 
             // Remover bloqueio visual
@@ -325,24 +403,9 @@ window.SGIPage.mount("competicoes/placar", function (pageConfig, pageScope) {
             if (ov) ov.remove();
 
             // Reiniciar timer
-            atualizarDisplayTimer();
-            pausado = false;
-            timerId = setInterval(function() {
-                if (tempoRestante > 0) {
-                    tempoRestante--;
-                    atualizarDisplayTimer();
-                    if (tempoRestante <= 0) {
-                        bloquearPontuacao();
-                    }
-                }
-            }, 1000);
-
-            // Salvar estado
-            fetchJson(API + 'jogos.php', {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ id_jogo: idJogo, tempo_restante_jogo: tempoRestante })
-            }).catch(function() {});
+            await persistirJogoLocal();
+            renderTudo();
+            iniciarTimerDisplay();
         } catch (e) {
             alert('Erro ao adicionar tempo extra: ' + (e.message || 'Erro de conexão'));
         }
@@ -356,6 +419,8 @@ window.SGIPage.mount("competicoes/placar", function (pageConfig, pageScope) {
         if (tempoRestante <= 0 && estadoJogo.status_jogo === 'Agendado') {
             tempoRestante = duracaoJogo;
         }
+
+        if (estadoJogo.status_jogo === 'Iniciado') tempoRestante = saldoCronometroAgora();
 
         if (tempoRestante <= 0) {
             tempoEsgotado = true;
@@ -379,52 +444,40 @@ window.SGIPage.mount("competicoes/placar", function (pageConfig, pageScope) {
         var btnPause = document.getElementById('btn-pausar');
         if (btnPause) btnPause.textContent = pausado ? 'Retomar' : 'Pausar';
         if (!pausado) {
-            timerId = setInterval(function() {
-                if (tempoRestante > 0) {
-                    tempoRestante--;
-                    atualizarDisplayTimer();
-                    if (tempoRestante <= 0) {
-                        bloquearPontuacao();
-                    }
-                }
-            }, 1000);
+            timerId = setInterval(atualizarTempoDoRelogio, 1000);
         }
     }
 
-    function togglePause() {
-        pausado = !pausado;
-        var btn = document.getElementById('btn-pausar');
-        if (btn) btn.textContent = pausado ? 'Retomar' : 'Pausar';
-        if (pausado) {
-            pararTimer();
-            // Pausar: servidor calcula e salva tempo_restante, limpa data_inicio_real
-            fetchJson(API + 'jogos.php', {
+    async function togglePause() {
+        if (!estadoJogo || !Cronometro) return;
+        var target = estadoJogo.status_jogo === 'Pausado' ? 'Iniciado' : 'Pausado';
+        var agoraMs = agoraServidorMs();
+        var estado = estadoCronometroAtual();
+        var next = Cronometro.aplicarSnapshot(
+            estado,
+            blocoCronometro(target, saldoCronometroAgora(), agoraMs),
+            target,
+            Math.floor(agoraMs / 1000),
+        );
+        try {
+            var response = await fetchJson(API + 'jogos.php', {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ id_jogo: idJogo, status_jogo: 'Pausado' })
-            }).catch(function() {});
-            estadoJogo.status_jogo = 'Pausado';
-            persistirJogoLocal().catch(function() {});
-        } else {
-            // Retomar: servidor define data_inicio_real = NOW()
-            fetchJson(API + 'jogos.php', {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ id_jogo: idJogo, status_jogo: 'Iniciado' })
-            }).catch(function() {});
-            estadoJogo.status_jogo = 'Iniciado';
-            persistirJogoLocal().catch(function() {});
-            if (!timerId) {
-                timerId = setInterval(function() {
-                    if (tempoRestante > 0) {
-                        tempoRestante--;
-                        atualizarDisplayTimer();
-                        if (tempoRestante <= 0) {
-                            bloquearPontuacao();
-                        }
-                    }
-                }, 1000);
-            }
+                body: JSON.stringify({
+                    id_jogo: idJogo,
+                    status_jogo: target,
+                    tempo_restante_jogo: next.tempo_restante_jogo,
+                    tempo_extra_jogo: next.tempo_extra_jogo,
+                    cronometro: blocoCronometro(target, next.tempo_restante_jogo, agoraMs),
+                })
+            });
+            aplicarEstadoCronometro(next, ajustarOffsetResposta(response));
+            pausado = target === 'Pausado';
+            await persistirJogoLocal();
+            renderTudo();
+            iniciarTimerDisplay();
+        } catch (e) {
+            alert('Erro ao ' + (target === 'Pausado' ? 'pausar' : 'retomar') + ': ' + (e.message || 'Erro de conexão'));
         }
     }
 
@@ -442,31 +495,66 @@ window.SGIPage.mount("competicoes/placar", function (pageConfig, pageScope) {
     }
 
     function agendarSalvarPartida(idPartida, gols) {
-        if (saveTimers[idPartida]) clearTimeout(saveTimers[idPartida]);
-        saveTimers[idPartida] = setTimeout(function() { salvarPartida(idPartida, gols); }, 400);
+        var chave = String(idPartida);
+        var partidaCapturada = (partidasLista || []).find(function(p) {
+            return String(p.id_partida) === chave;
+        });
+        var jogoCapturado = estadoJogo ? Object.assign({}, estadoJogo) : null;
+        var placarCapturado = Math.max(0, parseInt(gols, 10) || 0);
+        var anterior = saveChains[chave] || Promise.resolve();
+        var atual = anterior.catch(function() {}).then(function() {
+            return salvarPartida(idPartida, placarCapturado, {
+                jogo: jogoCapturado,
+                partida: partidaCapturada ? Object.assign({}, partidaCapturada) : null,
+            });
+        });
+        saveChains[chave] = atual;
+        atual.then(function() {
+            if (saveChains[chave] === atual) delete saveChains[chave];
+        }, function(error) {
+            if (saveChains[chave] === atual) delete saveChains[chave];
+            alert('Erro ao salvar o placar: ' + ((error && error.message) || 'não foi possível gravar a alteração local.'));
+        });
+        return atual;
     }
 
-    async function salvarPartida(idPartida, gols) {
+    async function salvarPartida(idPartida, gols, capturado) {
         if (!idPartida || isNaN(Number(idPartida)) || Number(idPartida) <= 0 || String(idPartida).indexOf('mm_local_') === 0 || (estadoJogo && Number(estadoJogo.id_jogo) < 0)) {
             // Partida offline ou derivada local: grava APENAS no banco local IndexedDB
             if (window.SGIDataLayer && window.SGIDataLayer.upsert) {
-                var rowPartida = (partidasLista || []).find(function(p) { return String(p.id_partida) === String(idPartida); });
-                if (rowPartida) {
-                    rowPartida.resultado_partida = gols;
-                    await window.SGIDataLayer.upsert('partidas', idPartida, rowPartida).catch(function() {});
-                }
+                var rowPartida = capturado && capturado.partida
+                    ? capturado.partida
+                    : (partidasLista || []).find(function(p) { return String(p.id_partida) === String(idPartida); });
+                if (!rowPartida) return;
+                rowPartida.resultado_partida = gols;
+                await window.SGIDataLayer.upsert('partidas', idPartida, rowPartida);
             }
             return;
         }
-        try {
-            await fetchJson(API + 'partidas.php', {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ id_partida: idPartida, resultado_partida: gols })
-            });
-        } catch (e) {
-            console.error(e);
+        if (!(window.SGIOffline && typeof window.SGIOffline.queueMutation === 'function')) {
+            throw new Error('A fila offline do Mesário não está disponível.');
         }
+        var urlAbsoluta;
+        try { urlAbsoluta = new URL(API + 'partidas.php', location.href).href; }
+        catch (_) { urlAbsoluta = API + 'partidas.php'; }
+        var item = await window.SGIOffline.queueMutation(
+            'PUT',
+            urlAbsoluta,
+            JSON.stringify({ id_partida: idPartida, resultado_partida: gols }),
+            { 'Content-Type': 'application/json' }
+        );
+        if (item && item.projectionError) {
+            throw new Error(item.projectionError);
+        }
+        if (typeof window.SGIOffline.sync === 'function' && window.SGIOffline.isOnline()) {
+            await window.SGIOffline.sync();
+        }
+    }
+
+    function aguardarGravacoesPartidas() {
+        return Promise.all(Object.keys(saveChains).map(function(chave) {
+            return saveChains[chave];
+        }));
     }
 
     /* Espelha o estado do jogo (Iniciado/Pausado/duração) na store local de
@@ -474,10 +562,14 @@ window.SGIPage.mount("competicoes/placar", function (pageConfig, pageScope) {
        recarregando o placar offline sem mutações pendentes, o snapshot por URL
        mostrava 'Agendado' e o botão de finalizar sumia. */
     function persistirJogoLocal() {
-        if (window.SGIDataLayer && window.SGIDataLayer.upsert) {
-            return window.SGIDataLayer.upsert('jogos', idJogo, Object.assign({}, estadoJogo, { _pendente: false }));
-        }
-        return Promise.resolve();
+        if (!(window.SGIDataLayer && window.SGIDataLayer.upsert)) return Promise.resolve();
+        var DL = window.SGIDataLayer;
+        return Promise.resolve(DL.read ? DL.read('jogos') : []).then(function (rows) {
+            var old = (rows || []).filter(function (row) { return String(row.id_jogo) === String(idJogo); })[0];
+            return DL.upsert('jogos', idJogo, Object.assign({}, old || {}, estadoJogo, {
+                _pendente: !!(old && old._pendente === true),
+            }));
+        });
     }
 
     function jogoEncerrado() {
@@ -493,22 +585,24 @@ window.SGIPage.mount("competicoes/placar", function (pageConfig, pageScope) {
             if (!isNaN(valM) && valM > 0) duracaoJogo = valM * 60;
         }
         if (!duracaoJogo || isNaN(duracaoJogo)) duracaoJogo = 20 * 60;
-        tempoRestante = duracaoJogo;
-        await fetchJson(API + 'jogos.php', {
+        var agoraMs = agoraServidorMs();
+        var estado = estadoCronometroAtual();
+        estado.status_jogo = 'Agendado';
+        estado.duracao_jogo = duracaoJogo;
+        var next = Cronometro.transicionar(estado, 'retomar', Math.floor(agoraMs / 1000));
+        var response = await fetchJson(API + 'jogos.php', {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 id_jogo: idJogo,
                 status_jogo: 'Iniciado',
                 duracao_jogo: duracaoJogo,
-                tempo_restante_jogo: duracaoJogo,
-                tempo_extra_jogo: 0
+                tempo_restante_jogo: next.tempo_restante_jogo,
+                tempo_extra_jogo: next.tempo_extra_jogo,
+                cronometro: blocoCronometro('Iniciado', next.tempo_restante_jogo, agoraMs),
             })
         });
-        if (!estadoJogo) estadoJogo = { id_jogo: idJogo };
-        estadoJogo.status_jogo = 'Iniciado';
-        estadoJogo.duracao_jogo = duracaoJogo;
-        estadoJogo.tempo_extra_jogo = 0;
+        aplicarEstadoCronometro(next, ajustarOffsetResposta(response));
         await persistirJogoLocal();
         renderTudo();
         iniciarTimerDisplay();
@@ -630,16 +724,16 @@ window.SGIPage.mount("competicoes/placar", function (pageConfig, pageScope) {
             return;
         }
 
-        /* O botão +/- usa um debounce de 400 ms para reduzir gravações. Ao
-           encerrar imediatamente depois do último clique, esse timer ainda
-           pode estar pendente e uma escrita antiga (0x0) pode chegar depois
-           da projeção do POST de finalização. Drene o debounce e persista o
-           placar final antes de enfileirar/promover o jogo; assim a leitura
-           seguinte do mesmo jogo sempre parte do valor definitivo. */
-        Object.keys(saveTimers || {}).forEach(function(key) {
-            try { clearTimeout(saveTimers[key]); } catch (_) {}
-        });
-        saveTimers = {};
+        // Aguarde as intenções de placar capturadas antes da finalização. A
+        // desmontagem da SPA não pode deixar uma gravação anterior sobrescrever
+        // o resultado final que será enviado agora.
+        try {
+            await aguardarGravacoesPartidas();
+        } catch (e) {
+            liberarLock();
+            alert('Não foi possível salvar o placar antes de finalizar: ' + ((e && e.message) || 'tente novamente.'));
+            return;
+        }
         if (window.SGIDataLayer && typeof window.SGIDataLayer.upsert === 'function') {
             await Promise.all(resultados.map(function(r) {
                 var partida = (partidasLista || []).find(function(p) {
@@ -732,6 +826,7 @@ window.SGIPage.mount("competicoes/placar", function (pageConfig, pageScope) {
             if (!row) return false;
 
             estadoJogo = Object.assign({}, row);
+            normalizarJogoRecebido(estadoJogo);
             if (!estadoJogo.nome_modalidade) estadoJogo.nome_modalidade = '';
 
             var modalidades = await DL.read('modalidades').catch(function() { return []; });
@@ -780,7 +875,9 @@ window.SGIPage.mount("competicoes/placar", function (pageConfig, pageScope) {
             if (!placarContinuaAtivo(ciclo)) return false;
             ehIndividual = false;
             duracaoJogo = parseInt(estadoJogo.duracao_jogo, 10) || (20 * 60);
-            tempoRestante = duracaoJogo;
+            tempoRestante = estadoJogo.tempo_restante_jogo != null
+                ? Math.max(0, parseInt(estadoJogo.tempo_restante_jogo, 10) || 0)
+                : duracaoJogo;
 
             document.getElementById('placar-loading').classList.add('d-none');
             document.getElementById('placar-conteudo').classList.remove('d-none');
@@ -1171,6 +1268,7 @@ window.SGIPage.mount("competicoes/placar", function (pageConfig, pageScope) {
             if (!placarContinuaAtivo(ciclo)) return;
             if (!Array.isArray(lista) || lista.length === 0) throw new Error('Jogo não encontrado.');
             estadoJogo = lista[0];
+            normalizarJogoRecebido(estadoJogo);
             if (!estadoJogo.nome_modalidade) estadoJogo.nome_modalidade = '';
             if (estadoJogo.status_jogo === 'Concluido' || estadoJogo.status_jogo === 'Finalizado') {
                 tempoEsgotado = true;
@@ -1354,9 +1452,11 @@ window.SGIPage.mount("competicoes/placar", function (pageConfig, pageScope) {
 
                 var acoesHtml = '';
                 if (!jogoEncerrado()) {
+                    var idOcorrenciaHtml = String(o.id_ocorrencia == null ? '' : o.id_ocorrencia)
+                        .replace(/\\/g, '\\\\').replace(/'/g, "\\'");
                     acoesHtml = '<div class="tl-event-actions">' +
-                        '<button type="button" class="tl-action-btn tl-action-btn--edit" onclick="editarOcorrencia(' + o.id_ocorrencia + ')" title="Editar"><i class="bi bi-pencil-square"></i></button>' +
-                        '<button type="button" class="tl-action-btn tl-action-btn--delete" onclick="excluirOcorrencia(' + o.id_ocorrencia + ')" title="Excluir"><i class="bi bi-trash3"></i></button>' +
+                        '<button type="button" class="tl-action-btn tl-action-btn--edit" onclick="editarOcorrencia(\'' + idOcorrenciaHtml + '\')" title="Editar"><i class="bi bi-pencil-square"></i></button>' +
+                        '<button type="button" class="tl-action-btn tl-action-btn--delete" onclick="excluirOcorrencia(\'' + idOcorrenciaHtml + '\')" title="Excluir"><i class="bi bi-trash3"></i></button>' +
                         '</div>';
                 }
 
@@ -1385,12 +1485,21 @@ window.SGIPage.mount("competicoes/placar", function (pageConfig, pageScope) {
     }
 
     var _editandoOcorrenciaId = null;
+    var _ocorrenciaModalHideTimer = null;
+
+    function cancelarFechamentoOcorrenciaPendente() {
+        if (_ocorrenciaModalHideTimer !== null) {
+            clearTimeout(_ocorrenciaModalHideTimer);
+            _ocorrenciaModalHideTimer = null;
+        }
+    }
 
     function abrirModalOcorrencia() {
         if (jogoEncerrado()) {
             alert('O jogo já foi encerrado. Não é possível registrar ocorrências.');
             return;
         }
+        cancelarFechamentoOcorrenciaPendente();
         _editandoOcorrenciaId = null;
         document.getElementById('formOcorrencia').reset();
         document.getElementById('msgOcorrencia').innerHTML = '';
@@ -1400,6 +1509,7 @@ window.SGIPage.mount("competicoes/placar", function (pageConfig, pageScope) {
         var selAluno = document.getElementById('selectAlunoOcorrencia');
         selAluno.disabled = true;
         selAluno.innerHTML = '<option value="">Selecione uma turma primeiro</option>';
+        document.getElementById('btnSalvarOcorrencia').disabled = false;
         document.getElementById('btnSalvarOcorrencia').innerHTML = '<i class="bi bi-check-lg me-1"></i>Registrar';
         var modal = bootstrap.Modal.getOrCreateInstance(document.getElementById('modalOcorrencia'));
         modal.show();
@@ -1410,7 +1520,9 @@ window.SGIPage.mount("competicoes/placar", function (pageConfig, pageScope) {
             alert('O jogo já foi encerrado. Não é possível editar ocorrências.');
             return;
         }
-        _editandoOcorrenciaId = id;
+        cancelarFechamentoOcorrenciaPendente();
+        var idSolicitado = String(id);
+        _editandoOcorrenciaId = idSolicitado;
         document.getElementById('formOcorrencia').reset();
         document.getElementById('msgOcorrencia').innerHTML = '';
         document.querySelectorAll('.ocorrencia-tipo-option').forEach(function(el) {
@@ -1419,12 +1531,15 @@ window.SGIPage.mount("competicoes/placar", function (pageConfig, pageScope) {
         var selAluno = document.getElementById('selectAlunoOcorrencia');
         selAluno.disabled = true;
         selAluno.innerHTML = '<option value="">Carregando...</option>';
+        document.getElementById('btnSalvarOcorrencia').disabled = false;
         document.getElementById('btnSalvarOcorrencia').innerHTML = '<i class="bi bi-check-lg me-1"></i>Atualizar';
 
         try {
-            var lista = await fetchJson(API + 'ocorrencias.php?id_ocorrencia=' + id);
-            var o = Array.isArray(lista) ? lista[0] : null;
-            if (!o) return;
+            var lista = await fetchJson(API + 'ocorrencias.php?id_ocorrencia=' + encodeURIComponent(idSolicitado));
+            var o = Array.isArray(lista) ? lista.find(function (item) {
+                return item && String(item.id_ocorrencia) === idSolicitado;
+            }) : null;
+            if (!o) throw new Error('Ocorrência não disponível neste dispositivo.');
             document.querySelectorAll('.ocorrencia-tipo-option').forEach(function(el) {
                 if (el.getAttribute('data-tipo') === o.titulo_ocorrencia) {
                     el.classList.add('active');
@@ -1455,6 +1570,7 @@ window.SGIPage.mount("competicoes/placar", function (pageConfig, pageScope) {
         } catch (e) {
             _editandoOcorrenciaId = null;
             document.getElementById('btnSalvarOcorrencia').innerHTML = '<i class="bi bi-check-lg me-1"></i>Registrar';
+            alert(e && e.message ? e.message : 'Ocorrência não disponível neste dispositivo.');
         }
     }
 
@@ -1552,10 +1668,12 @@ window.SGIPage.mount("competicoes/placar", function (pageConfig, pageScope) {
                 } else if (!isUpdate && (tipo === 'Vermelho' || tipo === 'Suspensao')) {
                     carregarAlunosOcorrencia();
                 }
-                setTimeout(function() {
+                cancelarFechamentoOcorrenciaPendente();
+                _ocorrenciaModalHideTimer = setTimeout(function() {
                     var m = bootstrap.Modal.getInstance(document.getElementById('modalOcorrencia'));
                     if (m) m.hide();
                     _editandoOcorrenciaId = null;
+                    _ocorrenciaModalHideTimer = null;
                     carregarOcorrencias();
                 }, 600);
             } else {

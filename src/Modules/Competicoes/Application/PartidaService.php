@@ -20,6 +20,15 @@ final class PartidaService
     {
     }
 
+    /** @return array<string, mixed>|null */
+    public function encontrar(int $id): ?array
+    {
+        if ($id <= 0) {
+            return null;
+        }
+        return $this->partidas->find($id);
+    }
+
     /**
      * Atualiza somente os campos públicos suportados pela API.
      *
