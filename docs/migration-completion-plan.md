@@ -1,6 +1,14 @@
 # Conclusão da migração do SGI
 
-Data da verificação: 06/09/2026. Branch: `codex/refatoracao-arquitetura-limpeza`.
+Data da verificação estrutural: 06/09/2026. Branch: `codex/refatoracao-arquitetura-limpeza`.
+
+## Atualização funcional do plano Luna — 08/09/2026
+
+As tarefas T00–T29 do plano de implementação foram executadas no mesmo branch e registradas em [`docs/plano-implementacao-luna/STATUS.md`](plano-implementacao-luna/STATUS.md). A validação local final aprovou `380/380` asserções HTTP, `163` testes PHPUnit com `1.815` asserções, PHPStan `213/213`, PHP CS Fixer `275/275`, `16/16` testes JavaScript e `32/32` cenários Playwright, incluindo operação online/offline, aliases, fila legada, subdiretório `/SGI` e o ensaio sintético de backup/restauração.
+
+Durante a revisão final foi reproduzida e corrigida uma corrida em que o timer de fechamento de uma ocorrência anterior fechava um novo modal de edição offline. O fluxo de duas ocorrências, criação temporária, edição antes do POST, sincronização e inativação passou depois da correção. A auditoria original continua preservada como histórico dos defeitos que motivaram o plano.
+
+A matriz CI continua sendo a evidência prevista para PHP 8.2/8.4, MySQL 8.4, MariaDB 10.11 e comparação visual Windows. Esses alvos externos não foram executados neste host local e permanecem pendência operacional explícita; não houve publicação nem deploy.
 
 ## Estado atual
 

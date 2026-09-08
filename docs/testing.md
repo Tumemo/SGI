@@ -60,6 +60,14 @@ O cenário de chaveamento ímpar prepara três equipes com elenco e exige um ava
 
 `deployment-paths.spec.cjs` verifica redirecionamento, login, carregamento de arquivos e paridade das APIs no endereço configurado. Para testar uma instalação em subdiretório, inicie um servidor separado com `SGI_BASE_PATH=SGI` e execute esse teste com `SGI_BASE_URL=http://127.0.0.1:PORTA/SGI/`. O teste também roda normalmente na raiz. Os testes unitários usam sessões próprias em `test-results/unit-sessions/`, sem depender da pasta de sessões do servidor.
 
+`legacy-offline-compat.spec.cjs` cobre fila antiga sem `session`, alias antigo de mutação, isolamento entre operadores, casca sem `pageSources` e retry após falha de rede. A compatibilidade exige uma casca autenticada/preparada; refresh, nova aba e cold-open sem essa casca não são declarados como suporte porque o pacote não usa Service Worker.
+
 `visual-contract.spec.cjs` compara quatro imagens do login em desktop/mobile. A resposta de credenciais inválidas é fixa nesse teste visual; a autenticação real é validada separadamente. As referências versionadas são do Windows. No Linux, execute os demais testes com `--grep-invert "contrato visual do acesso"`; o CI executa a comparação visual em um job Windows.
 
 Imagens, traces e relatório ficam em `tests/browser/test-results/` e `tests/browser/playwright-report/`. Só atualize snapshots após inspecionar uma mudança visual intencional. Testes aprovados cobrem os cenários descritos; não representam garantia de ausência de qualquer defeito.
+
+## Matriz e recuperação
+
+O CI executa a qualidade em PHP 8.2 e 8.4, a integração em MySQL 8.4 e MariaDB 10.11, os cenários online/offline no Linux e o contrato visual em Windows. A configuração está em `.github/workflows/ci.yml`; uma execução local em outro motor não substitui os alvos que não foram instalados.
+
+`php tests/run_all.php` também executa o ensaio sintético de recuperação. Ele cria bases temporárias com nomes próprios, gera um `mysqldump` contendo schema/dados/triggers, grava hash e versão em `test-results/t28-recovery-*.json`, atualiza uma cópia com as migrações e restaura o dump em outra base. As bases são removidas ao final; os dumps e manifestos permanecem como evidência ignorada pelo Git. O ensaio não aponta para base de trabalho e não limpa filas IndexedDB.

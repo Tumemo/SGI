@@ -35,3 +35,9 @@ Se a atualização falhar, interrompa novas escritas e guarde os logs. Volte ao 
 Se houver DDL parcialmente aplicado ou incompatibilidade, restaure o backup verificado em uma base separada, valide-o e redirecione a aplicação. Não apague o marcador de falha para forçar repetição de uma migração sem analisar seus efeitos. Não existe comando automático de rollback destrutivo.
 
 Preserve as filas IndexedDB durante a recuperação. Não limpe dados do navegador de um mesário com alterações ainda não confirmadas.
+
+### Ensaio sintético reproduzível
+
+Antes de uma atualização real, `php tests/run_all.php` executa a Suite 16 de recuperação em bancos descartáveis. O teste gera `test-results/t28-recovery-*.sql` e um manifesto JSON com hash do dump, referência do código, origem pré-upgrade e versão das migrações; compara matrículas, hashes, histórico, triggers e a fronteira pré-upgrade após restaurar em outra base. Esses arquivos são evidência do ensaio, não backup de produção.
+
+O dump restaurado representa a base anterior às migrações 002–004. A aplicação atualizada não deve ser revertida apontando para esse dump sem interromper escritas e sem confirmar a compatibilidade do pacote anterior com o esquema já aplicado. O procedimento conserva as filas/cache offline e exige validação operacional antes de redirecionar tráfego. MySQL 8.4, MariaDB 10.11 e o job visual Windows continuam sendo validados pelo CI quando não estiverem disponíveis no host local.

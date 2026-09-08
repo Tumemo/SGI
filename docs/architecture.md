@@ -59,6 +59,30 @@ Os controladores novos não executam SQL. Serviços recebem interfaces de domín
 testáveis sem banco. Repositórios concentram consultas, transações e detalhes
 do MySQL/MariaDB.
 
+## Dependências entre módulos
+
+- `Competicoes` pode expor contratos de equipes e a API de pontuação para os
+  demais módulos; sua implementação MySQLi permanece em `Infrastructure`.
+- `Participantes` usa contratos de `Competicoes` para localizar/criar equipes
+  padrão e mantém a decisão de limite de modalidades em regra pura, sem chamar
+  a infraestrutura de equipes diretamente.
+- `Eventos` coordena a criação da edição e de seus padrões por contratos de
+  `Competicoes`; a geração de nomes e o SQL continuam nos adaptadores de
+  infraestrutura.
+- `Presentation` não importa implementações de outro módulo para executar
+  regras ou consultas; a composição concreta fica nas rotas.
+
+As dependências concretas de apresentação abaixo permanecem fora do escopo
+crítico migrado e são intencionais, não uma exceção curinga: `ArtilheiroController`
+e `OcorrenciaController` usam queries somente de leitura do próprio módulo;
+`EquipeController`, `JogoController` e `PartidaController` mantêm gateways de
+compatibilidade dos fluxos operacionais; `EdicaoController` e
+`ImportacaoTurmaController` recebem storages de arquivo do próprio módulo;
+`HistoricoTurmaController` usa o repositório de consulta do histórico; e
+`ChaveamentoSyncController` usa o gateway de sincronização de sua própria
+fronteira. `ResultadoController` e `UsuarioController`, que foram migrados,
+ficam fora dessa lista e só recebem serviços, contratos e adaptadores de HTTP.
+
 ## Fronteiras de segurança e dados
 
 - `AccessGuard` aplica sessão e RBAC antes das mutações versionadas.
@@ -87,6 +111,8 @@ O build copia fontes e dependências fixadas no lockfile para `public/assets`, i
 
 Cada programa de página roda em uma função própria. `page-runtime.js` registra inicialização e reativação, restaura as ações usadas pelo HTML e evita duplicar eventos. Ao sair de uma tela, os eventos globais são removidos; placar e chaveamento interrompem suas atualizações. O shell guarda HTML, JSON e fontes JavaScript juntos no registro de versão 2. O adaptador léxico é mantido apenas para os scripts legados e os caches de versões anteriores.
 
+O modal de ocorrência cancela fechamentos atrasados quando uma nova edição começa, impedindo que uma confirmação anterior desmonte a edição seguinte durante uma reconexão offline. A fila continua sendo a mesma store IndexedDB, com os mesmos aliases e identificadores de mutação.
+
 ## Migrações e sincronização
 
 O gerenciamento de chaveamento usa `ChaveamentoController` e `ChaveamentoService`, com persistência por `ChaveamentoManagement`. A URL antiga encaminha para `/api/v1/chaveamentos`. A criação coletiva continua restrita a administrador/colaborador; o mesário registra resultados individuais somente na edição ativa. A criação de jogos e os avanços automáticos são confirmados na mesma transação.
@@ -96,6 +122,8 @@ A importação por PDF usa `ImportacaoTurmaController`, `ImportacaoTurmaService`
 `MigrationRunner` registra checksum, estado de conclusão e trava de execução. A adoção de uma base existente exige `--baseline`; a rotina valida parte da estrutura e não apaga seus dados. Veja [implantação](deployment.md).
 
 `MysqliMutationStore` serializa uma mesma chave, rejeita sua reutilização com outro conteúdo/operador e confirma resposta e dados na mesma transação. Transações aninhadas usam savepoints. Os testes provocam falha antes da confirmação e reenvios concorrentes. A fila mantém o identificador e atualiza o token CSRF da sessão ao reenviar.
+
+O ensaio de recuperação de `tests/Integration/RecoveryRehearsalTest.php` usa somente bases sintéticas: preserva schema, dados, hashes e triggers através do upgrade e restauração, registra hash/versão no manifesto e deixa explícita a fronteira pré-upgrade. Ele não altera banco de trabalho nem remove filas do navegador.
 
 ## Rede de segurança
 
@@ -112,5 +140,7 @@ As duas últimas suítes precisam de um servidor de teste e banco `sgi_test`.
 Elas cobrem autenticação, ciclo de edição, importação de PDF, modalidades,
 agendamento, placar, ranking, portal do aluno, fronteira pública, operação
 offline e chaveamento completo.
+
+A matriz declarada no CI adiciona PHP 8.4, MySQL 8.4, MariaDB 10.11 e comparação visual Windows aos checks locais. Quando esses ambientes não estão disponíveis, o resultado deve permanecer como pendência explícita no registro de execução, não como aprovação implícita.
 
 O procedimento reproduzível está em [testes](testing.md). Não há exceção de CSRF baseada em `SGI_APP_ENV=test`.
