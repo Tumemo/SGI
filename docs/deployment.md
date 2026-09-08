@@ -22,11 +22,13 @@ Os dados de demonstração em `database/seeders/test.sql` pertencem aos testes. 
 
 As migrações são numeradas, têm checksum e usam trava no banco para impedir execuções simultâneas. Uma migração aplicada não deve ser editada; crie outra. DDL do MySQL/MariaDB pode fazer commit implícito: o marcador `dirty` sinaliza aplicação incompleta e interrompe novas tentativas automáticas.
 
-## Compatibilidade offline
+## Operação offline atual
 
-As URLs anteriores continuam definidas em `config/routes/compatibility.php`, `config/routes/web.php` e `config/assets.php`. Não remova esses aliases enquanto existirem clientes ou filas que os utilizem. A versão nova armazena HTML, configuração e JavaScript da página juntos. Registros antigos, contendo scripts inline, ainda são lidos pelo adaptador do shell.
+O cliente atual usa a casca SPA preparada durante a sessão e armazena HTML, configuração e JavaScript da página juntos. A operação offline exige que a casca e os dados tenham sido preparados antes da perda de conexão; não há suporte declarado para abertura fria ou refresh sem essa preparação. O navegador não usa Service Worker.
 
-O identificador de mutação acompanha os reenvios. Novas confirmações registram também a identidade do operador e o conteúdo da operação; a mesma chave com conteúdo ou operador diferente é recusada. Registros anteriores à migração `002` não possuem esse vínculo e preservam a resposta histórica para compatibilidade. Gols, ocorrências e resultados protegidos são confirmados junto com o registro de repetição na mesma transação. Operações recusadas permanecem na fila e precisam de revisão.
+A limpeza das rotas relativas antigas está planejada para L04/L05. Até essa migração ser concluída, o servidor ainda carrega os aliases necessários pelo próprio cliente atual; novas telas e chamadas devem usar os caminhos versionados.
+
+O identificador de mutação acompanha os reenvios. As confirmações registram a identidade do operador e o conteúdo da operação; a mesma chave com conteúdo ou operador diferente é recusada. Gols, ocorrências e resultados protegidos são confirmados junto com o registro de repetição na mesma transação. Operações recusadas permanecem na fila e precisam de revisão.
 
 ## Recuperação
 

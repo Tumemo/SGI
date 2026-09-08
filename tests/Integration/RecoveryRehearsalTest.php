@@ -120,7 +120,7 @@ final class RecoveryRehearsalTest
 
     private static function createBackup(string $database, string $backup): string
     {
-        $binary = getenv('SGI_MYSQLDUMP_PATH') ?: 'C:\\xampp\\mysql\\bin\\mysqldump.exe';
+        $binary = self::toolPath('SGI_MYSQLDUMP_PATH', ['mysqldump.exe', 'mysqldump']);
         $version = trim(self::runProcess([$binary, '--version']));
         self::runProcess([
             $binary,
@@ -140,7 +140,7 @@ final class RecoveryRehearsalTest
 
     private static function restoreBackup(string $database, string $backup): string
     {
-        $binary = getenv('SGI_MYSQL_PATH') ?: 'C:\\xampp\\mysql\\bin\\mysql.exe';
+        $binary = self::toolPath('SGI_MYSQL_PATH', ['mysql.exe', 'mysql']);
         return trim(self::runProcess([
             $binary,
             '--host=' . (getenv('SGI_DB_HOST') ?: '127.0.0.1'),
@@ -180,6 +180,43 @@ final class RecoveryRehearsalTest
             throw new RuntimeException('Ferramenta de recuperação falhou: ' . trim($error));
         }
         return (string) $output;
+    }
+
+    /** @param list<string> $names */
+    private static function toolPath(string $environment, array $names): string
+    {
+        $configured = trim((string) getenv($environment));
+        if ($configured !== '') {
+            return $configured;
+        }
+
+        $candidates = $names;
+        if (PHP_OS_FAMILY === 'Windows') {
+            $candidates = array_merge(['C:\\xampp\\mysql\\bin\\' . $names[0]], $names);
+        }
+        foreach ($candidates as $candidate) {
+            if (is_file($candidate) || self::commandAvailable($candidate)) {
+                return $candidate;
+            }
+        }
+
+        throw new RuntimeException(sprintf(
+            'Ferramenta %s não encontrada. Defina %s ou instale o cliente MySQL/MariaDB no PATH.',
+            $names[0],
+            $environment,
+        ));
+    }
+
+    private static function commandAvailable(string $command): bool
+    {
+        $probe = PHP_OS_FAMILY === 'Windows' ? 'where ' : 'command -v ';
+        $process = proc_open($probe . escapeshellarg($command), [1 => ['pipe', 'w'], 2 => ['pipe', 'w']], $pipes);
+        if (!is_resource($process)) {
+            return false;
+        }
+        if (isset($pipes[1])) fclose($pipes[1]);
+        if (isset($pipes[2])) fclose($pipes[2]);
+        return proc_close($process) === 0;
     }
 
     private static function hasColumn(mysqli $connection, string $table, string $column): bool

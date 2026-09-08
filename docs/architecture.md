@@ -53,7 +53,7 @@ Os serviços de domínio/aplicação não dependem de HTTP, sessão ou MySQLi; t
    uniforme de exceções e `Router`.
 4. Cada rota compõe explicitamente seu controlador, serviço e repositório em
    `config/routes.php`; não existe contêiner global ou descoberta implícita.
-5. Os aliases encaminham URLs anteriores aos mesmos controladores versionados. Não há executores PHP fora do front controller; novas rotas devem ser registradas exclusivamente no namespace versionado.
+5. As rotas públicas de produção pertencem ao namespace versionado. O mapa transitório de aliases ainda é consumido por chamadas relativas do cliente atual e só será retirado após L04/L05 do plano de limpeza. Não há executores PHP fora do front controller; novas rotas devem ser registradas exclusivamente nesse namespace.
 
 Os controladores novos não executam SQL. Serviços recebem interfaces de domínio e são
 testáveis sem banco. Repositórios concentram consultas, transações e detalhes
@@ -90,7 +90,7 @@ ficam fora dessa lista e só recebem serviços, contratos e adaptadores de HTTP.
   detalhe no log, sem vazar SQL ou caminhos locais.
 - `StoragePaths` resolve uploads fora do código (`storage/uploads/*` por
   padrão) e aceita diretórios configuráveis por `SGI_*_DIR`.
-- O modo offline do mesário continua usando IDs temporários negativos e a fila IndexedDB; os aliases legados preservam as URLs dos clientes instalados enquanto os controladores versionados processam todas as operações.
+- O modo offline do mesário usa IDs temporários negativos e a fila IndexedDB. A casca atual precisa ser preparada antes da perda de conexão e não depende de Service Worker.
 
 ## Regras para mudanças
 
@@ -100,14 +100,14 @@ ficam fora dessa lista e só recebem serviços, contratos e adaptadores de HTTP.
    o banco diretamente.
 3. Entradas são normalizadas e validadas antes do repositório. Mensagens
    internas de banco ficam no log.
-4. Rotas novas entram primeiro em `/api/v1`; aliases antigos apontam para o controlador versionado e não executam arquivos procedurais.
+4. Rotas novas entram exclusivamente em `/api/v1` e não executam arquivos procedurais.
 5. Não adicionar triggers que atualizem a própria tabela disparadora (erro
    1442 em MySQL/MariaDB). Matrículas permanecem únicas por edição e senhas
    usam `password_hash`/`password_verify`.
 
 ## Assets e ciclo de vida offline
 
-O build copia fontes e dependências fixadas no lockfile para `public/assets`, inclui licenças e gera um manifesto de checksums. URLs emitidas por `Assets` têm versão derivada do conteúdo. Os aliases de arquivos antigos continuam disponíveis.
+O build copia fontes e dependências fixadas no lockfile para `public/assets`, inclui licenças e gera um manifesto de checksums. URLs emitidas por `Assets` têm versão derivada do conteúdo.
 
 Cada programa de página roda em uma função própria. `page-runtime.js` registra inicialização e reativação, restaura as ações usadas pelo HTML e evita duplicar eventos. Ao sair de uma tela, os eventos globais são removidos; placar e chaveamento interrompem suas atualizações. O shell guarda HTML, JSON e fontes JavaScript juntos no registro de versão 2. O adaptador léxico é mantido apenas para os scripts legados e os caches de versões anteriores.
 

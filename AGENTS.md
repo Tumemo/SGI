@@ -13,7 +13,7 @@ O **SGI (Sistema de Gestão de Interclasses)** é uma aplicação web monolític
 - **Importação de Alunos via PDF:** Extração automática de dados de alunos (Nome, RM/RA, Data de Nascimento e Gênero) a partir de listas em PDF e distribuição em turmas.
 - **Inscrição de Competidores:** Painel para alunos escolherem suas modalidades esportivas (com validação de regras de gênero, limites e categorias).
 - **Chaveamento e Mata-Mata:** Gerador e visualizador interativo de chaves com suporte a modalidades individuais e mata-mata.
-- **Placar e Operação Offline (Mesário):** Operação de partidas em tempo real (cronômetro, gols, cartões, ocorrências e avanço de chaves) funcionando **100% offline via IndexedDB e Service Worker/SPA shell** com sincronização bidirecional na reconexão.
+- **Placar e Operação Offline (Mesário):** Operação de partidas em tempo real (cronômetro, gols, cartões, ocorrências e avanço de chaves) funcionando offline via IndexedDB e casca SPA previamente preparada, com sincronização bidirecional na reconexão.
 - **Ranking Geral e Arrecadações:** Pontuação de turmas por pódios esportivos, arrecadação de alimentos e desconto automático por ocorrências disciplinares.
 
 ---
@@ -52,7 +52,7 @@ O **SGI (Sistema de Gestão de Interclasses)** é uma aplicação web monolític
 
 ## 4. Arquitetura do Modo Offline (Perfil Mesário)
 
-O subsistema offline está localizado em `resources/js/offline/` e opera em conjunto com `api/lancar_resultado.php` e a URL compatível `views/src/pages/jogos.php` (template em `resources/views/pages/competicoes/placar.php`):
+O subsistema offline está localizado em `resources/js/offline/` e opera em conjunto com `/api/v1/resultados` e a página atual de placar (template em `resources/views/pages/competicoes/placar.php`):
 
 1. **`offline-core.js`:**
    - Intercepta chamadas de rede (`fetch`, `XMLHttpRequest`, `axios`).
@@ -81,7 +81,7 @@ O subsistema offline está localizado em `resources/js/offline/` e opera em conj
 - **Compatibilidade MySQL / MariaDB:** Nunca adicione triggers que executem `UPDATE` na mesma tabela que disparou o evento (evita Erro 1442).
 - **Unicidade de Matrículas:** Alunos utilizam a chave composta `uk_matricula_interclasse` (`matricula_usuario`, `interclasses_id_interclasse`), permitindo que a mesma matrícula participe em anos diferentes.
 - **Senhas:** Sempre utilize `password_hash($senha, PASSWORD_DEFAULT)` e `password_verify($senha, $hash)`.
-- **Rotas Relativas:** As URLs antigas permanecem em `config/routes/`. Templates físicos ficam em `resources/views`; use `SGI_ROOT` para includes e `Assets`/`Url` para novos links.
+- **Rotas:** APIs novas ficam em `/api/v1`; templates físicos ficam em `resources/views`. A migração das chamadas relativas ainda existentes está registrada em L04/L05 do plano de limpeza; use `SGI_ROOT` para includes e `Assets`/`Url` para novos links.
 
 ---
 
@@ -104,4 +104,4 @@ php tests/seed_interclasse_demo.php
 - Edite JavaScript, CSS e imagens em `resources/`; execute `npm run build` para preparar `public/assets/`.
 - Execute também `composer verify`, `npm run check`, `npm test` e `npm --prefix tests/browser test`. O guia completo está em `docs/testing.md`.
 - Migrações aplicadas não devem ser reescritas. Adicione uma nova em `database/migrations/` e teste atualização e repetição.
-- Preserve aliases, registros antigos de cache e identificadores das mutações enquanto houver clientes offline.
+- Preserve os identificadores das mutações e o schema offline atual enquanto houver dados pendentes no cliente. A versão entregue não precisa manter contratos de versões anteriores da aplicação.
