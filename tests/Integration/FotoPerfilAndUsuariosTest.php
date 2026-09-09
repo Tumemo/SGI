@@ -81,6 +81,11 @@ class FotoPerfilAndUsuariosTest
         Assertions::assertJsonSuccess('Cadastro de aluno pela rota modular', $student);
         $studentId = (int) ($student['json']['id_usuario'] ?? 0);
         Assertions::assert('Cadastro de aluno retorna identificador', $studentId > 0);
+        Assertions::assert(
+            'Cadastro de aluno devolve segredo temporário não universal',
+            is_string($student['json']['senha_temporaria'] ?? null)
+            && ($student['json']['senha_temporaria'] ?? '') !== '123',
+        );
         $editStudent = $admin->postJson('api/v1/usuarios?acao=editar_aluno', [
             'id_usuario' => $studentId,
             'nome_usuario' => 'Aluno de contrato atualizado',
@@ -91,6 +96,11 @@ class FotoPerfilAndUsuariosTest
         Assertions::assertJsonSuccess('Edição de aluno pela rota modular', $editStudent);
         $resetStudent = $admin->postJson('api/v1/usuarios?acao=resetar_senha_aluno', ['id_usuario' => $studentId]);
         Assertions::assertJsonSuccess('Redefinição de senha de aluno', $resetStudent);
+        Assertions::assert(
+            'Reset de aluno devolve segredo temporário não universal',
+            is_string($resetStudent['json']['senha_temporaria'] ?? null)
+            && ($resetStudent['json']['senha_temporaria'] ?? '') !== '123',
+        );
         $removeStudent = $admin->postJson('api/v1/usuarios?acao=excluir_aluno', ['id_usuario' => $studentId]);
         Assertions::assertJsonSuccess('Exclusão de aluno pela rota modular', $removeStudent);
 

@@ -1,5 +1,4 @@
 <?php
-$tituloPagina = 'SGI - Início';
 include SGI_ROOT . '/resources/views/components/aluno-head.php';
 
 $paginaAtiva = 'home';
@@ -16,7 +15,7 @@ include SGI_ROOT . '/resources/views/components/aluno-nav.php';
 
         <!-- NOVO BOTÃO DE ACESSO AOS JOGOS -->
         <div class="mt-3">
-            <a href="<?= \App\Shared\Http\Url::to('aluno/jogos') ?>" class="btn btn-light fw-bold text-danger rounded-pill px-4 shadow-sm sgi-inline-663d5b1a" >
+            <a href="<?= \App\Shared\Http\Url::to('aluno/jogos') ?>" class="btn btn-light fw-bold text-danger rounded-pill px-4 shadow-sm sgi-u-transition-transform-0-2s" >
                 <i class="bi bi-calendar-check me-2"></i> Ver Tabela de Jogos
             </a>
         </div>
@@ -25,7 +24,7 @@ include SGI_ROOT . '/resources/views/components/aluno-nav.php';
       <!-- <div class="aluno-section-header">
         <h2><i class="bi bi-trophy"></i>Interclasses</h2>
         <div class="d-flex gap-2 flex-wrap align-items-center">
-          <div class="aluno-search sgi-inline-4cc9496c" >
+          <div class="aluno-search sgi-u-min-width-220px" >
             <i class="bi bi-search search-icon"></i>
             <input type="text" class="form-control" id="searchInput" placeholder="Pesquisar...">
           </div>

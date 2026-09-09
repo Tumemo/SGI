@@ -18,7 +18,7 @@ $navItens = [
     'perfil'  => ['label' => 'Perfil',   'icon' => 'bi-person-gear',    'url' => \App\Shared\Http\Url::to('aluno/perfil')],
     'home'    => ['label' => 'Início',   'icon' => 'bi-house-door',     'url' => \App\Shared\Http\Url::to('aluno/inicio')],
     'jogos'   => ['label' => 'Jogos',    'icon' => 'bi-calendar-event', 'url' => \App\Shared\Http\Url::to('aluno/jogos')],
-    'ranking' => ['label' => 'Ranking',  'icon' => 'bi-trophy',         'url' => \App\Shared\Http\Url::to('aluno/ranking')],
+    'ranking' => ['label' => 'Rankings publicados',  'icon' => 'bi-trophy',         'url' => \App\Shared\Http\Url::to('aluno/ranking')],
     'termos'  => ['label' => 'Termos',   'icon' => 'bi-file-text',      'url' => \App\Shared\Http\Url::to('aluno/termos')],
 ];
 
@@ -31,7 +31,7 @@ $onclickSair = "onclick=\"return confirm('Deseja realmente sair?')\"";
 
 
 <!-- Navbar Mobile (Fixo na parte inferior) -->
-<nav class="d-md-none fixed-bottom bg-danger shadow-lg mobile-nav sgi-inline-cf687978" >
+<nav class="d-md-none fixed-bottom bg-danger shadow-lg mobile-nav sgi-u-z-1040-h-64px" >
     <ul class="nav justify-content-around flex-nowrap fs-5 list-unstyled mb-0 gap-0 px-1 align-items-center h-100">
         <?php foreach ($navItens as $key => $item): ?>
         <li>
@@ -47,7 +47,7 @@ $onclickSair = "onclick=\"return confirm('Deseja realmente sair?')\"";
         </li>
         <?php endforeach; ?>
         <li>
-            <a href="<?= \App\Shared\Http\Url::to('api/v1/logout') ?>" class="text-white-50 nav-link p-1" aria-label="Sair" <?= $onclickSair ?>>
+            <a href="<?= \App\Shared\Http\Url::to('api/v1/logout') ?>" class="text-white-50 nav-link p-1" aria-label="Sair" data-sgi-logout <?= $onclickSair ?>>
                 <i class="bi bi-box-arrow-right"></i>
             </a>
         </li>
@@ -73,7 +73,7 @@ $onclickSair = "onclick=\"return confirm('Deseja realmente sair?')\"";
 </script>
 
 <!-- Navbar Desktop (Barra lateral esquerda) -->
-<nav class="d-none d-md-flex flex-column position-fixed start-0 shadow-lg sidebar-nav sgi-inline-cff1f685" >
+<nav class="d-none d-md-flex flex-column position-fixed start-0 shadow-lg sidebar-nav sgi-u-w-80px-top-0-bottom-0-2" >
     <ul class="nav flex-column align-items-center h-100 py-4 gap-4 fs-3 sidebar-nav-list">
         <?php foreach ($navItens as $key => $item): ?>
         <li>
@@ -89,7 +89,7 @@ $onclickSair = "onclick=\"return confirm('Deseja realmente sair?')\"";
         </li>
         <?php endforeach; ?>
         <li>
-            <a href="<?= \App\Shared\Http\Url::to('api/v1/logout') ?>" class="text-white" <?= $onclickSair ?> title="Sair">
+            <a href="<?= \App\Shared\Http\Url::to('api/v1/logout') ?>" class="text-white" data-sgi-logout <?= $onclickSair ?> title="Sair">
                 <i class="bi bi-box-arrow-right"></i>
             </a>
         </li>

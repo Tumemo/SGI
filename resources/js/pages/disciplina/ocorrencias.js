@@ -79,7 +79,7 @@ window.SGIPage.mount("disciplina/ocorrencias", function (pageConfig, pageScope) 
         const turmas = turmasFiltradas();
 
         if (turmas.length === 0) {
-            const msg = '<div class="text-center text-muted py-5 sgi-inline-c5f53f82" ><i class="bi bi-inbox sgi-inline-43389611" ></i>Nenhuma turma encontrada.</div>';
+            const msg = '<div class="text-center text-muted py-5 sgi-u-col-1-1" ><i class="bi bi-inbox sgi-u-text-2rem-display-block-mb-5rem" ></i>Nenhuma turma encontrada.</div>';
             listaDesk.innerHTML = msg;
             listaMob.innerHTML = msg;
         } else {
@@ -107,7 +107,7 @@ window.SGIPage.mount("disciplina/ocorrencias", function (pageConfig, pageScope) 
         const btnEl = document.getElementById('btnSalvarOcrModal');
 
         if (!titulo || !modalTurmaId) {
-            msgEl.innerHTML = '<span class="sgi-inline-bb8f15e7">Preencha o título.</span>';
+            msgEl.innerHTML = '<span class="sgi-u-color-dc2626-weight-700">Preencha o título.</span>';
             return;
         }
 
@@ -130,17 +130,17 @@ window.SGIPage.mount("disciplina/ocorrencias", function (pageConfig, pageScope) 
             const result = await resp.json();
 
             if (result.success) {
-                msgEl.innerHTML = '<span class="sgi-inline-fc3b2320">Ocorrência registrada!</span>';
+                msgEl.innerHTML = '<span class="sgi-u-color-16a34a-weight-700">Ocorrência registrada!</span>';
                 setTimeout(() => {
                     const modal = bootstrap.Modal.getInstance(document.getElementById('modalNovaOcorrencia'));
                     if (modal) modal.hide();
                     msgEl.innerHTML = '';
                 }, 1000);
             } else {
-                msgEl.innerHTML = '<span class="sgi-inline-bb8f15e7">' + esc(result.message || 'Erro ao salvar.') + '</span>';
+                msgEl.innerHTML = '<span class="sgi-u-color-dc2626-weight-700">' + esc(result.message || 'Erro ao salvar.') + '</span>';
             }
         } catch (e) {
-            msgEl.innerHTML = '<span class="sgi-inline-bb8f15e7">Erro de conexão.</span>';
+            msgEl.innerHTML = '<span class="sgi-u-color-dc2626-weight-700">Erro de conexão.</span>';
         } finally {
             btnEl.disabled = false;
             btnEl.innerHTML = originalText;
@@ -169,7 +169,7 @@ window.SGIPage.mount("disciplina/ocorrencias", function (pageConfig, pageScope) 
                 return;
             }
 
-            let html = '<div class="table-responsive"><table class="table table-hover align-middle">';
+            let html = '<div class="table-responsive"><table class="table sgi-table table-hover align-middle">';
             html += '<thead><tr class="table-light"><th>Data</th><th>Título</th><th>Descrição</th><th class="text-center">Pontos</th><th class="text-center">Ação</th></tr></thead><tbody>';
 
             historicoRegistros.forEach(r => {

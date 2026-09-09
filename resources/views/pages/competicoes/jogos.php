@@ -1,5 +1,4 @@
 <?php
-$tituloPagina = 'SGI - Mesário - Jogos';
 $titulo = 'Jogos';
 $mostrarVoltar = true;
 $urlVoltar = \App\Shared\Http\Url::to('painel');

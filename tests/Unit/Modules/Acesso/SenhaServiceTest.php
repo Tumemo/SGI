@@ -14,7 +14,7 @@ final class SenhaServiceTest extends TestCase
     public function testHashesAndPersistsNewPassword(): void
     {
         $repository = new InMemorySenhaRepository();
-        (new SenhaService($repository))->trocar(7, 'senha-segura', 'senha-segura');
+        (new SenhaService($repository))->trocar(7, 'senha-segura', 'senha-segura', 'senha-atual');
 
         self::assertNotSame('senha-segura', $repository->hash);
         self::assertTrue(password_verify('senha-segura', (string) $repository->hash));
@@ -26,11 +26,22 @@ final class SenhaServiceTest extends TestCase
         $this->expectException(InvalidArgumentException::class);
         $service->trocar(7, '123', '123');
     }
+
+    public function testRejectsChangeWithoutCurrentPassword(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        (new SenhaService(new InMemorySenhaRepository()))->trocar(7, 'senha-segura', 'senha-segura');
+    }
 }
 
 final class InMemorySenhaRepository implements SenhaRepository
 {
     public ?string $hash = null;
+
+    public function senhaAtualValida(int $usuarioId, string $senha): bool
+    {
+        return $senha === 'senha-atual';
+    }
 
     public function alterarSenha(int $usuarioId, string $hash): bool
     {

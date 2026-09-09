@@ -1,4 +1,5 @@
 const { test, expect, request: playwrightRequest } = require('./fixtures.cjs');
+const { agendarBloco } = require('./agenda-helper.cjs');
 
 async function jsonOrThrow(response, label) {
     if (!response.ok()) {
@@ -137,9 +138,20 @@ async function criarChaveFixture(request) {
         }
     }), 'criação do chaveamento fixture');
 
-    const listaJogos = await jsonOrThrow(
+    let listaJogos = await jsonOrThrow(
         await request.get(`api/v1/jogos?id_modalidade=${Number(modalidade.id_modalidade)}`),
         'consulta dos jogos do fixture'
+    );
+    await agendarBloco(request, {
+        idInterclasse,
+        idModalidade: Number(modalidade.id_modalidade),
+        jogos: listaJogos.filter((item) => String(item.nome_jogo).startsWith('MM:8:')),
+        chaveTags: ['MM:4:0:N', 'MM:4:1:N', 'MM:2:0:N', 'POS:3:0:N'],
+        label: 'E2E-torneio-offline',
+    });
+    listaJogos = await jsonOrThrow(
+        await request.get(`api/v1/jogos?id_modalidade=${Number(modalidade.id_modalidade)}`),
+        'consulta dos jogos agendados do fixture'
     );
     const ids = {};
     const detalhes = {};
@@ -376,6 +388,10 @@ test.describe.serial('Mesário — torneio completo online e offline', () => {
         const semi2 = await obterJogoLocal(page, 'MM:4:1:N');
         expect(Number(semi1.id_jogo)).toBeLessThan(0);
         expect(Number(semi2.id_jogo)).toBeLessThan(0);
+        expect(semi1.data_jogo).toBeTruthy();
+        expect(semi1.inicio_jogo).toBeTruthy();
+        expect(Number(semi1.locais_id_local)).toBeGreaterThan(0);
+        expect(semi2.data_jogo).toBe(semi1.data_jogo);
 
         await validarConfrontoNaAgenda(page, fixture.idInterclasse, 'Semifinal — Confronto 1', [
             fixture.equipes[0].nome_equipe,
@@ -384,11 +400,11 @@ test.describe.serial('Mesário — torneio completo online e offline', () => {
         await capturarTela(page, testInfo, '02-semifinais-com-times-offline');
 
         const semi1Esperada = {
-            jogo: fixture.detalhes['MM:8:0:N'].jogo,
+            jogo: semi1,
             partidas: [fixture.detalhes['MM:8:0:N'].partidas[0], fixture.detalhes['MM:8:1:N'].partidas[0]]
         };
         const semi2Esperada = {
-            jogo: fixture.detalhes['MM:8:2:N'].jogo,
+            jogo: semi2,
             partidas: [fixture.detalhes['MM:8:2:N'].partidas[0], fixture.detalhes['MM:8:3:N'].partidas[0]]
         };
         await abrirJogo(page, Number(semi1.id_jogo), semi1Esperada);
@@ -400,6 +416,9 @@ test.describe.serial('Mesário — torneio completo online e offline', () => {
         const finalLocal = await obterJogoLocal(page, 'MM:2:0:N');
         expect(Number(finalLocal.id_jogo)).toBeLessThan(0);
         expect(finalLocal.equipes).toHaveLength(2);
+        expect(finalLocal.data_jogo).toBeTruthy();
+        expect(finalLocal.inicio_jogo).toBeTruthy();
+        expect(Number(finalLocal.locais_id_local)).toBeGreaterThan(0);
         const finalistasEsperados = finalLocal.equipes.map((equipe) => Number(equipe.id_equipe));
         const nomesFinalistas = finalLocal.equipes.map(nomeEquipeAgenda).filter(Boolean);
         expect(nomesFinalistas).toHaveLength(2);
@@ -412,7 +431,7 @@ test.describe.serial('Mesário — torneio completo online e offline', () => {
         await capturarTela(page, testInfo, '03-final-com-times-offline');
 
         const finalEsperada = {
-            jogo: fixture.detalhes['MM:8:0:N'].jogo,
+            jogo: finalLocal,
             partidas: finalLocal.equipes.map((equipe) => ({
                 equipes_id_equipe: equipe.id_equipe,
                 nome_equipe: nomeEquipeAgenda(equipe)

@@ -1,5 +1,4 @@
 <?php
-$tituloPagina = 'SGI - Pontuações';
 $titulo = 'Pontuações';
 $mostrarVoltar = true;
 $urlVoltar = \App\Shared\Http\Url::to('painel');

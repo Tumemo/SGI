@@ -36,13 +36,17 @@ final class RecoveryRehearsalTest
             $connection = TestDatabase::connect($source);
             $applied = (new MigrationRunner($connection, self::migrationDirectory()))->migrate();
             $upgraded = self::snapshot($connection);
-            Assertions::assert('Instalação atual aplica as quatro versões sem perder os dados', $applied === [] && $appliedInitial === [
+            Assertions::assert('Instalação atual aplica as oito versões sem perder os dados', $applied === [] && $appliedInitial === [
                 '001_initial_schema.sql',
                 '002_mutation_fingerprint.sql',
                 '003_fix_arrecadacao_revaluation.sql',
                 '004_podio_credit_sources.sql',
+                '005_agendamento_blocos.sql',
+                '006_unique_category_name_per_edition.sql',
+                '007_publicacao_ranking.sql',
+                '008_auth_version.sql',
             ] && $upgraded['users'] === $before['users'] && $upgraded['history'] === $before['history']);
-            Assertions::assert('Upgrade da origem registra a versão e deixa request_hash disponível', (int) $connection->query("SELECT COUNT(*) FROM sgi_migrations WHERE dirty = 0")->fetch_row()[0] === 4 && self::hasColumn($connection, 'sincronizacoes_idempotentes', 'request_hash'));
+            Assertions::assert('Upgrade da origem registra as versões e deixa request_hash disponível', (int) $connection->query("SELECT COUNT(*) FROM sgi_migrations WHERE dirty = 0")->fetch_row()[0] === 8 && self::hasColumn($connection, 'sincronizacoes_idempotentes', 'request_hash'));
             $connection->close();
 
             self::createDatabase($restore);
@@ -60,7 +64,7 @@ final class RecoveryRehearsalTest
                 'restore_command_completed' => $restoreOutput === '',
                 'source_database' => $source,
                 'restore_database' => $restore,
-                'source_schema' => '001 + 002 + 003 + 004',
+                'source_schema' => '001 + 002 + 003 + 004 + 005 + 006 + 007 + 008',
                 'data_comparison' => 'users/history antes do upgrade == restore do backup',
                 'current_architecture_boundary' => 'a base restaurada contém somente o schema atual',
             ];
@@ -87,13 +91,13 @@ final class RecoveryRehearsalTest
         $hash = $connection->real_escape_string(password_hash('RecoverySenha!123', PASSWORD_DEFAULT));
         $statements = [
             "INSERT INTO tipos_modalidades VALUES (1, 'Mata-Mata', '1')",
-            "INSERT INTO interclasses VALUES (1, 'Recovery 2026', '2026-01-01 00:00:00', 'synthetic.pdf', '1', 10, 7, 5, 2)",
+            "INSERT INTO interclasses (id_interclasse, nome_interclasse, ano_interclasse, regulamento_interclasse, status_interclasse, ponto_1_lugar, ponto_2_lugar, ponto_3_lugar, valor_item_arrecadacao) VALUES (1, 'Recovery 2026', '2026-01-01 00:00:00', 'synthetic.pdf', '1', 10, 7, 5, 2)",
             "INSERT INTO categorias VALUES (1, 'Categoria I', '1', 1)",
             "INSERT INTO turmas VALUES (1, 1, '6EF', 'manha', '6EF', '1', 1, 42, 10.50)",
             "INSERT INTO modalidades VALUES (1, 'Futsal', 'MASC', NULL, 4, '1', 1, 1, 1)",
             "INSERT INTO locais VALUES (1, 'Ginásio recuperação', '1', NULL, '1', 1)",
             "INSERT INTO equipes VALUES (1, '1', 1, 1, '6EF Recovery')",
-            "INSERT INTO usuarios VALUES (1, 'RM-REC', 'RECOVERY-26', 'Aluno sintético', '{$hash}', '3', 'MASC', '2008-01-01', '', '1', 1, 1, NULL)",
+            "INSERT INTO usuarios (id_usuario, sigla_usuario, matricula_usuario, nome_usuario, senha_usuario, nivel_usuario, genero_usuario, data_nasc_usuario, foto_usuario, status_usuario, turmas_id_turma, interclasses_id_interclasse, chave_usuario_edicao, auth_version) VALUES (1, 'RM', 'RECOVERY-26', 'Aluno sintético', '{$hash}', '3', 'MASC', '2008-01-01', '', '1', 1, 1, NULL, 1)",
             "INSERT INTO jogos VALUES (1, 'MM:2:0:N', '2026-10-01', '08:00:00', '09:00:00', 'Concluido', NULL, 3600, 0, NULL, 1, 1)",
             "INSERT INTO partidas VALUES (1, 1, 1, 1, 3, '1')",
             "INSERT INTO artilheiros VALUES (1, 1, 1, 1)",

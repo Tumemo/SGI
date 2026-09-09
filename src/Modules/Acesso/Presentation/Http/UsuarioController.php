@@ -13,7 +13,6 @@ use App\Modules\Eventos\Domain\EdicaoRules;
 use App\Shared\Http\AccessGuard;
 use App\Shared\Http\Request;
 use App\Shared\Http\Response;
-use App\Shared\Http\SessionManager;
 
 final class UsuarioController
 {
@@ -31,17 +30,31 @@ final class UsuarioController
         $action = (string) $request->query('acao', $request->input('acao', ''));
         try {
             if ($request->method() === 'GET') {
-                if (($denied = AccessGuard::authorize([0, 1, 2])) !== null) {
+                $level = (int) ($_SESSION['nivel'] ?? -1);
+                $allowed = match ($action) {
+                    'listar_competidores' => [0, 1, 2],
+                    'listar_colaboradores', '' => [0],
+                    default => [],
+                };
+                if (($denied = AccessGuard::authorize($allowed)) !== null) {
                     return $denied;
                 }
                 $edition = $this->edicoesConsulta->findActiveId();
                 if ($edition === null) {
                     return Response::json(['status' => 'erro', 'mensagem' => 'Nenhuma edição ativa.']);
                 }
+                $requestedEdition = (int) $request->query('id_interclasse', $edition);
+                // Mesários are strictly limited to the currently active edition;
+                // the client cannot widen this scope with a query parameter.
+                if ($level === 2 && $requestedEdition !== $edition) {
+                    return Response::json(['status' => 'erro', 'mensagem' => 'Edição não autorizada.'], 403);
+                }
+                $effectiveEdition = $level === 2 ? $edition : $requestedEdition;
                 return match ($action) {
-                    'listar_competidores' => Response::json($this->consultas->competitors((int) $request->query('id_turma', 0), (int) $request->query('id_interclasse', $edition), (string) $request->query('genero', ''))),
+                    'listar_competidores' => Response::json($this->consultas->competitors((int) $request->query('id_turma', 0), $effectiveEdition, (string) $request->query('genero', ''), $level !== 2)),
                     'listar_colaboradores' => Response::json($this->consultas->collaborators($edition)),
-                    default => Response::json($this->consultas->allUsers($edition)),
+                    '' => Response::json($this->consultas->allUsers($edition)),
+                    default => Response::json(['status' => 'erro', 'mensagem' => 'Ação inválida.'], 400),
                 };
             }
             if ($request->method() === 'PUT') {
@@ -57,31 +70,12 @@ final class UsuarioController
             }
             $data = $request->allInput();
             if ($action === 'validar_inscricao') {
-                $edition = $this->edicoesConsulta->findActiveId();
-                if ($edition === null) {
-                    return Response::json(EdicaoRules::erroSemInterclasseAtivo());
-                }
-                $registration = (string) ($data['matricula_usuario'] ?? $data['rm'] ?? $data['ra'] ?? '');
-                $user = $this->usuarios->validarInscricao($registration, (string) ($data['data_nasc_usuario'] ?? ''), $edition);
-                if ($user === null) {
-                    return Response::json(['status' => 'erro', 'mensagem' => 'Não foi possível validar os dados informados.']);
-                }
-                SessionManager::start();
-                session_regenerate_id(true);
-                $_SESSION = [];
-                $_SESSION['logado'] = true;
-                $_SESSION['id'] = (int) $user['id_usuario'];
-                $_SESSION['id_usuario'] = (int) $user['id_usuario'];
-                $_SESSION['nivel'] = (string) $user['nivel_usuario'];
-                $_SESSION['id_interclasse'] = $edition;
-                OfflineSession::definirChaveCacheOfflineUsuario((int) $user['id_usuario'], (string) $user['senha_usuario']);
-                $level = (string) $user['nivel_usuario'];
+                // Matrícula + data de nascimento are not authentication factors.
+                // This legacy endpoint must never create an authenticated session.
                 return Response::json([
-                    'status' => 'sucesso',
-                    'mensagem' => 'Dados validados.',
-                    'permissoes' => ['admin' => $level === '0', 'colaborador' => $level === '1', 'mesario' => $level === '2', 'competidor' => $level === '3'],
-                    'dados' => ['id_usuario' => (int) $user['id_usuario'], 'nome' => $user['nome_usuario'], 'sigla' => $user['sigla_usuario']],
-                ]);
+                    'status' => 'erro',
+                    'mensagem' => 'Validação cadastral descontinuada. Use matrícula e senha para entrar.',
+                ], 410);
             }
             if ($action === 'criar_aluno') {
                 if (($denied = AccessGuard::authorize([0, 1])) !== null) {
@@ -139,8 +133,12 @@ final class UsuarioController
                     return Response::json(['status' => 'sucesso', 'mensagem' => 'Aluno removido.']);
                 }
                 if ($action === 'resetar_senha_aluno') {
-                    $this->administrative->resetarSenhaAluno($id);
-                    return Response::json(['status' => 'sucesso', 'mensagem' => 'Senha do aluno resetada para o padrão (123).']);
+                    $temporaryPassword = $this->administrative->resetarSenhaAluno($id);
+                    return Response::json([
+                        'status' => 'sucesso',
+                        'mensagem' => 'Senha temporária gerada. Entregue-a ao aluno por um canal seguro.',
+                        'senha_temporaria' => $temporaryPassword,
+                    ]);
                 }
                 $this->administrative->excluirColaborador($id, $this->edicoesConsulta->findActiveId(), (int) ($_SESSION['id'] ?? $_SESSION['id_usuario'] ?? 0));
                 return Response::json(['status' => 'sucesso', 'mensagem' => 'Colaborador removido.']);
@@ -153,7 +151,11 @@ final class UsuarioController
                 if ($edition === null) {
                     return Response::json(['status' => 'erro', 'mensagem' => 'Nenhuma edição ativa.']);
                 }
-                $this->usuarios->atribuirAluno((int) $request->query('id'), (int) ($data['turmas_id_turma'] ?? 0), (int) ($data['interclasses_id_interclasse'] ?? $edition));
+                $requestedEdition = (int) ($data['interclasses_id_interclasse'] ?? $edition);
+                if ($requestedEdition !== $edition) {
+                    return Response::json(['status' => 'erro', 'mensagem' => 'Edição não autorizada.'], 403);
+                }
+                $this->usuarios->atribuirAluno((int) $request->query('id'), (int) ($data['turmas_id_turma'] ?? 0), $edition);
                 return Response::json(['status' => 'sucesso', 'mensagem' => 'Aluno atualizado.']);
             }
             return Response::json(['status' => 'erro', 'mensagem' => 'Ação inválida.'], 400);

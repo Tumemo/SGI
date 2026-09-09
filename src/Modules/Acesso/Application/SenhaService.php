@@ -14,7 +14,7 @@ final class SenhaService
     {
     }
 
-    public function trocar(int $usuarioId, string $novaSenha, string $confirmacao): void
+    public function trocar(int $usuarioId, string $novaSenha, string $confirmacao, string $senhaAtual = ''): void
     {
         if ($usuarioId <= 0) {
             throw new InvalidArgumentException('Sessão expirada. Faça login novamente.');
@@ -27,6 +27,10 @@ final class SenhaService
         }
         if ($novaSenha === '123') {
             throw new InvalidArgumentException('Escolha uma senha diferente da senha padrão.');
+        }
+
+        if (!$this->senhas->senhaAtualValida($usuarioId, $senhaAtual)) {
+            throw new InvalidArgumentException('Informe a senha atual para confirmar a alteração.');
         }
 
         $hash = password_hash($novaSenha, PASSWORD_DEFAULT);

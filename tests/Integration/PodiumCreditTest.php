@@ -77,7 +77,18 @@ final class PodiumCreditTest
         $modality->execute();
         $modalityId = (int) $modality->get_result()->fetch_column();
         $modality->close();
-        $usersResult = $connection->query('SELECT id_usuario, turmas_id_turma FROM usuarios WHERE interclasses_id_interclasse = ' . $editionId . " AND nivel_usuario = '3' AND status_usuario = '1' AND turmas_id_turma IS NOT NULL ORDER BY id_usuario LIMIT 3");
+        $usersResult = $connection->query(
+            'SELECT id_usuario, turmas_id_turma FROM usuarios
+             WHERE interclasses_id_interclasse = ' . $editionId . "
+               AND nivel_usuario = '3' AND status_usuario = '1' AND turmas_id_turma IS NOT NULL
+               AND turmas_id_turma = (
+                   SELECT turmas_id_turma FROM usuarios
+                   WHERE interclasses_id_interclasse = " . $editionId . "
+                     AND nivel_usuario = '3' AND status_usuario = '1' AND turmas_id_turma IS NOT NULL
+                   GROUP BY turmas_id_turma HAVING COUNT(*) >= 3 ORDER BY turmas_id_turma LIMIT 1
+               )
+             ORDER BY id_usuario LIMIT 3",
+        );
         $users = $usersResult->fetch_all(\MYSQLI_ASSOC);
         if ($modalityId <= 0 || count($users) < 3) {
             throw new \RuntimeException('O cenário individual não encontrou modalidade e competidores suficientes.');
@@ -104,6 +115,16 @@ final class PodiumCreditTest
             'segundo' => (int) $users[1]['id_usuario'],
             'terceiro' => (int) $users[2]['id_usuario'],
         ];
+        $rejectedBeforePreparation = false;
+        try {
+            \App\Modules\Competicoes\Infrastructure\MysqliIndividualRepository::salvarRanking($connection, $modalityId, $ranking);
+        } catch (\RuntimeException) {
+            $rejectedBeforePreparation = true;
+        }
+        $gamesBeforePreparation = (int) $connection->query("SELECT COUNT(*) FROM jogos WHERE nome_jogo = 'IND:" . $modalityId . "'")->fetch_column();
+        Assertions::assert('Ranking individual sem preparação é rejeitado sem criar jogo', $rejectedBeforePreparation && $gamesBeforePreparation === 0);
+        \App\Modules\Competicoes\Infrastructure\MysqliIndividualRepository::criarJogoAgenda($connection, $modalityId);
+        $connection->query("UPDATE jogos SET status_jogo = 'Iniciado' WHERE nome_jogo = 'IND:" . $modalityId . "'");
         \App\Modules\Competicoes\Infrastructure\MysqliIndividualRepository::salvarRanking($connection, $modalityId, $ranking);
         $points = self::podiumValues($connection, $editionId);
         $afterFirst = self::classPoints($connection, $classes);
@@ -117,6 +138,10 @@ final class PodiumCreditTest
         Assertions::assert('Retificação individual move o crédito sem duplicá-lo', $afterRevision === $expectedRevision, json_encode(['depois' => $afterRevision, 'esperado' => $expectedRevision]));
         $count = (int) $connection->query('SELECT COUNT(*) FROM pontuacoes_podio WHERE id_interclasse = ' . $editionId . ' AND id_modalidade = ' . $modalityId)->fetch_column();
         Assertions::assert('Modalidade individual mantém uma linha por posição', $count === 3);
+        $partidasBeforeReprepare = (int) $connection->query("SELECT COUNT(*) FROM partidas p INNER JOIN jogos j ON j.id_jogo = p.jogos_id_jogo WHERE j.nome_jogo = 'IND:" . $modalityId . "'")->fetch_column();
+        $reprepare = \App\Modules\Competicoes\Infrastructure\MysqliIndividualRepository::criarJogoAgenda($connection, $modalityId);
+        $partidasAfterReprepare = (int) $connection->query("SELECT COUNT(*) FROM partidas p INNER JOIN jogos j ON j.id_jogo = p.jogos_id_jogo WHERE j.nome_jogo = 'IND:" . $modalityId . "'")->fetch_column();
+        Assertions::assert('Preparar novamente pódio concluído não cria placeholders nem altera partidas', $reprepare['jogos_criados'] === 0 && $partidasAfterReprepare === $partidasBeforeReprepare);
     }
 
     private static function runSemifinalInvalidationScenario(\mysqli $connection, int $editionId, int $modalityId): void

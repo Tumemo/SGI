@@ -1,5 +1,4 @@
 <?php
-$tituloPagina = 'SGI - Inscrições';
 $titulo = 'Inscrições';
 $mostrarVoltar = true;
 $mostrarSino = true;

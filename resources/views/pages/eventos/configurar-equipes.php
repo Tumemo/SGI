@@ -1,5 +1,4 @@
 <?php
-$tituloPagina = 'SGI - Equipes';
 include SGI_ROOT . '/resources/views/components/admin-head.php';
 include SGI_ROOT . '/resources/views/components/admin-header.php';
 $nivelUsuario = (int)($_SESSION['nivel'] ?? -1);
@@ -7,8 +6,8 @@ $isAdmin = $nivelUsuario === 0;
 $paginaAtiva = 'dashboard';
 ?>
 
-<main class="d-md-none p-3 sgi-inline-d6522d52" >
-    <a href="<?= \App\Shared\Http\Url::to('painel') ?>" id="btnVoltarEquipesMobile" class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none sgi-inline-e1bcebb6" >
+<main class="d-md-none p-3 sgi-u-pb-5rem" >
+    <a href="<?= \App\Shared\Http\Url::to('painel') ?>" id="btnVoltarEquipesMobile" class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none sgi-u-bg-E30613-radius-6px-p-8px-16px" >
         <i class="bi bi-arrow-left-circle fs-5"></i> <span id="nomeInterclasseEquipesMob">Interclasse</span>
     </a>
     <p class="text-secondary text-center small mb-3">Equipes por modalidade e categoria desta edição.</p>
@@ -27,10 +26,10 @@ $paginaAtiva = 'dashboard';
     <div class="aluno-page container-fluid py-4 px-4">
         <div class="aluno-page-header">
             <div class="header-left">
-                <a href="<?= \App\Shared\Http\Url::to('painel') ?>" id="btnVoltarEquipesDesk" class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none sgi-inline-e1bcebb6" >
+                <a href="<?= \App\Shared\Http\Url::to('painel') ?>" id="btnVoltarEquipesDesk" class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none sgi-u-bg-E30613-radius-6px-p-8px-16px" >
                     <i class="bi bi-arrow-left-circle fs-5"></i> <span id="nomeInterclasseEquipesDesk">Interclasse</span>
                 </a>
-                <h1 id="nomeInterclasseEquipes" class="sgi-inline-12a59c06">Equipes</h1>
+                <h1 id="nomeInterclasseEquipes" class="sgi-u-display-none">Equipes</h1>
             </div>
             <?php if ($isAdmin): ?>
             <button id="btnCriarEquipeDesk" class="btn btn-aluno" data-bs-toggle="modal" data-bs-target="#modalCriarEquipe">
@@ -49,19 +48,19 @@ $paginaAtiva = 'dashboard';
 
 <div class="modal fade" id="modalCriarEquipe" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content sgi-inline-910958c1" >
-            <div class="modal-header border-0 sgi-inline-d4384255" >
-                <h5 class="modal-title sgi-inline-919e66cc" ><i class="bi bi-plus-circle me-2"></i>Criar nova equipe</h5>
+        <div class="modal-content sgi-u-radius-var-border-none-box-shadow-var" >
+            <div class="modal-header border-0 sgi-u-p-1-25rem-1-5rem-0" >
+                <h5 class="modal-title sgi-u-color-var-weight-600" ><i class="bi bi-plus-circle me-2"></i>Criar nova equipe</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
-            <div class="modal-body sgi-inline-e7df035e" >
+            <div class="modal-body sgi-u-p-1rem-1-5rem-1-5rem" >
                 <form id="formCriarEquipe">
                     <label for="selectModalidadeEquipe" class="form-label small text-muted fw-semibold">Modalidade</label>
-                    <select id="selectModalidadeEquipe" class="form-select mb-3 sgi-inline-0fd5584e"  required>
+                    <select id="selectModalidadeEquipe" class="form-select mb-3 sgi-u-radius-var-border-color-var"  required>
                         <option value="" selected disabled>Carregando modalidades...</option>
                     </select>
                     <label for="selectTurmaEquipe" class="form-label small text-muted fw-semibold">Turma</label>
-                    <select id="selectTurmaEquipe" class="form-select mb-3 sgi-inline-0fd5584e"  required>
+                    <select id="selectTurmaEquipe" class="form-select mb-3 sgi-u-radius-var-border-color-var"  required>
                         <option value="" selected disabled>Carregando turmas...</option>
                     </select>
                     <div id="msgCriarEquipe" class="text-center mb-2 small"></div>

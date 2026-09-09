@@ -37,6 +37,14 @@ final class MysqliEdicaoRepository implements EdicaoRepository
             $types .= 'i';
             $params[] = (int) $filters['ano'];
         }
+        if ((string) ($filters['status_interclasse'] ?? '') !== '') {
+            $sql .= ' AND status_interclasse = ?';
+            $types .= 's';
+            $params[] = (string) $filters['status_interclasse'];
+        }
+        if ((string) ($filters['ranking_publicado'] ?? '') === '1') {
+            $sql .= " AND ranking_publicado_em IS NOT NULL AND status_interclasse = '0'";
+        }
         if ((string) ($filters['busca'] ?? '') !== '') {
             $sql .= ' AND nome_interclasse LIKE ?';
             $types .= 's';
@@ -146,6 +154,36 @@ final class MysqliEdicaoRepository implements EdicaoRepository
             throw $exception;
         } finally {
             $this->releaseEditionLock($lockName);
+        }
+    }
+
+    public function publishRanking(int $id, int $userId): void
+    {
+        $statement = $this->connection->prepare(
+            "UPDATE interclasses
+             SET ranking_publicado_em = COALESCE(ranking_publicado_em, CURRENT_TIMESTAMP),
+                 ranking_publicado_por = COALESCE(ranking_publicado_por, ?),
+                 status_interclasse = '0'
+             WHERE id_interclasse = ?
+               AND NOT EXISTS (
+                   SELECT 1 FROM jogos j
+                   INNER JOIN modalidades m ON m.id_modalidade = j.modalidades_id_modalidade
+                   WHERE m.interclasses_id_interclasse = interclasses.id_interclasse
+                     AND j.status_jogo NOT IN ('Concluido', 'Finalizado')
+               )",
+        );
+        if ($statement === false) {
+            throw new RuntimeException('Não foi possível publicar o ranking.');
+        }
+        $statement->bind_param('ii', $userId, $id);
+        if (!$statement->execute()) {
+            $statement->close();
+            throw new RuntimeException('Não foi possível publicar o ranking.');
+        }
+        $changed = $statement->affected_rows > 0;
+        $statement->close();
+        if (!$changed) {
+            throw new RuntimeException('A edição possui jogos pendentes ou não foi encontrada.');
         }
     }
 

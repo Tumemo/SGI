@@ -294,9 +294,9 @@ final class ConcurrentInvariantsTest
             $activeEdition = (int) $activeSwitch[0];
             $inactiveEdition = $activeEdition === $switchFixture['edition_a'] ? $switchFixture['edition_b'] : $switchFixture['edition_a'];
             Assertions::assert(
-                'Trigger mantém alunos sincronizados com a edição ativa',
-                self::userStatus($connection, $switchFixture['user_a']) === ($activeEdition === $switchFixture['edition_a'] ? '1' : '0')
-                    && self::userStatus($connection, $switchFixture['user_b']) === ($activeEdition === $switchFixture['edition_b'] ? '1' : '0'),
+                'Alternância de edição não bloqueia contas de alunos',
+                self::userStatus($connection, $switchFixture['user_a']) === '0'
+                    && self::userStatus($connection, $switchFixture['user_b']) === '0',
             );
             Assertions::assert('Edição inativa permanece desativada após a ativação concorrente', self::editionStatus($connection, $inactiveEdition) === '0');
             $activeBeforeInvalid = self::activeEditionIds($connection, [$switchFixture['edition_a'], $switchFixture['edition_b']]);

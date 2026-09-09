@@ -25,8 +25,11 @@ final class JogoService
         if ($name === '' || $date === '' || $modalityId <= 0 || $localId <= 0) {
             throw new InvalidArgumentException('Dados incompletos.');
         }
-        $start = $this->formatTime($data['inicio_jogo'] ?? '00:00:00');
-        $end = $this->formatTime($data['termino_jogo'] ?? $data['terminno_jogo'] ?? '00:00:00');
+        $start = $this->formatTime($data['inicio_jogo'] ?? null);
+        $end = $this->formatTime($data['termino_jogo'] ?? $data['terminno_jogo'] ?? null);
+        if ($start === null || $end === null || $this->minutes($end) <= $this->minutes($start)) {
+            throw new InvalidArgumentException('Informe um horário de início e término válidos.');
+        }
         $conflict = $this->jogos->localConflict($date, $localId, $start, $end);
         if ($conflict !== null) {
             throw new JogoConflitoException($conflict);
@@ -42,12 +45,21 @@ final class JogoService
         ]);
     }
 
-    private function formatTime(mixed $value): string
+    private function formatTime(mixed $value): ?string
     {
+        if ($value === null) {
+            return null;
+        }
         $time = trim((string) $value);
         if ($time === '' || $time === '00:00' || $time === '00:00:00') {
-            return '00:00:00';
+            return null;
         }
         return strlen($time) === 5 ? $time . ':00' : $time;
+    }
+
+    private function minutes(string $time): int
+    {
+        [$hours, $minutes] = array_map('intval', explode(':', substr($time, 0, 5)));
+        return $hours * 60 + $minutes;
     }
 }

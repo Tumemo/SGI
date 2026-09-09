@@ -1,5 +1,4 @@
 <?php
-$tituloPagina = 'SGI - Dashboard';
 $titulo = 'Dashboard';
 $mostrarVoltar = true;
 $urlVoltar = \App\Shared\Http\Url::to('aluno/inicio');
@@ -23,9 +22,8 @@ $isMesario = $nivelUsuario === 2;
             </a>
 
         <?php if ($isAdmin): ?>
-        <div id="avisoFinalizacaoInterclasse" class="d-none alert alert-warning d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-2 mb-4">
-            <span>Esta edição ainda não foi finalizada. Conclua as etapas para ativá-la.</span>
-            <a id="linkConcluirInterclasse" class="btn btn-sm btn-danger" href="#">Concluir criação</a>
+        <div id="avisoFinalizacaoInterclasse" class="d-none alert alert-warning mb-4">
+            <span>O interclasse está inativo no momento.</span>
         </div>
         <?php endif; ?>
 

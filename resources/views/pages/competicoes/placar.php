@@ -1,5 +1,4 @@
 <?php
-$tituloPagina = 'SGI - Placar';
 $titulo = 'Placar';
 $mostrarVoltar = true;
 $urlVoltar = \App\Shared\Http\Url::to('painel');
@@ -14,7 +13,7 @@ $paginaAtiva = 'dashboard';
 
         <div class="mc-header">
             <div class="mc-match-info">
-                <a href="<?= \App\Shared\Http\Url::to('edicoes/agenda') ?>" id="btnVoltarPlacar" class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none sgi-inline-e1bcebb6" >
+                <a href="<?= \App\Shared\Http\Url::to('edicoes/agenda') ?>" id="btnVoltarPlacar" class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none sgi-u-bg-E30613-radius-6px-p-8px-16px" >
                     <i class="bi bi-arrow-left-circle fs-5"></i> <span>Voltar</span>
                 </a>
                 <h1 id="placar-titulo-jogo" class="mc-match-title">Placar</h1>
@@ -84,17 +83,17 @@ $paginaAtiva = 'dashboard';
                         <label class="form-label">Tipo</label>
                         <div class="mc-tipo-grid">
                             <label class="btn btn-outline-warning ocorrencia-tipo-option d-flex align-items-center justify-content-center gap-1" data-tipo="Amarelo">
-                                <i class="bi bi-square-fill sgi-inline-e20cf733" ></i>
+                                <i class="bi bi-square-fill sgi-u-color-f59e0b-text-7rem" ></i>
                                 Amarelo
                                 <input type="radio" name="tipo_ocorrencia" value="Amarelo" class="d-none">
                             </label>
                             <label class="btn btn-outline-danger ocorrencia-tipo-option d-flex align-items-center justify-content-center gap-1" data-tipo="Vermelho">
-                                <i class="bi bi-x-octagon-fill sgi-inline-b2fe9a0d" ></i>
+                                <i class="bi bi-x-octagon-fill sgi-u-text-7rem" ></i>
                                 Vermelho
                                 <input type="radio" name="tipo_ocorrencia" value="Vermelho" class="d-none">
                             </label>
                             <label class="btn btn-outline-suspensao ocorrencia-tipo-option d-flex align-items-center justify-content-center gap-1" data-tipo="Suspensao">
-                                <i class="bi bi-pause-circle-fill sgi-inline-b2fe9a0d" ></i>
+                                <i class="bi bi-pause-circle-fill sgi-u-text-7rem" ></i>
                                 Suspensão
                                 <input type="radio" name="tipo_ocorrencia" value="Suspensao" class="d-none">
                             </label>
@@ -143,7 +142,7 @@ $paginaAtiva = 'dashboard';
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">
-                <h6 class="modal-title"><i class="bi bi-trophy-fill me-1 sgi-inline-737e977a" ></i>Registrar Gol</h6>
+                <h6 class="modal-title"><i class="bi bi-trophy-fill me-1 sgi-u-color-f59e0b" ></i>Registrar Gol</h6>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
             </div>
             <form id="formArtilheiro" onsubmit="return salvarArtilheiro(event)">

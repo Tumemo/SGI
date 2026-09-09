@@ -29,7 +29,20 @@ final class ArtilheiroController
             return $denied;
         }
         if ($request->method() === 'GET') {
-            return Response::json($this->queries->list($request->allQuery()));
+            if ((int) ($_SESSION['nivel'] ?? -1) === 3) {
+                return Response::json([
+                    'success' => false,
+                    'message' => 'A artilharia será liberada após a premiação.',
+                ], 403);
+            }
+            $filters = $request->allQuery();
+            if ((int) ($_SESSION['nivel'] ?? -1) === 2) {
+                if ((int) ($_SESSION['id_interclasse'] ?? 0) <= 0) {
+                    return Response::json(['success' => false, 'message' => 'Nenhuma edição ativa.'], 403);
+                }
+                $filters['id_interclasse'] = (int) ($_SESSION['id_interclasse'] ?? 0);
+            }
+            return Response::json($this->queries->list($filters));
         }
         if (($denied = $this->access->authorize()) !== null) {
             return $denied;

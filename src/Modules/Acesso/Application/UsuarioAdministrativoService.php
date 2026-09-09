@@ -21,13 +21,15 @@ final class UsuarioAdministrativoService
         }
     }
 
-    public function resetarSenhaAluno(int $id): void
+    public function resetarSenhaAluno(int $id): string
     {
         $this->validateId($id);
-        $hash = password_hash('123', PASSWORD_DEFAULT);
+        $temporaryPassword = rtrim(strtr(base64_encode(random_bytes(9)), '+/', '-_'), '=');
+        $hash = password_hash($temporaryPassword, PASSWORD_DEFAULT);
         if (!$this->usuarios->resetStudentPassword($id, $hash)) {
             throw new UsuarioNaoEncontradoException();
         }
+        return $temporaryPassword;
     }
 
     public function excluirColaborador(int $id, ?int $interclasseId, int $currentUserId): void

@@ -670,7 +670,7 @@
             url = rec.url || construirUrl(tela, {});
         }
         if (!historicoJaAtualizado) pushEstado(tela, key, url);
-        document.title = TELA_TITULO[tela] || 'SGI';
+        document.title = 'SGI';
 
         if (m.inits) m.inits.forEach(function (fn) { runSafe(fn); });
     }
@@ -727,6 +727,7 @@
             b + 'turmas?id_interclasse=' + id,
             b + 'equipes',
             b + 'equipes?id_interclasse=' + id,
+            b + 'agenda-blocos?id_interclasse=' + id,
             b + 'jogos?id_interclasse=' + id,
             b + 'jogos?x=1&id_interclasse=' + id
         ];
@@ -742,8 +743,10 @@
         ];
         return fetchJson(b + 'jogos?id_jogo=' + j.id_jogo).then(function (lista) {
             var jogo = (Array.isArray(lista) && lista[0]) || j;
-            var ehIndividual = /^IND:/.test(jogo.nome_jogo || '') ||
-                parseInt(jogo.tipos_modalidades_id_tipo_modalidade, 10) === 2;
+            var nomeTipo = String(jogo.nome_tipo_modalidade || '').trim().toLowerCase();
+            var ehIndividual = jogo.tipo_competicao === 'individual' ||
+                (!jogo.tipo_competicao && (nomeTipo === 'individual' || nomeTipo === 'prova individual')) ||
+                (!jogo.tipo_competicao && !nomeTipo && parseInt(jogo.tipos_modalidades_id_tipo_modalidade, 10) === 2);
             var idMod = jogo.modalidades_id_modalidade;
             if (ehIndividual && idMod) {
                 urls.push(b + 'chaveamentos?tipo_modalidade=individual&acao=participantes&id_modalidade=' + idMod);
@@ -901,9 +904,14 @@
                     jobs.push(function () {
                         return aquecer(apiBase() + 'chaveamentos?id_modalidade=' + idModalidade);
                     });
+                    jobs.push(function () {
+                        return aquecer(apiBase() + 'agenda-blocos?id_interclasse=' + id + '&id_modalidade=' + idModalidade);
+                    });
                     // Modalidades individuais consultam ranking e participantes
                     // mesmo antes de existir um jogo na agenda.
-                    if (parseInt(m.id_tipo_modalidade, 10) === 2) {
+                    if (m.tipo_competicao === 'individual' ||
+                        (!m.tipo_competicao && String(m.nome_tipo_modalidade || '').trim().toLowerCase() === 'individual') ||
+                        (!m.tipo_competicao && !m.nome_tipo_modalidade && parseInt(m.id_tipo_modalidade, 10) === 2)) {
                         jobs.push(function () {
                             return aquecer(apiBase() + 'chaveamentos?tipo_modalidade=individual&acao=participantes&id_modalidade=' + idModalidade);
                         });

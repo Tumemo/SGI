@@ -85,4 +85,12 @@ final class EdicaoService
         }
         $this->edicoes->update($id, ['status_interclasse' => $status]);
     }
+
+    public function publicarRanking(int $id, int $userId): void
+    {
+        if ($id <= 0 || $userId <= 0) {
+            throw new InvalidArgumentException('Edição ou usuário inválido.');
+        }
+        $this->edicoes->publishRanking($id, $userId);
+    }
 }

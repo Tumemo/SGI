@@ -39,6 +39,9 @@ final class PerfilController
             $name = trim((string) $request->input('nome_usuario', ''));
             $this->service->update($id, $name, (string) $request->input('senha_atual', ''), (string) $request->input('nova_senha', ''));
             $_SESSION['nome'] = $name;
+            if ((string) $request->input('nova_senha', '') !== '') {
+                $_SESSION['auth_version'] = (int) ($_SESSION['auth_version'] ?? 1) + 1;
+            }
             return Response::json(['success' => true, 'message' => 'Perfil atualizado com sucesso!']);
         } catch (\InvalidArgumentException $exception) {
             return Response::json(['success' => false, 'message' => $exception->getMessage()]);

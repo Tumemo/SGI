@@ -3,6 +3,7 @@ const path = require('node:path');
 const crypto = require('node:crypto');
 const root = path.resolve(__dirname, '..');
 const output = path.join(root, 'public/assets');
+const bundlesFile = path.join(root, 'tools/css-bundles.json');
 for (const directory of ['resources/js', 'resources/css', 'resources/images', 'node_modules/bootstrap', 'node_modules/axios']) {
     if (!fs.existsSync(path.join(root, directory))) throw new Error(`Dependência ausente: ${directory}. Execute npm ci.`);
 }
@@ -12,8 +13,28 @@ if (fs.existsSync(output)) {
     fs.rmSync(output, { recursive: true });
 }
 fs.mkdirSync(output, { recursive: true });
-for (const directory of ['js', 'css', 'images']) {
+// CSS fonte é organizado em fragments e não deve ser publicado como dezenas
+// de folhas independentes. Apenas os bundles abaixo entram em public/assets.
+for (const directory of ['js', 'images']) {
     fs.cpSync(path.join(root, 'resources', directory), path.join(output, directory), { recursive: true });
+}
+fs.mkdirSync(path.join(output, 'css'), { recursive: true });
+
+// Componha as folhas públicas a partir de uma ordem explícita. Os arquivos
+// de origem continuam separados para facilitar manutenção e auditoria da
+// cascata; as páginas carregam somente o pacote do próprio contexto.
+const bundles = JSON.parse(fs.readFileSync(bundlesFile, 'utf8'));
+for (const [name, entries] of Object.entries(bundles)) {
+    if (!Array.isArray(entries) || entries.length === 0) throw new Error(`Bundle CSS inválido: ${name}`);
+    const parts = entries.map((entry) => {
+        const normalized = path.normalize(entry);
+        const source = path.resolve(root, normalized);
+        if (!source.startsWith(path.resolve(root, 'resources/css') + path.sep) || !fs.existsSync(source)) {
+            throw new Error(`Fonte CSS inválida ou ausente: ${entry}`);
+        }
+        return `/* source: ${entry.replaceAll('\\', '/')} */\n${fs.readFileSync(source, 'utf8')}`;
+    });
+    fs.writeFileSync(path.join(output, 'css', `${name}.css`), parts.join('\n\n'));
 }
 const vendors = {
     'bootstrap': 'bootstrap/dist',

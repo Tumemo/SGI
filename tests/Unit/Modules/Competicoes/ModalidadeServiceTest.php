@@ -29,6 +29,26 @@ final class ModalidadeServiceTest extends TestCase
         self::assertSame(4, $repository->rows[1]['max_equipes']);
     }
 
+    public function testUpdatesGender(): void
+    {
+        $repository = new InMemoryModalidadeRepository();
+        $service = new ModalidadeService($repository);
+        $id = $service->criar([
+            'nome_modalidade' => 'Futsal',
+            'genero_modalidade' => 'MASC',
+            'tipos_modalidades_id_tipo_modalidade' => 1,
+            'categorias_id_categoria' => 2,
+            'interclasses_id_interclasse' => 3,
+        ]);
+
+        $service->atualizar([
+            'id_modalidade' => $id,
+            'genero_modalidade' => 'FEM',
+        ]);
+
+        self::assertSame('FEM', $repository->rows[$id]['genero_modalidade']);
+    }
+
     public function testRejectsIncompleteCreate(): void
     {
         $this->expectException(InvalidArgumentException::class);

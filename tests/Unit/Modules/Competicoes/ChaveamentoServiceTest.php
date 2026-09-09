@@ -27,6 +27,19 @@ final class ChaveamentoServiceTest extends TestCase
         self::assertTrue((new ChaveamentoService($repository))->gerar(7, false, null)['success']);
     }
 
+    public function testIndividualTypeUsesSemanticNameEvenWhenForeignKeyIsNotTwo(): void
+    {
+        $repository = $this->createMock(ChaveamentoManagement::class);
+        $repository->method('modality')->with(17)->willReturn([
+            'tipos_modalidades_id_tipo_modalidade' => 37,
+            'nome_tipo_modalidade' => 'Individual',
+        ]);
+        $repository->expects(self::never())->method('createBracket');
+        $repository->expects(self::once())->method('saveIndividual')->with(17, null)->willReturn(['success' => true]);
+
+        self::assertTrue((new ChaveamentoService($repository))->gerar(17, false, null)['success']);
+    }
+
     public function testNormalizesIndividualPodiumIdentifiers(): void
     {
         $repository = $this->createMock(ChaveamentoManagement::class);
@@ -34,11 +47,37 @@ final class ChaveamentoServiceTest extends TestCase
         self::assertTrue((new ChaveamentoService($repository))->gerar(7, true, ['primeiro' => '1', 'segundo' => '2', 'terceiro' => '3'])['success']);
     }
 
-    public function testIncompletePodiumPreservesScheduleOperation(): void
+    public function testIncompletePodiumIsRejectedWithoutDelegating(): void
     {
         $repository = $this->createMock(ChaveamentoManagement::class);
-        $repository->expects(self::once())->method('saveIndividual')->with(7, null)->willReturn(['success' => true]);
-        self::assertTrue((new ChaveamentoService($repository))->gerar(7, true, ['primeiro' => 1])['success']);
+        $repository->expects(self::never())->method('saveIndividual');
+        $this->expectException(\InvalidArgumentException::class);
+        (new ChaveamentoService($repository))->gerar(7, true, ['primeiro' => 1]);
+    }
+
+    public function testIndividualPodiumCanBindToTheGameCurrentlyOpenInTheScreen(): void
+    {
+        $repository = $this->createMock(ChaveamentoManagement::class);
+        $repository->expects(self::once())->method('saveIndividual')
+            ->with(7, ['primeiro' => 1, 'segundo' => 2, 'terceiro' => 3], 20)
+            ->willReturn(['success' => true]);
+
+        self::assertTrue((new ChaveamentoService($repository))->gerar(
+            7,
+            true,
+            ['primeiro' => 1, 'segundo' => 2, 'terceiro' => 3],
+            true,
+            20,
+        )['success']);
+    }
+
+    public function testExplicitNullRankingIsNotInterpretedAsAgendaGeneration(): void
+    {
+        $repository = $this->createMock(ChaveamentoManagement::class);
+        $repository->expects(self::never())->method('saveIndividual');
+
+        $this->expectException(\InvalidArgumentException::class);
+        (new ChaveamentoService($repository))->gerar(7, true, null, true);
     }
 
     public function testClassificationOmitsMatchesButPreservesThePodium(): void

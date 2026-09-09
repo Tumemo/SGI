@@ -54,6 +54,9 @@ final class MysqliRankingRepository implements RankingRepository
                 WHERE 1=1";
         $types = '';
         $params = [];
+        if (($filters['somente_publicados'] ?? false) === true) {
+            $sql .= " AND interclasses.status_interclasse = '0' AND interclasses.ranking_publicado_em IS NOT NULL";
+        }
         if ((int) ($filters['id_turma'] ?? 0) > 0) {
             $sql .= ' AND turmas.id_turma = ?';
             $types .= 'i';

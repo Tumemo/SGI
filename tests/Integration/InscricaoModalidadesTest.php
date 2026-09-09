@@ -12,29 +12,30 @@ class InscricaoModalidadesTest
     {
         echo "\n  \033[1;34m[Suite 10: Inscrição de Alunos em Modalidades e Regras de Limite]\033[0m\n";
 
-        $aluno = new TestClient();
-        $aluno->login('2879', '123');
-
         $admin = new TestClient();
         $admin->login('admin', '123');
 
-        // Descobrir a turma do aluno 2879
-        $resUser = $aluno->get('api/v1/session');
-        $idAluno = (int) ($resUser['json']['usuario']['id'] ?? 0);
-
-        // Buscar equipes da turma do aluno
+        // Buscar uma turma da edição recém-criada. Alunos são registros por
+        // edição; não mover o aluno legado 2879 de outra edição para este
+        // cenário, pois isso mascararia a chave composta de matrícula.
         $resTurmas = $admin->get("api/v1/turmas?id_interclasse=$idEdicao");
         $turmas = $resTurmas['json'] ?? [];
         $idTurmaAluno = (int) ($turmas[0]['id_turma'] ?? 0);
 
-        // Atualiza a turma do aluno para este interclasse de teste para garantir vínculo
-        if ($idAluno > 0 && $idTurmaAluno > 0) {
-            $resAtualizacao = $admin->postJson('api/v1/usuarios?id=' . $idAluno, [
-                'turmas_id_turma' => $idTurmaAluno,
-                'interclasses_id_interclasse' => $idEdicao
-            ]);
-            Assertions::assertStatus('Vínculo do aluno com a edição de teste foi atualizado', $resAtualizacao, 200);
-        }
+        $matricula = '9' . date('ymdHis') . random_int(10, 99);
+        $novoAluno = $admin->postJson('api/v1/usuarios?acao=criar_aluno', [
+            'nome_usuario' => 'Aluno de Inscrição',
+            'matricula_usuario' => $matricula,
+            'data_nasc_usuario' => '2010-01-01',
+            'genero_usuario' => 'MASC',
+            'turmas_id_turma' => $idTurmaAluno,
+        ]);
+        Assertions::assertStatus('Aluno de teste vinculado à edição', $novoAluno, 200);
+        $idAluno = (int) ($novoAluno['json']['id_usuario'] ?? $novoAluno['json']['id'] ?? 0);
+        $senha = (string) ($novoAluno['json']['senha_temporaria'] ?? '');
+        $aluno = new TestClient();
+        $loginAluno = $aluno->login($matricula, $senha);
+        Assertions::assertJsonSuccess('Aluno de teste autenticado para inscrição', $loginAluno);
 
         $resEqTurma = $admin->get("api/v1/equipes?id_interclasse=$idEdicao&id_turma=$idTurmaAluno");
         $eqsTurma = $resEqTurma['json'] ?? [];

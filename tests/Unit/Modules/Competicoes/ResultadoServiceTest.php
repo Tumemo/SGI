@@ -9,6 +9,7 @@ use App\Modules\Competicoes\Domain\ResultadoRepository;
 use App\Modules\Resultados\Application\PontuacaoService;
 use App\Modules\Resultados\Domain\PodioRepository;
 use App\Shared\Application\TransactionRunner;
+use InvalidArgumentException;
 use PHPUnit\Framework\TestCase;
 
 final class ResultadoServiceTest extends TestCase
@@ -117,6 +118,28 @@ final class ResultadoServiceTest extends TestCase
 
         self::assertSame([], $podium->calls);
     }
+
+    public function testModalidadeIndividualNaoPodeSerConcluidaPeloFluxoDePlacar(): void
+    {
+        $repository = new ResultadoRepositoryFake();
+        $repository->modalityType = 2;
+        $runner = new TransactionRunnerFake();
+        $podium = new PodioRepositoryFake();
+        $service = new ResultadoService($repository, $runner, new PontuacaoService($podium));
+
+        try {
+            $service->lancar(12, null, 7, [
+                ['id_equipe' => 101, 'gols' => 3],
+                ['id_equipe' => 102, 'gols' => 1],
+            ]);
+            self::fail('A conclusão genérica de modalidade individual deveria ser recusada.');
+        } catch (InvalidArgumentException $exception) {
+            self::assertStringContainsString('lançamento do pódio', $exception->getMessage());
+        }
+
+        self::assertSame(['resolve', 'lock'], $repository->calls);
+        self::assertSame([], $podium->calls);
+    }
 }
 
 final class ResultadoRepositoryFake implements ResultadoRepository
@@ -131,6 +154,7 @@ final class ResultadoRepositoryFake implements ResultadoRepository
         ['equipes_id_equipe' => 102, 'resultado_partida' => 1],
     ];
     public ?\Throwable $advanceFailure = null;
+    public int $modalityType = 1;
 
     public function inspectResult(int $gameId, ?string $tag, int $modalityId): array
     {
@@ -153,7 +177,13 @@ final class ResultadoRepositoryFake implements ResultadoRepository
     public function lockGame(int $gameId): array
     {
         $this->calls[] = 'lock';
-        return ['status_jogo' => $this->status, 'nome_jogo' => 'MM:2:0:N', 'modalidade_id' => 7, 'interclasse_id' => 1];
+        return [
+            'status_jogo' => $this->status,
+            'nome_jogo' => 'MM:2:0:N',
+            'modalidade_id' => 7,
+            'interclasse_id' => 1,
+            'tipos_modalidades_id_tipo_modalidade' => $this->modalityType,
+        ];
     }
 
     public function carregarPartidas(int $gameId): array

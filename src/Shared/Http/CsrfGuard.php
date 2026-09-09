@@ -62,8 +62,7 @@ final class CsrfGuard
             return true;
         }
 
-        return str_ends_with($normalised, '/api/v1/usuarios')
-            && (string) ($_GET['acao'] ?? '') === 'validar_inscricao';
+        return false;
     }
 
     private static function isSameOrigin(string $origin): bool

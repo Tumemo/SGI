@@ -22,6 +22,10 @@ final class FotoController
         }
         if ($request->method() === 'GET') {
             $id = (int) $request->query('user_id', 0);
+            $currentUserId = (int) ($_SESSION['id'] ?? $_SESSION['id_usuario'] ?? 0);
+            if ((int) ($_SESSION['nivel'] ?? -1) > 1 && $id !== $currentUserId) {
+                return Response::json(['success' => false, 'message' => 'Acesso não autorizado.'], 403);
+            }
             return $id <= 0 ? Response::json(['erro' => 'user_id inválido'], 400)
                 : Response::json(['success' => true, 'user_id' => $id, 'foto_usuario' => $this->service->find($id)]);
         }

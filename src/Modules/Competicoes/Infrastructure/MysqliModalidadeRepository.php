@@ -77,7 +77,10 @@ final class MysqliModalidadeRepository implements ModalidadeRepository
         }
         $rows = $statement->get_result()->fetch_all(MYSQLI_ASSOC);
         $statement->close();
-        return $rows;
+        return array_map(static function (array $row): array {
+            $row['tipo_competicao'] = \App\Modules\Competicoes\Domain\TipoCompeticaoRules::resolve($row);
+            return $row;
+        }, $rows);
     }
 
     public function create(array $data): int

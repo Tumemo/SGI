@@ -42,6 +42,21 @@ final class MysqliEdicaoConsultaRepository implements EdicaoConsulta
         return isset($row['status_interclasse']) && $row['status_interclasse'] === '1';
     }
 
+    public function isRankingPublished(int $editionId): bool
+    {
+        $statement = $this->connection->prepare(
+            'SELECT ranking_publicado_em FROM interclasses WHERE id_interclasse = ? LIMIT 1',
+        );
+        if ($statement === false) {
+            return false;
+        }
+        $statement->bind_param('i', $editionId);
+        $statement->execute();
+        $row = $statement->get_result()->fetch_assoc();
+        $statement->close();
+        return $row !== null && $row['ranking_publicado_em'] !== null;
+    }
+
     public function isUserEditionClosed(int $userId): bool
     {
         $statement = $this->connection->prepare(

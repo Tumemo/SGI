@@ -15,20 +15,31 @@ final class PublicBoundaryTest
 
         $client = new TestClient();
 
-        foreach (['config/db.php', 'src/Shared/Config/Env.php', 'tests/run_all.php', 'vendor/autoload.php', 'composer.json', 'api/v1/filtros', 'api/v1/conversor-pdf', 'api/v1/pontuacao'] as $path) {
+        foreach (['config/db.php', 'src/Shared/Config/Env.php', 'tests/run_all.php', 'vendor/autoload.php', 'composer.json'] as $path) {
             $response = $client->get($path);
             Assertions::assertStatus("Arquivo interno não exposto: {$path}", $response, 404);
+        }
+
+        foreach (['api/v1/filtros', 'api/v1/conversor-pdf', 'api/v1/pontuacao'] as $path) {
+            $response = $client->get($path);
+            Assertions::assert(
+                "Arquivo interno não exposto: {$path}",
+                in_array($response['code'], [401, 404], true),
+            );
         }
 
         $traversal = $client->get('views/%2e%2e/config/db.php');
         Assertions::assert('Tentativa de traversal é rejeitada', in_array($traversal['code'], [400, 404], true));
 
-        $asset = $client->get('assets/css/style.css');
-        Assertions::assertStatus('Asset CSS público servido pelo front controller', $asset, 200);
-        Assertions::assert(
-            'Asset CSS possui content-type correto',
-            str_contains((string) ($asset['body'] ?? ''), 'SGI - Folha de Estilos Principal'),
-        );
+        foreach (['admin.css', 'aluno.css', 'login.css'] as $bundle) {
+            $asset = $client->get('assets/css/' . $bundle);
+            Assertions::assertStatus("Bundle CSS público servido: {$bundle}", $asset, 200);
+            Assertions::assert(
+                "Bundle CSS possui content-type correto: {$bundle}",
+                str_contains((string) ($asset['headers']['Content-Type'] ?? ''), 'text/css')
+                    || str_contains((string) ($asset['body'] ?? ''), 'SGI'),
+            );
+        }
 
         $publicSource = $client->get('public/index.php');
         Assertions::assertStatus('Código do front controller não é baixável', $publicSource, 404);

@@ -4,11 +4,11 @@ $urlVoltar = $urlVoltar ?? \App\Shared\Http\Url::to('aluno/inicio');
 $titulo = $titulo ?? '';
 $nivelUsuario = (int)($_SESSION['nivel'] ?? -1);
 ?>
-<section class="d-md-none position-relative sgi-inline-c89f451e" >
+<section class="d-md-none position-relative sgi-u-h-120px" >
     <?php if ($mostrarVoltar): ?>
-    <a href="<?= htmlspecialchars($urlVoltar) ?>" class="bi bi-arrow-left position-absolute text-white fs-3 text-decoration-none sgi-inline-138c2dcc" ></a>
+    <a href="<?= htmlspecialchars($urlVoltar) ?>" class="bi bi-arrow-left position-absolute text-white fs-3 text-decoration-none sgi-u-top-20px-left-20px-z-10" ></a>
     <?php endif; ?>
-    <img src="<?= \App\Shared\Http\Assets::url('images/banner-global.png') ?>" alt="Banner" class="w-100 object-fit-cover sgi-inline-e8d2328b" >
+    <img src="<?= \App\Shared\Http\Assets::url('images/banner-global.png') ?>" alt="Banner" class="w-100 object-fit-cover sgi-u-h-100" >
     <?php if (!empty($titulo)): ?>
     <h2 class="position-absolute top-50 start-50 translate-middle text-white m-0 fw-bold"><?= htmlspecialchars($titulo) ?></h2>
     <?php endif; ?>
@@ -84,9 +84,8 @@ window.SGIInterclasse = (() => {
         return base + separador + 'id=' + idInterclasse;
     };
 
-    const updatePageTitle = (nomeInterclasse) => {
-        const base = document.body.dataset.defaultTitle || 'SGI';
-        document.title = nomeInterclasse ? `SGI - ${base} - ${nomeInterclasse}` : `SGI - ${base}`;
+    const updatePageTitle = () => {
+        document.title = 'SGI';
     };
 
     const resolveId = async () => {

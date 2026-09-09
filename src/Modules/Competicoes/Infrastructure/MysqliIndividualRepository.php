@@ -40,16 +40,19 @@ final class MysqliIndividualRepository
     public static function buscarParticipantes(\mysqli $conn, int $idModalidade): array
     {
         $sql = 'SELECT DISTINCT u.id_usuario, u.nome_usuario, u.genero_usuario,
-                   t.nome_turma, t.nome_fantasia_turma,
+                   t.id_turma, t.nome_turma, t.nome_fantasia_turma,
                    e.id_equipe
             FROM usuarios u
             INNER JOIN equipes_has_usuarios ehu ON ehu.usuarios_id_usuario = u.id_usuario
             INNER JOIN equipes e ON e.id_equipe = ehu.equipes_id_equipe
             INNER JOIN turmas t ON t.id_turma = e.turmas_id_turma
+            INNER JOIN modalidades m ON m.id_modalidade = e.modalidades_id_modalidade
             WHERE e.modalidades_id_modalidade = ?
               AND e.status_equipe = \'1\'
               AND u.status_usuario = \'1\'
-            ORDER BY t.nome_turma, u.nome_usuario';
+              AND u.nivel_usuario = \'3\'
+              AND u.interclasses_id_interclasse = m.interclasses_id_interclasse
+            ORDER BY t.nome_turma, u.nome_usuario, e.id_equipe';
         $st = $conn->prepare($sql);
         if (!$st) {
             throw new \RuntimeException($conn->error);
@@ -58,22 +61,42 @@ final class MysqliIndividualRepository
         $st->execute();
         $rows = $st->get_result()->fetch_all(\MYSQLI_ASSOC);
         $st->close();
-        return \array_map(static fn (array $r): array => ['id_usuario' => (int) $r['id_usuario'], 'nome_usuario' => $r['nome_usuario'], 'genero_usuario' => $r['genero_usuario'], 'nome_turma' => $r['nome_turma'], 'nome_fantasia_turma' => $r['nome_fantasia_turma'], 'id_equipe' => (int) $r['id_equipe']], $rows);
+        return \array_map(static fn (array $r): array => ['id_usuario' => (int) $r['id_usuario'], 'nome_usuario' => $r['nome_usuario'], 'genero_usuario' => $r['genero_usuario'], 'id_turma' => (int) $r['id_turma'], 'nome_turma' => $r['nome_turma'], 'nome_fantasia_turma' => $r['nome_fantasia_turma'], 'id_equipe' => (int) $r['id_equipe']], $rows);
     }
     /**
      * Busca o jogo de ranking existente para uma modalidade individual.
      *
      * @return array{id_jogo:int, status_jogo:string}|null
      */
-    public static function buscarJogoExistente(\mysqli $conn, int $idModalidade): ?array
+    public static function buscarJogoExistente(\mysqli $conn, int $idModalidade, ?int $idJogo = null): ?array
     {
-        $tag = \App\Modules\Competicoes\Domain\IndividualRules::tag($idModalidade);
-        $st = $conn->prepare('SELECT id_jogo, status_jogo FROM jogos WHERE nome_jogo = ? LIMIT 1');
-        $st->bind_param('s', $tag);
-        $st->execute();
-        $row = $st->get_result()->fetch_assoc();
-        $st->close();
-        return $row ? ['id_jogo' => (int) $row['id_jogo'], 'status_jogo' => $row['status_jogo']] : \null;
+        $row = null;
+        if ($idJogo !== null && $idJogo > 0) {
+            $st = $conn->prepare('SELECT id_jogo, status_jogo, nome_jogo, modalidades_id_modalidade FROM jogos WHERE id_jogo = ? AND modalidades_id_modalidade = ? LIMIT 1 FOR UPDATE');
+            $st->bind_param('ii', $idJogo, $idModalidade);
+        } else {
+            $tag = \App\Modules\Competicoes\Domain\IndividualRules::tag($idModalidade);
+            $st = $conn->prepare('SELECT id_jogo, status_jogo, nome_jogo, modalidades_id_modalidade FROM jogos WHERE modalidades_id_modalidade = ? AND nome_jogo = ? LIMIT 1 FOR UPDATE');
+            $st->bind_param('is', $idModalidade, $tag);
+            $st->execute();
+            $row = $st->get_result()->fetch_assoc();
+            $st->close();
+            if ($row !== null) {
+                return ['id_jogo' => (int) $row['id_jogo'], 'status_jogo' => $row['status_jogo'], 'nome_jogo' => (string) $row['nome_jogo'], 'modalidades_id_modalidade' => (int) $row['modalidades_id_modalidade']];
+            }
+            // Sem a tag oficial, somente um registro legado pode ser
+            // reaproveitado automaticamente. Vários jogos exigem auditoria.
+            $st = $conn->prepare('SELECT id_jogo, status_jogo, nome_jogo, modalidades_id_modalidade FROM jogos WHERE modalidades_id_modalidade = ? ORDER BY id_jogo ASC FOR UPDATE');
+            $st->bind_param('i', $idModalidade);
+            $st->execute();
+            $rows = $st->get_result()->fetch_all(\MYSQLI_ASSOC);
+            $st->close();
+            if (count($rows) > 1) {
+                throw new \RuntimeException('Há mais de um jogo para esta prova individual; faça a auditoria antes de registrar o ranking.');
+            }
+            $row = $rows[0] ?? null;
+        }
+        return $row ? ['id_jogo' => (int) $row['id_jogo'], 'status_jogo' => $row['status_jogo'], 'nome_jogo' => (string) $row['nome_jogo'], 'modalidades_id_modalidade' => (int) $row['modalidades_id_modalidade']] : \null;
     }
     /**
      * Cria o jogo de ranking para uma modalidade individual.
@@ -81,12 +104,12 @@ final class MysqliIndividualRepository
     public static function criarJogo(\mysqli $conn, int $idModalidade): int
     {
         $tag = \App\Modules\Competicoes\Domain\IndividualRules::tag($idModalidade);
-        $idLocal = \App\Modules\Competicoes\Infrastructure\MysqliIndividualRepository::resolverIdLocal($conn);
-        $st = $conn->prepare("INSERT INTO jogos (nome_jogo, data_jogo, inicio_jogo, status_jogo, modalidades_id_modalidade, locais_id_local)\r\n         VALUES (?, CURDATE(), '08:00:00', 'Agendado', ?, ?)");
-        $st->bind_param('sii', $tag, $idModalidade, $idLocal);
+        $st = $conn->prepare("INSERT INTO jogos (nome_jogo, data_jogo, inicio_jogo, termino_jogo, status_jogo, modalidades_id_modalidade, locais_id_local)\r\n         VALUES (?, NULL, NULL, NULL, 'Agendado', ?, NULL)");
+        $st->bind_param('si', $tag, $idModalidade);
         $st->execute();
         $idJogo = (int) $conn->insert_id;
         $st->close();
+        MysqliChaveamentoRepository::aplicarReservaAgenda($conn, $idModalidade, $tag, $idJogo);
         return $idJogo;
     }
     /**
@@ -96,15 +119,25 @@ final class MysqliIndividualRepository
      *
      * @param array{primeiro:int, segundo:int, terceiro:int} $ranking IDs dos usuários
      */
-    public static function salvarRanking(\mysqli $conn, int $idModalidade, array $ranking): array
+    public static function salvarRanking(\mysqli $conn, int $idModalidade, array $ranking, ?int $idJogo = null): array
     {
+        self::bloquearModalidadeIndividual($conn, $idModalidade);
         // Validações
         if (empty($ranking['primeiro']) || empty($ranking['segundo']) || empty($ranking['terceiro'])) {
             throw new \RuntimeException('É necessário informar o 1º, 2º e 3º lugar.');
         }
         // Verifica se os participantes são válidos
         $participantes = \App\Modules\Competicoes\Infrastructure\MysqliIndividualRepository::buscarParticipantes($conn, $idModalidade);
-        $idsValidos = \array_column($participantes, 'id_usuario');
+        $participantesPorId = [];
+        foreach ($participantes as $participante) {
+            $idParticipante = (int) $participante['id_usuario'];
+            if (isset($participantesPorId[$idParticipante])
+                && (int) $participantesPorId[$idParticipante]['id_equipe'] !== (int) $participante['id_equipe']) {
+                throw new \RuntimeException('O atleta possui vínculos conflitantes nesta modalidade.');
+            }
+            $participantesPorId[$idParticipante] = $participante;
+        }
+        $idsValidos = \array_keys($participantesPorId);
         foreach (['primeiro', 'segundo', 'terceiro'] as $posicao) {
             if (!\in_array($ranking[$posicao], $idsValidos, \true)) {
                 throw new \RuntimeException("O participante do {$posicao} lugar não é válido para esta modalidade.");
@@ -118,21 +151,23 @@ final class MysqliIndividualRepository
         $posicoes = [1 => (int) $ranking['primeiro'], 2 => (int) $ranking['segundo'], 3 => (int) $ranking['terceiro']];
         $equipesPorPosicao = [];
         foreach ($posicoes as $posicao => $idUsuario) {
-            $equipe = \App\Modules\Competicoes\Infrastructure\MysqliIndividualRepository::buscarEquipeUsuario($conn, $idUsuario, $idModalidade);
-            if ($equipe === null) {
+            $equipe = isset($participantesPorId[$idUsuario]) ? (int) $participantesPorId[$idUsuario]['id_equipe'] : null;
+            if ($equipe === null || $equipe <= 0) {
                 throw new \RuntimeException("Usuário {$idUsuario} não possui equipe nesta modalidade.");
             }
             $equipesPorPosicao[$posicao] = $equipe;
         }
         // Busca ou cria o jogo
-        $jogo = \App\Modules\Competicoes\Infrastructure\MysqliIndividualRepository::buscarJogoExistente($conn, $idModalidade);
+        $jogo = \App\Modules\Competicoes\Infrastructure\MysqliIndividualRepository::buscarJogoExistente($conn, $idModalidade, $idJogo);
         $creditosAnteriores = null;
         if ($jogo === \null) {
-            $idJogo = \App\Modules\Competicoes\Infrastructure\MysqliIndividualRepository::criarJogo($conn, $idModalidade);
-            $jaConcluido = \false;
+            throw new \RuntimeException('Prepare o jogo da modalidade individual antes de registrar o ranking.');
         } else {
             $idJogo = $jogo['id_jogo'];
             $jaConcluido = $jogo['status_jogo'] === 'Concluido' || $jogo['status_jogo'] === 'Finalizado';
+            if (!$jaConcluido && !in_array($jogo['status_jogo'], ['Iniciado', 'Pausado'], true)) {
+                throw new \RuntimeException('Inicie o jogo da modalidade individual antes de registrar o ranking.');
+            }
             $editionStatement = $conn->prepare('SELECT interclasses_id_interclasse FROM modalidades WHERE id_modalidade = ? LIMIT 1');
             $editionStatement->bind_param('i', $idModalidade);
             $editionStatement->execute();
@@ -286,15 +321,29 @@ final class MysqliIndividualRepository
         }
         $stJ = $conn->prepare('SELECT j.id_jogo, j.nome_jogo, j.data_jogo, j.inicio_jogo, j.termino_jogo,
                 j.status_jogo, j.locais_id_local, j.modalidades_id_modalidade,
-                m.nome_modalidade
+                m.nome_modalidade, m.tipos_modalidades_id_tipo_modalidade,
+                tm.nome_tipo_modalidade
          FROM jogos j
          LEFT JOIN modalidades m ON m.id_modalidade = j.modalidades_id_modalidade
+         LEFT JOIN tipos_modalidades tm ON tm.id_tipo_modalidade = m.tipos_modalidades_id_tipo_modalidade
          WHERE j.id_jogo = ? LIMIT 1');
         $stJ->bind_param('i', $jogo['id_jogo']);
         $stJ->execute();
         $jogoDetalhes = $stJ->get_result()->fetch_assoc();
         $stJ->close();
-        return ['success' => \true, 'ranking' => $ranking, 'jogo' => $jogoDetalhes ? ['id_jogo' => (int) $jogoDetalhes['id_jogo'], 'nome_jogo' => $jogoDetalhes['nome_jogo'], 'data_jogo' => $jogoDetalhes['data_jogo'], 'inicio_jogo' => $jogoDetalhes['inicio_jogo'], 'termino_jogo' => $jogoDetalhes['termino_jogo'], 'status_jogo' => $jogoDetalhes['status_jogo'], 'locais_id_local' => $jogoDetalhes['locais_id_local'], 'nome_modalidade' => $jogoDetalhes['nome_modalidade']] : \null];
+        return ['success' => \true, 'ranking' => $ranking, 'jogo' => $jogoDetalhes ? [
+            'id_jogo' => (int) $jogoDetalhes['id_jogo'],
+            'nome_jogo' => $jogoDetalhes['nome_jogo'],
+            'data_jogo' => $jogoDetalhes['data_jogo'],
+            'inicio_jogo' => $jogoDetalhes['inicio_jogo'],
+            'termino_jogo' => $jogoDetalhes['termino_jogo'],
+            'status_jogo' => $jogoDetalhes['status_jogo'],
+            'locais_id_local' => $jogoDetalhes['locais_id_local'],
+            'nome_modalidade' => $jogoDetalhes['nome_modalidade'],
+            'tipos_modalidades_id_tipo_modalidade' => (int) $jogoDetalhes['tipos_modalidades_id_tipo_modalidade'],
+            'nome_tipo_modalidade' => $jogoDetalhes['nome_tipo_modalidade'],
+            'tipo_competicao' => \App\Modules\Competicoes\Domain\TipoCompeticaoRules::resolve($jogoDetalhes),
+        ] : \null];
     }
     /**
      * Cria ou atualiza o jogo da modalidade individual para exibição na Agenda.
@@ -304,6 +353,15 @@ final class MysqliIndividualRepository
      */
     public static function criarJogoAgenda(\mysqli $conn, int $idModalidade): array
     {
+        self::bloquearModalidadeIndividual($conn, $idModalidade);
+        // Um jogo já concluído é imutável para a preparação da agenda. A
+        // consulta vem antes das equipes para que a operação continue
+        // idempotente mesmo se as equipes tiverem sido desativadas depois do
+        // encerramento.
+        $jogo = \App\Modules\Competicoes\Infrastructure\MysqliIndividualRepository::buscarJogoExistente($conn, $idModalidade);
+        if ($jogo !== null && in_array($jogo['status_jogo'], ['Concluido', 'Finalizado'], true)) {
+            return ['success' => \true, 'message' => 'O jogo individual já foi concluído e permanece disponível na agenda.', 'id_jogo' => $jogo['id_jogo'], 'jogos_criados' => 0];
+        }
         // Buscar equipes ativas desta modalidade
         $stEq = $conn->prepare("SELECT id_equipe FROM equipes WHERE modalidades_id_modalidade = ? AND status_equipe = '1'");
         if (!$stEq) {
@@ -318,7 +376,6 @@ final class MysqliIndividualRepository
         }
         $equipeIds = \array_map(static fn (array $r): int => (int) $r['id_equipe'], $rowsEq);
         // Buscar ou criar o jogo de tag IND:{idModalidade}
-        $jogo = \App\Modules\Competicoes\Infrastructure\MysqliIndividualRepository::buscarJogoExistente($conn, $idModalidade);
         if ($jogo === \null) {
             $idJogo = \App\Modules\Competicoes\Infrastructure\MysqliIndividualRepository::criarJogo($conn, $idModalidade);
         } else {
@@ -340,5 +397,23 @@ final class MysqliIndividualRepository
         }
         $stIns->close();
         return ['success' => \true, 'message' => 'Jogo de modalidade individual gerado para a agenda.', 'id_jogo' => $idJogo, 'jogos_criados' => 1];
+    }
+
+    private static function bloquearModalidadeIndividual(\mysqli $conn, int $idModalidade): void
+    {
+        $st = $conn->prepare('SELECT m.tipos_modalidades_id_tipo_modalidade, tm.nome_tipo_modalidade FROM modalidades m LEFT JOIN tipos_modalidades tm ON tm.id_tipo_modalidade = m.tipos_modalidades_id_tipo_modalidade WHERE m.id_modalidade = ? LIMIT 1 FOR UPDATE');
+        if (!$st) {
+            throw new \RuntimeException($conn->error);
+        }
+        $st->bind_param('i', $idModalidade);
+        $st->execute();
+        $modality = $st->get_result()->fetch_assoc() ?: null;
+        $st->close();
+        if ($modality === null) {
+            throw new \RuntimeException('Modalidade não encontrada.');
+        }
+        if (!\App\Modules\Competicoes\Domain\TipoCompeticaoRules::isIndividual($modality)) {
+            throw new \RuntimeException('A modalidade informada não é individual.');
+        }
     }
 }

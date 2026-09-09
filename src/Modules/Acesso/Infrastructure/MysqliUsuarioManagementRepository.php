@@ -35,7 +35,8 @@ final class MysqliUsuarioManagementRepository implements UsuarioManagementReposi
             throw new RuntimeException('Já existe um aluno com este RM nesta edição do interclasse.');
         }
 
-        $password = password_hash('123', PASSWORD_DEFAULT);
+        $temporaryPassword = rtrim(strtr(base64_encode(random_bytes(9)), '+/', '-_'), '=');
+        $password = password_hash($temporaryPassword, PASSWORD_DEFAULT);
         $statement = $this->prepare('INSERT INTO usuarios (sigla_usuario, matricula_usuario, nome_usuario, senha_usuario, nivel_usuario, genero_usuario, data_nasc_usuario, foto_usuario, status_usuario, turmas_id_turma, interclasses_id_interclasse, chave_usuario_edicao) VALUES (\'RM\', ?, ?, ?, \'3\', ?, ?, \'default.jpg\', \'1\', ?, ?, ?)');
         $statement->bind_param('sssssiis', $matricula, $name, $password, $gender, $birth, $classId, $editionId, $key);
         if (!$statement->execute()) {
@@ -46,11 +47,28 @@ final class MysqliUsuarioManagementRepository implements UsuarioManagementReposi
         $id = (int) $statement->insert_id;
         $statement->close();
 
-        return ['status' => 'sucesso', 'mensagem' => 'Aluno cadastrado!', 'id_usuario' => $id];
+        return [
+            'status' => 'sucesso',
+            'mensagem' => 'Aluno cadastrado. Entregue a senha temporária por um canal seguro.',
+            'id_usuario' => $id,
+            'senha_temporaria' => $temporaryPassword,
+        ];
     }
 
     public function assignStudent(int $userId, int $classId, int $editionId): void
     {
+        if ($this->one(
+            "SELECT u.id_usuario
+             FROM usuarios u
+             INNER JOIN turmas t ON t.id_turma = ?
+             WHERE u.id_usuario = ? AND u.nivel_usuario = '3'
+               AND u.interclasses_id_interclasse = ?
+               AND t.interclasses_id_interclasse = ? LIMIT 1",
+            'iiii',
+            [$classId, $userId, $editionId, $editionId],
+        ) === null) {
+            throw new RuntimeException('Aluno ou turma não pertence à edição ativa.');
+        }
         $statement = $this->prepare('UPDATE usuarios SET turmas_id_turma = ?, interclasses_id_interclasse = ?, chave_usuario_edicao = CONCAT(matricula_usuario, \'-\', ?) WHERE id_usuario = ? AND nivel_usuario = \'3\'');
         $statement->bind_param('iiii', $classId, $editionId, $editionId, $userId);
         if (!$statement->execute()) {
@@ -107,7 +125,7 @@ final class MysqliUsuarioManagementRepository implements UsuarioManagementReposi
             throw new RuntimeException('ID do colaborador inválido.');
         }
         $level = ($data['is_admin_clicado'] ?? '0') === '1' ? '0' : (($data['is_mesario_clicado'] ?? '0') === '1' ? '2' : '1');
-        $statement = $this->prepare('UPDATE usuarios SET nivel_usuario = ? WHERE id_usuario = ? AND (interclasses_id_interclasse = ? OR interclasses_id_interclasse IS NULL)');
+        $statement = $this->prepare('UPDATE usuarios SET nivel_usuario = ?, auth_version = auth_version + 1 WHERE id_usuario = ? AND (interclasses_id_interclasse = ? OR interclasses_id_interclasse IS NULL)');
         $statement->bind_param('sii', $level, $id, $editionId);
         if (!$statement->execute()) {
             $statement->close();
@@ -141,6 +159,9 @@ final class MysqliUsuarioManagementRepository implements UsuarioManagementReposi
             $fields[] = 'senha_usuario = ?';
             $values[] = password_hash($password, PASSWORD_DEFAULT);
             $types .= 's';
+        }
+        if ($password !== '') {
+            $fields[] = 'auth_version = auth_version + 1';
         }
         $values[] = $id;
         $values[] = $editionId;

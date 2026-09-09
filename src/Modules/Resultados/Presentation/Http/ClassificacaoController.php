@@ -17,7 +17,7 @@ final class ClassificacaoController
 
     public function __invoke(Request $request): Response
     {
-        if (($denied = AccessGuard::authorize([0, 1, 2, 3])) !== null) {
+        if (($denied = AccessGuard::authorize([0, 1])) !== null) {
             return $denied;
         }
         try {

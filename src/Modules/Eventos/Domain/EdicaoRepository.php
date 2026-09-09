@@ -22,4 +22,6 @@ interface EdicaoRepository
      * @param array<string, mixed> $data
      */
     public function update(int $id, array $data): void;
+
+    public function publishRanking(int $id, int $userId): void;
 }

@@ -60,13 +60,11 @@ window.SGIPage.mount("eventos/dashboard", function (pageConfig, pageScope) {
         window.SGIInterclasse.updatePageTitle(dados.nome_interclasse);
 
         if (pageConfig.value1) {
-        if (String(dados.status_interclasse) !== '1') {
             const aviso = document.getElementById('avisoFinalizacaoInterclasse');
             if (aviso) {
-                aviso.classList.remove('d-none');
-                document.getElementById('linkConcluirInterclasse').href = `/edicoes/resumo?id=${idInterclasse}`;
+                const edicaoInativa = String(dados.status_interclasse) !== '1';
+                aviso.classList.toggle('d-none', !edicaoInativa);
             }
-        }
         }
     }
 

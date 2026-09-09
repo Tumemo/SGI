@@ -2,7 +2,10 @@
 /vendor/
 /storage/uploads/
 /storage/imports/
+/storage/sessions/
 .env
+.env.*
+!.env.example
 docs/lista_Alunos
 docs/turmas
 /tests/browser/node_modules/
@@ -11,8 +14,24 @@ docs/turmas
 /tests/browser/*.log
 /test-results/
 /test-results-browser-refactor/
+/output/
+/tmp/
+/temp/
 /.phpunit.cache/
 /.phpstan/
 /.php-cs-fixer.cache
 /node_modules/
 /public/assets/
+
+# Logs, temporários e arquivos de backup locais.
+*.log
+*.tmp
+*.temp
+*.bak
+*.swp
+*.swo
+
+# Arquivos gerados pelo sistema operacional.
+.DS_Store
+Thumbs.db
+Desktop.ini

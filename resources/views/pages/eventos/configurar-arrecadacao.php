@@ -1,5 +1,4 @@
 <?php
-$tituloPagina = 'SGI - Arrecadação';
 $mostrarVoltar = true;
 $urlVoltar = \App\Shared\Http\Url::to('painel');
 include SGI_ROOT . '/resources/views/components/admin-head.php';
@@ -11,7 +10,7 @@ $isAdmin = $nivelUsuario === 0;
 
 <main class="d-md-none ocr-mobile">
     <div class="px-3 mt-3">
-        <a href="<?= \App\Shared\Http\Url::to('painel') ?>" id="btnVoltarArrecadacaoMob" class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none sgi-inline-e1bcebb6" >
+        <a href="<?= \App\Shared\Http\Url::to('painel') ?>" id="btnVoltarArrecadacaoMob" class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none sgi-u-bg-E30613-radius-6px-p-8px-16px" >
             <i class="bi bi-arrow-left-circle fs-5"></i> <span id="nomeInterclasseArrecadacaoMob">Interclasse</span>
         </a>
 
@@ -22,7 +21,7 @@ $isAdmin = $nivelUsuario === 0;
     </div>
 
     <div class="px-3">
-        <div class="ocr-grid sgi-inline-98d53286" id="listaArrecadacaoMobile" >
+        <div class="ocr-grid sgi-u-grid-1fr" id="listaArrecadacaoMobile" >
             <div class="text-center text-muted py-5"><div class="spinner-border spinner-border-sm me-2"></div>Carregando...</div>
         </div>
     </div>
@@ -31,7 +30,7 @@ $isAdmin = $nivelUsuario === 0;
 <main class="d-none d-md-block main-desktop-layout ocr-page">
     <div class="ocr-container">
         <div class="mb-4">
-            <a href="<?= \App\Shared\Http\Url::to('painel') ?>" id="btnVoltarArrecadacao" class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none sgi-inline-e1bcebb6" >
+            <a href="<?= \App\Shared\Http\Url::to('painel') ?>" id="btnVoltarArrecadacao" class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none sgi-u-bg-E30613-radius-6px-p-8px-16px" >
                 <i class="bi bi-arrow-left-circle fs-5"></i> <span id="nomeInterclasseArrecadacao">Interclasse</span>
             </a>
         </div>
@@ -46,7 +45,7 @@ $isAdmin = $nivelUsuario === 0;
         </div>
 
         <div class="ocr-grid" id="listaArrecadacaoDesktop">
-            <div class="text-center text-muted py-5 sgi-inline-c5f53f82" ><div class="spinner-border spinner-border-sm me-2"></div>Carregando...</div>
+            <div class="text-center text-muted py-5 sgi-u-col-1-1" ><div class="spinner-border spinner-border-sm me-2"></div>Carregando...</div>
         </div>
     </div>
 </main>
@@ -65,10 +64,10 @@ $isAdmin = $nivelUsuario === 0;
             <div class="modal-body">
                 <?php if ($isAdmin): ?>
                 <div class="d-flex gap-2 mb-3">
-                    <button type="button" id="btnFiltroAdicionados" class="btn btn-sm rounded-3 px-3 py-1 fw-semibold active sgi-inline-882a3ecc"  onclick="filtrarHistorico('adicionados')">
+                    <button type="button" id="btnFiltroAdicionados" class="btn btn-sm rounded-3 px-3 py-1 fw-semibold active sgi-u-bg-var-color-white-border-1px-solid-var"  onclick="filtrarHistorico('adicionados')">
                         <i class="bi bi-plus-circle me-1"></i>Adicionados
                     </button>
-                    <button type="button" id="btnFiltroExcluidos" class="btn btn-sm rounded-3 px-3 py-1 fw-semibold sgi-inline-dc96eb94"  onclick="filtrarHistorico('excluidos')">
+                    <button type="button" id="btnFiltroExcluidos" class="btn btn-sm rounded-3 px-3 py-1 fw-semibold sgi-u-bg-f0f0f0-color-555-border-1px-solid-e0e0e0"  onclick="filtrarHistorico('excluidos')">
                         <i class="bi bi-trash me-1"></i>Excluídos
                     </button>
                 </div>

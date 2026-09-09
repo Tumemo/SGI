@@ -1,5 +1,4 @@
 <?php
-$tituloPagina = 'SGI - Detalhes da Modalidade';
 $titulo = 'Modalidade';
 $mostrarVoltar = true;
 $urlVoltar = \App\Shared\Http\Url::to('painel');
@@ -12,7 +11,7 @@ $isAdmin = $nivelUsuario === 0;
 
 <main class="main-desktop-layout main-mdd-layout">
     <div class="mdd-container">
-        <a href="#" id="btnVoltarDashboardDesktop" class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none sgi-inline-e1bcebb6" >
+        <a href="#" id="btnVoltarDashboardDesktop" class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none sgi-u-bg-E30613-radius-6px-p-8px-16px" >
             <i class="bi bi-arrow-left-circle fs-5"></i> <span id="nomeInterModalidadeDet">Interclasse</span>
         </a>
         <div class="mdd-head">
@@ -60,6 +59,15 @@ $isAdmin = $nivelUsuario === 0;
                     <div class="mb-3">
                         <label class="form-label fw-medium">Nome da Modalidade:</label>
                         <input type="text" class="form-control" id="editNomeModalidade" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editGeneroModalidade" class="form-label fw-medium">Gênero:</label>
+                        <select class="form-select" id="editGeneroModalidade" required>
+                            <option value="" disabled>Selecione...</option>
+                            <option value="MASC">Masculino (M)</option>
+                            <option value="FEM">Feminino (F)</option>
+                            <option value="MISTO">Misto</option>
+                        </select>
                     </div>
                     <div class="mb-3">
                         <label class="form-label fw-medium">Máx. de Inscritos:</label>

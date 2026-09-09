@@ -26,11 +26,14 @@ final class MysqliChaveamentoManagement implements ChaveamentoManagement
 
     public function modality(int $id): ?array
     {
-        $statement = $this->connection->prepare('SELECT interclasses_id_interclasse, tipos_modalidades_id_tipo_modalidade FROM modalidades WHERE id_modalidade = ? LIMIT 1');
+        $statement = $this->connection->prepare('SELECT m.interclasses_id_interclasse, m.tipos_modalidades_id_tipo_modalidade, tm.nome_tipo_modalidade FROM modalidades m LEFT JOIN tipos_modalidades tm ON tm.id_tipo_modalidade = m.tipos_modalidades_id_tipo_modalidade WHERE m.id_modalidade = ? LIMIT 1');
         $statement->bind_param('i', $id);
         $statement->execute();
         $row = $statement->get_result()->fetch_assoc();
         $statement->close();
+        if ($row !== null) {
+            $row['tipo_competicao'] = \App\Modules\Competicoes\Domain\TipoCompeticaoRules::resolve($row);
+        }
         return $row;
     }
 
@@ -46,9 +49,9 @@ final class MysqliChaveamentoManagement implements ChaveamentoManagement
             : MysqliChaveamentoRepository::montarJsonArvore($this->connection, $id);
     }
 
-    public function saveIndividual(int $id, ?array $ranking): array
+    public function saveIndividual(int $id, ?array $ranking, ?int $gameId = null): array
     {
-        return $this->atomic(fn (): array => $this->individual->registrar($id, $ranking));
+        return $this->atomic(fn (): array => $this->individual->registrar($id, $ranking, $gameId));
     }
 
     public function createBracket(int $id): array

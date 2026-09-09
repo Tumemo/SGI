@@ -63,6 +63,24 @@ final class ConsistencyGuardsTest
             ]);
             $row = $connection->query("SELECT nome_jogo, duracao_jogo FROM jogos WHERE id_jogo = {$gameId}")->fetch_assoc();
             Assertions::assert('Atualização mista de agenda e cronômetro é rejeitada atomicamente', $mixed['code'] === 422 && $row['nome_jogo'] === 'Antes' && (int) $row['duracao_jogo'] === 1200);
+
+            $agenda = $client->request('api/v1/jogos', 'PUT', [
+                'id_jogo' => $gameId,
+                'data_jogo' => date('Y-m-d', strtotime('+1 day')),
+                'inicio_jogo' => '09:00',
+                'termino_jogo' => '10:00',
+                'locais_id_local' => (int) $edition['local_id'],
+                'status_jogo' => 'Agendado',
+            ]);
+            $agendaRow = $connection->query("SELECT data_jogo, inicio_jogo, termino_jogo, status_jogo FROM jogos WHERE id_jogo = {$gameId}")->fetch_assoc();
+            Assertions::assert('Edição da agenda com status Agendado é aceita',
+                $agenda['code'] === 200
+                && ($agenda['json']['success'] ?? false) === true
+                && $agendaRow['data_jogo'] === date('Y-m-d', strtotime('+1 day'))
+                && substr((string) $agendaRow['inicio_jogo'], 0, 5) === '09:00'
+                && substr((string) $agendaRow['termino_jogo'], 0, 5) === '10:00'
+                && $agendaRow['status_jogo'] === 'Agendado',
+            );
         } finally {
             $connection->query('DELETE FROM pontuacoes_podio WHERE id_interclasse = ' . (int) $edition['interclasse_id']);
             AuditFixtures::restoreAndRemove($connection, $fixture, $previousActive);

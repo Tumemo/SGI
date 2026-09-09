@@ -1,0 +1,154 @@
+/* SGI — estilos exclusivos da tela de acesso. Bootstrap fornece o layout,
+   os formulários e os estados de botão; este arquivo cuida apenas da marca,
+   da composição dos banners e do feedback de autenticação. */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap');
+
+:root {
+    --sgi-danger: #e30613;
+    --sgi-font-sans: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+    font-family: var(--sgi-font-sans);
+}
+
+html,
+body {
+    min-height: 100%;
+    overflow-x: hidden;
+}
+
+body {
+    margin: 0;
+    background-color: #f9f9f9;
+    font-weight: 300;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+body > main {
+    background-color: #f9f9f9;
+}
+
+.bi::before,
+[class^="bi-"]::before,
+[class*=" bi-"]::before {
+    font-weight: 400;
+    -webkit-text-stroke: 0.25px currentColor;
+}
+
+.btn-danger {
+    font-family: var(--sgi-font-sans);
+    background-color: var(--sgi-danger);
+    border-color: var(--sgi-danger);
+}
+
+.btn-danger:hover {
+    background-color: #bb0812;
+    border-color: #bb0812;
+}
+
+.btn-danger:active,
+.btn-danger:focus {
+    background-color: #a00610;
+    border-color: #a00610;
+    box-shadow: 0 0 0 3px rgba(227, 6, 19, 0.2);
+}
+
+.form-control:focus {
+    border-color: transparent;
+    box-shadow: 0 0 2px 4px rgba(255, 0, 0, 0.64);
+}
+
+#msg_erro_mobile,
+#msg_erro_desktop {
+    margin-top: 10px;
+    font-size: 0.85rem;
+}
+
+.login-mobile-layout {
+    min-height: 100svh;
+    justify-content: flex-start;
+    gap: 0;
+    padding: 0;
+}
+
+.login-mobile-banner {
+    position: relative;
+    flex: 0 0 auto;
+    width: 100vw;
+    height: calc(100vw * 463 / 412);
+    overflow: hidden;
+}
+
+.login-mobile-banner-border,
+.login-mobile-banner-image {
+    position: absolute;
+    top: 0;
+    left: 0;
+    display: block;
+    width: 100%;
+    max-width: none;
+    height: auto;
+}
+
+.login-mobile-banner-border { z-index: 0; }
+.login-mobile-banner-image { z-index: 1; }
+
+.login-mobile-form,
+.login-mobile-brand { flex: 0 0 auto; }
+
+.login-mobile-form {
+    width: 82%;
+    max-width: 360px;
+    margin: 1.85rem auto 0;
+}
+
+.login-mobile-form .form-control {
+    height: 32px;
+    min-height: 32px;
+    padding: 0.25rem 0.75rem;
+    font-size: 0.7rem;
+}
+
+.login-mobile-form .ipt-matricula { margin-bottom: 0.5rem; }
+.login-mobile-form .ipt-senha { margin-top: 0; margin-bottom: 0; }
+
+.login-mobile-forgot {
+    display: block;
+    margin-top: 1rem;
+    color: #212529;
+    font-size: 0.65rem;
+    line-height: 1;
+}
+
+.login-mobile-button {
+    height: 32px;
+    margin-top: 1.25rem;
+    padding: 0.25rem;
+    font-size: 0.8rem;
+}
+
+.login-mobile-brand {
+    width: 92px;
+    height: 32px;
+    margin-top: 3rem;
+    overflow: hidden;
+}
+
+.login-mobile-brand img {
+    display: block;
+    width: auto;
+    max-width: none;
+    height: 32px;
+}
+
+.login-desktop-banner-image { z-index: 1; }
+.login-desktop-banner-border { z-index: 2; }
+.login-desktop-logo { max-width: 280px; }
+.login-desktop-form { max-width: 420px; border-radius: 15px; }
+.login-field { border-radius: 10px; }

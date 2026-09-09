@@ -27,6 +27,7 @@ require_once __DIR__ . '/Integration/TurmasAndPdfImportTest.php';
 require_once __DIR__ . '/Integration/ModalidadesAndEquipesTest.php';
 require_once __DIR__ . '/Integration/InscricaoModalidadesTest.php';
 require_once __DIR__ . '/Integration/JogosAndConflitosTest.php';
+require_once __DIR__ . '/Integration/AgendamentoBlocoTest.php';
 require_once __DIR__ . '/Integration/PlacarAndArtilhariaTest.php';
 require_once __DIR__ . '/Integration/OcorrenciasAndRankingTest.php';
 require_once __DIR__ . '/Integration/HistoricoTurmaAndClassificacaoTest.php';
@@ -61,6 +62,7 @@ use SGITests\Integration\TurmasAndPdfImportTest;
 use SGITests\Integration\ModalidadesAndEquipesTest;
 use SGITests\Integration\InscricaoModalidadesTest;
 use SGITests\Integration\JogosAndConflitosTest;
+use SGITests\Integration\AgendamentoBlocoTest;
 use SGITests\Integration\PlacarAndArtilhariaTest;
 use SGITests\Integration\OcorrenciasAndRankingTest;
 use SGITests\Integration\HistoricoTurmaAndClassificacaoTest;
@@ -125,6 +127,7 @@ try {
     $idJogo1 = $dadosJogos['id_jogo_1'];
     $idJogo2 = $dadosJogos['id_jogo_2'];
     $equipesIds = $dadosJogos['equipes_ids'];
+    AgendamentoBlocoTest::run($idEdicao, $idModalidade, $dadosJogos);
 
     // 6.1 Persistência e replay do cronômetro
     CronometroPersistenceTest::run($idModalidade, $idJogo1);

@@ -3,6 +3,7 @@
   --aluno-primary-dark: #b02a37;
   --aluno-primary-light: #fce4e6;
   --aluno-primary-subtle: #fff0f0;
+  --aluno-primary-soft: #fdeef0;
 
   --aluno-success: #198754;
   --aluno-warning: #ffc107;
@@ -20,11 +21,13 @@
   --aluno-radius-md: 12px;
   --aluno-radius-lg: 16px;
   --aluno-radius-xl: 24px;
+  --aluno-radius: 16px;
 
   --aluno-shadow-sm: 0 1px 3px rgba(0,0,0,0.06);
   --aluno-shadow-md: 0 4px 12px rgba(0,0,0,0.08);
   --aluno-shadow-lg: 0 8px 24px rgba(0,0,0,0.12);
   --aluno-shadow-hover: 0 12px 28px rgba(0,0,0,0.15);
+  --aluno-shadow: 0 6px 20px rgba(30, 30, 60, 0.08);
 
   --aluno-transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
@@ -96,6 +99,7 @@
 .aluno-search .form-control:focus {
   border-color: var(--aluno-primary);
   box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.15);
+  outline: none;
 }
 
 .aluno-search .search-icon {
@@ -124,6 +128,7 @@
   font-weight: 500;
   cursor: pointer;
   transition: all var(--aluno-transition);
+  user-select: none;
 }
 
 .aluno-filter-pills .filter-pill:hover {

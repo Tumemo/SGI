@@ -1,6 +1,7 @@
 const { test, expect } = require('./fixtures.cjs');
 const fs = require('node:fs');
 const path = require('node:path');
+const { agendarBloco } = require('./agenda-helper.cjs');
 
 fs.mkdirSync(path.resolve(__dirname, '..', '..', 'test-results', 'sessions'), { recursive: true });
 
@@ -62,6 +63,12 @@ async function criarJogoFixture(request) {
         await request.get(api(`api/v1/partidas?id_jogo=${Number(jogo.id_jogo)}`)),
         'consulta das partidas',
     );
+    await agendarBloco(request, {
+        idInterclasse,
+        idModalidade: Number(modalidade.id_modalidade),
+        jogos: [{ id_jogo: Number(jogo.id_jogo) }],
+        label: 'T10-score',
+    });
     return {
         idInterclasse,
         idJogo: Number(jogo.id_jogo),

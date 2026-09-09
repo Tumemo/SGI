@@ -69,6 +69,26 @@ test.describe('Autenticação, RBAC e Segurança de Rotas', () => {
         }
     });
 
+    test('mesário não pode abrir diretamente o gerenciamento de alunos da turma', async ({ page }) => {
+        await page.goto('login', { waitUntil: 'domcontentloaded' });
+        await page.locator('#form_desktop .ipt-matricula').fill('mesario');
+        await page.locator('#form_desktop .ipt-senha').fill('123');
+        await page.locator('#form_desktop button[type="submit"]').click();
+
+        await page.waitForURL(/\/painel/, { timeout: 15_000 });
+        for (const path of [
+            'turmas/alunos?id=1&id_turma=1&id_categoria=1',
+            'colaboradores',
+            'edicoes/modalidades?id=1',
+            'edicoes/pontuacao?id=1',
+            'edicoes/equipes?id=1',
+        ]) {
+            await page.goto(path, { waitUntil: 'domcontentloaded' });
+            await expect(page).toHaveURL(/\/painel(?:\?|$)/);
+            await expect(page.locator('body')).not.toContainText('Alunos da turma');
+        }
+    });
+
     test('aluno autenticado não pode acessar rotas da administração (RBAC)', async ({ page, request }) => {
         // Obter uma turma para vincular o aluno
         const adminLogin = await request.post('api/v1/login', {
@@ -76,14 +96,19 @@ test.describe('Autenticação, RBAC e Segurança de Rotas', () => {
         });
         await jsonOrThrow(adminLogin, 'login de admin');
 
-        const turmasRes = await request.get('api/v1/turmas');
+        const edicoesRes = await request.get('api/v1/edicoes?regulamento=true');
+        const edicoes = await jsonOrThrow(edicoesRes, 'consulta edições');
+        const edicaoAtiva = (Array.isArray(edicoes) ? edicoes : [])
+            .find((item) => String(item.status_interclasse) === '1');
+        if (!edicaoAtiva) throw new Error('Nenhuma edição ativa para o fixture RBAC.');
+        const turmasRes = await request.get(`api/v1/turmas?id_interclasse=${Number(edicaoAtiva.id_interclasse)}`);
         const turmas = await jsonOrThrow(turmasRes, 'consulta turmas');
         const turma = Array.isArray(turmas) && turmas.length > 0 ? turmas[0] : null;
         const idTurma = turma ? Number(turma.id_turma) : 1;
 
         // Cria competidor efêmero
         const matriculaAluno = `88${Date.now().toString().slice(-7)}`;
-        await jsonOrThrow(await request.post('api/v1/usuarios?acao=criar_aluno', {
+        const aluno = await jsonOrThrow(await request.post('api/v1/usuarios?acao=criar_aluno', {
             data: {
                 nome_usuario: 'Aluno RBAC Test',
                 matricula_usuario: matriculaAluno,
@@ -92,11 +117,13 @@ test.describe('Autenticação, RBAC e Segurança de Rotas', () => {
                 turmas_id_turma: idTurma
             }
         }), 'criação do aluno');
+        const senhaAluno = String(aluno.senha_temporaria || '');
+        if (senhaAluno === '') throw new Error('A API não retornou a senha temporária do aluno RBAC.');
 
         // Loga como aluno
         await page.goto('login', { waitUntil: 'domcontentloaded' });
         await page.locator('#form_desktop .ipt-matricula').fill(matriculaAluno);
-        await page.locator('#form_desktop .ipt-senha').fill('123');
+        await page.locator('#form_desktop .ipt-senha').fill(senhaAluno);
         await page.locator('#form_desktop button[type="submit"]').click();
 
         await page.waitForURL(/\/aluno\/inicio/, { timeout: 15_000 });

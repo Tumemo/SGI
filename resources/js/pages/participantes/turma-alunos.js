@@ -41,7 +41,6 @@ window.SGIPage.mount("participantes/turma-alunos", function (pageConfig, pageSco
             const el = document.getElementById(id);
             if (el) el.textContent = nome;
         });
-        document.title = `SGI - Alunos da Turma: ${nome}`;
     }
 
     function setVoltar() {
@@ -323,6 +322,9 @@ window.SGIPage.mount("participantes/turma-alunos", function (pageConfig, pageSco
             const js = await r.json();
             if (js.status === 'sucesso') {
                 bootstrap.Modal.getInstance(document.getElementById('modalAluno')).hide();
+                if (js.senha_temporaria) {
+                    alert(`${js.mensagem || 'Aluno cadastrado.'}\nSenha temporária: ${js.senha_temporaria}`);
+                }
                 carregarAlunos();
             } else {
                 msgEl.innerHTML = `<span class="text-danger">${esc(js.mensagem || 'Erro ao salvar.')}</span>`;
@@ -383,7 +385,8 @@ window.SGIPage.mount("participantes/turma-alunos", function (pageConfig, pageSco
             const js = await r.json();
             bootstrap.Modal.getInstance(document.getElementById('modalResetarSenha')).hide();
             if (js.status === 'sucesso') {
-                alert(js.mensagem || 'Senha resetada.');
+                const temporaryPassword = js.senha_temporaria ? `\nSenha temporária: ${js.senha_temporaria}` : '';
+                alert(`${js.mensagem || 'Senha temporária gerada.'}${temporaryPassword}`);
                 carregarAlunos();
             } else {
                 alert(js.mensagem || 'Erro ao resetar a senha.');

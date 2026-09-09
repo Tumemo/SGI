@@ -170,3 +170,65 @@ test('projeção PUT preserva referências e POST temporário preserva os aliase
     assert.equal(temporaria.jogos_id_jogo, -5);
     assert.equal(temporaria.id_usuario, 20);
 });
+
+test('projeção individual mantém participantes e pódio pendente na leitura offline', async () => {
+    const layer = await carregarDataLayer();
+    const participantsUrl = 'https://sgi.test/api/v1/chaveamentos?tipo_modalidade=individual&acao=participantes&id_modalidade=9';
+    const rankingUrl = 'https://sgi.test/api/v1/chaveamentos?tipo_modalidade=individual&acao=ranking&id_modalidade=9';
+    await layer.capture(participantsUrl, JSON.stringify({
+        success: true,
+        participantes: [
+            { id_usuario: 11, nome_usuario: 'A', nome_turma: '3A' },
+            { id_usuario: 12, nome_usuario: 'B', nome_turma: '3A' },
+            { id_usuario: 13, nome_usuario: 'C', nome_turma: '3A' },
+        ],
+    }));
+    await layer.onQueued({
+        id: 90,
+        method: 'POST',
+        url: 'https://sgi.test/api/v1/chaveamentos',
+        body: JSON.stringify({
+            tipo_modalidade: 'individual',
+            id_modalidade: 9,
+            ranking: { primeiro: 11, segundo: 12, terceiro: 13 },
+        }),
+    });
+
+    const resposta = await layer.localGet(rankingUrl);
+    const dados = await resposta.json();
+    assert.equal(dados.queued, true);
+    assert.deepEqual(dados.ranking.map((row) => [row.posicao, row.id_usuario, row.nome_turma]), [
+        [1, 11, '3A'], [2, 12, '3A'], [3, 13, '3A'],
+    ]);
+
+    await layer.onSynced({
+        id: 90,
+        method: 'POST',
+        url: 'https://sgi.test/api/v1/chaveamentos',
+        body: JSON.stringify({ tipo_modalidade: 'individual', id_modalidade: 9, ranking: { primeiro: 11, segundo: 12, terceiro: 13 } }),
+    }, JSON.stringify({ success: true }));
+    const confirmado = await (await layer.localGet(rankingUrl)).json();
+    assert.deepEqual(confirmado.ranking.map((row) => row.id_usuario), [11, 12, 13]);
+});
+
+test('confirmação offline de A não confirma a retificação B da mesma prova', async () => {
+    const layer = await carregarDataLayer();
+    const rankingUrl = 'https://sgi.test/api/v1/chaveamentos?tipo_modalidade=individual&acao=ranking&id_modalidade=9';
+    const base = {
+        tipo_modalidade: 'individual',
+        id_modalidade: 9,
+        id_jogo: 44,
+    };
+    const a = { id: 101, method: 'POST', url: 'https://sgi.test/api/v1/chaveamentos', body: JSON.stringify({ ...base, ranking: { primeiro: 11, segundo: 12, terceiro: 13 } }) };
+    const b = { id: 102, method: 'POST', url: 'https://sgi.test/api/v1/chaveamentos', body: JSON.stringify({ ...base, ranking: { primeiro: 12, segundo: 13, terceiro: 11 } }) };
+    await layer.onQueued(a);
+    await layer.onQueued(b);
+    let dados = await (await layer.localGet(rankingUrl)).json();
+    assert.equal(dados.queued, true);
+    assert.deepEqual(dados.ranking.map((row) => row.id_usuario), [12, 13, 11]);
+
+    await layer.onSynced(a, JSON.stringify({ success: true }));
+    dados = await (await layer.localGet(rankingUrl)).json();
+    assert.equal(dados.queued, true);
+    assert.deepEqual(dados.ranking.map((row) => row.id_usuario), [12, 13, 11]);
+});

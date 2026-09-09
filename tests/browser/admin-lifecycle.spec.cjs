@@ -66,6 +66,55 @@ test.describe.serial('Gestão Administrativa Completa (Admin Lifecycle)', () => 
         await expect(page.locator('#listaDesktop .row', { hasText: nomeEdicaoTeste })).toBeVisible({ timeout: 15_000 });
     });
 
+    test('dashboard informa somente quando a edição está inativa', async ({ page, request }) => {
+        await entrarComoAdmin(page);
+
+        const login = await request.post('api/v1/login', {
+            data: { matricula: 'admin', senha: '123' }
+        });
+        expect(login.ok()).toBeTruthy();
+
+        const listagem = await request.get('api/v1/edicoes?regulamento=true');
+        expect(listagem.ok()).toBeTruthy();
+        const edicoes = await listagem.json();
+        const edicaoAtiva = Array.isArray(edicoes)
+            ? edicoes.find((edicao) => String(edicao.status_interclasse) === '1')
+            : null;
+        const edicaoAlvo = edicaoAtiva || (Array.isArray(edicoes)
+            ? edicoes.find((edicao) => String(edicao.status_interclasse) !== '1')
+            : null);
+        expect(edicaoAlvo).toBeTruthy();
+
+        const idEdicaoAlvo = Number(edicaoAlvo.id_interclasse);
+        expect(idEdicaoAlvo).toBeGreaterThan(0);
+        if (edicaoAtiva) {
+            const desativada = await request.post(`api/v1/edicoes?id=${idEdicaoAlvo}`, {
+                data: { status_interclasse: '0' }
+            });
+            expect(desativada.ok()).toBeTruthy();
+            expect((await desativada.json()).success).toBe(true);
+        }
+
+        try {
+            await page.goto(`painel?id=${idEdicaoAlvo}`, { waitUntil: 'domcontentloaded' });
+            const aviso = page.locator('#avisoFinalizacaoInterclasse');
+
+            await expect(aviso).toBeVisible({ timeout: 15_000 });
+            await expect(aviso).toHaveText('O interclasse está inativo no momento.');
+            await expect(aviso).not.toContainText(/finalizad|etapas|concluir|ativar/i);
+            await expect(aviso.locator('a')).toHaveCount(0);
+            await expect(page.locator('#linkConcluirInterclasse')).toHaveCount(0);
+        } finally {
+            if (edicaoAtiva) {
+                const reativada = await request.post(`api/v1/edicoes?id=${idEdicaoAlvo}`, {
+                    data: { status_interclasse: '1' }
+                });
+                expect(reativada.ok()).toBeTruthy();
+                expect((await reativada.json()).success).toBe(true);
+            }
+        }
+    });
+
     test('configuração de pontuações de pódio e arrecadação com persistência', async ({ page }) => {
         expect(idEdicaoCriada).toBeTruthy();
         await entrarComoAdmin(page);

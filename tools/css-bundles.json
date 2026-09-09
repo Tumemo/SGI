@@ -1,0 +1,15 @@
+{
+  "admin": [
+    "resources/css/source/admin.css",
+    "resources/css/source/utilities.css"
+  ],
+  "aluno": [
+    "resources/css/source/aluno-shared.css",
+    "resources/css/source/aluno-pages.css",
+    "resources/css/source/aluno-home.css",
+    "resources/css/source/utilities.css"
+  ],
+  "login": [
+    "resources/css/source/login.css"
+  ]
+}

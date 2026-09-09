@@ -1,5 +1,4 @@
 <?php
-$tituloPagina = 'SGI - Elenco';
 include SGI_ROOT . '/resources/views/components/admin-head.php';
 include SGI_ROOT . '/resources/views/components/admin-header.php';
 $nivelUsuario = (int)($_SESSION['nivel'] ?? -1);
@@ -7,8 +6,8 @@ $isAdmin = $nivelUsuario === 0;
 $paginaAtiva = 'dashboard';
 ?>
 
-<main class="d-md-none p-3 sgi-inline-d6522d52" >
-    <a href="<?= \App\Shared\Http\Url::to('edicoes/equipes') ?>" class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none sgi-inline-e1bcebb6" id="btnVoltarElencoMob" >
+<main class="d-md-none p-3 sgi-u-pb-5rem" >
+    <a href="<?= \App\Shared\Http\Url::to('edicoes/equipes') ?>" class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none sgi-u-bg-E30613-radius-6px-p-8px-16px" id="btnVoltarElencoMob" >
         <i class="bi bi-arrow-left-circle fs-5"></i> <span id="nomeInterclasseElencoMob">Interclasse</span>
     </a>
     <div id="alertaLimiteMob" class="alert alert-danger d-none d-flex flex-wrap align-items-center gap-2 small"></div>
@@ -23,7 +22,7 @@ $paginaAtiva = 'dashboard';
 <main class="d-none d-md-block main-desktop-layout">
     <div class="aluno-page container-fluid py-4 px-4">
         <div class="aluno-page-header">
-            <a href="<?= \App\Shared\Http\Url::to('edicoes/equipes') ?>" id="btnVoltarElencoDesk" class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none sgi-inline-e1bcebb6" >
+            <a href="<?= \App\Shared\Http\Url::to('edicoes/equipes') ?>" id="btnVoltarElencoDesk" class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none sgi-u-bg-E30613-radius-6px-p-8px-16px" >
                 <i class="bi bi-arrow-left-circle fs-5"></i> <span id="nomeInterclasseElencoDesk">Interclasse</span>
             </a>
             <h1>Elenco da equipe</h1>

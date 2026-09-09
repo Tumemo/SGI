@@ -1,5 +1,4 @@
 <?php
-$tituloPagina = 'SGI - Perfil';
 $titulo = 'Perfil';
 $mostrarVoltar = true;
 $mostrarSino = false;
@@ -22,8 +21,8 @@ include SGI_ROOT . '/resources/views/components/aluno-nav.php';
 ?>
 
 <!-- ===================== MOBILE ===================== -->
-<main class="perfil-page d-md-none p-3 sgi-inline-6663e3de" >
-    <a href="<?= htmlspecialchars($urlVoltar) ?>" id="perfilBackMob" class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold mb-3 px-3 py-2 border-0 text-decoration-none sgi-inline-c865b3d3" >
+<main class="perfil-page d-md-none p-3 sgi-u-pt-1-25rem-pb-5rem" >
+    <a href="<?= htmlspecialchars($urlVoltar) ?>" id="perfilBackMob" class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold mb-3 px-3 py-2 border-0 text-decoration-none sgi-u-bg-E30613-radius-6px" >
         <i class="bi bi-arrow-left-circle fs-5"></i> <span>Início</span>
     </a>
 
@@ -84,11 +83,11 @@ include SGI_ROOT . '/resources/views/components/aluno-nav.php';
     <div class="perfil-wrapper">
         <!-- Topbar -->
         <div class="perfil-topbar">
-            <a href="<?= htmlspecialchars($urlVoltar) ?>" id="perfilBackDesk" class="perfil-btn-voltar btn btn-danger d-inline-flex align-items-center gap-2 fw-bold px-3 py-2 border-0 text-decoration-none sgi-inline-c865b3d3" >
+            <a href="<?= htmlspecialchars($urlVoltar) ?>" id="perfilBackDesk" class="perfil-btn-voltar btn btn-danger d-inline-flex align-items-center gap-2 fw-bold px-3 py-2 border-0 text-decoration-none sgi-u-bg-E30613-radius-6px" >
                 <i class="bi bi-arrow-left-circle fs-5"></i> <span>Início</span>
             </a>
             <div class="perfil-topbar-title">
-                <h1><i class="bi bi-person-circle me-2 sgi-inline-86de2c51" ></i>Meu Perfil</h1>
+                <h1><i class="bi bi-person-circle me-2 sgi-u-color-e30613" ></i>Meu Perfil</h1>
                 <p class="perfil-topbar-subtitle">Gerencie suas informações, segurança e acompanhe sua participação</p>
             </div>
         </div>
@@ -118,7 +117,7 @@ include SGI_ROOT . '/resources/views/components/aluno-nav.php';
                             <i class="<?= $nivelInfo['icon'] ?>"></i> <?= $nivelInfo['label'] ?>
                         </span>
 
-                        <div class="d-flex align-items-center justify-content-center gap-1 mt-2 sgi-inline-a730c39c" >
+                        <div class="d-flex align-items-center justify-content-center gap-1 mt-2 sgi-u-text-0-8rem-color-888" >
                             <span class="perfil-status-dot perfil-status-online"></span> Online
                         </div>
 
@@ -180,7 +179,7 @@ include SGI_ROOT . '/resources/views/components/aluno-nav.php';
                             </div>
                             <div class="perfil-info-item mb-0">
                                 <span class="perfil-info-label"><i class="bi bi-shield-plus"></i> Autenticação</span>
-                                <span class="perfil-info-value sgi-inline-8484a423" >Senha criptografada</span>
+                                <span class="perfil-info-value sgi-u-color-888-text-0-85rem" >Senha criptografada</span>
                             </div>
                         </div>
                     </div>
@@ -197,7 +196,7 @@ include SGI_ROOT . '/resources/views/components/aluno-nav.php';
     </div>
 </main>
 
-<div class="modal fade sgi-inline-cf2d16e2" id="modalEditarPerfil" tabindex="-1" aria-hidden="true" >
+<div class="modal fade sgi-u-w-100" id="modalEditarPerfil" tabindex="-1" aria-hidden="true" >
     <div class="modal-dialog modal-dialog-centered modal-sm">
         <div class="modal-content rounded-4 border-0 shadow">
             <div class="modal-header border-0 pt-4 px-4 pb-0">
@@ -262,7 +261,7 @@ include SGI_ROOT . '/resources/views/components/aluno-nav.php';
     </div>
 </div>
 
-<input type="file" id="fotoUploadInput" accept="image/jpeg,image/png,image/gif,image/webp" class="sgi-inline-6f9051e3">
+<input type="file" id="fotoUploadInput" accept="image/jpeg,image/png,image/gif,image/webp" class="sgi-u-display-none">
 
 <script src="<?= \App\Shared\Http\Assets::url('vendor/bootstrap/js/bootstrap.bundle.min.js') ?>" crossorigin="anonymous"></script>
 <script type="application/json" data-sgi-config="aluno/perfil"><?= json_encode(['value2' => ($usuarioPerfil['nome_usuario'] ?? ''), 'value3' => ($usuarioPerfil['matricula_usuario'] ?? ''), 'value4' => ($sessionId ?? 0), 'value5' => ((int)($nivelUsuario ?? 3))], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_THROW_ON_ERROR) ?></script>

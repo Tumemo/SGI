@@ -1,4 +1,5 @@
 const { test, expect } = require('./fixtures.cjs');
+const { agendarBloco } = require('./agenda-helper.cjs');
 
 const BASE_URL = process.env.PLAYWRIGHT_BASE_URL || 'http://localhost/SGI';
 
@@ -90,6 +91,13 @@ async function criarChaveFixture(request) {
         await request.get(`api/v1/jogos?id_modalidade=${Number(modalidade.id_modalidade)}`),
         'consulta dos jogos do fixture'
     );
+    await agendarBloco(request, {
+        idInterclasse,
+        idModalidade: Number(modalidade.id_modalidade),
+        jogos: listaJogos.filter((item) => String(item.nome_jogo).startsWith('MM:8:')),
+        chaveTags: ['MM:4:0:N', 'MM:4:1:N', 'MM:2:0:N', 'POS:3:0:N'],
+        label: 'E2E-bracket-offline',
+    });
 
     return {
         idInterclasse,

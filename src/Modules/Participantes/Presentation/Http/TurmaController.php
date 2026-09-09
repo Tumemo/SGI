@@ -35,6 +35,12 @@ final class TurmaController
         try {
             switch ($method) {
                 case 'GET':
+                    if ((int) ($_SESSION['nivel'] ?? -1) === 2) {
+                        if ((int) ($_SESSION['id_interclasse'] ?? 0) <= 0) {
+                            return \App\Shared\Http\Response::json(['success' => false, 'message' => 'Nenhuma edição ativa.'], 403);
+                        }
+                        $query['id_interclasse'] = (int) ($_SESSION['id_interclasse'] ?? 0);
+                    }
                     // Sem edição explícita, não há conjunto de turmas a consultar.
                     if (!isset($query['id_interclasse']) || $query['id_interclasse'] === '') {
                         return \App\Shared\Http\Response::json([], $status, $headers);

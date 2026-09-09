@@ -81,15 +81,15 @@ window.SGIPage.mount("participantes/turmas", function (pageConfig, pageScope) {
 
     /* ── RENDER CARD ── */
     function renderizarCard(turma, interclasse) {
-        const avatarLetra = turma.nome_turma.charAt(0).toUpperCase();
-        const turno = turma.turno_turma || '';
+        const avatarLetra = esc((turma.nome_turma || '').charAt(0).toUpperCase());
+        const turno = esc(turma.turno_turma || '');
 
         const adminBtns = NIVEL_USUARIO === 0 ? `
             <div class="turma-card-admin">
                 <button class="btn-icon" title="Editar" onclick='editarTurma(${turma.id_turma})'>
                     <i class="bi bi-pencil"></i>
                 </button>
-                <button class="btn-icon btn-icon--delete" title="Excluir" onclick='abrirModalExcluir(${turma.id_turma}, "${esc(turma.nome_turma)}")'>
+                <button class="btn-icon btn-icon--delete" title="Excluir" onclick="abrirModalExcluir(${Number(turma.id_turma) || 0})">
                     <i class="bi bi-trash"></i>
                 </button>
             </div>` : '';
@@ -98,7 +98,7 @@ window.SGIPage.mount("participantes/turmas", function (pageConfig, pageScope) {
             <div class="col">
                 <div class="turma-card">
                     <div class="turma-card-top">
-                        <div class="turma-avatar sgi-inline-53f1afc1" >${avatarLetra}</div>
+                        <div class="turma-avatar sgi-u-background-e30613" >${avatarLetra}</div>
                         <div class="turma-card-info">
                             <div class="turma-card-name">${esc(turma.nome_turma)}</div>
                             ${turma.nome_fantasia_turma ? `<div class="turma-card-fantasy">${esc(turma.nome_fantasia_turma)}</div>` : ''}
@@ -224,6 +224,17 @@ window.SGIPage.mount("participantes/turmas", function (pageConfig, pageScope) {
     }
 
     /* ── CATEGORIAS MODAL ── */
+    function preencherSelectCategorias(sel, categorias, selectedId) {
+        sel.replaceChildren(new Option('Selecione...', ''));
+        (categorias || []).forEach(cat => {
+            const option = new Option(String(cat.nome_categoria || ''), String(cat.id_categoria || ''));
+            if (selectedId != null && String(cat.id_categoria) === String(selectedId)) {
+                option.selected = true;
+            }
+            sel.appendChild(option);
+        });
+    }
+
     async function carregarCategoriasModal() {
         try {
             const interclasse = await resolverInterclasse();
@@ -232,10 +243,7 @@ window.SGIPage.mount("participantes/turmas", function (pageConfig, pageScope) {
             const res = await fetch(`/api/v1/categorias?id_interclasse=${interclasse.id_interclasse}`);
             const categorias = await res.json();
             const sel = document.getElementById('categoriaTurma');
-            sel.innerHTML = '<option value="">Selecione...</option>';
-            (categorias || []).forEach(cat => {
-                sel.innerHTML += `<option value="${cat.id_categoria}">${cat.nome_categoria}</option>`;
-            });
+            preencherSelectCategorias(sel, categorias);
         } catch (error) {
             console.error('Erro ao carregar categorias:', error);
         }
@@ -316,10 +324,7 @@ window.SGIPage.mount("participantes/turmas", function (pageConfig, pageScope) {
             const res = await fetch(`/api/v1/categorias?id_interclasse=${interclasse.id_interclasse}`);
             const cats = await res.json();
             const sel = document.getElementById('editCategoriaTurma');
-            sel.innerHTML = '<option value="">Selecione...</option>';
-            (cats || []).forEach(cat => {
-                sel.innerHTML += `<option value="${cat.id_categoria}" ${cat.id_categoria == selectedId ? 'selected' : ''}>${cat.nome_categoria}</option>`;
-            });
+            preencherSelectCategorias(sel, cats, selectedId);
         } catch (e) {
             console.error('Erro ao carregar categorias:', e);
         }
@@ -400,7 +405,9 @@ window.SGIPage.mount("participantes/turmas", function (pageConfig, pageScope) {
     /* ── EXCLUSÃO COM MODAL ── */
     let excluirIdPendente = null;
 
-    window.abrirModalExcluir = function(idTurma, nomeTurma) {
+    window.abrirModalExcluir = function(idTurma) {
+        const turma = turmasData.find(item => Number(item.id_turma) === Number(idTurma));
+        const nomeTurma = turma ? turma.nome_turma : '';
         excluirIdPendente = idTurma;
         document.getElementById('excluirTurmaNome').textContent = nomeTurma;
         const modal = new bootstrap.Modal(document.getElementById('modalExcluirTurma'));

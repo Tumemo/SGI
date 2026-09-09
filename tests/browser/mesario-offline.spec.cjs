@@ -1,4 +1,5 @@
 const { test, expect, request: playwrightRequest } = require('./fixtures.cjs');
+const { agendarBloco } = require('./agenda-helper.cjs');
 
 async function jsonOrThrow(response, label) {
     if (!response.ok()) {
@@ -67,13 +68,15 @@ async function criarPartidaFixture(request) {
     if (aluno.status !== 'sucesso') {
         throw new Error(`criação do atleta fixture: ${aluno.mensagem || JSON.stringify(aluno)}`);
     }
+    const senhaAtleta = String(aluno.senha_temporaria || '');
+    if (senhaAtleta === '') throw new Error('A API não retornou a senha temporária do atleta fixture.');
 
     const alunoApi = await playwrightRequest.newContext({
         baseURL: process.env.SGI_BASE_URL || 'http://localhost/SGI/'
     });
     try {
         const alunoLogin = await alunoApi.post('api/v1/login', {
-            data: { matricula: matriculaAtleta, senha: '123' }
+            data: { matricula: matriculaAtleta, senha: senhaAtleta }
         });
         await jsonOrThrow(alunoLogin, 'login do atleta fixture');
         const inscricao = await alunoApi.post('api/v1/inscricoes', {
@@ -112,6 +115,12 @@ async function criarPartidaFixture(request) {
     const jogo = jogos.find((item) => String(item.nome_jogo) === nomeJogo);
     const idJogo = Number(jogo && jogo.id_jogo);
     if (!idJogo) throw new Error(`A API não retornou o ID do jogo: ${JSON.stringify(jogo)}`);
+    await agendarBloco(request, {
+        idInterclasse,
+        idModalidade: Number(modalidade.id_modalidade),
+        jogos: [{ id_jogo: idJogo }],
+        label: 'E2E-visual-offline',
+    });
 
     return {
         idJogo,
@@ -257,10 +266,11 @@ test.describe('Mesário — fluxo visual completo offline', () => {
         await expect(page.locator('#artilheiro-cards')).toContainText('1 gol', { timeout: 10_000 });
         await expect(page.locator('#lista-ocorrencias')).toContainText('Registro visual offline', { timeout: 10_000 });
 
-        const servidor = await page.evaluate(async (id) => {
-            const response = await fetch(`/api/v1/jogos?id_jogo=${id}`);
-            return response.json();
-        }, fixture.idJogo);
+        // O perfil mesário consulta apenas a fila operacional; após concluído,
+        // o jogo sai deliberadamente dessa fila. A auditoria final usa o
+        // contexto administrativo do fixture para consultar o registro completo.
+        const servidorResponse = await request.get(`api/v1/jogos?id_jogo=${fixture.idJogo}`);
+        const servidor = await jsonOrThrow(servidorResponse, 'consulta administrativa do jogo sincronizado');
         expect(servidor[0].status_jogo).toMatch(/Concluido|Finalizado/);
         expect(Number(servidor[0].id_jogo)).toBe(fixture.idJogo);
         const artilhariaServidor = await page.evaluate(async (id) => {

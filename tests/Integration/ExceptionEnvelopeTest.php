@@ -45,7 +45,7 @@ final class ExceptionEnvelopeTest
                 'logado' => true,
                 'id_usuario' => 1,
                 'id' => 1,
-                'nivel' => 1,
+                'nivel' => 0,
                 'id_interclasse' => 1,
             ];
 
@@ -123,7 +123,10 @@ final class ExceptionEnvelopeTest
                 && !str_contains($result->body(), 'information_schema'),
             );
 
-            $history = (new HistoricoTurmaController(new MysqliHistoricoTurmaRepository($connection)))(
+            $history = (new HistoricoTurmaController(
+                new MysqliHistoricoTurmaRepository($connection),
+                new \App\Modules\Eventos\Infrastructure\MysqliEdicaoConsultaRepository($connection),
+            ))(
                 new Request('GET', '/api/v1/historico-turma', ['id_turma' => 1, 'id_interclasse' => 1]),
             );
             $historyBody = self::decode($history->body());

@@ -29,8 +29,20 @@ final class SenhaController
         $idUsuario = (int) ($_SESSION['id'] ?? $_SESSION['id_usuario'] ?? 0);
         $payload = $request->allInput();
         try {
-            $this->service->trocar($idUsuario, (string) ($payload['nova_senha'] ?? ''), (string) ($payload['confirmar_senha'] ?? ''));
+            $senhaAtual = (string) ($payload['senha_atual'] ?? '');
+            // The only password-less migration path is the first-login flow for
+            // a student whose stored password is still the generated default.
+            if ($senhaAtual === '' && !empty($_SESSION['exige_troca_senha'])) {
+                $senhaAtual = '123';
+            }
+            $this->service->trocar(
+                $idUsuario,
+                (string) ($payload['nova_senha'] ?? ''),
+                (string) ($payload['confirmar_senha'] ?? ''),
+                $senhaAtual,
+            );
             $_SESSION['exige_troca_senha'] = false;
+            $_SESSION['auth_version'] = (int) ($_SESSION['auth_version'] ?? 1) + 1;
             return \App\Shared\Http\Response::json(['success' => true, 'message' => 'Senha alterada com sucesso!'], $status, $headers);
         } catch (\InvalidArgumentException $exception) {
             $status = $idUsuario > 0 ? 200 : 401;

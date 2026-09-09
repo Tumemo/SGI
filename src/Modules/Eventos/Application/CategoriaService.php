@@ -33,6 +33,9 @@ final class CategoriaService
         if ($nome === '' || $interclasseId <= 0) {
             throw new InvalidArgumentException('nome_categoria e interclasses_id_interclasse são obrigatórios.');
         }
+        if ($this->categorias->duplicateExists($interclasseId, $nome)) {
+            throw new CategoriaDuplicadaException();
+        }
 
         return $this->categorias->create([
             'nome_categoria' => $nome,
@@ -51,11 +54,11 @@ final class CategoriaService
             throw new InvalidArgumentException('O ID da categoria é obrigatório.');
         }
 
-        $statusAtual = $this->categorias->findStatus($id);
-        if ($statusAtual === null) {
+        $categoria = $this->categorias->find($id);
+        if ($categoria === null) {
             throw new CategoriaNaoEncontradaException();
         }
-        if ($statusAtual === '0') {
+        if ($categoria['status_categoria'] === '0') {
             throw new CategoriaInativaException();
         }
 
@@ -64,6 +67,9 @@ final class CategoriaService
             $nome = trim((string) $data['nome_categoria']);
             if ($nome === '') {
                 throw new InvalidArgumentException('O nome da categoria não pode ser vazio.');
+            }
+            if ($this->categorias->duplicateExists((int) $categoria['interclasses_id_interclasse'], $nome, $id)) {
+                throw new CategoriaDuplicadaException();
             }
             $updates['nome_categoria'] = $nome;
         }
@@ -83,7 +89,7 @@ final class CategoriaService
         if ($id <= 0) {
             throw new InvalidArgumentException('O ID da categoria é obrigatório.');
         }
-        if ($this->categorias->findStatus($id) === null) {
+        if ($this->categorias->find($id) === null) {
             throw new CategoriaNaoEncontradaException();
         }
 

@@ -79,7 +79,7 @@ final class InMemoryUsuarioConsultaRepository implements UsuarioConsultaReposito
     /** @var list<mixed>|null */
     public ?array $validationArguments = null;
 
-    public function competitors(int $classId, int $editionId, string $gender = ''): array
+    public function competitors(int $classId, int $editionId, string $gender = '', bool $includeSensitive = true): array
     {
         return [];
     }

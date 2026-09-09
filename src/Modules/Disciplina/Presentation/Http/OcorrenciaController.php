@@ -30,7 +30,33 @@ final class OcorrenciaController
         }
         try {
             if ($request->method() === 'GET') {
-                return Response::json($this->queries->list($request->allQuery()));
+                $filters = $request->allQuery();
+                $level = (int) ($_SESSION['nivel'] ?? -1);
+                if (($filters['acao'] ?? '') === 'listar_atletas') {
+                    if ($level === 3) {
+                        return Response::json(['success' => false, 'message' => 'Consulta não disponível para competidores.'], 403);
+                    }
+                    if ($level === 2) {
+                        $activeEdition = $this->access->context()->edicaoAtivaId;
+                        $classEdition = $this->service->editionOfTurma((int) ($filters['id_turma'] ?? 0));
+                        $gameId = (int) ($filters['id_jogo'] ?? 0);
+                        $gameEdition = $gameId > 0 ? $this->service->editionOfGame($gameId) : null;
+                        if ($activeEdition === null
+                            || $classEdition !== $activeEdition
+                            || ($gameId > 0 && $gameEdition !== $activeEdition)) {
+                            return Response::json(['success' => false, 'message' => 'Recurso fora da edição ativa.'], 403);
+                        }
+                    }
+                }
+                if ($level === 2) {
+                    if (($denied = $this->access->authorize()) !== null) {
+                        return $denied;
+                    }
+                    $filters['_scope_interclasse'] = $this->access->context()->edicaoAtivaId;
+                } elseif ($level === 3) {
+                    $filters['_scope_usuario'] = (int) ($_SESSION['id_usuario'] ?? $_SESSION['id'] ?? 0);
+                }
+                return Response::json($this->queries->list($filters));
             }
             if (($denied = $this->access->authorize()) !== null) {
                 return $denied;

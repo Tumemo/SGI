@@ -30,6 +30,26 @@ final class Kernel
             (new Response('Requisição inválida.', 400))->send();
             return;
         }
+
+        $protectedRoute = str_starts_with($path, '/api/v1/') || isset($this->webRoutes[$path]);
+        $deprecatedRegistrationValidation = $this->isDeprecatedRegistrationValidation($request, $path);
+        if ($protectedRoute && !$this->isPublicPath($path) && !$deprecatedRegistrationValidation && !str_ends_with($path, '/api/v1/logout')) {
+            try {
+                if (!SessionRevalidator::valid()) {
+                    SessionManager::clearAuthentication();
+                    if (str_starts_with($path, '/api/v1/')) {
+                        Response::json(['success' => false, 'message' => 'Sessão expirada. Faça login novamente.'], 401)->send();
+                    } else {
+                        Response::empty(302, ['Location' => Url::to('login'), 'Cache-Control' => 'no-store'])->send();
+                    }
+                    return;
+                }
+            } catch (\Throwable $exception) {
+                error_log('Falha ao revalidar sessão: ' . $exception->getMessage());
+                Response::json(['success' => false, 'message' => 'Serviço temporariamente indisponível.'], 503)->send();
+                return;
+            }
+        }
         CsrfGuard::protectCurrentApiMutation();
         if ($path === '/' || $path === '/index.php') {
             Response::empty(302, ['Location' => Url::to('login')])->send();
@@ -60,5 +80,17 @@ final class Kernel
             return substr($script, 0, $marker);
         }
         return str_ends_with($script, '/index.php') ? rtrim(substr($script, 0, -10), '/') : '';
+    }
+
+    private function isPublicPath(string $path): bool
+    {
+        return in_array($path, ['/login', '/aluno/login', '/api/v1/login', '/api/v1/health'], true);
+    }
+
+    private function isDeprecatedRegistrationValidation(Request $request, string $path): bool
+    {
+        return $path === '/api/v1/usuarios'
+            && strtoupper($request->method()) === 'POST'
+            && (string) $request->query('acao', $request->input('acao', '')) === 'validar_inscricao';
     }
 }

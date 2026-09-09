@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Modules\Resultados\Presentation\Http;
 
 use App\Modules\Resultados\Application\RankingService;
+use App\Modules\Eventos\Infrastructure\MysqliEdicaoConsultaRepository;
 use App\Shared\Http\AccessGuard;
 use App\Shared\Http\Request;
 use App\Shared\Http\Response;
@@ -12,7 +13,7 @@ use Throwable;
 
 final class RankingController
 {
-    public function __construct(private readonly RankingService $service)
+    public function __construct(private readonly RankingService $service, private readonly MysqliEdicaoConsultaRepository $edicoes)
     {
     }
 
@@ -26,7 +27,7 @@ final class RankingController
             ]);
         }
 
-        $authorization = AccessGuard::authorize([0, 1, 2, 3]);
+        $authorization = AccessGuard::authorize([0, 1, 3]);
         if ($authorization !== null) {
             return $authorization;
         }
@@ -48,24 +49,22 @@ final class RankingController
 
     private function list(Request $request): Response
     {
-        $isAdmin = in_array((int) ($_SESSION['nivel'] ?? -1), [0, 1], true);
+        $isAluno = (int) ($_SESSION['nivel'] ?? -1) === 3;
+        $editionId = (int) $request->query('id_interclasse', 0);
+        if ($isAluno && $editionId <= 0) {
+            return Response::json(['success' => false, 'message' => 'Selecione uma edição com ranking publicado.'], 400);
+        }
+        if ($isAluno && (!$this->edicoes->isRankingPublished($editionId) || $this->edicoes->isActive($editionId))) {
+            return Response::json(['success' => false, 'bloqueado' => true, 'message' => 'O ranking será liberado após a premiação.'], 403);
+        }
         $data = $this->service->listar([
             'id_turma' => (int) $request->query('id_turma', 0),
             'id_interclasse' => (int) $request->query('id_interclasse', 0),
             'id_categoria' => (int) $request->query('id_categoria', 0),
             'turno' => (string) $request->query('turno', ''),
             'busca' => trim((string) $request->query('busca', '')),
+            'somente_publicados' => $isAluno,
         ]);
-
-        if ($data !== [] && !$isAdmin) {
-            $status = $data[0]['status_interclasse'] ?? 'ativo';
-            if (in_array($status, ['ativo', '1', 1, true], true)) {
-                return Response::json([
-                    'bloqueado' => true,
-                    'message' => 'O ranking deste interclasse está restrito apenas para os administradores.',
-                ]);
-            }
-        }
 
         return Response::json($data);
     }

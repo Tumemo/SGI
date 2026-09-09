@@ -19,14 +19,26 @@ final class MysqliEquipeGateway
     {
         if (!empty($filters['id_equipe']) && empty($filters['id_turma'])) {
             $id_equipe = intval($filters['id_equipe']);
-            $sql = "SELECT u.id_usuario, u.nome_usuario, u.matricula_usuario\n                    FROM usuarios u\n                    INNER JOIN equipes_has_usuarios eu ON eu.usuarios_id_usuario = u.id_usuario\n                    WHERE eu.equipes_id_equipe = ? AND u.status_usuario = '1'";
+            $sql = "SELECT u.id_usuario, u.nome_usuario, u.matricula_usuario
+                    FROM usuarios u
+                    INNER JOIN equipes_has_usuarios eu ON eu.usuarios_id_usuario = u.id_usuario
+                    INNER JOIN equipes e ON e.id_equipe = eu.equipes_id_equipe
+                    INNER JOIN turmas t ON t.id_turma = e.turmas_id_turma
+                    WHERE eu.equipes_id_equipe = ? AND u.status_usuario = '1'";
+            $types = 'i';
+            $params = [$id_equipe];
+            if ((int) ($filters['id_interclasse'] ?? 0) > 0) {
+                $sql .= ' AND t.interclasses_id_interclasse = ?';
+                $types .= 'i';
+                $params[] = (int) $filters['id_interclasse'];
+            }
             $stmt = $this->connection->prepare($sql);
-            $stmt->bind_param('i', $id_equipe);
+            $stmt->bind_param($types, ...$params);
             $stmt->execute();
             $res = $stmt->get_result();
             return $res->fetch_all(MYSQLI_ASSOC);
         }
-        if (!empty($filters['id_modalidade']) && !empty($filters['id_turma'])) {
+        if (empty($filters['_read_only']) && !empty($filters['id_modalidade']) && !empty($filters['id_turma'])) {
             $id_modalidade_get = intval($filters['id_modalidade']);
             $id_turma_get = intval($filters['id_turma']);
             if ($id_modalidade_get > 0 && $id_turma_get > 0) {

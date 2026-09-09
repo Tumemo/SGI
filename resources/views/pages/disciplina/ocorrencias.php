@@ -1,5 +1,4 @@
 <?php
-$tituloPagina = 'SGI - Ocorrências';
 $mostrarVoltar = true;
 $urlVoltar = \App\Shared\Http\Url::to('painel');
 include SGI_ROOT . '/resources/views/components/admin-head.php';
@@ -11,7 +10,7 @@ $isAdmin = $nivelUsuario === 0;
 
 <main class="d-md-none ocr-mobile">
     <div class="px-3 mt-3">
-        <a href="<?= \App\Shared\Http\Url::to('painel') ?>" id="btnVoltarOcrMob" class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none sgi-inline-e1bcebb6" >
+        <a href="<?= \App\Shared\Http\Url::to('painel') ?>" id="btnVoltarOcrMob" class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none sgi-u-bg-E30613-radius-6px-p-8px-16px" >
             <i class="bi bi-arrow-left-circle fs-5"></i> <span id="nomeInterclasseOcrMob">Interclasse</span>
         </a>
 
@@ -22,7 +21,7 @@ $isAdmin = $nivelUsuario === 0;
     </div>
 
     <div class="px-3">
-        <div class="ocr-grid sgi-inline-98d53286" id="listaOcorrenciasMobile" >
+        <div class="ocr-grid sgi-u-grid-1fr" id="listaOcorrenciasMobile" >
             <div class="text-center text-muted py-5"><div class="spinner-border spinner-border-sm me-2"></div>Carregando...</div>
         </div>
     </div>
@@ -31,7 +30,7 @@ $isAdmin = $nivelUsuario === 0;
 <main class="d-none d-md-block main-desktop-layout ocr-page">
     <div class="ocr-container">
         <div class="mb-4">
-            <a href="<?= \App\Shared\Http\Url::to('painel') ?>" id="btnVoltarOcr" class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none sgi-inline-e1bcebb6" >
+            <a href="<?= \App\Shared\Http\Url::to('painel') ?>" id="btnVoltarOcr" class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none sgi-u-bg-E30613-radius-6px-p-8px-16px" >
                 <i class="bi bi-arrow-left-circle fs-5"></i> <span id="nomeInterclasseOcr">Interclasse</span>
             </a>
         </div>
@@ -46,7 +45,7 @@ $isAdmin = $nivelUsuario === 0;
         </div>
 
         <div class="ocr-grid" id="listaOcorrenciasDesktop">
-            <div class="text-center text-muted py-5 sgi-inline-c5f53f82" ><div class="spinner-border spinner-border-sm me-2"></div>Carregando...</div>
+            <div class="text-center text-muted py-5 sgi-u-col-1-1" ><div class="spinner-border spinner-border-sm me-2"></div>Carregando...</div>
         </div>
     </div>
 </main>
@@ -61,18 +60,18 @@ $isAdmin = $nivelUsuario === 0;
             </div>
             <div class="modal-body">
                 <div class="mb-3">
-                    <label class="form-label fw-semibold sgi-inline-cef94cbe" >Título</label>
-                    <input type="text" class="form-control sgi-inline-74940e40" id="ocrTituloModal" placeholder="Ex: Conduta antidesportiva" >
+                    <label class="form-label fw-semibold sgi-u-text-78rem-color-6B7280" >Título</label>
+                    <input type="text" class="form-control sgi-u-radius-10px" id="ocrTituloModal" placeholder="Ex: Conduta antidesportiva" >
                 </div>
                 <div class="mb-3">
-                    <label class="form-label fw-semibold sgi-inline-cef94cbe" >Pontos a descontar</label>
-                    <input type="number" min="0" class="form-control sgi-inline-74940e40" id="ocrPontosModal" placeholder="0" >
+                    <label class="form-label fw-semibold sgi-u-text-78rem-color-6B7280" >Pontos a descontar</label>
+                    <input type="number" min="0" class="form-control sgi-u-radius-10px" id="ocrPontosModal" placeholder="0" >
                 </div>
-                <div id="msgOcrModal" class="mt-3 sgi-inline-abc60b0c" ></div>
+                <div id="msgOcrModal" class="mt-3 sgi-u-text-85rem" ></div>
             </div>
-            <div class="modal-footer sgi-inline-052b34ec" >
-                <button type="button" class="ocr-btn-cancel sgi-inline-32a9b88c" data-bs-dismiss="modal" >Cancelar</button>
-                <button type="button" class="ocr-btn-primary sgi-inline-40033629" id="btnSalvarOcrModal" onclick="salvarOcorrenciaModal()" >
+            <div class="modal-footer sgi-u-border-none-p-0-1-5rem-1-25rem" >
+                <button type="button" class="ocr-btn-cancel sgi-u-border-1-5px-solid-E5E7EB-background-fff-color-6B7280" data-bs-dismiss="modal" >Cancelar</button>
+                <button type="button" class="ocr-btn-primary sgi-u-background-E30613-border-none-color-fff" id="btnSalvarOcrModal" onclick="salvarOcorrenciaModal()" >
                     <i class="bi bi-check-lg me-1"></i>Registrar
                 </button>
             </div>

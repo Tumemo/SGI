@@ -16,10 +16,11 @@ final class UsuarioAdministrativoServiceTest extends TestCase
     public function testResetsStudentPasswordWithHash(): void
     {
         $repository = new InMemoryUsuarioAdministrativoRepository();
-        (new UsuarioAdministrativoService($repository))->resetarSenhaAluno(4);
+        $temporaryPassword = (new UsuarioAdministrativoService($repository))->resetarSenhaAluno(4);
 
         self::assertNotSame('123', $repository->hash);
-        self::assertTrue(password_verify('123', $repository->hash));
+        self::assertNotSame('123', $temporaryPassword);
+        self::assertTrue(password_verify($temporaryPassword, $repository->hash));
     }
 
     public function testProtectsAdministratorAndOwnAccount(): void

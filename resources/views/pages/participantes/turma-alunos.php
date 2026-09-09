@@ -1,12 +1,11 @@
 <?php
-$tituloPagina = 'SGI - Alunos da turma';
 $titulo = 'Alunos da turma';
 $mostrarVoltar = true;
 $urlVoltar = \App\Shared\Http\Url::to('painel');
 include SGI_ROOT . '/resources/views/components/admin-head.php';
 include SGI_ROOT . '/resources/views/components/admin-header.php';
 $paginaAtiva = 'turmas';
-$podeGerenciar = in_array($nivelUsuario, [0, 1], true);
+$podeGerenciar = $nivelUsuario === 0;
 $podeExcluir   = in_array($nivelUsuario, [0], true);
 $podeResetarSenha = in_array($nivelUsuario, [0], true);
 ?>
@@ -14,7 +13,7 @@ $podeResetarSenha = in_array($nivelUsuario, [0], true);
 
 
 <!-- main mobile -->
-<main class="d-md-none ta-page-bg p-3 sgi-inline-b9068c61" >
+<main class="d-md-none ta-page-bg p-3 sgi-u-pt-5-5rem-pb-6rem" >
     <a href="#" class="ta-btn-interclasse" id="btnVoltarTurmaAlunosMob">
         <i class="bi bi-arrow-left-circle fs-5"></i> <span id="nomeInterclasseTurmaAlunosMob">Interclasse</span>
     </a>
@@ -60,7 +59,7 @@ $podeResetarSenha = in_array($nivelUsuario, [0], true);
                     </div>
                     <div class="ta-progress" id="progressMob">
                         <div class="progress" role="progressbar" aria-label="Progresso do upload">
-                            <div class="progress-bar sgi-inline-66785aa8" id="progressBarMob" ></div>
+                            <div class="progress-bar sgi-u-w-0" id="progressBarMob" ></div>
                         </div>
                         <span class="ta-progress-text" id="progressTextoMob">Enviando…</span>
                     </div>
@@ -143,7 +142,7 @@ $podeResetarSenha = in_array($nivelUsuario, [0], true);
                         </div>
                         <div class="ta-progress" id="progressDesk">
                             <div class="progress" role="progressbar" aria-label="Progresso do upload">
-                                <div class="progress-bar sgi-inline-66785aa8" id="progressBarDesk" ></div>
+                                <div class="progress-bar sgi-u-w-0" id="progressBarDesk" ></div>
                             </div>
                             <span class="ta-progress-text" id="progressTextoDesk">Enviando…</span>
                         </div>
@@ -284,7 +283,7 @@ $podeResetarSenha = in_array($nivelUsuario, [0], true);
                 <i class="bi bi-key-fill text-warning fs-1"></i>
                 <p class="mt-3 mb-1 fw-medium">Resetar senha do aluno?</p>
                 <p class="text-muted small mb-1" id="nomeAlunoResetar"></p>
-                <p class="text-muted small">A senha voltará para o padrão <strong>123</strong> e o aluno deverá trocá-la no próximo acesso.</p>
+                <p class="text-muted small">Será gerada uma senha temporária aleatória. Entregue-a ao aluno por um canal seguro.</p>
             </div>
             <div class="modal-footer justify-content-center border-0 pt-0">
                 <button type="button" class="btn btn-secondary btn-sm rounded-3" data-bs-dismiss="modal">Cancelar</button>

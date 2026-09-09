@@ -42,7 +42,36 @@ final class MysqliOcorrenciaQueries
             return ["success" => true, "atletas" => $res->fetch_all(MYSQLI_ASSOC)];
         }
         $filtro = \App\Shared\Database\SqlFilters::aplicarFiltrosOcorrencias($filters);
-        $sql = "SELECT \n                    ocorrencias.id_ocorrencia, \n                    ocorrencias.titulo_ocorrencia, \n                    ocorrencias.descricao_ocorrencia, \n                    ocorrencias.data_ocorrencia, \n                    ocorrencias.hora_ocorrencia, \n                    ocorrencias.penalidade,\n                    ocorrencias.status_ocorrencia,\n                    usuarios.nome_usuario,\n                    usuarios.id_usuario,\n                    usuarios.turmas_id_turma\n                FROM ocorrencias \n                INNER JOIN usuarios ON ocorrencias.usuarios_id_usuario = usuarios.id_usuario \n                WHERE 1=1" . $filtro['sql'];
+        $projection = isset($filters['_scope_usuario'])
+            ? "ocorrencias.id_ocorrencia, ocorrencias.titulo_ocorrencia,
+                    ocorrencias.data_ocorrencia, ocorrencias.status_ocorrencia,
+                    usuarios.id_usuario"
+            : "ocorrencias.id_ocorrencia, ocorrencias.titulo_ocorrencia,
+                    ocorrencias.descricao_ocorrencia, ocorrencias.data_ocorrencia,
+                    ocorrencias.hora_ocorrencia, ocorrencias.penalidade,
+                    ocorrencias.status_ocorrencia, usuarios.nome_usuario,
+                    usuarios.id_usuario, usuarios.turmas_id_turma";
+        $sql = "SELECT {$projection}
+                FROM ocorrencias
+                INNER JOIN usuarios ON ocorrencias.usuarios_id_usuario = usuarios.id_usuario
+                WHERE 1=1" . $filtro['sql'];
+        if (isset($filters['_scope_interclasse']) || isset($filters['_scope_usuario'])) {
+            $sql = str_replace(
+                'WHERE 1=1',
+                'INNER JOIN turmas ON turmas.id_turma = usuarios.turmas_id_turma WHERE 1=1',
+                $sql,
+            );
+            if (isset($filters['_scope_interclasse'])) {
+                $sql .= ' AND turmas.interclasses_id_interclasse = ?';
+                $filtro['types'] .= 'i';
+                $filtro['params'][] = (int) $filters['_scope_interclasse'];
+            }
+            if (isset($filters['_scope_usuario'])) {
+                $sql .= ' AND ocorrencias.usuarios_id_usuario = ?';
+                $filtro['types'] .= 'i';
+                $filtro['params'][] = (int) $filters['_scope_usuario'];
+            }
+        }
         if (!empty($filters['id_jogo'])) {
             $buscaJogo = '%[JOGO:' . intval($filters['id_jogo']) . ']%';
             $sql .= " AND ocorrencias.descricao_ocorrencia LIKE ?";

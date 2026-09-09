@@ -6,6 +6,8 @@ Instale as dependências com `composer install --no-dev --optimize-autoloader` e
 
 `public/assets/` é gerado e não é versionado. Edite as fontes em `resources/`. O build inclui versões fixadas das bibliotecas e suas licenças. `public/index.php` é a única entrada HTTP; não publique a raiz do repositório.
 
+Para uploads, o PHP precisa de um `upload_tmp_dir` existente e gravável pelo usuário do servidor. Mantenha `display_errors=0` e `log_errors=1` fora do desenvolvimento; avisos emitidos durante o upload podem ser adicionados ao corpo da resposta e invalidar o JSON da API. O diretório persistente de regulamentos continua sendo configurado por `SGI_REGULAMENTOS_DIR`.
+
 ## Banco novo
 
 Crie um banco vazio e configure `SGI_DB_*`. Execute `php bin/sgi.php migrate`. Para a primeira conta, informe `SGI_ADMIN_LOGIN`, `SGI_ADMIN_NAME` e `SGI_ADMIN_PASSWORD` somente no ambiente do comando `php bin/sgi.php admin:create`. A senha precisa ter pelo menos 12 caracteres e é persistida com `password_hash`. A rotina não substitui administradores existentes.

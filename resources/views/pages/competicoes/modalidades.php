@@ -1,5 +1,4 @@
 <?php
-$tituloPagina = 'SGI - Modalidades';
 $titulo = 'Modalidades';
 $mostrarVoltar = true;
 $urlVoltar = \App\Shared\Http\Url::to('painel');
@@ -9,22 +8,22 @@ include SGI_ROOT . '/resources/views/components/admin-header.php';
 $paginaAtiva = 'modalidades';
 ?>
 
-<main class="position-relative d-md-none sgi-inline-80857b05" >
+<main class="position-relative d-md-none sgi-u-mb-120px" >
     <section id="listaModalidadesMobile" class="d-flex flex-column align-items-center w-100 mt-4">
         <p class="text-muted small">(Carregando modalidades...)</p>
     </section>
 
-    <div class="position-fixed sgi-inline-39903530" >
-        <button class="btn btn-danger rounded-circle d-flex align-items-center justify-content-center shadow sgi-inline-33e75484"  data-bs-toggle="modal" data-bs-target="#modalCriarModalidade">
+    <div class="position-fixed sgi-u-bottom-92px-right-16px-z-20" >
+        <button class="btn btn-danger rounded-circle d-flex align-items-center justify-content-center shadow sgi-u-w-56px-h-56px-bg-ed1c24"  data-bs-toggle="modal" data-bs-target="#modalCriarModalidade">
             <i class="bi bi-plus-lg text-white fs-4"></i>
         </button>
     </div>
 </main>
 
 <main class="d-none d-md-block main-desktop-layout">
-    <div class="sgi-inline-93f2597a">
+    <div class="sgi-u-radius-12px">
         <div class="mb-5">
-            <a href="<?= \App\Shared\Http\Url::to('painel') ?>" id="btnVoltarModalidades" class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none sgi-inline-e1bcebb6" >
+            <a href="<?= \App\Shared\Http\Url::to('painel') ?>" id="btnVoltarModalidades" class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none sgi-u-bg-E30613-radius-6px-p-8px-16px" >
                 <i class="bi bi-arrow-left-circle fs-5"></i> <span id="nomeInterclasseModalidades">Interclasse</span>
             </a>
         </div>
@@ -34,10 +33,10 @@ $paginaAtiva = 'modalidades';
         </div>
     </div>
 
-    <div class="position-fixed d-flex flex-row align-items-center gap-4 py-3 px-5 sgi-inline-06a722df" >
+    <div class="position-fixed d-flex flex-row align-items-center gap-4 py-3 px-5 sgi-u-bottom-0-right-0-z-1050" >
         <span class="text-muted small fw-medium">Não tem a modalidade que você quer?</span>
 
-        <button type="button" class="btn bg-white fw-bold px-4 py-2 d-flex align-items-center justify-content-center gap-2 shadow-sm sgi-inline-035ae517"  data-bs-toggle="modal" data-bs-target="#modalCriarModalidade">
+        <button type="button" class="btn bg-white fw-bold px-4 py-2 d-flex align-items-center justify-content-center gap-2 shadow-sm sgi-u-color-ed1c24-border-2px-solid-ed1c24-radius-8px"  data-bs-toggle="modal" data-bs-target="#modalCriarModalidade">
             <i class="bi bi-plus-circle"></i> Adicionar
         </button>
     </div>

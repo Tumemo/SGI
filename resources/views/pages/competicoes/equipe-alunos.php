@@ -1,16 +1,15 @@
 <?php
-$tituloPagina = 'SGI - Adicionar Alunos';
 include SGI_ROOT . '/resources/views/components/admin-head.php';
 include SGI_ROOT . '/resources/views/components/admin-header.php';
 $paginaAtiva = 'dashboard';
 ?>
 
-<main class="d-md-none sgi-inline-80857b05" >
+<main class="d-md-none sgi-u-mb-120px" >
     <div class="container mt-3">
-        <a href="#" class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none sgi-inline-e1bcebb6" id="btnVoltarEquipesMobile" >
+        <a href="#" class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none sgi-u-bg-E30613-radius-6px-p-8px-16px" id="btnVoltarEquipesMobile" >
             <i class="bi bi-arrow-left-circle fs-5"></i> <span id="nomeInterclasseEquipeAlunosMob">Interclasse</span>
         </a>
-        <div id="listaAlunosMobile" class="sgi-inline-717378fd">
+        <div id="listaAlunosMobile" class="sgi-u-display-grid-grid-repeat-2-1fr-gap-0-75rem">
             <p class="text-muted text-center">(Carregando alunos...)</p>
         </div>
         <button id="btnSalvarAlunosMobile" class="btn btn-aluno w-100 mt-3"><i class="bi bi-check-lg"></i></button>
@@ -20,7 +19,7 @@ $paginaAtiva = 'dashboard';
 <main class="d-none d-md-block main-desktop-layout">
     <div class="aluno-page container-fluid py-4 px-4">
         <div class="aluno-page-header">
-            <a href="#" id="btnVoltarEquipesDesktop" class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none sgi-inline-e1bcebb6" >
+            <a href="#" id="btnVoltarEquipesDesktop" class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none sgi-u-bg-E30613-radius-6px-p-8px-16px" >
                 <i class="bi bi-arrow-left-circle fs-5"></i> <span id="nomeInterclasseEquipeAlunosDesk">Interclasse</span>
             </a>
             <h1>Adicionar alunos à equipe</h1>
@@ -29,14 +28,14 @@ $paginaAtiva = 'dashboard';
             </div>
         </div>
 
-        <div id="listaAlunosDesktop" class="sgi-inline-717378fd">
+        <div id="listaAlunosDesktop" class="sgi-u-display-grid-grid-repeat-2-1fr-gap-0-75rem">
             <div class="aluno-loading text-center py-4 text-muted">Carregando alunos...</div>
         </div>
     </div>
 </main>
 
-<div id="toastMensagem" class="position-fixed top-0 start-50 translate-middle-x z-3 p-3 sgi-inline-0aeee3b8" >
-    <div class="d-flex align-items-center gap-2 px-4 py-3 rounded-3 shadow-lg sgi-inline-ec730adf" id="toastConteudo" >
+<div id="toastMensagem" class="position-fixed top-0 start-50 translate-middle-x z-3 p-3 sgi-u-display-none-mt-10px" >
+    <div class="d-flex align-items-center gap-2 px-4 py-3 rounded-3 shadow-lg sgi-u-min-width-280px-background-white-border-left-5px-solid-198754" id="toastConteudo" >
         <i class="bi fs-4" id="toastIcone"></i>
         <span class="fw-semibold" id="toastTexto"></span>
     </div>

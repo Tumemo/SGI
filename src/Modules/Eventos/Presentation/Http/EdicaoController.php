@@ -23,13 +23,34 @@ final class EdicaoController
         }
         $uploaded = null;
         try {
+            if ($request->method() === 'POST' && $request->query('acao') === 'publicar_ranking') {
+                if (($denied = AccessGuard::authorize([0])) !== null) {
+                    return $denied;
+                }
+                $this->service->publicarRanking(
+                    (int) $request->query('id', 0),
+                    (int) ($_SESSION['id_usuario'] ?? $_SESSION['id'] ?? 0),
+                );
+                return Response::json(['success' => true, 'message' => 'Ranking publicado com sucesso.']);
+            }
             if ($request->method() === 'GET') {
-                return Response::json($this->service->listar([
+                $filters = [
                     'detalhes' => $request->query('regulamento') === 'true' || $request->query('id_interclasse') || $request->query('id'),
                     'id_interclasse' => (int) $request->query('id_interclasse', $request->query('id', 0)),
                     'ano' => (int) $request->query('ano', 0),
+                    'status_interclasse' => (string) $request->query('status_interclasse', ''),
+                    'ranking_publicado' => (string) $request->query('ranking_publicado', ''),
                     'busca' => trim((string) $request->query('busca', '')),
-                ]));
+                ];
+                if ((int) ($_SESSION['nivel'] ?? -1) === 2) {
+                    $activeEdition = (int) ($_SESSION['id_interclasse'] ?? 0);
+                    if ($activeEdition <= 0) {
+                        return Response::json(['success' => false, 'message' => 'Nenhuma edição ativa.'], 403);
+                    }
+                    $filters['id_interclasse'] = $activeEdition;
+                    $filters['detalhes'] = true;
+                }
+                return Response::json($this->service->listar($filters));
             }
             if (($denied = AccessGuard::requireWrite()) !== null) {
                 return $denied;

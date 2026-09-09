@@ -12,7 +12,7 @@ interface ResultadoRepository
     /** @param list<array<string, mixed>> $results */
     public function resolveAndValidate(int $gameId, ?string $tag, int $modalityId, array $results): int;
 
-    /** @return array{status_jogo:string,nome_jogo:string,modalidade_id:int,interclasse_id:int} */
+    /** @return array{status_jogo:string,nome_jogo:string,modalidade_id:int,interclasse_id:int,tipos_modalidades_id_tipo_modalidade?:int} */
     public function lockGame(int $gameId): array;
 
     /** @return list<array{equipes_id_equipe:int,resultado_partida:int}> */

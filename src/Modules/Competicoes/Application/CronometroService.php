@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Modules\Competicoes\Application;
 
 use App\Modules\Competicoes\Domain\CronometroRepository;
+use App\Modules\Competicoes\Domain\TipoCompeticaoRules;
 use App\Modules\Competicoes\Domain\CronometroRules;
 use Closure;
 use InvalidArgumentException;
@@ -38,6 +39,9 @@ final class CronometroService
         $agora = ($this->clock)();
         if (!is_int($agora) || $agora < 0) {
             throw new InvalidArgumentException('O relógio do cronômetro é inválido.');
+        }
+        if ($this->ehConclusaoIndividual($state, $data)) {
+            throw new InvalidArgumentException('Modalidades individuais devem ser concluídas pelo lançamento do pódio.');
         }
 
         $state = $this->prepararEstadoInicial($state, $data);
@@ -115,6 +119,13 @@ final class CronometroService
         if (!is_string($data['status_jogo']) || trim($data['status_jogo']) === '') {
             throw new InvalidArgumentException('Status de cronômetro inválido.');
         }
+        if ($data['status_jogo'] === 'Iniciado' && $state['status_jogo'] === 'Agendado') {
+            foreach (['data_jogo', 'inicio_jogo', 'termino_jogo', 'locais_id_local'] as $field) {
+                if (!array_key_exists($field, $state) || $state[$field] === null || $state[$field] === '') {
+                    throw new InvalidArgumentException('O jogo precisa ter data, horário e local definidos antes de iniciar.');
+                }
+            }
+        }
         return match ($data['status_jogo']) {
             'Iniciado' => CronometroRules::transicionar($state, 'retomar', $agora),
             'Pausado' => CronometroRules::transicionar($state, 'pausar', $agora),
@@ -187,5 +198,18 @@ final class CronometroService
             throw new InvalidArgumentException($field . ' deve ser não negativo' . ($positive ? ' e positivo.' : '.'));
         }
         return $normalised;
+    }
+
+    /** @param array<string,mixed> $state @param array<string,mixed> $data */
+    private function ehConclusaoIndividual(array $state, array $data): bool
+    {
+        if (!TipoCompeticaoRules::isIndividual($state)) {
+            return false;
+        }
+        $status = $data['status_jogo'] ?? null;
+        if ($status === null && is_array($data['cronometro'] ?? null)) {
+            $status = $data['cronometro']['status_jogo'] ?? null;
+        }
+        return in_array($status, ['Concluido', 'Finalizado'], true);
     }
 }

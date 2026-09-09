@@ -31,7 +31,17 @@ final class OcorrenciaTurmaController
         }
         try {
             if ($request->method() === 'GET') {
+                $level = (int) ($_SESSION['nivel'] ?? -1);
+                if ($level === 3) {
+                    return Response::json(['success' => false, 'message' => 'Consulta não disponível para competidores.'], 403);
+                }
                 $edition = (int) $request->query('id_interclasse', 0);
+                if ($level === 2) {
+                    if (($denied = $this->access->authorize()) !== null) {
+                        return $denied;
+                    }
+                    $edition = (int) ($this->access->context()->edicaoAtivaId ?? 0);
+                }
                 return Response::json($edition > 0 ? $this->service->listar([
                     'id_interclasse' => $edition,
                     'id_turma' => (int) $request->query('id_turma', 0),

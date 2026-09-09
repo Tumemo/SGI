@@ -156,7 +156,7 @@ window.SGIPage.mount("aluno/modalidade", function (pageConfig, pageScope) {
 
         if (qtdInscritos >= 3) {
             acoes.classList.add('d-none');
-            grid.innerHTML = '<div class="col-12 sgi-inline-b9d3ea53" ><div class="d-flex flex-column align-items-center justify-content-center text-center text-success py-5 sgi-inline-c083ecd3" ><i class="bi bi-check-circle-fill fs-1 mb-2"></i><span>Você já está inscrito em 3 modalidades. Limite atingido.</span></div></div>';
+            grid.innerHTML = '<div class="col-12 sgi-u-flex-basis-100-w-100" ><div class="d-flex flex-column align-items-center justify-content-center text-center text-success py-5 sgi-u-min-height-45vh" ><i class="bi bi-check-circle-fill fs-1 mb-2"></i><span>Você já está inscrito em 3 modalidades. Limite atingido.</span></div></div>';
             return;
         }
 
@@ -171,7 +171,7 @@ window.SGIPage.mount("aluno/modalidade", function (pageConfig, pageScope) {
 
         if (disponiveis.length === 0) {
             acoes.classList.add('d-none');
-            grid.innerHTML = '<div class="col-12 sgi-inline-b9d3ea53" ><div class="d-flex flex-column align-items-center justify-content-center text-center text-muted py-5 sgi-inline-c083ecd3" ><i class="bi bi-inbox fs-1 mb-2"></i><span>Nenhuma modalidade disponível para sua categoria no momento.</span></div></div>';
+            grid.innerHTML = '<div class="col-12 sgi-u-flex-basis-100-w-100" ><div class="d-flex flex-column align-items-center justify-content-center text-center text-muted py-5 sgi-u-min-height-45vh" ><i class="bi bi-inbox fs-1 mb-2"></i><span>Nenhuma modalidade disponível para sua categoria no momento.</span></div></div>';
             return;
         }
 

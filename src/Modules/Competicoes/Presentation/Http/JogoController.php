@@ -32,7 +32,15 @@ final class JogoController
                 return $denied;
             }
             try {
-                return Response::json($this->queries->list($request->allQuery()));
+                $filters = $request->allQuery();
+                if ((int) ($_SESSION['nivel'] ?? -1) === 2) {
+                    if (($denied = $this->access->authorize()) !== null) {
+                        return $denied;
+                    }
+                    $filters['operacional'] = 1;
+                    $filters['id_interclasse'] = (int) ($this->access->context()->edicaoAtivaId ?? 0);
+                }
+                return Response::json($this->queries->list($filters));
             } catch (\Throwable $exception) {
                 error_log('Falha ao listar jogos: ' . $exception->getMessage());
                 return Response::json(['success' => false, 'message' => 'Não foi possível consultar jogos.'], 500);
@@ -42,6 +50,12 @@ final class JogoController
             return $denied;
         }
         if ($request->method() === 'POST') {
+            if ((int) ($_SESSION['nivel'] ?? -1) === 2) {
+                return Response::json([
+                    'success' => false,
+                    'message' => 'Mesários não podem criar ou agendar jogos manualmente.',
+                ], 403);
+            }
             try {
                 $data = $request->allInput();
                 if (!$this->resourceBelongsToActiveEdition((int) ($data['modalidades_id_modalidade'] ?? 0), false)) {
@@ -62,6 +76,9 @@ final class JogoController
             $data = $request->allInput();
             $id = (int) ($data['id_jogo'] ?? 0);
             if ($id < 0) {
+                if ((int) ($_SESSION['nivel'] ?? -1) === 2 && $this->isScheduleMutation($data)) {
+                    return Response::json(['success' => false, 'message' => 'Mesários não podem alterar a programação dos jogos.'], 403);
+                }
                 return Response::json(['success' => true, 'offline' => true, 'message' => 'Jogo temporário offline registrado.']);
             }
             if ($id <= 0) {
@@ -71,7 +88,7 @@ final class JogoController
                 return Response::json(['success' => false, 'message' => 'O jogo não pertence à edição ativa.'], 403);
             }
             if ((int) ($_SESSION['nivel'] ?? -1) === 2
-                && (isset($data['data_jogo']) || isset($data['locais_id_local']) || isset($data['modalidades_id_modalidade']))) {
+                && $this->isScheduleMutation($data)) {
                 return Response::json(['success' => false, 'message' => 'Mesários só podem alterar o status ou placar do jogo.'], 403);
             }
             if ($this->isCronometroMutation($data) && $this->isScheduleMutation($data)) {
@@ -94,6 +111,8 @@ final class JogoController
                     return Response::json(['success' => true, 'offline' => true, 'message' => 'Jogo temporário registrado localmente.']);
                 }
                 return Response::json(['success' => true, 'message' => 'Jogo atualizado com sucesso!']);
+            } catch (JogoConflitoException $exception) {
+                return Response::json(['success' => false, 'message' => $exception->getMessage()], 422);
             } catch (\InvalidArgumentException $exception) {
                 return Response::json(['success' => false, 'message' => $exception->getMessage()], 422);
             } catch (\Throwable $exception) {
@@ -107,11 +126,19 @@ final class JogoController
     /** @param array<string,mixed> $data */
     private function isCronometroMutation(array $data): bool
     {
-        return array_key_exists('status_jogo', $data)
-            || array_key_exists('cronometro', $data)
+        if (array_key_exists('cronometro', $data)
             || array_key_exists('tempo_restante_jogo', $data)
             || array_key_exists('tempo_extra_jogo', $data)
-            || array_key_exists('duracao_jogo', $data);
+            || array_key_exists('duracao_jogo', $data)) {
+            return true;
+        }
+
+        // Agendado/Aguardando são estados da agenda. Somente uma transição
+        // explícita para um estado de operação do relógio deve passar pelo
+        // CronometroService; caso contrário, o status atual enviado pelo
+        // formulário de agenda seria confundido com uma mutação do timer.
+        return array_key_exists('status_jogo', $data)
+            && in_array($data['status_jogo'], ['Iniciado', 'Pausado', 'Concluido'], true);
     }
 
     /** @param array<string,mixed> $data */

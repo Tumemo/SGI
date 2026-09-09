@@ -34,12 +34,23 @@ final class EdicaoServiceTest extends TestCase
         $this->expectException(InvalidArgumentException::class);
         (new EdicaoService(new InMemoryEdicaoRepository()))->alterarStatus(1, '2');
     }
+
+    public function testPublicaRankingComUsuarioValido(): void
+    {
+        $repository = new InMemoryEdicaoRepository();
+        (new EdicaoService($repository))->publicarRanking(7, 3);
+
+        self::assertSame([7, 3], $repository->published);
+    }
 }
 
 final class InMemoryEdicaoRepository implements EdicaoRepository
 {
     /** @var array<string, mixed> */
     public array $created = [];
+
+    /** @var array{0:int,1:int}|null */
+    public ?array $published = null;
 
     public function list(array $filters): array
     {
@@ -54,5 +65,10 @@ final class InMemoryEdicaoRepository implements EdicaoRepository
 
     public function update(int $id, array $data): void
     {
+    }
+
+    public function publishRanking(int $id, int $userId): void
+    {
+        $this->published = [$id, $userId];
     }
 }

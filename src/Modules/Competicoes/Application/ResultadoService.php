@@ -6,6 +6,7 @@ namespace App\Modules\Competicoes\Application;
 
 use App\Modules\Competicoes\Domain\ResultadoRepository;
 use App\Modules\Competicoes\Domain\ChaveamentoRules;
+use App\Modules\Competicoes\Domain\TipoCompeticaoRules;
 use App\Modules\Resultados\Application\PontuacaoService;
 use App\Shared\Application\TransactionRunner;
 use InvalidArgumentException;
@@ -58,6 +59,9 @@ final class ResultadoService
                 throw new \RuntimeException('Não foi possível identificar o jogo no servidor.');
             }
             $state = $this->repository->lockGame($resolvedGameId);
+            if (TipoCompeticaoRules::isIndividual($state)) {
+                throw new InvalidArgumentException('Modalidades individuais devem ser concluídas pelo lançamento do pódio.');
+            }
             $closed = ChaveamentoRules::jogoEstaEncerrado($state['status_jogo']);
             $oldWinner = $closed
                 ? ChaveamentoRules::vencedorDePartidas($this->repository->carregarPartidas($resolvedGameId))

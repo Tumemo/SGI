@@ -48,6 +48,31 @@ window.SGIPage.mount("eventos/configurar-locais", function (pageConfig, pageScop
         return d.innerHTML;
     }
 
+    async function lerRespostaJson(response) {
+        const body = await response.text();
+        if (body.trim() === '') return {};
+
+        try {
+            return JSON.parse(body);
+        } catch (_) {
+            // PHP pode acrescentar um aviso HTML antes do JSON quando o
+            // diretório temporário de upload está mal configurado. Recupera
+            // o envelope para não transformar uma gravação concluída em erro.
+            const inicio = body.indexOf('{');
+            const fim = body.lastIndexOf('}');
+            if (inicio >= 0 && fim > inicio) {
+                try {
+                    return JSON.parse(body.slice(inicio, fim + 1));
+                } catch (_) {
+                    // A resposta realmente não contém um envelope JSON.
+                }
+            }
+            throw new Error(response.ok
+                ? 'O servidor concluiu o envio, mas retornou uma resposta inválida.'
+                : 'O servidor não conseguiu processar o regulamento.');
+        }
+    }
+
     // --- LÓGICA DO REGULAMENTO ---
     async function carregarRegulamento() {
         if (!idInterclasse) await obterInterclasseAtivo();
@@ -219,7 +244,7 @@ window.SGIPage.mount("eventos/configurar-locais", function (pageConfig, pageScop
                     body: formData
                 });
 
-                const js = await res.json();
+                const js = await lerRespostaJson(res);
                 if (!res.ok || js.success === false) {
                     throw new Error(js.message || 'Falha ao salvar o regulamento.');
                 }
@@ -395,5 +420,5 @@ window.SGIPage.mount("eventos/configurar-locais", function (pageConfig, pageScop
 
     pageScope.listen(document.getElementById('modalTermosColaborador'), 'show.bs.modal', carregarRegulamentoModal);
 
-return {obterInterclasseAtivo, esc, carregarRegulamento, cardLocal, carregarLocais, carregarRegulamentoModal};
+return {obterInterclasseAtivo, esc, lerRespostaJson, carregarRegulamento, cardLocal, carregarLocais, carregarRegulamentoModal};
 });

@@ -47,7 +47,7 @@ async function prepararAlunoFixture(request) {
         idInterclasse,
         idTurma,
         matricula,
-        senhaOriginal: '123'
+        senhaOriginal: String(novoAluno.senha_temporaria || '')
     };
 }
 

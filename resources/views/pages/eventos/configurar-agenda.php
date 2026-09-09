@@ -1,5 +1,4 @@
 <?php
-$tituloPagina = 'SGI - Agenda';
 $titulo = 'Agenda';
 $mostrarVoltar = true;
 $urlVoltar = \App\Shared\Http\Url::to('painel');
@@ -15,7 +14,7 @@ $nivelUsuarioAgenda = (int)($_SESSION['nivel'] ?? -1);
         <div class="ag-cal-header">
             <button type="button" id="btn-prev-mobile" class="ag-cal-nav"><i class="bi bi-chevron-left"></i></button>
             <div class="d-flex gap-2 align-items-center">
-                <select id="select-mes" class="form-select form-select-sm border-0 text-white text-center sgi-inline-6eb73c6d" >
+                <select id="select-mes" class="form-select form-select-sm border-0 text-white text-center sgi-u-w-auto-text-82rem-weight-700" >
                     <option value="0">Jan</option>
                     <option value="1">Fev</option>
                     <option value="2">Mar</option>
@@ -29,7 +28,7 @@ $nivelUsuarioAgenda = (int)($_SESSION['nivel'] ?? -1);
                     <option value="10">Nov</option>
                     <option value="11">Dez</option>
                 </select>
-                <select id="select-ano" class="form-select form-select-sm border-0 text-white text-center sgi-inline-6eb73c6d" >
+                <select id="select-ano" class="form-select form-select-sm border-0 text-white text-center sgi-u-w-auto-text-82rem-weight-700" >
                 </select>
             </div>
             <button type="button" id="btn-next-mobile" class="ag-cal-nav"><i class="bi bi-chevron-right"></i></button>
@@ -43,12 +42,12 @@ $nivelUsuarioAgenda = (int)($_SESSION['nivel'] ?? -1);
     </div>
 
     <div class="ag-filter-bar justify-content-center">
-        <div class="ag-search sgi-inline-4273f5af" >
+        <div class="ag-search sgi-u-maxw-260px" >
             <i class="bi bi-search"></i>
             <input type="text" id="agenda-busca-mobile" placeholder="Buscar time ou modalidade...">
         </div>
-        <select id="agenda-select-mod-mobile" class="form-select form-select-sm sgi-inline-4273f5af" ></select>
-        <select id="agenda-select-status-mobile" class="form-select form-select-sm sgi-inline-4273f5af" >
+        <select id="agenda-select-mod-mobile" class="form-select form-select-sm sgi-u-maxw-260px" ></select>
+        <select id="agenda-select-status-mobile" class="form-select form-select-sm sgi-u-maxw-260px" >
             <option value="">Todos os status</option>
             <option value="Concluido">Concluídos</option>
             <option value="andamento">Em andamento</option>
@@ -56,13 +55,17 @@ $nivelUsuarioAgenda = (int)($_SESSION['nivel'] ?? -1);
         </select>
         <?php if ($nivelUsuarioAgenda <= 1): ?>
             <button type="button" class="ag-btn-auto w-100 justify-content-center mt-1 btn-trigger-datas-auto">
-                <i class="bi bi-magic"></i> Datas Automáticas
+                <i class="bi bi-calendar2-plus"></i> Agendar em blocos
             </button>
         <?php endif; ?>
     </div>
 
+    <div class="mb-3">
+        <h3 class="h6 text-danger"><i class="bi bi-exclamation-circle me-1"></i>Aguardando agendamento</h3>
+        <div id="lista-pendentes-mobile" class="ag-event-list"></div>
+    </div>
     <div id="lista-eventos-mobile" class="ag-event-list"></div>
-    <div class="ag-show-all sgi-inline-7830d708" id="container-mostrar-todos-mobile" >
+    <div class="ag-show-all sgi-u-display-none" id="container-mostrar-todos-mobile" >
         <button type="button" class="btn btn-outline-secondary" id="btn-mostrar-todos-mobile">
             <i class="bi bi-calendar3 me-1"></i>Mostrar Todos os Jogos
         </button>
@@ -86,7 +89,7 @@ $nivelUsuarioAgenda = (int)($_SESSION['nivel'] ?? -1);
                 <h2><i class="bi bi-calendar3"></i> Agenda de Jogos</h2>
                 <p>Calendário de confrontos e partidas do Interclasse</p>
             </div>
-            <span class="ag-badge-count sgi-inline-7830d708" id="agenda-count-badge" >
+            <span class="ag-badge-count sgi-u-display-none" id="agenda-count-badge" >
                 <i class="bi bi-fire"></i> <span id="agenda-count-text">0 jogos</span>
             </span>
         </div>
@@ -96,7 +99,7 @@ $nivelUsuarioAgenda = (int)($_SESSION['nivel'] ?? -1);
                 <i class="bi bi-search"></i>
                 <input type="text" id="agenda-busca" placeholder="Buscar time ou modalidade...">
             </div>
-            <select id="agenda-select-mod" class="sgi-inline-5c041da1"></select>
+            <select id="agenda-select-mod" class="sgi-u-maxw-280px"></select>
             <select id="agenda-select-status">
                 <option value="">Todos os status</option>
                 <option value="Concluido">Concluídos</option>
@@ -105,15 +108,19 @@ $nivelUsuarioAgenda = (int)($_SESSION['nivel'] ?? -1);
             </select>
             <?php if ($nivelUsuarioAgenda <= 1): ?>
                 <button type="button" class="ag-btn-auto ms-auto btn-trigger-datas-auto">
-                    <i class="bi bi-magic"></i> Datas Automáticas
+                    <i class="bi bi-calendar2-plus"></i> Agendar em blocos
                 </button>
             <?php endif; ?>
         </div>
 
         <div class="ag-desktop-grid">
             <div>
+                <div class="mb-3">
+                    <h3 class="h6 text-danger"><i class="bi bi-exclamation-circle me-1"></i>Aguardando agendamento</h3>
+                    <div id="lista-pendentes" class="ag-event-list"></div>
+                </div>
                 <div id="lista-eventos" class="ag-event-list"></div>
-                <div class="ag-show-all sgi-inline-7830d708" id="container-mostrar-todos" >
+                <div class="ag-show-all sgi-u-display-none" id="container-mostrar-todos" >
                     <button type="button" class="btn btn-outline-secondary" id="btn-mostrar-todos">
                         <i class="bi bi-calendar3 me-1"></i>Mostrar Todos os Jogos
                     </button>
@@ -169,8 +176,8 @@ $nivelUsuarioAgenda = (int)($_SESSION['nivel'] ?? -1);
                 </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-outline-secondary sgi-inline-2add2726" data-bs-dismiss="modal" >Cancelar</button>
-                <button type="button" class="btn btn-danger sgi-inline-2add2726" id="edit-jogo-salvar" >Salvar</button>
+                <button type="button" class="btn btn-outline-secondary sgi-u-radius-10px-weight-600-text-85rem" data-bs-dismiss="modal" >Cancelar</button>
+                <button type="button" class="btn btn-danger sgi-u-radius-10px-weight-600-text-85rem" id="edit-jogo-salvar" >Salvar</button>
             </div>
         </div>
     </div>
@@ -181,39 +188,70 @@ $nivelUsuarioAgenda = (int)($_SESSION['nivel'] ?? -1);
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title"><i class="bi bi-magic text-danger me-2"></i>Agendamento Automático</h5>
+                <h5 class="modal-title"><i class="bi bi-calendar2-plus text-danger me-2"></i>Agendamento em blocos</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
             </div>
             <div class="modal-body">
-                <p class="small text-muted mb-3">Defina a data e o horário inicial. O sistema agendará em sequência todos os jogos da modalidade de acordo com a ordem do chaveamento.</p>
+                <p class="small text-muted mb-3">Escolha os jogos, as janelas e os locais. O sistema fará uma prévia respeitando dependências, duração, intervalo de troca e conflitos antes de confirmar o bloco.</p>
                 <div class="mb-3">
                     <label class="form-label">Modalidade</label>
                     <select class="form-select" id="auto-modalidade"></select>
                 </div>
                 <div class="mb-3">
-                    <label class="form-label">Data dos jogos</label>
-                    <input type="date" class="form-control" id="auto-data">
+                    <label class="form-label">Jogos</label>
+                    <select class="form-select" id="auto-jogos" multiple size="6"></select>
+                    <div class="form-text">Selecione jogos já programados somente se quiser reprogramá-los.</div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Posições futuras (opcional)</label>
+                    <input type="text" class="form-control" id="auto-tags" placeholder="Ex.: MM:2:0:N, POS:3:0:N">
+                    <div class="form-text">Use a tag exibida no chaveamento para reservar uma fase que ainda não foi materializada.</div>
                 </div>
                 <div class="row g-2 mb-3">
                     <div class="col-6">
-                        <label class="form-label">Horário de Início (1º Jogo)</label>
-                        <input type="time" class="form-control" id="auto-inicio" value="08:00">
+                        <label class="form-label">Data</label>
+                        <input type="date" class="form-control" id="auto-data">
                     </div>
                     <div class="col-6">
-                        <label class="form-label">Duração/Jogo (Minutos)</label>
-                        <input type="number" class="form-control" id="auto-duracao" min="5" step="5" value="60">
+                        <label class="form-label">Início da janela</label>
+                        <input type="time" class="form-control" id="auto-inicio" value="08:00">
                     </div>
                 </div>
                 <div class="mb-3">
-                    <label class="form-label">Local das Partidas</label>
-                    <select class="form-select" id="auto-local"></select>
+                    <label class="form-label">Fim da janela</label>
+                    <input type="time" class="form-control" id="auto-fim" value="18:00">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Locais disponíveis</label>
+                    <select class="form-select" id="auto-local" multiple size="3"></select>
+                </div>
+                <div class="row g-2 mb-3">
+                    <div class="col-4">
+                        <label class="form-label">Duração (min)</label>
+                        <input type="number" class="form-control" id="auto-duracao" min="1" step="1" value="60">
+                    </div>
+                    <div class="col-4">
+                        <label class="form-label">Troca (min)</label>
+                        <input type="number" class="form-control" id="auto-troca" min="0" step="1" value="5">
+                    </div>
+                    <div class="col-4">
+                        <label class="form-label">Descanso (min)</label>
+                        <input type="number" class="form-control" id="auto-descanso" min="0" step="1" value="0">
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Prévia</label>
+                    <div id="auto-previa" class="small border rounded p-2 bg-light">Preencha os dados e clique em “Calcular prévia”.</div>
+                </div>
+                <div class="form-check mb-2">
+                    <input class="form-check-input" type="checkbox" id="auto-reprogramar">
+                    <label class="form-check-label" for="auto-reprogramar">Permitir reprogramar jogos já agendados</label>
                 </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-outline-secondary sgi-inline-2add2726" data-bs-dismiss="modal" >Cancelar</button>
-                <button type="button" class="btn btn-danger sgi-inline-2add2726" id="auto-salvar-btn" >
-                    <i class="bi bi-check-lg me-1"></i>Gerar e Aplicar Datas
-                </button>
+                <button type="button" class="btn btn-outline-secondary sgi-u-radius-10px-weight-600-text-85rem" data-bs-dismiss="modal" >Cancelar</button>
+                <button type="button" class="btn btn-outline-danger sgi-u-radius-10px-weight-600-text-85rem" id="auto-simular-btn"><i class="bi bi-eye me-1"></i>Calcular prévia</button>
+                <button type="button" class="btn btn-danger sgi-u-radius-10px-weight-600-text-85rem" id="auto-salvar-btn" disabled><i class="bi bi-check-lg me-1"></i>Confirmar bloco</button>
             </div>
         </div>
     </div>

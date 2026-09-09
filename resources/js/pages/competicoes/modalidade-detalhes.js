@@ -172,6 +172,7 @@ window.SGIPage.mount("competicoes/modalidade-detalhes", function (pageConfig, pa
         if (!modalidadeAtual) return;
 
         document.getElementById('editNomeModalidade').value = modalidadeAtual.nome_modalidade;
+        document.getElementById('editGeneroModalidade').value = modalidadeAtual.genero_modalidade || '';
         document.getElementById('editMaxInscritos').value = modalidadeAtual.max_inscrito_modalidade || '';
         document.getElementById('editMaxEquipes').value = modalidadeAtual.max_equipes || '';
         document.getElementById('msgEditarModalidade').innerHTML = '';
@@ -227,6 +228,7 @@ window.SGIPage.mount("competicoes/modalidade-detalhes", function (pageConfig, pa
         const dados = {
             id_modalidade: modalidadeAtual.id_modalidade,
             nome_modalidade: document.getElementById('editNomeModalidade').value.trim(),
+            genero_modalidade: document.getElementById('editGeneroModalidade').value,
             max_inscrito_modalidade: parseInt(document.getElementById('editMaxInscritos').value) || 0,
             max_equipes: (() => { const v = document.getElementById('editMaxEquipes').value; return v === '' ? null : parseInt(v); })(),
             tipos_modalidades_id_tipo_modalidade: parseInt(document.getElementById('editTipoModalidade').value),
@@ -235,6 +237,10 @@ window.SGIPage.mount("competicoes/modalidade-detalhes", function (pageConfig, pa
 
         if (!dados.nome_modalidade) {
             msg.innerHTML = '<p class="text-danger text-center fw-bold mb-0">O nome não pode estar vazio.</p>';
+            return;
+        }
+        if (!dados.genero_modalidade) {
+            msg.innerHTML = '<p class="text-danger text-center fw-bold mb-0">Selecione o gênero da modalidade.</p>';
             return;
         }
 

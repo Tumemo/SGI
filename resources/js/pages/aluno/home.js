@@ -30,8 +30,9 @@ function renderCards(items) {
             const statusLabel = isAtivo ? 'Em Andamento' : 'Encerrado';
             const statusClass = isAtivo ? 'active' : 'inactive';
             const iconClass = isAtivo ? 'active' : 'inactive';
-            const href = isAtivo ? `/aluno/modalidades?id=${item.id_interclasse}` : `/ranking?id=${item.id_interclasse}`;
-            const btnLabel = isAtivo ? 'Ver Detalhes <i class="bi bi-arrow-right"></i>' : 'Ver Ranking <i class="bi bi-bar-chart"></i>';
+            const publicado = Boolean(item.ranking_publicado_em);
+            const href = isAtivo ? `/aluno/modalidades?id=${item.id_interclasse}` : (publicado ? `/aluno/ranking?id=${item.id_interclasse}` : '#');
+            const btnLabel = isAtivo ? 'Ver Detalhes <i class="bi bi-arrow-right"></i>' : (publicado ? 'Ver Ranking <i class="bi bi-bar-chart"></i>' : 'Ranking aguardando premiação');
 
             return `
                 <div class="aluno-card" data-status="${statusClass}">
@@ -45,7 +46,7 @@ function renderCards(items) {
                             <div class="card-meta">
                                 <span><i class="bi bi-calendar3"></i>${ano}</span>
                                 <span class="aluno-status-badge ${statusClass}">
-                                    <i class="bi bi-circle-fill sgi-inline-a03c0aaa" ></i>
+                                    <i class="bi bi-circle-fill sgi-u-text-0-4rem" ></i>
                                     ${statusLabel}
                                 </span>
                             </div>

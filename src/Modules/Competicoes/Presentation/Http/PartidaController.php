@@ -27,7 +27,14 @@ final class PartidaController
                 return $denied;
             }
             try {
-                return Response::json($this->queries->list($request->allQuery()));
+                $filters = $request->allQuery();
+                if ((int) ($_SESSION['nivel'] ?? -1) === 2) {
+                    if ((int) ($_SESSION['id_interclasse'] ?? 0) <= 0) {
+                        return Response::json(['success' => false, 'message' => 'Nenhuma edição ativa.'], 403);
+                    }
+                    $filters['id_interclasse'] = (int) ($_SESSION['id_interclasse'] ?? 0);
+                }
+                return Response::json($this->queries->list($filters));
             } catch (\Throwable $exception) {
                 error_log('Falha ao listar partidas: ' . $exception->getMessage());
                 return Response::json(['success' => false, 'message' => 'Não foi possível consultar partidas.'], 500);

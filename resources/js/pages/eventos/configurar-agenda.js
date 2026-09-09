@@ -23,8 +23,18 @@ window.SGIPage.mount("eventos/configurar-agenda", function (pageConfig, pageScop
     let filtroStatus = '';
     let buscaAtual = '';
 
-    function formatNomeJogo(nomeJogo) {
-        if (/^IND:\d+$/.test(nomeJogo || '')) {
+    function jogoEhIndividual(jogo) {
+        if (!jogo) return false;
+        if (jogo.tipo_competicao === 'individual') return true;
+        if (jogo.tipo_competicao === 'mata_mata') return false;
+        const nomeTipo = String(jogo.nome_tipo_modalidade || '').trim().toLowerCase();
+        if (nomeTipo === 'individual' || nomeTipo === 'prova individual') return true;
+        if (nomeTipo === 'mata-mata' || nomeTipo === 'mata mata') return false;
+        return !jogo.tipo_competicao && !jogo.nome_tipo_modalidade && Number(jogo.tipos_modalidades_id_tipo_modalidade) === 2;
+    }
+
+    function formatNomeJogo(nomeJogo, jogo = null) {
+        if (jogoEhIndividual(jogo)) {
             return 'Competição Individual';
         }
         const mm = (nomeJogo || '').match(/^MM:(\d+):(\d+):([NB])$/);
@@ -76,6 +86,7 @@ window.SGIPage.mount("eventos/configurar-agenda", function (pageConfig, pageScop
 
     function podeIniciar(j) {
         if (!j || j.status_jogo !== 'Agendado') return false;
+        if (!j.data_jogo || !j.inicio_jogo || !j.termino_jogo || !j.locais_id_local) return false;
         const hj = hojeISO();
         return j.data_jogo <= hj;
     }
@@ -201,7 +212,7 @@ window.SGIPage.mount("eventos/configurar-agenda", function (pageConfig, pageScop
                 if (stF === 'Concluido' && j.status_jogo !== 'Concluido' && j.status_jogo !== 'Finalizado') return false;
                 if (stF && stF !== 'andamento' && stF !== 'Concluido' && j.status_jogo !== stF) return false;
                 if (q) {
-                    const alvo = `${j.nome_modalidade || ''} ${j.nome_categoria || ''} ${j.nome_local || ''} ${j.equipes_nomes || ''} ${formatNomeJogo(j.nome_jogo)}`.toLowerCase();
+                    const alvo = `${j.nome_modalidade || ''} ${j.nome_categoria || ''} ${j.nome_local || ''} ${j.equipes_nomes || ''} ${formatNomeJogo(j.nome_jogo, j)}`.toLowerCase();
                     if (!alvo.includes(q)) return false;
                 }
                 return true;
@@ -274,10 +285,10 @@ window.SGIPage.mount("eventos/configurar-agenda", function (pageConfig, pageScop
                     </div>
                     <span class="ag-status-chip ag-status-chip--${cardClass}">${escapeHtml(statusTxt)}</span>
                 </div>
-                <h3 class="ag-event-card__title">${escapeHtml(formatNomeJogo(j.nome_jogo))}</h3>
+                <h3 class="ag-event-card__title">${escapeHtml(formatNomeJogo(j.nome_jogo, j))}</h3>
                 <p class="ag-event-card__subtitle">
                     ${modalidadeTxt ? '<i class="bi bi-trophy-fill"></i> ' + escapeHtml(modalidadeTxt) : ''}
-                    ${localTxt ? `<span class="sgi-inline-d7556a02">•</span> ${localTxt}` : ''}
+                    ${localTxt ? `<span class="sgi-u-color-D1D5DB">•</span> ${localTxt}` : ''}
                 </p>
                 ${teamsHtml}
                 <div class="ag-event-card__actions">
@@ -286,15 +297,45 @@ window.SGIPage.mount("eventos/configurar-agenda", function (pageConfig, pageScop
             </div>`;
     }
 
+    function jogosPendentes() {
+        const modF = modalidadeSelecionadaId();
+        const q = buscaAtual.toLowerCase();
+        return jogosCache.filter((j) => {
+            if (j.status_jogo !== 'Agendado' || /:B$/.test(String(j.nome_jogo || ''))) return false;
+            if (j.data_jogo && j.inicio_jogo && j.termino_jogo && j.locais_id_local) return false;
+            if (modF && String(j.modalidades_id_modalidade) !== String(modF)) return false;
+            if (q && !(`${j.nome_modalidade || ''} ${j.nome_categoria || ''} ${j.equipes_nomes || ''} ${formatNomeJogo(j.nome_jogo, j)}`.toLowerCase().includes(q))) return false;
+            return true;
+        });
+    }
+
+    function montarCardPendente(j) {
+        const modalidadeTxt = [j.nome_modalidade, j.nome_categoria].filter(Boolean).join(' – ');
+        const equipes = j.equipes_nomes ? String(j.equipes_nomes).split(' vs ') : [];
+        const equipesTxt = equipes.length ? escapeHtml(equipes.join(' VS ')) : 'Classificados ainda não definidos';
+        return `<div class="ag-event-card ag-event-card--agendado">
+            <div class="ag-event-card__top"><span class="ag-meta-chip"><i class="bi bi-calendar-x"></i> Data: A definir</span><span class="ag-status-chip ag-status-chip--agendado">Pendente</span></div>
+            <h3 class="ag-event-card__title">${escapeHtml(formatNomeJogo(j.nome_jogo, j))}</h3>
+            <p class="ag-event-card__subtitle">${modalidadeTxt ? escapeHtml(modalidadeTxt) + ' • ' : ''}${equipesTxt}</p>
+            <p class="small text-muted mb-2">Horário: ${j.inicio_jogo ? formatarHora(j.inicio_jogo) : 'A definir'} · Local: ${j.nome_local || 'A definir'}</p>
+            ${NIVEL_USUARIO <= 1 ? `<button type="button" class="ag-icon-btn btn-ajuste-jogo" data-id-jogo="${j.id_jogo}" title="Agendar jogo" aria-label="Agendar jogo"><i class="bi bi-pencil"></i> Definir agenda</button>` : ''}
+        </div>`;
+    }
+
     function renderListaEventos() {
         const containerDesk = document.getElementById('lista-eventos');
         const containerMob = document.getElementById('lista-eventos-mobile');
+        const pendingDesk = document.getElementById('lista-pendentes');
+        const pendingMob = document.getElementById('lista-pendentes-mobile');
         if (!containerDesk || !containerMob || !containerDesk.isConnected || !containerMob.isConnected) return;
         const lista = jogosDoMesVisivel();
+        const pendentes = jogosPendentes();
         const badge = document.getElementById('agenda-count-badge');
 
         containerDesk.innerHTML = '';
         containerMob.innerHTML = '';
+        if (pendingDesk) pendingDesk.innerHTML = pendentes.map(montarCardPendente).join('') || '<div class="small text-muted">Nenhum jogo pendente.</div>';
+        if (pendingMob) pendingMob.innerHTML = pendentes.map(montarCardPendente).join('') || '<div class="small text-muted">Nenhum jogo pendente.</div>';
 
         if (!interclasseAtual) {
             const msg = '<div class="ag-empty"><i class="bi bi-calendar-x"></i><p>Nenhum interclasse selecionado ou ativo.</p></div>';
@@ -303,6 +344,23 @@ window.SGIPage.mount("eventos/configurar-agenda", function (pageConfig, pageScop
             if (badge) badge.style.display = 'none';
             return;
         }
+
+        document.querySelectorAll('#lista-pendentes .btn-ajuste-jogo, #lista-pendentes-mobile .btn-ajuste-jogo').forEach((btn) => {
+            pageScope.listen(btn, 'click', () => {
+                const id = Number(btn.getAttribute('data-id-jogo'));
+                const j = jogosCache.find((x) => Number(x.id_jogo) === id);
+                if (!j) return;
+                jogoEmEdicao = j;
+                document.getElementById('edit-jogo-titulo').textContent = formatNomeJogo(j.nome_jogo, j) || 'Jogo';
+                document.getElementById('edit-jogo-data').value = j.data_jogo || '';
+                document.getElementById('edit-jogo-data').min = hojeISO();
+                document.getElementById('edit-jogo-inicio').value = formatarHora(j.inicio_jogo);
+                document.getElementById('edit-jogo-fim').value = formatarHora(j.termino_jogo || j.terminno_jogo);
+                const sel = document.getElementById('edit-jogo-local');
+                sel.value = j.locais_id_local ? String(j.locais_id_local) : '';
+                new bootstrap.Modal(document.getElementById('modalEditarJogoAgenda')).show();
+            });
+        });
 
         if (lista.length === 0) {
             const msg = filtroData
@@ -364,6 +422,8 @@ window.SGIPage.mount("eventos/configurar-agenda", function (pageConfig, pageScop
                                 nome_categoria: jogoAtual.nome_categoria || null,
                                 nome_local: jogoAtual.nome_local || null,
                                 equipes_nomes: jogoAtual.equipes_nomes || null,
+                                tipo_competicao: jogoAtual.tipo_competicao || null,
+                                nome_tipo_modalidade: jogoAtual.nome_tipo_modalidade || null,
                                 tipos_modalidades_id_tipo_modalidade: jogoAtual.tipos_modalidades_id_tipo_modalidade || null
                             } : null,
                             status_jogo: 'Iniciado',
@@ -405,15 +465,15 @@ window.SGIPage.mount("eventos/configurar-agenda", function (pageConfig, pageScop
                 const j = jogosCache.find((x) => Number(x.id_jogo) === id);
                 if (!j) return;
                 jogoEmEdicao = j;
-                document.getElementById('edit-jogo-titulo').textContent = formatNomeJogo(j.nome_jogo) || 'Jogo';
+                document.getElementById('edit-jogo-titulo').textContent = formatNomeJogo(j.nome_jogo, j) || 'Jogo';
                 document.getElementById('edit-jogo-data').value = j.data_jogo || '';
                 document.getElementById('edit-jogo-data').min = hojeISO();
-                document.getElementById('edit-jogo-inicio').value = formatarHora(j.inicio_jogo) || '08:00';
-                document.getElementById('edit-jogo-fim').value = formatarHora(j.termino_jogo || j.terminno_jogo) || '09:00';
+                document.getElementById('edit-jogo-inicio').value = formatarHora(j.inicio_jogo);
+                document.getElementById('edit-jogo-fim').value = formatarHora(j.termino_jogo || j.terminno_jogo);
                 const sel = document.getElementById('edit-jogo-local');
                 sel.value = locaisLista.some(l => String(l.id_local) === String(j.locais_id_local))
                     ? String(j.locais_id_local)
-                    : (sel.options[0]?.value ?? '');
+                    : '';
                 const modal = new bootstrap.Modal(document.getElementById('modalEditarJogoAgenda'));
                 modal.show();
             });
@@ -557,7 +617,7 @@ window.SGIPage.mount("eventos/configurar-agenda", function (pageConfig, pageScop
         const sel = document.getElementById('edit-jogo-local');
         const autoLoc = document.getElementById('auto-local');
 
-        if (sel) sel.innerHTML = '';
+        if (sel) sel.innerHTML = '<option value="">A definir</option>';
         if (autoLoc) autoLoc.innerHTML = '';
 
         if (locaisLista.length === 0) {
@@ -721,7 +781,7 @@ window.SGIPage.mount("eventos/configurar-agenda", function (pageConfig, pageScop
         if (elSalvar) pageScope.listen(elSalvar, 'click', async () => {
             if (!jogoEmEdicao) return;
             const data = document.getElementById('edit-jogo-data').value;
-            if (data < hojeISO()) {
+            if (data && data < hojeISO()) {
                 alert('Não é permitido agendar um jogo para uma data passada.');
                 return;
             }
@@ -731,9 +791,9 @@ window.SGIPage.mount("eventos/configurar-agenda", function (pageConfig, pageScop
             const body = {
                 id_jogo: Number(jogoEmEdicao.id_jogo, 10),
                 data_jogo: data,
-                inicio_jogo: ini ? (ini.length === 5 ? `${ini}:00` : ini) : '00:00:00',
-                termino_jogo: fim ? (fim.length === 5 ? `${fim}:00` : fim) : '00:00:00',
-                locais_id_local: idLocal
+                inicio_jogo: ini ? (ini.length === 5 ? `${ini}:00` : ini) : null,
+                termino_jogo: fim ? (fim.length === 5 ? `${fim}:00` : fim) : null,
+                locais_id_local: Number.isInteger(idLocal) && idLocal > 0 ? idLocal : null
             };
             try {
                 const r = await fetch(`${API}jogos`, {
@@ -751,138 +811,113 @@ window.SGIPage.mount("eventos/configurar-agenda", function (pageConfig, pageScop
             }
         });
 
-        /* ── ABRIR MODAL DATAS AUTOMÁTICAS ── */
+        /* ── AGENDAMENTO EM BLOCOS ── */
+        let blocoAtual = null;
+
+        function preencherJogosBloco() {
+            const select = document.getElementById('auto-jogos');
+            const mod = document.getElementById('auto-modalidade');
+            if (!select || !mod) return;
+            const idMod = mod.value || modalidadeSelecionadaId();
+            select.innerHTML = '';
+            jogosCache.filter((j) => String(j.modalidades_id_modalidade) === String(idMod) && j.status_jogo === 'Agendado' && !/:B$/.test(String(j.nome_jogo || ''))).forEach((j) => {
+                const option = document.createElement('option');
+                option.value = String(j.id_jogo);
+                option.textContent = `${formatNomeJogo(j.nome_jogo, j)} — ${j.data_jogo ? j.data_jogo : 'A definir'}`;
+                option.selected = !j.data_jogo || !j.inicio_jogo || !j.termino_jogo || !j.locais_id_local;
+                select.appendChild(option);
+            });
+        }
+
+        function payloadBloco(acao) {
+            const mod = document.getElementById('auto-modalidade').value;
+            const jogosEl = document.getElementById('auto-jogos');
+            const tags = (document.getElementById('auto-tags').value || '').split(',').map((tag) => tag.trim()).filter(Boolean);
+            const jogos = Array.from(jogosEl.selectedOptions).map((option) => ({ id_jogo: Number(option.value) }));
+            return {
+                acao,
+                id_interclasse: Number(interclasseAtual && interclasseAtual.id_interclasse),
+                id_modalidade: Number(mod),
+                jogos,
+                chave_tags: tags.map((chave_tag) => ({ id_modalidade: Number(mod), chave_tag })),
+                janelas: [{
+                    data: document.getElementById('auto-data').value,
+                    inicio: document.getElementById('auto-inicio').value,
+                    fim: document.getElementById('auto-fim').value,
+                    locais: Array.from(document.getElementById('auto-local').selectedOptions).map((option) => Number(option.value)).filter((id) => id > 0)
+                }],
+                opcoes: {
+                    duracao_min: Number(document.getElementById('auto-duracao').value),
+                    intervalo_troca_min: Number(document.getElementById('auto-troca').value),
+                    descanso_min: Number(document.getElementById('auto-descanso').value)
+                },
+                reprogramar: document.getElementById('auto-reprogramar').checked
+            };
+        }
+
+        function renderPrevia(bloco) {
+            const area = document.getElementById('auto-previa');
+            if (!area) return;
+            const linhas = (bloco.proposta || []).map((item) => `<div>${escapeHtml(formatNomeJogo(item.chave_tag))}: ${item.data_jogo} ${formatarHora(item.inicio_jogo)}–${formatarHora(item.termino_jogo)} · local ${item.locais_id_local}</div>`).join('');
+            const pendencias = (bloco.pendencias || []).map((item) => `<div class="text-danger">${escapeHtml(formatNomeJogo(item.chave_tag))}: ${escapeHtml(item.motivo)}</div>`).join('');
+            area.innerHTML = `<strong>${bloco.resumo ? bloco.resumo.encaixados : 0} programado(s)</strong>${linhas}${pendencias ? `<hr>${pendencias}` : ''}`;
+        }
+
         document.querySelectorAll('.btn-trigger-datas-auto').forEach((btn) => {
             pageScope.listen(btn, 'click', () => {
-                const autoData = document.getElementById('auto-data');
-                if (autoData) {
-                    autoData.value = hojeISO();
-                    autoData.min = hojeISO();
-                }
+                preencherJogosBloco();
+                const data = document.getElementById('auto-data');
+                if (data) { data.min = hojeISO(); if (!data.value) data.value = hojeISO(); }
                 const modalMod = document.getElementById('auto-modalidade');
                 const selModGlobal = modalidadeSelecionadaId();
                 if (modalMod && selModGlobal) {
                     modalMod.value = selModGlobal;
+                    preencherJogosBloco();
                 }
+                const locais = document.getElementById('auto-local');
+                if (locais) Array.from(locais.options).forEach((option) => { option.selected = true; });
                 const modal = new bootstrap.Modal(document.getElementById('modalDatasAutomaticas'));
                 modal.show();
             });
         });
+        pageScope.listen(document.getElementById('auto-modalidade'), 'change', preencherJogosBloco);
 
-       /* ── GERAR E APLICAR DATAS AUTOMÁTICAS (EM LOTE) ── */
-const btnAutoSalvar = document.getElementById('auto-salvar-btn');
-if (btnAutoSalvar) {
-    pageScope.listen(btnAutoSalvar, 'click', async () => {
-        const idMod = document.getElementById('auto-modalidade').value;
-        const dataSel = document.getElementById('auto-data').value;
-        const horaInicio = document.getElementById('auto-inicio').value;
-        const duracaoMin = parseInt(document.getElementById('auto-duracao').value, 10);
-        const idLocal = parseInt(document.getElementById('auto-local').value, 10);
-
-        if (!idMod) {
-            alert('Por favor, selecione uma modalidade.');
-            return;
-        }
-        if (!dataSel || dataSel < hojeISO()) {
-            alert('Por favor, escolha uma data válida (de hoje em diante).');
-            return;
-        }
-        if (!horaInicio) {
-            alert('Por favor, informe o horário inicial.');
-            return;
-        }
-        if (isNaN(duracaoMin) || duracaoMin <= 0) {
-            alert('Por favor, informe uma duração válida em minutos.');
-            return;
-        }
-
-        // Filtrar jogos agendados da modalidade
-        let jogosMod = jogosCache.filter(j =>
-            String(j.modalidades_id_modalidade) === String(idMod) &&
-            j.status_jogo === 'Agendado'
-        );
-
-        if (jogosMod.length === 0) {
-            alert('Nenhum jogo agendado encontrado para esta modalidade.');
-            return;
-        }
-
-        jogosMod = ordenarJogosChaveamento(jogosMod);
-
-        btnAutoSalvar.disabled = true;
-        btnAutoSalvar.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Processando...';
-
-        try {
-            let [h, m] = horaInicio.split(':').map(Number);
-            let dataAtual = new Date(`${dataSel}T${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:00`);
-            
-            let alteradosComSucesso = 0;
-            let houveErroTurno = false;
-            let errosOutros = [];
-
-            // Executa requisições em sequência
-            for (const jogo of jogosMod) {
-                const inicioStr = `${String(dataAtual.getHours()).padStart(2, '0')}:${String(dataAtual.getMinutes()).padStart(2, '0')}:00`;
-                
-                dataAtual.setMinutes(dataAtual.getMinutes() + duracaoMin);
-                const terminoStr = `${String(dataAtual.getHours()).padStart(2, '0')}:${String(dataAtual.getMinutes()).padStart(2, '0')}:00`;
-
-                const body = {
-                    id_jogo: Number(jogo.id_jogo),
-                    data_jogo: dataSel,
-                    inicio_jogo: inicioStr,
-                    termino_jogo: terminoStr,
-                    locais_id_local: idLocal
-                };
-
-                const resp = await fetch(`${API}jogos`, {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(body)
-                });
-                
-                const resJson = await resp.json();
-                if (resp.ok && resJson.success !== false) {
-                    alteradosComSucesso++;
-                } else {
-                    // Trata mensagens vindas da validação de turno da API
-                    const msgErro = resJson.message || '';
-                    if (resp.status === 422 && (msgErro.includes('excede o turno') || msgErro.includes('turno'))) {
-                        houveErroTurno = true;
-                    } else if (msgErro) {
-                        errosOutros.push(msgErro);
-                    }
-                }
+        const btnAutoSimular = document.getElementById('auto-simular-btn');
+        const btnAutoConfirmar = document.getElementById('auto-salvar-btn');
+        if (btnAutoSimular) pageScope.listen(btnAutoSimular, 'click', async () => {
+            try {
+                blocoAtual = payloadBloco('simular');
+                if (!blocoAtual.id_modalidade || blocoAtual.jogos.length === 0 && blocoAtual.chave_tags.length === 0) throw new Error('Selecione ao menos um jogo ou informe uma posição futura.');
+                const response = await fetch(`${API}agenda-blocos`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(blocoAtual) });
+                const json = await response.json();
+                if (!response.ok || json.success === false) throw new Error(json.message || 'Não foi possível calcular a prévia.');
+                blocoAtual = { ...blocoAtual, revisao: json.revisao };
+                renderPrevia(json);
+                if (btnAutoConfirmar) btnAutoConfirmar.disabled = (json.pendencias || []).length > 0;
+            } catch (error) {
+                document.getElementById('auto-previa').textContent = error.message || 'Erro na prévia.';
+                if (btnAutoConfirmar) btnAutoConfirmar.disabled = true;
             }
-
-            bootstrap.Modal.getInstance(document.getElementById('modalDatasAutomaticas')).hide();
-            await carregarJogosDoInterclasse();
-            
-            // Navega para o mês selecionado e remove filtro por dia
-            const [anoA, mesA] = dataSel.split('-').map(Number);
-            dataNavegacao.setFullYear(anoA);
-            dataNavegacao.setMonth(mesA - 1);
-            filtroData = null; 
-  
-            atualizarTelas();
-
-            // Montagem da mensagem personalizada
-            if (houveErroTurno) {
-                alert(`⚠️ Não foi possível agendar todas as partidas dessa forma porque o horário total ultrapassa o período de aula/turno das turmas envolvidas.\n\n${alteradosComSucesso} de ${jogosMod.length} jogo(s) puderam ser agendados. Tente reduzir o tempo de partida ou iniciar mais cedo.`);
-            } else if (errosOutros.length > 0) {
-                alert(`Aviso: ${alteradosComSucesso} de ${jogosMod.length} jogo(s) foram reagendados.\nMotivo: ${errosOutros[0]}`);
-            } else {
-                alert(`Sucesso! Todos os ${alteradosComSucesso} jogos foram reagendados para ${dataSel}!`);
+        });
+        if (btnAutoConfirmar) pageScope.listen(btnAutoConfirmar, 'click', async () => {
+            if (!blocoAtual) return;
+            btnAutoConfirmar.disabled = true;
+            try {
+                const payload = { ...blocoAtual, acao: 'confirmar', idempotencia: `agenda-${Date.now()}-${Math.random().toString(16).slice(2)}` };
+                const response = await fetch(`${API}agenda-blocos`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+                const json = await response.json();
+                if (!response.ok || json.success === false) throw new Error(json.message || 'Não foi possível confirmar o bloco.');
+                bootstrap.Modal.getInstance(document.getElementById('modalDatasAutomaticas')).hide();
+                blocoAtual = null;
+                await carregarJogosDoInterclasse();
+                atualizarTelas();
+                alert(`${json.programados || 0} jogo(s) programado(s) com sucesso.`);
+            } catch (error) {
+                alert(error.message || 'Não foi possível confirmar o bloco.');
+                btnAutoConfirmar.disabled = false;
             }
+        });
 
-        } catch (e) {
-            alert('Ocorreu um erro ao atualizar os jogos: ' + (e.message || e));
-        } finally {
-            btnAutoSalvar.disabled = false;
-            btnAutoSalvar.innerHTML = '<i class="bi bi-check-lg me-1"></i>Gerar e Aplicar Datas';
-        }
-    });
-}
     });
 })();
 

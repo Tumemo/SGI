@@ -30,6 +30,23 @@ class AuthAndRbacTest
         $resMes = $clientMes->login('mesario', '123');
         Assertions::assertJsonSuccess("Login do Mesário (nível 2)", $resMes);
 
+        // Regression: a mesário may operate the event, but must not open
+        // configuration/user-management pages by typing their URLs.
+        foreach (['colaboradores', 'edicoes/modalidades', 'edicoes/pontuacao', 'edicoes/equipes', 'turmas/alunos'] as $staffPage) {
+            $page = $clientMes->get($staffPage);
+            Assertions::assert(
+                "Mesário bloqueado na página administrativa {$staffPage}",
+                $page['code'] === 200
+                && !str_contains((string) $page['body'], 'Colaboradores')
+                && !str_contains((string) $page['body'], 'Gerenciar alunos'),
+            );
+        }
+        Assertions::assertStatus(
+            'Mesário não pode listar colaboradores pela API',
+            $clientMes->get('api/v1/usuarios?acao=listar_colaboradores'),
+            403,
+        );
+
         // 1.4 Login Aluno
         $clientAluno = new TestClient();
         $resAluno = $clientAluno->login('2879', '123');
@@ -44,6 +61,12 @@ class AuthAndRbacTest
         // 1.6 Rejeição de Matrícula Inexistente
         $resInexistente = $clientAnon->login('usuario_fantasma_9999', '123');
         Assertions::assertStatus("Bloqueio de matrícula inexistente (HTTP 401)", $resInexistente, 401);
+
+        $legacyValidation = $clientAnon->postJson('api/v1/usuarios?acao=validar_inscricao', [
+            'matricula_usuario' => '2879',
+            'data_nasc_usuario' => '2010-01-01',
+        ]);
+        Assertions::assertStatus('Validação cadastral não cria sessão', $legacyValidation, 410);
 
         // 1.7 Bloqueio de Acesso a Área Staff sem Login
         $resSemSessao = $clientAnon->get('painel');
@@ -103,7 +126,9 @@ class AuthAndRbacTest
         Assertions::assert("Rejeição quando as senhas não coincidem", ($resTrocaDiv['json']['success'] ?? false) === false);
 
         // 1.11 Logout
-        $resLogout = $client->get('api/v1/logout');
+        $resLogoutGet = $client->get('api/v1/logout');
+        Assertions::assertStatus('Logout por GET não altera a sessão', $resLogoutGet, 405);
+        $resLogout = $client->postJson('api/v1/logout', []);
         Assertions::assert("Execução de logout limpo", $resLogout['code'] === 200 || $resLogout['code'] === 302);
     }
 }

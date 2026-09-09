@@ -10,10 +10,10 @@ interface ChaveamentoManagement
     public function modality(int $id): ?array;
     /** @return array<mixed> */
     public function read(int $id, bool $individual, string $action): array;
-    /** @param array{primeiro:int, segundo:int, terceiro:int}|null $ranking
+    /** @param array{primeiro:mixed, segundo:mixed, terceiro:mixed}|null $ranking
      * @return array<string, mixed>
      */
-    public function saveIndividual(int $id, ?array $ranking): array;
+    public function saveIndividual(int $id, ?array $ranking, ?int $gameId = null): array;
     /** @return array<string, mixed> */
     public function createBracket(int $id): array;
 }

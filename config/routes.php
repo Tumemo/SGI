@@ -103,6 +103,7 @@ $router->add(['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'], '/api/v1/modalidades',
 $router->add(['GET', 'PUT', 'OPTIONS'], '/api/v1/ranking', $withDatabase(
     static fn (mysqli $conn): RankingController => new RankingController(
         new RankingService(new MysqliRankingRepository($conn)),
+        new \App\Modules\Eventos\Infrastructure\MysqliEdicaoConsultaRepository($conn),
     ),
 ));
 
@@ -168,6 +169,12 @@ $router->add(['GET', 'POST', 'PUT'], '/api/v1/jogos', $withDatabase(
         new \App\Modules\Sincronizacao\Presentation\Http\MutationAction(new \App\Modules\Sincronizacao\Infrastructure\MysqliMutationStore($conn)),
     ),
 ));
+$router->add(['GET', 'POST'], '/api/v1/agenda-blocos', $withDatabase(
+    static fn (mysqli $conn) => new \App\Modules\Competicoes\Presentation\Http\AgendamentoBlocoController(
+        new \App\Modules\Competicoes\Infrastructure\MysqliAgendamentoBlocoRepository($conn),
+        new \App\Modules\Acesso\Presentation\Http\CompetitionAccess(new \App\Modules\Acesso\Infrastructure\MysqliInterclasseRepository($conn)),
+    ),
+));
 $router->add(['GET', 'POST', 'PUT'], '/api/v1/partidas', $withDatabase(
     static fn (mysqli $conn) => new \App\Modules\Competicoes\Presentation\Http\PartidaController(
         new \App\Modules\Competicoes\Application\PartidaService(new \App\Modules\Competicoes\Infrastructure\MysqliPartidaRepository($conn)),
@@ -191,6 +198,7 @@ $router->post('/api/v1/resultados', $withDatabase(
 $router->get('/api/v1/historico-turma', $withDatabase(
     static fn (mysqli $conn) => new \App\Modules\Resultados\Presentation\Http\HistoricoTurmaController(
         new \App\Modules\Resultados\Infrastructure\MysqliHistoricoTurmaRepository($conn),
+        new \App\Modules\Eventos\Infrastructure\MysqliEdicaoConsultaRepository($conn),
     ),
 ));
 $router->add(['GET', 'POST', 'PUT'], '/api/v1/usuarios', $withDatabase(

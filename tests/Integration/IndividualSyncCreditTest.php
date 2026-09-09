@@ -78,6 +78,15 @@ final class IndividualSyncCreditTest
 
     private static function assertMataMataSyncRestoresCredit(\mysqli $connection, int $editionId, int $modalityId): void
     {
+        $forcedIndividual = false;
+        try {
+            (new MysqliChaveamentoSyncGateway($connection))->sync($modalityId, 'individual', [
+                'ranking' => ['primeiro' => 1, 'segundo' => 2, 'terceiro' => 3],
+            ]);
+        } catch (\InvalidArgumentException) {
+            $forcedIndividual = true;
+        }
+        Assertions::assert('Sincronização individual não pode forçar modalidade coletiva', $forcedIndividual);
         $final = $connection->query(
             "SELECT id_jogo FROM jogos WHERE modalidades_id_modalidade = {$modalityId}
              AND nome_jogo = 'MM:2:0:N' AND status_jogo IN ('Concluido', 'Finalizado')

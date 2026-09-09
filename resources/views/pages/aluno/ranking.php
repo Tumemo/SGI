@@ -13,7 +13,6 @@ if (is_numeric($nivelRaw)) {
     $eAdmin = (strtolower((string)$nivelRaw) === 'admin');
 }
 
-$tituloPagina = 'SGI - Ranking';
 $titulo = 'Ranking de Turmas';
 $mostrarVoltar = true;
 $urlVoltar = \App\Shared\Http\Url::to('aluno/inicio');
@@ -22,7 +21,7 @@ $paginaAtiva = 'ranking';
 ?>
 
 <!-- ======================== MOBILE ======================== -->
-<main class="d-md-none py-3 px-3 sgi-inline-9f1598af" >
+<main class="d-md-none py-3 px-3 sgi-u-mb-100px" >
     <div id="msgMob"></div>
 
     <header class="rk-mobile-header mb-2">
@@ -75,7 +74,7 @@ $paginaAtiva = 'ranking';
 <!-- Modal: histórico de pontuações da turma -->
 <div class="modal fade" id="modalHistoricoTurma" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
-        <div class="modal-content border-0 shadow sgi-inline-0e984564" >
+        <div class="modal-content border-0 shadow sgi-u-radius-18px" >
             <div class="modal-header border-0 pb-0 px-4 pt-3">
                 <h5 class="modal-title fw-bold" id="htrTitulo">Histórico de Pontos</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>

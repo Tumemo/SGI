@@ -33,6 +33,9 @@ final class ArrecadacaoController
         try {
             switch ($method) {
                 case 'GET':
+                    if (($denied = \App\Shared\Http\AccessGuard::authorize([0, 1])) !== null) {
+                        return $denied;
+                    }
                     return \App\Shared\Http\Response::json($service->listar((int) ($query['id_interclasse'] ?? 0)), $status, $headers);
                 case 'POST':
                     if (($denied = \App\Shared\Http\AccessGuard::authorize([0, 1])) !== null) {

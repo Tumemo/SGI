@@ -1,5 +1,4 @@
 <?php
-$tituloPagina = 'SGI - Categorias';
 $titulo = 'Categorias';
 $modoPagina = $_GET['modo'] ?? 'view';
 $mostrarVoltar = $modoPagina === 'view';
@@ -12,9 +11,9 @@ $paginaAtiva = 'dashboard';
 
 
 <!-- main mobile -->
-<main class="position-relative d-md-none sgi-inline-80857b05" >
+<main class="position-relative d-md-none sgi-u-mb-120px" >
     <?php if ($modoPagina === 'view'): ?>
-    <a href="<?= \App\Shared\Http\Url::to('painel') ?>" id="btnVoltarCatMobile" class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none sgi-inline-e1bcebb6" >
+    <a href="<?= \App\Shared\Http\Url::to('painel') ?>" id="btnVoltarCatMobile" class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none sgi-u-bg-E30613-radius-6px-p-8px-16px" >
         <i class="bi bi-arrow-left-circle fs-5"></i> <span id="nomeInterclasseCatMob">Interclasse</span>
     </a>
     <?php endif; ?>
@@ -23,7 +22,7 @@ $paginaAtiva = 'dashboard';
         <p class="text-muted small mt-3">(Carregando categorias...)</p>
     </div>
 
-    <section class="d-flex gap-3 mt-3 position-fixed translate-middle flex-wrap justify-content-center sgi-inline-1ab1658d" >
+    <section class="d-flex gap-3 mt-3 position-fixed translate-middle flex-wrap justify-content-center sgi-u-w-max-content-maxw-96vw-top-85" >
         <button type="button" id="btnEditarCategoriaMobile" class="btn btn-outline-primary d-none" onclick="abrirModalEditarCategoria()">Editar</button>
         <button type="button" id="btnExcluirCategoriaMobile" class="btn btn-danger d-none" onclick="excluirCategoria()">Excluir</button>
         <button data-bs-toggle="modal" data-bs-target="#modalCriarCategoria" class="btn btn-outline-danger">Adicionar Categoria</button>
@@ -36,7 +35,7 @@ $paginaAtiva = 'dashboard';
     <div class="container-fluid px-0 position-relative">
         <div class="mb-5">
             <?php if ($modoPagina === 'view'): ?>
-            <a href="<?= \App\Shared\Http\Url::to('painel') ?>" id="btnVoltarCatDesk" class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none sgi-inline-e1bcebb6" >
+            <a href="<?= \App\Shared\Http\Url::to('painel') ?>" id="btnVoltarCatDesk" class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none sgi-u-bg-E30613-radius-6px-p-8px-16px" >
                 <i class="bi bi-arrow-left-circle fs-5"></i> <span id="nomeInterclasseCategoria">Interclasse</span>
             </a>
             <?php endif; ?>
@@ -46,7 +45,7 @@ $paginaAtiva = 'dashboard';
             <p class="text-muted">(Carregando categorias...)</p>
         </div>
 
-        <div class="position-fixed d-flex flex-row gap-3 sgi-inline-ddd60826" >
+        <div class="position-fixed d-flex flex-row gap-3 sgi-u-bottom-40px-right-5-z-1050" >
             <button type="button" id="btnEditarCategoriaDesktop" class="btn btn-outline-primary fw-semibold rounded-3 px-4 py-2 d-flex align-items-center justify-content-center gap-2 shadow-lg d-none" onclick="abrirModalEditarCategoria()">
                 <i class="bi bi-pencil-square"></i> Editar
             </button>
@@ -55,11 +54,11 @@ $paginaAtiva = 'dashboard';
                 <i class="bi bi-trash"></i> Excluir
             </button>
 
-            <button type="button" class="btn bg-white fw-semibold rounded-3 px-4 py-2 d-flex align-items-center justify-content-center gap-2 shadow-lg sgi-inline-f825f7e3"  data-bs-toggle="modal" data-bs-target="#modalCriarCategoria">
+            <button type="button" class="btn bg-white fw-semibold rounded-3 px-4 py-2 d-flex align-items-center justify-content-center gap-2 shadow-lg sgi-u-color-ed1c24-border-2px-solid-ed1c24"  data-bs-toggle="modal" data-bs-target="#modalCriarCategoria">
                 <i class="bi bi-plus-circle"></i> Adicionar
             </button>
 
-            <a href="#" id="btnContinuarDesktop" class="btn fw-semibold rounded-3 px-5 py-2 text-white text-decoration-none shadow-lg d-flex align-items-center justify-content-center sgi-inline-aec0cf4e" >
+            <a href="#" id="btnContinuarDesktop" class="btn fw-semibold rounded-3 px-5 py-2 text-white text-decoration-none shadow-lg d-flex align-items-center justify-content-center sgi-u-bg-ed1c24-border-2px-solid-ed1c24" >
                 Continuar
             </a>
         </div>
@@ -95,8 +94,8 @@ $paginaAtiva = 'dashboard';
                     </div>
                     <div class="mb-3 d-flex align-items-center gap-2 flex-column">
                         <input type="file" id="arquivoUpload" class="d-none" accept=".pdf" onchange="mostrarNomeArquivo()">
-                        <p class="text-center sgi-inline-346a5ee5" >Adicione aqui o pdf dos alunos da turma criada</p>
-                        <label for="arquivoUpload" class="btn btn-light border rounded-circle p-3 sgi-inline-f649ae05" >
+                        <p class="text-center sgi-u-text-13px" >Adicione aqui o pdf dos alunos da turma criada</p>
+                        <label for="arquivoUpload" class="btn btn-light border rounded-circle p-3 sgi-u-cursor-pointer" >
                             <i class="bi bi-upload fs-4"></i>
                         </label>
                         <span id="nomeArquivo" class="text-muted mt-2"></span>

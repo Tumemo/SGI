@@ -33,6 +33,50 @@ final class IndividualRankingServiceTest extends TestCase
             self::assertNull($repository->rankingCall);
         }
     }
+
+    public function testRankingIncompletoNaoCriaJogoDeAgenda(): void
+    {
+        $repository = new IndividualRankingRepositoryFake();
+        $service = new IndividualRankingService($repository);
+
+        $this->expectException(\InvalidArgumentException::class);
+        $service->registrar(7, ['primeiro' => 11, 'segundo' => 12]);
+        self::assertNull($repository->rankingCall);
+    }
+
+    public function testAceitaIdsComoStringsDecimaisSemCoercaoPermissiva(): void
+    {
+        $repository = new IndividualRankingRepositoryFake();
+        $service = new IndividualRankingService($repository);
+
+        $service->registrar(7, ['primeiro' => '11', 'segundo' => '12', 'terceiro' => '13']);
+
+        self::assertSame([7, ['primeiro' => 11, 'segundo' => 12, 'terceiro' => 13]], $repository->rankingCall);
+    }
+
+    /** @dataProvider invalidRankingIds */
+    public function testRejeitaIdsQueParecemNumericosMasNaoSaoInteirosPositivos(mixed $value): void
+    {
+        $repository = new IndividualRankingRepositoryFake();
+        $service = new IndividualRankingService($repository);
+
+        $this->expectException(\InvalidArgumentException::class);
+        $service->registrar(7, ['primeiro' => $value, 'segundo' => 12, 'terceiro' => 13]);
+        self::assertNull($repository->rankingCall);
+    }
+
+    /** @return iterable<string,array{mixed}> */
+    public static function invalidRankingIds(): iterable
+    {
+        yield 'zero' => [0];
+        yield 'negative' => [-1];
+        yield 'float' => [1.5];
+        yield 'boolean' => [true];
+        yield 'prefixo' => ['12abc'];
+        yield 'notacao' => ['1e2'];
+        yield 'lista' => [[11]];
+        yield 'overflow' => ['999999999999999999999999999999999999'];
+    }
 }
 
 final class IndividualRankingRepositoryFake implements IndividualRankingRepository
@@ -40,7 +84,7 @@ final class IndividualRankingRepositoryFake implements IndividualRankingReposito
     /** @var array{0:int,1:array{primeiro:int,segundo:int,terceiro:int}}|null */
     public ?array $rankingCall = null;
 
-    public function salvarRanking(int $modalityId, array $ranking): array
+    public function salvarRanking(int $modalityId, array $ranking, ?int $gameId = null): array
     {
         $this->rankingCall = [$modalityId, $ranking];
         return ['success' => true];

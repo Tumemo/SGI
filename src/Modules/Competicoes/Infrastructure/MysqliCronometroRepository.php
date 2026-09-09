@@ -17,9 +17,14 @@ final class MysqliCronometroRepository implements CronometroRepository
     public function findForUpdate(int $gameId): ?array
     {
         $statement = $this->connection->prepare(
-            'SELECT status_jogo, duracao_jogo, tempo_extra_jogo, tempo_restante_jogo,
-                    UNIX_TIMESTAMP(data_inicio_real) AS data_inicio_epoch
-             FROM jogos WHERE id_jogo = ? LIMIT 1 FOR UPDATE',
+            'SELECT j.status_jogo, j.data_jogo, j.inicio_jogo, j.termino_jogo, j.locais_id_local,
+                    duracao_jogo, tempo_extra_jogo, tempo_restante_jogo,
+                    UNIX_TIMESTAMP(j.data_inicio_real) AS data_inicio_epoch,
+                    m.tipos_modalidades_id_tipo_modalidade, tm.nome_tipo_modalidade
+             FROM jogos j
+             INNER JOIN modalidades m ON m.id_modalidade = j.modalidades_id_modalidade
+             LEFT JOIN tipos_modalidades tm ON tm.id_tipo_modalidade = m.tipos_modalidades_id_tipo_modalidade
+             WHERE j.id_jogo = ? LIMIT 1 FOR UPDATE',
         );
         if ($statement === false) {
             throw new RuntimeException('Não foi possível carregar o cronômetro.');
@@ -36,10 +41,17 @@ final class MysqliCronometroRepository implements CronometroRepository
         }
         return [
             'status_jogo' => (string) $row['status_jogo'],
+            'data_jogo' => $row['data_jogo'],
+            'inicio_jogo' => $row['inicio_jogo'],
+            'termino_jogo' => $row['termino_jogo'],
+            'locais_id_local' => $row['locais_id_local'] === null ? null : (int) $row['locais_id_local'],
             'duracao_jogo' => $row['duracao_jogo'],
             'tempo_extra_jogo' => $row['tempo_extra_jogo'],
             'tempo_restante_jogo' => $row['tempo_restante_jogo'],
             'data_inicio_real' => $row['data_inicio_epoch'] === null ? null : (int) $row['data_inicio_epoch'],
+            'tipos_modalidades_id_tipo_modalidade' => (int) $row['tipos_modalidades_id_tipo_modalidade'],
+            'nome_tipo_modalidade' => $row['nome_tipo_modalidade'],
+            'tipo_competicao' => \App\Modules\Competicoes\Domain\TipoCompeticaoRules::resolve($row),
         ];
     }
 

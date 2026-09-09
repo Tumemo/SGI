@@ -25,8 +25,8 @@ final class MysqliPerfilRepository implements PerfilRepository
 
     public function update(int $id, string $name, ?string $passwordHash): void
     {
-        $statement = $this->connection->prepare('UPDATE usuarios SET nome_usuario = ?, senha_usuario = COALESCE(?, senha_usuario) WHERE id_usuario = ?');
-        $statement->bind_param('ssi', $name, $passwordHash, $id);
+        $statement = $this->connection->prepare('UPDATE usuarios SET nome_usuario = ?, senha_usuario = COALESCE(?, senha_usuario), auth_version = auth_version + IF(? IS NULL, 0, 1) WHERE id_usuario = ?');
+        $statement->bind_param('sssi', $name, $passwordHash, $passwordHash, $id);
         $statement->execute();
         $statement->close();
     }

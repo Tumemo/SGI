@@ -27,6 +27,10 @@ final class LocalController
         }
 
         try {
+            if ($request->method() === 'GET' && (int) ($_SESSION['nivel'] ?? -1) === 2
+                && (int) ($_SESSION['id_interclasse'] ?? 0) <= 0) {
+                return Response::json(['success' => false, 'message' => 'Nenhuma edição ativa.'], 403);
+            }
             return match ($request->method()) {
                 'GET' => Response::json([
                     'success' => true,
@@ -34,7 +38,9 @@ final class LocalController
                         'id_local' => (int) $request->query('id_local', 0),
                         'disponivel' => (string) $request->query('disponivel', ''),
                         'busca' => trim((string) $request->query('busca', '')),
-                        'id_interclasse' => (int) $request->query('id_interclasse', 0),
+                        'id_interclasse' => (int) ($_SESSION['nivel'] ?? -1) === 2
+                            ? (int) ($_SESSION['id_interclasse'] ?? 0)
+                            : (int) $request->query('id_interclasse', 0),
                     ]),
                 ]),
                 'POST' => $this->create($request),

@@ -1,6 +1,7 @@
 const { test, expect } = require('./fixtures.cjs');
 const fs = require('node:fs');
 const path = require('node:path');
+const { agendarBloco } = require('./agenda-helper.cjs');
 
 // O servidor de teste usa este diretório relativo para as sessões. O
 // Playwright limpa o outputDir antes de carregar os testes, então recriamos
@@ -68,6 +69,12 @@ async function criarJogoFixture(request) {
     const jogo = jogos.find((item) => String(item.nome_jogo) === nomeJogo);
     const idJogo = Number(jogo && jogo.id_jogo);
     if (!idJogo) throw new Error(`A API não retornou o ID do jogo: ${JSON.stringify(jogo)}`);
+    await agendarBloco(request, {
+        idInterclasse,
+        idModalidade: Number(modalidade.id_modalidade),
+        jogos: [{ id_jogo: idJogo }],
+        label: 'T09-clock',
+    });
     return { idJogo, nomeJogo };
 }
 

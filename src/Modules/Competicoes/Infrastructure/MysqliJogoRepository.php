@@ -16,11 +16,12 @@ final class MysqliJogoRepository implements JogoRepository
 
     public function localConflict(string $date, int $localId, string $start, string $end, ?int $currentId = null): ?string
     {
-        if ($start === '00:00:00' || $end === '00:00:00') {
+        if ($start === '' || $end === '' || $start === '00:00:00' || $end === '00:00:00') {
             return null;
         }
         $sql = "SELECT nome_jogo FROM jogos
-                WHERE data_jogo = ? AND locais_id_local = ? AND status_jogo != 'Cancelado'
+                WHERE data_jogo = ? AND locais_id_local = ?
+                  AND status_jogo IN ('Agendado', 'Iniciado', 'Pausado')
                   AND ? < termino_jogo AND ? > inicio_jogo";
         $types = 'siss';
         $params = [$date, $localId, $start, $end];

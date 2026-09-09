@@ -54,7 +54,7 @@ window.SGIPage.mount("eventos/configurar-arrecadacao", function (pageConfig, pag
         const listaDesktop = document.getElementById('listaArrecadacaoDesktop');
 
         if (todasAsTurmas.length === 0) {
-            const msg = '<div class="text-center text-muted py-5 sgi-inline-c5f53f82" ><i class="bi bi-inbox sgi-inline-43389611" ></i>Nenhuma turma encontrada.</div>';
+            const msg = '<div class="text-center text-muted py-5 sgi-u-col-1-1" ><i class="bi bi-inbox sgi-u-text-2rem-display-block-mb-5rem" ></i>Nenhuma turma encontrada.</div>';
             listaMobile.innerHTML = msg;
             listaDesktop.innerHTML = msg;
             return;
@@ -302,7 +302,7 @@ window.SGIPage.mount("eventos/configurar-arrecadacao", function (pageConfig, pag
             return;
         }
 
-        let html = '<div class="table-responsive"><table class="table table-hover align-middle">';
+        let html = '<div class="table-responsive"><table class="table sgi-table table-hover align-middle">';
         html += '<thead><tr class="table-light"><th>Data</th><th class="text-center">Kg</th><th class="text-center">Pts</th>';
 
         if (isAdminPage && filtroHistoricoAtual === 'adicionados') {

@@ -151,7 +151,7 @@ async function carregar() {
                     <div class="text-muted small">${esc(u.matricula_usuario)}</div>
                 </div>
                 ${isAdmin ? `
-                    <button onclick="removerAluno(${u.id_usuario}, ${idEquipe})" class="btn btn-aluno btn-sm sgi-inline-d00c1ab7" >
+                    <button onclick="removerAluno(${u.id_usuario}, ${idEquipe})" class="btn btn-aluno btn-sm sgi-u-p-0-3rem-0-75rem-text-0-8rem" >
                         <i class="bi bi-trash"></i>
                     </button>
                 ` : ''}
@@ -164,7 +164,7 @@ async function carregar() {
                 <td>${esc(u.matricula_usuario)}</td>
                 ${isAdmin ? `
                     <td class="text-end">
-                        <button onclick="removerAluno(${u.id_usuario}, ${idEquipe})" class="btn btn-aluno btn-sm sgi-inline-d00c1ab7" >
+                        <button onclick="removerAluno(${u.id_usuario}, ${idEquipe})" class="btn btn-aluno btn-sm sgi-u-p-0-3rem-0-75rem-text-0-8rem" >
                             <i class="bi bi-trash"></i>
                         </button>
                     </td>

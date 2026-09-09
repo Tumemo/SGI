@@ -92,8 +92,16 @@
         var store = { 'jogos': 'jogos', 'partidas': 'partidas', 'turmas': 'turmas', 'modalidades': 'modalidades', 'categorias': 'categorias', 'locais': 'locais', 'equipes': 'equipes', 'artilheiros': 'atletas', 'ocorrencias': 'ocorrencias', 'ocorrencias_turmas': 'ocorrencias_turmas', 'chaveamentos': 'chaveamentos' }[file];
         if (!store) return Promise.resolve();
         if (!Array.isArray(rows)) rows = [data];
+        var action = info.q && info.q.get('acao');
         return Promise.all(rows.filter(function (r) { return r && typeof r === 'object'; }).map(function (r, i) {
             var identity = idFor(file, r, url + '#' + i);
+            if (file === 'chaveamentos' && action) {
+                r = Object.assign({}, r, {
+                    _sgi_chaveamento_url: url,
+                    _sgi_chaveamento_action: action,
+                    _sgi_chaveamento_modality: info.q.get('id_modalidade') || null,
+                });
+            }
             return put(store, identity, r);
         }));
     }
@@ -214,23 +222,83 @@
         if (file === 'ocorrencias_turmas' && item.method === 'POST') return put('ocorrencias_turmas', temporary, Object.assign({ id_ocorrencia: temporary, _pendente: true }, data));
         if (file === 'chaveamentos' && item.method === 'POST' && data.tipo_modalidade === 'individual' && data.ranking && data.id_modalidade) {
             var tagInd = 'IND:' + data.id_modalidade;
-            return all('jogos').then(function (jogos) {
-                var indJogo = jogos.filter(function (j) { return j.nome_jogo === tagInd; })[0];
+            var rankingUrl = apiBaseForChaveamento(data.id_modalidade, 'ranking');
+            return Promise.all([all('jogos'), all('chaveamentos')]).then(function (state) {
+                var jogos = state[0], chaveamentos = state[1];
+                var indJogo = data.id_jogo
+                    ? jogos.filter(function (j) { return String(j.id_jogo) === String(data.id_jogo); })[0]
+                    : jogos.filter(function (j) { return j.nome_jogo === tagInd; })[0];
                 if (!indJogo) {
                     indJogo = { id_jogo: tagInd, nome_jogo: tagInd, modalidades_id_modalidade: data.id_modalidade };
                 }
                 indJogo.status_jogo = 'Concluido';
                 indJogo._pendente = true;
-                return put('jogos', indJogo.id_jogo, indJogo);
+                var pendente = {
+                    _sgi_chaveamento_pending: true,
+                    _sgi_chaveamento_url: rankingUrl,
+                    _sgi_chaveamento_action: 'ranking',
+                    _sgi_chaveamento_modality: String(data.id_modalidade),
+                    _sgi_chaveamento_mutation_id: String(item.id),
+                    ranking: [
+                        { posicao: 1, id_usuario: Number(data.ranking.primeiro) },
+                        { posicao: 2, id_usuario: Number(data.ranking.segundo) },
+                        { posicao: 3, id_usuario: Number(data.ranking.terceiro) },
+                    ],
+                    _pendente: true,
+                };
+                return Promise.all([
+                    put('jogos', indJogo.id_jogo, indJogo),
+                    put('chaveamentos', 'pending|' + data.id_modalidade + '|' + item.id, Object.assign({}, pendente, { _sgi_chaveamento_shadow: true })),
+                    put('chaveamentos', 'pending|' + data.id_modalidade, pendente),
+                ]);
             });
         }
         return Promise.resolve();
+    }
+    function apiBaseForChaveamento(idModalidade, action) {
+        var base = window.SGI_API_BASE || '/api/v1/';
+        base = String(base).replace(/\/?$/, '/');
+        return base + 'chaveamentos?tipo_modalidade=individual&acao=' + encodeURIComponent(action) + '&id_modalidade=' + encodeURIComponent(idModalidade);
     }
     function localGet(url) {
         var info = urlInfo(url), file = info.file, store = { 'jogos': 'jogos', 'partidas': 'partidas', 'turmas': 'turmas', 'modalidades': 'modalidades', 'categorias': 'categorias', 'locais': 'locais', 'equipes': 'equipes', 'artilheiros': 'atletas', 'ocorrencias': 'ocorrencias', 'ocorrencias_turmas': 'ocorrencias_turmas', 'chaveamentos': 'chaveamentos' }[file];
         // Endpoints com "acao" possuem formatos especiais; o cache por URL
         // da camada base preserva exatamente a resposta original nesses casos.
-        if (!store || info.q.get('acao')) return Promise.resolve(null);
+        if (!store) return Promise.resolve(null);
+        if (file === 'chaveamentos' && ['participantes', 'ranking'].indexOf(info.q.get('acao')) !== -1) {
+            var action = info.q.get('acao');
+            var modality = String(info.q.get('id_modalidade') || '');
+            return all('chaveamentos').then(function (rows) {
+                var matching = rows.filter(function (row) {
+                    return String(row._sgi_chaveamento_modality || '') === modality
+                        && String(row._sgi_chaveamento_action || '') === action;
+                });
+                var pending = matching.filter(function (row) { return row._sgi_chaveamento_pending && row._sgi_chaveamento_shadow !== true; }).pop();
+                var confirmed = matching.filter(function (row) { return row._sgi_chaveamento_pending === false && Array.isArray(row.ranking); }).pop();
+                var base = matching.filter(function (row) { return !row._sgi_chaveamento_pending; });
+                if (action === 'participantes') {
+                    return new Response(JSON.stringify({ success: true, participantes: base.map(function (row) {
+                        var copy = Object.assign({}, row);
+                        delete copy._sgi_chaveamento_url; delete copy._sgi_chaveamento_action; delete copy._sgi_chaveamento_modality;
+                        return copy;
+                    }) }), { status: 200, headers: { 'Content-Type': 'application/json' } });
+                }
+                var participants = rows.filter(function (row) {
+                    return String(row._sgi_chaveamento_modality || '') === modality && row._sgi_chaveamento_action === 'participantes';
+                });
+                var ranking = pending && Array.isArray(pending.ranking)
+                    ? pending.ranking
+                    : (confirmed && Array.isArray(confirmed.ranking)
+                        ? confirmed.ranking
+                        : base.filter(function (row) { return row.posicao != null; }));
+                ranking = ranking.map(function (row) {
+                    var participant = participants.filter(function (candidate) { return String(candidate.id_usuario) === String(row.id_usuario); })[0] || {};
+                    return Object.assign({}, participant, row);
+                });
+                return new Response(JSON.stringify({ success: true, ranking: ranking, jogo: null, offline: Boolean(pending), queued: Boolean(pending) }), { status: 200, headers: { 'Content-Type': 'application/json' } });
+            });
+        }
+        if (file === 'chaveamentos' && info.q.get('acao')) return Promise.resolve(null);
         return all(store).then(function (rows) {
             var idOcorrencia = file === 'ocorrencias' ? info.q.get('id_ocorrencia') : null;
             var idOcorrenciaTurma = file === 'ocorrencias_turmas' ? info.q.get('id_ocorrencia_turma') : null;
@@ -274,6 +342,10 @@
             if (arquivo !== 'ocorrencias') return false;
         } else if (info.file === 'ocorrencias_turmas') {
             if (arquivo !== 'ocorrencias_turmas') return false;
+        } else if (info.file === 'chaveamentos') {
+            if (arquivo !== 'chaveamentos') return false;
+            var modalidadeConsulta = info.q && info.q.get('id_modalidade');
+            return modalidadeConsulta !== null && String(dados.id_modalidade || dados._sgi_chaveamento_modality || '') === String(modalidadeConsulta);
         } else {
             return false;
         }
@@ -357,7 +429,7 @@
             var priorizarLocal = navigator.onLine === false ||
                 info.file === 'jogos' || info.file === 'partidas' ||
                 info.file === 'artilheiros' || info.file === 'ocorrencias' ||
-                info.file === 'ocorrencias_turmas';
+                info.file === 'ocorrencias_turmas' || info.file === 'chaveamentos';
             if (priorizarLocal) {
                 return temPendenciaRelevante(url).then(function (haPendencia) {
                     if (!haPendencia) {
@@ -407,6 +479,42 @@
             var info = urlInfo(item.url), resposta = {};
             try { resposta = JSON.parse(text || '{}'); } catch (_) {}
             var dados = bodyOf(item);
+            if (info.file === 'chaveamentos' && item.method === 'POST'
+                && dados.tipo_modalidade === 'individual' && dados.id_modalidade) {
+                var modalidade = String(dados.id_modalidade);
+                return remove('chaveamentos', 'pending|' + modalidade + '|' + item.id)
+                    .then(function () { return all('chaveamentos'); })
+                    .then(function (rows) {
+                        rows = rows || [];
+                        var restantes = rows.filter(function (row) {
+                            return row && row._sgi_chaveamento_pending &&
+                                String(row._sgi_chaveamento_modality || '') === modalidade &&
+                                row._sgi_chaveamento_shadow;
+                        });
+                        var proxima = restantes[restantes.length - 1] || null;
+                        var tarefas = [remove('fila_sincronizacao', item.id)];
+                        if (proxima) {
+                            tarefas.push(put('chaveamentos', 'pending|' + modalidade, Object.assign({}, proxima, { _sgi_chaveamento_shadow: false })));
+                        } else {
+                            tarefas.push(remove('chaveamentos', 'pending|' + modalidade));
+                            var rankingConfirmado = Array.isArray(dados.ranking)
+                                ? dados.ranking
+                                : [
+                                    { posicao: 1, id_usuario: Number(dados.ranking && dados.ranking.primeiro) },
+                                    { posicao: 2, id_usuario: Number(dados.ranking && dados.ranking.segundo) },
+                                    { posicao: 3, id_usuario: Number(dados.ranking && dados.ranking.terceiro) },
+                                ];
+                            tarefas.push(put('chaveamentos', 'confirmed|' + modalidade, {
+                                _sgi_chaveamento_pending: false,
+                                _sgi_chaveamento_modality: modalidade,
+                                _sgi_chaveamento_action: 'ranking',
+                                ranking: rankingConfirmado,
+                                _pendente: false,
+                            }));
+                        }
+                        return Promise.all(tarefas);
+                    });
+            }
             if (info.file === 'jogos' && item.method === 'PUT' && dados.id_jogo != null) {
                 return get('jogos', dados.id_jogo).then(function (jogo) {
                     if (!jogo) return remove('fila_sincronizacao', item.id);

@@ -16,7 +16,7 @@ final class MysqliUsuarioAdministrativoRepository implements UsuarioAdministrati
 
     public function deactivateStudent(int $id): bool
     {
-        $statement = $this->connection->prepare("UPDATE usuarios SET status_usuario = '0' WHERE id_usuario = ? AND nivel_usuario = '3'");
+        $statement = $this->connection->prepare("UPDATE usuarios SET status_usuario = '0', auth_version = auth_version + 1 WHERE id_usuario = ? AND nivel_usuario = '3'");
         if ($statement === false) {
             throw new RuntimeException('Não foi possível remover aluno.');
         }
@@ -32,7 +32,7 @@ final class MysqliUsuarioAdministrativoRepository implements UsuarioAdministrati
 
     public function resetStudentPassword(int $id, string $hash): bool
     {
-        $statement = $this->connection->prepare("UPDATE usuarios SET senha_usuario = ? WHERE id_usuario = ? AND nivel_usuario = '3'");
+        $statement = $this->connection->prepare("UPDATE usuarios SET senha_usuario = ?, auth_version = auth_version + 1 WHERE id_usuario = ? AND nivel_usuario = '3'");
         if ($statement === false) {
             throw new RuntimeException('Não foi possível resetar senha de aluno.');
         }
@@ -64,7 +64,7 @@ final class MysqliUsuarioAdministrativoRepository implements UsuarioAdministrati
 
     public function deactivateCollaborator(int $id, ?int $interclasseId): bool
     {
-        $sql = "UPDATE usuarios SET status_usuario = '0' WHERE id_usuario = ?
+        $sql = "UPDATE usuarios SET status_usuario = '0', auth_version = auth_version + 1 WHERE id_usuario = ?
                 AND (interclasses_id_interclasse = ? OR interclasses_id_interclasse IS NULL)";
         $statement = $this->connection->prepare($sql);
         if ($statement === false) {

@@ -1,5 +1,4 @@
 <?php
-$tituloPagina = 'SGI - Jogos';
 $titulo = 'Tabela de Jogos';
 $mostrarVoltar = true;
 $mostrarSino = true;

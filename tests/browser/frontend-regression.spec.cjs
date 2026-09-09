@@ -69,6 +69,7 @@ async function obterContexto(request) {
     // Cria um competidor efêmero para que a suíte não dependa do estado de um
     // RM importado por uma execução anterior (ou que tenha sido desativado).
     const matriculaAluno = `98${Date.now().toString().slice(-7)}`;
+    let senhaAluno = '';
     if (idTurma > 0) {
         const aluno = await jsonOrThrow(await request.post('api/v1/usuarios?acao=criar_aluno', {
             data: {
@@ -80,6 +81,8 @@ async function obterContexto(request) {
             }
         }), 'competidor efêmero do frontend');
         if (aluno.status !== 'sucesso') throw new Error(`Não foi possível criar o competidor visual: ${JSON.stringify(aluno)}`);
+        senhaAluno = String(aluno.senha_temporaria || '');
+        if (senhaAluno === '') throw new Error('A API não retornou a senha temporária do competidor visual.');
     }
 
     return {
@@ -90,6 +93,7 @@ async function obterContexto(request) {
         idEquipe: Number(equipe.id_equipe || 0),
         idJogo: Number(jogo.id_jogo || 0),
         matriculaAluno,
+        senhaAluno,
         categorias: Array.isArray(categorias) ? categorias : [],
         modalidades: listaModalidades,
         turmas: listaTurmas,
@@ -98,11 +102,11 @@ async function obterContexto(request) {
     };
 }
 
-async function entrar(page, matricula) {
+async function entrar(page, matricula, senha = '123') {
     await page.goto('login', { waitUntil: 'domcontentloaded' });
     await expect(page.locator('#form_desktop')).toBeVisible();
     await page.locator('#form_desktop .ipt-matricula').fill(String(matricula));
-    await page.locator('#form_desktop .ipt-senha').fill('123');
+    await page.locator('#form_desktop .ipt-senha').fill(String(senha));
     await page.locator('#form_desktop button[type="submit"]').click();
     await page.waitForLoadState('domcontentloaded');
     await expect(page).not.toHaveURL(/login(?:\?|$)/, { timeout: 15_000 });
@@ -216,6 +220,9 @@ test.describe('Frontend — regressão visual por perfil', () => {
                 throw new Error(`Contexto incompleto para a tela ${nome}: ${caminho}`);
             }
             await validarTela(page, testInfo, nome, caminho, seletores);
+            if (nome === '04-admin-dashboard') {
+                await expect(page.locator('#avisoFinalizacaoInterclasse')).toBeHidden();
+            }
         }
         expect(erros).toEqual([]);
     });
@@ -230,17 +237,16 @@ test.describe('Frontend — regressão visual por perfil', () => {
             ['27-colab-home', `${base}edicoes`, ['#listaDesktop']],
             ['28-colab-dashboard', `${base}painel?id=${id}`, ['#conteudo-principal']],
             ['29-colab-modalidades', `${base}modalidades?id=${id}`, ['#listaModalidadesDesktop']],
-            ['30-colab-pontuacao', `${base}edicoes/pontuacao?id=${id}&modo=view`, ['#btnSalvarPontuacao']],
-            ['31-colab-locais', `${base}edicoes/locais?id=${id}`, ['#listaLocaisDesktop']],
-            ['32-colab-agenda', `${base}edicoes/agenda?id=${id}&modo=view`, ['#lista-eventos']],
-            ['33-colab-arrecadacao', `${base}edicoes/arrecadacao?id=${id}`, ['#listaArrecadacaoDesktop']],
-            ['34-colab-ocorrencias', `${base}ocorrencias?id=${id}`, ['#listaOcorrenciasDesktop']],
-            ['35-colab-categorias', `${base}categorias?id=${id}`, ['#listaCategoriasDesktop']],
-            ['36-colab-turmas', `${base}turmas?id=${id}`, ['#listaTurmasDesktop']],
-            ['37-colab-equipes', `${base}edicoes/equipes?id=${id}`, ['#listaEquipesDesktop']],
-            ['38-colab-ranking', `${base}ranking?id=${id}`, ['#listaDesk']],
-            ['39-colab-chaveamento', `${base}chaveamento?id=${id}`, ['#bracketArea', '#tbodyJogos']],
-            ['40-colab-perfil', `${base}perfil`, ['#perfilNomeInfo']]
+            // Pontuação, locais e equipes são configurações administrativas;
+            // o colaborador opera agenda/resultados, mas não altera o cadastro.
+            ['30-colab-agenda', `${base}edicoes/agenda?id=${id}&modo=view`, ['#lista-eventos']],
+            ['31-colab-arrecadacao', `${base}edicoes/arrecadacao?id=${id}`, ['#listaArrecadacaoDesktop']],
+            ['32-colab-ocorrencias', `${base}ocorrencias?id=${id}`, ['#listaOcorrenciasDesktop']],
+            ['33-colab-categorias', `${base}categorias?id=${id}`, ['#listaCategoriasDesktop']],
+            ['34-colab-turmas', `${base}turmas?id=${id}`, ['#listaTurmasDesktop']],
+            ['35-colab-ranking', `${base}ranking?id=${id}`, ['#listaDesk']],
+            ['36-colab-chaveamento', `${base}chaveamento?id=${id}`, ['#bracketArea', '#tbodyJogos']],
+            ['37-colab-perfil', `${base}perfil`, ['#perfilNomeInfo']]
         ];
         for (const [nome, caminho, seletores] of telas) {
             await validarTela(page, testInfo, nome, caminho, seletores);
@@ -285,7 +291,7 @@ test.describe('Frontend — regressão visual por perfil', () => {
     test('portal do aluno em todas as telas', async ({ page, request }, testInfo) => {
         const erros = ouvirErros(page);
         const ctx = await obterContexto(request);
-        await entrar(page, ctx.matriculaAluno);
+        await entrar(page, ctx.matriculaAluno, ctx.senhaAluno);
         const base = 'aluno/';
         const id = ctx.idInterclasse;
         const telas = [

@@ -1,5 +1,4 @@
 <?php
-$tituloPagina = 'SGI - Home';
 $titulo = '';
 $mostrarVoltar = false;
 $nivelUsuario = (int)($_SESSION['nivel'] ?? -1);

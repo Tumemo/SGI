@@ -17,7 +17,12 @@ interface CategoriaRepository
      */
     public function create(array $data): int;
 
-    public function findStatus(int $id): ?string;
+    /**
+     * @return array{status_categoria:string, interclasses_id_interclasse:int}|null
+     */
+    public function find(int $id): ?array;
+
+    public function duplicateExists(int $editionId, string $name, int $exceptId = 0): bool;
 
     /**
      * @param array<string, mixed> $data

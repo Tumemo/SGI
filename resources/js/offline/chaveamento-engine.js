@@ -96,6 +96,92 @@
         try { return new URL(url, window.location.href).href; } catch (e) { return url; }
     }
 
+    function agendaRows(data) {
+        if (Array.isArray(data)) return data;
+        if (data && Array.isArray(data.data)) return data.data;
+        if (data && Array.isArray(data.reservas)) return data.reservas;
+        return [];
+    }
+
+    function lerCacheLista(urlRel) {
+        var chave = urlAbsoluta(urlRel);
+        if (!window.SGIOffline || typeof window.SGIOffline.getCached !== 'function') {
+            return Promise.resolve([]);
+        }
+        return Promise.resolve(window.SGIOffline.getCached(chave)).then(function (rec) {
+            if (!rec || !rec.text) return [];
+            try { return agendaRows(JSON.parse(rec.text)); } catch (e) { return []; }
+        }).catch(function () { return []; });
+    }
+
+    function edicaoConhecida(jogos) {
+        var ativa = Number(window.SGI_SESSION_INTERCLASSE_ATIVO || 0);
+        if (ativa > 0) return ativa;
+        for (var i = 0; i < (jogos || []).length; i++) {
+            var jogo = jogos[i] || {};
+            var id = Number(jogo.id_interclasse || jogo.interclasses_id_interclasse || 0);
+            if (id > 0) return id;
+        }
+        return 0;
+    }
+
+    function carregarReservasAgenda(idModalidade, jogos) {
+        var edition = edicaoConhecida(jogos);
+        if (edition <= 0 || Number(idModalidade) <= 0) return Promise.resolve([]);
+        var url = apiBase() + 'agenda-blocos?id_interclasse=' + encodeURIComponent(edition) +
+            '&id_modalidade=' + encodeURIComponent(idModalidade);
+        return fetch(url, { headers: { 'Accept': 'application/json' } }).then(function (resp) {
+            if (!resp.ok) throw new Error('Falha ao consultar reservas da agenda.');
+            return resp.json();
+        }).then(agendaRows).catch(function () { return lerCacheLista(url); });
+    }
+
+    function reservaAgendaDoJogo(jogo, reservas, defaultModality) {
+        var idModalidade = Number(jogo && (jogo.modalidades_id_modalidade || jogo.id_modalidade) || defaultModality || 0);
+        var tag = String(jogo && (jogo.chave_tag || jogo.nome_jogo) || '');
+        return (reservas || []).filter(function (reserva) {
+            return Number(reserva.id_modalidade) === idModalidade &&
+                String(reserva.chave_tag || '') === tag &&
+                String(reserva.chave_versao || '1') === String(jogo.chave_versao || '1');
+        })[0] || null;
+    }
+
+    function aplicarReservaAgendaNoJogo(jogo, reserva, locaisStore) {
+        if (!jogo || !reserva || !reserva.data_reserva || !reserva.inicio_reserva ||
+            !reserva.termino_reserva || Number(reserva.id_local) <= 0) return false;
+        jogo.data_jogo = String(reserva.data_reserva).slice(0, 10);
+        jogo.inicio_jogo = String(reserva.inicio_reserva);
+        jogo.termino_jogo = String(reserva.termino_reserva);
+        jogo.locais_id_local = Number(reserva.id_local);
+        var local = (locaisStore || []).filter(function (item) {
+            return Number(item && item.id_local) === Number(reserva.id_local);
+        })[0];
+        jogo.nome_local = reserva.nome_local || (local && local.nome_local) || jogo.nome_local || null;
+        var duration = Number(reserva.duracao_segundos || 0);
+        if (duration <= 0) {
+            var inicio = String(reserva.inicio_reserva).split(':');
+            var termino = String(reserva.termino_reserva).split(':');
+            var inicioSeg = Number(inicio[0]) * 3600 + Number(inicio[1] || 0) * 60 + Number(inicio[2] || 0);
+            var terminoSeg = Number(termino[0]) * 3600 + Number(termino[1] || 0) * 60 + Number(termino[2] || 0);
+            duration = terminoSeg - inicioSeg;
+        }
+        if (duration > 0) {
+            jogo.duracao_jogo = duration;
+            if (jogo.tempo_restante_jogo == null || jogo._local) jogo.tempo_restante_jogo = duration;
+        }
+        jogo._agenda_reserva_id = Number(reserva.id_reserva || 0) || null;
+        return true;
+    }
+
+    function aplicarReservasAgenda(jogos, reservas, locaisStore, defaultModality) {
+        var alterou = false;
+        (jogos || []).forEach(function (jogo) {
+            var reserva = reservaAgendaDoJogo(jogo, reservas, defaultModality);
+            if (reserva) alterou = aplicarReservaAgendaNoJogo(jogo, reserva, locaisStore) || alterou;
+        });
+        return alterou;
+    }
+
     /* --------------------- Leitura dos dados pendentes locais ---------------------
        Os resultados lançados offline ficam na mutation_queue (IndexedDB
        sgi_offline), na forma das requisições originais:
@@ -228,7 +314,7 @@
        de 3º lugar quando as semifinais terminam. A final (MM:2) é o último
        jogo operacional: seu vencedor é o campeão e não existe partida solo. */
 
-    function criarMotorAvanco(jogos, dirEquipes, contadorInicial) {
+    function criarMotorAvanco(jogos, dirEquipes, contadorInicial, reservasAgenda, locaisStore) {
         var mapaTag = {};
         var mapaId = {};
         /* Ids temporários negativos. Opcionalmente semeado abaixo do menor id
@@ -238,20 +324,11 @@
         var contadorLocal = (typeof contadorInicial === 'number') ? contadorInicial : 0;
         var criouJogo = false;
         var primeiroJogo = jogos[0] || {};
-        var hoje = new Date();
-        var hojeISO = hoje.getFullYear() + '-' + String(hoje.getMonth() + 1).padStart(2, '0') + '-' + String(hoje.getDate()).padStart(2, '0');
-        // Partidas derivadas pertencem ao mesmo evento dos jogos de origem.
-        // Reaproveitar a data do primeiro jogo evita que a conversão UTC do
-        // toISOString() faça a final aparecer no dia seguinte ao restante da
-        // chave quando o navegador está em um fuso negativo.
-        var dataJogoPadrao = primeiroJogo.data_jogo || hojeISO;
 
         var defaultModId = primeiroJogo.modalidades_id_modalidade || primeiroJogo.id_modalidade || null;
         var defaultInterclasseId = primeiroJogo.id_interclasse || primeiroJogo.interclasses_id_interclasse || null;
         var defaultModNome = primeiroJogo.nome_modalidade || '';
         var defaultModTipo = primeiroJogo.tipos_modalidades_id_tipo_modalidade || 1;
-        var defaultLocalId = primeiroJogo.locais_id_local || null;
-        var defaultLocalNome = primeiroJogo.nome_local || '';
         var defaultDuracao = primeiroJogo.duracao_jogo || 1200;
 
         jogos.forEach(function (j) {
@@ -298,15 +375,16 @@
                 id_jogo: contadorLocal,                 // id temporário negativo (só existe localmente)
                 nome_jogo: tag,
                 status_jogo: 'Agendado',
-                data_jogo: dataJogoPadrao,
-                inicio_jogo: '08:00:00',
+                data_jogo: null,
+                inicio_jogo: null,
+                termino_jogo: null,
                 modalidades_id_modalidade: defaultModId,
                 id_interclasse: defaultInterclasseId,
                 interclasses_id_interclasse: defaultInterclasseId,
                 nome_modalidade: defaultModNome,
                 tipos_modalidades_id_tipo_modalidade: defaultModTipo,
-                locais_id_local: defaultLocalId,
-                nome_local: defaultLocalNome,
+                locais_id_local: null,
+                nome_local: null,
                 duracao_jogo: defaultDuracao,
                 tempo_restante_jogo: defaultDuracao,
                 tempo_extra_jogo: 0,
@@ -317,6 +395,7 @@
             jogos.push(pai);
             mapaTag[tag] = pai;
             mapaId[pai.id_jogo] = pai;
+            aplicarReservaAgendaNoJogo(pai, reservaAgendaDoJogo(pai, reservasAgenda, defaultModId), locaisStore);
             criouJogo = true;
             return pai;
         }
@@ -515,7 +594,7 @@
     }
 
     /* Pipeline local: pendências → rebuild se vencedor mudou → avanço → derivados. */
-    function processarLocalmente(jogosBase) {
+    function processarLocalmente(jogosBase, reservasAgenda, locaisStore) {
         var jogos = JSON.parse(JSON.stringify(jogosBase)); // não mutar o snapshot original
         var mapaPorId = {};
         jogos.forEach(function (j) { mapaPorId[Number(j.id_jogo)] = j; });
@@ -565,7 +644,7 @@
                 if (!isNaN(n) && n < menorId) menorId = n;
             });
 
-            var motor = criarMotorAvanco(jogos, dirEquipes, menorId - 1);
+            var motor = criarMotorAvanco(jogos, dirEquipes, menorId - 1, reservasAgenda, locaisStore);
             if (precisaRebuildLargura !== Infinity) {
                 motor.reconstruirAPartirDe(precisaRebuildLargura);
             } else {
@@ -608,12 +687,17 @@
                usuário consiga jogá-la (o placar lê direto das tabelas). */
             var DL = window.SGIDataLayer;
             var promessaLocais = (DL && typeof DL.read === 'function')
-                ? Promise.all([DL.read('jogos'), DL.read('partidas')])
-                : Promise.resolve([[], []]);
+                ? Promise.all([DL.read('jogos'), DL.read('partidas'), DL.read('locais').catch(function () { return []; })])
+                : Promise.resolve([[], [], []]);
+            var promessaReservas = carregarReservasAgenda(idModalidade, jogosBase);
 
-            return promessaLocais.then(function (dados) {
+            return Promise.all([promessaLocais, promessaReservas]).then(function (dadosCompletos) {
+                var dados = dadosCompletos[0] || [[], [], []];
+                var reservasAgenda = dadosCompletos[1] || [];
                 var jogosLocais = dados[0] || [];
                 var partidasLocais = dados[1] || [];
+                var locaisStore = dados[2] || [];
+                aplicarReservasAgenda(jogosBase, reservasAgenda, locaisStore, idModalidade);
 
                 jogosLocais.forEach(function (local) {
                     if (!mmParse(local.nome_jogo)) return;
@@ -693,7 +777,7 @@
                     _ultimo = { fonte: fonteOrigem, idModalidade: idModalidade, jogos: [] };
                     return { jogos: [], fonte: fonteOrigem, idModalidade: idModalidade };
                 }
-                return processarLocalmente(jogosBase).then(function (res) {
+                return processarLocalmente(jogosBase, reservasAgenda, locaisStore).then(function (res) {
                     var fonte = res.alterado ? 'local' : fonteOrigem;
                     _ultimo = { fonte: fonte, idModalidade: idModalidade, jogos: res.jogos };
                     return { jogos: res.jogos, fonte: fonte, idModalidade: idModalidade };
@@ -812,9 +896,20 @@
                 return { promoveu: false, motivo: 'nao_mata_mata' };
             }
             var idModalidade = Number(alvo.modalidades_id_modalidade || alvo.id_modalidade || 0);
+            var modalidadeCadastro = modalidadesStore.filter(function (m) {
+                return Number(m && m.id_modalidade) === idModalidade;
+            })[0];
+            if (!alvo.id_interclasse && modalidadeCadastro) {
+                alvo.id_interclasse = modalidadeCadastro.interclasses_id_interclasse;
+            }
 
             var urlArvore = apiBase() + 'chaveamentos?id_modalidade=' + idModalidade;
-            return lerCacheSnapshot(urlArvore).then(function (snap) {
+            return Promise.all([
+                lerCacheSnapshot(urlArvore),
+                carregarReservasAgenda(idModalidade, jogosLocais.concat([alvo]))
+            ]).then(function (fontes) {
+                var snap = fontes[0];
+                var reservasAgenda = fontes[1] || [];
                 /* 3) Base = snapshot remoto clonado + sobreposição local */
                 var base = snap && Array.isArray(snap.jogos) ? JSON.parse(JSON.stringify(snap.jogos)) : [];
 
@@ -846,6 +941,7 @@
                         existente.modalidades_id_modalidade = local.modalidades_id_modalidade;
                     }
                 });
+                aplicarReservasAgenda(base, reservasAgenda, locaisStore, idModalidade);
 
                 // 3b) Gols/equipes sempre vêm das partidas locais (fonte mais fresca)
                 base.forEach(function (b) {
@@ -891,7 +987,7 @@
                     if (!isNaN(n) && n < menorId) menorId = n;
                 });
 
-                var motor = criarMotorAvanco(base, dirEquipes, menorId - 1);
+                var motor = criarMotorAvanco(base, dirEquipes, menorId - 1, reservasAgenda, locaisStore);
                 motor.processarConcluidos();
                 recalcularDerivados(base);
 
@@ -936,10 +1032,6 @@
                                 if (!rowJogo.nome_modalidade) rowJogo.nome_modalidade = mObj.nome_modalidade;
                                 if (!rowJogo.tipos_modalidades_id_tipo_modalidade) rowJogo.tipos_modalidades_id_tipo_modalidade = mObj.tipos_modalidades_id_tipo_modalidade;
                             }
-                        }
-                        if (Array.isArray(locaisStore) && locaisStore.length > 0) {
-                            if (!rowJogo.locais_id_local) rowJogo.locais_id_local = locaisStore[0].id_local;
-                            if (!rowJogo.nome_local) rowJogo.nome_local = locaisStore[0].nome_local;
                         }
                         escritas.push(DL.upsert('jogos', b.id_jogo, rowJogo));
 

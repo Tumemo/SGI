@@ -45,6 +45,11 @@ final class SqlFilters
             $types .= "i";
             $params[] = \intval($filters['id_categoria']);
         }
+        if (!empty($filters['id_interclasse'])) {
+            $sqlExtras .= " AND modalidades.interclasses_id_interclasse = ?";
+            $types .= "i";
+            $params[] = \intval($filters['id_interclasse']);
+        }
         return ['sql' => $sqlExtras, 'types' => $types, 'params' => $params];
     }
     public static function aplicarFiltrosEquipes(array $filters): array
@@ -66,6 +71,11 @@ final class SqlFilters
             $sqlExtras .= " AND equipes.modalidades_id_modalidade = ?";
             $types .= "i";
             $params[] = \intval($filters['id_modalidade']);
+        }
+        if (!empty($filters['id_interclasse'])) {
+            $sqlExtras .= " AND turmas.interclasses_id_interclasse = ?";
+            $types .= "i";
+            $params[] = \intval($filters['id_interclasse']);
         }
         return ['sql' => $sqlExtras, 'types' => $types, 'params' => $params];
     }

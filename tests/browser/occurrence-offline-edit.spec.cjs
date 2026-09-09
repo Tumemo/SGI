@@ -1,4 +1,5 @@
 const { test, expect, request: requestFactory } = require('./fixtures.cjs');
+const { agendarBloco } = require('./agenda-helper.cjs');
 
 async function jsonOrThrow(response, label) {
     if (!response.ok()) throw new Error(`${label}: HTTP ${response.status()} ${await response.text()}`);
@@ -53,6 +54,12 @@ async function criarFixture(request) {
     const jogo = jogos.find((item) => String(item.nome_jogo) === nomeJogo);
     if (!jogo) throw new Error('Jogo criado não retornado pela API.');
     const idJogo = Number(jogo.id_jogo);
+    await agendarBloco(request, {
+        idInterclasse,
+        idModalidade: Number(modalidade.id_modalidade),
+        jogos: [{ id_jogo: idJogo }],
+        label: 'T11-occurrence',
+    });
     const turma = Number(equipesDaModalidade[0].turmas_id_turma);
     const matriculaAtleta = String(910000000 + (Date.now() % 100000));
     const aluno = await jsonOrThrow(await request.post(api('api/v1/usuarios?acao=criar_aluno'), {
@@ -65,10 +72,12 @@ async function criarFixture(request) {
         },
     }), 'criação do atleta fixture');
     if (aluno.status !== 'sucesso') throw new Error(`criação do atleta fixture: ${aluno.mensagem || JSON.stringify(aluno)}`);
+    const senhaAtleta = String(aluno.senha_temporaria || '');
+    if (senhaAtleta === '') throw new Error('A API não retornou a senha temporária do atleta fixture.');
     const alunoApi = await requestFactory.newContext({ baseURL: base });
     try {
         await jsonOrThrow(await alunoApi.post(api('api/v1/login'), {
-            data: { matricula: matriculaAtleta, senha: '123' },
+            data: { matricula: matriculaAtleta, senha: senhaAtleta },
         }), 'login do atleta fixture');
         await jsonOrThrow(await alunoApi.post(api('api/v1/inscricoes'), {
             data: { id_interclasse: idInterclasse, id_equipes: [Number(equipesDaModalidade[0].id_equipe)] },

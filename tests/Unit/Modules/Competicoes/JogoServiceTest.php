@@ -38,6 +38,8 @@ final class JogoServiceTest extends TestCase
         (new JogoService($repository))->agendar([
             'nome_jogo' => 'Jogo',
             'data_jogo' => '2026-09-04',
+            'inicio_jogo' => '08:00',
+            'termino_jogo' => '09:00',
             'modalidades_id_modalidade' => 2,
             'locais_id_local' => 3,
         ]);

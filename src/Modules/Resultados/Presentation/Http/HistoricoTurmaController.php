@@ -9,10 +9,11 @@ use App\Modules\Resultados\Infrastructure\MysqliHistoricoTurmaRepository;
 use App\Shared\Http\AccessGuard;
 use App\Shared\Http\Request;
 use App\Shared\Http\Response;
+use App\Modules\Eventos\Infrastructure\MysqliEdicaoConsultaRepository;
 
 final class HistoricoTurmaController
 {
-    public function __construct(private readonly MysqliHistoricoTurmaRepository $repository)
+    public function __construct(private readonly MysqliHistoricoTurmaRepository $repository, private readonly MysqliEdicaoConsultaRepository $edicoes)
     {
     }
 
@@ -29,7 +30,16 @@ final class HistoricoTurmaController
         if ($classId <= 0 || $editionId <= 0) {
             return Response::json(['success' => false, 'message' => 'id_turma e id_interclasse são obrigatórios.'], 400);
         }
+        if ((int) ($_SESSION['nivel'] ?? -1) === 2) {
+            $activeEdition = (int) ($_SESSION['id_interclasse'] ?? 0);
+            if ($activeEdition <= 0 || $editionId !== $activeEdition) {
+                return Response::json(['success' => false, 'message' => 'Recurso fora da edição ativa.'], 403);
+            }
+        }
         if ((int) ($_SESSION['nivel'] ?? -1) === 3) {
+            if (!$this->edicoes->isRankingPublished($editionId) || $this->edicoes->isActive($editionId)) {
+                return Response::json(['success' => false, 'message' => 'O histórico será liberado após a premiação.'], 403);
+            }
             $userId = (int) ($_SESSION['id_usuario'] ?? $_SESSION['id'] ?? 0);
             if (!$this->repository->studentBelongsToClass($userId, $classId, $editionId)) {
                 return Response::json(['success' => false, 'message' => 'Você não tem acesso ao histórico desta turma.'], 403);

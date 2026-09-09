@@ -68,6 +68,25 @@ window.SGIPage.mount("resultados/ranking", function (pageConfig, pageScope) {
 
             dadosAPI = data;
 
+            const publicar = document.getElementById('btnPublicarRanking');
+            if (publicar && String(data[0].status_interclasse) === '1') {
+                publicar.classList.remove('d-none');
+                publicar.onclick = async () => {
+                    if (!window.confirm('Confirmar publicação do ranking desta edição na cerimônia de premiação?')) return;
+                    publicar.disabled = true;
+                    try {
+                        const r = await fetch(`/api/v1/edicoes?id=${idInterclasse}&acao=publicar_ranking`, { method: 'POST' });
+                        const body = await r.json();
+                        if (!r.ok || !body.success) throw new Error(body.message || 'Não foi possível publicar o ranking.');
+                        publicar.classList.add('d-none');
+                        exibirMensagem('Ranking publicado com sucesso.', 'success');
+                    } catch (error) {
+                        publicar.disabled = false;
+                        exibirMensagem(error.message, 'danger');
+                    }
+                };
+            }
+
             const catRes = await fetch(`/api/v1/categorias?id_interclasse=${idInterclasse}`);
             const catData = await catRes.json();
             categoriasUnicas = Array.isArray(catData) ? catData.map(c => c.nome_categoria) : [];
@@ -145,7 +164,7 @@ window.SGIPage.mount("resultados/ranking", function (pageConfig, pageScope) {
             const isTop3 = posicao <= 3;
 
             const html = `
-                <div class="rk-card-wrapper ${isTop3 ? 'rk-card-wrapper--top' : ''} sgi-inline-666499cd"  data-sgi-index="${index}">
+                <div class="rk-card-wrapper ${isTop3 ? 'rk-card-wrapper--top' : ''} sgi-u-animation-delay-calc-attr-data-sgi-index-type-number-07s"  data-sgi-index="${index}">
                     <div class="card card-turma rk-rank-card ${classeDestaque} ${isTop3 ? 'rk-rank-card--podium' : ''}">
                         ${isTop3 ? `<div class="rk-rank-card__medal">${medals[posicao - 1]}</div>` : ''}
 
@@ -167,8 +186,8 @@ window.SGIPage.mount("resultados/ranking", function (pageConfig, pageScope) {
                             <span><i class="bi bi-star"></i> Pontuação bruta</span>
                             <span class="rk-bar-group__val">${ptsBrutos} pts</span>
                                 </div>
-                                <div class="barra-fundo sgi-inline-65fd1499" >
-                                    <div class="barra-progresso rk-bar--expected sgi-inline-95b73db3"  data-sgi-width="${porcentagemSem}"></div>
+                                <div class="barra-fundo sgi-u-h-8px" >
+                                    <div class="barra-progresso rk-bar--expected sgi-u-w-calc-attr-data-sgi-width-type-number-1"  data-sgi-width="${porcentagemSem}"></div>
                                 </div>
                             </div>
                             <div class="rk-bar-group">
@@ -176,8 +195,8 @@ window.SGIPage.mount("resultados/ranking", function (pageConfig, pageScope) {
                             <span class="text-danger fw-semibold"><i class="bi bi-flag-fill"></i> Pontuação líquida</span>
                             <span class="rk-bar-group__val fw-bold">${ptsLiquidos} pts${perdeu > 0 ? ` <span class="text-danger">(-${perdeu})</span>` : ''}</span>
                                 </div>
-                                <div class="barra-fundo sgi-inline-9d3cb190" >
-                                    <div class="barra-progresso rk-bar--final sgi-inline-f2316fc1"  data-sgi-width="${porcentagemCom}"></div>
+                                <div class="barra-fundo sgi-u-h-12px" >
+                                    <div class="barra-progresso rk-bar--final sgi-u-w-calc-attr-data-sgi-width-type-number-1"  data-sgi-width="${porcentagemCom}"></div>
                                 </div>
                             </div>
                         </div>

@@ -50,6 +50,7 @@ final class LoginController
         $_SESSION['id'] = (int) $usuario['id_usuario'];
         $_SESSION['id_usuario'] = (int) $usuario['id_usuario'];
         $_SESSION['nivel'] = $nivel;
+        $_SESSION['auth_version'] = max(1, (int) ($usuario['auth_version'] ?? 1));
         $_SESSION['nome'] = $usuario['nome_usuario'];
         $_SESSION['matricula'] = $usuario['matricula_usuario'];
         $_SESSION['foto_usuario'] = $usuario['foto_usuario'] ?? null;
@@ -62,7 +63,8 @@ final class LoginController
         $_SESSION['exige_troca_senha'] = $authenticated['exige_troca_senha'];
         $destino = match ($nivel) {
             3 => '/aluno/inicio',
-            0, 1, 2 => '/edicoes',
+            0, 1 => '/edicoes',
+            2 => '/painel',
             default => '/login',
         };
         return \App\Shared\Http\Response::json(['status' => 'sucesso', 'redirect' => $destino, 'csrf_token' => CsrfGuard::token()], $status, $headers);

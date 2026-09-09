@@ -8,6 +8,7 @@ use App\Modules\Competicoes\Application\ModalidadeNaoEncontradaException;
 use App\Modules\Competicoes\Infrastructure\MysqliChaveamentoRepository;
 use App\Modules\Competicoes\Application\IndividualRankingService;
 use App\Modules\Competicoes\Infrastructure\MysqliIndividualRankingRepository;
+use App\Modules\Competicoes\Domain\TipoCompeticaoRules;
 use App\Modules\Resultados\Application\PontuacaoService;
 use App\Modules\Resultados\Infrastructure\MysqliPodioRepository;
 use App\Shared\Application\TransactionRunner;
@@ -45,20 +46,48 @@ final class MysqliChaveamentoSyncGateway
         return $row === null ? null : (int) $row['interclasses_id_interclasse'];
     }
 
+    public function modalityType(int $modalityId): ?string
+    {
+        $statement = $this->connection->prepare('SELECT m.tipos_modalidades_id_tipo_modalidade, tm.nome_tipo_modalidade FROM modalidades m LEFT JOIN tipos_modalidades tm ON tm.id_tipo_modalidade = m.tipos_modalidades_id_tipo_modalidade WHERE m.id_modalidade = ? LIMIT 1');
+        if ($statement === false) {
+            throw new RuntimeException('Não foi possível consultar modalidade.');
+        }
+        $statement->bind_param('i', $modalityId);
+        $statement->execute();
+        $row = $statement->get_result()->fetch_assoc();
+        $statement->close();
+        return $row === null ? null : TipoCompeticaoRules::resolve($row);
+    }
+
     /** @param array<string, mixed> $data @return array<string, mixed> */
     public function sync(int $modalityId, string $type, array $data): array
     {
         return $this->transactions->run(function () use ($modalityId, $type, $data): array {
+            $actualType = $this->modalityType($modalityId);
+            if ($actualType === null) {
+                $edition = $this->editionOfModality($modalityId);
+                if ($edition === null) {
+                    throw new ModalidadeNaoEncontradaException('Modalidade não encontrada.');
+                }
+                throw new \InvalidArgumentException('O tipo da modalidade não está configurado.');
+            }
+            if ($type === 'individual' && $actualType !== TipoCompeticaoRules::INDIVIDUAL) {
+                throw new \InvalidArgumentException('A modalidade informada não é individual.');
+            }
+            if ($type === 'mata_mata' && $actualType === TipoCompeticaoRules::INDIVIDUAL) {
+                throw new \InvalidArgumentException('Modalidades individuais não aceitam sincronização de mata-mata.');
+            }
             if ($type === 'individual') {
                 $ranking = $data['ranking'] ?? null;
                 if (!is_array($ranking) || !isset($ranking['primeiro'], $ranking['segundo'], $ranking['terceiro'])) {
                     throw new \InvalidArgumentException('Dados de ranking incompletos para modalidade individual.');
                 }
+                $gameId = isset($data['id_jogo']) && is_numeric($data['id_jogo']) ? (int) $data['id_jogo'] : null;
                 $result = $this->individual->registrar($modalityId, [
-                    'primeiro' => (int) $ranking['primeiro'],
-                    'segundo' => (int) $ranking['segundo'],
-                    'terceiro' => (int) $ranking['terceiro'],
-                ]);
+                    'primeiro' => $ranking['primeiro'],
+                    'segundo' => $ranking['segundo'],
+                    'terceiro' => $ranking['terceiro'],
+                ], $gameId);
                 return ['success' => true, 'message' => 'Sincronização de modalidade individual concluída com sucesso.', 'detalhes' => $result];
             }
             if ($type !== 'mata_mata') {
@@ -69,7 +98,6 @@ final class MysqliChaveamentoSyncGateway
                 throw new \InvalidArgumentException('Nenhum jogo enviado para sincronização de mata-mata.');
             }
             $this->validateMataMataPayload($modalityId, $games);
-            $local = MysqliChaveamentoRepository::resolverIdLocal($this->connection);
             $processed = 0;
             foreach ($games as $game) {
                 if (!is_array($game) || trim((string) ($game['nome_jogo'] ?? '')) === '') {
@@ -83,14 +111,15 @@ final class MysqliChaveamentoSyncGateway
                     $statement = $this->prepare('UPDATE jogos SET status_jogo = ? WHERE id_jogo = ?');
                     $statement->bind_param('si', $status, $gameId);
                 } else {
-                    $statement = $this->prepare("INSERT INTO jogos (nome_jogo, data_jogo, inicio_jogo, status_jogo, modalidades_id_modalidade, locais_id_local) VALUES (?, CURDATE(), '08:00:00', ?, ?, ?)");
-                    $statement->bind_param('ssii', $name, $status, $modalityId, $local);
+                    $statement = $this->prepare("INSERT INTO jogos (nome_jogo, data_jogo, inicio_jogo, termino_jogo, status_jogo, modalidades_id_modalidade, locais_id_local) VALUES (?, NULL, NULL, NULL, ?, ?, NULL)");
+                    $statement->bind_param('ssi', $name, $status, $modalityId);
                 }
                 $statement->execute();
                 if ($existing === null) {
                     $gameId = (int) $this->connection->insert_id;
                 }
                 $statement->close();
+                MysqliChaveamentoRepository::aplicarReservaAgenda($this->connection, $modalityId, $name, $gameId);
                 foreach ((array) ($game['partidas'] ?? []) as $part) {
                     if (!is_array($part)) {
                         continue;

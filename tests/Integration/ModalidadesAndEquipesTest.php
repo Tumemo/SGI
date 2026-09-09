@@ -21,6 +21,25 @@ class ModalidadesAndEquipesTest
         $cats = $resCat['json'] ?? [];
         Assertions::assert("Criação de 2 categorias escolares (I e II)", count($cats) === 2);
 
+        $categoriaI = $cats[0] ?? [];
+        $categoriaII = $cats[1] ?? [];
+        $duplicada = $admin->postJson('api/v1/categorias', [
+            'nome_categoria' => (string) ($categoriaI['nome_categoria'] ?? 'Categoria I'),
+            'interclasses_id_interclasse' => $idEdicao,
+        ]);
+        Assertions::assertStatus('Categoria duplicada na mesma edição retorna conflito', $duplicada, 409);
+        $aposDuplicada = $admin->get("api/v1/categorias?id_interclasse=$idEdicao");
+        Assertions::assert('Tentativa de categoria duplicada não altera a lista', ($aposDuplicada['json'] ?? null) === $cats);
+
+        $renomeada = $admin->putJson('api/v1/categorias', [
+            'id_categoria' => (int) ($categoriaI['id_categoria'] ?? 0),
+            'nome_categoria' => (string) ($categoriaII['nome_categoria'] ?? 'Categoria II'),
+        ]);
+        Assertions::assertStatus('Renomear categoria para nome já utilizado retorna conflito', $renomeada, 409);
+        $categoriaPreservada = $admin->get('api/v1/categorias?id_categoria=' . (int) ($categoriaI['id_categoria'] ?? 0));
+        $categoriaPreservadaDados = $categoriaPreservada['json'][0] ?? [];
+        Assertions::assert('Conflito de renomeação não altera a categoria original', ($categoriaPreservadaDados['nome_categoria'] ?? null) === ($categoriaI['nome_categoria'] ?? null));
+
         // 4.2 Modalidades
         $resMod = $admin->get("api/v1/modalidades?id_interclasse=$idEdicao");
         Assertions::assertStatus("Consulta de modalidades (HTTP 200)", $resMod, 200);

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Competicoes\Infrastructure;
 
+use App\Modules\Competicoes\Application\JogoConflitoException;
 use App\Modules\Competicoes\Domain\CronometroRules;
 use App\Shared\Database\SqlFilters;
 use mysqli;
@@ -22,6 +23,15 @@ final class MysqliJogoGateway
             return [];
         }
         $filter = SqlFilters::aplicarFiltrosJogos($filters);
+        // A consulta operacional de lista exclui jogos concluídos, mas o
+        // placar ainda precisa abrir um jogo específico encerrado para
+        // consulta e confirmação da sincronização. Preserve o filtro somente
+        // quando a chamada não está apontando para um jogo individual.
+        $operational = !empty($filters['operacional']) && (int) ($filters['id_jogo'] ?? 0) <= 0
+            ? " AND jogos.data_jogo IS NOT NULL AND jogos.inicio_jogo IS NOT NULL
+                AND jogos.termino_jogo IS NOT NULL AND jogos.locais_id_local IS NOT NULL
+                AND jogos.status_jogo IN ('Agendado', 'Iniciado', 'Pausado')"
+            : '';
         $sql = "SELECT jogos.id_jogo, jogos.nome_jogo, jogos.data_jogo,
                        jogos.inicio_jogo, jogos.termino_jogo, jogos.status_jogo,
                        jogos.tempo_restante_jogo, jogos.duracao_jogo,
@@ -31,13 +41,15 @@ final class MysqliJogoGateway
                        modalidades.nome_modalidade,
                        modalidades.interclasses_id_interclasse AS id_interclasse,
                        modalidades.tipos_modalidades_id_tipo_modalidade,
+                       tipos_modalidades.nome_tipo_modalidade,
                        locais.nome_local, categorias.nome_categoria,
                        GROUP_CONCAT(DISTINCT COALESCE(e.nome_equipe, t.nome_turma)
                            ORDER BY p.id_partida SEPARATOR ' vs ') AS equipes_nomes,
                        art_top.nome_usuario AS artilheiro_nome
                 FROM jogos
                 INNER JOIN modalidades ON modalidades.id_modalidade = jogos.modalidades_id_modalidade
-                INNER JOIN locais ON locais.id_local = jogos.locais_id_local
+                LEFT JOIN tipos_modalidades ON tipos_modalidades.id_tipo_modalidade = modalidades.tipos_modalidades_id_tipo_modalidade
+                LEFT JOIN locais ON locais.id_local = jogos.locais_id_local
                 INNER JOIN categorias ON categorias.id_categoria = modalidades.categorias_id_categoria
                 LEFT JOIN partidas p ON p.jogos_id_jogo = jogos.id_jogo
                 LEFT JOIN equipes e ON e.id_equipe = p.equipes_id_equipe
@@ -50,7 +62,7 @@ final class MysqliJogoGateway
                     INNER JOIN usuarios u ON u.id_usuario = a.usuarios_id_usuario
                     GROUP BY a.jogos_id_jogo, a.usuarios_id_usuario, u.nome_usuario
                 ) art_top ON art_top.jogos_id_jogo = jogos.id_jogo AND art_top.rn = 1
-                WHERE 1=1" . $filter['sql'] . ' GROUP BY jogos.id_jogo ORDER BY jogos.data_jogo ASC, jogos.inicio_jogo ASC';
+                WHERE 1=1" . $filter['sql'] . $operational . ' GROUP BY jogos.id_jogo ORDER BY jogos.data_jogo ASC, jogos.inicio_jogo ASC';
         $statement = $this->prepare($sql);
         if ($filter['params'] !== []) {
             $statement->bind_param($filter['types'], ...$filter['params']);
@@ -80,6 +92,7 @@ final class MysqliJogoGateway
                 ], $now);
             }
             $row['servidor_epoch_ms'] = $now * 1000;
+            $row['tipo_competicao'] = \App\Modules\Competicoes\Domain\TipoCompeticaoRules::resolve($row);
             unset($row['data_inicio_epoch']);
         }
         unset($row);
@@ -89,7 +102,13 @@ final class MysqliJogoGateway
     /** @return array<string, mixed>|null */
     public function find(int $id): ?array
     {
-        $statement = $this->prepare('SELECT * FROM jogos WHERE id_jogo = ? LIMIT 1');
+        $statement = $this->prepare(
+            'SELECT j.*, m.tipos_modalidades_id_tipo_modalidade, tm.nome_tipo_modalidade
+             FROM jogos j
+             INNER JOIN modalidades m ON m.id_modalidade = j.modalidades_id_modalidade
+             LEFT JOIN tipos_modalidades tm ON tm.id_tipo_modalidade = m.tipos_modalidades_id_tipo_modalidade
+             WHERE j.id_jogo = ? LIMIT 1',
+        );
         $statement->bind_param('i', $id);
         $statement->execute();
         $row = $statement->get_result()->fetch_assoc() ?: null;
@@ -116,9 +135,14 @@ final class MysqliJogoGateway
         if ($current === null) {
             return false;
         }
+        if (\App\Modules\Competicoes\Domain\TipoCompeticaoRules::isIndividual($current)
+            && in_array($data['status_jogo'] ?? null, ['Concluido', 'Finalizado'], true)) {
+            throw new \InvalidArgumentException('Modalidades individuais devem ser concluídas pelo lançamento do pódio.');
+        }
         $fields = [];
         $values = [];
         $types = '';
+        $nullableSchedule = ['data_jogo', 'inicio_jogo', 'termino_jogo', 'locais_id_local'];
         foreach ([
             'nome_jogo' => 's', 'data_jogo' => 's', 'inicio_jogo' => 's',
             'termino_jogo' => 's', 'tempo_restante_jogo' => 'i',
@@ -127,6 +151,17 @@ final class MysqliJogoGateway
             'locais_id_local' => 'i',
         ] as $field => $type) {
             if (!array_key_exists($field, $data)) {
+                continue;
+            }
+            if ($data[$field] === null || ($type === 's' && in_array($field, ['data_jogo', 'inicio_jogo', 'termino_jogo'], true) && trim((string) $data[$field]) === '')) {
+                if (in_array($field, $nullableSchedule, true)) {
+                    $fields[] = $field . ' = NULL';
+                    continue;
+                }
+                throw new \InvalidArgumentException('O campo ' . $field . ' não pode ser nulo.');
+            }
+            if ($type === 'i' && $field === 'locais_id_local' && (int) $data[$field] <= 0) {
+                $fields[] = $field . ' = NULL';
                 continue;
             }
             $value = $type === 'i' ? (int) $data[$field] : (string) $data[$field];
@@ -143,6 +178,19 @@ final class MysqliJogoGateway
         if ($fields === []) {
             throw new RuntimeException('Nenhum dado enviado para atualização.');
         }
+
+        $candidate = [
+            'data_jogo' => array_key_exists('data_jogo', $data) ? $this->nullableString($data['data_jogo']) : $current['data_jogo'],
+            'inicio_jogo' => array_key_exists('inicio_jogo', $data) ? $this->nullableString($data['inicio_jogo']) : $current['inicio_jogo'],
+            'termino_jogo' => array_key_exists('termino_jogo', $data) ? $this->nullableString($data['termino_jogo']) : $current['termino_jogo'],
+            'locais_id_local' => array_key_exists('locais_id_local', $data) ? ((int) $data['locais_id_local'] > 0 ? (int) $data['locais_id_local'] : null) : ($current['locais_id_local'] === null ? null : (int) $current['locais_id_local']),
+        ];
+        if ($candidate['data_jogo'] !== null && $candidate['inicio_jogo'] !== null && $candidate['termino_jogo'] !== null && $candidate['locais_id_local'] !== null) {
+            $conflict = $this->scheduleConflict($candidate['data_jogo'], $candidate['locais_id_local'], $candidate['inicio_jogo'], $candidate['termino_jogo'], $id);
+            if ($conflict !== null) {
+                throw new JogoConflitoException($conflict);
+            }
+        }
         $values[] = $id;
         $types .= 'i';
         $statement = $this->prepare('UPDATE jogos SET ' . implode(', ', $fields) . ' WHERE id_jogo = ?');
@@ -154,6 +202,26 @@ final class MysqliJogoGateway
             throw new RuntimeException($message !== '' ? $message : 'Não foi possível atualizar jogo.');
         }
         return true;
+    }
+
+    private function nullableString(mixed $value): ?string
+    {
+        $text = trim((string) $value);
+        return $text === '' ? null : $text;
+    }
+
+    private function scheduleConflict(string $date, int $localId, string $start, string $end, int $currentId): ?string
+    {
+        $statement = $this->prepare("SELECT nome_jogo FROM jogos
+            WHERE data_jogo = ? AND locais_id_local = ?
+              AND status_jogo IN ('Agendado', 'Iniciado', 'Pausado')
+              AND id_jogo <> ? AND ? < termino_jogo AND ? > inicio_jogo
+            LIMIT 1");
+        $statement->bind_param('siiss', $date, $localId, $currentId, $start, $end);
+        $statement->execute();
+        $row = $statement->get_result()->fetch_assoc() ?: null;
+        $statement->close();
+        return $row === null ? null : 'Já existe um jogo agendado neste mesmo local com conflito de horário (' . $row['nome_jogo'] . ').';
     }
 
     private function prepare(string $sql): \mysqli_stmt

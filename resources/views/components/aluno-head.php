@@ -10,14 +10,12 @@ if ((int) ($_SESSION['nivel'] ?? -1) !== 3) {
     header('Location: ' . \App\Shared\Http\Url::to('aluno/login'));
     exit;
 }
-// Cache de página por sessão: o PHPSESSID protege a resposta HTTP e uma chave
-// opaca por usuário separa os bancos IndexedDB no navegador. max-age +
-// stale-while-revalidate permitem navegar offline nas páginas já visitadas;
-// os dados dinâmicos continuam via offline-core.js (IndexedDB, por sessão).
+// O cache offline é controlado pela camada explícita de dados. A resposta HTML
+// do portal não deve reaparecer pelo cache HTTP após logout.
 $chaveCacheOffline = \App\Modules\Acesso\Presentation\Http\OfflineSession::obterChaveCacheOffline();
 $csrfToken = CsrfGuard::token();
 if (!headers_sent()) {
-    header('Cache-Control: private, max-age=10800, stale-while-revalidate=86400');
+    header('Cache-Control: private, no-store, max-age=0');
     header('Vary: Cookie');
 }
 ?>
@@ -26,17 +24,13 @@ if (!headers_sent()) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?php
-echo htmlspecialchars($tituloPagina ?? 'SGI');
-?></title>
+    <?php include SGI_ROOT . '/resources/views/components/page-title.php'; ?>
     <!-- Bootstrap CSS -->
     <link href="<?= \App\Shared\Http\Assets::url('vendor/bootstrap/css/bootstrap.min.css') ?>" rel="stylesheet" crossorigin="anonymous">
     <!-- Bootstrap Icons -->
     <link rel="stylesheet" href="<?= \App\Shared\Http\Assets::url('vendor/bootstrap-icons/bootstrap-icons.min.css') ?>">
-    <!-- SGI Aluno Shared Styles -->
+    <!-- Folha consolidada do portal do aluno -->
     <link rel="stylesheet" href="<?= \App\Shared\Http\Assets::url('css/aluno.css') ?>">
-    <link rel="stylesheet" href="<?= \App\Shared\Http\Assets::url('css/style-migrated.css') ?>">
-    <link rel="stylesheet" href="<?= \App\Shared\Http\Assets::url('css/aluno-page.css') ?>">
     <script>window.SGI_SESSION_ID = <?php
 echo (int) ($_SESSION['id_usuario'] ?? $_SESSION['id'] ?? 0);
 ?>; window.SGI_CACHE_KEY = <?php
@@ -55,5 +49,22 @@ echo json_encode(\App\Shared\Http\Url::to('assets'), JSON_HEX_TAG | JSON_HEX_AMP
     <script src="<?= \App\Shared\Http\Assets::url('js/shared/http-client.js') ?>"></script>
 
 <script src="<?= \App\Shared\Http\Assets::url('js/shared/page-runtime.js') ?>"></script>
+<script>
+(function () {
+    document.addEventListener('click', function (event) {
+        var link = event.target.closest && event.target.closest('[data-sgi-logout]');
+        if (!link) return;
+        if (event.defaultPrevented) return;
+        event.preventDefault();
+        fetch(link.href, {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: {'X-SGI-CSRF': window.SGI_CSRF_TOKEN || ''}
+        }).finally(function () {
+            window.location.href = <?= json_encode(\App\Shared\Http\Url::to('aluno/login')) ?>;
+        });
+    });
+})();
+</script>
 </head>
 <body class="bg-light d-flex flex-column min-vh-100">

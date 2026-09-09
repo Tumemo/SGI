@@ -34,7 +34,15 @@ final class EquipeController
             $data = $request->allInput();
             switch ($request->method()) {
                 case 'GET':
-                    return Response::json($this->queries->list($request->allQuery()));
+                    $filters = $request->allQuery();
+                    if ((int) ($_SESSION['nivel'] ?? -1) === 2) {
+                        if ((int) ($_SESSION['id_interclasse'] ?? 0) <= 0) {
+                            return Response::json(['success' => false, 'message' => 'Nenhuma edição ativa.'], 403);
+                        }
+                        $filters['id_interclasse'] = (int) ($_SESSION['id_interclasse'] ?? 0);
+                        $filters['_read_only'] = true;
+                    }
+                    return Response::json($this->queries->list($filters));
                 case 'POST':
                     return $this->createOrManage($data);
                 case 'PUT':

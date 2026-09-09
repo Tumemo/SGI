@@ -143,14 +143,16 @@ final class MysqliPartidaGateway implements ResultadoRepository
         return $this->resolveGame($gameId, $gameTag, $modalityId, $results);
     }
 
-    /** @return array{status_jogo:string,nome_jogo:string,modalidade_id:int,interclasse_id:int} */
+    /** @return array{status_jogo:string,nome_jogo:string,modalidade_id:int,interclasse_id:int,tipos_modalidades_id_tipo_modalidade:int} */
     public function lockGame(int $gameId): array
     {
         $row = $this->one(
             'SELECT j.status_jogo, j.nome_jogo, j.modalidades_id_modalidade AS modalidade_id,
-                    m.interclasses_id_interclasse AS interclasse_id
+                    m.interclasses_id_interclasse AS interclasse_id,
+                    m.tipos_modalidades_id_tipo_modalidade, tm.nome_tipo_modalidade
              FROM jogos j
              INNER JOIN modalidades m ON m.id_modalidade = j.modalidades_id_modalidade
+             LEFT JOIN tipos_modalidades tm ON tm.id_tipo_modalidade = m.tipos_modalidades_id_tipo_modalidade
              WHERE j.id_jogo = ? LIMIT 1 FOR UPDATE',
             'i',
             [$gameId],
@@ -163,6 +165,9 @@ final class MysqliPartidaGateway implements ResultadoRepository
             'nome_jogo' => (string) $row['nome_jogo'],
             'modalidade_id' => (int) $row['modalidade_id'],
             'interclasse_id' => (int) $row['interclasse_id'],
+            'tipos_modalidades_id_tipo_modalidade' => (int) $row['tipos_modalidades_id_tipo_modalidade'],
+            'nome_tipo_modalidade' => (string) ($row['nome_tipo_modalidade'] ?? ''),
+            'tipo_competicao' => \App\Modules\Competicoes\Domain\TipoCompeticaoRules::resolve($row),
         ];
     }
 
@@ -247,19 +252,16 @@ final class MysqliPartidaGateway implements ResultadoRepository
         if ($tagValue === null || $tagValue === '') {
             throw new RuntimeException('Não foi possível identificar a tag do jogo temporário.');
         }
-        $local = MysqliChaveamentoRepository::resolverIdLocal($this->connection);
-        if ($local <= 0) {
-            throw new RuntimeException('Não há local disponível para materializar o jogo.');
-        }
         $materializedModality = $context['modality_id'];
-        $statement = $this->prepare("INSERT INTO jogos (nome_jogo, data_jogo, inicio_jogo, status_jogo, modalidades_id_modalidade, locais_id_local) VALUES (?, CURDATE(), '08:00:00', 'Agendado', ?, ?)");
-        $statement->bind_param('sii', $tagValue, $materializedModality, $local);
+        $statement = $this->prepare("INSERT INTO jogos (nome_jogo, data_jogo, inicio_jogo, termino_jogo, status_jogo, modalidades_id_modalidade, locais_id_local) VALUES (?, NULL, NULL, NULL, 'Agendado', ?, NULL)");
+        $statement->bind_param('si', $tagValue, $materializedModality);
         if (!$statement->execute()) {
             $statement->close();
             throw new RuntimeException('Não foi possível materializar o jogo temporário.');
         }
         $id = (int) $this->connection->insert_id;
         $statement->close();
+        MysqliChaveamentoRepository::aplicarReservaAgenda($this->connection, $materializedModality, $tagValue, $id);
         return $id;
     }
 

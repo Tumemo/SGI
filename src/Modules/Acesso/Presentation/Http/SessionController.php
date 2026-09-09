@@ -26,6 +26,16 @@ final class SessionController
 
     public function logout(Request $request): Response
     {
+        if ($request->method() !== 'POST') {
+            return Response::json([
+                'success' => false,
+                'message' => 'Logout exige uma requisição POST.',
+            ], 405, [
+                'Allow' => 'POST',
+                'Cache-Control' => 'no-store',
+            ]);
+        }
+
         SessionManager::start();
         SessionManager::destroy();
         $_SESSION = [];

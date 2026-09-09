@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Eventos\Infrastructure;
 
+use App\Modules\Eventos\Application\CategoriaDuplicadaException;
 use App\Modules\Eventos\Domain\CategoriaRepository;
 use mysqli;
 use RuntimeException;
@@ -68,17 +69,26 @@ final class MysqliCategoriaRepository implements CategoriaRepository
         $status = (string) $data['status_categoria'];
         $interclasseId = (int) $data['interclasses_id_interclasse'];
         $statement->bind_param('ssi', $name, $status, $interclasseId);
-        if (!$statement->execute()) {
-            throw new RuntimeException('Não foi possível criar categoria.');
+        try {
+            if (!$statement->execute()) {
+                throw new RuntimeException('Não foi possível criar categoria.');
+            }
+        } catch (\mysqli_sql_exception $exception) {
+            if ($exception->getCode() === 1062) {
+                $statement->close();
+                throw new CategoriaDuplicadaException();
+            }
+            $statement->close();
+            throw new RuntimeException('Não foi possível criar categoria.', 0, $exception);
         }
         $id = $this->connection->insert_id;
         $statement->close();
         return $id;
     }
 
-    public function findStatus(int $id): ?string
+    public function find(int $id): ?array
     {
-        $statement = $this->connection->prepare('SELECT status_categoria FROM categorias WHERE id_categoria = ?');
+        $statement = $this->connection->prepare('SELECT status_categoria, interclasses_id_interclasse FROM categorias WHERE id_categoria = ?');
         if ($statement === false) {
             throw new RuntimeException('Não foi possível consultar categoria.');
         }
@@ -86,7 +96,30 @@ final class MysqliCategoriaRepository implements CategoriaRepository
         $statement->execute();
         $row = $statement->get_result()->fetch_assoc();
         $statement->close();
-        return $row === null ? null : (string) $row['status_categoria'];
+        return $row === null ? null : [
+            'status_categoria' => (string) $row['status_categoria'],
+            'interclasses_id_interclasse' => (int) $row['interclasses_id_interclasse'],
+        ];
+    }
+
+    public function duplicateExists(int $editionId, string $name, int $exceptId = 0): bool
+    {
+        $statement = $this->connection->prepare(
+            'SELECT 1 FROM categorias
+             WHERE interclasses_id_interclasse = ? AND nome_categoria = ? AND id_categoria <> ?
+             LIMIT 1',
+        );
+        if ($statement === false) {
+            throw new RuntimeException('Não foi possível validar categoria.');
+        }
+        $statement->bind_param('isi', $editionId, $name, $exceptId);
+        if (!$statement->execute()) {
+            $statement->close();
+            throw new RuntimeException('Não foi possível validar categoria.');
+        }
+        $exists = $statement->get_result()->num_rows > 0;
+        $statement->close();
+        return $exists;
     }
 
     public function update(int $id, array $data): void
@@ -113,8 +146,17 @@ final class MysqliCategoriaRepository implements CategoriaRepository
             throw new RuntimeException('Não foi possível atualizar categoria.');
         }
         $statement->bind_param($types, ...$values);
-        if (!$statement->execute()) {
-            throw new RuntimeException('Não foi possível atualizar categoria.');
+        try {
+            if (!$statement->execute()) {
+                throw new RuntimeException('Não foi possível atualizar categoria.');
+            }
+        } catch (\mysqli_sql_exception $exception) {
+            if ($exception->getCode() === 1062) {
+                $statement->close();
+                throw new CategoriaDuplicadaException();
+            }
+            $statement->close();
+            throw new RuntimeException('Não foi possível atualizar categoria.', 0, $exception);
         }
         $statement->close();
     }

@@ -1,5 +1,4 @@
 <?php
-$tituloPagina = 'SGI - Chaveamento';
 $mostrarVoltar = true;
 $urlVoltar = \App\Shared\Http\Url::to('painel');
 
@@ -12,15 +11,15 @@ $isNivel2 = $nivelUsuario === 2;
 $podeGerar = !$isNivel2 && !$isNivel3;
 ?>
 
-<main class="d-md-none kv-page sgi-inline-5ab1acff" >
-    <a href="<?= \App\Shared\Http\Url::to('painel') ?>" id="btnVoltarChaveamentoMob" class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none sgi-inline-e1bcebb6" >
+<main class="d-md-none kv-page sgi-u-p-20px" >
+    <a href="<?= \App\Shared\Http\Url::to('painel') ?>" id="btnVoltarChaveamentoMob" class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none sgi-u-bg-E30613-radius-6px-p-8px-16px" >
         <i class="bi bi-arrow-left-circle fs-5"></i> <span id="nomeInterclasseChaveamentoMob">Interclasse</span>
     </a>
     <div class="mb-3">
-        <h4 class="kv-title sgi-inline-b52d90da" >Chaveamento</h4>
+        <h4 class="kv-title sgi-u-text-1-2rem" >Chaveamento</h4>
     </div>
 
-    <div class="kv-stats sgi-inline-41adbce3" >
+    <div class="kv-stats sgi-u-grid-repeat-2-1fr-mb-20px" >
         <div class="kv-stat">
             <div class="kv-stat__icon kv-stat__icon--modalidades"><i class="bi bi-trophy"></i></div>
             <div class="kv-stat__info">
@@ -53,11 +52,11 @@ $podeGerar = !$isNivel2 && !$isNivel3;
 
     <div class="kv-gen-card">
         <div class="kv-gen-card__header">
-            <div class="kv-gen-card__title"><i class="bi bi-diagram-3 me-2 sgi-inline-eba5fafe" ></i><?php echo $podeGerar ? 'Gerar novo chaveamento' : 'Visualizar chaveamento'; ?></div>
+            <div class="kv-gen-card__title"><i class="bi bi-diagram-3 me-2 sgi-u-color-e30613" ></i><?php echo $podeGerar ? 'Gerar novo chaveamento' : 'Visualizar chaveamento'; ?></div>
             <div class="kv-gen-card__desc"><?php echo $podeGerar ? 'Selecione uma modalidade para gerar automaticamente o chaveamento.' : 'Selecione uma modalidade para visualizar a árvore do torneio.'; ?></div>
         </div>
         <div class="kv-gen-card__row">
-            <div id="kvs-wrap-selectModalidadeMob" class="kvs-wrap sgi-inline-3637b976" ></div>
+            <div id="kvs-wrap-selectModalidadeMob" class="kvs-wrap sgi-u-w-100-min-width-0" ></div>
             <select class="kv-gen-card__select d-none" id="selectModalidadeMob">
                 <option value="">Selecione uma modalidade</option>
             </select>
@@ -67,7 +66,7 @@ $podeGerar = !$isNivel2 && !$isNivel3;
             </button>
             <?php endif; ?>
         </div>
-        <div id="msgChaveamentoMob" class="kv-alert sgi-inline-7830d708" ></div>
+        <div id="msgChaveamentoMob" class="kv-alert sgi-u-display-none" ></div>
     </div>
 
     <div id="bracketAreaMob" class="kv-empty">
@@ -76,24 +75,24 @@ $podeGerar = !$isNivel2 && !$isNivel3;
         <div class="kv-empty__desc">Selecione uma modalidade acima para <?php echo $podeGerar ? 'gerar ou ' : ''; ?>visualizar um chaveamento.</div>
     </div>
 
-    <div id="secaoJogosMob" class="sgi-inline-05073bd0">
+    <div id="secaoJogosMob" class="sgi-u-mt-24px">
         <div class="kv-table-card">
             <div class="kv-table-card__header">
                 <div class="kv-table-card__title">Jogos Realizados</div>
                 <div class="kv-table-card__desc">Histórico de partidas concluídas.</div>
             </div>
-            <div class="kv-filters sgi-inline-1ff8312b" >
-                <div id="kvs-wrap-filtroModalidadeJogosMob" class="kvs-wrap sgi-inline-3637b976" ></div>
-                <select class="kv-filter-select d-none sgi-inline-cf2d16e2" id="filtroModalidadeJogosMob" >
+            <div class="kv-filters sgi-u-flex-direction-column" >
+                <div id="kvs-wrap-filtroModalidadeJogosMob" class="kvs-wrap sgi-u-w-100-min-width-0" ></div>
+                <select class="kv-filter-select d-none sgi-u-w-100" id="filtroModalidadeJogosMob" >
                     <option value="">Todas modalidades</option>
                 </select>
-                <select class="kv-filter-select sgi-inline-cf2d16e2" id="filtroCategoriaJogosMob" >
+                <select class="kv-filter-select sgi-u-w-100" id="filtroCategoriaJogosMob" >
                     <option value="">Todas categorias</option>
                 </select>
-                <input type="text" class="kv-filter-input sgi-inline-cf2d16e2" placeholder="Buscar partida..." id="inputBuscaJogoMob" >
+                <input type="text" class="kv-filter-input sgi-u-w-100" placeholder="Buscar partida..." id="inputBuscaJogoMob" >
             </div>
             <div class="table-responsive">
-                <table class="table table-hover align-middle">
+                <table class="table sgi-table table-hover align-middle">
                     <thead>
                         <tr>
                             <th>Partida</th>
@@ -119,11 +118,11 @@ $podeGerar = !$isNivel2 && !$isNivel3;
 
 <main class="d-none d-md-block kv-page main-desktop-layout">
 
-    <div class="container-fluid sgi-inline-09c28ee5" >
+    <div class="container-fluid sgi-u-maxw-96" >
 
         <div class="kv-header">
             <div class="kv-header__left">
-                <a href="<?= \App\Shared\Http\Url::to('painel') ?>" id="btnVoltar" class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold px-3 py-2 border-0 text-decoration-none sgi-inline-e1bcebb6" >
+                <a href="<?= \App\Shared\Http\Url::to('painel') ?>" id="btnVoltar" class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold px-3 py-2 border-0 text-decoration-none sgi-u-bg-E30613-radius-6px-p-8px-16px" >
                     <i class="bi bi-arrow-left-circle fs-5"></i> <span id="nomeInterclasseChaveamento">Interclasse</span>
                 </a>
             </div>
@@ -169,7 +168,7 @@ $podeGerar = !$isNivel2 && !$isNivel3;
 
         <div class="kv-gen-card">
             <div class="kv-gen-card__header">
-                <div class="kv-gen-card__title"><i class="bi bi-diagram-3 me-2 sgi-inline-eba5fafe" ></i><?php echo $podeGerar ? 'Gerar novo chaveamento' : 'Visualizar chaveamento'; ?></div>
+                <div class="kv-gen-card__title"><i class="bi bi-diagram-3 me-2 sgi-u-color-e30613" ></i><?php echo $podeGerar ? 'Gerar novo chaveamento' : 'Visualizar chaveamento'; ?></div>
                 <div class="kv-gen-card__desc"><?php echo $podeGerar ? 'Selecione uma modalidade para gerar automaticamente o chaveamento.' : 'Selecione uma modalidade para visualizar a árvore do torneio.'; ?></div>
             </div>
             <div class="kv-gen-card__row">
@@ -182,7 +181,7 @@ $podeGerar = !$isNivel2 && !$isNivel3;
             <div class="kv-gen-card__note">⚠ Não há possibilidade de gerar um segundo chaveamento.Tome cuidado!</div>
             <?php endif; ?>
             <div id="msgChaveamento"></div>
-            <div id="linkVerArvore" class="d-none sgi-inline-6751b8f3" >
+            <div id="linkVerArvore" class="d-none sgi-u-mt-12px" >
                 <a href="#" id="btnVerArvore" class="kv-link-btn">
                     <i class="bi bi-diagram-3-fill"></i> Ver árvore do chaveamento
                 </a>
@@ -204,7 +203,7 @@ $podeGerar = !$isNivel2 && !$isNivel3;
             </div>
         </div>
 
-        <div id="secaoJogos" class="sgi-inline-05073bd0">
+        <div id="secaoJogos" class="sgi-u-mt-24px">
             <div class="kv-table-card">
                 <div class="kv-table-card__header">
                     <div class="kv-table-card__title">Jogos Realizados</div>
@@ -221,7 +220,7 @@ $podeGerar = !$isNivel2 && !$isNivel3;
                     </select>
                 </div>
                 <div class="table-responsive">
-                    <table class="table table-hover align-middle">
+                    <table class="table sgi-table table-hover align-middle">
                         <thead>
                             <tr>
                                 <th>Partida</th>
@@ -264,16 +263,16 @@ $podeGerar = !$isNivel2 && !$isNivel3;
                         <div class="modal-summary__value" id="editNomePartida">---</div>
                         <div class="modal-summary__sub" id="editModalidadePartida"></div>
                     </div>
-                    <div id="editConcluidoBanner" class="edit-concluido-banner sgi-inline-7830d708" >
+                    <div id="editConcluidoBanner" class="edit-concluido-banner sgi-u-display-none" >
                         <i class="bi bi-exclamation-triangle-fill"></i>
                         <span>Este jogo já foi <strong>finalizado</strong>. Alterar o resultado pode afetar o chaveamento.</span>
                     </div>
                     <div class="edit-modal-grid">
                         <div class="edit-modal-grid__col">
-                            <div id="editTeamsSection" class="sgi-inline-7830d708">
+                            <div id="editTeamsSection" class="sgi-u-display-none">
                                 <label class="form-label">Equipes e Placar</label>
                                 <div id="editTeamsList"></div>
-                                <div id="editWinnerSection" class="mt-3 grid gap-2 sgi-inline-7830d708" >
+                                <div id="editWinnerSection" class="mt-3 grid gap-2 sgi-u-display-none" >
                                     <label class="form-label">Vencedor</label>
                                     <div id="editWinnerOptions"></div>
                                 </div>

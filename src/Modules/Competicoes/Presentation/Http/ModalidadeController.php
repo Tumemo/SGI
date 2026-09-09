@@ -50,8 +50,13 @@ final class ModalidadeController
 
     private function list(Request $request): Response
     {
+        if ((int) ($_SESSION['nivel'] ?? -1) === 2 && (int) ($_SESSION['id_interclasse'] ?? 0) <= 0) {
+            return Response::json(['success' => false, 'message' => 'Nenhuma edição ativa.'], 403);
+        }
         $filters = [
-            'id_interclasse' => (int) $request->query('id_interclasse', 0),
+            'id_interclasse' => (int) ($_SESSION['nivel'] ?? -1) === 2
+                ? (int) ($_SESSION['id_interclasse'] ?? 0)
+                : (int) $request->query('id_interclasse', 0),
             'id_modalidade' => (int) $request->query('id_modalidade', 0),
             'id_categoria' => (int) $request->query('id_categoria', 0),
             'id_tipo_modalidade' => (int) $request->query('id_tipo_modalidade', 0),

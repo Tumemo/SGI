@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Eventos\Presentation\Http;
 
+use App\Modules\Eventos\Application\CategoriaDuplicadaException;
 use App\Modules\Eventos\Application\CategoriaInativaException;
 use App\Modules\Eventos\Application\CategoriaNaoEncontradaException;
 use App\Modules\Eventos\Application\CategoriaService;
@@ -27,10 +28,16 @@ final class CategoriaController
         }
 
         try {
+            if ($request->method() === 'GET' && (int) ($_SESSION['nivel'] ?? -1) === 2
+                && (int) ($_SESSION['id_interclasse'] ?? 0) <= 0) {
+                return Response::json(['success' => false, 'message' => 'Nenhuma edição ativa.'], 403);
+            }
             return match ($request->method()) {
                 'GET' => Response::json($this->service->listar([
                     'id_categoria' => (int) $request->query('id_categoria', 0),
-                    'id_interclasse' => (int) $request->query('id_interclasse', 0),
+                    'id_interclasse' => (int) ($_SESSION['nivel'] ?? -1) === 2
+                        ? (int) ($_SESSION['id_interclasse'] ?? 0)
+                        : (int) $request->query('id_interclasse', 0),
                     'busca' => trim((string) $request->query('busca', '')),
                 ])),
                 'POST' => $this->create($request),
@@ -40,6 +47,11 @@ final class CategoriaController
             };
         } catch (\InvalidArgumentException $exception) {
             return Response::json(['success' => false, 'message' => $exception->getMessage()], 400);
+        } catch (CategoriaDuplicadaException) {
+            return Response::json([
+                'success' => false,
+                'message' => 'Já existe uma categoria com este nome nesta edição.',
+            ], 409);
         } catch (CategoriaNaoEncontradaException) {
             return Response::json(['success' => false, 'message' => 'Categoria não encontrada.'], 404);
         } catch (CategoriaInativaException) {

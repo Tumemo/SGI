@@ -1,5 +1,4 @@
 <?php
-$tituloPagina = 'SGI - Modalidades';
 $titulo = 'Modalidade';
 $mostrarVoltar = true;
 $urlVoltar = \App\Shared\Http\Url::to('painel');
@@ -11,7 +10,7 @@ $paginaAtiva = 'dashboard';
 <main class="main-desktop-layout main-modalidades-layout">
 
     <div class="modalidades-toolbar">
-            <a href="<?= \App\Shared\Http\Url::to('painel') ?>" id="btnVoltarModalidades" class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold px-3 py-2 border-0 text-decoration-none sgi-inline-e1bcebb6" >
+            <a href="<?= \App\Shared\Http\Url::to('painel') ?>" id="btnVoltarModalidades" class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold px-3 py-2 border-0 text-decoration-none sgi-u-bg-E30613-radius-6px-p-8px-16px" >
                 <i class="bi bi-arrow-left-circle fs-5"></i> <span id="nomeInterclasseModalidades">Interclasse</span>
             </a>
         <div class="d-flex align-items-center gap-3 flex-shrink-0 flex-wrap">
@@ -19,7 +18,7 @@ $paginaAtiva = 'dashboard';
                 <span>⭐</span> Alunos Destaques
             </button>
             <?php if ($nivelUsuario === 0): ?>
-            <button type="button" class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold px-3 py-2 border-0 sgi-inline-74cfd8db"  data-bs-toggle="modal" data-bs-target="#exampleModal">
+            <button type="button" class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold px-3 py-2 border-0 sgi-u-radius-8px"  data-bs-toggle="modal" data-bs-target="#exampleModal">
                 <i class="bi bi-plus-lg"></i> Nova Modalidade
             </button>
             <?php endif; ?>
@@ -97,9 +96,9 @@ $paginaAtiva = 'dashboard';
 <!-- Modal de Alunos Destaques -->
 <div class="modal fade" id="modalDestaques" tabindex="-1" aria-labelledby="modalDestaquesLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
-        <div class="modal-content sgi-inline-b4aeb9c6" >
+        <div class="modal-content sgi-u-radius-16px" >
             <div class="modal-header border-0">
-                <h5 class="modal-title text-danger fw-bold" id="modalDestaquesLabel"><i class="bi bi-star-fill me-2 sgi-inline-8640bf47" ></i>Alunos Destaques</h5>
+                <h5 class="modal-title text-danger fw-bold" id="modalDestaquesLabel"><i class="bi bi-star-fill me-2 sgi-u-color-f5b301" ></i>Alunos Destaques</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
             </div>
             <div class="modal-body" id="corpoDestaques">

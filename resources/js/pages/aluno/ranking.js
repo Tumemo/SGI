@@ -16,9 +16,9 @@ window.SGIPage.mount("aluno/ranking", function (pageConfig, pageScope) {
                 const data = await res.json();
                 const lista = Array.isArray(data) ? data : [data];
 
-                const ativo = lista.find(i => String(i.status_interclasse) === '1');
-                if (ativo) {
-                    idInterclasse = ativo.id_interclasse;
+                const publicado = lista.find(i => String(i.status_interclasse) !== '1' && i.ranking_publicado_em);
+                if (publicado) {
+                    idInterclasse = publicado.id_interclasse;
                     const url = new URL(window.location);
                     url.searchParams.set('id', idInterclasse);
                     window.history.replaceState({}, '', url);
@@ -31,7 +31,7 @@ window.SGIPage.mount("aluno/ranking", function (pageConfig, pageScope) {
         }
 
         if (!idInterclasse) {
-            exibirMensagem("Nenhum interclasse selecionado ou ativo no momento.", "warning");
+            exibirMensagem("Nenhum ranking foi publicado até o momento.", "warning");
             return;
         }
         await carregarDados();
@@ -150,7 +150,7 @@ window.SGIPage.mount("aluno/ranking", function (pageConfig, pageScope) {
             const isTop3 = posicao <= 3;
 
             const html = `
-                <div class="rk-card-wrapper ${isTop3 ? 'rk-card-wrapper--top' : ''} sgi-inline-666499cd"  data-sgi-index="${index}">
+                <div class="rk-card-wrapper ${isTop3 ? 'rk-card-wrapper--top' : ''} sgi-u-animation-delay-calc-attr-data-sgi-index-type-number-07s"  data-sgi-index="${index}">
                     <div class="card card-turma rk-rank-card ${classeDestaque} ${isTop3 ? 'rk-rank-card--podium' : ''}">
                         ${isTop3 ? `<div class="rk-rank-card__medal">${medals[posicao - 1]}</div>` : ''}
 
@@ -172,8 +172,8 @@ window.SGIPage.mount("aluno/ranking", function (pageConfig, pageScope) {
                             <span><i class="bi bi-star"></i> Pontuação bruta</span>
                             <span class="rk-bar-group__val">${ptsBrutos} pts</span>
                                 </div>
-                                <div class="barra-fundo sgi-inline-65fd1499" >
-                                    <div class="barra-progresso rk-bar--expected sgi-inline-95b73db3"  data-sgi-width="${porcentagemSem}"></div>
+                                <div class="barra-fundo sgi-u-h-8px" >
+                                    <div class="barra-progresso rk-bar--expected sgi-u-w-calc-attr-data-sgi-width-type-number-1"  data-sgi-width="${porcentagemSem}"></div>
                                 </div>
                             </div>
                             <div class="rk-bar-group">
@@ -181,8 +181,8 @@ window.SGIPage.mount("aluno/ranking", function (pageConfig, pageScope) {
                             <span class="text-danger fw-semibold"><i class="bi bi-flag-fill"></i> Pontuação líquida</span>
                             <span class="rk-bar-group__val fw-bold">${ptsLiquidos} pts${perdeu > 0 ? ` <span class="text-danger">(-${perdeu})</span>` : ''}</span>
                                 </div>
-                                <div class="barra-fundo sgi-inline-9d3cb190" >
-                                    <div class="barra-progresso rk-bar--final sgi-inline-f2316fc1"  data-sgi-width="${porcentagemCom}"></div>
+                                <div class="barra-fundo sgi-u-h-12px" >
+                                    <div class="barra-progresso rk-bar--final sgi-u-w-calc-attr-data-sgi-width-type-number-1"  data-sgi-width="${porcentagemCom}"></div>
                                 </div>
                             </div>
                         </div>

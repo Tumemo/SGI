@@ -1,5 +1,4 @@
 <?php
-$tituloPagina = 'SGI - Colaboradores';
 $titulo = 'Colaboradores';
 $mostrarVoltar = true;
 $urlVoltar = \App\Shared\Http\Url::to('painel');
@@ -12,9 +11,9 @@ $usuarioEhAdmin = (isset($_SESSION['nivel']) && (string)$_SESSION['nivel'] === '
 ?>
 
 <!-- ═══ MOBILE ═══ -->
-<main class="d-md-none sgi-inline-5460531b" >
+<main class="d-md-none sgi-u-pt-5-5rem-pb-6rem" >
     <div class="col-wrap">
-        <a href="<?= \App\Shared\Http\Url::to('painel') ?>" id="btnVoltarColabMobile" class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none sgi-inline-e1bcebb6" >
+        <a href="<?= \App\Shared\Http\Url::to('painel') ?>" id="btnVoltarColabMobile" class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none sgi-u-bg-E30613-radius-6px-p-8px-16px" >
             <i class="bi bi-arrow-left-circle fs-5"></i> <span id="nomeInterclasseColabMobile">Interclasse</span>
         </a>
 
@@ -37,7 +36,7 @@ $usuarioEhAdmin = (isset($_SESSION['nivel']) && (string)$_SESSION['nivel'] === '
             <div class="col-stat"><div class="col-stat__icon col-stat__icon--colab"><i class="bi bi-person"></i></div><div><div class="col-stat__num" id="statColabMob">-</div><div class="col-stat__label">Colaboradores</div></div></div>
         </div>
 
-        <div class="col-toolbar sgi-inline-3b7b4abf" >
+        <div class="col-toolbar sgi-u-flex-direction-column-align-items-stretch" >
             <div class="col-search">
                 <i class="bi bi-search col-search__icon"></i>
                 <input type="text" class="col-search__input" id="buscaColabMob" placeholder="Pesquisar colaborador...">
@@ -56,7 +55,7 @@ $usuarioEhAdmin = (isset($_SESSION['nivel']) && (string)$_SESSION['nivel'] === '
 <!-- ═══ DESKTOP ═══ -->
 <main class="d-none d-md-block main-desktop-layout col-page">
     <div class="col-wrap">
-        <a href="<?= \App\Shared\Http\Url::to('painel') ?>" id="btnVoltarColabDesk" class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none sgi-inline-e1bcebb6" >
+        <a href="<?= \App\Shared\Http\Url::to('painel') ?>" id="btnVoltarColabDesk" class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none sgi-u-bg-E30613-radius-6px-p-8px-16px" >
             <i class="bi bi-arrow-left-circle fs-5"></i> <span id="nomeInterclasseColabDesk">Interclasse</span>
         </a>
 
@@ -143,8 +142,8 @@ $usuarioEhAdmin = (isset($_SESSION['nivel']) && (string)$_SESSION['nivel'] === '
                     </div>
                     <div id="msgNovoColaborador" class="text-center mb-2"></div>
                     <div class="d-flex justify-content-end gap-2">
-                        <button type="button" class="btn btn-outline-secondary sgi-inline-0d1f6728" data-bs-dismiss="modal" >Cancelar</button>
-                        <button type="submit" class="btn btn-danger sgi-inline-be2e418b" id="btnSalvarColaborador" >Cadastrar</button>
+                        <button type="button" class="btn btn-outline-secondary sgi-u-radius-10px-weight-600-text-85rem" data-bs-dismiss="modal" >Cancelar</button>
+                        <button type="submit" class="btn btn-danger sgi-u-radius-10px-weight-700-text-85rem" id="btnSalvarColaborador" >Cadastrar</button>
                     </div>
                 </form>
             </div>
@@ -183,8 +182,8 @@ $usuarioEhAdmin = (isset($_SESSION['nivel']) && (string)$_SESSION['nivel'] === '
                     </div>
                     <div id="msgEditarColaborador" class="text-center mb-2"></div>
                     <div class="d-flex justify-content-end gap-2">
-                        <button type="button" class="btn btn-outline-secondary sgi-inline-0d1f6728" data-bs-dismiss="modal" >Cancelar</button>
-                        <button type="submit" class="btn btn-danger sgi-inline-be2e418b" id="btnSalvarEdicaoColaborador" >Salvar</button>
+                        <button type="button" class="btn btn-outline-secondary sgi-u-radius-10px-weight-600-text-85rem" data-bs-dismiss="modal" >Cancelar</button>
+                        <button type="submit" class="btn btn-danger sgi-u-radius-10px-weight-700-text-85rem" id="btnSalvarEdicaoColaborador" >Salvar</button>
                     </div>
                 </form>
             </div>

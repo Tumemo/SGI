@@ -6,6 +6,20 @@ window.SGIPage.mount("competicoes/chaveamento", function (pageConfig, pageScope)
     let jogosCache = [];
     const NIVEL_USUARIO = pageConfig.value3;
 
+    function modalidadeEhIndividual(mod) {
+        if (!mod) return false;
+        if (mod.tipo_competicao === 'individual') return true;
+        if (mod.tipo_competicao === 'mata_mata') return false;
+        const nome = String(mod.nome_tipo_modalidade || '').trim().toLowerCase();
+        if (nome === 'individual' || nome === 'prova individual') return true;
+        if (nome === 'mata-mata' || nome === 'mata mata') return false;
+        return !mod.tipo_competicao && Number(mod.id_tipo_modalidade || mod.tipos_modalidades_id_tipo_modalidade) === 2;
+    }
+
+    function jogoEhIndividual(jogo) {
+        return modalidadeEhIndividual(jogo);
+    }
+
     function esc(s) {
         const d = document.createElement('div');
         d.textContent = s == null ? '' : String(s);
@@ -31,7 +45,7 @@ window.SGIPage.mount("competicoes/chaveamento", function (pageConfig, pageScope)
             grupos[chave].push({
                 valor: String(mod.id_modalidade),
                 nome: mod.nome_modalidade,
-                tipo: Number(mod.id_tipo_modalidade) === 2 ? 'Individual' : 'Coletiva'
+                tipo: modalidadeEhIndividual(mod) ? 'Individual' : 'Coletiva'
             });
         });
         kvs_grupos = Object.keys(grupos).map(chave => ({ nome: chave, opcoes: grupos[chave] }));
@@ -82,7 +96,7 @@ window.SGIPage.mount("competicoes/chaveamento", function (pageConfig, pageScope)
                     const ativa = select.value === '' ? ' kvs__opcao--ativa' : '';
                     html += `<button type="button" class="kvs__opcao${ativa}" data-value="">
                         <span class="kvs__opcao-nome">Todas modalidades</span>
-                        <span class="kvs__opcao-tipo kvs__opcao-tipo--coletiva sgi-inline-eae8643c" >Mostrar tudo</span>
+                        <span class="kvs__opcao-tipo kvs__opcao-tipo--coletiva sgi-u-opacity-55" >Mostrar tudo</span>
                     </button>`;
                 }
             }
@@ -226,7 +240,7 @@ window.SGIPage.mount("competicoes/chaveamento", function (pageConfig, pageScope)
                 if (!isConcluido) return;
                 const tag = j.nome_jogo || '';
                 const isFinalMM = /^MM:2:/.test(tag);
-                const isInd = /^IND:\d+$/.test(tag) || Number(j.tipos_modalidades_id_tipo_modalidade) === 2;
+                const isInd = jogoEhIndividual(j);
                 if (isFinalMM || isInd) {
                     const idMod = j.modalidades_id_modalidade || j.id_modalidade;
                     if (idMod) modalidadesComCampeao.add(String(idMod));
@@ -341,7 +355,7 @@ window.SGIPage.mount("competicoes/chaveamento", function (pageConfig, pageScope)
 
     function formatarNomePartida(jogo) {
         const tag = jogo.nome_jogo || '';
-        if (/^IND:\d+$/.test(tag)) {
+        if (jogoEhIndividual(jogo)) {
             const equipes = (jogo.equipes_nomes || '').trim();
             if (equipes) {
                 return `Competição Individual: ${equipes}`;
@@ -465,7 +479,7 @@ window.SGIPage.mount("competicoes/chaveamento", function (pageConfig, pageScope)
             .then(function(data) {
                 if (_editIdJogo !== jogo.id_jogo) return;
                 const locais = data.success && Array.isArray(data.data) ? data.data : [];
-                selectLocal.innerHTML = '<option value="">Selecione um local</option>';
+                selectLocal.innerHTML = '<option value="">A definir</option>';
                 locais.forEach(function(l) {
                     var sel = Number(l.id_local) === Number(jogo.locais_id_local) ? 'selected' : '';
                     selectLocal.innerHTML += '<option value="' + l.id_local + '" ' + sel + '>' + l.nome_local + '</option>';
@@ -507,11 +521,7 @@ window.SGIPage.mount("competicoes/chaveamento", function (pageConfig, pageScope)
         var termino_jogo = document.getElementById('editTerminoJogo').value;
         var locais_id_local = document.getElementById('editLocalJogo').value;
         var status_jogo = document.getElementById('editStatusJogo').value;
-
-        if (!data_jogo) {
-            msgEl.innerHTML = '<span class="text-danger fw-bold">Selecione a data do jogo.</span>';
-            return;
-        }
+        var statusAtual = _editJogoData && _editJogoData.status_jogo ? String(_editJogoData.status_jogo) : '';
 
         if (status_jogo === 'Concluido') {
             const scoreInputsCheck = document.querySelectorAll('.edit-score-input');
@@ -526,12 +536,12 @@ window.SGIPage.mount("competicoes/chaveamento", function (pageConfig, pageScope)
 
         var payload = {
             id_jogo: Number(id_jogo),
-            data_jogo: data_jogo,
-            status_jogo: status_jogo
+            data_jogo: data_jogo || null,
+            inicio_jogo: inicio_jogo || null,
+            termino_jogo: termino_jogo || null,
+            locais_id_local: locais_id_local ? Number(locais_id_local) : null,
         };
-        if (inicio_jogo) payload.inicio_jogo = inicio_jogo;
-        if (termino_jogo) payload.termino_jogo = termino_jogo;
-        if (locais_id_local) payload.locais_id_local = Number(locais_id_local);
+        if (status_jogo !== statusAtual) payload.status_jogo = status_jogo;
 
         btn.disabled = true;
         btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status"></span> Salvando...';
@@ -710,7 +720,7 @@ window.SGIPage.mount("competicoes/chaveamento", function (pageConfig, pageScope)
             let statsJogos = Array.isArray(statsData) ? statsData : [];
             statsJogos = statsJogos.filter(function(j) {
                 var nomes = (j.equipes_nomes || '').trim();
-                var isInd = j.tipos_modalidades_id_tipo_modalidade == 2 || /^IND:\d+$/.test(j.nome_jogo || '');
+                var isInd = jogoEhIndividual(j);
                 return isInd || (nomes.indexOf(' vs ') !== -1);
             });
             atualizarStats(statsJogos);
@@ -725,7 +735,7 @@ window.SGIPage.mount("competicoes/chaveamento", function (pageConfig, pageScope)
 
             jogos = jogos.filter(function(j) {
                 var nomes = (j.equipes_nomes || '').trim();
-                var isInd = j.tipos_modalidades_id_tipo_modalidade == 2 || /^IND:\d+$/.test(j.nome_jogo || '');
+                var isInd = jogoEhIndividual(j);
                 return isInd || (nomes.indexOf(' vs ') !== -1) || (nomes.length > 0);
             });
 
@@ -808,7 +818,7 @@ window.SGIPage.mount("competicoes/chaveamento", function (pageConfig, pageScope)
 
     /* Selo visual quando a árvore foi calculada localmente (modo offline). */
     function _badgeFonteLocal() {
-        return `<div class="kv-alert kv-alert--info sgi-inline-8bbdd234" >
+        return `<div class="kv-alert kv-alert--info sgi-u-mt-16px-display-flex-align-items-center" >
             <i class="bi bi-wifi-off"></i> Offline: árvore avançada localmente com os resultados deste dispositivo.
             Será sincronizada automaticamente quando a conexão voltar.
         </div>`;
@@ -830,8 +840,8 @@ window.SGIPage.mount("competicoes/chaveamento", function (pageConfig, pageScope)
 
         let teamsHtml = '';
         if (eqs.length === 0) {
-            teamsHtml = `<div class="bkt-team"><span class="bkt-team__name sgi-inline-d7cd6f0b" >A definir</span><span class="bkt-team__score">-</span></div>
-                         <div class="bkt-team"><span class="bkt-team__name sgi-inline-d7cd6f0b" >A definir</span><span class="bkt-team__score">-</span></div>`;
+            teamsHtml = `<div class="bkt-team"><span class="bkt-team__name sgi-u-color-9ca3af-font-style-italic" >A definir</span><span class="bkt-team__score">-</span></div>
+                         <div class="bkt-team"><span class="bkt-team__name sgi-u-color-9ca3af-font-style-italic" >A definir</span><span class="bkt-team__score">-</span></div>`;
         } else {
             eqs.forEach(eq => {
                 const nome = eq.nome_equipe || eq.nome_fantasia || eq.nome_turma || `Equipe #${eq.id_equipe}`;
@@ -873,13 +883,13 @@ window.SGIPage.mount("competicoes/chaveamento", function (pageConfig, pageScope)
         let metaParts = [];
         if (faseLabel) metaParts.push(`<i class="bi bi-tag"></i><span>${faseLabel}</span>`);
         if (nomeModalidade) metaParts.push(`<span>${nomeModalidade}</span>`);
-        if (dataJogo) metaParts.push(`<i class="bi bi-calendar3"></i><span>${dataJogo}${inicioJogo ? ' ' + inicioJogo.substring(0,5) : ''}</span>`);
-        if (localJogo) metaParts.push(`<i class="bi bi-geo-alt"></i><span>${localJogo}</span>`);
+        metaParts.push(`<i class="bi bi-calendar3"></i><span>${dataJogo ? dataJogo + (inicioJogo ? ' ' + inicioJogo.substring(0,5) : '') : 'A definir'}</span>`);
+        metaParts.push(`<i class="bi bi-geo-alt"></i><span>${localJogo || 'A definir'}</span>`);
 
         let actionsHtml = '';
         if (!isBye && !isConcluido && jogo.id_jogo) {
             actionsHtml += '<div class="bkt-match__actions">';
-            if (jogo.status_jogo === 'Agendado') {
+            if (jogo.status_jogo === 'Agendado' && jogo.data_jogo && jogo.inicio_jogo && jogo.termino_jogo && jogo.locais_id_local) {
                 actionsHtml += `<a href="/jogos/placar?id_jogo=${jogo.id_jogo}" class="game-action-btn game-action-btn--start" title="Iniciar Jogo"><i class="bi bi-play-fill"></i>Iniciar</a>`;
             }
             actionsHtml += `<button class="game-action-btn game-action-btn--edit" title="Editar Jogo" onclick="editarJogoBracket(this)" data-jogo='${jogoData}'><i class="bi bi-pencil"></i>Editar</button>`;
@@ -952,13 +962,13 @@ window.SGIPage.mount("competicoes/chaveamento", function (pageConfig, pageScope)
                 const nextNivel = niveis[nivelIdx + 1];
                 const nextCount = rounds[nextNivel]?.length || 1;
                 const connectorHeight = matchCount * 140;
-                html += '<div class="bkt-connector sgi-inline-886e54cd" ></div>';
+                html += '<div class="bkt-connector"></div>';
             }
         });
 
         if (posGames.length > 0) {
             html += '<div class="bracket-round-col">';
-            html += '<div class="bracket-round-header sgi-inline-be12652a" >Disputas de Posição</div>';
+            html += '<div class="bracket-round-header sgi-u-color-e30613-border-color-fecaca-background-linear-gradient-135deg-fff5f5-fff" >Disputas de Posição</div>';
             posGames.forEach(j => {
                 html += _renderBracketMatch(j);
             });
@@ -966,7 +976,7 @@ window.SGIPage.mount("competicoes/chaveamento", function (pageConfig, pageScope)
         }
 
         if (campeao) {
-            html += '<div class="bkt-connector sgi-inline-9c7a412e" ></div>';
+            html += '<div class="bkt-connector sgi-u-h-120px" ></div>';
             html += '<div class="bracket-champion-col">';
             html += '<div class="bracket-champion-card">';
             html += '<div class="bracket-champion-card__icon">🏆</div>';
@@ -1101,7 +1111,7 @@ window.SGIPage.mount("competicoes/chaveamento", function (pageConfig, pageScope)
         if (!idModalidade) {
             const emptyHtml = `
                 <div class="kv-empty kv-animate">
-                    <div class="kv-empty__icon sgi-inline-13bf432d" >
+                    <div class="kv-empty__icon sgi-u-text-5rem-mb-24px" >
                         <svg width="80" height="80" viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
                             <rect x="8" y="12" width="20" height="14" rx="3" stroke="#d1d5db" stroke-width="2" fill="#f9fafb"/>
                             <rect x="8" y="54" width="20" height="14" rx="3" stroke="#d1d5db" stroke-width="2" fill="#f9fafb"/>
@@ -1110,10 +1120,10 @@ window.SGIPage.mount("competicoes/chaveamento", function (pageConfig, pageScope)
                             <path d="M28 61 H40 V40 H52" stroke="#d1d5db" stroke-width="1.5" fill="none"/>
                         </svg>
                     </div>
-                    <div class="kv-empty__title sgi-inline-1dd0923c" >Nenhum chaveamento gerado</div>
-                    <div class="kv-empty__desc sgi-inline-bf00ca50" >Selecione uma modalidade acima para gerar automaticamente o chaveamento do torneio.</div>
+                    <div class="kv-empty__title sgi-u-text-1-4rem" >Nenhum chaveamento gerado</div>
+                    <div class="kv-empty__desc sgi-u-maxw-450px" >Selecione uma modalidade acima para gerar automaticamente o chaveamento do torneio.</div>
                     ${pageConfig.value0 ? `
-                    <button class="kv-empty__btn sgi-inline-1cf0d3f0" onclick="kvs_focus('selectModalidade');" >
+                    <button class="kv-empty__btn sgi-u-p-12px-28px-text-0-95rem" onclick="kvs_focus('selectModalidade');" >
                         <i class="bi bi-diagram-3-fill"></i> Gerar Chaveamento
                     </button>
                     ` : ``}
@@ -1126,7 +1136,7 @@ window.SGIPage.mount("competicoes/chaveamento", function (pageConfig, pageScope)
         _currentModalidade = idModalidade;
 
         const mod = modalidadesCache.find(m => String(m.id_modalidade) === idModalidade);
-        const isIndividual = mod && Number(mod.id_tipo_modalidade) === 2;
+        const isIndividual = modalidadeEhIndividual(mod);
 
         if (isIndividual) {
             const loadingHtml = `
@@ -1147,34 +1157,34 @@ window.SGIPage.mount("competicoes/chaveamento", function (pageConfig, pageScope)
                 if (rankingAtual.length > 0) {
                     const posLabels = ['🥇 1º Lugar', '🥈 2º Lugar', '🥉 3º Lugar'];
                     const posBg = ['kv-podium-item--first', 'kv-podium-item--second', 'kv-podium-item--third'];
-                    rankingDisplay = '<div class="kv-podium sgi-inline-cafe2684" >';
+                    rankingDisplay = '<div class="kv-podium sgi-u-mt-20px" >';
                     rankingAtual.forEach((r, idx) => {
                         const nome = esc(r.nome_usuario || 'Desconhecido');
                         const turma = esc(r.nome_fantasia_turma || r.nome_turma || '');
                         rankingDisplay += `
                             <div class="kv-podium-item ${posBg[idx] || ''}">
-                                <div class="kv-podium-item__icon sgi-inline-b65dc436" >${idx === 0 ? '🥇' : idx === 1 ? '🥈' : '🥉'}</div>
+                                <div class="kv-podium-item__icon sgi-u-text-1-6rem" >${idx === 0 ? '🥇' : idx === 1 ? '🥈' : '🥉'}</div>
                                 <div class="kv-podium-item__label">${posLabels[idx] || (idx+1)+'º Lugar'}</div>
                                 <div class="kv-podium-item__name">${nome}</div>
-                                <div class="kv-podium-item__turma sgi-inline-baecff79" >${turma}</div>
+                                <div class="kv-podium-item__turma sgi-u-text-0-78rem-color-6b7280-mt-4px" >${turma}</div>
                             </div>`;
                     });
                     rankingDisplay += '</div>';
                 } else {
-                    rankingDisplay = '<div class="kv-empty sgi-inline-29f53383" ><div class="kv-empty__icon"><i class="bi bi-award"></i></div><div class="kv-empty__title">Nenhum ranking registrado</div><div class="kv-empty__desc">Registre os colocados (1º, 2º e 3º lugar) na página do jogo.</div></div>';
+                    rankingDisplay = '<div class="kv-empty sgi-u-p-24px" ><div class="kv-empty__icon"><i class="bi bi-award"></i></div><div class="kv-empty__title">Nenhum ranking registrado</div><div class="kv-empty__desc">Registre os colocados (1º, 2º e 3º lugar) na página do jogo.</div></div>';
                 }
 
                 const individualHtml = `
                     <div class="kv-history-card">
-                        <div class="kv-history-card__header sgi-inline-5b3cf3a3" >
+                        <div class="kv-history-card__header sgi-u-display-flex-justify-content-space-between-align-items-center" >
                             <div class="kv-history-card__title"><i class="bi bi-award-fill"></i> Ranking Atual</div>
                             ${jogoIndividual ? `
                             <div class="dropdown">
                                 <button class="kv-action" type="button" data-bs-toggle="dropdown" aria-expanded="false" title="Mais opções">
                                     <i class="bi bi-three-dots-vertical"></i>
                                 </button>
-                                <ul class="dropdown-menu dropdown-menu-end sgi-inline-0fb64623" >
-                                    <li><a class="dropdown-item sgi-inline-45432120" href="#" onclick="editarJogoIndividual(event)" ><i class="bi bi-pencil"></i> Editar Jogo</a></li>
+                                <ul class="dropdown-menu dropdown-menu-end sgi-u-min-width-180px-radius-10px-box-shadow-0-8px-24px-0-0-0-0-12" >
+                                    <li><a class="dropdown-item sgi-u-text-0-88rem-display-flex-align-items-center" href="#" onclick="editarJogoIndividual(event)" ><i class="bi bi-pencil"></i> Editar Jogo</a></li>
                                 </ul>
                             </div>` : ''}
                         </div>
@@ -1182,7 +1192,7 @@ window.SGIPage.mount("competicoes/chaveamento", function (pageConfig, pageScope)
                             ${rankingDisplay}
                         </div>
                     </div>
-                    <div class="kv-alert kv-alert--info sgi-inline-6668ba87" >
+                    <div class="kv-alert kv-alert--info sgi-u-mt-20px-display-flex-align-items-center" >
                         <i class="bi bi-info-circle"></i> Os colocados (1º, 2º e 3º lugar) são registrados na página do jogo.
                     </div>`;
 
@@ -1192,7 +1202,7 @@ window.SGIPage.mount("competicoes/chaveamento", function (pageConfig, pageScope)
 
             } catch (e) {
                 console.error("Erro ao carregar ranking individual:", e);
-                const errHtml = `<div class="kv-empty kv-animate"><div class="kv-empty__icon"><i class="bi bi-exclamation-triangle sgi-inline-11481b53" ></i></div><div class="kv-empty__title">Erro</div><div class="kv-empty__desc">Erro ao carregar dados da modalidade individual.</div></div>`;
+                const errHtml = `<div class="kv-empty kv-animate"><div class="kv-empty__icon"><i class="bi bi-exclamation-triangle sgi-u-color-f59e0b" ></i></div><div class="kv-empty__title">Erro</div><div class="kv-empty__desc">Erro ao carregar dados da modalidade individual.</div></div>`;
                 area.innerHTML = errHtml;
                 if (areaMob) areaMob.innerHTML = errHtml;
             }
@@ -1243,7 +1253,7 @@ window.SGIPage.mount("competicoes/chaveamento", function (pageConfig, pageScope)
 
         } catch (e) {
             console.error("Erro ao carregar árvore:", e);
-            const errHtml = `<div class="kv-empty kv-animate"><div class="kv-empty__icon"><i class="bi bi-exclamation-triangle sgi-inline-11481b53" ></i></div><div class="kv-empty__title">Erro de conexão</div><div class="kv-empty__desc">Não foi possível conectar ao servidor.</div></div>`;
+            const errHtml = `<div class="kv-empty kv-animate"><div class="kv-empty__icon"><i class="bi bi-exclamation-triangle sgi-u-color-f59e0b" ></i></div><div class="kv-empty__title">Erro de conexão</div><div class="kv-empty__desc">Não foi possível conectar ao servidor.</div></div>`;
             area.innerHTML = errHtml;
             if (areaMob) areaMob.innerHTML = errHtml;
         }
@@ -1361,10 +1371,10 @@ window.SGIPage.mount("competicoes/chaveamento", function (pageConfig, pageScope)
         }
 
         const mod = modalidadesCache.find(m => String(m.id_modalidade) === idModalidade);
-        const tipoId = mod ? Number(mod.id_tipo_modalidade) : 0;
-        const tipoModalidadeParam = tipoId === 2 ? 'individual' : 'mata_mata';
+        const isIndividual = modalidadeEhIndividual(mod);
+        const tipoModalidadeParam = isIndividual ? 'individual' : 'mata_mata';
 
-        msgEl.innerHTML = '<div class="kv-alert kv-alert--info">' + (tipoId === 2 ? 'Gerando jogo da modalidade para a agenda...' : 'Gerando chaveamento...') + '</div>';
+        msgEl.innerHTML = '<div class="kv-alert kv-alert--info">' + (isIndividual ? 'Gerando jogo da modalidade para a agenda...' : 'Gerando chaveamento...') + '</div>';
 
         try {
             btn.disabled = true;

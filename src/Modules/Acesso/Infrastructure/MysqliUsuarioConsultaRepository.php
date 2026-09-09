@@ -14,14 +14,15 @@ final class MysqliUsuarioConsultaRepository implements UsuarioConsultaRepository
     {
     }
 
-    public function competitors(int $classId, int $editionId, string $gender = ''): array
+    public function competitors(int $classId, int $editionId, string $gender = '', bool $includeSensitive = true): array
     {
         if ($classId <= 0 || $editionId <= 0) {
             throw new RuntimeException('ID da turma é obrigatório e deve ser um número válido.');
         }
 
+        $sensitiveColumns = $includeSensitive ? ', u.data_nasc_usuario' : '';
         $sql = "SELECT u.id_usuario, u.nome_usuario, u.matricula_usuario,
-                       u.genero_usuario, u.nivel_usuario, u.data_nasc_usuario,
+                       u.genero_usuario, u.nivel_usuario{$sensitiveColumns},
                        CASE WHEN EXISTS (
                            SELECT 1 FROM equipes_has_usuarios eu
                            INNER JOIN equipes eq ON eq.id_equipe = eu.equipes_id_equipe
@@ -79,7 +80,7 @@ final class MysqliUsuarioConsultaRepository implements UsuarioConsultaRepository
     {
         $statement = $this->prepare("SELECT id_usuario, nome_usuario, matricula_usuario, senha_usuario, nivel_usuario, sigla_usuario, foto_usuario
             FROM usuarios WHERE matricula_usuario = ? AND data_nasc_usuario = ? AND interclasses_id_interclasse = ?
-              AND (nivel_usuario = '3' OR competidor_usuario = '3') AND status_usuario = '1' LIMIT 1");
+              AND nivel_usuario = '3' AND status_usuario = '1' LIMIT 1");
         $statement->bind_param('ssi', $registration, $birth, $editionId);
         $statement->execute();
         $row = $statement->get_result()->fetch_assoc() ?: null;

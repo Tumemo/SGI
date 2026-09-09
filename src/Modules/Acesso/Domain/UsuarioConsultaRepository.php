@@ -7,7 +7,7 @@ namespace App\Modules\Acesso\Domain;
 interface UsuarioConsultaRepository
 {
     /** @return array<string, mixed> */
-    public function competitors(int $classId, int $editionId, string $gender = ''): array;
+    public function competitors(int $classId, int $editionId, string $gender = '', bool $includeSensitive = true): array;
 
     /** @return array<string, mixed> */
     public function collaborators(int $editionId): array;

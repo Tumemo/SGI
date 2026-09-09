@@ -13,9 +13,9 @@ final class MysqliIndividualRankingRepository implements IndividualRankingReposi
     {
     }
 
-    public function salvarRanking(int $modalityId, array $ranking): array
+    public function salvarRanking(int $modalityId, array $ranking, ?int $gameId = null): array
     {
-        return MysqliIndividualRepository::salvarRanking($this->connection, $modalityId, $ranking);
+        return MysqliIndividualRepository::salvarRanking($this->connection, $modalityId, $ranking, $gameId);
     }
 
     public function criarJogoAgenda(int $modalityId): array
