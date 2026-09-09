@@ -12,9 +12,7 @@ public/index.php               entrada HTTP
 bootstrap/autoload.php         Composer, raiz do projeto e ambiente
 bootstrap/app.php              composição do Kernel
 config/routes.php              controladores e dependências das APIs versionadas
-config/routes/web.php          URLs anteriores para templates privados
-config/routes/compatibility.php aliases de API legadas
-config/assets.php              compatibilidade com URLs antigas de assets
+config/routes/web.php          URLs canônicas para templates privados
 src/Modules/
   Acesso/                      autenticação, perfil, fotos e usuários
   Eventos/                     edições, categorias e locais
@@ -53,7 +51,7 @@ Os serviços de domínio/aplicação não dependem de HTTP, sessão ou MySQLi; t
    uniforme de exceções e `Router`.
 4. Cada rota compõe explicitamente seu controlador, serviço e repositório em
    `config/routes.php`; não existe contêiner global ou descoberta implícita.
-5. As rotas públicas de produção pertencem ao namespace versionado. O mapa transitório de aliases ainda é consumido por chamadas relativas do cliente atual e só será retirado após L04/L05 do plano de limpeza. Não há executores PHP fora do front controller; novas rotas devem ser registradas exclusivamente nesse namespace.
+5. As rotas públicas de produção usam somente os namespaces canônicos de páginas e `/api/v1`. Não há aliases procedurais nem executores PHP fora do front controller.
 
 Os controladores novos não executam SQL. Serviços recebem interfaces de domínio e são
 testáveis sem banco. Repositórios concentram consultas, transações e detalhes
@@ -109,7 +107,7 @@ ficam fora dessa lista e só recebem serviços, contratos e adaptadores de HTTP.
 
 O build copia fontes e dependências fixadas no lockfile para `public/assets`, inclui licenças e gera um manifesto de checksums. URLs emitidas por `Assets` têm versão derivada do conteúdo.
 
-Cada programa de página roda em uma função própria. `page-runtime.js` registra inicialização e reativação, restaura as ações usadas pelo HTML e evita duplicar eventos. Ao sair de uma tela, os eventos globais são removidos; placar e chaveamento interrompem suas atualizações. O shell guarda HTML, JSON e fontes JavaScript juntos no registro de versão 2. O adaptador léxico é mantido apenas para os scripts legados e os caches de versões anteriores.
+Cada programa de página roda em uma função própria. `page-runtime.js` registra inicialização e reativação, restaura as ações usadas pelo HTML e evita duplicar eventos. Ao sair de uma tela, os eventos globais são removidos; placar e chaveamento interrompem suas atualizações. O shell guarda HTML, JSON e fontes JavaScript juntos no registro de versão 2.
 
 O modal de ocorrência cancela fechamentos atrasados quando uma nova edição começa, impedindo que uma confirmação anterior desmonte a edição seguinte durante uma reconexão offline. A fila continua sendo a mesma store IndexedDB, com os mesmos aliases e identificadores de mutação.
 
@@ -117,9 +115,9 @@ O modal de ocorrência cancela fechamentos atrasados quando uma nova edição co
 
 O gerenciamento de chaveamento usa `ChaveamentoController` e `ChaveamentoService`, com persistência por `ChaveamentoManagement`. A URL antiga encaminha para `/api/v1/chaveamentos`. A criação coletiva continua restrita a administrador/colaborador; o mesário registra resultados individuais somente na edição ativa. A criação de jogos e os avanços automáticos são confirmados na mesma transação.
 
-A importação por PDF usa `ImportacaoTurmaController`, `ImportacaoTurmaService`, um contrato de leitura e um repositório de persistência. As URLs antigas de upload encaminham para `/api/v1/importacoes/turma-pdf`, incluindo o campo legado `pdf`. A turma e a edição são validadas antes de salvar arquivos; o conteúdo precisa ter cabeçalho PDF. Um bloqueio de arquivo serializa importações da mesma turma para preservar o par PDF/CSV durante a extração. A deduplicação de matrículas por edição permanece no importador existente.
+A importação por PDF usa `ImportacaoTurmaController`, `ImportacaoTurmaService`, um contrato de leitura e um repositório de persistência em `/api/v1/importacoes/turma-pdf`. A turma e a edição são validadas antes de salvar arquivos; o conteúdo precisa ter cabeçalho PDF. Um bloqueio de arquivo serializa importações da mesma turma para preservar o par PDF/CSV durante a extração. A deduplicação de matrículas por edição permanece no importador existente.
 
-`MigrationRunner` registra checksum, estado de conclusão e trava de execução. A adoção de uma base existente exige `--baseline`; a rotina valida parte da estrutura e não apaga seus dados. Veja [implantação](deployment.md).
+`MigrationRunner` registra checksum, estado de conclusão e trava de execução. Instalações novas começam com banco vazio e aplicam todas as migrações; uma base sem histórico é recusada para evitar mistura de esquemas.
 
 `MysqliMutationStore` serializa uma mesma chave, rejeita sua reutilização com outro conteúdo/operador e confirma resposta e dados na mesma transação. Transações aninhadas usam savepoints. Os testes provocam falha antes da confirmação e reenvios concorrentes. A fila mantém o identificador e atualiza o token CSRF da sessão ao reenviar.
 

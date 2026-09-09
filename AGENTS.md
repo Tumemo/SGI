@@ -65,7 +65,7 @@ O subsistema offline está localizado em `resources/js/offline/` e opera em conj
 
 3. **`mesario-offline.js`:**
    - SPA Shell para Mesário: pré-carrega as páginas HTML e scripts no login (`preload`).
-   - Utiliza `tornarReexecutavel(src)` com analisador léxico para reinjetar o DOM e reexecutar scripts sem recarregar a página (com suporte a regex literals e variáveis de escopo).
+   - Reidrata as telas pelo cache versionado atual, reinicializando os scripts publicados sem interpretar ou executar o formato legado de scripts serializados.
 
 4. **`chaveamento-engine.js`:**
    - Motor híbrido em JavaScript: quando um jogo é concluído offline, `promoverVencedorLocal(idJogo)` avança o vencedor para a próxima fase localmente, gerando partidas derivadas com IDs temporários negativos (`id_jogo < 0`).

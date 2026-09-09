@@ -16,17 +16,14 @@ Os dados de demonstração em `database/seeders/test.sql` pertencem aos testes. 
 
 1. Faça backup consistente do banco, dos uploads, das importações e da configuração. Teste a restauração em outra base.
 2. Prepare o novo pacote e execute as suítes em um ambiente separado. Configure os mesmos diretórios persistentes de upload da instalação atual.
-3. Em uma janela sem operações de mesário em andamento, execute `php bin/sgi.php migrate --baseline` na primeira adoção das migrações. A rotina confere tabelas, colunas e a chave de matrícula por edição antes de registrar o esquema inicial. Ela não certifica equivalência de todos os tipos, triggers ou índices: compare divergências da instalação com `001_initial_schema.sql` antes dessa etapa.
-4. Em atualizações posteriores, execute somente `php bin/sgi.php migrate`.
-5. Publique o pacote, faça login com os perfis utilizados e confira agenda, ranking e armazenamento. Os mesários devem concluir a preparação offline antes de perder a conexão.
+3. Em uma janela sem operações de mesário em andamento, execute `php bin/sgi.php migrate`. O comando aplica as migrações pendentes e recusa bases sem histórico, que devem ser recriadas a partir do schema atual.
+4. Publique o pacote, faça login com os perfis utilizados e confira agenda, ranking e armazenamento. Os mesários devem concluir a preparação offline antes de perder a conexão.
 
 As migrações são numeradas, têm checksum e usam trava no banco para impedir execuções simultâneas. Uma migração aplicada não deve ser editada; crie outra. DDL do MySQL/MariaDB pode fazer commit implícito: o marcador `dirty` sinaliza aplicação incompleta e interrompe novas tentativas automáticas.
 
 ## Operação offline atual
 
 O cliente atual usa a casca SPA preparada durante a sessão e armazena HTML, configuração e JavaScript da página juntos. A operação offline exige que a casca e os dados tenham sido preparados antes da perda de conexão; não há suporte declarado para abertura fria ou refresh sem essa preparação. O navegador não usa Service Worker.
-
-A limpeza das rotas relativas antigas está planejada para L04/L05. Até essa migração ser concluída, o servidor ainda carrega os aliases necessários pelo próprio cliente atual; novas telas e chamadas devem usar os caminhos versionados.
 
 O identificador de mutação acompanha os reenvios. As confirmações registram a identidade do operador e o conteúdo da operação; a mesma chave com conteúdo ou operador diferente é recusada. Gols, ocorrências e resultados protegidos são confirmados junto com o registro de repetição na mesma transação. Operações recusadas permanecem na fila e precisam de revisão.
 
