@@ -26,8 +26,6 @@ interface PodioRepository
     /** @return array<string, mixed> */
     public function diagnosticar(): array;
 
-    /** @param list<array<string, mixed>> $creditos */
-    public function adotar(array $creditos): void;
 
     public function invalidarFontesSemOrigemAtual(int $interclasseId, int $modalidadeId): void;
 }

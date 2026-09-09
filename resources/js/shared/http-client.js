@@ -5,7 +5,16 @@
     'use strict';
 
     var token = String(window.SGI_CSRF_TOKEN || '');
-    if (!token) return;
+    var basePath = String(window.SGI_BASE_PATH || '').replace(/\/+$/, '');
+
+    // Todas as chamadas canônicas continuam usando /api/v1/... no código da
+    // tela. Quando a instalação vive em um subdiretório, o prefixo é aplicado
+    // aqui, no cliente HTTP compartilhado, antes de sair do navegador.
+    function resolveUrl(url) {
+        if (typeof url !== 'string' || !basePath || url.indexOf('//') === 0) return url;
+        if (url === '/api' || url.indexOf('/api/') === 0) return basePath + url;
+        return url;
+    }
 
     function isMutation(method) {
         method = String(method || 'GET').toUpperCase();
@@ -25,19 +34,26 @@
         window.fetch = function (input, init) {
             var request = input instanceof Request ? input : null;
             var method = (init && init.method) || (request && request.method) || 'GET';
-            var url = request ? request.url : input;
+            var sourceUrl = request ? request.url : input;
+            var resolved = resolveUrl(sourceUrl);
+            var normalizedInput = input;
+            if (resolved !== sourceUrl) {
+                normalizedInput = request ? new Request(resolved, request) : resolved;
+            }
+            var url = normalizedInput instanceof Request ? normalizedInput.url : normalizedInput;
             if (!isMutation(method) || !isSameOrigin(url)) {
-                return nativeFetch.call(this, input, init);
+                return nativeFetch.call(this, normalizedInput, init);
             }
 
-            var headers = new Headers(request ? request.headers : undefined);
+            var normalizedRequest = normalizedInput instanceof Request ? normalizedInput : request;
+            var headers = new Headers(normalizedRequest ? normalizedRequest.headers : undefined);
             if (init && init.headers) {
                 new Headers(init.headers).forEach(function (value, name) { headers.set(name, value); });
             }
             if (!headers.has('X-SGI-CSRF')) headers.set('X-SGI-CSRF', token);
 
             var options = Object.assign({}, init || {}, { headers: headers });
-            return nativeFetch.call(this, input, options);
+            return nativeFetch.call(this, normalizedInput, options);
         };
     }
 
@@ -57,9 +73,11 @@
 
             xhr.open = function (requestMethod, requestUrl) {
                 method = String(requestMethod || 'GET').toUpperCase();
-                url = requestUrl;
+                url = resolveUrl(String(requestUrl || ''));
                 csrfHeaderSet = false;
-                return nativeOpen.apply(xhr, arguments);
+                var args = Array.prototype.slice.call(arguments);
+                args[1] = url;
+                return nativeOpen.apply(xhr, args);
             };
             xhr.setRequestHeader = function (name, value) {
                 if (String(name).toLowerCase() === 'x-sgi-csrf') csrfHeaderSet = true;
@@ -79,6 +97,7 @@
 
     if (window.axios && window.axios.interceptors) {
         window.axios.interceptors.request.use(function (config) {
+            config.url = resolveUrl(config.url || '');
             if (isMutation(config.method) && isSameOrigin(config.url || window.location.href)) {
                 config.headers = config.headers || {};
                 if (!config.headers['X-SGI-CSRF']) config.headers['X-SGI-CSRF'] = token;

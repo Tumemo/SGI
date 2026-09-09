@@ -16,11 +16,10 @@ if (is_numeric($nivelRaw)) {
 $tituloPagina = 'SGI - Ranking';
 $titulo = 'Ranking de Turmas';
 $mostrarVoltar = true;
-$urlVoltar = './home.php';
+$urlVoltar = \App\Shared\Http\Url::to('aluno/inicio');
 include SGI_ROOT . '/resources/views/components/aluno-head.php';
 $paginaAtiva = 'ranking';
 ?>
-<link rel="stylesheet" href="../../styles/style.css">
 
 <!-- ======================== MOBILE ======================== -->
 <main class="d-md-none py-3 px-3 sgi-inline-9f1598af" >

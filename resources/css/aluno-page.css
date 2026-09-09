@@ -1,6 +1,6 @@
 /* SGI - estilos específicos do portal do aluno. */
 
-/* Migrado de views/src/pages/alunos/home.php */
+/* Tela inicial do portal do aluno */
 /* ==================== DESIGN SYSTEM ==================== */
 :root {
   --aluno-primary: #dc3545;
@@ -339,7 +339,7 @@
   border-bottom: none;
 }
 
-/* Migrado de views/src/pages/alunos/ranking.php */
+/* Ranking do portal do aluno */
 .btn-categoria { transition: all 0.2s; border-radius: 50px !important; min-width: 100px; border: 1.5px solid #E5E7EB; background: #fff; color: #4B5563; font-weight: 600; font-size: .9rem; padding: .55rem 1.3rem; white-space: nowrap; }
 .rk-stat-chip { font-size: .9rem; padding: .55rem 1.1rem; }
 .btn-categoria:hover { border-color: #dc3545 !important; color: #dc3545 !important; background: #fff5f5 !important; }
@@ -406,7 +406,7 @@
     }
 }
 
-/* Migrado de views/src/pages/alunos/perfil.php */
+/* Perfil do portal do aluno */
 /* ==================== PERFIL (alunos/perfil.php) ==================== */
 .perfil-page {
     font-weight: 300;
@@ -895,6 +895,6 @@
     }
 }
 
-/* Migrado de views/src/pages/alunos/termos.php */
+/* Termos do portal do aluno */
 .termo-clausula { border-left: 4px solid #dc3545; padding-left: 1rem; margin-bottom: 1rem; }
         .regulamento-card { background: #fff; border-radius: 12px; padding: 1.5rem; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }

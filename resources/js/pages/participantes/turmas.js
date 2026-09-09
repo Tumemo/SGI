@@ -111,7 +111,7 @@ window.SGIPage.mount("participantes/turmas", function (pageConfig, pageScope) {
                     </div>
                     <div class="turma-card-actions">
                         ${adminBtns}
-                        <a href="./turma_alunos.php?id=${interclasse.id_interclasse}&id_turma=${turma.id_turma}&id_categoria=${turma.categorias_id_categoria}" class="turma-card-btn-detalhes ms-auto">
+                        <a href="/turmas/alunos?id=${interclasse.id_interclasse}&id_turma=${turma.id_turma}&id_categoria=${turma.categorias_id_categoria}" class="turma-card-btn-detalhes ms-auto">
                             Ver detalhes <i class="bi bi-arrow-right"></i>
                         </a>
                     </div>
@@ -202,11 +202,11 @@ window.SGIPage.mount("participantes/turmas", function (pageConfig, pageScope) {
             });
             ['btnVoltarCatDesk', 'btnVoltarCatMob'].forEach(id => {
                 const el = document.getElementById(id);
-                if (el) el.href = `./dashboard.php?id=${interclasse.id_interclasse}`;
+                if (el) el.href = `/painel?id=${interclasse.id_interclasse}`;
             });
             window.SGIInterclasse.updatePageTitle(interclasse.nome_interclasse);
 
-            const turmasRes = await fetch(`../../../api/turmas.php?id_interclasse=${interclasse.id_interclasse}`);
+            const turmasRes = await fetch(`/api/v1/turmas?id_interclasse=${interclasse.id_interclasse}`);
             const listaFinal = await turmasRes.json();
 
             turmasData = Array.isArray(listaFinal) ? listaFinal : [];
@@ -229,7 +229,7 @@ window.SGIPage.mount("participantes/turmas", function (pageConfig, pageScope) {
             const interclasse = await resolverInterclasse();
             if (!interclasse) return;
 
-            const res = await fetch(`../../../api/categorias.php?id_interclasse=${interclasse.id_interclasse}`);
+            const res = await fetch(`/api/v1/categorias?id_interclasse=${interclasse.id_interclasse}`);
             const categorias = await res.json();
             const sel = document.getElementById('categoriaTurma');
             sel.innerHTML = '<option value="">Selecione...</option>';
@@ -268,7 +268,7 @@ window.SGIPage.mount("participantes/turmas", function (pageConfig, pageScope) {
                 return;
             }
 
-            const res = await fetch('../../../api/turmas.php', {
+            const res = await fetch('/api/v1/turmas', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(body)
@@ -285,7 +285,7 @@ window.SGIPage.mount("participantes/turmas", function (pageConfig, pageScope) {
                 formData.append('id_interclasse', String(interclasse.id_interclasse));
                 formData.append('id_categoria', String(body.categorias_id_categoria));
                 formData.append('id_turma', String(data.id_turma));
-                const up = await fetch('../../../api/upload_turma_pdf.php', {
+                const up = await fetch('/api/v1/importacoes/turma-pdf', {
                     method: 'POST',
                     body: formData
                 });
@@ -313,7 +313,7 @@ window.SGIPage.mount("participantes/turmas", function (pageConfig, pageScope) {
         try {
             const interclasse = await resolverInterclasse();
             if (!interclasse) return;
-            const res = await fetch(`../../../api/categorias.php?id_interclasse=${interclasse.id_interclasse}`);
+            const res = await fetch(`/api/v1/categorias?id_interclasse=${interclasse.id_interclasse}`);
             const cats = await res.json();
             const sel = document.getElementById('editCategoriaTurma');
             sel.innerHTML = '<option value="">Selecione...</option>';
@@ -375,7 +375,7 @@ window.SGIPage.mount("participantes/turmas", function (pageConfig, pageScope) {
             btn.disabled = true;
             btn.innerHTML = 'Salvando...';
 
-            const resp = await fetch('../../../api/turmas.php', {
+            const resp = await fetch('/api/v1/turmas', {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(body)
@@ -415,7 +415,7 @@ window.SGIPage.mount("participantes/turmas", function (pageConfig, pageScope) {
         btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Excluindo...';
 
         try {
-            const res = await fetch(`../../../api/turmas.php?id_turma=${excluirIdPendente}`, { method: 'DELETE' });
+            const res = await fetch(`/api/v1/turmas?id_turma=${excluirIdPendente}`, { method: 'DELETE' });
             const texto = await res.text();
             let data = null;
             try { data = JSON.parse(texto); } catch (_) {}

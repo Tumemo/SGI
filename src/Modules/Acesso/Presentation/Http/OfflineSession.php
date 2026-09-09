@@ -33,14 +33,14 @@ final class OfflineSession
         return $chave;
     }
     /**
-     * Obtém a chave de cache da sessão atual e cria uma chave efêmera apenas para
-     * sessões legadas que ainda não tenham passado por um login autenticado.
+     * Obtém a chave de cache da sessão atual e cria uma chave efêmera quando a
+     * sessão ainda não foi inicializada.
      */
     public static function obterChaveCacheOffline(): string
     {
         $chave = $_SESSION['chave_cache_offline'] ?? \null;
         if (!\is_string($chave) || !\preg_match('/\A[a-f0-9]{64}\z/D', $chave)) {
-            return \App\Modules\Acesso\Presentation\Http\OfflineSession::renovarChaveCacheOffline();
+            return self::renovarChaveCacheOffline();
         }
         return $chave;
     }

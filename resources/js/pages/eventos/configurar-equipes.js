@@ -1,6 +1,6 @@
 window.SGIPage.mount("eventos/configurar-equipes", function (pageConfig, pageScope) {
 
-    const API = '../../../api/';
+    const API = '/api/v1/';
     const params = new URLSearchParams(window.location.search);
     let idInterclasseEq = params.get('id');
     const idCategoriaUrl = params.get('id_categoria');
@@ -13,7 +13,7 @@ window.SGIPage.mount("eventos/configurar-equipes", function (pageConfig, pageSco
     if (idInterclasseEq) {
         ['btnVoltarEquipesMobile', 'btnVoltarEquipesDesk'].forEach(id => {
             const el = document.getElementById(id);
-            if (el) el.href = `./dashboard.php?id=${idInterclasseEq}`;
+            if (el) el.href = `/painel?id=${idInterclasseEq}`;
         });
     }
 
@@ -55,7 +55,7 @@ window.SGIPage.mount("eventos/configurar-equipes", function (pageConfig, pageSco
     async function carregarCategorias() {
         if (!idInterclasseEq) return;
         try {
-            const res = await fetch(`${API}categorias.php?id_interclasse=${encodeURIComponent(idInterclasseEq)}`);
+            const res = await fetch(`${API}categorias?id_interclasse=${encodeURIComponent(idInterclasseEq)}`);
             const cats = await res.json();
             const lista = Array.isArray(cats) ? cats : [];
 
@@ -134,7 +134,7 @@ window.SGIPage.mount("eventos/configurar-equipes", function (pageConfig, pageSco
                 nome_turma: eq.nome_turma || '',
                 nome_modalidade: modNome || ''
             });
-            const hrefElenco = `./elenco_equipe.php?${qElenco.toString()}`;
+            const hrefElenco = `/equipes/elenco?${qElenco.toString()}`;
             return `<div class="aluno-equipe-item ${info.excedeu ? 'equipe-excedida' : ''}">
                     <div>
                         <div class="aluno-equipe-nome">${esc(eq.nome_equipe || eq.nome_turma)}</div>
@@ -162,7 +162,7 @@ window.SGIPage.mount("eventos/configurar-equipes", function (pageConfig, pageSco
 
         content.innerHTML = '<p class="text-muted small text-center py-3"><i class="bi bi-hourglass-split me-1"></i>Carregando equipes…</p>';
         try {
-            const rEq = await fetch(`${API}equipes.php?id_modalidade=${encodeURIComponent(modId)}&id_turma=${encodeURIComponent(turmaId)}&_t=${Date.now()}`);
+        const rEq = await fetch(`${API}equipes?id_modalidade=${encodeURIComponent(modId)}&id_turma=${encodeURIComponent(turmaId)}&_t=${Date.now()}`);
             const equipes = await rEq.json();
             const arr = Array.isArray(equipes) ? equipes : [];
             content.innerHTML = montarEquipesHtml(arr, cardEl);
@@ -228,14 +228,14 @@ window.SGIPage.mount("eventos/configurar-equipes", function (pageConfig, pageSco
 
         try {
             if (isAdmin) {
-                await fetch(`${API}CriarEquipes.php`, {
+                await fetch(`${API}equipes/gerar`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ id_interclasse: parseInt(idInterclasseEq) })
                 });
             }
 
-            let urlTurmas = `${API}turmas.php?id_interclasse=${encodeURIComponent(idInterclasseEq)}`;
+            let urlTurmas = `${API}turmas?id_interclasse=${encodeURIComponent(idInterclasseEq)}`;
             if (idCategoriaFiltro) {
                 urlTurmas += `&id_categoria=${encodeURIComponent(idCategoriaFiltro)}`;
             }
@@ -243,7 +243,7 @@ window.SGIPage.mount("eventos/configurar-equipes", function (pageConfig, pageSco
             const turmasRaw = await resTurmas.json();
             const turmas = Array.isArray(turmasRaw) ? turmasRaw : [];
 
-            let urlMod = `${API}modalidades.php?id_interclasse=${encodeURIComponent(idInterclasseEq)}`;
+            let urlMod = `${API}modalidades?id_interclasse=${encodeURIComponent(idInterclasseEq)}`;
             if (idCategoriaFiltro) {
                 urlMod += `&id_categoria=${encodeURIComponent(idCategoriaFiltro)}`;
             }
@@ -269,7 +269,7 @@ window.SGIPage.mount("eventos/configurar-equipes", function (pageConfig, pageSco
 
             for (const [, listaMod] of Object.entries(porCategoria)) {
                 for (const m of listaMod) {
-                    const rEq = await fetch(`${API}equipes.php?id_modalidade=${encodeURIComponent(m.id_modalidade)}&_t=${Date.now()}`);
+                    const rEq = await fetch(`${API}equipes?id_modalidade=${encodeURIComponent(m.id_modalidade)}&_t=${Date.now()}`);
                     const equipes = await rEq.json();
                     const arr = Array.isArray(equipes) ? equipes : [];
 
@@ -332,8 +332,8 @@ window.SGIPage.mount("eventos/configurar-equipes", function (pageConfig, pageSco
         if (!idInterclasseEq) return;
         try {
             const [resMod, resTurmas] = await Promise.all([
-                fetch(`${API}modalidades.php?id_interclasse=${encodeURIComponent(idInterclasseEq)}`),
-                fetch(`${API}turmas.php?id_interclasse=${encodeURIComponent(idInterclasseEq)}`)
+                fetch(`${API}modalidades?id_interclasse=${encodeURIComponent(idInterclasseEq)}`),
+                fetch(`${API}turmas?id_interclasse=${encodeURIComponent(idInterclasseEq)}`)
             ]);
             const modalidades = await resMod.json();
             const turmas = await resTurmas.json();
@@ -375,7 +375,7 @@ window.SGIPage.mount("eventos/configurar-equipes", function (pageConfig, pageSco
         msg.innerHTML = '';
 
         try {
-            const resp = await fetch(`${API}equipes.php`, {
+                const resp = await fetch(`${API}equipes`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -423,7 +423,7 @@ window.SGIPage.mount("eventos/configurar-equipes", function (pageConfig, pageSco
     window.excluirEquipe = async function(id, nome) {
         if (!confirm(`Excluir a equipe "${nome}"?`)) return;
         try {
-            const resp = await fetch(`${API}equipes.php`, {
+                const resp = await fetch(`${API}equipes`, {
                 method: 'DELETE',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ id_equipe: id })
@@ -449,7 +449,7 @@ window.SGIPage.mount("eventos/configurar-equipes", function (pageConfig, pageSco
                 idInterclasseEq = resolved;
                 ['btnVoltarEquipesMobile', 'btnVoltarEquipesDesk'].forEach(id => {
                     const el = document.getElementById(id);
-                    if (el) el.href = `./dashboard.php?id=${idInterclasseEq}`;
+                    if (el) el.href = `/painel?id=${idInterclasseEq}`;
                 });
             }
         }

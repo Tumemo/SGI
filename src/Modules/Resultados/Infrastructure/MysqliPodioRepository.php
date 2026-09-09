@@ -236,43 +236,9 @@ final class MysqliPodioRepository implements PodioRepository
         $incompatible = $this->connection->query(
             "SELECT id_pontuacao, id_interclasse, id_modalidade, posicao, pontos, origem_registro
              FROM pontuacoes_podio
-             WHERE ativo = 1 AND origem_registro NOT IN ('novo', 'legado_conferido')",
+             WHERE ativo = 1 AND origem_registro <> 'novo'",
         )->fetch_all(MYSQLI_ASSOC);
         return ['podios_sem_origem' => $missing, 'creditos_orfaos' => $orphan, 'diferenças' => $incompatible];
-    }
-
-    public function adotar(array $creditos): void
-    {
-        usort($creditos, static fn (array $a, array $b): int => [(int) ($a['id_interclasse'] ?? 0), (int) ($a['id_modalidade'] ?? 0), (int) ($a['posicao'] ?? 0)] <=> [(int) ($b['id_interclasse'] ?? 0), (int) ($b['id_modalidade'] ?? 0), (int) ($b['posicao'] ?? 0)]);
-        Transaction::begin($this->connection);
-        try {
-            foreach ($creditos as $credit) {
-                $this->validarAdocao($credit);
-                $editionId = (int) $credit['id_interclasse'];
-                $modalityId = (int) $credit['id_modalidade'];
-                $position = (int) $credit['posicao'];
-                $existing = $this->existing($editionId, $modalityId, $position);
-                if ($existing !== null && !$this->sameCredit($existing, $credit)) {
-                    throw new RuntimeException('Conflito de crédito de pódio já adotado.');
-                }
-                if ($existing === null) {
-                    $this->substituirPosicoes($editionId, $modalityId, [[
-                        'posicao' => $position,
-                        'id_turma' => (int) $credit['id_turma'],
-                        'id_equipe' => $credit['id_equipe'] ?? null,
-                        'id_usuario' => $credit['id_usuario'] ?? null,
-                        'id_jogo' => $credit['id_jogo'] ?? null,
-                        'pontos' => (int) $credit['pontos'],
-                        'ativo' => 1,
-                        'origem_registro' => 'legado_conferido',
-                    ]]);
-                }
-            }
-            Transaction::commit($this->connection);
-        } catch (\Throwable $exception) {
-            Transaction::rollback($this->connection);
-            throw $exception;
-        }
     }
 
     public function invalidarFontesSemOrigemAtual(int $interclasseId, int $modalidadeId): void
@@ -302,7 +268,7 @@ final class MysqliPodioRepository implements PodioRepository
     {
         $gameId = $credit['id_jogo'] ?? null;
         if ($gameId === null || (int) $gameId <= 0) {
-            return (string) ($credit['origem_registro'] ?? '') === 'legado_conferido';
+            return false;
         }
         $statement = $this->connection->prepare(
             'SELECT nome_jogo, status_jogo FROM jogos WHERE id_jogo = ? AND modalidades_id_modalidade = ? LIMIT 1',
@@ -327,75 +293,4 @@ final class MysqliPodioRepository implements PodioRepository
             || in_array($position, [1, 2], true) && (int) $meta['largura'] === 2 && !isset($meta['posicao']);
     }
 
-    /** @return array<string, mixed>|null */
-    private function existing(int $editionId, int $modalityId, int $position): ?array
-    {
-        $statement = $this->connection->prepare('SELECT id_turma, id_equipe, id_usuario, id_jogo, pontos, ativo FROM pontuacoes_podio WHERE id_interclasse = ? AND id_modalidade = ? AND posicao = ? FOR UPDATE');
-        $statement->bind_param('iii', $editionId, $modalityId, $position);
-        $statement->execute();
-        $row = $statement->get_result()->fetch_assoc() ?: null;
-        $statement->close();
-        if ($row !== null) {
-            foreach (['id_turma', 'id_equipe', 'id_usuario', 'id_jogo', 'pontos', 'ativo'] as $field) {
-                if ($row[$field] !== null) {
-                    $row[$field] = (int) $row[$field];
-                }
-            }
-        }
-        return $row;
-    }
-
-    /** @param array<string, mixed> $existing @param array<string, mixed> $credit */
-    private function sameCredit(array $existing, array $credit): bool
-    {
-        foreach (['id_turma', 'id_equipe', 'id_usuario', 'id_jogo', 'pontos'] as $field) {
-            if (($existing[$field] ?? null) !== (($credit[$field] ?? null) === null ? null : (int) $credit[$field])) {
-                return false;
-            }
-        }
-        return (int) ($existing['ativo'] ?? 0) === 1;
-    }
-
-    /** @param array<string, mixed> $credit */
-    private function validarAdocao(array $credit): void
-    {
-        $editionId = (int) ($credit['id_interclasse'] ?? 0);
-        $modalityId = (int) ($credit['id_modalidade'] ?? 0);
-        $position = (int) ($credit['posicao'] ?? 0);
-        $classId = (int) ($credit['id_turma'] ?? 0);
-        $points = (int) ($credit['pontos'] ?? -1);
-        if ($editionId <= 0 || $modalityId <= 0 || !in_array($position, [1, 2, 3], true) || $classId <= 0 || $points < 0) {
-            throw new RuntimeException('Arquivo de adoção de pódio malformado.');
-        }
-        $statement = $this->connection->prepare('SELECT 1 FROM modalidades WHERE id_modalidade = ? AND interclasses_id_interclasse = ?');
-        $statement->bind_param('ii', $modalityId, $editionId);
-        $statement->execute();
-        if ($statement->get_result()->num_rows !== 1) {
-            $statement->close();
-            throw new RuntimeException('Modalidade não pertence à edição no arquivo de adoção.');
-        }
-        $statement->close();
-        $statement = $this->connection->prepare('SELECT 1 FROM turmas WHERE id_turma = ? AND interclasses_id_interclasse = ?');
-        $statement->bind_param('ii', $classId, $editionId);
-        $statement->execute();
-        if ($statement->get_result()->num_rows !== 1) {
-            $statement->close();
-            throw new RuntimeException('Turma não pertence à edição no arquivo de adoção.');
-        }
-        $statement->close();
-        if (array_key_exists('id_equipe', $credit) && $credit['id_equipe'] !== null && $this->turmaDaEquipe((int) $credit['id_equipe'], $modalityId) !== $classId) {
-            throw new RuntimeException('Equipe não pertence à turma/modalidade no arquivo de adoção.');
-        }
-        if (array_key_exists('id_jogo', $credit) && $credit['id_jogo'] !== null) {
-            $statement = $this->connection->prepare("SELECT 1 FROM jogos WHERE id_jogo = ? AND modalidades_id_modalidade = ? AND status_jogo IN ('Concluido', 'Finalizado')");
-            $gameId = (int) $credit['id_jogo'];
-            $statement->bind_param('ii', $gameId, $modalityId);
-            $statement->execute();
-            if ($statement->get_result()->num_rows !== 1) {
-                $statement->close();
-                throw new RuntimeException('Jogo não concluído ou incompatível no arquivo de adoção.');
-            }
-            $statement->close();
-        }
-    }
 }

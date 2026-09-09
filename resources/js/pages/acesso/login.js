@@ -1,5 +1,7 @@
 window.SGIPage.mount("acesso/login", function (pageConfig, pageScope) {
 
+        const API_BASE = (window.SGI_API_BASE || '/api/v1/').replace(/\/?$/, '/');
+
         async function realizarLogin(e) {
             e.preventDefault();
 
@@ -17,7 +19,7 @@ window.SGIPage.mount("acesso/login", function (pageConfig, pageScope) {
             };
 
             try {
-                const response = await fetch('../api/login.php', {
+                const response = await fetch(API_BASE + 'login', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'

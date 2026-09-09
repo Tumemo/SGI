@@ -23,7 +23,7 @@ function statusAtivo(item) {
 async function atualizarStatusInterclasse(idInterclasse, ativo) {
     const body = new FormData();
     body.append('status_interclasse', ativo ? '1' : '0');
-    const response = await fetch(`../../../api/interclasse.php?id=${idInterclasse}`, { method: 'POST', body });
+    const response = await fetch(`/api/v1/edicoes?id=${idInterclasse}`, { method: 'POST', body });
     const raw = await response.text();
     let data;
     try { data = JSON.parse(raw); } catch { throw new Error('Erro no servidor ao atualizar status.'); }
@@ -46,7 +46,7 @@ async function listarInterclasses() {
     const listarDesktop = document.getElementById('listaDesktop');
 
     try {
-        const res = await fetch('../../../api/interclasse.php?regulamento=true');
+        const res = await fetch('/api/v1/edicoes?regulamento=true');
         const data = await res.json();
 
         if (!Array.isArray(data) || data.length === 0) {
@@ -92,7 +92,7 @@ if (pageConfig.value1) {
             const nome = escaparHTML(item.nome_interclasse);
 
             htmlMobile += `
-                <a href="./dashboard.php?id=${item.id_interclasse}" class="text-decoration-none text-dark">
+                <a href="/painel?id=${item.id_interclasse}" class="text-decoration-none text-dark">
                     <div class="m-auto shadow d-flex justify-content-between align-content-center px-3 py-3 rounded-3 my-3 border border-1 ${classeCard} sgi-inline-8dd04718" >
                         <div>
                             <h2 class="m-0 fs-4">${nome}</h2>
@@ -107,7 +107,7 @@ if (pageConfig.value1) {
                             <span class="badge bg-danger mt-2">Ativo</span>
                             ` : ``}
                         </div>
-                        <img src="../../public/icons/arrow-right.svg" alt="icone de seta">
+                        <img src="${(window.SGI_ASSET_BASE || '/assets') + '/images/arrow-right.svg'}" alt="icone de seta">
                     </div>
                 </a>
             `;
@@ -116,7 +116,7 @@ if (pageConfig.value1) {
                 <div class="row bg-white shadow rounded-3 py-3 fs-5 mt-3 align-items-center px-2 border border-1 ${classeCard} sgi-inline-d9a72e84"
                      onmouseover="this.style.backgroundColor='#f8f9fa'"
                      onmouseout="this.style.backgroundColor='#ffffff'"
-                     onclick="window.location.href='./dashboard.php?id=${item.id_interclasse}'">
+                     onclick="window.location.href='/painel?id=${item.id_interclasse}'">
 
                     <div class="col-4 fw-semibold text-dark text-truncate">${nome}</div>
                     <div class="col-4 text-center text-secondary">${anoStr}</div>
@@ -189,7 +189,7 @@ pageScope.listen(document.getElementById('formulario'), 'submit', async (event) 
         document.getElementById('btnCriar').disabled = true;
         document.getElementById('btnCriar').innerText = "Criando...";
 
-        const res = await axios.post("../../../api/interclasse.php", novoInterclasse);
+        const res = await axios.post("/api/v1/edicoes", novoInterclasse);
 
         if (res.data && res.data.success) {
             document.getElementById('caixaMensagem').innerHTML = '<p class="text-success text-center mt-3 mb-0 fw-bold">Criado com sucesso!</p>';
@@ -198,7 +198,7 @@ pageScope.listen(document.getElementById('formulario'), 'submit', async (event) 
             document.getElementById('formulario').reset();
             listarInterclasses();
             setTimeout(() => {
-                window.location.href = `./dashboard.php?id=${idCriado}`;
+                window.location.href = `/painel?id=${idCriado}`;
             }, 800);
         } else {
             throw new Error(res.data ? res.data.message : "Erro interno no servidor ao salvar.");
@@ -221,13 +221,13 @@ async function redirecionarParaInterclasseAtivo() {
         document.getElementById('listaDesktop').innerHTML = msg;
     };
     try {
-        const res = await fetch('../../../api/interclasse.php?regulamento=true');
+        const res = await fetch('/api/v1/edicoes?regulamento=true');
         const lista = await res.json();
         if (Array.isArray(lista)) {
             const ativos = lista.filter(item => String(item.status_interclasse) === '1');
             if (ativos.length > 0) {
                 const ativo = ativos.sort((a, b) => Number(b.id_interclasse) - Number(a.id_interclasse))[0];
-                window.location.replace('./dashboard.php?id=' + ativo.id_interclasse);
+                window.location.replace('/painel?id=' + ativo.id_interclasse);
                 return;
             }
         }
@@ -236,7 +236,7 @@ async function redirecionarParaInterclasseAtivo() {
         // Offline: usa o id ativo gravado na sessão no login, se houver.
         const idSessao = window.SGI_SESSION_INTERCLASSE_ATIVO;
         if (idSessao) {
-            window.location.replace('./dashboard.php?id=' + idSessao);
+            window.location.replace('/painel?id=' + idSessao);
             return;
         }
     }

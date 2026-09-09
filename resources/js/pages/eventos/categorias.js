@@ -32,7 +32,7 @@ window.SGIPage.mount("eventos/categorias", function (pageConfig, pageScope) {
             if (el) el.classList.toggle('d-none', !categoriaSelecionada);
         });
 
-        const rota = './edicao_modalidades.php';
+        const rota = '/edicoes/modalidades';
         const sufixoCategoria = categoriaSelecionada ? `&id_categoria=${categoriaSelecionada}` : '';
         ['btnContinuarMobile', 'btnContinuarDesktop'].forEach(id => {
             const el = document.getElementById(id);
@@ -41,7 +41,7 @@ window.SGIPage.mount("eventos/categorias", function (pageConfig, pageScope) {
 
         ['btnVoltarCatMobile', 'btnVoltarCatDesk'].forEach(id => {
             const el = document.getElementById(id);
-            if (el) el.href = `./dashboard.php?id=${idInterclasse}`;
+            if (el) el.href = `/painel?id=${idInterclasse}`;
         });
     }
 
@@ -49,7 +49,7 @@ window.SGIPage.mount("eventos/categorias", function (pageConfig, pageScope) {
     if (!idInterclasse) {
         window.SGIInterclasse.getActiveInterclasse().then(ativo => {
             if (ativo) {
-                window.location.href = `./categorias.php?id=${ativo.id_interclasse}`;
+                window.location.href = `/edicoes/categorias?id=${ativo.id_interclasse}`;
                 return;
             }
             document.getElementById('listaCategoriasMobile').innerHTML = '<p class="text-muted mt-4 text-center w-100">Nenhum interclasse ativo.</p>';
@@ -68,7 +68,7 @@ window.SGIPage.mount("eventos/categorias", function (pageConfig, pageScope) {
 
         ['btnVoltarCatMobile', 'btnVoltarCatDesk'].forEach(id => {
             const el = document.getElementById(id);
-            if (el) el.href = `./dashboard.php?id=${idInterclasse}`;
+            if (el) el.href = `/painel?id=${idInterclasse}`;
         });
 
         if (isAdmin) atualizarAcoesCategoria();
@@ -80,12 +80,12 @@ window.SGIPage.mount("eventos/categorias", function (pageConfig, pageScope) {
 
         try {
             const respostas = await Promise.allSettled([
-                fetch(`../../../api/categorias.php?id_interclasse=${idInterclasse}`).then(r => r.json()),
-                fetch(`../../../api/turmas.php?id_interclasse=${idInterclasse}`).then(r => r.json()),
-                fetch(`../../../api/equipes.php`).then(r => r.json()),
-                fetch(`../../../api/modalidades.php?id_interclasse=${idInterclasse}`).then(r => r.json()),
-                fetch(`../../../api/jogos.php?id_interclasse=${idInterclasse}`).then(r => r.json()),
-                fetch(`../../../api/partidas.php`).then(r => r.json()),
+                fetch(`/api/v1/categorias?id_interclasse=${idInterclasse}`).then(r => r.json()),
+                fetch(`/api/v1/turmas?id_interclasse=${idInterclasse}`).then(r => r.json()),
+                fetch(`/api/v1/equipes`).then(r => r.json()),
+                fetch(`/api/v1/modalidades?id_interclasse=${idInterclasse}`).then(r => r.json()),
+                fetch(`/api/v1/jogos?id_interclasse=${idInterclasse}`).then(r => r.json()),
+                fetch(`/api/v1/partidas`).then(r => r.json()),
             ]);
 
             const extrair = (res, padrao) => (res.status === 'fulfilled' && Array.isArray(res.value)) ? res.value : padrao;
@@ -132,7 +132,7 @@ window.SGIPage.mount("eventos/categorias", function (pageConfig, pageScope) {
                 return;
             }
 
-            const linkTarget = isAdmin ? './edicao_turmas.php' : './turmas.php';
+            const linkTarget = isAdmin ? '/edicoes/turmas' : '/turmas';
 
             categorias.forEach((categoria) => {
                 const cId = Number(categoria.id_categoria);
@@ -144,15 +144,15 @@ window.SGIPage.mount("eventos/categorias", function (pageConfig, pageScope) {
                         <button type="button" class="categoria-item bg-white d-flex m-auto justify-content-between align-items-center shadow-sm py-3 px-4 mb-3 border border-1 rounded-3 sgi-inline-8dd04718"  data-id="${cId}">
                             <i class="bi bi-trophy fs-3"></i>
                             <h2 class="m-0 fs-5 text-truncate px-3 w-100 text-start">${esc(categoria.nome_categoria)}</h2>
-                            <picture><img src="../../public/icons/arrow-right.svg" alt="Seta para direita"></picture>
+                            <picture><img src="${(window.SGI_ASSET_BASE || '/assets') + '/images/arrow-right.svg'}" alt="Seta para direita"></picture>
                         </button>
                     `;
                 } else {
                     divMobile.innerHTML += `
-                        <a href="./turmas.php?id=${idInterclasse}&id_categoria=${cId}" class="categoria-item text-decoration-none text-dark bg-white d-flex m-auto justify-content-between align-items-center shadow-sm py-3 px-4 mb-3 border border-1 rounded-3 sgi-inline-8dd04718" >
+                        <a href="/turmas?id=${idInterclasse}&id_categoria=${cId}" class="categoria-item text-decoration-none text-dark bg-white d-flex m-auto justify-content-between align-items-center shadow-sm py-3 px-4 mb-3 border border-1 rounded-3 sgi-inline-8dd04718" >
                             <i class="bi bi-trophy fs-3"></i>
                             <h2 class="m-0 fs-5 text-truncate px-3 w-100 text-start">${esc(categoria.nome_categoria)}</h2>
-                            <picture><img src="../../public/icons/arrow-right.svg" alt="Seta para direita"></picture>
+                            <picture><img src="${(window.SGI_ASSET_BASE || '/assets') + '/images/arrow-right.svg'}" alt="Seta para direita"></picture>
                         </a>
                     `;
                 }
@@ -231,7 +231,7 @@ window.SGIPage.mount("eventos/categorias", function (pageConfig, pageScope) {
                 btn.disabled = true;
                 btn.innerHTML = 'Salvando...';
 
-                const resp = await fetch('../../../api/categorias.php', {
+                const resp = await fetch('/api/v1/categorias', {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ id_categoria: editCategoriaId, nome_categoria: nome })
@@ -264,7 +264,7 @@ window.SGIPage.mount("eventos/categorias", function (pageConfig, pageScope) {
 
             try {
                 desabilitar(true);
-                const resp = await fetch('../../../api/categorias.php', {
+                const resp = await fetch('/api/v1/categorias', {
                     method: 'DELETE',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ id_categoria: categoriaSelecionada })
@@ -295,7 +295,7 @@ window.SGIPage.mount("eventos/categorias", function (pageConfig, pageScope) {
                 fd.append('id_turma', String(idManual));
             }
 
-            const response = await fetch('../../../api/upload_turma_pdf.php', { method: 'POST', body: fd, credentials: 'include' });
+            const response = await fetch('/api/v1/importacoes/turma-pdf', { method: 'POST', body: fd, credentials: 'include' });
             const text = await response.text();
             let json = {};
             try {
@@ -337,7 +337,7 @@ window.SGIPage.mount("eventos/categorias", function (pageConfig, pageScope) {
                 status_turma: "1"
             };
 
-            fetch('../../../api/turmas.php', {
+            fetch('/api/v1/turmas', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payloadTurma)
@@ -366,7 +366,7 @@ window.SGIPage.mount("eventos/categorias", function (pageConfig, pageScope) {
                     bootstrap.Modal.getOrCreateInstance(document.getElementById('criarTurma')).hide();
                     msg.innerHTML = '';
                     if (turmaId) {
-                        window.location.href = `./turma_alunos.php?id=${encodeURIComponent(idInterclasse)}&id_categoria=${encodeURIComponent(categoriaSelecionada)}&id_turma=${encodeURIComponent(turmaId)}`;
+                        window.location.href = `/turmas/alunos?id=${encodeURIComponent(idInterclasse)}&id_categoria=${encodeURIComponent(categoriaSelecionada)}&id_turma=${encodeURIComponent(turmaId)}`;
                     } else {
                         carregarCategorias();
                     }
@@ -419,7 +419,7 @@ window.SGIPage.mount("eventos/categorias", function (pageConfig, pageScope) {
             btnSalvar.innerHTML = "Salvando...";
 
             try {
-                const response = await fetch('../../../api/categorias.php', {
+                const response = await fetch('/api/v1/categorias', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(dados)

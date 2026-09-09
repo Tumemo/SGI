@@ -58,11 +58,11 @@ final class CsrfGuard
     {
         $path = (string) (parse_url((string) ($_SERVER['REQUEST_URI'] ?? ''), PHP_URL_PATH) ?: '');
         $normalised = '/' . ltrim($path, '/');
-        if (str_ends_with($normalised, '/api/login.php') || str_ends_with($normalised, '/api/v1/login')) {
+        if (str_ends_with($normalised, '/api/v1/login')) {
             return true;
         }
 
-        return str_ends_with($normalised, '/api/usuarios.php')
+        return str_ends_with($normalised, '/api/v1/usuarios')
             && (string) ($_GET['acao'] ?? '') === 'validar_inscricao';
     }
 

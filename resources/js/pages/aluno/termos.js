@@ -1,5 +1,7 @@
 window.SGIPage.mount("aluno/termos", function (pageConfig, pageScope) {
 
+        const APP_BASE = window.SGI_BASE_PATH || '';
+
         async function carregarRegulamento() {
             const statusEl = document.getElementById('statusRegulamento');
             const containerPdf = document.getElementById('containerPdfRegulamento');
@@ -7,7 +9,7 @@ window.SGIPage.mount("aluno/termos", function (pageConfig, pageScope) {
 
             try {
                 // Busca a lista de interclasses com regulamento atrelado
-                const res = await fetch('../../../../api/interclasse.php?regulamento=true');
+                const res = await fetch('/api/v1/edicoes?regulamento=true');
                 if (!res.ok) throw new Error('Erro na resposta da API');
 
                 const data = await res.json();
@@ -19,7 +21,7 @@ window.SGIPage.mount("aluno/termos", function (pageConfig, pageScope) {
                 const ativo = lista.find(i => String(i.status_interclasse) === '1') || lista[0];
 
                 if (ativo && ativo.regulamento_interclasse && ativo.regulamento_interclasse.trim() !== '') {
-                    btnPdf.href = '../../../../uploads/regulamentos/' + ativo.regulamento_interclasse;
+                    btnPdf.href = APP_BASE + '/uploads/regulamentos/' + encodeURIComponent(ativo.regulamento_interclasse);
 
                     statusEl.classList.add('d-none');
                     containerPdf.classList.remove('d-none');

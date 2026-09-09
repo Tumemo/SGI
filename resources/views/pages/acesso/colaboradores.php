@@ -2,7 +2,7 @@
 $tituloPagina = 'SGI - Colaboradores';
 $titulo = 'Colaboradores';
 $mostrarVoltar = true;
-$urlVoltar = './dashboard.php';
+$urlVoltar = \App\Shared\Http\Url::to('painel');
 include SGI_ROOT . '/resources/views/components/admin-head.php';
 include SGI_ROOT . '/resources/views/components/admin-header.php';
 $paginaAtiva = 'colaboradores';
@@ -14,7 +14,7 @@ $usuarioEhAdmin = (isset($_SESSION['nivel']) && (string)$_SESSION['nivel'] === '
 <!-- ═══ MOBILE ═══ -->
 <main class="d-md-none sgi-inline-5460531b" >
     <div class="col-wrap">
-        <a href="./dashboard.php" id="btnVoltarColabMobile" class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none sgi-inline-e1bcebb6" >
+        <a href="<?= \App\Shared\Http\Url::to('painel') ?>" id="btnVoltarColabMobile" class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none sgi-inline-e1bcebb6" >
             <i class="bi bi-arrow-left-circle fs-5"></i> <span id="nomeInterclasseColabMobile">Interclasse</span>
         </a>
 
@@ -56,7 +56,7 @@ $usuarioEhAdmin = (isset($_SESSION['nivel']) && (string)$_SESSION['nivel'] === '
 <!-- ═══ DESKTOP ═══ -->
 <main class="d-none d-md-block main-desktop-layout col-page">
     <div class="col-wrap">
-        <a href="./dashboard.php" id="btnVoltarColabDesk" class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none sgi-inline-e1bcebb6" >
+        <a href="<?= \App\Shared\Http\Url::to('painel') ?>" id="btnVoltarColabDesk" class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none sgi-inline-e1bcebb6" >
             <i class="bi bi-arrow-left-circle fs-5"></i> <span id="nomeInterclasseColabDesk">Interclasse</span>
         </a>
 

@@ -330,7 +330,7 @@ final class MysqliChaveamentoRepository
             return;
         }
         // A grande final é terminal. Seu vencedor é usado diretamente para
-        // classificação/pontuação; não criar um jogo solo MM:1.
+        // classificação/pontuação; não criar uma partida solo adicional.
         if ($largura === 2) {
             \App\Modules\Competicoes\Infrastructure\MysqliChaveamentoRepository::verificarGerarDisputasPosicao($conn, $idModalidade, 2);
             return;

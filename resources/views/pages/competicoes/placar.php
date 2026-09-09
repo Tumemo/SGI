@@ -2,7 +2,7 @@
 $tituloPagina = 'SGI - Placar';
 $titulo = 'Placar';
 $mostrarVoltar = true;
-$urlVoltar = './dashboard.php';
+$urlVoltar = \App\Shared\Http\Url::to('painel');
 
 include SGI_ROOT . '/resources/views/components/admin-head.php';
 include SGI_ROOT . '/resources/views/components/admin-header.php';
@@ -14,7 +14,7 @@ $paginaAtiva = 'dashboard';
 
         <div class="mc-header">
             <div class="mc-match-info">
-                <a href="./edicao_agenda.php" id="btnVoltarPlacar" class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none sgi-inline-e1bcebb6" >
+                <a href="<?= \App\Shared\Http\Url::to('edicoes/agenda') ?>" id="btnVoltarPlacar" class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none sgi-inline-e1bcebb6" >
                     <i class="bi bi-arrow-left-circle fs-5"></i> <span>Voltar</span>
                 </a>
                 <h1 id="placar-titulo-jogo" class="mc-match-title">Placar</h1>

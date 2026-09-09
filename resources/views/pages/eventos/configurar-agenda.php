@@ -2,7 +2,7 @@
 $tituloPagina = 'SGI - Agenda';
 $titulo = 'Agenda';
 $mostrarVoltar = true;
-$urlVoltar = './dashboard.php';
+$urlVoltar = \App\Shared\Http\Url::to('painel');
 include SGI_ROOT . '/resources/views/components/admin-head.php';
 include SGI_ROOT . '/resources/views/components/admin-header.php';
 $paginaAtiva = 'agenda';
@@ -79,7 +79,7 @@ $nivelUsuarioAgenda = (int)($_SESSION['nivel'] ?? -1);
     <div class="ag-desktop-layout">
 
         <div class="ag-header-row">
-            <a href="./dashboard.php" id="btnVoltarAgendaDesk" class="ag-btn-interclasse">
+            <a href="<?= \App\Shared\Http\Url::to('painel') ?>" id="btnVoltarAgendaDesk" class="ag-btn-interclasse">
                 <i class="bi bi-arrow-left-circle fs-5"></i> <span id="nomeInterclasseAgenda">Interclasse</span>
             </a>
             <div class="ag-header__text">

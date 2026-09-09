@@ -3,7 +3,7 @@ $tituloPagina = 'SGI - Perfil';
 $titulo = 'Perfil';
 $mostrarVoltar = true;
 $mostrarSino = false;
-$urlVoltar = './home.php';
+$urlVoltar = \App\Shared\Http\Url::to('aluno/inicio');
 
 $nivelUsuario = (int) ($usuarioPerfil['nivel_usuario'] ?? $_SESSION['nivel'] ?? 0);
 $labelNiveis = [
@@ -33,7 +33,7 @@ include SGI_ROOT . '/resources/views/components/aluno-nav.php';
         <div class="card-body text-center py-4">
             <div class="perfil-avatar-ring mx-auto" id="fotoCircleMob">
                 <div class="perfil-avatar-inner">
-                    <?php $fotoPath = $usuarioPerfil['foto_usuario'] ? '../../../../uploads/fotosUsuarios/' . rawurlencode($usuarioPerfil['foto_usuario']) : ''; ?>
+                    <?php $fotoPath = $usuarioPerfil['foto_usuario'] ? \App\Shared\Http\Url::to('uploads/fotosUsuarios/' . rawurlencode($usuarioPerfil['foto_usuario'])) : ''; ?>
                     <img src="<?= $fotoPath ?>" id="fotoImgMob" class="w-100 h-100 object-fit-cover <?= $fotoPath ? '' : 'd-none' ?>" alt="Foto" onerror="this.classList.add('d-none');document.getElementById('fotoIconMob')?.classList.remove('d-none');">
                     <i class="bi bi-person-fill <?= $fotoPath ? 'd-none' : '' ?>" id="fotoIconMob"></i>
                     <div class="perfil-avatar-skeleton" id="fotoSkeletonMob">
@@ -101,7 +101,7 @@ include SGI_ROOT . '/resources/views/components/aluno-nav.php';
                     <div class="card-body text-center py-5 px-4">
                         <div class="perfil-avatar-ring mx-auto" id="fotoCircleDesk">
                             <div class="perfil-avatar-inner">
-                                <?php $fotoPathDesk = $usuarioPerfil['foto_usuario'] ? '../../../../uploads/fotosUsuarios/' . rawurlencode($usuarioPerfil['foto_usuario']) : ''; ?>
+                                <?php $fotoPathDesk = $usuarioPerfil['foto_usuario'] ? \App\Shared\Http\Url::to('uploads/fotosUsuarios/' . rawurlencode($usuarioPerfil['foto_usuario'])) : ''; ?>
                                 <img src="<?= $fotoPathDesk ?>" id="fotoImgDesk" class="w-100 h-100 object-fit-cover <?= $fotoPathDesk ? '' : 'd-none' ?>" alt="Foto" onerror="this.classList.add('d-none');document.getElementById('fotoIconDesk')?.classList.remove('d-none');">
                                 <i class="bi bi-person-fill <?= $fotoPathDesk ? 'd-none' : '' ?>" id="fotoIconDesk"></i>
                                 <div class="perfil-avatar-skeleton" id="fotoSkeletonDesk">

@@ -35,7 +35,7 @@ final class TurmaController
         try {
             switch ($method) {
                 case 'GET':
-                    // Compatibilidade: sem edição explícita, a rota historicamente retorna lista vazia.
+                    // Sem edição explícita, não há conjunto de turmas a consultar.
                     if (!isset($query['id_interclasse']) || $query['id_interclasse'] === '') {
                         return \App\Shared\Http\Response::json([], $status, $headers);
                     }
@@ -77,7 +77,7 @@ final class TurmaController
             $status = 400;
             return \App\Shared\Http\Response::json(['success' => false, 'message' => $exception->getMessage()], $status, $headers);
         } catch (\Throwable $exception) {
-            error_log('Falha em turmas.php: ' . $exception->getMessage());
+            error_log('Falha ao processar turmas: ' . $exception->getMessage());
             $status = 500;
             return \App\Shared\Http\Response::json(['success' => false, 'message' => 'Não foi possível processar a turma.'], $status, $headers);
         }

@@ -17,7 +17,7 @@ window.SGIPage.mount("resultados/ranking", function (pageConfig, pageScope) {
             try {
                 const ativo = await window.SGIInterclasse.getActiveInterclasse();
                 if (ativo) {
-                    window.location.href = `./ranking.php?id=${ativo.id_interclasse}`;
+                    window.location.href = `/ranking?id=${ativo.id_interclasse}`;
                     return;
                 }
             } catch (_) {}
@@ -52,7 +52,7 @@ window.SGIPage.mount("resultados/ranking", function (pageConfig, pageScope) {
         document.getElementById('listaDesk').innerHTML = loading;
 
         try {
-            const response = await fetch(`../../../api/ranking.php?id_interclasse=${idInterclasse}`);
+            const response = await fetch(`/api/v1/ranking?id_interclasse=${idInterclasse}`);
             const data = await response.json();
 
             // Trata o bloqueio retornado de forma limpa pela API
@@ -68,7 +68,7 @@ window.SGIPage.mount("resultados/ranking", function (pageConfig, pageScope) {
 
             dadosAPI = data;
 
-            const catRes = await fetch(`../../../api/categorias.php?id_interclasse=${idInterclasse}`);
+            const catRes = await fetch(`/api/v1/categorias?id_interclasse=${idInterclasse}`);
             const catData = await catRes.json();
             categoriasUnicas = Array.isArray(catData) ? catData.map(c => c.nome_categoria) : [];
 
@@ -266,7 +266,7 @@ window.SGIPage.mount("resultados/ranking", function (pageConfig, pageScope) {
                     <span class="htr-chip__valor">+${d.esportes.pontos_total} pts</span>
                     <span class="htr-chip__rotulo">Esportes</span>
                 </div>
-                ${ajuste !== 0 ? `<div class="htr-chip htr-chip--amarelo"><i class="bi bi-question-circle"></i><span class="htr-chip__valor">${ajuste > 0 ? '+' : ''}${ajuste} pts</span><span class="htr-chip__rotulo">Ajuste legado</span></div>` : ''}
+                ${ajuste !== 0 ? `<div class="htr-chip htr-chip--amarelo"><i class="bi bi-question-circle"></i><span class="htr-chip__valor">${ajuste > 0 ? '+' : ''}${ajuste} pts</span><span class="htr-chip__rotulo">Ajuste sem origem detalhada</span></div>` : ''}
                 <div class="htr-chip htr-chip--vermelho">
                     <i class="bi bi-flag"></i>
                     <span class="htr-chip__valor">-${d.penalidades.pontos_total} pts</span>
@@ -363,7 +363,7 @@ window.SGIPage.mount("resultados/ranking", function (pageConfig, pageScope) {
         modal.show();
 
         try {
-            const response = await fetch(`../../../api/historico_turma.php?id_turma=${idTurma}&id_interclasse=${idInterclasse}`);
+            const response = await fetch(`/api/v1/historico-turma?id_turma=${idTurma}&id_interclasse=${idInterclasse}`);
             const data = await response.json();
 
             if (!response.ok || !data.success) {

@@ -47,7 +47,7 @@ final class PontuacaoService
                 throw new RuntimeException('Não foi possível identificar o beneficiário do pódio.');
             }
             if ($correction && !isset($oldByPosition[$position])) {
-                throw new RuntimeException('Pódio legado sem origem conferida; adote os créditos antes de retificar.');
+                throw new RuntimeException('Pódio sem origem atual não pode ser retificado.');
             }
             $existing = $oldByPosition[$position] ?? null;
             $new[] = [

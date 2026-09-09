@@ -49,7 +49,7 @@ final class TermosController
             $status = 401;
             return \App\Shared\Http\Response::json(['success' => false, 'message' => $exception->getMessage()], $status, $headers);
         } catch (\Throwable $exception) {
-            error_log('Falha em concordarTermos.php: ' . $exception->getMessage());
+            error_log('Falha ao registrar aceite de termos: ' . $exception->getMessage());
             $status = 500;
             return \App\Shared\Http\Response::json(['success' => false, 'message' => 'Não foi possível processar os termos.'], $status, $headers);
         }

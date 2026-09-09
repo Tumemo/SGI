@@ -1,6 +1,6 @@
 /* SGI - estilos migrados dos templates PHP. */
 
-/* Migrado de views/src/pages/alunos/componentes/head.php */
+/* Estilos compartilhados do portal do aluno */
 body {
             background-color: #f8f9fa;
             padding-bottom: 70px; /* Margem para menu mobile inferior */
@@ -24,7 +24,7 @@ body {
         }
 
 
-/* Migrado de views/src/pages/alunos/jogos.php */
+/* Tela de jogos do portal do aluno */
 :root {
         --aluno-primary: #e30613;
         --aluno-primary-dark: #c82333;
@@ -529,7 +529,7 @@ body {
         font-size: 0.9rem;
     }
 
-/* Migrado de views/src/pages/alunos/modalidade.php */
+/* Tela de modalidades do portal do aluno */
 :root {
         --md-primary: #e30613;
         --md-primary-dark: #c82333;

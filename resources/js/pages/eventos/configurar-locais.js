@@ -1,6 +1,7 @@
 window.SGIPage.mount("eventos/configurar-locais", function (pageConfig, pageScope) {
 
-    const API = '../../../api/';
+    const APP_BASE = window.SGI_BASE_PATH || '';
+    const API = (window.SGI_API_BASE || '/api/v1/').replace(/\/?$/, '/');
     const params = new URLSearchParams(window.location.search);
     let idInterclasse = params.get('id');
 
@@ -9,8 +10,8 @@ window.SGIPage.mount("eventos/configurar-locais", function (pageConfig, pageScop
         if (idInterclasse) return idInterclasse;
 
         try {
-            // Chamada ajustada para a API interclasse.php (no singular)
-            const res = await fetch(`${API}interclasse.php?status_interclasse=1`);
+            // Consulta a edição ativa pela API versionada.
+            const res = await fetch(`${API}edicoes?status_interclasse=1`);
             const data = await res.json();
 
             const ativo = Array.isArray(data) ? data[0] : data;
@@ -18,7 +19,7 @@ window.SGIPage.mount("eventos/configurar-locais", function (pageConfig, pageScop
                 idInterclasse = ativo.id_interclasse;
 
                 const btnVoltarDesk = document.getElementById('btnVoltarLocaisDesk');
-                if (btnVoltarDesk) btnVoltarDesk.href = `./dashboard.php?id=${idInterclasse}`;
+                if (btnVoltarDesk) btnVoltarDesk.href = `/painel?id=${idInterclasse}`;
                 if (ativo.nome_interclasse) {
                     ['nomeInterclasseLocais'].forEach(id => {
                         const el = document.getElementById(id);
@@ -37,7 +38,7 @@ window.SGIPage.mount("eventos/configurar-locais", function (pageConfig, pageScop
     if (idInterclasse) {
         ['btnVoltarLocaisDesk'].forEach(id => {
             const el = document.getElementById(id);
-            if (el) el.href = `./dashboard.php?id=${idInterclasse}`;
+            if (el) el.href = `/painel?id=${idInterclasse}`;
         });
     }
 
@@ -53,8 +54,8 @@ window.SGIPage.mount("eventos/configurar-locais", function (pageConfig, pageScop
         if (!idInterclasse) return;
 
         try {
-            // Chamada ajustada para a API interclasse.php (no singular)
-            const res = await fetch(`${API}interclasse.php?id_interclasse=${idInterclasse}&regulamento=true`);
+            // Consulta a edição selecionada pela API versionada.
+            const res = await fetch(`${API}edicoes?id_interclasse=${idInterclasse}&regulamento=true`);
             const data = await res.json();
 
             const item = Array.isArray(data) ? data[0] : data;
@@ -64,7 +65,7 @@ window.SGIPage.mount("eventos/configurar-locais", function (pageConfig, pageScop
             const btnVerDesk = document.getElementById('btnVerPdfDesk');
 
             if (pdfName && pdfName.trim() !== '') {
-                const pdfUrl = `../../../uploads/regulamentos/${pdfName}`;
+                const pdfUrl = `${APP_BASE}/uploads/regulamentos/${encodeURIComponent(pdfName)}`;
 
                 if (infoDesk) infoDesk.textContent = 'O regulamento em PDF está atualizado e disponível para consulta.';
 
@@ -121,7 +122,7 @@ window.SGIPage.mount("eventos/configurar-locais", function (pageConfig, pageScop
             return;
         }
         try {
-            const res = await fetch(`${API}locais.php?id_local=${parseInt(idLocal)}`, {
+            const res = await fetch(`${API}locais?id_local=${parseInt(idLocal)}`, {
                 method: 'DELETE'
             });
             const data = await res.json();
@@ -142,7 +143,7 @@ window.SGIPage.mount("eventos/configurar-locais", function (pageConfig, pageScop
         try {
             // Envia o id_interclasse na Query String para filtrar só os do interclasse atual
             const q = idInterclasse ? `?id_interclasse=${encodeURIComponent(idInterclasse)}` : '';
-            const res = await fetch(`${API}locais.php${q}`);
+            const res = await fetch(`${API}locais${q}`);
             const data = await res.json();
             const lista = (data && Array.isArray(data.data)) ? data.data : [];
 
@@ -213,7 +214,7 @@ window.SGIPage.mount("eventos/configurar-locais", function (pageConfig, pageScop
             btn.disabled = true;
 
             try {
-                const res = await fetch(`${API}interclasse.php?id=${idInterclasse}`, {
+                const res = await fetch(`${API}edicoes?id=${idInterclasse}`, {
                     method: 'POST',
                     body: formData
                 });
@@ -269,7 +270,7 @@ window.SGIPage.mount("eventos/configurar-locais", function (pageConfig, pageScop
                 };
                 if (carga != null && !Number.isNaN(carga)) body.carga_local = carga;
 
-                const res = await fetch(`${API}locais.php`, {
+                const res = await fetch(`${API}locais`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
@@ -341,7 +342,7 @@ window.SGIPage.mount("eventos/configurar-locais", function (pageConfig, pageScop
         };
         if (carga != null && !Number.isNaN(carga)) body.carga_local = carga;
         
-        const res = await fetch(`${API}locais.php`, {
+        const res = await fetch(`${API}locais`, {
             method: 'PUT', 
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(body)
@@ -368,7 +369,7 @@ window.SGIPage.mount("eventos/configurar-locais", function (pageConfig, pageScop
         const btnPdf = document.getElementById('btnBaixarPdfModal');
 
         try {
-            const res = await fetch(`${API}interclasse.php?regulamento=true`);
+        const res = await fetch(`${API}edicoes?regulamento=true`);
             if (!res.ok) throw new Error('Erro na resposta da API');
 
             const data = await res.json();
@@ -378,7 +379,7 @@ window.SGIPage.mount("eventos/configurar-locais", function (pageConfig, pageScop
             const regulamentoPath = ativo?.regulamento_interclasse || ativo?.regulamento;
 
             if (regulamentoPath && regulamentoPath.trim() !== '') {
-                btnPdf.href = `../../../uploads/regulamentos/${regulamentoPath}`;
+                btnPdf.href = `${APP_BASE}/uploads/regulamentos/${encodeURIComponent(regulamentoPath)}`;
                 statusEl.classList.add('d-none');
                 containerPdf.classList.remove('d-none');
             } else {

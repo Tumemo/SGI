@@ -3,7 +3,7 @@ $tituloPagina = 'SGI - Termos';
 include SGI_ROOT . '/resources/views/components/aluno-head.php';
 $titulo = 'Termos';
 $mostrarVoltar = true;
-$urlVoltar = './home.php';
+$urlVoltar = \App\Shared\Http\Url::to('aluno/inicio');
 ?>
 
     <main class="container py-4">

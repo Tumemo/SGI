@@ -68,7 +68,7 @@ window.SGIPage.mount("eventos/configurar-pontuacao", function (pageConfig, pageS
         }
         if (!idInterclasse) {
             alert("Nenhum interclasse ativo encontrado.");
-            window.location.href = "home.php";
+            window.location.href = "/edicoes";
             return null;
         }
         const dados = await window.SGIInterclasse.getInterclasseById(idInterclasse);
@@ -79,8 +79,8 @@ window.SGIPage.mount("eventos/configurar-pontuacao", function (pageConfig, pageS
         const btnBack = document.getElementById('btnVoltarPontuacao');
         if (btnBack) {
             btnBack.href = modo === 'view'
-                ? `./dashboard.php?id=${idInterclasse}`
-                : `./edicao_modalidades.php?id=${idInterclasse}&modo=create`;
+                ? `/painel?id=${idInterclasse}`
+                : `/edicoes/modalidades?id=${idInterclasse}&modo=create`;
         }
 
         if (dados) {
@@ -118,7 +118,7 @@ window.SGIPage.mount("eventos/configurar-pontuacao", function (pageConfig, pageS
             formData.append('ponto_3_lugar', pontos3);
             formData.append('valor_item_arrecadacao', pontosArr);
 
-            const resp = await fetch(`../../../api/interclasse.php?id=${idInterclasse}`, {
+            const resp = await fetch(`/api/v1/edicoes?id=${idInterclasse}`, {
                 method: 'POST',
                 body: formData
             });
@@ -163,7 +163,7 @@ window.SGIPage.mount("eventos/configurar-pontuacao", function (pageConfig, pageS
 
         const btnContinuar = document.getElementById('btnContinuarPontuacao');
         if (btnContinuar) {
-            btnContinuar.href = `./edicao_resumo.php?id=${idInterclasse}&modo=create`;
+            btnContinuar.href = `/edicoes/resumo?id=${idInterclasse}&modo=create`;
             if (modo === 'create') btnContinuar.classList.remove('d-none');
         }
     });

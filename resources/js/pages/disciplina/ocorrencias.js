@@ -21,7 +21,7 @@ window.SGIPage.mount("disciplina/ocorrencias", function (pageConfig, pageScope) 
         }
         if (!idInterclasse) {
             alert('Nenhum interclasse ativo.');
-            window.location.href = 'home.php';
+            window.location.href = '/painel';
             return;
         }
         const dados = await window.SGIInterclasse.getInterclasseById(idInterclasse);
@@ -31,18 +31,18 @@ window.SGIPage.mount("disciplina/ocorrencias", function (pageConfig, pageScope) 
         });
         ['btnVoltarOcr', 'btnVoltarOcrMob'].forEach(id => {
             const el = document.getElementById(id);
-            if (el) el.href = `./dashboard.php?id=${idInterclasse}`;
+            if (el) el.href = `/painel?id=${idInterclasse}`;
         });
     }
 
-    const API_BASE = window.location.pathname.replace(/\/views\/src\/pages\/.*$/, '/api');
+    const API_BASE = '/api/v1';
 
     async function carregarDados() {
         await resolverInterclasse();
 
         if (!idInterclasse) return;
 
-        const resTurmas = await fetch(`${API_BASE}/turmas.php?id_interclasse=${idInterclasse}`);
+        const resTurmas = await fetch(`${API_BASE}/turmas?id_interclasse=${idInterclasse}`);
         if (!resTurmas.ok) {
             alert('Erro ao carregar turmas.');
             return;
@@ -116,7 +116,7 @@ window.SGIPage.mount("disciplina/ocorrencias", function (pageConfig, pageScope) 
         btnEl.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Salvando...';
 
         try {
-            const resp = await fetch(`${API_BASE}/ocorrencias_turmas.php`, {
+            const resp = await fetch(`${API_BASE}/ocorrencias-turmas`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -161,7 +161,7 @@ window.SGIPage.mount("disciplina/ocorrencias", function (pageConfig, pageScope) 
 
         try {
             if (!idInterclasse) return;
-            const res = await fetch(`${API_BASE}/ocorrencias_turmas.php?id_interclasse=${idInterclasse}&id_turma=${idTurma}`);
+            const res = await fetch(`${API_BASE}/ocorrencias-turmas?id_interclasse=${idInterclasse}&id_turma=${idTurma}`);
             historicoRegistros = await res.json();
 
             if (!Array.isArray(historicoRegistros) || historicoRegistros.length === 0) {
@@ -194,7 +194,7 @@ window.SGIPage.mount("disciplina/ocorrencias", function (pageConfig, pageScope) 
         if (!confirm('Tem certeza que deseja remover esta ocorrência?')) return;
 
         try {
-            const res = await fetch(`${API_BASE}/ocorrencias_turmas.php`, {
+            const res = await fetch(`${API_BASE}/ocorrencias-turmas`, {
                 method: 'DELETE',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ id_ocorrencia_turma: id })

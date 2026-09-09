@@ -2,7 +2,7 @@
 $tituloPagina = 'SGI - Turmas';
 $titulo = 'Turmas';
 $mostrarVoltar = true;
-$urlVoltar = './dashboard.php';
+$urlVoltar = \App\Shared\Http\Url::to('painel');
 include SGI_ROOT . '/resources/views/components/admin-head.php';
 include SGI_ROOT . '/resources/views/components/admin-header.php';
 $paginaAtiva = 'categorias';
@@ -15,7 +15,7 @@ $paginaAtiva = 'categorias';
 <main class="position-relative d-md-none sgi-inline-80857b05" >
     <div class="p-3">
         <div class="d-flex align-items-center gap-2 mb-3">
-            <a href="./dashboard.php" id="btnVoltarCatMob" class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none sgi-inline-e1bcebb6" >
+            <a href="<?= \App\Shared\Http\Url::to('painel') ?>" id="btnVoltarCatMob" class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none sgi-inline-e1bcebb6" >
                 <i class="bi bi-arrow-left-circle fs-5"></i> <span id="nomeInterclasseCatMob">Interclasse</span>
             </a>
             <div class="turma-search-wrapper flex-grow-1">
@@ -37,7 +37,7 @@ $paginaAtiva = 'categorias';
 <main class="d-none d-md-flex flex-column main-desktop-layout">
     <div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-3">
         <div class="d-flex align-items-center gap-3">
-            <a href="./dashboard.php" id="btnVoltarCatDesk" class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none sgi-inline-e1bcebb6" >
+            <a href="<?= \App\Shared\Http\Url::to('painel') ?>" id="btnVoltarCatDesk" class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none sgi-inline-e1bcebb6" >
                 <i class="bi bi-arrow-left-circle fs-5"></i> <span id="nomeInterclasseCategoria">Interclasse</span>
             </a>
         </div>

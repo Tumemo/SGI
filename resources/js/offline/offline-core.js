@@ -90,7 +90,7 @@
     function pareceTelaLogin(texto, url) {
         var textoNormalizado = String(texto || '').toLowerCase();
         var urlNormalizada = String(url || '').toLowerCase();
-        return urlNormalizada.indexOf('/views/index.php') > -1 ||
+        return urlNormalizada.indexOf('/login') > -1 ||
             textoNormalizado.indexOf('id="form_mobile"') > -1 ||
             textoNormalizado.indexOf('id="form_desktop"') > -1 ||
             textoNormalizado.indexOf('class="ipt-matricula"') > -1 ||
@@ -159,7 +159,11 @@
     }
 
     function resolveUrl(url) {
-        try { return new URL(url, window.location.href).href; } catch (e) { return String(url); }
+        try {
+            var value = String(url || '');
+            if (value.indexOf('/api/v1') === 0) value = aplicacaoBasePath() + value;
+            return new URL(value, window.location.href).href;
+        } catch (e) { return String(url); }
     }
 
     function healthUrl() {
@@ -506,21 +510,6 @@
         });
     }
 
-    function filaLegadaPertenceASessao(item) {
-        // Versões anteriores não gravavam `session`. Não atribua uma fila
-        // antiga a qualquer usuário autenticado: só é seguro adotá-la quando
-        // o identificador de mutação preserva o namespace opaco da sessão que
-        // está aberta. Em modo anônimo não há outro namespace para comparar.
-        if (item && Object.prototype.hasOwnProperty.call(item, 'session') && item.session != null) {
-            return String(item.session) === SESSION_KEY;
-        }
-        if (SESSION_KEY === 'anon') return true;
-        var headers = copiarCabecalhos(item && item.headers);
-        var nomeId = localizarCabecalho(headers, 'X-SGI-Mutation-Id');
-        var idMutacao = nomeId ? String(headers[nomeId] || '') : '';
-        return idMutacao === SESSION_KEY || idMutacao.indexOf(SESSION_KEY + '-') === 0;
-    }
-
     function idbQueueAll() {
         return openDB().then(function (db) {
             return new Promise(function (resolve, reject) {
@@ -529,7 +518,7 @@
                 req.onsuccess = function () {
                     var todos = req.result || [];
                     resolve(todos.filter(function (i) {
-                        return filaLegadaPertenceASessao(i);
+                        return i && String(i.session || '') === SESSION_KEY;
                     }));
                 };
                 req.onerror = function () { reject(req.error); };
@@ -800,12 +789,12 @@
         try { bodyJson = typeof storedBody === 'string' ? JSON.parse(storedBody || '{}') : storedBody; } catch (_) { bodyJson = null; }
         var arquivo = fileFromUrl(url);
         var idTemporario = bodyJson && bodyJson.id_ocorrencia != null ? String(bodyJson.id_ocorrencia) : '';
-        var precisaCriacaoOcorrencia = method === 'PUT' && arquivo === 'ocorrencias.php' && /^temp_\d+$/.test(idTemporario);
+        var precisaCriacaoOcorrencia = method === 'PUT' && arquivo === 'ocorrencias' && /^temp_\d+$/.test(idTemporario);
         var dependencia = precisaCriacaoOcorrencia
             ? idbQueueAll().then(function (fila) {
                 var idPai = Number(idTemporario.slice(5));
                 var criacao = (fila || []).filter(function (pendente) {
-                    return Number(pendente.id) === idPai && pendente.method === 'POST' && fileFromUrl(pendente.url) === 'ocorrencias.php';
+                    return Number(pendente.id) === idPai && pendente.method === 'POST' && fileFromUrl(pendente.url) === 'ocorrencias';
                 })[0];
                 if (criacao) {
                     item.dependsOn = { mutationId: criacao.id, tempId: idTemporario, field: 'id_ocorrencia' };
@@ -868,10 +857,10 @@
         try {
             var file = new URL(url, window.location.href).pathname.replace(/\/+$/, '').split('/').pop();
             var recursos = {
-                resultados: 'lancar_resultado.php',
-                artilheiros: 'artilheiro.php',
-                ocorrencias: 'ocorrencias.php',
-                partidas: 'partidas.php'
+                resultados: 'resultados',
+                artilheiros: 'artilheiros',
+                ocorrencias: 'ocorrencias',
+                partidas: 'partidas'
             };
             return recursos[file] || file;
         }
@@ -885,16 +874,16 @@
         var file = fileFromUrl(item.url);
         var data = bodyAsJson(item);
         var id = null;
-        if (file === 'lancar_resultado.php') id = data.id_jogo;
-        else if (file === 'artilheiro.php') id = data.jogos_id_jogo;
-        else if (file === 'ocorrencias.php') id = data.id_jogo;
-        else if (file === 'partidas.php') id = data.jogos_id_jogo;
+        if (file === 'resultados') id = data.id_jogo;
+        else if (file === 'artilheiros') id = data.jogos_id_jogo;
+        else if (file === 'ocorrencias') id = data.id_jogo;
+        else if (file === 'partidas') id = data.jogos_id_jogo;
         if (Number(id) >= 0 || id == null) return null;
         return String(data.id_modalidade || '') + '|' + String(id);
     }
 
     function materializaJogoTemporario(item) {
-        return fileFromUrl(item.url) === 'lancar_resultado.php' && Number(bodyAsJson(item).id_jogo) < 0;
+        return fileFromUrl(item.url) === 'resultados' && Number(bodyAsJson(item).id_jogo) < 0;
     }
 
     function ordenarFila(queue) {
@@ -934,7 +923,7 @@
                 json: json,
                 httpOk: !!(res && res.ok),
                 // HTTP 200 sozinho não confirma uma mutação: pode conter HTML,
-                // JSON incompleto ou o formato legado { status: 'erro' }.
+                // JSON incompleto ou uma resposta de erro sem campo success.
                 semanticOk: !redirecionouParaLogin && !!json && typeof json === 'object' &&
                     !Array.isArray(json) && json.success !== false && json.status !== 'erro' &&
                     (json.success === true || json.status === 'sucesso')
@@ -980,7 +969,7 @@
             ? window.SGIDataLayer.onSynced(item, text, json || {})
             : null;
         function resolverDependentes() {
-            if (fileFromUrl(item.url) !== 'ocorrencias.php' || item.method !== 'POST' || !json || !json.id) return Promise.resolve();
+            if (fileFromUrl(item.url) !== 'ocorrencias' || item.method !== 'POST' || !json || !json.id) return Promise.resolve();
             return idbQueueAll().then(function (fila) {
                 return Promise.all((fila || []).filter(function (pendente) {
                     return pendente.dependsOn && Number(pendente.dependsOn.mutationId) === Number(item.id);

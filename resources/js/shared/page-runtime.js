@@ -87,8 +87,8 @@
         constructionScope = scope;
         actions = factory(config, scope) || {};
         constructionScope = null;
-        // HTML event attributes remain compatible while each screen's state stays
-        // in its own closure. Reactivation restores that screen's actions.
+        // Atributos de eventos HTML continuam disponíveis enquanto o estado de
+        // cada tela permanece isolado em seu próprio closure.
         Object.assign(global, actions);
     }
     function prepareModal(element) {

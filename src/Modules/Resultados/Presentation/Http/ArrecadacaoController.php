@@ -63,7 +63,7 @@ final class ArrecadacaoController
         } catch (ArrecadacaoQuantidadeInsuficienteException $exception) {
             return \App\Shared\Http\Response::json(['success' => false, 'message' => 'A quantidade arrecadada é insuficiente para o estorno.'], 409, $headers);
         } catch (\Throwable $exception) {
-            error_log('Falha em arrecadacao.php: ' . $exception->getMessage());
+            error_log('Falha ao processar arrecadação: ' . $exception->getMessage());
             $status = 500;
             return \App\Shared\Http\Response::json(['success' => false, 'message' => 'Não foi possível processar a arrecadação.'], $status, $headers);
         }

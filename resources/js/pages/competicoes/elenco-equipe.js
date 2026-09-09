@@ -1,6 +1,6 @@
 window.SGIPage.mount("competicoes/elenco-equipe", function (pageConfig, pageScope) {
 
-const API = '../../../api/';
+const API = '/api/v1/';
 const isAdmin = pageConfig.value1;
 const params = new URLSearchParams(window.location.search);
 const idInterclasse = params.get('id');
@@ -21,7 +21,7 @@ function montarVoltar() {
     const q = new URLSearchParams();
     if (idInterclasse) q.set('id', idInterclasse);
     if (idCategoria) q.set('id_categoria', idCategoria);
-    const hrefEq = `./edicao_equipes.php?${q.toString()}`;
+    const hrefEq = `/edicoes/equipes?${q.toString()}`;
     ['btnVoltarElencoMob', 'btnVoltarElencoDesk'].forEach(id => {
         const el = document.getElementById(id);
         if (el) el.href = hrefEq;
@@ -49,7 +49,7 @@ function montarGerenciar() {
     if (idModalidade) q.set('id_modalidade', idModalidade);
     if (nomeTurma) q.set('nome_turma', nomeTurma);
     if (nomeModalidade) q.set('nome_modalidade', nomeModalidade);
-    const href = `./equipe_alunos.php?${q.toString()}`;
+    const href = `/equipes/alunos?${q.toString()}`;
     const a = document.getElementById('linkGerenciarMob');
     const b = document.getElementById('linkGerenciarDesk');
     if (a) a.href = href;
@@ -70,7 +70,7 @@ async function carregarAlertaLimite() {
     }
 
     try {
-        const r = await fetch(`${API}equipes.php?id_turma=${encodeURIComponent(idTurma)}&id_modalidade=${encodeURIComponent(idModalidade)}&_t=${Date.now()}`);
+        const r = await fetch(`${API}equipes?id_turma=${encodeURIComponent(idTurma)}&id_modalidade=${encodeURIComponent(idModalidade)}&_t=${Date.now()}`);
         const lista = await r.json();
         const arr = Array.isArray(lista) ? lista : [];
         const eq = arr.find(e => String(e.id_equipe) === String(idEquipe));
@@ -100,7 +100,7 @@ async function carregarAlertaLimite() {
 async function redistribuirElenco() {
     if (!confirm('Enviar os alunos excedentes para as outras equipes desta turma?')) return;
     try {
-        const resp = await fetch(`${API}equipes.php`, {
+        const resp = await fetch(`${API}equipes`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -133,7 +133,7 @@ async function carregar() {
     }
 
     try {
-        const r = await fetch(`${API}equipes.php?id_equipe=${encodeURIComponent(idEquipe)}&_t=${Date.now()}`);
+        const r = await fetch(`${API}equipes?id_equipe=${encodeURIComponent(idEquipe)}&_t=${Date.now()}`);
         const lista = await r.json();
         const arr = Array.isArray(lista) ? lista : [];
 
@@ -183,7 +183,7 @@ async function removerAluno(idUsuario, idEquipe) {
     if (!confirm('Deseja realmente remover este aluno da equipe?')) return;
 
     try {
-        const response = await fetch(`${API}equipes.php`, {
+        const response = await fetch(`${API}equipes`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({

@@ -11,16 +11,16 @@ $nomeUsuario = $_SESSION['nome'] ?? 'Usuário';
 $inicialNome = strtoupper(substr($nomeUsuario, 0, 1));
 
 $todosItens = [
-    'perfil'            => ['label' => 'Perfil',          'icon' => 'bi-person',             'url' => './perfil.php',              'niveis' => [0, 1, 2]],
-    'dashboard'         => ['label' => 'Dashboard',       'icon' => 'bi-house-door',         'url' => './dashboard.php',           'niveis' => [0, 1, 2]],
-    'ocorrencias'        => ['label' => 'Ocorrências',    'icon' => 'bi-exclamation-triangle',          'url' => './ocorrencias.php',          'niveis' => [0, 1, 2]],
-    'chaveamento'       => ['label' => 'Chaveamento',     'icon' => 'bi-diagram-3',          'url' => './chaveamento_arvore.php',  'niveis' => [0, 1]],
-    'ranking'           => ['label' => 'Ranking',         'icon' => 'bi-trophy',             'url' => './ranking.php',             'niveis' => [0, 1]],
-    'agenda'            => ['label' => 'Agenda',          'icon' => 'bi-calendar2-check',          'url' => './edicao_agenda.php',       'niveis' => [0, 1]],
-    'arrecadacoes'      => ['label' => 'Arrecadações',    'icon' => 'bi-basket',             'url' => './edicao_arrecadacao.php',  'niveis' => [0, 1]],
-    'equipes'     => ['label' => 'Equipes',   'icon' => 'bi-people',             'url' => './edicao_equipes.php',       'niveis' => [0]],
-    'chaveamentos_mesario' => ['label' => 'Chaveamentos', 'icon' => 'bi-diagram-3',          'url' => './chaveamento_arvore.php',           'niveis' => [2]],
-    'agenda_mesario'    => ['label' => 'Agenda',          'icon' => 'bi-calendar3',          'url' => './edicao_agenda.php',       'niveis' => [2]],
+    'perfil'            => ['label' => 'Perfil',          'icon' => 'bi-person',             'url' => \App\Shared\Http\Url::to('perfil'),              'niveis' => [0, 1, 2]],
+    'dashboard'         => ['label' => 'Dashboard',       'icon' => 'bi-house-door',         'url' => \App\Shared\Http\Url::to('painel'),           'niveis' => [0, 1, 2]],
+    'ocorrencias'        => ['label' => 'Ocorrências',    'icon' => 'bi-exclamation-triangle',          'url' => \App\Shared\Http\Url::to('ocorrencias'),          'niveis' => [0, 1, 2]],
+    'chaveamento'       => ['label' => 'Chaveamento',     'icon' => 'bi-diagram-3',          'url' => \App\Shared\Http\Url::to('chaveamento'),  'niveis' => [0, 1]],
+    'ranking'           => ['label' => 'Ranking',         'icon' => 'bi-trophy',             'url' => \App\Shared\Http\Url::to('ranking'),             'niveis' => [0, 1]],
+    'agenda'            => ['label' => 'Agenda',          'icon' => 'bi-calendar2-check',          'url' => \App\Shared\Http\Url::to('edicoes/agenda'),       'niveis' => [0, 1]],
+    'arrecadacoes'      => ['label' => 'Arrecadações',    'icon' => 'bi-basket',             'url' => \App\Shared\Http\Url::to('edicoes/arrecadacao'),  'niveis' => [0, 1]],
+    'equipes'     => ['label' => 'Equipes',   'icon' => 'bi-people',             'url' => \App\Shared\Http\Url::to('edicoes/equipes'),       'niveis' => [0]],
+    'chaveamentos_mesario' => ['label' => 'Chaveamentos', 'icon' => 'bi-diagram-3',          'url' => \App\Shared\Http\Url::to('chaveamento'),           'niveis' => [2]],
+    'agenda_mesario'    => ['label' => 'Agenda',          'icon' => 'bi-calendar3',          'url' => \App\Shared\Http\Url::to('edicoes/agenda'),       'niveis' => [2]],
 ];
 
 $navItens = [];
@@ -42,7 +42,7 @@ $onclickSair = "onclick=\"return confirm('Deseja realmente sair?')\"";
         <li>
             <a href="<?= $item['url'] ?>" class="<?= $classeLink($key) ?> nav-link p-1 <?= $key === $paginaAtiva ? 'active-nav-icon' : '' ?>" aria-label="<?= $item['label'] ?>">
                 <?php if ($key === 'perfil' && !empty($fotoUsuario)): ?>
-                    <img src="../../../uploads/fotosUsuarios/<?= htmlspecialchars($fotoUsuario) ?>" class="nav-avatar-img-mobile" alt="Perfil">
+                    <img src="<?= htmlspecialchars(\App\Shared\Http\Url::to('uploads/fotosUsuarios/' . rawurlencode($fotoUsuario))) ?>" class="nav-avatar-img-mobile" alt="Perfil">
                 <?php elseif ($key === 'perfil'): ?>
                     <span class="nav-avatar-fallback-mobile"><?= $inicialNome ?></span>
                 <?php else: ?>
@@ -52,7 +52,7 @@ $onclickSair = "onclick=\"return confirm('Deseja realmente sair?')\"";
         </li>
         <?php endforeach; ?>
         <li>
-            <a href="../../../api/logout.php" class="text-white-50 nav-link p-1" aria-label="Sair" <?= $onclickSair ?>>
+            <a href="<?= \App\Shared\Http\Url::to('api/v1/logout') ?>" class="text-white-50 nav-link p-1" aria-label="Sair" <?= $onclickSair ?>>
                 <i class="bi bi-box-arrow-right"></i>
             </a>
         </li>
@@ -84,7 +84,7 @@ $onclickSair = "onclick=\"return confirm('Deseja realmente sair?')\"";
         <li>
             <a href="<?= $item['url'] ?>" class="text-white d-flex align-items-center justify-content-center position-relative <?= $key === $paginaAtiva ? 'active-nav-icon' : '' ?>" title="<?= $item['label'] ?>">
                 <?php if ($key === 'perfil' && !empty($fotoUsuario)): ?>
-                    <img src="../../../uploads/fotosUsuarios/<?= htmlspecialchars($fotoUsuario) ?>" class="nav-avatar-img" alt="Perfil">
+                    <img src="<?= htmlspecialchars(\App\Shared\Http\Url::to('uploads/fotosUsuarios/' . rawurlencode($fotoUsuario))) ?>" class="nav-avatar-img" alt="Perfil">
                 <?php elseif ($key === 'perfil'): ?>
                     <span class="nav-avatar-fallback"><?= $inicialNome ?></span>
                 <?php else: ?>
@@ -94,7 +94,7 @@ $onclickSair = "onclick=\"return confirm('Deseja realmente sair?')\"";
         </li>
         <?php endforeach; ?>
         <li class="">
-            <a href="../../../api/logout.php" class="text-white" <?= $onclickSair ?>>
+            <a href="<?= \App\Shared\Http\Url::to('api/v1/logout') ?>" class="text-white" <?= $onclickSair ?>>
                 <i class="bi bi-box-arrow-right"></i>
             </a>
         </li>

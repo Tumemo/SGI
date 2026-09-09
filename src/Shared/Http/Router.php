@@ -9,8 +9,8 @@ use LogicException;
 /**
  * Roteador pequeno e determinístico para o monólito modular.
  *
- * Os endpoints legados continuam podendo ser atendidos pelo front controller;
- * as novas rotas não dependem de includes procedurais.
+ * As rotas são declaradas somente pelos módulos atuais e não dependem de
+ * includes procedurais.
  */
 final class Router implements RequestHandler
 {

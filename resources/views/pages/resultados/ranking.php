@@ -16,7 +16,7 @@ if (is_numeric($nivelRaw)) {
 $tituloPagina = 'SGI - Ranking Geral';
 $titulo = 'Ranking de Turmas';
 $mostrarVoltar = true;
-$urlVoltar = './dashboard.php';
+$urlVoltar = \App\Shared\Http\Url::to('painel');
 include SGI_ROOT . '/resources/views/components/admin-head.php';
 include SGI_ROOT . '/resources/views/components/admin-header.php';
 $paginaAtiva = 'ranking';

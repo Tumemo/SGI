@@ -1,7 +1,7 @@
 <?php
 $tituloPagina = 'SGI - Chaveamento';
 $mostrarVoltar = true;
-$urlVoltar = './dashboard.php';
+$urlVoltar = \App\Shared\Http\Url::to('painel');
 
 include SGI_ROOT . '/resources/views/components/admin-head.php';
 include SGI_ROOT . '/resources/views/components/admin-header.php';
@@ -13,7 +13,7 @@ $podeGerar = !$isNivel2 && !$isNivel3;
 ?>
 
 <main class="d-md-none kv-page sgi-inline-5ab1acff" >
-    <a href="./dashboard.php" id="btnVoltarChaveamentoMob" class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none sgi-inline-e1bcebb6" >
+    <a href="<?= \App\Shared\Http\Url::to('painel') ?>" id="btnVoltarChaveamentoMob" class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none sgi-inline-e1bcebb6" >
         <i class="bi bi-arrow-left-circle fs-5"></i> <span id="nomeInterclasseChaveamentoMob">Interclasse</span>
     </a>
     <div class="mb-3">
@@ -123,7 +123,7 @@ $podeGerar = !$isNivel2 && !$isNivel3;
 
         <div class="kv-header">
             <div class="kv-header__left">
-                <a href="./dashboard.php" id="btnVoltar" class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold px-3 py-2 border-0 text-decoration-none sgi-inline-e1bcebb6" >
+                <a href="<?= \App\Shared\Http\Url::to('painel') ?>" id="btnVoltar" class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold px-3 py-2 border-0 text-decoration-none sgi-inline-e1bcebb6" >
                     <i class="bi bi-arrow-left-circle fs-5"></i> <span id="nomeInterclasseChaveamento">Interclasse</span>
                 </a>
             </div>

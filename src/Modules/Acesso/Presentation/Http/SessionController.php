@@ -39,6 +39,6 @@ final class SessionController
             ]);
         }
         session_destroy();
-        return Response::empty(302, ['Location' => Url::to('views/index.php'), 'Cache-Control' => 'no-store']);
+        return Response::empty(302, ['Location' => Url::to('login'), 'Cache-Control' => 'no-store']);
     }
 }

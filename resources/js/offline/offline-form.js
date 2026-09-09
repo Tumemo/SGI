@@ -8,7 +8,7 @@
    voltar. Requer que o offline-core.js esteja carregado antes.
 
    Para um formulario funcionar offline basta:
-       <form action="../api/..." method="POST" data-sgi-offline> ...
+       <form action="/api/v1/..." method="POST" data-sgi-offline> ...
    ============================================================ */
 (function () {
     'use strict';

@@ -1,6 +1,6 @@
 window.SGIPage.mount("participantes/turma-alunos", function (pageConfig, pageScope) {
 
-    const API = '../../../api/';
+    const API = '/api/v1/';
     const params = new URLSearchParams(window.location.search);
     const idInterclasse = Number(params.get('id') || 0);
     const idCategoria = Number(params.get('id_categoria') || 0);
@@ -48,8 +48,7 @@ window.SGIPage.mount("participantes/turma-alunos", function (pageConfig, pageSco
         const q = new URLSearchParams();
         if (idInterclasse) q.set('id', idInterclasse);
         if (idCategoria) q.set('id_categoria', idCategoria);
-        const pagina = idCategoria ? 'turmas' : 'edicao_turmas';
-        const href = `./${pagina}.php?${q.toString()}`;
+        const href = `${idCategoria ? '/turmas' : '/edicoes/turmas'}?${q.toString()}`;
         ['btnVoltarTurmaAlunosMob', 'btnVoltarTurmaAlunosDesk'].forEach(id => {
             const el = document.getElementById(id);
             if (el) el.href = href;
@@ -77,7 +76,7 @@ window.SGIPage.mount("participantes/turma-alunos", function (pageConfig, pageSco
         }
         let nomeTurma = '';
         try {
-            const rT = await fetch(`${API}turmas.php?id_turma=${encodeURIComponent(idTurma)}&id_interclasse=${encodeURIComponent(idInterclasse)}`);
+            const rT = await fetch(`${API}turmas?id_turma=${encodeURIComponent(idTurma)}&id_interclasse=${encodeURIComponent(idInterclasse)}`);
             const textTurmas = await rT.text();
             let turmas = null;
             try { turmas = JSON.parse(textTurmas || 'null'); } catch (_) { turmas = null; }
@@ -88,7 +87,7 @@ window.SGIPage.mount("participantes/turma-alunos", function (pageConfig, pageSco
         setNomeTurma(nomeTurma);
 
         try {
-            const r = await fetch(`${API}usuarios.php?acao=listar_competidores&id_turma=${encodeURIComponent(idTurma)}&id_interclasse=${encodeURIComponent(idInterclasse)}`);
+            const r = await fetch(`${API}usuarios?acao=listar_competidores&id_turma=${encodeURIComponent(idTurma)}&id_interclasse=${encodeURIComponent(idInterclasse)}`);
             const textData = await r.text();
             let data;
             try { data = JSON.parse(textData || '{}'); } catch (_) { data = {}; }
@@ -320,7 +319,7 @@ window.SGIPage.mount("participantes/turma-alunos", function (pageConfig, pageSco
 
         try {
             btn.disabled = true;
-            const r = await fetch(`${API}usuarios.php`, { method: 'POST', body: fd, credentials: 'include' });
+            const r = await fetch(`${API}usuarios`, { method: 'POST', body: fd, credentials: 'include' });
             const js = await r.json();
             if (js.status === 'sucesso') {
                 bootstrap.Modal.getInstance(document.getElementById('modalAluno')).hide();
@@ -350,7 +349,7 @@ window.SGIPage.mount("participantes/turma-alunos", function (pageConfig, pageSco
             const fd = new FormData();
             fd.append('acao', 'excluir_aluno');
             fd.append('id_usuario', idAlunoExcluir);
-            const r = await fetch(`${API}usuarios.php`, { method: 'POST', body: fd, credentials: 'include' });
+            const r = await fetch(`${API}usuarios`, { method: 'POST', body: fd, credentials: 'include' });
             const js = await r.json();
             bootstrap.Modal.getInstance(document.getElementById('modalConfirmarExcluir')).hide();
             if (js.status === 'sucesso') {
@@ -380,7 +379,7 @@ window.SGIPage.mount("participantes/turma-alunos", function (pageConfig, pageSco
             const fd = new FormData();
             fd.append('acao', 'resetar_senha_aluno');
             fd.append('id_usuario', idAlunoResetar);
-            const r = await fetch(`${API}usuarios.php`, { method: 'POST', body: fd, credentials: 'include' });
+            const r = await fetch(`${API}usuarios`, { method: 'POST', body: fd, credentials: 'include' });
             const js = await r.json();
             bootstrap.Modal.getInstance(document.getElementById('modalResetarSenha')).hide();
             if (js.status === 'sucesso') {
@@ -436,7 +435,7 @@ window.SGIPage.mount("participantes/turma-alunos", function (pageConfig, pageSco
         fd.append('id_turma', idTurma || '');
 
         const xhr = new XMLHttpRequest();
-        xhr.open('POST', '../../../api/upload_turma_pdf.php');
+        xhr.open('POST', '/api/v1/importacoes/turma-pdf');
         xhr.withCredentials = true;
 
         pageScope.listen(xhr.upload, 'progress', (e) => {

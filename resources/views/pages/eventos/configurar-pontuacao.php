@@ -2,7 +2,7 @@
 $tituloPagina = 'SGI - Pontuações';
 $titulo = 'Pontuações';
 $mostrarVoltar = true;
-$urlVoltar = './dashboard.php';
+$urlVoltar = \App\Shared\Http\Url::to('painel');
 include SGI_ROOT . '/resources/views/components/admin-head.php';
 include SGI_ROOT . '/resources/views/components/admin-header.php';
 $paginaAtiva = 'dashboard';
@@ -59,7 +59,7 @@ $ptcCards = [
     <div class="px-0 ptc-container">
 
         <div class="ptc-header">
-            <a href="./dashboard.php" id="btnVoltarPontuacao" class="ptc-btn-interclasse">
+            <a href="<?= \App\Shared\Http\Url::to('painel') ?>" id="btnVoltarPontuacao" class="ptc-btn-interclasse">
                 <i class="bi bi-arrow-left-circle fs-5"></i> <span id="nomeInterclassePontuacao">Interclasse</span>
             </a>
             <div class="ptc-title-wrap">

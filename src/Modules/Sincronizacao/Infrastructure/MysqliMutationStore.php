@@ -42,9 +42,7 @@ final class MysqliMutationStore
             $stmt->close();
             if ($row !== null) {
                 $this->release();
-                // Entries saved by older deployments have no fingerprint. Keep their
-                // response available to clients whose queues predate this migration.
-                if ($row['request_hash'] !== null && !hash_equals($row['request_hash'], $identity->fingerprint)) {
+                if ($row['request_hash'] === null || !hash_equals($row['request_hash'], $identity->fingerprint)) {
                     throw new MutationConflict('Identificador já utilizado para outra operação.');
                 }
                 return ['status' => (int) $row['status_http'], 'payload' => json_decode($row['resposta_json'], true, 512, JSON_THROW_ON_ERROR)];

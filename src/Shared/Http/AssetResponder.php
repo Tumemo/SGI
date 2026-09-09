@@ -17,16 +17,15 @@ final class AssetResponder
         'ttf' => 'font/ttf', 'map' => 'application/json; charset=UTF-8',
     ];
 
-    /** @param array<string,string> $aliases */
-    public function __construct(private readonly string $root, private readonly array $aliases, private readonly PublicFileResolver $files = new PublicFileResolver())
+    public function __construct(private readonly string $root, private readonly PublicFileResolver $files = new PublicFileResolver())
     {
     }
 
     public function send(Request $request): void
     {
         $path = ltrim($request->path(), '/');
-        $file = isset($this->aliases[$path]) ? $this->files->resolve($this->aliases[$path], $this->root) : null;
-        if ($file === null && str_starts_with($path, 'assets/')) {
+        $file = null;
+        if (str_starts_with($path, 'assets/')) {
             $file = $this->files->resolve($path, $this->root . '/public');
         }
         if ($file === null && str_starts_with($path, 'uploads/')) {

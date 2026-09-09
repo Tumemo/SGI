@@ -197,7 +197,7 @@ window.SGIPage.mount("competicoes/chaveamento", function (pageConfig, pageScope)
         }
         if (!idInterclasse) {
             alert("Nenhum interclasse ativo encontrado.");
-            window.location.href = "home.php";
+            window.location.href = "/painel";
             return null;
         }
         const dados = await window.SGIInterclasse.getInterclasseById(idInterclasse);
@@ -207,7 +207,7 @@ window.SGIPage.mount("competicoes/chaveamento", function (pageConfig, pageScope)
         });
         ['btnVoltar', 'btnVoltarChaveamentoMob'].forEach(id => {
             const el = document.getElementById(id);
-            if (el) el.href = `./dashboard.php?id=${idInterclasse}`;
+            if (el) el.href = `/painel?id=${idInterclasse}`;
         });
         return idInterclasse;
     }
@@ -225,7 +225,7 @@ window.SGIPage.mount("competicoes/chaveamento", function (pageConfig, pageScope)
                 const isConcluido = status === 'concluido' || status === 'finalizado';
                 if (!isConcluido) return;
                 const tag = j.nome_jogo || '';
-                const isFinalMM = /^MM:2:/.test(tag) || tag === 'MM:1:0:N';
+                const isFinalMM = /^MM:2:/.test(tag);
                 const isInd = /^IND:\d+$/.test(tag) || Number(j.tipos_modalidades_id_tipo_modalidade) === 2;
                 if (isFinalMM || isInd) {
                     const idMod = j.modalidades_id_modalidade || j.id_modalidade;
@@ -286,7 +286,7 @@ window.SGIPage.mount("competicoes/chaveamento", function (pageConfig, pageScope)
 
     async function carregarModalidades() {
         try {
-            const resp = await fetch(`../../../api/modalidades.php?id_interclasse=${idInterclasse}`);
+            const resp = await fetch(`/api/v1/modalidades?id_interclasse=${idInterclasse}`);
             const data = await resp.json();
             modalidadesCache = Array.isArray(data) ? data : [];
             const select = document.getElementById('selectModalidade');
@@ -325,7 +325,7 @@ window.SGIPage.mount("competicoes/chaveamento", function (pageConfig, pageScope)
         const select = document.getElementById('filtroCategoriaJogos');
         const selectMob = document.getElementById('filtroCategoriaJogosMob');
         try {
-            const resp = await fetch(`../../../api/categorias.php?id_interclasse=${idInterclasse}`);
+            const resp = await fetch(`/api/v1/categorias?id_interclasse=${idInterclasse}`);
             const data = await resp.json();
             const categorias = Array.isArray(data) ? data : [];
             select.innerHTML = '<option value="">Todas categorias</option>';
@@ -458,7 +458,7 @@ window.SGIPage.mount("competicoes/chaveamento", function (pageConfig, pageScope)
         var selectLocal = document.getElementById('editLocalJogo');
         selectLocal.innerHTML = '<option value="">Carregando...</option>';
 
-        fetch('../../../api/locais.php?id_interclasse=' + idInterclasse + '&disponivel=1')
+        fetch('/api/v1/locais?id_interclasse=' + idInterclasse + '&disponivel=1')
             .then(function(r) {
                 return r.json();
             })
@@ -537,7 +537,7 @@ window.SGIPage.mount("competicoes/chaveamento", function (pageConfig, pageScope)
         btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status"></span> Salvando...';
 
         try {
-            var resp = await fetch('../../../api/jogos.php', {
+            var resp = await fetch('/api/v1/jogos', {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json'
@@ -560,7 +560,7 @@ window.SGIPage.mount("competicoes/chaveamento", function (pageConfig, pageScope)
                         });
                     });
 
-                    const scoreResp = await fetch('../../../api/lancar_resultado.php', {
+                    const scoreResp = await fetch('/api/v1/resultados', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json'
@@ -684,7 +684,7 @@ window.SGIPage.mount("competicoes/chaveamento", function (pageConfig, pageScope)
             <td><span class="kv-badge kv-badge--${statusLower}">${statusLabel}</span></td>
             <td>
                 <div class="kv-table-actions">
-                    <a href="./jogos.php?id_jogo=${j.id_jogo}" class="kv-action kv-action--play" title="Acessar Jogo">
+                    <a href="/jogos/placar?id_jogo=${j.id_jogo}" class="kv-action kv-action--play" title="Acessar Jogo">
                         <i class="bi bi-play-fill"></i>
                     </a>
                     <button class="kv-action kv-action--edit" title="Editar Jogo"
@@ -704,7 +704,7 @@ window.SGIPage.mount("competicoes/chaveamento", function (pageConfig, pageScope)
             const idModalidade = document.getElementById('filtroModalidadeJogos').value;
             const idCategoria = document.getElementById('filtroCategoriaJogos').value;
 
-            let statsUrl = `../../../api/jogos.php?id_interclasse=${idInterclasse}`;
+            let statsUrl = `/api/v1/jogos?id_interclasse=${idInterclasse}`;
             const statsResp = await fetch(statsUrl);
             const statsData = await statsResp.json();
             let statsJogos = Array.isArray(statsData) ? statsData : [];
@@ -715,7 +715,7 @@ window.SGIPage.mount("competicoes/chaveamento", function (pageConfig, pageScope)
             });
             atualizarStats(statsJogos);
 
-            let url = `../../../api/jogos.php?id_interclasse=${idInterclasse}`;
+            let url = `/api/v1/jogos?id_interclasse=${idInterclasse}`;
             if (idModalidade) url += `&id_modalidade=${idModalidade}`;
             if (idCategoria) url += `&id_categoria=${idCategoria}`;
 
@@ -880,14 +880,14 @@ window.SGIPage.mount("competicoes/chaveamento", function (pageConfig, pageScope)
         if (!isBye && !isConcluido && jogo.id_jogo) {
             actionsHtml += '<div class="bkt-match__actions">';
             if (jogo.status_jogo === 'Agendado') {
-                actionsHtml += `<a href="./jogos.php?id_jogo=${jogo.id_jogo}" class="game-action-btn game-action-btn--start" title="Iniciar Jogo"><i class="bi bi-play-fill"></i>Iniciar</a>`;
+                actionsHtml += `<a href="/jogos/placar?id_jogo=${jogo.id_jogo}" class="game-action-btn game-action-btn--start" title="Iniciar Jogo"><i class="bi bi-play-fill"></i>Iniciar</a>`;
             }
             actionsHtml += `<button class="game-action-btn game-action-btn--edit" title="Editar Jogo" onclick="editarJogoBracket(this)" data-jogo='${jogoData}'><i class="bi bi-pencil"></i>Editar</button>`;
             actionsHtml += '</div>';
         }
         if (isConcluido && jogo.id_jogo) {
             actionsHtml += '<div class="bkt-match__actions">';
-            actionsHtml += `<a href="./jogos.php?id_jogo=${jogo.id_jogo}" class="game-action-btn game-action-btn--view" title="Ver resultado"><i class="bi bi-eye"></i>Ver resultado</a>`;
+            actionsHtml += `<a href="/jogos/placar?id_jogo=${jogo.id_jogo}" class="game-action-btn game-action-btn--view" title="Ver resultado"><i class="bi bi-eye"></i>Ver resultado</a>`;
             actionsHtml += `<button class="game-action-btn game-action-btn--edit" title="Editar Jogo" data-jogo='${JSON.stringify(jogo).replace(/'/g, "&#39;")}' onclick="editarJogoBracket(this)"><i class="bi bi-pencil"></i>Editar</button>`;
             actionsHtml += '</div>';
         }
@@ -903,10 +903,8 @@ window.SGIPage.mount("competicoes/chaveamento", function (pageConfig, pageScope)
     }
 
     function _detectarCampeao(jogos) {
-        // O campeão é o vencedor da grande final (MM:2). MM:1 é aceito
-        // apenas como legado para não quebrar edições antigas.
-        const final = jogos.find(j => j.fase_nivel === 2 && (j.status_jogo === 'Concluido' || j.status_jogo === 'Finalizado')) ||
-            jogos.find(j => j.fase_nivel === 1 && (j.status_jogo === 'Concluido' || j.status_jogo === 'Finalizado'));
+        // O campeão é o vencedor da grande final (MM:2).
+        const final = jogos.find(j => j.fase_nivel === 2 && (j.status_jogo === 'Concluido' || j.status_jogo === 'Finalizado'));
         if (!final || !final.equipes || !final.equipe_vencedora_id) return null;
         const winner = final.equipes.find(eq => eq.id_equipe == final.equipe_vencedora_id);
         if (!winner) return null;
@@ -920,7 +918,7 @@ window.SGIPage.mount("competicoes/chaveamento", function (pageConfig, pageScope)
     }
 
     function _renderModernBracket(jogos) {
-        const mmGames = jogos.filter(j => !j.eh_disputa_posicao && j.fase_nivel !== 1);
+        const mmGames = jogos.filter(j => !j.eh_disputa_posicao);
         const posGames = jogos.filter(j => j.eh_disputa_posicao);
 
         const rounds = {};
@@ -1068,7 +1066,7 @@ window.SGIPage.mount("competicoes/chaveamento", function (pageConfig, pageScope)
         var selectLocal = document.getElementById('editLocalJogo');
         selectLocal.innerHTML = '<option value="">Carregando...</option>';
 
-        fetch('../../../api/locais.php?id_interclasse=' + idInterclasse)
+        fetch('/api/v1/locais?id_interclasse=' + idInterclasse)
             .then(function(r) {
                 return r.json();
             })
@@ -1140,7 +1138,7 @@ window.SGIPage.mount("competicoes/chaveamento", function (pageConfig, pageScope)
             if (areaMob) areaMob.innerHTML = loadingHtml;
 
             try {
-                const resRank = await fetch(`../../../api/chaveamento.php?tipo_modalidade=individual&acao=ranking&id_modalidade=${idModalidade}`);
+                const resRank = await fetch(`/api/v1/chaveamentos?tipo_modalidade=individual&acao=ranking&id_modalidade=${idModalidade}`);
                 const dadosRank = await resRank.json();
                 const rankingAtual = (dadosRank.success && dadosRank.ranking) ? dadosRank.ranking : [];
                 const jogoIndividual = dadosRank.jogo || null;
@@ -1239,7 +1237,7 @@ window.SGIPage.mount("competicoes/chaveamento", function (pageConfig, pageScope)
                 _drawConnectors(areaMob);
             });
 
-            const niveis = [...new Set(jogos.filter(j => !j.eh_disputa_posicao && j.fase_nivel !== 1).map(j => j.fase_nivel))].sort((a, b) => b - a);
+            const niveis = [...new Set(jogos.filter(j => !j.eh_disputa_posicao).map(j => j.fase_nivel))].sort((a, b) => b - a);
             atualizarTimeline(niveis);
             iniciarPolling();
 
@@ -1371,7 +1369,7 @@ window.SGIPage.mount("competicoes/chaveamento", function (pageConfig, pageScope)
         try {
             btn.disabled = true;
             btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Gerando...';
-            const resp = await fetch('../../../api/chaveamento.php', {
+            const resp = await fetch('/api/v1/chaveamentos', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ id_modalidade: Number(idModalidade), tipo_modalidade: tipoModalidadeParam, acao: 'gerar' })
@@ -1385,7 +1383,7 @@ window.SGIPage.mount("competicoes/chaveamento", function (pageConfig, pageScope)
             const linkArvore = document.getElementById('linkVerArvore');
             if (linkArvore) linkArvore.classList.remove('d-none');
             const btnArvore = document.getElementById('btnVerArvore');
-            if (btnArvore) btnArvore.href = `./chaveamento_arvore.php?id=${idInterclasse}`;
+            if (btnArvore) btnArvore.href = `/chaveamento?id=${idInterclasse}`;
             carregarArvore(idModalidade);
             carregarJogos();
         } catch (err) {

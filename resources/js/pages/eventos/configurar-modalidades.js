@@ -1,5 +1,7 @@
 window.SGIPage.mount("eventos/configurar-modalidades", function (pageConfig, pageScope) {
 
+    const APP_BASE = window.SGI_BASE_PATH || '';
+
     const urlParams = new URLSearchParams(window.location.search);
     let idInterclasse = urlParams.get('id');
     const idCategoria = urlParams.get('id_categoria');
@@ -22,7 +24,7 @@ window.SGIPage.mount("eventos/configurar-modalidades", function (pageConfig, pag
         if (!idInterclasse) {
             const msg = '<p class="text-muted mt-4 text-center w-100">Nenhum interclasse ativo.</p>';
             document.getElementById('listaModalidadesDesktop').innerHTML = msg;
-            window.location.href = "home.php";
+            window.location.href = "/edicoes";
             return null;
         }
         const dados = await window.SGIInterclasse.getInterclasseById(idInterclasse);
@@ -40,7 +42,7 @@ window.SGIPage.mount("eventos/configurar-modalidades", function (pageConfig, pag
         const botaoDesktop = document.getElementById('btnContinuarDesktop');
 
         if (botaoDesktop) {
-            botaoDesktop.href = `./edicao_pontuacao.php?id=${idInterclasse}&modo=create${modalidadeSelecionada ? `&id_modalidade=${modalidadeSelecionada}` : ''}`;
+            botaoDesktop.href = `/edicoes/pontuacao?id=${idInterclasse}&modo=create${modalidadeSelecionada ? `&id_modalidade=${modalidadeSelecionada}` : ''}`;
             const disabled = !modalidadeSelecionada;
             botaoDesktop.classList.toggle('disabled', disabled);
             botaoDesktop.setAttribute('aria-disabled', disabled ? 'true' : 'false');
@@ -48,15 +50,15 @@ window.SGIPage.mount("eventos/configurar-modalidades", function (pageConfig, pag
         }
 
         const destinoVoltar = modo === 'view'
-            ? `./dashboard.php?id=${idInterclasse}`
-            : `./edicao_categorias.php?id=${idInterclasse}&modo=create`;
+            ? `/painel?id=${idInterclasse}`
+            : `/edicoes/categorias?id=${idInterclasse}&modo=create`;
         const btnVoltar = document.getElementById('btnVoltarModalidades');
         if (btnVoltar) btnVoltar.href = destinoVoltar;
     }
 
     /* ── RENDER CARD ── */
     function renderizarCard(modalidade) {
-        const destino = `./modalidade_detalhes.php?id=${modalidade.id_modalidade}`;
+        const destino = `/modalidades/detalhes?id=${modalidade.id_modalidade}`;
         const genero = modalidade.genero_modalidade || '';
         const generoLabel = genero === 'MASC' ? 'Masculino' : genero === 'FEM' ? 'Feminino' : genero === 'MISTO' ? 'Misto' : genero;
         const qtdEquipes = Number(modalidade.qtd_equipes) || 0;
@@ -142,7 +144,7 @@ window.SGIPage.mount("eventos/configurar-modalidades", function (pageConfig, pag
     async function carregarModalidades() {
         try {
             const filtroCategoria = idCategoria ? `&id_categoria=${idCategoria}` : '';
-            const response = await axios.get(`../../../api/modalidades.php?x=1${filtroCategoria}`);
+            const response = await axios.get(`/api/v1/modalidades?x=1${filtroCategoria}`);
             let modalidades = response.data.data || response.data;
             if (!Array.isArray(modalidades)) modalidades = [];
             modalidades = modalidades.filter((item) => String(item.interclasses_id_interclasse) === String(idInterclasse));
@@ -154,13 +156,13 @@ window.SGIPage.mount("eventos/configurar-modalidades", function (pageConfig, pag
         }
     }
 
-    // 2. FUNÇÃO: Preencher o Select de TIPOS (Vem da api/tipoModalidade.php)
+    // 2. FUNÇÃO: Preencher o Select de TIPOS (Vem da api/v1/tipos-modalidade)
     async function carregarTiposModalidades() {
         const selectTipo = document.getElementById('inputTipoModalidade');
         if (!selectTipo) return;
 
         try {
-            const response = await axios.get('../../../api/tipoModalidade.php');
+            const response = await axios.get('/api/v1/tipos-modalidade');
             const tipos = response.data;
             selectTipo.innerHTML = '<option value="" disabled selected>Selecione um tipo...</option>';
             tipos.forEach(tipo => {
@@ -172,13 +174,13 @@ window.SGIPage.mount("eventos/configurar-modalidades", function (pageConfig, pag
         }
     }
 
-    // 3. FUNÇÃO: Preencher o Select de CATEGORIAS (Vem da api/categorias.php)
+    // 3. FUNÇÃO: Preencher o Select de CATEGORIAS (Vem da api/v1/categorias)
     async function carregarCategoriasModalidades() {
         const selectCat = document.getElementById('inputCategoriaModalidade');
         if (!selectCat) return;
 
         try {
-            const response = await axios.get(`../../../api/categorias.php?id_interclasse=${idInterclasse}`);
+            const response = await axios.get(`/api/v1/categorias?id_interclasse=${idInterclasse}`);
             const categorias = response.data;
             selectCat.innerHTML = '<option value="" disabled selected>Selecione uma categoria...</option>';
             categorias.forEach((cat) => {
@@ -210,7 +212,7 @@ window.SGIPage.mount("eventos/configurar-modalidades", function (pageConfig, pag
         try {
             btnSalvar.disabled = true;
             btnSalvar.innerHTML = "Salvando...";
-            const res = await axios.post('../../../api/modalidades.php', dados);
+            const res = await axios.post('/api/v1/modalidades', dados);
 
             if (res.data.success) {
                 caixaMensagem.innerHTML = `<p class="text-success text-center fw-bold">Criada com sucesso!</p>`;
@@ -234,7 +236,7 @@ window.SGIPage.mount("eventos/configurar-modalidades", function (pageConfig, pag
     function montarItemDestaque(a) {
         const temFoto = a.foto_usuario && !/^default\.(jpg|jpeg|png|gif|webp)$/i.test(a.foto_usuario);
         const fotoHtml = temFoto
-            ? `<img src="../../../uploads/fotosUsuarios/${encodeURIComponent(a.foto_usuario)}" alt="${esc(a.nome_usuario)}" onerror="this.classList.add('d-none');this.nextElementSibling.classList.remove('d-none');">`
+            ? `<img src="${APP_BASE}/uploads/fotosUsuarios/${encodeURIComponent(a.foto_usuario)}" alt="${esc(a.nome_usuario)}" onerror="this.classList.add('d-none');this.nextElementSibling.classList.remove('d-none');">`
             : '';
         const iconeHtml = `<span class="${temFoto ? 'd-none' : ''}"><i class="bi bi-star-fill"></i></span>`;
         const turma = a.nome_fantasia_turma || a.nome_turma || 'Sem turma';
@@ -259,7 +261,7 @@ window.SGIPage.mount("eventos/configurar-modalidades", function (pageConfig, pag
         </div>`;
 
         try {
-            const res = await axios.get(`../../../api/artilheiro.php?acao=destaques_modalidades&id_interclasse=${idInterclasse}`);
+            const res = await axios.get(`/api/v1/artilheiros?acao=destaques_modalidades&id_interclasse=${idInterclasse}`);
             const raw = res.data && res.data.data !== undefined ? res.data.data : res.data;
             const lista = Array.isArray(raw) ? raw : [];
 

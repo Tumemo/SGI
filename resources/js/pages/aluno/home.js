@@ -1,5 +1,7 @@
 window.SGIPage.mount("aluno/home", function (pageConfig, pageScope) {
 
+const APP_BASE = window.SGI_BASE_PATH || '';
+
 function escapeHTML(string) {
     const mapa = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#x27;' };
     return String(string || '').replace(/[&<>"']/g, (s) => mapa[s]);
@@ -28,7 +30,7 @@ function renderCards(items) {
             const statusLabel = isAtivo ? 'Em Andamento' : 'Encerrado';
             const statusClass = isAtivo ? 'active' : 'inactive';
             const iconClass = isAtivo ? 'active' : 'inactive';
-            const href = isAtivo ? `./modalidade.php?id=${item.id_interclasse}` : `./ranking.php?id=${item.id_interclasse}`;
+            const href = isAtivo ? `/aluno/modalidades?id=${item.id_interclasse}` : `/ranking?id=${item.id_interclasse}`;
             const btnLabel = isAtivo ? 'Ver Detalhes <i class="bi bi-arrow-right"></i>' : 'Ver Ranking <i class="bi bi-bar-chart"></i>';
 
             return `
@@ -80,7 +82,7 @@ function filterAndRender() {
 
 async function carregarInterclassesAluno() {
     try {
-        const res = await fetch('../../../../api/interclasse.php?regulamento=true');
+        const res = await fetch('/api/v1/edicoes?regulamento=true');
         if (!res.ok) throw new Error('Resposta do servidor não amigável.');
         const lista = await res.json();
 
@@ -112,12 +114,12 @@ async function carregarRegulamentoModal() {
     const btnAceitar = document.getElementById('btnAceitarTermo');
 
     try {
-        const res = await fetch('../../../../api/interclasse.php?status_interclasse=1&regulamento=true');
+        const res = await fetch('/api/v1/edicoes?status_interclasse=1&regulamento=true');
         const data = await res.json();
         const ativo = Array.isArray(data) ? data[0] : data;
 
         if (ativo && ativo.regulamento_interclasse && ativo.regulamento_interclasse.trim() !== '') {
-            btnPdf.href = `../../../../uploads/regulamentos/${ativo.regulamento_interclasse}`;
+            btnPdf.href = `${APP_BASE}/uploads/regulamentos/${encodeURIComponent(ativo.regulamento_interclasse)}`;
             btnPdf.classList.remove('disabled');
             pageScope.listen(btnPdf, 'click', () => {
                 btnAceitar.disabled = false;
@@ -166,12 +168,12 @@ async function salvarNovaSenha() {
     btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status"></span>Salvando...';
 
     try {
-        const res = await fetch('../../../../api/trocar_senha.php', {
+        const res = await fetch('/api/v1/senha', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ nova_senha: novaSenha, confirmar_senha: confirmarSenha })
         });
-        if (res.status === 401) { window.location.href = '../../../..'; return; }
+        if (res.status === 401) { window.location.href = `${APP_BASE}/aluno/login`; return; }
         const data = await res.json();
         if (data.success) {
             msgEl.innerHTML = '<span class="text-success fw-semibold"><i class="bi bi-check-circle-fill me-1"></i>' + data.message + '</span>';
@@ -198,7 +200,7 @@ async function initModalTermo() {
     let precisaTrocarSenha = false;
 
     try {
-        const checagem = await fetch('../../../../api/concordarTermos.php', { method: 'GET' });
+        const checagem = await fetch('/api/v1/termos', { method: 'GET' });
         if (checagem.status === 401) return;
         const resCheck = await checagem.json();
         precisaTrocarSenha = !!resCheck.exige_troca_senha;
@@ -218,11 +220,11 @@ async function initModalTermo() {
         btnRecusar.disabled = true;
         btnAceitar.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status"></span>Salvando...';
         try {
-            const res = await fetch('../../../../api/concordarTermos.php', {
+            const res = await fetch('/api/v1/termos', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' }
             });
-            if (res.status === 401) { window.location.href = '../../../..'; return; }
+            if (res.status === 401) { window.location.href = `${APP_BASE}/aluno/login`; return; }
             const data = await res.json();
             if (data.success) {
                 avisoRecusa.classList.add('d-none');

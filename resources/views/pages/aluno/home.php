@@ -16,7 +16,7 @@ include SGI_ROOT . '/resources/views/components/aluno-nav.php';
 
         <!-- NOVO BOTÃO DE ACESSO AOS JOGOS -->
         <div class="mt-3">
-            <a href="jogos.php" class="btn btn-light fw-bold text-danger rounded-pill px-4 shadow-sm sgi-inline-663d5b1a" >
+            <a href="<?= \App\Shared\Http\Url::to('aluno/jogos') ?>" class="btn btn-light fw-bold text-danger rounded-pill px-4 shadow-sm sgi-inline-663d5b1a" >
                 <i class="bi bi-calendar-check me-2"></i> Ver Tabela de Jogos
             </a>
         </div>

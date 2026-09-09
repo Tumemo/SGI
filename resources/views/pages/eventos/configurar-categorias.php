@@ -3,7 +3,7 @@ $tituloPagina = 'SGI - Categorias';
 $titulo = 'Categorias';
 $modoPagina = $_GET['modo'] ?? 'view';
 $mostrarVoltar = $modoPagina === 'view';
-$urlVoltar = './dashboard.php';
+$urlVoltar = \App\Shared\Http\Url::to('painel');
 include SGI_ROOT . '/resources/views/components/admin-head.php';
 include SGI_ROOT . '/resources/views/components/admin-header.php';
 $paginaAtiva = 'dashboard';
@@ -14,7 +14,7 @@ $paginaAtiva = 'dashboard';
 <!-- main mobile -->
 <main class="position-relative d-md-none sgi-inline-80857b05" >
     <?php if ($modoPagina === 'view'): ?>
-    <a href="./dashboard.php" id="btnVoltarCatMobile" class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none sgi-inline-e1bcebb6" >
+    <a href="<?= \App\Shared\Http\Url::to('painel') ?>" id="btnVoltarCatMobile" class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none sgi-inline-e1bcebb6" >
         <i class="bi bi-arrow-left-circle fs-5"></i> <span id="nomeInterclasseCatMob">Interclasse</span>
     </a>
     <?php endif; ?>
@@ -36,7 +36,7 @@ $paginaAtiva = 'dashboard';
     <div class="container-fluid px-0 position-relative">
         <div class="mb-5">
             <?php if ($modoPagina === 'view'): ?>
-            <a href="./dashboard.php" id="btnVoltarCatDesk" class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none sgi-inline-e1bcebb6" >
+            <a href="<?= \App\Shared\Http\Url::to('painel') ?>" id="btnVoltarCatDesk" class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none sgi-inline-e1bcebb6" >
                 <i class="bi bi-arrow-left-circle fs-5"></i> <span id="nomeInterclasseCategoria">Interclasse</span>
             </a>
             <?php endif; ?>

@@ -8,7 +8,7 @@ require_once SGI_ROOT . '/bootstrap/autoload.php';
 use App\Shared\Http\CsrfGuard;
 $nivelUsuario = (int) ($_SESSION['nivel'] ?? -1);
 if (!in_array($nivelUsuario, [0, 1, 2], true)) {
-    header('Location: ../../index.php');
+    header('Location: ' . \App\Shared\Http\Url::to('login'));
     exit;
 }
 $tituloPagina = $tituloPagina ?? 'SGI';
@@ -35,8 +35,8 @@ echo htmlspecialchars($tituloPagina);
     <link href="<?= \App\Shared\Http\Assets::url('vendor/bootstrap/css/bootstrap.min.css') ?>" rel="stylesheet" crossorigin="anonymous">
     <link rel="stylesheet" href="<?= \App\Shared\Http\Assets::url('vendor/bootstrap-icons/bootstrap-icons.min.css') ?>">
     <link rel="stylesheet" href="<?= \App\Shared\Http\Assets::url('vendor/fontawesome/css/all.min.css') ?>" crossorigin="anonymous" referrerpolicy="no-referrer">
-    <link rel="stylesheet" href="../styles/style.css">
-    <link rel="stylesheet" href="../styles/style-utilities.css">
+    <link rel="stylesheet" href="<?= \App\Shared\Http\Assets::url('css/style.css') ?>">
+    <link rel="stylesheet" href="<?= \App\Shared\Http\Assets::url('css/style-utilities.css') ?>">
     <script src="<?= \App\Shared\Http\Assets::url('vendor/axios/axios.min.js') ?>"></script>
     <script>window.SGI_SESSION_ID = <?php
 echo (int) ($_SESSION['id'] ?? $_SESSION['id_usuario'] ?? 0);
@@ -48,6 +48,12 @@ echo json_encode($csrfToken, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_
 echo (int) $nivelUsuario;
 ?>; window.SGI_SESSION_INTERCLASSE_ATIVO = <?php
 echo (int) ($_SESSION['id_interclasse'] ?? 0);
+?>; window.SGI_BASE_PATH = <?php
+echo json_encode(\App\Shared\Http\Url::basePath(), JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT);
+?>; window.SGI_API_BASE = <?php
+echo json_encode(\App\Shared\Http\Url::to('api/v1/'), JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT);
+?>; window.SGI_ASSET_BASE = <?php
+echo json_encode(\App\Shared\Http\Url::to('assets'), JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT);
 ?>;</script>
     <?php
 if ($nivelUsuario === 2) {

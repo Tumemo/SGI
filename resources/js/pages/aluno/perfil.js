@@ -1,12 +1,15 @@
 window.SGIPage.mount("aluno/perfil", function (pageConfig, pageScope) {
 
+    const APP_BASE = window.SGI_BASE_PATH || '';
+
     const DADOS_PERFIL = {
         nome: pageConfig.value2,
         matricula: pageConfig.value3,
         id: pageConfig.value4,
         nivel: pageConfig.value5
     };
-    const API_FOTO = '../../../../api/foto.php';
+    const API_BASE = (window.SGI_API_BASE || '/api/v1/').replace(/\/?$/, '/');
+    const API_FOTO = API_BASE + 'foto';
 
     let fotoPreviewFile = null;
     let temFotoAtual = false;
@@ -125,7 +128,7 @@ window.SGIPage.mount("aluno/perfil", function (pageConfig, pageScope) {
                 const data = await resp.json();
                 if (data.success && data.foto_usuario) {
                     temFotoAtual = true;
-                    mostrarFoto('../../../../uploads/fotosUsuarios/' + data.foto_usuario);
+                    mostrarFoto(APP_BASE + '/uploads/fotosUsuarios/' + encodeURIComponent(data.foto_usuario));
                     atualizarBotoesFoto();
                 } else {
                     ['Mob', 'Desk'].forEach(esconderSkeleton);

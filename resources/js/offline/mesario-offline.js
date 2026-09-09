@@ -5,9 +5,9 @@
    enquanto houver conexao, as telas e os dados que ele precisa
    para operar 100% offline (sem Service Worker).
 
-   Dependencias (carregadas antes, no head.php):
+   Dependencias (carregadas antes, no cabeçalho compartilhado):
      - offline-core.js      (cache GET por URL + fila de mutacoes)
-     - Comandooffline.js    (forms com data-sgi-offline)
+     - offline-form.js       (forms com data-sgi-offline)
 
    Esse arquivo so age quando:
      - window.SGI_SESSION_NIVEL === 2 (mesario); e
@@ -24,7 +24,6 @@
         ? String(window.SGI_CACHE_KEY) : 'anon';
     var USER_ID = (typeof window !== 'undefined' && window.SGI_SESSION_ID)
         ? String(window.SGI_SESSION_ID) : '';
-    var SEP = '\n/*__SGI_SEP__*/\n';
     var DB_NAME = 'sgi_pages';
     var DB_VERSION = 1;
     // O timeout evita que uma requisição presa deixe a preparação offline
@@ -37,13 +36,13 @@
     var PRONTO_STORAGE_KEY = 'sgi_pronto_v2_' + SESSION;
 
     var ARQ_TELA = {
-        'perfil.php': 'perfil',
-        'edicao_agenda.php': 'agenda',
-        'chaveamento_arvore.php': 'chaveamento',
-        'ocorrencias.php': 'ocorrencias',
-        'jogos_lista.php': 'jogoslista',
-        'jogos.php': 'jogos',
-        'dashboard.php': 'dashboard'
+        'perfil': 'perfil',
+        'edicoes/agenda': 'agenda',
+        'chaveamento': 'chaveamento',
+        'ocorrencias': 'ocorrencias',
+        'jogos': 'jogoslista',
+        'jogos/placar': 'jogos',
+        'painel': 'dashboard'
     };
 
     var TELA_TITULO = {
@@ -81,17 +80,31 @@
     }
 
     function apiBase() {
-        var path = window.location.pathname || '';
-        var idx = path.indexOf('/views/src/pages/');
-        if (idx !== -1) {
-            return path.substring(0, idx) + '/api/';
+        var base = window.SGI_BASE_PATH ? '/' + String(window.SGI_BASE_PATH).replace(/^\/+|\/+$/g, '') : '';
+        if (!base) {
+            var scripts = document.getElementsByTagName('script');
+            for (var i = 0; i < scripts.length; i++) {
+                var src = scripts[i].src || '';
+                var marker = '/assets/';
+                var pos = src.indexOf(marker);
+                if (pos > -1) { base = new URL(src, window.location.href).pathname.split(marker)[0]; break; }
+            }
         }
-        return path.replace(/\/views\/src\/pages\/[^/]*$/, '/api/');
+        return base + '/api/v1/';
     }
 
     function resolverAbs(urlRel) {
-        try { return new URL(urlRel, window.location.href).href; }
+        try {
+            var base = window.SGI_BASE_PATH ? '/' + String(window.SGI_BASE_PATH).replace(/^\/+|\/+$/g, '') : '';
+            var caminho = String(urlRel || '').replace(/^\/+/, '');
+            return new URL(base + '/' + caminho, window.location.origin).href;
+        }
         catch (e) { return urlRel; }
+    }
+
+    function resolverPath(urlRel) {
+        var base = window.SGI_BASE_PATH ? '/' + String(window.SGI_BASE_PATH).replace(/^\/+|\/+$/g, '') : '';
+        return base + '/' + String(urlRel || '').replace(/^\/+/, '');
     }
 
     function criarErroPreload(tipo, mensagem, causa) {
@@ -213,27 +226,30 @@
         params = params || {};
         switch (tela) {
             case 'agenda':
-                return 'edicao_agenda.php' + (params.id ? '?id=' + params.id : '');
+                return 'edicoes/agenda' + (params.id ? '?id=' + params.id : '');
             case 'chaveamento':
-                return 'chaveamento_arvore.php' + (params.id ? '?id=' + params.id : '');
+                return 'chaveamento' + (params.id ? '?id=' + params.id : '');
             case 'ocorrencias':
-                return 'ocorrencias.php' + (params.id ? '?id=' + params.id : '');
+                return 'ocorrencias' + (params.id ? '?id=' + params.id : '');
             case 'jogoslista':
-                return 'jogos_lista.php' + (params.id ? '?id=' + params.id : '');
+                return 'jogos' + (params.id ? '?id=' + params.id : '');
             case 'perfil':
-                return 'perfil.php' + (params.id ? '?id=' + params.id : '');
+                return 'perfil' + (params.id ? '?id=' + params.id : '');
             case 'jogos':
-                return 'jogos.php?id_jogo=' + params.id_jogo +
+                return 'jogos/placar?id_jogo=' + params.id_jogo +
                     (params.origem ? '&origem=' + encodeURIComponent(params.origem) : '');
             default:
-                return 'dashboard.php' + (params.id ? '?id=' + params.id : '');
+                return 'painel' + (params.id ? '?id=' + params.id : '');
         }
     }
 
     function mapearTela(pathWithQuery) {
         var qIndex = pathWithQuery.indexOf('?');
         var path = qIndex > -1 ? pathWithQuery.slice(0, qIndex) : pathWithQuery;
-        var nome = path.split('/').pop();
+        var segmentos = path.replace(/^\/+/, '').split('/');
+        var ultimo = segmentos[segmentos.length - 1] || '';
+        var penultimo = segmentos.length > 1 ? segmentos[segmentos.length - 2] + '/' + ultimo : ultimo;
+        var nome = ARQ_TELA[penultimo] ? penultimo : ultimo;
         var tela = ARQ_TELA[nome];
         if (!tela) return null;
         var params = {};
@@ -311,7 +327,7 @@
         return h.indexOf('ipt-matricula') > -1 ||
             h.indexOf('form_mobile') > -1 ||
             h.indexOf('form_desktop') > -1 ||
-            h.indexOf('api/login.php') > -1 ||
+            h.indexOf('api/v1/login') > -1 ||
             h.indexOf('acesso ao sistema') > -1 ||
             h.indexOf('painel de acesso') > -1 ||
             h.indexOf('sgi - login') > -1 ||
@@ -365,192 +381,6 @@
         });
     }
 
-    /* ================ Transformador de script (reexecutavel) ================
-       Objetivo: permitir re-executar o <script> de uma tela dentro da casca,
-       sem quebrar por redeclaracao de const/let nem esperar eventos
-       DOMContentLoaded/load (que ja ocorreram).
-
-       1) document.addEventListener('DOMContentLoaded', cb);
-          window.addEventListener('load', cb);
-          -> registra cb no motor (rodado apos injetar a tela).
-       2) const x = ... / let x = ...  no topo do script -> var x = ...
-    */
-
-    function tornarReexecutavel(src) {
-        var n = src.length, i = 0, out = '';
-        var depth = 0, quote = null, line = false, block = false, tpl = false;
-        var reevalCount = 0;
-
-        function pularEspacos(idx) {
-            while (idx < n) {
-                var ch = src[idx];
-                if (ch === ' ' || ch === '\t' || ch === '\n' || ch === '\r') idx++;
-                else break;
-            }
-            return idx;
-        }
-
-        // Acha o parentese que fecha a chamada iniciada em openIdx (o '('
-        // de addEventListener). Ignora strings, comentarios e template literals.
-        function acharFechaParen(openIdx) {
-            var d = 0, j = openIdx, q = null, lc = false, bc = false, t = false;
-            for (; j < n; j++) {
-                var c = src[j], nx = src[j + 1];
-                if (lc) { if (c === '\n') lc = false; continue; }
-                if (bc) { if (c === '*' && nx === '/') bc = false; continue; }
-                if (q) { if (c === '\\') { j++; continue; } if (c === q) q = null; continue; }
-                if (t) { if (c === '\\') { j++; continue; } if (c === '`') t = false; continue; }
-                if (c === '`') { t = true; continue; }
-                if (c === '/' && nx === '/') { lc = true; j++; continue; }
-                if (c === '/' && nx === '*') { bc = true; j++; continue; }
-                if (c === "'" || c === '"') { q = c; continue; }
-                if (c === '(') d++;
-                else if (c === ')') { d--; if (d === 0) return j; }
-            }
-            return -1;
-        }
-
-        function emitirRegistro(cb) {
-            reevalCount++;
-            out += 'var __SGI_REEVAL_' + reevalCount + '__ = ' + cb + ';\n';
-            out += 'if (window.__SGI_SPA__ && window.__SGI_SPA__.registrarInit) {' +
-                ' window.__SGI_SPA__.registrarInit(__SGI_REEVAL_' + reevalCount + '__); }\n';
-            out += 'else { __SGI_REEVAL_' + reevalCount + '__(); }\n';
-        }
-
-        while (i < n) {
-            var c = src[i];
-            var nx = src[i + 1];
-
-            if (line) { if (c === '\n') { line = false; out += '\n'; } i++; continue; }
-            if (block) { if (c === '*' && nx === '/') { block = false; i += 2; continue; } i++; continue; }
-            if (quote) {
-                if (c === '\\') { out += c + (nx || ''); i += 2; continue; }
-                if (c === quote) quote = null;
-                out += c; i++; continue;
-            }
-            if (tpl) {
-                if (c === '\\') { out += c + (nx || ''); i += 2; continue; }
-                if (c === '`') tpl = false;
-                out += c; i++; continue;
-            }
-            // Detecção de Regex literal: evita que aspas dentro de regexes (ex.: /[&<>"']/g) abram blocos de string
-            if (c === '/' && nx !== '/' && nx !== '*') {
-                var prevToken = out.trim();
-                var lastChar = prevToken.slice(-1);
-                var isRegex = !prevToken || /[(=,:;!&|?~^%*+\-\[{]/.test(lastChar) ||
-                    /\b(return|typeof|void|delete|case|throw|in|instanceof)$/.test(prevToken);
-                if (isRegex) {
-                    var regStr = c;
-                    var rIdx = i + 1;
-                    var inClass = false;
-                    var fechouRegex = false;
-                    while (rIdx < n) {
-                        var rc = src[rIdx];
-                        regStr += rc;
-                        if (rc === '\\') {
-                            if (rIdx + 1 < n) {
-                                rIdx++;
-                                regStr += src[rIdx];
-                            }
-                        } else if (rc === '[') {
-                            inClass = true;
-                        } else if (rc === ']' && inClass) {
-                            inClass = false;
-                        } else if (rc === '/' && !inClass) {
-                            rIdx++;
-                            while (rIdx < n && /[a-z]/i.test(src[rIdx])) {
-                                regStr += src[rIdx];
-                                rIdx++;
-                            }
-                            fechouRegex = true;
-                            break;
-                        } else if (rc === '\n') {
-                            break;
-                        }
-                        rIdx++;
-                    }
-                    if (fechouRegex) {
-                        out += regStr;
-                        i = rIdx;
-                        continue;
-                    }
-                }
-            }
-
-            // Remove comentários inteiros: manter apenas uma barra criava
-            // expressões regulares inválidas no script reexecutado.
-            if (c === '/' && nx === '/') { line = true; i += 2; continue; }
-            if (c === '/' && nx === '*') { block = true; i += 2; continue; }
-            if (c === "'" || c === '"') { quote = c; out += c; i++; continue; }
-            if (c === '`') { tpl = true; out += c; i++; continue; }
-
-            // document.addEventListener('DOMContentLoaded', cb);
-            if (c === 'd' && src.substr(i, 26) === 'document.addEventListener(') {
-                var j1 = i + 26;
-                var j2 = pularEspacos(j1);
-                var ev = src.substr(j2, 18);
-                if (ev === "'DOMContentLoaded'" || ev === '"DOMContentLoaded"') {
-                    var j3 = pularEspacos(j2 + 18);
-                    if (src[j3] === ',') {
-                        var fech = acharFechaParen(j1 - 1);
-                        if (fech > -1) {
-                            var stmtFim = fech + 1;
-                            if (src[stmtFim] === ';') stmtFim++;
-                            emitirRegistro(src.slice(j3 + 1, fech).trim());
-                            i = stmtFim;
-                            continue;
-                        }
-                    }
-                }
-            }
-
-            // window.addEventListener('load', cb);
-            if (c === 'w' && src.substr(i, 24) === 'window.addEventListener(') {
-                var k1 = i + 24;
-                var k2 = pularEspacos(k1);
-                var ev2 = src.substr(k2, 6);
-                if (ev2 === "'load'" || ev2 === '"load"') {
-                    var k3 = pularEspacos(k2 + 6);
-                    if (src[k3] === ',') {
-                        var fech2 = acharFechaParen(k1 - 1);
-                        if (fech2 > -1) {
-                            var stmtFim2 = fech2 + 1;
-                            if (src[stmtFim2] === ';') stmtFim2++;
-                            emitirRegistro(src.slice(k3 + 1, fech2).trim());
-                            i = stmtFim2;
-                            continue;
-                        }
-                    }
-                }
-            }
-
-            // let/const no topo -> var (evita redeclaracao ao re-montar)
-            if (depth === 0) {
-                if (c === 'c' && src.substr(i, 5) === 'const') {
-                    var nc = src[i + 5];
-                    var antC = i > 0 ? src[i - 1] : '';
-                    if ((nc === ' ' || nc === '{' || nc === '[') && !/[A-Za-z0-9_$]/.test(antC)) {
-                        out += 'var'; i += 5; continue;
-                    }
-                } else if (c === 'l' && src.substr(i, 4) === 'let ') {
-                    var nl = src[i + 4];
-                    var antL = i > 0 ? src[i - 1] : '';
-                    if (/[A-Za-z_$]/.test(nl) && !/[A-Za-z0-9_$]/.test(antL)) {
-                        out += 'var '; i += 4; continue;
-                    }
-                }
-            }
-
-            if (c === '(' || c === '{' || c === '[') depth++;
-            else if (c === ')' || c === '}' || c === ']') depth = Math.max(0, depth - 1);
-
-            out += c;
-            i++;
-        }
-        return out;
-    }
-
     /* ==================== Captura / download das telas ==================== */
 
     function extrairScreen(html) {
@@ -563,7 +393,6 @@
         }
         var partes = [];
         var css = '';
-        var scripts = [];
         var pageScripts = [];
 
         doc.querySelectorAll('style').forEach(function (st) {
@@ -589,10 +418,9 @@
             if (t.indexOf('SGI_SESSION_ID') > -1) return;
             if (t.indexOf('__SGI_OFFLINE_CORE__') > -1) return;
             if (t.indexOf('__SGI_OFFLINE_FORM__') > -1) return;
-            scripts.push(t);
         });
 
-        // Perifericos fora do <main>: FAB e modais (ex.: jogos.php)
+        // Perifericos fora do <main>: FAB e modais (ex.: jogos)
         var vistos = {};
         doc.body.querySelectorAll('[data-bs-toggle="modal"],[data-bs-target],[id*="modal" i],[class*="fab"]').forEach(function (el) {
             if (el.closest('main')) return;
@@ -604,12 +432,9 @@
             partes.push(el.outerHTML);
         });
 
-        var scriptsConjunto = tornarReexecutavel(scripts.join(SEP));
-
         return {
             html: partes.join('\n'),
             css: css,
-            script: scriptsConjunto,
             pageScripts: pageScripts,
             titulo: doc.title || 'SGI'
         };
@@ -665,7 +490,7 @@
                         // usam IDs negativos e não possuem uma página própria
                         // no cache de telas. Reaproveitamos o shell de jogos
                         // já baixado, mas preservamos a URL solicitada para
-                        // que jogos.php leia o ID temporário e carregue o jogo
+                        // que jogos leia o ID temporário e carregue o jogo
                         // diretamente do SGIDataLayer (em vez de reabrir o
                         // último jogo positivo armazenado).
                         if (tela === 'jogos' && params && Number(params.id_jogo) < 0) {
@@ -692,7 +517,7 @@
 
     function pushEstado(tela, key, url) {
         try {
-            history.pushState({ sgi: { tela: tela, key: key } }, '', url);
+            history.pushState({ sgi: { tela: tela, key: key } }, '', resolverPath(url));
         } catch (e) {
             try { history.pushState({ sgi: { tela: tela, key: key } }, ''); } catch (e2) {}
         }
@@ -710,19 +535,16 @@
 
     function executarScripts(scriptConjunto) {
         if (!scriptConjunto) return;
-        var partes = scriptConjunto.split(SEP);
-        partes.forEach(function (code) {
-            code = code.trim();
-            if (!code) return;
-            try {
-                var s = document.createElement('script');
-                s.textContent = code;
-                document.body.appendChild(s);
-                if (s.parentNode) s.parentNode.removeChild(s);
-            } catch (e) {
-                if (window.console) console.error('[SGI Mesario SPA] script da tela', e);
-            }
-        });
+        var code = String(scriptConjunto).trim();
+        if (!code) return;
+        try {
+            var s = document.createElement('script');
+            s.textContent = code;
+            document.body.appendChild(s);
+            if (s.parentNode) s.parentNode.removeChild(s);
+        } catch (e) {
+            if (window.console) console.error('[SGI Mesario SPA] script da tela', e);
+        }
     }
 
     function registrarInit(fn) {
@@ -818,9 +640,6 @@
 
         state.montando = key;
         state.pendentesInit = [];
-        executarScripts(rec.script);
-        // New pages use closures and explicit lifecycle hooks, without lexical
-        // rewriting. Old cached records still execute through rec.script.
         (rec.pageSources || []).forEach(function (source) { executarScripts(source); });
         var inits = state.pendentesInit.slice();
         state.pendentesInit = [];
@@ -897,45 +716,45 @@
     function dataUrls(id) {
         var b = apiBase();
         return [
-            b + 'interclasse.php?regulamento=true',
-            b + 'interclasse.php?id=' + id + '&regulamento=true',
+            b + 'edicoes?regulamento=true',
+            b + 'edicoes?id=' + id + '&regulamento=true',
             // A agenda consulta todas as modalidades e depois cada modalidade.
-            b + 'modalidades.php',
-            b + 'modalidades.php?id_interclasse=' + id,
-            b + 'locais.php?id_interclasse=' + id + '&disponivel=1',
-            b + 'locais.php?id_interclasse=' + id,
-            b + 'categorias.php?id_interclasse=' + id,
-            b + 'turmas.php?id_interclasse=' + id,
-            b + 'equipes.php',
-            b + 'equipes.php?id_interclasse=' + id,
-            b + 'jogos.php?id_interclasse=' + id,
-            b + 'jogos.php?x=1&id_interclasse=' + id
+            b + 'modalidades',
+            b + 'modalidades?id_interclasse=' + id,
+            b + 'locais?id_interclasse=' + id + '&disponivel=1',
+            b + 'locais?id_interclasse=' + id,
+            b + 'categorias?id_interclasse=' + id,
+            b + 'turmas?id_interclasse=' + id,
+            b + 'equipes',
+            b + 'equipes?id_interclasse=' + id,
+            b + 'jogos?id_interclasse=' + id,
+            b + 'jogos?x=1&id_interclasse=' + id
         ];
     }
 
     function dadosPorJogo(j) {
         var b = apiBase();
         var urls = [
-            b + 'jogos.php?id_jogo=' + j.id_jogo,
-            b + 'partidas.php?id_jogo=' + j.id_jogo,
-            b + 'artilheiro.php?id_jogo=' + j.id_jogo,
-            b + 'ocorrencias.php?id_jogo=' + j.id_jogo + '&data=' + encodeURIComponent(j.data_jogo || '')
+            b + 'jogos?id_jogo=' + j.id_jogo,
+            b + 'partidas?id_jogo=' + j.id_jogo,
+            b + 'artilheiros?id_jogo=' + j.id_jogo,
+            b + 'ocorrencias?id_jogo=' + j.id_jogo + '&data=' + encodeURIComponent(j.data_jogo || '')
         ];
-        return fetchJson(b + 'jogos.php?id_jogo=' + j.id_jogo).then(function (lista) {
+        return fetchJson(b + 'jogos?id_jogo=' + j.id_jogo).then(function (lista) {
             var jogo = (Array.isArray(lista) && lista[0]) || j;
             var ehIndividual = /^IND:/.test(jogo.nome_jogo || '') ||
                 parseInt(jogo.tipos_modalidades_id_tipo_modalidade, 10) === 2;
             var idMod = jogo.modalidades_id_modalidade;
             if (ehIndividual && idMod) {
-                urls.push(b + 'chaveamento.php?tipo_modalidade=individual&acao=participantes&id_modalidade=' + idMod);
-                urls.push(b + 'chaveamento.php?tipo_modalidade=individual&acao=ranking&id_modalidade=' + idMod);
+                urls.push(b + 'chaveamentos?tipo_modalidade=individual&acao=participantes&id_modalidade=' + idMod);
+                urls.push(b + 'chaveamentos?tipo_modalidade=individual&acao=ranking&id_modalidade=' + idMod);
             }
             // Algumas ações do placar (como editar uma ocorrência) consultam
             // um registro individual. Baixamos também essas URLs exatas, pois
             // o cache offline é indexado pela URL completa da requisição.
             return Promise.all([
-                fetchJson(b + 'partidas.php?id_jogo=' + j.id_jogo).catch(function () { return []; }),
-                fetchJson(b + 'ocorrencias.php?id_jogo=' + j.id_jogo + '&data=' + encodeURIComponent(jogo.data_jogo || j.data_jogo || '')).catch(function () { return []; })
+                fetchJson(b + 'partidas?id_jogo=' + j.id_jogo).catch(function () { return []; }),
+                fetchJson(b + 'ocorrencias?id_jogo=' + j.id_jogo + '&data=' + encodeURIComponent(jogo.data_jogo || j.data_jogo || '')).catch(function () { return []; })
             ]).then(function (resultados) {
                 var partidas = resultados[0];
                 var ocorrencias = resultados[1];
@@ -944,11 +763,11 @@
                     var t = parseInt(p.id_turma, 10);
                     if (!t || vistas[t]) return;
                     vistas[t] = true;
-                    urls.push(b + 'ocorrencias.php?acao=listar_atletas&id_jogo=' + j.id_jogo + '&id_turma=' + t);
+                    urls.push(b + 'ocorrencias?acao=listar_atletas&id_jogo=' + j.id_jogo + '&id_turma=' + t);
                 });
                 (Array.isArray(ocorrencias) ? ocorrencias : []).forEach(function (o) {
                     if (o && o.id_ocorrencia) {
-                        urls.push(b + 'ocorrencias.php?id_ocorrencia=' + o.id_ocorrencia);
+                        urls.push(b + 'ocorrencias?id_ocorrencia=' + o.id_ocorrencia);
                     }
                 });
                 return urls;
@@ -1044,7 +863,7 @@
         // offline, sem depender de uma visita anterior à página.
         if (USER_ID) {
             jobs.push(function () {
-                return aquecer(apiBase() + 'foto.php?user_id=' + encodeURIComponent(USER_ID));
+                return aquecer(apiBase() + 'foto?user_id=' + encodeURIComponent(USER_ID));
             });
         }
 
@@ -1060,10 +879,10 @@
                 jobs.push(function () { return aquecer(u); });
             });
             return Promise.all([
-                fetchJson(apiBase() + 'jogos.php?id_interclasse=' + id),
-                fetchJson(apiBase() + 'modalidades.php'),
-                fetchJson(apiBase() + 'turmas.php?id_interclasse=' + id),
-                fetchJson(apiBase() + 'categorias.php?id_interclasse=' + id)
+                fetchJson(apiBase() + 'jogos?id_interclasse=' + id),
+                fetchJson(apiBase() + 'modalidades'),
+                fetchJson(apiBase() + 'turmas?id_interclasse=' + id),
+                fetchJson(apiBase() + 'categorias?id_interclasse=' + id)
             ]).then(function (resultados) {
                 var jogos = resultados[0];
                 var modalidades = Array.isArray(resultados[1]) ? resultados[1] : [];
@@ -1075,28 +894,28 @@
                 }).forEach(function (m) {
                     var idModalidade = encodeURIComponent(m.id_modalidade);
                     jobs.push(function () {
-                        return aquecer(apiBase() + 'jogos.php?id_modalidade=' + idModalidade);
+                        return aquecer(apiBase() + 'jogos?id_modalidade=' + idModalidade);
                     });
                     // A árvore de chaveamento consulta esta rota para cada
                     // modalidade, inclusive nas modalidades coletivas.
                     jobs.push(function () {
-                        return aquecer(apiBase() + 'chaveamento.php?id_modalidade=' + idModalidade);
+                        return aquecer(apiBase() + 'chaveamentos?id_modalidade=' + idModalidade);
                     });
                     // Modalidades individuais consultam ranking e participantes
                     // mesmo antes de existir um jogo na agenda.
                     if (parseInt(m.id_tipo_modalidade, 10) === 2) {
                         jobs.push(function () {
-                            return aquecer(apiBase() + 'chaveamento.php?tipo_modalidade=individual&acao=participantes&id_modalidade=' + idModalidade);
+                            return aquecer(apiBase() + 'chaveamentos?tipo_modalidade=individual&acao=participantes&id_modalidade=' + idModalidade);
                         });
                         jobs.push(function () {
-                            return aquecer(apiBase() + 'chaveamento.php?tipo_modalidade=individual&acao=ranking&id_modalidade=' + idModalidade);
+                            return aquecer(apiBase() + 'chaveamentos?tipo_modalidade=individual&acao=ranking&id_modalidade=' + idModalidade);
                         });
                     }
                 });
                 categorias.forEach(function (categoria) {
                     if (!categoria.id_categoria) return;
                     jobs.push(function () {
-                        return aquecer(apiBase() + 'jogos.php?id_interclasse=' + id +
+                        return aquecer(apiBase() + 'jogos?id_interclasse=' + id +
                             '&id_categoria=' + encodeURIComponent(categoria.id_categoria));
                     });
                 });
@@ -1104,13 +923,13 @@
                     if (!turma.id_turma) return;
                     var tId = encodeURIComponent(turma.id_turma);
                     jobs.push(function () {
-                        return aquecer(apiBase() + 'ocorrencias_turmas.php?id_interclasse=' + id + '&id_turma=' + tId);
+                        return aquecer(apiBase() + 'ocorrencias-turmas?id_interclasse=' + id + '&id_turma=' + tId);
                     });
                     jobs.push(function () {
-                        return aquecer(apiBase() + 'ocorrencias.php?acao=listar_atletas&id_jogo=0&id_turma=' + tId);
+                        return aquecer(apiBase() + 'ocorrencias?acao=listar_atletas&id_jogo=0&id_turma=' + tId);
                     });
                     jobs.push(function () {
-                        return aquecer(apiBase() + 'equipes.php?id_turma=' + tId);
+                        return aquecer(apiBase() + 'equipes?id_turma=' + tId);
                     });
                 });
                 lista.forEach(function (j) {

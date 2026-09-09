@@ -2,7 +2,7 @@
 $tituloPagina = 'SGI - Modalidades';
 $titulo = 'Modalidades';
 $mostrarVoltar = true;
-$urlVoltar = './dashboard.php';
+$urlVoltar = \App\Shared\Http\Url::to('painel');
 $nivelUsuario = (int)($_SESSION['nivel'] ?? -1);
 include SGI_ROOT . '/resources/views/components/admin-head.php';
 include SGI_ROOT . '/resources/views/components/admin-header.php';
@@ -24,7 +24,7 @@ $paginaAtiva = 'modalidades';
 <main class="d-none d-md-block main-desktop-layout">
     <div class="sgi-inline-93f2597a">
         <div class="mb-5">
-            <a href="./dashboard.php" id="btnVoltarModalidades" class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none sgi-inline-e1bcebb6" >
+            <a href="<?= \App\Shared\Http\Url::to('painel') ?>" id="btnVoltarModalidades" class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none sgi-inline-e1bcebb6" >
                 <i class="bi bi-arrow-left-circle fs-5"></i> <span id="nomeInterclasseModalidades">Interclasse</span>
             </a>
         </div>

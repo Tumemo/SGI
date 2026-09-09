@@ -143,7 +143,7 @@ final class MysqliIndividualRepository
             }
             $creditosAnteriores = (new MysqliPodioRepository($conn))->carregarBloqueados($editionId, $idModalidade);
             if ($jaConcluido && \count(\array_filter($creditosAnteriores, static fn (array $credito): bool => (int) ($credito['posicao'] ?? 0) <= 3)) < 3) {
-                throw new \RuntimeException('Pódio individual legado sem origem conferida; adote os créditos antes de retificar.');
+                throw new \RuntimeException('Pódio individual sem origem atual não pode ser retificado.');
             }
             // Limpa partidas existentes
             $stDel = $conn->prepare('DELETE FROM partidas WHERE jogos_id_jogo = ?');
@@ -170,7 +170,7 @@ final class MysqliIndividualRepository
     }
     /**
      * Soma os pontos dos 3 colocados à pontuação das turmas no ranking geral.
-     * Espelha o comportamento de `lancar_resultado.php`: só roda na primeira finalização.
+     * Aplica os créditos de pódio somente na primeira finalização.
      *
      * @param array{1:int, 2:int, 3:int} $equipesPorPosicao id_equipe de cada posição
      */
@@ -206,7 +206,7 @@ final class MysqliIndividualRepository
             }
         }
         if ($jaConcluido && count($oldByPosition) < 3) {
-            throw new \RuntimeException('Pódio individual legado sem origem conferida; adote os créditos antes de retificar.');
+            throw new \RuntimeException('Pódio individual sem origem atual não pode ser retificado.');
         }
         $pointsStatement = $conn->prepare('SELECT ponto_1_lugar, ponto_2_lugar, ponto_3_lugar FROM interclasses WHERE id_interclasse = ? LIMIT 1');
         $pointsStatement->bind_param('i', $editionId);

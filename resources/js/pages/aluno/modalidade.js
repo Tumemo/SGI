@@ -1,5 +1,7 @@
 window.SGIPage.mount("aluno/modalidade", function (pageConfig, pageScope) {
 
+    const APP_BASE = window.SGI_BASE_PATH || '';
+
     const urlParams = new URLSearchParams(window.location.search);
     
     // CORREÇÃO: Transformado de "const" para "let" para permitir a reatribuição da variável depois
@@ -33,7 +35,7 @@ window.SGIPage.mount("aluno/modalidade", function (pageConfig, pageScope) {
     async function carregarDados() {
         try {
             if (!idInterclasse) {
-                const listaInter = await (await fetch('../../../../api/interclasse.php?regulamento=true')).json();
+                const listaInter = await (await fetch('/api/v1/edicoes?regulamento=true')).json();
                 const ativos = (Array.isArray(listaInter) ? listaInter : []).filter(i => String(i.status_interclasse) === '1');
                 if (ativos.length === 0) {
                     return;
@@ -44,14 +46,14 @@ window.SGIPage.mount("aluno/modalidade", function (pageConfig, pageScope) {
                 window.history.replaceState({}, '', url);
             }
 
-            const resInter = await fetch('../../../../api/interclasse.php?regulamento=true');
+            const resInter = await fetch('/api/v1/edicoes?regulamento=true');
             const listaInter = await resInter.json();
             const dadosInter = (Array.isArray(listaInter) ? listaInter : []).find(i => String(i.id_interclasse) === String(idInterclasse));
             if (dadosInter) {
                 const msg = estaInscrito ? ' — Suas inscrições' : ' — Selecione até 3 modalidades';
             }
 
-            let urlMod = `../../../../api/modalidades.php?id_interclasse=${idInterclasse}`;
+            let urlMod = `/api/v1/modalidades?id_interclasse=${idInterclasse}`;
             if (idTurmaUsuario > 0) urlMod += `&id_turma=${idTurmaUsuario}`;
             const res = await fetch(urlMod);
             const lista = await res.json();
@@ -271,7 +273,7 @@ window.SGIPage.mount("aluno/modalidade", function (pageConfig, pageScope) {
         modal.show();
 
         try {
-            const res = await fetch(`../../../../api/jogos.php?id_modalidade=${idModalidade}&id_interclasse=${idInterclasse}`);
+            const res = await fetch(`/api/v1/jogos?id_modalidade=${idModalidade}&id_interclasse=${idInterclasse}`);
             const jogos = await res.json();
             const lista = Array.isArray(jogos) ? jogos : [];
 
@@ -318,7 +320,7 @@ window.SGIPage.mount("aluno/modalidade", function (pageConfig, pageScope) {
     async function carregarMembros(idEquipe) {
         const container = document.getElementById('membros-' + idEquipe);
         try {
-            const res = await fetch(`../../../../api/equipes.php?id_equipe=${idEquipe}`);
+            const res = await fetch(`/api/v1/equipes?id_equipe=${idEquipe}`);
             const data = await res.json();
             const membros = Array.isArray(data) ? data : [];
 
@@ -349,9 +351,9 @@ window.SGIPage.mount("aluno/modalidade", function (pageConfig, pageScope) {
                 span.textContent = esc(m.nome_usuario) + (ehVoce ? ' (Você)' : '');
                 div.appendChild(span);
                 container.appendChild(div);
-                fetch('../../../../api/foto.php?user_id=' + m.id_usuario)
+                fetch('/api/v1/foto?user_id=' + m.id_usuario)
                     .then(r => r.json())
-                    .then(d => { if (d.foto_usuario) img.src = '../../../../uploads/fotosUsuarios/' + d.foto_usuario; })
+                    .then(d => { if (d.foto_usuario) img.src = APP_BASE + '/uploads/fotosUsuarios/' + encodeURIComponent(d.foto_usuario); })
                     .catch(function() {});
             });
         } catch (e) {
@@ -397,7 +399,7 @@ window.SGIPage.mount("aluno/modalidade", function (pageConfig, pageScope) {
         if (chip) chip.textContent = 'Carregando...';
 
         try {
-            const res = await fetch(`../../../../api/equipes.php?id_modalidade=${idModalidade}&id_turma=${idTurmaUsuario}`);
+            const res = await fetch(`/api/v1/equipes?id_modalidade=${idModalidade}&id_turma=${idTurmaUsuario}`);
             const dados = await res.json();
             const equipes = Array.isArray(dados) ? dados : [];
 
@@ -507,7 +509,7 @@ window.SGIPage.mount("aluno/modalidade", function (pageConfig, pageScope) {
         }
 
         try {
-            const res = await fetch('../../../../api/inscricao.php', {
+            const res = await fetch('/api/v1/inscricoes', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -519,7 +521,7 @@ window.SGIPage.mount("aluno/modalidade", function (pageConfig, pageScope) {
             document.getElementById('msgFeedback').textContent = result.message;
             if (result.success) {
                 document.getElementById('msgFeedback').className = 'bottom-label text-success small';
-                setTimeout(() => window.location.href = 'home.php', 1500);
+                setTimeout(() => window.location.href = '/aluno/inicio', 1500);
             } else {
                 document.getElementById('msgFeedback').className = 'bottom-label text-danger small';
                 btn.disabled = false;

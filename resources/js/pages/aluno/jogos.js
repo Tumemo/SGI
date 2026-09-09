@@ -1,5 +1,7 @@
 window.SGIPage.mount("aluno/jogos", function (pageConfig, pageScope) {
 
+    const APP_BASE = window.SGI_BASE_PATH || '';
+
     let todosOsJogos = [];
     let filtroStatus = 'all';
     let filtroModalidade = 'all';
@@ -77,14 +79,8 @@ window.SGIPage.mount("aluno/jogos", function (pageConfig, pageScope) {
         else if (fase === '8') nomeFase = 'Quartas de Final';
         else if (fase === '4') nomeFase = 'Semifinal';
         else if (fase === '2') nomeFase = 'Final';
-        else if (fase === '1') nomeFase = 'Campeão';
 
         return `${nomeFase} (Jogo ${indexJogo})`;
-    }
-
-    // Jogo de campeão = código MM:1 (largura 1, última fase da chave)
-    function eJogoCampeao(codigo) {
-        return typeof codigo === 'string' && /^MM:1:/i.test(codigo.trim());
     }
 
     // Mapa de badge de status (EM ANDAMENTO / AGUARDANDO / FINALIZADO)
@@ -116,7 +112,7 @@ window.SGIPage.mount("aluno/jogos", function (pageConfig, pageScope) {
 
         try {
             // 1. Descobrir o Interclasse Ativo
-            const resInter = await fetch('../../../../api/interclasse.php?regulamento=true');
+            const resInter = await fetch('/api/v1/edicoes?regulamento=true');
             const dataInter = await resInter.json();
             const listaInter = Array.isArray(dataInter) ? dataInter : [dataInter];
             const ativo = listaInter.find(i => String(i.status_interclasse) === '1');
@@ -133,7 +129,7 @@ window.SGIPage.mount("aluno/jogos", function (pageConfig, pageScope) {
             }
 
             // 2. Buscar as partidas da API (agora com data, horário, local e modalidade)
-            const resJogos = await fetch(`../../../../api/partidas.php?id_interclasse=${idInterclasse}`);
+            const resJogos = await fetch(`/api/v1/partidas?id_interclasse=${idInterclasse}`);
 
             if (!resJogos.ok) throw new Error('Erro ao buscar partidas');
 
@@ -234,8 +230,7 @@ window.SGIPage.mount("aluno/jogos", function (pageConfig, pageScope) {
     function renderizarJogos() {
         const container = document.getElementById('listaJogos');
 
-        // Jogos de campeão (MM:1) não entram na lista — eles aparecem na seção "Campeões"
-        let jogosFiltrados = todosOsJogos.filter(j => !eJogoCampeao(j.nome_jogo_raw));
+        let jogosFiltrados = todosOsJogos.slice();
 
         if (filtroStatus === 'agendado') {
             jogosFiltrados = jogosFiltrados.filter(j => String(j.status_jogo).toLowerCase() !== 'concluido');
@@ -341,8 +336,8 @@ window.SGIPage.mount("aluno/jogos", function (pageConfig, pageScope) {
 
         try {
             const [resPartidas, resDestaques] = await Promise.all([
-                fetch(`../../../../api/partidas.php?id_jogo=${idJogo}`),
-                fetch(`../../../../api/artilheiro.php?id_jogo=${idJogo}&ano=${anoInterclasse}`)
+                fetch(`/api/v1/partidas?id_jogo=${idJogo}`),
+                fetch(`/api/v1/artilheiros?id_jogo=${idJogo}&ano=${anoInterclasse}`)
             ]);
 
             const partidas = await resPartidas.json();
@@ -406,7 +401,7 @@ window.SGIPage.mount("aluno/jogos", function (pageConfig, pageScope) {
         const artilheiroTop = artilheiros[0];
         if (artilheiroTop) {
             const temFotoReal = artilheiroTop.foto_usuario && !/^default\.(jpg|jpeg|png|gif|webp)$/i.test(artilheiroTop.foto_usuario);
-            const foto = temFotoReal ? `../../../../uploads/fotosUsuarios/${encodeURIComponent(artilheiroTop.foto_usuario)}` : '';
+            const foto = temFotoReal ? `${APP_BASE}/uploads/fotosUsuarios/${encodeURIComponent(artilheiroTop.foto_usuario)}` : '';
             html += `
                 <div class="destaque-card">
                     ${foto
@@ -537,7 +532,7 @@ window.SGIPage.mount("aluno/jogos", function (pageConfig, pageScope) {
         const idEquipe = target.replace('#equipe-', '');
 
         try {
-            const res = await fetch(`../../../../api/equipes.php?id_equipe=${idEquipe}`);
+            const res = await fetch(`/api/v1/equipes?id_equipe=${idEquipe}`);
             const membros = await res.json();
             const lista = Array.isArray(membros) ? membros : [];
 
@@ -582,5 +577,5 @@ window.SGIPage.mount("aluno/jogos", function (pageConfig, pageScope) {
 
     window.SGIPage.ready( inicializarJogos);
 
-return {esc, iconeModalidade, abreviarTurma, formatarData, formatarHora, traduzirNomeJogo, eJogoCampeao, badgeStatus, inicializarJogos, preencherFiltroModalidades, preencherFiltroCategorias, renderizarJogos, abrirDetalhesJogo, montarHTMLResumoJogo, agruparFases, inicializarAcordeoes, carregarMembrosEquipe};
+return {esc, iconeModalidade, abreviarTurma, formatarData, formatarHora, traduzirNomeJogo, badgeStatus, inicializarJogos, preencherFiltroModalidades, preencherFiltroCategorias, renderizarJogos, abrirDetalhesJogo, montarHTMLResumoJogo, agruparFases, inicializarAcordeoes, carregarMembrosEquipe};
 });

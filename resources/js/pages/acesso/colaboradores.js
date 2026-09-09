@@ -18,7 +18,7 @@ window.SGIPage.mount("acesso/colaboradores", function (pageConfig, pageScope) {
             });
             ['btnVoltarColabMobile', 'btnVoltarColabDesk'].forEach(id => {
                 const el = document.getElementById(id);
-                if (el) el.href = `./dashboard.php?id=${ic.id_interclasse}`;
+                if (el) el.href = `/painel?id=${ic.id_interclasse}`;
             });
         }
     })();
@@ -149,7 +149,7 @@ window.SGIPage.mount("acesso/colaboradores", function (pageConfig, pageScope) {
         if (mob) mob.innerHTML = loading;
 
         try {
-            const response = await fetch('../../../api/usuarios.php?acao=listar_colaboradores');
+            const response = await fetch('/api/v1/usuarios?acao=listar_colaboradores');
             const resultado = await response.json();
             if (resultado.status !== 'sucesso') throw new Error(resultado.mensagem || 'Falha ao listar colaboradores.');
             const lista = resultado.colaboradores || [];
@@ -173,7 +173,7 @@ window.SGIPage.mount("acesso/colaboradores", function (pageConfig, pageScope) {
                 body.append('acao', 'excluir_colaborador');
                 body.append('id_usuario', id);
 
-                const resp = await fetch('../../../api/usuarios.php', {
+                const resp = await fetch('/api/v1/usuarios', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
                     body: body.toString()
@@ -252,7 +252,7 @@ window.SGIPage.mount("acesso/colaboradores", function (pageConfig, pageScope) {
             body.append('sigla_usuario', 'SS');
             body.append('genero_usuario', genero);
 
-            const response = await fetch('../../../api/usuarios.php', {
+            const response = await fetch('/api/v1/usuarios', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
                 body: body.toString()
@@ -300,7 +300,7 @@ window.SGIPage.mount("acesso/colaboradores", function (pageConfig, pageScope) {
             body.append('genero_usuario', genero);
             if (senha) body.append('senha_usuario', senha);
 
-            const response = await fetch('../../../api/usuarios.php', {
+            const response = await fetch('/api/v1/usuarios', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
                 body: body.toString()

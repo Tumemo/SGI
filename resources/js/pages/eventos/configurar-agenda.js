@@ -8,7 +8,7 @@ window.SGIPage.mount("eventos/configurar-agenda", function (pageConfig, pageScop
         try { window.__SGI_TELA_CLEANUP__(); } catch (_) {}
     }
     window.__SGI_TELA_CLEANUP__ = function () {};
-    const API = '../../../api/';
+    const API = '/api/v1/';
     const NIVEL_USUARIO = pageConfig.value2;
     let dataNavegacao = new Date();
     const params = new URLSearchParams(window.location.search);
@@ -158,7 +158,7 @@ window.SGIPage.mount("eventos/configurar-agenda", function (pageConfig, pageScop
     async function carregarJogosDoInterclasse() {
         jogosCache = [];
         if (!interclasseAtual) return;
-        const resMod = await fetch(`${API}modalidades.php`);
+        const resMod = await fetch(`${API}modalidades`);
         if (!resMod.ok) throw new Error('Falha ao carregar modalidades');
         const todasMods = await resMod.json();
         modalidadesLista = (Array.isArray(todasMods) ? todasMods : []).filter(
@@ -168,7 +168,7 @@ window.SGIPage.mount("eventos/configurar-agenda", function (pageConfig, pageScop
         if (ids.length === 0) return;
         const batches = await Promise.all(
             ids.map((id) =>
-                fetch(`${API}jogos.php?id_modalidade=${encodeURIComponent(id)}`).then(async (r) => {
+                fetch(`${API}jogos?id_modalidade=${encodeURIComponent(id)}`).then(async (r) => {
                     const arr = await r.json();
                     return (Array.isArray(arr) ? arr : []).map((j) => ({
                         ...j,
@@ -184,10 +184,6 @@ window.SGIPage.mount("eventos/configurar-agenda", function (pageConfig, pageScop
         jogosCache = await enriquecerNomesEquipesLocais(Array.from(map.values()));
     }
 
-    function isJogoCampeao(nomeJogo) {
-        return /^MM:1:\d+:[NB]$/.test(nomeJogo || '');
-    }
-
     function jogosDoMesVisivel() {
         const y = dataNavegacao.getFullYear();
         const m = dataNavegacao.getMonth();
@@ -197,7 +193,6 @@ window.SGIPage.mount("eventos/configurar-agenda", function (pageConfig, pageScop
         return jogosCache
             .filter((j) => {
                 if (!j.data_jogo) return false;
-                if (isJogoCampeao(j.nome_jogo)) return false;
                 if (filtroData && j.data_jogo !== filtroData) return false;
                 const [jy, jm] = j.data_jogo.split('-').map(Number);
                 if (jy !== y || jm - 1 !== m) return false;
@@ -225,7 +220,6 @@ window.SGIPage.mount("eventos/configurar-agenda", function (pageConfig, pageScop
         const modF = modalidadeSelecionadaId();
         return jogosCache.some((j) => {
             if (j.data_jogo !== key) return false;
-            if (isJogoCampeao(j.nome_jogo)) return false;
             if (modF && String(j.modalidades_id_modalidade) !== String(modF)) return false;
             return true;
         });
@@ -239,7 +233,7 @@ window.SGIPage.mount("eventos/configurar-agenda", function (pageConfig, pageScop
         const hi = formatarHora(j.inicio_jogo);
         const hf = formatarHora(j.termino_jogo || j.terminno_jogo);
         const horario = hi && hf ? `${hi} – ${hf}` : hi || 'Horário a definir';
-        const placarHref = `./jogos.php?id_jogo=${encodeURIComponent(j.id_jogo)}&origem=agenda_edit`;
+        const placarHref = `/jogos/placar?id_jogo=${encodeURIComponent(j.id_jogo)}&origem=agenda_edit`;
         const statusClass = (j.status_jogo || '').toLowerCase().replace('ã','a').replace('õ','o');
         const statusMap = { agendado: 'agendado', iniciado: 'andamento', pausado: 'pausado', concluido: 'concluido', finalizado: 'concluido' };
         const cardClass = statusMap[statusClass] || 'agendado';
@@ -349,7 +343,7 @@ window.SGIPage.mount("eventos/configurar-agenda", function (pageConfig, pageScop
                     const restante = Number(jogoAtual && (jogoAtual.tempo_restante_jogo ?? jogoAtual.tempo_restante_calculado)) > 0
                         ? Number(jogoAtual.tempo_restante_jogo ?? jogoAtual.tempo_restante_calculado)
                         : duracao;
-                    const r = await fetch(`${API}jogos.php`, {
+                    const r = await fetch(`${API}jogos`, {
                         method: 'PUT',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
@@ -553,7 +547,7 @@ window.SGIPage.mount("eventos/configurar-agenda", function (pageConfig, pageScop
     async function carregarLocais() {
         if (!interclasseAtual || !interclasseAtual.id_interclasse) return;
 
-        const res = await fetch(`${API}locais.php?id_interclasse=${encodeURIComponent(interclasseAtual.id_interclasse)}`);
+        const res = await fetch(`${API}locais?id_interclasse=${encodeURIComponent(interclasseAtual.id_interclasse)}`);
         const data = await res.json();
         
         let todosLocais = data && Array.isArray(data.data) ? data.data : Array.isArray(data) ? data : [];
@@ -608,7 +602,7 @@ window.SGIPage.mount("eventos/configurar-agenda", function (pageConfig, pageScop
                     nomeInterclasse.innerText = interclasseAtual.nome_interclasse;
                 }
                 if (btnVoltar && btnVoltar.isConnected) {
-                    btnVoltar.href = `./dashboard.php?id=${interclasseAtual.id_interclasse}`;
+                    btnVoltar.href = `/painel?id=${interclasseAtual.id_interclasse}`;
                 }
             }
         } catch (e) {
@@ -742,7 +736,7 @@ window.SGIPage.mount("eventos/configurar-agenda", function (pageConfig, pageScop
                 locais_id_local: idLocal
             };
             try {
-                const r = await fetch(`${API}jogos.php`, {
+                const r = await fetch(`${API}jogos`, {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(body)
@@ -803,10 +797,9 @@ if (btnAutoSalvar) {
         }
 
         // Filtrar jogos agendados da modalidade
-        let jogosMod = jogosCache.filter(j => 
+        let jogosMod = jogosCache.filter(j =>
             String(j.modalidades_id_modalidade) === String(idMod) &&
-            j.status_jogo === 'Agendado' &&
-            !isJogoCampeao(j.nome_jogo)
+            j.status_jogo === 'Agendado'
         );
 
         if (jogosMod.length === 0) {
@@ -842,7 +835,7 @@ if (btnAutoSalvar) {
                     locais_id_local: idLocal
                 };
 
-                const resp = await fetch(`${API}jogos.php`, {
+                const resp = await fetch(`${API}jogos`, {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(body)

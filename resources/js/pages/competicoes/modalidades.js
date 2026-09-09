@@ -8,7 +8,7 @@ window.SGIPage.mount("competicoes/modalidades", function (pageConfig, pageScope)
         const divDesktop = document.getElementById('listaModalidadesDesktop');
 
         try {
-            const response = await axios.get('../../../api/modalidades.php?x=1');
+            const response = await axios.get('/api/v1/modalidades?x=1');
             let modalidades = response.data.data || response.data;
             if (!Array.isArray(modalidades)) modalidades = [];
             modalidades = modalidades.filter((item) => String(item.interclasses_id_interclasse) === String(idInterclasse));
@@ -40,7 +40,7 @@ window.SGIPage.mount("competicoes/modalidades", function (pageConfig, pageScope)
                     mods.forEach((modalidade) => {
                         const botoesAdmin = nivelUsuario === 0
                             ? '<div class="d-flex gap-1 ms-2">'
-                                + '<a class="btn btn-sm btn-outline-primary" href="./modalidade_detalhes.php?id=' + idInterclasse + '&id_modalidade=' + modalidade.id_modalidade + '" title="Editar"><i class="bi bi-pencil"></i></a>'
+                                + '<a class="btn btn-sm btn-outline-primary" href="/modalidades/detalhes?id=' + idInterclasse + '&id_modalidade=' + modalidade.id_modalidade + '" title="Editar"><i class="bi bi-pencil"></i></a>'
                                 + '<button class="btn btn-sm btn-outline-danger" onclick="excluirModalidade(' + modalidade.id_modalidade + ')" title="Excluir"><i class="bi bi-trash"></i></button>'
                                 + '</div>'
                             : '';
@@ -60,7 +60,7 @@ window.SGIPage.mount("competicoes/modalidades", function (pageConfig, pageScope)
                     mods.forEach((modalidade) => {
                         const botoesAdmin = nivelUsuario === 0
                             ? '<div class="d-flex gap-1 ms-2">'
-                                + '<a class="btn btn-sm btn-outline-primary" href="./modalidade_detalhes.php?id=' + idInterclasse + '&id_modalidade=' + modalidade.id_modalidade + '" title="Editar"><i class="bi bi-pencil"></i></a>'
+                                + '<a class="btn btn-sm btn-outline-primary" href="/modalidades/detalhes?id=' + idInterclasse + '&id_modalidade=' + modalidade.id_modalidade + '" title="Editar"><i class="bi bi-pencil"></i></a>'
                                 + '<button class="btn btn-sm btn-outline-danger" onclick="excluirModalidade(' + modalidade.id_modalidade + ')" title="Excluir"><i class="bi bi-trash"></i></button>'
                                 + '</div>'
                             : '';
@@ -90,7 +90,7 @@ window.SGIPage.mount("competicoes/modalidades", function (pageConfig, pageScope)
         if (!selectTipo) return;
 
         try {
-            const response = await axios.get('../../../api/tipoModalidade.php');
+            const response = await axios.get('/api/v1/tipos-modalidade');
             const tipos = response.data;
 
             selectTipo.innerHTML = '<option value="" disabled selected>Selecione um tipo...</option>';
@@ -108,7 +108,7 @@ window.SGIPage.mount("competicoes/modalidades", function (pageConfig, pageScope)
         if (!selectCat) return;
 
         try {
-            const response = await axios.get('../../../api/categorias.php?id_interclasse=' + idInterclasse);
+            const response = await axios.get('/api/v1/categorias?id_interclasse=' + idInterclasse);
             const categorias = response.data;
 
             selectCat.innerHTML = '<option value="" disabled selected>Selecione uma categoria...</option>';
@@ -125,7 +125,7 @@ window.SGIPage.mount("competicoes/modalidades", function (pageConfig, pageScope)
         if (!confirm('Tem certeza que deseja excluir esta modalidade?')) return;
 
         try {
-            const res = await axios.put('../../../api/modalidades.php', {
+            const res = await axios.put('/api/v1/modalidades', {
                 id_modalidade: id,
                 status_modalidade: '0'
             });
@@ -161,7 +161,7 @@ window.SGIPage.mount("competicoes/modalidades", function (pageConfig, pageScope)
         try {
             btnSalvar.disabled = true;
             btnSalvar.innerHTML = 'Salvando...';
-            const res = await axios.post('../../../api/modalidades.php', dados);
+            const res = await axios.post('/api/v1/modalidades', dados);
 
             if (res.data.success) {
                 caixaMensagem.innerHTML = '<p class="text-success text-center fw-bold">Criada com sucesso!</p>';
@@ -184,14 +184,14 @@ window.SGIPage.mount("competicoes/modalidades", function (pageConfig, pageScope)
         idInterclasse = await window.SGIInterclasse.resolveId();
         if (!idInterclasse) {
             alert('Nenhum interclasse ativo encontrado.');
-            window.location.href = 'home.php';
+            window.location.href = '/edicoes';
             return;
         }
         const ic = await window.SGIInterclasse.getInterclasseById(idInterclasse);
         const nomeEl = document.getElementById('nomeInterclasseModalidades');
         if (nomeEl) nomeEl.innerText = ic?.nome_interclasse || 'Interclasse';
         const btnEl = document.getElementById('btnVoltarModalidades');
-        if (btnEl) btnEl.href = `./dashboard.php?id=${idInterclasse}`;
+        if (btnEl) btnEl.href = `/painel?id=${idInterclasse}`;
         await Promise.all([
             carregarModalidades(),
             carregarTiposModalidades(),

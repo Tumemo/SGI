@@ -9,13 +9,12 @@ use App\Shared\Config\Env;
 
 final class Kernel
 {
-    /** @param array<string,string> $webRoutes @param array<string,string> $apiAliases */
+    /** @param array<string,string> $webRoutes */
     public function __construct(
         private readonly string $root,
         private readonly RequestHandler $api,
         private readonly AssetResponder $assets,
         private readonly array $webRoutes,
-        private readonly array $apiAliases,
     ) {
     }
 
@@ -33,16 +32,9 @@ final class Kernel
         }
         CsrfGuard::protectCurrentApiMutation();
         if ($path === '/' || $path === '/index.php') {
-            Response::empty(302, ['Location' => Url::to('views/index.php')])->send();
+            Response::empty(302, ['Location' => Url::to('login')])->send();
             return;
         }
-        if ($path === '/views/src/pages/upload_turma_pdf.php') {
-            $path = '/api/upload_turma_pdf.php';
-            if (isset($_FILES['pdf']) && !isset($_FILES['pdf_arquivo'])) {
-                $_FILES['pdf_arquivo'] = $_FILES['pdf'];
-            }
-        }
-        $path = $this->apiAliases[$path] ?? $path;
         $request = $request->withPath($path);
         if (str_starts_with($path, '/api/v1/')) {
             $this->api->handle($request)->send();

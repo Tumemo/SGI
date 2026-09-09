@@ -10,7 +10,7 @@ final class ChaveamentoRules
      * Chaveamento mata-mata: metadados compactos em nome_jogo (VARCHAR 45).
      * Formato: MM:{largura_fase}:{slot}:{N|B}
      * - largura_fase: 8,4,2 (oitavas→8 … final→2). O campeão é o vencedor da
-     *   final e não é modelado como uma partida solo MM:1.
+     *   final e não é modelado como uma partida solo adicional.
      * - slot: 0-based dentro da fase
      * - N = confronto normal; B = bye (uma equipe, jogo já concluído)
      */

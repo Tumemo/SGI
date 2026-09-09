@@ -31,7 +31,7 @@ final class ImportacaoTurmaController
             $this->service->validateDestination($class, $edition);
             return Response::json($this->storage->process($file, $class, fn (string $path): array => $this->service->importar($path, $class, $edition)));
         } catch (\InvalidArgumentException $exception) {
-            // Legacy upload clients inspect success, including for validation errors.
+            // O contrato JSON mantém o campo success também para validações.
             return Response::json(['success' => false, 'message' => $exception->getMessage()]);
         } catch (\Throwable $exception) {
             error_log('Falha ao importar PDF da turma: ' . $exception->getMessage());

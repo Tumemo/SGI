@@ -65,7 +65,7 @@ final class MysqliJogoGateway
         $now = time();
         foreach ($rows as &$row) {
             if ($row['duracao_jogo'] === null || (int) $row['duracao_jogo'] <= 0) {
-                // Registros legados podem não ter duração; nesse caso só há
+                // Jogos sem duração podem não ter saldo calculável; nesse caso só há
                 // saldo calculável quando um snapshot explícito foi salvo.
                 $row['tempo_restante_calculado'] = $row['tempo_restante_jogo'] === null
                     ? null

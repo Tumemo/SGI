@@ -11,8 +11,8 @@ window.SGIPage.mount("competicoes/modalidade-detalhes", function (pageConfig, pa
 
         try {
             const [resModalidade, resEquipes] = await Promise.all([
-                fetch(`../../../api/modalidades.php?id_modalidade=${idModalidade}`),
-                fetch(`../../../api/equipes.php?id_modalidade=${idModalidade}`)
+                fetch(`/api/v1/modalidades?id_modalidade=${idModalidade}`),
+                fetch(`/api/v1/equipes?id_modalidade=${idModalidade}`)
             ]);
             const modalidades = await resModalidade.json();
             const equipes = await resEquipes.json();
@@ -23,7 +23,7 @@ window.SGIPage.mount("competicoes/modalidade-detalhes", function (pageConfig, pa
             idInterclasseAtual = modalidade.interclasses_id_interclasse || params.get('id') || null;
 
             if (idInterclasseAtual) {
-                document.getElementById('btnVoltarDashboardDesktop').href = `./dashboard.php?id=${idInterclasseAtual}`;
+                document.getElementById('btnVoltarDashboardDesktop').href = `/painel?id=${idInterclasseAtual}`;
                 const ic = await window.SGIInterclasse.getInterclasseById(idInterclasseAtual);
                 if (ic?.nome_interclasse) {
                     const el = document.getElementById('nomeInterModalidadeDet');
@@ -140,7 +140,7 @@ window.SGIPage.mount("competicoes/modalidade-detalhes", function (pageConfig, pa
     async function carregarTiposEdicao(selectedId) {
         const select = document.getElementById('editTipoModalidade');
         try {
-            const resp = await fetch('../../../api/tipoModalidade.php');
+            const resp = await fetch('/api/v1/tipos-modalidade');
             const tipos = await resp.json();
             select.innerHTML = '<option value="" disabled>Selecione...</option>';
             tipos.forEach(t => {
@@ -156,7 +156,7 @@ window.SGIPage.mount("competicoes/modalidade-detalhes", function (pageConfig, pa
         const idInterclasse = idInterclasseAtual || new URLSearchParams(window.location.search).get('id');
         const select = document.getElementById('editCategoriaModalidade');
         try {
-            const resp = await fetch(`../../../api/categorias.php?id_interclasse=${idInterclasse}`);
+            const resp = await fetch(`/api/v1/categorias?id_interclasse=${idInterclasse}`);
             const cats = await resp.json();
             select.innerHTML = '<option value="" disabled>Selecione...</option>';
             cats.forEach(c => {
@@ -194,7 +194,7 @@ window.SGIPage.mount("competicoes/modalidade-detalhes", function (pageConfig, pa
         if (btn) { btn.disabled = true; btn.innerHTML = '<i class="bi bi-trash3"></i> Excluindo...'; }
 
         try {
-            const resp = await fetch('../../../api/modalidades.php', {
+            const resp = await fetch('/api/v1/modalidades', {
                 method: 'DELETE',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ id_modalidade: modalidadeAtual.id_modalidade })
@@ -208,8 +208,8 @@ window.SGIPage.mount("competicoes/modalidade-detalhes", function (pageConfig, pa
 
             const idInterclasse = idInterclasseAtual;
             window.location.href = idInterclasse
-                ? `./edicao_modalidades.php?id=${idInterclasse}&modo=view`
-                : './edicao_modalidades.php';
+                ? `/edicoes/modalidades?id=${idInterclasse}&modo=view`
+                : '/edicoes/modalidades';
         } catch (e) {
             alert('Erro de conexão.');
         } finally {
@@ -242,7 +242,7 @@ window.SGIPage.mount("competicoes/modalidade-detalhes", function (pageConfig, pa
             btn.disabled = true;
             btn.innerHTML = 'Salvando...';
 
-            const resp = await fetch('../../../api/modalidades.php', {
+            const resp = await fetch('/api/v1/modalidades', {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(dados)

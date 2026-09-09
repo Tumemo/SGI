@@ -59,43 +59,41 @@
         try {
             var u = new URL(url, location.href);
             var file = u.pathname.replace(/\/+$/, '').split('/').pop();
-            // Os clientes antigos usam arquivos PHP; as rotas versionadas usam
-            // os nomes do recurso sem extensão. O adaptador conserva ambos os
-            // caminhos sem inventar novas pluralizações.
+            // As rotas versionadas usam os nomes canônicos dos recursos.
             var recursos = {
-                'jogos': 'jogos.php',
-                'resultados': 'lancar_resultado.php',
-                'turmas': 'turmas.php',
-                'modalidades': 'modalidades.php',
-                'categorias': 'categorias.php',
-                'locais': 'locais.php',
-                'equipes': 'equipes.php',
-                'partidas': 'partidas.php',
-                'ocorrencias': 'ocorrencias.php',
-                'ocorrencias-turmas': 'ocorrencias_turmas.php',
-                'artilheiros': 'artilheiro.php',
-                'chaveamentos': 'chaveamento.php'
+                'jogos': 'jogos',
+                'resultados': 'resultados',
+                'turmas': 'turmas',
+                'modalidades': 'modalidades',
+                'categorias': 'categorias',
+                'locais': 'locais',
+                'equipes': 'equipes',
+                'partidas': 'partidas',
+                'ocorrencias': 'ocorrencias',
+                'ocorrencias-turmas': 'ocorrencias_turmas',
+                'artilheiros': 'artilheiros',
+                'chaveamentos': 'chaveamentos'
             };
             return { file: recursos[file] || file, q: u.searchParams };
         } catch (_) { return {}; }
     }
     function idFor(file, row, fallback) {
-        var fields = { jogos: 'id_jogo', partidas: 'id_partida', turmas: 'id_turma', modalidades: 'id_modalidade', categorias: 'id_categoria', locais: 'id_local', equipes: 'id_equipe', artilheiro: 'id_artilheiro', ocorrencias: 'id_ocorrencia', ocorrencias_turmas: 'id_ocorrencia_turma' };
+        var fields = { jogos: 'id_jogo', partidas: 'id_partida', turmas: 'id_turma', modalidades: 'id_modalidade', categorias: 'id_categoria', locais: 'id_local', equipes: 'id_equipe', artilheiros: 'id_artilheiro', ocorrencias: 'id_ocorrencia', ocorrencias_turmas: 'id_ocorrencia_turma' };
         return row && (row[fields[file]] || row.id || fallback);
     }
     function capture(url, text) {
         var info = urlInfo(url), file = info.file, data;
         try { data = JSON.parse(text); } catch (_) { return Promise.resolve(); }
-        // Algumas APIs do SGI (por exemplo locais.php) encapsulam a lista em
+        // Algumas APIs do SGI (por exemplo locais) encapsulam a lista em
         // { success: true, data: [...] }. Sem reconhecer `data`, os locais
         // nunca entravam no IndexedDB e as partidas derivadas offline perdiam
         // o nome da quadra/local no placar.
         var rows = Array.isArray(data) ? data : (data && (data.dados || data.data || data.ranking || data.participantes));
-        var store = { 'jogos.php': 'jogos', 'partidas.php': 'partidas', 'turmas.php': 'turmas', 'modalidades.php': 'modalidades', 'categorias.php': 'categorias', 'locais.php': 'locais', 'equipes.php': 'equipes', 'artilheiro.php': 'atletas', 'ocorrencias.php': 'ocorrencias', 'ocorrencias_turmas.php': 'ocorrencias_turmas', 'chaveamento.php': 'chaveamentos' }[file];
+        var store = { 'jogos': 'jogos', 'partidas': 'partidas', 'turmas': 'turmas', 'modalidades': 'modalidades', 'categorias': 'categorias', 'locais': 'locais', 'equipes': 'equipes', 'artilheiros': 'atletas', 'ocorrencias': 'ocorrencias', 'ocorrencias_turmas': 'ocorrencias_turmas', 'chaveamentos': 'chaveamentos' }[file];
         if (!store) return Promise.resolve();
         if (!Array.isArray(rows)) rows = [data];
         return Promise.all(rows.filter(function (r) { return r && typeof r === 'object'; }).map(function (r, i) {
-            var identity = idFor(file.replace('.php', ''), r, url + '#' + i);
+            var identity = idFor(file, r, url + '#' + i);
             return put(store, identity, r);
         }));
     }
@@ -140,7 +138,7 @@
 
     function project(item) {
         var info = urlInfo(item.url), data = bodyOf(item), file = info.file, temporary = 'temp_' + item.id;
-        if (file === 'jogos.php' && data.id_jogo) return get('jogos', data.id_jogo).then(function (old) {
+        if (file === 'jogos' && data.id_jogo) return get('jogos', data.id_jogo).then(function (old) {
             // O PUT de início só pode enviar ao servidor os campos permitidos
             // ao mesário. Os dados usados pela agenda/placar seguem dentro de
             // `_contexto_offline` e são aplicados apenas ao IndexedDB.
@@ -163,25 +161,25 @@
         });
         // Placar ao vivo (botões +/- do placar): atualiza a partida no banco
         // local, inclusive em partidas criadas offline (id "mm_local_…").
-        if (file === 'partidas.php' && item.method === 'PUT' && data.id_partida != null) return all('partidas').then(function (ps) {
+        if (file === 'partidas' && item.method === 'PUT' && data.id_partida != null) return all('partidas').then(function (ps) {
             var old = ps.filter(function (p) { return String(p.id_partida) === String(data.id_partida); })[0];
             return put('partidas', data.id_partida, Object.assign({}, old || { id_partida: data.id_partida }, data, { _pendente: true }));
         });
-        if (file === 'ocorrencias.php' && item.method === 'PUT' && data.id_ocorrencia != null) return all('ocorrencias').then(function (ocorrencias) {
+        if (file === 'ocorrencias' && item.method === 'PUT' && data.id_ocorrencia != null) return all('ocorrencias').then(function (ocorrencias) {
             var old = ocorrencias.filter(function (ocorrencia) {
                 return String(ocorrencia.id_ocorrencia) === String(data.id_ocorrencia);
             })[0];
             var merged = preservarReferenciasOcorrencia(old, Object.assign({}, old || { id_ocorrencia: data.id_ocorrencia }, data, { _pendente: true }));
             return put('ocorrencias', data.id_ocorrencia, merged);
         });
-        if (file === 'lancar_resultado.php' && data.id_jogo) return Promise.all([
+        if (file === 'resultados' && data.id_jogo) return Promise.all([
             all('partidas').then(function (partidas) {
                 return Promise.all((data.resultados || []).map(function (r, i) {
                     var old = partidas.filter(function (p) { return String(p.jogos_id_jogo) === String(data.id_jogo) && String(p.equipes_id_equipe) === String(r.id_equipe); })[0];
                     return put('partidas', (old && old.id_partida) || ('temp_partida_' + item.id + '_' + i), Object.assign({}, old || {}, { jogos_id_jogo: data.id_jogo, equipes_id_equipe: r.id_equipe, resultado_partida: r.gols, _pendente: true }));
                 }));
             }),
-            // Espelha lancar_resultado.php: ao concluir um jogo, o status passa
+            // Espelha resultados: ao concluir um jogo, o status passa
             // para 'Concluido' TAMBÉM no banco temporário JS. Sem isto, a tela
             // do placar recarregava offline com o status antigo ("Iniciado") e
             // o mesário não conseguia finalizar a partida.
@@ -193,7 +191,7 @@
                     ? data._contexto_offline
                     : {};
                 jogo = Object.assign({}, contexto, jogo || { id_jogo: data.id_jogo });
-                // `lancar_resultado.php` recebe id_modalidade para resolver
+                // `resultados` recebe id_modalidade para resolver
                 // jogos temporários. Espelhamos o mesmo valor no nome de
                 // coluna usado pelos filtros locais da agenda.
                 if (!jogo.modalidades_id_modalidade && data.id_modalidade) {
@@ -205,16 +203,16 @@
                 return put('jogos', data.id_jogo, jogo);
             })
         ]);
-        if (file === 'artilheiro.php' && item.method === 'POST') return put('atletas', temporary, Object.assign({ id_artilheiro: temporary, _pendente: true }, data));
-        if (file === 'ocorrencias.php' && item.method === 'POST') return put('ocorrencias', temporary, Object.assign({
+        if (file === 'artilheiros' && item.method === 'POST') return put('atletas', temporary, Object.assign({ id_artilheiro: temporary, _pendente: true }, data));
+        if (file === 'ocorrencias' && item.method === 'POST') return put('ocorrencias', temporary, Object.assign({
             id_ocorrencia: temporary,
             _pendente: true,
             turmas_id_turma: data.id_turma || data.turmas_id_turma || 0,
             id_usuario: data.usuarios_id_usuario || data.id_usuario || 0,
             jogos_id_jogo: data.id_jogo || data.jogos_id_jogo || 0,
         }, data));
-        if (file === 'ocorrencias_turmas.php' && item.method === 'POST') return put('ocorrencias_turmas', temporary, Object.assign({ id_ocorrencia: temporary, _pendente: true }, data));
-        if (file === 'chaveamento.php' && item.method === 'POST' && data.tipo_modalidade === 'individual' && data.ranking && data.id_modalidade) {
+        if (file === 'ocorrencias_turmas' && item.method === 'POST') return put('ocorrencias_turmas', temporary, Object.assign({ id_ocorrencia: temporary, _pendente: true }, data));
+        if (file === 'chaveamentos' && item.method === 'POST' && data.tipo_modalidade === 'individual' && data.ranking && data.id_modalidade) {
             var tagInd = 'IND:' + data.id_modalidade;
             return all('jogos').then(function (jogos) {
                 var indJogo = jogos.filter(function (j) { return j.nome_jogo === tagInd; })[0];
@@ -229,14 +227,14 @@
         return Promise.resolve();
     }
     function localGet(url) {
-        var info = urlInfo(url), file = info.file, store = { 'jogos.php': 'jogos', 'partidas.php': 'partidas', 'turmas.php': 'turmas', 'modalidades.php': 'modalidades', 'categorias.php': 'categorias', 'locais.php': 'locais', 'equipes.php': 'equipes', 'artilheiro.php': 'atletas', 'ocorrencias.php': 'ocorrencias', 'ocorrencias_turmas.php': 'ocorrencias_turmas', 'chaveamento.php': 'chaveamentos' }[file];
+        var info = urlInfo(url), file = info.file, store = { 'jogos': 'jogos', 'partidas': 'partidas', 'turmas': 'turmas', 'modalidades': 'modalidades', 'categorias': 'categorias', 'locais': 'locais', 'equipes': 'equipes', 'artilheiros': 'atletas', 'ocorrencias': 'ocorrencias', 'ocorrencias_turmas': 'ocorrencias_turmas', 'chaveamentos': 'chaveamentos' }[file];
         // Endpoints com "acao" possuem formatos especiais; o cache por URL
         // da camada base preserva exatamente a resposta original nesses casos.
         if (!store || info.q.get('acao')) return Promise.resolve(null);
         return all(store).then(function (rows) {
-            var idOcorrencia = file === 'ocorrencias.php' ? info.q.get('id_ocorrencia') : null;
-            var idOcorrenciaTurma = file === 'ocorrencias_turmas.php' ? info.q.get('id_ocorrencia_turma') : null;
-            var statusOcorrencia = file === 'ocorrencias.php' ? info.q.get('status_ocorrencia') : null;
+            var idOcorrencia = file === 'ocorrencias' ? info.q.get('id_ocorrencia') : null;
+            var idOcorrenciaTurma = file === 'ocorrencias_turmas' ? info.q.get('id_ocorrencia_turma') : null;
+            var statusOcorrencia = file === 'ocorrencias' ? info.q.get('status_ocorrencia') : null;
             var idJogo = info.q.get('id_jogo'), idInter = info.q.get('id_interclasse'), idMod = info.q.get('id_modalidade');
             if (idOcorrencia !== null && idOcorrencia !== '') {
                 rows = rows.filter(function (r) { return String(r.id_ocorrencia) === String(idOcorrencia); });
@@ -266,31 +264,31 @@
         var idOcorrenciaTurmaConsulta = info.q && info.q.get('id_ocorrencia_turma');
         var idJogoMutacao = dados.id_jogo != null ? dados.id_jogo : dados.jogos_id_jogo;
 
-        if (info.file === 'jogos.php') {
-            if (arquivo !== 'jogos.php' && arquivo !== 'partidas.php' && arquivo !== 'lancar_resultado.php') return false;
-        } else if (info.file === 'partidas.php') {
-            if (arquivo !== 'partidas.php' && arquivo !== 'lancar_resultado.php') return false;
-        } else if (info.file === 'artilheiro.php') {
-            if (arquivo !== 'artilheiro.php') return false;
-        } else if (info.file === 'ocorrencias.php') {
-            if (arquivo !== 'ocorrencias.php') return false;
-        } else if (info.file === 'ocorrencias_turmas.php') {
-            if (arquivo !== 'ocorrencias_turmas.php') return false;
+        if (info.file === 'jogos') {
+            if (arquivo !== 'jogos' && arquivo !== 'partidas' && arquivo !== 'resultados') return false;
+        } else if (info.file === 'partidas') {
+            if (arquivo !== 'partidas' && arquivo !== 'resultados') return false;
+        } else if (info.file === 'artilheiros') {
+            if (arquivo !== 'artilheiros') return false;
+        } else if (info.file === 'ocorrencias') {
+            if (arquivo !== 'ocorrencias') return false;
+        } else if (info.file === 'ocorrencias_turmas') {
+            if (arquivo !== 'ocorrencias_turmas') return false;
         } else {
             return false;
         }
 
-        if (info.file === 'ocorrencias.php' && idOcorrenciaConsulta !== null && idOcorrenciaConsulta !== '') {
-            return arquivo === 'ocorrencias.php' && dados.id_ocorrencia != null &&
+        if (info.file === 'ocorrencias' && idOcorrenciaConsulta !== null && idOcorrenciaConsulta !== '') {
+            return arquivo === 'ocorrencias' && dados.id_ocorrencia != null &&
                 String(idOcorrenciaConsulta) === String(dados.id_ocorrencia);
         }
 
-        if (info.file === 'ocorrencias_turmas.php' && idOcorrenciaTurmaConsulta !== null && idOcorrenciaTurmaConsulta !== '') {
-            return arquivo === 'ocorrencias_turmas.php' && dados.id_ocorrencia_turma != null &&
+        if (info.file === 'ocorrencias_turmas' && idOcorrenciaTurmaConsulta !== null && idOcorrenciaTurmaConsulta !== '') {
+            return arquivo === 'ocorrencias_turmas' && dados.id_ocorrencia_turma != null &&
                 String(idOcorrenciaTurmaConsulta) === String(dados.id_ocorrencia_turma);
         }
 
-        if (info.file === 'partidas.php' && arquivo === 'partidas.php' && dados.id_partida != null) {
+        if (info.file === 'partidas' && arquivo === 'partidas' && dados.id_partida != null) {
             var partidaLocal = (partidasLocais || []).filter(function (partida) {
                 return String(partida.id_partida) === String(dados.id_partida);
             })[0];
@@ -311,7 +309,7 @@
             !(window.SGIOffline.hasPending && window.SGIOffline.hasPending())) {
             return Promise.resolve(false);
         }
-        var partidasLocais = info.file === 'partidas.php' ? all('partidas') : Promise.resolve(null);
+        var partidasLocais = info.file === 'partidas' ? all('partidas') : Promise.resolve(null);
         return Promise.all([window.SGIOffline.getPendingList(), partidasLocais]).then(function (resultado) {
             var fila = resultado[0];
             var partidas = resultado[1];
@@ -321,8 +319,8 @@
 
     function respostaLocalComDados(url) {
         var info = urlInfo(url);
-        var consultaPorId = (info.file === 'ocorrencias.php' && info.q && info.q.get('id_ocorrencia') !== null) ||
-            (info.file === 'ocorrencias_turmas.php' && info.q && info.q.get('id_ocorrencia_turma') !== null);
+        var consultaPorId = (info.file === 'ocorrencias' && info.q && info.q.get('id_ocorrencia') !== null) ||
+            (info.file === 'ocorrencias_turmas' && info.q && info.q.get('id_ocorrencia_turma') !== null);
         return localGet(url).then(function (resposta) {
             if (!resposta) return null;
             return resposta.clone().text().then(function (texto) {
@@ -357,9 +355,9 @@
             // pendência para a mesma entidade; isso evita que um store ainda
             // vazio esconda uma resposta válida em cache com uma lista vazia.
             var priorizarLocal = navigator.onLine === false ||
-                info.file === 'jogos.php' || info.file === 'partidas.php' ||
-                info.file === 'artilheiro.php' || info.file === 'ocorrencias.php' ||
-                info.file === 'ocorrencias_turmas.php';
+                info.file === 'jogos' || info.file === 'partidas' ||
+                info.file === 'artilheiros' || info.file === 'ocorrencias' ||
+                info.file === 'ocorrencias_turmas';
             if (priorizarLocal) {
                 return temPendenciaRelevante(url).then(function (haPendencia) {
                     if (!haPendencia) {
@@ -409,7 +407,7 @@
             var info = urlInfo(item.url), resposta = {};
             try { resposta = JSON.parse(text || '{}'); } catch (_) {}
             var dados = bodyOf(item);
-            if (info.file === 'jogos.php' && item.method === 'PUT' && dados.id_jogo != null) {
+            if (info.file === 'jogos' && item.method === 'PUT' && dados.id_jogo != null) {
                 return get('jogos', dados.id_jogo).then(function (jogo) {
                     if (!jogo) return remove('fila_sincronizacao', item.id);
                     aplicarRespostaCronometro(jogo, resposta);
@@ -419,7 +417,7 @@
                     ]);
                 });
             }
-            if (info.file === 'ocorrencias.php' && item.method === 'PUT' && dados.id_ocorrencia != null && !item.dependsOn) {
+            if (info.file === 'ocorrencias' && item.method === 'PUT' && dados.id_ocorrencia != null && !item.dependsOn) {
                 return get('ocorrencias', dados.id_ocorrencia).then(function (ocorrencia) {
                     if (!ocorrencia) return remove('fila_sincronizacao', item.id);
                     return Promise.all([
@@ -428,7 +426,7 @@
                     ]);
                 });
             }
-            var store = info.file === 'artilheiro.php' ? 'atletas' : (info.file === 'ocorrencias.php' ? 'ocorrencias' : (info.file === 'ocorrencias_turmas.php' ? 'ocorrencias_turmas' : null));
+            var store = info.file === 'artilheiros' ? 'atletas' : (info.file === 'ocorrencias' ? 'ocorrencias' : (info.file === 'ocorrencias_turmas' ? 'ocorrencias_turmas' : null));
             var temp = 'temp_' + item.id;
             if (store && item.method === 'POST' && resposta.id) {
                 return get(store, temp).then(function (row) {
@@ -440,7 +438,7 @@
                     return Promise.all([put(store, idReal, Object.assign({}, row, identidade, { _pendente: false })), remove(store, temp), remove('fila_sincronizacao', item.id)]);
                 });
             }
-            if (info.file === 'ocorrencias.php' && item.method === 'PUT' && dados.id_ocorrencia != null && item.dependsOn && item.dependsOn.resolvedId != null) {
+            if (info.file === 'ocorrencias' && item.method === 'PUT' && dados.id_ocorrencia != null && item.dependsOn && item.dependsOn.resolvedId != null) {
                 return get('ocorrencias', dados.id_ocorrencia).then(function (ocorrencia) {
                     if (!ocorrencia) return remove('fila_sincronizacao', item.id);
                     var idReal = item.dependsOn.resolvedId;

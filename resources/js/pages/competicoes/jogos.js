@@ -15,7 +15,7 @@ window.SGIPage.mount("competicoes/jogos", function (pageConfig, pageScope) {
             // pode deixar de renderizar por causa disso.
             const [dadosInter, resJogos] = await Promise.all([
                 window.SGIInterclasse.getInterclasseById(idInterclasse).catch(() => null),
-                fetch(`../../../api/jogos.php?x=1&id_interclasse=${idInterclasse}`)
+                fetch(`/api/v1/jogos?x=1&id_interclasse=${idInterclasse}`)
             ]);
 
             if (dadosInter) {
@@ -41,7 +41,7 @@ window.SGIPage.mount("competicoes/jogos", function (pageConfig, pageScope) {
                 const equipes = j.equipes_nomes || '---';
                 return `
                     <div class="col-12 col-md-6 col-lg-4">
-                        <a href="./jogos.php?id_jogo=${j.id_jogo}" class="text-decoration-none text-dark">
+                        <a href="/jogos/placar?id_jogo=${j.id_jogo}" class="text-decoration-none text-dark">
                             <div class="card shadow-sm jogo-card p-3 h-100">
                                 <div class="d-flex justify-content-between align-items-start mb-2">
                                     <span class="fw-bold">${j.nome_modalidade || '---'}</span>

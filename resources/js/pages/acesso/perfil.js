@@ -1,20 +1,13 @@
 window.SGIPage.mount("acesso/perfil", function (pageConfig, pageScope) {
 
-    var API_BASE = (function() {
-        var path = window.location.pathname || '';
-        var idx = path.indexOf('/views/src/');
-        if (idx !== -1) {
-            return path.substring(0, idx) + '/';
-        }
-        return '../../../';
-    })();
+    var API_BASE = (window.SGI_API_BASE || '/api/v1/').replace(/\/?$/, '/');
     const DADOS_PERFIL = {
         nome: pageConfig.value2,
         matricula: pageConfig.value3,
         id: pageConfig.value4,
         nivel: pageConfig.value5
     };
-    const API_FOTO = API_BASE + 'api/foto.php';
+    const API_FOTO = API_BASE + 'foto';
 
     let fotoPreviewFile = null;
     let temFotoAtual = false;
@@ -105,7 +98,7 @@ window.SGIPage.mount("acesso/perfil", function (pageConfig, pageScope) {
         const params = new URLSearchParams(window.location.search);
         const id = params.get('id');
         if (id) {
-            const href = './dashboard.php?id=' + encodeURIComponent(id);
+            const href = '/painel?id=' + encodeURIComponent(id);
             document.getElementById('perfilBackDesk').href = href;
             const mob = document.getElementById('perfilBackMob');
             if (mob) mob.href = href;
@@ -129,7 +122,8 @@ window.SGIPage.mount("acesso/perfil", function (pageConfig, pageScope) {
                 const data = await resp.json();
                 if (data.success && data.foto_usuario) {
                     temFotoAtual = true;
-                    mostrarFoto(API_BASE + 'uploads/fotosUsuarios/' + data.foto_usuario);
+                    var assetBase = (window.SGI_BASE_PATH || '') + '/uploads/fotosUsuarios/';
+                    mostrarFoto(assetBase.replace(/\/+/g, '/') + data.foto_usuario);
                     atualizarBotoesFoto();
                 } else {
                     ['Mob', 'Desk'].forEach(esconderSkeleton);

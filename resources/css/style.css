@@ -5769,5 +5769,5 @@ body.sgi-offline-active {
     .btn-score{width:44px;height:44px;border-radius:12px;font-size:1.15rem}
 }
 
-/* --- Section 14 Override (compatibility) --- */
+/* --- Ajustes finais do placar --- */
 .time-card,.timer-wrap,.timer-display,.timer-select,.score-display,.timer-expired,.timer-pulse,.ocorrencias-card,.ocorrencia-item,.ocorrencia-tipo,.artilheiro-select-wrap,.artilheiro-list,.score-blocked,.container-principal,.section-meta,.section-header,.section-title,#placar-meta,#placar-acoes,#artilheiro-section .row.g-3>div,#alerta-segundo-amarelo .alert,.page-header,.page-title{all:unset}

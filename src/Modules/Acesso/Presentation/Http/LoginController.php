@@ -61,9 +61,9 @@ final class LoginController
         }
         $_SESSION['exige_troca_senha'] = $authenticated['exige_troca_senha'];
         $destino = match ($nivel) {
-            3 => '../views/src/pages/alunos/home.php',
-            0, 1, 2 => '../views/src/pages/home.php',
-            default => '../views/index.php',
+            3 => '/aluno/inicio',
+            0, 1, 2 => '/edicoes',
+            default => '/login',
         };
         return \App\Shared\Http\Response::json(['status' => 'sucesso', 'redirect' => $destino, 'csrf_token' => CsrfGuard::token()], $status, $headers);
     }

@@ -21,14 +21,14 @@ final class PageController
     {
         SessionManager::start();
         $path = $request->path();
-        $public = in_array($path, ['/views/index.php', '/views/src/pages/alunos/login.php'], true);
+        $public = in_array($path, ['/login', '/aluno/login'], true);
         if (!$public) {
-            $levels = str_contains($path, '/alunos/') ? [3] : [0, 1, 2];
+            $levels = str_starts_with($path, '/aluno/') ? [3] : [0, 1, 2];
             if (!in_array((int) ($_SESSION['nivel'] ?? -1), $levels, true)) {
-                return new Response('', 302, ['Location' => Url::to('views/index.php')]);
+                return new Response('', 302, ['Location' => Url::to('login')]);
             }
         }
-        $profile = str_ends_with($path, '/perfil.php');
+        $profile = in_array($path, ['/perfil', '/aluno/perfil'], true);
         if (!in_array($request->method(), $profile ? ['GET', 'HEAD', 'POST'] : ['GET', 'HEAD'], true)) {
             return Response::json(['success' => false, 'message' => 'Método não permitido.'], 405);
         }
@@ -42,7 +42,7 @@ final class PageController
             unset($data['usuarioPerfil']['senha_usuario']);
             $data['sessionId'] = (int) ($_SESSION['id'] ?? 0);
         }
-        if (in_array($path, ['/views/src/pages/alunos/modalidade.php', '/views/src/pages/alunos/jogos.php'], true)) {
+        if (in_array($path, ['/aluno/modalidades', '/aluno/jogos'], true)) {
             $data = (new MysqliPortalAlunoRepository(ConnectionFactory::get()))->context((int) ($_SESSION['id'] ?? 0), (int) $request->query('id', 0));
         }
         return (new ViewRenderer())->render($template, $data);

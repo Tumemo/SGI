@@ -134,7 +134,7 @@ final class MysqliHistoricoTurmaRepository
         $liquid = $bruto - $penaltyPoints;
         $adjustmentInfo = [
             'pontos' => $adjustment,
-            'origem' => 'Saldo legado sem origem detalhada',
+            'origem' => 'Saldo sem origem detalhada',
             'pendente_origem' => $adjustment !== 0,
         ];
 

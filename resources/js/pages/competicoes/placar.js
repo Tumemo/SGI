@@ -33,14 +33,14 @@ window.SGIPage.mount("competicoes/placar", function (pageConfig, pageScope) {
         const origem = params.get('origem');
         const refPagina = paginaOrigem();
         const refURL = (refPagina && document.referrer) ? document.referrer : null;
-        let href = './edicao_agenda.php';
+        let href = '/edicoes/agenda';
 
-        if (origem === 'ranking' || refPagina === 'ranking.php') {
-            href = refURL || './ranking.php';
-        } else if (origem === 'agenda' || refPagina === 'agenda.php') {
-            href = refURL || './agenda.php';
-        } else if (origem === 'agenda_edit' || refPagina === 'edicao_agenda.php') {
-            href = refURL || './edicao_agenda.php';
+        if (origem === 'ranking' || refPagina === 'ranking') {
+            href = refURL || '/ranking';
+        } else if (origem === 'agenda' || refPagina === 'agenda') {
+            href = refURL || '/edicoes/agenda';
+        } else if (origem === 'agenda_edit' || refPagina === 'edicoes/agenda') {
+            href = refURL || './edicoes/agenda';
         }
 
         const btn = document.getElementById('btnVoltarPlacar');
@@ -49,14 +49,7 @@ window.SGIPage.mount("competicoes/placar", function (pageConfig, pageScope) {
         if (seta) seta.href = href;
     }
 
-    var API = window.API || (function() {
-        var path = window.location.pathname;
-        var idx = path.indexOf('/views/src/pages/');
-        if (idx !== -1) {
-            return path.substring(0, idx) + '/api/';
-        }
-        return '../../../api/';
-    })();
+    var API = (window.SGI_API_BASE || '/api/v1/').replace(/\/?$/, '/');
 
     let estadoJogo = null;
     let partidasLista = [];
@@ -377,7 +370,7 @@ window.SGIPage.mount("competicoes/placar", function (pageConfig, pageScope) {
             var next = Cronometro.transicionar(estado, 'acrescentar', Math.floor(agoraMs / 1000), {
                 tempo_extra_jogo: novoTotal,
             });
-            var response = await fetchJson(API + 'jogos.php', {
+            var response = await fetchJson(API + 'jogos', {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -460,7 +453,7 @@ window.SGIPage.mount("competicoes/placar", function (pageConfig, pageScope) {
             Math.floor(agoraMs / 1000),
         );
         try {
-            var response = await fetchJson(API + 'jogos.php', {
+            var response = await fetchJson(API + 'jogos', {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -535,8 +528,8 @@ window.SGIPage.mount("competicoes/placar", function (pageConfig, pageScope) {
             throw new Error('A fila offline do Mesário não está disponível.');
         }
         var urlAbsoluta;
-        try { urlAbsoluta = new URL(API + 'partidas.php', location.href).href; }
-        catch (_) { urlAbsoluta = API + 'partidas.php'; }
+        try { urlAbsoluta = new URL(API + 'partidas', location.href).href; }
+        catch (_) { urlAbsoluta = API + 'partidas'; }
         var item = await window.SGIOffline.queueMutation(
             'PUT',
             urlAbsoluta,
@@ -590,7 +583,7 @@ window.SGIPage.mount("competicoes/placar", function (pageConfig, pageScope) {
         estado.status_jogo = 'Agendado';
         estado.duracao_jogo = duracaoJogo;
         var next = Cronometro.transicionar(estado, 'retomar', Math.floor(agoraMs / 1000));
-        var response = await fetchJson(API + 'jogos.php', {
+        var response = await fetchJson(API + 'jogos', {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -636,7 +629,7 @@ window.SGIPage.mount("competicoes/placar", function (pageConfig, pageScope) {
                 id_modalidade: (estadoJogo && (estadoJogo.modalidades_id_modalidade || estadoJogo.id_modalidade)) || null,
                 resultados: resultados
             };
-            var res = await fetch(API + 'lancar_resultado.php', {
+            var res = await fetch(API + 'resultados', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payloadFin)
@@ -667,7 +660,7 @@ window.SGIPage.mount("competicoes/placar", function (pageConfig, pageScope) {
     /* ── Finalização OFFLINE ─────────────────────────────────────────────
        1) Aplica o término imediatamente na memória (status 'Concluido' +
           placar) e re-renderiza a tela, sem esperar servidor.
-       2) Enfileira a MESMA requisição original (POST lancar_resultado.php)
+       2) Enfileira a MESMA requisição original (POST resultados)
           na mutation queue do offline-core. O hook SGIDataLayer.onQueued
           projeta o placar e o novo status no IndexedDB local, e quando a
           conexão voltar a fila reenvia tudo ao PHP, que refaz as validações
@@ -746,8 +739,8 @@ window.SGIPage.mount("competicoes/placar", function (pageConfig, pageScope) {
             }));
         }
         var urlAbsoluta;
-        try { urlAbsoluta = new URL(API + 'lancar_resultado.php', location.href).href; }
-        catch (_) { urlAbsoluta = API + 'lancar_resultado.php'; }
+        try { urlAbsoluta = new URL(API + 'resultados', location.href).href; }
+        catch (_) { urlAbsoluta = API + 'resultados'; }
 
         var payloadLocal = {
             id_jogo: idJogo,
@@ -1085,8 +1078,8 @@ window.SGIPage.mount("competicoes/placar", function (pageConfig, pageScope) {
             return;
         }
         try {
-            var resPart = await fetch(API + 'chaveamento.php?tipo_modalidade=individual&acao=participantes&id_modalidade=' + idModalidade);
-            var resRank = await fetch(API + 'chaveamento.php?tipo_modalidade=individual&acao=ranking&id_modalidade=' + idModalidade);
+            var resPart = await fetch(API + 'chaveamentos?tipo_modalidade=individual&acao=participantes&id_modalidade=' + idModalidade);
+            var resRank = await fetch(API + 'chaveamentos?tipo_modalidade=individual&acao=ranking&id_modalidade=' + idModalidade);
             var dadosPart = await resPart.json();
             var dadosRank = await resRank.json();
             indParticipantes = (dadosPart.success && Array.isArray(dadosPart.participantes)) ? dadosPart.participantes : [];
@@ -1203,7 +1196,7 @@ window.SGIPage.mount("competicoes/placar", function (pageConfig, pageScope) {
         msg.innerHTML = '';
 
         try {
-            var resp = await fetch(API + 'chaveamento.php', {
+            var resp = await fetch(API + 'chaveamentos', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -1264,7 +1257,7 @@ window.SGIPage.mount("competicoes/placar", function (pageConfig, pageScope) {
         }
 
         try {
-            var lista = await fetchJson(API + 'jogos.php?id_jogo=' + idJogo);
+            var lista = await fetchJson(API + 'jogos?id_jogo=' + idJogo);
             if (!placarContinuaAtivo(ciclo)) return;
             if (!Array.isArray(lista) || lista.length === 0) throw new Error('Jogo não encontrado.');
             estadoJogo = lista[0];
@@ -1274,7 +1267,7 @@ window.SGIPage.mount("competicoes/placar", function (pageConfig, pageScope) {
                 tempoEsgotado = true;
             }
 
-            partidasLista = await fetchJson(API + 'partidas.php?id_jogo=' + idJogo);
+            partidasLista = await fetchJson(API + 'partidas?id_jogo=' + idJogo);
             if (!placarContinuaAtivo(ciclo)) return;
             if (!Array.isArray(partidasLista)) partidasLista = [];
             await enriquecerPartidasComTurmas();
@@ -1363,10 +1356,10 @@ window.SGIPage.mount("competicoes/placar", function (pageConfig, pageScope) {
             var idTurma = parseInt(p.id_turma, 10);
             if (!idTurma || vistas[idTurma]) return;
             vistas[idTurma] = true;
-            urls.push(API + 'ocorrencias.php?acao=listar_atletas&id_jogo=' + idJogo + '&id_turma=' + idTurma);
+            urls.push(API + 'ocorrencias?acao=listar_atletas&id_jogo=' + idJogo + '&id_turma=' + idTurma);
         });
-        urls.push(API + 'artilheiro.php?id_jogo=' + idJogo);
-        urls.push(API + 'ocorrencias.php?id_jogo=' + idJogo + '&data=' + (estadoJogo.data_jogo || ''));
+        urls.push(API + 'artilheiros?id_jogo=' + idJogo);
+        urls.push(API + 'ocorrencias?id_jogo=' + idJogo + '&data=' + (estadoJogo.data_jogo || ''));
         urls.forEach(function (u) {
             fetch(u).then(function (r) { return r.text(); }).catch(function () { /* offline pre-cache é best-effort */ });
         });
@@ -1402,7 +1395,7 @@ window.SGIPage.mount("competicoes/placar", function (pageConfig, pageScope) {
         select.disabled = true;
         select.innerHTML = '<option value="">Carregando...</option>';
         try {
-            var data = await fetchJson(API + 'ocorrencias.php?acao=listar_atletas&id_jogo=' + idJogo + '&id_turma=' + idTurma);
+            var data = await fetchJson(API + 'ocorrencias?acao=listar_atletas&id_jogo=' + idJogo + '&id_turma=' + idTurma);
             if (!placarContinuaAtivo(cicloLocal) || !select.isConnected || document.getElementById('selectAlunoOcorrencia') !== select) return;
             var alunos = data.success && Array.isArray(data.atletas) ? data.atletas : [];
             select.innerHTML = '<option value="">Selecione o(a) aluno(a)</option>';
@@ -1427,7 +1420,7 @@ window.SGIPage.mount("competicoes/placar", function (pageConfig, pageScope) {
         var container = document.getElementById('lista-ocorrencias');
         if (!container || !container.isConnected || !placarContinuaAtivo(cicloLocal)) return;
         try {
-            var data = await fetchJson(API + 'ocorrencias.php?id_jogo=' + idJogo + '&data=' + (estadoJogo.data_jogo || ''));
+            var data = await fetchJson(API + 'ocorrencias?id_jogo=' + idJogo + '&data=' + (estadoJogo.data_jogo || ''));
             if (!placarContinuaAtivo(cicloLocal) || !container.isConnected || document.getElementById('lista-ocorrencias') !== container) return;
             var lista = Array.isArray(data) ? data : [];
             var countEl = document.getElementById('mc-occ-count');
@@ -1535,7 +1528,7 @@ window.SGIPage.mount("competicoes/placar", function (pageConfig, pageScope) {
         document.getElementById('btnSalvarOcorrencia').innerHTML = '<i class="bi bi-check-lg me-1"></i>Atualizar';
 
         try {
-            var lista = await fetchJson(API + 'ocorrencias.php?id_ocorrencia=' + encodeURIComponent(idSolicitado));
+            var lista = await fetchJson(API + 'ocorrencias?id_ocorrencia=' + encodeURIComponent(idSolicitado));
             var o = Array.isArray(lista) ? lista.find(function (item) {
                 return item && String(item.id_ocorrencia) === idSolicitado;
             }) : null;
@@ -1581,7 +1574,7 @@ window.SGIPage.mount("competicoes/placar", function (pageConfig, pageScope) {
         }
         if (!confirm('Tem certeza que deseja excluir esta ocorrência?')) return;
         try {
-            await fetchJson(API + 'ocorrencias.php', {
+            await fetchJson(API + 'ocorrencias', {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ id_ocorrencia: id, status_ocorrencia: '0' })
@@ -1652,7 +1645,7 @@ window.SGIPage.mount("competicoes/placar", function (pageConfig, pageScope) {
         }
 
         try {
-            var resp = await fetch(API + 'ocorrencias.php', {
+            var resp = await fetch(API + 'ocorrencias', {
                 method: isUpdate ? 'PUT' : 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)
@@ -1721,7 +1714,7 @@ window.SGIPage.mount("competicoes/placar", function (pageConfig, pageScope) {
         var cards = document.getElementById('artilheiro-cards');
         if (!cards || !cards.isConnected || !placarContinuaAtivo(cicloLocal)) return;
         try {
-            var data = await fetchJson(API + 'artilheiro.php?id_jogo=' + idJogo);
+            var data = await fetchJson(API + 'artilheiros?id_jogo=' + idJogo);
             if (!placarContinuaAtivo(cicloLocal) || !cards.isConnected || document.getElementById('artilheiro-cards') !== cards) return;
             if (!Array.isArray(data) || data.length === 0) {
                 cards.innerHTML = '<div class="mc-artilheiro-empty"><i class="bi bi-trophy"></i><p>Nenhum gol registrado ainda.</p></div>';
@@ -1773,7 +1766,7 @@ window.SGIPage.mount("competicoes/placar", function (pageConfig, pageScope) {
             var p = partidasLista.find(function(p) { return p.equipes_id_equipe == idEquipe; });
             if (!p) throw new Error('Equipe não encontrada');
             var idTurma = p.id_turma;
-            var data = await fetchJson(API + 'ocorrencias.php?acao=listar_atletas&id_jogo=' + idJogo + '&id_turma=' + idTurma);
+            var data = await fetchJson(API + 'ocorrencias?acao=listar_atletas&id_jogo=' + idJogo + '&id_turma=' + idTurma);
             if (!placarContinuaAtivo(cicloLocal) || !select.isConnected || document.getElementById('selectAlunoArtilheiro') !== select) return;
             var alunos = data.success && Array.isArray(data.atletas) ? data.atletas : [];
             select.innerHTML = '<option value="">Selecione o(a) jogador(a)</option>';
@@ -1829,7 +1822,7 @@ window.SGIPage.mount("competicoes/placar", function (pageConfig, pageScope) {
         btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Salvando...';
 
         try {
-            var resp = await fetch(API + 'artilheiro.php', {
+            var resp = await fetch(API + 'artilheiros', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({

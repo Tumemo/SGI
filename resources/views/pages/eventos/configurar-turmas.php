@@ -2,13 +2,13 @@
 $tituloPagina = 'SGI - Gerenciar Turmas';
 $titulo = 'Turmas';
 $mostrarVoltar = true;
-$urlVoltar = './edicao_categorias.php';
+$urlVoltar = \App\Shared\Http\Url::to('edicoes/categorias');
 include SGI_ROOT . '/resources/views/components/admin-head.php';
 include SGI_ROOT . '/resources/views/components/admin-header.php';
 $paginaAtiva = 'categorias';
 ?>
 <main class="d-md-none">
-    <a href="./dashboard.php" id="btnVoltarTurmasMobile" class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none sgi-inline-e1bcebb6" >
+    <a href="<?= \App\Shared\Http\Url::to('painel') ?>" id="btnVoltarTurmasMobile" class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none sgi-inline-e1bcebb6" >
         <i class="bi bi-arrow-left-circle fs-5"></i> <span id="nomeInterclasseTurmasMob">Interclasse</span>
     </a>
     <p class="text-secondary text-center my-3">Editar detalhes turmas</p>
@@ -22,7 +22,7 @@ $paginaAtiva = 'categorias';
 
 <main class="d-none d-md-block main-desktop-layout" id="viewTurmasGestaoDesk">
     <div class="container-fluid px-0">
-        <a href="./edicao_categorias.php" id="btnVoltarTurmasDesk" class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none sgi-inline-e1bcebb6" >
+        <a href="<?= \App\Shared\Http\Url::to('edicoes/categorias') ?>" id="btnVoltarTurmasDesk" class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none sgi-inline-e1bcebb6" >
             <i class="bi bi-arrow-left-circle fs-5"></i> <span id="nomeInterclasseTurmasDesk">Interclasse</span>
         </a>
         <div class="row g-4 mx-0">

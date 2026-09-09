@@ -3,7 +3,7 @@ $tituloPagina = 'SGI - Inscrições';
 $titulo = 'Inscrições';
 $mostrarVoltar = true;
 $mostrarSino = true;
-$urlVoltar = './home.php';
+$urlVoltar = \App\Shared\Http\Url::to('aluno/inicio');
 include SGI_ROOT . '/resources/views/components/aluno-head.php';
 ?>
 

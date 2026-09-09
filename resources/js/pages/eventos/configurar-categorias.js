@@ -22,7 +22,7 @@ window.SGIPage.mount("eventos/configurar-categorias", function (pageConfig, page
             if (el) el.classList.toggle('d-none', !categoriaSelecionada);
         });
 
-        const rota = modo === 'view' ? './dashboard.php' : './edicao_modalidades.php';
+        const rota = modo === 'view' ? '/painel' : '/edicoes/modalidades';
         const sufixoCategoria = categoriaSelecionada ? `&id_categoria=${categoriaSelecionada}` : '';
         document.getElementById('btnContinuarMobile').href = `${rota}?id=${idInterclasse}${sufixoCategoria}${modo !== 'view' ? '&modo=create' : ''}`;
         document.getElementById('btnContinuarDesktop').href = `${rota}?id=${idInterclasse}${sufixoCategoria}${modo !== 'view' ? '&modo=create' : ''}`;
@@ -31,7 +31,7 @@ window.SGIPage.mount("eventos/configurar-categorias", function (pageConfig, page
         if (modo === 'view') {
             ['btnVoltarCatMobile', 'btnVoltarCatDesk'].forEach(id => {
                 const el = document.getElementById(id);
-                if (el) el.href = `./dashboard.php?id=${idInterclasse}`;
+                if (el) el.href = `/painel?id=${idInterclasse}`;
             });
         }
     }
@@ -52,7 +52,7 @@ window.SGIPage.mount("eventos/configurar-categorias", function (pageConfig, page
             fd.append('id_turma', String(idManual));
         }
 
-        const response = await fetch('../../../api/upload_turma_pdf.php', { method: 'POST', body: fd, credentials: 'include' });
+        const response = await fetch('/api/v1/importacoes/turma-pdf', { method: 'POST', body: fd, credentials: 'include' });
         const text = await response.text();
         let json = {};
         try {
@@ -84,13 +84,13 @@ window.SGIPage.mount("eventos/configurar-categorias", function (pageConfig, page
         // Tenta resolver para o interclasse ativo
         window.SGIInterclasse.getActiveInterclasse().then(ativo => {
             if (ativo) {
-                window.location.href = `./edicao_categorias.php?id=${ativo.id_interclasse}&${modo !== 'view' ? 'modo=create' : 'modo=view'}`;
+                window.location.href = `/edicoes/categorias?id=${ativo.id_interclasse}&${modo !== 'view' ? 'modo=create' : 'modo=view'}`;
                 return;
             }
             document.getElementById('listaCategoriasMobile').innerHTML = '<p class="text-muted mt-4 text-center w-100">Nenhum interclasse ativo.</p>';
             document.getElementById('listaCategoriasDesktop').innerHTML = '<p class="text-muted mt-4 text-center w-100">Nenhum interclasse ativo.</p>';
-            document.getElementById('btnContinuarMobile').href = './dashboard.php';
-            document.getElementById('btnContinuarDesktop').href = './dashboard.php';
+            document.getElementById('btnContinuarMobile').href = '/painel';
+            document.getElementById('btnContinuarDesktop').href = '/painel';
         });
     } else {
         window.SGIInterclasse.getInterclasseById(idInterclasse).then((dados) => {
@@ -112,12 +112,12 @@ window.SGIPage.mount("eventos/configurar-categorias", function (pageConfig, page
 
         try {
             const respostas = await Promise.allSettled([
-                fetch(`../../../api/categorias.php?id_interclasse=${idInterclasse}`).then(r => r.json()),
-                fetch(`../../../api/turmas.php?id_interclasse=${idInterclasse}`).then(r => r.json()),
-                fetch(`../../../api/equipes.php`).then(r => r.json()),
-                fetch(`../../../api/modalidades.php?id_interclasse=${idInterclasse}`).then(r => r.json()),
-                fetch(`../../../api/jogos.php?id_interclasse=${idInterclasse}`).then(r => r.json()),
-                fetch(`../../../api/partidas.php`).then(r => r.json()),
+                fetch(`/api/v1/categorias?id_interclasse=${idInterclasse}`).then(r => r.json()),
+                fetch(`/api/v1/turmas?id_interclasse=${idInterclasse}`).then(r => r.json()),
+                fetch(`/api/v1/equipes`).then(r => r.json()),
+                fetch(`/api/v1/modalidades?id_interclasse=${idInterclasse}`).then(r => r.json()),
+                fetch(`/api/v1/jogos?id_interclasse=${idInterclasse}`).then(r => r.json()),
+                fetch(`/api/v1/partidas`).then(r => r.json()),
             ]);
 
             const extrair = (res, padrao) => (res.status === 'fulfilled' && Array.isArray(res.value)) ? res.value : padrao;
@@ -176,7 +176,7 @@ window.SGIPage.mount("eventos/configurar-categorias", function (pageConfig, page
                     <button type="button" class="categoria-item bg-white d-flex m-auto justify-content-between align-items-center shadow-sm py-3 px-4 mb-3 border border-1 rounded-3 sgi-inline-8dd04718"  data-id="${cId}">
                         <i class="bi bi-trophy fs-3"></i>
                         <h2 class="m-0 fs-5 text-truncate px-3 w-100 text-start">${categoria.nome_categoria}</h2>
-                        <picture><img src="../../public/icons/arrow-right.svg" alt="Seta para direita"></picture>
+                        <picture><img src="${(window.SGI_ASSET_BASE || '/assets') + '/images/arrow-right.svg'}" alt="Seta para direita"></picture>
                     </button>
                 `;
 
@@ -195,7 +195,7 @@ window.SGIPage.mount("eventos/configurar-categorias", function (pageConfig, page
                                         <div class="fs-5 text-dark">${pt}</div>
                                     </div>
                                 </div>
-                                <a class="btn btn-danger w-100 fw-semibold text-uppercase mt-auto border-0 sgi-inline-55d15a66"  href="./edicao_turmas.php?id=${idInterclasse}&id_categoria=${cId}">
+                                <a class="btn btn-danger w-100 fw-semibold text-uppercase mt-auto border-0 sgi-inline-55d15a66"  href="/edicoes/turmas?id=${idInterclasse}&id_categoria=${cId}">
                                     VER DETALHES <i class="bi bi-arrow-right"></i>
                                 </a>
                             </div>
@@ -249,7 +249,7 @@ window.SGIPage.mount("eventos/configurar-categorias", function (pageConfig, page
             btn.disabled = true;
             btn.innerHTML = 'Salvando...';
 
-            const resp = await fetch('../../../api/categorias.php', {
+            const resp = await fetch('/api/v1/categorias', {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ id_categoria: editCategoriaId, nome_categoria: nome })
@@ -282,7 +282,7 @@ window.SGIPage.mount("eventos/configurar-categorias", function (pageConfig, page
         try {
             desabilitar(true);
 
-            const resp = await fetch('../../../api/categorias.php', {
+            const resp = await fetch('/api/v1/categorias', {
                 method: 'DELETE',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ id_categoria: categoriaSelecionada })
@@ -317,7 +317,7 @@ window.SGIPage.mount("eventos/configurar-categorias", function (pageConfig, page
         btnSalvar.innerHTML = "Salvando...";
 
         try {
-            const response = await fetch('../../../api/categorias.php', {
+            const response = await fetch('/api/v1/categorias', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -376,7 +376,7 @@ window.SGIPage.mount("eventos/configurar-categorias", function (pageConfig, page
             status_turma: "1"
         };
 
-        fetch('../../../api/turmas.php', {
+        fetch('/api/v1/turmas', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payloadTurma)
@@ -405,7 +405,7 @@ window.SGIPage.mount("eventos/configurar-categorias", function (pageConfig, page
                 bootstrap.Modal.getOrCreateInstance(document.getElementById('criarTurma')).hide();
                 msg.innerHTML = '';
                 if (turmaId) {
-                    window.location.href = `./turma_alunos.php?id=${encodeURIComponent(idInterclasse)}&id_categoria=${encodeURIComponent(categoriaSelecionada)}&id_turma=${encodeURIComponent(turmaId)}`;
+                    window.location.href = `/turmas/alunos?id=${encodeURIComponent(idInterclasse)}&id_categoria=${encodeURIComponent(categoriaSelecionada)}&id_turma=${encodeURIComponent(turmaId)}`;
                 } else {
                     carregarCategorias();
                 }

@@ -4,7 +4,7 @@
 $paginaAtiva = $paginaAtiva ?? 'home';
 $nivelUsuario = (int)($_SESSION['nivel'] ?? -1);
 
-// Busca a foto da sessão ou do array $usuarioPerfil (caso esteja definido na página perfil.php)
+// Busca a foto da sessão ou do array $usuarioPerfil (caso esteja definido na página de perfil)
 $fotoUsuario = $_SESSION['foto_usuario'] ?? $usuarioPerfil['foto_usuario'] ?? null;
 if ($fotoUsuario) {
     $fotoPath = dirname(__DIR__, 5) . DIRECTORY_SEPARATOR . 'uploads' . DIRECTORY_SEPARATOR . 'fotosUsuarios' . DIRECTORY_SEPARATOR . $fotoUsuario;
@@ -15,11 +15,11 @@ $inicialNome = mb_strtoupper(mb_substr($nomeUsuario, 0, 1));
 
 // LISTA DE ITENS DO MENU
 $navItens = [
-    'perfil'  => ['label' => 'Perfil',   'icon' => 'bi-person-gear',    'url' => './perfil.php'],
-    'home'    => ['label' => 'Início',   'icon' => 'bi-house-door',     'url' => './home.php'],
-    'jogos'   => ['label' => 'Jogos',    'icon' => 'bi-calendar-event', 'url' => './jogos.php'],
-    'ranking' => ['label' => 'Ranking',  'icon' => 'bi-trophy',         'url' => './ranking.php'],
-    'termos'  => ['label' => 'Termos',   'icon' => 'bi-file-text',      'url' => './termos.php'],
+    'perfil'  => ['label' => 'Perfil',   'icon' => 'bi-person-gear',    'url' => \App\Shared\Http\Url::to('aluno/perfil')],
+    'home'    => ['label' => 'Início',   'icon' => 'bi-house-door',     'url' => \App\Shared\Http\Url::to('aluno/inicio')],
+    'jogos'   => ['label' => 'Jogos',    'icon' => 'bi-calendar-event', 'url' => \App\Shared\Http\Url::to('aluno/jogos')],
+    'ranking' => ['label' => 'Ranking',  'icon' => 'bi-trophy',         'url' => \App\Shared\Http\Url::to('aluno/ranking')],
+    'termos'  => ['label' => 'Termos',   'icon' => 'bi-file-text',      'url' => \App\Shared\Http\Url::to('aluno/termos')],
 ];
 
 $classeLink = fn($key) => $key === $paginaAtiva ? 'text-white fw-bold' : 'text-white-50';
@@ -37,7 +37,7 @@ $onclickSair = "onclick=\"return confirm('Deseja realmente sair?')\"";
         <li>
             <a href="<?= $item['url'] ?>" class="<?= $classeLink($key) ?> nav-link p-1 d-flex align-items-center justify-content-center <?= $key === $paginaAtiva ? 'active-nav-icon' : '' ?>" aria-label="<?= $item['label'] ?>">
                 <?php if ($key === 'perfil' && !empty($fotoUsuario)): ?>
-                    <img src="../../../../uploads/fotosUsuarios/<?= htmlspecialchars($fotoUsuario) ?>" class="nav-avatar-img-mobile" alt="Perfil">
+                    <img src="<?= htmlspecialchars(\App\Shared\Http\Url::to('uploads/fotosUsuarios/' . rawurlencode($fotoUsuario))) ?>" class="nav-avatar-img-mobile" alt="Perfil">
                 <?php elseif ($key === 'perfil'): ?>
                     <span class="nav-avatar-fallback-mobile"><?= $inicialNome ?></span>
                 <?php else: ?>
@@ -47,7 +47,7 @@ $onclickSair = "onclick=\"return confirm('Deseja realmente sair?')\"";
         </li>
         <?php endforeach; ?>
         <li>
-            <a href="../../../api/logout.php" class="text-white-50 nav-link p-1" aria-label="Sair" <?= $onclickSair ?>>
+            <a href="<?= \App\Shared\Http\Url::to('api/v1/logout') ?>" class="text-white-50 nav-link p-1" aria-label="Sair" <?= $onclickSair ?>>
                 <i class="bi bi-box-arrow-right"></i>
             </a>
         </li>
@@ -79,7 +79,7 @@ $onclickSair = "onclick=\"return confirm('Deseja realmente sair?')\"";
         <li>
             <a href="<?= $item['url'] ?>" class="text-white d-flex align-items-center justify-content-center position-relative <?= $key === $paginaAtiva ? 'active-nav-icon' : '' ?>" title="<?= $item['label'] ?>">
                 <?php if ($key === 'perfil' && !empty($fotoUsuario)): ?>
-                    <img src="../../../../uploads/fotosUsuarios/<?= htmlspecialchars($fotoUsuario) ?>" class="nav-avatar-img" alt="Perfil">
+                    <img src="<?= htmlspecialchars(\App\Shared\Http\Url::to('uploads/fotosUsuarios/' . rawurlencode($fotoUsuario))) ?>" class="nav-avatar-img" alt="Perfil">
                 <?php elseif ($key === 'perfil'): ?>
                     <span class="nav-avatar-fallback"><?= $inicialNome ?></span>
                 <?php else: ?>
@@ -89,7 +89,7 @@ $onclickSair = "onclick=\"return confirm('Deseja realmente sair?')\"";
         </li>
         <?php endforeach; ?>
         <li>
-            <a href="../../../../api/logout.php" class="text-white" <?= $onclickSair ?> title="Sair">
+            <a href="<?= \App\Shared\Http\Url::to('api/v1/logout') ?>" class="text-white" <?= $onclickSair ?> title="Sair">
                 <i class="bi bi-box-arrow-right"></i>
             </a>
         </li>

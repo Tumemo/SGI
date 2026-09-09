@@ -1,6 +1,6 @@
 window.SGIPage.mount("eventos/configurar-turmas", function (pageConfig, pageScope) {
 
-    const API = '../../../api/';
+    const API = '/api/v1/';
     const urlParams = new URLSearchParams(window.location.search);
     const idInterclasse = urlParams.get('id');
     const idCategoriaUrl = urlParams.get('id_categoria');
@@ -13,7 +13,7 @@ window.SGIPage.mount("eventos/configurar-turmas", function (pageConfig, pageScop
 
     if (!idInterclasse) {
         alert("Erro: Nenhum interclasse selecionado! Você será redirecionado.");
-        window.location.href = "home.php";
+        window.location.href = "/edicoes";
     }
 
     function getEl(id) {
@@ -24,7 +24,7 @@ window.SGIPage.mount("eventos/configurar-turmas", function (pageConfig, pageScop
     if (idInterclasse) {
         ['btnVoltarTurmasMobile', 'btnVoltarTurmasDesk'].forEach(id => {
             const el = getEl(id);
-            if (el) el.href = `./edicao_categorias.php?id=${idInterclasse}`;
+            if (el) el.href = `/edicoes/categorias?id=${idInterclasse}`;
         });
         window.SGIInterclasse.getInterclasseById(idInterclasse).then(dados => {
             const nome = dados?.nome_interclasse || 'Interclasse';
@@ -43,7 +43,7 @@ window.SGIPage.mount("eventos/configurar-turmas", function (pageConfig, pageScop
 
     async function carregarCategorias() {
         try {
-            const response = await fetch(`${API}categorias.php?id_interclasse=${idInterclasse}`);
+            const response = await fetch(`${API}categorias?id_interclasse=${idInterclasse}`);
             const categorias = await response.json();
             const container = getEl('listaCategorias');
             container.innerHTML = '';
@@ -81,7 +81,7 @@ window.SGIPage.mount("eventos/configurar-turmas", function (pageConfig, pageScop
 
     async function carregarTurmas(idCategoria) {
         try {
-            const response = await fetch(`${API}turmas.php?id_categoria=${idCategoria}&id_interclasse=${idInterclasse}`);
+            const response = await fetch(`${API}turmas?id_categoria=${idCategoria}&id_interclasse=${idInterclasse}`);
             const turmas = await response.json();
             todasTurmasAtuais = turmas;
             renderizarTurmas(turmas);
@@ -98,7 +98,7 @@ window.SGIPage.mount("eventos/configurar-turmas", function (pageConfig, pageScop
 
         if (turmas && turmas.length > 0) {
             const html = turmas.map(turma => `
-                <a href="./turma_alunos.php?id=${idInterclasse}&id_turma=${turma.id_turma}" class="text-decoration-none">
+                <a href="/turmas/alunos?id=${idInterclasse}&id_turma=${turma.id_turma}" class="text-decoration-none">
                     <div class="bg-white rounded-3 shadow-sm p-4 d-flex align-items-center justify-content-between">
                         <span class="fw-bold text-dark fs-5">${esc(turma.nome_turma)}</span>
                         <i class="bi bi-chevron-right text-muted"></i>
@@ -178,7 +178,7 @@ window.SGIPage.mount("eventos/configurar-turmas", function (pageConfig, pageScop
             try {
                 btnSalvar.disabled = true;
                 msg.innerHTML = "Salvando turma...";
-                const response = await fetch(`${API}turmas.php`, {
+                const response = await fetch(`${API}turmas`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'

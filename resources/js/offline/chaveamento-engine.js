@@ -2,7 +2,7 @@
    SGI — Motor de Chaveamento Híbrido (Online/Offline)
    --------------------------------------------------------------------------
    Ordem de verificação ao carregar/avançar a árvore:
-     1) Tenta a API PHP (chaveamento.php). Sendo online, o próprio fetch
+     1) Tenta a API PHP (chaveamentos). Sendo online, o próprio fetch
         encapsulado (offline-core.js) já persiste o snapshot no IndexedDB.
      2) Sem conexão (ou erro/servidor indisponível): o fetch serve o snapshot
         do IndexedDB; se não houver resposta, lê o cache explicitamente.
@@ -76,9 +76,19 @@
 
     function apiBase() {
         try {
-            return window.location.pathname.replace(/\/views\/src\/pages\/[^/]*$/, '/api/');
+            var base = window.SGI_BASE_PATH ? '/' + String(window.SGI_BASE_PATH).replace(/^\/+|\/+$/g, '') : '';
+            if (!base) {
+                var scripts = document.getElementsByTagName('script');
+                for (var i = 0; i < scripts.length; i++) {
+                    var src = scripts[i].src || '';
+                    var marker = '/assets/';
+                    var pos = src.indexOf(marker);
+                    if (pos > -1) { base = new URL(src, window.location.href).pathname.split(marker)[0]; break; }
+                }
+            }
+            return base + '/api/v1/';
         } catch (e) {
-            return '/api/';
+            return '/api/v1/';
         }
     }
 
@@ -89,8 +99,8 @@
     /* --------------------- Leitura dos dados pendentes locais ---------------------
        Os resultados lançados offline ficam na mutation_queue (IndexedDB
        sgi_offline), na forma das requisições originais:
-         - POST lancar_resultado.php  → { id_jogo, resultados:[{id_equipe,gols}] }
-         - PUT  jogos.php             → { id_jogo, status_jogo, data_jogo, ... }
+         - POST resultados  → { id_jogo, resultados:[{id_equipe,gols}] }
+         - PUT  jogos             → { id_jogo, status_jogo, data_jogo, ... }
        Reproduzi-los sobre o snapshot é o que faz a árvore avançar offline. */
 
     function coletarPendencias() {
@@ -108,13 +118,13 @@
                 } catch (e) { dados = null; }
                 if (!dados) return;
 
-                if (/\/(?:lancar_resultado\.php|v1\/resultados)\/?(?:\?|$)/.test(url)) {
+                if (/\/api\/v1\/resultados\/?(?:\?|$)/.test(url)) {
                     ops.push({ tipo: 'resultado', quando: item.createdAt || 0, dados: dados });
-                } else if (/\/(?:partidas\.php|v1\/partidas)\/?(?:\?|$)/.test(url) && String(item.method || '').toUpperCase() === 'POST') {
+                } else if (/\/api\/v1\/partidas\/?(?:\?|$)/.test(url) && String(item.method || '').toUpperCase() === 'POST') {
                     ops.push({ tipo: 'partida_resultado', quando: item.createdAt || 0, dados: dados });
-                } else if (/\/(?:jogos\.php|v1\/jogos)\/?(?:\?|$)/.test(url) && String(item.method || '').toUpperCase() === 'PUT') {
+                } else if (/\/api\/v1\/jogos\/?(?:\?|$)/.test(url) && String(item.method || '').toUpperCase() === 'PUT') {
                     ops.push({ tipo: 'jogo_update', quando: item.createdAt || 0, dados: dados });
-                } else if (/\/(?:chaveamento\.php|v1\/chaveamentos)\/?(?:\?|$)/.test(url) && String(item.method || '').toUpperCase() === 'POST' && dados.tipo_modalidade === 'individual') {
+                } else if (/\/api\/v1\/chaveamentos\/?(?:\?|$)/.test(url) && String(item.method || '').toUpperCase() === 'POST' && dados.tipo_modalidade === 'individual') {
                     ops.push({ tipo: 'ind_ranking', quando: item.createdAt || 0, dados: dados });
                 }
             });
@@ -124,7 +134,7 @@
     }
 
     /* Aplica as operações pendentes sobre o array de jogos (em memória).
-       Retorna true se algo foi alterado. Validações espelham lancar_resultado.php:
+       Retorna true se algo foi alterado. Validações espelham resultados:
        sem placar 0x0 e sem empate ao concluir um jogo. */
     function aplicarPendencias(jogos, ops, mapaPorId) {
         var alterou = false;
@@ -216,7 +226,7 @@
        concluído, garante o vencedor no jogo-pai da fase seguinte (criando-o
        se necessário), autoconclui pais com bye implícito e gera a disputa
        de 3º lugar quando as semifinais terminam. A final (MM:2) é o último
-       jogo operacional: seu vencedor é o campeão e não existe jogo MM:1. */
+       jogo operacional: seu vencedor é o campeão e não existe partida solo. */
 
     function criarMotorAvanco(jogos, dirEquipes, contadorInicial) {
         var mapaTag = {};
@@ -372,7 +382,7 @@
             var w1Obj = (jogo.equipes || []).find(function(e) { return Number(e.id_equipe) === Number(w1); });
 
             // A grande final encerra o chaveamento. O campeão é derivado da
-            // própria final; criar MM:1 gerava uma partida solo sem ação do
+            // própria final; criar uma partida solo não gera ação do
             // usuário e fazia a agenda oscilar entre offline/online.
             if (meta.largura === 2) {
                 verificarDisputaTerceiro();
@@ -574,7 +584,7 @@
 
     function buscarArvore(idModalidade) {
         idModalidade = Number(idModalidade) || 0;
-        var urlRel = apiBase() + 'chaveamento.php?id_modalidade=' + idModalidade;
+        var urlRel = apiBase() + 'chaveamentos?id_modalidade=' + idModalidade;
 
         return fetch(urlRel, { headers: { 'Accept': 'application/json' } })
             .then(function (resp) { return resp.json(); })
@@ -709,7 +719,7 @@
     /* --------------------------- Sincronização (volta) ---------------------------
        A fila de mutações contém exatamente os POSTs/PUTs originais feitos
        offline. Reenviá-los reproduz no PHP os mesmos disparos de avanço do
-       modo online (lancar_resultado.php → sgi_chaveamento_processar_avanco),
+       modo online (resultados → sgi_chaveamento_processar_avanco),
        garantindo a reconstrução fiel da árvore no servidor. */
 
     function sincronizacaoConfirmada(resposta) {
@@ -737,14 +747,14 @@
             partidas/gols correspondentes (store "partidas").
          2) Identifica o vencedor (maior gols; empate → menor id_equipe).
          3) Monta o estado completo da árvore localmente: snapshot capturado
-            enquanto online (chaveamento.php?id_modalidade=X) SOBREPOSTO às
+            enquanto online (chaveamentos?id_modalidade=X) SOBREPOSTO às
             linhas locais — assim decisões offline anteriores são respeitadas.
          4) Roda o motor de avanço (criarMotorAvanco) que percorre os jogos
             concluídos RECURSIVAMENTE: insere o vencedor na chave-pai
             (MM:largura/2:floor(slot/2):N), cria o pai se não existir,
             autoconclui chaves com bye implícito, gera a disputa de 3º lugar
             quando as semifinais terminam. A grande final (MM:2) é terminal:
-            o campeão é derivado dela e não há um jogo solo MM:1.
+            o campeão é derivado dela e não há um jogo solo adicional.
          5) PERSISTE no banco JS cada partida derivada que ainda não existia
             (id temporário negativo estável + partidas "mm_local_…", status
             'Agendado') para que a nova confrontação possa ser jogada offline.
@@ -803,7 +813,7 @@
             }
             var idModalidade = Number(alvo.modalidades_id_modalidade || alvo.id_modalidade || 0);
 
-            var urlArvore = apiBase() + 'chaveamento.php?id_modalidade=' + idModalidade;
+            var urlArvore = apiBase() + 'chaveamentos?id_modalidade=' + idModalidade;
             return lerCacheSnapshot(urlArvore).then(function (snap) {
                 /* 3) Base = snapshot remoto clonado + sobreposição local */
                 var base = snap && Array.isArray(snap.jogos) ? JSON.parse(JSON.stringify(snap.jogos)) : [];
@@ -885,7 +895,7 @@
                 motor.processarConcluidos();
                 recalcularDerivados(base);
 
-                /* A final é terminal: não materializar nem procurar MM:1. */
+                /* A final é terminal e não gera uma partida adicional. */
                 var ehFinal = metaAlvo.largura === 2;
                 var pai = null;
                 if (!ehFinal) {
@@ -981,8 +991,7 @@
                             nome_jogo: pai.nome_jogo,
                             nome_display: displayPai,
                             status_jogo: pai.status_jogo,
-                            formada: (pai.equipes || []).length >= 2,
-                            eh_campeao: pai.fase_nivel === 1
+                            formada: (pai.equipes || []).length >= 2
                         }
                     };
                 });

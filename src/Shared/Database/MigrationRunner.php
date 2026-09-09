@@ -14,7 +14,7 @@ final class MigrationRunner
     }
 
     /** @return list<string> */
-    public function migrate(bool $baselineExisting = false): array
+    public function migrate(): array
     {
         $lock = $this->connection->query("SELECT GET_LOCK(CONCAT(DATABASE(), ':migrations'), 10) AS acquired")->fetch_assoc();
         if ((int) ($lock['acquired'] ?? 0) !== 1) {
@@ -41,12 +41,8 @@ final class MigrationRunner
                     }
                     continue;
                 }
-                $baseline = $index === 0 && $existing;
-                if ($baseline && !$baselineExisting) {
-                    throw new RuntimeException('Base existente sem histórico. Valide um backup e execute migrate --baseline para registrar a estrutura inicial.');
-                }
-                if ($baseline) {
-                    $this->assertBaseline((string) file_get_contents($file));
+                if ($index === 0 && $existing) {
+                    throw new RuntimeException('Base existente sem histórico de migrações. Instale o schema atual ou restaure um backup válido.');
                 }
                 $statement = $this->connection->prepare('INSERT INTO sgi_migrations (version, checksum) VALUES (?, ?)');
                 $statement->bind_param('ss', $version, $hash);
@@ -54,10 +50,8 @@ final class MigrationRunner
                 $statement->close();
                 // DDL faz commit implícito em MySQL/MariaDB. O marcador dirty
                 // impede que uma aplicação parcial seja confundida com sucesso.
-                if (!$baseline) {
-                    foreach (SqlScript::statements((string) file_get_contents($file)) as $sql) {
-                        $this->connection->query($sql);
-                    }
+                foreach (SqlScript::statements((string) file_get_contents($file)) as $sql) {
+                    $this->connection->query($sql);
                 }
                 $statement = $this->connection->prepare('UPDATE sgi_migrations SET dirty = 0, applied_at = CURRENT_TIMESTAMP WHERE version = ?');
                 $statement->bind_param('s', $version);
@@ -71,22 +65,4 @@ final class MigrationRunner
         }
     }
 
-    private function assertBaseline(string $sql): void
-    {
-        preg_match_all('/CREATE TABLE `([^`]+)`\s*\((.*?)\) ENGINE=/s', $sql, $tables, PREG_SET_ORDER);
-        foreach ($tables as $table) {
-            preg_match_all('/^\s*`([^`]+)`/m', $table[2], $columns);
-            $actual = array_column($this->connection->query('SHOW COLUMNS FROM `' . $table[1] . '`')->fetch_all(MYSQLI_ASSOC), 'Field');
-            if (array_diff($columns[1], $actual) !== []) {
-                throw new RuntimeException('Estrutura incompatível com a versão inicial: ' . $table[1]);
-            }
-        }
-        $index = $this->connection->query("SHOW INDEX FROM usuarios WHERE Key_name = 'uk_matricula_interclasse'")->fetch_all(MYSQLI_ASSOC);
-        usort($index, static fn (array $left, array $right): int => ((int) ($left['Seq_in_index'] ?? 0)) <=> ((int) ($right['Seq_in_index'] ?? 0)));
-        if ($index === []
-            || (int) ($index[0]['Non_unique'] ?? 1) !== 0
-            || array_column($index, 'Column_name') !== ['matricula_usuario', 'interclasses_id_interclasse']) {
-            throw new RuntimeException('Índice de matrícula por edição não confere.');
-        }
-    }
 }

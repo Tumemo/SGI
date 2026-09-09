@@ -99,7 +99,7 @@ window.SGIPage.mount("eventos/configurar-arrecadacao", function (pageConfig, pag
         const pendentes = todasAsTurmas.some(t => getQuantidadePendente(t) > 0);
         if (pendentes) {
             const xhr = new XMLHttpRequest();
-            xhr.open('POST', '../../../api/arrecadacao.php', false);
+            xhr.open('POST', '/api/v1/arrecadacao', false);
             xhr.setRequestHeader('Content-Type', 'application/json');
             const payload = {
                 id_interclasse: idInterclasseResolvida || idInterclasseArrecadacao,
@@ -127,14 +127,14 @@ window.SGIPage.mount("eventos/configurar-arrecadacao", function (pageConfig, pag
             if (nomeMob) nomeMob.innerText = ativo.nome_interclasse;
             const vDesk = document.getElementById('btnVoltarArrecadacao');
             if (vDesk) {
-                vDesk.href = `./dashboard.php?id=${idInterclasseArrecadacao || ativo.id_interclasse}`;
+                vDesk.href = `/painel?id=${idInterclasseArrecadacao || ativo.id_interclasse}`;
             }
             const vMob = document.getElementById('btnVoltarArrecadacaoMob');
             if (vMob) {
-                vMob.href = `./dashboard.php?id=${idInterclasseArrecadacao || ativo.id_interclasse}`;
+                vMob.href = `/painel?id=${idInterclasseArrecadacao || ativo.id_interclasse}`;
             }
 
-            const res = await fetch(`../../../api/turmas.php?id_interclasse=${ativo.id_interclasse}`);
+            const res = await fetch(`/api/v1/turmas?id_interclasse=${ativo.id_interclasse}`);
             todasAsTurmas = await res.json();
 
             renderizarTelas();
@@ -166,7 +166,7 @@ window.SGIPage.mount("eventos/configurar-arrecadacao", function (pageConfig, pag
         };
 
         try {
-            const response = await fetch('../../../api/arrecadacao.php', {
+            const response = await fetch('/api/v1/arrecadacao', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)
@@ -188,7 +188,7 @@ window.SGIPage.mount("eventos/configurar-arrecadacao", function (pageConfig, pag
                 alert('Erro do servidor: ' + result.message);
             }
         } catch (error) {
-            alert('Erro de comunicação: Verifique se o ficheiro api/arrecadacao.php existe e se o banco de dados está online.');
+            alert('Erro de comunicação: Verifique se o ficheiro api/v1/arrecadacao existe e se o banco de dados está online.');
             console.error('Falha no salvamento:', error);
         } finally {
             botoes.forEach(btn => {
@@ -235,7 +235,7 @@ window.SGIPage.mount("eventos/configurar-arrecadacao", function (pageConfig, pag
         }
 
         try {
-            const res = await fetch(`../../../api/arrecadacao.php?id_interclasse=${idInterclasse}`);
+            const res = await fetch(`/api/v1/arrecadacao?id_interclasse=${idInterclasse}`);
             historicoRegistros = await res.json();
 
             if (!Array.isArray(historicoRegistros)) {
@@ -352,7 +352,7 @@ window.SGIPage.mount("eventos/configurar-arrecadacao", function (pageConfig, pag
         const idInterclasse = idInterclasseResolvida || idInterclasseArrecadacao;
 
         try {
-            const res = await fetch('../../../api/arrecadacao.php', {
+            const res = await fetch('/api/v1/arrecadacao', {
                 method: 'DELETE',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ id_historico: idHistorico, id_interclasse: idInterclasse })

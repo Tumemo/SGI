@@ -23,28 +23,28 @@ window.SGIPage.mount("eventos/configurar-resumo", function (pageConfig, pageScop
 
         ['btnVoltarMobile', 'btnVoltarResumoTopo'].forEach(id => {
             const el = document.getElementById(id);
-            if (el) el.href = `./edicao_pontuacao.php?id=${idInterclasse}&modo=create`;
+            if (el) el.href = `/edicoes/pontuacao?id=${idInterclasse}&modo=create`;
         });
-        document.getElementById('btnVoltarDesktop').href = `./edicao_pontuacao.php?id=${idInterclasse}&modo=create`;
+        document.getElementById('btnVoltarDesktop').href = `/edicoes/pontuacao?id=${idInterclasse}&modo=create`;
         const spanDesk = document.getElementById('nomeInterclasseResumoDesk');
         if (spanDesk) spanDesk.innerText = nome;
 
-        document.getElementById('linkEditarModalidadesMobile').href = `./edicao_modalidades.php?id=${idInterclasse}&modo=create`;
-        document.getElementById('linkEditarModalidadesDesktop').href = `./edicao_modalidades.php?id=${idInterclasse}&modo=create`;
+        document.getElementById('linkEditarModalidadesMobile').href = `/edicoes/modalidades?id=${idInterclasse}&modo=create`;
+        document.getElementById('linkEditarModalidadesDesktop').href = `/edicoes/modalidades?id=${idInterclasse}&modo=create`;
 
-        document.getElementById('linkEditarRegulamentosMobile').href = `./edicao_pontuacao.php?id=${idInterclasse}&modo=create`;
-        document.getElementById('linkEditarRegulamentosDesktop').href = `./edicao_pontuacao.php?id=${idInterclasse}&modo=create`;
-        document.getElementById('linkEditarCategoriasMobile').href = `./edicao_categorias.php?id=${idInterclasse}&modo=create`;
-        document.getElementById('linkEditarCategoriasDesktop').href = `./edicao_categorias.php?id=${idInterclasse}&modo=create`;
+        document.getElementById('linkEditarRegulamentosMobile').href = `/edicoes/pontuacao?id=${idInterclasse}&modo=create`;
+        document.getElementById('linkEditarRegulamentosDesktop').href = `/edicoes/pontuacao?id=${idInterclasse}&modo=create`;
+        document.getElementById('linkEditarCategoriasMobile').href = `/edicoes/categorias?id=${idInterclasse}&modo=create`;
+        document.getElementById('linkEditarCategoriasDesktop').href = `/edicoes/categorias?id=${idInterclasse}&modo=create`;
         window.SGIInterclasse.getActiveInterclasse().then((ativo) => {
             const idTurmas = ativo?.id_interclasse || idInterclasse;
-            document.getElementById('linkEditarTurmasMobile').href = `./turmas.php?id=${idTurmas}`;
-            document.getElementById('linkEditarTurmasDesktop').href = `./turmas.php?id=${idTurmas}`;
+            document.getElementById('linkEditarTurmasMobile').href = `/turmas?id=${idTurmas}`;
+            document.getElementById('linkEditarTurmasDesktop').href = `/turmas?id=${idTurmas}`;
         }).catch(() => {
-            document.getElementById('linkEditarTurmasMobile').href = `./turmas.php?id=${idInterclasse}`;
-            document.getElementById('linkEditarTurmasDesktop').href = `./turmas.php?id=${idInterclasse}`;
+            document.getElementById('linkEditarTurmasMobile').href = `/turmas?id=${idInterclasse}`;
+            document.getElementById('linkEditarTurmasDesktop').href = `/turmas?id=${idInterclasse}`;
         });
-        document.getElementById('btnCriarInterclasseFinal').href = `./dashboard.php?id=${idInterclasse}`;
+        document.getElementById('btnCriarInterclasseFinal').href = `/painel?id=${idInterclasse}`;
         ['nomeInterclasseResumo', 'nomeInterclasseResumoMob'].forEach(id => {
             const el = document.getElementById(id);
             if (el) el.innerText = nome;
@@ -63,7 +63,7 @@ window.SGIPage.mount("eventos/configurar-resumo", function (pageConfig, pageScop
 
         // --- Tentativa de carregar Modalidades ---
         try {
-            const resMod = await fetch(`../../../api/modalidades.php?id_interclasse=${idInterclasse}`);
+            const resMod = await fetch(`/api/v1/modalidades?id_interclasse=${idInterclasse}`);
             const dataMod = await resMod.json();
 
             let textoModalidades = "(Nenhuma modalidade cadastrada)";
@@ -99,8 +99,8 @@ window.SGIPage.mount("eventos/configurar-resumo", function (pageConfig, pageScop
 
         try {
             const [resCategorias, resTurmas] = await Promise.all([
-                fetch(`../../../api/categorias.php?id_interclasse=${idInterclasse}`),
-                fetch(`../../../api/turmas.php?id_interclasse=${idInterclasse}`)
+                fetch(`/api/v1/categorias?id_interclasse=${idInterclasse}`),
+                fetch(`/api/v1/turmas?id_interclasse=${idInterclasse}`)
             ]);
             const categorias = await resCategorias.json();
             const turmas = await resTurmas.json();
@@ -136,17 +136,17 @@ window.SGIPage.mount("eventos/configurar-resumo", function (pageConfig, pageScop
                 if (String(item.id_interclasse) !== String(idInterclasse) && String(item.status_interclasse) === '1') {
                     const body = new FormData();
                     body.append('status_interclasse', '0');
-                    await fetch(`../../../api/interclasse.php?id=${item.id_interclasse}`, { method: 'POST', body });
+                    await fetch(`/api/v1/edicoes?id=${item.id_interclasse}`, { method: 'POST', body });
                 }
             }
             const bodyAtual = new FormData();
             bodyAtual.append('status_interclasse', '1');
-            await fetch(`../../../api/interclasse.php?id=${idInterclasse}`, { method: 'POST', body: bodyAtual });
+            await fetch(`/api/v1/edicoes?id=${idInterclasse}`, { method: 'POST', body: bodyAtual });
         } catch (error) {
             console.error(error);
         } finally {
             await window.SGIInterclasse.refreshNavigation();
-            window.location.href = `./dashboard.php?id=${idInterclasse}`;
+            window.location.href = `/painel?id=${idInterclasse}`;
         }
     });
 

@@ -2,7 +2,7 @@
 $tituloPagina = 'SGI - Dashboard';
 $titulo = 'Dashboard';
 $mostrarVoltar = true;
-$urlVoltar = './home.php';
+$urlVoltar = \App\Shared\Http\Url::to('aluno/inicio');
 $nivelUsuario = (int)($_SESSION['nivel'] ?? -1);
 include SGI_ROOT . '/resources/views/components/admin-head.php';
 include SGI_ROOT . '/resources/views/components/admin-header.php';
@@ -18,7 +18,7 @@ $isMesario = $nivelUsuario === 2;
 <div id="conteudo-principal" data-sgi-shell="1">
     <main class="main-desktop-layout main-dashboard-layout">
         <div class="container-fluid px-0">
-            <a href="./home.php" class="btn btn-outline-danger btn-sm mb-3 d-inline-flex align-items-center gap-1">
+            <a href="<?= \App\Shared\Http\Url::to('aluno/inicio') ?>" class="btn btn-outline-danger btn-sm mb-3 d-inline-flex align-items-center gap-1">
                 <i class="bi bi-house"></i> Voltar ao início
             </a>
 
@@ -33,7 +33,7 @@ $isMesario = $nivelUsuario === 2;
             <?php if ($isMesario): ?>
 
             <div class="col-12 col-md-6 col-lg-4">
-                <a href="edicao_agenda.php" id="linkAgenda" class="dash-card">
+                <a href="<?= \App\Shared\Http\Url::to('edicoes/agenda') ?>" id="linkAgenda" class="dash-card">
                     <div class="dash-card-red-corner"></div>
                     <div class="dash-card-header">
                         <div class="dash-card-icon"><i class="bi bi-calendar3"></i></div>
@@ -43,7 +43,7 @@ $isMesario = $nivelUsuario === 2;
                 </a>
             </div>
             <div class="col-12 col-md-6 col-lg-4">
-                <a href="chaveamento_arvore.php" id="linkChaveamentos" class="dash-card">
+                <a href="<?= \App\Shared\Http\Url::to('chaveamento') ?>" id="linkChaveamentos" class="dash-card">
                     <div class="dash-card-red-corner"></div>
                     <div class="dash-card-header">
                         <div class="dash-card-icon"><i class="bi bi-diagram-3"></i></div>
@@ -54,7 +54,7 @@ $isMesario = $nivelUsuario === 2;
             </div>
            
             <div class="col-12 col-md-6 col-lg-4">
-                <a href="ocorrencias.php" id="linkOcorrencias" class="dash-card">
+                <a href="<?= \App\Shared\Http\Url::to('ocorrencias') ?>" id="linkOcorrencias" class="dash-card">
                     <div class="dash-card-red-corner"></div>
                     <div class="dash-card-header">
                         <div class="dash-card-icon"><i class="bi bi-exclamation-triangle"></i></div>
@@ -67,7 +67,7 @@ $isMesario = $nivelUsuario === 2;
 
             <?php if ($isColaborador): ?>
             <div class="col-12 col-md-6 col-lg-4">
-                <a href="modalidades.php" id="linkModalidades" class="dash-card">
+                <a href="<?= \App\Shared\Http\Url::to('modalidades') ?>" id="linkModalidades" class="dash-card">
                     <div class="dash-card-red-corner"></div>
                     <div class="dash-card-header">
                         <div class="dash-card-icon"><i class="bi bi-trophy"></i></div>
@@ -77,7 +77,7 @@ $isMesario = $nivelUsuario === 2;
                 </a>
             </div>
             <div class="col-12 col-md-6 col-lg-4">
-                <a href="edicao_pontuacao.php" id="linkPontuacoes" class="dash-card">
+                <a href="<?= \App\Shared\Http\Url::to('edicoes/pontuacao') ?>" id="linkPontuacoes" class="dash-card">
                     <div class="dash-card-red-corner"></div>
                     <div class="dash-card-header">
                         <div class="dash-card-icon"><i class="bi bi-award"></i></div>
@@ -87,7 +87,7 @@ $isMesario = $nivelUsuario === 2;
                 </a>
             </div>
             <div class="col-12 col-md-6 col-lg-4">
-                <a href="edicao_locais.php" id="linkLocais" class="dash-card">
+                <a href="<?= \App\Shared\Http\Url::to('edicoes/locais') ?>" id="linkLocais" class="dash-card">
                     <div class="dash-card-red-corner"></div>
                     <div class="dash-card-header">
                         <div class="dash-card-icon"><i class="bi bi-geo-alt"></i></div>
@@ -97,7 +97,7 @@ $isMesario = $nivelUsuario === 2;
                 </a>
             </div>
             <div class="col-12 col-md-6 col-lg-4">
-                <a href="colaboradores.php" id="linkColaboradores" class="dash-card">
+                <a href="<?= \App\Shared\Http\Url::to('colaboradores') ?>" id="linkColaboradores" class="dash-card">
                     <div class="dash-card-red-corner"></div>
                     <div class="dash-card-header">
                         <div class="dash-card-icon"><i class="bi bi-people"></i></div>
@@ -107,7 +107,7 @@ $isMesario = $nivelUsuario === 2;
                 </a>
             </div>
             <div class="col-12 col-md-6 col-lg-4">
-                <a href="edicao_arrecadacao.php" id="linkArrecadacoes" class="dash-card">
+                <a href="<?= \App\Shared\Http\Url::to('edicoes/arrecadacao') ?>" id="linkArrecadacoes" class="dash-card">
                     <div class="dash-card-red-corner"></div>
                     <div class="dash-card-header">
                         <div class="dash-card-icon"><i class="bi bi-basket"></i></div>
@@ -117,7 +117,7 @@ $isMesario = $nivelUsuario === 2;
                 </a>
             </div>
             <div class="col-12 col-md-6 col-lg-4">
-                <a href="ocorrencias.php" id="linkOcorrenciasColab" class="dash-card">
+                <a href="<?= \App\Shared\Http\Url::to('ocorrencias') ?>" id="linkOcorrenciasColab" class="dash-card">
                     <div class="dash-card-red-corner"></div>
                     <div class="dash-card-header">
                         <div class="dash-card-icon"><i class="bi bi-exclamation-triangle"></i></div>
@@ -127,7 +127,7 @@ $isMesario = $nivelUsuario === 2;
                 </a>
             </div>
             <div class="col-12 col-md-6 col-lg-4">
-                <a href="categorias.php" id="linkCategorias" class="dash-card">
+                <a href="<?= \App\Shared\Http\Url::to('categorias') ?>" id="linkCategorias" class="dash-card">
                     <div class="dash-card-red-corner"></div>
                     <div class="dash-card-header">
                         <div class="dash-card-icon"><i class="bi bi-bookmark"></i></div>
@@ -137,7 +137,7 @@ $isMesario = $nivelUsuario === 2;
                 </a>
             </div>
             <div class="col-12 col-md-6 col-lg-4">
-                <a href="turmas.php" id="linkTurmas" class="dash-card">
+                <a href="<?= \App\Shared\Http\Url::to('turmas') ?>" id="linkTurmas" class="dash-card">
                     <div class="dash-card-red-corner"></div>
                     <div class="dash-card-header">
                         <div class="dash-card-icon"><i class="bi bi-backpack"></i></div>
@@ -147,7 +147,7 @@ $isMesario = $nivelUsuario === 2;
                 </a>
             </div>
             <div class="col-12 col-md-6 col-lg-4">
-                <a href="edicao_equipes.php" id="linkEquipes" class="dash-card">
+                <a href="<?= \App\Shared\Http\Url::to('edicoes/equipes') ?>" id="linkEquipes" class="dash-card">
                     <div class="dash-card-red-corner"></div>
                     <div class="dash-card-header">
                         <div class="dash-card-icon"><i class="bi bi-diagram-3"></i></div>
@@ -157,7 +157,7 @@ $isMesario = $nivelUsuario === 2;
                 </a>
             </div>
             <div class="col-12 col-md-6 col-lg-4">
-                <a href="ranking.php" id="linkRanking" class="dash-card">
+                <a href="<?= \App\Shared\Http\Url::to('ranking') ?>" id="linkRanking" class="dash-card">
                     <div class="dash-card-red-corner"></div>
                     <div class="dash-card-header">
                         <div class="dash-card-icon"><i class="bi bi-trophy"></i></div>
@@ -170,7 +170,7 @@ $isMesario = $nivelUsuario === 2;
 
             <?php if ($isAdmin): ?>
             <div class="col-12 col-md-6 col-lg-4">
-                <a href="edicao_modalidades.php" id="linkModalidades" class="dash-card">
+                <a href="<?= \App\Shared\Http\Url::to('edicoes/modalidades') ?>" id="linkModalidades" class="dash-card">
                     <div class="dash-card-red-corner"></div>
                     <div class="dash-card-header">
                         <div class="dash-card-icon"><i class="bi bi-trophy"></i></div>
@@ -180,7 +180,7 @@ $isMesario = $nivelUsuario === 2;
                 </a>
             </div>
             <div class="col-12 col-md-6 col-lg-4">
-                <a href="edicao_pontuacao.php" id="linkPontuacoes" class="dash-card">
+                <a href="<?= \App\Shared\Http\Url::to('edicoes/pontuacao') ?>" id="linkPontuacoes" class="dash-card">
                     <div class="dash-card-red-corner"></div>
                     <div class="dash-card-header">
                         <div class="dash-card-icon"><i class="bi bi-award"></i></div>
@@ -190,7 +190,7 @@ $isMesario = $nivelUsuario === 2;
                 </a>
             </div>
             <div class="col-12 col-md-6 col-lg-4">
-                <a href="edicao_locais.php" id="linkLocais" class="dash-card">
+                <a href="<?= \App\Shared\Http\Url::to('edicoes/locais') ?>" id="linkLocais" class="dash-card">
                     <div class="dash-card-red-corner"></div>
                     <div class="dash-card-header">
                         <div class="dash-card-icon"><i class="bi bi-building-gear"></i></div>
@@ -200,7 +200,7 @@ $isMesario = $nivelUsuario === 2;
                 </a>
             </div>
             <div class="col-12 col-md-6 col-lg-4">
-                <a href="edicao_agenda.php" id="linkAgenda" class="dash-card">
+                <a href="<?= \App\Shared\Http\Url::to('edicoes/agenda') ?>" id="linkAgenda" class="dash-card">
                     <div class="dash-card-red-corner"></div>
                     <div class="dash-card-header">
                         <div class="dash-card-icon"><i class="bi bi-calendar3"></i></div>
@@ -210,7 +210,7 @@ $isMesario = $nivelUsuario === 2;
                 </a>
             </div>
             <div class="col-12 col-md-6 col-lg-4">
-                <a href="edicao_arrecadacao.php" id="linkArrecadacoes" class="dash-card">
+                <a href="<?= \App\Shared\Http\Url::to('edicoes/arrecadacao') ?>" id="linkArrecadacoes" class="dash-card">
                     <div class="dash-card-red-corner"></div>
                     <div class="dash-card-header">
                         <div class="dash-card-icon"><i class="bi bi-basket"></i></div>
@@ -220,7 +220,7 @@ $isMesario = $nivelUsuario === 2;
                 </a>
             </div>
             <div class="col-12 col-md-6 col-lg-4">
-                <a href="ocorrencias.php" id="linkOcorrenciasAdmin" class="dash-card">
+                <a href="<?= \App\Shared\Http\Url::to('ocorrencias') ?>" id="linkOcorrenciasAdmin" class="dash-card">
                     <div class="dash-card-red-corner"></div>
                     <div class="dash-card-header">
                         <div class="dash-card-icon"><i class="bi bi-exclamation-triangle"></i></div>
@@ -230,7 +230,7 @@ $isMesario = $nivelUsuario === 2;
                 </a>
             </div>
             <div class="col-12 col-md-6 col-lg-4">
-                <a href="edicao_categorias.php" id="linkCategorias" class="dash-card">
+                <a href="<?= \App\Shared\Http\Url::to('edicoes/categorias') ?>" id="linkCategorias" class="dash-card">
                     <div class="dash-card-red-corner"></div>
                     <div class="dash-card-header">
                         <div class="dash-card-icon"><i class="bi bi-bookmark"></i></div>
@@ -240,17 +240,17 @@ $isMesario = $nivelUsuario === 2;
                 </a>
             </div>
             <div class="col-12 col-md-6 col-lg-4">
-                <a href="colaboradores.php" id="linkColaboradores" class="dash-card">
+                <a href="<?= \App\Shared\Http\Url::to('colaboradores') ?>" id="linkColaboradores" class="dash-card">
                     <div class="dash-card-red-corner"></div>
                     <div class="dash-card-header">
-                        <div class="dash-card-icon"><img src="../../public/icons/icon_equipes.png" alt="Icone de equipe"></div>
+                        <div class="dash-card-icon"><img src="<?= \App\Shared\Http\Assets::url('images/icon_equipes.png') ?>" alt="Icone de equipe"></div>
                         <h5 class="dash-card-title">COLABORADORES</h5>
                     </div>
                     <p class="dash-card-text">Gerencie a equipe de organização, voluntários, comissão técnica e juízes do evento.</p>
                 </a>
             </div>
             <div class="col-12 col-md-6 col-lg-4">
-                <a href="turmas.php" id="linkTurmas" class="dash-card">
+                <a href="<?= \App\Shared\Http\Url::to('turmas') ?>" id="linkTurmas" class="dash-card">
                     <div class="dash-card-red-corner"></div>
                     <div class="dash-card-header">
                         <div class="dash-card-icon"><i class="bi bi-backpack"></i></div>
@@ -260,7 +260,7 @@ $isMesario = $nivelUsuario === 2;
                 </a>
             </div>
             <div class="col-12 col-md-6 col-lg-4">
-                <a href="edicao_equipes.php" id="linkEquipes" class="dash-card">
+                <a href="<?= \App\Shared\Http\Url::to('edicoes/equipes') ?>" id="linkEquipes" class="dash-card">
                     <div class="dash-card-red-corner"></div>
                     <div class="dash-card-header">
                         <div class="dash-card-icon"><i class="bi bi-people"></i></div>
@@ -270,7 +270,7 @@ $isMesario = $nivelUsuario === 2;
                 </a>
             </div>
             <div class="col-12 col-md-6 col-lg-4">
-                <a href="chaveamento_arvore.php" id="linkChaveamento" class="dash-card">
+                <a href="<?= \App\Shared\Http\Url::to('chaveamento') ?>" id="linkChaveamento" class="dash-card">
                     <div class="dash-card-red-corner"></div>
                     <div class="dash-card-header">
                         <div class="dash-card-icon"><i class="bi bi-diagram-3"></i></div>
@@ -280,7 +280,7 @@ $isMesario = $nivelUsuario === 2;
                 </a>
             </div>
             <div class="col-12 col-md-6 col-lg-4">
-                <a href="ranking.php" id="linkRanking" class="dash-card">
+                <a href="<?= \App\Shared\Http\Url::to('ranking') ?>" id="linkRanking" class="dash-card">
                     <div class="dash-card-red-corner"></div>
                     <div class="dash-card-header">
                         <div class="dash-card-icon"><i class="bi bi-trophy"></i></div>

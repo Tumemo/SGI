@@ -60,8 +60,7 @@ final class StoragePaths
         }
 
         // Caminhos relativos do .env são relativos à raiz do projeto, nunca
-        // ao diretório corrente (que pode ser alterado pelo front controller
-        // antes de incluir um endpoint legado).
+        // ao diretório corrente do processo HTTP.
         $absolute = str_starts_with($path, '/')
             || str_starts_with($path, '\\')
             || preg_match('/^[A-Za-z]:[\\\\\/]/', $path) === 1;

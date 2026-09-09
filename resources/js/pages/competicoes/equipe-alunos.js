@@ -88,7 +88,7 @@ async function carregar() {
     if (idModalidade) qVoltar.set('id_modalidade', idModalidade);
     if (nomeTurma) qVoltar.set('nome_turma', nomeTurma);
     if (nomeModalidade) qVoltar.set('nome_modalidade', nomeModalidade);
-    const voltar = `./elenco_equipe.php?${qVoltar.toString()}`;
+    const voltar = `/equipes/elenco?${qVoltar.toString()}`;
     document.getElementById('btnVoltarEquipesDesktop').href = voltar;
     const vm = document.getElementById('btnVoltarEquipesMobile');
     if (vm) vm.href = voltar;
@@ -98,7 +98,7 @@ async function carregar() {
 
         if (idModalidade) {
             try {
-                const resMod = await fetch(`../../../api/modalidades.php?id_modalidade=${idModalidade}&_t=${ts}`);
+                const resMod = await fetch(`/api/v1/modalidades?id_modalidade=${idModalidade}&_t=${ts}`);
                 const dadosMod = await resMod.json();
                 if (Array.isArray(dadosMod) && dadosMod.length > 0) {
                     generoDaModalidade = dadosMod[0].genero_modalidade || 'MISTO';
@@ -113,7 +113,7 @@ async function carregar() {
             }
         } else if (idCategoria) {
             try {
-                const resMod = await fetch(`../../../api/modalidades.php?id_categoria=${idCategoria}&_t=${ts}`);
+                const resMod = await fetch(`/api/v1/modalidades?id_categoria=${idCategoria}&_t=${ts}`);
                 const dadosMod = await resMod.json();
                 if (Array.isArray(dadosMod) && dadosMod.length > 0) {
                     generoDaModalidade = dadosMod[0].genero_modalidade || 'MISTO';
@@ -123,12 +123,12 @@ async function carregar() {
             }
         }
 
-        const resEquipe = await fetch(`../../../api/equipes.php?id_equipe=${_idEquipe}&_t=${ts}`);
+        const resEquipe = await fetch(`/api/v1/equipes?id_equipe=${_idEquipe}&_t=${ts}`);
         const rawEq = await resEquipe.json();
         alunosNaEquipe = Array.isArray(rawEq) ? rawEq : [];
 
         const generoParam = (generoDaModalidade === 'MISTO' || generoDaModalidade === 'MISTA') ? '' : `&genero=${generoDaModalidade}`;
-        const res = await fetch(`../../../api/usuarios.php?acao=listar_competidores&id_turma=${idTurma}${generoParam}&_t=${ts}`);
+        const res = await fetch(`/api/v1/usuarios?acao=listar_competidores&id_turma=${idTurma}${generoParam}&_t=${ts}`);
         const data = await res.json();
         alunos = (data && data.competidores) ? data.competidores : (Array.isArray(data) ? data : []);
 
@@ -157,7 +157,7 @@ async function salvar() {
     botoes.forEach(b => { b.disabled = true; b.innerHTML = '<span class="spinner-border spinner-border-sm"></span>'; });
 
     try {
-        const response = await fetch('../../../api/equipes.php', {
+        const response = await fetch('/api/v1/equipes', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({

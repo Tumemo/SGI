@@ -40,11 +40,7 @@ final class CronometroService
             throw new InvalidArgumentException('O relógio do cronômetro é inválido.');
         }
 
-        // Jogos criados pelas rotas legadas podem ainda não ter duração. O
-        // cliente atual envia snapshot v2 junto com a duração, portanto a
-        // compatibilização precisa ocorrer antes de qualquer uma das duas
-        // formas de aplicar a mutação.
-        $state = $this->prepararBaseLegada($state, $data);
+        $state = $this->prepararEstadoInicial($state, $data);
         $hasSnapshot = array_key_exists('cronometro', $data);
         $snapshot = $hasSnapshot
             ? $this->aplicarSnapshot($state, $data, $agora)
@@ -72,7 +68,7 @@ final class CronometroService
     }
 
     /** @param array<string,mixed> $state @param array<string,mixed> $data @return array<string,mixed> */
-    private function prepararBaseLegada(array $state, array $data): array
+    private function prepararEstadoInicial(array $state, array $data): array
     {
         if ($state['duracao_jogo'] === null && array_key_exists('duracao_jogo', $data)) {
             $state['duracao_jogo'] = $data['duracao_jogo'];

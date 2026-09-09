@@ -36,7 +36,7 @@ final class SenhaController
             $status = $idUsuario > 0 ? 200 : 401;
             return \App\Shared\Http\Response::json(['success' => false, 'message' => $exception->getMessage()], $status, $headers);
         } catch (\Throwable $exception) {
-            error_log('Falha em trocar_senha.php: ' . $exception->getMessage());
+            error_log('Falha ao trocar senha: ' . $exception->getMessage());
             $status = 500;
             return \App\Shared\Http\Response::json(['success' => false, 'message' => 'Não foi possível alterar a senha. Tente novamente.'], $status, $headers);
         }

@@ -1,6 +1,6 @@
 <?php
 $mostrarVoltar = $mostrarVoltar ?? true;
-$urlVoltar = $urlVoltar ?? './home.php';
+$urlVoltar = $urlVoltar ?? \App\Shared\Http\Url::to('aluno/inicio');
 $titulo = $titulo ?? '';
 $nivelUsuario = (int)($_SESSION['nivel'] ?? -1);
 ?>
@@ -8,30 +8,32 @@ $nivelUsuario = (int)($_SESSION['nivel'] ?? -1);
     <?php if ($mostrarVoltar): ?>
     <a href="<?= htmlspecialchars($urlVoltar) ?>" class="bi bi-arrow-left position-absolute text-white fs-3 text-decoration-none sgi-inline-138c2dcc" ></a>
     <?php endif; ?>
-    <img src="../../public/images/banner-global.png" alt="Banner" class="w-100 object-fit-cover sgi-inline-e8d2328b" >
+    <img src="<?= \App\Shared\Http\Assets::url('images/banner-global.png') ?>" alt="Banner" class="w-100 object-fit-cover sgi-inline-e8d2328b" >
     <?php if (!empty($titulo)): ?>
     <h2 class="position-absolute top-50 start-50 translate-middle text-white m-0 fw-bold"><?= htmlspecialchars($titulo) ?></h2>
     <?php endif; ?>
 </section>
 <script>
 window.SGIInterclasse = (() => {
-    const basePath = '../../../';
+    const basePath = window.SGI_BASE_PATH || '';
+    const apiBase = (window.SGI_API_BASE || (basePath + '/api/v1/')).replace(/\/?$/, '/');
+    const to = (path) => basePath + '/' + String(path).replace(/^\//, '');
     const nivel = <?= $nivelUsuario ?>;
 
     const endpoints = {
-        home: './home.php',
-        dashboard: './dashboard.php',
-        categorias: './ocorrencias.php',
-        turmas: './turmas.php',
-        equipes: './equipes.php',
-        modalidades: './modalidades.php',
-        pontuacoes: './pontuacoes.php',
-        locais: './locais.php',
-        arrecadacoes: './edicao_arrecadacao.php',
-        colaboradores: './colaboradores.php',
-        agenda: './edicao_agenda.php',
-        chaveamentos: './pontuacao.php',
-        ranking: './ranking.php'
+        home: to('aluno/inicio'),
+        dashboard: to('painel'),
+        categorias: to('ocorrencias'),
+        turmas: to('turmas'),
+        equipes: to('edicoes/equipes'),
+        modalidades: to('edicoes/modalidades'),
+        pontuacoes: to('edicoes/pontuacao'),
+        locais: to('edicoes/locais'),
+        arrecadacoes: to('edicoes/arrecadacao'),
+        colaboradores: to('colaboradores'),
+        agenda: to('edicoes/agenda'),
+        chaveamentos: to('chaveamento'),
+        ranking: to('ranking')
     };
 
     let cache = null;
@@ -54,7 +56,7 @@ window.SGIInterclasse = (() => {
 
     const getInterclasses = async () => {
         if (cache) return cache;
-        const response = await fetch(basePath + 'api/interclasse.php?regulamento=true');
+        const response = await fetch(apiBase + 'edicoes?regulamento=true');
         if (!response.ok) throw new Error('Falha ao carregar interclasses');
         const data = await response.json();
         cache = Array.isArray(data) ? sortByMostRecent(data) : [];
@@ -126,7 +128,7 @@ window.SGIInterclasse = (() => {
                 return;
             }
         } catch (_) { }
-        window.location.href = fallbackPath || './home.php';
+        window.location.href = fallbackPath || to('aluno/inicio');
     };
 
     const invalidateCache = () => { cache = null; };

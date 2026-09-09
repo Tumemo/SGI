@@ -2,7 +2,7 @@
 $tituloPagina = 'SGI - Alunos da turma';
 $titulo = 'Alunos da turma';
 $mostrarVoltar = true;
-$urlVoltar = './dashboard.php';
+$urlVoltar = \App\Shared\Http\Url::to('painel');
 include SGI_ROOT . '/resources/views/components/admin-head.php';
 include SGI_ROOT . '/resources/views/components/admin-header.php';
 $paginaAtiva = 'turmas';

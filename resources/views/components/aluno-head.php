@@ -7,7 +7,7 @@ if (session_status() === PHP_SESSION_NONE) {
 require_once SGI_ROOT . '/bootstrap/autoload.php';
 use App\Shared\Http\CsrfGuard;
 if ((int) ($_SESSION['nivel'] ?? -1) !== 3) {
-    header('Location: ../../../index.php');
+    header('Location: ' . \App\Shared\Http\Url::to('aluno/login'));
     exit;
 }
 // Cache de página por sessão: o PHPSESSID protege a resposta HTTP e uma chave
@@ -34,15 +34,21 @@ echo htmlspecialchars($tituloPagina ?? 'SGI');
     <!-- Bootstrap Icons -->
     <link rel="stylesheet" href="<?= \App\Shared\Http\Assets::url('vendor/bootstrap-icons/bootstrap-icons.min.css') ?>">
     <!-- SGI Aluno Shared Styles -->
-    <link rel="stylesheet" href="assets/aluno.css">
-    <link rel="stylesheet" href="../../styles/style-migrated.css">
-    <link rel="stylesheet" href="assets/aluno-page.css">
+    <link rel="stylesheet" href="<?= \App\Shared\Http\Assets::url('css/aluno.css') ?>">
+    <link rel="stylesheet" href="<?= \App\Shared\Http\Assets::url('css/style-migrated.css') ?>">
+    <link rel="stylesheet" href="<?= \App\Shared\Http\Assets::url('css/aluno-page.css') ?>">
     <script>window.SGI_SESSION_ID = <?php
 echo (int) ($_SESSION['id_usuario'] ?? $_SESSION['id'] ?? 0);
 ?>; window.SGI_CACHE_KEY = <?php
 echo json_encode($chaveCacheOffline, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT);
 ?>; window.SGI_CSRF_TOKEN = <?php
 echo json_encode($csrfToken, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT);
+?>; window.SGI_BASE_PATH = <?php
+echo json_encode(\App\Shared\Http\Url::basePath(), JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT);
+?>; window.SGI_API_BASE = <?php
+echo json_encode(\App\Shared\Http\Url::to('api/v1/'), JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT);
+?>; window.SGI_ASSET_BASE = <?php
+echo json_encode(\App\Shared\Http\Url::to('assets'), JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT);
 ?>;</script>
     <script src="<?= \App\Shared\Http\Assets::url('js/offline/offline-core.js') ?>"></script>
     <script src="<?= \App\Shared\Http\Assets::url('js/offline/offline-form.js') ?>"></script>
