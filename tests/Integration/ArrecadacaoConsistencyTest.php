@@ -25,7 +25,7 @@ final class ArrecadacaoConsistencyTest
             $historyId = self::add($admin, $interclasseId, $turmaId, 10);
             self::setEditionValue($connection, $interclasseId, 3);
 
-            $removed = $admin->deleteJson('api/arrecadacao.php', [
+            $removed = $admin->deleteJson('api/v1/arrecadacao', [
                 'id_historico' => $historyId,
                 'id_interclasse' => $interclasseId,
             ]);
@@ -33,7 +33,7 @@ final class ArrecadacaoConsistencyTest
             $row = self::turma($connection, $turmaId);
             Assertions::assert('Estorno reverte Q10 e bruto 60 para Q0 e bruto esportivo 30', $row['quantidade'] === '0.00' && $row['pontos'] === 30, json_encode($row));
 
-            $again = $admin->deleteJson('api/arrecadacao.php', [
+            $again = $admin->deleteJson('api/v1/arrecadacao', [
                 'id_historico' => $historyId,
                 'id_interclasse' => $interclasseId,
             ]);
@@ -43,7 +43,7 @@ final class ArrecadacaoConsistencyTest
 
             self::setEditionValue($connection, $interclasseId, 2);
             self::setTurma($connection, $turmaId, '0', 30);
-            $batch = $admin->postJson('api/arrecadacao.php', [
+            $batch = $admin->postJson('api/v1/arrecadacao', [
                 'id_interclasse' => $interclasseId,
                 'arrecadacoes' => [
                     ['id_turma' => $turmaId, 'quantidade' => 10],
@@ -60,8 +60,8 @@ final class ArrecadacaoConsistencyTest
             $fractionB = self::add($admin, $interclasseId, $turmaId, 0.01);
             $fractionRow = self::turma($connection, $turmaId);
             Assertions::assert('Delta zero registra a fração sem alterar pontos duas vezes', $fractionRow['quantidade'] === '1.25' && $fractionRow['pontos'] === 18 && self::historyPoints($connection, $fractionB) === 0);
-            $admin->deleteJson('api/arrecadacao.php', ['id_historico' => $fractionB, 'id_interclasse' => $interclasseId]);
-            $admin->deleteJson('api/arrecadacao.php', ['id_historico' => $fractionA, 'id_interclasse' => $interclasseId]);
+            $admin->deleteJson('api/v1/arrecadacao', ['id_historico' => $fractionB, 'id_interclasse' => $interclasseId]);
+            $admin->deleteJson('api/v1/arrecadacao', ['id_historico' => $fractionA, 'id_interclasse' => $interclasseId]);
             $fractionRestored = self::turma($connection, $turmaId);
             Assertions::assert('Estorno fracionário restaura o bruto original', $fractionRestored['quantidade'] === '0.00' && $fractionRestored['pontos'] === 17);
 
@@ -76,7 +76,7 @@ final class ArrecadacaoConsistencyTest
 
     private static function add(TestClient $admin, int $editionId, int $classId, float $quantity): int
     {
-        $response = $admin->postJson('api/arrecadacao.php', [
+        $response = $admin->postJson('api/v1/arrecadacao', [
             'id_interclasse' => $editionId,
             'arrecadacoes' => [['id_turma' => $classId, 'quantidade' => $quantity]],
         ]);

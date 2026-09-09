@@ -33,7 +33,7 @@ final class PontuacaoReconciliationTest
         $originalQuantity = (string) ($originalRow['qtd_itens_arrecadados'] ?? '0');
         $originalPoints = (int) ($originalRow['pontuacao_turma'] ?? 0);
 
-        $admin->postJson('api/interclasse.php?id=' . $interclasseId, ['valor_item_arrecadacao' => 2]);
+        $admin->postJson('api/v1/edicoes?id=' . $interclasseId, ['valor_item_arrecadacao' => 2]);
         $statement = $connection->prepare(
             'UPDATE turmas SET qtd_itens_arrecadados = 10, pontuacao_turma = 30 WHERE id_turma = ? AND interclasses_id_interclasse = ?',
         );
@@ -41,7 +41,7 @@ final class PontuacaoReconciliationTest
         $statement->execute();
         $statement->close();
 
-        $alteracao = $admin->postJson('api/interclasse.php?id=' . $interclasseId, ['valor_item_arrecadacao' => 3]);
+        $alteracao = $admin->postJson('api/v1/edicoes?id=' . $interclasseId, ['valor_item_arrecadacao' => 3]);
         Assertions::assertJsonSuccess('Alterar valor do item de arrecadação', $alteracao);
 
         $check = $connection->prepare('SELECT pontuacao_turma FROM turmas WHERE id_turma = ? LIMIT 1');
@@ -51,25 +51,25 @@ final class PontuacaoReconciliationTest
         $check->close();
         Assertions::assert('Revalorização preserva pontos esportivos (30 + 10 x 3 - 10 x 2 = 40)', $points === 40, 'Pontos encontrados: ' . $points);
 
-        $admin->postJson('api/interclasse.php?id=' . $interclasseId, ['valor_item_arrecadacao' => 2]);
+        $admin->postJson('api/v1/edicoes?id=' . $interclasseId, ['valor_item_arrecadacao' => 2]);
         $points = self::points($connection, $turmaId);
         Assertions::assert('Voltar V3 para V2 restaura o bruto inicial em 30 pontos', $points === 30, 'Pontos encontrados: ' . $points);
 
         self::setTurma($connection, $turmaId, '10', 35);
-        $admin->postJson('api/interclasse.php?id=' . $interclasseId, ['valor_item_arrecadacao' => 3]);
+        $admin->postJson('api/v1/edicoes?id=' . $interclasseId, ['valor_item_arrecadacao' => 3]);
         Assertions::assert('Revalorização preserva ajuste J5 (35 - 20 + 30 = 45)', self::points($connection, $turmaId) === 45);
-        $admin->postJson('api/interclasse.php?id=' . $interclasseId, ['valor_item_arrecadacao' => 2]);
+        $admin->postJson('api/v1/edicoes?id=' . $interclasseId, ['valor_item_arrecadacao' => 2]);
 
         self::setTurma($connection, $turmaId, '0', 17);
-        $admin->postJson('api/interclasse.php?id=' . $interclasseId, ['valor_item_arrecadacao' => 3]);
+        $admin->postJson('api/v1/edicoes?id=' . $interclasseId, ['valor_item_arrecadacao' => 3]);
         Assertions::assert('Quantidade zero preserva pontos esportivos e ajustes', self::points($connection, $turmaId) === 17);
-        $admin->postJson('api/interclasse.php?id=' . $interclasseId, ['valor_item_arrecadacao' => 2]);
+        $admin->postJson('api/v1/edicoes?id=' . $interclasseId, ['valor_item_arrecadacao' => 2]);
 
         self::setTurma($connection, $turmaId, '1.25', 5);
-        $admin->postJson('api/interclasse.php?id=' . $interclasseId, ['valor_item_arrecadacao' => 3]);
+        $admin->postJson('api/v1/edicoes?id=' . $interclasseId, ['valor_item_arrecadacao' => 3]);
         Assertions::assert('Quantidade fracionária usa arredondamento inteiro único', self::points($connection, $turmaId) === 6);
 
-        $admin->postJson('api/interclasse.php?id=' . $interclasseId, ['valor_item_arrecadacao' => $originalValue]);
+        $admin->postJson('api/v1/edicoes?id=' . $interclasseId, ['valor_item_arrecadacao' => $originalValue]);
         self::setTurma($connection, $turmaId, $originalQuantity, $originalPoints);
         Assertions::assert('Reprodução restaura a linha da turma usada no cenário', self::points($connection, $turmaId) === $originalPoints);
         $connection->close();

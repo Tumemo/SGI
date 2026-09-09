@@ -32,7 +32,7 @@ final class CronometroPersistenceTest
         $mesario->login('mesario', '123');
 
         self::setState($timerId, $modalityId, 'Iniciado', 1200, 0, 1200, 'past');
-        $paused = $mesario->putJson('api/jogos.php', [
+        $paused = $mesario->putJson('api/v1/jogos', [
             'id_jogo' => $timerId,
             'status_jogo' => 'Pausado',
         ]);
@@ -47,7 +47,7 @@ final class CronometroPersistenceTest
         );
 
         self::setState($timerId, $modalityId, 'Pausado', 1200, 0, 1200, null);
-        $snapshot = $mesario->putJson('api/jogos.php', [
+        $snapshot = $mesario->putJson('api/v1/jogos', [
             'id_jogo' => $timerId,
             'status_jogo' => 'Pausado',
             'cronometro' => [
@@ -64,7 +64,7 @@ final class CronometroPersistenceTest
         );
 
         self::setState($timerId, $modalityId, 'Iniciado', 1200, 0, 1170, 'past-10');
-        $listed = $mesario->get('api/jogos.php?id_jogo=' . $timerId);
+        $listed = $mesario->get('api/v1/jogos?id_jogo=' . $timerId);
         $listedRemaining = (int) (($listed['json'][0]['tempo_restante_calculado'] ?? -1));
         $listedReference = self::readReferenceEpoch($timerId);
         $listedNow = (int) floor(((int) ($listed['json'][0]['servidor_epoch_ms'] ?? (time() * 1000))) / 1000);
@@ -75,7 +75,7 @@ final class CronometroPersistenceTest
             && $listedRemaining >= 1159,
         );
 
-        $pausedAgain = $mesario->putJson('api/jogos.php', [
+        $pausedAgain = $mesario->putJson('api/v1/jogos', [
             'id_jogo' => $timerId,
             'status_jogo' => 'Pausado',
         ]);
@@ -96,8 +96,8 @@ final class CronometroPersistenceTest
             'tempo_extra_jogo' => 60,
             'tempo_restante_jogo' => 1230,
         ];
-        $first = $mesario->putJson('api/jogos.php', $body, ['X-SGI-Mutation-Id' => $mutation]);
-        $retry = $mesario->putJson('api/jogos.php', $body, ['X-SGI-Mutation-Id' => $mutation]);
+        $first = $mesario->putJson('api/v1/jogos', $body, ['X-SGI-Mutation-Id' => $mutation]);
+        $retry = $mesario->putJson('api/v1/jogos', $body, ['X-SGI-Mutation-Id' => $mutation]);
         $replayedState = self::readState($timerId);
         $stored = self::countMutations('jogos.put', $mutation);
         Assertions::assert('Reenvio idempotente não reaplica extra nem transição',
@@ -108,7 +108,7 @@ final class CronometroPersistenceTest
             && $stored === 1,
         );
 
-        $conflict = $mesario->putJson('api/jogos.php', [
+        $conflict = $mesario->putJson('api/v1/jogos', [
             'id_jogo' => $timerId,
             'status_jogo' => 'Pausado',
             'tempo_extra_jogo' => 120,
@@ -117,7 +117,7 @@ final class CronometroPersistenceTest
         Assertions::assert('Chave do cronômetro com corpo diferente é rejeitada', $conflict['code'] === 409);
 
         $beforeInvalid = self::readState($timerId);
-        $invalid = $mesario->putJson('api/jogos.php', [
+        $invalid = $mesario->putJson('api/v1/jogos', [
             'id_jogo' => $timerId,
             'status_jogo' => 'Pausado',
             'cronometro' => [

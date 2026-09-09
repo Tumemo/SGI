@@ -1,12 +1,12 @@
 const { test, expect } = require('./fixtures.cjs');
 
 async function entrarComoAdmin(page) {
-    await page.goto('views/index.php', { waitUntil: 'domcontentloaded' });
+    await page.goto('login', { waitUntil: 'domcontentloaded' });
     await expect(page.locator('#form_desktop')).toBeVisible();
     await page.locator('#form_desktop .ipt-matricula').fill('admin');
     await page.locator('#form_desktop .ipt-senha').fill('123');
     await page.locator('#form_desktop button[type="submit"]').click();
-    await page.waitForURL(/\/views\/src\/pages\/home\.php/, { timeout: 15_000 });
+    await page.waitForURL(/\/edicoes/, { timeout: 15_000 });
 }
 
 test.describe.serial('Gestão Administrativa Completa (Admin Lifecycle)', () => {
@@ -15,9 +15,9 @@ test.describe.serial('Gestão Administrativa Completa (Admin Lifecycle)', () => 
     const nomeEdicaoTeste = `Interclasse E2E Playwright ${Date.now()}`;
 
     test.beforeAll(async ({ request }) => {
-        const login = await request.post('api/login.php', { data: { matricula: 'admin', senha: '123' } });
+        const login = await request.post('api/v1/login', { data: { matricula: 'admin', senha: '123' } });
         expect(login.ok()).toBeTruthy();
-        const res = await request.get('api/interclasse.php?regulamento=true');
+        const res = await request.get('api/v1/edicoes?regulamento=true');
         if (res.ok()) {
             const data = await res.json();
             const ativa = Array.isArray(data) ? data.find(e => String(e.status_interclasse) === '1') : null;
@@ -27,8 +27,8 @@ test.describe.serial('Gestão Administrativa Completa (Admin Lifecycle)', () => 
 
     test.afterAll(async ({ request }) => {
         if (idEdicaoOriginal) {
-            await request.post('api/login.php', { data: { matricula: 'admin', senha: '123' } });
-            const restored = await request.post(`api/interclasse.php?id=${idEdicaoOriginal}`, {
+            await request.post('api/v1/login', { data: { matricula: 'admin', senha: '123' } });
+            const restored = await request.post(`api/v1/edicoes?id=${idEdicaoOriginal}`, {
                 data: { status_interclasse: '1' }
             });
             expect((await restored.json()).success).toBe(true);
@@ -54,14 +54,14 @@ test.describe.serial('Gestão Administrativa Completa (Admin Lifecycle)', () => 
         await page.locator('#btnCriar').click();
 
         // A tela exibe confirmação e redireciona automaticamente para o dashboard da nova edição
-        await page.waitForURL(/\/views\/src\/pages\/dashboard\.php\?id=\d+/, { timeout: 20_000 });
+        await page.waitForURL(/\/painel\?id=\d+/, { timeout: 20_000 });
         const url = new URL(page.url());
         idEdicaoCriada = Number(url.searchParams.get('id'));
         expect(idEdicaoCriada).toBeGreaterThan(0);
         await expect(page.locator('#conteudo-principal')).toBeVisible();
 
         // Volta para a home e valida se o card da nova edição está listado
-        await page.goto('views/src/pages/home.php', { waitUntil: 'domcontentloaded' });
+        await page.goto('edicoes', { waitUntil: 'domcontentloaded' });
         await expect(page.locator('#listaDesktop')).toBeVisible({ timeout: 15_000 });
         await expect(page.locator('#listaDesktop .row', { hasText: nomeEdicaoTeste })).toBeVisible({ timeout: 15_000 });
     });
@@ -70,7 +70,7 @@ test.describe.serial('Gestão Administrativa Completa (Admin Lifecycle)', () => 
         expect(idEdicaoCriada).toBeTruthy();
         await entrarComoAdmin(page);
 
-        await page.goto(`views/src/pages/edicao_pontuacao.php?id=${idEdicaoCriada}&modo=view`, { waitUntil: 'domcontentloaded' });
+        await page.goto(`edicoes/pontuacao?id=${idEdicaoCriada}&modo=view`, { waitUntil: 'domcontentloaded' });
         await expect(page.locator('#pontos-1')).toBeVisible({ timeout: 15_000 });
 
         // Ajustar pontuações personalizadas
@@ -98,7 +98,7 @@ test.describe.serial('Gestão Administrativa Completa (Admin Lifecycle)', () => 
         expect(idEdicaoCriada).toBeTruthy();
         await entrarComoAdmin(page);
 
-        await page.goto(`views/src/pages/edicao_locais.php?id=${idEdicaoCriada}`, { waitUntil: 'domcontentloaded' });
+        await page.goto(`edicoes/locais?id=${idEdicaoCriada}`, { waitUntil: 'domcontentloaded' });
         await expect(page.locator('#listaLocaisDesktop')).toBeVisible({ timeout: 15_000 });
 
         const nomeLocal = `Arena Playwright ${Date.now()}`;
@@ -129,7 +129,7 @@ test.describe.serial('Gestão Administrativa Completa (Admin Lifecycle)', () => 
         await entrarComoAdmin(page);
 
         // 1. Criar nova categoria
-        await page.goto(`views/src/pages/edicao_categorias.php?id=${idEdicaoCriada}&modo=view`, { waitUntil: 'domcontentloaded' });
+        await page.goto(`edicoes/categorias?id=${idEdicaoCriada}&modo=view`, { waitUntil: 'domcontentloaded' });
         await expect(page.locator('#listaCategoriasDesktop')).toBeVisible({ timeout: 15_000 });
 
         const nomeCategoria = `Categoria E2E ${Date.now()}`;
@@ -147,7 +147,7 @@ test.describe.serial('Gestão Administrativa Completa (Admin Lifecycle)', () => 
         await expect(page.locator('#listaCategoriasDesktop')).toContainText(nomeCategoria, { timeout: 15_000 });
 
         // 2. Criar nova modalidade
-        await page.goto(`views/src/pages/edicao_modalidades.php?id=${idEdicaoCriada}&modo=view`, { waitUntil: 'domcontentloaded' });
+        await page.goto(`edicoes/modalidades?id=${idEdicaoCriada}&modo=view`, { waitUntil: 'domcontentloaded' });
         await expect(page.locator('#listaModalidadesDesktop')).toBeVisible({ timeout: 15_000 });
 
         const nomeModalidade = `Queimada E2E ${Date.now()}`;
@@ -185,7 +185,7 @@ test.describe.serial('Gestão Administrativa Completa (Admin Lifecycle)', () => 
         await entrarComoAdmin(page);
 
         // 1. Lançar ocorrência disciplinar em uma turma
-        await page.goto(`views/src/pages/ocorrencias.php?id=${idEdicaoCriada}`, { waitUntil: 'domcontentloaded' });
+        await page.goto(`ocorrencias?id=${idEdicaoCriada}`, { waitUntil: 'domcontentloaded' });
         const gridOcorrencias = page.locator('#listaOcorrenciasDesktop');
         await expect(gridOcorrencias).toBeVisible({ timeout: 15_000 });
         await expect(gridOcorrencias.locator('.ocr-card').first()).toBeVisible({ timeout: 15_000 });
@@ -202,7 +202,7 @@ test.describe.serial('Gestão Administrativa Completa (Admin Lifecycle)', () => 
         await expect(modalOcr).toBeHidden({ timeout: 10_000 });
 
         // 2. Lançar arrecadação solidária na turma
-        await page.goto(`views/src/pages/edicao_arrecadacao.php?id=${idEdicaoCriada}`, { waitUntil: 'domcontentloaded' });
+        await page.goto(`edicoes/arrecadacao?id=${idEdicaoCriada}`, { waitUntil: 'domcontentloaded' });
         const gridArrecadacao = page.locator('#listaArrecadacaoDesktop');
         await expect(gridArrecadacao).toBeVisible({ timeout: 15_000 });
         await expect(gridArrecadacao.locator('.ocr-card').first()).toBeVisible({ timeout: 15_000 });
@@ -222,7 +222,7 @@ test.describe.serial('Gestão Administrativa Completa (Admin Lifecycle)', () => 
         await expect(primeiroCard.locator('.ocr-card__save')).not.toBeDisabled({ timeout: 10_000 });
 
         // 3. Consultar a tela de Ranking Geral
-        await page.goto(`views/src/pages/ranking.php?id=${idEdicaoCriada}`, { waitUntil: 'domcontentloaded' });
+        await page.goto(`ranking?id=${idEdicaoCriada}`, { waitUntil: 'domcontentloaded' });
         await expect(page.locator('#listaDesk')).toBeVisible({ timeout: 15_000 });
         await expect(page.locator('#totalTurmasDesk')).toContainText(/Turmas/, { timeout: 15_000 });
     });

@@ -63,12 +63,13 @@ final class PresentationBoundaryTest extends TestCase
         self::assertGreaterThan(20, $count);
     }
 
-    public function testLegacyPageUrlsResolveOnlyToExistingPrivateTemplates(): void
+    public function testCanonicalPageUrlsResolveOnlyToExistingPrivateTemplates(): void
     {
         $root = dirname(__DIR__, 3);
         $routes = require $root . '/config/routes/web.php';
         foreach ($routes as $url => $template) {
-            self::assertStringStartsWith('/views/', $url);
+            self::assertStringStartsWith('/', $url);
+            self::assertStringNotContainsString('/views/', $url);
             self::assertStringStartsWith('resources/views/pages/', $template);
             self::assertFileExists($root . '/' . $template);
         }

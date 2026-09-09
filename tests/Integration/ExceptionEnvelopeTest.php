@@ -85,7 +85,7 @@ final class ExceptionEnvelopeTest
                     ),
                 ),
             ))(
-                new Request('GET', '/api/usuarios.php'),
+                new Request('GET', '/api/v1/usuarios'),
             );
             $usersBody = self::decode($users->body());
             Assertions::assert(
@@ -106,7 +106,7 @@ final class ExceptionEnvelopeTest
                 new MutationAction(new MysqliMutationStore($connection)),
             ))(new Request(
                 'POST',
-                '/api/lancar_resultado.php',
+                '/api/v1/resultados',
                 [],
                 [],
                 [],
@@ -143,7 +143,7 @@ final class ExceptionEnvelopeTest
                 ),
                 $access,
                 new MutationAction(new MysqliMutationStore($connection)),
-            ))(new Request('POST', '/api/lancar_resultado.php', [], [], [], [], [], '{"id_jogo":1}'));
+            ))(new Request('POST', '/api/v1/resultados', [], [], [], [], [], '{"id_jogo":1}'));
             Assertions::assert(
                 'Validação continua usando HTTP 400 sem tocar a persistência',
                 $invalid->status() === 400

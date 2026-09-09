@@ -8,12 +8,12 @@ async function jsonOrThrow(response, label) {
 }
 
 async function prepararAlunoFixture(request) {
-    await jsonOrThrow(await request.post('api/login.php', {
+    await jsonOrThrow(await request.post('api/v1/login', {
         data: { matricula: 'admin', senha: '123' }
     }), 'login administrativo de preparação');
 
     const edicoes = await jsonOrThrow(
-        await request.get('api/interclasse.php?regulamento=true'),
+        await request.get('api/v1/edicoes?regulamento=true'),
         'consulta edições'
     );
     const edicao = (Array.isArray(edicoes) ? edicoes : []).find((e) => String(e.status_interclasse) === '1') || edicoes[0];
@@ -21,7 +21,7 @@ async function prepararAlunoFixture(request) {
     const idInterclasse = Number(edicao.id_interclasse);
 
     const turmas = await jsonOrThrow(
-        await request.get(`api/turmas.php?id_interclasse=${idInterclasse}`),
+        await request.get(`api/v1/turmas?id_interclasse=${idInterclasse}`),
         'consulta turmas'
     );
     const turma = (Array.isArray(turmas) && turmas.length > 0) ? turmas[0] : null;
@@ -29,7 +29,7 @@ async function prepararAlunoFixture(request) {
     const idTurma = Number(turma.id_turma);
 
     const matricula = `55${Date.now().toString().slice(-7)}`;
-    const novoAluno = await jsonOrThrow(await request.post('api/usuarios.php?acao=criar_aluno', {
+    const novoAluno = await jsonOrThrow(await request.post('api/v1/usuarios?acao=criar_aluno', {
         data: {
             nome_usuario: 'Aluno E2E Portal',
             matricula_usuario: matricula,
@@ -59,18 +59,18 @@ test.describe.serial('Portal do Aluno — Jornada Interativa e Regras de Negóci
     });
 
     test('login do aluno e leitura dos termos de responsabilidade', async ({ page }) => {
-        await page.goto('views/index.php', { waitUntil: 'domcontentloaded' });
+        await page.goto('login', { waitUntil: 'domcontentloaded' });
         await expect(page.locator('#form_desktop')).toBeVisible();
 
         await page.locator('#form_desktop .ipt-matricula').fill(fixture.matricula);
         await page.locator('#form_desktop .ipt-senha').fill(fixture.senhaOriginal);
         await page.locator('#form_desktop button[type="submit"]').click();
 
-        await page.waitForURL(/\/views\/src\/pages\/alunos\/home\.php/, { timeout: 15_000 });
+        await page.waitForURL(/\/aluno\/inicio/, { timeout: 15_000 });
         await expect(page.locator('main')).toBeVisible();
 
         // Navegar para a página de Termos
-        await page.goto('views/src/pages/alunos/termos.php', { waitUntil: 'domcontentloaded' });
+        await page.goto('aluno/termos', { waitUntil: 'domcontentloaded' });
         await expect(page.locator('main')).toBeVisible();
 
         // Validar presença do Termo de Responsabilidade e suas cláusulas fundamentais
@@ -82,14 +82,14 @@ test.describe.serial('Portal do Aluno — Jornada Interativa e Regras de Negóci
 
     test('inscrição em modalidades, escolha de equipe e validação de regras', async ({ page }) => {
         // Login com o aluno
-        await page.goto('views/index.php', { waitUntil: 'domcontentloaded' });
+        await page.goto('login', { waitUntil: 'domcontentloaded' });
         await page.locator('#form_desktop .ipt-matricula').fill(fixture.matricula);
         await page.locator('#form_desktop .ipt-senha').fill(fixture.senhaOriginal);
         await page.locator('#form_desktop button[type="submit"]').click();
-        await page.waitForURL(/\/views\/src\/pages\/alunos\/home\.php/, { timeout: 15_000 });
+        await page.waitForURL(/\/aluno\/inicio/, { timeout: 15_000 });
 
         // Ir para a tela de inscrição de modalidades
-        await page.goto(`views/src/pages/alunos/modalidade.php?id=${fixture.idInterclasse}`, { waitUntil: 'domcontentloaded' });
+        await page.goto(`aluno/modalidades?id=${fixture.idInterclasse}`, { waitUntil: 'domcontentloaded' });
         await expect(page.locator('#modalidadesGrid')).toBeVisible({ timeout: 15_000 });
 
         const cards = page.locator('.modalidade-card:not(.lotado)');
@@ -120,33 +120,33 @@ test.describe.serial('Portal do Aluno — Jornada Interativa e Regras de Negóci
 
     test('navegação e consulta da agenda de jogos e do ranking pelo aluno', async ({ page }) => {
         // Login com o aluno
-        await page.goto('views/index.php', { waitUntil: 'domcontentloaded' });
+        await page.goto('login', { waitUntil: 'domcontentloaded' });
         await page.locator('#form_desktop .ipt-matricula').fill(fixture.matricula);
         await page.locator('#form_desktop .ipt-senha').fill(fixture.senhaOriginal);
         await page.locator('#form_desktop button[type="submit"]').click();
-        await page.waitForURL(/\/views\/src\/pages\/alunos\/home\.php/, { timeout: 15_000 });
+        await page.waitForURL(/\/aluno\/inicio/, { timeout: 15_000 });
 
         // 1. Tela de Jogos
-        await page.goto(`views/src/pages/alunos/jogos.php?id=${fixture.idInterclasse}`, { waitUntil: 'domcontentloaded' });
+        await page.goto(`aluno/jogos?id=${fixture.idInterclasse}`, { waitUntil: 'domcontentloaded' });
         await expect(page.locator('main')).toBeVisible({ timeout: 15_000 });
         await expect(page.locator('body')).not.toContainText(/Fatal error|Warning:/i);
 
         // 2. Tela de Ranking
-        await page.goto(`views/src/pages/alunos/ranking.php?id=${fixture.idInterclasse}`, { waitUntil: 'domcontentloaded' });
+        await page.goto(`aluno/ranking?id=${fixture.idInterclasse}`, { waitUntil: 'domcontentloaded' });
         await expect(page.locator('main:visible')).toBeVisible({ timeout: 15_000 });
         await expect(page.locator('body')).not.toContainText(/Fatal error|Warning:/i);
     });
 
     test('gestão de perfil, validação de senha e alteração com reautenticação', async ({ page }) => {
         // Login com o aluno
-        await page.goto('views/index.php', { waitUntil: 'domcontentloaded' });
+        await page.goto('login', { waitUntil: 'domcontentloaded' });
         await page.locator('#form_desktop .ipt-matricula').fill(fixture.matricula);
         await page.locator('#form_desktop .ipt-senha').fill(fixture.senhaOriginal);
         await page.locator('#form_desktop button[type="submit"]').click();
-        await page.waitForURL(/\/views\/src\/pages\/alunos\/home\.php/, { timeout: 15_000 });
+        await page.waitForURL(/\/aluno\/inicio/, { timeout: 15_000 });
 
         // Acessar perfil
-        await page.goto('views/src/pages/alunos/perfil.php', { waitUntil: 'domcontentloaded' });
+        await page.goto('aluno/perfil', { waitUntil: 'domcontentloaded' });
         await expect(page.locator('#perfilNomeDesk, #perfilNomeInfo').first()).toBeVisible({ timeout: 15_000 });
 
         // Abrir modal de alteração de senha
@@ -183,10 +183,10 @@ test.describe.serial('Portal do Aluno — Jornada Interativa e Regras de Negóci
 
         // 4. Logout e reautenticação com a nova senha
         page.on('dialog', async (dialog) => dialog.accept());
-        const linkLogout = page.locator('a[href*="logout.php"]:visible');
+        const linkLogout = page.locator('a[href*="api/v1/logout"]:visible');
         await expect(linkLogout).toBeVisible({ timeout: 10_000 });
         await linkLogout.click();
-        await page.waitForURL(/views\/index\.php/, { timeout: 15_000 });
+        await page.waitForURL(/login/, { timeout: 15_000 });
 
         // Tentativa com senha antiga deve falhar
         await page.locator('#form_desktop .ipt-matricula').fill(fixture.matricula);
@@ -197,8 +197,8 @@ test.describe.serial('Portal do Aluno — Jornada Interativa e Regras de Negóci
         // Login com nova senha deve suceder
         await page.locator('#form_desktop .ipt-senha').fill(novaSenhaCorreta);
         await page.locator('#form_desktop button[type="submit"]').click();
-        await page.waitForURL(/\/views\/src\/pages\/alunos\/home\.php/, { timeout: 15_000 });
-        await expect(page).toHaveURL(/\/views\/src\/pages\/alunos\/home\.php/);
+        await page.waitForURL(/\/aluno\/inicio/, { timeout: 15_000 });
+        await expect(page).toHaveURL(/\/aluno\/inicio/);
     });
 
 });

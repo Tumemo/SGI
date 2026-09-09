@@ -17,7 +17,7 @@ class FotoPerfilAndUsuariosTest
         $admin->login('admin', '123');
 
         // 12.1 Consultar dados do usuário atual autenticado
-        $resAuth = $admin->get('api/auth.php');
+        $resAuth = $admin->get('api/v1/session');
         Assertions::assertStatus("Consulta de sessão autenticada (HTTP 200)", $resAuth, 200);
         $user = $resAuth['json']['usuario'] ?? [];
         $idUser = (int) ($user['id'] ?? 0);
@@ -30,23 +30,23 @@ class FotoPerfilAndUsuariosTest
         file_put_contents($tmpImg, $pngContent);
 
         $cfile = new CURLFile($tmpImg, 'image/png', 'test_avatar.png');
-        $resUpload = $admin->postForm('api/foto.php', [
+        $resUpload = $admin->postForm('api/v1/foto', [
             'foto' => $cfile
         ]);
         Assertions::assert("Upload de foto de perfil (PNG)", in_array($resUpload['code'], [200, 201], true) && ($resUpload['json']['success'] ?? false) === true);
 
         // 12.3 Consultar foto de perfil
-        $resFoto = $admin->get("api/foto.php?user_id=$idUser");
+        $resFoto = $admin->get("api/v1/foto?user_id=$idUser");
         Assertions::assertStatus("Consulta de foto de perfil (HTTP 200)", $resFoto, 200);
 
         // 12.4 Remover foto de perfil
-        $resDelete = $admin->deleteJson('api/foto.php');
+        $resDelete = $admin->deleteJson('api/v1/foto');
         Assertions::assertJsonSuccess("Exclusão de foto de perfil retorna confirmação válida", $resDelete);
-        $after = $admin->get("api/foto.php?user_id=$idUser");
+        $after = $admin->get("api/v1/foto?user_id=$idUser");
         Assertions::assert('Foto removida não permanece referenciada no perfil', ($after['json']['foto_usuario'] ?? null) === '');
 
         // 12.5 Cobrir as ações administrativas que antes ficavam no arquivo procedural.
-        $staff = $admin->postJson('api/usuarios.php?acao=cadastrar_usuario', [
+        $staff = $admin->postJson('api/v1/usuarios?acao=cadastrar_usuario', [
             'nome_usuario' => 'Colaborador de contrato',
             'matricula_usuario' => '991234',
             'senha_usuario' => 'senhaSegura123',
@@ -56,22 +56,22 @@ class FotoPerfilAndUsuariosTest
         Assertions::assertJsonSuccess('Cadastro de colaborador pela rota modular', $staff);
         $staffId = (int) ($staff['json']['id_usuario'] ?? 0);
         Assertions::assert('Cadastro de colaborador retorna identificador', $staffId > 0);
-        $role = $admin->postJson('api/usuarios.php?acao=atualizar_colaborador', [
+        $role = $admin->postJson('api/v1/usuarios?acao=atualizar_colaborador', [
             'id_usuario' => $staffId,
             'is_mesario_clicado' => '1',
         ]);
         Assertions::assertJsonSuccess('Atualização de papel do colaborador', $role);
-        $details = $admin->postJson('api/usuarios.php?acao=atualizar_dados_colaborador', [
+        $details = $admin->postJson('api/v1/usuarios?acao=atualizar_dados_colaborador', [
             'id_usuario' => $staffId,
             'nome_usuario' => 'Colaborador atualizado',
             'matricula_usuario' => '991234',
             'genero_usuario' => 'MASC',
         ]);
         Assertions::assertJsonSuccess('Atualização de dados do colaborador', $details);
-        $removeStaff = $admin->postJson('api/usuarios.php?acao=excluir_colaborador', ['id_usuario' => $staffId]);
+        $removeStaff = $admin->postJson('api/v1/usuarios?acao=excluir_colaborador', ['id_usuario' => $staffId]);
         Assertions::assertJsonSuccess('Exclusão de colaborador pela rota modular', $removeStaff);
 
-        $student = $admin->postJson('api/usuarios.php?acao=criar_aluno', [
+        $student = $admin->postJson('api/v1/usuarios?acao=criar_aluno', [
             'nome_usuario' => 'Aluno de contrato',
             'matricula_usuario' => '991235',
             'data_nasc_usuario' => '2010-02-03',
@@ -81,7 +81,7 @@ class FotoPerfilAndUsuariosTest
         Assertions::assertJsonSuccess('Cadastro de aluno pela rota modular', $student);
         $studentId = (int) ($student['json']['id_usuario'] ?? 0);
         Assertions::assert('Cadastro de aluno retorna identificador', $studentId > 0);
-        $editStudent = $admin->postJson('api/usuarios.php?acao=editar_aluno', [
+        $editStudent = $admin->postJson('api/v1/usuarios?acao=editar_aluno', [
             'id_usuario' => $studentId,
             'nome_usuario' => 'Aluno de contrato atualizado',
             'matricula_usuario' => '991235',
@@ -89,9 +89,9 @@ class FotoPerfilAndUsuariosTest
             'genero_usuario' => 'MASC',
         ]);
         Assertions::assertJsonSuccess('Edição de aluno pela rota modular', $editStudent);
-        $resetStudent = $admin->postJson('api/usuarios.php?acao=resetar_senha_aluno', ['id_usuario' => $studentId]);
+        $resetStudent = $admin->postJson('api/v1/usuarios?acao=resetar_senha_aluno', ['id_usuario' => $studentId]);
         Assertions::assertJsonSuccess('Redefinição de senha de aluno', $resetStudent);
-        $removeStudent = $admin->postJson('api/usuarios.php?acao=excluir_aluno', ['id_usuario' => $studentId]);
+        $removeStudent = $admin->postJson('api/v1/usuarios?acao=excluir_aluno', ['id_usuario' => $studentId]);
         Assertions::assertJsonSuccess('Exclusão de aluno pela rota modular', $removeStudent);
 
         @unlink($tmpImg);

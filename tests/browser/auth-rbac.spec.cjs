@@ -10,7 +10,7 @@ async function jsonOrThrow(response, label) {
 test.describe('Autenticação, RBAC e Segurança de Rotas', () => {
 
     test('rejeição de credenciais inválidas com feedback visual adequado em desktop e mobile', async ({ page }) => {
-        await page.goto('views/index.php', { waitUntil: 'domcontentloaded' });
+        await page.goto('login', { waitUntil: 'domcontentloaded' });
         await expect(page.locator('#form_desktop')).toBeVisible();
 
         // 1. Senha incorreta no desktop
@@ -20,7 +20,7 @@ test.describe('Autenticação, RBAC e Segurança de Rotas', () => {
 
         await expect(page.locator('#msg_erro_desktop')).toBeVisible();
         await expect(page.locator('#msg_erro_desktop')).toContainText(/Matrícula ou Senha incorretos|incorretos/i);
-        await expect(page).toHaveURL(/views\/index\.php(?:\?|$)/);
+        await expect(page).toHaveURL(/login(?:\?|$)/);
 
         // 2. Matrícula inexistente no desktop
         await page.locator('#form_desktop .ipt-matricula').fill('usuario_que_nao_existe_xyz');
@@ -40,7 +40,7 @@ test.describe('Autenticação, RBAC e Segurança de Rotas', () => {
 
         await expect(page.locator('#msg_erro_mobile')).toBeVisible();
         await expect(page.locator('#msg_erro_mobile')).toContainText(/Matrícula ou Senha incorretos|incorretos/i);
-        await expect(page).toHaveURL(/views\/index\.php(?:\?|$)/);
+        await expect(page).toHaveURL(/login(?:\?|$)/);
     });
 
     test('proteção de rotas restritas para acessos anônimos', async ({ browser }) => {
@@ -50,20 +50,20 @@ test.describe('Autenticação, RBAC e Segurança de Rotas', () => {
 
         try {
             // Tenta acessar home administrativa sem login
-            await page.goto('views/src/pages/home.php', { waitUntil: 'domcontentloaded' });
-            await expect(page).toHaveURL(/views\/index\.php/);
+            await page.goto('edicoes', { waitUntil: 'domcontentloaded' });
+            await expect(page).toHaveURL(/login/);
 
             // Tenta acessar dashboard administrativa sem login
-            await page.goto('views/src/pages/dashboard.php?id=1', { waitUntil: 'domcontentloaded' });
-            await expect(page).toHaveURL(/views\/index\.php/);
+            await page.goto('painel?id=1', { waitUntil: 'domcontentloaded' });
+            await expect(page).toHaveURL(/login/);
 
             // Tenta acessar ranking staff sem login
-            await page.goto('views/src/pages/ranking.php?id=1', { waitUntil: 'domcontentloaded' });
-            await expect(page).toHaveURL(/views\/index\.php/);
+            await page.goto('ranking?id=1', { waitUntil: 'domcontentloaded' });
+            await expect(page).toHaveURL(/login/);
 
             // Tenta acessar portal do aluno sem login
-            await page.goto('views/src/pages/alunos/home.php', { waitUntil: 'domcontentloaded' });
-            await expect(page).toHaveURL(/views\/index\.php/);
+            await page.goto('aluno/inicio', { waitUntil: 'domcontentloaded' });
+            await expect(page).toHaveURL(/login/);
         } finally {
             await context.close();
         }
@@ -71,19 +71,19 @@ test.describe('Autenticação, RBAC e Segurança de Rotas', () => {
 
     test('aluno autenticado não pode acessar rotas da administração (RBAC)', async ({ page, request }) => {
         // Obter uma turma para vincular o aluno
-        const adminLogin = await request.post('api/login.php', {
+        const adminLogin = await request.post('api/v1/login', {
             data: { matricula: 'admin', senha: '123' }
         });
         await jsonOrThrow(adminLogin, 'login de admin');
 
-        const turmasRes = await request.get('api/turmas.php');
+        const turmasRes = await request.get('api/v1/turmas');
         const turmas = await jsonOrThrow(turmasRes, 'consulta turmas');
         const turma = Array.isArray(turmas) && turmas.length > 0 ? turmas[0] : null;
         const idTurma = turma ? Number(turma.id_turma) : 1;
 
         // Cria competidor efêmero
         const matriculaAluno = `88${Date.now().toString().slice(-7)}`;
-        await jsonOrThrow(await request.post('api/usuarios.php?acao=criar_aluno', {
+        await jsonOrThrow(await request.post('api/v1/usuarios?acao=criar_aluno', {
             data: {
                 nome_usuario: 'Aluno RBAC Test',
                 matricula_usuario: matriculaAluno,
@@ -94,21 +94,21 @@ test.describe('Autenticação, RBAC e Segurança de Rotas', () => {
         }), 'criação do aluno');
 
         // Loga como aluno
-        await page.goto('views/index.php', { waitUntil: 'domcontentloaded' });
+        await page.goto('login', { waitUntil: 'domcontentloaded' });
         await page.locator('#form_desktop .ipt-matricula').fill(matriculaAluno);
         await page.locator('#form_desktop .ipt-senha').fill('123');
         await page.locator('#form_desktop button[type="submit"]').click();
 
-        await page.waitForURL(/\/views\/src\/pages\/alunos\/home\.php/, { timeout: 15_000 });
-        await expect(page).toHaveURL(/\/views\/src\/pages\/alunos\/home\.php/);
+        await page.waitForURL(/\/aluno\/inicio/, { timeout: 15_000 });
+        await expect(page).toHaveURL(/\/aluno\/inicio/);
 
         // Aluno tenta navegar para tela staff
-        await page.goto('views/src/pages/home.php', { waitUntil: 'domcontentloaded' });
+        await page.goto('edicoes', { waitUntil: 'domcontentloaded' });
         // Deve ser bloqueado ou redirecionado para o portal de aluno / login
-        await expect(page).not.toHaveURL(/views\/src\/pages\/home\.php$/);
+        await expect(page).not.toHaveURL(/edicoes$/);
 
-        await page.goto('views/src/pages/dashboard.php?id=1', { waitUntil: 'domcontentloaded' });
-        await expect(page).not.toHaveURL(/views\/src\/pages\/dashboard\.php/);
+        await page.goto('painel?id=1', { waitUntil: 'domcontentloaded' });
+        await expect(page).not.toHaveURL(/painel/);
     });
 
     test('logout encerra sessão com segurança e impede reentrada pelo histórico', async ({ page }) => {
@@ -117,26 +117,26 @@ test.describe('Autenticação, RBAC e Segurança de Rotas', () => {
         });
 
         // 1. Login como admin
-        await page.goto('views/index.php', { waitUntil: 'domcontentloaded' });
+        await page.goto('login', { waitUntil: 'domcontentloaded' });
         await page.locator('#form_desktop .ipt-matricula').fill('admin');
         await page.locator('#form_desktop .ipt-senha').fill('123');
         await page.locator('#form_desktop button[type="submit"]').click();
 
-        await page.waitForURL(/\/views\/src\/pages\/home\.php/, { timeout: 15_000 });
+        await page.waitForURL(/\/edicoes/, { timeout: 15_000 });
         await expect(page.locator('#listaDesktop')).toBeVisible({ timeout: 15_000 });
 
         // 2. Acionar logout no menu de navegação visível
-        const logoutLink = page.locator('a[href*="logout.php"]:visible');
+        const logoutLink = page.locator('a[href*="api/v1/logout"]:visible');
         await expect(logoutLink).toBeVisible();
         await logoutLink.click();
 
         // 3. Confirmar que redirecionou para tela de login
-        await page.waitForURL(/views\/index\.php/, { timeout: 15_000 });
+        await page.waitForURL(/login/, { timeout: 15_000 });
         await expect(page.locator('#form_desktop')).toBeVisible();
 
         // 4. Tentar acessar página interna diretamente após logout
-        await page.goto('views/src/pages/home.php', { waitUntil: 'domcontentloaded' });
-        await expect(page).toHaveURL(/views\/index\.php/);
+        await page.goto('edicoes', { waitUntil: 'domcontentloaded' });
+        await expect(page).toHaveURL(/login/);
     });
 
 });

@@ -16,13 +16,13 @@ class ModalidadesAndEquipesTest
         $admin->login('admin', '123');
 
         // 4.1 Categorias
-        $resCat = $admin->get("api/categorias.php?id_interclasse=$idEdicao");
+        $resCat = $admin->get("api/v1/categorias?id_interclasse=$idEdicao");
         Assertions::assertStatus("Consulta de categorias (HTTP 200)", $resCat, 200);
         $cats = $resCat['json'] ?? [];
         Assertions::assert("Criação de 2 categorias escolares (I e II)", count($cats) === 2);
 
         // 4.2 Modalidades
-        $resMod = $admin->get("api/modalidades.php?id_interclasse=$idEdicao");
+        $resMod = $admin->get("api/v1/modalidades?id_interclasse=$idEdicao");
         Assertions::assertStatus("Consulta de modalidades (HTTP 200)", $resMod, 200);
         $mods = $resMod['json'] ?? [];
         Assertions::assert("Total de modalidades padrão (esperado >= 10)", count($mods) >= 10, "Total: " . count($mods));
@@ -32,7 +32,7 @@ class ModalidadesAndEquipesTest
         $equipesEscolhidas = [];
         foreach ($mods as $m) {
             $idM = (int) $m['id_modalidade'];
-            $resEq = $admin->get("api/equipes.php?id_modalidade=$idM");
+            $resEq = $admin->get("api/v1/equipes?id_modalidade=$idM");
             $eqs = $resEq['json'] ?? [];
             if (count($eqs) >= 4) {
                 $modEscolhida = $m;
@@ -50,8 +50,8 @@ class ModalidadesAndEquipesTest
 
         $generated = $admin->postJson('api/v1/equipes/gerar', ['id_interclasse' => $idEdicao]);
         Assertions::assertJsonSuccess('Geração de equipes pela rota versionada', $generated);
-        $beforeRepeat = $admin->get("api/equipes.php?id_interclasse=$idEdicao");
-        $repeated = $admin->postJson('api/CriarEquipes.php', ['id_interclasse' => $idEdicao]);
+        $beforeRepeat = $admin->get("api/v1/equipes?id_interclasse=$idEdicao");
+        $repeated = $admin->postJson('api/v1/equipes/gerar', ['id_interclasse' => $idEdicao]);
         $afterRepeat = $admin->get("api/v1/equipes?id_interclasse=$idEdicao");
         Assertions::assert('Repetir geração pela URL antiga não duplica equipes', ($repeated['json']['success'] ?? false) && $beforeRepeat['json'] === $afterRepeat['json']);
         $anonymous = new TestClient();

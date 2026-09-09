@@ -27,7 +27,7 @@ final class MesarioResourceScopeTest
         try {
             $mesario = new TestClient();
             $mesario->login('mesario', '123');
-            $response = $mesario->postJson('api/artilheiro.php', [
+            $response = $mesario->postJson('api/v1/artilheiros', [
                 'usuarios_id_usuario' => $userId,
                 'jogos_id_jogo' => $gameId,
                 'num_gol' => 1,
@@ -41,7 +41,7 @@ final class MesarioResourceScopeTest
             );
 
             $beforeOccurrences = self::countOccurrences($connection, $userId);
-            $occurrence = $mesario->postJson('api/ocorrencias.php', [
+            $occurrence = $mesario->postJson('api/v1/ocorrencias', [
                 'titulo_ocorrencia' => 'Amarelo',
                 'descricao_ocorrencia' => 'Fixture fora da edição ativa',
                 'data_ocorrencia' => '2026-09-07',
@@ -61,7 +61,7 @@ final class MesarioResourceScopeTest
             $gameA = (int) $fixture['by_edition']['A']['jogo_ids'][0];
             $teamB = (int) $editionB['equipe_ids'][0];
             $beforePartida = self::partida($connection, $partidaId);
-            $partidaResponse = $mesario->putJson('api/partidas.php', [
+            $partidaResponse = $mesario->putJson('api/v1/partidas', [
                 'id_partida' => $partidaId,
                 'jogos_id_jogo' => $gameA,
                 'equipes_id_equipe' => $teamB,
@@ -78,7 +78,7 @@ final class MesarioResourceScopeTest
             $partidaA = (int) $fixture['by_edition']['A']['partida_ids'][0];
             $teamA2 = (int) $fixture['by_edition']['A']['equipe_ids'][1];
             $beforePartidaA = self::partida($connection, $partidaA);
-            $discordant = $mesario->putJson('api/partidas.php', [
+            $discordant = $mesario->putJson('api/v1/partidas', [
                 'id_partida' => $partidaA,
                 'jogos_id_jogo' => $gameA,
                 'equipes_id_equipe' => $teamA2,
@@ -91,7 +91,7 @@ final class MesarioResourceScopeTest
                 && self::partida($connection, $partidaA) === $beforePartidaA,
             );
 
-            $missing = $mesario->putJson('api/partidas.php', [
+            $missing = $mesario->putJson('api/v1/partidas', [
                 'id_partida' => max($fixture['ids']['partidas']) + 100000,
                 'resultado_partida' => 2,
             ]);
@@ -100,7 +100,7 @@ final class MesarioResourceScopeTest
                 $missing['code'] === 404 && ($missing['json']['success'] ?? true) === false,
             );
 
-            $inferred = $mesario->putJson('api/partidas.php', [
+            $inferred = $mesario->putJson('api/v1/partidas', [
                 'id_partida' => $partidaA,
                 'resultado_partida' => 2,
             ]);
@@ -114,13 +114,13 @@ final class MesarioResourceScopeTest
                 && $afterInferred['resultado_partida'] === 2,
             );
 
-            $finalized = $mesario->postJson('api/partidas.php', [
+            $finalized = $mesario->postJson('api/v1/partidas', [
                 'id_partida' => $partidaA,
                 'resultado_final' => 3,
             ]);
             $scores = self::scores($connection, $gameA);
             Assertions::assert(
-                'POST legado finaliza a partida com o placar completo do jogo',
+                'POST canônico finaliza a partida com o placar completo do jogo',
                 $finalized['code'] === 200
                 && ($finalized['json']['success'] ?? false) === true
                 && $scores === [

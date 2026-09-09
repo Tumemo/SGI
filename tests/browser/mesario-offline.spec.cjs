@@ -14,20 +14,20 @@ async function capturarTela(page, testInfo, nome) {
 }
 
 async function criarPartidaFixture(request) {
-    const adminLogin = await request.post('api/login.php', {
+    const adminLogin = await request.post('api/v1/login', {
         data: { matricula: 'admin', senha: '123' }
     });
     await jsonOrThrow(adminLogin, 'login administrativo');
 
-    const interclassesResponse = await request.get('api/interclasse.php?regulamento=true');
+    const interclassesResponse = await request.get('api/v1/edicoes?regulamento=true');
     const interclasses = await jsonOrThrow(interclassesResponse, 'edições');
     const edicao = interclasses.find((item) => String(item.status_interclasse) === '1');
     if (!edicao) throw new Error('Nenhuma edição ativa disponível para o teste visual.');
     const idInterclasse = Number(edicao.id_interclasse);
 
     const [equipesResponse, modalidadesResponse] = await Promise.all([
-        request.get(`api/equipes.php?id_interclasse=${idInterclasse}`),
-        request.get(`api/modalidades.php?id_interclasse=${idInterclasse}`)
+        request.get(`api/v1/equipes?id_interclasse=${idInterclasse}`),
+        request.get(`api/v1/modalidades?id_interclasse=${idInterclasse}`)
     ]);
 
     const equipes = await jsonOrThrow(equipesResponse, 'equipes');
@@ -54,7 +54,7 @@ async function criarPartidaFixture(request) {
     // real no fluxo do portal. Assim o modal de artilharia tem dados locais
     // suficientes para ser exercitado visualmente.
     const matriculaAtleta = String(900000000 + (Date.now() % 100000));
-    const alunoResponse = await request.post('api/usuarios.php?acao=criar_aluno', {
+    const alunoResponse = await request.post('api/v1/usuarios?acao=criar_aluno', {
         data: {
             nome_usuario: 'Atleta E2E Offline',
             matricula_usuario: matriculaAtleta,
@@ -72,11 +72,11 @@ async function criarPartidaFixture(request) {
         baseURL: process.env.SGI_BASE_URL || 'http://localhost/SGI/'
     });
     try {
-        const alunoLogin = await alunoApi.post('api/login.php', {
+        const alunoLogin = await alunoApi.post('api/v1/login', {
             data: { matricula: matriculaAtleta, senha: '123' }
         });
         await jsonOrThrow(alunoLogin, 'login do atleta fixture');
-        const inscricao = await alunoApi.post('api/inscricao.php', {
+        const inscricao = await alunoApi.post('api/v1/inscricoes', {
             data: {
                 id_interclasse: idInterclasse,
                 id_equipes: [Number(equipe1.id_equipe)]
@@ -92,7 +92,7 @@ async function criarPartidaFixture(request) {
 
     // Esta rota de sincronização também cria as linhas de partidas, algo que a
     // tela de agendamento deixa para o gerador de chaveamento.
-    const jogoResponse = await request.post('api/sincronizar_chaveamento.php', {
+    const jogoResponse = await request.post('api/v1/sincronizacao/chaveamento', {
         data: {
             id_modalidade: Number(modalidade.id_modalidade),
             tipo_modalidade: 'mata_mata',
@@ -107,7 +107,7 @@ async function criarPartidaFixture(request) {
         }
     });
     await jsonOrThrow(jogoResponse, 'criação do jogo fixture');
-    const jogosResponse = await request.get(`api/jogos.php?id_modalidade=${Number(modalidade.id_modalidade)}`);
+    const jogosResponse = await request.get(`api/v1/jogos?id_modalidade=${Number(modalidade.id_modalidade)}`);
     const jogos = await jsonOrThrow(jogosResponse, 'consulta do jogo fixture');
     const jogo = jogos.find((item) => String(item.nome_jogo) === nomeJogo);
     const idJogo = Number(jogo && jogo.id_jogo);
@@ -133,7 +133,7 @@ test.describe('Mesário — fluxo visual completo offline', () => {
             await dialog.accept();
         });
 
-        await page.goto('views/index.php', { waitUntil: 'domcontentloaded' });
+        await page.goto('login', { waitUntil: 'domcontentloaded' });
         await expect(page.locator('#form_desktop')).toBeVisible();
         await expect(page.locator('#form_desktop h2')).toHaveText('Acesso ao sistema');
         await capturarTela(page, testInfo, '01-login');
@@ -141,7 +141,7 @@ test.describe('Mesário — fluxo visual completo offline', () => {
         await page.locator('#form_desktop .ipt-matricula').fill('mesario');
         await page.locator('#form_desktop .ipt-senha').fill('123');
         await page.locator('#form_desktop button[type="submit"]').click();
-        await page.waitForURL(/\/dashboard\.php\?id=\d+/, { waitUntil: 'domcontentloaded' });
+        await page.waitForURL(/\/painel\?id=\d+/, { waitUntil: 'domcontentloaded' });
         await expect(page.locator('body')).not.toContainText('Download parcial');
 
         // O preload é sequencial por desenho: aguardamos o indicador verde que
@@ -166,8 +166,8 @@ test.describe('Mesário — fluxo visual completo offline', () => {
         await expect.poll(() => page.evaluate(() => window.SGIOffline.getState().pending)).toBeGreaterThan(0);
 
         // O botão de placar nasce depois que o estado local passa a Iniciado.
-        await expect(fixtureCard.locator('a[href*="jogos.php"]')).toBeVisible();
-        await fixtureCard.locator('a[href*="jogos.php"]').click();
+        await expect(fixtureCard.locator('a[href*="jogos/placar"]')).toBeVisible();
+        await fixtureCard.locator('a[href*="jogos/placar"]').click();
         await expect(page.locator('#placar-conteudo')).toBeVisible();
         await expect(page.locator('#placar-grid')).toBeVisible();
         await expect(page.locator('#mc-status-badge')).toContainText('Em andamento');
@@ -212,12 +212,12 @@ test.describe('Mesário — fluxo visual completo offline', () => {
             return Number(jogos.find((jogo) => Number(jogo.id_jogo) === Number(id))?.modalidades_id_modalidade || 0);
         }, fixture.idJogo)).toBe(fixture.idModalidade);
         await expect.poll(() => page.evaluate(async (id) => {
-            const response = await fetch(`../../../api/jogos.php?id_jogo=${id}`);
+            const response = await fetch(`/api/v1/jogos?id_jogo=${id}`);
             const jogos = await response.json();
             return jogos[0]?.status_jogo || null;
         }, fixture.idJogo)).toBe('Concluido');
         await expect.poll(() => page.evaluate(async ({ idJogo, idModalidade }) => {
-            const response = await fetch(`../../../api/jogos.php?id_modalidade=${idModalidade}`);
+            const response = await fetch(`/api/v1/jogos?id_modalidade=${idModalidade}`);
             const jogos = await response.json();
             return jogos.find((jogo) => Number(jogo.id_jogo) === Number(idJogo))?.status_jogo || null;
         }, fixture)).toBe('Concluido');
@@ -258,18 +258,18 @@ test.describe('Mesário — fluxo visual completo offline', () => {
         await expect(page.locator('#lista-ocorrencias')).toContainText('Registro visual offline', { timeout: 10_000 });
 
         const servidor = await page.evaluate(async (id) => {
-            const response = await fetch(`../../../api/jogos.php?id_jogo=${id}`);
+            const response = await fetch(`/api/v1/jogos?id_jogo=${id}`);
             return response.json();
         }, fixture.idJogo);
         expect(servidor[0].status_jogo).toMatch(/Concluido|Finalizado/);
         expect(Number(servidor[0].id_jogo)).toBe(fixture.idJogo);
         const artilhariaServidor = await page.evaluate(async (id) => {
-            const response = await fetch(`../../../api/artilheiro.php?id_jogo=${id}`);
+            const response = await fetch(`/api/v1/artilheiros?id_jogo=${id}`);
             return response.json();
         }, fixture.idJogo);
         expect(artilhariaServidor.some((item) => Number(item.total_gols || item.num_gol) >= 1)).toBeTruthy();
         const ocorrenciasServidor = await page.evaluate(async (id) => {
-            const response = await fetch(`../../../api/ocorrencias.php?id_jogo=${id}`);
+            const response = await fetch(`/api/v1/ocorrencias?id_jogo=${id}`);
             return response.json();
         }, fixture.idJogo);
         expect(ocorrenciasServidor.some((item) => /Registro visual offline/i.test(item.descricao_ocorrencia || ''))).toBeTruthy();

@@ -6,13 +6,13 @@ for (const [name, viewport] of [
 ]) {
     test(`contrato visual do acesso em ${name}`, async ({ page }) => {
         await page.setViewportSize(viewport);
-        await page.goto('views/index.php');
+        await page.goto('login');
         const form = page.locator(name === 'desktop' ? '#form_desktop' : '#form_mobile');
         await expect(form).toBeVisible();
         await page.evaluate(() => document.fonts.ready);
         await expect(page).toHaveScreenshot(`acesso-${name}.png`, { fullPage: true, animations: 'disabled' });
         // Stable visual fixture. Real authentication is exercised by auth-rbac.
-        await page.route('**/api/login.php', route => route.fulfill({
+        await page.route('**/api/v1/login', route => route.fulfill({
             status: 401, contentType: 'application/json',
             body: JSON.stringify({ status: 'erro', mensagem: 'Matrícula ou Senha incorretos.' }),
         }));

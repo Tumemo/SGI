@@ -19,7 +19,7 @@ class PlacarAndArtilhariaTest
         $e2 = $equipesIds[1];
 
         // 6.1 Iniciar jogo (status 'Iniciado')
-        $resStart = $mesario->putJson('api/jogos.php', [
+        $resStart = $mesario->putJson('api/v1/jogos', [
             'id_jogo' => $idJogo,
             'status_jogo' => 'Iniciado',
             'duracao_jogo' => 1200,
@@ -29,7 +29,7 @@ class PlacarAndArtilhariaTest
         Assertions::assert("Mudança de status do jogo para 'Iniciado'", ($resStart['json']['success'] ?? false) === true);
 
         // 6.2 Pausar jogo
-        $resPause = $mesario->putJson('api/jogos.php', [
+        $resPause = $mesario->putJson('api/v1/jogos', [
             'id_jogo' => $idJogo,
             'status_jogo' => 'Pausado',
             'duracao_jogo' => 1200,
@@ -38,7 +38,7 @@ class PlacarAndArtilhariaTest
         Assertions::assert("Mudança de status do jogo para 'Pausado'", ($resPause['json']['success'] ?? false) === true);
 
         // 6.3 Lançar gol de artilheiro (usuário ID 1)
-        $resArt = $mesario->postJson('api/artilheiro.php', [
+        $resArt = $mesario->postJson('api/v1/artilheiros', [
             'usuarios_id_usuario' => 1,
             'jogos_id_jogo' => $idJogo,
             'num_gol' => 2
@@ -47,18 +47,18 @@ class PlacarAndArtilhariaTest
 
         $mutation = ['X-SGI-Mutation-Id' => 'regression-goal-' . bin2hex(random_bytes(8))];
         $goal = ['usuarios_id_usuario' => 1, 'jogos_id_jogo' => $idJogo, 'num_gol' => 1];
-        $first = $mesario->postJson('api/artilheiro.php', $goal, $mutation);
-        $retry = $mesario->postJson('api/artilheiro.php', $goal, $mutation);
+        $first = $mesario->postJson('api/v1/artilheiros', $goal, $mutation);
+        $retry = $mesario->postJson('api/v1/artilheiros', $goal, $mutation);
         Assertions::assertJsonSuccess('Primeiro envio com identificador persistente', $first);
         Assertions::assert('Reenvio devolve exatamente o mesmo registro', $first['json'] === $retry['json']);
-        $conflict = $mesario->postJson('api/artilheiro.php', array_replace($goal, ['num_gol' => 4]), $mutation);
+        $conflict = $mesario->postJson('api/v1/artilheiros', array_replace($goal, ['num_gol' => 4]), $mutation);
         Assertions::assertStatus('Identificador reutilizado com dados diferentes é rejeitado', $conflict, 409);
         $otherActor = new TestClient();
         $otherActor->login('admin', '123');
-        Assertions::assertStatus('Identificador não pode ser reutilizado por outro operador', $otherActor->postJson('api/artilheiro.php', $goal, $mutation), 409);
+        Assertions::assertStatus('Identificador não pode ser reutilizado por outro operador', $otherActor->postJson('api/v1/artilheiros', $goal, $mutation), 409);
 
         // 6.4 Rejeição de finalização com placar 0x0
-        $resZero = $mesario->postJson('api/lancar_resultado.php', [
+        $resZero = $mesario->postJson('api/v1/resultados', [
             'id_jogo' => $idJogo,
             'nome_jogo' => 'MM:4:0:N',
             'id_modalidade' => $idModalidade,
@@ -70,7 +70,7 @@ class PlacarAndArtilhariaTest
         Assertions::assert("Proibição de finalização de mata-mata com placar 0x0", ($resZero['json']['success'] ?? true) === false);
 
         // 6.5 Rejeição de finalização empatada (mata-mata não pode empatar)
-        $resEmpate = $mesario->postJson('api/lancar_resultado.php', [
+        $resEmpate = $mesario->postJson('api/v1/resultados', [
             'id_jogo' => $idJogo,
             'nome_jogo' => 'MM:4:0:N',
             'id_modalidade' => $idModalidade,
@@ -82,7 +82,7 @@ class PlacarAndArtilhariaTest
         Assertions::assert("Proibição de empate na finalização de partida mata-mata", ($resEmpate['json']['success'] ?? true) === false);
 
         // 6.6 Finalização correta com placar definido (3x1)
-        $resFin = $mesario->postJson('api/lancar_resultado.php', [
+        $resFin = $mesario->postJson('api/v1/resultados', [
             'id_jogo' => $idJogo,
             'nome_jogo' => 'MM:4:0:N',
             'id_modalidade' => $idModalidade,

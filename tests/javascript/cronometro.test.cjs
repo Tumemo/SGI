@@ -46,7 +46,7 @@ test('zero remains zero until a valid extra is added', () => {
     assert.equal(CronometroRules.transicionar(zero, 'acrescentar', 2000, { tempo_extra_jogo: 60 }).tempo_restante_jogo, 60);
 });
 
-test('legacy null balance uses duration and extra but zero does not fall back', () => {
+test('null balance uses duration and extra but zero does not fall back', () => {
     assert.equal(CronometroRules.saldoAtual(state(1200, 60, null, null, 'Pausado'), 2000), 1260);
     assert.equal(CronometroRules.saldoAtual(state(1200, 60, 0, null, 'Pausado'), 2000), 0);
 });

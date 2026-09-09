@@ -36,7 +36,7 @@ final class TemporaryResolutionScopeTest
             $teamB2 = (int) $editionB['equipe_ids'][1];
 
             $beforeB = self::gameSnapshot($connection, $gameB);
-            $resultB = $mesario->postJson('api/lancar_resultado.php', [
+            $resultB = $mesario->postJson('api/v1/resultados', [
                 'id_jogo' => -501,
                 'nome_jogo' => 'MM:2:0:N',
                 'id_modalidade' => $modalityB,
@@ -55,7 +55,7 @@ final class TemporaryResolutionScopeTest
 
             $beforeCrossEdition = self::gameSnapshot($connection, $gameB);
             $crossTag = 'MM:2:91:N';
-            $crossEdition = $mesario->postJson('api/lancar_resultado.php', [
+            $crossEdition = $mesario->postJson('api/v1/resultados', [
                 'id_jogo' => -502,
                 'nome_jogo' => $crossTag,
                 'id_modalidade' => $modalityA,
@@ -85,7 +85,7 @@ final class TemporaryResolutionScopeTest
             $beforeAmbiguous = self::gameSnapshot($connection, $ambiguousGame);
             $ambiguousTag = 'MM:2:92:N';
             $mutation = ['X-SGI-Mutation-Id' => 't05-ambiguous-' . bin2hex(random_bytes(5))];
-            $ambiguous = $mesario->postJson('api/lancar_resultado.php', [
+            $ambiguous = $mesario->postJson('api/v1/resultados', [
                 'id_jogo' => -503,
                 'nome_jogo' => $ambiguousTag,
                 'id_modalidade' => $modalityA,
@@ -102,7 +102,7 @@ final class TemporaryResolutionScopeTest
                 && $afterAmbiguous === $beforeAmbiguous,
             );
             self::deleteGame($connection, $ambiguousGame);
-            $retryAmbiguous = $mesario->postJson('api/lancar_resultado.php', [
+            $retryAmbiguous = $mesario->postJson('api/v1/resultados', [
                 'id_jogo' => -503,
                 'nome_jogo' => $ambiguousTag,
                 'id_modalidade' => $modalityA,
@@ -119,7 +119,7 @@ final class TemporaryResolutionScopeTest
             );
 
             $syncName = 'T05 Sync ' . bin2hex(random_bytes(5));
-            $sync = $mesario->postJson('api/sincronizar_chaveamento.php', [
+            $sync = $mesario->postJson('api/v1/sincronizacao/chaveamento', [
                 'id_modalidade' => $modalityA,
                 'tipo_modalidade' => 'mata_mata',
                 'jogos' => [[

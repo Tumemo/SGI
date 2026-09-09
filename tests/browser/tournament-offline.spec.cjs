@@ -54,7 +54,7 @@ async function validarDadosJogoOffline(page, esperado, opcoes = {}) {
 }
 
 async function criarChaveFixture(request) {
-    await jsonOrThrow(await request.post('api/login.php', {
+    await jsonOrThrow(await request.post('api/v1/login', {
         data: { matricula: 'admin', senha: '123' }
     }), 'login administrativo do fixture');
 
@@ -62,14 +62,14 @@ async function criarChaveFixture(request) {
     // completa a modalidade até oito equipes para exercitar quatro quartas,
     // duas semifinais e a final (sete jogos operados).
     const nomeEdicao = `E2E Torneio Offline ${Date.now()}`;
-    const edicao = await jsonOrThrow(await request.post('api/interclasse.php', {
+    const edicao = await jsonOrThrow(await request.post('api/v1/edicoes', {
         data: { nome_interclasse: nomeEdicao, ano_interclasse: new Date().toISOString().slice(0, 10) }
     }), 'criação da edição fixture');
     const idInterclasse = Number(edicao.id);
     if (!idInterclasse) throw new Error(`Edição fixture sem ID: ${JSON.stringify(edicao)}`);
 
     const modalidades = await jsonOrThrow(
-        await request.get(`api/modalidades.php?id_interclasse=${idInterclasse}`),
+        await request.get(`api/v1/modalidades?id_interclasse=${idInterclasse}`),
         'modalidades do fixture'
     );
 
@@ -78,7 +78,7 @@ async function criarChaveFixture(request) {
     for (const item of modalidades) {
         if (!String(item.nome_tipo_modalidade || '').toLowerCase().includes('mata')) continue;
         const lista = await jsonOrThrow(
-            await request.get(`api/equipes.php?id_modalidade=${Number(item.id_modalidade)}`),
+            await request.get(`api/v1/equipes?id_modalidade=${Number(item.id_modalidade)}`),
             `equipes da modalidade ${item.id_modalidade}`
         );
         if (lista.length >= 4) {
@@ -94,7 +94,7 @@ async function criarChaveFixture(request) {
     const equipesBase = equipes.slice();
     while (equipes.length < 8) {
         const origem = equipesBase[(equipes.length - equipesBase.length) % equipesBase.length];
-        const criada = await jsonOrThrow(await request.post('api/equipes.php', {
+        const criada = await jsonOrThrow(await request.post('api/v1/equipes', {
             data: {
                 acao: 'criar_equipe',
                 modalidades_id_modalidade: Number(modalidade.id_modalidade),
@@ -122,7 +122,7 @@ async function criarChaveFixture(request) {
     ];
     // Esta rota grava os jogos e suas partidas na mesma transação, exatamente
     // como o gerador de chaveamento da aplicação.
-    await jsonOrThrow(await request.post('api/sincronizar_chaveamento.php', {
+    await jsonOrThrow(await request.post('api/v1/sincronizacao/chaveamento', {
         data: {
             id_modalidade: Number(modalidade.id_modalidade),
             tipo_modalidade: 'mata_mata',
@@ -138,7 +138,7 @@ async function criarChaveFixture(request) {
     }), 'criação do chaveamento fixture');
 
     const listaJogos = await jsonOrThrow(
-        await request.get(`api/jogos.php?id_modalidade=${Number(modalidade.id_modalidade)}`),
+        await request.get(`api/v1/jogos?id_modalidade=${Number(modalidade.id_modalidade)}`),
         'consulta dos jogos do fixture'
     );
     const ids = {};
@@ -149,7 +149,7 @@ async function criarChaveFixture(request) {
         if (!idJogo) throw new Error(`A API não retornou o ID de ${jogo.tag}: ${JSON.stringify(encontrado)}`);
         ids[jogo.tag] = idJogo;
         const partidas = await jsonOrThrow(
-            await request.get(`api/partidas.php?id_jogo=${idJogo}`),
+            await request.get(`api/v1/partidas?id_jogo=${idJogo}`),
             `partidas da fixture ${jogo.tag}`
         );
         detalhes[jogo.tag] = {
@@ -211,14 +211,14 @@ async function esperarDetalheServidor(request, idModalidade, tag, equipes = []) 
     let jogo = null;
     await expect.poll(async () => {
         const lista = await jsonOrThrow(
-            await request.get(`api/jogos.php?id_modalidade=${idModalidade}`),
+            await request.get(`api/v1/jogos?id_modalidade=${idModalidade}`),
             `consulta online de ${tag}`
         );
         jogo = lista.find((item) => String(item.nome_jogo) === String(tag)) || null;
         return Boolean(jogo && Number(jogo.id_jogo));
     }, { timeout: 30_000 }).toBe(true);
     const partidas = await jsonOrThrow(
-        await request.get(`api/partidas.php?id_jogo=${Number(jogo.id_jogo)}`),
+        await request.get(`api/v1/partidas?id_jogo=${Number(jogo.id_jogo)}`),
         `partidas online de ${tag}`
     );
     return {
@@ -233,12 +233,12 @@ async function esperarDetalheServidor(request, idModalidade, tag, equipes = []) 
 }
 
 async function entrarComoMesario(page) {
-    await page.goto('views/index.php', { waitUntil: 'domcontentloaded' });
+    await page.goto('login', { waitUntil: 'domcontentloaded' });
     await expect(page.locator('#form_desktop')).toBeVisible();
     await page.locator('#form_desktop .ipt-matricula').fill('mesario');
     await page.locator('#form_desktop .ipt-senha').fill('123');
     await page.locator('#form_desktop button[type="submit"]').click();
-    await page.waitForURL(/\/dashboard\.php\?id=\d+/, { waitUntil: 'domcontentloaded' });
+    await page.waitForURL(/\/painel\?id=\d+/, { waitUntil: 'domcontentloaded' });
     await expect(page.locator('body')).not.toContainText('Download parcial');
 }
 
@@ -323,7 +323,7 @@ test.describe.serial('Mesário — torneio completo online e offline', () => {
         await capturarTela(page, testInfo, '02-online-campeao');
 
         const arvore = await jsonOrThrow(
-            await request.get(`api/chaveamento.php?id_modalidade=${fixture.idModalidade}`),
+            await request.get(`api/v1/chaveamentos?id_modalidade=${fixture.idModalidade}`),
             'árvore final online'
         );
         const porTag = Object.fromEntries((arvore.jogos || []).map((jogo) => [jogo.nome_jogo, jogo]));
@@ -435,7 +435,7 @@ test.describe.serial('Mesário — torneio completo online e offline', () => {
             window.__sgiTesteOcorrenciasResolver = null;
             window.fetch = function (input, init) {
                 const url = String(input && input.url ? input.url : input);
-                if (url.includes('ocorrencias.php?id_jogo=')) {
+                if (url.includes('ocorrencias?id_jogo=')) {
                     return new Promise((resolve) => {
                         window.__sgiTesteOcorrenciasResolver = () => resolve(new Response('[]', {
                             status: 200,
@@ -488,7 +488,7 @@ test.describe.serial('Mesário — torneio completo online e offline', () => {
         await expect(page.locator('#sgi-offline-banner')).toHaveClass(/sgi-hidden/);
 
         const arvore = await page.evaluate(async (idModalidade) => {
-            const response = await fetch(`../../../api/chaveamento.php?id_modalidade=${idModalidade}`);
+            const response = await fetch(`/api/v1/chaveamentos?id_modalidade=${idModalidade}`);
             return response.json();
         }, fixture.idModalidade);
         expect(arvore.success).toBe(true);

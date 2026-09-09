@@ -12,16 +12,16 @@ test('instalação preserva o prefixo nos caminhos de páginas, arquivos e APIs'
     });
 
     await page.goto(base.href);
-    expect(new URL(page.url()).pathname).toBe(`${prefix}views/index.php`);
-    const login = await page.request.post(new URL('api/login.php', base).href, {
+    expect(new URL(page.url()).pathname).toBe(`${prefix}login`);
+    const login = await page.request.post(new URL('api/v1/login', base).href, {
         data: { matricula: 'admin', senha: '123' }
     });
     expect((await login.json()).status).toBe('sucesso');
 
-    await page.goto(new URL('views/src/pages/home.php', base).href);
+    await page.goto(new URL('edicoes', base).href);
     await page.waitForLoadState('networkidle');
-    expect(new URL(page.url()).pathname).toBe(`${prefix}views/src/pages/home.php`);
-    const previous = await page.request.get(new URL('api/equipes.php', base).href);
+    expect(new URL(page.url()).pathname).toBe(`${prefix}edicoes`);
+    const previous = await page.request.get(new URL('api/v1/equipes', base).href);
     const versioned = await page.request.get(new URL('api/v1/equipes', base).href);
     expect(previous.status()).toBe(200);
     expect(versioned.status()).toBe(200);

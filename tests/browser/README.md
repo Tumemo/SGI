@@ -9,7 +9,6 @@ Consulte [o guia de execução](../../docs/testing.md) para preparar banco, serv
 - `mesario-offline.spec.cjs`: partida offline com gol, ocorrência e sincronização.
 - `tournament-offline.spec.cjs`: sete partidas online e sete sem rede, com confirmação do campeão.
 - `offline-tournament-bracket.spec.cjs`: projeções locais e árvore completa do torneio.
-- `legacy-offline-compat.spec.cjs`: fila antiga, alias de API, CSRF/identidade, isolamento por usuário e casca legada sem Service Worker.
 
 Limitações intencionais: a operação exige que a sessão autenticada tenha
 preparado a casca SPA antes da desconexão; refresh, nova aba ou abertura a frio

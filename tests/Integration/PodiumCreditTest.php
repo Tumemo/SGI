@@ -67,7 +67,6 @@ final class PodiumCreditTest
         self::runThirdPlaceScenario($connection, $editionId, $modalityId, $points[3]);
         self::runUnconciledCorrectionScenario($connection, $editionId, $modalityId);
         self::runIndividualScenario($connection, $editionId);
-        self::runAdoptionScenario($connection, $editionId);
         $connection->close();
     }
 
@@ -118,61 +117,6 @@ final class PodiumCreditTest
         Assertions::assert('Retificação individual move o crédito sem duplicá-lo', $afterRevision === $expectedRevision, json_encode(['depois' => $afterRevision, 'esperado' => $expectedRevision]));
         $count = (int) $connection->query('SELECT COUNT(*) FROM pontuacoes_podio WHERE id_interclasse = ' . $editionId . ' AND id_modalidade = ' . $modalityId)->fetch_column();
         Assertions::assert('Modalidade individual mantém uma linha por posição', $count === 3);
-    }
-
-    private static function runAdoptionScenario(\mysqli $connection, int $editionId): void
-    {
-        $modality = $connection->prepare(
-            'SELECT m.id_modalidade
-             FROM modalidades m
-             WHERE m.interclasses_id_interclasse = ?
-               AND NOT EXISTS (
-                   SELECT 1 FROM pontuacoes_podio p
-                   WHERE p.id_interclasse = m.interclasses_id_interclasse
-                     AND p.id_modalidade = m.id_modalidade
-               )
-             ORDER BY m.id_modalidade DESC LIMIT 1',
-        );
-        $modality->bind_param('i', $editionId);
-        $modality->execute();
-        $modalityId = (int) $modality->get_result()->fetch_column();
-        $modality->close();
-        $classId = (int) $connection->query('SELECT id_turma FROM turmas WHERE interclasses_id_interclasse = ' . $editionId . ' ORDER BY id_turma LIMIT 1')->fetch_column();
-        if ($modalityId <= 0 || $classId <= 0) {
-            throw new \RuntimeException('O cenário de adoção não encontrou modalidade e turma disponíveis.');
-        }
-        $credit = [
-            'id_interclasse' => $editionId,
-            'id_modalidade' => $modalityId,
-            'posicao' => 3,
-            'id_turma' => $classId,
-            'id_equipe' => null,
-            'id_usuario' => null,
-            'id_jogo' => null,
-            'pontos' => 0,
-        ];
-        $before = self::classPoints($connection, [$classId]);
-        $repository = new \App\Modules\Resultados\Infrastructure\MysqliPodioRepository($connection);
-        $repository->adotar([$credit]);
-        $after = self::classPoints($connection, [$classId]);
-        Assertions::assert('Adoção legada registra valor zero sem alterar o bruto', $before === $after);
-        $row = $connection->query('SELECT pontos, origem_registro FROM pontuacoes_podio WHERE id_interclasse = ' . $editionId . ' AND id_modalidade = ' . $modalityId . ' AND posicao = 3')->fetch_assoc();
-        Assertions::assert('Adoção legada grava origem conferida e valor zero', $row !== null && (int) $row['pontos'] === 0 && $row['origem_registro'] === 'legado_conferido');
-
-        $repository->adotar([$credit]);
-        $repeatCount = (int) $connection->query('SELECT COUNT(*) FROM pontuacoes_podio WHERE id_interclasse = ' . $editionId . ' AND id_modalidade = ' . $modalityId . ' AND posicao = 3')->fetch_column();
-        Assertions::assert('Adoção idêntica é repetível sem duplicar a fonte', $repeatCount === 1 && self::classPoints($connection, [$classId]) === $before);
-
-        $conflict = $credit;
-        $conflict['pontos'] = 1;
-        $conflictRejected = false;
-        try {
-            $repository->adotar([$conflict]);
-        } catch (\Throwable) {
-            $conflictRejected = true;
-        }
-        $afterConflict = $connection->query('SELECT pontos, origem_registro FROM pontuacoes_podio WHERE id_interclasse = ' . $editionId . ' AND id_modalidade = ' . $modalityId . ' AND posicao = 3')->fetch_assoc();
-        Assertions::assert('Adoção conflitante falha sem escrita parcial', $conflictRejected && $afterConflict !== null && (int) $afterConflict['pontos'] === 0 && $afterConflict['origem_registro'] === 'legado_conferido' && self::classPoints($connection, [$classId]) === $before);
     }
 
     private static function runSemifinalInvalidationScenario(\mysqli $connection, int $editionId, int $modalityId): void

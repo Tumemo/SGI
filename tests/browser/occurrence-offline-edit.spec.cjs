@@ -8,20 +8,20 @@ async function jsonOrThrow(response, label) {
 async function criarFixture(request) {
     const base = process.env.SGI_BASE_URL || 'http://localhost/SGI/';
     const api = (value) => new URL(value, base).href;
-    await jsonOrThrow(await request.post(api('api/login.php'), {
+    await jsonOrThrow(await request.post(api('api/v1/login'), {
         data: { matricula: 'admin', senha: '123' },
     }), 'login administrativo');
 
     const edicoes = await jsonOrThrow(
-        await request.get(api('api/interclasse.php?regulamento=true')),
+        await request.get(api('api/v1/edicoes?regulamento=true')),
         'edições',
     );
     const edicao = edicoes.find((item) => String(item.status_interclasse) === '1');
     if (!edicao) throw new Error('Nenhuma edição ativa disponível.');
     const idInterclasse = Number(edicao.id_interclasse);
     const [equipes, modalidades] = await Promise.all([
-        request.get(api(`api/equipes.php?id_interclasse=${idInterclasse}`)).then((response) => jsonOrThrow(response, 'equipes')),
-        request.get(api(`api/modalidades.php?id_interclasse=${idInterclasse}`)).then((response) => jsonOrThrow(response, 'modalidades')),
+        request.get(api(`api/v1/equipes?id_interclasse=${idInterclasse}`)).then((response) => jsonOrThrow(response, 'equipes')),
+        request.get(api(`api/v1/modalidades?id_interclasse=${idInterclasse}`)).then((response) => jsonOrThrow(response, 'modalidades')),
     ]);
     const modalidade = modalidades.find((item) =>
         String(item.nome_tipo_modalidade || '').toLowerCase().includes('mata') &&
@@ -32,7 +32,7 @@ async function criarFixture(request) {
     if (equipesDaModalidade.length < 2) throw new Error('O fixture precisa de duas equipes.');
 
     const nomeJogo = `T11 Occurrence ${Date.now()}`;
-    await jsonOrThrow(await request.post(api('api/sincronizar_chaveamento.php'), {
+    await jsonOrThrow(await request.post(api('api/v1/sincronizacao/chaveamento'), {
         data: {
             id_modalidade: Number(modalidade.id_modalidade),
             tipo_modalidade: 'mata_mata',
@@ -47,7 +47,7 @@ async function criarFixture(request) {
         },
     }), 'criação do jogo');
     const jogos = await jsonOrThrow(
-        await request.get(api(`api/jogos.php?id_modalidade=${Number(modalidade.id_modalidade)}`)),
+        await request.get(api(`api/v1/jogos?id_modalidade=${Number(modalidade.id_modalidade)}`)),
         'consulta do jogo',
     );
     const jogo = jogos.find((item) => String(item.nome_jogo) === nomeJogo);
@@ -55,7 +55,7 @@ async function criarFixture(request) {
     const idJogo = Number(jogo.id_jogo);
     const turma = Number(equipesDaModalidade[0].turmas_id_turma);
     const matriculaAtleta = String(910000000 + (Date.now() % 100000));
-    const aluno = await jsonOrThrow(await request.post(api('api/usuarios.php?acao=criar_aluno'), {
+    const aluno = await jsonOrThrow(await request.post(api('api/v1/usuarios?acao=criar_aluno'), {
         data: {
             nome_usuario: 'Atleta T11 Ocorrência',
             matricula_usuario: matriculaAtleta,
@@ -67,23 +67,23 @@ async function criarFixture(request) {
     if (aluno.status !== 'sucesso') throw new Error(`criação do atleta fixture: ${aluno.mensagem || JSON.stringify(aluno)}`);
     const alunoApi = await requestFactory.newContext({ baseURL: base });
     try {
-        await jsonOrThrow(await alunoApi.post(api('api/login.php'), {
+        await jsonOrThrow(await alunoApi.post(api('api/v1/login'), {
             data: { matricula: matriculaAtleta, senha: '123' },
         }), 'login do atleta fixture');
-        await jsonOrThrow(await alunoApi.post(api('api/inscricao.php'), {
+        await jsonOrThrow(await alunoApi.post(api('api/v1/inscricoes'), {
             data: { id_interclasse: idInterclasse, id_equipes: [Number(equipesDaModalidade[0].id_equipe)] },
         }), 'inscrição do atleta fixture');
     } finally {
         await alunoApi.dispose();
     }
     const atletas = await jsonOrThrow(
-        await request.get(api(`api/ocorrencias.php?acao=listar_atletas&id_jogo=${idJogo}&id_turma=${turma}`)),
+        await request.get(api(`api/v1/ocorrencias?acao=listar_atletas&id_jogo=${idJogo}&id_turma=${turma}`)),
         'atletas do jogo',
     );
     const atleta = atletas.atletas && (atletas.atletas.find((item) => String(item.matricula_usuario) === matriculaAtleta) || atletas.atletas[0]);
     if (!atleta) throw new Error(`O fixture não encontrou o atleta inscrito no jogo: ${JSON.stringify({ aluno, atletas })}`);
     const dataOcorrencia = String(jogo.data_jogo || new Date().toISOString().slice(0, 10));
-    const criarOcorrencia = (descricao, data) => request.post(api('api/ocorrencias.php'), {
+    const criarOcorrencia = (descricao, data) => request.post(api('api/v1/ocorrencias'), {
         data: {
             titulo_ocorrencia: 'Amarelo',
             descricao_ocorrencia: descricao,
@@ -111,11 +111,11 @@ test('busca por ID, abre a segunda ocorrência e edita a mesma ocorrência offli
         test.setTimeout(180_000);
         const fixture = await criarFixture(request);
 
-        await page.goto('views/index.php', { waitUntil: 'domcontentloaded' });
+        await page.goto('login', { waitUntil: 'domcontentloaded' });
         await page.locator('#form_desktop .ipt-matricula').fill('mesario');
         await page.locator('#form_desktop .ipt-senha').fill('123');
         await page.locator('#form_desktop button[type="submit"]').click();
-        await page.waitForURL(/\/dashboard\.php\?id=\d+/, { waitUntil: 'domcontentloaded' });
+        await page.waitForURL(/\/painel\?id=\d+/, { waitUntil: 'domcontentloaded' });
         await page.evaluate(({ id }) => window.__SGI_SPA__.navegarPara('jogos', { id_jogo: id, origem: 'agenda_edit' }), { id: fixture.idJogo });
         await expect(page.locator('#placar-conteudo')).toBeVisible();
         await page.getByRole('button', { name: /Iniciar jogo/i }).click();
@@ -143,7 +143,7 @@ test('busca por ID, abre a segunda ocorrência e edita a mesma ocorrência offli
 
         const servidor = await page.evaluate(async ({ alvo, primeira }) => {
             const ler = async (id) => {
-                const resposta = await fetch('../../../api/ocorrencias.php?id_ocorrencia=' + encodeURIComponent(id));
+                const resposta = await fetch('/api/v1/ocorrencias?id_ocorrencia=' + encodeURIComponent(id));
                 if (!resposta.ok) throw new Error(`consulta final: HTTP ${resposta.status}`);
                 return resposta.json();
             };
@@ -156,7 +156,7 @@ test('busca por ID, abre a segunda ocorrência e edita a mesma ocorrência offli
 
         await context.setOffline(true);
         await page.evaluate(async (dados) => {
-            await fetch('../../../api/ocorrencias.php', {
+            await fetch('/api/v1/ocorrencias', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -198,14 +198,14 @@ test('busca por ID, abre a segunda ocorrência e edita a mesma ocorrência offli
         await expect.poll(() => page.evaluate(() => window.SGIOffline.getState()), { timeout: 30_000 })
             .toMatchObject({ pending: 0 });
         const temporariasServidor = await page.evaluate(async (id) => {
-            const resposta = await fetch('../../../api/ocorrencias.php?id_jogo=' + encodeURIComponent(id));
+            const resposta = await fetch('/api/v1/ocorrencias?id_jogo=' + encodeURIComponent(id));
             return resposta.json();
         }, fixture.idJogo);
         const criadas = temporariasServidor.filter((item) => /T11 ocorrência temporária editada antes da sincronização/.test(item.descricao_ocorrencia || ''));
         expect(criadas).toHaveLength(1);
 
         const inativacao = await page.evaluate(async (id) => {
-            const resposta = await fetch('../../../api/ocorrencias.php', {
+            const resposta = await fetch('/api/v1/ocorrencias', {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ id_ocorrencia: id, status_ocorrencia: '0' }),
@@ -216,7 +216,7 @@ test('busca por ID, abre a segunda ocorrência e edita a mesma ocorrência offli
         expect(inativacao.body.success).toBe(true);
         const filtrosStatus = await page.evaluate(async (id) => {
             const ler = async (status) => {
-                const resposta = await fetch('../../../api/ocorrencias.php?id_ocorrencia=' + encodeURIComponent(id) + '&status_ocorrencia=' + status);
+                const resposta = await fetch('/api/v1/ocorrencias?id_ocorrencia=' + encodeURIComponent(id) + '&status_ocorrencia=' + status);
                 return resposta.json();
             };
             return { ativa: await ler('1'), inativa: await ler('0') };

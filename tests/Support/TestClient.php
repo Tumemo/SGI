@@ -12,8 +12,7 @@ class TestClient
     public function __construct(?string $baseUrl = null, ?string $cookieFile = null)
     {
         // Permite que a suíte seja executada contra o workspace (por exemplo,
-        // um servidor PHP embutido), sem depender de uma implantação Apache
-        // que possa estar desatualizada. Mantém o endereço legado como padrão.
+        // um servidor PHP embutido), sem depender de uma implantação Apache.
         // O padrão aponta para o servidor embutido de testes. Assim, executar
         // a suíte sem configurar um ambiente nunca atinge o Apache de
         // desenvolvimento por acidente.
@@ -151,7 +150,7 @@ class TestClient
 
     public function login(string $matricula, string $senha): array
     {
-        $response = $this->postJson('api/login.php', [
+        $response = $this->postJson('api/v1/login', [
             'matricula' => $matricula,
             'senha' => $senha
         ]);

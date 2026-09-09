@@ -16,7 +16,7 @@ class JogosAndConflitosTest
         $admin->login('admin', '123');
 
         // 5.1 Criar Local de Jogo
-        $resLocal = $admin->postJson('api/locais.php', [
+        $resLocal = $admin->postJson('api/v1/locais', [
             'nome_local' => 'Ginásio Poliesportivo A',
             'disponivel_local' => '1',
             'carga_local' => 6,
@@ -32,7 +32,7 @@ class JogosAndConflitosTest
         $e3 = (int) $equipes[2]['id_equipe'];
         $e4 = (int) $equipes[3]['id_equipe'];
 
-        $resSf1 = $admin->postJson('api/jogos.php', [
+        $resSf1 = $admin->postJson('api/v1/jogos', [
             'nome_jogo' => 'MM:4:0:N',
             'data_jogo' => $hoje,
             'inicio_jogo' => '08:00',
@@ -47,7 +47,7 @@ class JogosAndConflitosTest
         $idJogo1 = (int) ($resSf1['json']['id_jogo'] ?? $resSf1['json']['id'] ?? 0);
 
         // 5.3 Testar detecção de conflito de horário no mesmo local (sobreposição às 08:15)
-        $resConflito = $admin->postJson('api/jogos.php', [
+        $resConflito = $admin->postJson('api/v1/jogos', [
             'nome_jogo' => 'MM:4:1:N',
             'data_jogo' => $hoje,
             'inicio_jogo' => '08:15',
@@ -60,7 +60,7 @@ class JogosAndConflitosTest
         Assertions::assert("Bloqueio de conflito de horário no mesmo local", $resConflito['code'] === 400 || ($resConflito['json']['success'] ?? true) === false);
 
         // 5.4 Agendar Semifinal 2 em horário válido (MM:4:1:N) às 09:00
-        $resSf2 = $admin->postJson('api/jogos.php', [
+        $resSf2 = $admin->postJson('api/v1/jogos', [
             'nome_jogo' => 'MM:4:1:N',
             'data_jogo' => $hoje,
             'inicio_jogo' => '09:00',

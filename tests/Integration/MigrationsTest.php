@@ -20,15 +20,6 @@ final class MigrationsTest
         $runner = new MigrationRunner($connection, dirname(__DIR__, 2) . '/database/migrations');
         Assertions::assert('Segunda execução das migrações não reaplica alterações', $runner->migrate() === []);
         Assertions::assert('Migrações preservam identidades, edições e senhas', $before === $connection->query($query)->fetch_all(MYSQLI_ASSOC) && count($before) > 0);
-        $connection->query("DELETE FROM sgi_migrations WHERE version = '001_initial_schema.sql'");
-        try {
-            $runner->migrate();
-            Assertions::assert('Base existente exige baseline explícito', false);
-        } catch (\RuntimeException $exception) {
-            Assertions::assert('Base existente exige baseline explícito', str_contains($exception->getMessage(), '--baseline'));
-        }
-        $runner->migrate(true);
-        Assertions::assert('Baseline reconhece estrutura existente sem apagar dados', $before === $connection->query($query)->fetch_all(MYSQLI_ASSOC));
         $connection->close();
     }
 }

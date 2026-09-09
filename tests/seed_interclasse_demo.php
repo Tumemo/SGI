@@ -66,7 +66,7 @@ function apiUpload(string $url, array $postFields, string $cookieFile, ?string $
 echo "=== INICIANDO CONFIGURAÇÃO INICIAL DO SGI PARA USO DOS ALUNOS ===\n\n";
 
 // 1. Autenticar como Admin
-$login = apiPost("$baseUrl/api/login.php", ['matricula' => 'admin', 'senha' => '123'], $cookieJar);
+$login = apiPost("$baseUrl/api/v1/login", ['matricula' => 'admin', 'senha' => '123'], $cookieJar);
 if (($login['json']['status'] ?? '') !== 'sucesso') {
     die("Erro no login do Administrador: " . $login['raw'] . "\n");
 }
@@ -75,7 +75,7 @@ echo "[1/5] Administrador autenticado com sucesso.\n";
 
 // 2. Criar Edição Oficial do Interclasses
 $anoAtual = date('Y');
-$edicao = apiPost("$baseUrl/api/interclasse.php", [
+$edicao = apiPost("$baseUrl/api/v1/edicoes", [
     'nome_interclasse' => "Interclasses SESI $anoAtual",
     'ano_interclasse' => date('Y-m-d')
 ], $cookieJar, $csrfToken);
@@ -87,14 +87,14 @@ if ($idEdicao <= 0) {
 echo "[2/5] Edição 'Interclasses SESI $anoAtual' criada com ID $idEdicao (35 equipes padrão geradas automaticamente).\n";
 
 // 3. Cadastrar Locais Oficiais (Quadra Poliesportiva e Campo Society)
-$local1 = apiPost("$baseUrl/api/locais.php", [
+$local1 = apiPost("$baseUrl/api/v1/locais", [
     'nome_local' => 'Ginásio Poliesportivo Principal',
     'disponivel_local' => '1',
     'carga_local' => 8,
     'interclasses_id_interclasse' => $idEdicao
 ], $cookieJar, $csrfToken);
 
-$local2 = apiPost("$baseUrl/api/locais.php", [
+$local2 = apiPost("$baseUrl/api/v1/locais", [
     'nome_local' => 'Quadra Externa A',
     'disponivel_local' => '1',
     'carga_local' => 6,
@@ -103,7 +103,7 @@ $local2 = apiPost("$baseUrl/api/locais.php", [
 echo "[3/5] Locais de jogos cadastrados (Ginásio Principal e Quadra Externa A).\n";
 
 // 4. Importar Alunos do PDF da Turma 6EFB
-$turmas = apiGet("$baseUrl/api/turmas.php?id_interclasse=$idEdicao", $cookieJar)['json'] ?? [];
+$turmas = apiGet("$baseUrl/api/v1/turmas?id_interclasse=$idEdicao", $cookieJar)['json'] ?? [];
 $idTurma6EF = 0;
 foreach ($turmas as $t) {
     if (str_contains($t['nome_turma'], '6') || str_contains($t['nome_turma'], 'EF')) {
@@ -120,7 +120,7 @@ if (!file_exists($pdfPath)) {
 
     if (file_exists($pdfPath)) {
         $cfile = new CURLFile($pdfPath, 'application/pdf', '6EFB.pdf');
-        $upload = apiUpload("$baseUrl/api/upload_turma_pdf.php", [
+        $upload = apiUpload("$baseUrl/api/v1/importacoes/turma-pdf", [
             'pdf_arquivo' => $cfile,
             'id_turma' => (string) $idTurma6EF,
             'id_interclasse' => (string) $idEdicao
@@ -131,7 +131,7 @@ if (!file_exists($pdfPath)) {
 
 // 5. Testar Login de um Aluno Importado (RM 2879)
 $cookieAluno = sys_get_temp_dir() . '/sgi_init_aluno.txt';
-$loginAluno = apiPost("$baseUrl/api/login.php", ['matricula' => '2879', 'senha' => '123'], $cookieAluno);
+$loginAluno = apiPost("$baseUrl/api/v1/login", ['matricula' => '2879', 'senha' => '123'], $cookieAluno);
 $nomeAluno = $loginAluno['json']['usuario']['nome'] ?? 'Aluno';
 echo "[5/5] Teste de login do Aluno (RM: 2879 / Senha: 123) realizado com sucesso: $nomeAluno.\n";
 

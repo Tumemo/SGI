@@ -10,19 +10,19 @@ async function jsonOrThrow(response, label) {
 }
 
 async function criarChaveFixture(request) {
-    await jsonOrThrow(await request.post('api/login.php', {
+    await jsonOrThrow(await request.post('api/v1/login', {
         data: { matricula: 'admin', senha: '123' }
     }), 'login administrativo do fixture');
 
     const nomeEdicao = `E2E Bracket Inspection ${Date.now()}`;
-    const edicao = await jsonOrThrow(await request.post('api/interclasse.php', {
+    const edicao = await jsonOrThrow(await request.post('api/v1/edicoes', {
         data: { nome_interclasse: nomeEdicao, ano_interclasse: new Date().toISOString().slice(0, 10) }
     }), 'criação da edição fixture');
     const idInterclasse = Number(edicao.id);
     if (!idInterclasse) throw new Error(`Edição fixture sem ID: ${JSON.stringify(edicao)}`);
 
     const modalidades = await jsonOrThrow(
-        await request.get(`api/modalidades.php?id_interclasse=${idInterclasse}`),
+        await request.get(`api/v1/modalidades?id_interclasse=${idInterclasse}`),
         'modalidades do fixture'
     );
 
@@ -31,7 +31,7 @@ async function criarChaveFixture(request) {
     for (const item of modalidades) {
         if (!String(item.nome_tipo_modalidade || '').toLowerCase().includes('mata')) continue;
         const lista = await jsonOrThrow(
-            await request.get(`api/equipes.php?id_modalidade=${Number(item.id_modalidade)}`),
+            await request.get(`api/v1/equipes?id_modalidade=${Number(item.id_modalidade)}`),
             `equipes da modalidade ${item.id_modalidade}`
         );
         if (lista.length >= 4) {
@@ -47,7 +47,7 @@ async function criarChaveFixture(request) {
     const equipesBase = equipes.slice();
     while (equipes.length < 8) {
         const origem = equipesBase[(equipes.length - equipesBase.length) % equipesBase.length];
-        const criada = await jsonOrThrow(await request.post('api/equipes.php', {
+        const criada = await jsonOrThrow(await request.post('api/v1/equipes', {
             data: {
                 acao: 'criar_equipe',
                 modalidades_id_modalidade: Number(modalidade.id_modalidade),
@@ -71,7 +71,7 @@ async function criarChaveFixture(request) {
         { tag: 'MM:8:3:N', a: equipes[6], b: equipes[7] }
     ];
 
-    await jsonOrThrow(await request.post('api/sincronizar_chaveamento.php', {
+    await jsonOrThrow(await request.post('api/v1/sincronizacao/chaveamento', {
         data: {
             id_modalidade: Number(modalidade.id_modalidade),
             tipo_modalidade: 'mata_mata',
@@ -87,7 +87,7 @@ async function criarChaveFixture(request) {
     }), 'criação do chaveamento fixture');
 
     const listaJogos = await jsonOrThrow(
-        await request.get(`api/jogos.php?id_modalidade=${Number(modalidade.id_modalidade)}`),
+        await request.get(`api/v1/jogos?id_modalidade=${Number(modalidade.id_modalidade)}`),
         'consulta dos jogos do fixture'
     );
 
@@ -111,12 +111,12 @@ test.describe('Torneio Offline e Inspeção da Árvore de Chaveamento', () => {
         test.setTimeout(180000);
 
         // 1. Login como Mesário
-        await page.goto('views/index.php', { waitUntil: 'domcontentloaded' });
+        await page.goto('login', { waitUntil: 'domcontentloaded' });
         await expect(page.locator('#form_desktop')).toBeVisible();
         await page.locator('#form_desktop .ipt-matricula').fill('mesario');
         await page.locator('#form_desktop .ipt-senha').fill('123');
         await page.locator('#form_desktop button[type="submit"]').click();
-        await page.waitForURL(/\/dashboard\.php\?id=\d+/, { waitUntil: 'domcontentloaded' });
+        await page.waitForURL(/\/painel\?id=\d+/, { waitUntil: 'domcontentloaded' });
 
         // 2. Aguarda pré-carregamento do SPA
         await expect(page.locator('#sgi-offline-ok')).toContainText('Pronto para uso offline', { timeout: 60_000 });
@@ -141,13 +141,13 @@ test.describe('Torneio Offline e Inspeção da Árvore de Chaveamento', () => {
 
         for (const qf of placaresQF) {
             await page.evaluate(async ({ idJogo, eq1Gols, eq2Gols }) => {
-                const partidasResp = await fetch(`../../../api/partidas.php?id_jogo=${idJogo}`);
+                const partidasResp = await fetch(`/api/v1/partidas?id_jogo=${idJogo}`);
                 const partidas = await partidasResp.json();
                 const resultados = [
                     { id_equipe: partidas[0].equipes_id_equipe, gols: eq1Gols },
                     { id_equipe: partidas[1].equipes_id_equipe, gols: eq2Gols }
                 ];
-                await fetch('../../../api/lancar_resultado.php', {
+                await fetch('/api/v1/resultados', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ id_jogo: idJogo, resultados })
@@ -178,13 +178,13 @@ test.describe('Torneio Offline e Inspeção da Árvore de Chaveamento', () => {
 
         for (const sf of placaresSF) {
             await page.evaluate(async ({ idJogo, eq1Gols, eq2Gols }) => {
-                const partidasResp = await fetch(`../../../api/partidas.php?id_jogo=${idJogo}`);
+                const partidasResp = await fetch(`/api/v1/partidas?id_jogo=${idJogo}`);
                 const partidas = await partidasResp.json();
                 const resultados = [
                     { id_equipe: partidas[0].equipes_id_equipe, gols: eq1Gols },
                     { id_equipe: partidas[1].equipes_id_equipe, gols: eq2Gols }
                 ];
-                await fetch('../../../api/lancar_resultado.php', {
+                await fetch('/api/v1/resultados', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ id_jogo: idJogo, resultados })
@@ -204,13 +204,13 @@ test.describe('Torneio Offline e Inspeção da Árvore de Chaveamento', () => {
         const idFinal = Number(finalJogo.id_jogo);
 
         await page.evaluate(async ({ idJogo }) => {
-            const partidasResp = await fetch(`../../../api/partidas.php?id_jogo=${idJogo}`);
+            const partidasResp = await fetch(`/api/v1/partidas?id_jogo=${idJogo}`);
             const partidas = await partidasResp.json();
             const resultados = [
                 { id_equipe: partidas[0].equipes_id_equipe, gols: 3 },
                 { id_equipe: partidas[1].equipes_id_equipe, gols: 0 }
             ];
-            await fetch('../../../api/lancar_resultado.php', {
+            await fetch('/api/v1/resultados', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ id_jogo: idJogo, resultados })
@@ -243,7 +243,7 @@ test.describe('Torneio Offline e Inspeção da Árvore de Chaveamento', () => {
 
         await page.waitForTimeout(2000);
 
-        // 9. Inspeciona o DOM da tela chaveamento_arvore.php
+        // 9. Inspeciona o DOM da tela chaveamento
         const domInfo = await page.evaluate(() => {
             return {
                 temBracketArea: !!document.getElementById('bracketArea'),

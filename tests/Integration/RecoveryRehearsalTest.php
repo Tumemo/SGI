@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace SGITests\Integration;
 
 use App\Shared\Database\MigrationRunner;
-use App\Shared\Database\SqlScript;
 use mysqli;
 use RuntimeException;
 use SGITests\Support\Assertions;
@@ -26,7 +25,7 @@ final class RecoveryRehearsalTest
         try {
             self::createDatabase($source);
             $connection = TestDatabase::connect($source);
-            self::createLegacySchema($connection);
+            $appliedInitial = (new MigrationRunner($connection, self::migrationDirectory()))->migrate();
             self::seedSyntheticData($connection);
             $before = self::snapshot($connection);
             $connection->close();
@@ -35,9 +34,9 @@ final class RecoveryRehearsalTest
             Assertions::assert('Backup sintético contém schema, dados e triggers', is_file($backup) && filesize($backup) > 0 && $dumpVersion !== '');
 
             $connection = TestDatabase::connect($source);
-            $applied = (new MigrationRunner($connection, self::migrationDirectory()))->migrate(true);
+            $applied = (new MigrationRunner($connection, self::migrationDirectory()))->migrate();
             $upgraded = self::snapshot($connection);
-            Assertions::assert('Upgrade da origem aplica as quatro versões sem perder os dados', $applied === [
+            Assertions::assert('Instalação atual aplica as quatro versões sem perder os dados', $applied === [] && $appliedInitial === [
                 '001_initial_schema.sql',
                 '002_mutation_fingerprint.sql',
                 '003_fix_arrecadacao_revaluation.sql',
@@ -51,7 +50,7 @@ final class RecoveryRehearsalTest
             $connection = TestDatabase::connect($restore);
             $restored = self::snapshot($connection);
             Assertions::assert('Restauração em outra base preserva matrículas, hashes e histórico', $restored['users'] === $before['users'] && $restored['history'] === $before['history']);
-            Assertions::assert('Restauração preserva triggers e mantém a fronteira pré-upgrade explícita', $restored['triggers'] === $before['triggers'] && !self::hasTable($connection, 'sgi_migrations'));
+            Assertions::assert('Restauração preserva triggers e o histórico do schema atual', $restored['triggers'] === $before['triggers'] && self::hasTable($connection, 'sgi_migrations'));
             $connection->close();
 
             $manifestData = [
@@ -61,10 +60,9 @@ final class RecoveryRehearsalTest
                 'restore_command_completed' => $restoreOutput === '',
                 'source_database' => $source,
                 'restore_database' => $restore,
-                'source_schema_before_upgrade' => '001_initial_schema.sql sem histórico de migrações',
-                'source_schema_after_upgrade' => '001 + 002 + 003 + 004',
+                'source_schema' => '001 + 002 + 003 + 004',
                 'data_comparison' => 'users/history antes do upgrade == restore do backup',
-                'old_code_boundary' => 'a base restaurada é o limite seguro para o pacote antigo; a origem atualizada não é revertida por Git',
+                'current_architecture_boundary' => 'a base restaurada contém somente o schema atual',
             ];
             file_put_contents($manifest, json_encode($manifestData, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) . PHP_EOL);
             Assertions::assert('Manifesto do backup registra hash e fronteira de recuperação', is_file($manifest) && strlen((string) ($manifestData['backup_sha256'] ?? '')) === 64);
@@ -84,14 +82,6 @@ final class RecoveryRehearsalTest
         ];
     }
 
-    private static function createLegacySchema(mysqli $connection): void
-    {
-        $root = dirname(__DIR__, 2);
-        foreach (SqlScript::statements((string) file_get_contents($root . '/database/migrations/001_initial_schema.sql')) as $sql) {
-            $connection->query($sql);
-        }
-    }
-
     private static function seedSyntheticData(mysqli $connection): void
     {
         $hash = $connection->real_escape_string(password_hash('RecoverySenha!123', PASSWORD_DEFAULT));
@@ -104,14 +94,14 @@ final class RecoveryRehearsalTest
             "INSERT INTO locais VALUES (1, 'Ginásio recuperação', '1', NULL, '1', 1)",
             "INSERT INTO equipes VALUES (1, '1', 1, 1, '6EF Recovery')",
             "INSERT INTO usuarios VALUES (1, 'RM-REC', 'RECOVERY-26', 'Aluno sintético', '{$hash}', '3', 'MASC', '2008-01-01', '', '1', 1, 1, NULL)",
-            "INSERT INTO jogos VALUES (1, 'MM:1:0:N', '2026-10-01', '08:00:00', '09:00:00', 'Concluido', NULL, 3600, 0, NULL, 1, 1)",
+            "INSERT INTO jogos VALUES (1, 'MM:2:0:N', '2026-10-01', '08:00:00', '09:00:00', 'Concluido', NULL, 3600, 0, NULL, 1, 1)",
             "INSERT INTO partidas VALUES (1, 1, 1, 1, 3, '1')",
             "INSERT INTO artilheiros VALUES (1, 1, 1, 1)",
             "INSERT INTO pontuacoes VALUES (1, 'Final', 10, 1, NULL)",
             "INSERT INTO historico_arrecadacoes VALUES (1, 1, 1, 1.50, 3, '2026-10-02 10:00:00', 1, '1')",
             "INSERT INTO ocorrencias VALUES (1, 'Advertência', 'Recuperação sintética', '2026-10-03 12:00:00', '12:00:00', 1, '1', 1)",
             "INSERT INTO ocorrencias_turmas VALUES (1, 1, 1, 'Ajuste', 'Recuperação sintética', 1, '2026-10-03', 1, '2026-10-03 12:00:00')",
-            "INSERT INTO sincronizacoes_idempotentes (rota, chave_mutacao, status_http, resposta_json) VALUES ('/api/legacy', 'recovery-legacy', 200, '{\"ok\":true}')",
+            "INSERT INTO sincronizacoes_idempotentes (rota, chave_mutacao, status_http, resposta_json) VALUES ('/api/v1/resultados', 'recovery-current', 200, '{\"ok\":true}')",
         ];
         foreach ($statements as $sql) {
             $connection->query($sql);

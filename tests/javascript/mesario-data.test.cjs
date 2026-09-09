@@ -96,7 +96,7 @@ async function carregarDataLayer() {
         indexedDB: criarIndexedDbFake(),
         URL,
         Response,
-        location: { href: 'https://sgi.test/dashboard.php' },
+        location: { href: 'https://sgi.test/painel' },
         navigator: { onLine: true },
         fetch: () => Promise.reject(new Error('não usado neste teste')),
         Promise,
@@ -139,7 +139,7 @@ test('consulta de ocorrência versionada filtra por ID e não transforma ausênc
         id_jogo: 7,
         status_ocorrencia: '1',
     }]);
-    const ausente = await layer.localGet('https://sgi.test/api/ocorrencias.php?id_ocorrencia=999');
+    const ausente = await layer.localGet('https://sgi.test/api/v1/ocorrencias?id_ocorrencia=999');
     assert.deepEqual(await ausente.json(), []);
     const ativas = await layer.localGet('https://sgi.test/api/v1/ocorrencias?status_ocorrencia=1');
     assert.deepEqual((await ativas.json()).map((row) => row.id_ocorrencia), [11]);
@@ -162,7 +162,7 @@ test('projeção PUT preserva referências e POST temporário preserva os aliase
     await layer.onQueued({
         id: 13,
         method: 'POST',
-        url: 'https://sgi.test/api/ocorrencias.php',
+        url: 'https://sgi.test/api/v1/ocorrencias',
         body: JSON.stringify({ id_jogo: -5, id_turma: 3, usuarios_id_usuario: 20, descricao_ocorrencia: 'Temporária' }),
     });
     const temporaria = (await layer.read('ocorrencias')).find((row) => row.id_ocorrencia === 'temp_13');

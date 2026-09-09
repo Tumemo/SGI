@@ -18,7 +18,7 @@ class AuthAndRbacTest
         $res = $client->login('admin', '123');
         Assertions::assertStatus("Login do Administrador (HTTP 200)", $res, 200);
         Assertions::assertJsonSuccess("Retorno de sucesso no login do Admin", $res);
-        Assertions::assert("Redirecionamento de Admin para home.php", str_contains((string)($res['json']['redirect'] ?? ''), 'home.php'));
+        Assertions::assert("Redirecionamento de Admin para edicoes", str_contains((string)($res['json']['redirect'] ?? ''), 'edicoes'));
 
         // 1.2 Login Colaborador
         $clientColab = new TestClient();
@@ -34,7 +34,7 @@ class AuthAndRbacTest
         $clientAluno = new TestClient();
         $resAluno = $clientAluno->login('2879', '123');
         Assertions::assertJsonSuccess("Login do Aluno/Competidor (nível 3)", $resAluno);
-        Assertions::assert("Redirecionamento de Aluno para portal do aluno", str_contains((string)($resAluno['json']['redirect'] ?? ''), 'alunos/home.php'));
+        Assertions::assert("Redirecionamento de Aluno para portal do aluno", str_contains((string)($resAluno['json']['redirect'] ?? ''), 'aluno/inicio'));
 
         // 1.5 Rejeição de Senha Incorreta
         $clientAnon = new TestClient();
@@ -46,15 +46,15 @@ class AuthAndRbacTest
         Assertions::assertStatus("Bloqueio de matrícula inexistente (HTTP 401)", $resInexistente, 401);
 
         // 1.7 Bloqueio de Acesso a Área Staff sem Login
-        $resSemSessao = $clientAnon->get('views/src/pages/dashboard.php');
+        $resSemSessao = $clientAnon->get('painel');
         Assertions::assert("Redirecionamento/Bloqueio de rota staff sem sessão", $resSemSessao['code'] === 200 || $resSemSessao['code'] === 302);
         // O conteúdo não pode carregar o dashboard administrativo para anônimos
         Assertions::assert("Não expõe conteúdo de admin sem autenticação", !str_contains((string)$resSemSessao['body'], 'Total de Jogos'));
 
-        $usuariosAnonimo = $clientAnon->get('api/usuarios.php?acao=listar_colaboradores');
+        $usuariosAnonimo = $clientAnon->get('api/v1/usuarios?acao=listar_colaboradores');
         Assertions::assertStatus('Bloqueio de consulta administrativa de usuários sem sessão', $usuariosAnonimo, 401);
 
-        $csrfInvalido = $client->postJson('api/trocar_senha.php', [
+        $csrfInvalido = $client->postJson('api/v1/senha', [
             'nova_senha' => 'senhaSegura123',
             'confirmar_senha' => 'senhaSegura123',
         ], ['X-SGI-CSRF' => 'token-invalido']);
@@ -62,26 +62,26 @@ class AuthAndRbacTest
 
         // Nenhuma leitura da API deve expor dados sem uma sessão autenticada.
         $leiturasProtegidas = [
-            'api/arrecadacao.php',
-            'api/artilheiro.php',
-            'api/categorias.php',
-            'api/equipes.php',
-            'api/interclasse.php',
-            'api/jogos.php',
-            'api/locais.php',
-            'api/modalidades.php',
-            'api/ocorrencias.php',
-            'api/ocorrencias_turmas.php',
-            'api/partidas.php',
-            'api/ranking.php',
-            'api/tipoModalidade.php',
-            'api/turmas.php',
+            'api/v1/arrecadacao',
+            'api/v1/artilheiros',
+            'api/v1/categorias',
+            'api/v1/equipes',
+            'api/v1/edicoes',
+            'api/v1/jogos',
+            'api/v1/locais',
+            'api/v1/modalidades',
+            'api/v1/ocorrencias',
+            'api/v1/ocorrencias-turmas',
+            'api/v1/partidas',
+            'api/v1/ranking',
+            'api/v1/tipos-modalidade',
+            'api/v1/turmas',
         ];
         foreach ($leiturasProtegidas as $endpoint) {
             Assertions::assertStatus("Bloqueio de leitura sem sessão: {$endpoint}", $clientAnon->get($endpoint), 401);
         }
 
-        $syncAnonimo = $clientAnon->postJson('api/sincronizar_chaveamento.php', [
+        $syncAnonimo = $clientAnon->postJson('api/v1/sincronizacao/chaveamento', [
             'id_modalidade' => 1,
             'tipo_modalidade' => 'mata_mata',
             'jogos' => [],
@@ -89,21 +89,21 @@ class AuthAndRbacTest
         Assertions::assertStatus('Bloqueio de sincronização de chaveamento sem sessão', $syncAnonimo, 401);
 
         // 1.9 Troca de Senha - Validação de mínimo de 6 dígitos
-        $resTrocaCurta = $client->postJson('api/trocar_senha.php', [
+        $resTrocaCurta = $client->postJson('api/v1/senha', [
             'nova_senha' => '123',
             'confirmar_senha' => '123'
         ]);
         Assertions::assert("Rejeição de troca para senha com menos de 6 caracteres", ($resTrocaCurta['json']['success'] ?? false) === false);
 
         // 1.10 Troca de Senha - Divergência na confirmação
-        $resTrocaDiv = $client->postJson('api/trocar_senha.php', [
+        $resTrocaDiv = $client->postJson('api/v1/senha', [
             'nova_senha' => 'senhaSegura123',
             'confirmar_senha' => 'senhaDiferente456'
         ]);
         Assertions::assert("Rejeição quando as senhas não coincidem", ($resTrocaDiv['json']['success'] ?? false) === false);
 
         // 1.11 Logout
-        $resLogout = $client->get('api/logout.php');
+        $resLogout = $client->get('api/v1/logout');
         Assertions::assert("Execução de logout limpo", $resLogout['code'] === 200 || $resLogout['code'] === 302);
     }
 }

@@ -60,7 +60,7 @@ final class CronometroRulesTest extends TestCase
         self::assertSame(60, $updated['tempo_restante_jogo']);
     }
 
-    public function testLegacyNullBalanceUsesDurationAndExtraButZeroDoesNot(): void
+    public function testNullBalanceUsesDurationAndExtraButZeroDoesNot(): void
     {
         self::assertSame(1260, CronometroRules::saldoAtual($this->state(1200, 60, null, null, 'Pausado'), 2000));
         self::assertSame(0, CronometroRules::saldoAtual($this->state(1200, 60, 0, null, 'Pausado'), 2000));

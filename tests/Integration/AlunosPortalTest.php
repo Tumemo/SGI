@@ -16,18 +16,18 @@ class AlunosPortalTest
         $aluno->login('2879', '123');
 
         // 8.1 Aceitar termos de participação
-        $resAceite = $aluno->postJson('api/concordarTermos.php', []);
+        $resAceite = $aluno->postJson('api/v1/termos', []);
         Assertions::assert("Aceite digital de termos de participação esportiva", ($resAceite['json']['success'] ?? false) === true);
 
         // 8.2 Consultar status do termo
-        $resStatusTermo = $aluno->get('api/concordarTermos.php');
+        $resStatusTermo = $aluno->get('api/v1/termos');
         Assertions::assertStatus("Consulta de termos (HTTP 200)", $resStatusTermo, 200);
         Assertions::assert("Termo marcado como aceito (termo_aceito: true)", ($resStatusTermo['json']['termo_aceito'] ?? false) === true);
 
         // 8.3 Acessar páginas do portal do aluno
-        $paginas = ['home.php', 'modalidade.php', 'jogos.php', 'termos.php', 'perfil.php'];
+        $paginas = ['inicio', 'modalidades', 'jogos', 'termos', 'perfil'];
         foreach ($paginas as $p) {
-            $resPage = $aluno->get("views/src/pages/alunos/$p");
+            $resPage = $aluno->get("aluno/$p");
             Assertions::assertStatus("Renderização da tela de aluno [$p]", $resPage, 200);
         }
     }

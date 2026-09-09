@@ -17,7 +17,7 @@ class InterclasseLifecycleTest
 
         // 2.1 Criar nova edição
         $nome = "Edicao Suite Test " . date('Ymd_His');
-        $res = $admin->postJson('api/interclasse.php', [
+        $res = $admin->postJson('api/v1/edicoes', [
             'nome_interclasse' => $nome,
             'ano_interclasse' => date('Y-m-d')
         ]);
@@ -30,12 +30,12 @@ class InterclasseLifecycleTest
         Assertions::assert("Criação automática de no mínimo 35 equipes padrão", $eqCount >= 35, "Criadas: $eqCount");
 
         // 2.3 Listagem de edições
-        $resList = $admin->get('api/interclasse.php?regulamento=true');
+        $resList = $admin->get('api/v1/edicoes?regulamento=true');
         Assertions::assertStatus("Listagem de edições (HTTP 200)", $resList, 200);
         Assertions::assert("Retorno de lista não vazia de edições", is_array($resList['json']) && count($resList['json']) > 0);
 
         // 2.4 Atualização de Pontuações de Pódio e Arrecadação
-        $resConfig = $admin->postJson("api/interclasse.php?id=$idEdicao", [
+        $resConfig = $admin->postJson("api/v1/edicoes?id=$idEdicao", [
             'ponto_1_lugar' => 20,
             'ponto_2_lugar' => 12,
             'ponto_3_lugar' => 8,
@@ -44,7 +44,7 @@ class InterclasseLifecycleTest
         Assertions::assertJsonSuccess("Configuração de pontuações de pódio e arrecadação", $resConfig);
 
         // 2.5 Consultar edição criada e verificar persistência dos pontos
-        $resCheck = $admin->get("api/interclasse.php?id=$idEdicao");
+        $resCheck = $admin->get("api/v1/edicoes?id=$idEdicao");
         $dados = $resCheck['json'] ?? [];
         if (isset($dados[0])) $dados = $dados[0];
         Assertions::assert("Persistência do valor do 1º lugar (20 pontos)", (int)($dados['ponto_1_lugar'] ?? 0) === 20);

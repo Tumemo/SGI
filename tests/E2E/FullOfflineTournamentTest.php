@@ -23,7 +23,7 @@ class FullOfflineTournamentTest
         $e4 = $equipesIds[3];
 
         // 9.1 Concluir Semifinal 2 (Equipe 3 vence Equipe 4 por 2x0)
-        $resSf2 = $mesario->postJson('api/lancar_resultado.php', [
+        $resSf2 = $mesario->postJson('api/v1/resultados', [
             'id_jogo' => $idJogo2,
             'nome_jogo' => 'MM:4:1:N',
             'id_modalidade' => $idModalidade,
@@ -35,7 +35,7 @@ class FullOfflineTournamentTest
         Assertions::assertJsonSuccess("Conclusão da Semifinal 2 (2x0)", $resSf2);
 
         // 9.2 Simulação de mutações provisórias offline com ID negativo
-        $resPartidaLocal = $mesario->postJson('api/partidas.php', [
+        $resPartidaLocal = $mesario->postJson('api/v1/partidas', [
             'id_partida' => 'mm_local_-1_0',
             'resultado_partida' => 4
         ]);
@@ -48,7 +48,7 @@ class FullOfflineTournamentTest
             'id_modalidade' => $idModalidade,
             'num_gol' => 3
         ];
-        $resArtLocal = $mesario->postJson('api/artilheiro.php', $payloadArtilhariaTemporaria);
+        $resArtLocal = $mesario->postJson('api/v1/artilheiros', $payloadArtilhariaTemporaria);
         Assertions::assert(
             "Artilharia temporária é resolvida com segurança ou mantida pendente",
             ($resArtLocal['json']['success'] ?? false) === true ||
@@ -57,7 +57,7 @@ class FullOfflineTournamentTest
 
         // 9.3 Concluir Grande Final jogada offline com ID Provisório Negativo (-1)
         // Equipe 1 vence Equipe 3 por 4x2 e torna-se Campeã
-        $resFinal = $mesario->postJson('api/lancar_resultado.php', [
+        $resFinal = $mesario->postJson('api/v1/resultados', [
             'id_jogo' => -1,
             'nome_jogo' => 'MM:2:0:N',
             'id_modalidade' => $idModalidade,
@@ -72,12 +72,12 @@ class FullOfflineTournamentTest
         // navegador envia o resultado antes da artilharia do mesmo ID
         // temporário. O segundo envio abaixo simula essa retomada.
         if (($resArtLocal['json']['success'] ?? false) !== true) {
-            $resArtSincronizado = $mesario->postJson('api/artilheiro.php', $payloadArtilhariaTemporaria);
+            $resArtSincronizado = $mesario->postJson('api/v1/artilheiros', $payloadArtilhariaTemporaria);
             Assertions::assertJsonSuccess("Artilharia vinculada à final materializada", $resArtSincronizado);
         }
 
         // 9.4 Verificar consolidação da árvore no servidor
-        $resArvore = $admin->get("api/chaveamento.php?id_modalidade=$idModalidade");
+        $resArvore = $admin->get("api/v1/chaveamentos?id_modalidade=$idModalidade");
         Assertions::assertStatus("Consulta de árvore no servidor (HTTP 200)", $resArvore, 200);
         $jogos = $resArvore['json']['jogos'] ?? [];
 

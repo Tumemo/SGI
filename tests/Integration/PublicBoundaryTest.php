@@ -15,7 +15,7 @@ final class PublicBoundaryTest
 
         $client = new TestClient();
 
-        foreach (['config/db.php', 'src/Shared/Config/Env.php', 'tests/run_all.php', 'vendor/autoload.php', 'composer.json', 'api/filtros.php', 'api/conversor_pdf.php', 'api/pontuacaoInterclasse.php'] as $path) {
+        foreach (['config/db.php', 'src/Shared/Config/Env.php', 'tests/run_all.php', 'vendor/autoload.php', 'composer.json', 'api/v1/filtros', 'api/v1/conversor-pdf', 'api/v1/pontuacao'] as $path) {
             $response = $client->get($path);
             Assertions::assertStatus("Arquivo interno não exposto: {$path}", $response, 404);
         }
@@ -23,7 +23,7 @@ final class PublicBoundaryTest
         $traversal = $client->get('views/%2e%2e/config/db.php');
         Assertions::assert('Tentativa de traversal é rejeitada', in_array($traversal['code'], [400, 404], true));
 
-        $asset = $client->get('views/src/styles/style.css');
+        $asset = $client->get('assets/css/style.css');
         Assertions::assertStatus('Asset CSS público servido pelo front controller', $asset, 200);
         Assertions::assert(
             'Asset CSS possui content-type correto',

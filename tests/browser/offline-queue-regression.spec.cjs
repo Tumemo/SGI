@@ -14,12 +14,12 @@ test.beforeEach(async ({ page }) => {
 
 test('alteração nova respeita a fila ainda pendente após reconexão', async ({ page }) => {
     const enviados = [];
-    await page.route('**/api/partidas.php', route => {
+    await page.route('**/api/v1/partidas', route => {
         enviados.push(route.request().postDataJSON().resultado_partida);
         return route.fulfill({ json: { success: true } });
     });
     await page.evaluate(async () => {
-        const url = '/api/partidas.php';
+        const url = '/api/v1/partidas';
         const headers = { 'Content-Type': 'application/json' };
         await SGIOffline.queueMutation('PUT', url, JSON.stringify({ id_partida: 1, resultado_partida: 1 }), headers);
         await fetch(url, { method: 'PUT', headers, body: JSON.stringify({ id_partida: 1, resultado_partida: 2 }) });
@@ -30,9 +30,9 @@ test('alteração nova respeita a fila ainda pendente após reconexão', async (
 
 for (const body of ['<html>Servidor em manutenção</html>', '', '{"success":', '{}', '{"status":"erro","mensagem":"Dados inválidos"}']) {
     test(`resposta sem confirmação JSON conserva a mutação: ${JSON.stringify(body)}`, async ({ page }) => {
-        await page.route('**/api/lancar_resultado.php', route => route.fulfill({ status: 200, body }));
+        await page.route('**/api/v1/resultados', route => route.fulfill({ status: 200, body }));
         const resultado = await page.evaluate(async () => {
-            await SGIOffline.queueMutation('POST', '/api/lancar_resultado.php', '{"id_jogo":1}', {});
+            await SGIOffline.queueMutation('POST', '/api/v1/resultados', '{"id_jogo":1}', {});
             await SGIOffline.syncNow();
             return SGIOffline.getPendingList();
         });
@@ -42,9 +42,9 @@ for (const body of ['<html>Servidor em manutenção</html>', '', '{"success":', 
 }
 
 test('confirmação no formato status sucesso continua compatível', async ({ page }) => {
-    await page.route('**/api/usuarios.php', route => route.fulfill({ json: { status: 'sucesso' } }));
+    await page.route('**/api/v1/usuarios', route => route.fulfill({ json: { status: 'sucesso' } }));
     const fila = await page.evaluate(async () => {
-        await SGIOffline.queueMutation('PUT', '/api/usuarios.php', '{"id_usuario":1}', {});
+        await SGIOffline.queueMutation('PUT', '/api/v1/usuarios', '{"id_usuario":1}', {});
         await SGIOffline.syncNow();
         return SGIOffline.getPendingList();
     });
@@ -69,22 +69,22 @@ test('edição de ocorrência temporária resolve o ID nas rotas v1', async ({ p
 
 test('jogos temporários intercalados enviam resultado antes de seus gols', async ({ page }) => {
     const enviados = [];
-    await page.route('**/api/*.php', route => {
+    await page.route('**/api/v1/*', route => {
         const dados = route.request().postDataJSON();
         enviados.push(`${route.request().url().split('/').pop()}:${dados.id_jogo || dados.jogos_id_jogo}`);
         return route.fulfill({ json: { success: true } });
     });
     await page.evaluate(async () => {
         for (const id of [-1, -2]) {
-            await SGIOffline.queueMutation('POST', '/api/artilheiro.php', JSON.stringify({ jogos_id_jogo: id, id_modalidade: 1 }), {});
+            await SGIOffline.queueMutation('POST', '/api/v1/artilheiros', JSON.stringify({ jogos_id_jogo: id, id_modalidade: 1 }), {});
         }
         for (const id of [-1, -2]) {
-            await SGIOffline.queueMutation('POST', '/api/lancar_resultado.php', JSON.stringify({ id_jogo: id, id_modalidade: 1 }), {});
+            await SGIOffline.queueMutation('POST', '/api/v1/resultados', JSON.stringify({ id_jogo: id, id_modalidade: 1 }), {});
         }
         await SGIOffline.syncNow();
     });
     for (const id of [-1, -2]) {
-        expect(enviados.indexOf(`lancar_resultado.php:${id}`)).toBeLessThan(enviados.indexOf(`artilheiro.php:${id}`));
+        expect(enviados.indexOf(`resultados:${id}`)).toBeLessThan(enviados.indexOf(`artilheiros:${id}`));
     }
 });
 
@@ -99,7 +99,7 @@ test('aborto da transação local não anuncia salvamento nem projeta dados', as
             return req;
         };
         let rejeitada = false;
-        try { await SGIOffline.queueMutation('PUT', '/api/partidas.php', '{"id_partida":1}', {}); }
+        try { await SGIOffline.queueMutation('PUT', '/api/v1/partidas', '{"id_partida":1}', {}); }
         catch (_) { rejeitada = true; }
         return { rejeitada, projecoes, fila: await SGIOffline.getPendingList() };
     });
@@ -107,7 +107,7 @@ test('aborto da transação local não anuncia salvamento nem projeta dados', as
 });
 
 test('chaveamento aplica resultado pendente enviado pela rota v1', async ({ page }) => {
-    await page.route('**/chaveamento.php?*', route => route.fulfill({ json: { success: true, jogos: [{
+    await page.route('**/api/v1/chaveamentos?*', route => route.fulfill({ json: { success: true, jogos: [{
         id_jogo: 7, nome_jogo: 'MM:2:0:N', status_jogo: 'Iniciado',
         equipes: [{ id_equipe: 1, gols: 0 }, { id_equipe: 2, gols: 0 }],
     }] } }));
@@ -171,7 +171,7 @@ test('duas abas do mesmo operador não sincronizam a fila simultaneamente', asyn
         await new Promise(resolve => setTimeout(resolve, 120));
         await route.fulfill({ json: { success: true } });
     };
-    await page.route('**/api/partidas.php', responder);
+    await page.route('**/api/v1/partidas', responder);
     const segundaAba = await context.newPage();
     await segundaAba.route('https://offline.sgi.test/**', route => route.fulfill({
         contentType: 'text/html', body: '<html><body></body></html>',
@@ -179,8 +179,8 @@ test('duas abas do mesmo operador não sincronizam a fila simultaneamente', asyn
     await segundaAba.goto('https://offline.sgi.test/');
     await segundaAba.evaluate(() => { window.SGI_CACHE_KEY = 'queue-audit'; });
     await segundaAba.addScriptTag({ path: path.resolve(__dirname, '../../resources/js/offline/offline-core.js') });
-    await segundaAba.route('**/api/partidas.php', responder);
-    await page.evaluate(() => SGIOffline.queueMutation('PUT', '/api/partidas.php', JSON.stringify({ id_partida: 9, resultado_partida: 3 }), {}));
+    await segundaAba.route('**/api/v1/partidas', responder);
+    await page.evaluate(() => SGIOffline.queueMutation('PUT', '/api/v1/partidas', JSON.stringify({ id_partida: 9, resultado_partida: 3 }), {}));
     const resultados = await Promise.all([
         page.evaluate(() => SGIOffline.syncNow()),
         segundaAba.evaluate(() => SGIOffline.syncNow()),
@@ -191,7 +191,7 @@ test('duas abas do mesmo operador não sincronizam a fila simultaneamente', asyn
 
 test('exportação de pendências remove identificador local e credencial CSRF', async ({ page }) => {
     const exportado = await page.evaluate(async () => {
-        await SGIOffline.queueMutation('POST', '/api/lancar_resultado.php', '{"id_jogo":11}', {
+        await SGIOffline.queueMutation('POST', '/api/v1/resultados', '{"id_jogo":11}', {
             'Content-Type': 'application/json',
             'X-SGI-CSRF': 'segredo-de-teste',
         });
@@ -207,7 +207,7 @@ test('exportação de pendências remove identificador local e credencial CSRF',
 
 test('importação de pendências é idempotente e rejeita outra sessão', async ({ page }) => {
     const resultado = await page.evaluate(async () => {
-        const item = await SGIOffline.queueMutation('POST', '/api/lancar_resultado.php', '{"id_jogo":12}', {});
+        const item = await SGIOffline.queueMutation('POST', '/api/v1/resultados', '{"id_jogo":12}', {});
         const payload = await SGIOffline.exportPending();
         const importado = await SGIOffline.importPending(JSON.stringify(payload));
         let rejeitado = false;

@@ -17,7 +17,7 @@ class TurmasAndPdfImportTest
         $admin->login('admin', '123');
 
         // 3.1 Consultar turmas geradas automaticamente
-        $resTurmas = $admin->get("api/turmas.php?id_interclasse=$idEdicao");
+        $resTurmas = $admin->get("api/v1/turmas?id_interclasse=$idEdicao");
         Assertions::assertStatus("Consulta de turmas da edição (HTTP 200)", $resTurmas, 200);
         $turmas = $resTurmas['json'] ?? [];
         Assertions::assert("Total de 7 turmas padrão geradas (6EF ao 3EMA)", count($turmas) === 7, "Total: " . count($turmas));
@@ -34,7 +34,7 @@ class TurmasAndPdfImportTest
 
         if (file_exists($pdfPath) && $idTurma > 0) {
             $cfile = new CURLFile($pdfPath, 'application/pdf', '6EFB.pdf');
-            $resUpload = $admin->postForm('api/upload_turma_pdf.php', [
+            $resUpload = $admin->postForm('api/v1/importacoes/turma-pdf', [
                 'pdf_arquivo' => $cfile,
                 'id_turma' => (string) $idTurma,
                 'id_interclasse' => (string) $idEdicao
@@ -42,7 +42,7 @@ class TurmasAndPdfImportTest
             Assertions::assertJsonSuccess("Upload e extração automática de alunos via PDF", $resUpload);
 
             // 3.3 Listar competidores cadastrados
-            $resAlunos = $admin->get("api/usuarios.php?acao=listar_competidores&id_turma=$idTurma&id_interclasse=$idEdicao");
+            $resAlunos = $admin->get("api/v1/usuarios?acao=listar_competidores&id_turma=$idTurma&id_interclasse=$idEdicao");
             Assertions::assertStatus("Listagem de competidores da turma (HTTP 200)", $resAlunos, 200);
             $competidores = $resAlunos['json']['competidores'] ?? [];
             Assertions::assert("Alunos inseridos no banco de dados (esperado >= 20)", count($competidores) >= 20, "Total: " . count($competidores));
@@ -58,11 +58,8 @@ class TurmasAndPdfImportTest
                 'id_turma' => (string) $idTurma,
             ]);
             Assertions::assertJsonSuccess('Reimportação versionada usa a edição da turma', $repeated);
-            $legacyView = $admin->postForm('views/src/pages/upload_turma_pdf.php', [
-                'pdf' => new CURLFile($pdfPath, 'application/pdf', '6EFB.pdf'),
-                'id_turma' => (string) $idTurma,
-            ]);
-            Assertions::assertJsonSuccess('Upload antigo aceita campo pdf e preserva importação', $legacyView);
+            $legacyView = $admin->postForm('upload_turma_pdf.php', []);
+            Assertions::assertStatus('Upload antigo não possui rota', $legacyView, 404);
             $wrongEdition = $admin->postForm('api/v1/importacoes/turma-pdf', [
                 'pdf_arquivo' => new CURLFile($pdfPath, 'application/pdf', '6EFB.pdf'),
                 'id_turma' => (string) $idTurma,
@@ -74,7 +71,7 @@ class TurmasAndPdfImportTest
                 'id_turma' => (string) $idTurma,
             ]);
             Assertions::assert('Upload verifica conteúdo do arquivo além da extensão', ($invalid['json']['success'] ?? true) === false && str_contains($invalid['json']['message'] ?? '', 'PDF válido'));
-            $afterUploads = $admin->get("api/usuarios.php?acao=listar_competidores&id_turma=$idTurma&id_interclasse=$idEdicao");
+            $afterUploads = $admin->get("api/v1/usuarios?acao=listar_competidores&id_turma=$idTurma&id_interclasse=$idEdicao");
             Assertions::assert('Reenvios e arquivos recusados não duplicam nem alteram alunos', ($afterUploads['json']['competidores'] ?? null) === $competidores);
             $anonymous = new TestClient();
             Assertions::assertStatus('Upload versionado exige autenticação', $anonymous->postForm('api/v1/importacoes/turma-pdf', []), 401);

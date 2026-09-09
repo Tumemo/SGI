@@ -12,12 +12,12 @@ async function jsonOrThrow(response, label) {
 async function criarJogoFixture(request) {
     const base = process.env.SGI_BASE_URL || 'http://localhost/SGI/';
     const api = (value) => new URL(value, base).href;
-    await jsonOrThrow(await request.post(api('api/login.php'), {
+    await jsonOrThrow(await request.post(api('api/v1/login'), {
         data: { matricula: 'admin', senha: '123' },
     }), 'login administrativo');
 
     const edicoes = await jsonOrThrow(
-        await request.get(api('api/interclasse.php?regulamento=true')),
+        await request.get(api('api/v1/edicoes?regulamento=true')),
         'edições',
     );
     const edicao = edicoes.find((item) => String(item.status_interclasse) === '1');
@@ -25,8 +25,8 @@ async function criarJogoFixture(request) {
 
     const idInterclasse = Number(edicao.id_interclasse);
     const [equipes, modalidades] = await Promise.all([
-        request.get(api(`api/equipes.php?id_interclasse=${idInterclasse}`)).then((response) => jsonOrThrow(response, 'equipes')),
-        request.get(api(`api/modalidades.php?id_interclasse=${idInterclasse}`)).then((response) => jsonOrThrow(response, 'modalidades')),
+        request.get(api(`api/v1/equipes?id_interclasse=${idInterclasse}`)).then((response) => jsonOrThrow(response, 'equipes')),
+        request.get(api(`api/v1/modalidades?id_interclasse=${idInterclasse}`)).then((response) => jsonOrThrow(response, 'modalidades')),
     ]);
     const modalidade = modalidades.find((item) =>
         String(item.nome_tipo_modalidade || '').toLowerCase().includes('mata') &&
@@ -37,7 +37,7 @@ async function criarJogoFixture(request) {
     if (disponiveis.length < 2) throw new Error('O fixture precisa de duas equipes.');
 
     const nomeJogo = `T10 Score ${Date.now()}`;
-    await jsonOrThrow(await request.post(api('api/sincronizar_chaveamento.php'), {
+    await jsonOrThrow(await request.post(api('api/v1/sincronizacao/chaveamento'), {
         data: {
             id_modalidade: Number(modalidade.id_modalidade),
             tipo_modalidade: 'mata_mata',
@@ -53,13 +53,13 @@ async function criarJogoFixture(request) {
     }), 'criação do jogo');
 
     const jogos = await jsonOrThrow(
-        await request.get(api(`api/jogos.php?id_modalidade=${Number(modalidade.id_modalidade)}`)),
+        await request.get(api(`api/v1/jogos?id_modalidade=${Number(modalidade.id_modalidade)}`)),
         'consulta do jogo',
     );
     const jogo = jogos.find((item) => String(item.nome_jogo) === nomeJogo);
     if (!jogo) throw new Error('A API não retornou o jogo criado.');
     const partidas = await jsonOrThrow(
-        await request.get(api(`api/partidas.php?id_jogo=${Number(jogo.id_jogo)}`)),
+        await request.get(api(`api/v1/partidas?id_jogo=${Number(jogo.id_jogo)}`)),
         'consulta das partidas',
     );
     return {
@@ -80,7 +80,7 @@ async function lerFila(page, idsPartidas) {
         const fila = await window.SGIDataLayer.read('fila_sincronizacao');
         const partidas = new Set(ids.map((item) => String(item)));
         return fila.filter((item) => {
-            if (!item || !String(item.url || '').includes('/partidas.php')) return false;
+            if (!item || !String(item.url || '').includes('/api/v1/partidas')) return false;
             try {
                 const body = typeof item.body === 'string' ? JSON.parse(item.body) : item.body;
                 return partidas.has(String(body.id_partida));
@@ -119,11 +119,11 @@ test.describe('Mesário — persistência imediata do placar', () => {
         test.setTimeout(180_000);
         const fixture = await criarJogoFixture(request);
 
-        await page.goto('views/index.php', { waitUntil: 'domcontentloaded' });
+        await page.goto('login', { waitUntil: 'domcontentloaded' });
         await page.locator('#form_desktop .ipt-matricula').fill('mesario');
         await page.locator('#form_desktop .ipt-senha').fill('123');
         await page.locator('#form_desktop button[type="submit"]').click();
-        await page.waitForURL(/\/dashboard\.php\?id=\d+/, { waitUntil: 'domcontentloaded' });
+        await page.waitForURL(/\/painel\?id=\d+/, { waitUntil: 'domcontentloaded' });
         await navegar(page, 'jogos', { id_jogo: fixture.idJogo, origem: 'agenda_edit' });
         await expect(page.locator('#placar-conteudo')).toBeVisible();
         await page.getByRole('button', { name: /Iniciar jogo/i }).click();
@@ -167,7 +167,7 @@ test.describe('Mesário — persistência imediata do placar', () => {
         await expect.poll(() => page.evaluate(() => window.SGIOffline.getState().pending), { timeout: 45_000 }).toBe(0);
 
         const servidor = await page.evaluate(async (id) => {
-            const response = await fetch(`../../../api/partidas.php?id_jogo=${id}`);
+            const response = await fetch(`/api/v1/partidas?id_jogo=${id}`);
             return response.json();
         }, fixture.idJogo);
         const resultados = servidor.map((item) => Number(item.resultado_partida));
