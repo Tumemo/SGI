@@ -975,22 +975,22 @@ window.SGIPage.mount("competicoes/placar", function (pageConfig, pageScope) {
                 return '<option value="' + v + '"' + (duracaoJogo === v*60 ? ' selected' : '') + '>' + v + ' min</option>';
             }).join('');
 
-            html += '<div class="mc-timer-section">';
+            html += '<div class="text-center w-100 border-bottom pb-4 mb-4">';
             html += '<div class="mc-timer-time" id="timer-placar">' +
                 String(Math.floor(duracaoJogo / 60)).padStart(2, '0') + ':' +
                 String(duracaoJogo % 60).padStart(2, '0') + '</div>';
-            html += '<div class="mc-timer-controls">';
+            html += '<div class="d-flex align-items-center justify-content-center gap-3 mt-3">';
             html += '<select id="select-duracao" class="mc-duration-select form-select form-select-sm w-auto"' + (emAndamento ? ' disabled' : '') + '>' + selOpts + '</select>';
             if (emAndamento) {
                 html += '<button type="button" class="mc-pause-btn btn btn-outline-secondary btn-sm" id="btn-pausar">' + (pausado ? 'Retomar' : 'Pausar') + '</button>';
             }
             html += '</div></div>';
         } else {
-            html += '<div class="mc-timer-section"><div class="mc-timer-time mc-timer-time--idle" id="timer-placar">--:--</div></div>';
+            html += '<div class="text-center w-100 border-bottom pb-4 mb-4"><div class="mc-timer-time mc-timer-time--idle" id="timer-placar">--:--</div></div>';
         }
 
         // Teams
-        html += '<div class="mc-teams">';
+        html += '<div class="row w-100 align-items-center justify-content-center g-4">';
 
         partidasLista.forEach(function(p, idx) {
             var gols = Math.max(0, parseInt(p.resultado_partida, 10) || 0);
@@ -1006,16 +1006,16 @@ window.SGIPage.mount("competicoes/placar", function (pageConfig, pageScope) {
                 ? '<button type="button" class="btn btn-primary btn-score btn-score-plus" disabled><i class="bi bi-plus-lg"></i></button>'
                 : '<button type="button" class="btn btn-primary btn-score btn-score-plus" data-idx="' + idx + '"><i class="bi bi-plus-lg"></i></button>';
 
-            html += '<div class="mc-team" data-partida-idx="' + idx + '">';
-            html += '<h3 class="mc-team-name">' + esc(nomeEquipe(p)) + '</h3>';
-            html += '<div class="mc-score-row">';
+            html += '<div class="col-12 col-md-5 text-center" data-partida-idx="' + idx + '">';
+            html += '<h3 class="mc-team-name h5 fw-bold text-body mb-3 text-truncate">' + esc(nomeEquipe(p)) + '</h3>';
+            html += '<div class="mc-score-row d-flex align-items-center justify-content-center gap-3">';
             html += btnMinus;
             html += '<span class="mc-score score-number" data-gols="' + idx + '">' + String(gols).padStart(2, '0') + '</span>';
             html += btnPlus;
             html += '</div></div>';
 
             if (idx === 0 && partidasLista.length === 2) {
-                html += '<div class="mc-vs"><span>VS</span></div>';
+                html += '<div class="mc-vs col-12 col-md-auto d-flex align-items-center justify-content-center px-2"><span class="fw-bold text-body-tertiary fs-5">VS</span></div>';
             }
         });
 

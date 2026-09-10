@@ -362,6 +362,11 @@ test('score controls keep behavior hooks while using native Bootstrap controls',
     assert.match(placar, /mc-action-btn--finish btn btn-outline-danger/);
     assert.match(placar, /mc-duration-select form-select form-select-sm w-auto/);
     assert.match(placar, /mc-pause-btn btn btn-outline-secondary btn-sm/);
+    assert.match(placar, /text-center w-100 border-bottom pb-4 mb-4/);
+    assert.match(placar, /row w-100 align-items-center justify-content-center g-4/);
+    assert.match(placar, /col-12 col-md-5 text-center/);
+    assert.match(placar, /d-flex align-items-center justify-content-center gap-3/);
+    assert.match(placar, /mc-vs col-12 col-md-auto d-flex align-items-center justify-content-center/);
     assert.match(placar, /badge rounded-pill ' \+ badgeClass/);
     assert.match(placar, /btn btn-outline-secondary btn-score btn-score-minus/);
     assert.match(placar, /row row-cols-1 row-cols-sm-3 g-3 mt-3/);
@@ -371,6 +376,7 @@ test('score controls keep behavior hooks while using native Bootstrap controls',
     assert.match(placarView, /row row-cols-1 row-cols-md-2 row-cols-xl-3 g-3/);
     assert.doesNotMatch(placar + placarView + adminCss, /\b(?:mc-page|mc-header|mc-match-title|mc-match-meta|mc-badge|mc-actions|mc-stat-chip|mc-section-header|mc-section-title|mc-timeline-empty|mc-artilheiro-card|mc-artilheiro-empty|mc-error|mc-loading|mc-empty|mc-modal|mc-tipo-grid)\b/);
     assert.doesNotMatch(adminCss, /\.mc-action-btn\s*\{|\.mc-action-btn--start\s*\{|\.mc-action-btn--finish\s*\{|\.mc-duration-select\s*\{|\.mc-pause-btn\s*\{/);
+    assert.doesNotMatch(adminCss, /\.mc-(?:timer-section|timer-controls|teams|team|team-name|score-row|vs)\b/);
     assert.match(placar, /badge text-bg-danger/);
     assert.match(placar, /btn btn-sm btn-light border text-primary/);
     assert.match(placar, /btn btn-sm btn-light border text-danger/);

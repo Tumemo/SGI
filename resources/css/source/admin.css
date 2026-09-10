@@ -1126,20 +1126,12 @@ body.sgi-offline-active {
 #placar-grid{background:#fff;border-radius:24px;box-shadow:0 4px 24px rgba(0,0,0,.06);border:1px solid #f3f4f6;padding:2.5rem 2rem 2rem;display:flex;flex-direction:column;align-items:center;gap:0;position:relative;overflow:hidden;transition:box-shadow .3s}
 #placar-grid.score-blocked::after{content:"Tempo esgotado";position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.6);color:#fff;font-size:1.25rem;font-weight:800;border-radius:24px;backdrop-filter:blur(4px);z-index:5;letter-spacing:.02em}
 
-/* --- Timer Section --- */
-.mc-timer-section{text-align:center;padding-bottom:1.75rem;width:100%;border-bottom:1px solid #f3f4f6;margin-bottom:1.75rem}
+/* --- Timer Typography --- */
 .mc-timer-time{font-size:3.5rem;font-weight:800;color:#111827;font-variant-numeric:tabular-nums;letter-spacing:.03em;line-height:1;transition:color .3s,text-shadow .3s}
 .mc-timer-time.timer-expired{color:#E30613;text-shadow:0 0 30px rgba(227,6,19,.25);animation:timer-pulse .8s ease-in-out infinite alternate}
 .mc-timer-time--idle{color:#d1d5db}
-.mc-timer-controls{display:flex;align-items:center;justify-content:center;gap:.75rem;margin-top:.75rem}
-/* --- Teams Row --- */
-.mc-teams{display:flex;align-items:center;justify-content:center;gap:1.5rem;width:100%}
-.mc-team{flex:1;text-align:center;max-width:340px;padding:1rem 0}
-.mc-team-name{font-size:1.2rem;font-weight:700;color:#1f2937;margin-bottom:1rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.3}
-.mc-score-row{display:flex;align-items:center;justify-content:center;gap:1rem}
+/* --- Score Typography --- */
 .mc-score{font-size:6.5rem;font-weight:800;color:#111827;line-height:1;min-width:5rem;text-align:center;font-variant-numeric:tabular-nums;letter-spacing:-.03em;transition:color .2s}
-.mc-vs{display:flex;align-items:center;justify-content:center;padding:0 .5rem;flex-shrink:0}
-.mc-vs span{font-size:1.6rem;font-weight:800;color:#d1d5db;letter-spacing:.08em}
 
 /* --- Score Buttons --- */
 .btn-score{width:56px;height:56px;border-radius:16px;font-size:1.5rem;display:inline-flex;align-items:center;justify-content:center;transition:transform .15s ease;line-height:1;flex-shrink:0}
@@ -1192,14 +1184,8 @@ body.sgi-offline-active {
 @media(max-width:767px){
     #placar-grid{padding:1.75rem 1rem 1.25rem;border-radius:20px}
     .mc-timer-time{font-size:2.5rem}
-    .mc-teams{flex-direction:column;gap:.5rem}
-    .mc-team{max-width:100%;padding:.5rem 0}
-    .mc-team-name{font-size:1.05rem;margin-bottom:.5rem}
     .mc-score{font-size:4.5rem;min-width:auto}
-    .mc-vs{padding:.25rem 0}
-    .mc-vs span{font-size:1.2rem}
     .btn-score{width:48px;height:48px;border-radius:14px;font-size:1.3rem}
-    .mc-score-row{gap:.75rem}
     .mc-fab{width:56px;height:56px}
     .mc-timeline{padding-left:1rem}
     .tl-event{gap:.75rem}
