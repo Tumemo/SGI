@@ -56,6 +56,35 @@ class OcorrenciasAndRankingTest
         $newList = $admin->get("api/v1/ocorrencias-turmas?id_interclasse=$idEdicao&id_turma=$idTurma");
         Assertions::assert('Consulta de ocorrências preserva dados entre rotas', $oldList['json'] === $newList['json']);
 
+        // 7.2.1 Entrada negativa não pode virar bônus e a remoção deve
+        // restaurar exatamente o ranking anterior.
+        $beforeNegative = self::rankingForClass($admin, $idEdicao, $idTurma);
+        $negative = $admin->postJson('api/v1/ocorrencias-turmas', [
+            'turmas_id_turma' => $idTurma,
+            'interclasses_id_interclasse' => $idEdicao,
+            'titulo_ocorrencia' => 'Regressão de sinal',
+            'data_ocorrencia' => date('Y-m-d'),
+            'pontos_descontados' => -4,
+        ]);
+        Assertions::assertStatus('Ocorrência negativa é normalizada antes de persistir', $negative, 201);
+        $negativeId = (int) ($negative['json']['id'] ?? 0);
+        $afterNegativeList = $admin->get("api/v1/ocorrencias-turmas?id_interclasse=$idEdicao&id_turma=$idTurma");
+        $negativeRow = null;
+        foreach (($afterNegativeList['json'] ?? []) as $row) {
+            if ((int) ($row['id_ocorrencia_turma'] ?? 0) === $negativeId) {
+                $negativeRow = $row;
+                break;
+            }
+        }
+        Assertions::assert('Ocorrência negativa é armazenada como magnitude positiva', (int) ($negativeRow['pontos_descontados'] ?? -1) === 4);
+        $afterNegative = self::rankingForClass($admin, $idEdicao, $idTurma);
+        Assertions::assert('Penalidade negativa reduz o líquido uma única vez', (int) ($afterNegative['pontuacao_liquida'] ?? 0) === (int) ($beforeNegative['pontuacao_liquida'] ?? 0) - 4);
+
+        $removed = $admin->deleteJson('api/v1/ocorrencias-turmas', ['id_ocorrencia_turma' => $negativeId]);
+        Assertions::assertJsonSuccess('Exclusão da ocorrência de turma permanece disponível', $removed);
+        $afterRemoval = self::rankingForClass($admin, $idEdicao, $idTurma);
+        Assertions::assert('Exclusão restaura a pontuação líquida anterior', $afterRemoval === $beforeNegative);
+
         // 7.3 Lançamento de arrecadação de alimentos em lote (40 itens)
         $resArrec = $admin->postJson('api/v1/arrecadacao', [
             'id_interclasse' => $idEdicao,
@@ -80,5 +109,18 @@ class OcorrenciasAndRankingTest
             }
         }
         Assertions::assert("Turma de teste presente no ranking", $turmaNoRank !== null);
+    }
+
+    /** @return array<string, mixed> */
+    private static function rankingForClass(TestClient $admin, int $editionId, int $classId): array
+    {
+        $response = $admin->get("api/v1/ranking?id_interclasse=$editionId&id_turma=$classId");
+        Assertions::assertStatus('Consulta de ranking da turma para regressão de pontuação', $response, 200);
+        foreach (($response['json'] ?? []) as $row) {
+            if ((int) ($row['id_turma'] ?? 0) === $classId) {
+                return $row;
+            }
+        }
+        return [];
     }
 }

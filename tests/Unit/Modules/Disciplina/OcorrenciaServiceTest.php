@@ -39,6 +39,20 @@ final class OcorrenciaServiceTest extends TestCase
             'penalidade' => -1,
         ]);
     }
+
+    public function testRejectsNegativePenaltyForValidUser(): void
+    {
+        $service = new OcorrenciaService(new InMemoryOcorrenciaRepository());
+
+        $this->expectException(InvalidArgumentException::class);
+        $service->registrar([
+            'titulo_ocorrencia' => 'Teste',
+            'descricao_ocorrencia' => 'Descrição',
+            'data_ocorrencia' => '2026-09-04',
+            'usuarios_id_usuario' => 5,
+            'penalidade' => -1,
+        ]);
+    }
 }
 
 final class InMemoryOcorrenciaRepository implements OcorrenciaRepository

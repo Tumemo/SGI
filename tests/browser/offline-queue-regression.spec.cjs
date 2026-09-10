@@ -67,7 +67,7 @@ test('edição de ocorrência temporária resolve o ID nas rotas v1', async ({ p
     expect(enviados[1].id_ocorrencia).toBe(321);
 });
 
-test('jogos temporários intercalados enviam resultado antes de seus gols', async ({ page }) => {
+test('jogos temporários intercalados enviam resultado antes de seus pontos vinculados', async ({ page }) => {
     const enviados = [];
     await page.route('**/api/v1/*', route => {
         const dados = route.request().postDataJSON();
@@ -76,7 +76,13 @@ test('jogos temporários intercalados enviam resultado antes de seus gols', asyn
     });
     await page.evaluate(async () => {
         for (const id of [-1, -2]) {
-            await SGIOffline.queueMutation('POST', '/api/v1/artilheiros', JSON.stringify({ jogos_id_jogo: id, id_modalidade: 1 }), {});
+            await SGIOffline.queueMutation('POST', '/api/v1/pontos', JSON.stringify({
+                jogos_id_jogo: id,
+                id_modalidade: 1,
+                id_equipe: 10,
+                usuarios_id_usuario: 20,
+                chave_jogada: 'offline-queue-point-' + Math.abs(id),
+            }), {});
         }
         for (const id of [-1, -2]) {
             await SGIOffline.queueMutation('POST', '/api/v1/resultados', JSON.stringify({ id_jogo: id, id_modalidade: 1 }), {});
@@ -84,7 +90,7 @@ test('jogos temporários intercalados enviam resultado antes de seus gols', asyn
         await SGIOffline.syncNow();
     });
     for (const id of [-1, -2]) {
-        expect(enviados.indexOf(`resultados:${id}`)).toBeLessThan(enviados.indexOf(`artilheiros:${id}`));
+        expect(enviados.indexOf(`resultados:${id}`)).toBeLessThan(enviados.indexOf(`pontos:${id}`));
     }
 });
 

@@ -36,6 +36,7 @@ async function criarJogoFixture(request) {
     if (!modalidade) throw new Error('Nenhuma modalidade de futsal mata-mata disponível.');
     const disponiveis = equipes.filter((item) => String(item.modalidades_id_modalidade) === String(modalidade.id_modalidade));
     if (disponiveis.length < 2) throw new Error('O fixture precisa de duas equipes.');
+    await garantirAtletas(request, idInterclasse, disponiveis.slice(0, 2));
 
     const nomeJogo = `T10 Score ${Date.now()}`;
     await jsonOrThrow(await request.post(api('api/v1/sincronizacao/chaveamento'), {
@@ -76,26 +77,62 @@ async function criarJogoFixture(request) {
     };
 }
 
+function apiPath(value) {
+    const base = process.env.SGI_BASE_URL || 'http://localhost/SGI/';
+    return new URL(value, base).href;
+}
+
+async function garantirAtletas(request, idInterclasse, equipes) {
+    for (let index = 0; index < equipes.length; index += 1) {
+        const equipe = equipes[index];
+        const membros = await jsonOrThrow(
+            await request.get(apiPath(`api/v1/equipes?id_equipe=${Number(equipe.id_equipe)}`)),
+            `membros da equipe ${equipe.id_equipe}`,
+        );
+        if (membros.some((membro) => Number(membro.id_usuario) > 0)) continue;
+        const alunos = await jsonOrThrow(
+            await request.get(apiPath(`api/v1/usuarios?acao=listar_competidores&id_turma=${Number(equipe.turmas_id_turma)}&id_interclasse=${idInterclasse}`)),
+            `alunos da equipe ${equipe.id_equipe}`,
+        );
+        let idUsuario = (alunos.competidores || []).find((aluno) => String(aluno.status_usuario || '1') === '1')?.id_usuario;
+        if (!Number(idUsuario)) {
+            const criado = await jsonOrThrow(await request.post(apiPath('api/v1/usuarios?acao=criar_aluno'), {
+                data: {
+                    nome_usuario: `Atleta T10 ${index + 1} ${Date.now()}`,
+                    matricula_usuario: `T10${Date.now()}${index}`,
+                    data_nasc_usuario: '2010-01-01',
+                    genero_usuario: 'MASC',
+                    turmas_id_turma: Number(equipe.turmas_id_turma),
+                },
+            }), `criação do atleta ${equipe.id_equipe}`);
+            idUsuario = criado.id_usuario || criado.id;
+        }
+        await jsonOrThrow(await request.post(apiPath('api/v1/equipes'), {
+            data: { acao: 'adicionar_usuarios', id_equipe: Number(equipe.id_equipe), usuarios: [Number(idUsuario)] },
+        }), `vínculo do atleta ${equipe.id_equipe}`);
+    }
+}
+
 async function navegar(page, tela, params) {
     await page.evaluate(({ tela, params }) => {
         window.__SGI_SPA__.navegarPara(tela, params);
     }, { tela, params });
 }
 
-async function lerFila(page, idsPartidas) {
-    return page.evaluate(async (ids) => {
+async function lerFilaPontos(page, idJogo) {
+    return page.evaluate(async (gameId) => {
         const fila = await window.SGIDataLayer.read('fila_sincronizacao');
-        const partidas = new Set(ids.map((item) => String(item)));
         return fila.filter((item) => {
-            if (!item || !String(item.url || '').includes('/api/v1/partidas')) return false;
+            if (!item || !String(item.url || '').includes('/api/v1/pontos')) return false;
             try {
                 const body = typeof item.body === 'string' ? JSON.parse(item.body) : item.body;
-                return partidas.has(String(body.id_partida));
+                return String(body.jogos_id_jogo ?? body.id_jogo) === String(gameId)
+                    || String(body.id_ponto || '').startsWith('temp_');
             } catch (_) {
                 return false;
             }
         }).sort((a, b) => Number(a.id) - Number(b.id));
-    }, idsPartidas);
+    }, idJogo);
 }
 
 async function lerPlacarLocal(page, idJogo) {
@@ -111,13 +148,11 @@ async function lerPlacarLocal(page, idJogo) {
 async function clicarPlacar(page, seletor) {
     await page.locator(seletor).first().click();
     const artilheiro = page.locator('#modalArtilheiro');
-    try {
-        await artilheiro.waitFor({ state: 'visible', timeout: 2_000 });
-    } catch (_) {
-        // Modal é opcional para a ação de gol; não aguardar quando não foi aberto.
-        return;
-    }
-    await artilheiro.locator('.btn-close').click();
+    await artilheiro.waitFor({ state: 'visible', timeout: 5_000 });
+    const aluno = artilheiro.locator('#selectAlunoArtilheiro');
+    await expect.poll(() => aluno.locator('option').count()).toBeGreaterThan(1);
+    await aluno.selectOption({ index: 1 });
+    await artilheiro.locator('#btnSalvarArtilheiro').click();
     await expect(artilheiro).toBeHidden();
 }
 
@@ -154,15 +189,18 @@ test.describe('Mesário — persistência imediata do placar', () => {
         await expect.poll(() => page.evaluate(() => navigator.onLine)).toBe(false);
         await clicarPlacar(page, '.btn-score-plus');
         await clicarPlacar(page, '.btn-score-plus');
-        await clicarPlacar(page, '.btn-score-minus');
+        // A anulação não abre o seletor: ela remove o último ponto ativo,
+        // mantendo o registro histórico do atleta.
+        await page.locator('.btn-score-minus').first().click();
+        await expect(page.locator('.score-number').first()).toHaveText('02');
         await navegar(page, 'agenda', { id: fixture.idInterclasse });
         await expect(page.locator('#lista-eventos')).toBeVisible();
         await expect.poll(() => page.evaluate(() => window.SGIOffline.getState().pending)).toBeGreaterThanOrEqual(3);
 
-        const fila = await lerFila(page, fixture.idsPartidas);
+        const fila = await lerFilaPontos(page, fixture.idJogo);
         const corpos = fila.map((item) => typeof item.body === 'string' ? JSON.parse(item.body) : item.body);
-        const sequencia = corpos.slice(-3).map((item) => Number(item.resultado_partida));
-        expect(sequencia).toEqual([2, 3, 2]);
+        expect(fila.slice(-3).map((item) => item.method)).toEqual(['POST', 'POST', 'PUT']);
+        expect(corpos.slice(-3).every((item) => Number(item.usuarios_id_usuario) > 0 || String(item.id_ponto || '').startsWith('temp_'))).toBe(true);
 
         await navegar(page, 'jogos', { id_jogo: fixture.idJogo, origem: 'agenda_edit' });
         await expect(page.locator('#placar-conteudo')).toBeVisible();
@@ -180,27 +218,28 @@ test.describe('Mesário — persistência imediata do placar', () => {
         const resultados = servidor.map((item) => Number(item.resultado_partida));
         expect(resultados[0]).toBe(2);
 
-        const dialogo = new Promise((resolve) => {
-            page.once('dialog', async (dialog) => {
-                const mensagem = dialog.message();
-                await dialog.dismiss();
-                resolve(mensagem);
-            });
-        });
         await page.evaluate(() => {
-            window.__SGI_QUEUE_MUTATION_ORIGINAL__ = window.SGIOffline.queueMutation;
-            window.SGIOffline.queueMutation = () => Promise.reject(new Error('IndexedDB indisponível'));
+            window.__SGI_FETCH_ORIGINAL__ = window.fetch;
+            window.fetch = function (input, init) {
+                const method = String((init && init.method) || 'GET').toUpperCase();
+                const url = String(input && input.url ? input.url : input);
+                if (method === 'POST' && url.includes('/api/v1/pontos')) {
+                    return Promise.reject(new Error('Falha de rede simulada'));
+                }
+                return window.__SGI_FETCH_ORIGINAL__.call(this, input, init);
+            };
         });
         await page.locator('.btn-score-plus').first().click();
-        expect(await dialogo).toContain('IndexedDB indisponível');
         const artilheiroFinal = page.locator('#modalArtilheiro');
-        if (await artilheiroFinal.isVisible()) {
-            await artilheiroFinal.locator('.btn-close').click();
-            await expect(artilheiroFinal).toBeHidden();
-        }
+        await expect(artilheiroFinal).toBeVisible();
+        await expect.poll(() => artilheiroFinal.locator('#selectAlunoArtilheiro option').count()).toBeGreaterThan(1);
+        await artilheiroFinal.locator('#selectAlunoArtilheiro').selectOption({ index: 1 });
+        await artilheiroFinal.locator('#btnSalvarArtilheiro').click();
+        await expect(artilheiroFinal.locator('#msgArtilheiro')).toContainText('Erro de conexão');
+        await expect(artilheiroFinal).toBeVisible();
         await page.evaluate(() => {
-            window.SGIOffline.queueMutation = window.__SGI_QUEUE_MUTATION_ORIGINAL__;
-            delete window.__SGI_QUEUE_MUTATION_ORIGINAL__;
+            window.fetch = window.__SGI_FETCH_ORIGINAL__;
+            delete window.__SGI_FETCH_ORIGINAL__;
         });
     });
 });

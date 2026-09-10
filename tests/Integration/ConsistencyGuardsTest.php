@@ -29,7 +29,47 @@ final class ConsistencyGuardsTest
             $login = $client->login('admin', '123');
             Assertions::assert('Guarda de consistência autentica o operador de teste', ($login['json']['status'] ?? '') === 'sucesso');
 
-            $connection->query("UPDATE jogos SET nome_jogo = 'MM:2:0:N', duracao_jogo = 1200, tempo_extra_jogo = 0 WHERE id_jogo = {$gameId}");
+            // A fixture genérica não agenda término para o jogo. Preenchemos
+            // apenas este cenário, pois a transição para Iniciado exige uma
+            // janela de agenda válida e não deve ser flexibilizada em produção.
+            $connection->query("UPDATE jogos SET nome_jogo = 'MM:2:0:N', termino_jogo = '10:00:00', duracao_jogo = 1200, tempo_extra_jogo = 0 WHERE id_jogo = {$gameId}");
+            $started = $client->putJson('api/v1/jogos', [
+                'id_jogo' => $gameId,
+                'status_jogo' => 'Iniciado',
+                'duracao_jogo' => 1200,
+                'tempo_restante_jogo' => 1200,
+            ]);
+            Assertions::assert(
+                'Partida da guarda pode ser iniciada para registrar jogadas',
+                ($started['json']['success'] ?? false) === true,
+                'HTTP ' . ($started['code'] ?? 0) . ': ' . mb_substr((string) ($started['body'] ?? ''), 0, 240),
+            );
+            $point1 = $client->postJson('api/v1/pontos', [
+                'jogos_id_jogo' => $gameId,
+                'id_partida' => (int) $edition['partida_ids'][0],
+                'equipes_id_equipe' => $teamIds[0],
+                'usuarios_id_usuario' => (int) $edition['atleta_ids'][0],
+                'chave_jogada' => 'consistency-point-' . bin2hex(random_bytes(5)),
+            ]);
+            $point1Extra = $client->postJson('api/v1/pontos', [
+                'jogos_id_jogo' => $gameId,
+                'id_partida' => (int) $edition['partida_ids'][0],
+                'equipes_id_equipe' => $teamIds[0],
+                'usuarios_id_usuario' => (int) $edition['atleta_ids'][0],
+                'chave_jogada' => 'consistency-point-' . bin2hex(random_bytes(5)),
+            ]);
+            $point2 = $client->postJson('api/v1/pontos', [
+                'jogos_id_jogo' => $gameId,
+                'id_partida' => $partidaId,
+                'equipes_id_equipe' => $teamIds[1],
+                'usuarios_id_usuario' => (int) $edition['atleta_ids'][1],
+                'chave_jogada' => 'consistency-point-' . bin2hex(random_bytes(5)),
+            ]);
+            Assertions::assert('Jogadas vinculadas deixam o placar pronto para finalização',
+                ($point1['json']['success'] ?? false) === true
+                && ($point1Extra['json']['success'] ?? false) === true
+                && ($point2['json']['success'] ?? false) === true,
+            );
             $final = $client->postJson('api/v1/resultados', [
                 'id_jogo' => $gameId,
                 'id_modalidade' => (int) $edition['modalidade_id'],
@@ -46,7 +86,7 @@ final class ConsistencyGuardsTest
                 'resultado_partida' => -5,
             ]);
             $afterNegative = $connection->query("SELECT resultado_partida FROM partidas WHERE id_partida = {$partidaId}")->fetch_column();
-            Assertions::assert('Placar negativo é rejeitado sem persistência', in_array($negative['code'], [400, 422], true) && $afterNegative === $before);
+            Assertions::assert('Alteração direta de placar é rejeitada sem persistência', $negative['code'] === 422 && $afterNegative === $before);
 
             $closed = $client->request('api/v1/partidas', 'PUT', [
                 'id_partida' => $partidaId,

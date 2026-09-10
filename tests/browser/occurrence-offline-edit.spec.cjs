@@ -79,6 +79,7 @@ async function criarFixture(request) {
         await jsonOrThrow(await alunoApi.post(api('api/v1/login'), {
             data: { matricula: matriculaAtleta, senha: senhaAtleta },
         }), 'login do atleta fixture');
+        await jsonOrThrow(await alunoApi.post(api('api/v1/termos'), { data: {} }), 'aceite dos termos do atleta fixture');
         await jsonOrThrow(await alunoApi.post(api('api/v1/inscricoes'), {
             data: { id_interclasse: idInterclasse, id_equipes: [Number(equipesDaModalidade[0].id_equipe)] },
         }), 'inscrição do atleta fixture');

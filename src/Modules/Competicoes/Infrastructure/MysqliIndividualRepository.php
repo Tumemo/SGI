@@ -181,6 +181,7 @@ final class MysqliIndividualRepository
                 throw new \RuntimeException('Pódio individual sem origem atual não pode ser retificado.');
             }
             // Limpa partidas existentes
+            \App\Modules\Competicoes\Infrastructure\MysqliChaveamentoRepository::desvincularHistoricoDasPartidas($conn, $idJogo);
             $stDel = $conn->prepare('DELETE FROM partidas WHERE jogos_id_jogo = ?');
             $stDel->bind_param('i', $idJogo);
             $stDel->execute();

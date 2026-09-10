@@ -16,9 +16,9 @@ window.SGIPage.mount("aluno/ranking", function (pageConfig, pageScope) {
                 const data = await res.json();
                 const lista = Array.isArray(data) ? data : [data];
 
-                const publicado = lista.find(i => String(i.status_interclasse) !== '1' && i.ranking_publicado_em);
-                if (publicado) {
-                    idInterclasse = publicado.id_interclasse;
+                const encerrado = lista.find(i => String(i.status_interclasse) === '0');
+                if (encerrado) {
+                    idInterclasse = encerrado.id_interclasse;
                     const url = new URL(window.location);
                     url.searchParams.set('id', idInterclasse);
                     window.history.replaceState({}, '', url);
@@ -31,7 +31,7 @@ window.SGIPage.mount("aluno/ranking", function (pageConfig, pageScope) {
         }
 
         if (!idInterclasse) {
-            exibirMensagem("Nenhum ranking foi publicado até o momento.", "warning");
+            exibirMensagem("Nenhum interclasse encerrado possui ranking disponível.", "warning");
             return;
         }
         await carregarDados();
@@ -42,13 +42,17 @@ window.SGIPage.mount("aluno/ranking", function (pageConfig, pageScope) {
             <div class="text-center py-5">
                 <i class="bi bi-lock-fill text-warning display-1"></i>
                 <h3 class="fw-bold mt-3">Ranking Oculto</h3>
-                <p class="text-muted fs-6">O ranking deste interclasse está restrito apenas para os administradores!</p>
+                <p class="text-muted fs-6">O ranking será exibido após o encerramento do Interclasse.</p>
             </div>
         `;
         const mob = document.getElementById('listaMob');
         const desk = document.getElementById('listaDesk');
+        const filtros = [document.getElementById('filtrosMob'), document.getElementById('filtrosDesk')];
+        const totais = [document.getElementById('totalTurmas'), document.getElementById('totalTurmasDesk')];
         if (mob) mob.innerHTML = mensagemOculta;
         if (desk) desk.innerHTML = mensagemOculta;
+        filtros.forEach((element) => { if (element) element.innerHTML = ''; });
+        totais.forEach((element) => { if (element) element.textContent = '0 Turmas'; });
     }
 
     async function carregarDados() {

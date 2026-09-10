@@ -789,15 +789,18 @@
         try { bodyJson = typeof storedBody === 'string' ? JSON.parse(storedBody || '{}') : storedBody; } catch (_) { bodyJson = null; }
         var arquivo = fileFromUrl(url);
         var idTemporario = bodyJson && bodyJson.id_ocorrencia != null ? String(bodyJson.id_ocorrencia) : '';
-        var precisaCriacaoOcorrencia = method === 'PUT' && arquivo === 'ocorrencias' && /^temp_\d+$/.test(idTemporario);
-        var dependencia = precisaCriacaoOcorrencia
+        var idPontoTemporario = bodyJson && bodyJson.id_ponto != null ? String(bodyJson.id_ponto) : '';
+        var arquivoCriacao = arquivo === 'ocorrencias' ? 'ocorrencias' : (arquivo === 'pontos' ? 'pontos' : null);
+        var idCriacaoTemporaria = arquivo === 'ocorrencias' ? idTemporario : idPontoTemporario;
+        var precisaCriacaoDependencia = method === 'PUT' && arquivoCriacao !== null && /^temp_\d+$/.test(idCriacaoTemporaria);
+        var dependencia = precisaCriacaoDependencia
             ? idbQueueAll().then(function (fila) {
-                var idPai = Number(idTemporario.slice(5));
+                var idPai = Number(idCriacaoTemporaria.slice(5));
                 var criacao = (fila || []).filter(function (pendente) {
-                    return Number(pendente.id) === idPai && pendente.method === 'POST' && fileFromUrl(pendente.url) === 'ocorrencias';
+                    return Number(pendente.id) === idPai && pendente.method === 'POST' && fileFromUrl(pendente.url) === arquivoCriacao;
                 })[0];
                 if (criacao) {
-                    item.dependsOn = { mutationId: criacao.id, tempId: idTemporario, field: 'id_ocorrencia' };
+                    item.dependsOn = { mutationId: criacao.id, tempId: idCriacaoTemporaria, field: arquivoCriacao === 'pontos' ? 'id_ponto' : 'id_ocorrencia' };
                 }
             })
             : Promise.resolve();
@@ -842,7 +845,7 @@
         if (dependencia.resolvedId == null || dependencia.resolvedId === '') {
             return Promise.resolve({
                 ok: false,
-                message: 'A ocorrência depende de uma criação que ainda não foi confirmada pelo servidor.'
+                message: 'Esta alteração depende de uma criação que ainda não foi confirmada pelo servidor.'
             });
         }
         var body = bodyAsJson(item);
@@ -859,6 +862,7 @@
             var recursos = {
                 resultados: 'resultados',
                 artilheiros: 'artilheiros',
+                pontos: 'pontos',
                 ocorrencias: 'ocorrencias',
                 partidas: 'partidas'
             };
@@ -876,6 +880,7 @@
         var id = null;
         if (file === 'resultados') id = data.id_jogo;
         else if (file === 'artilheiros') id = data.jogos_id_jogo;
+        else if (file === 'pontos') id = data.jogos_id_jogo;
         else if (file === 'ocorrencias') id = data.id_jogo;
         else if (file === 'partidas') id = data.jogos_id_jogo;
         if (Number(id) >= 0 || id == null) return null;
@@ -969,7 +974,8 @@
             ? window.SGIDataLayer.onSynced(item, text, json || {})
             : null;
         function resolverDependentes() {
-            if (fileFromUrl(item.url) !== 'ocorrencias' || item.method !== 'POST' || !json || !json.id) return Promise.resolve();
+            var arquivo = fileFromUrl(item.url);
+            if ((arquivo !== 'ocorrencias' && arquivo !== 'pontos') || item.method !== 'POST' || !json || !json.id) return Promise.resolve();
             return idbQueueAll().then(function (fila) {
                 return Promise.all((fila || []).filter(function (pendente) {
                     return pendente.dependsOn && Number(pendente.dependsOn.mutationId) === Number(item.id);
@@ -1265,13 +1271,13 @@
             var bodyStr = init.body ? String(init.body) : '';
             var ehNegativo = bodyStr.indexOf('"id_jogo":-') > -1 || absUrl.indexOf('id_jogo=-') > -1;
             if (!state.online || navigator.onLine === false || estaSoftOffline() || servidorIndisponivel() || ehNegativo || state.pending > 0 || syncing) {
-                return queueMutation(method, absUrl, init.body, init.headers).then(function () {
-                    return fakeResponse({ success: true, offline: true, queued: true, mensagem: 'Salvo localmente. Sera sincronizado quando houver conexao.' });
+                return queueMutation(method, absUrl, init.body, init.headers).then(function (item) {
+                    return fakeResponse({ success: true, offline: true, queued: true, mutation_id: item.id, mensagem: 'Salvo localmente. Sera sincronizado quando houver conexao.' });
                 });
             }
             return fetchComTimeout(input, init, REQUEST_TIMEOUT_MS).catch(function () {
-                return queueMutation(method, absUrl, init.body, init.headers).then(function () {
-                    return fakeResponse({ success: true, offline: true, queued: true, mensagem: 'Salvo localmente. Sera sincronizado quando houver conexao.' });
+                return queueMutation(method, absUrl, init.body, init.headers).then(function (item) {
+                    return fakeResponse({ success: true, offline: true, queued: true, mutation_id: item.id, mensagem: 'Salvo localmente. Sera sincronizado quando houver conexao.' });
                 });
             });
         }

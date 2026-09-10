@@ -7,7 +7,7 @@ test('placar de modalidade individual não cai no layout de mata-mata', async ({
     await page.locator('#form_desktop .ipt-matricula').fill('admin');
     await page.locator('#form_desktop .ipt-senha').fill('123');
     await page.locator('#form_desktop button[type="submit"]').click();
-    await page.waitForLoadState('domcontentloaded');
+    await page.waitForURL(/\/edicoes/, { waitUntil: 'domcontentloaded' });
 
     await page.route('**/api/v1/**', async (route) => {
         const url = new URL(route.request().url());
@@ -43,7 +43,7 @@ test('placar de modalidade individual não cai no layout de mata-mata', async ({
         return route.fulfill({ json: [] });
     });
 
-    await page.goto('jogos/placar?id_jogo=20', { waitUntil: 'commit' });
+    await page.goto('jogos/placar?id_jogo=20', { waitUntil: 'domcontentloaded' });
     await expect(page.locator('#placar-conteudo')).toBeVisible();
     await expect(page.locator('#placar-titulo-jogo')).toHaveText('Corrida');
     await expect(page.locator('#indSelectPrimeiro')).toBeVisible();

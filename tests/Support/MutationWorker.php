@@ -21,7 +21,7 @@ try {
         echo json_encode($previous['payload'], JSON_THROW_ON_ERROR);
     } else {
         usleep(250000);
-        $statement = $connection->prepare('INSERT INTO artilheiros (usuarios_id_usuario, jogos_id_jogo, num_gol) VALUES (1, ?, 1)');
+        $statement = $connection->prepare("INSERT INTO artilheiros (usuarios_id_usuario, jogos_id_jogo, num_gol, conta_no_placar, status_artilheiro) VALUES (1, ?, 1, 0, 'anulado')");
         $statement->bind_param('i', $gameId);
         $statement->execute();
         $payload = ['id' => $connection->insert_id];

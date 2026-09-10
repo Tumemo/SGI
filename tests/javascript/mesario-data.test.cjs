@@ -21,6 +21,64 @@ test('rotas v1 preservam cadastros e projetam o encerramento com placar offline'
     assert.deepEqual(Array.from(await layer.read('partidas'), p => p.resultado_partida), [2, 1]);
 });
 
+test('ponto offline incrementa a partida e a anulação preserva o histórico do atleta', async () => {
+    const layer = await carregarDataLayer();
+    await layer.upsert('partidas', 101, {
+        id_partida: 101,
+        jogos_id_jogo: 7,
+        equipes_id_equipe: 1,
+        resultado_partida: 0,
+    });
+    await layer.onQueued({
+        id: 201,
+        method: 'POST',
+        url: 'https://sgi.test/api/v1/pontos',
+        body: JSON.stringify({
+            jogos_id_jogo: 7,
+            id_partida: 101,
+            equipes_id_equipe: 1,
+            usuarios_id_usuario: 42,
+            chave_jogada: 'offline-point-201',
+        }),
+    });
+    let ponto = (await layer.read('pontos')).find((row) => row.id_ponto === 'temp_201');
+    let partida = (await layer.read('partidas')).find((row) => row.id_partida === 101);
+    assert.equal(ponto.status_artilheiro, 'ativo');
+    assert.equal(ponto.usuarios_id_usuario, 42);
+    assert.equal(partida.resultado_partida, 1);
+
+    await layer.onQueued({
+        id: 202,
+        method: 'PUT',
+        url: 'https://sgi.test/api/v1/pontos',
+        body: JSON.stringify({ id_ponto: 'temp_201' }),
+    });
+    ponto = (await layer.read('pontos')).find((row) => row.id_ponto === 'temp_201');
+    partida = (await layer.read('partidas')).find((row) => row.id_partida === 101);
+    assert.equal(ponto.status_artilheiro, 'anulado');
+    assert.equal(ponto.conta_no_placar, 0);
+    assert.equal(partida.resultado_partida, 0);
+});
+
+test('cache offline mantém o mesmo atleta disponível em equipes diferentes', async () => {
+    const layer = await carregarDataLayer();
+    const equipe1 = 'https://sgi.test/api/v1/pontos?acao=atletas&id_jogo=7&id_equipe=1';
+    const equipe2 = 'https://sgi.test/api/v1/pontos?acao=atletas&id_jogo=7&id_equipe=2';
+    const atleta = { id_usuario: 42, nome_usuario: 'Atleta compartilhado' };
+
+    await layer.capture(equipe1, JSON.stringify({
+        success: true,
+        atletas: [{ ...atleta, equipes_id_equipe: 1 }],
+    }));
+    await layer.capture(equipe2, JSON.stringify({
+        success: true,
+        atletas: [{ ...atleta, equipes_id_equipe: 2 }],
+    }));
+
+    assert.deepEqual((await (await layer.localGet(equipe1)).json()).atletas.map((row) => row.equipes_id_equipe), [1]);
+    assert.deepEqual((await (await layer.localGet(equipe2)).json()).atletas.map((row) => row.equipes_id_equipe), [2]);
+});
+
 function criarIndexedDbFake() {
     const stores = new Map();
     const nomes = { contains: (nome) => stores.has(nome) };

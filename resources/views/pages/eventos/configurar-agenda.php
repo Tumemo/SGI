@@ -55,7 +55,7 @@ $nivelUsuarioAgenda = (int)($_SESSION['nivel'] ?? -1);
         </select>
         <?php if ($nivelUsuarioAgenda <= 1): ?>
             <button type="button" class="ag-btn-auto w-100 justify-content-center mt-1 btn-trigger-datas-auto">
-                <i class="bi bi-calendar2-plus"></i> Agendar em blocos
+                <i class="bi bi-calendar2-plus"></i> Agendar automaticamente
             </button>
         <?php endif; ?>
     </div>
@@ -108,7 +108,7 @@ $nivelUsuarioAgenda = (int)($_SESSION['nivel'] ?? -1);
             </select>
             <?php if ($nivelUsuarioAgenda <= 1): ?>
                 <button type="button" class="ag-btn-auto ms-auto btn-trigger-datas-auto">
-                    <i class="bi bi-calendar2-plus"></i> Agendar em blocos
+                    <i class="bi bi-calendar2-plus"></i> Agendar automaticamente
                 </button>
             <?php endif; ?>
         </div>
@@ -188,70 +188,68 @@ $nivelUsuarioAgenda = (int)($_SESSION['nivel'] ?? -1);
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title"><i class="bi bi-calendar2-plus text-danger me-2"></i>Agendamento em blocos</h5>
+                <h5 class="modal-title"><i class="bi bi-calendar2-plus text-danger me-2"></i>Agendamento automático</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
             </div>
             <div class="modal-body">
-                <p class="small text-muted mb-3">Escolha os jogos, as janelas e os locais. O sistema fará uma prévia respeitando dependências, duração, intervalo de troca e conflitos antes de confirmar o bloco.</p>
+                <p class="small text-muted mb-3">Defina o primeiro jogo. O sistema agenda a chave na ordem correta, usando terça-feira e depois quinta-feira, sem ultrapassar 11h30. Se ainda houver jogos, o próximo dia será solicitado automaticamente.</p>
                 <div class="mb-3">
                     <label class="form-label">Modalidade</label>
                     <select class="form-select" id="auto-modalidade"></select>
                 </div>
-                <div class="mb-3">
-                    <label class="form-label">Jogos</label>
-                    <select class="form-select" id="auto-jogos" multiple size="6"></select>
-                    <div class="form-text">Selecione jogos já programados somente se quiser reprogramá-los.</div>
-                </div>
-                <div class="mb-3">
-                    <label class="form-label">Posições futuras (opcional)</label>
-                    <input type="text" class="form-control" id="auto-tags" placeholder="Ex.: MM:2:0:N, POS:3:0:N">
-                    <div class="form-text">Use a tag exibida no chaveamento para reservar uma fase que ainda não foi materializada.</div>
+                <div class="row g-2 mb-3">
+                    <div class="col-6">
+                        <label class="form-label">Primeiro dia (terça-feira)</label>
+                        <input type="date" class="form-control" id="seq-data">
+                    </div>
+                    <div class="col-6">
+                        <label class="form-label">Horário do primeiro jogo</label>
+                        <input type="time" class="form-control" id="seq-inicio" value="08:00">
+                    </div>
                 </div>
                 <div class="row g-2 mb-3">
                     <div class="col-6">
-                        <label class="form-label">Data</label>
-                        <input type="date" class="form-control" id="auto-data">
+                        <label class="form-label">Limite para terminar os jogos</label>
+                        <input type="time" class="form-control" id="seq-fim" value="11:30">
+                        <div class="form-text">Valor inicial: 11h30. Nenhum jogo ultrapassará este horário.</div>
                     </div>
                     <div class="col-6">
-                        <label class="form-label">Início da janela</label>
-                        <input type="time" class="form-control" id="auto-inicio" value="08:00">
+                        <label class="form-label">Local</label>
+                        <select class="form-select" id="seq-local"></select>
                     </div>
                 </div>
                 <div class="mb-3">
-                    <label class="form-label">Fim da janela</label>
-                    <input type="time" class="form-control" id="auto-fim" value="18:00">
-                </div>
-                <div class="mb-3">
-                    <label class="form-label">Locais disponíveis</label>
-                    <select class="form-select" id="auto-local" multiple size="3"></select>
-                </div>
-                <div class="row g-2 mb-3">
-                    <div class="col-4">
-                        <label class="form-label">Duração (min)</label>
-                        <input type="number" class="form-control" id="auto-duracao" min="1" step="1" value="60">
-                    </div>
-                    <div class="col-4">
-                        <label class="form-label">Troca (min)</label>
-                        <input type="number" class="form-control" id="auto-troca" min="0" step="1" value="5">
-                    </div>
-                    <div class="col-4">
-                        <label class="form-label">Descanso (min)</label>
-                        <input type="number" class="form-control" id="auto-descanso" min="0" step="1" value="0">
-                    </div>
+                    <label class="form-label">Duração média de cada jogo (minutos)</label>
+                    <input type="number" class="form-control" id="seq-duracao" min="1" step="1" value="60">
+                    <div class="form-text">O intervalo entre jogos será fixado em 10 minutos.</div>
                 </div>
                 <div class="mb-3">
                     <label class="form-label">Prévia</label>
-                    <div id="auto-previa" class="small border rounded p-2 bg-light">Preencha os dados e clique em “Calcular prévia”.</div>
+                    <div id="seq-previa" class="small border rounded p-2 bg-light">Preencha os dados e clique em “Calcular prévia”.</div>
                 </div>
-                <div class="form-check mb-2">
-                    <input class="form-check-input" type="checkbox" id="auto-reprogramar">
-                    <label class="form-check-label" for="auto-reprogramar">Permitir reprogramar jogos já agendados</label>
+                <div id="seq-proximo-dia" class="border rounded p-2 mb-2 d-none">
+                    <div class="fw-semibold mb-2">Ainda há jogos. Informe a próxima sessão:</div>
+                    <div class="row g-2">
+                        <div class="col-4">
+                            <label class="form-label">Próximo dia</label>
+                            <input type="date" class="form-control" id="seq-proxima-data">
+                        </div>
+                        <div class="col-4">
+                            <label class="form-label">Horário inicial</label>
+                            <input type="time" class="form-control" id="seq-proxima-inicio" value="08:00">
+                        </div>
+                        <div class="col-4">
+                            <label class="form-label">Limite</label>
+                            <input type="time" class="form-control" id="seq-proxima-fim" value="11:30">
+                        </div>
+                    </div>
+                    <button type="button" class="btn btn-outline-danger btn-sm mt-2" id="seq-adicionar-dia"><i class="bi bi-calendar-plus me-1"></i>Adicionar dia e recalcular</button>
                 </div>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-outline-secondary sgi-u-radius-10px-weight-600-text-85rem" data-bs-dismiss="modal" >Cancelar</button>
-                <button type="button" class="btn btn-outline-danger sgi-u-radius-10px-weight-600-text-85rem" id="auto-simular-btn"><i class="bi bi-eye me-1"></i>Calcular prévia</button>
-                <button type="button" class="btn btn-danger sgi-u-radius-10px-weight-600-text-85rem" id="auto-salvar-btn" disabled><i class="bi bi-check-lg me-1"></i>Confirmar bloco</button>
+                <button type="button" class="btn btn-outline-danger sgi-u-radius-10px-weight-600-text-85rem" id="seq-simular-btn"><i class="bi bi-eye me-1"></i>Calcular prévia</button>
+                <button type="button" class="btn btn-danger sgi-u-radius-10px-weight-600-text-85rem" id="seq-salvar-btn" disabled><i class="bi bi-check-lg me-1"></i>Confirmar agenda</button>
             </div>
         </div>
     </div>

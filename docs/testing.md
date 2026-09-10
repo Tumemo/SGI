@@ -1,22 +1,53 @@
 # Execução dos testes
 
-## Verificações locais sem banco
+## Execução descartável no Docker
 
-Na raiz: `composer install`, `npm ci --ignore-scripts` e `npm run build`.
+O fluxo recomendado não exige PHP, Composer, Node, MySQL/MariaDB ou Chromium
+instalados no host. O script constrói as imagens, cria um banco em `tmpfs`,
+inicia o servidor HTTP, executa as suítes e remove os containers ao terminar.
 
-```bash
-composer verify
-npm run check
-npm test
+No Windows:
+
+```powershell
+powershell -File tools/test-docker.ps1 -Database mariadb
 ```
 
-O PHPUnit testa regras de negócio, contratos HTTP unitários, organização dos módulos, limites das camadas, parsing SQL e validação do banco de teste. A análise estática usa PHPStan e o estilo usa PHP CS Fixer. A verificação de sintaxe inclui os templates privados.
+No Linux/macOS:
 
-## Banco isolado
+```bash
+sh tools/test-docker.sh --database mariadb
+```
 
-Se usar Docker, `docker compose -f compose.test.yml --profile mariadb up -d --wait` disponibiliza uma base descartável em `127.0.0.1:3308`. Para MySQL, use o perfil `mysql` e a porta `3307`. Ambos usam banco `sgi_test`, usuário `root` e senha `sgi-test-only`; os dados são temporários e os serviços só escutam na interface local.
+Para executar contra MySQL 8.4:
 
-Também é possível usar outra instância dedicada de MySQL/MariaDB. Não aponte testes para dados de trabalho. Configure **nos dois terminais** as mesmas variáveis:
+```powershell
+powershell -File tools/test-docker.ps1 -Database mysql
+```
+
+O banco padrão é `sgi_test`, com usuário `root` e senha `sgi-test-only`.
+Esses dados são exclusivos do ambiente de teste. `-Keep`/`--keep` mantém os
+containers para investigação; sem essa opção o Compose executa `down --volumes`.
+
+As imagens usam PHP 8.4 por padrão. Para validar PHP 8.2:
+
+```bash
+sh tools/test-docker.sh --database mariadb --php-version 8.2
+```
+
+O comando executa, em sequência, `composer verify`, validação do Composer,
+build e checks JavaScript, a suíte HTTP/banco (`tests/run_all.php`) e os testes
+Playwright online/offline. Os resultados permanecem em `test-results/` e
+`tests/browser/{test-results,playwright-report}/`.
+
+O contrato visual pode ser solicitado com `-IncludeVisual`/`--include-visual`.
+O container usa referências Linux (`*-linux.png`) versionadas separadamente das
+referências Windows (`*-win32.png`), evitando que a plataforma do executor
+altere o resultado da comparação.
+
+## Execução manual fora do Docker
+
+Para uma execução legada com ferramentas instaladas no host, use o servidor
+isolado e configure **nos dois terminais** as mesmas variáveis:
 
 ```powershell
 $env:SGI_DB_HOST = '127.0.0.1'
@@ -43,7 +74,7 @@ O runner reconstrói **apenas** a base de testes, executa migrações e carrega 
 
 Não execute duas suítes que alteram o banco simultaneamente. Os cenários de integração montam uma edição compartilhada em sequência. O teste específico de concorrência usa dois processos independentes para reenviar a mesma mutação e conferir a ausência de duplicação.
 
-## Navegador
+## Navegador em execução manual
 
 ```powershell
 npm ci --prefix tests/browser
@@ -52,7 +83,14 @@ $env:SGI_BASE_URL = 'http://127.0.0.1:8099/'
 npm --prefix tests/browser test
 ```
 
-Use a base preparada pelo runner HTTP. `SGI_E2E_RESET=1` pode executar esse preparo no início; nesse caso configure também `SGI_PHP_PATH` e as variáveis do teste HTTP. O Chromium instalado pelo Playwright é o padrão. `SGI_CHROME_PATH` permite outro executável, mas comparações visuais devem usar a mesma versão das referências.
+Use a base preparada pelo runner HTTP. No fluxo Docker, a imagem oficial do
+Playwright já contém o Chromium e o serviço `browser` recebe
+`SGI_BASE_URL=http://sgi-web:8099/`; não configure `SGI_E2E_RESET`, porque a etapa de
+integração já prepara a mesma base descartável. Na execução manual,
+`SGI_E2E_RESET=1` pode executar esse preparo no início; nesse caso configure
+também `SGI_PHP_PATH` e as variáveis do teste HTTP. `SGI_CHROME_PATH` permite
+outro executável, mas comparações visuais devem usar a mesma versão das
+referências.
 
 Os testes cobrem administração, portal do aluno, permissões, todas as telas principais e torneios com sete partidas. Os cenários offline desabilitam a rede do navegador, verificam IndexedDB e conferem no servidor o resultado após a reconexão.
 
@@ -64,12 +102,16 @@ O cenário de chaveamento ímpar prepara três equipes com elenco e exige um ava
 
 `legacy-offline-compat.spec.cjs` cobre fila antiga sem `session`, alias antigo de mutação, isolamento entre operadores, casca sem `pageSources` e retry após falha de rede. A compatibilidade exige uma casca autenticada/preparada; refresh, nova aba e cold-open sem essa casca não são declarados como suporte porque o pacote não usa Service Worker.
 
-`visual-contract.spec.cjs` compara quatro imagens do login em desktop/mobile. A resposta de credenciais inválidas é fixa nesse teste visual; a autenticação real é validada separadamente. As referências versionadas são do Windows. No Linux, execute os demais testes com `--grep-invert "contrato visual do acesso"`; o CI executa a comparação visual em um job Windows.
+`visual-contract.spec.cjs` compara quatro imagens do login em desktop/mobile. A resposta de credenciais inválidas é fixa nesse teste visual; a autenticação real é validada separadamente. O fluxo Docker compara as referências Linux; a execução manual no Windows usa as referências Windows.
 
 Imagens, traces e relatório ficam em `tests/browser/test-results/` e `tests/browser/playwright-report/`. Só atualize snapshots após inspecionar uma mudança visual intencional. Testes aprovados cobrem os cenários descritos; não representam garantia de ausência de qualquer defeito.
 
 ## Matriz e recuperação
 
-O CI executa a qualidade em PHP 8.2 e 8.4, a integração em MySQL 8.4 e MariaDB 10.11, os cenários online/offline no Linux e o contrato visual em Windows. A configuração está em `.github/workflows/ci.yml`; uma execução local em outro motor não substitui os alvos que não foram instalados.
+O CI executa todos os testes em containers descartáveis: qualidade em PHP 8.2 e
+8.4, integração e navegador em MySQL 8.4 e MariaDB 10.11, além do contrato
+visual nas referências Linux. A configuração está em `.github/workflows/ci.yml`;
+uma execução local em outro motor não substitui os alvos que não foram
+instalados.
 
 `php tests/run_all.php` também executa o ensaio sintético de recuperação. Ele cria bases temporárias com nomes próprios, gera um `mysqldump` contendo schema/dados/triggers, grava hash e versão em `test-results/t28-recovery-*.json`, atualiza uma cópia com as migrações e restaura o dump em outra base. As bases são removidas ao final; os dumps e manifestos permanecem como evidência ignorada pelo Git. O ensaio não aponta para base de trabalho e não limpa filas IndexedDB.

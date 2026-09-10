@@ -51,7 +51,7 @@ class AuthAndRbacTest
         $clientAluno = new TestClient();
         $resAluno = $clientAluno->login('2879', '123');
         Assertions::assertJsonSuccess("Login do Aluno/Competidor (nível 3)", $resAluno);
-        Assertions::assert("Redirecionamento de Aluno para portal do aluno", str_contains((string)($resAluno['json']['redirect'] ?? ''), 'aluno/inicio'));
+        Assertions::assert("Redirecionamento de Aluno pendente para os termos", str_contains((string)($resAluno['json']['redirect'] ?? ''), 'aluno/termos'));
 
         // 1.5 Rejeição de Senha Incorreta
         $clientAnon = new TestClient();

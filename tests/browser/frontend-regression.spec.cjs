@@ -224,6 +224,21 @@ test.describe('Frontend — regressão visual por perfil', () => {
                 await expect(page.locator('#avisoFinalizacaoInterclasse')).toBeHidden();
             }
         }
+
+        await page.goto(`${base}edicoes/modalidades?id=${id}&modo=view`, { waitUntil: 'domcontentloaded' });
+        const destaquesResponsePromise = page.waitForResponse((response) => {
+            const url = response.url();
+            return url.includes('/api/v1/artilheiros')
+                && url.includes('acao=destaques_modalidades');
+        });
+        await page.locator('button[data-bs-target="#modalDestaques"]').click();
+        const destaquesResponse = await destaquesResponsePromise;
+        expect(destaquesResponse.status()).toBe(200);
+        const destaquesPayload = await destaquesResponse.json();
+        expect(destaquesPayload.success).toBe(true);
+        await expect(page.locator('#modalDestaques')).toBeVisible();
+        await expect(page.locator('#corpoDestaques')).not.toContainText('Erro ao carregar os destaques.');
+        await capturarTela(page, testInfo, '27-admin-modalidades-destaques');
         expect(erros).toEqual([]);
     });
 

@@ -212,14 +212,15 @@ final class MysqliPartidaGateway implements ResultadoRepository
         MysqliChaveamentoRepository::chaveamentoRebuildFromRound($this->connection, $modalityId, $largura);
     }
 
-    /** @param list<array<string, mixed>> $results */
-    public function launch(int $gameId, ?string $gameTag, int $modalityId, array $results): array
+    /** @param list<array<string, mixed>> $results @param list<array<string, mixed>> $points */
+    public function launch(int $gameId, ?string $gameTag, int $modalityId, array $results, array $points = []): array
     {
         return (new ResultadoService(
             $this,
             new MysqliTransactionRunner($this->connection),
             new PontuacaoService(new MysqliPodioRepository($this->connection)),
-        ))->lancar($gameId, $gameTag, $modalityId, $results);
+            new MysqliPontoRepository($this->connection),
+        ))->lancar($gameId, $gameTag, $modalityId, $results, $points, (int) ($_SESSION['id_usuario'] ?? $_SESSION['id'] ?? 0));
     }
 
     private function resolveGame(int $gameId, ?string $tag, int $modalityId, array $results): int

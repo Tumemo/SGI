@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Modules\Competicoes\Infrastructure;
 
 use App\Modules\Competicoes\Application\AgendamentoBlocoScheduler;
+use App\Modules\Competicoes\Application\AgendamentoSequencialScheduler;
 use App\Modules\Competicoes\Application\AgendaRevisaoException;
 use InvalidArgumentException;
 use mysqli;
@@ -15,6 +16,7 @@ final class MysqliAgendamentoBlocoRepository
     public function __construct(
         private readonly mysqli $connection,
         private readonly AgendamentoBlocoScheduler $scheduler = new AgendamentoBlocoScheduler(),
+        private readonly AgendamentoSequencialScheduler $sequentialScheduler = new AgendamentoSequencialScheduler(),
     ) {
     }
 
@@ -31,6 +33,37 @@ final class MysqliAgendamentoBlocoRepository
         $result = $this->scheduler->simulate(
             $selected,
             (array) ($payload['janelas'] ?? []),
+            $fixed,
+            (array) ($payload['opcoes'] ?? $payload),
+        );
+        $result['revisao'] = $this->revision($edition);
+        return ['edicao' => $edition, 'resultado' => $result];
+    }
+
+    /**
+     * Simula a agenda completa da modalidade, incluindo posições futuras da
+     * chave. As reservas futuras permitem que o mesário avance a chave sem
+     * depender de uma nova intervenção do administrador.
+     *
+     * @return array{edicao:int,resultado:array<string,mixed>}
+     */
+    public function simulateSequential(array $payload, int $edition): array
+    {
+        $modality = (int) ($payload['id_modalidade'] ?? 0);
+        if ($modality <= 0) {
+            throw new InvalidArgumentException('Informe a modalidade para o agendamento sequencial.');
+        }
+        $this->assertModalityBelongsToEdition($modality, $edition);
+        $this->validateWindows($payload, $edition, true);
+        $selected = $this->selectedSequentialMatches($payload, $edition, $modality);
+        if ($selected === []) {
+            throw new InvalidArgumentException('Não há jogos pendentes de agendamento nesta modalidade.');
+        }
+        $keys = array_fill_keys(array_map(static fn (array $match): string => (string) $match['id_modalidade'] . ':' . (string) $match['chave_tag'], $selected), true);
+        $fixed = $this->fixedReservations($edition, $keys);
+        $result = $this->sequentialScheduler->simulate(
+            $selected,
+            (array) ($payload['dias'] ?? []),
             $fixed,
             (array) ($payload['opcoes'] ?? $payload),
         );
@@ -76,6 +109,18 @@ final class MysqliAgendamentoBlocoRepository
     /** @return array<string,mixed> */
     public function confirm(array $payload, int $edition, int $userId): array
     {
+        return $this->confirmInternal($payload, $edition, $userId, false);
+    }
+
+    /** @return array<string,mixed> */
+    public function confirmSequential(array $payload, int $edition, int $userId): array
+    {
+        return $this->confirmInternal($payload, $edition, $userId, true);
+    }
+
+    /** @return array<string,mixed> */
+    private function confirmInternal(array $payload, int $edition, int $userId, bool $sequential): array
+    {
         $idempotency = trim((string) ($payload['idempotencia'] ?? ''));
         if ($idempotency === '') {
             $idempotency = hash('sha256', (string) json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
@@ -96,7 +141,7 @@ final class MysqliAgendamentoBlocoRepository
                 return ['success' => true, 'id_bloco' => (int) $existing['id_bloco'], 'idempotente' => true, 'message' => 'Este bloco já foi confirmado.'];
             }
 
-            $simulation = $this->simulate($payload, $edition)['resultado'];
+            $simulation = ($sequential ? $this->simulateSequential($payload, $edition) : $this->simulate($payload, $edition))['resultado'];
             if ($simulation['pendencias'] !== []) {
                 throw new InvalidArgumentException('O bloco possui confrontos sem horário. Ajuste a seleção ou as janelas antes de confirmar.');
             }
@@ -123,7 +168,94 @@ final class MysqliAgendamentoBlocoRepository
             throw $exception;
         }
 
-        return ['success' => true, 'id_bloco' => $blockId, 'idempotente' => false, 'programados' => count($simulation['proposta']), 'message' => 'Bloco de jogos confirmado com sucesso.'];
+        return [
+            'success' => true,
+            'id_bloco' => $blockId,
+            'idempotente' => false,
+            'programados' => count($simulation['proposta']),
+            'message' => $sequential ? 'Agendamento sequencial confirmado com sucesso.' : 'Bloco de jogos confirmado com sucesso.',
+        ];
+    }
+
+    /** @return list<array<string,mixed>> */
+    private function selectedSequentialMatches(array $payload, int $edition, int $modality): array
+    {
+        $rows = $this->allGamesForModality($modality, $edition);
+        $byTag = [];
+        $maxWidth = 0;
+        foreach ($rows as $row) {
+            $tag = (string) ($row['nome_jogo'] ?? '');
+            $byTag[$tag] = $row;
+            if (preg_match('/^MM:(\d+):\d+:N$/', $tag, $parts) === 1) {
+                $maxWidth = max($maxWidth, (int) $parts[1]);
+            }
+        }
+        if ($maxWidth < 2) {
+            throw new InvalidArgumentException('A modalidade ainda não possui uma chave Mata-Mata para agendar.');
+        }
+
+        $tags = [];
+        for ($width = $maxWidth; $width >= 2; $width = intdiv($width, 2)) {
+            for ($slot = 0; $slot < intdiv($width, 2); $slot++) {
+                $tags[] = \App\Modules\Competicoes\Domain\ChaveamentoRules::tag($width, $slot, 'N');
+            }
+        }
+        if ($maxWidth >= 4) {
+            $tags[] = 'POS:3:0:N';
+        }
+        $scopePayload = $payload;
+        $scopePayload['todos_jogos'] = true;
+        $scopePayload['chave_tags'] = array_map(static fn (string $tag): array => [
+            'id_modalidade' => $modality,
+            'chave_tag' => $tag,
+        ], $tags);
+
+        $matches = [];
+        foreach ($tags as $tag) {
+            $row = $byTag[$tag] ?? null;
+            if ($row !== null) {
+                if ((string) ($row['status_jogo'] ?? '') !== 'Agendado') {
+                    continue;
+                }
+                $complete = $this->hasCompleteSchedule($row);
+                if ($complete && !filter_var($payload['reprogramar'] ?? false, FILTER_VALIDATE_BOOLEAN)) {
+                    continue;
+                }
+                $matches[] = $this->matchFromRow($row, $scopePayload);
+                continue;
+            }
+            if ($this->reservationIsComplete($edition, $modality, $tag)
+                && !filter_var($payload['reprogramar'] ?? false, FILTER_VALIDATE_BOOLEAN)) {
+                continue;
+            }
+            $matches[] = $this->matchFromTag($modality, $tag, $scopePayload);
+        }
+        return $this->uniqueMatches($matches);
+    }
+
+    /** @return list<array<string,mixed>> */
+    private function allGamesForModality(int $modality, int $edition): array
+    {
+        $statement = $this->prepare('SELECT j.id_jogo, j.nome_jogo, j.data_jogo, j.inicio_jogo, j.termino_jogo, j.locais_id_local, j.status_jogo, j.modalidades_id_modalidade FROM jogos j INNER JOIN modalidades m ON m.id_modalidade = j.modalidades_id_modalidade WHERE j.modalidades_id_modalidade = ? AND m.interclasses_id_interclasse = ? ORDER BY j.id_jogo ASC');
+        $statement->bind_param('ii', $modality, $edition);
+        $statement->execute();
+        $rows = $statement->get_result()->fetch_all(MYSQLI_ASSOC);
+        $statement->close();
+        return $rows;
+    }
+
+    /** @param array<string,mixed> $row */
+    private function hasCompleteSchedule(array $row): bool
+    {
+        return trim((string) ($row['data_jogo'] ?? '')) !== ''
+            && trim((string) ($row['inicio_jogo'] ?? '')) !== ''
+            && trim((string) ($row['termino_jogo'] ?? '')) !== ''
+            && (int) ($row['locais_id_local'] ?? 0) > 0;
+    }
+
+    private function reservationIsComplete(int $edition, int $modality, string $tag): bool
+    {
+        return $this->one('SELECT id_reserva FROM agenda_reservas WHERE id_interclasse = ? AND id_modalidade = ? AND chave_tag = ? AND data_reserva IS NOT NULL AND inicio_reserva IS NOT NULL AND termino_reserva IS NOT NULL AND id_local IS NOT NULL LIMIT 1', 'iis', [$edition, $modality, $tag]) !== null;
     }
 
     /** @return list<array<string,mixed>> */
@@ -236,6 +368,9 @@ final class MysqliAgendamentoBlocoRepository
     /** @return list<string> */
     private function dependencies(string $tag): array
     {
+        if ($tag === 'POS:3:0:N') {
+            return ['MM:4:0:N', 'MM:4:1:N'];
+        }
         if (preg_match('/^MM:(\d+):(\d+):[NB]$/', $tag, $parts) !== 1) {
             return [];
         }
@@ -358,18 +493,21 @@ final class MysqliAgendamentoBlocoRepository
         $history->close();
     }
 
-    private function validateWindows(array $payload, int $edition): void
+    private function validateWindows(array $payload, int $edition, bool $sequential = false): void
     {
-        $windows = (array) ($payload['janelas'] ?? []);
+        $windows = $sequential ? (array) ($payload['dias'] ?? []) : (array) ($payload['janelas'] ?? []);
         $localIds = [];
         foreach ($windows as $window) {
-            foreach ((array) ($window['locais'] ?? $window['locais_id_local'] ?? []) as $localId) {
+            $windowLocals = $sequential
+                ? [$window['local'] ?? $window['id_local'] ?? 0]
+                : (array) ($window['locais'] ?? $window['locais_id_local'] ?? []);
+            foreach ($windowLocals as $localId) {
                 $local = (int) $localId;
                 if ($local > 0) {
                     $localIds[$local] = true;
                 }
             }
-            if (isset($window['local']) && (int) $window['local'] > 0) {
+            if (!$sequential && isset($window['local']) && (int) $window['local'] > 0) {
                 $localIds[(int) $window['local']] = true;
             }
         }

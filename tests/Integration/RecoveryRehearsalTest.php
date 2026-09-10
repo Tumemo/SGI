@@ -36,17 +36,10 @@ final class RecoveryRehearsalTest
             $connection = TestDatabase::connect($source);
             $applied = (new MigrationRunner($connection, self::migrationDirectory()))->migrate();
             $upgraded = self::snapshot($connection);
-            Assertions::assert('Instalação atual aplica as oito versões sem perder os dados', $applied === [] && $appliedInitial === [
-                '001_initial_schema.sql',
-                '002_mutation_fingerprint.sql',
-                '003_fix_arrecadacao_revaluation.sql',
-                '004_podio_credit_sources.sql',
-                '005_agendamento_blocos.sql',
-                '006_unique_category_name_per_edition.sql',
-                '007_publicacao_ranking.sql',
-                '008_auth_version.sql',
-            ] && $upgraded['users'] === $before['users'] && $upgraded['history'] === $before['history']);
-            Assertions::assert('Upgrade da origem registra as versões e deixa request_hash disponível', (int) $connection->query("SELECT COUNT(*) FROM sgi_migrations WHERE dirty = 0")->fetch_row()[0] === 8 && self::hasColumn($connection, 'sincronizacoes_idempotentes', 'request_hash'));
+            $migrationVersions = self::migrationVersions();
+            $migrationCount = count($migrationVersions);
+            Assertions::assert('Instalação atual aplica as migrações sem perder os dados', $applied === [] && $appliedInitial === $migrationVersions && $upgraded['users'] === $before['users'] && $upgraded['history'] === $before['history']);
+            Assertions::assert('Upgrade da origem registra as versões e deixa request_hash disponível', (int) $connection->query("SELECT COUNT(*) FROM sgi_migrations WHERE dirty = 0")->fetch_row()[0] === $migrationCount && self::hasColumn($connection, 'sincronizacoes_idempotentes', 'request_hash'));
             $connection->close();
 
             self::createDatabase($restore);
@@ -64,7 +57,7 @@ final class RecoveryRehearsalTest
                 'restore_command_completed' => $restoreOutput === '',
                 'source_database' => $source,
                 'restore_database' => $restore,
-                'source_schema' => '001 + 002 + 003 + 004 + 005 + 006 + 007 + 008',
+                'source_schema' => implode(' + ', $migrationVersions),
                 'data_comparison' => 'users/history antes do upgrade == restore do backup',
                 'current_architecture_boundary' => 'a base restaurada contém somente o schema atual',
             ];
@@ -98,9 +91,9 @@ final class RecoveryRehearsalTest
             "INSERT INTO locais VALUES (1, 'Ginásio recuperação', '1', NULL, '1', 1)",
             "INSERT INTO equipes VALUES (1, '1', 1, 1, '6EF Recovery')",
             "INSERT INTO usuarios (id_usuario, sigla_usuario, matricula_usuario, nome_usuario, senha_usuario, nivel_usuario, genero_usuario, data_nasc_usuario, foto_usuario, status_usuario, turmas_id_turma, interclasses_id_interclasse, chave_usuario_edicao, auth_version) VALUES (1, 'RM', 'RECOVERY-26', 'Aluno sintético', '{$hash}', '3', 'MASC', '2008-01-01', '', '1', 1, 1, NULL, 1)",
-            "INSERT INTO jogos VALUES (1, 'MM:2:0:N', '2026-10-01', '08:00:00', '09:00:00', 'Concluido', NULL, 3600, 0, NULL, 1, 1)",
+            "INSERT INTO jogos (id_jogo, nome_jogo, data_jogo, inicio_jogo, termino_jogo, status_jogo, exige_vinculo_ponto, tempo_restante_jogo, duracao_jogo, tempo_extra_jogo, data_inicio_real, modalidades_id_modalidade, locais_id_local) VALUES (1, 'MM:2:0:N', '2026-10-01', '08:00:00', '09:00:00', 'Concluido', 0, NULL, 3600, 0, NULL, 1, 1)",
             "INSERT INTO partidas VALUES (1, 1, 1, 1, 3, '1')",
-            "INSERT INTO artilheiros VALUES (1, 1, 1, 1)",
+            "INSERT INTO artilheiros (id_artilheiro, usuarios_id_usuario, jogos_id_jogo, num_gol) VALUES (1, 1, 1, 1)",
             "INSERT INTO pontuacoes VALUES (1, 'Final', 10, 1, NULL)",
             "INSERT INTO historico_arrecadacoes VALUES (1, 1, 1, 1.50, 3, '2026-10-02 10:00:00', 1, '1')",
             "INSERT INTO ocorrencias VALUES (1, 'Advertência', 'Recuperação sintética', '2026-10-03 12:00:00', '12:00:00', 1, '1', 1)",
@@ -248,5 +241,14 @@ final class RecoveryRehearsalTest
     private static function migrationDirectory(): string
     {
         return dirname(__DIR__, 2) . '/database/migrations';
+    }
+
+    /** @return list<string> */
+    private static function migrationVersions(): array
+    {
+        $files = glob(self::migrationDirectory() . '/*.sql') ?: [];
+        sort($files, SORT_STRING);
+
+        return array_values(array_map('basename', $files));
     }
 }

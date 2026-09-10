@@ -1,27 +1,140 @@
+name: sgi-test
+
+x-test-environment: &test-environment
+  SGI_APP_ENV: test
+  SGI_APP_DEBUG: "0"
+  SGI_DB_HOST: db
+  SGI_DB_PORT: "3306"
+  SGI_DB_NAME: ${SGI_TEST_DB_NAME:-sgi_test}
+  SGI_DB_USER: root
+  SGI_DB_PASSWORD: ${SGI_DB_PASSWORD:-sgi-test-only}
+  SGI_TEST_DB_NAME: ${SGI_TEST_DB_NAME:-sgi_test}
+  SGI_TEST_BASE_URL: http://sgi-web:8099
+  SGI_BASE_URL: http://sgi-web:8099/
+  SGI_BASE_PATH: ${SGI_BASE_PATH:-}
+  SGI_UPLOAD_DIR: /app/test-results/uploads
+  SGI_REGULAMENTOS_DIR: /app/test-results/uploads/regulamentos
+  SGI_FOTOS_DIR: /app/test-results/uploads/fotos
+  SGI_IMPORT_DIR: /app/test-results/imports
+  SGI_SESSION_DIR: /app/test-results/sessions
+  SGI_MYSQL_PATH: sgi-mysql
+  SGI_MYSQLDUMP_PATH: sgi-mysqldump
+
+x-php-test-service: &php-test-service
+  build:
+    context: .
+    dockerfile: Dockerfile.test
+    args:
+      PHP_VERSION: ${SGI_PHP_VERSION:-8.4}
+  image: sgi-test-php:${SGI_PHP_VERSION:-8.4}
+  working_dir: /app
+  environment: *test-environment
+  volumes:
+    - ./test-results:/app/test-results
+    - test_sessions:/app/test-results/sessions
+
+x-browser-test-service: &browser-test-service
+  build:
+    context: .
+    dockerfile: Dockerfile.browser
+  image: sgi-test-browser:1.62.1
+  working_dir: /app
+  environment:
+    <<: *test-environment
+    SGI_INDIVIDUAL_BROWSER: "1"
+  volumes:
+    - ./test-results:/app/test-results
+    - ./tests/browser/test-results:/app/tests/browser/test-results
+    - ./tests/browser/playwright-report:/app/tests/browser/playwright-report
+
 services:
-  mysql:
-    image: mysql:8.4
-    profiles: [mysql]
+  db:
+    image: ${SGI_DB_IMAGE:-mariadb:10.11}
     environment:
-      MYSQL_ROOT_PASSWORD: sgi-test-only
-      MYSQL_DATABASE: sgi_test
-    ports: ["127.0.0.1:3307:3306"]
-    tmpfs: [/var/lib/mysql]
+      MYSQL_ROOT_PASSWORD: ${SGI_DB_PASSWORD:-sgi-test-only}
+      MYSQL_DATABASE: ${SGI_TEST_DB_NAME:-sgi_test}
+      MARIADB_ROOT_PASSWORD: ${SGI_DB_PASSWORD:-sgi-test-only}
+      MARIADB_DATABASE: ${SGI_TEST_DB_NAME:-sgi_test}
+    tmpfs:
+      - /var/lib/mysql
     healthcheck:
-      test: [CMD, mysqladmin, ping, -h, localhost, -uroot, -psgi-test-only]
-      interval: 5s
+      test: ["CMD-SHELL", "if command -v mysqladmin >/dev/null 2>&1; then mysqladmin ping -h 127.0.0.1 -uroot -p\"$${MYSQL_ROOT_PASSWORD}\" --silent; else mariadb-admin ping -h 127.0.0.1 -uroot -p\"$${MYSQL_ROOT_PASSWORD}\" --silent; fi"]
+      interval: 3s
       timeout: 5s
-      retries: 20
-  mariadb:
-    image: mariadb:10.11
-    profiles: [mariadb]
+      retries: 30
+      start_period: 5s
+
+  app:
+    <<: *php-test-service
+    networks:
+      default:
+        aliases:
+          - sgi-web
+    depends_on:
+      db:
+        condition: service_healthy
+    expose:
+      - "8099"
+    command:
+      - php
+      - -d
+      - session.save_path=/app/test-results/sessions
+      - -d
+      - upload_tmp_dir=/app/test-results/upload-tmp
+      - -S
+      - 0.0.0.0:8099
+      - -t
+      - public
+      - public/index.php
+    healthcheck:
+      test: ["CMD-SHELL", "curl --fail --silent http://127.0.0.1:8099/api/v1/health >/dev/null"]
+      interval: 3s
+      timeout: 5s
+      retries: 30
+      start_period: 3s
+
+  quality:
+    <<: *php-test-service
     environment:
-      MARIADB_ROOT_PASSWORD: sgi-test-only
-      MARIADB_DATABASE: sgi_test
-    ports: ["127.0.0.1:3308:3306"]
-    tmpfs: [/var/lib/mysql]
-    healthcheck:
-      test: [CMD, healthcheck.sh, --connect, --innodb_initialized]
-      interval: 5s
-      timeout: 5s
-      retries: 20
+      SGI_APP_ENV: test
+      SGI_APP_DEBUG: "0"
+    command:
+      - sh
+      - -lc
+      - |
+        composer validate --no-check-publish
+        composer verify
+        npm run build
+        npm run check
+        npm test
+
+  integration:
+    <<: *php-test-service
+    environment:
+      <<: *test-environment
+      SGI_SESSION_DIR: ""
+    depends_on:
+      app:
+        condition: service_healthy
+    command:
+      - php
+      - -d
+      - session.save_path=/app/test-results/sessions
+      - tests/run_all.php
+
+  browser:
+    <<: *browser-test-service
+    depends_on:
+      app:
+        condition: service_healthy
+    command: ["npm", "--prefix", "tests/browser", "test", "--", "--grep-invert", "contrato visual do acesso"]
+
+  visual:
+    <<: *browser-test-service
+    depends_on:
+      app:
+        condition: service_healthy
+    command: ["npm", "--prefix", "tests/browser", "test", "--", "visual-contract.spec.cjs"]
+
+volumes:
+  test_sessions:

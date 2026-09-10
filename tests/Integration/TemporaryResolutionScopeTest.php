@@ -110,12 +110,17 @@ final class TemporaryResolutionScopeTest
                     ['id_equipe' => $teamA1, 'gols' => 4],
                     ['id_equipe' => $teamA2, 'gols' => 1],
                 ],
+                'pontos' => [
+                    ...self::offlinePoints($teamA1, (int) $editionA['atleta_ids'][0], 4, 'retry-point-a'),
+                    ...self::offlinePoints($teamA2, (int) $editionA['atleta_ids'][1], 1, 'retry-point-b'),
+                ],
             ], $mutation);
             $retrySnapshot = self::gameSnapshot($connection, $gameA);
             Assertions::assert(
                 'Retry do fallback ambíguo permanece disponível na fila',
                 ($retryAmbiguous['json']['success'] ?? false) === true
                 && ($retrySnapshot['scores'][$teamA1] ?? null) === 4,
+                json_encode(['response' => $retryAmbiguous, 'snapshot' => $retrySnapshot], JSON_UNESCAPED_UNICODE),
             );
 
             $syncName = 'T05 Sync ' . bin2hex(random_bytes(5));
@@ -227,5 +232,20 @@ final class TemporaryResolutionScopeTest
         $jogo->bind_param('i', $gameId);
         $jogo->execute();
         $jogo->close();
+    }
+
+    /** @return list<array<string, int|string>> */
+    private static function offlinePoints(int $teamId, int $athleteId, int $quantity, string $prefix): array
+    {
+        $points = [];
+        for ($index = 1; $index <= $quantity; $index++) {
+            $points[] = [
+                'id_equipe' => $teamId,
+                'usuarios_id_usuario' => $athleteId,
+                'chave_jogada' => $prefix . '-' . $index,
+                'status_artilheiro' => 'ativo',
+            ];
+        }
+        return $points;
     }
 }

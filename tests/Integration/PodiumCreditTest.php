@@ -47,10 +47,19 @@ final class PodiumCreditTest
 
         try {
             $gateway = new \App\Modules\Competicoes\Infrastructure\MysqliPartidaGateway($connection);
-            $result = $gateway->launch($gameId, 'MM:2:0:N', $modalityId, [
-                ['id_equipe' => $winner, 'gols' => 1],
-                ['id_equipe' => $runnerUp, 'gols' => 5],
-            ]);
+            $result = $gateway->launch(
+                $gameId,
+                'MM:2:0:N',
+                $modalityId,
+                [
+                    ['id_equipe' => $winner, 'gols' => 1],
+                    ['id_equipe' => $runnerUp, 'gols' => 5],
+                ],
+                array_merge(
+                    self::pointAdjustments($connection, $gameId, $winner, 1),
+                    self::pointAdjustments($connection, $gameId, $runnerUp, 5),
+                ),
+            );
             Assertions::assert('Retificação da final aceita para reconciliar o pódio', ($result['success'] ?? false) === true);
         } catch (\Throwable $exception) {
             Assertions::assert('Retificação da final aceita para reconciliar o pódio', false, $exception->getMessage() . ' @ ' . $exception->getFile() . ':' . $exception->getLine());
@@ -184,10 +193,19 @@ final class PodiumCreditTest
             $expectedAfter[$classId] = ($expectedAfter[$classId] ?? 0) - (int) $credit['pontos'];
         }
         $gateway = new \App\Modules\Competicoes\Infrastructure\MysqliPartidaGateway($connection);
-        $gateway->launch($semiId, null, $modalityId, [
-            ['id_equipe' => $winner, 'gols' => 0],
-            ['id_equipe' => $loser, 'gols' => 2],
-        ]);
+        $gateway->launch(
+            $semiId,
+            null,
+            $modalityId,
+            [
+                ['id_equipe' => $winner, 'gols' => 0],
+                ['id_equipe' => $loser, 'gols' => 2],
+            ],
+            array_merge(
+                self::pointAdjustments($connection, $semiId, $winner, 0),
+                self::pointAdjustments($connection, $semiId, $loser, 2),
+            ),
+        );
         $activeCredits = (int) $connection->query(
             'SELECT COUNT(*) FROM pontuacoes_podio WHERE id_interclasse = ' . $editionId
             . ' AND id_modalidade = ' . $modalityId . ' AND ativo = 1 AND posicao IN (1, 2, 3)',
@@ -218,10 +236,19 @@ final class PodiumCreditTest
             $position = $index + 1;
             $expectedFinal[$classId] = ($expectedFinal[$classId] ?? 0) + self::podiumValues($connection, $editionId)[$position];
         }
-        $gateway->launch($finalId, 'MM:2:0:N', $modalityId, [
-            ['id_equipe' => $finalTeams[0], 'gols' => 2],
-            ['id_equipe' => $finalTeams[1], 'gols' => 0],
-        ]);
+        $gateway->launch(
+            $finalId,
+            'MM:2:0:N',
+            $modalityId,
+            [
+                ['id_equipe' => $finalTeams[0], 'gols' => 2],
+                ['id_equipe' => $finalTeams[1], 'gols' => 0],
+            ],
+            array_merge(
+                self::pointAdjustments($connection, $finalId, $finalTeams[0], 2),
+                self::pointAdjustments($connection, $finalId, $finalTeams[1], 0),
+            ),
+        );
         Assertions::assert('Nova final concede o pódio sem duplicar créditos', self::classPoints($connection, array_merge($classes, $newClasses)) === $expectedFinal);
     }
 
@@ -265,10 +292,19 @@ final class PodiumCreditTest
         $update->close();
         $gateway = new \App\Modules\Competicoes\Infrastructure\MysqliPartidaGateway($connection);
         try {
-            $gateway->launch($finalId, 'MM:2:0:N', $modalityId, [
-                ['id_equipe' => $currentWinner, 'gols' => 0],
-                ['id_equipe' => $currentRunner, 'gols' => 2],
-            ]);
+            $gateway->launch(
+                $finalId,
+                'MM:2:0:N',
+                $modalityId,
+                [
+                    ['id_equipe' => $currentWinner, 'gols' => 0],
+                    ['id_equipe' => $currentRunner, 'gols' => 2],
+                ],
+                array_merge(
+                    self::pointAdjustments($connection, $finalId, $currentWinner, 0),
+                    self::pointAdjustments($connection, $finalId, $currentRunner, 2),
+                ),
+            );
         } finally {
             $restore = $connection->prepare('UPDATE interclasses SET ponto_1_lugar = ?, ponto_2_lugar = ?, ponto_3_lugar = ? WHERE id_interclasse = ?');
             $restore->bind_param('iiii', $originalPoints[1], $originalPoints[2], $originalPoints[3], $editionId);
@@ -305,20 +341,38 @@ final class PodiumCreditTest
         }
         $gateway = new \App\Modules\Competicoes\Infrastructure\MysqliPartidaGateway($connection);
         $before = self::classPoints($connection, array_map(fn (int $team): int => self::teamClass($connection, $team), $teams));
-        $gateway->launch($thirdId, 'POS:3:0:N', $modalityId, [
-            ['id_equipe' => $teams[0], 'gols' => 1],
-            ['id_equipe' => $teams[1], 'gols' => 0],
-        ]);
+        $gateway->launch(
+            $thirdId,
+            'POS:3:0:N',
+            $modalityId,
+            [
+                ['id_equipe' => $teams[0], 'gols' => 1],
+                ['id_equipe' => $teams[1], 'gols' => 0],
+            ],
+            array_merge(
+                self::pointAdjustments($connection, $thirdId, $teams[0], 1),
+                self::pointAdjustments($connection, $thirdId, $teams[1], 0),
+            ),
+        );
         $classFirst = self::teamClass($connection, $teams[0]);
         $classSecond = self::teamClass($connection, $teams[1]);
         $afterFirst = self::classPoints($connection, [$classFirst, $classSecond]);
         $expectedFirst = $before;
         $expectedFirst[$classFirst] = ($expectedFirst[$classFirst] ?? 0) + $points;
         Assertions::assert('Terceiro lugar concede somente o crédito da posição 3', $afterFirst === $expectedFirst);
-        $gateway->launch($thirdId, 'POS:3:0:N', $modalityId, [
-            ['id_equipe' => $teams[0], 'gols' => 0],
-            ['id_equipe' => $teams[1], 'gols' => 1],
-        ]);
+        $gateway->launch(
+            $thirdId,
+            'POS:3:0:N',
+            $modalityId,
+            [
+                ['id_equipe' => $teams[0], 'gols' => 0],
+                ['id_equipe' => $teams[1], 'gols' => 1],
+            ],
+            array_merge(
+                self::pointAdjustments($connection, $thirdId, $teams[0], 0),
+                self::pointAdjustments($connection, $thirdId, $teams[1], 1),
+            ),
+        );
         $expectedSecond = $afterFirst;
         $expectedSecond[$classFirst] -= $points;
         $expectedSecond[$classSecond] += $points;
@@ -364,6 +418,71 @@ final class PodiumCreditTest
         $afterScores->close();
         $sources = (int) $connection->query('SELECT COUNT(*) FROM pontuacoes_podio WHERE id_interclasse = ' . $editionId . ' AND id_modalidade = ' . $modalityId . ' AND posicao IN (1, 2)')->fetch_column();
         Assertions::assert('Retificação sem pódio conciliado falha sem escrita', $rejected && $after === $beforeScores && $sources === 2);
+    }
+
+    /** @return list<array<string, mixed>> */
+    private static function pointAdjustments(\mysqli $connection, int $gameId, int $teamId, int $targetScore): array
+    {
+        if ($targetScore < 0) {
+            throw new \InvalidArgumentException('O placar de teste não pode ser negativo.');
+        }
+        $repository = new \App\Modules\Competicoes\Infrastructure\MysqliPontoRepository($connection);
+        $activePoints = array_values(array_filter(
+            $repository->listarPontos($gameId, $teamId),
+            static fn (array $point): bool => ($point['status_artilheiro'] ?? '') === 'ativo'
+                && (int) ($point['conta_no_placar'] ?? 0) === 1
+                && (int) ($point['partidas_id_partida'] ?? 0) > 0,
+        ));
+        $currentScore = count($activePoints);
+        $match = $connection->prepare('SELECT resultado_partida FROM partidas WHERE jogos_id_jogo = ? AND equipes_id_equipe = ? LIMIT 1');
+        $match->bind_param('ii', $gameId, $teamId);
+        $match->execute();
+        $persistedScore = (int) $match->get_result()->fetch_column();
+        $match->close();
+        if ($persistedScore !== $currentScore) {
+            throw new \RuntimeException('O cenário de pódio iniciou com placar divergente do livro de jogadas.');
+        }
+        if ($currentScore > $targetScore) {
+            return array_map(
+                static fn (array $point): array => [
+                    'id_ponto' => (int) $point['id_artilheiro'],
+                    'id_equipe' => $teamId,
+                    'usuarios_id_usuario' => (int) $point['usuarios_id_usuario'],
+                    'chave_jogada' => (string) $point['chave_jogada'],
+                    'status_artilheiro' => 'anulado',
+                ],
+                array_slice($activePoints, 0, $currentScore - $targetScore),
+            );
+        }
+        if ($currentScore === $targetScore) {
+            return [];
+        }
+        $athletes = $repository->listarAtletas($gameId, $teamId);
+        if ($athletes === []) {
+            throw new \RuntimeException('O cenário de pódio não possui atleta elegível para conciliar o placar.');
+        }
+        $match = $connection->prepare('SELECT id_partida FROM partidas WHERE jogos_id_jogo = ? AND equipes_id_equipe = ? LIMIT 1');
+        $match->bind_param('ii', $gameId, $teamId);
+        $match->execute();
+        $matchId = (int) $match->get_result()->fetch_column();
+        $match->close();
+        if ($matchId <= 0) {
+            throw new \RuntimeException('O cenário de pódio não possui partida para conciliar o placar.');
+        }
+        $athleteId = (int) $athletes[0]['id_usuario'];
+        $points = [];
+        for ($index = $currentScore; $index < $targetScore; $index++) {
+            $points[] = [
+                'jogos_id_jogo' => $gameId,
+                'partidas_id_partida' => $matchId,
+                'equipes_id_equipe' => $teamId,
+                'usuarios_id_usuario' => $athleteId,
+                'chave_jogada' => 'podium-ledger-' . $gameId . '-' . $teamId . '-' . $index . '-' . bin2hex(random_bytes(4)),
+                'status_artilheiro' => 'ativo',
+                'conta_no_placar' => 1,
+            ];
+        }
+        return $points;
     }
 
     /** @return array{1:int,2:int,3:int} */

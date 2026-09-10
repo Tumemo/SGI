@@ -68,25 +68,6 @@ window.SGIPage.mount("resultados/ranking", function (pageConfig, pageScope) {
 
             dadosAPI = data;
 
-            const publicar = document.getElementById('btnPublicarRanking');
-            if (publicar && String(data[0].status_interclasse) === '1') {
-                publicar.classList.remove('d-none');
-                publicar.onclick = async () => {
-                    if (!window.confirm('Confirmar publicação do ranking desta edição na cerimônia de premiação?')) return;
-                    publicar.disabled = true;
-                    try {
-                        const r = await fetch(`/api/v1/edicoes?id=${idInterclasse}&acao=publicar_ranking`, { method: 'POST' });
-                        const body = await r.json();
-                        if (!r.ok || !body.success) throw new Error(body.message || 'Não foi possível publicar o ranking.');
-                        publicar.classList.add('d-none');
-                        exibirMensagem('Ranking publicado com sucesso.', 'success');
-                    } catch (error) {
-                        publicar.disabled = false;
-                        exibirMensagem(error.message, 'danger');
-                    }
-                };
-            }
-
             const catRes = await fetch(`/api/v1/categorias?id_interclasse=${idInterclasse}`);
             const catData = await catRes.json();
             categoriasUnicas = Array.isArray(catData) ? catData.map(c => c.nome_categoria) : [];

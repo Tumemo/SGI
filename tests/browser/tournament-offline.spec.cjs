@@ -114,6 +114,7 @@ async function criarChaveFixture(request) {
         });
     }
     equipes = equipes.slice(0, 8);
+    await garantirAtletas(request, idInterclasse, equipes);
 
     const jogos = [
         { tag: 'MM:8:0:N', a: equipes[0], b: equipes[1] },
@@ -182,6 +183,37 @@ async function criarChaveFixture(request) {
         ids,
         detalhes
     };
+}
+
+async function garantirAtletas(request, idInterclasse, equipes) {
+    for (let index = 0; index < equipes.length; index += 1) {
+        const equipe = equipes[index];
+        const membros = await jsonOrThrow(
+            await request.get(`api/v1/equipes?id_equipe=${Number(equipe.id_equipe)}`),
+            `membros da equipe ${equipe.id_equipe}`,
+        );
+        if (membros.some((membro) => Number(membro.id_usuario) > 0)) continue;
+        const alunos = await jsonOrThrow(
+            await request.get(`api/v1/usuarios?acao=listar_competidores&id_turma=${Number(equipe.turmas_id_turma)}&id_interclasse=${idInterclasse}`),
+            `alunos da equipe ${equipe.id_equipe}`,
+        );
+        let idUsuario = (alunos.competidores || []).find((aluno) => String(aluno.status_usuario || '1') === '1')?.id_usuario;
+        if (!Number(idUsuario)) {
+            const criado = await jsonOrThrow(await request.post('api/v1/usuarios?acao=criar_aluno', {
+                data: {
+                    nome_usuario: `Atleta E2E ${index + 1} ${Date.now()}`,
+                    matricula_usuario: `E2E${Date.now()}${index}`,
+                    data_nasc_usuario: '2010-01-01',
+                    genero_usuario: 'MASC',
+                    turmas_id_turma: Number(equipe.turmas_id_turma),
+                },
+            }), `criação do atleta ${equipe.id_equipe}`);
+            idUsuario = criado.id_usuario || criado.id;
+        }
+        await jsonOrThrow(await request.post('api/v1/equipes', {
+            data: { acao: 'adicionar_usuarios', id_equipe: Number(equipe.id_equipe), usuarios: [Number(idUsuario)] },
+        }), `vínculo do atleta ${equipe.id_equipe}`);
+    }
 }
 
 async function abrirJogo(page, idJogo, esperado, opcoes = {}) {
@@ -275,18 +307,12 @@ async function marcarPartida(page, pontos) {
 
     for (let i = 0; i < pontos; i += 1) {
         await page.locator('.btn-score-plus').first().click();
-        // Futsal abre o registro de artilheiro depois de cada gol. O fluxo
-        // deste teste valida o placar de vários jogos; o atleta pode ser
-        // lançado em outro teste, então fechamos o modal sem perder o gol.
         const modal = page.locator('#modalArtilheiro');
-        // O modal entra com a animação do Bootstrap; aguardar o estado visível
-        // evita tentar finalizar a partida enquanto o backdrop ainda captura
-        // os cliques.
-        await modal.waitFor({ state: 'visible', timeout: 3_000 }).catch(() => {});
-        if (await modal.isVisible().catch(() => false)) {
-            await modal.locator('[data-bs-dismiss="modal"]').first().click();
-            await expect(modal).toBeHidden();
-        }
+        await modal.waitFor({ state: 'visible', timeout: 5_000 });
+        await expect.poll(() => modal.locator('#selectAlunoArtilheiro option').count()).toBeGreaterThan(1);
+        await modal.locator('#selectAlunoArtilheiro').selectOption({ index: 1 });
+        await modal.locator('#btnSalvarArtilheiro').click();
+        await expect(modal).toBeHidden();
     }
 
     await page.locator('button.mc-action-btn--finish').click();

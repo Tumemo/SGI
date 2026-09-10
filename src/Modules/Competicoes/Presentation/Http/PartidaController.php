@@ -40,19 +40,33 @@ final class PartidaController
                 return Response::json(['success' => false, 'message' => 'Não foi possível consultar partidas.'], 500);
             }
         }
+        $data = $request->allInput();
+        $id = $data['id_partida'] ?? null;
+        $partidaPrevia = null;
+        if ((int) ($_SESSION['nivel'] ?? -1) === 2 && is_numeric($id) && (int) $id > 0) {
+            $partidaPrevia = $this->service->encontrar((int) $id);
+            if ($partidaPrevia !== null
+                && ($denied = $this->access->authorize((int) ($partidaPrevia['edition_id'] ?? 0))) !== null) {
+                return $denied;
+            }
+        }
         if (($denied = $this->access->authorize()) !== null) {
             return $denied;
         }
-        $data = $request->allInput();
-        $id = $data['id_partida'] ?? null;
         if ($request->method() === 'POST') {
+            if (array_key_exists('resultado_final', $data) || array_key_exists('resultado_partida', $data)) {
+                return Response::json([
+                    'success' => false,
+                    'message' => 'O placar só pode ser alterado por uma jogada vinculada a um atleta.',
+                ], 422);
+            }
             if (!is_numeric($id) || (int) $id <= 0) {
                 return Response::json(['success' => true, 'offline' => true, 'message' => 'Partida temporária sincronizada']);
             }
             if (!array_key_exists('resultado_final', $data)) {
                 return Response::json(['success' => false, 'message' => 'Dados incompletos.'], 400);
             }
-            $partida = $this->service->encontrar((int) $id);
+            $partida = $partidaPrevia ?? $this->service->encontrar((int) $id);
             if ($partida === null) {
                 return Response::json(['success' => false, 'message' => 'Partida não encontrada.'], 404);
             }
@@ -89,10 +103,16 @@ final class PartidaController
             }
         }
         if ($request->method() === 'PUT') {
+            if (array_key_exists('resultado_partida', $data)) {
+                return Response::json([
+                    'success' => false,
+                    'message' => 'O placar só pode ser alterado por uma jogada vinculada a um atleta.',
+                ], 422);
+            }
             if (!is_numeric($id) || (int) $id <= 0) {
                 return Response::json(['success' => true, 'offline' => true, 'message' => 'Partida temporária sincronizada']);
             }
-            $partida = $this->service->encontrar((int) $id);
+            $partida = $partidaPrevia ?? $this->service->encontrar((int) $id);
             if ($partida === null) {
                 return Response::json(['success' => false, 'message' => 'Partida não encontrada.'], 404);
             }

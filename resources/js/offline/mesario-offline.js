@@ -739,6 +739,7 @@
             b + 'jogos?id_jogo=' + j.id_jogo,
             b + 'partidas?id_jogo=' + j.id_jogo,
             b + 'artilheiros?id_jogo=' + j.id_jogo,
+            b + 'pontos?id_jogo=' + j.id_jogo,
             b + 'ocorrencias?id_jogo=' + j.id_jogo + '&data=' + encodeURIComponent(j.data_jogo || '')
         ];
         return fetchJson(b + 'jogos?id_jogo=' + j.id_jogo).then(function (lista) {
@@ -764,9 +765,17 @@
                 var vistas = {};
                 (Array.isArray(partidas) ? partidas : []).forEach(function (p) {
                     var t = parseInt(p.id_turma, 10);
-                    if (!t || vistas[t]) return;
-                    vistas[t] = true;
-                    urls.push(b + 'ocorrencias?acao=listar_atletas&id_jogo=' + j.id_jogo + '&id_turma=' + t);
+                    var equipeId = parseInt(p.equipes_id_equipe, 10);
+                    if (t && !vistas[t]) {
+                        vistas[t] = true;
+                        urls.push(b + 'ocorrencias?acao=listar_atletas&id_jogo=' + j.id_jogo + '&id_turma=' + t);
+                    }
+                    // A mesma turma pode ter mais de uma equipe na modalidade.
+                    // O seletor de pontos precisa do elenco da equipe exata, não
+                    // do primeiro registro encontrado para aquela turma.
+                    if (equipeId) {
+                        urls.push(b + 'pontos?acao=atletas&id_jogo=' + j.id_jogo + '&id_equipe=' + equipeId);
+                    }
                 });
                 (Array.isArray(ocorrencias) ? ocorrencias : []).forEach(function (o) {
                     if (o && o.id_ocorrencia) {
@@ -793,6 +802,15 @@
                 }
             } catch (erro) {
                 if (erro && erro.sgiPreloadTipo) throw erro;
+            }
+            // O interceptor HTTP também captura as respostas, mas o preload
+            // precisa garantir explicitamente o preenchimento das stores
+            // estruturadas. Isso é essencial para o elenco de cada equipe,
+            // inclusive quando a mesma matrícula aparece em equipes distintas.
+            if (window.SGIDataLayer && typeof window.SGIDataLayer.capture === 'function') {
+                return Promise.resolve(window.SGIDataLayer.capture(url, texto)).catch(function () {}).then(function () {
+                    return texto;
+                });
             }
             return texto;
         });

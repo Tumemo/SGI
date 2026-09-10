@@ -230,6 +230,27 @@ final class MysqliChaveamentoRepository
         $stP->execute();
         $stP->close();
     }
+
+    /** @param list<int> $keepTeams */
+    public static function desvincularHistoricoDasPartidas(\mysqli $conn, int $gameId, array $keepTeams = []): void
+    {
+        $sql = 'UPDATE artilheiros a
+                INNER JOIN partidas p ON p.id_partida = a.partidas_id_partida
+                SET a.partidas_id_partida = NULL
+                WHERE p.jogos_id_jogo = ?';
+        $types = 'i';
+        $params = [$gameId];
+        if ($keepTeams !== []) {
+            $sql .= ' AND p.equipes_id_equipe NOT IN (' . implode(',', array_fill(0, count($keepTeams), '?')) . ')';
+            $types .= str_repeat('i', count($keepTeams));
+            $params = array_merge($params, $keepTeams);
+        }
+        $statement = $conn->prepare($sql);
+        $statement->bind_param($types, ...$params);
+        $statement->execute();
+        $statement->close();
+    }
+
     /**
      * Limpa todos os jogos MM nas fases posteriores à fase informada e reprocessa o avanço
      * a partir dos jogos concluídos daquela fase em diante. Usado quando o vencedor de um
@@ -249,6 +270,7 @@ final class MysqliChaveamentoRepository
             }
             if ($meta['largura'] < $larguraInicial) {
                 $jogoId = (int) $j['id_jogo'];
+                self::desvincularHistoricoDasPartidas($conn, $jogoId);
                 $stD = $conn->prepare("DELETE FROM partidas WHERE jogos_id_jogo = ?");
                 $stD->bind_param('i', $jogoId);
                 $stD->execute();
@@ -266,6 +288,7 @@ final class MysqliChaveamentoRepository
         $stPOS->close();
         foreach ($posGames as $pg) {
             $posGameId = (int) $pg['id_jogo'];
+            self::desvincularHistoricoDasPartidas($conn, $posGameId);
             $stDP = $conn->prepare("DELETE FROM partidas WHERE jogos_id_jogo = ?");
             $stDP->bind_param('i', $posGameId);
             $stDP->execute();
@@ -378,6 +401,7 @@ final class MysqliChaveamentoRepository
         }
         $idPai = (int) $existente['id_jogo'];
         $stClean = $conn->prepare("DELETE FROM partidas WHERE jogos_id_jogo = ? AND equipes_id_equipe NOT IN (?, ?)");
+        self::desvincularHistoricoDasPartidas($conn, $idPai, [$w1, $w2]);
         $stClean->bind_param('iii', $idPai, $w1, $w2);
         $stClean->execute();
         $stClean->close();
@@ -568,7 +592,7 @@ final class MysqliChaveamentoRepository
      */
     public static function aplicarReservaAgenda(\mysqli $conn, int $idModalidade, string $tag, int $idJogo): void
     {
-        $statement = $conn->prepare('SELECT id_reserva, data_reserva, inicio_reserva, termino_reserva, id_local FROM agenda_reservas WHERE id_modalidade = ? AND chave_tag = ? AND data_reserva IS NOT NULL AND inicio_reserva IS NOT NULL AND termino_reserva IS NOT NULL AND id_local IS NOT NULL LIMIT 1');
+        $statement = $conn->prepare('SELECT ar.id_reserva, ar.data_reserva, ar.inicio_reserva, ar.termino_reserva, ar.id_local FROM agenda_reservas ar INNER JOIN modalidades m ON m.id_modalidade = ar.id_modalidade AND m.interclasses_id_interclasse = ar.id_interclasse WHERE ar.id_modalidade = ? AND ar.chave_tag = ? AND ar.data_reserva IS NOT NULL AND ar.inicio_reserva IS NOT NULL AND ar.termino_reserva IS NOT NULL AND ar.id_local IS NOT NULL LIMIT 1');
         if ($statement === false) {
             return;
         }

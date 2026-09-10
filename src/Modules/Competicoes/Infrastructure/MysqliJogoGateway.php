@@ -45,7 +45,7 @@ final class MysqliJogoGateway
                        locais.nome_local, categorias.nome_categoria,
                        GROUP_CONCAT(DISTINCT COALESCE(e.nome_equipe, t.nome_turma)
                            ORDER BY p.id_partida SEPARATOR ' vs ') AS equipes_nomes,
-                       art_top.nome_usuario AS artilheiro_nome
+                       MAX(art_top.nome_usuario) AS artilheiro_nome
                 FROM jogos
                 INNER JOIN modalidades ON modalidades.id_modalidade = jogos.modalidades_id_modalidade
                 LEFT JOIN tipos_modalidades ON tipos_modalidades.id_tipo_modalidade = modalidades.tipos_modalidades_id_tipo_modalidade
@@ -56,10 +56,11 @@ final class MysqliJogoGateway
                 LEFT JOIN turmas t ON t.id_turma = e.turmas_id_turma
                 LEFT JOIN (
                     SELECT a.jogos_id_jogo, u.nome_usuario,
-                           ROW_NUMBER() OVER (PARTITION BY a.jogos_id_jogo
+                    ROW_NUMBER() OVER (PARTITION BY a.jogos_id_jogo
                                ORDER BY COUNT(*) DESC, u.nome_usuario ASC) AS rn
                     FROM artilheiros a
                     INNER JOIN usuarios u ON u.id_usuario = a.usuarios_id_usuario
+                    WHERE a.status_artilheiro = 'ativo' AND a.conta_no_placar = 1
                     GROUP BY a.jogos_id_jogo, a.usuarios_id_usuario, u.nome_usuario
                 ) art_top ON art_top.jogos_id_jogo = jogos.id_jogo AND art_top.rn = 1
                 WHERE 1=1" . $filter['sql'] . $operational . ' GROUP BY jogos.id_jogo ORDER BY jogos.data_jogo ASC, jogos.inicio_jogo ASC';
@@ -215,7 +216,9 @@ final class MysqliJogoGateway
         $statement = $this->prepare("SELECT nome_jogo FROM jogos
             WHERE data_jogo = ? AND locais_id_local = ?
               AND status_jogo IN ('Agendado', 'Iniciado', 'Pausado')
-              AND id_jogo <> ? AND ? < termino_jogo AND ? > inicio_jogo
+              AND id_jogo <> ?
+              AND ? < ADDTIME(termino_jogo, '00:10:00')
+              AND ADDTIME(?, '00:10:00') > inicio_jogo
             LIMIT 1");
         $statement->bind_param('siiss', $date, $localId, $currentId, $start, $end);
         $statement->execute();

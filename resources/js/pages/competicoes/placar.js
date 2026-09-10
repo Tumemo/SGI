@@ -53,6 +53,7 @@ window.SGIPage.mount("competicoes/placar", function (pageConfig, pageScope) {
 
     let estadoJogo = null;
     let partidasLista = [];
+    let pontosLista = [];
     let timerId = null;
     let tempoRestante = 0;
     let duracaoJogo = 20 * 60;
@@ -772,7 +773,19 @@ window.SGIPage.mount("competicoes/placar", function (pageConfig, pageScope) {
                 equipes_nomes: estadoJogo.equipes_nomes || null,
                 tipos_modalidades_id_tipo_modalidade: estadoJogo.tipos_modalidades_id_tipo_modalidade || null
             } : null,
-            resultados: resultados
+            resultados: resultados,
+            // Jogos derivados não podem enviar pontos separados antes de o
+            // servidor materializar o jogo. O ledger local completo viaja
+            // junto da finalização, incluindo eventos já anulados.
+            pontos: Number(idJogo) < 0 ? pontosLista.map(function (ponto) {
+                return {
+                    id_equipe: Number(ponto.equipes_id_equipe),
+                    usuarios_id_usuario: Number(ponto.usuarios_id_usuario),
+                    chave_jogada: ponto.chave_jogada,
+                    status_artilheiro: ponto.status_artilheiro || 'ativo',
+                    conta_no_placar: ponto.conta_no_placar == null ? 1 : Number(ponto.conta_no_placar)
+                };
+            }) : []
         };
 
         try {
@@ -856,6 +869,8 @@ window.SGIPage.mount("competicoes/placar", function (pageConfig, pageScope) {
             partidasLista = todasPartidas.filter(function(p) {
                 return String(p.jogos_id_jogo) === String(idJogo);
             });
+            pontosLista = await DL.read('pontos').catch(function() { return []; });
+            pontosLista = (pontosLista || []).filter(function(p) { return String(p.jogos_id_jogo) === String(idJogo); });
 
             if ((!partidasLista || partidasLista.length === 0) && Array.isArray(row.equipes) && row.equipes.length > 0) {
                 partidasLista = row.equipes.map(function(eq, idx) {
@@ -883,6 +898,7 @@ window.SGIPage.mount("competicoes/placar", function (pageConfig, pageScope) {
             document.getElementById('placar-loading').classList.add('d-none');
             document.getElementById('placar-conteudo').classList.remove('d-none');
             renderTudo();
+            if (!ehIndividual) iniciarArtilheiro(ciclo);
             return true;
         } catch (e) {
             return false;
@@ -992,7 +1008,12 @@ window.SGIPage.mount("competicoes/placar", function (pageConfig, pageScope) {
 
         partidasLista.forEach(function(p, idx) {
             var gols = Math.max(0, parseInt(p.resultado_partida, 10) || 0);
-            var btnMinus = readonly
+            var possuiPontoAtivo = pontosLista.some(function (ponto) {
+                return String(ponto.equipes_id_equipe) === String(p.equipes_id_equipe)
+                    && String(ponto.status_artilheiro || 'ativo') === 'ativo'
+                    && Number(ponto.conta_no_placar == null ? 1 : ponto.conta_no_placar) === 1;
+            });
+            var btnMinus = readonly || !possuiPontoAtivo
                 ? '<button type="button" class="btn-score btn-score-minus" disabled><i class="bi bi-dash-lg"></i></button>'
                 : '<button type="button" class="btn-score btn-score-minus" data-idx="' + idx + '"><i class="bi bi-dash-lg"></i></button>';
             var btnPlus = readonly
@@ -1019,12 +1040,15 @@ window.SGIPage.mount("competicoes/placar", function (pageConfig, pageScope) {
         // Bind events
         document.querySelectorAll('.btn-score-minus').forEach(function(btn) {
             pageScope.listen(btn, 'click', function() {
-                if (!tempoEsgotado) ajustarGols(parseInt(btn.getAttribute('data-idx'), 10), -1);
+                if (!tempoEsgotado) anularUltimoPonto(parseInt(btn.getAttribute('data-idx'), 10));
             });
         });
         document.querySelectorAll('.btn-score-plus').forEach(function(btn) {
             pageScope.listen(btn, 'click', function() {
-                if (!tempoEsgotado) ajustarGols(parseInt(btn.getAttribute('data-idx'), 10), 1);
+                if (!tempoEsgotado) {
+                    var partida = partidasLista[parseInt(btn.getAttribute('data-idx'), 10)];
+                    if (partida) abrirModalArtilheiro(partida.equipes_id_equipe);
+                }
             });
         });
 
@@ -1052,24 +1076,8 @@ window.SGIPage.mount("competicoes/placar", function (pageConfig, pageScope) {
         var p = partidasLista[idx];
         var st = estadoJogo.status_jogo;
         if (!p || (st !== 'Iniciado' && st !== 'Pausado') || tempoEsgotado) return;
-        var g = Math.max(0, (parseInt(p.resultado_partida, 10) || 0) + delta);
-        p.resultado_partida = g;
-        var el = document.querySelector('[data-gols="' + idx + '"]');
-        if (el) {
-            el.textContent = String(g).padStart(2, '0');
-            el.classList.remove('score-animate');
-            void el.offsetWidth;
-            el.classList.add('score-animate');
-        }
-        // Partidas derivadas usam IDs textuais (mm_local_*). Preservar o
-        // identificador original evita transformá-lo em NaN e perder a
-        // alteração no IndexedDB.
-        agendarSalvarPartida(p.id_partida, g);
-
-        if (delta > 0 && ehFutsal()) {
-            var idEquipe = parseInt(p.equipes_id_equipe, 10);
-            abrirModalArtilheiro(idEquipe);
-        }
+        if (delta > 0) abrirModalArtilheiro(p.equipes_id_equipe);
+        else anularUltimoPonto(idx);
     }
 
     function ehFutsal() {
@@ -1350,6 +1358,12 @@ window.SGIPage.mount("competicoes/placar", function (pageConfig, pageScope) {
             partidasLista = await fetchJson(API + 'partidas?id_jogo=' + idJogo);
             if (!placarContinuaAtivo(ciclo)) return;
             if (!Array.isArray(partidasLista)) partidasLista = [];
+            try {
+                var pontosResposta = await fetchJson(API + 'pontos?id_jogo=' + idJogo);
+                pontosLista = pontosResposta && Array.isArray(pontosResposta.pontos) ? pontosResposta.pontos : [];
+            } catch (_) {
+                pontosLista = [];
+            }
             ehIndividual = jogoEhIndividual(estadoJogo);
             await enriquecerPartidasComTurmas();
             if (!placarContinuaAtivo(ciclo)) return;
@@ -1400,7 +1414,7 @@ window.SGIPage.mount("competicoes/placar", function (pageConfig, pageScope) {
             cont.classList.remove('d-none');
             renderTudo();
 
-            if (ehFutsal()) {
+            if (!ehIndividual) {
                 iniciarArtilheiro(ciclo);
             }
             iniciarOcorrencias(ciclo);
@@ -1435,11 +1449,15 @@ window.SGIPage.mount("competicoes/placar", function (pageConfig, pageScope) {
         var vistas = {};
         partidasLista.forEach(function (p) {
             var idTurma = parseInt(p.id_turma, 10);
-            if (!idTurma || vistas[idTurma]) return;
-            vistas[idTurma] = true;
-            urls.push(API + 'ocorrencias?acao=listar_atletas&id_jogo=' + idJogo + '&id_turma=' + idTurma);
+            var idEquipe = parseInt(p.equipes_id_equipe, 10);
+            if (idTurma && !vistas[idTurma]) {
+                vistas[idTurma] = true;
+                urls.push(API + 'ocorrencias?acao=listar_atletas&id_jogo=' + idJogo + '&id_turma=' + idTurma);
+            }
+            if (idEquipe) urls.push(API + 'pontos?acao=atletas&id_jogo=' + idJogo + '&id_equipe=' + idEquipe);
         });
         urls.push(API + 'artilheiros?id_jogo=' + idJogo);
+        urls.push(API + 'pontos?id_jogo=' + idJogo);
         urls.push(API + 'ocorrencias?id_jogo=' + idJogo + '&data=' + (estadoJogo.data_jogo || ''));
         urls.forEach(function (u) {
             fetch(u).then(function (r) { return r.text(); }).catch(function () { /* offline pre-cache é best-effort */ });
@@ -1798,7 +1816,7 @@ window.SGIPage.mount("competicoes/placar", function (pageConfig, pageScope) {
             var data = await fetchJson(API + 'artilheiros?id_jogo=' + idJogo);
             if (!placarContinuaAtivo(cicloLocal) || !cards.isConnected || document.getElementById('artilheiro-cards') !== cards) return;
             if (!Array.isArray(data) || data.length === 0) {
-                cards.innerHTML = '<div class="mc-artilheiro-empty"><i class="bi bi-trophy"></i><p>Nenhum gol registrado ainda.</p></div>';
+                cards.innerHTML = '<div class="mc-artilheiro-empty"><i class="bi bi-trophy"></i><p>Nenhuma ação registrada ainda.</p></div>';
                 return;
             }
             var html = '';
@@ -1806,12 +1824,16 @@ window.SGIPage.mount("competicoes/placar", function (pageConfig, pageScope) {
                 var nome = esc(a.nome_usuario || 'Desconhecido');
                 var turma = esc(a.nome_fantasia_turma || a.nome_turma || '');
                 var gols = parseInt(a.total_gols, 10) || 0;
-                var icon = gols >= 3 ? 'bi-star-fill text-warning' : gols >= 2 ? 'bi-fire text-danger' : 'bi-circle-fill text-success';
+                var acoes = parseInt(a.total_acoes, 10) || 0;
+                var anulados = parseInt(a.total_anulados, 10) || 0;
+                var icon = gols >= 3 ? 'bi-star-fill text-warning' : gols >= 2 ? 'bi-fire text-danger' : gols > 0 ? 'bi-circle-fill text-success' : 'bi-dash-circle text-secondary';
+                var resumo = acoes + ' ação' + (acoes !== 1 ? 'ões' : '');
+                if (anulados > 0) resumo += ' · ' + anulados + ' anulada' + (anulados !== 1 ? 's' : '');
                 html += '<div class="mc-artilheiro-card">' +
                     '<div class="mc-artilheiro-card-icon"><i class="bi ' + icon + '"></i></div>' +
                     '<div class="mc-artilheiro-card-info">' +
                     '<div class="mc-artilheiro-card-nome">' + nome + '</div>' +
-                    '<div class="mc-artilheiro-card-turma">' + turma + '</div>' +
+                    '<div class="mc-artilheiro-card-turma">' + turma + ' · ' + esc(resumo) + '</div>' +
                     '</div>' +
                     '<div class="mc-artilheiro-card-gols">' + gols + ' gol' + (gols > 1 ? 's' : '') + '</div>' +
                     '</div>';
@@ -1846,8 +1868,19 @@ window.SGIPage.mount("competicoes/placar", function (pageConfig, pageScope) {
         try {
             var p = partidasLista.find(function(p) { return p.equipes_id_equipe == idEquipe; });
             if (!p) throw new Error('Equipe não encontrada');
-            var idTurma = p.id_turma;
-            var data = await fetchJson(API + 'ocorrencias?acao=listar_atletas&id_jogo=' + idJogo + '&id_turma=' + idTurma);
+            var data;
+            if (Number(idJogo) < 0 && window.SGIDataLayer && typeof window.SGIDataLayer.read === 'function') {
+                var locais = await window.SGIDataLayer.read('atletas');
+                data = {
+                    success: true,
+                    atletas: (locais || []).filter(function (a) {
+                        return String(a.equipes_id_equipe || '') === String(idEquipe)
+                            && Number(a.id_usuario || 0) > 0;
+                    })
+                };
+            } else {
+                data = await fetchJson(API + 'pontos?acao=atletas&id_jogo=' + idJogo + '&id_equipe=' + idEquipe);
+            }
             if (!placarContinuaAtivo(cicloLocal) || !select.isConnected || document.getElementById('selectAlunoArtilheiro') !== select) return;
             var alunos = data.success && Array.isArray(data.atletas) ? data.atletas : [];
             select.innerHTML = '<option value="">Selecione o(a) jogador(a)</option>';
@@ -1883,10 +1916,10 @@ window.SGIPage.mount("competicoes/placar", function (pageConfig, pageScope) {
         modal.show();
     }
 
-    async function salvarArtilheiro(e) {
+    async function salvarPonto(e) {
         e.preventDefault();
         if (jogoEncerrado()) {
-            alert('O jogo já foi encerrado. Não é possível salvar artilharia.');
+            alert('O jogo já foi encerrado. Não é possível registrar ponto.');
             return;
         }
         var btn = document.getElementById('btnSalvarArtilheiro');
@@ -1895,7 +1928,7 @@ window.SGIPage.mount("competicoes/placar", function (pageConfig, pageScope) {
 
         var idAluno = document.getElementById('selectAlunoArtilheiro').value;
         if (!idAluno) {
-            msg.innerHTML = '<span class="text-danger">Selecione o(a) jogador(a).</span>';
+            msg.innerHTML = '<span class="text-danger">Selecione o aluno responsável pela jogada para confirmar o ponto.</span>';
             return;
         }
 
@@ -1903,41 +1936,125 @@ window.SGIPage.mount("competicoes/placar", function (pageConfig, pageScope) {
         btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Salvando...';
 
         try {
-            var resp = await fetch(API + 'artilheiros', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    usuarios_id_usuario: parseInt(idAluno, 10),
-                    jogos_id_jogo: idJogo,
-                    // Em jogos derivados offline, o ID ainda é negativo. A tag
-                    // e a modalidade permitem resolver o jogo definitivo na
-                    // sincronização, depois que o resultado materializá-lo.
-                    nome_jogo: (estadoJogo && estadoJogo.nome_jogo) || null,
-                    id_modalidade: (estadoJogo && (estadoJogo.modalidades_id_modalidade || estadoJogo.id_modalidade)) || null,
-                    num_gol: 1
-                })
-            });
-            var result = await resp.json();
+            var idEquipe = parseInt(document.getElementById('selectEquipeArtilheiro').value, 10);
+            var partida = partidasLista.filter(function (p) { return Number(p.equipes_id_equipe) === idEquipe; })[0];
+            if (!partida) throw new Error('Selecione uma equipe válida.');
+            var alunoSelect = document.getElementById('selectAlunoArtilheiro');
+            var chave = 'ponto-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2);
+            var pontoLocal = {
+                id_ponto: 'local-' + chave,
+                jogos_id_jogo: idJogo,
+                id_partida: partida.id_partida,
+                partidas_id_partida: partida.id_partida,
+                equipes_id_equipe: idEquipe,
+                usuarios_id_usuario: parseInt(idAluno, 10),
+                chave_jogada: chave,
+                num_gol: 1,
+                conta_no_placar: 1,
+                status_artilheiro: 'ativo',
+                nome_usuario: alunoSelect.selectedOptions[0] ? alunoSelect.selectedOptions[0].text : ''
+            };
+            var result;
+            if (Number(idJogo) < 0) {
+                result = { success: true, offline: true };
+            } else {
+                var resp = await fetch(API + 'pontos', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        usuarios_id_usuario: parseInt(idAluno, 10),
+                        jogos_id_jogo: idJogo,
+                        id_partida: partida.id_partida,
+                        equipes_id_equipe: idEquipe,
+                        chave_jogada: chave
+                    })
+                });
+                result = await resp.json();
+            }
             if (result.success) {
-                msg.innerHTML = '<span class="text-success">Gol registrado!</span>';
+                pontoLocal = Object.assign({}, pontoLocal, result.ponto || {}, {
+                    id_ponto: result.id_ponto || (result.mutation_id ? 'temp_' + result.mutation_id : pontoLocal.id_ponto),
+                    _pendente: result.offline === true
+                });
+                pontosLista.push(pontoLocal);
+                partida.resultado_partida = result.placar == null
+                    ? Math.max(0, parseInt(partida.resultado_partida, 10) || 0) + 1
+                    : Number(result.placar);
+                if (Number(idJogo) < 0 && window.SGIDataLayer && typeof window.SGIDataLayer.upsert === 'function') {
+                    await Promise.all([
+                        window.SGIDataLayer.upsert('pontos', chave, pontoLocal),
+                        window.SGIDataLayer.upsert('partidas', partida.id_partida, partida)
+                    ]);
+                }
+                msg.innerHTML = '<span class="text-success">Ponto registrado com o atleta responsável!</span>';
+                renderTudo();
                 carregarArtilheiros();
                 setTimeout(function() {
                     btn.disabled = false;
-                    btn.innerHTML = '<i class="bi bi-check-lg me-1"></i>Registrar Gol';
+                    btn.innerHTML = '<i class="bi bi-check-lg me-1"></i>Registrar ponto';
                     var m = bootstrap.Modal.getInstance(document.getElementById('modalArtilheiro'));
                     if (m) m.hide();
                 }, 600);
             } else {
                 msg.innerHTML = '<span class="text-danger">' + (result.message || 'Erro ao registrar.') + '</span>';
                 btn.disabled = false;
-                btn.innerHTML = '<i class="bi bi-check-lg me-1"></i>Registrar Gol';
+                btn.innerHTML = '<i class="bi bi-check-lg me-1"></i>Registrar ponto';
             }
         } catch (err) {
             msg.innerHTML = '<span class="text-danger">Erro de conexão.</span>';
             btn.disabled = false;
-            btn.innerHTML = '<i class="bi bi-check-lg me-1"></i>Registrar Gol';
+                btn.innerHTML = '<i class="bi bi-check-lg me-1"></i>Registrar ponto';
         }
     }
+
+    async function anularUltimoPonto(idx) {
+        if (jogoEncerrado()) return;
+        var partida = partidasLista[idx];
+        if (!partida) return;
+        var pontos = pontosLista.filter(function (ponto) {
+            return String(ponto.equipes_id_equipe) === String(partida.equipes_id_equipe)
+                && String(ponto.status_artilheiro || 'ativo') === 'ativo'
+                && Number(ponto.conta_no_placar == null ? 1 : ponto.conta_no_placar) === 1;
+        });
+        var ponto = pontos[pontos.length - 1];
+        if (!ponto) {
+            alert('Não há ponto vinculado a um atleta para anular.');
+            return;
+        }
+        try {
+            if (Number(idJogo) < 0) {
+                ponto.status_artilheiro = 'anulado';
+                ponto.conta_no_placar = 0;
+                partida.resultado_partida = Math.max(0, (parseInt(partida.resultado_partida, 10) || 0) - 1);
+                if (window.SGIDataLayer && typeof window.SGIDataLayer.upsert === 'function') {
+                    await Promise.all([
+                        window.SGIDataLayer.upsert('pontos', ponto.chave_jogada || ponto.id_ponto, ponto),
+                        window.SGIDataLayer.upsert('partidas', partida.id_partida, partida)
+                    ]);
+                }
+            } else {
+                var resp = await fetch(API + 'pontos', {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ id_ponto: ponto.id_ponto })
+                });
+                var resposta = await resp.json();
+                if (!resp.ok || resposta.success === false) throw new Error(resposta.message || 'Não foi possível anular o ponto.');
+                ponto = Object.assign({}, ponto, resposta.ponto || {}, { status_artilheiro: 'anulado', conta_no_placar: 0 });
+                pontosLista[pontosLista.indexOf(pontos[pontos.length - 1])] = ponto;
+                partida.resultado_partida = resposta.placar == null
+                    ? Math.max(0, (parseInt(partida.resultado_partida, 10) || 0) - 1)
+                    : Number(resposta.placar);
+            }
+            renderTudo();
+            carregarArtilheiros();
+        } catch (error) {
+            alert(error.message || 'Não foi possível anular o ponto.');
+        }
+    }
+
+    // Compatibilidade para módulos legados que ainda chamam o nome antigo.
+    var salvarArtilheiro = salvarPonto;
 
     function mostrarAlertaSegundoAmarelo(nomeAluno) {
         var container = document.getElementById('alerta-segundo-amarelo');
@@ -2005,5 +2122,5 @@ window.SGIPage.mount("competicoes/placar", function (pageConfig, pageScope) {
 
     window.SGIPage.ready( ativarTelaPlacar);
 
-return {obterIdJogoAtual, paginaOrigem, definirLinkVoltar, formatNomeJogo, jogoEhIndividual, nomeEquipe, enriquecerPartidasComTurmas, esc, fetchJson, pararTimer, atualizarDisplayTimer, tocarAlertaSonoro, bloquearPontuacao, mostrarBotoesTempoExtra, adicionarTempoExtra, iniciarTimerDisplay, togglePause, mudarDuracao, agendarSalvarPartida, salvarPartida, persistirJogoLocal, jogoEncerrado, iniciarJogoServidor, finalizarJogo, aplicarFinalizacaoUI, finalizarLocalmente, placarContinuaAtivo, carregarJogoLocalTemporario, renderTudo, ajustarGols, ehFutsal, carregarIndDados, renderIndividual, salvarIndRanking, carregarDados, iniciarOcorrencias, precarregarDadosOffline, carregarTurmasOcorrencia, carregarAlunosOcorrencia, limparDescricaoOcorrencia, carregarOcorrencias, abrirModalOcorrencia, editarOcorrencia, excluirOcorrencia, salvarOcorrencia, iniciarArtilheiro, acompanharSincronizacaoPlacar, carregarArtilheiros, carregarEquipesArtilheiro, carregarAlunosArtilheiro, abrirModalArtilheiro, salvarArtilheiro, mostrarAlertaSegundoAmarelo, prepararFechamentoAcessivelModais, ativarTelaPlacar};
+return {obterIdJogoAtual, paginaOrigem, definirLinkVoltar, formatNomeJogo, jogoEhIndividual, nomeEquipe, enriquecerPartidasComTurmas, esc, fetchJson, pararTimer, atualizarDisplayTimer, tocarAlertaSonoro, bloquearPontuacao, mostrarBotoesTempoExtra, adicionarTempoExtra, iniciarTimerDisplay, togglePause, mudarDuracao, agendarSalvarPartida, salvarPartida, persistirJogoLocal, jogoEncerrado, iniciarJogoServidor, finalizarJogo, aplicarFinalizacaoUI, finalizarLocalmente, placarContinuaAtivo, carregarJogoLocalTemporario, renderTudo, ajustarGols, ehFutsal, carregarIndDados, renderIndividual, salvarIndRanking, carregarDados, iniciarOcorrencias, precarregarDadosOffline, carregarTurmasOcorrencia, carregarAlunosOcorrencia, limparDescricaoOcorrencia, carregarOcorrencias, abrirModalOcorrencia, editarOcorrencia, excluirOcorrencia, salvarOcorrencia, iniciarArtilheiro, acompanharSincronizacaoPlacar, carregarArtilheiros, carregarEquipesArtilheiro, carregarAlunosArtilheiro, abrirModalArtilheiro, salvarPonto, salvarArtilheiro, anularUltimoPonto, mostrarAlertaSegundoAmarelo, prepararFechamentoAcessivelModais, ativarTelaPlacar};
 });

@@ -616,13 +616,16 @@ window.SGIPage.mount("eventos/configurar-agenda", function (pageConfig, pageScop
 
         const sel = document.getElementById('edit-jogo-local');
         const autoLoc = document.getElementById('auto-local');
+        const seqLoc = document.getElementById('seq-local');
 
         if (sel) sel.innerHTML = '<option value="">A definir</option>';
         if (autoLoc) autoLoc.innerHTML = '';
+        if (seqLoc) seqLoc.innerHTML = '';
 
         if (locaisLista.length === 0) {
             if (sel) sel.innerHTML = '<option value="">Nenhum local disponível</option>';
             if (autoLoc) autoLoc.innerHTML = '<option value="">Nenhum local disponível</option>';
+            if (seqLoc) seqLoc.innerHTML = '<option value="">Nenhum local disponível</option>';
             return;
         }
 
@@ -630,6 +633,7 @@ window.SGIPage.mount("eventos/configurar-agenda", function (pageConfig, pageScop
             const optionHtml = `<option value="${loc.id_local}">${escapeHtml(loc.nome_local || 'Local')}</option>`;
             if (sel) sel.innerHTML += optionHtml;
             if (autoLoc) autoLoc.innerHTML += optionHtml;
+            if (seqLoc) seqLoc.innerHTML += optionHtml;
         });
     }
 
@@ -811,110 +815,162 @@ window.SGIPage.mount("eventos/configurar-agenda", function (pageConfig, pageScop
             }
         });
 
-        /* ── AGENDAMENTO EM BLOCOS ── */
-        let blocoAtual = null;
+        /* ── AGENDAMENTO AUTOMÁTICO EM SESSÕES ── */
+        let agendaSequencialAtual = null;
+        let diasSequenciaisAdicionados = [];
 
-        function preencherJogosBloco() {
-            const select = document.getElementById('auto-jogos');
-            const mod = document.getElementById('auto-modalidade');
-            if (!select || !mod) return;
-            const idMod = mod.value || modalidadeSelecionadaId();
-            select.innerHTML = '';
-            jogosCache.filter((j) => String(j.modalidades_id_modalidade) === String(idMod) && j.status_jogo === 'Agendado' && !/:B$/.test(String(j.nome_jogo || ''))).forEach((j) => {
-                const option = document.createElement('option');
-                option.value = String(j.id_jogo);
-                option.textContent = `${formatNomeJogo(j.nome_jogo, j)} — ${j.data_jogo ? j.data_jogo : 'A definir'}`;
-                option.selected = !j.data_jogo || !j.inicio_jogo || !j.termino_jogo || !j.locais_id_local;
-                select.appendChild(option);
-            });
+        function dataLocalISO(date) {
+            return ymd(date);
         }
 
-        function payloadBloco(acao) {
-            const mod = document.getElementById('auto-modalidade').value;
-            const jogosEl = document.getElementById('auto-jogos');
-            const tags = (document.getElementById('auto-tags').value || '').split(',').map((tag) => tag.trim()).filter(Boolean);
-            const jogos = Array.from(jogosEl.selectedOptions).map((option) => ({ id_jogo: Number(option.value) }));
+        function dataSessaoInicial() {
+            const hoje = new Date();
+            const distancia = (2 - hoje.getDay() + 7) % 7; // terça-feira
+            hoje.setDate(hoje.getDate() + distancia);
+            return dataLocalISO(hoje);
+        }
+
+        function proximaDataSessao(data) {
+            const atual = new Date(`${data}T00:00:00`);
+            const alvo = atual.getDay() === 2 ? 4 : 2; // terça → quinta → terça
+            const distancia = (alvo - atual.getDay() + 7) % 7 || 7;
+            atual.setDate(atual.getDate() + distancia);
+            return dataLocalISO(atual);
+        }
+
+        function valorDiasSequenciais() {
+            const inicio = document.getElementById('seq-inicio').value;
+            const fim = document.getElementById('seq-fim').value || '11:30';
+            const local = Number(document.getElementById('seq-local').value);
+            return [{
+                data: document.getElementById('seq-data').value,
+                inicio,
+                fim,
+                local
+            }, ...diasSequenciaisAdicionados];
+        }
+
+        function payloadSequencial(acao) {
             return {
                 acao,
                 id_interclasse: Number(interclasseAtual && interclasseAtual.id_interclasse),
-                id_modalidade: Number(mod),
-                jogos,
-                chave_tags: tags.map((chave_tag) => ({ id_modalidade: Number(mod), chave_tag })),
-                janelas: [{
-                    data: document.getElementById('auto-data').value,
-                    inicio: document.getElementById('auto-inicio').value,
-                    fim: document.getElementById('auto-fim').value,
-                    locais: Array.from(document.getElementById('auto-local').selectedOptions).map((option) => Number(option.value)).filter((id) => id > 0)
-                }],
+                id_modalidade: Number(document.getElementById('auto-modalidade').value),
+                todos_jogos: true,
+                dias: valorDiasSequenciais(),
                 opcoes: {
-                    duracao_min: Number(document.getElementById('auto-duracao').value),
-                    intervalo_troca_min: Number(document.getElementById('auto-troca').value),
-                    descanso_min: Number(document.getElementById('auto-descanso').value)
-                },
-                reprogramar: document.getElementById('auto-reprogramar').checked
+                    duracao_min: Number(document.getElementById('seq-duracao').value),
+                    intervalo_troca_min: 10
+                }
             };
         }
 
-        function renderPrevia(bloco) {
-            const area = document.getElementById('auto-previa');
+        function atualizarProximoDia(bloco) {
+            const painel = document.getElementById('seq-proximo-dia');
+            const campoData = document.getElementById('seq-proxima-data');
+            const campoInicio = document.getElementById('seq-proxima-inicio');
+            const campoFim = document.getElementById('seq-proxima-fim');
+            if (!painel || !campoData || !campoInicio || !campoFim) return;
+            const proximo = bloco.proximo_dia_sugerido || null;
+            const pendente = Array.isArray(bloco.pendencias) && bloco.pendencias.length > 0;
+            painel.classList.toggle('d-none', !pendente || !proximo);
+            if (pendente && proximo) {
+                campoData.value = proximo;
+                campoData.min = hojeISO();
+                campoInicio.value = bloco.proximo_inicio_sugerido || '08:00:00';
+                campoFim.value = bloco.proximo_termino_sugerido || '11:30';
+            }
+        }
+
+        function renderPreviaSequencial(bloco) {
+            const area = document.getElementById('seq-previa');
             if (!area) return;
-            const linhas = (bloco.proposta || []).map((item) => `<div>${escapeHtml(formatNomeJogo(item.chave_tag))}: ${item.data_jogo} ${formatarHora(item.inicio_jogo)}–${formatarHora(item.termino_jogo)} · local ${item.locais_id_local}</div>`).join('');
+            const linhas = (bloco.proposta || []).map((item) => `<div>${escapeHtml(formatNomeJogo(item.chave_tag))}: ${item.data_jogo} ${formatarHora(item.inicio_jogo)}–${formatarHora(item.termino_jogo)} · ${escapeHtml(String(item.locais_id_local))}</div>`).join('');
             const pendencias = (bloco.pendencias || []).map((item) => `<div class="text-danger">${escapeHtml(formatNomeJogo(item.chave_tag))}: ${escapeHtml(item.motivo)}</div>`).join('');
-            area.innerHTML = `<strong>${bloco.resumo ? bloco.resumo.encaixados : 0} programado(s)</strong>${linhas}${pendencias ? `<hr>${pendencias}` : ''}`;
+            const resumo = bloco.resumo || {};
+            area.innerHTML = `<strong>${Number(resumo.encaixados || 0)} jogo(s) programado(s)</strong>${linhas}${pendencias ? `<hr><strong class="text-danger">Pendências</strong>${pendencias}` : '<div class="text-success mt-1">Todos os jogos da chave possuem horário.</div>'}`;
+            atualizarProximoDia(bloco);
+        }
+
+        function preencherModalSequencial() {
+            diasSequenciaisAdicionados = [];
+            agendaSequencialAtual = null;
+            const data = document.getElementById('seq-data');
+            if (data) { data.min = hojeISO(); data.value = dataSessaoInicial(); }
+            const fim = document.getElementById('seq-fim');
+            if (fim) fim.value = '11:30';
+            const inicio = document.getElementById('seq-inicio');
+            if (inicio) inicio.value = '08:00';
+            const local = document.getElementById('seq-local');
+            if (local && local.options.length > 0) local.value = local.options[0].value;
+            const area = document.getElementById('seq-previa');
+            if (area) area.textContent = 'Preencha os dados e clique em “Calcular prévia”.';
+            const painel = document.getElementById('seq-proximo-dia');
+            if (painel) painel.classList.add('d-none');
+            const confirmar = document.getElementById('seq-salvar-btn');
+            if (confirmar) confirmar.disabled = true;
         }
 
         document.querySelectorAll('.btn-trigger-datas-auto').forEach((btn) => {
             pageScope.listen(btn, 'click', () => {
-                preencherJogosBloco();
-                const data = document.getElementById('auto-data');
-                if (data) { data.min = hojeISO(); if (!data.value) data.value = hojeISO(); }
+                preencherModalSequencial();
                 const modalMod = document.getElementById('auto-modalidade');
                 const selModGlobal = modalidadeSelecionadaId();
-                if (modalMod && selModGlobal) {
-                    modalMod.value = selModGlobal;
-                    preencherJogosBloco();
-                }
-                const locais = document.getElementById('auto-local');
-                if (locais) Array.from(locais.options).forEach((option) => { option.selected = true; });
+                if (modalMod && selModGlobal) modalMod.value = selModGlobal;
                 const modal = new bootstrap.Modal(document.getElementById('modalDatasAutomaticas'));
                 modal.show();
             });
         });
-        pageScope.listen(document.getElementById('auto-modalidade'), 'change', preencherJogosBloco);
 
-        const btnAutoSimular = document.getElementById('auto-simular-btn');
-        const btnAutoConfirmar = document.getElementById('auto-salvar-btn');
-        if (btnAutoSimular) pageScope.listen(btnAutoSimular, 'click', async () => {
+        const btnSeqSimular = document.getElementById('seq-simular-btn');
+        const btnSeqConfirmar = document.getElementById('seq-salvar-btn');
+        if (btnSeqSimular) pageScope.listen(btnSeqSimular, 'click', async () => {
             try {
-                blocoAtual = payloadBloco('simular');
-                if (!blocoAtual.id_modalidade || blocoAtual.jogos.length === 0 && blocoAtual.chave_tags.length === 0) throw new Error('Selecione ao menos um jogo ou informe uma posição futura.');
-                const response = await fetch(`${API}agenda-blocos`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(blocoAtual) });
-                const json = await response.json();
-                if (!response.ok || json.success === false) throw new Error(json.message || 'Não foi possível calcular a prévia.');
-                blocoAtual = { ...blocoAtual, revisao: json.revisao };
-                renderPrevia(json);
-                if (btnAutoConfirmar) btnAutoConfirmar.disabled = (json.pendencias || []).length > 0;
-            } catch (error) {
-                document.getElementById('auto-previa').textContent = error.message || 'Erro na prévia.';
-                if (btnAutoConfirmar) btnAutoConfirmar.disabled = true;
-            }
-        });
-        if (btnAutoConfirmar) pageScope.listen(btnAutoConfirmar, 'click', async () => {
-            if (!blocoAtual) return;
-            btnAutoConfirmar.disabled = true;
-            try {
-                const payload = { ...blocoAtual, acao: 'confirmar', idempotencia: `agenda-${Date.now()}-${Math.random().toString(16).slice(2)}` };
+                const payload = payloadSequencial('simular_sequencial');
+                if (!payload.id_modalidade) throw new Error('Selecione uma modalidade.');
+                if (!payload.dias[0].data || !payload.dias[0].inicio || !payload.dias[0].local) throw new Error('Informe a data, o horário e o local do primeiro jogo.');
                 const response = await fetch(`${API}agenda-blocos`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
                 const json = await response.json();
-                if (!response.ok || json.success === false) throw new Error(json.message || 'Não foi possível confirmar o bloco.');
+                if (!response.ok || json.success === false) throw new Error(json.message || 'Não foi possível calcular a prévia.');
+                agendaSequencialAtual = { ...payload, revisao: json.revisao };
+                renderPreviaSequencial(json);
+                if (btnSeqConfirmar) btnSeqConfirmar.disabled = (json.pendencias || []).length > 0;
+            } catch (error) {
+                const area = document.getElementById('seq-previa');
+                if (area) area.textContent = error.message || 'Erro na prévia.';
+                if (btnSeqConfirmar) btnSeqConfirmar.disabled = true;
+            }
+        });
+
+        const btnAdicionarDia = document.getElementById('seq-adicionar-dia');
+        if (btnAdicionarDia) pageScope.listen(btnAdicionarDia, 'click', async () => {
+            const data = document.getElementById('seq-proxima-data').value;
+            const inicio = document.getElementById('seq-proxima-inicio').value;
+            const fim = document.getElementById('seq-proxima-fim').value || '11:30';
+            const local = Number(document.getElementById('seq-local').value);
+            const anterior = valorDiasSequenciais().at(-1);
+            if (!data || !inicio || !local) { alert('Informe a data, o horário e o local da próxima sessão.'); return; }
+            if (anterior && data !== proximaDataSessao(anterior.data)) { alert('A próxima sessão deve seguir a cadência terça-feira e quinta-feira.'); return; }
+            diasSequenciaisAdicionados.push({ data, inicio, fim, local });
+            document.getElementById('seq-proximo-dia').classList.add('d-none');
+            if (btnSeqSimular) btnSeqSimular.click();
+        });
+
+        if (btnSeqConfirmar) pageScope.listen(btnSeqConfirmar, 'click', async () => {
+            if (!agendaSequencialAtual) return;
+            btnSeqConfirmar.disabled = true;
+            try {
+                const payload = { ...agendaSequencialAtual, acao: 'confirmar_sequencial', idempotencia: `agenda-sequencial-${Date.now()}-${Math.random().toString(16).slice(2)}` };
+                const response = await fetch(`${API}agenda-blocos`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+                const json = await response.json();
+                if (!response.ok || json.success === false) throw new Error(json.message || 'Não foi possível confirmar a agenda.');
                 bootstrap.Modal.getInstance(document.getElementById('modalDatasAutomaticas')).hide();
-                blocoAtual = null;
+                agendaSequencialAtual = null;
                 await carregarJogosDoInterclasse();
                 atualizarTelas();
                 alert(`${json.programados || 0} jogo(s) programado(s) com sucesso.`);
             } catch (error) {
-                alert(error.message || 'Não foi possível confirmar o bloco.');
-                btnAutoConfirmar.disabled = false;
+                alert(error.message || 'Não foi possível confirmar a agenda.');
+                btnSeqConfirmar.disabled = false;
             }
         });
 

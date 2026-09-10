@@ -36,6 +36,10 @@ class InscricaoModalidadesTest
         $aluno = new TestClient();
         $loginAluno = $aluno->login($matricula, $senha);
         Assertions::assertJsonSuccess('Aluno de teste autenticado para inscrição', $loginAluno);
+        Assertions::assertJsonSuccess(
+            'Aluno de teste aceita os termos antes da inscrição',
+            $aluno->postJson('api/v1/termos', []),
+        );
 
         $resEqTurma = $admin->get("api/v1/equipes?id_interclasse=$idEdicao&id_turma=$idTurmaAluno");
         $eqsTurma = $resEqTurma['json'] ?? [];

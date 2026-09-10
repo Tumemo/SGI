@@ -17,7 +17,18 @@ final class MysqliUsuarioRepository implements UsuarioRepository
     {
         $activeId = $activeInterclasseId ?? 0;
         $statement = $this->connection->prepare(
-            "SELECT u.*
+            "SELECT u.*,
+                    CASE
+                        WHEN u.nivel_usuario <> '3' THEN 1
+                        WHEN EXISTS (
+                            SELECT 1
+                            FROM usuarios_has_interclasses ui
+                            WHERE ui.usuarios_id_usuario = u.id_usuario
+                              AND ui.interclasses_id_interclasse = u.interclasses_id_interclasse
+                              AND ui.aceito_termo = 'sim'
+                        ) THEN 1
+                        ELSE 0
+                    END AS termo_aceito
              FROM usuarios u
              WHERE u.matricula_usuario = ?
                AND u.status_usuario = '1'

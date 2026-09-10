@@ -23,7 +23,7 @@ $urlVoltar = \App\Shared\Http\Url::to('aluno/inicio');
         </section>
 
         <!-- Regulamento do Interclasse -->
-        <section>
+    <section>
             <h2 class="fs-5 fw-bold mb-3">Regulamento do Interclasse</h2>
             <div class="regulamento-card">
                 <p id="statusRegulamento" class="text-muted mb-0">
@@ -45,9 +45,20 @@ $urlVoltar = \App\Shared\Http\Url::to('aluno/inicio');
                         </a>
                     </div>
                 </div>
-            </div>
-        </section>
-    </main>
+        </div>
+    </section>
+
+    <section id="acoesTermos" class="mt-4">
+        <div class="bg-white rounded-3 p-4 shadow-sm">
+            <h2 class="fs-5 fw-bold mb-2">Confirmação obrigatória</h2>
+            <p class="text-secondary mb-3">O aceite é necessário para acessar jogos, inscrições e as demais funções do portal.</p>
+            <button type="button" class="btn btn-danger fw-semibold" id="btnAceitarTermos">
+                <i class="bi bi-check-lg me-1"></i>Aceitar e continuar
+            </button>
+            <p id="msgAceiteTermos" class="small mt-3 mb-0" role="status"></p>
+        </div>
+    </section>
+</main>
 
 <?php
 $paginaAtiva = 'termos';

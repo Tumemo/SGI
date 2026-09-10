@@ -1,0 +1,59 @@
+# syntax=docker/dockerfile:1.7
+
+ARG PHP_VERSION=8.4
+
+FROM node:22-bookworm AS node-runtime
+FROM composer:2 AS composer-runtime
+FROM php:${PHP_VERSION}-cli-bookworm
+
+ENV COMPOSER_ALLOW_SUPERUSER=1 \
+    COMPOSER_NO_INTERACTION=1 \
+    CI=1
+
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+        ca-certificates \
+        curl \
+        default-mysql-client \
+        git \
+        libcurl4-openssl-dev \
+        libonig-dev \
+        libxml2-dev \
+        unzip \
+    && docker-php-ext-install -j"$(nproc)" mysqli mbstring dom curl \
+    && rm -rf /var/lib/apt/lists/* \
+    && mysql_bin="$(command -v mysql || command -v mariadb)" \
+    && dump_bin="$(command -v mysqldump || command -v mariadb-dump)" \
+    && ln -sf "$mysql_bin" /usr/local/bin/sgi-mysql \
+    && ln -sf "$dump_bin" /usr/local/bin/sgi-mysqldump
+
+# Reutiliza o Node 22 oficial sem instalar uma segunda distribuição dentro da
+# imagem PHP. O npm e o npx apontam para os módulos copiados abaixo.
+COPY --from=node-runtime /usr/local/bin/node /usr/local/bin/node
+COPY --from=node-runtime /usr/local/lib/node_modules /usr/local/lib/node_modules
+RUN ln -sf /usr/local/lib/node_modules/npm/bin/npm-cli.js /usr/local/bin/npm \
+    && ln -sf /usr/local/lib/node_modules/npm/bin/npx-cli.js /usr/local/bin/npx
+
+COPY --from=composer-runtime /usr/bin/composer /usr/bin/composer
+
+WORKDIR /app
+
+COPY composer.json composer.lock ./
+RUN composer install --no-interaction --prefer-dist --no-progress
+
+COPY package.json package-lock.json ./
+RUN npm ci --ignore-scripts
+
+COPY . .
+RUN npm run build
+
+COPY tools/docker-test-entrypoint.sh /usr/local/bin/docker-test-entrypoint
+RUN chmod +x /usr/local/bin/docker-test-entrypoint \
+    && mkdir -p \
+        /app/test-results/sessions \
+        /app/test-results/upload-tmp \
+        /app/test-results/uploads/regulamentos \
+        /app/test-results/uploads/fotos \
+        /app/test-results/imports
+
+ENTRYPOINT ["/usr/local/bin/docker-test-entrypoint"]

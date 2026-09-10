@@ -38,8 +38,36 @@ final class PageControllerTest extends TestCase
         );
 
         self::assertSame(302, $response->status());
-        self::assertSame($level === 3 ? '/aluno/inicio' : ($level === 2 ? '/painel' : '/edicoes'), $response->headers()['Location'] ?? null);
+        self::assertSame($level === 3 ? '/aluno/termos' : ($level === 2 ? '/painel' : '/edicoes'), $response->headers()['Location'] ?? null);
         self::assertSame('', $response->body());
+    }
+
+    #[DataProvider('studentPortalPages')]
+    public function testStudentWithoutTermsCannotOpenAnyPortalPage(string $path): void
+    {
+        $_SESSION['nivel'] = 3;
+
+        $response = (new PageController())->show(
+            new Request('GET', $path),
+            __DIR__ . '/does-not-render-before-terms.php',
+        );
+
+        self::assertSame(302, $response->status(), $path);
+        self::assertSame('/aluno/termos', $response->headers()['Location'] ?? null, $path);
+        self::assertSame('no-store', $response->headers()['Cache-Control'] ?? null, $path);
+        self::assertSame('', $response->body(), $path);
+    }
+
+    /** @return array<string, array{string}> */
+    public static function studentPortalPages(): array
+    {
+        return [
+            'inicio' => ['/aluno/inicio'],
+            'modalidades' => ['/aluno/modalidades'],
+            'jogos' => ['/aluno/jogos'],
+            'perfil' => ['/aluno/perfil'],
+            'ranking' => ['/aluno/ranking'],
+        ];
     }
 
     /** @dataProvider forbiddenPagesForMesario */

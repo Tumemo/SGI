@@ -31,6 +31,7 @@ class JogosAndConflitosTest
         $e2 = (int) $equipes[1]['id_equipe'];
         $e3 = (int) $equipes[2]['id_equipe'];
         $e4 = (int) $equipes[3]['id_equipe'];
+        self::ensureAthletes($admin, $idEdicao, $equipes);
 
         $resSf1 = $admin->postJson('api/v1/jogos', [
             'nome_jogo' => 'MM:4:0:N',
@@ -74,11 +75,70 @@ class JogosAndConflitosTest
         Assertions::assert("Agendamento da Semifinal 2 (MM:4:1:N) em horário livre", in_array($resSf2['code'], [200, 201], true) && ($resSf2['json']['success'] ?? false) === true);
         $idJogo2 = (int) ($resSf2['json']['id_jogo'] ?? $resSf2['json']['id'] ?? 0);
 
+        // 5.5 O intervalo operacional mínimo é de 10 minutos, mesmo sem sobreposição.
+        $resIntervalo = $admin->postJson('api/v1/jogos', [
+            'nome_jogo' => 'MM:4:2:N',
+            'data_jogo' => $hoje,
+            'inicio_jogo' => '08:45',
+            'termino_jogo' => '08:49',
+            'status_jogo' => 'Agendado',
+            'modalidades_id_modalidade' => $idModalidade,
+            'locais_id_local' => $idLocal,
+            'equipes' => [['id_equipe' => $e1], ['id_equipe' => $e2]]
+        ]);
+        Assertions::assert("Bloqueio de intervalo inferior a 10 minutos no mesmo local", $resIntervalo['code'] === 400 || ($resIntervalo['json']['success'] ?? true) === false);
+
         return [
             'id_local' => $idLocal,
             'id_jogo_1' => $idJogo1,
             'id_jogo_2' => $idJogo2,
             'equipes_ids' => [$e1, $e2, $e3, $e4]
         ];
+    }
+
+    /** @param list<array<string, mixed>> $equipes */
+    private static function ensureAthletes(TestClient $admin, int $editionId, array $equipes): void
+    {
+        foreach ($equipes as $index => $team) {
+            $teamId = (int) ($team['id_equipe'] ?? 0);
+            $classId = (int) ($team['turmas_id_turma'] ?? 0);
+            if ($teamId <= 0 || $classId <= 0) {
+                continue;
+            }
+            $members = $admin->get('api/v1/equipes?id_equipe=' . $teamId);
+            $athleteId = 0;
+            foreach (($members['json'] ?? []) as $member) {
+                if ((int) ($member['id_usuario'] ?? 0) > 0) {
+                    $athleteId = (int) $member['id_usuario'];
+                    break;
+                }
+            }
+            if ($athleteId <= 0) {
+                $competitors = $admin->get("api/v1/usuarios?acao=listar_competidores&id_turma={$classId}&id_interclasse={$editionId}");
+                foreach (($competitors['json']['competidores'] ?? []) as $competitor) {
+                    if ((string) ($competitor['status_usuario'] ?? '1') === '1') {
+                        $athleteId = (int) ($competitor['id_usuario'] ?? 0);
+                        break;
+                    }
+                }
+            }
+            if ($athleteId <= 0) {
+                $created = $admin->postJson('api/v1/usuarios?acao=criar_aluno', [
+                    'nome_usuario' => 'Atleta de jogo ' . ($index + 1) . ' ' . bin2hex(random_bytes(3)),
+                    'matricula_usuario' => 'JOGO' . date('ymdHis') . random_int(100, 999),
+                    'data_nasc_usuario' => '2010-01-01',
+                    'genero_usuario' => 'MASC',
+                    'turmas_id_turma' => $classId,
+                ]);
+                $athleteId = (int) ($created['json']['id_usuario'] ?? $created['json']['id'] ?? 0);
+            }
+            if ($athleteId > 0) {
+                $admin->postJson('api/v1/equipes', [
+                    'acao' => 'adicionar_usuarios',
+                    'id_equipe' => $teamId,
+                    'usuarios' => [$athleteId],
+                ]);
+            }
+        }
     }
 }

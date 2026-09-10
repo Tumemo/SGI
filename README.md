@@ -107,22 +107,30 @@ SGI/
 
 ## 🧪 Testes Automatizados e Auditoria
 
-Os testes devem usar banco e servidor isolados. O reset exige um nome contendo `test`/`testing` e confere se o servidor HTTP aponta para a mesma base antes de alterar dados.
+Os testes devem usar banco e servidor isolados. O reset exige um nome contendo `test`/`testing` e confere se o servidor HTTP aponta para a mesma base antes de alterar dados. A execução recomendada é descartável no Docker e não exige as ferramentas da aplicação instaladas no host:
 
-```bash
-composer verify
-npm run check
-npm test
+```powershell
+powershell -File tools/test-docker.ps1 -Database mariadb
 ```
 
-Para os testes HTTP e de navegador, siga [o guia de testes](docs/testing.md). O fluxo completo executa:
+Para MySQL 8.4, use `-Database mysql`. O contrato visual também pode ser
+incluído com `-IncludeVisual`. O parâmetro `-Keep` mantém os containers para
+investigação; sem ele, banco, aplicação e executores são removidos ao final.
+Para os testes HTTP e de navegador, consulte [o guia de testes](docs/testing.md).
+
+Na execução manual fora do Docker, o fluxo completo executa:
 
 ```bash
 php tests/run_all.php
 npm --prefix tests/browser test
 ```
 
-Há testes de autenticação, CSRF, permissões, importação PDF, inscrições, agendamento, ranking, migrações, concorrência, rollback e torneios online/offline. As comparações de imagem usam referências aprovadas no Windows. O CI foi configurado para PHP 8.2/8.4, MySQL/MariaDB e Chromium; a execução remota depende do envio destas alterações ao repositório.
+Há testes de autenticação, CSRF, permissões, importação PDF, inscrições,
+agendamento, ranking, migrações, concorrência, rollback, torneios
+online/offline e contrato visual. As comparações de imagem usam referências
+separadas por plataforma. O CI foi configurado para PHP 8.2/8.4,
+MySQL/MariaDB e Chromium em Docker; a execução remota depende do envio destas
+alterações ao repositório.
 
 Detalhes das camadas e da compatibilidade estão em [arquitetura](docs/architecture.md).
 

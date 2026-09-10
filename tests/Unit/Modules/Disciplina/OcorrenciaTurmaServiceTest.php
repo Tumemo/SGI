@@ -30,6 +30,21 @@ final class OcorrenciaTurmaServiceTest extends TestCase
         self::assertNull($repository->created['usuarios_id_usuario']);
     }
 
+    public function testNormalizesNegativePointsToPenaltyMagnitude(): void
+    {
+        $repository = new InMemoryOcorrenciaTurmaRepository();
+
+        (new OcorrenciaTurmaService($repository))->registrar([
+            'turmas_id_turma' => 2,
+            'interclasses_id_interclasse' => 3,
+            'titulo_ocorrencia' => 'Pontuação inválida',
+            'data_ocorrencia' => '2026-09-04',
+            'pontos_descontados' => -10,
+        ]);
+
+        self::assertSame(10, $repository->created['pontos_descontados']);
+    }
+
     public function testRejectsIncompleteOccurrence(): void
     {
         $this->expectException(InvalidArgumentException::class);

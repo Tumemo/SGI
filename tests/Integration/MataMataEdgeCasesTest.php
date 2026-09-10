@@ -73,12 +73,12 @@ final class MataMataEdgeCasesTest
             'id_jogo' => $idJogo, 'nome_jogo' => 'MM:4:0:N', 'id_modalidade' => $idModalidade,
             'resultados' => [['id_equipe' => $equipesIds[0], 'gols' => 4], ['id_equipe' => $equipesIds[1], 'gols' => 2]],
         ]);
-        Assertions::assertJsonSuccess('Retificação de placar de jogo real é aceita', $corrected);
+        Assertions::assertStatus('Retificação direta não altera placar estrito já encerrado', $corrected, 422);
         $scores = $admin->get("api/v1/partidas?id_jogo=$idJogo");
         $actual = [];
         foreach ($scores['json'] ?? [] as $score) {
             $actual[(int) $score['equipes_id_equipe']] = (int) $score['resultado_partida'];
         }
-        Assertions::assert('Placar retificado foi persistido para as equipes corretas', ($actual[$equipesIds[0]] ?? null) === 4 && ($actual[$equipesIds[1]] ?? null) === 2);
+        Assertions::assert('Placar encerrado permanece consistente com as jogadas vinculadas', ($actual[$equipesIds[0]] ?? null) === 3 && ($actual[$equipesIds[1]] ?? null) === 1);
     }
 }

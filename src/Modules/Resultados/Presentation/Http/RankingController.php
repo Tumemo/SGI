@@ -52,10 +52,10 @@ final class RankingController
         $isAluno = (int) ($_SESSION['nivel'] ?? -1) === 3;
         $editionId = (int) $request->query('id_interclasse', 0);
         if ($isAluno && $editionId <= 0) {
-            return Response::json(['success' => false, 'message' => 'Selecione uma edição com ranking publicado.'], 400);
+            return Response::json(['success' => false, 'message' => 'Selecione uma edição encerrada.'], 400);
         }
-        if ($isAluno && (!$this->edicoes->isRankingPublished($editionId) || $this->edicoes->isActive($editionId))) {
-            return Response::json(['success' => false, 'bloqueado' => true, 'message' => 'O ranking será liberado após a premiação.'], 403);
+        if ($isAluno && $this->edicoes->isActive($editionId)) {
+            return Response::json(['success' => false, 'bloqueado' => true, 'message' => 'O ranking será exibido após o encerramento do Interclasse.'], 403);
         }
         $data = $this->service->listar([
             'id_turma' => (int) $request->query('id_turma', 0),
@@ -63,7 +63,7 @@ final class RankingController
             'id_categoria' => (int) $request->query('id_categoria', 0),
             'turno' => (string) $request->query('turno', ''),
             'busca' => trim((string) $request->query('busca', '')),
-            'somente_publicados' => $isAluno,
+            'somente_encerrados' => $isAluno,
         ]);
 
         return Response::json($data);

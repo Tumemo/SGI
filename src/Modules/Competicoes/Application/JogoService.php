@@ -30,6 +30,21 @@ final class JogoService
         if ($start === null || $end === null || $this->minutes($end) <= $this->minutes($start)) {
             throw new InvalidArgumentException('Informe um horário de início e término válidos.');
         }
+        $teams = [];
+        if (array_key_exists('equipes', $data)) {
+            if (!is_array($data['equipes'])) {
+                throw new InvalidArgumentException('A lista de equipes do jogo é inválida.');
+            }
+            foreach ($data['equipes'] as $team) {
+                $teamId = is_array($team)
+                    ? (int) ($team['id_equipe'] ?? $team['equipes_id_equipe'] ?? 0)
+                    : (int) $team;
+                if ($teamId <= 0 || in_array($teamId, $teams, true)) {
+                    throw new InvalidArgumentException('As equipes do jogo devem ser válidas e distintas.');
+                }
+                $teams[] = $teamId;
+            }
+        }
         $conflict = $this->jogos->localConflict($date, $localId, $start, $end);
         if ($conflict !== null) {
             throw new JogoConflitoException($conflict);
@@ -42,6 +57,7 @@ final class JogoService
             'modalidades_id_modalidade' => $modalityId,
             'locais_id_local' => $localId,
             'status_jogo' => (string) ($data['status_jogo'] ?? 'Agendado'),
+            'equipes' => $teams,
         ]);
     }
 

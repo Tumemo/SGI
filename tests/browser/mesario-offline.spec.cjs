@@ -79,6 +79,7 @@ async function criarPartidaFixture(request) {
             data: { matricula: matriculaAtleta, senha: senhaAtleta }
         });
         await jsonOrThrow(alunoLogin, 'login do atleta fixture');
+        await jsonOrThrow(await alunoApi.post('api/v1/termos', { data: {} }), 'aceite dos termos do atleta fixture');
         const inscricao = await alunoApi.post('api/v1/inscricoes', {
             data: {
                 id_interclasse: idInterclasse,
@@ -181,13 +182,18 @@ test.describe('Mesário — fluxo visual completo offline', () => {
         await expect(page.locator('#placar-grid')).toBeVisible();
         await expect(page.locator('#mc-status-badge')).toContainText('Em andamento');
 
-        // Registra um gol e um artilheiro; o modal também é servido do cache.
+        // Registra um ponto somente depois de escolher o atleta. A tentativa
+        // vazia não pode alterar o placar.
         await page.locator('.btn-score-plus').first().click();
         await expect(page.locator('#modalArtilheiro')).toBeVisible();
+        await expect(page.locator('.score-number').first()).toHaveText('00');
+        await page.locator('#btnSalvarArtilheiro').click();
+        await expect(page.locator('#msgArtilheiro')).toContainText('Selecione o aluno responsável pela jogada', { timeout: 10_000 });
+        await expect(page.locator('.score-number').first()).toHaveText('00');
         await expect.poll(() => page.locator('#selectAlunoArtilheiro option').count()).toBeGreaterThan(1);
         await page.locator('#selectAlunoArtilheiro').selectOption({ index: 1 });
         await page.locator('#btnSalvarArtilheiro').click();
-        await expect(page.locator('#msgArtilheiro')).toContainText('Gol registrado', { timeout: 10_000 });
+        await expect(page.locator('#msgArtilheiro')).toContainText('Ponto registrado', { timeout: 10_000 });
         await expect(page.locator('#modalArtilheiro')).toBeHidden({ timeout: 10_000 });
         await expect(page.locator('.score-number').first()).toHaveText('01');
 

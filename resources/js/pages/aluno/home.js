@@ -30,9 +30,8 @@ function renderCards(items) {
             const statusLabel = isAtivo ? 'Em Andamento' : 'Encerrado';
             const statusClass = isAtivo ? 'active' : 'inactive';
             const iconClass = isAtivo ? 'active' : 'inactive';
-            const publicado = Boolean(item.ranking_publicado_em);
-            const href = isAtivo ? `/aluno/modalidades?id=${item.id_interclasse}` : (publicado ? `/aluno/ranking?id=${item.id_interclasse}` : '#');
-            const btnLabel = isAtivo ? 'Ver Detalhes <i class="bi bi-arrow-right"></i>' : (publicado ? 'Ver Ranking <i class="bi bi-bar-chart"></i>' : 'Ranking aguardando premiação');
+            const href = isAtivo ? `/aluno/modalidades?id=${item.id_interclasse}` : `/aluno/ranking?id=${item.id_interclasse}`;
+            const btnLabel = isAtivo ? 'Ver Detalhes <i class="bi bi-arrow-right"></i>' : 'Ver Ranking <i class="bi bi-bar-chart"></i>';
 
             return `
                 <div class="aluno-card" data-status="${statusClass}">

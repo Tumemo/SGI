@@ -63,9 +63,17 @@ final class AgendamentoBlocoController
                 $result = $this->repository->simulate($data, $edition);
                 return Response::json(array_merge(['success' => true, 'message' => 'Prévia calculada.'], $result['resultado']));
             }
+            if (in_array($action, ['simular_sequencial', 'simular-sequencial'], true)) {
+                $result = $this->repository->simulateSequential($data, $edition);
+                return Response::json(array_merge(['success' => true, 'message' => 'Prévia sequencial calculada.'], $result['resultado']));
+            }
             if ($action === 'confirmar') {
                 $userId = (int) ($_SESSION['id_usuario'] ?? $_SESSION['id'] ?? 0);
                 return Response::json($this->repository->confirm($data, $edition, $userId));
+            }
+            if (in_array($action, ['confirmar_sequencial', 'confirmar-sequencial'], true)) {
+                $userId = (int) ($_SESSION['id_usuario'] ?? $_SESSION['id'] ?? 0);
+                return Response::json($this->repository->confirmSequential($data, $edition, $userId));
             }
             return Response::json(['success' => false, 'message' => 'Ação de agendamento inválida.'], 422);
         } catch (AgendaRevisaoException $exception) {

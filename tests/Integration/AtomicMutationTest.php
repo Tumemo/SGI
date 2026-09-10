@@ -22,7 +22,7 @@ final class AtomicMutationTest
         $identity = MutationIdentity::create('atomic-rollback-' . bin2hex(random_bytes(8)), 1, '{}');
         $store->begin('atomic.test', $identity);
         (new MysqliTransactionRunner($connection))->run(function () use ($connection, $gameId): void {
-            $connection->query('INSERT INTO artilheiros (usuarios_id_usuario, jogos_id_jogo, num_gol) VALUES (1, ' . $gameId . ', 1)');
+            $connection->query("INSERT INTO artilheiros (usuarios_id_usuario, jogos_id_jogo, num_gol, conta_no_placar, status_artilheiro) VALUES (1, " . $gameId . ", 1, 0, 'anulado')");
         });
         try {
             $store->complete('atomic.test', $identity, 200, ['invalid_utf8' => "\xB1\x31"]);

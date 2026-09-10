@@ -24,8 +24,20 @@ final class SessionRevalidator
 
         $connection = ConnectionFactory::get();
         $statement = $connection->prepare(
-            "SELECT nivel_usuario, status_usuario, auth_version
-             FROM usuarios WHERE id_usuario = ? LIMIT 1",
+            "SELECT u.nivel_usuario, u.status_usuario, u.auth_version,
+                    CASE
+                        WHEN u.nivel_usuario <> '3' THEN 1
+                        WHEN EXISTS (
+                            SELECT 1
+                            FROM usuarios_has_interclasses ui
+                            WHERE ui.usuarios_id_usuario = u.id_usuario
+                              AND ui.interclasses_id_interclasse = u.interclasses_id_interclasse
+                              AND ui.aceito_termo = 'sim'
+                        ) THEN 1
+                        ELSE 0
+                    END AS termo_aceito
+             FROM usuarios u
+             WHERE u.id_usuario = ? LIMIT 1",
         );
         if ($statement === false) {
             throw new RuntimeException('Não foi possível validar a sessão.');
@@ -50,6 +62,12 @@ final class SessionRevalidator
         if (!$valid) {
             return false;
         }
+
+        // O aceite é uma autorização de negócio, não um dado confiável do
+        // navegador. Recalcule-o em toda requisição protegida para que uma
+        // sessão antiga nunca mantenha acesso depois de perder o aceite.
+        $_SESSION['termo_aceito'] = $sessionLevel !== 3
+            || (int) ($row['termo_aceito'] ?? 0) === 1;
 
         // The active edition may change while a mesário keeps the browser
         // open. Refresh that operational context on every protected request

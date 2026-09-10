@@ -39,12 +39,18 @@ final class OcorrenciaTurmaService
         if ($userId !== null && $userId <= 0) {
             throw new InvalidArgumentException('Usuário da ocorrência é inválido.');
         }
+        // `pontos_descontados` represents the magnitude of the penalty. The
+        // ranking applies the subtraction when it calculates the liquid score,
+        // so storing a negative value would turn a penalty into a bonus.
+        $points = (int) ($data['pontos_descontados'] ?? 0);
+        $points = abs($points);
+
         return $this->ocorrencias->create([
             'turmas_id_turma' => $teamId,
             'interclasses_id_interclasse' => $interclasseId,
             'titulo_ocorrencia' => $title,
             'descricao_ocorrencia' => trim((string) ($data['descricao_ocorrencia'] ?? '')),
-            'pontos_descontados' => (int) ($data['pontos_descontados'] ?? 0),
+            'pontos_descontados' => $points,
             'data_ocorrencia' => $date,
             'usuarios_id_usuario' => $userId,
         ]);

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Modules\Competicoes\Application;
 
 use App\Modules\Competicoes\Domain\ResultadoRepository;
+use App\Modules\Competicoes\Domain\PontoRepository;
 use App\Modules\Competicoes\Domain\ChaveamentoRules;
 use App\Modules\Competicoes\Domain\TipoCompeticaoRules;
 use App\Modules\Resultados\Application\PontuacaoService;
@@ -17,6 +18,7 @@ final class ResultadoService
         private readonly ResultadoRepository $repository,
         private readonly TransactionRunner $transactions,
         private readonly PontuacaoService $pontuacao,
+        private readonly ?PontoRepository $pontos = null,
     ) {
     }
 
@@ -27,7 +29,7 @@ final class ResultadoService
     }
 
     /** @param list<array<string, mixed>> $results @return array<string, mixed> */
-    public function lancar(int $gameId, ?string $tag, int $modalityId, array $results): array
+    public function lancar(int $gameId, ?string $tag, int $modalityId, array $results, array $points = [], int $operatorId = 0): array
     {
         $results = array_values(array_filter($results, 'is_array'));
         if ($results === []) {
@@ -53,7 +55,8 @@ final class ResultadoService
 
         $scores = array_map(static fn (array $result): int => (int) ($result['gols'] ?? 0), $results);
 
-        return $this->transactions->run(function () use ($gameId, $tag, $modalityId, $results, $scores): array {
+        $points = array_values(array_filter($points, 'is_array'));
+        return $this->transactions->run(function () use ($gameId, $tag, $modalityId, $results, $scores, $points, $operatorId): array {
             $resolvedGameId = $this->repository->resolveAndValidate($gameId, $tag, $modalityId, $results);
             if ($resolvedGameId <= 0) {
                 throw new \RuntimeException('Não foi possível identificar o jogo no servidor.');
@@ -66,12 +69,31 @@ final class ResultadoService
             $oldWinner = $closed
                 ? ChaveamentoRules::vencedorDePartidas($this->repository->carregarPartidas($resolvedGameId))
                 : null;
+            if ($this->pontos !== null && ($gameId < 0 || $points !== [])) {
+                $this->pontos->garantirPartidas($resolvedGameId, $results);
+                if ($points !== []) {
+                    $this->pontos->persistirPontosOffline($resolvedGameId, array_map(
+                        static function (array $point) use ($operatorId): array {
+                            if (!isset($point['registrado_por']) && $operatorId > 0) {
+                                $point['registrado_por'] = $operatorId;
+                            }
+                            return $point;
+                        },
+                        $points,
+                    ));
+                }
+            }
+            if ($this->pontos !== null) {
+                $this->pontos->validarPlacarVinculado($resolvedGameId, $results);
+            }
             if ($closed) {
                 (new PlacarService())->validarAlteracao($scores);
             } else {
                 (new PlacarService())->validarFinalizacao($scores);
             }
-            $this->repository->persistirPlacar($resolvedGameId, $results);
+            if ($this->pontos === null || !$this->pontos->exigeVinculo($resolvedGameId)) {
+                $this->repository->persistirPlacar($resolvedGameId, $results);
+            }
             if (!$closed) {
                 $this->repository->concluirJogo($resolvedGameId);
                 $this->repository->avancarChaveamento($resolvedGameId);

@@ -9,7 +9,7 @@ window.SGIPage.mount("aluno/termos", function (pageConfig, pageScope) {
 
             try {
                 // Busca a lista de interclasses com regulamento atrelado
-                const res = await fetch('/api/v1/edicoes?regulamento=true');
+                const res = await fetch('/api/v1/edicoes?status_interclasse=1&regulamento=true');
                 if (!res.ok) throw new Error('Erro na resposta da API');
 
                 const data = await res.json();
@@ -36,7 +36,66 @@ window.SGIPage.mount("aluno/termos", function (pageConfig, pageScope) {
             }
         }
 
-        window.SGIPage.ready( carregarRegulamento);
+        async function carregarStatusTermos() {
+            const button = document.getElementById('btnAceitarTermos');
+            const message = document.getElementById('msgAceiteTermos');
+            if (!button || !message) return;
 
-return {carregarRegulamento};
+            try {
+                const res = await fetch('/api/v1/termos');
+                if (res.status === 401) {
+                    window.location.href = APP_BASE + '/aluno/login';
+                    return;
+                }
+                const data = await res.json();
+                if (res.ok && data.success && data.termo_aceito === true) {
+                    button.disabled = true;
+                    button.innerHTML = '<i class="bi bi-check-circle-fill me-1"></i>Termos já aceitos';
+                    message.className = 'small mt-3 mb-0 text-success';
+                    message.textContent = 'Seu aceite está registrado.';
+                }
+            } catch (error) {
+                console.error('Erro ao verificar aceite dos termos:', error);
+            }
+        }
+
+        async function aceitarTermos() {
+            const button = document.getElementById('btnAceitarTermos');
+            const message = document.getElementById('msgAceiteTermos');
+            if (!button || !message) return;
+
+            button.disabled = true;
+            message.className = 'small mt-3 mb-0 text-secondary';
+            message.textContent = 'Registrando aceite...';
+            try {
+                const res = await fetch('/api/v1/termos', {
+                    method: 'POST',
+                    headers: { 'X-SGI-CSRF': window.SGI_CSRF_TOKEN || '' }
+                });
+                if (res.status === 401) {
+                    window.location.href = APP_BASE + '/aluno/login';
+                    return;
+                }
+                const data = await res.json();
+                if (!res.ok || !data.success) {
+                    throw new Error(data.message || 'Não foi possível registrar o aceite.');
+                }
+                message.className = 'small mt-3 mb-0 text-success';
+                message.textContent = data.message || 'Termos aceitos com sucesso.';
+                window.location.href = APP_BASE + '/aluno/inicio';
+            } catch (error) {
+                button.disabled = false;
+                message.className = 'small mt-3 mb-0 text-danger';
+                message.textContent = error.message || 'Erro ao registrar o aceite. Tente novamente.';
+            }
+        }
+
+        window.SGIPage.ready(function () {
+            carregarRegulamento();
+            carregarStatusTermos();
+            const button = document.getElementById('btnAceitarTermos');
+            if (button) pageScope.listen(button, 'click', aceitarTermos);
+        });
+
+return {carregarRegulamento, carregarStatusTermos, aceitarTermos};
 });

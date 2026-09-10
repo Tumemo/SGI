@@ -55,6 +55,7 @@ final class LoginController
         $_SESSION['matricula'] = $usuario['matricula_usuario'];
         $_SESSION['foto_usuario'] = $usuario['foto_usuario'] ?? null;
         \App\Modules\Acesso\Presentation\Http\OfflineSession::definirChaveCacheOfflineUsuario((int) $usuario['id_usuario'], (string) $usuario['senha_usuario']);
+        $_SESSION['termo_aceito'] = $nivel !== 3 || (int) ($usuario['termo_aceito'] ?? 0) === 1;
         if ($nivel === 2) {
             $_SESSION['id_interclasse'] = $authenticated['interclasse_ativo'];
         } elseif ($nivel === 3) {
@@ -62,7 +63,7 @@ final class LoginController
         }
         $_SESSION['exige_troca_senha'] = $authenticated['exige_troca_senha'];
         $destino = match ($nivel) {
-            3 => '/aluno/inicio',
+            3 => $_SESSION['termo_aceito'] ? '/aluno/inicio' : '/aluno/termos',
             0, 1 => '/edicoes',
             2 => '/painel',
             default => '/login',

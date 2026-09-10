@@ -20,7 +20,7 @@ Documento consolidado dos problemas identificados durante a homologação do SGI
 | HOM-005 | Base de homologação / acessos | Era necessário preparar os administradores e usuários padrão para executar os testes. | A base local não estava com o conjunto padrão de acessos disponível para a homologação. | Cadastro dos perfis padrão na base não produtiva, com níveis de acesso compatíveis e senhas armazenadas com hash. | `Validado` |
 | HOM-006 | Sessão / ambiente local | A sessão podia depender de um diretório PHP inexistente ou sem permissão de gravação. | O caminho padrão de sessões variava entre instalações e não era garantido pelo aplicativo. | Diretório de sessão configurável por `SGI_SESSION_DIR`, com criação e validação de permissão no bootstrap. | `Validado` |
 | HOM-007 | Acesso / gerenciamento de alunos | O mesário conseguia abrir diretamente a página `/turmas/alunos` pela URL. | O controlador de páginas aplicava uma autorização genérica para todos os níveis administrativos, e a view apenas ocultava alguns controles. | Política específica no servidor para permitir a rota somente ao nível `0`, com teste regressivo e view alinhada à mesma regra. | `Validado` |
-| HOM-008 | Chaveamento / agenda / mesário | Jogos recebem programação padrão repetida; a organização precisa agendar por blocos e o mesário deve receber apenas programação completa. | Geradores preenchem data/horário/local automaticamente; fases futuras ainda não têm uma reserva própria e criação/edição divergem na validação de conflitos. | Implementados agenda nula na geração, reservas futuras, simulador determinístico, confirmação idempotente em bloco, validação de conflitos e filtro operacional do mesário. | `Validado tecnicamente — homologação publicada pendente` |
+| HOM-008 | Chaveamento / agenda / mesário | Jogos recebem programação padrão repetida; a organização precisa agendar por blocos e o mesário deve receber apenas programação completa. | Geradores preenchem data/horário/local automaticamente; fases futuras ainda não têm uma reserva própria e criação/edição divergem na validação de conflitos. | Implementados agenda nula na geração, reservas futuras, simulador determinístico, assistente sequencial terça/quinta, limite padrão de 11h30, intervalo mínimo de 10 minutos, confirmação idempotente e filtro operacional do mesário. | `Validado tecnicamente — homologação publicada pendente` |
 | HOM-009 | Tabelas administrativas | As tabelas apresentavam estilos inconsistentes, células comprimidas e rolagem ruim em telas estreitas. | Regras distribuídas entre Bootstrap e componentes específicos; regra duplicada removia o espaçamento da tabela de elenco; tabelas largas não mantinham largura mínima legível no celular. | Base visual compartilhada, espaçamento corrigido, rolagem horizontal interna e aplicação do padrão em jogos, ocorrências e arrecadações. | `Validado tecnicamente — reteste visual pendente` |
 | HOM-010 | Categorias / edições | O sistema permitia criar duas categorias com o mesmo nome dentro da mesma edição. | Não havia validação de duplicidade no serviço nem restrição única no banco; o mesmo problema poderia ocorrer em requisições concorrentes. | Validação no serviço para criação/edição, restrição única por edição no banco, conversão de conflito para HTTP 409 e testes de regressão. | `Validado tecnicamente — migração condicionada à auditoria de dados` |
 | HOM-011 | Todas as páginas | O título do navegador podia repetir `SGI` ou incluir o nome da tela, interclasse ou turma. | O título era definido em múltiplas views e reescrito por scripts da navegação administrativa, turma de alunos e operação offline. | Componente único com `<title>SGI</title>`, remoção dos títulos por página e bloqueio das substituições contextuais no JavaScript. | `Validado tecnicamente — reteste visual pendente` |
@@ -29,8 +29,13 @@ Documento consolidado dos problemas identificados durante a homologação do SGI
 | HOM-016 | Modalidades / edição de modalidade | O campo de gênero não aparecia no modal de edição, impedindo alterar o gênero de uma modalidade já criada. | O modal de edição não renderizava o select de gênero e o JavaScript não carregava nem enviava `genero_modalidade`, embora o backend já aceitasse o campo. | Inclusão do select de gênero no modal, preenchimento com o valor atual, envio no `PUT` e validação do formulário. | `Implementado — validação técnica aprovada; reteste visual/browser pendente` |
 | HOM-017 | Chaveamento / geração | O botão **Gerar Chaveamento** retornava HTTP 500 depois do preenchimento dos dados obrigatórios. | O código passou a criar jogos com data, horário e local nulos, mas a base ainda estava somente até a migração 004 e mantinha essas colunas como `NOT NULL`. | Aplicação das migrações pendentes, reconciliação segura da migração 008 já parcialmente refletida no banco e validação da geração com equipes reais. | `Implementado — validação técnica aprovada` |
 | HOM-018 | Autorização / sessão / escopo do mesário | O mesário conseguia acessar telas administrativas por URL direta e consultar recursos de outras edições por filtros manipulados. | O `PageController` herdava níveis permissivos, APIs confiavam em IDs enviados pelo cliente e sessões não eram revalidadas contra alterações de papel, senha ou status. | Política explícita por rota, escopo derivado do servidor, revalidação com `auth_version`, logout somente por POST/CSRF, projeções mínimas e testes de regressão. | `Validado tecnicamente — homologação publicada pendente` |
+| HOM-019 | Modalidades / Alunos Destaques | O modal **Alunos Destaques** exibia “Erro ao carregar os destaques.” e a API retornava HTTP 500. | A consulta SQL correlacionava o alias externo `m` dentro de uma subconsulta derivada, onde esse alias não era visível no MySQL/MariaDB. | Apuração do maior total por modalidade com `NOT EXISTS`, agrupamento compatível com modo SQL estrito, suporte aos eventos de pontos da migration 010 e regressões HTTP/browser. | `Implementado — integração e navegador aprovados; publicação pendente` |
+| HOM-021 | Infraestrutura de testes / CI | Os testes dependiam de ferramentas e serviços instalados no host, dificultando a repetição em ambiente limpo e a equivalência entre desenvolvimento e CI. | A execução não possuía um fluxo único para provisionar banco, servidor HTTP, navegador e dependências em ambientes isolados e temporários. | Criado executor Docker descartável com Compose, imagens de teste, bancos MariaDB/MySQL, suites de qualidade, integração, navegador e contrato visual, além de limpeza automática ao final. | `Implementado — infraestrutura validada; reteste da suíte completa afetado por alterações de domínio em paralelo` |
+| HOM-022 | Disciplina / ocorrências de turma / ranking | Uma penalidade informada com sinal negativo era interpretada como bônus, fazendo o ranking aumentar em vez de diminuir; a remoção da ocorrência também precisava restaurar exatamente o valor anterior. | O serviço aceitava valores assinados, enquanto o cálculo do ranking já subtraía a penalidade. Faltavam normalização centralizada e uma restrição de banco para impedir valores negativos legados ou novos. | Normalização com `ABS()` no serviço e na interface, correção dos dados legados, `CHECK` constraints na migration 009 e regressões para persistência, ranking, remoção e recuperação. | `Implementado — regressão MariaDB aprovada; cenário de navegador da ocorrência aprovado; ressalva de falhas MySQL preexistentes fora deste fluxo` |
+| HOM-023 | Portal do aluno / aceite de regras | Um aluno conseguia abrir Jogos, Modalidades/Inscrições e outras telas por URL direta antes de aceitar as regras; também era possível tentar acessar as APIs diretamente. | O bloqueio dependia da navegação da interface e não havia uma barreira única, server-side, aplicada a todas as rotas web e APIs do nível competidor. | Estado do aceite consultado no banco e revalidado a cada requisição; rotas e APIs do aluno bloqueadas antes do aceite, com redirecionamento web ou HTTP 403; liberados somente Termos, status dos termos e regulamento ativo. | `Implementado — testes de regressão do aceite aprovados` |
+| HOM-024 | Mesário / placar / artilharia / operação offline | O placar podia ser incrementado antes da identificação do atleta; havia caminhos de API que permitiam pontuação isolada; ao anular, o histórico individual precisava permanecer; durante a regressão offline, uma jogada temporária chegou a ser contabilizada duas vezes. | O botão de ponto misturava a alteração visual do placar com o lançamento da artilharia; o elenco era consultado por turma em vez da equipe exata; rotas legadas aceitavam mutações sem vínculo; e o ramo de jogos temporários projetava o mesmo ponto antes e depois do tratamento comum de sucesso. | Migração 010 e serviço transacional de pontos, seletor por equipe, validações server-side, proteção das rotas alternativas, anulação lógica com preservação histórica, projeção offline idempotente e correção da duplicidade encontrada no teste `06–00` versus `03–00`. | `Implementado — integração 475/475 e navegador 47/47 aprovados; publicação pendente` |
 
-> A validação técnica das ocorrências HOM-001 a HOM-011, HOM-013, HOM-014, HOM-015 e HOM-016 foi registrada abaixo. HOM-012 foi reaberta após o PDF revisado; seus testes anteriores são evidência histórica, sem aceite do percurso completo. O responsável pela homologação ainda pode repetir os fluxos já corrigidos no ambiente publicado para registrar a confirmação visual final.
+> A validação técnica das ocorrências HOM-001 a HOM-011, HOM-013, HOM-014, HOM-015, HOM-016, HOM-019, HOM-020, HOM-021, HOM-022, HOM-023 e HOM-024 foi registrada abaixo. HOM-012 foi reaberta após o PDF revisado; seus testes anteriores são evidência histórica, sem aceite do percurso completo. O responsável pela homologação ainda pode repetir os fluxos já corrigidos no ambiente publicado para registrar a confirmação visual final.
 
 ## Ocorrências detalhadas
 
@@ -477,8 +482,9 @@ O Apache local estava publicando a aplicação em uma subpasta, enquanto alguns 
 | 09/09/2026 | Recuperação do fluxo de modalidades individuais, com pódio, créditos e sincronização offline. | Chaveamento / placar / mesário | `composer verify`, testes JavaScript, análise estática e build aprovados; HTTP/browser pendentes por falta do ambiente isolado |
 | 09/09/2026 | Reestruturação dos estilos em fontes por responsabilidade e bundles por contexto; remoção de duplicações e utilitários hash. | Acesso, administração, mesário e portal do aluno | `composer verify`, `npm run check`, `npm test`, `npm run build` e `git diff --check` aprovados; reteste visual e suíte HTTP/browser pendentes |
 | 09/09/2026 | Substituição do aviso de finalização por `O interclasse está inativo no momento.` e remoção do botão de conclusão. | Dashboard / edições inativas | Teste Playwright direcionado e regressão do dashboard ativo aprovados; reteste visual/publicado pendente |
-| 09/09/2026 | Implementação da programação em blocos, reservas futuras e filtro operacional do mesário. | Chaveamento / agenda / mesário | 373 asserções HTTP aprovadas, testes unitários, análise estática, build e regressão de materialização offline aprovados; browser/publicado pendentes |
+| 09/09/2026 | Implementação da programação em blocos, reservas futuras, filtro operacional do mesário e agenda sequencial terça/quinta. | Chaveamento / agenda / mesário | 473 asserções de integração aprovadas, testes unitários, análise estática, build e materialização de reservas aprovados; homologação publicada pendente |
 | 09/09/2026 | Fechamento de autorização por rota, escopo de recursos, revalidação de sessão, logout com POST/CSRF e regressões do mesário. | Acesso / APIs / mesário | PHPUnit 212/212, 2.089 asserções, JavaScript 21/21, análise estática e build aprovados; HTTP/browser isolados pendentes |
+| 09/09/2026 | Vínculo obrigatório de cada ponto a atleta, preservação do histórico após anulação e correção da duplicidade no placar temporário offline. | Mesário / placar / artilharia / sincronização | Integração 475/475, JavaScript 23/23, navegador 47/47, PHPStan, CS Fixer e build aprovados |
 
 ## Validações históricas das rodadas anteriores
 
@@ -614,37 +620,39 @@ O fluxo existente estava distribuído entre o chaveamento, o placar, o repositó
 ## Pendências para encerramento
 
 - [ ] Responsável da homologação repetir os fluxos no ambiente publicado.
+- [ ] Homologar no ambiente publicado o assistente de agenda sequencial: terça inicial, quinta seguinte, alternância posterior, limite padrão de 11h30, intervalo de 10 minutos e materialização das reservas futuras.
 - [ ] Retestar visualmente os bundles CSS e a navegação offline após a reestruturação (HOM-013).
 - [ ] Retestar visualmente o campo de gênero no modal de edição de modalidade e confirmar a persistência da alteração (HOM-016).
 - [ ] Retestar visualmente no ambiente publicado o comportamento do dashboard para uma edição inativa (HOM-015).
 - [ ] Anexar evidências finais do reteste do usuário, se exigido pelo processo.
 - [x] Ocorrências técnicas registradas com causa e solução.
 - [x] Correções críticas validadas por testes automatizados.
+- [x] Regra de vínculo obrigatório entre ponto e atleta validada na API, interface, operação offline e sincronização (HOM-024).
 - [x] Servidores temporários de teste encerrados.
 
 ## Encerramento da rodada
 
-- **Total de ocorrências registradas:** 16.
-- **Validadas tecnicamente:** 14 (HOM-012 tem implementação e testes locais, mas permanece fora do aceite publicado).
-- **Em reteste após implementação:** 4 (HOM-013, HOM-014, HOM-015 e HOM-016).
-- **Abertas:** 1 (HOM-012).
-- **Reabertas:** 1 (HOM-012, incluída nas abertas).
+- **Total de ocorrências registradas:** 24.
+- **Correções técnicas registradas:** 24, com ressalvas de auditoria de dados ou confirmação visual/publicada descritas em cada ocorrência.
+- **Validação automatizada consolidada:** suíte integrada 475/475, qualidade PHP/JavaScript aprovada e navegador 47/47.
+- **Pendências operacionais:** retestes visuais/publicados e auditoria da HOM-012, conforme a lista de pendências e os status detalhados acima.
+- **Reabertas:** 1 (HOM-012, incluída nas pendências de auditoria/publicação).
 - **Observação final:** a confirmação visual do responsável pela homologação deve ser registrada após o reteste no ambiente publicado.
 
-## HOM-008 — Programação em blocos pela organização
+## HOM-008 — Programação em blocos e agenda sequencial pela organização
 
 - **Data da solicitação e do plano:** 09/09/2026.
 - **Origem:** teste de homologação e orientação posterior do responsável.
 - **Status:** Implementado — validado tecnicamente.
 - **Problema:** data, horário e local são repetidos automaticamente na geração; o fluxo atual também permite inconsistência na validação de sobreposição entre criação e edição.
-- **Comportamento solicitado:** a organização define todos os horários; o mesário recebe apenas programação completa.
-- **Solução aplicada:** gerar confrontos sem agenda automática, reservar previamente fases futuras e oferecer assistente de agendamento em blocos com seleção, janelas por dia/local, duração, troca, descanso, prévia e confirmação integral.
+- **Comportamento solicitado:** a organização define todos os horários; o mesário recebe apenas programação completa. Para o fluxo automático, a primeira sessão começa na terça-feira, a próxima ocorre na quinta-feira e as sessões seguintes alternam terça e quinta.
+- **Solução aplicada:** gerar confrontos sem agenda automática, reservar previamente fases futuras e oferecer assistente de agendamento em blocos com seleção, janelas por dia/local, duração, troca, descanso, prévia e confirmação integral. O assistente também oferece a agenda sequencial com solicitação progressiva das próximas sessões.
 - **Regra de conflito proposta:** impedir sobreposição no mesmo espaço e verificar participantes e dependências. Substitui a interpretação anterior de permitir sobreposição deliberada.
 - **Offline:** carregar reservas das fases futuras para que o mesário avance o torneio sem precisar agendar; preservar resultados e tratar divergências de revisão na reconexão.
 - **Plano detalhado vigente:** [Agendamento em blocos e programação do mesário](plano-agendamento-em-blocos.md).
 - **Plano anterior:** `plano-ajuste-chaveamento-agenda.md`, identificado como substituído.
-- **Validação técnica:** suíte unitária do algoritmo, suíte HTTP completa, análise estática, build e regressões de materialização offline aprovados. A suíte HTTP terminou com 388 asserções e nenhuma falha.
-- **Pendência:** confirmação dos responsáveis pela homologação no ambiente publicado.
+- **Validação técnica:** suíte unitária dos algoritmos, suíte HTTP completa, análise estática, build e regressões de materialização offline aprovados. A execução integrada mais recente terminou com 473 asserções e nenhuma falha.
+- **Pendência:** confirmação dos responsáveis pela homologação no ambiente publicado. Os cenários de agenda e do mesário foram validados no ambiente isolado; a regressão de pontuação offline que surgiu durante a validação foi registrada e corrigida em HOM-024.
 
 #### Implementação realizada
 
@@ -654,6 +662,62 @@ O fluxo existente estava distribuído entre o chaveamento, o placar, o repositó
 - As reservas futuras são gravadas sem jogo fictício e aplicadas quando o confronto real é materializado, preservando data, local e duração.
 - O mesário consulta somente jogos operacionais com agenda completa; não agenda nem reprograma jogos.
 - A confirmação é transacional, idempotente e mantém histórico da alteração.
+
+#### Adequação do plano — agenda sequencial terça/quinta
+
+O plano original de agendamento em blocos foi ampliado para atender à regra operacional definida durante a revisão da homologação. A agenda passa a ser construída de forma progressiva: o responsável informa a primeira sessão, recebe uma prévia e só precisa informar a sessão seguinte quando o limite diário não comportar os jogos restantes.
+
+Regras consolidadas:
+
+- A primeira data válida é obrigatoriamente uma terça-feira. A interface já sugere a próxima terça-feira disponível, inclusive quando o modal é aberto em outro dia da semana.
+- A segunda sessão deve ser a quinta-feira imediatamente posterior à terça-feira. Depois disso, a cadência é terça-feira, quinta-feira, terça-feira, e assim sucessivamente.
+- O horário inicial do primeiro jogo é informado pelo responsável, com valor inicial de `08:00`.
+- O limite inicial para término dos jogos é `11:30`. O limite pode ser ajustado na sessão, mas nenhum jogo da sessão pode ultrapassar o término informado.
+- Cada jogo recebe intervalo fixo de 10 minutos. O backend rejeita intervalos menores, mesmo que não haja sobreposição direta entre os jogos.
+- Quando a prévia não consegue acomodar todos os jogos até o limite da última sessão informada, a resposta devolve a próxima data da cadência, o horário inicial sugerido e o limite `11:30`.
+- A interface exibe esses dados em um painel **Ainda há jogos. Informe a próxima sessão**, permitindo alterar o horário, adicionar a sessão e recalcular. O processo se repete até que não existam pendências.
+- O local selecionado permanece associado às sessões seguintes no assistente. Conflitos com jogos ou reservas fora da seleção continuam sendo considerados.
+- A confirmação só é habilitada quando a prévia não possui pendências; a confirmação permanece protegida por revisão e chave de idempotência.
+
+#### Fluxo de homologação atualizado
+
+1. Acessar a configuração de agenda e selecionar uma modalidade Mata-Mata.
+2. Clicar em **Agendar automaticamente**.
+3. Conferir a terça-feira sugerida, o horário inicial, o limite `11:30`, o local e a duração média do jogo.
+4. Clicar em **Calcular prévia** e conferir a ordem dos confrontos, os intervalos de 10 minutos e os horários de cada sessão.
+5. Se houver pendências, conferir que o sistema sugere a quinta-feira seguinte, informar/confirmar o horário da próxima sessão e clicar em **Adicionar dia e recalcular**.
+6. Repetir a etapa anterior enquanto houver jogos pendentes, validando a alternância terça/quinta.
+7. Confirmar a agenda somente quando a prévia indicar que todos os jogos possuem horário.
+8. Conferir no calendário e na tela do mesário que apenas jogos com data, horário e local completos são operacionais.
+9. Materializar/avançar uma posição futura da chave e conferir que a reserva é aplicada ao jogo real sem novo agendamento manual.
+
+#### Contrato técnico do fluxo sequencial
+
+- `POST /api/v1/agenda-blocos` com `acao: simular_sequencial` simula a agenda e retorna `dias`, `resumo`, `proposta`, `pendencias`, `intervalo_troca_min`, `limite_termino_padrao`, `proximo_dia_sugerido`, `proximo_inicio_sugerido` e `proximo_termino_sugerido`.
+- `POST /api/v1/agenda-blocos` com `acao: confirmar_sequencial` confirma a mesma proposta após validar a revisão.
+- O payload sequencial usa `id_modalidade`, `dias` e `opcoes.duracao_min`; cada item de `dias` contém `data`, `inicio`, `fim` e `local`.
+- O intervalo operacional é normalizado para 10 minutos no assistente e validado também no servidor.
+- A seleção automática descobre as posições existentes da modalidade, inclui posições futuras da chave e a disputa de terceiro lugar quando aplicável, sem criar jogos fictícios.
+- Posições futuras são persistidas em `agenda_reservas` com `id_jogo` nulo. Quando o chaveamento cria o jogo real, `aplicarReservaAgenda()` copia data, início, término e local e vincula a reserva ao novo jogo.
+- A seleção respeita as dependências entre fases: uma posição só pode ser programada depois que seus confrontos filhos tiverem horário ou estiverem resolvidos por bye.
+- O fluxo antigo `simular`/`confirmar` continua disponível para preservar compatibilidade com agendamentos em bloco já existentes.
+
+#### Testes de regressão da adequação
+
+- `tests/Unit/Modules/Competicoes/AgendamentoSequencialSchedulerTest.php`: seis cenários para limite diário, sugestão da quinta-feira, alternância de datas, dependências, intervalo mínimo e rejeição de primeira data fora da terça-feira.
+- `tests/Integration/AgendamentoSequencialTest.php`: prévia e confirmação HTTP, inclusão das posições futuras, intervalo de 10 minutos, reserva futura não materializada e reenvio idempotente.
+- `tests/Integration/JogosAndConflitosTest.php`: rejeição de jogo com intervalo operacional inferior a 10 minutos no mesmo local.
+- `tests/Integration/AgendamentoBlocoTest.php`: preservação do fluxo legado, reservas futuras e materialização.
+- `tests/run_all.php`: a nova suíte sequencial é executada junto com a suíte HTTP completa.
+
+#### Validação final atualizada — 09/09/2026
+
+- PHPUnit em Docker: 229 testes aprovados e 2.175 asserções; PHPStan sem erros e PHP CS Fixer sem correções.
+- JavaScript em Docker: 40 arquivos válidos, 23 testes aprovados e 132 assets preparados.
+- Integração HTTP, banco e recuperação em MariaDB isolado: 475/475 asserções aprovadas, incluindo a nova Suite 6.2 de agenda automática terça/quinta e a regressão do relatório de destaques.
+- Navegador: a suíte completa terminou com **47/47 testes aprovados**, incluindo inspeção offline do chaveamento, persistência do placar, operação do mesário e torneio online/offline. Durante a execução foi encontrada e corrigida a duplicidade de projeção `03–00`/`06–00`, detalhada em HOM-024.
+- `git diff --check`: sem erros de whitespace.
+- O ambiente Docker temporário foi encerrado ao final da validação.
 
 #### Arquivos principais
 
@@ -669,14 +733,14 @@ O fluxo existente estava distribuído entre o chaveamento, o placar, o repositó
 
 #### Validação final da implementação — 09/09/2026
 
-- `php tests/run_all.php`: 388/388 asserções aprovadas.
-- `composer verify`: 212 testes PHPUnit e 2.089 asserções aprovados; duas depreciações do PHPUnit, sem falha.
+- `php tests/run_all.php`: 475/475 asserções aprovadas.
+- `composer verify`: 229 testes PHPUnit e 2.175 asserções aprovados; duas depreciações do PHPUnit, sem falha.
 - `npm run check`: 40 arquivos JavaScript válidos.
-- `npm test`: 21 testes aprovados.
+- `npm test`: 23 testes aprovados.
 - `npm run build`: 132 assets preparados.
-- `npm --prefix tests/browser test`: 48 testes aprovados e 1 cenário opt-in ignorado (`individual-ranking.spec.cjs`).
+- `npm --prefix tests/browser test`: **47/47 testes aprovados**, incluindo os cenários de inspeção do chaveamento offline e torneio online/offline.
 - Contratos visuais de login desktop/mobile: 2 testes aprovados.
-- A validação confirmou: geração sem data/horário/local fictícios, prévia sem escrita, confirmação transacional, idempotência, revisão concorrente, conflitos de local/participantes, reservas futuras e operação offline do mesário sem agendamento local.
+- A validação confirmou: geração sem data/horário/local fictícios, prévia sem escrita, confirmação transacional, idempotência, revisão concorrente, conflitos de local/participantes, intervalo mínimo de 10 minutos, limite diário de 11h30, cadência terça/quinta, reservas futuras e operação offline do mesário sem agendamento local.
 
 ## HOM-014 — Ranking da edição em andamento visível aos alunos
 
@@ -1001,3 +1065,423 @@ O mesário deve acessar apenas as telas operacionais autorizadas e somente a edi
 #### Pendências registradas
 
 O rate limiting persistente de login e a ativação formal por token individual de uso único ainda precisam ser implementados. A senha universal de criação/reset foi removida, mas o fluxo de ativação e a auditoria final da casca offline devem ser homologados em ambiente HTTP/MariaDB isolado antes da publicação.
+
+---
+
+### HOM-019 — Erro 500 ao carregar Alunos Destaques nas modalidades
+
+- **Data do relato:** 09/09/2026.
+- **Data da implementação:** 09/09/2026.
+- **Reportado por:** homologação, com evidências visuais e console anexados.
+- **Área/tela:** `/edicoes/modalidades`, botão **Alunos Destaques**.
+- **Prioridade:** Alta.
+- **Status:** Implementado — integração e navegador aprovados; publicação pendente.
+
+#### Descrição do erro
+
+Ao clicar em **Alunos Destaques** na tela de modalidades, o modal era aberto, mas exibia a mensagem:
+
+> `Erro ao carregar os destaques.`
+
+No console do navegador, a chamada abaixo retornava HTTP 500:
+
+> `GET /api/v1/artilheiros?acao=destaques_modalidades&id_interclasse=1`
+
+O log do servidor registrava:
+
+> `Unknown column 'm.id_modalidade' in 'where clause'`
+
+#### Resultado esperado
+
+O modal deve consultar a artilharia da edição selecionada e exibir os alunos com maior total de gols agrupados por modalidade. Quando não houver registros, deve informar que ainda não existem alunos destaque, sem erro de servidor.
+
+#### Causa identificada
+
+Em `MysqliArtilheiroQueries::revelarDestaquesPorModalidade()`, a consulta comparava o total de gols com o maior total encontrado em uma subconsulta derivada. Essa subconsulta tentava usar `m.id_modalidade`, alias pertencente à consulta externa, dentro do `FROM (...) AS sub`:
+
+```sql
+WHERE m2.id_modalidade = m.id_modalidade
+```
+
+MySQL/MariaDB não permite essa referência correlacionada nesse nível da subconsulta derivada. A exceção do banco não tratada pelo fluxo de leitura resultava em HTTP 500 e acionava a mensagem genérica do front-end. A consulta de destaque geral possuía o mesmo padrão, usando `c.id_categoria` dentro de uma subconsulta derivada.
+
+#### Correção aplicada
+
+- Substituída a subconsulta derivada inválida por uma condição `HAVING NOT EXISTS`, que elimina um aluno quando existe outro com total de gols maior na mesma modalidade.
+- Mantido o suporte a empates: todos os alunos com o maior total continuam sendo retornados.
+- Mantido o filtro por edição informado na tela e o filtro da edição ativa quando nenhum ID é fornecido.
+- Incluídos no `GROUP BY` os campos não agregados selecionados, garantindo compatibilidade com `ONLY_FULL_GROUP_BY`.
+- Aplicada a mesma correção estrutural à consulta de destaque geral por categoria.
+- A migration `database/migrations/010_vinculo_obrigatorio_pontos.sql` fornece os campos de status e contribuição efetiva usados pela consulta para separar pontos ativos de ações anuladas; sua aplicação deve preceder a publicação desta versão.
+- Não houve mudança de rota ou do contrato JSON consumido pelo front-end.
+
+#### Arquivos principais
+
+- `src/Modules/Competicoes/Infrastructure/MysqliArtilheiroQueries.php`
+- `database/migrations/010_vinculo_obrigatorio_pontos.sql`
+- `resources/js/pages/eventos/configurar-modalidades.js` — consumidor existente da API, sem alteração necessária.
+- `tests/Integration/PlacarAndArtilhariaTest.php`
+- `tests/browser/frontend-regression.spec.cjs`
+
+#### Validação executada
+
+- Regressão HTTP adicionada para `acao=destaques_modalidades` com e sem `id_interclasse`; a resposta foi HTTP 200, `success: true` e `data` em formato de lista.
+- Migration 010 aplicada e repetida em MariaDB descartável; as colunas, índices e vínculos foram validados sem reaplicação indevida.
+- `php tests/run_all.php`: 475/475 asserções aprovadas em servidor e banco isolados MariaDB.
+- `composer verify`: 229 testes PHPUnit e 2.175 asserções aprovados.
+- `npm run check`: 40 arquivos JavaScript válidos.
+- `npm test`: 23 testes JavaScript aprovados.
+- `npm run build`: 132 assets preparados.
+- `npm --prefix tests/browser test`: 47/47 testes aprovados, incluindo a abertura do modal e a ausência da mensagem de erro.
+- `git diff --check`: concluído sem erros de whitespace.
+
+#### Validação da solução
+
+O erro SQL que provocava o HTTP 500 foi eliminado. O endpoint utilizado pelo modal agora retorna o envelope JSON esperado, preservando a listagem de destaques por modalidade e os demais fluxos de artilharia.
+
+---
+
+### HOM-020 — Ranking do aluno dependia de publicação manual e aparecia no menu lateral
+
+- **Data do relato:** 09/09/2026.
+- **Data da implementação:** 09/09/2026.
+- **Reportado por:** homologação, com especificação visual e de regras anexada.
+- **Área/tela:** portal do aluno — `/aluno/inicio`, `/aluno/ranking` e menu lateral.
+- **Prioridade:** Alta.
+- **Status:** Implementado — validação técnica concluída; homologação HTTP/browser isolada pendente por indisponibilidade do ambiente.
+
+#### Descrição da falha
+
+O portal do aluno ainda tratava o ranking como uma funcionalidade dependente de publicação manual. Em uma edição encerrada sem `ranking_publicado_em`, o card da home exibia **Ranking aguardando premiação**, não oferecia um link funcional e o aluno não conseguia consultar a classificação final. Ao mesmo tempo, o menu lateral sempre exibia o item **Rankings publicados**, embora esse não fosse mais o fluxo desejado.
+
+Também era possível acessar diretamente `/aluno/ranking?id={ID}`. Para uma edição ativa, a tela não usava uma regra própria de estado: a API misturava a validação de edição ativa com a existência do campo de publicação e a mensagem apresentada dizia que o ranking era restrito a administradores.
+
+#### Resultado esperado
+
+- Edição ativa (`status_interclasse = '1'`): o card deve exibir **Ver Detalhes** e o ranking deve permanecer oculto.
+- Edição encerrada (`status_interclasse = '0'`): o card deve exibir **Ver Ranking**, sem depender de publicação manual.
+- Acesso direto a uma edição ativa deve retornar o estado **Ranking Oculto**, com cadeado e explicação.
+- O menu lateral do aluno não deve conter o link de ranking.
+
+#### Causa identificada
+
+- `resources/views/components/aluno-nav.php` mantinha o item de ranking fixo no array do menu.
+- `resources/js/pages/aluno/home.js` exigia `ranking_publicado_em` para montar o link de edições encerradas.
+- `resources/js/pages/aluno/ranking.js` procurava uma edição encerrada que também tivesse publicação registrada.
+- `src/Modules/Resultados/Presentation/Http/RankingController.php` bloqueava o aluno quando a edição não estava publicada ou ainda estava ativa.
+- `src/Modules/Resultados/Infrastructure/MysqliRankingRepository.php` filtrava o ranking do aluno por status encerrado e publicação manual.
+
+#### Correção aplicada
+
+- Removido o item **Rankings publicados** do menu desktop e mobile do aluno.
+- Alterada a home para decidir o destino apenas pelo `status_interclasse`: modalidades para edição ativa e ranking para edição encerrada.
+- Alterada a seleção automática da rota de ranking para usar qualquer edição encerrada, sem consultar `ranking_publicado_em`.
+- Atualizada a tela de ranking para mostrar **Ranking Oculto**, cadeado e mensagem orientativa quando a edição informada estiver ativa; filtros e contadores são limpos nesse estado.
+- Alterada a proteção da API para bloquear somente edições ativas e renomeado o filtro interno para `somente_encerrados`.
+- Alterada a consulta SQL do ranking para retornar dados de qualquer edição encerrada, mesmo que a coluna legada de publicação esteja nula.
+- Removido do ranking administrativo o botão e o JavaScript de publicação manual, que não fazem mais parte do fluxo de negócio.
+- A migration `007_publicacao_ranking.sql` não foi reescrita e as colunas legadas foram preservadas para compatibilidade; elas deixaram de controlar a visualização do aluno.
+
+#### Testes de regressão adicionados
+
+- `tests/Integration/AlunosPortalTest.php`: aluno bloqueado em edição ativa, ranking liberado após encerramento sem publicação manual e restauração da edição ativa.
+- `tests/browser/aluno-portal.spec.cjs`: ausência do link no menu, botão **Ver Detalhes** na home ativa e estado **Ranking Oculto** no acesso direto.
+
+#### Arquivos principais
+
+- `resources/views/components/aluno-nav.php`
+- `resources/js/pages/aluno/home.js`
+- `resources/js/pages/aluno/ranking.js`
+- `resources/views/pages/aluno/ranking.php`
+- `resources/views/pages/resultados/ranking.php`
+- `resources/js/pages/resultados/ranking.js`
+- `src/Modules/Resultados/Presentation/Http/RankingController.php`
+- `src/Modules/Resultados/Infrastructure/MysqliRankingRepository.php`
+
+#### Validação executada
+
+- `composer verify`: aprovado — 212 testes PHPUnit, 2.089 asserções, PHPStan sem erros e PHP CS Fixer sem correções.
+- `npm run check`: aprovado — 40 arquivos JavaScript válidos.
+- `npm test`: aprovado — 21 testes JavaScript.
+- `npm run build`: aprovado — 132 assets preparados.
+- `php -l` nos PHP alterados e `node --check` nos JavaScript alterados: aprovados.
+- `git diff --check`: sem erros de whitespace.
+- `php tests/run_all.php`: não executado porque `SGI_TEST_BASE_URL` e o servidor HTTP de teste não estavam configurados.
+- `npm --prefix tests/browser test -- aluno-portal.spec.cjs`: não validado funcionalmente; a execução padrão apontou para o Apache local e recebeu `Not Found`, e a tentativa contra `127.0.0.1:8099` encontrou `ECONNREFUSED`.
+
+#### Validação da solução
+
+A regra do portal foi alinhada ao status da edição: rankings encerrados não dependem mais de publicação manual, enquanto rankings de edições ativas continuam protegidos no front-end e na API. A validação final em servidor, banco isolado e navegador permanece pendente até a disponibilidade desse ambiente.
+
+---
+
+### HOM-021 — Testes executados em Docker descartável
+
+- **Data da implementação:** 09/09/2026.
+- **Área:** automação de testes, homologação e CI.
+- **Prioridade:** Alta.
+- **Status:** Implementado — infraestrutura validada tecnicamente.
+
+#### Solicitação
+
+Garantir que os testes rodem em um ambiente isolado e descartável, sem depender de PHP, Composer, Node.js, MySQL/MariaDB ou Chromium instalados no host.
+
+#### Solução aplicada
+
+- Criadas imagens separadas para o executor PHP/Node/Composer e para Playwright/Chromium.
+- O `compose.test.yml` passou a orquestrar banco, servidor HTTP, qualidade, integração, navegador e contrato visual.
+- O banco usa `tmpfs`; as sessões usam um volume Docker temporário, removido ao final da execução.
+- O fluxo aceita MariaDB 10.11 e MySQL 8.4, além de PHP 8.2 e 8.4.
+- Os scripts `tools/test-docker.ps1` e `tools/test-docker.sh` executam as suites e limpam containers, rede e volumes automaticamente; `-Keep`/`--keep` permanece disponível para investigação.
+- O contrato visual passou a usar snapshots Linux próprios (`*-linux.png`), mantendo as referências Windows existentes.
+- O CI foi migrado para Docker para as etapas de qualidade, integração, navegador e contrato visual.
+- Ajustes SQL tornaram a suíte compatível com `ONLY_FULL_GROUP_BY` e a consulta de bloqueios compatível com MySQL e MariaDB.
+
+#### Comandos de homologação
+
+```text
+powershell -File tools/test-docker.ps1 -Database mariadb
+powershell -File tools/test-docker.ps1 -Database mysql
+sh tools/test-docker.sh --database mariadb --include-visual
+```
+
+#### Validação executada
+
+- `docker compose -f compose.test.yml config --quiet`: aprovado.
+- Qualidade em Docker: 214 testes PHPUnit, 2.091 asserções, PHPStan sem erros, PHP CS Fixer sem correções e 21 testes JavaScript aprovados.
+- Integração MariaDB: 406/406 asserções aprovadas.
+- Navegador Playwright: 46 testes aprovados e 1 cenário opt-in existente; contrato visual Linux: 2 testes aprovados.
+- MySQL 8.4: execução da integração e do navegador concluída com sucesso em rodada anterior.
+- `git diff --check`: aprovado.
+- Ao finalizar, containers, rede e volume de sessões são removidos automaticamente, sem deixar dados persistentes da rodada.
+
+#### Observação da rodada
+
+A execução mais recente no workspace encontrou falhas no fluxo antigo de artilharia/placar porque alterações de domínio adicionadas em paralelo passaram a exigir pontos vinculados a atletas e retornam HTTP 422 para os testes antigos. Essa falha não é causada pelo executor Docker; os arquivos dessas alterações não foram modificados neste ajuste.
+
+---
+
+### HOM-022 — Penalidade negativa em ocorrência de turma invertia o ranking
+
+- **Data do relato:** 09/09/2026.
+- **Data da implementação:** 09/09/2026.
+- **Evidência analisada:** `C:\Users\ferreira-mr\Downloads\Pontuação.pdf`.
+- **Reportado por:** homologação.
+- **Área/telas:** `/ocorrencias`, `/api/v1/ocorrencias-turmas` e ranking da turma.
+- **Prioridade:** Alta.
+- **Status:** Implementado — regressão MariaDB aprovada; cenário de ocorrência no navegador aprovado; ressalvas de compatibilidade MySQL registradas abaixo.
+
+#### Distinção entre evidência e instrução
+
+O PDF foi utilizado como **evidência do comportamento observado** e não como instrução de alteração do sistema. A correção foi definida a partir da regra de negócio existente: pontos de ocorrência representam uma penalidade e devem ser armazenados como magnitude positiva, sendo descontados uma única vez no cálculo do ranking.
+
+#### Descrição da falha
+
+Ao informar uma ocorrência de turma com pontuação negativa, o valor era salvo com o sinal negativo. Como o ranking já aplicava a fórmula `pontuação acumulada - penalidades`, uma penalidade de `-100` era convertida em `+100` no ranking. Na prática, a turma recebia bônus em vez de perder pontos. A remoção da ocorrência precisava, ainda, devolver o ranking exatamente ao valor anterior, sem deixar efeito residual.
+
+#### Resultado esperado
+
+- Qualquer pontuação de ocorrência deve ser tratada como magnitude não negativa.
+- Uma ocorrência de `4` ou `-4` deve reduzir o ranking em exatamente `4` pontos.
+- A penalidade não pode ser aplicada duas vezes nem transformar-se em bônus.
+- A remoção de uma ocorrência ativa deve restaurar exatamente o ranking calculado antes dela.
+- Registros antigos negativos devem ser corrigidos sem reescrever migrações já aplicadas.
+- Ocorrências individuais continuam usando inativação lógica; o ajuste não altera esse contrato nem cria exclusão física indevida.
+
+#### Causa identificada
+
+- `OcorrenciaTurmaService` encaminhava o valor recebido sem normalizar o sinal.
+- A validação HTML com `min="0"` não era uma proteção suficiente para requisições manuais ou clientes antigos.
+- A tabela não possuía uma invariável de banco que impedisse valores negativos.
+- O cálculo do ranking já subtraía a soma das penalidades; por isso, aceitar um valor negativo invertia a regra.
+
+#### Correção aplicada
+
+- Normalização centralizada com `abs()` em `src/Modules/Disciplina/Application/OcorrenciaTurmaService.php`, protegendo a regra também para chamadas HTTP diretas.
+- Normalização no formulário de `resources/js/pages/disciplina/ocorrencias.js`, incluindo correção visual do campo quando o usuário digita um valor negativo manualmente.
+- Nova migration `database/migrations/009_occurrence_penalty_invariant.sql` para:
+  - converter registros legados negativos para seus valores absolutos;
+  - impedir novos valores negativos em `ocorrencias_turmas` e `ocorrencias` com `CHECK constraints`;
+  - manter as migrações anteriores intactas e permitir atualização/reexecução segura.
+- Preservado o endpoint existente de remoção de ocorrência de turma.
+- Mantida a inativação lógica das ocorrências individuais, com `status_ocorrencia = 0`.
+- Ajustado o ensaio de recuperação para descobrir dinamicamente todas as migrations, evitando que novas migrations quebrem o teste por contagem fixa.
+
+#### Testes de regressão adicionados ou ajustados
+
+- `tests/Unit/Modules/Disciplina/OcorrenciaTurmaServiceTest.php`: valor negativo normalizado para magnitude positiva antes da persistência.
+- `tests/Unit/Modules/Disciplina/OcorrenciaServiceTest.php`: penalidade individual negativa rejeitada quando o usuário é válido.
+- `tests/Integration/OcorrenciasAndRankingTest.php`: valor negativo persistido como positivo, desconto aplicado uma única vez e restauração exata após remoção.
+- `tests/Integration/MigrationsTest.php`: presença das duas restrições `CHECK` da migration 009.
+- `tests/Integration/RecoveryRehearsalTest.php`: aplicação e repetição das migrations sem depender de quantidade fixa.
+- `tests/browser/occurrence-offline-edit.spec.cjs`: fluxo de ocorrência validado no navegador em execução isolada; o teste passou com `1/1` cenário.
+
+#### Validação executada
+
+- Suíte de qualidade em Docker: **214 testes PHPUnit, 2.091 asserções**, PHPStan sem erros, PHP CS Fixer sem correções, `npm run check` com 40 arquivos JavaScript válidos e `npm test` com 21 testes aprovados.
+- Suíte HTTP, banco e recuperação em MariaDB isolado: **406/406 asserções aprovadas**.
+- Regressões específicas de ocorrência e ranking aprovadas em MariaDB e nos cenários correspondentes do MySQL 8.4.
+- `php -l` nos arquivos PHP alterados, `node --check` nos JavaScript alterados e `git diff --check`: aprovados.
+- Cenário browser diretamente relacionado à ocorrência offline: **1/1 aprovado**.
+
+#### Ressalvas da homologação
+
+- A primeira execução concorrente do executor Docker sofreu encerramento do container da aplicação por pressão de memória do ambiente. A execução foi repetida de forma isolada, com a suíte de qualidade antes da inicialização do servidor, e foi aprovada.
+- A suíte browser agregada foi interrompida por `SIGTERM` do ambiente antes do resumo final; o cenário diretamente relacionado à ocorrência foi executado separadamente e aprovado.
+- A rodada completa em MySQL 8.4 ainda apresenta falhas preexistentes em cenários de placar/artilharia que passaram a exigir pontos vinculados a atletas e retornam HTTP 422. Os testes de ocorrência passaram, e nenhum ajuste fora desse fluxo foi incluído para mascarar essa falha de domínio.
+
+#### Critério de aceite
+
+Considera-se corrigido o erro de pontuação negativa quando o valor persistido é não negativo, a redução do ranking ocorre uma única vez, a remoção restaura o total anterior e a migration impede regressão por novas requisições ou dados inválidos. A confirmação visual no ambiente publicado permanece como etapa operacional da homologação.
+
+---
+
+### HOM-023 — Aluno acessava o sistema antes de aceitar as regras
+
+- **Data do relato:** 09/09/2026.
+- **Data da implementação:** 09/09/2026.
+- **Reportado por:** homologação.
+- **Área/telas:** `/aluno/termos`, `/aluno/inicio`, `/aluno/modalidades`, `/aluno/jogos`, `/aluno/perfil`, `/aluno/ranking` e APIs do portal do aluno.
+- **Prioridade:** Crítica.
+- **Status:** Implementado — bloqueio server-side e regressões automatizadas aprovados; confirmação no ambiente publicado permanece como etapa operacional.
+
+#### Descrição da falha
+
+Foi reproduzido que um aluno autenticado, sem aceitar as regras de participação, conseguia acessar por URL direta telas de jogos e modalidades/inscrições. A mesma brecha permitia tentar consultar ou alterar recursos pelas APIs, contornando o bloqueio visual apresentado na navegação normal.
+
+#### Resultado esperado
+
+- Nenhum aluno pode acessar qualquer funcionalidade do sistema antes de aceitar as regras.
+- O único fluxo disponível antes do aceite é a leitura/aceite dos termos, além da consulta necessária ao regulamento ativo.
+- O bloqueio deve ocorrer no servidor, independentemente de o acesso ser feito pelo menu, por URL digitada, por recarregamento da página ou por chamada direta à API.
+- Depois do aceite, o aluno deve seguir normalmente para o portal, jogos, modalidades/inscrições e demais recursos autorizados.
+- A retirada do aceite no banco deve invalidar o acesso de uma sessão já aberta no próximo request, sem depender de novo login.
+
+#### Causa identificada
+
+- O controle anterior dependia principalmente do fluxo de navegação e do estado carregado no cliente.
+- O `PageController` e as APIs não aplicavam uma política única para impedir o acesso de aluno sem aceite.
+- A sessão precisava refletir o estado persistido em `usuarios_has_interclasses.aceito_termo`, inclusive quando esse estado fosse alterado depois do login.
+
+#### Correção aplicada
+
+- O repositório de usuários passou a carregar o estado de aceite a partir do vínculo do usuário com a edição.
+- O login e o revalidador de sessão passaram a atualizar `$_SESSION['termo_aceito']` com o valor atual do banco.
+- O `Kernel` passou a aplicar a barreira antes do processamento das rotas protegidas:
+  - páginas web redirecionam para `/aluno/termos`;
+  - APIs retornam HTTP 403 com a mensagem `Aceite os termos de responsabilidade para continuar.` e indicação do redirecionamento;
+  - ficam liberados somente `/aluno/termos`, `GET /api/v1/termos` e a consulta sem identificador ao regulamento da edição ativa.
+- A proteção específica do portal foi mantida no `PageController`, evitando acesso direto às cinco páginas do aluno mesmo fora da navegação normal.
+- A navegação do aluno sem aceite exibe somente Termos e Sair; após a confirmação, o botão conclui o aceite e encaminha o aluno para `/aluno/inicio`.
+- O aceite é idempotente: repetir a confirmação não duplica o registro nem altera o resultado já aceito.
+
+#### Testes de regressão adicionados ou ajustados
+
+- `tests/Integration/AlunosPortalTest.php`:
+  - login inicial de aluno sem aceite direciona para Termos;
+  - todas as páginas protegidas do portal são bloqueadas por URL;
+  - matriz das APIs protegidas retorna HTTP 403;
+  - tentativas de contornar a regra usando filtros no endpoint de edições também são bloqueadas;
+  - Termos, status dos termos e regulamento ativo permanecem acessíveis;
+  - aceite repetido é idempotente;
+  - revogação direta no banco é percebida pela sessão já existente e volta a bloquear jogos/páginas.
+- `tests/Unit/Presentation/Web/PageControllerTest.php`: data provider cobrindo início, modalidades, jogos, perfil e ranking, com redirecionamento e `Cache-Control: no-store`.
+- `tests/browser/aluno-portal.spec.cjs`: percurso real no navegador, URLs diretas, menu restrito, consulta de jogos e tentativa de inscrição antes do aceite; depois do aceite, acesso normal ao portal.
+- Fixtures de `tests/browser/auth-rbac.spec.cjs`, `tests/browser/mesario-offline.spec.cjs` e `tests/browser/occurrence-offline-edit.spec.cjs` ajustadas para aceitar os termos antes dos fluxos que dependem do portal do aluno.
+- `tests/Integration/AuthAndRbacTest.php` e `tests/Integration/InscricaoModalidadesTest.php` atualizados para preservar o comportamento esperado de login e inscrição após o aceite.
+
+#### Validação executada
+
+- Qualidade em Docker: **229 testes PHPUnit e 2.175 asserções aprovados**, PHPStan sem erros, PHP CS Fixer aprovado, `npm run check` com 40 arquivos JavaScript válidos, `npm test` com 23 testes aprovados e `npm run build` com 132 assets preparados.
+- Suíte HTTP, banco e recuperação em ambiente isolado: os cenários do portal do aluno e do aceite foram aprovados. A execução agregada mais recente terminou com **473 de 473 asserções aprovadas**.
+- A validação da agenda automática terça/quinta também foi concluída separadamente e não apresenta pendências de integração; os cenários browser legados de placar permanecem acompanhados na seção HOM-008.
+- Teste browser direcionado do Portal do Aluno: execução final aprovada; um cenário precisou de nova tentativa após erro transitório de conexão (`ERR_CONNECTION_REFUSED`) e passou no retry.
+- `git diff --check`: aprovado.
+
+#### Critério de aceite
+
+Considera-se corrigida a falha quando um aluno sem aceite não consegue acessar páginas, jogos, inscrições ou APIs protegidas por menu, URL direta ou chamada manual; somente o fluxo de termos permanece disponível; o aceite libera o portal; e a revogação persistida volta a bloquear a sessão sem novo login. A validação da agenda possui registro próprio em HOM-008 e não altera este critério de aceite.
+
+---
+
+### HOM-024 — Ponto lançado sem vínculo obrigatório ao atleta
+
+- **Data do relato:** 09/09/2026.
+- **Data da implementação:** 09/09/2026.
+- **Reportado por:** homologação e revisão da regra de lançamento de ponto.
+- **Área/telas:** `/jogos/placar`, `/api/v1/pontos`, `/api/v1/artilheiros`, `/api/v1/partidas` e operação offline do mesário.
+- **Prioridade:** Crítica.
+- **Status:** Implementado — integração completa e suíte browser aprovadas; publicação pendente.
+
+#### Descrição dos erros encontrados
+
+O botão `+` alterava o placar antes de o mesário informar o atleta responsável pela jogada. O modal de artilharia era aberto depois do incremento e podia ser fechado sem uma identificação válida. Também existiam caminhos alternativos que permitiam alterar `resultado_partida` ou gravar artilharia sem a relação simultânea entre jogo, partida, equipe e atleta.
+
+Na consulta do elenco, a seleção podia ser montada por turma, misturando alunos inscritos em equipes diferentes da mesma turma. Isso permitia atribuir a jogada à equipe incorreta. O fluxo de anulação ainda precisava retirar somente a contribuição do placar, mantendo a ação individual para o relatório final.
+
+Durante a regressão do torneio 100% offline foi encontrado um segundo defeito: uma jogada de jogo temporário era projetada no placar duas vezes. O teste esperava `03–00`, mas a tela remontada apresentava `06–00`.
+
+#### Resultado esperado
+
+- Clicar em `+` deve abrir a seleção sem alterar placar, histórico ou fila.
+- O seletor deve listar exclusivamente atletas competidores, ativos e inscritos na equipe exata da partida.
+- A confirmação sem atleta deve ser bloqueada com a mensagem `Selecione o aluno responsável pela jogada para confirmar o ponto.`.
+- A confirmação deve criar uma única jogada vinculada e incrementar o placar na mesma operação transacional.
+- Reenviar a mesma jogada não pode criar outro ponto nem outro incremento.
+- Anular uma jogada deve diminuir o placar uma única vez, sem excluir ou apagar a ação do atleta.
+- O comportamento deve permanecer consistente após recarga, navegação SPA, operação offline e sincronização.
+
+#### Causas identificadas
+
+- A interface misturava a ação visual de incrementar o placar com a confirmação da artilharia.
+- A validação do atleta não era uma regra centralizada do servidor; o endpoint legado de artilharia e alterações diretas de partida podiam contornar o vínculo.
+- A consulta do modal não restringia todos os critérios à equipe exata e à inscrição ativa no jogo.
+- O modelo anterior não diferenciava adequadamente ação válida, ação anulada e contribuição efetiva ao placar.
+- A projeção de jogo temporário executava o incremento no ramo offline e novamente no tratamento comum de sucesso.
+- A reconstrução do chaveamento podia excluir a partida referenciada pela ação, ameaçando a preservação do histórico.
+
+#### Correção aplicada
+
+- Criada a migration `database/migrations/010_vinculo_obrigatorio_pontos.sql`, com:
+  - referência à partida e à equipe da jogada;
+  - atleta e operador responsáveis;
+  - chave idempotente `chave_jogada`;
+  - estado `ativo`/`anulado` e `conta_no_placar`;
+  - dados de autoria e data da anulação;
+  - índices e chaves estrangeiras para preservar a integridade;
+  - marcação explícita de jogos anteriores como legados, sem reescrever seus placares históricos.
+- Criados `PontoService`, `PontoRepository`, `MysqliPontoRepository` e `PontoController` para concentrar o contrato de pontos.
+- Implementado `GET /api/v1/pontos?acao=atletas&id_jogo=...&id_equipe=...`, que devolve somente atletas de nível competidor, ativos, inscritos na equipe exata e elegíveis disciplinarmente para o jogo.
+- Implementado `POST /api/v1/pontos`, que valida jogo, partida, equipe, edição, modalidade coletiva, atleta, inscrição, elegibilidade e chave idempotente dentro da transação; o placar é incrementado junto com a jogada.
+- Implementado `PUT /api/v1/pontos`, que marca a jogada como anulada, registra a autoria da operação e reduz a contribuição do placar sem remover o registro histórico.
+- O front-end de `resources/js/pages/competicoes/placar.js` passou a abrir o modal antes de qualquer alteração, bloquear seleção vazia, enviar o atleta e exibir ações anuladas separadamente das válidas.
+- As rotas antigas de artilharia e mutações diretas de partida foram bloqueadas para novas pontuações isoladas. A finalização e a sincronização conferem que o placar de jogos novos corresponde às jogadas ativas vinculadas.
+- O IndexedDB passou a armazenar pontos, anulações e elencos por equipe; o pré-carregamento não mistura atletas de equipes distintas e a fila mantém a mesma intenção até a confirmação remota.
+- A projeção de jogos temporários foi corrigida para incrementar cada ponto exatamente uma vez. O caso `06–00` foi eliminado sem alterar a expectativa do teste.
+- Antes de remover partidas durante a reconstrução de chaveamento, o histórico é desvinculado da linha física da partida, preservando jogo, equipe, atleta, estado e autoria da ação.
+
+#### Testes de regressão adicionados ou ajustados
+
+- `tests/Unit/Modules/Competicoes/PontoServiceTest.php`: contrato de validação, ausência de atleta, escopo da equipe, idempotência e anulação.
+- `tests/Integration/PlacarAndArtilhariaTest.php`: ponto sem atleta, elenco exato, repetição da chave, equipe adversária, anulação com histórico preservado, relatório e finalização.
+- `tests/Integration/ConsistencyGuardsTest.php`: rejeição de alteração direta de placar e exigência de jogadas vinculadas para finalizar o jogo.
+- `tests/Integration/MesarioResourceScopeTest.php`: bloqueio de recursos de outra edição e proteção das mutações do mesário.
+- `tests/Integration/TemporaryResolutionScopeTest.php` e `tests/E2E/FullOfflineTournamentTest.php`: pontos vinculados em jogos temporários, resolução de IDs e sincronização do torneio offline.
+- `tests/Integration/PodiumCreditTest.php`: retificação por eventos, preservação do histórico e não duplicação de créditos.
+- `tests/javascript/mesario-data.test.cjs`: projeção e anulação offline, além da regressão que mantém o mesmo atleta disponível quando ele participa de equipes diferentes.
+- `tests/browser/score-persistence.spec.cjs`, `tests/browser/mesario-offline.spec.cjs` e `tests/browser/tournament-offline.spec.cjs`: modal obrigatório, fila, remontagem da tela, anulação e torneio online/offline completo.
+- `tests/browser/frontend-regression.spec.cjs`: abertura do modal **Alunos Destaques**, confirmação de HTTP 200 e ausência da mensagem de erro na página de modalidades.
+
+#### Validação executada
+
+- `php tests/run_all.php`: **475/475 asserções aprovadas**, incluindo a nova suíte de placar, artilharia, escopo, relatório de destaques e torneio offline.
+- `composer verify`: **229 testes PHPUnit e 2.175 asserções aprovados**, PHPStan sem erros e PHP CS Fixer sem correções; duas depreciações do PHPUnit foram reportadas sem falha.
+- `npm run check`: **40 arquivos JavaScript válidos**.
+- `npm test`: **23/23 testes JavaScript aprovados**.
+- `npm run build`: **132 assets preparados**.
+- `npm --prefix tests/browser test`: **47/47 testes browser aprovados**, incluindo os cenários de persistência do placar, mesário offline, chaveamento e torneio completo online/offline.
+- `git diff --check`: aprovado, sem erros de whitespace.
+
+#### Critério de aceite
+
+Considera-se corrigida a ocorrência quando nenhum novo ponto pode existir sem atleta e partida/equipe válidos; o seletor não mistura elencos; a confirmação é atômica e idempotente; a anulação reduz o placar sem apagar a ação; e o mesmo comportamento é mantido após recarga, operação offline, sincronização e reconstrução do chaveamento.

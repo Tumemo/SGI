@@ -126,8 +126,8 @@ test.describe('Autenticação, RBAC e Segurança de Rotas', () => {
         await page.locator('#form_desktop .ipt-senha').fill(senhaAluno);
         await page.locator('#form_desktop button[type="submit"]').click();
 
-        await page.waitForURL(/\/aluno\/inicio/, { timeout: 15_000 });
-        await expect(page).toHaveURL(/\/aluno\/inicio/);
+        await page.waitForURL(/\/aluno\/termos/, { timeout: 15_000 });
+        await expect(page).toHaveURL(/\/aluno\/termos/);
 
         // Aluno tenta navegar para tela staff
         await page.goto('edicoes', { waitUntil: 'domcontentloaded' });

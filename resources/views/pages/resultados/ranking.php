@@ -9,7 +9,6 @@ $nivelRaw = $_SESSION['nivel_usuario'] ?? $_SESSION['nivel'] ?? $_SESSION['usuar
 if (is_numeric($nivelRaw)) {
     $nivelNum = (int)$nivelRaw;
 $eAdmin = ($nivelNum === 0 || $nivelNum === 1);
-$podePublicar = $nivelNum === 0;
 } else {
     $eAdmin = (strtolower((string)$nivelRaw) === 'admin');
 }
@@ -55,11 +54,6 @@ $paginaAtiva = 'ranking';
             <div id="filtrosDesk" class="d-flex overflow-auto gap-2"></div>
 
             <div class="d-flex align-items-center gap-3">
-                <?php if ($podePublicar): ?>
-                    <button type="button" id="btnPublicarRanking" class="btn btn-danger fw-bold d-none">
-                        <i class="bi bi-megaphone"></i> Publicar na premiação
-                    </button>
-                <?php endif; ?>
                 <?php if ($eAdmin): ?>
                     <button type="button" class="btn btn-outline-dark fw-bold btn-imprimir" onclick="window.print()">
                         <i class="bi bi-printer"></i> Imprimir Ranking

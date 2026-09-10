@@ -101,7 +101,9 @@ window.SGIPage.mount("disciplina/ocorrencias", function (pageConfig, pageScope) 
 
     async function salvarOcorrenciaModal() {
         const titulo = document.getElementById('ocrTituloModal').value.trim();
-        const pontos = parseInt(document.getElementById('ocrPontosModal').value) || 0;
+        const pontosEl = document.getElementById('ocrPontosModal');
+        const pontosInformados = parseInt(pontosEl.value, 10);
+        const pontos = Number.isNaN(pontosInformados) ? 0 : Math.abs(pontosInformados);
         const data = new Date().toISOString().split('T')[0];
         const msgEl = document.getElementById('msgOcrModal');
         const btnEl = document.getElementById('btnSalvarOcrModal');
@@ -109,6 +111,12 @@ window.SGIPage.mount("disciplina/ocorrencias", function (pageConfig, pageScope) 
         if (!titulo || !modalTurmaId) {
             msgEl.innerHTML = '<span class="sgi-u-color-dc2626-weight-700">Preencha o título.</span>';
             return;
+        }
+
+        // Keep the field consistent with the server contract even when a
+        // browser accepts a manually typed negative number despite min="0".
+        if (pontosInformados < 0) {
+            pontosEl.value = String(pontos);
         }
 
         btnEl.disabled = true;

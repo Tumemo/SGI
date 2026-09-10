@@ -57,8 +57,13 @@ $router->post('/api/v1/senha', $withDatabase(
 ));
 $router->add(['GET', 'POST', 'PUT'], '/api/v1/artilheiros', $withDatabase(
     static fn (mysqli $conn) => new \App\Modules\Competicoes\Presentation\Http\ArtilheiroController(
-        new \App\Modules\Competicoes\Application\ArtilheiroService(new \App\Modules\Competicoes\Infrastructure\MysqliArtilheiroRepository($conn)),
         new \App\Modules\Competicoes\Infrastructure\MysqliArtilheiroQueries($conn),
+        new \App\Modules\Acesso\Presentation\Http\CompetitionAccess(new \App\Modules\Acesso\Infrastructure\MysqliInterclasseRepository($conn)),
+    ),
+));
+$router->add(['GET', 'POST', 'PUT'], '/api/v1/pontos', $withDatabase(
+    static fn (mysqli $conn) => new \App\Modules\Competicoes\Presentation\Http\PontoController(
+        new \App\Modules\Competicoes\Application\PontoService(new \App\Modules\Competicoes\Infrastructure\MysqliPontoRepository($conn)),
         new \App\Modules\Acesso\Presentation\Http\CompetitionAccess(new \App\Modules\Acesso\Infrastructure\MysqliInterclasseRepository($conn)),
         new \App\Modules\Sincronizacao\Presentation\Http\MutationAction(new \App\Modules\Sincronizacao\Infrastructure\MysqliMutationStore($conn)),
     ),
@@ -190,6 +195,7 @@ $router->post('/api/v1/resultados', $withDatabase(
             new \App\Modules\Resultados\Application\PontuacaoService(
                 new \App\Modules\Resultados\Infrastructure\MysqliPodioRepository($conn),
             ),
+            new \App\Modules\Competicoes\Infrastructure\MysqliPontoRepository($conn),
         ),
         new \App\Modules\Acesso\Presentation\Http\CompetitionAccess(new \App\Modules\Acesso\Infrastructure\MysqliInterclasseRepository($conn)),
         new \App\Modules\Sincronizacao\Presentation\Http\MutationAction(new \App\Modules\Sincronizacao\Infrastructure\MysqliMutationStore($conn)),

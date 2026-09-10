@@ -128,7 +128,7 @@ final class ArrecadacaoConsistencyTest
             $waiters = 0;
             $states = [];
             while ($waiters < 2 && microtime(true) < $deadline) {
-                $lockWaits = (int) $connection->query('SELECT COUNT(*) FROM information_schema.INNODB_LOCK_WAITS')->fetch_column();
+                $lockWaits = (int) $connection->query("SELECT COUNT(*) FROM information_schema.INNODB_TRX WHERE trx_state = 'LOCK WAIT'")->fetch_column();
                 $trxWaits = (int) $connection->query("SELECT COUNT(*) FROM information_schema.INNODB_TRX WHERE trx_state = 'LOCK WAIT'")->fetch_column();
                 $processList = $connection->query('SELECT STATE, INFO FROM information_schema.PROCESSLIST WHERE ID <> CONNECTION_ID() AND DB = DATABASE()');
                 $states = [];

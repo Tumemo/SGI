@@ -6,6 +6,7 @@ namespace App\Modules\Sincronizacao\Infrastructure;
 
 use App\Modules\Competicoes\Application\ModalidadeNaoEncontradaException;
 use App\Modules\Competicoes\Infrastructure\MysqliChaveamentoRepository;
+use App\Modules\Competicoes\Infrastructure\MysqliPontoRepository;
 use App\Modules\Competicoes\Application\IndividualRankingService;
 use App\Modules\Competicoes\Infrastructure\MysqliIndividualRankingRepository;
 use App\Modules\Competicoes\Domain\TipoCompeticaoRules;
@@ -129,6 +130,7 @@ final class MysqliChaveamentoSyncGateway
                         continue;
                     }
                     $score = (int) ($part['resultado'] ?? 0);
+                    $this->validarPontuacaoSincronizada($gameId, $teamId, $score);
                     $current = $this->one('SELECT id_partida FROM partidas WHERE jogos_id_jogo = ? AND equipes_id_equipe = ? LIMIT 1', 'ii', [$gameId, $teamId]);
                     if ($current !== null) {
                         $statement = $this->prepare('UPDATE partidas SET resultado_partida = ? WHERE id_partida = ?');
@@ -234,5 +236,25 @@ final class MysqliChaveamentoSyncGateway
             throw new RuntimeException('Não foi possível preparar sincronização.');
         }
         return $statement;
+    }
+
+    private function validarPontuacaoSincronizada(int $gameId, int $teamId, int $score): void
+    {
+        if ($score < 0) {
+            throw new \InvalidArgumentException('O resultado da partida não pode ser negativo.');
+        }
+        $pontos = new MysqliPontoRepository($this->connection);
+        if (!$pontos->exigeVinculo($gameId)) {
+            return;
+        }
+        $partida = $this->one('SELECT id_partida FROM partidas WHERE jogos_id_jogo = ? AND equipes_id_equipe = ? LIMIT 1', 'ii', [$gameId, $teamId]);
+        $ativos = 0;
+        if ($partida !== null) {
+            $row = $this->one("SELECT COUNT(*) AS total FROM artilheiros WHERE partidas_id_partida = ? AND status_artilheiro = 'ativo' AND conta_no_placar = 1", 'i', [(int) $partida['id_partida']]);
+            $ativos = (int) ($row['total'] ?? 0);
+        }
+        if ($ativos !== $score) {
+            throw new \InvalidArgumentException('O placar sincronizado precisa possuir um ponto vinculado a cada gol.');
+        }
     }
 }

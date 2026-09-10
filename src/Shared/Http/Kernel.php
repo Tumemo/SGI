@@ -50,6 +50,28 @@ final class Kernel
                 return;
             }
         }
+        if ($protectedRoute
+            && !$this->isPublicPath($path)
+            && !$deprecatedRegistrationValidation
+            && !str_ends_with($path, '/api/v1/logout')
+            && $this->studentTermsAreRequired($request, $path)
+            && (int) ($_SESSION['nivel'] ?? -1) === 3
+            && empty($_SESSION['termo_aceito'])) {
+            $redirect = Url::to('aluno/termos');
+            if (str_starts_with($path, '/api/v1/')) {
+                Response::json([
+                    'success' => false,
+                    'message' => 'Aceite os termos de responsabilidade para continuar.',
+                    'redirect' => $redirect,
+                ], 403, ['Cache-Control' => 'no-store'])->send();
+            } else {
+                Response::empty(302, [
+                    'Location' => $redirect,
+                    'Cache-Control' => 'no-store',
+                ])->send();
+            }
+            return;
+        }
         CsrfGuard::protectCurrentApiMutation();
         if ($path === '/' || $path === '/index.php') {
             Response::empty(302, ['Location' => Url::to('login')])->send();
@@ -92,5 +114,25 @@ final class Kernel
         return $path === '/api/v1/usuarios'
             && strtoupper($request->method()) === 'POST'
             && (string) $request->query('acao', $request->input('acao', '')) === 'validar_inscricao';
+    }
+
+    private function studentTermsAreRequired(Request $request, string $path): bool
+    {
+        if ($path === '/aluno/termos' || $path === '/api/v1/termos') {
+            return false;
+        }
+
+        // Esta é a única leitura de dados liberada antes do aceite: o aluno
+        // precisa conseguir abrir o regulamento para decidir se aceita.
+        if ($path === '/api/v1/edicoes'
+            && $request->method() === 'GET'
+            && strtolower((string) $request->query('regulamento', '')) === 'true'
+            && (string) $request->query('status_interclasse', '') === '1'
+            && (int) $request->query('id', 0) <= 0
+            && (int) $request->query('id_interclasse', 0) <= 0) {
+            return false;
+        }
+
+        return true;
     }
 }

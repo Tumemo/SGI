@@ -3,6 +3,7 @@
 
 $paginaAtiva = $paginaAtiva ?? 'home';
 $nivelUsuario = (int)($_SESSION['nivel'] ?? -1);
+$termoAceito = $nivelUsuario !== 3 || !empty($_SESSION['termo_aceito']);
 
 // Busca a foto da sessão ou do array $usuarioPerfil (caso esteja definido na página de perfil)
 $fotoUsuario = $_SESSION['foto_usuario'] ?? $usuarioPerfil['foto_usuario'] ?? null;
@@ -18,9 +19,11 @@ $navItens = [
     'perfil'  => ['label' => 'Perfil',   'icon' => 'bi-person-gear',    'url' => \App\Shared\Http\Url::to('aluno/perfil')],
     'home'    => ['label' => 'Início',   'icon' => 'bi-house-door',     'url' => \App\Shared\Http\Url::to('aluno/inicio')],
     'jogos'   => ['label' => 'Jogos',    'icon' => 'bi-calendar-event', 'url' => \App\Shared\Http\Url::to('aluno/jogos')],
-    'ranking' => ['label' => 'Rankings publicados',  'icon' => 'bi-trophy',         'url' => \App\Shared\Http\Url::to('aluno/ranking')],
     'termos'  => ['label' => 'Termos',   'icon' => 'bi-file-text',      'url' => \App\Shared\Http\Url::to('aluno/termos')],
 ];
+if (!$termoAceito) {
+    $navItens = ['termos' => $navItens['termos']];
+}
 
 $classeLink = fn($key) => $key === $paginaAtiva ? 'text-white fw-bold' : 'text-white-50';
 $iconeNav = fn($icon, $key) => $key === $paginaAtiva ? $icon . '-fill' : $icon;

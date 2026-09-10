@@ -6,9 +6,9 @@
     if (window.__SGI_MESARIO_DATA__) return;
     window.__SGI_MESARIO_DATA__ = true;
 
-    var DB = 'sgi_mesario_dados', VERSION = 1;
+    var DB = 'sgi_mesario_dados', VERSION = 2;
     var STORES = ['jogos', 'partidas', 'atletas', 'turmas', 'modalidades', 'categorias', 'locais', 'equipes',
-        'ocorrencias', 'ocorrencias_turmas', 'chaveamentos', 'fila_sincronizacao'];
+        'ocorrencias', 'ocorrencias_turmas', 'chaveamentos', 'pontos', 'fila_sincronizacao'];
     // Namespace opaco por usuário; não usar o ID persistente diretamente.
     var session = String(window.SGI_CACHE_KEY || 'anon');
     var dbPromise;
@@ -72,13 +72,14 @@
                 'ocorrencias': 'ocorrencias',
                 'ocorrencias-turmas': 'ocorrencias_turmas',
                 'artilheiros': 'artilheiros',
+                'pontos': 'pontos',
                 'chaveamentos': 'chaveamentos'
             };
             return { file: recursos[file] || file, q: u.searchParams };
         } catch (_) { return {}; }
     }
     function idFor(file, row, fallback) {
-        var fields = { jogos: 'id_jogo', partidas: 'id_partida', turmas: 'id_turma', modalidades: 'id_modalidade', categorias: 'id_categoria', locais: 'id_local', equipes: 'id_equipe', artilheiros: 'id_artilheiro', ocorrencias: 'id_ocorrencia', ocorrencias_turmas: 'id_ocorrencia_turma' };
+        var fields = { jogos: 'id_jogo', partidas: 'id_partida', turmas: 'id_turma', modalidades: 'id_modalidade', categorias: 'id_categoria', locais: 'id_local', equipes: 'id_equipe', artilheiros: 'id_artilheiro', pontos: 'id_ponto', ocorrencias: 'id_ocorrencia', ocorrencias_turmas: 'id_ocorrencia_turma' };
         return row && (row[fields[file]] || row.id || fallback);
     }
     function capture(url, text) {
@@ -88,13 +89,20 @@
         // { success: true, data: [...] }. Sem reconhecer `data`, os locais
         // nunca entravam no IndexedDB e as partidas derivadas offline perdiam
         // o nome da quadra/local no placar.
-        var rows = Array.isArray(data) ? data : (data && (data.dados || data.data || data.ranking || data.participantes));
-        var store = { 'jogos': 'jogos', 'partidas': 'partidas', 'turmas': 'turmas', 'modalidades': 'modalidades', 'categorias': 'categorias', 'locais': 'locais', 'equipes': 'equipes', 'artilheiros': 'atletas', 'ocorrencias': 'ocorrencias', 'ocorrencias_turmas': 'ocorrencias_turmas', 'chaveamentos': 'chaveamentos' }[file];
+        var action = info.q && info.q.get('acao');
+        var rows = Array.isArray(data) ? data : (data && (data.dados || data.data || data.ranking || data.participantes || data.atletas || data.pontos));
+        var store = file === 'pontos' && action === 'atletas'
+            ? 'atletas'
+            : ({ 'jogos': 'jogos', 'partidas': 'partidas', 'turmas': 'turmas', 'modalidades': 'modalidades', 'categorias': 'categorias', 'locais': 'locais', 'equipes': 'equipes', 'artilheiros': 'atletas', 'pontos': 'pontos', 'ocorrencias': 'ocorrencias', 'ocorrencias_turmas': 'ocorrencias_turmas', 'chaveamentos': 'chaveamentos' }[file]);
         if (!store) return Promise.resolve();
         if (!Array.isArray(rows)) rows = [data];
-        var action = info.q && info.q.get('acao');
         return Promise.all(rows.filter(function (r) { return r && typeof r === 'object'; }).map(function (r, i) {
-            var identity = idFor(file, r, url + '#' + i);
+            var identity = file === 'pontos' && action === 'atletas'
+                // O mesmo aluno pode estar em equipes diferentes da mesma
+                // modalidade/turma. O elenco offline precisa preservar cada
+                // vínculo para não deixar uma equipe sobrescrever a outra.
+                ? ((r.equipes_id_equipe || info.q.get('id_equipe') || 'equipe') + '|' + (r.id_usuario || url + '#' + i))
+                : idFor(file, r, url + '#' + i);
             if (file === 'chaveamentos' && action) {
                 r = Object.assign({}, r, {
                     _sgi_chaveamento_url: url,
@@ -172,6 +180,39 @@
         if (file === 'partidas' && item.method === 'PUT' && data.id_partida != null) return all('partidas').then(function (ps) {
             var old = ps.filter(function (p) { return String(p.id_partida) === String(data.id_partida); })[0];
             return put('partidas', data.id_partida, Object.assign({}, old || { id_partida: data.id_partida }, data, { _pendente: true }));
+        });
+        if (file === 'pontos' && item.method === 'POST') return Promise.all([
+            put('pontos', temporary, Object.assign({ id_ponto: temporary }, data, {
+                _pendente: true,
+                status_artilheiro: 'ativo',
+                conta_no_placar: 1,
+            })),
+            all('partidas').then(function (ps) {
+                var old = ps.filter(function (p) { return String(p.id_partida) === String(data.id_partida); })[0];
+                if (!old) return null;
+                return put('partidas', old.id_partida, Object.assign({}, old, {
+                    resultado_partida: Math.max(0, parseInt(old.resultado_partida, 10) || 0) + 1,
+                    _pendente: true,
+                }));
+            })
+        ]);
+        if (file === 'pontos' && item.method === 'PUT' && data.id_ponto != null) return all('pontos').then(function (pontos) {
+            var old = pontos.filter(function (p) { return String(p.id_ponto) === String(data.id_ponto); })[0];
+            if (!old) return null;
+            var tarefas = [put('pontos', data.id_ponto, Object.assign({}, old, {
+                status_artilheiro: 'anulado', conta_no_placar: 0, _pendente: true,
+            }))];
+            if (Number(old.conta_no_placar) === 1 && old.id_partida != null) {
+                tarefas.push(all('partidas').then(function (ps) {
+                    var partida = ps.filter(function (p) { return String(p.id_partida) === String(old.id_partida); })[0];
+                    if (!partida) return null;
+                    return put('partidas', partida.id_partida, Object.assign({}, partida, {
+                        resultado_partida: Math.max(0, (parseInt(partida.resultado_partida, 10) || 0) - 1),
+                        _pendente: true,
+                    }));
+                }));
+            }
+            return Promise.all(tarefas);
         });
         if (file === 'ocorrencias' && item.method === 'PUT' && data.id_ocorrencia != null) return all('ocorrencias').then(function (ocorrencias) {
             var old = ocorrencias.filter(function (ocorrencia) {
@@ -261,7 +302,7 @@
         return base + 'chaveamentos?tipo_modalidade=individual&acao=' + encodeURIComponent(action) + '&id_modalidade=' + encodeURIComponent(idModalidade);
     }
     function localGet(url) {
-        var info = urlInfo(url), file = info.file, store = { 'jogos': 'jogos', 'partidas': 'partidas', 'turmas': 'turmas', 'modalidades': 'modalidades', 'categorias': 'categorias', 'locais': 'locais', 'equipes': 'equipes', 'artilheiros': 'atletas', 'ocorrencias': 'ocorrencias', 'ocorrencias_turmas': 'ocorrencias_turmas', 'chaveamentos': 'chaveamentos' }[file];
+        var info = urlInfo(url), file = info.file, store = { 'jogos': 'jogos', 'partidas': 'partidas', 'turmas': 'turmas', 'modalidades': 'modalidades', 'categorias': 'categorias', 'locais': 'locais', 'equipes': 'equipes', 'artilheiros': 'atletas', 'pontos': 'pontos', 'ocorrencias': 'ocorrencias', 'ocorrencias_turmas': 'ocorrencias_turmas', 'chaveamentos': 'chaveamentos' }[file];
         // Endpoints com "acao" possuem formatos especiais; o cache por URL
         // da camada base preserva exatamente a resposta original nesses casos.
         if (!store) return Promise.resolve(null);
@@ -299,7 +340,12 @@
             });
         }
         if (file === 'chaveamentos' && info.q.get('acao')) return Promise.resolve(null);
-        return all(store).then(function (rows) {
+        return all(file === 'pontos' && info.q.get('acao') === 'atletas' ? 'atletas' : store).then(function (rows) {
+            if (file === 'pontos' && info.q.get('acao') === 'atletas') {
+                var teamId = info.q.get('id_equipe');
+                var atletas = teamId ? rows.filter(function (r) { return String(r.equipes_id_equipe || '') === String(teamId); }) : rows;
+                return new Response(JSON.stringify({ success: true, atletas: atletas }), { status: 200, headers: { 'Content-Type': 'application/json' } });
+            }
             var idOcorrencia = file === 'ocorrencias' ? info.q.get('id_ocorrencia') : null;
             var idOcorrenciaTurma = file === 'ocorrencias_turmas' ? info.q.get('id_ocorrencia_turma') : null;
             var statusOcorrencia = file === 'ocorrencias' ? info.q.get('status_ocorrencia') : null;
@@ -320,6 +366,7 @@
                 return Number(r.id_jogo) < 0;
             });
             if (idMod) rows = rows.filter(function (r) { return String(r.modalidades_id_modalidade || r.id_modalidade) === String(idMod); });
+            if (file === 'pontos') return new Response(JSON.stringify({ success: true, pontos: rows }), { status: 200, headers: { 'Content-Type': 'application/json' } });
             return new Response(JSON.stringify(rows), { status: 200, headers: { 'Content-Type': 'application/json' } });
         });
     }
@@ -335,9 +382,14 @@
         if (info.file === 'jogos') {
             if (arquivo !== 'jogos' && arquivo !== 'partidas' && arquivo !== 'resultados') return false;
         } else if (info.file === 'partidas') {
-            if (arquivo !== 'partidas' && arquivo !== 'resultados') return false;
+            // Pontos vinculados também alteram o placar projetado da partida.
+            // Sem esta relação, a remontagem da tela offline aceitava o
+            // snapshot antigo da API e fazia o placar voltar temporariamente.
+            if (arquivo !== 'partidas' && arquivo !== 'resultados' && arquivo !== 'pontos') return false;
         } else if (info.file === 'artilheiros') {
             if (arquivo !== 'artilheiros') return false;
+        } else if (info.file === 'pontos') {
+            if (arquivo !== 'pontos') return false;
         } else if (info.file === 'ocorrencias') {
             if (arquivo !== 'ocorrencias') return false;
         } else if (info.file === 'ocorrencias_turmas') {
@@ -428,7 +480,7 @@
             // vazio esconda uma resposta válida em cache com uma lista vazia.
             var priorizarLocal = navigator.onLine === false ||
                 info.file === 'jogos' || info.file === 'partidas' ||
-                info.file === 'artilheiros' || info.file === 'ocorrencias' ||
+                info.file === 'artilheiros' || info.file === 'pontos' || info.file === 'ocorrencias' ||
                 info.file === 'ocorrencias_turmas' || info.file === 'chaveamentos';
             if (priorizarLocal) {
                 return temPendenciaRelevante(url).then(function (haPendencia) {
@@ -534,7 +586,7 @@
                     ]);
                 });
             }
-            var store = info.file === 'artilheiros' ? 'atletas' : (info.file === 'ocorrencias' ? 'ocorrencias' : (info.file === 'ocorrencias_turmas' ? 'ocorrencias_turmas' : null));
+            var store = info.file === 'artilheiros' ? 'atletas' : (info.file === 'pontos' ? 'pontos' : (info.file === 'ocorrencias' ? 'ocorrencias' : (info.file === 'ocorrencias_turmas' ? 'ocorrencias_turmas' : null)));
             var temp = 'temp_' + item.id;
             if (store && item.method === 'POST' && resposta.id) {
                 return get(store, temp).then(function (row) {
@@ -542,7 +594,7 @@
                     var idReal = resposta.id;
                     var identidade = store === 'ocorrencias'
                         ? { id_ocorrencia: idReal }
-                        : (store === 'atletas' ? { id_artilheiro: idReal } : { id_ocorrencia_turma: idReal });
+                        : (store === 'atletas' ? { id_artilheiro: idReal } : (store === 'pontos' ? { id_ponto: idReal } : { id_ocorrencia_turma: idReal }));
                     return Promise.all([put(store, idReal, Object.assign({}, row, identidade, { _pendente: false })), remove(store, temp), remove('fila_sincronizacao', item.id)]);
                 });
             }

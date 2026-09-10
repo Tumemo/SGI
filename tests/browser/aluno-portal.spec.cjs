@@ -66,11 +66,7 @@ test.describe.serial('Portal do Aluno — Jornada Interativa e Regras de Negóci
         await page.locator('#form_desktop .ipt-senha').fill(fixture.senhaOriginal);
         await page.locator('#form_desktop button[type="submit"]').click();
 
-        await page.waitForURL(/\/aluno\/inicio/, { timeout: 15_000 });
-        await expect(page.locator('main')).toBeVisible();
-
-        // Navegar para a página de Termos
-        await page.goto('aluno/termos', { waitUntil: 'domcontentloaded' });
+        await page.waitForURL(/\/aluno\/termos/, { timeout: 15_000 });
         await expect(page.locator('main')).toBeVisible();
 
         // Validar presença do Termo de Responsabilidade e suas cláusulas fundamentais
@@ -78,6 +74,53 @@ test.describe.serial('Portal do Aluno — Jornada Interativa e Regras de Negóci
         await expect(page.locator('main')).toContainText('Conduta:');
         await expect(page.locator('main')).toContainText('Regras:');
         await expect(page.locator('main')).toContainText('Saúde:');
+
+        // O acesso direto por URL e a API permanecem bloqueados antes do aceite.
+        for (const paginaProtegida of [
+            'aluno/inicio',
+            'aluno/modalidades',
+            'aluno/jogos',
+            'aluno/perfil',
+            'aluno/ranking',
+        ]) {
+            await page.goto(paginaProtegida, { waitUntil: 'domcontentloaded' });
+            await expect(page).toHaveURL(/\/aluno\/termos/);
+            await expect(page.locator('body')).not.toContainText('Cronograma de Jogos');
+        }
+
+        await expect(page.locator('nav a[aria-label="Termos"], nav a[title="Termos"]')).not.toHaveCount(0);
+        for (const seletorProtegido of [
+            'nav a[aria-label="Início"], nav a[title="Início"]',
+            'nav a[aria-label="Jogos"], nav a[title="Jogos"]',
+            'nav a[aria-label="Perfil"], nav a[title="Perfil"]',
+        ]) {
+            await expect(page.locator(seletorProtegido)).toHaveCount(0);
+        }
+
+        const jogosSemAceite = await page.evaluate(async () => {
+            const response = await fetch('/api/v1/jogos');
+            return response.status;
+        });
+        expect(jogosSemAceite).toBe(403);
+
+        const inscricaoSemAceite = await page.evaluate(async () => {
+            const response = await fetch('/api/v1/inscricoes', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-SGI-CSRF': window.SGI_CSRF_TOKEN || '',
+                },
+                body: JSON.stringify({ id_interclasse: 1, id_equipes: [] }),
+            });
+            return response.status;
+        });
+        expect(inscricaoSemAceite).toBe(403);
+
+        await page.goto('aluno/termos', { waitUntil: 'domcontentloaded' });
+        const btnAceitar = page.locator('#btnAceitarTermos');
+        await expect(btnAceitar).toBeVisible({ timeout: 15_000 });
+        await btnAceitar.click();
+        await page.waitForURL(/\/aluno\/inicio/, { timeout: 15_000 });
     });
 
     test('inscrição em modalidades, escolha de equipe e validação de regras', async ({ page }) => {
@@ -126,6 +169,9 @@ test.describe.serial('Portal do Aluno — Jornada Interativa e Regras de Negóci
         await page.locator('#form_desktop button[type="submit"]').click();
         await page.waitForURL(/\/aluno\/inicio/, { timeout: 15_000 });
 
+        await expect(page.locator('nav a[aria-label="Rankings publicados"], nav a[title="Rankings publicados"]')).toHaveCount(0);
+        await expect(page.locator('.aluno-card[data-status="active"] .btn-card').first()).toContainText('Ver Detalhes');
+
         // 1. Tela de Jogos
         await page.goto(`aluno/jogos?id=${fixture.idInterclasse}`, { waitUntil: 'domcontentloaded' });
         await expect(page.locator('main')).toBeVisible({ timeout: 15_000 });
@@ -134,6 +180,7 @@ test.describe.serial('Portal do Aluno — Jornada Interativa e Regras de Negóci
         // 2. Tela de Ranking
         await page.goto(`aluno/ranking?id=${fixture.idInterclasse}`, { waitUntil: 'domcontentloaded' });
         await expect(page.locator('main:visible')).toBeVisible({ timeout: 15_000 });
+        await expect(page.locator('main:visible')).toContainText('Ranking Oculto', { timeout: 15_000 });
         await expect(page.locator('body')).not.toContainText(/Fatal error|Warning:/i);
     });
 

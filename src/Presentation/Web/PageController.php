@@ -69,12 +69,18 @@ final class PageController
                 // a própria página de login redireciona usuários autenticados,
                 // o que criava um loop ao tentar abrir uma rota proibida.
                 $destino = match ($level) {
-                    3 => 'aluno/inicio',
+                    3 => empty($_SESSION['termo_aceito']) ? 'aluno/termos' : 'aluno/inicio',
                     2 => 'painel',
                     0, 1 => 'edicoes',
                     default => 'login',
                 };
                 return new Response('', 302, ['Location' => Url::to($destino)]);
+            }
+            if ($level === 3 && $path !== '/aluno/termos' && empty($_SESSION['termo_aceito'])) {
+                return new Response('', 302, [
+                    'Location' => Url::to('aluno/termos'),
+                    'Cache-Control' => 'no-store',
+                ]);
             }
         }
         $profile = in_array($path, ['/perfil', '/aluno/perfil'], true);

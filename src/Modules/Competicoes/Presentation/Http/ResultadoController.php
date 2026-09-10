@@ -65,6 +65,8 @@ final class ResultadoController
                     isset($data['nome_jogo']) ? (string) $data['nome_jogo'] : null,
                     (int) ($data['id_modalidade'] ?? 0),
                     array_values(array_filter($data['resultados'], 'is_array')),
+                    array_values(array_filter($data['pontos'] ?? [], 'is_array')),
+                    (int) ($_SESSION['id_usuario'] ?? $_SESSION['id'] ?? 0),
                 );
                 return Response::json($result);
             } catch (JogoResolucaoAmbiguaException $exception) {

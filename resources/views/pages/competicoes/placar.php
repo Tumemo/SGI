@@ -142,10 +142,10 @@ $paginaAtiva = 'dashboard';
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">
-                <h6 class="modal-title"><i class="bi bi-trophy-fill me-1 sgi-u-color-f59e0b" ></i>Registrar Gol</h6>
+                <h6 class="modal-title"><i class="bi bi-trophy-fill me-1 sgi-u-color-f59e0b" ></i>Registrar ponto</h6>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
             </div>
-            <form id="formArtilheiro" onsubmit="return salvarArtilheiro(event)">
+            <form id="formArtilheiro" onsubmit="return salvarPonto(event)">
                 <div class="modal-body">
                     <div class="mb-3">
                         <label class="form-label">Equipe</label>
@@ -154,8 +154,8 @@ $paginaAtiva = 'dashboard';
                         </select>
                     </div>
                     <div class="mb-2">
-                        <label class="form-label">Jogador(a)</label>
-                        <select class="form-select" id="selectAlunoArtilheiro" required>
+                        <label class="form-label">Aluno responsável pela jogada</label>
+                        <select class="form-select" id="selectAlunoArtilheiro" aria-required="true">
                             <option value="">Selecione uma equipe primeiro</option>
                         </select>
                     </div>
@@ -164,7 +164,7 @@ $paginaAtiva = 'dashboard';
                 <div class="modal-footer">
                     <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill" data-bs-dismiss="modal">Cancelar</button>
                     <button type="submit" class="btn btn-sm btn-success rounded-pill px-3 fw-bold" id="btnSalvarArtilheiro">
-                        <i class="bi bi-check-lg me-1"></i>Registrar Gol
+                        <i class="bi bi-check-lg me-1"></i>Registrar ponto
                     </button>
                 </div>
             </form>

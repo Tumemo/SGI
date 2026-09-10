@@ -96,8 +96,8 @@ final class MesarioResourceScopeTest
                 'resultado_partida' => 2,
             ]);
             Assertions::assert(
-                'Partida inexistente é rejeitada antes da mutação',
-                $missing['code'] === 404 && ($missing['json']['success'] ?? true) === false,
+                'Alteração direta de partida inexistente é rejeitada pelo contrato do placar',
+                $missing['code'] === 422 && ($missing['json']['success'] ?? true) === false,
             );
 
             $inferred = $mesario->putJson('api/v1/partidas', [
@@ -106,28 +106,57 @@ final class MesarioResourceScopeTest
             ]);
             $afterInferred = self::partida($connection, $partidaA);
             Assertions::assert(
-                'PUT de partida infere jogo e equipe persistidos',
-                $inferred['code'] === 200
-                && ($inferred['json']['success'] ?? false) === true
+                'PUT de partida não altera o placar sem uma jogada vinculada',
+                $inferred['code'] === 422
+                && ($inferred['json']['success'] ?? true) === false
                 && $afterInferred['jogos_id_jogo'] === $gameA
                 && $afterInferred['equipes_id_equipe'] === (int) $fixture['by_edition']['A']['equipe_ids'][0]
-                && $afterInferred['resultado_partida'] === 2,
+                && $afterInferred['resultado_partida'] === 0,
             );
 
-            $finalized = $mesario->postJson('api/v1/partidas', [
+            $schedule = $connection->prepare("UPDATE jogos SET termino_jogo = '09:00:00' WHERE id_jogo = ?");
+            $schedule->bind_param('i', $gameA);
+            $schedule->execute();
+            $schedule->close();
+            $started = $mesario->putJson('api/v1/jogos', [
+                'id_jogo' => $gameA,
+                'status_jogo' => 'Iniciado',
+                'duracao_jogo' => 1200,
+                'tempo_restante_jogo' => 1200,
+            ]);
+            $point = $mesario->postJson('api/v1/pontos', [
+                'jogos_id_jogo' => $gameA,
                 'id_partida' => $partidaA,
-                'resultado_final' => 3,
+                'equipes_id_equipe' => (int) $fixture['by_edition']['A']['equipe_ids'][0],
+                'usuarios_id_usuario' => (int) $fixture['by_edition']['A']['atleta_ids'][0],
+                'chave_jogada' => 'mesario-scope-point-' . bin2hex(random_bytes(5)),
+            ]);
+            $finalized = $mesario->postJson('api/v1/resultados', [
+                'id_jogo' => $gameA,
+                'id_modalidade' => (int) $fixture['by_edition']['A']['modalidade_id'],
+                'resultados' => [
+                    ['id_equipe' => (int) $fixture['by_edition']['A']['equipe_ids'][0], 'gols' => 1],
+                    ['id_equipe' => $teamA2, 'gols' => 0],
+                ],
             ]);
             $scores = self::scores($connection, $gameA);
             Assertions::assert(
-                'POST canônico finaliza a partida com o placar completo do jogo',
-                $finalized['code'] === 200
+                'Ponto vinculado permite finalizar a partida pelo resultado completo',
+                ($started['json']['success'] ?? false) === true
+                && ($point['json']['success'] ?? false) === true
+                && $finalized['code'] === 200
                 && ($finalized['json']['success'] ?? false) === true
                 && $scores === [
-                    (int) $fixture['by_edition']['A']['equipe_ids'][0] => 3,
+                    (int) $fixture['by_edition']['A']['equipe_ids'][0] => 1,
                     $teamA2 => 0,
                 ]
                 && self::gameStatus($connection, $gameA) === 'Concluido',
+                json_encode([
+                    'started' => $started,
+                    'point' => $point,
+                    'finalized' => $finalized,
+                    'scores' => $scores,
+                ], JSON_UNESCAPED_UNICODE),
             );
         } finally {
             $connection->close();
