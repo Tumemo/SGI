@@ -7,9 +7,9 @@ include SGI_ROOT . '/resources/views/components/admin-header.php';
 $paginaAtiva = 'dashboard';
 ?>
 
-<main class="main-desktop-layout main-modalidades-layout">
+<main class="main-desktop-layout">
 
-    <div class="modalidades-toolbar">
+    <div class="d-flex align-items-center justify-content-between gap-3 flex-wrap mb-4">
             <a href="<?= \App\Shared\Http\Url::to('painel') ?>" id="btnVoltarModalidades" class="btn btn-primary d-inline-flex align-items-center gap-2 fw-bold px-3 py-2 border-0 text-decoration-none" >
                 <i class="bi bi-arrow-left-circle fs-5"></i> <span id="nomeInterclasseModalidades">Interclasse</span>
             </a>
@@ -28,9 +28,9 @@ $paginaAtiva = 'dashboard';
         </div>
     </div>
 
-    <header class="modalidades-head">
-        <h1 class="modalidades-head__title">Modalidades</h1>
-        <p class="modalidades-head__sub">Gerencie as modalidades do interclasse e navegue para os detalhes de cada uma.</p>
+    <header class="border-bottom pb-3 mb-4">
+        <h1 class="h3 fw-bold text-body mb-1">Modalidades</h1>
+        <p class="text-body-secondary mb-0">Gerencie as modalidades do interclasse e navegue para os detalhes de cada uma.</p>
     </header>
 
     <div id="listaModalidadesDesktop">

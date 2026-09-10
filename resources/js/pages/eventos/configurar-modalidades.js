@@ -66,19 +66,19 @@ window.SGIPage.mount("eventos/configurar-modalidades", function (pageConfig, pag
 
         return `
             <div class="col">
-                <a href="${destino}" class="modalidade-card-simples" data-id="${modalidade.id_modalidade}" aria-label="Ver detalhes de ${esc(modalidade.nome_modalidade)}">
-                    <div class="modalidade-card-topo">
-                        <div class="modalidade-icone"><i class="bi bi-trophy"></i></div>
-                        <div class="modalidade-titulo">
-                            <h5 class="modalidade-nome">${esc(modalidade.nome_modalidade)}</h5>
-                            <small class="modalidade-sub">${esc(tipo)}${tipo && genero ? ' · ' : ''}${esc(generoLabel)}</small>
+                <a href="${destino}" class="card h-100 border shadow-sm text-body text-decoration-none p-3 d-flex flex-column modalidade-card-simples" data-id="${modalidade.id_modalidade}" aria-label="Ver detalhes de ${esc(modalidade.nome_modalidade)}">
+                    <div class="d-flex align-items-start gap-3 mb-3">
+                        <div class="rounded-3 bg-primary-subtle text-primary p-2 fs-4 d-inline-flex flex-shrink-0"><i class="bi bi-trophy"></i></div>
+                        <div class="flex-grow-1 overflow-hidden">
+                            <h5 class="fw-bold text-body mb-0 text-truncate">${esc(modalidade.nome_modalidade)}</h5>
+                            <small class="text-body-secondary text-truncate d-block mt-1">${esc(tipo)}${tipo && genero ? ' · ' : ''}${esc(generoLabel)}</small>
                         </div>
                     </div>
-                    <div class="modalidade-badges">
-                        <span class="modalidade-badge modalidade-badge--accent"><i class="bi bi-people"></i> ${qtdEquipes} equipe${qtdEquipes !== 1 ? 's' : ''}</span>
-                        ${modalidade.max_inscrito_modalidade ? `<span class="modalidade-badge"><i class="bi bi-person-lines-fill"></i> Máx. ${esc(modalidade.max_inscrito_modalidade)}</span>` : ''}
+                    <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
+                        <span class="badge rounded-pill bg-primary-subtle text-primary-emphasis border border-primary-subtle"><i class="bi bi-people"></i> ${qtdEquipes} equipe${qtdEquipes !== 1 ? 's' : ''}</span>
+                        ${modalidade.max_inscrito_modalidade ? `<span class="badge rounded-pill text-bg-light border text-body-secondary"><i class="bi bi-person-lines-fill"></i> Máx. ${esc(modalidade.max_inscrito_modalidade)}</span>` : ''}
                     </div>
-                    <span class="modalidade-cta">
+                    <span class="btn btn-sm btn-outline-primary align-self-end mt-auto d-inline-flex align-items-center gap-2">
                         Ver detalhes <i class="bi bi-arrow-right"></i>
                     </span>
                 </a>
@@ -105,10 +105,10 @@ window.SGIPage.mount("eventos/configurar-modalidades", function (pageConfig, pag
         let html = '';
         Object.entries(grupos).forEach(([catNome, lista]) => {
             html += `
-                <section class="modalidades-categoria mb-5">
-                    <div class="modalidade-categoria-header">
-                        <h2 class="modalidade-categoria-nome">${esc(catNome)}</h2>
-                        <span class="modalidade-categoria-count" title="Total de modalidades">${lista.length}</span>
+                <section class="mb-5">
+                    <div class="d-flex align-items-center gap-2 mb-3 pb-2 border-bottom border-primary-subtle">
+                        <h2 class="h5 fw-bold text-body mb-0">${esc(catNome)}</h2>
+                        <span class="badge rounded-pill bg-primary-subtle text-primary-emphasis" title="Total de modalidades">${lista.length}</span>
                     </div>
                     <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-3 g-lg-4">
                         ${lista.map(renderizarCard).join('')}
@@ -136,6 +136,10 @@ window.SGIPage.mount("eventos/configurar-modalidades", function (pageConfig, pag
         modalidadeSelecionada = Number(id);
         document.querySelectorAll('.modalidade-card-simples').forEach((card) => {
             card.classList.toggle('is-selected', Number(card.dataset.id) === modalidadeSelecionada);
+            const selecionado = Number(card.dataset.id) === modalidadeSelecionada;
+            card.classList.toggle('border-primary', selecionado);
+            card.classList.toggle('border-3', selecionado);
+            card.classList.toggle('bg-primary-subtle', selecionado);
         });
         atualizarBotaoContinuar();
     }
@@ -236,20 +240,22 @@ window.SGIPage.mount("eventos/configurar-modalidades", function (pageConfig, pag
     function montarItemDestaque(a) {
         const temFoto = a.foto_usuario && !/^default\.(jpg|jpeg|png|gif|webp)$/i.test(a.foto_usuario);
         const fotoHtml = temFoto
-            ? `<img src="${APP_BASE}/uploads/fotosUsuarios/${encodeURIComponent(a.foto_usuario)}" alt="${esc(a.nome_usuario)}" onerror="this.classList.add('d-none');this.nextElementSibling.classList.remove('d-none');">`
+            ? `<img class="rounded-circle object-fit-cover flex-shrink-0" width="48" height="48" src="${APP_BASE}/uploads/fotosUsuarios/${encodeURIComponent(a.foto_usuario)}" alt="${esc(a.nome_usuario)}" onerror="this.classList.add('d-none');this.nextElementSibling.classList.remove('d-none');">`
             : '';
-        const iconeHtml = `<span class="${temFoto ? 'd-none' : ''}"><i class="bi bi-star-fill"></i></span>`;
+        const iconeHtml = `<span class="${temFoto ? 'd-none' : 'rounded-circle bg-warning-subtle text-warning-emphasis p-2 fs-4 d-inline-flex align-items-center justify-content-center'}"><i class="bi bi-star-fill"></i></span>`;
         const turma = a.nome_fantasia_turma || a.nome_turma || 'Sem turma';
         const gols = Number(a.total_gols) || 0;
 
         return `
-            <div class="destaque-item">
-                <div class="destaque-avatar">${fotoHtml}${iconeHtml}</div>
-                <div class="destaque-info">
-                    <div class="destaque-nome">${esc(a.nome_usuario)} <i class="bi bi-star-fill"></i></div>
-                    <div class="destaque-sub">${esc(a.nome_categoria || 'Sem categoria')} · ${esc(turma)}</div>
+            <div class="card border-0 bg-body-tertiary mb-2">
+                <div class="card-body d-flex align-items-center gap-3 p-3">
+                    ${fotoHtml}${iconeHtml}
+                    <div class="flex-grow-1 overflow-hidden">
+                        <div class="fw-bold text-body text-truncate">${esc(a.nome_usuario)} <i class="bi bi-star-fill text-warning"></i></div>
+                        <div class="small text-body-secondary text-truncate">${esc(a.nome_categoria || 'Sem categoria')} · ${esc(turma)}</div>
+                    </div>
+                    <div class="text-end fw-bold text-primary fs-5 flex-shrink-0">${gols}<small class="d-block text-body-secondary text-uppercase fs-6 fw-semibold">gol${gols !== 1 ? 's' : ''}</small></div>
                 </div>
-                <div class="destaque-gols">${gols}<small>gol${gols !== 1 ? 's' : ''}</small></div>
             </div>`;
     }
 
@@ -279,8 +285,9 @@ window.SGIPage.mount("eventos/configurar-modalidades", function (pageConfig, pag
 
             let html = '';
             Object.entries(grupos).forEach(([modalidade, alunos]) => {
-                html += `<div class="destaque-group-title"><i class="bi bi-trophy-fill"></i>${esc(modalidade)}</div>`;
+                html += `<section class="mb-3"><h6 class="d-flex align-items-center gap-2 fw-bold text-body-secondary border-bottom pb-2 mb-2 mt-4"><i class="bi bi-trophy-fill text-primary"></i>${esc(modalidade)}</h6>`;
                 html += alunos.map(montarItemDestaque).join('');
+                html += '</section>';
             });
             corpo.innerHTML = html;
         } catch (error) {

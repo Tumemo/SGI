@@ -402,6 +402,21 @@ test('points configuration uses Bootstrap controls and feedback', () => {
     assert.doesNotMatch(css, /--ptc-|\.ptc-(?:container|header|title|actions|btn-|card(?:$|[^-])|rank-badge|card-head|card-icon|card-title|card-sub|card-value|card-label|card-foot|note|unsaved)\b/);
 });
 
+test('modality management uses Bootstrap cards, badges and selection states', () => {
+    const js = fs.readFileSync(path.join(root, 'resources', 'js', 'pages', 'eventos', 'configurar-modalidades.js'), 'utf8');
+    const view = fs.readFileSync(path.join(root, 'resources', 'views', 'pages', 'eventos', 'configurar-modalidades.php'), 'utf8');
+    const css = fs.readFileSync(path.join(root, 'resources', 'css', 'source', 'admin.css'), 'utf8');
+    assert.match(view, /main class="main-desktop-layout"/);
+    assert.match(js, /card h-100 border shadow-sm text-body text-decoration-none p-3 d-flex flex-column modalidade-card-simples/);
+    assert.match(js, /badge rounded-pill bg-primary-subtle text-primary-emphasis/);
+    assert.match(js, /border-primary/);
+    assert.match(js, /<section class="mb-3"><h6 class="d-flex align-items-center gap-2 fw-bold/);
+    assert.doesNotMatch(js + view, /modalidades-(?:toolbar|head(?:__title|__sub)?)/);
+    assert.doesNotMatch(js + view, /modalidade-(?:card-topo|titulo|nome|sub|icone|badges|badge|cta|categoria-header|categoria-nome|categoria-count)\b/);
+    assert.doesNotMatch(js, /destaque-(?:group-title|item|avatar|info|nome|sub|gols)\b/);
+    assert.doesNotMatch(css, /\.(?:modalidades-|modalidade-|destaque-)/);
+});
+
 test('agenda uses Bootstrap controls while keeping calendar domain geometry', () => {
     const view = fs.readFileSync(path.join(root, 'resources', 'views', 'pages', 'eventos', 'configurar-agenda.php'), 'utf8');
     const js = fs.readFileSync(path.join(root, 'resources', 'js', 'pages', 'eventos', 'configurar-agenda.js'), 'utf8');
