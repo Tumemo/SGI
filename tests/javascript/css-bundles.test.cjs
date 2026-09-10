@@ -428,6 +428,24 @@ test('modality management uses Bootstrap cards, badges and selection states', ()
     assert.doesNotMatch(css, /\.(?:modalidades-|modalidade-|destaque-)/);
 });
 
+test('classroom student management uses native Bootstrap layouts and actions', () => {
+    const view = fs.readFileSync(path.join(root, 'resources', 'views', 'pages', 'participantes', 'turma-alunos.php'), 'utf8');
+    const js = fs.readFileSync(path.join(root, 'resources', 'js', 'pages', 'participantes', 'turma-alunos.js'), 'utf8');
+    const css = fs.readFileSync(path.join(root, 'resources', 'css', 'source', 'admin.css'), 'utf8');
+    const utilities = fs.readFileSync(path.join(root, 'resources', 'css', 'source', 'utilities.css'), 'utf8');
+    assert.match(view, /bg-body-tertiary min-vh-100/);
+    assert.match(view, /input-group flex-grow-1/);
+    assert.match(view, /card border shadow-sm overflow-hidden/);
+    assert.match(view, /table table-hover align-middle mb-0/);
+    assert.match(js, /card border shadow-sm p-3 d-flex flex-row align-items-center gap-3/);
+    assert.match(js, /btn btn-sm btn-light border text-primary px-2 py-1/);
+    assert.match(js, /table-danger/);
+    assert.match(js, /border-success.*bg-success-subtle/);
+    assert.doesNotMatch(view + js, /\bta-(?:page|btn|title|subtitle|toolbar|search|pdf|dropzone|file|progress|table|count|student|cell|badge|tr|action|empty|view)/);
+    assert.doesNotMatch(css, /\.ta-|--ta-/);
+    assert.doesNotMatch(utilities, /\.sgi-u-w-0\b/);
+});
+
 test('agenda uses Bootstrap controls while keeping calendar domain geometry', () => {
     const view = fs.readFileSync(path.join(root, 'resources', 'views', 'pages', 'eventos', 'configurar-agenda.php'), 'utf8');
     const js = fs.readFileSync(path.join(root, 'resources', 'js', 'pages', 'eventos', 'configurar-agenda.js'), 'utf8');

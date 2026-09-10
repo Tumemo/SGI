@@ -13,55 +13,55 @@ $podeResetarSenha = in_array($nivelUsuario, [0], true);
 
 
 <!-- main mobile -->
-<main class="d-md-none ta-page-bg p-3 pt-5 pb-5" >
-    <a href="#" class="ta-btn-interclasse" id="btnVoltarTurmaAlunosMob">
+<main class="d-md-none bg-body-tertiary min-vh-100 p-3 pt-5 pb-5" >
+    <a href="#" class="btn btn-primary d-inline-flex align-items-center gap-2 fw-semibold text-decoration-none" id="btnVoltarTurmaAlunosMob">
         <i class="bi bi-arrow-left-circle fs-5"></i> <span id="nomeInterclasseTurmaAlunosMob">Interclasse</span>
     </a>
 
-    <div class="ta-title-wrap mb-3 mt-3">
-        <h1 class="ta-title ta-title--mob">Alunos da Turma: <span id="nomeTurmaMob">…</span></h1>
-        <p class="ta-subtitle"><i class="bi bi-people-fill"></i> Gerencie os alunos vinculados a esta turma</p>
+    <div class="mb-3 mt-3">
+        <h1 class="h3 fw-bold text-body mb-1">Alunos da Turma: <span id="nomeTurmaMob">…</span></h1>
+        <p class="small text-body-secondary mb-0"><i class="bi bi-people-fill text-primary me-1"></i> Gerencie os alunos vinculados a esta turma</p>
     </div>
 
-    <div class="ta-toolbar">
+    <div class="d-flex flex-wrap align-items-center gap-3 mb-4">
         <?php if ($podeGerenciar): ?>
-        <button class="btn btn-outline-danger ta-btn-add" onclick="abrirModalAluno()">
+        <button class="btn btn-outline-danger d-inline-flex align-items-center gap-2" onclick="abrirModalAluno()">
             <i class="bi bi-plus-lg"></i> Adicionar Aluno
         </button>
         <?php endif; ?>
-        <div class="ta-search">
-            <i class="bi bi-search"></i>
-            <input type="text" id="buscaAlunoMob" placeholder="Buscar aluno por nome ou RM..." autocomplete="off">
+        <div class="input-group flex-grow-1">
+            <span class="input-group-text"><i class="bi bi-search"></i></span>
+            <input type="text" class="form-control" id="buscaAlunoMob" placeholder="Buscar aluno por nome ou RM..." autocomplete="off">
         </div>
     </div>
 
     <?php if ($nivelUsuario === 0): ?>
-    <div class="ta-pdf-card">
-        <button class="ta-pdf-toggle" id="botaoPdfMob" type="button" data-bs-toggle="collapse" data-bs-target="#blocoPdfMob" aria-expanded="false" aria-controls="blocoPdfMob">
-            <span class="ta-pdf-toggle-label"><i class="bi bi-file-earmark-pdf-fill"></i> Importar alunos via PDF</span>
-            <span class="ta-pdf-toggle-right">
-                <span class="ta-pdf-badge">Administrador</span>
-                <i class="bi bi-chevron-down ta-chevron"></i>
+    <div class="card border shadow-sm overflow-hidden mb-4">
+        <button class="btn w-100 d-flex align-items-center justify-content-between gap-3 p-3 text-start" id="botaoPdfMob" type="button" data-bs-toggle="collapse" data-bs-target="#blocoPdfMob" aria-expanded="false" aria-controls="blocoPdfMob">
+            <span class="d-flex align-items-center gap-2 fw-semibold"><i class="bi bi-file-earmark-pdf-fill text-danger"></i> Importar alunos via PDF</span>
+            <span class="d-flex align-items-center gap-2">
+                <span class="badge rounded-pill bg-danger-subtle text-danger-emphasis">Administrador</span>
+                <i class="bi bi-chevron-down" data-pdf-chevron></i>
             </span>
         </button>
         <div id="blocoPdfMob" class="collapse">
-            <div class="ta-pdf-body">
-                <p class="ta-pdf-aviso">
+            <div class="card-body p-3 pt-0">
+                <p class="alert alert-warning d-flex align-items-start gap-2 small mb-3">
                     <i class="bi bi-info-circle-fill"></i>
                     <span>O PDF deve conter <strong>texto selecionável</strong> (não imagem). Se for imagem, converta antes de importar.</span>
                 </p>
                 <form id="formPdfTurmaMob" enctype="multipart/form-data">
-                    <div class="ta-dropzone" id="dropzoneMob">
+                    <div class="border rounded-3 p-4 text-center bg-body-tertiary" id="dropzoneMob">
                         <input type="file" class="d-none" name="pdf" id="pdfInputMob" accept="application/pdf" required>
-                        <i class="bi bi-cloud-arrow-up"></i>
-                        <p><strong>Arraste e solte o PDF aqui</strong><br>ou <span class="ta-link">clique para selecionar</span></p>
-                        <span class="ta-file-name" id="pdfNomeMob"></span>
+                        <i class="bi bi-cloud-arrow-up fs-1 text-danger"></i>
+                        <p class="small text-body-secondary mb-0 mt-2"><strong>Arraste e solte o PDF aqui</strong><br>ou <span class="text-danger fw-semibold text-decoration-underline">clique para selecionar</span></p>
+                        <span class="d-none small fw-semibold text-success mt-2" id="pdfNomeMob"></span>
                     </div>
-                    <div class="ta-progress" id="progressMob">
+                    <div class="d-none mt-3" id="progressMob">
                         <div class="progress" role="progressbar" aria-label="Progresso do upload">
-                            <div class="progress-bar sgi-u-w-0" id="progressBarMob" ></div>
+                            <div class="progress-bar" id="progressBarMob"></div>
                         </div>
-                        <span class="ta-progress-text" id="progressTextoMob">Enviando…</span>
+                        <span class="small text-body-secondary mt-1 d-block" id="progressTextoMob">Enviando…</span>
                     </div>
                     <div id="msgPdfMob" class="small mt-2 text-center"></div>
                     <div id="fallbackMob" class="d-none mt-2 text-center">
@@ -71,7 +71,7 @@ $podeResetarSenha = in_array($nivelUsuario, [0], true);
                         </a>
                     </div>
                     <div class="d-grid mt-3">
-                        <button type="submit" class="btn btn-primary ta-btn-submit">
+                        <button type="submit" class="btn btn-primary d-inline-flex align-items-center gap-2">
                             <i class="bi bi-file-earmark-arrow-up"></i> Importar PDF
                         </button>
                     </div>
@@ -83,10 +83,10 @@ $podeResetarSenha = in_array($nivelUsuario, [0], true);
 
     <div id="listaAlunosTurmaMob" class="d-flex flex-column gap-2"></div>
 
-    <div class="ta-table-footer ta-footer-mob">
+    <div class="d-flex align-items-center justify-content-between flex-wrap gap-3 pt-3">
         <span id="taInfoPaginaMob"></span>
         <nav aria-label="Paginação">
-            <ul class="pagination pagination-sm ta-pagination mb-0" id="paginacaoMob"></ul>
+            <ul class="pagination pagination-sm mb-0" id="paginacaoMob"></ul>
         </nav>
     </div>
 </main>
@@ -95,56 +95,56 @@ $podeResetarSenha = in_array($nivelUsuario, [0], true);
 <main class="d-none d-md-block main-desktop-layout">
     <div class="container-fluid px-0">
 
-        <div class="ta-header">
-            <a href="#" id="btnVoltarTurmaAlunosDesk" class="ta-btn-interclasse">
+        <div class="d-flex align-items-center gap-3 flex-wrap mb-4">
+            <a href="#" id="btnVoltarTurmaAlunosDesk" class="btn btn-primary d-inline-flex align-items-center gap-2 fw-semibold text-decoration-none">
                 <i class="bi bi-arrow-left-circle fs-5"></i> <span id="nomeInterclasseTurmaAlunosDesk">Interclasse</span>
             </a>
-            <div class="ta-title-wrap">
-                <h1 class="ta-title">Alunos da Turma: <span id="nomeTurmaDesk">…</span></h1>
-                <p class="ta-subtitle"><i class="bi bi-people-fill"></i> Gerencie os alunos vinculados a esta turma</p>
+            <div class="flex-grow-1">
+                <h1 class="h3 fw-bold text-body mb-1">Alunos da Turma: <span id="nomeTurmaDesk">…</span></h1>
+                <p class="small text-body-secondary mb-0"><i class="bi bi-people-fill text-primary me-1"></i> Gerencie os alunos vinculados a esta turma</p>
             </div>
         </div>
 
-        <div class="ta-toolbar">
+        <div class="d-flex flex-wrap align-items-center gap-3 mb-4">
             <?php if ($podeGerenciar): ?>
-            <button class="btn btn-outline-danger ta-btn-add" onclick="abrirModalAluno()">
+            <button class="btn btn-outline-danger d-inline-flex align-items-center gap-2" onclick="abrirModalAluno()">
                 <i class="bi bi-plus-lg"></i> Adicionar Aluno
             </button>
             <?php endif; ?>
-            <div class="ta-search">
-                <i class="bi bi-search"></i>
-                <input type="text" id="buscaAlunoDesk" placeholder="Buscar aluno por nome ou RM..." autocomplete="off">
+            <div class="input-group flex-grow-1">
+                <span class="input-group-text"><i class="bi bi-search"></i></span>
+                <input type="text" class="form-control" id="buscaAlunoDesk" placeholder="Buscar aluno por nome ou RM..." autocomplete="off">
             </div>
-            <span class="ta-count" id="contadorAlunosDesk"></span>
+            <span class="badge rounded-pill text-bg-light border text-body-secondary" id="contadorAlunosDesk"></span>
         </div>
 
         <?php if ($nivelUsuario === 0): ?>
-        <div class="ta-pdf-card">
-            <button class="ta-pdf-toggle" id="botaoPdfDesk" type="button" data-bs-toggle="collapse" data-bs-target="#blocoPdfDesk" aria-expanded="false" aria-controls="blocoPdfDesk">
-                <span class="ta-pdf-toggle-label"><i class="bi bi-file-earmark-pdf-fill"></i> Importar alunos via PDF</span>
-                <span class="ta-pdf-toggle-right">
-                    <span class="ta-pdf-badge">Administrador</span>
-                    <i class="bi bi-chevron-down ta-chevron"></i>
+        <div class="card border shadow-sm overflow-hidden mb-4">
+            <button class="btn w-100 d-flex align-items-center justify-content-between gap-3 p-3 text-start" id="botaoPdfDesk" type="button" data-bs-toggle="collapse" data-bs-target="#blocoPdfDesk" aria-expanded="false" aria-controls="blocoPdfDesk">
+                <span class="d-flex align-items-center gap-2 fw-semibold"><i class="bi bi-file-earmark-pdf-fill text-danger"></i> Importar alunos via PDF</span>
+                <span class="d-flex align-items-center gap-2">
+                    <span class="badge rounded-pill bg-danger-subtle text-danger-emphasis">Administrador</span>
+                    <i class="bi bi-chevron-down" data-pdf-chevron></i>
                 </span>
             </button>
             <div id="blocoPdfDesk" class="collapse">
-                <div class="ta-pdf-body">
-                    <p class="ta-pdf-aviso">
+                <div class="card-body p-3 pt-0">
+                    <p class="alert alert-warning d-flex align-items-start gap-2 small mb-3">
                         <i class="bi bi-info-circle-fill"></i>
                         <span>O PDF deve conter <strong>texto selecionável</strong> (não imagem). Os alunos serão vinculados automaticamente a esta turma.</span>
                     </p>
                     <form id="formPdfTurmaDesk" enctype="multipart/form-data">
-                        <div class="ta-dropzone" id="dropzoneDesk">
+                        <div class="border rounded-3 p-4 text-center bg-body-tertiary" id="dropzoneDesk">
                             <input type="file" class="d-none" name="pdf" id="pdfInputDesk" accept="application/pdf" required>
-                            <i class="bi bi-cloud-arrow-up"></i>
-                            <p><strong>Arraste e solte o PDF aqui</strong><br>ou <span class="ta-link">clique para selecionar</span></p>
-                            <span class="ta-file-name" id="pdfNomeDesk"></span>
+                            <i class="bi bi-cloud-arrow-up fs-1 text-danger"></i>
+                            <p class="small text-body-secondary mb-0 mt-2"><strong>Arraste e solte o PDF aqui</strong><br>ou <span class="text-danger fw-semibold text-decoration-underline">clique para selecionar</span></p>
+                            <span class="d-none small fw-semibold text-success mt-2" id="pdfNomeDesk"></span>
                         </div>
-                        <div class="ta-progress" id="progressDesk">
+                        <div class="d-none mt-3" id="progressDesk">
                             <div class="progress" role="progressbar" aria-label="Progresso do upload">
-                                <div class="progress-bar sgi-u-w-0" id="progressBarDesk" ></div>
+                                <div class="progress-bar" id="progressBarDesk"></div>
                             </div>
-                            <span class="ta-progress-text" id="progressTextoDesk">Enviando…</span>
+                            <span class="small text-body-secondary mt-1 d-block" id="progressTextoDesk">Enviando…</span>
                         </div>
                         <div id="msgPdfDesk" class="small mt-2 text-center"></div>
                         <div id="fallbackDesk" class="d-none mt-2 text-center">
@@ -154,7 +154,7 @@ $podeResetarSenha = in_array($nivelUsuario, [0], true);
                             </a>
                         </div>
                         <div class="d-flex justify-content-end mt-3">
-                            <button type="submit" class="btn btn-primary ta-btn-submit">
+                            <button type="submit" class="btn btn-primary d-inline-flex align-items-center gap-2">
                                 <i class="bi bi-file-earmark-arrow-up"></i> Importar PDF
                             </button>
                         </div>
@@ -164,13 +164,13 @@ $podeResetarSenha = in_array($nivelUsuario, [0], true);
         </div>
         <?php endif; ?>
 
-        <div class="ta-table-card mt-4">
-            <div class="ta-table-card-header">
-                <span class="ta-title-label"><i class="bi bi-people-fill"></i> Alunos cadastrados</span>
-                <span class="ta-badge-count" id="taTableCount"></span>
+        <div class="card border shadow-sm overflow-hidden mt-4">
+            <div class="card-header d-flex align-items-center justify-content-between gap-3">
+                <span class="fw-semibold"><i class="bi bi-people-fill text-primary me-1"></i> Alunos cadastrados</span>
+                <span class="badge rounded-pill text-bg-light border text-body-secondary" id="taTableCount"></span>
             </div>
             <div class="table-responsive">
-                <table class="table ta-table align-middle mb-0">
+                <table class="table table-hover align-middle mb-0">
                     <thead>
                         <tr>
                             <th>Nome</th>
@@ -182,10 +182,10 @@ $podeResetarSenha = in_array($nivelUsuario, [0], true);
                     <tbody id="tbodyAlunosTurmaDesk"></tbody>
                 </table>
             </div>
-            <div class="ta-table-footer">
+            <div class="d-flex align-items-center justify-content-between flex-wrap gap-3 p-3 border-top small text-body-secondary">
                 <span id="taInfoPaginaDesk"></span>
                 <nav aria-label="Paginação">
-                    <ul class="pagination pagination-sm ta-pagination mb-0" id="paginacaoDesk"></ul>
+                    <ul class="pagination pagination-sm mb-0" id="paginacaoDesk"></ul>
                 </nav>
             </div>
         </div>
@@ -202,11 +202,11 @@ $podeResetarSenha = in_array($nivelUsuario, [0], true);
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
-                <div class="ta-view-avatar" id="verInicial">—</div>
+                <div class="rounded-circle bg-danger-subtle text-danger-emphasis fw-bold fs-3 d-flex align-items-center justify-content-center mx-auto mb-3 p-3" id="verInicial">—</div>
                 <h5 class="text-center mb-1" id="verNome">—</h5>
-                <div class="text-center mb-3"><span class="ta-badge-genero" id="verGenero">—</span></div>
-                <div class="ta-view-row"><span>RM</span><strong id="verRm">—</strong></div>
-                <div class="ta-view-row"><span>Data de nascimento</span><strong id="verDataNasc">—</strong></div>
+                <div class="text-center mb-3"><span class="badge rounded-pill text-bg-light border" id="verGenero">—</span></div>
+                <div class="d-flex align-items-center justify-content-between gap-3 py-2 border-top"><span class="small text-body-secondary">RM</span><strong id="verRm">—</strong></div>
+                <div class="d-flex align-items-center justify-content-between gap-3 py-2 border-top"><span class="small text-body-secondary">Data de nascimento</span><strong id="verDataNasc">—</strong></div>
             </div>
             <div class="modal-footer justify-content-center border-0 pt-0">
                 <button type="button" class="btn btn-outline-secondary btn-sm rounded-3 px-4" data-bs-dismiss="modal">Fechar</button>

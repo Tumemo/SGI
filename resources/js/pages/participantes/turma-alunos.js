@@ -131,65 +131,65 @@ window.SGIPage.mount("participantes/turma-alunos", function (pageConfig, pageSco
             const vazio = termo
                 ? '<i class="bi bi-search"></i><p><strong>Nenhum resultado para sua busca.</strong></p><p class="small text-muted">Tente buscar por nome ou RM.</p>'
                 : '<i class="bi bi-people"></i><p><strong>Nenhum aluno cadastrado nesta turma.</strong></p><p class="small text-muted">Clique em "Adicionar Aluno" ou importe um PDF para começar.</p>';
-            mob.innerHTML = `<div class="ta-empty">${vazio}</div>`;
-            desk.innerHTML = `<tr><td colspan="4"><div class="ta-empty ta-empty--cell">${vazio}</div></td></tr>`;
+            mob.innerHTML = `<div class="text-center py-5 text-body-secondary">${vazio}</div>`;
+            desk.innerHTML = `<tr><td colspan="4"><div class="text-center py-5 text-body-secondary">${vazio}</div></td></tr>`;
         } else {
             const acoesMob = (u) => `
                 <div class="d-flex gap-1">
-                    <button type="button" class="ta-action ta-action--view" data-bs-toggle="tooltip" title="Visualizar" onclick="verAlunoId(${u.id_usuario})">
+                    <button type="button" class="btn btn-sm btn-light border text-primary px-2 py-1" data-bs-toggle="tooltip" title="Visualizar" onclick="verAlunoId(${u.id_usuario})">
                         <i class="bi bi-eye"></i>
                     </button>
                     ${podeGerenciar ? `
-                    <button type="button" class="ta-action ta-action--edit" data-bs-toggle="tooltip" title="Editar" onclick="abrirModalAlunoId(${u.id_usuario})">
+                    <button type="button" class="btn btn-sm btn-light border text-secondary px-2 py-1" data-bs-toggle="tooltip" title="Editar" onclick="abrirModalAlunoId(${u.id_usuario})">
                         <i class="bi bi-pencil"></i>
                     </button>` : ''}
                     ${podeExcluir ? `
-                    <button type="button" class="ta-action ta-action--delete" data-bs-toggle="tooltip" title="Excluir" onclick="confirmarExcluir(${u.id_usuario})">
+                    <button type="button" class="btn btn-sm btn-light border text-danger px-2 py-1" data-bs-toggle="tooltip" title="Excluir" onclick="confirmarExcluir(${u.id_usuario})">
                         <i class="bi bi-trash"></i>
                     </button>` : ''}
                     ${podeResetarSenha ? `
-                    <button type="button" class="ta-action ta-action--reset" data-bs-toggle="tooltip" title="Resetar senha" onclick="resetarSenha(${u.id_usuario})">
+                    <button type="button" class="btn btn-sm btn-light border text-warning-emphasis px-2 py-1" data-bs-toggle="tooltip" title="Resetar senha" onclick="resetarSenha(${u.id_usuario})">
                         <i class="bi bi-key-fill"></i>
                     </button>` : ''}
                 </div>`;
 
             mob.innerHTML = pagina.map((u) => `
-                <div class="ta-student-card${Number(u.inscrito || 0) === 0 ? ' sem-inscricao' : ''}">
-                    <div class="ta-student-avatar">${esc((u.nome_usuario || 'A').charAt(0)).toUpperCase()}</div>
-                    <div class="ta-student-info">
-                        <div class="ta-student-name">${esc(u.nome_usuario)}${Number(u.inscrito || 0) === 0 ? '<span class="ta-badge-sem-inscricao">Sem inscrição</span>' : ''}</div>
-                        <div class="ta-student-meta">${esc(u.matricula_usuario || '—')} · ${esc(generoLabel(u.genero_usuario))}</div>
+                <div class="card border shadow-sm p-3 d-flex flex-row align-items-center gap-3${Number(u.inscrito || 0) === 0 ? ' border-danger bg-danger-subtle' : ''}">
+                    <div class="rounded-circle bg-danger-subtle text-danger-emphasis fw-semibold fs-5 d-flex align-items-center justify-content-center flex-shrink-0 p-2">${esc((u.nome_usuario || 'A').charAt(0)).toUpperCase()}</div>
+                    <div class="flex-grow-1 overflow-hidden">
+                        <div class="fw-semibold text-body text-truncate">${esc(u.nome_usuario)}${Number(u.inscrito || 0) === 0 ? '<span class="badge rounded-pill text-bg-danger ms-2">Sem inscrição</span>' : ''}</div>
+                        <div class="small text-body-secondary">${esc(u.matricula_usuario || '—')} · ${esc(generoLabel(u.genero_usuario))}</div>
                     </div>
                     ${acoesMob(u)}
                 </div>`).join('');
 
             const acoesDesk = (u) => `
                 <div class="d-flex gap-1 justify-content-center">
-                    <button type="button" class="ta-action ta-action--view" data-bs-toggle="tooltip" title="Visualizar" onclick="verAlunoId(${u.id_usuario})">
+                    <button type="button" class="btn btn-sm btn-light border text-primary px-2 py-1" data-bs-toggle="tooltip" title="Visualizar" onclick="verAlunoId(${u.id_usuario})">
                         <i class="bi bi-eye"></i>
                     </button>
                     ${podeGerenciar ? `
-                    <button type="button" class="ta-action ta-action--edit" data-bs-toggle="tooltip" title="Editar" onclick="abrirModalAlunoId(${u.id_usuario})">
+                    <button type="button" class="btn btn-sm btn-light border text-secondary px-2 py-1" data-bs-toggle="tooltip" title="Editar" onclick="abrirModalAlunoId(${u.id_usuario})">
                         <i class="bi bi-pencil"></i>
                     </button>` : ''}
                     ${podeExcluir ? `
-                    <button type="button" class="ta-action ta-action--delete" data-bs-toggle="tooltip" title="Excluir" onclick="confirmarExcluir(${u.id_usuario})">
+                    <button type="button" class="btn btn-sm btn-light border text-danger px-2 py-1" data-bs-toggle="tooltip" title="Excluir" onclick="confirmarExcluir(${u.id_usuario})">
                         <i class="bi bi-trash"></i>
                     </button>` : ''}
                     ${podeResetarSenha ? `
-                    <button type="button" class="ta-action ta-action--reset" data-bs-toggle="tooltip" title="Resetar senha" onclick="resetarSenha(${u.id_usuario})">
+                    <button type="button" class="btn btn-sm btn-light border text-warning-emphasis px-2 py-1" data-bs-toggle="tooltip" title="Resetar senha" onclick="resetarSenha(${u.id_usuario})">
                         <i class="bi bi-key-fill"></i>
                     </button>` : ''}
                 </div>`;
 
             desk.innerHTML = pagina.map((u) => `
-                <tr class="${Number(u.inscrito || 0) === 0 ? 'ta-tr-sem-inscricao' : ''}">
-                    <td class="ta-cell-nome">
-                        <span class="ta-table-avatar">${esc((u.nome_usuario || 'A').charAt(0)).toUpperCase()}</span>${esc(u.nome_usuario)}${Number(u.inscrito || 0) === 0 ? '<span class="ta-badge-sem-inscricao">Sem inscrição</span>' : ''}
+                <tr class="${Number(u.inscrito || 0) === 0 ? 'table-danger' : ''}">
+                    <td class="fw-semibold text-body">
+                        <span class="rounded-circle bg-danger-subtle text-danger-emphasis fw-semibold d-inline-flex align-items-center justify-content-center p-1 me-2">${esc((u.nome_usuario || 'A').charAt(0)).toUpperCase()}</span>${esc(u.nome_usuario)}${Number(u.inscrito || 0) === 0 ? '<span class="badge rounded-pill text-bg-danger ms-2">Sem inscrição</span>' : ''}
                     </td>
                     <td>${esc(u.matricula_usuario)}</td>
                     <td>
-                        <span class="ta-badge-genero ${u.genero_usuario === 'FEM' ? 'ta-badge-genero--fem' : ''}">
+                        <span class="badge rounded-pill text-bg-light border ${u.genero_usuario === 'FEM' ? 'bg-danger-subtle text-danger-emphasis' : ''}">
                             <i class="bi ${u.genero_usuario === 'FEM' ? 'bi-gender-female' : 'bi-gender-male'}"></i>
                             ${esc(generoLabel(u.genero_usuario))}
                         </span>
@@ -416,8 +416,9 @@ window.SGIPage.mount("participantes/turma-alunos", function (pageConfig, pageSco
         const bar = document.getElementById(barId);
         const txt = document.getElementById(textoId);
         if (!cont || !bar || !txt) return null;
+        bar.style.width = '0%';
         return {
-            start() { cont.style.display = 'block'; bar.style.width = '8%'; txt.textContent = 'Enviando arquivo…'; },
+            start() { cont.classList.remove('d-none'); bar.style.width = '8%'; txt.textContent = 'Enviando arquivo…'; },
             progress(p) { bar.style.width = p + '%'; txt.textContent = `Enviando… ${p}%`; },
             done() { bar.style.width = '100%'; txt.textContent = 'Processando alunos…'; },
             reset() { bar.style.width = '0%'; txt.textContent = 'Enviando…'; }
@@ -483,12 +484,12 @@ window.SGIPage.mount("participantes/turma-alunos", function (pageConfig, pageSco
         pageScope.listen(input, 'change', () => {
             if (input.files && input.files[0]) {
                 nome.textContent = input.files[0].name;
-                nome.classList.add('visivel');
-                dropzone.classList.add('ta-dropzone--has-file');
+                nome.classList.remove('d-none');
+                dropzone.classList.add('border-success', 'bg-success-subtle');
             } else {
                 nome.textContent = '';
-                nome.classList.remove('visivel');
-                dropzone.classList.remove('ta-dropzone--has-file');
+                nome.classList.add('d-none');
+                dropzone.classList.remove('border-success', 'bg-success-subtle');
             }
         });
 
@@ -496,14 +497,14 @@ window.SGIPage.mount("participantes/turma-alunos", function (pageConfig, pageSco
             pageScope.listen(dropzone, ev, (e) => {
                 e.preventDefault();
                 e.stopPropagation();
-                dropzone.classList.add('ta-dropzone--dragover');
+                dropzone.classList.add('border-danger', 'bg-danger-subtle');
             })
         );
         ['dragleave', 'drop'].forEach(ev =>
             pageScope.listen(dropzone, ev, (e) => {
                 e.preventDefault();
                 e.stopPropagation();
-                dropzone.classList.remove('ta-dropzone--dragover');
+                dropzone.classList.remove('border-danger', 'bg-danger-subtle');
             })
         );
         pageScope.listen(dropzone, 'drop', (e) => {
@@ -539,13 +540,19 @@ window.SGIPage.mount("participantes/turma-alunos", function (pageConfig, pageSco
         const colapsoDesk = document.getElementById('blocoPdfDesk');
         const botaoMob = document.getElementById('botaoPdfMob');
         const botaoDesk = document.getElementById('botaoPdfDesk');
+        const atualizarChevron = (botao, aberto) => {
+            const chevron = botao?.querySelector('[data-pdf-chevron]');
+            if (!chevron) return;
+            chevron.classList.toggle('bi-chevron-down', !aberto);
+            chevron.classList.toggle('bi-chevron-up', aberto);
+        };
         if (colapsoMob && botaoMob) {
-            pageScope.listen(colapsoMob, 'show.bs.collapse', () => botaoMob.classList.add('aberto'));
-            pageScope.listen(colapsoMob, 'hide.bs.collapse', () => botaoMob.classList.remove('aberto'));
+            pageScope.listen(colapsoMob, 'show.bs.collapse', () => atualizarChevron(botaoMob, true));
+            pageScope.listen(colapsoMob, 'hide.bs.collapse', () => atualizarChevron(botaoMob, false));
         }
         if (colapsoDesk && botaoDesk) {
-            pageScope.listen(colapsoDesk, 'show.bs.collapse', () => botaoDesk.classList.add('aberto'));
-            pageScope.listen(colapsoDesk, 'hide.bs.collapse', () => botaoDesk.classList.remove('aberto'));
+            pageScope.listen(colapsoDesk, 'show.bs.collapse', () => atualizarChevron(botaoDesk, true));
+            pageScope.listen(colapsoDesk, 'hide.bs.collapse', () => atualizarChevron(botaoDesk, false));
         }
 
         configurarDropzone('dropzoneMob', 'pdfInputMob', 'pdfNomeMob');
