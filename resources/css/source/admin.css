@@ -1099,82 +1099,6 @@ body.sgi-offline-active {
 /* ==========================================================================
    29. CHAVEAMENTO — ÁRVORE DO TORNEIO (chaveamento_arvore.php)
    ========================================================================== */
-/* ── Chaveamento Page ── */
-.kv-page {
-    font-family: "Inter", sans-serif;
-    font-weight: 400;
-    color: #1a1a2e;
-    background: #f8f9fc;
-    min-height: 100vh;
-    padding: 40px;
-}
-.kv-page * { box-sizing: border-box; }
-
-/* ── Header ── */
-.kv-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 32px;
-    flex-wrap: wrap;
-    gap: 16px;
-}
-.kv-header__left { display: flex; align-items: center; gap: 16px; }
-.kv-back {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 40px;
-    height: 40px;
-    border-radius: 12px;
-    background: #fff;
-    border: 1px solid #e5e7eb;
-    color: #374151;
-    text-decoration: none;
-    transition: all 0.2s;
-    font-size: 1.1rem;
-    flex-shrink: 0;
-}
-.kv-back:hover {
-    background: #fee2e2;
-    border-color: #fca5a5;
-    color: #dc2626;
-    transform: translateX(-2px);
-}
-.kv-title { font-size: 1.75rem; font-weight: 800; color: #111827; line-height: 1.2; }
-.kv-subtitle { font-size: 0.9rem; color: #6b7280; margin-top: 2px; }
-.kv-header__right { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
-/* ── Stats Cards ── */
-.kv-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 32px; }
-.kv-stat {
-    background: #fff;
-    border-radius: 16px;
-    padding: 20px;
-    display: flex;
-    align-items: center;
-    gap: 16px;
-    border: 1px solid #f0f0f5;
-    transition: all 0.25s;
-}
-.kv-stat:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,0.07); }
-.kv-stat__icon {
-    width: 48px;
-    height: 48px;
-    border-radius: 12px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.3rem;
-    flex-shrink: 0;
-}
-.kv-stat__icon--modalidades { background: #fee2e2; color: #dc2626; }
-.kv-stat__icon--jogos { background: #dbeafe; color: #2563eb; }
-.kv-stat__icon--campeoes { background: #fef3c7; color: #d97706; }
-.kv-stat__icon--pendentes { background: #e0e7ff; color: #4f46e5; }
-.kv-stat__info { flex: 1; }
-.kv-stat__number { font-size: 1.5rem; font-weight: 800; color: #111827; line-height: 1; }
-.kv-stat__label { font-size: 0.78rem; color: #6b7280; margin-top: 4px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.03em; }
-
 /* ── Phase Timeline ── */
 .kv-phase-timeline {
     display: flex;
@@ -1476,16 +1400,11 @@ body.sgi-offline-active {
 
 /* ── Responsive ── */
 @media (max-width: 991px) {
-    .kv-page { padding: 20px; }
-    .kv-stats { grid-template-columns: repeat(2, 1fr); }
     .bracket-tree { padding-bottom: 20px; }
     .bracket-round-col { min-width: 220px; padding: 0 12px; }
 }
 
 @media (max-width: 575px) {
-    .kv-stats { grid-template-columns: 1fr; }
-    .kv-header { flex-direction: column; align-items: flex-start; }
-    .kv-header__right { width: 100%; }
     .kv-podium { grid-template-columns: 1fr 1fr; }
     .kv-phase-timeline { padding: 16px; }
     .bracket-tree { flex-direction: column; align-items: stretch; overflow-x: hidden; }
@@ -1494,15 +1413,6 @@ body.sgi-offline-active {
     .bkt-connector { display: none; }
     .bracket-champion-col { min-width: 100%; flex: none; padding: 0; margin-top: 16px; }
     .kv-classificacao-geral__podium { grid-template-columns: 1fr 1fr; }
-}
-
-@media (max-width: 767.98px) {
-    /* A tabela permanece rolável no próprio contêiner sem aumentar a página. */
-    .kv-page {
-        width: 100%;
-        max-width: 100%;
-        overflow-x: hidden;
-    }
 }
 
 /* ── Custom Select (KVS) ── */

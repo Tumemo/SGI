@@ -345,6 +345,7 @@ test('competition list and bracket modal use native status and action variants',
     assert.doesNotMatch(css, /\.jogo-card\b/);
     assert.doesNotMatch(bracket + bracketJs + games + css, /\b(?:kv-badge|kv-action|game-action-btn)\b/);
     assert.doesNotMatch(bracket + bracketJs + css, /\b(?:kv-table-card|kv-filters|kv-filter-(?:input|select)|kv-gen-card|kv-empty|kv-loading|kv-alert|kv-link-btn|kv-history-card|kv-modal)\b/);
+    assert.doesNotMatch(bracket + css, /\bkv-(?:page|title|subtitle|header|back|stats|stat)\b/);
     assert.doesNotMatch(css, /\.status-badge\s*\{|\.kv-modal \.btn-save\s*\{/);
 });
 

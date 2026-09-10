@@ -11,41 +11,49 @@ $isNivel2 = $nivelUsuario === 2;
 $podeGerar = !$isNivel2 && !$isNivel3;
 ?>
 
-<main class="d-md-none kv-page p-4" >
+<main class="d-md-none p-4 bg-body-tertiary min-vh-100" >
     <a href="<?= \App\Shared\Http\Url::to('painel') ?>" id="btnVoltarChaveamentoMob" class="btn btn-primary d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none" >
         <i class="bi bi-arrow-left-circle fs-5"></i> <span id="nomeInterclasseChaveamentoMob">Interclasse</span>
     </a>
     <div class="mb-3">
-        <h4 class="kv-title fs-4" >Chaveamento</h4>
+        <h4 class="h3 fw-bold text-body mb-0" >Chaveamento</h4>
     </div>
 
-    <div class="kv-stats mb-4" >
-        <div class="kv-stat">
-            <div class="kv-stat__icon kv-stat__icon--modalidades"><i class="bi bi-trophy"></i></div>
-            <div class="kv-stat__info">
-                <div class="kv-stat__number" id="statModalidadesMob">0</div>
-                <div class="kv-stat__label">Modalidades</div>
+    <div class="row row-cols-2 g-3 mb-4" >
+        <div class="col">
+            <div class="card border-0 shadow-sm h-100 p-3 d-flex flex-row align-items-center gap-3">
+                <div class="rounded-3 bg-danger-subtle text-danger p-2 fs-5 d-inline-flex flex-shrink-0"><i class="bi bi-trophy"></i></div>
+                <div class="flex-grow-1">
+                    <div class="fs-4 fw-bold lh-1" id="statModalidadesMob">0</div>
+                    <div class="small text-body-secondary text-uppercase">Modalidades</div>
+                </div>
             </div>
         </div>
-        <div class="kv-stat">
-            <div class="kv-stat__icon kv-stat__icon--jogos"><i class="fa-solid fa-volleyball"></i></div>
-            <div class="kv-stat__info">
-                <div class="kv-stat__number" id="statJogosMob">0</div>
-                <div class="kv-stat__label">Jogos</div>
+        <div class="col">
+            <div class="card border-0 shadow-sm h-100 p-3 d-flex flex-row align-items-center gap-3">
+                <div class="rounded-3 bg-primary-subtle text-primary p-2 fs-5 d-inline-flex flex-shrink-0"><i class="fa-solid fa-volleyball"></i></div>
+                <div class="flex-grow-1">
+                    <div class="fs-4 fw-bold lh-1" id="statJogosMob">0</div>
+                    <div class="small text-body-secondary text-uppercase">Jogos</div>
+                </div>
             </div>
         </div>
-        <div class="kv-stat">
-            <div class="kv-stat__icon kv-stat__icon--campeoes"><i class="bi bi-award"></i></div>
-            <div class="kv-stat__info">
-                <div class="kv-stat__number" id="statCampeoesMob">0</div>
-                <div class="kv-stat__label">Campeões</div>
+        <div class="col">
+            <div class="card border-0 shadow-sm h-100 p-3 d-flex flex-row align-items-center gap-3">
+                <div class="rounded-3 bg-warning-subtle text-warning-emphasis p-2 fs-5 d-inline-flex flex-shrink-0"><i class="bi bi-award"></i></div>
+                <div class="flex-grow-1">
+                    <div class="fs-4 fw-bold lh-1" id="statCampeoesMob">0</div>
+                    <div class="small text-body-secondary text-uppercase">Campeões</div>
+                </div>
             </div>
         </div>
-        <div class="kv-stat">
-            <div class="kv-stat__icon kv-stat__icon--pendentes"><i class="bi bi-hourglass-split"></i></div>
-            <div class="kv-stat__info">
-                <div class="kv-stat__number" id="statPendentesMob">0</div>
-                <div class="kv-stat__label">Pendentes</div>
+        <div class="col">
+            <div class="card border-0 shadow-sm h-100 p-3 d-flex flex-row align-items-center gap-3">
+                <div class="rounded-3 bg-info-subtle text-info-emphasis p-2 fs-5 d-inline-flex flex-shrink-0"><i class="bi bi-hourglass-split"></i></div>
+                <div class="flex-grow-1">
+                    <div class="fs-4 fw-bold lh-1" id="statPendentesMob">0</div>
+                    <div class="small text-body-secondary text-uppercase">Pendentes</div>
+                </div>
             </div>
         </div>
     </div>
@@ -116,17 +124,17 @@ $podeGerar = !$isNivel2 && !$isNivel3;
     </div>
 </main>
 
-<main class="d-none d-md-block kv-page main-desktop-layout">
+<main class="d-none d-md-block main-desktop-layout bg-body-tertiary min-vh-100">
 
     <div class="container-fluid mw-100" >
 
-        <div class="kv-header">
-            <div class="kv-header__left">
+        <div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-3">
+            <div class="d-flex align-items-center gap-3">
                 <a href="<?= \App\Shared\Http\Url::to('painel') ?>" id="btnVoltar" class="btn btn-primary d-inline-flex align-items-center gap-2 fw-bold px-3 py-2 border-0 text-decoration-none" >
                     <i class="bi bi-arrow-left-circle fs-5"></i> <span id="nomeInterclasseChaveamento">Interclasse</span>
                 </a>
             </div>
-            <div class="kv-header__right d-grid d-sm-flex">
+            <div class="d-flex gap-2 align-items-center flex-wrap">
                 <?php if ($podeGerar): ?>
                 <button class="btn btn-primary d-inline-flex align-items-center gap-2" id="btnGerarChaveamento">
                     <i class="bi bi-diagram-3-fill"></i> Gerar Chaveamento
@@ -135,33 +143,41 @@ $podeGerar = !$isNivel2 && !$isNivel3;
             </div>
         </div>
 
-        <div class="kv-stats">
-            <div class="kv-stat">
-                <div class="kv-stat__icon kv-stat__icon--modalidades"><i class="bi bi-trophy"></i></div>
-                <div class="kv-stat__info">
-                    <div class="kv-stat__number" id="statModalidades">0</div>
-                    <div class="kv-stat__label">Modalidades</div>
+        <div class="row row-cols-2 row-cols-xl-4 g-3 mb-4">
+            <div class="col">
+                <div class="card border-0 shadow-sm h-100 p-3 d-flex flex-row align-items-center gap-3">
+                    <div class="rounded-3 bg-danger-subtle text-danger p-2 fs-5 d-inline-flex flex-shrink-0"><i class="bi bi-trophy"></i></div>
+                    <div class="flex-grow-1">
+                        <div class="fs-4 fw-bold lh-1" id="statModalidades">0</div>
+                        <div class="small text-body-secondary text-uppercase">Modalidades</div>
+                    </div>
                 </div>
             </div>
-            <div class="kv-stat">
-                <div class="kv-stat__icon kv-stat__icon--jogos"><i class="fa-solid fa-volleyball"></i></div>
-                <div class="kv-stat__info">
-                    <div class="kv-stat__number" id="statJogos">0</div>
-                    <div class="kv-stat__label">Jogos</div>
+            <div class="col">
+                <div class="card border-0 shadow-sm h-100 p-3 d-flex flex-row align-items-center gap-3">
+                    <div class="rounded-3 bg-primary-subtle text-primary p-2 fs-5 d-inline-flex flex-shrink-0"><i class="fa-solid fa-volleyball"></i></div>
+                    <div class="flex-grow-1">
+                        <div class="fs-4 fw-bold lh-1" id="statJogos">0</div>
+                        <div class="small text-body-secondary text-uppercase">Jogos</div>
+                    </div>
                 </div>
             </div>
-            <div class="kv-stat">
-                <div class="kv-stat__icon kv-stat__icon--campeoes"><i class="bi bi-award"></i></div>
-                <div class="kv-stat__info">
-                    <div class="kv-stat__number" id="statCampeoes">0</div>
-                    <div class="kv-stat__label">Campeões definidos</div>
+            <div class="col">
+                <div class="card border-0 shadow-sm h-100 p-3 d-flex flex-row align-items-center gap-3">
+                    <div class="rounded-3 bg-warning-subtle text-warning-emphasis p-2 fs-5 d-inline-flex flex-shrink-0"><i class="bi bi-award"></i></div>
+                    <div class="flex-grow-1">
+                        <div class="fs-4 fw-bold lh-1" id="statCampeoes">0</div>
+                        <div class="small text-body-secondary text-uppercase">Campeões definidos</div>
+                    </div>
                 </div>
             </div>
-            <div class="kv-stat">
-                <div class="kv-stat__icon kv-stat__icon--pendentes"><i class="bi bi-hourglass-split"></i></div>
-                <div class="kv-stat__info">
-                    <div class="kv-stat__number" id="statPendentes">0</div>
-                    <div class="kv-stat__label">Jogos pendentes</div>
+            <div class="col">
+                <div class="card border-0 shadow-sm h-100 p-3 d-flex flex-row align-items-center gap-3">
+                    <div class="rounded-3 bg-info-subtle text-info-emphasis p-2 fs-5 d-inline-flex flex-shrink-0"><i class="bi bi-hourglass-split"></i></div>
+                    <div class="flex-grow-1">
+                        <div class="fs-4 fw-bold lh-1" id="statPendentes">0</div>
+                        <div class="small text-body-secondary text-uppercase">Jogos pendentes</div>
+                    </div>
                 </div>
             </div>
         </div>
