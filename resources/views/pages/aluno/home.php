@@ -31,10 +31,10 @@ include SGI_ROOT . '/resources/views/components/aluno-nav.php';
         </div>
       </div> -->
 
-      <div class="aluno-filter-pills mb-4" id="filterPills">
-        <span class="filter-pill active" data-filter="active">Em Andamento</span>
-        <span class="filter-pill" data-filter="all">Todos</span>
-        <span class="filter-pill" data-filter="inactive">Encerrados</span>
+      <div class="d-flex gap-2 flex-wrap mb-4" id="filterPills">
+        <button type="button" class="btn btn-sm btn-outline-primary rounded-pill filter-pill active" data-filter="active" aria-pressed="true">Em Andamento</button>
+        <button type="button" class="btn btn-sm btn-outline-primary rounded-pill filter-pill" data-filter="all" aria-pressed="false">Todos</button>
+        <button type="button" class="btn btn-sm btn-outline-primary rounded-pill filter-pill" data-filter="inactive" aria-pressed="false">Encerrados</button>
       </div>
 
       <section id="listaInterclassesAluno">
@@ -79,7 +79,7 @@ include SGI_ROOT . '/resources/views/components/aluno-nav.php';
                                 <small class="text-muted">Leia o regulamento completo antes de aceitar.</small>
                             </div>
                         </div>
-                        <a id="btnBaixarPdf" href="#" target="_blank" class="btn btn-danger btn-sm rounded-3 fw-semibold d-inline-flex align-items-center gap-1 disabled">
+                        <a id="btnBaixarPdf" href="#" target="_blank" class="btn btn-primary btn-sm rounded-3 fw-semibold d-inline-flex align-items-center gap-1 disabled">
                             <i class="bi bi-download"></i> Baixar / Ler PDF
                         </a>
                     </div>
@@ -92,7 +92,7 @@ include SGI_ROOT . '/resources/views/components/aluno-nav.php';
             </div>
             <div class="modal-footer border-0 justify-content-end gap-2 bg-light px-4 py-3">
                 <button type="button" class="btn btn-outline-secondary px-4 fw-semibold" id="btnRecusarTermo">Recusar</button>
-                <button type="button" class="btn btn-danger px-4 fw-semibold" id="btnAceitarTermo" disabled title="Abra o PDF do regulamento acima para liberar o botão">Aceitar e Continuar</button>
+                <button type="button" class="btn btn-primary px-4 fw-semibold" id="btnAceitarTermo" disabled title="Abra o PDF do regulamento acima para liberar o botão">Aceitar e Continuar</button>
             </div>
         </div>
     </div>
@@ -123,7 +123,7 @@ include SGI_ROOT . '/resources/views/components/aluno-nav.php';
                 </form>
             </div>
             <div class="modal-footer border-0 justify-content-end gap-2 bg-light px-4 py-3">
-                <button type="button" class="btn btn-danger px-4 fw-semibold" id="btnSalvarNovaSenha">
+                <button type="button" class="btn btn-primary px-4 fw-semibold" id="btnSalvarNovaSenha">
                     <i class="bi bi-check-lg me-1"></i>Salvar Senha
                 </button>
             </div>

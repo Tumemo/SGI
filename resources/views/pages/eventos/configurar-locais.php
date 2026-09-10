@@ -10,9 +10,9 @@ $isColaborador = $nivelUsuario === 1;
 ?>
 
 <main class="main-desktop-layout main-locais-layout my-4">
-    <div class="container-fluid px-0 sgi-u-maxw-100" >
+    <div class="container-fluid px-0 mw-100" >
         <div class="mb-4 d-flex flex-column flex-lg-row justify-content-between align-items-start align-items-lg-center gap-3">
-            <a href="<?= \App\Shared\Http\Url::to('painel') ?>" id="btnVoltarLocaisDesk" class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none sgi-u-bg-E30613-radius-6px-p-8px-16px" >
+            <a href="<?= \App\Shared\Http\Url::to('painel') ?>" id="btnVoltarLocaisDesk" class="btn btn-primary d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none" >
                 <i class="bi bi-arrow-left-circle fs-5"></i> <span id="nomeInterclasseLocais">Interclasse</span>
             </a>
 
@@ -22,7 +22,7 @@ $isColaborador = $nivelUsuario === 1;
                         <i class="bi bi-file-earmark-text"></i> Termos do Colaborador
                     </button>
                 <?php endif; ?>
-                <button type="button" class="btn btn-danger fw-semibold rounded-3 px-4 py-2 shadow-sm d-inline-flex align-items-center gap-2 sgi-u-bg-ed1c24-border-none" data-bs-toggle="modal" data-bs-target="#modalNovoLocal" >
+                <button type="button" class="btn btn-primary fw-semibold rounded-3 px-4 py-2 shadow-sm d-inline-flex align-items-center gap-2 " data-bs-toggle="modal" data-bs-target="#modalNovoLocal" >
                     <i class="bi bi-plus-lg"></i> Novo local
                 </button>
             </div>
@@ -44,7 +44,7 @@ $isColaborador = $nivelUsuario === 1;
                     <a id="btnVerPdfDesk" href="#" target="_blank" class="btn btn-outline-danger fw-semibold rounded-3 px-3 d-none">
                         <i class="bi bi-file-earmark-pdf-fill"></i> Visualizar PDF
                     </a>
-                    <button type="button" class="btn btn-danger fw-semibold rounded-3 px-3 sgi-u-bg-ed1c24-border-none" data-bs-toggle="modal" data-bs-target="#modalRegulamento" >
+                    <button type="button" class="btn btn-primary fw-semibold rounded-3 px-3 " data-bs-toggle="modal" data-bs-target="#modalRegulamento" >
                         <i class="bi bi-cloud-arrow-up me-1"></i> Upload do Regulamento
                     </button>
                 </div>
@@ -77,7 +77,7 @@ $isColaborador = $nivelUsuario === 1;
                 </div>
                 <div class="modal-footer border-0 pt-0 d-flex justify-content-end gap-2">
                     <button type="button" class="btn btn-outline-secondary rounded-3" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="submit" class="btn btn-danger rounded-3 fw-semibold px-4" id="btnSalvarRegulamento">Enviar Arquivo</button>
+                    <button type="submit" class="btn btn-primary rounded-3 fw-semibold px-4" id="btnSalvarRegulamento">Enviar Arquivo</button>
                 </div>
             </form>
         </div>
@@ -112,7 +112,7 @@ $isColaborador = $nivelUsuario === 1;
                     <div id="msgNovoLocal" class="small text-center mb-2"></div>
                     <div class="d-flex justify-content-end gap-2 pt-2">
                         <button type="button" class="btn btn-outline-secondary rounded-3" data-bs-dismiss="modal">Cancelar</button>
-                        <button type="submit" class="btn btn-danger rounded-3 fw-semibold px-4" id="btnSalvarLocal">Salvar</button>
+                        <button type="submit" class="btn btn-primary rounded-3 fw-semibold px-4" id="btnSalvarLocal">Salvar</button>
                     </div>
                 </form>
             </div>
@@ -153,7 +153,7 @@ $isColaborador = $nivelUsuario === 1;
                 </div>
                 <div class="modal-footer border-0 pt-0 d-flex justify-content-end gap-2">
                     <button type="button" class="btn btn-outline-secondary rounded-3" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="submit" class="btn btn-danger rounded-3 fw-semibold px-4" id="btnAtualizarLocal">Salvar Alterações</button>
+                    <button type="submit" class="btn btn-primary rounded-3 fw-semibold px-4" id="btnAtualizarLocal">Salvar Alterações</button>
                 </div>
             </form>
         </div>
@@ -220,7 +220,7 @@ $isColaborador = $nivelUsuario === 1;
                                         <small class="text-muted">Consulte o documento oficial e as diretrizes do evento.</small>
                                     </div>
                                 </div>
-                                <a id="btnBaixarPdfModal" href="#" target="_blank" class="btn btn-danger btn-sm rounded-3 fw-semibold d-inline-flex align-items-center gap-1">
+                                <a id="btnBaixarPdfModal" href="#" target="_blank" class="btn btn-primary btn-sm rounded-3 fw-semibold d-inline-flex align-items-center gap-1">
                                     <i class="bi bi-download"></i> Baixar / Ler PDF
                                 </a>
                             </div>

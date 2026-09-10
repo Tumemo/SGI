@@ -47,7 +47,9 @@ window.SGIPage.mount("eventos/configurar-equipes", function (pageConfig, pageSco
             const c = document.getElementById(idContainer);
             if (!c) return;
             c.querySelectorAll('button').forEach(b => {
-                b.classList.toggle('active', b.dataset.id === id);
+            const selected = b.dataset.id === id;
+            b.classList.toggle('active', selected);
+            b.setAttribute('aria-pressed', selected ? 'true' : 'false');
             });
         });
     }
@@ -60,7 +62,7 @@ window.SGIPage.mount("eventos/configurar-equipes", function (pageConfig, pageSco
             const lista = Array.isArray(cats) ? cats : [];
 
             const btns = lista.map(c =>
-                `<button class="btn-filter-cat" data-id="${c.id_categoria}">${esc(c.nome_categoria)}</button>`
+                `<button type="button" class="btn btn-sm btn-outline-primary btn-filter-cat" data-id="${c.id_categoria}" aria-pressed="false">${esc(c.nome_categoria)}</button>`
             ).join('');
 
             const desk = document.getElementById('filtroCategoria');
@@ -93,7 +95,7 @@ window.SGIPage.mount("eventos/configurar-equipes", function (pageConfig, pageSco
                             <div class="fw-semibold">${esc(t.nome_turma)}</div>
                             <div class="aluno-turma-contador"><i class="bi bi-people-fill me-1"></i>${qtd} equipe${qtd === 1 ? '' : 's'}${temExcedida ? '<i class="fas fa-exclamation-triangle aluno-turma-alerta" title="Esta turma possui equipe com alunos acima do limite"></i>' : ''}</div>
                         </div>
-                        <button type="button" class="btn btn-aluno btn-sm ver-equipes-btn" data-mod="${m.id_modalidade}" data-turma="${idTurma}" data-turma-nome="${esc(t.nome_turma)}" title="Ver equipes">
+                        <button type="button" class="btn btn-outline-primary btn-sm ver-equipes-btn" data-mod="${m.id_modalidade}" data-turma="${idTurma}" data-turma-nome="${esc(t.nome_turma)}" title="Ver equipes">
                             <i class="fas fa-users-cog"></i>
                         </button>
                     </div>`;
@@ -103,7 +105,7 @@ window.SGIPage.mount("eventos/configurar-equipes", function (pageConfig, pageSco
         return `<div class="aluno-card" data-mod="${m.id_modalidade}" data-mod-cat="${m.categorias_id_categoria}" data-mod-nome="${esc(m.nome_modalidade)}">
             <div class="card-header-custom">
                 <span>${esc(m.nome_modalidade)}</span>
-                <button type="button" class="btn btn-aluno btn-sm aluno-voltar-btn voltar-btn" title="Voltar às turmas">
+                <button type="button" class="btn btn-outline-secondary btn-sm aluno-voltar-btn voltar-btn" title="Voltar às turmas">
                     <i class="bi bi-arrow-left"></i>
                 </button>
             </div>
@@ -141,8 +143,8 @@ window.SGIPage.mount("eventos/configurar-equipes", function (pageConfig, pageSco
                         <div>${info.contador}</div>
                     </div>
                     <div class="d-flex gap-1">
-                        <a class="btn btn-aluno btn-sm" href="${hrefElenco}" title="Ver elenco"><i class="bi bi-people-fill"></i></a>
-                        ${isAdmin ? `<button class="btn btn-aluno btn-sm" onclick="excluirEquipe(${eq.id_equipe}, '${esc(eq.nome_turma || 'Turma')}')" title="Excluir equipe"><i class="bi bi-trash"></i></button>` : ''}
+                        <a class="btn btn-outline-primary btn-sm" href="${hrefElenco}" title="Ver elenco"><i class="bi bi-people-fill"></i></a>
+                        ${isAdmin ? `<button class="btn btn-outline-danger btn-sm" onclick="excluirEquipe(${eq.id_equipe}, '${esc(eq.nome_turma || 'Turma')}')" title="Excluir equipe"><i class="bi bi-trash"></i></button>` : ''}
                     </div>
                 </div>`;
         }).join('');

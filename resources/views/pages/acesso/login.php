@@ -15,7 +15,7 @@ if ((int) ($_SESSION['nivel'] ?? -1) >= 0) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link href="<?= \App\Shared\Http\Assets::url('vendor/bootstrap/css/bootstrap.min.css') ?>" rel="stylesheet">
+    <link href="<?= \App\Shared\Http\Assets::url('css/bootstrap-theme.css') ?>" rel="stylesheet">
     <link rel="stylesheet" href="<?= \App\Shared\Http\Assets::url('vendor/bootstrap-icons/bootstrap-icons.min.css') ?>">
     <link rel="stylesheet" href="<?= \App\Shared\Http\Assets::url('css/login.css') ?>">
     <?php include SGI_ROOT . '/resources/views/components/page-title.php'; ?>
@@ -33,7 +33,7 @@ if ((int) ($_SESSION['nivel'] ?? -1) >= 0) {
             <input type="text" class="form-control ipt-matricula" placeholder="email" required>
             <input type="password" class="form-control ipt-senha" placeholder="senha" required>
             <span class="login-mobile-forgot">Esqueci minha senha</span>
-            <button type="submit" class="btn btn-danger w-100 login-mobile-button">Entrar</button>
+            <button type="submit" class="btn btn-primary w-100 login-mobile-button">Entrar</button>
             <div id="msg_erro_mobile" class="text-danger mt-2"></div>
         </form>
         <div class="login-mobile-brand" aria-label="Logo SESI">
@@ -60,7 +60,7 @@ if ((int) ($_SESSION['nivel'] ?? -1) >= 0) {
                     <i class="bi bi-lock position-absolute top-50 start-0 translate-middle-y ms-3 text-dark"></i>
                     <input type="password" class="form-control ps-5 py-2 ipt-senha login-field" placeholder="Senha"  required>
                 </div>
-                <button type="submit" class="btn btn-danger w-100 mt-2">Entrar</button>
+                <button type="submit" class="btn btn-primary w-100 mt-2">Entrar</button>
                 <div id="msg_erro_desktop" class="text-danger mt-2"></div>
             </form>
         </section>

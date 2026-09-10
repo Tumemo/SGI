@@ -22,12 +22,7 @@
 }
 
 /* Ranking do portal do aluno */
-.btn-categoria { transition: all 0.2s; border-radius: 50px !important; min-width: 100px; border: 1.5px solid #E5E7EB; background: #fff; color: #4B5563; font-weight: 600; font-size: .9rem; padding: .55rem 1.3rem; white-space: nowrap; }
 .rk-stat-chip { font-size: .9rem; padding: .55rem 1.1rem; }
-.btn-categoria:hover { border-color: #dc3545 !important; color: #dc3545 !important; background: #fff5f5 !important; }
-.btn-categoria.ativo { background: #dc3545 !important; color: #fff !important; border-color: #dc3545 !important; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-.rk-hist-btn { border: 1px solid #E5E7EB; background: #fff; color: #4B5563; font-weight: 600; font-size: .8rem; border-radius: 10px; padding: .45rem .8rem; transition: all .2s; }
-.rk-hist-btn:hover { border-color: #dc3545 !important; color: #dc3545 !important; background: #fff5f5 !important; }
 .rk-hist-footer { margin-top: .9rem; position: relative; z-index: 1; }
 .htr-modal-body { padding: 0; }
 .htr-titulo { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 18px 22px; background: linear-gradient(135deg, #1F2937, #111827); color: #fff; }

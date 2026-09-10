@@ -11,12 +11,6 @@ border-radius: 10px;
 margin-bottom: 120px;
 }
 
-.sgi-u-bg-E30613-radius-6px-p-8px-16px {
-background-color: #E30613;
-    border-radius: 6px;
-    padding: 8px 16px;
-}
-
 .sgi-u-w-max-content-maxw-96vw-top-85 {
 width: max-content;
     max-width: 96vw;
@@ -29,16 +23,6 @@ width: max-content;
 bottom: 40px;
     right: 5%;
     z-index: 1050;
-}
-
-.sgi-u-color-ed1c24-border-2px-solid-ed1c24 {
-color: #ed1c24;
-    border: 2px solid #ed1c24;
-}
-
-.sgi-u-bg-ed1c24-border-2px-solid-ed1c24 {
-background-color: #ed1c24;
-    border: 2px solid #ed1c24;
 }
 
 .sgi-u-text-13px {
@@ -58,19 +42,8 @@ border-radius: 12px;
     cursor: pointer;
 }
 
-.sgi-u-bg-f8f9fc {
-background-color: #f8f9fc;
-}
-
 .sgi-u-text-0-65rem {
 font-size: 0.65rem;
-}
-
-.sgi-u-bg-ed1c24-radius-6px-text-0-8rem {
-background-color: #ed1c24;
-    border-radius: 6px;
-    font-size: 0.8rem;
-    padding: 0.75rem;
 }
 
 .sgi-u-grid-1fr {
@@ -79,20 +52,6 @@ grid-template-columns: 1fr;
 
 .sgi-u-col-1-1 {
 grid-column: 1/-1;
-}
-
-.sgi-u-bg-var-color-white-border-1px-solid-var {
-background-color: var(--vermelho);
-    color: white;
-    border: 1px solid var(--vermelho);
-    font-size: 0.8rem;
-}
-
-.sgi-u-bg-f0f0f0-color-555-border-1px-solid-e0e0e0 {
-background-color: #f0f0f0;
-    color: #555;
-    border: 1px solid #e0e0e0;
-    font-size: 0.8rem;
 }
 
 .sgi-u-text-2rem-display-block-mb-5rem {
@@ -113,10 +72,6 @@ width: auto;
 
 .sgi-u-maxw-260px {
 max-width: 260px;
-}
-
-.sgi-u-display-none {
-display: none;
 }
 
 .sgi-u-radius-10px-weight-600-text-85rem {
@@ -148,20 +103,8 @@ height: 60px;
     box-shadow: 0 4px 16px rgba(227,6,19,0.4);
 }
 
-.sgi-u-radius-8px {
-border-radius: 8px;
-}
-
 .sgi-u-text-14px {
 font-size: 14px;
-}
-
-.sgi-u-radius-16px {
-border-radius: 16px;
-}
-
-.sgi-u-background-e30613 {
-background: #e30613;
 }
 
 .sgi-u-mb-100px {
@@ -212,42 +155,8 @@ font-size: .78rem;
 font-size: .85rem;
 }
 
-.sgi-u-border-none-p-0-1-5rem-1-25rem {
-border: none;
+.sgi-u-p-0-1-5rem-1-25rem {
     padding: 0 1.5rem 1.25rem;
-}
-
-.sgi-u-border-1-5px-solid-E5E7EB-background-fff-color-6B7280 {
-border: 1.5px solid #E5E7EB;
-    background: #fff;
-    color: #6B7280;
-    border-radius: 10px;
-    padding: .6rem 1.25rem;
-    font-size: .85rem;
-    font-weight: 600;
-    cursor: pointer;
-}
-
-.sgi-u-background-E30613-border-none-color-fff {
-background: #E30613;
-    border: none;
-    color: #fff;
-    border-radius: 10px;
-    padding: .6rem 1.5rem;
-    font-size: .85rem;
-    font-weight: 700;
-    cursor: pointer;
-    box-shadow: 0 2px 8px rgba(227,6,19,.25);
-}
-
-.sgi-u-color-dc2626-weight-700 {
-color: #dc2626;
-    font-weight: 700;
-}
-
-.sgi-u-color-16a34a-weight-700 {
-color: #16a34a;
-    font-weight: 700;
 }
 
 .sgi-u-bottom-92px-right-16px-z-20 {
@@ -256,11 +165,9 @@ bottom: 92px;
     z-index: 20;
 }
 
-.sgi-u-w-56px-h-56px-bg-ed1c24 {
+.sgi-u-w-56px-h-56px {
 width: 56px;
     height: 56px;
-    background-color: #ed1c24;
-    border: none;
 }
 
 .sgi-u-radius-12px {
@@ -274,27 +181,12 @@ bottom: 0;
     background: transparent;
 }
 
-.sgi-u-color-ed1c24-border-2px-solid-ed1c24-radius-8px {
-color: #ed1c24;
-    border: 2px solid #ed1c24;
-    border-radius: 8px;
-}
-
 .sgi-u-maxw-90 {
 max-width: 90%;
 }
 
-.sgi-u-color-f59e0b-text-7rem {
-color: #f59e0b;
-    font-size: .7rem;
-}
-
 .sgi-u-text-7rem {
 font-size: .7rem;
-}
-
-.sgi-u-color-f59e0b {
-color: #f59e0b;
 }
 
 .sgi-u-text-2rem-display-block-mb-5rem-2 {
@@ -329,11 +221,6 @@ font-weight: 700;
     margin-top: 6px;
 }
 
-.sgi-u-weight-600-mt-4px {
-font-weight: 600;
-    margin-top: 4px;
-}
-
 .sgi-u-text-78rem-color-6b7280-mt-4px {
 font-size: .78rem;
     color: #6b7280;
@@ -349,8 +236,7 @@ font-size: 2rem;
     color: #d1d5db;
 }
 
-.sgi-u-w-100-maxw-760px-background-fff {
-width: 100%;
+.sgi-u-maxw-760px-background-fff {
     max-width: 760px;
     background: #fff;
     border-radius: 24px;
@@ -384,19 +270,10 @@ display: flex;
     margin-top: 1rem;
 }
 
-.sgi-u-mt-1-5rem {
-margin-top: 1.5rem;
-}
-
 .sgi-u-weight-800-text-9rem-color-111827 {
 font-weight: 800;
     font-size: .9rem;
     color: #111827;
-}
-
-.sgi-u-background-fef2f2-color-991b1b {
-background: #fef2f2;
-    color: #991b1b;
 }
 
 .sgi-u-w-36px-h-36px-text-1rem {
@@ -436,14 +313,8 @@ display: grid;
     gap: 0.75rem;
 }
 
-.sgi-u-display-none-mt-10px {
-display: none;
-    margin-top: 10px;
-}
-
-.sgi-u-min-width-280px-background-white-border-left-5px-solid-198754 {
+.sgi-u-min-width-280px-border-left-5px-solid-198754 {
 min-width: 280px;
-    background: white;
     border-left: 5px solid #198754;
 }
 
@@ -456,18 +327,9 @@ padding: 0.3rem 0.75rem;
     font-size: 0.8rem;
 }
 
-.sgi-u-bg-ed1c24-color-white {
-background-color: #ed1c24;
-    color: white;
-}
-
 .sgi-u-max-height-60vh-overflow-y-auto {
 max-height: 60vh;
     overflow-y: auto;
-}
-
-.sgi-u-color-ed1c24 {
-color: #ed1c24;
 }
 
 .sgi-u-text-0-95rem {
@@ -477,16 +339,6 @@ font-size: 0.95rem;
 .sgi-u-text-0-95rem-border-1px-solid-dee2e6 {
 font-size: 0.95rem;
     border: 1px solid #dee2e6;
-}
-
-.sgi-u-color-ed1c24-border-1px-solid-ed1c24 {
-color: #ed1c24;
-    border: 1px solid #ed1c24;
-}
-
-.sgi-u-bg-ed1c24-border-1px-solid-ed1c24 {
-background-color: #ed1c24;
-    border: 1px solid #ed1c24;
 }
 
 .sgi-u-w-90-min-height-90px {
@@ -521,54 +373,18 @@ background: linear-gradient(to top, rgba(248,249,250,1) 70%, rgba(248,249,250,0)
 color: #f5b301;
 }
 
-.sgi-u-maxw-100 {
-max-width: 100%;
-}
-
-.sgi-u-bg-ed1c24-border-none {
-background-color: #ed1c24;
-    border: none;
-}
-
 .sgi-u-w-50px-h-50px {
 width: 50px;
     height: 50px;
-}
-
-.sgi-u-radius-var-border-none-box-shadow-var {
-border-radius: var(--aluno-radius-lg);
-    border: none;
-    box-shadow: var(--aluno-shadow-lg);
 }
 
 .sgi-u-p-1-25rem-1-5rem-0 {
 padding: 1.25rem 1.5rem 0;
 }
 
-.sgi-u-color-var-weight-600 {
-color: var(--aluno-primary);
-    font-weight: 600;
-}
-
-.sgi-u-p-1rem-1-5rem-1-5rem {
-padding: 1rem 1.5rem 1.5rem;
-}
-
 .sgi-u-radius-var-border-color-var {
 border-radius: var(--aluno-radius-md);
     border-color: var(--aluno-border);
-}
-
-.sgi-u-z-1040-h-64px {
-z-index: 1040;
-    height: 64px;
-}
-
-.sgi-u-w-80px-top-0-bottom-0 {
-width: 80px;
-    top: 0;
-    bottom: 0;
-    z-index: 1040;
 }
 
 .sgi-u-h-120px {
@@ -579,15 +395,6 @@ height: 120px;
 top: 20px;
     left: 20px;
     z-index: 10;
-}
-
-.sgi-u-h-100 {
-height: 100%;
-}
-
-.sgi-u-flex-direction-column-align-items-stretch {
-flex-direction: column;
-    align-items: stretch;
 }
 
 .sgi-u-radius-10px-weight-700-text-85rem {
@@ -609,25 +416,8 @@ grid-template-columns: repeat(2,1fr);
     margin-bottom: 20px;
 }
 
-.sgi-u-color-e30613 {
-color: #e30613;
-}
-
-.sgi-u-w-100-min-width-0 {
-width: 100%;
+.sgi-u-min-width-0 {
     min-width: 0;
-}
-
-.sgi-u-mt-24px {
-margin-top: 24px;
-}
-
-.sgi-u-flex-direction-column {
-flex-direction: column;
-}
-
-.sgi-u-w-100 {
-width: 100%;
 }
 
 .sgi-u-maxw-96 {
@@ -642,20 +432,12 @@ margin-top: 12px;
 opacity: .55;
 }
 
-.sgi-u-mt-16px-display-flex-align-items-center {
-margin-top: 16px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-
 .sgi-u-color-9ca3af-font-style-italic {
 color: #9ca3af;
     font-style: italic;
 }
 
-.sgi-u-color-e30613-border-color-fecaca-background-linear-gradient-135deg-fff5f5-fff {
-color: #e30613;
+.sgi-u-border-color-fecaca-background-linear-gradient-135deg-fff5f5-fff {
     border-color: #fecaca;
     background: linear-gradient(135deg,#fff5f5,#fff);
 }
@@ -688,16 +470,6 @@ font-size: 0.78rem;
     margin-top: 4px;
 }
 
-.sgi-u-p-24px {
-padding: 24px;
-}
-
-.sgi-u-display-flex-justify-content-space-between-align-items-center {
-display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
 .sgi-u-min-width-180px-radius-10px-box-shadow-0-8px-24px-0-0-0-0-12 {
 min-width: 180px;
     border-radius: 10px;
@@ -724,11 +496,6 @@ padding-top: 1.25rem;
     padding-bottom: 5rem;
 }
 
-.sgi-u-bg-E30613-radius-6px {
-background-color: #E30613;
-    border-radius: 6px;
-}
-
 .sgi-u-flex-basis-100-w-100 {
 flex-basis: 100%;
     width: 100%;
@@ -748,12 +515,4 @@ min-width: 220px;
 
 .sgi-u-text-0-4rem {
 font-size: 0.4rem;
-}
-
-.sgi-u-w-80px-top-0-bottom-0-2 {
-width: 80px;
-    top: 0;
-    bottom: 0;
-    z-index: 1040;
-    background-color: #e30613;
 }

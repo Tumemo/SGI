@@ -44,13 +44,13 @@ function renderCards(items) {
                             <div class="card-title">${nome}</div>
                             <div class="card-meta">
                                 <span><i class="bi bi-calendar3"></i>${ano}</span>
-                                <span class="aluno-status-badge ${statusClass}">
+                                <span class="badge rounded-pill text-bg-${isAtivo ? 'success' : 'secondary'}">
                                     <i class="bi bi-circle-fill sgi-u-text-0-4rem" ></i>
                                     ${statusLabel}
                                 </span>
                             </div>
-                            <div class="card-footer">
-                                <a href="${href}" class="btn-card">${btnLabel}</a>
+                            <div class="d-flex align-items-center justify-content-between mt-auto">
+                                <a href="${href}" class="btn btn-primary btn-sm d-inline-flex align-items-center gap-2">${btnLabel}</a>
                             </div>
                         </div>
                     </div>
@@ -128,7 +128,7 @@ async function carregarRegulamentoModal() {
         } else {
             btnPdf.textContent = 'Sem PDF anexado';
             btnPdf.classList.add('btn-secondary', 'disabled');
-            btnPdf.classList.remove('btn-danger');
+            btnPdf.classList.remove('btn-primary');
             btnAceitar.disabled = false;
             btnAceitar.removeAttribute('title');
         }
@@ -269,8 +269,12 @@ window.SGIPage.ready( function() {
 
     document.querySelectorAll('.filter-pill').forEach(pill => {
         pageScope.listen(pill, 'click', function() {
-            document.querySelectorAll('.filter-pill').forEach(p => p.classList.remove('active'));
+            document.querySelectorAll('.filter-pill').forEach(p => {
+                p.classList.remove('active');
+                p.setAttribute('aria-pressed', 'false');
+            });
             this.classList.add('active');
+            this.setAttribute('aria-pressed', 'true');
             filterAndRender();
         });
     });

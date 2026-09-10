@@ -21,22 +21,22 @@ include SGI_ROOT . '/resources/views/components/aluno-head.php';
 
     <!-- Filtros -->
     <div class="filtro-bar">
-        <div class="filtro-jogos">
-            <button class="filtro-btn active" data-filter="all">Todos</button>
-            <button class="filtro-btn" data-filter="agendado">Próximos Jogos</button>
-            <button class="filtro-btn" data-filter="finalizado">Resultados</button>
+        <div class="filtro-jogos btn-group" role="group" aria-label="Filtrar jogos">
+            <button type="button" class="btn btn-sm btn-outline-primary filtro-btn active" data-filter="all" aria-pressed="true">Todos</button>
+            <button type="button" class="btn btn-sm btn-outline-primary filtro-btn" data-filter="agendado" aria-pressed="false">Próximos Jogos</button>
+            <button type="button" class="btn btn-sm btn-outline-primary filtro-btn" data-filter="finalizado" aria-pressed="false">Resultados</button>
         </div>
 
         <div class="filtro-modalidade">
             <span class="mod-label">Modalidade</span>
-            <select id="filtroModalidade" aria-label="Filtrar por modalidade">
+            <select id="filtroModalidade" class="form-select form-select-sm" aria-label="Filtrar por modalidade">
                 <option value="all">Todas</option>
             </select>
         </div>
 
         <div class="filtro-modalidade">
             <span class="mod-label">Categoria</span>
-            <select id="filtroCategoria" aria-label="Filtrar por categoria">
+            <select id="filtroCategoria" class="form-select form-select-sm" aria-label="Filtrar por categoria">
                 <option value="all">Todas</option>
             </select>
         </div>
@@ -44,7 +44,7 @@ include SGI_ROOT . '/resources/views/components/aluno-head.php';
 
     <!-- Container dos Jogos -->
     <div id="listaJogos" class="jogos-grid">
-        <div class="empty-state">
+        <div class="text-center text-muted py-5">
             <div class="spinner-border spinner-border-sm text-danger mb-2" role="status"></div>
             Carregando tabela de jogos...
         </div>

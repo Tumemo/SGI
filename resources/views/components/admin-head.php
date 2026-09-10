@@ -27,7 +27,8 @@ if (!headers_sent()) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <?php include SGI_ROOT . '/resources/views/components/page-title.php'; ?>
-    <link href="<?= \App\Shared\Http\Assets::url('vendor/bootstrap/css/bootstrap.min.css') ?>" rel="stylesheet" crossorigin="anonymous">
+    <link href="<?= \App\Shared\Http\Assets::url('css/bootstrap-theme.css') ?>" rel="stylesheet">
+    <link rel="stylesheet" href="<?= \App\Shared\Http\Assets::url('css/shared.css') ?>">
     <link rel="stylesheet" href="<?= \App\Shared\Http\Assets::url('vendor/bootstrap-icons/bootstrap-icons.min.css') ?>">
     <link rel="stylesheet" href="<?= \App\Shared\Http\Assets::url('vendor/fontawesome/css/all.min.css') ?>" crossorigin="anonymous" referrerpolicy="no-referrer">
     <link rel="stylesheet" href="<?= \App\Shared\Http\Assets::url('css/admin.css') ?>">

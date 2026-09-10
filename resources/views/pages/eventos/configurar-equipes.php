@@ -7,7 +7,7 @@ $paginaAtiva = 'dashboard';
 ?>
 
 <main class="d-md-none p-3 sgi-u-pb-5rem" >
-    <a href="<?= \App\Shared\Http\Url::to('painel') ?>" id="btnVoltarEquipesMobile" class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none sgi-u-bg-E30613-radius-6px-p-8px-16px" >
+    <a href="<?= \App\Shared\Http\Url::to('painel') ?>" id="btnVoltarEquipesMobile" class="btn btn-primary d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none" >
         <i class="bi bi-arrow-left-circle fs-5"></i> <span id="nomeInterclasseEquipesMob">Interclasse</span>
     </a>
     <p class="text-secondary text-center small mb-3">Equipes por modalidade e categoria desta edição.</p>
@@ -15,7 +15,7 @@ $paginaAtiva = 'dashboard';
     <div id="filtroCategoriaMobile" class="d-flex flex-nowrap overflow-auto gap-2 pb-2 mb-3"></div>
 
     <?php if ($isAdmin): ?>
-    <button id="btnCriarEquipeMob" class="btn btn-aluno w-100 fw-semibold mb-3" data-bs-toggle="modal" data-bs-target="#modalCriarEquipe">
+    <button id="btnCriarEquipeMob" class="btn btn-primary w-100 fw-semibold mb-3" data-bs-toggle="modal" data-bs-target="#modalCriarEquipe">
         <i class="bi bi-plus-lg"></i>
     </button>
     <?php endif; ?>
@@ -26,13 +26,13 @@ $paginaAtiva = 'dashboard';
     <div class="aluno-page container-fluid py-4 px-4">
         <div class="aluno-page-header">
             <div class="header-left">
-                <a href="<?= \App\Shared\Http\Url::to('painel') ?>" id="btnVoltarEquipesDesk" class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none sgi-u-bg-E30613-radius-6px-p-8px-16px" >
+                <a href="<?= \App\Shared\Http\Url::to('painel') ?>" id="btnVoltarEquipesDesk" class="btn btn-primary d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none" >
                     <i class="bi bi-arrow-left-circle fs-5"></i> <span id="nomeInterclasseEquipesDesk">Interclasse</span>
                 </a>
-                <h1 id="nomeInterclasseEquipes" class="sgi-u-display-none">Equipes</h1>
+                <h1 id="nomeInterclasseEquipes" class="d-none">Equipes</h1>
             </div>
             <?php if ($isAdmin): ?>
-            <button id="btnCriarEquipeDesk" class="btn btn-aluno" data-bs-toggle="modal" data-bs-target="#modalCriarEquipe">
+            <button id="btnCriarEquipeDesk" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalCriarEquipe">
                 <i class="bi bi-plus-lg"></i>
             </button>
             <?php endif; ?>
@@ -48,12 +48,12 @@ $paginaAtiva = 'dashboard';
 
 <div class="modal fade" id="modalCriarEquipe" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content sgi-u-radius-var-border-none-box-shadow-var" >
+        <div class="modal-content border-0 shadow-lg rounded-4" >
             <div class="modal-header border-0 sgi-u-p-1-25rem-1-5rem-0" >
-                <h5 class="modal-title sgi-u-color-var-weight-600" ><i class="bi bi-plus-circle me-2"></i>Criar nova equipe</h5>
+                <h5 class="modal-title text-primary fw-semibold" ><i class="bi bi-plus-circle me-2"></i>Criar nova equipe</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
-            <div class="modal-body sgi-u-p-1rem-1-5rem-1-5rem" >
+            <div class="modal-body pt-3 px-4 pb-4" >
                 <form id="formCriarEquipe">
                     <label for="selectModalidadeEquipe" class="form-label small text-muted fw-semibold">Modalidade</label>
                     <select id="selectModalidadeEquipe" class="form-select mb-3 sgi-u-radius-var-border-color-var"  required>
@@ -65,8 +65,8 @@ $paginaAtiva = 'dashboard';
                     </select>
                     <div id="msgCriarEquipe" class="text-center mb-2 small"></div>
                     <div class="d-flex justify-content-end gap-2 pt-2">
-                        <button type="button" class="btn btn-aluno" data-bs-dismiss="modal">Cancelar</button>
-                        <button type="submit" class="btn btn-aluno" id="btnSalvarEquipe"><i class="bi bi-check-lg"></i></button>
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-primary" id="btnSalvarEquipe"><i class="bi bi-check-lg"></i></button>
                     </div>
                 </form>
             </div>

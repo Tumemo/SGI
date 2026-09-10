@@ -12,7 +12,7 @@ $podeGerar = !$isNivel2 && !$isNivel3;
 ?>
 
 <main class="d-md-none kv-page sgi-u-p-20px" >
-    <a href="<?= \App\Shared\Http\Url::to('painel') ?>" id="btnVoltarChaveamentoMob" class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none sgi-u-bg-E30613-radius-6px-p-8px-16px" >
+    <a href="<?= \App\Shared\Http\Url::to('painel') ?>" id="btnVoltarChaveamentoMob" class="btn btn-primary d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none" >
         <i class="bi bi-arrow-left-circle fs-5"></i> <span id="nomeInterclasseChaveamentoMob">Interclasse</span>
     </a>
     <div class="mb-3">
@@ -52,21 +52,21 @@ $podeGerar = !$isNivel2 && !$isNivel3;
 
     <div class="kv-gen-card">
         <div class="kv-gen-card__header">
-            <div class="kv-gen-card__title"><i class="bi bi-diagram-3 me-2 sgi-u-color-e30613" ></i><?php echo $podeGerar ? 'Gerar novo chaveamento' : 'Visualizar chaveamento'; ?></div>
+            <div class="kv-gen-card__title"><i class="bi bi-diagram-3 me-2 text-primary" ></i><?php echo $podeGerar ? 'Gerar novo chaveamento' : 'Visualizar chaveamento'; ?></div>
             <div class="kv-gen-card__desc"><?php echo $podeGerar ? 'Selecione uma modalidade para gerar automaticamente o chaveamento.' : 'Selecione uma modalidade para visualizar a árvore do torneio.'; ?></div>
         </div>
         <div class="kv-gen-card__row">
-            <div id="kvs-wrap-selectModalidadeMob" class="kvs-wrap sgi-u-w-100-min-width-0" ></div>
+            <div id="kvs-wrap-selectModalidadeMob" class="kvs-wrap w-100 sgi-u-min-width-0" ></div>
             <select class="kv-gen-card__select d-none" id="selectModalidadeMob">
                 <option value="">Selecione uma modalidade</option>
             </select>
             <?php if ($podeGerar): ?>
-            <button class="kv-btn-generate" id="btnGerarChaveamentoMob">
+            <button class="btn btn-primary d-inline-flex align-items-center gap-2" id="btnGerarChaveamentoMob">
                 <i class="bi bi-diagram-3-fill"></i> Gerar
             </button>
             <?php endif; ?>
         </div>
-        <div id="msgChaveamentoMob" class="kv-alert sgi-u-display-none" ></div>
+        <div id="msgChaveamentoMob" class="kv-alert d-none" ></div>
     </div>
 
     <div id="bracketAreaMob" class="kv-empty">
@@ -75,21 +75,21 @@ $podeGerar = !$isNivel2 && !$isNivel3;
         <div class="kv-empty__desc">Selecione uma modalidade acima para <?php echo $podeGerar ? 'gerar ou ' : ''; ?>visualizar um chaveamento.</div>
     </div>
 
-    <div id="secaoJogosMob" class="sgi-u-mt-24px">
+    <div id="secaoJogosMob" class="mt-4">
         <div class="kv-table-card">
             <div class="kv-table-card__header">
                 <div class="kv-table-card__title">Jogos Realizados</div>
                 <div class="kv-table-card__desc">Histórico de partidas concluídas.</div>
             </div>
-            <div class="kv-filters sgi-u-flex-direction-column" >
-                <div id="kvs-wrap-filtroModalidadeJogosMob" class="kvs-wrap sgi-u-w-100-min-width-0" ></div>
-                <select class="kv-filter-select d-none sgi-u-w-100" id="filtroModalidadeJogosMob" >
+            <div class="kv-filters flex-column" >
+                <div id="kvs-wrap-filtroModalidadeJogosMob" class="kvs-wrap w-100 sgi-u-min-width-0" ></div>
+                 <select class="kv-filter-select d-none w-100" id="filtroModalidadeJogosMob" >
                     <option value="">Todas modalidades</option>
                 </select>
-                <select class="kv-filter-select sgi-u-w-100" id="filtroCategoriaJogosMob" >
+                 <select class="kv-filter-select w-100" id="filtroCategoriaJogosMob" >
                     <option value="">Todas categorias</option>
                 </select>
-                <input type="text" class="kv-filter-input sgi-u-w-100" placeholder="Buscar partida..." id="inputBuscaJogoMob" >
+                 <input type="text" class="kv-filter-input w-100" placeholder="Buscar partida..." id="inputBuscaJogoMob" >
             </div>
             <div class="table-responsive">
                 <table class="table sgi-table table-hover align-middle">
@@ -122,13 +122,13 @@ $podeGerar = !$isNivel2 && !$isNivel3;
 
         <div class="kv-header">
             <div class="kv-header__left">
-                <a href="<?= \App\Shared\Http\Url::to('painel') ?>" id="btnVoltar" class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold px-3 py-2 border-0 text-decoration-none sgi-u-bg-E30613-radius-6px-p-8px-16px" >
+                <a href="<?= \App\Shared\Http\Url::to('painel') ?>" id="btnVoltar" class="btn btn-primary d-inline-flex align-items-center gap-2 fw-bold px-3 py-2 border-0 text-decoration-none" >
                     <i class="bi bi-arrow-left-circle fs-5"></i> <span id="nomeInterclasseChaveamento">Interclasse</span>
                 </a>
             </div>
-            <div class="kv-header__right">
+            <div class="kv-header__right d-grid d-sm-flex">
                 <?php if ($podeGerar): ?>
-                <button class="kv-btn-generate" id="btnGerarChaveamento">
+                <button class="btn btn-primary d-inline-flex align-items-center gap-2" id="btnGerarChaveamento">
                     <i class="bi bi-diagram-3-fill"></i> Gerar Chaveamento
                 </button>
                 <?php endif; ?>
@@ -168,7 +168,7 @@ $podeGerar = !$isNivel2 && !$isNivel3;
 
         <div class="kv-gen-card">
             <div class="kv-gen-card__header">
-                <div class="kv-gen-card__title"><i class="bi bi-diagram-3 me-2 sgi-u-color-e30613" ></i><?php echo $podeGerar ? 'Gerar novo chaveamento' : 'Visualizar chaveamento'; ?></div>
+                <div class="kv-gen-card__title"><i class="bi bi-diagram-3 me-2 text-primary" ></i><?php echo $podeGerar ? 'Gerar novo chaveamento' : 'Visualizar chaveamento'; ?></div>
                 <div class="kv-gen-card__desc"><?php echo $podeGerar ? 'Selecione uma modalidade para gerar automaticamente o chaveamento.' : 'Selecione uma modalidade para visualizar a árvore do torneio.'; ?></div>
             </div>
             <div class="kv-gen-card__row">
@@ -203,7 +203,7 @@ $podeGerar = !$isNivel2 && !$isNivel3;
             </div>
         </div>
 
-        <div id="secaoJogos" class="sgi-u-mt-24px">
+        <div id="secaoJogos" class="mt-4">
             <div class="kv-table-card">
                 <div class="kv-table-card__header">
                     <div class="kv-table-card__title">Jogos Realizados</div>
@@ -263,16 +263,16 @@ $podeGerar = !$isNivel2 && !$isNivel3;
                         <div class="modal-summary__value" id="editNomePartida">---</div>
                         <div class="modal-summary__sub" id="editModalidadePartida"></div>
                     </div>
-                    <div id="editConcluidoBanner" class="edit-concluido-banner sgi-u-display-none" >
+                    <div id="editConcluidoBanner" class="edit-concluido-banner d-none" >
                         <i class="bi bi-exclamation-triangle-fill"></i>
                         <span>Este jogo já foi <strong>finalizado</strong>. Alterar o resultado pode afetar o chaveamento.</span>
                     </div>
                     <div class="edit-modal-grid">
                         <div class="edit-modal-grid__col">
-                            <div id="editTeamsSection" class="sgi-u-display-none">
+                            <div id="editTeamsSection" class="d-none">
                                 <label class="form-label">Equipes e Placar</label>
                                 <div id="editTeamsList"></div>
-                                <div id="editWinnerSection" class="mt-3 grid gap-2 sgi-u-display-none" >
+                                <div id="editWinnerSection" class="mt-3 grid gap-2 d-none" >
                                     <label class="form-label">Vencedor</label>
                                     <div id="editWinnerOptions"></div>
                                 </div>
@@ -313,8 +313,8 @@ $podeGerar = !$isNivel2 && !$isNivel3;
                     <div id="msgEditarJogo" class="small"></div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-cancel" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="submit" class="btn btn-save" id="btnSalvarJogo">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary" id="btnSalvarJogo">
                         <i class="bi bi-check-lg me-1"></i>Salvar
                     </button>
                 </div>

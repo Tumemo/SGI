@@ -103,11 +103,15 @@ window.SGIPage.mount("aluno/ranking", function (pageConfig, pageScope) {
 
         categoriasUnicas.forEach(cat => {
             const btn = document.createElement('button');
-            btn.className = 'btn btn-outline-secondary btn-categoria';
+            btn.type = 'button';
+            btn.className = 'btn btn-sm btn-outline-primary rounded-pill btn-categoria';
+            btn.setAttribute('aria-pressed', 'false');
             btn.textContent = cat;
             btn.onclick = () => filtrarCategoria(cat);
 
-            fMob.appendChild(btn.cloneNode(true));
+            const btnM = btn.cloneNode(true);
+            btnM.onclick = () => filtrarCategoria(cat);
+            fMob.appendChild(btnM);
             const btnD = btn.cloneNode(true);
             btnD.onclick = () => filtrarCategoria(cat);
             fDesk.appendChild(btnD);
@@ -116,8 +120,9 @@ window.SGIPage.mount("aluno/ranking", function (pageConfig, pageScope) {
 
     function filtrarCategoria(categoria) {
         document.querySelectorAll('.btn-categoria').forEach(b => {
-            b.classList.remove('ativo');
-            if (b.textContent.trim() === categoria) b.classList.add('ativo');
+            const selected = b.textContent.trim() === categoria;
+            b.classList.toggle('active', selected);
+            b.setAttribute('aria-pressed', selected ? 'true' : 'false');
         });
 
         const turmasFiltradas = dadosAPI.filter(t => t.nome_categoria === categoria);
@@ -192,7 +197,7 @@ window.SGIPage.mount("aluno/ranking", function (pageConfig, pageScope) {
                         </div>
 
                         <div class="rk-hist-footer">
-                            <button type="button" class="rk-hist-btn w-100" onclick="abrirHistorico(${t.id_turma}, '${jsEsc(t.nome_turma)}')">
+                            <button type="button" class="btn btn-sm btn-outline-secondary w-100" onclick="abrirHistorico(${t.id_turma}, '${jsEsc(t.nome_turma)}')">
                                 <i class="bi bi-clock-history"></i> Ver histórico de pontos
                             </button>
                         </div>

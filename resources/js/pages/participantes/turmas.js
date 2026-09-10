@@ -73,7 +73,7 @@ window.SGIPage.mount("participantes/turmas", function (pageConfig, pageScope) {
                 <div class="empty-state-icon"><i class="bi bi-people"></i></div>
                 <h3>${mensagem || 'Nenhuma turma encontrada'}</h3>
                 <p>${botao || 'Nenhuma turma cadastrada neste interclasse ainda.'}</p>
-                ${NIVEL_USUARIO === 0 ? '<button class="btn btn-danger px-4" data-bs-toggle="modal" data-bs-target="#exampleModal"><i class="bi bi-plus-lg me-1"></i>Criar Turma</button>' : ''}
+                ${NIVEL_USUARIO === 0 ? '<button class="btn btn-primary px-4" data-bs-toggle="modal" data-bs-target="#exampleModal"><i class="bi bi-plus-lg me-1"></i>Criar Turma</button>' : ''}
             </div>`;
         document.getElementById('listaTurmasMobile').innerHTML = html;
         document.getElementById('listaTurmasDesktop').innerHTML = html;
@@ -98,7 +98,7 @@ window.SGIPage.mount("participantes/turmas", function (pageConfig, pageScope) {
             <div class="col">
                 <div class="turma-card">
                     <div class="turma-card-top">
-                        <div class="turma-avatar sgi-u-background-e30613" >${avatarLetra}</div>
+                        <div class="turma-avatar bg-primary" >${avatarLetra}</div>
                         <div class="turma-card-info">
                             <div class="turma-card-name">${esc(turma.nome_turma)}</div>
                             ${turma.nome_fantasia_turma ? `<div class="turma-card-fantasy">${esc(turma.nome_fantasia_turma)}</div>` : ''}

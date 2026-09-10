@@ -45,7 +45,7 @@ window.SGIPage.mount("competicoes/jogos", function (pageConfig, pageScope) {
                             <div class="card shadow-sm jogo-card p-3 h-100">
                                 <div class="d-flex justify-content-between align-items-start mb-2">
                                     <span class="fw-bold">${j.nome_modalidade || '---'}</span>
-                                    <span class="status-badge ${statusClass}">${status}</span>
+                                    <span class="badge rounded-pill ${statusClass}">${status}</span>
                                 </div>
                                 <p class="mb-1 small text-muted">${equipes}</p>
                                 <div class="d-flex justify-content-between small text-muted">

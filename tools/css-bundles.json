@@ -1,13 +1,18 @@
 {
-  "admin": [
-    "resources/css/source/admin.css",
+  "bootstrap-theme": [
+    "resources/scss/bootstrap-theme.scss"
+  ],
+  "shared": [
+    "resources/scss/shared.scss",
     "resources/css/source/utilities.css"
+  ],
+  "admin": [
+    "resources/css/source/admin.css"
   ],
   "aluno": [
     "resources/css/source/aluno-shared.css",
     "resources/css/source/aluno-pages.css",
-    "resources/css/source/aluno-home.css",
-    "resources/css/source/utilities.css"
+    "resources/css/source/aluno-home.css"
   ],
   "login": [
     "resources/css/source/login.css"

@@ -13,7 +13,7 @@ $paginaAtiva = 'dashboard';
 
         <div class="mc-header">
             <div class="mc-match-info">
-                <a href="<?= \App\Shared\Http\Url::to('edicoes/agenda') ?>" id="btnVoltarPlacar" class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none sgi-u-bg-E30613-radius-6px-p-8px-16px" >
+                <a href="<?= \App\Shared\Http\Url::to('edicoes/agenda') ?>" id="btnVoltarPlacar" class="btn btn-primary d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none" >
                     <i class="bi bi-arrow-left-circle fs-5"></i> <span>Voltar</span>
                 </a>
                 <h1 id="placar-titulo-jogo" class="mc-match-title">Placar</h1>
@@ -83,7 +83,7 @@ $paginaAtiva = 'dashboard';
                         <label class="form-label">Tipo</label>
                         <div class="mc-tipo-grid">
                             <label class="btn btn-outline-warning ocorrencia-tipo-option d-flex align-items-center justify-content-center gap-1" data-tipo="Amarelo">
-                                <i class="bi bi-square-fill sgi-u-color-f59e0b-text-7rem" ></i>
+                                <i class="bi bi-square-fill text-warning sgi-u-text-7rem" ></i>
                                 Amarelo
                                 <input type="radio" name="tipo_ocorrencia" value="Amarelo" class="d-none">
                             </label>
@@ -128,7 +128,7 @@ $paginaAtiva = 'dashboard';
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="submit" class="btn btn-sm btn-danger rounded-pill px-4 fw-bold" id="btnSalvarOcorrencia">
+                    <button type="submit" class="btn btn-sm btn-primary rounded-pill px-4 fw-bold" id="btnSalvarOcorrencia">
                         <i class="bi bi-check-lg me-1"></i>Registrar
                     </button>
                 </div>
@@ -142,7 +142,7 @@ $paginaAtiva = 'dashboard';
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">
-                <h6 class="modal-title"><i class="bi bi-trophy-fill me-1 sgi-u-color-f59e0b" ></i>Registrar ponto</h6>
+                <h6 class="modal-title"><i class="bi bi-trophy-fill me-1 text-warning" ></i>Registrar ponto</h6>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
             </div>
             <form id="formArtilheiro" onsubmit="return salvarPonto(event)">

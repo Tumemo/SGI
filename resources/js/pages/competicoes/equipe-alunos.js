@@ -15,9 +15,9 @@ function mostrarToast(tipo, texto) {
     conteudo.style.borderLeftColor = cor;
     icone.className = `bi ${iconeNome} fs-4`;
     txt.textContent = texto;
-    container.style.display = 'block';
+    container.classList.remove('d-none');
     clearTimeout(container._timer);
-    container._timer = setTimeout(() => { container.style.display = 'none'; }, 4000);
+    container._timer = setTimeout(() => { container.classList.add('d-none'); }, 4000);
 }
 
 function cardAluno(aluno) {

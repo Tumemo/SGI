@@ -65,7 +65,7 @@ $nivelUsuarioAgenda = (int)($_SESSION['nivel'] ?? -1);
         <div id="lista-pendentes-mobile" class="ag-event-list"></div>
     </div>
     <div id="lista-eventos-mobile" class="ag-event-list"></div>
-    <div class="ag-show-all sgi-u-display-none" id="container-mostrar-todos-mobile" >
+    <div class="ag-show-all d-none" id="container-mostrar-todos-mobile" >
         <button type="button" class="btn btn-outline-secondary" id="btn-mostrar-todos-mobile">
             <i class="bi bi-calendar3 me-1"></i>Mostrar Todos os Jogos
         </button>
@@ -89,7 +89,7 @@ $nivelUsuarioAgenda = (int)($_SESSION['nivel'] ?? -1);
                 <h2><i class="bi bi-calendar3"></i> Agenda de Jogos</h2>
                 <p>Calendário de confrontos e partidas do Interclasse</p>
             </div>
-            <span class="ag-badge-count sgi-u-display-none" id="agenda-count-badge" >
+            <span class="ag-badge-count d-none" id="agenda-count-badge" >
                 <i class="bi bi-fire"></i> <span id="agenda-count-text">0 jogos</span>
             </span>
         </div>
@@ -120,7 +120,7 @@ $nivelUsuarioAgenda = (int)($_SESSION['nivel'] ?? -1);
                     <div id="lista-pendentes" class="ag-event-list"></div>
                 </div>
                 <div id="lista-eventos" class="ag-event-list"></div>
-                <div class="ag-show-all sgi-u-display-none" id="container-mostrar-todos" >
+                <div class="ag-show-all d-none" id="container-mostrar-todos" >
                     <button type="button" class="btn btn-outline-secondary" id="btn-mostrar-todos">
                         <i class="bi bi-calendar3 me-1"></i>Mostrar Todos os Jogos
                     </button>
@@ -177,7 +177,7 @@ $nivelUsuarioAgenda = (int)($_SESSION['nivel'] ?? -1);
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-outline-secondary sgi-u-radius-10px-weight-600-text-85rem" data-bs-dismiss="modal" >Cancelar</button>
-                <button type="button" class="btn btn-danger sgi-u-radius-10px-weight-600-text-85rem" id="edit-jogo-salvar" >Salvar</button>
+                <button type="button" class="btn btn-primary sgi-u-radius-10px-weight-600-text-85rem" id="edit-jogo-salvar" >Salvar</button>
             </div>
         </div>
     </div>
@@ -249,7 +249,7 @@ $nivelUsuarioAgenda = (int)($_SESSION['nivel'] ?? -1);
             <div class="modal-footer">
                 <button type="button" class="btn btn-outline-secondary sgi-u-radius-10px-weight-600-text-85rem" data-bs-dismiss="modal" >Cancelar</button>
                 <button type="button" class="btn btn-outline-danger sgi-u-radius-10px-weight-600-text-85rem" id="seq-simular-btn"><i class="bi bi-eye me-1"></i>Calcular prévia</button>
-                <button type="button" class="btn btn-danger sgi-u-radius-10px-weight-600-text-85rem" id="seq-salvar-btn" disabled><i class="bi bi-check-lg me-1"></i>Confirmar agenda</button>
+                <button type="button" class="btn btn-primary sgi-u-radius-10px-weight-600-text-85rem" id="seq-salvar-btn" disabled><i class="bi bi-check-lg me-1"></i>Confirmar agenda</button>
             </div>
         </div>
     </div>

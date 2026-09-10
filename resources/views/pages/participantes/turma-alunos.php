@@ -71,7 +71,7 @@ $podeResetarSenha = in_array($nivelUsuario, [0], true);
                         </a>
                     </div>
                     <div class="d-grid mt-3">
-                        <button type="submit" class="btn btn-danger ta-btn-submit">
+                        <button type="submit" class="btn btn-primary ta-btn-submit">
                             <i class="bi bi-file-earmark-arrow-up"></i> Importar PDF
                         </button>
                     </div>
@@ -154,7 +154,7 @@ $podeResetarSenha = in_array($nivelUsuario, [0], true);
                             </a>
                         </div>
                         <div class="d-flex justify-content-end mt-3">
-                            <button type="submit" class="btn btn-danger ta-btn-submit">
+                            <button type="submit" class="btn btn-primary ta-btn-submit">
                                 <i class="bi bi-file-earmark-arrow-up"></i> Importar PDF
                             </button>
                         </div>
@@ -209,7 +209,7 @@ $podeResetarSenha = in_array($nivelUsuario, [0], true);
                 <div class="ta-view-row"><span>Data de nascimento</span><strong id="verDataNasc">—</strong></div>
             </div>
             <div class="modal-footer justify-content-center border-0 pt-0">
-                <button type="button" class="btn btn-danger btn-sm rounded-3 px-4" data-bs-dismiss="modal">Fechar</button>
+                <button type="button" class="btn btn-outline-secondary btn-sm rounded-3 px-4" data-bs-dismiss="modal">Fechar</button>
             </div>
         </div>
     </div>
@@ -251,7 +251,7 @@ $podeResetarSenha = in_array($nivelUsuario, [0], true);
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary btn-sm rounded-3" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="submit" class="btn btn-danger btn-sm rounded-3" id="btnSalvarAluno">Salvar</button>
+                    <button type="submit" class="btn btn-primary btn-sm rounded-3" id="btnSalvarAluno">Salvar</button>
                 </div>
             </form>
         </div>

@@ -15,7 +15,7 @@ $isMesario = $nivelUsuario === 2;
 <!-- main mobile -->
 <main class="d-md-none <?= $isMesario ? '' : 'home-main--with-footer' ?>">
     <?php if ($isAdmin): ?>
-    <button class="mx-4 btn btn-danger d-flex gap-2 mt-3 align-items-center" data-bs-toggle="modal" data-bs-target="#exampleModal">
+    <button class="mx-4 btn btn-primary d-flex gap-2 mt-3 align-items-center" data-bs-toggle="modal" data-bs-target="#exampleModal">
         <i class="bi bi-plus-circle"></i>Criar Nova Edição
     </button>
     <?php endif; ?>
@@ -74,7 +74,7 @@ $isMesario = $nivelUsuario === 2;
                     <div id="caixaMensagem"></div>
                     <div class="d-flex justify-content-center gap-2 mt-5 pt-5">
                         <button type="button" class="btn btn-outline-danger" data-bs-dismiss="modal">Cancelar</button>
-                        <button type="submit" class="btn btn-danger" id="btnCriar">Criar</button>
+                        <button type="submit" class="btn btn-primary" id="btnCriar">Criar</button>
                     </div>
                 </form>
             </div>

@@ -25,8 +25,9 @@ if (!headers_sent()) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <?php include SGI_ROOT . '/resources/views/components/page-title.php'; ?>
-    <!-- Bootstrap CSS -->
-    <link href="<?= \App\Shared\Http\Assets::url('vendor/bootstrap/css/bootstrap.min.css') ?>" rel="stylesheet" crossorigin="anonymous">
+    <!-- Bootstrap tematizado e folha compartilhada -->
+    <link href="<?= \App\Shared\Http\Assets::url('css/bootstrap-theme.css') ?>" rel="stylesheet">
+    <link rel="stylesheet" href="<?= \App\Shared\Http\Assets::url('css/shared.css') ?>">
     <!-- Bootstrap Icons -->
     <link rel="stylesheet" href="<?= \App\Shared\Http\Assets::url('vendor/bootstrap-icons/bootstrap-icons.min.css') ?>">
     <!-- Folha consolidada do portal do aluno -->

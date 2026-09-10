@@ -40,7 +40,7 @@ $urlVoltar = \App\Shared\Http\Url::to('aluno/inicio');
                                 <small class="text-muted">Clique para ler as regras completas da competição.</small>
                             </div>
                         </div>
-                        <a id="btnBaixarPdf" href="#" target="_blank" class="btn btn-danger btn-sm rounded-3 fw-semibold d-inline-flex align-items-center gap-1">
+                        <a id="btnBaixarPdf" href="#" target="_blank" class="btn btn-primary btn-sm rounded-3 fw-semibold d-inline-flex align-items-center gap-1">
                             <i class="bi bi-download"></i> Baixar / Ler PDF
                         </a>
                     </div>
@@ -52,7 +52,7 @@ $urlVoltar = \App\Shared\Http\Url::to('aluno/inicio');
         <div class="bg-white rounded-3 p-4 shadow-sm">
             <h2 class="fs-5 fw-bold mb-2">Confirmação obrigatória</h2>
             <p class="text-secondary mb-3">O aceite é necessário para acessar jogos, inscrições e as demais funções do portal.</p>
-            <button type="button" class="btn btn-danger fw-semibold" id="btnAceitarTermos">
+            <button type="button" class="btn btn-primary fw-semibold" id="btnAceitarTermos">
                 <i class="bi bi-check-lg me-1"></i>Aceitar e continuar
             </button>
             <p id="msgAceiteTermos" class="small mt-3 mb-0" role="status"></p>

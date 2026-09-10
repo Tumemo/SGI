@@ -72,7 +72,7 @@ $ptcCards = [
                 <button type="button" class="btn ptc-btn-default" id="btnRestaurarPadrao" onclick="restaurarPadrao()" disabled>
                     <i class="bi bi-arrow-counterclockwise"></i> Restaurar Padrão
                 </button>
-                <button type="button" class="btn btn-danger ptc-btn-salvar" id="btnSalvarPontuacao" onclick="salvarPontuacao()" disabled>
+                <button type="button" class="btn btn-primary ptc-btn-salvar" id="btnSalvarPontuacao" onclick="salvarPontuacao()" disabled>
                     <i class="bi bi-check-lg"></i> Salvar
                 </button>
                 <a href="#" id="btnContinuarPontuacao" class="btn ptc-btn-continuar d-none">

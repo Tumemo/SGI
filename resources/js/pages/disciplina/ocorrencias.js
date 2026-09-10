@@ -109,7 +109,7 @@ window.SGIPage.mount("disciplina/ocorrencias", function (pageConfig, pageScope) 
         const btnEl = document.getElementById('btnSalvarOcrModal');
 
         if (!titulo || !modalTurmaId) {
-            msgEl.innerHTML = '<span class="sgi-u-color-dc2626-weight-700">Preencha o título.</span>';
+            msgEl.innerHTML = '<span class="text-danger fw-bold">Preencha o título.</span>';
             return;
         }
 
@@ -138,17 +138,17 @@ window.SGIPage.mount("disciplina/ocorrencias", function (pageConfig, pageScope) 
             const result = await resp.json();
 
             if (result.success) {
-                msgEl.innerHTML = '<span class="sgi-u-color-16a34a-weight-700">Ocorrência registrada!</span>';
+                msgEl.innerHTML = '<span class="text-success fw-bold">Ocorrência registrada!</span>';
                 setTimeout(() => {
                     const modal = bootstrap.Modal.getInstance(document.getElementById('modalNovaOcorrencia'));
                     if (modal) modal.hide();
                     msgEl.innerHTML = '';
                 }, 1000);
             } else {
-                msgEl.innerHTML = '<span class="sgi-u-color-dc2626-weight-700">' + esc(result.message || 'Erro ao salvar.') + '</span>';
+                msgEl.innerHTML = '<span class="text-danger fw-bold">' + esc(result.message || 'Erro ao salvar.') + '</span>';
             }
         } catch (e) {
-            msgEl.innerHTML = '<span class="sgi-u-color-dc2626-weight-700">Erro de conexão.</span>';
+            msgEl.innerHTML = '<span class="text-danger fw-bold">Erro de conexão.</span>';
         } finally {
             btnEl.disabled = false;
             btnEl.innerHTML = originalText;

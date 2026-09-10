@@ -215,17 +215,8 @@ window.SGIPage.mount("eventos/configurar-arrecadacao", function (pageConfig, pag
         conteudo.innerHTML = '<div class="spinner-border text-danger" role="status"><span class="visually-hidden">A carregar...</span></div>';
 
         if (pageConfig.value0) {
-        const btnAdic = document.getElementById('btnFiltroAdicionados');
-        const btnExcl = document.getElementById('btnFiltroExcluidos');
-        if (btnAdic && btnExcl) {
-            btnAdic.style.backgroundColor = 'var(--vermelho)';
-            btnAdic.style.color = 'white';
-            btnAdic.style.borderColor = 'var(--vermelho)';
-            btnExcl.style.backgroundColor = '#f0f0f0';
-            btnExcl.style.color = '#555';
-            btnExcl.style.borderColor = '#e0e0e0';
-        }
-        filtroHistoricoAtual = 'adicionados';
+            filtroHistoricoAtual = 'adicionados';
+            atualizarFiltrosHistorico(filtroHistoricoAtual);
         }
 
         const idInterclasse = idInterclasseResolvida || idInterclasseArrecadacao;
@@ -262,27 +253,24 @@ window.SGIPage.mount("eventos/configurar-arrecadacao", function (pageConfig, pag
         filtroHistoricoAtual = filtro;
 
         if (pageConfig.value0) {
-        const btnAdic = document.getElementById('btnFiltroAdicionados');
-        const btnExcl = document.getElementById('btnFiltroExcluidos');
-
-        if (filtro === 'adicionados') {
-            btnAdic.style.backgroundColor = 'var(--vermelho)';
-            btnAdic.style.color = 'white';
-            btnAdic.style.borderColor = 'var(--vermelho)';
-            btnExcl.style.backgroundColor = '#f0f0f0';
-            btnExcl.style.color = '#555';
-            btnExcl.style.borderColor = '#e0e0e0';
-        } else {
-            btnExcl.style.backgroundColor = 'var(--vermelho)';
-            btnExcl.style.color = 'white';
-            btnExcl.style.borderColor = 'var(--vermelho)';
-            btnAdic.style.backgroundColor = '#f0f0f0';
-            btnAdic.style.color = '#555';
-            btnAdic.style.borderColor = '#e0e0e0';
-        }
+            atualizarFiltrosHistorico(filtro);
         }
 
         renderizarHistoricoFiltrado();
+    }
+
+    function atualizarFiltrosHistorico(filtro) {
+        const botoes = [
+            [document.getElementById('btnFiltroAdicionados'), filtro === 'adicionados'],
+            [document.getElementById('btnFiltroExcluidos'), filtro === 'excluidos'],
+        ];
+        botoes.forEach(([botao, ativo]) => {
+            if (!botao) return;
+            botao.classList.toggle('btn-primary', ativo);
+            botao.classList.toggle('btn-outline-secondary', !ativo);
+            botao.classList.toggle('active', ativo);
+            botao.setAttribute('aria-pressed', String(ativo));
+        });
     }
 
     function renderizarHistoricoFiltrado() {

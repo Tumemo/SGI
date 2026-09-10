@@ -10,19 +10,19 @@ $paginaAtiva = 'dashboard';
 <main class="main-desktop-layout main-modalidades-layout">
 
     <div class="modalidades-toolbar">
-            <a href="<?= \App\Shared\Http\Url::to('painel') ?>" id="btnVoltarModalidades" class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold px-3 py-2 border-0 text-decoration-none sgi-u-bg-E30613-radius-6px-p-8px-16px" >
+            <a href="<?= \App\Shared\Http\Url::to('painel') ?>" id="btnVoltarModalidades" class="btn btn-primary d-inline-flex align-items-center gap-2 fw-bold px-3 py-2 border-0 text-decoration-none" >
                 <i class="bi bi-arrow-left-circle fs-5"></i> <span id="nomeInterclasseModalidades">Interclasse</span>
             </a>
         <div class="d-flex align-items-center gap-3 flex-shrink-0 flex-wrap">
-            <button type="button" class="btn btn-destaques d-inline-flex align-items-center gap-2 fw-bold px-3 py-2" data-bs-toggle="modal" data-bs-target="#modalDestaques">
+            <button type="button" class="btn btn-outline-secondary d-inline-flex align-items-center gap-2 fw-bold px-3 py-2" data-bs-toggle="modal" data-bs-target="#modalDestaques">
                 <span>⭐</span> Alunos Destaques
             </button>
             <?php if ($nivelUsuario === 0): ?>
-            <button type="button" class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold px-3 py-2 border-0 sgi-u-radius-8px"  data-bs-toggle="modal" data-bs-target="#exampleModal">
+            <button type="button" class="btn btn-primary d-inline-flex align-items-center gap-2 fw-bold px-3 py-2 border-0 rounded-3"  data-bs-toggle="modal" data-bs-target="#exampleModal">
                 <i class="bi bi-plus-lg"></i> Nova Modalidade
             </button>
             <?php endif; ?>
-            <a href="#" id="btnContinuarDesktop" class="btn btn-danger fw-bold px-4 py-2 d-inline-flex align-items-center gap-2 text-white text-decoration-none disabled d-none" aria-disabled="true">
+            <a href="#" id="btnContinuarDesktop" class="btn btn-primary fw-bold px-4 py-2 d-inline-flex align-items-center gap-2 text-white text-decoration-none disabled d-none" aria-disabled="true">
                 Continuar
             </a>
         </div>
@@ -85,7 +85,7 @@ $paginaAtiva = 'dashboard';
                     <div id="caixaMensagemModalidade" class="mt-3"></div>
                     <div class="d-flex justify-content-center gap-4 mt-4">
                         <button type="button" class="btn btn-outline-danger" data-bs-dismiss="modal">Cancelar</button>
-                        <button type="submit" class="btn btn-danger" id="btnSalvarModalidade">Criar</button>
+                        <button type="submit" class="btn btn-primary" id="btnSalvarModalidade">Criar</button>
                     </div>
                 </form>
             </div>
@@ -96,7 +96,7 @@ $paginaAtiva = 'dashboard';
 <!-- Modal de Alunos Destaques -->
 <div class="modal fade" id="modalDestaques" tabindex="-1" aria-labelledby="modalDestaquesLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
-        <div class="modal-content sgi-u-radius-16px" >
+        <div class="modal-content rounded-4" >
             <div class="modal-header border-0">
                 <h5 class="modal-title text-danger fw-bold" id="modalDestaquesLabel"><i class="bi bi-star-fill me-2 sgi-u-color-f5b301" ></i>Alunos Destaques</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
@@ -105,7 +105,7 @@ $paginaAtiva = 'dashboard';
                 <p class="text-muted small">(Carregando destaques...)</p>
             </div>
             <div class="modal-footer border-0">
-                <button type="button" class="btn btn-danger px-4" data-bs-dismiss="modal">Fechar</button>
+                <button type="button" class="btn btn-outline-secondary px-4" data-bs-dismiss="modal">Fechar</button>
             </div>
         </div>
     </div>

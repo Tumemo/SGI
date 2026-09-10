@@ -10,7 +10,7 @@ $isAdmin = $nivelUsuario === 0;
 
 <main class="d-md-none ocr-mobile">
     <div class="px-3 mt-3">
-        <a href="<?= \App\Shared\Http\Url::to('painel') ?>" id="btnVoltarOcrMob" class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none sgi-u-bg-E30613-radius-6px-p-8px-16px" >
+        <a href="<?= \App\Shared\Http\Url::to('painel') ?>" id="btnVoltarOcrMob" class="btn btn-primary d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none" >
             <i class="bi bi-arrow-left-circle fs-5"></i> <span id="nomeInterclasseOcrMob">Interclasse</span>
         </a>
 
@@ -30,7 +30,7 @@ $isAdmin = $nivelUsuario === 0;
 <main class="d-none d-md-block main-desktop-layout ocr-page">
     <div class="ocr-container">
         <div class="mb-4">
-            <a href="<?= \App\Shared\Http\Url::to('painel') ?>" id="btnVoltarOcr" class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none sgi-u-bg-E30613-radius-6px-p-8px-16px" >
+            <a href="<?= \App\Shared\Http\Url::to('painel') ?>" id="btnVoltarOcr" class="btn btn-primary d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none" >
                 <i class="bi bi-arrow-left-circle fs-5"></i> <span id="nomeInterclasseOcr">Interclasse</span>
             </a>
         </div>
@@ -69,9 +69,9 @@ $isAdmin = $nivelUsuario === 0;
                 </div>
                 <div id="msgOcrModal" class="mt-3 sgi-u-text-85rem" ></div>
             </div>
-            <div class="modal-footer sgi-u-border-none-p-0-1-5rem-1-25rem" >
-                <button type="button" class="ocr-btn-cancel sgi-u-border-1-5px-solid-E5E7EB-background-fff-color-6B7280" data-bs-dismiss="modal" >Cancelar</button>
-                <button type="button" class="ocr-btn-primary sgi-u-background-E30613-border-none-color-fff" id="btnSalvarOcrModal" onclick="salvarOcorrenciaModal()" >
+                  <div class="modal-footer border-0 sgi-u-p-0-1-5rem-1-25rem" >
+                <button type="button" class="ocr-btn-cancel btn btn-outline-secondary" data-bs-dismiss="modal" >Cancelar</button>
+                <button type="button" class="btn btn-primary" id="btnSalvarOcrModal" onclick="salvarOcorrenciaModal()" >
                     <i class="bi bi-check-lg me-1"></i>Registrar
                 </button>
             </div>

@@ -2,72 +2,22 @@
    os formulários e os estados de botão; este arquivo cuida apenas da marca,
    da composição dos banners e do feedback de autenticação. */
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap');
-
-:root {
-    --sgi-danger: #e30613;
-    --sgi-font-sans: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-}
-
-*,
-*::before,
-*::after {
-    box-sizing: border-box;
-    font-family: var(--sgi-font-sans);
-}
-
-html,
 body {
     min-height: 100%;
-    overflow-x: hidden;
-}
-
-body {
-    margin: 0;
-    background-color: #f9f9f9;
-    font-weight: 300;
+    background-color: var(--bs-body-bg);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
 }
 
 body > main {
-    background-color: #f9f9f9;
-}
-
-.bi::before,
-[class^="bi-"]::before,
-[class*=" bi-"]::before {
-    font-weight: 400;
-    -webkit-text-stroke: 0.25px currentColor;
-}
-
-.btn-danger {
-    font-family: var(--sgi-font-sans);
-    background-color: var(--sgi-danger);
-    border-color: var(--sgi-danger);
-}
-
-.btn-danger:hover {
-    background-color: #bb0812;
-    border-color: #bb0812;
-}
-
-.btn-danger:active,
-.btn-danger:focus {
-    background-color: #a00610;
-    border-color: #a00610;
-    box-shadow: 0 0 0 3px rgba(227, 6, 19, 0.2);
-}
-
-.form-control:focus {
-    border-color: transparent;
-    box-shadow: 0 0 2px 4px rgba(255, 0, 0, 0.64);
+    background-color: var(--bs-body-bg);
 }
 
 #msg_erro_mobile,
 #msg_erro_desktop {
     margin-top: 10px;
     font-size: 0.85rem;
+    font-weight: 300;
 }
 
 .login-mobile-layout {
@@ -123,6 +73,7 @@ body > main {
     margin-top: 1rem;
     color: #212529;
     font-size: 0.65rem;
+    font-weight: 300;
     line-height: 1;
 }
 

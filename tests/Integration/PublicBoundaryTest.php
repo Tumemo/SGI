@@ -31,7 +31,7 @@ final class PublicBoundaryTest
         $traversal = $client->get('views/%2e%2e/config/db.php');
         Assertions::assert('Tentativa de traversal é rejeitada', in_array($traversal['code'], [400, 404], true));
 
-        foreach (['admin.css', 'aluno.css', 'login.css'] as $bundle) {
+        foreach (['bootstrap-theme.css', 'shared.css', 'admin.css', 'aluno.css', 'login.css'] as $bundle) {
             $asset = $client->get('assets/css/' . $bundle);
             Assertions::assertStatus("Bundle CSS público servido: {$bundle}", $asset, 200);
             Assertions::assert(

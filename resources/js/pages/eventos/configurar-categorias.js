@@ -186,16 +186,16 @@ window.SGIPage.mount("eventos/configurar-categorias", function (pageConfig, page
                             <div class="card-body p-0 d-flex flex-column">
                                 <h4 class="fw-bold text-dark mb-4 pb-2 text-truncate" title="${categoria.nome_categoria}">${categoria.nome_categoria}</h4>
                                 <div class="d-flex gap-3 mb-4">
-                                    <div class="rounded-3 p-2 px-3 flex-fill border border-light-subtle shadow-sm sgi-u-bg-f8f9fc" >
+                                    <div class="rounded-3 p-2 px-3 flex-fill border border-light-subtle shadow-sm bg-light-subtle" >
                                         <div class="text-dark fw-medium mb-1 sgi-u-text-0-65rem" >EQUIPES</div>
                                         <div class="fs-5 text-dark">${eq}</div>
                                     </div>
-                                    <div class="rounded-3 p-2 px-3 flex-fill border border-light-subtle shadow-sm sgi-u-bg-f8f9fc" >
+                                    <div class="rounded-3 p-2 px-3 flex-fill border border-light-subtle shadow-sm bg-light-subtle" >
                                         <div class="text-dark fw-medium mb-1 sgi-u-text-0-65rem" >PARTIDAS</div>
                                         <div class="fs-5 text-dark">${pt}</div>
                                     </div>
                                 </div>
-                                <a class="btn btn-danger w-100 fw-semibold text-uppercase mt-auto border-0 sgi-u-bg-ed1c24-radius-6px-text-0-8rem"  href="/edicoes/turmas?id=${idInterclasse}&id_categoria=${cId}">
+                                <a class="btn btn-primary w-100 fw-semibold text-uppercase mt-auto border-0 "  href="/edicoes/turmas?id=${idInterclasse}&id_categoria=${cId}">
                                     VER DETALHES <i class="bi bi-arrow-right"></i>
                                 </a>
                             </div>

@@ -8,7 +8,7 @@ $nivelUsuario = (int)($_SESSION['nivel'] ?? -1);
     <?php if ($mostrarVoltar): ?>
     <a href="<?= htmlspecialchars($urlVoltar) ?>" class="bi bi-arrow-left position-absolute text-white fs-3 text-decoration-none sgi-u-top-20px-left-20px-z-10" ></a>
     <?php endif; ?>
-    <img src="<?= \App\Shared\Http\Assets::url('images/banner-global.png') ?>" alt="Banner" class="w-100 object-fit-cover sgi-u-h-100" >
+    <img src="<?= \App\Shared\Http\Assets::url('images/banner-global.png') ?>" alt="Banner" class="w-100 h-100 object-fit-cover" >
     <?php if (!empty($titulo)): ?>
     <h2 class="position-absolute top-50 start-50 translate-middle text-white m-0 fw-bold"><?= htmlspecialchars($titulo) ?></h2>
     <?php endif; ?>

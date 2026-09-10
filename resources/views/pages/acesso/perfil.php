@@ -20,7 +20,7 @@ $paginaAtiva = 'perfil';
 
 <!-- ===================== MOBILE ===================== -->
 <main class="perfil-page d-md-none p-3 sgi-u-pt-5-5rem-pb-5rem" >
-    <a href="<?= htmlspecialchars($urlVoltar) ?>" id="perfilBackMob" class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold mb-3 px-3 py-2 border-0 text-decoration-none sgi-u-bg-E30613-radius-6px-p-8px-16px" >
+    <a href="<?= htmlspecialchars($urlVoltar) ?>" id="perfilBackMob" class="btn btn-primary d-inline-flex align-items-center gap-2 fw-bold mb-3 px-3 py-2 border-0 text-decoration-none" >
         <i class="bi bi-arrow-left-circle fs-5"></i> <span id="perfilNomeInterMobile">Interclasse</span>
     </a>
 
@@ -46,7 +46,7 @@ $paginaAtiva = 'perfil';
                 <i class="<?= $nivelInfo['icon'] ?>"></i> <?= $nivelInfo['label'] ?>
             </span>
             <div class="d-flex justify-content-center gap-2 mt-3">
-                <button type="button" class="btn btn-sm btn-danger rounded-pill d-none px-3" id="btnSalvarFotoMob"><i class="bi bi-check-lg me-1"></i>Salvar</button>
+                <button type="button" class="btn btn-sm btn-primary rounded-pill d-none px-3" id="btnSalvarFotoMob"><i class="bi bi-check-lg me-1"></i>Salvar</button>
                 <button type="button" class="btn btn-sm btn-outline-danger rounded-pill perfil-btn-excluir" id="btnExcluirFotoMob" disabled><i class="bi bi-trash me-1"></i>Remover</button>
             </div>
         </div>
@@ -70,7 +70,7 @@ $paginaAtiva = 'perfil';
         </div>
     </div>
 
-    <button type="button" class="btn btn-danger w-100 rounded-pill py-2 fw-semibold" data-bs-toggle="modal" data-bs-target="#modalEditarPerfil">
+    <button type="button" class="btn btn-primary w-100 rounded-pill py-2 fw-semibold" data-bs-toggle="modal" data-bs-target="#modalEditarPerfil">
         <i class="bi bi-pencil-square me-2"></i>Editar perfil
     </button>
 </main>
@@ -81,11 +81,11 @@ $paginaAtiva = 'perfil';
     <div class="perfil-wrapper">
         <!-- Topbar -->
         <div class="perfil-topbar mt-5">
-            <a href="<?= htmlspecialchars($urlVoltar) ?>" id="perfilBackDesk" class="perfil-btn-voltar btn btn-danger d-inline-flex align-items-center gap-2 fw-bold px-3 py-2 border-0 text-decoration-none sgi-u-bg-E30613-radius-6px-p-8px-16px" >
+            <a href="<?= htmlspecialchars($urlVoltar) ?>" id="perfilBackDesk" class="perfil-btn-voltar btn btn-primary d-inline-flex align-items-center gap-2 fw-bold px-3 py-2 border-0 text-decoration-none" >
                 <i class="bi bi-arrow-left-circle fs-5"></i> <span id="perfilNomeInterDesk">Interclasse</span>
             </a>
             <div class="perfil-topbar-title">
-                <h1><i class="bi bi-person-circle me-2 sgi-u-color-e30613" ></i>Meu Perfil</h1>
+                <h1><i class="bi bi-person-circle me-2 text-primary" ></i>Meu Perfil</h1>
                 <p class="perfil-topbar-subtitle">Gerencie suas informações, segurança e acompanhe sua participação</p>
             </div>
         </div>
@@ -120,7 +120,7 @@ $paginaAtiva = 'perfil';
                         </div>
 
                         <div class="d-flex justify-content-center gap-2 mt-4">
-                            <button type="button" class="btn btn-sm btn-danger rounded-pill d-none px-3" id="btnSalvarFotoDesk"><i class="bi bi-check-lg me-1"></i>Salvar</button>
+                            <button type="button" class="btn btn-sm btn-primary rounded-pill d-none px-3" id="btnSalvarFotoDesk"><i class="bi bi-check-lg me-1"></i>Salvar</button>
                             <button type="button" class="btn btn-sm btn-outline-danger rounded-pill perfil-btn-excluir" id="btnExcluirFotoDesk" disabled><i class="bi bi-trash me-1"></i>Remover</button>
                         </div>
                     </div>
@@ -211,7 +211,7 @@ $paginaAtiva = 'perfil';
                 </div>
                 <div class="modal-footer border-0 pb-4 px-4 pt-0">
                     <button type="button" class="btn btn-outline-secondary rounded-3" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="submit" class="btn btn-danger rounded-3 px-4" id="btnSalvarPerfil"><i class="bi bi-check-lg me-1"></i>Salvar</button>
+                    <button type="submit" class="btn btn-primary rounded-3 px-4" id="btnSalvarPerfil"><i class="bi bi-check-lg me-1"></i>Salvar</button>
                 </div>
             </form>
         </div>
@@ -252,14 +252,14 @@ $paginaAtiva = 'perfil';
                 </div>
                 <div class="modal-footer border-0 pb-4 px-4 pt-0">
                     <button type="button" class="btn btn-outline-secondary rounded-3" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="submit" class="btn btn-danger rounded-3 px-4" id="btnSalvarSenha"><i class="bi bi-check-lg me-1"></i>Salvar</button>
+                    <button type="submit" class="btn btn-primary rounded-3 px-4" id="btnSalvarSenha"><i class="bi bi-check-lg me-1"></i>Salvar</button>
                 </div>
             </form>
         </div>
     </div>
 </div>
 
-<input type="file" id="fotoUploadInput" accept="image/jpeg,image/png,image/gif,image/webp" class="sgi-u-display-none">
+<input type="file" id="fotoUploadInput" accept="image/jpeg,image/png,image/gif,image/webp" class="d-none">
 
 <script type="application/json" data-sgi-config="acesso/perfil"><?= json_encode(['value2' => ($usuarioPerfil['nome_usuario'] ?? ''), 'value3' => ($usuarioPerfil['matricula_usuario'] ?? ''), 'value4' => ($sessionId ?? 0), 'value5' => ((int)($nivelUsuario ?? 0))], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_THROW_ON_ERROR) ?></script>
 <script data-sgi-page src="<?= \App\Shared\Http\Assets::url('js/pages/acesso/perfil.js') ?>"></script>

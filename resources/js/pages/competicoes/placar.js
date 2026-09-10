@@ -1188,7 +1188,7 @@ window.SGIPage.mount("competicoes/placar", function (pageConfig, pageScope) {
                 podiumHtml += '<div class="sgi-u-flex-1-min-width-160px-text-align-center">' +
                     '<div class="sgi-u-text-1-6rem">' + (posIcons[idx] || '') + '</div>' +
                     '<div class="sgi-u-weight-700-mt-6px">' + (posLabels[idx] || '') + '</div>' +
-                    '<div class="sgi-u-weight-600-mt-4px">' + esc(r.nome_usuario || 'Desconhecido') + '</div>' +
+                    '<div class="fw-semibold mt-1">' + esc(r.nome_usuario || 'Desconhecido') + '</div>' +
                     '<div class="sgi-u-text-78rem-color-6b7280-mt-4px">' + esc(r.nome_fantasia_turma || r.nome_turma || '') + '</div>' +
                 '</div>';
             });
@@ -1211,7 +1211,7 @@ window.SGIPage.mount("competicoes/placar", function (pageConfig, pageScope) {
                         : '')));
 
         grid.innerHTML =
-            '<div class="sgi-u-w-100-maxw-760px-background-fff">' +
+            '<div class="w-100 sgi-u-maxw-760px-background-fff">' +
                 '<div class="sgi-u-display-flex-align-items-center-gap-5rem">' +
                     '<i class="bi bi-trophy-fill text-warning"></i> Registrar Resultado Individual' +
                 '</div>' +
@@ -1234,7 +1234,7 @@ window.SGIPage.mount("competicoes/placar", function (pageConfig, pageScope) {
                     '<button type="button" class="mc-action-btn mc-action-btn--start" id="btnSalvarIndRanking"' + (individualBloqueado ? ' disabled' : '') + '><i class="bi bi-check-lg"></i> Salvar Ranking</button>' +
                     '<span id="msgIndRanking" class="small" role="status" aria-live="polite"></span>' +
                 '</div>' +
-                '<div class="sgi-u-mt-1-5rem">' +
+                '<div class="mt-4">' +
                     '<div class="sgi-u-weight-800-text-9rem-color-111827"><i class="bi bi-award-fill me-1"></i>Ranking Atual</div>' +
                     podiumHtml +
                 '</div>' +
@@ -2061,7 +2061,7 @@ window.SGIPage.mount("competicoes/placar", function (pageConfig, pageScope) {
         if (!container) return;
         var nome = nomeAluno || 'Jogador(a)';
         container.innerHTML =
-            '<div class="alert d-flex align-items-center gap-3 py-3 px-4 mb-0 rounded-3 shadow-sm border-0 sgi-u-background-fef2f2-color-991b1b" role="alert" >' +
+            '<div class="alert d-flex align-items-center gap-3 py-3 px-4 mb-0 rounded-3 shadow-sm border-0 bg-danger-subtle text-danger-emphasis" role="alert" >' +
                 '<span class="sgi-u-w-36px-h-36px-text-1rem">V</span>' +
                 '<div class="flex-grow-1">' +
                     '<strong class="d-block mb-1 sgi-u-text-85rem" >SEGUNDO CARTÃO AMARELO</strong>' +

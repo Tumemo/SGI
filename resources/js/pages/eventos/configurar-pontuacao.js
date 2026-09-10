@@ -129,12 +129,12 @@ window.SGIPage.mount("eventos/configurar-pontuacao", function (pageConfig, pageS
             VALORES_INICIAIS = { 'pontos-1': pontos1, 'pontos-2': pontos2, 'pontos-3': pontos3, 'pontos-arr': pontosArr };
             marcarMudancas();
 
-            btn.classList.remove('btn-danger');
+            btn.classList.remove('btn-primary');
             btn.classList.add('btn-success');
             btn.innerHTML = '<i class="bi bi-check-lg me-1"></i> Salvo!';
             setTimeout(() => {
                 btn.classList.remove('btn-success');
-                btn.classList.add('btn-danger');
+                btn.classList.add('btn-primary');
                 btn.disabled = false;
                 btn.innerHTML = '<i class="bi bi-check-lg me-1"></i> Salvar';
             }, 2000);

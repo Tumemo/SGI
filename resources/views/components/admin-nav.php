@@ -36,7 +36,7 @@ $onclickSair = "onclick=\"return confirm('Deseja realmente sair?')\"";
 ?>
 
 <!-- navbar mobile -->
-<nav class="d-md-none fixed-bottom bg-danger shadow-lg mobile-nav sgi-u-z-1040-h-64px" >
+<nav class="d-md-none fixed-bottom bg-primary shadow-lg mobile-nav">
     <ul class="nav justify-content-around flex-nowrap fs-5 list-unstyled mb-0 gap-0 px-1 align-items-center h-100">
         <?php foreach ($navItens as $key => $item): ?>
         <li>
@@ -78,7 +78,7 @@ $onclickSair = "onclick=\"return confirm('Deseja realmente sair?')\"";
 </script>
 
 <!-- navbar desktop -->
-<nav class="d-none d-md-flex flex-column position-fixed start-0 shadow-lg bg-danger sidebar-nav sgi-u-w-80px-top-0-bottom-0" >
+<nav class="d-none d-md-flex flex-column position-fixed start-0 shadow-lg bg-primary sidebar-nav">
     <ul class="nav flex-column align-items-center h-100 py-4 gap-4 fs-3 sidebar-nav-list">
         <?php foreach ($navItens as $key => $item): ?>
         <li>

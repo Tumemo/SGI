@@ -14,7 +14,7 @@ $paginaAtiva = 'categorias';
 <main class="position-relative d-md-none sgi-u-mb-120px" >
     <div class="p-3">
         <div class="d-flex align-items-center gap-2 mb-3">
-            <a href="<?= \App\Shared\Http\Url::to('painel') ?>" id="btnVoltarCatMob" class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none sgi-u-bg-E30613-radius-6px-p-8px-16px" >
+            <a href="<?= \App\Shared\Http\Url::to('painel') ?>" id="btnVoltarCatMob" class="btn btn-primary d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none" >
                 <i class="bi bi-arrow-left-circle fs-5"></i> <span id="nomeInterclasseCatMob">Interclasse</span>
             </a>
             <div class="turma-search-wrapper flex-grow-1">
@@ -36,7 +36,7 @@ $paginaAtiva = 'categorias';
 <main class="d-none d-md-flex flex-column main-desktop-layout">
     <div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-3">
         <div class="d-flex align-items-center gap-3">
-            <a href="<?= \App\Shared\Http\Url::to('painel') ?>" id="btnVoltarCatDesk" class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none sgi-u-bg-E30613-radius-6px-p-8px-16px" >
+            <a href="<?= \App\Shared\Http\Url::to('painel') ?>" id="btnVoltarCatDesk" class="btn btn-primary d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none" >
                 <i class="bi bi-arrow-left-circle fs-5"></i> <span id="nomeInterclasseCategoria">Interclasse</span>
             </a>
         </div>
@@ -46,7 +46,7 @@ $paginaAtiva = 'categorias';
                 <input type="text" id="buscaTurmaDesk" placeholder="Buscar turma..." oninput="filtrarTurmas()">
             </div>
             <?php if ($nivelUsuario === 0): ?>
-            <button class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold px-3 py-2 border-0 sgi-u-radius-8px"  data-bs-toggle="modal" data-bs-target="#exampleModal">
+            <button class="btn btn-primary d-inline-flex align-items-center gap-2 fw-bold px-3 py-2 border-0 rounded-3"  data-bs-toggle="modal" data-bs-target="#exampleModal">
                 <i class="bi bi-plus-lg"></i> Nova Turma
             </button>
             <?php endif; ?>
@@ -100,7 +100,7 @@ $paginaAtiva = 'categorias';
                     </div>
                     <div class=" d-flex justify-content-center gap-4">
                         <button type="button" class="btn btn-outline-danger" data-bs-dismiss="modal">Cancelar</button>
-                        <button type="submit" class="btn btn-danger">Criar</button>
+                        <button type="submit" class="btn btn-primary">Criar</button>
                     </div>
                 </form>
             </div>
@@ -144,7 +144,7 @@ $paginaAtiva = 'categorias';
                     <div id="msgEditarTurma" class="mt-2"></div>
                     <div class="d-flex justify-content-center gap-4 mt-4">
                         <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
-                        <button type="submit" class="btn btn-danger" id="btnSalvarEdicaoTurma">Salvar Alterações</button>
+                        <button type="submit" class="btn btn-primary" id="btnSalvarEdicaoTurma">Salvar Alterações</button>
                     </div>
                 </form>
             </div>
@@ -155,7 +155,7 @@ $paginaAtiva = 'categorias';
 <!-- Modal de Exclusão -->
 <div class="modal fade" id="modalExcluirTurma" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-sm">
-        <div class="modal-content sgi-u-radius-16px" >
+        <div class="modal-content rounded-4" >
             <div class="modal-body text-center py-4">
                 <div class="modal-excluir-icon">
                     <i class="bi bi-exclamation-triangle"></i>

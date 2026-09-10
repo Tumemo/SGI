@@ -1,40 +1,6 @@
-:root {
-  --aluno-primary: #dc3545;
-  --aluno-primary-dark: #b02a37;
-  --aluno-primary-light: #fce4e6;
-  --aluno-primary-subtle: #fff0f0;
-  --aluno-primary-soft: #fdeef0;
-
-  --aluno-success: #198754;
-  --aluno-warning: #ffc107;
-  --aluno-info: #0dcaf0;
-
-  --aluno-bg: #f5f6fa;
-  --aluno-surface: #ffffff;
-  --aluno-border: #e9ecef;
-
-  --aluno-text: #1a1a2e;
-  --aluno-text-secondary: #6c757d;
-  --aluno-text-muted: #adb5bd;
-
-  --aluno-radius-sm: 8px;
-  --aluno-radius-md: 12px;
-  --aluno-radius-lg: 16px;
-  --aluno-radius-xl: 24px;
-  --aluno-radius: 16px;
-
-  --aluno-shadow-sm: 0 1px 3px rgba(0,0,0,0.06);
-  --aluno-shadow-md: 0 4px 12px rgba(0,0,0,0.08);
-  --aluno-shadow-lg: 0 8px 24px rgba(0,0,0,0.12);
-  --aluno-shadow-hover: 0 12px 28px rgba(0,0,0,0.15);
-  --aluno-shadow: 0 6px 20px rgba(30, 30, 60, 0.08);
-
-  --aluno-transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
 .aluno-page {
-  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-  color: var(--aluno-text);
+  font-family: var(--bs-body-font-family);
+  color: var(--bs-body-color);
 }
 
 .aluno-hero {
@@ -110,37 +76,6 @@
   color: var(--aluno-text-muted);
   font-size: 1.1rem;
   pointer-events: none;
-}
-
-.aluno-filter-pills {
-  display: flex;
-  gap: 0.5rem;
-  flex-wrap: wrap;
-}
-
-.aluno-filter-pills .filter-pill {
-  padding: 0.4rem 1rem;
-  border-radius: 50px;
-  border: 1.5px solid var(--aluno-border);
-  background: var(--aluno-surface);
-  color: var(--aluno-text-secondary);
-  font-size: 0.875rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all var(--aluno-transition);
-  user-select: none;
-}
-
-.aluno-filter-pills .filter-pill:hover {
-  border-color: var(--aluno-primary);
-  color: var(--aluno-primary);
-  background: var(--aluno-primary-subtle);
-}
-
-.aluno-filter-pills .filter-pill.active {
-  background: var(--aluno-primary);
-  border-color: var(--aluno-primary);
-  color: #fff;
 }
 
 .aluno-card-grid {
@@ -229,62 +164,6 @@
 
 .aluno-card .card-meta .bi {
   margin-right: 0.25rem;
-}
-
-.aluno-card .card-footer {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-top: auto;
-}
-
-.aluno-card .btn-card {
-  background: var(--aluno-primary);
-  color: #fff;
-  border: none;
-  border-radius: var(--aluno-radius-md);
-  padding: 0.5rem 1.25rem;
-  font-size: 0.875rem;
-  font-weight: 500;
-  transition: all var(--aluno-transition);
-  text-decoration: none;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.aluno-card .btn-card:hover {
-  background: var(--aluno-primary-dark);
-  color: #fff;
-  transform: translateX(2px);
-}
-
-.aluno-card .btn-card.inactive {
-  background: var(--aluno-text-muted);
-  cursor: default;
-  pointer-events: none;
-}
-
-.aluno-status-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-  padding: 0.25rem 0.75rem;
-  border-radius: 50px;
-  font-size: 0.75rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.03em;
-}
-
-.aluno-status-badge.active {
-  background: #d1e7dd;
-  color: #0a3622;
-}
-
-.aluno-status-badge.inactive {
-  background: #e9ecef;
-  color: #6c757d;
 }
 
 .aluno-section-header {
@@ -392,11 +271,6 @@
     overflow-x: auto;
     flex-wrap: nowrap;
     padding-bottom: 0.25rem;
-  }
-
-  .aluno-filter-pills .filter-pill {
-    white-space: nowrap;
-    flex-shrink: 0;
   }
 
   .aluno-section-header {

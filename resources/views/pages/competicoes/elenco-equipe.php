@@ -7,13 +7,13 @@ $paginaAtiva = 'dashboard';
 ?>
 
 <main class="d-md-none p-3 sgi-u-pb-5rem" >
-    <a href="<?= \App\Shared\Http\Url::to('edicoes/equipes') ?>" class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none sgi-u-bg-E30613-radius-6px-p-8px-16px" id="btnVoltarElencoMob" >
+    <a href="<?= \App\Shared\Http\Url::to('edicoes/equipes') ?>" class="btn btn-primary d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none" id="btnVoltarElencoMob" >
         <i class="bi bi-arrow-left-circle fs-5"></i> <span id="nomeInterclasseElencoMob">Interclasse</span>
     </a>
     <div id="alertaLimiteMob" class="alert alert-danger d-none d-flex flex-wrap align-items-center gap-2 small"></div>
     <div id="listaElencoMob" class="d-flex flex-column gap-2"></div>
     <?php if ($isAdmin): ?>
-    <a class="btn btn-aluno w-100 mt-4" id="linkGerenciarMob" href="#">
+    <a class="btn btn-outline-primary w-100 mt-4" id="linkGerenciarMob" href="#">
         <i class="bi bi-person-plus"></i>
     </a>
     <?php endif; ?>
@@ -22,13 +22,13 @@ $paginaAtiva = 'dashboard';
 <main class="d-none d-md-block main-desktop-layout">
     <div class="aluno-page container-fluid py-4 px-4">
         <div class="aluno-page-header">
-            <a href="<?= \App\Shared\Http\Url::to('edicoes/equipes') ?>" id="btnVoltarElencoDesk" class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none sgi-u-bg-E30613-radius-6px-p-8px-16px" >
+            <a href="<?= \App\Shared\Http\Url::to('edicoes/equipes') ?>" id="btnVoltarElencoDesk" class="btn btn-primary d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none" >
                 <i class="bi bi-arrow-left-circle fs-5"></i> <span id="nomeInterclasseElencoDesk">Interclasse</span>
             </a>
             <h1>Elenco da equipe</h1>
             <?php if ($isAdmin): ?>
             <div class="ms-auto">
-                <a class="btn btn-aluno" id="linkGerenciarDesk" href="#">
+                <a class="btn btn-outline-primary" id="linkGerenciarDesk" href="#">
                     <i class="bi bi-person-plus"></i>
                 </a>
             </div>

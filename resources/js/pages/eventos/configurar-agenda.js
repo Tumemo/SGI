@@ -261,7 +261,7 @@ window.SGIPage.mount("eventos/configurar-agenda", function (pageConfig, pageScop
                 : '');
 
         const iniciarBtn = podeIniciar(j)
-            ? `<button type="button" class="btn btn-danger iniciar-jogo-btn" data-id-jogo="${j.id_jogo}"><i class="bi bi-play-fill"></i> Iniciar jogo</button>`
+            ? `<button type="button" class="btn btn-primary iniciar-jogo-btn" data-id-jogo="${j.id_jogo}"><i class="bi bi-play-fill"></i> Iniciar jogo</button>`
             : '';
         const placarBtn =
             j.status_jogo === 'Iniciado' || j.status_jogo === 'Pausado'
@@ -269,7 +269,7 @@ window.SGIPage.mount("eventos/configurar-agenda", function (pageConfig, pageScop
                 : '';
         const verBtn =
             j.status_jogo === 'Concluido' || j.status_jogo === 'Finalizado'
-                ? `<a class="btn btn-danger" href="${placarHref}"><i class="bi bi-trophy"></i> Ver resultado</a>`
+                ? `<a class="btn btn-primary" href="${placarHref}"><i class="bi bi-trophy"></i> Ver resultado</a>`
                 : '';
         const ajusteBtn =
             podeAjustar && j.status_jogo === 'Agendado'
@@ -341,7 +341,7 @@ window.SGIPage.mount("eventos/configurar-agenda", function (pageConfig, pageScop
             const msg = '<div class="ag-empty"><i class="bi bi-calendar-x"></i><p>Nenhum interclasse selecionado ou ativo.</p></div>';
             containerDesk.innerHTML = msg;
             containerMob.innerHTML = msg;
-            if (badge) badge.style.display = 'none';
+            if (badge) badge.classList.add('d-none');
             return;
         }
 
@@ -370,16 +370,16 @@ window.SGIPage.mount("eventos/configurar-agenda", function (pageConfig, pageScop
             containerMob.innerHTML = msg;
             const mostrarTodos = document.getElementById('container-mostrar-todos');
             const mostrarTodosMobile = document.getElementById('container-mostrar-todos-mobile');
-            if (mostrarTodos) mostrarTodos.style.display = filtroData ? 'block' : 'none';
-            if (mostrarTodosMobile) mostrarTodosMobile.style.display = filtroData ? 'block' : 'none';
-            if (badge) badge.style.display = 'none';
+            if (mostrarTodos) mostrarTodos.classList.toggle('d-none', !filtroData);
+            if (mostrarTodosMobile) mostrarTodosMobile.classList.toggle('d-none', !filtroData);
+            if (badge) badge.classList.add('d-none');
             return;
         }
 
         if (badge) {
             const txt = document.getElementById('agenda-count-text');
             if (txt) txt.textContent = lista.length + (lista.length === 1 ? ' jogo' : ' jogos');
-            badge.style.display = 'inline-flex';
+            badge.classList.remove('d-none');
         }
 
         lista.forEach((j) => {
@@ -456,8 +456,8 @@ window.SGIPage.mount("eventos/configurar-agenda", function (pageConfig, pageScop
 
         const mostrarTodosInicial = document.getElementById('container-mostrar-todos');
         const mostrarTodosMobileInicial = document.getElementById('container-mostrar-todos-mobile');
-        if (mostrarTodosInicial) mostrarTodosInicial.style.display = filtroData ? 'block' : 'none';
-        if (mostrarTodosMobileInicial) mostrarTodosMobileInicial.style.display = filtroData ? 'block' : 'none';
+        if (mostrarTodosInicial) mostrarTodosInicial.classList.toggle('d-none', !filtroData);
+        if (mostrarTodosMobileInicial) mostrarTodosMobileInicial.classList.toggle('d-none', !filtroData);
 
         document.querySelectorAll('.btn-ajuste-jogo').forEach((btn) => {
             pageScope.listen(btn, 'click', () => {

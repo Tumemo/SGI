@@ -87,7 +87,7 @@ async function carregarAlertaLimite() {
         let msg = `<i class="bi bi-exclamation-triangle-fill"></i>`;
         msg += `<span class="flex-grow-1"><strong>Limite excedido:</strong> esta equipe possui <strong>${total}</strong> inscritos e o limite da modalidade é <strong>${limite}</strong>.</span>`;
         if (isAdmin) {
-            msg += `<button type="button" class="btn btn-aluno btn-sm flex-shrink-0" onclick="redistribuirElenco()"><i class="bi bi-shuffle"></i> Enviar alunos para as outras equipes</button>`;
+            msg += `<button type="button" class="btn btn-primary btn-sm flex-shrink-0" onclick="redistribuirElenco()"><i class="bi bi-shuffle"></i> Enviar alunos para as outras equipes</button>`;
         }
 
         if (mob) { mob.innerHTML = msg; mob.classList.remove('d-none'); }
@@ -151,7 +151,7 @@ async function carregar() {
                     <div class="text-muted small">${esc(u.matricula_usuario)}</div>
                 </div>
                 ${isAdmin ? `
-                    <button onclick="removerAluno(${u.id_usuario}, ${idEquipe})" class="btn btn-aluno btn-sm sgi-u-p-0-3rem-0-75rem-text-0-8rem" >
+                    <button onclick="removerAluno(${u.id_usuario}, ${idEquipe})" class="btn btn-outline-danger btn-sm sgi-u-p-0-3rem-0-75rem-text-0-8rem" >
                         <i class="bi bi-trash"></i>
                     </button>
                 ` : ''}
@@ -164,7 +164,7 @@ async function carregar() {
                 <td>${esc(u.matricula_usuario)}</td>
                 ${isAdmin ? `
                     <td class="text-end">
-                        <button onclick="removerAluno(${u.id_usuario}, ${idEquipe})" class="btn btn-aluno btn-sm sgi-u-p-0-3rem-0-75rem-text-0-8rem" >
+                        <button onclick="removerAluno(${u.id_usuario}, ${idEquipe})" class="btn btn-outline-danger btn-sm sgi-u-p-0-3rem-0-75rem-text-0-8rem" >
                             <i class="bi bi-trash"></i>
                         </button>
                     </td>

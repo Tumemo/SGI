@@ -88,20 +88,20 @@ window.SGIPage.mount("aluno/jogos", function (pageConfig, pageScope) {
         const s = String(status || '').toLowerCase();
         if (s === 'iniciado') {
             return {
-                classe: 'status-andamento',
+                classe: 'text-bg-primary',
                 texto: 'Em Andamento',
                 dot: true
             };
         }
         if (s === 'concluido' || s === 'finalizado') {
             return {
-                classe: 'status-finalizado',
+                classe: 'text-bg-success',
                 texto: 'Finalizado',
                 dot: false
             };
         }
         return {
-            classe: 'status-aguardando',
+            classe: 'text-bg-secondary',
             texto: s === 'pausado' ? 'Pausado' : 'Aguardando',
             dot: false
         };
@@ -118,7 +118,7 @@ window.SGIPage.mount("aluno/jogos", function (pageConfig, pageScope) {
             const ativo = listaInter.find(i => String(i.status_interclasse) === '1');
 
             if (!ativo) {
-                container.innerHTML = '<div class="empty-state"><i class="bi bi-calendar-x mb-2"></i>Nenhuma competição ativa no momento.</div>';
+                container.innerHTML = '<div class="text-center text-muted py-5"><i class="bi bi-calendar-x fs-1 d-block mb-2"></i>Nenhuma competição ativa no momento.</div>';
                 return;
             }
 
@@ -166,7 +166,7 @@ window.SGIPage.mount("aluno/jogos", function (pageConfig, pageScope) {
             todosOsJogos = Object.values(jogosAgrupados);
 
             if (todosOsJogos.length === 0) {
-                container.innerHTML = '<div class="empty-state"><i class="bi bi-inbox mb-2"></i>Nenhum jogo agendado ainda.</div>';
+                container.innerHTML = '<div class="text-center text-muted py-5"><i class="bi bi-inbox fs-1 d-block mb-2"></i>Nenhum jogo agendado ainda.</div>';
                 return;
             }
 
@@ -179,8 +179,8 @@ window.SGIPage.mount("aluno/jogos", function (pageConfig, pageScope) {
         } catch (error) {
             console.error("Erro ao carregar jogos:", error);
             container.innerHTML = `
-                <div class="empty-state text-danger">
-                    <i class="bi bi-exclamation-triangle mb-2"></i>
+                <div class="text-center text-danger py-5">
+                    <i class="bi bi-exclamation-triangle fs-1 d-block mb-2"></i>
                     Erro ao carregar a tabela de jogos. Tente novamente mais tarde.
                 </div>`;
         }
@@ -247,7 +247,7 @@ window.SGIPage.mount("aluno/jogos", function (pageConfig, pageScope) {
         }
 
         if (jogosFiltrados.length === 0) {
-            container.innerHTML = '<div class="empty-state"><i class="bi bi-search mb-2"></i>Nenhum jogo encontrado para este filtro.</div>';
+            container.innerHTML = '<div class="text-center text-muted py-5"><i class="bi bi-search fs-1 d-block mb-2"></i>Nenhum jogo encontrado para este filtro.</div>';
             return;
         }
 
@@ -267,14 +267,14 @@ window.SGIPage.mount("aluno/jogos", function (pageConfig, pageScope) {
                 <span class="meta-item"><i class="bi bi-geo-alt"></i>${esc(jogo.nome_local || 'Quadra')}</span>
             `;
 
-            const dot = status.dot ? '<span class="status-dot"></span>' : '';
+            const dot = status.dot ? '<i class="bi bi-circle-fill me-1" aria-hidden="true"></i>' : '';
 
             return `
                 <div class="jogo-card" data-jogo-id="${esc(jogo.id_jogo)}"
                      onclick="abrirDetalhesJogo(this)" role="button" tabindex="0">
                     <div class="jogo-top">
                         <div class="jogo-meta">${metaInfo}</div>
-                        <span class="status-badge ${status.classe}">${dot}${esc(status.texto)}</span>
+                        <span class="badge rounded-pill ${status.classe}">${dot}${esc(status.texto)}</span>
                     </div>
 
                     <div class="modalidade-row">
@@ -364,7 +364,7 @@ window.SGIPage.mount("aluno/jogos", function (pageConfig, pageScope) {
 
         const placarA = isFinalizado ? (eqA.placar ?? '0') : '-';
         const placarB = isFinalizado ? (eqB.placar ?? '0') : '-';
-        const dot = status.dot ? '<span class="status-dot"></span>' : '';
+        const dot = status.dot ? '<i class="bi bi-circle-fill me-1" aria-hidden="true"></i>' : '';
 
         let html = '';
 
@@ -388,7 +388,7 @@ window.SGIPage.mount("aluno/jogos", function (pageConfig, pageScope) {
                 </div>
             </div>
             <div class="text-center">
-                <span class="status-badge ${status.classe}">${dot}${esc(status.texto)}</span>
+                <span class="badge rounded-pill ${status.classe}">${dot}${esc(status.texto)}</span>
             </div>
         `;
         html += '</div>';
@@ -555,10 +555,14 @@ window.SGIPage.mount("aluno/jogos", function (pageConfig, pageScope) {
 
     // Filtro de status
     document.querySelectorAll('.filtro-btn').forEach(btn => {
-        pageScope.listen(btn, 'click', (e) => {
-            document.querySelectorAll('.filtro-btn').forEach(b => b.classList.remove('active'));
-            e.target.classList.add('active');
-            filtroStatus = e.target.dataset.filter;
+        pageScope.listen(btn, 'click', () => {
+            document.querySelectorAll('.filtro-btn').forEach(b => {
+                b.classList.remove('active');
+                b.setAttribute('aria-pressed', 'false');
+            });
+            btn.classList.add('active');
+            btn.setAttribute('aria-pressed', 'true');
+            filtroStatus = btn.dataset.filter;
             renderizarJogos();
         });
     });

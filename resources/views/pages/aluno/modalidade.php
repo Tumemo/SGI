@@ -53,8 +53,8 @@ include SGI_ROOT . '/resources/views/components/aluno-head.php';
             <div class="counter-box">
                 <span class="counter-label">Modalidades escolhidas</span>
                 <div class="counter-value"><span id="counterNum">0</span>&nbsp;<span class="counter-total">/ 3</span></div>
-                <span id="statusDefault" class="status-default">Em andamento</span>
-                <span id="limiteBadge" class="limite-badge d-none"><i class="bi bi-check-circle-fill"></i> Limite atingido</span>
+                <span id="statusDefault" class="badge rounded-pill text-bg-secondary">Em andamento</span>
+                <span id="limiteBadge" class="badge rounded-pill text-bg-success d-none"><i class="bi bi-check-circle-fill"></i> Limite atingido</span>
             </div>
 
             <div class="resumo-progress">
@@ -70,7 +70,7 @@ include SGI_ROOT . '/resources/views/components/aluno-head.php';
             </div>
 
             <div class="resumo-actions">
-                <button type="button" class="btn-save" id="btnSalvar" onclick="salvarEscolhas()" disabled>
+                <button type="button" class="btn btn-primary px-4 py-2" id="btnSalvar" onclick="salvarEscolhas()" disabled>
                     <i class="bi bi-check-lg"></i> Salvar
                 </button>
             </div>

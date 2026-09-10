@@ -14,7 +14,7 @@ $isMesario = $nivelUsuario === 2;
 
 <!-- main mobile -->
 <main class="position-relative d-md-none sgi-u-mb-120px" >
-    <a href="<?= \App\Shared\Http\Url::to('painel') ?>" id="btnVoltarCatMobile" class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none sgi-u-bg-E30613-radius-6px-p-8px-16px" >
+    <a href="<?= \App\Shared\Http\Url::to('painel') ?>" id="btnVoltarCatMobile" class="btn btn-primary d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none" >
         <i class="bi bi-arrow-left-circle fs-5"></i> <span id="nomeInterclasseCatMob">Interclasse</span>
     </a>
 
@@ -27,7 +27,7 @@ $isMesario = $nivelUsuario === 2;
         <button type="button" id="btnEditarCategoriaMobile" class="btn btn-outline-primary d-none" onclick="abrirModalEditarCategoria()">Editar</button>
         <button type="button" id="btnExcluirCategoriaMobile" class="btn btn-danger d-none" onclick="excluirCategoria()">Excluir</button>
         <button data-bs-toggle="modal" data-bs-target="#modalCriarCategoria" class="btn btn-outline-danger">Adicionar Categoria</button>
-        <a href="#" id="btnContinuarMobile" class="btn btn-danger">Continuar</a>
+        <a href="#" id="btnContinuarMobile" class="btn btn-primary">Continuar</a>
     </section>
     <?php elseif ($isColaborador): ?>
     <div class="d-flex justify-content-center mt-4">
@@ -40,7 +40,7 @@ $isMesario = $nivelUsuario === 2;
 <main class="d-none d-md-block main-desktop-layout">
     <div class="container-fluid px-0 position-relative">
         <div class="mb-5">
-            <a href="<?= \App\Shared\Http\Url::to('painel') ?>" id="btnVoltarCatDesk" class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none sgi-u-bg-E30613-radius-6px-p-8px-16px" >
+            <a href="<?= \App\Shared\Http\Url::to('painel') ?>" id="btnVoltarCatDesk" class="btn btn-primary d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none" >
                 <i class="bi bi-arrow-left-circle fs-5"></i> <span id="nomeInterclasseCategoria">Interclasse</span>
             </a>
         </div>
@@ -57,15 +57,15 @@ $isMesario = $nivelUsuario === 2;
             <button type="button" id="btnExcluirCategoriaDesktop" class="btn btn-danger fw-semibold rounded-3 px-4 py-2 d-flex align-items-center justify-content-center gap-2 shadow-lg d-none" onclick="excluirCategoria()">
                 <i class="bi bi-trash"></i> Excluir
             </button>
-            <button type="button" class="btn bg-white fw-semibold rounded-3 px-4 py-2 d-flex align-items-center justify-content-center gap-2 shadow-lg sgi-u-color-ed1c24-border-2px-solid-ed1c24"  data-bs-toggle="modal" data-bs-target="#modalCriarCategoria">
+            <button type="button" class="btn bg-white fw-semibold rounded-3 px-4 py-2 d-flex align-items-center justify-content-center gap-2 shadow-lg btn-outline-primary"  data-bs-toggle="modal" data-bs-target="#modalCriarCategoria">
                 <i class="bi bi-plus-circle"></i> Adicionar
             </button>
-            <a href="#" id="btnContinuarDesktop" class="btn fw-semibold rounded-3 px-5 py-2 text-white text-decoration-none shadow-lg d-flex align-items-center justify-content-center sgi-u-bg-ed1c24-border-2px-solid-ed1c24" >
+            <a href="#" id="btnContinuarDesktop" class="btn fw-semibold rounded-3 px-5 py-2 text-white text-decoration-none shadow-lg d-flex align-items-center justify-content-center btn-primary" >
                 Continuar
             </a>
         </div>
         <?php elseif ($isColaborador): ?>
-        <button type="button" class="btn bg-white fw-semibold rounded-3 px-4 py-2 d-flex align-items-center justify-content-center gap-2 shadow-lg mt-4 sgi-u-color-ed1c24-border-2px-solid-ed1c24"  data-bs-toggle="modal" data-bs-target="#modalCriarCategoria">
+        <button type="button" class="btn bg-white fw-semibold rounded-3 px-4 py-2 d-flex align-items-center justify-content-center gap-2 shadow-lg mt-4 btn-outline-primary"  data-bs-toggle="modal" data-bs-target="#modalCriarCategoria">
             <i class="bi bi-plus-circle"></i> Adicionar categoria
         </button>
         <?php endif; ?>
@@ -111,7 +111,7 @@ $isMesario = $nivelUsuario === 2;
                     <div id="msgNovaTurmaCategoria" class="text-center mb-2"></div>
                     <div class="d-flex justify-content-center gap-4 mt-4">
                         <button type="button" class="btn btn-outline-danger" data-bs-dismiss="modal">Cancelar</button>
-                        <button type="submit" class="btn btn-danger" id="btnCriarTurmaCategoria">Criar e enviar</button>
+                        <button type="submit" class="btn btn-primary" id="btnCriarTurmaCategoria">Criar e enviar</button>
                     </div>
                 </form>
             </div>
@@ -137,7 +137,7 @@ $isMesario = $nivelUsuario === 2;
                     </div>
                     <div class="d-flex justify-content-center gap-3 pt-5">
                         <button type="button" class="btn btn-outline-danger" data-bs-dismiss="modal">Cancelar</button>
-                        <button type="submit" class="btn btn-danger" id="btnSalvarCategoria">Criar</button>
+                        <button type="submit" class="btn btn-primary" id="btnSalvarCategoria">Criar</button>
                     </div>
                 </form>
             </div>
@@ -162,7 +162,7 @@ $isMesario = $nivelUsuario === 2;
                     <div id="msgEditarCategoria" class="mt-2"></div>
                     <div class="d-flex justify-content-center gap-3 pt-4">
                         <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
-                        <button type="submit" class="btn btn-danger" id="btnSalvarEdicaoCategoria">Salvar</button>
+                        <button type="submit" class="btn btn-primary" id="btnSalvarEdicaoCategoria">Salvar</button>
                     </div>
                 </form>
             </div>

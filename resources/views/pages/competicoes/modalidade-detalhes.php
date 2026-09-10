@@ -11,7 +11,7 @@ $isAdmin = $nivelUsuario === 0;
 
 <main class="main-desktop-layout main-mdd-layout">
     <div class="mdd-container">
-        <a href="#" id="btnVoltarDashboardDesktop" class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none sgi-u-bg-E30613-radius-6px-p-8px-16px" >
+        <a href="#" id="btnVoltarDashboardDesktop" class="btn btn-primary d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none" >
             <i class="bi bi-arrow-left-circle fs-5"></i> <span id="nomeInterModalidadeDet">Interclasse</span>
         </a>
         <div class="mdd-head">
@@ -92,7 +92,7 @@ $isAdmin = $nivelUsuario === 0;
                     <div id="msgEditarModalidade" class="mt-2"></div>
                     <div class="d-flex justify-content-center gap-4 mt-4">
                         <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
-                        <button type="submit" class="btn btn-danger" id="btnSalvarEdicao">Salvar Alterações</button>
+                        <button type="submit" class="btn btn-primary" id="btnSalvarEdicao">Salvar Alterações</button>
                     </div>
                 </form>
             </div>

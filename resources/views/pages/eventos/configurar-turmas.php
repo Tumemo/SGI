@@ -7,7 +7,7 @@ include SGI_ROOT . '/resources/views/components/admin-header.php';
 $paginaAtiva = 'categorias';
 ?>
 <main class="d-md-none">
-    <a href="<?= \App\Shared\Http\Url::to('painel') ?>" id="btnVoltarTurmasMobile" class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none sgi-u-bg-E30613-radius-6px-p-8px-16px" >
+    <a href="<?= \App\Shared\Http\Url::to('painel') ?>" id="btnVoltarTurmasMobile" class="btn btn-primary d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none" >
         <i class="bi bi-arrow-left-circle fs-5"></i> <span id="nomeInterclasseTurmasMob">Interclasse</span>
     </a>
     <p class="text-secondary text-center my-3">Editar detalhes turmas</p>
@@ -21,13 +21,13 @@ $paginaAtiva = 'categorias';
 
 <main class="d-none d-md-block main-desktop-layout" id="viewTurmasGestaoDesk">
     <div class="container-fluid px-0">
-        <a href="<?= \App\Shared\Http\Url::to('edicoes/categorias') ?>" id="btnVoltarTurmasDesk" class="btn btn-danger d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none sgi-u-bg-E30613-radius-6px-p-8px-16px" >
+        <a href="<?= \App\Shared\Http\Url::to('edicoes/categorias') ?>" id="btnVoltarTurmasDesk" class="btn btn-primary d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none" >
             <i class="bi bi-arrow-left-circle fs-5"></i> <span id="nomeInterclasseTurmasDesk">Interclasse</span>
         </a>
         <div class="row g-4 mx-0">
             <div class="col-md-4 px-0 px-md-2">
                 <div class="bg-white rounded-4 shadow-sm overflow-hidden border-0">
-                    <div class="p-3 d-flex align-items-center gap-2 sgi-u-bg-ed1c24-color-white" >
+                    <div class="p-3 d-flex align-items-center gap-2 bg-primary text-white" >
                         <h6 class="mb-0 fw-bold fs-5">Categorias</h6>
                     </div>
 
@@ -42,7 +42,7 @@ $paginaAtiva = 'categorias';
                 <div class="bg-white rounded-3 shadow-sm p-2 d-flex align-items-center">
                     <i class="bi bi-search text-muted ms-3"></i>
                     <input type="text" id="inputBuscaTurma" class="form-control border-0 shadow-none bg-transparent" placeholder="Buscar turma">
-                    <button class="btn fw-bold px-4 text-nowrap sgi-u-color-ed1c24"  data-bs-toggle="modal" data-bs-target="#modalCriarTurma">
+                    <button class="btn fw-bold px-4 text-nowrap btn-outline-primary"  data-bs-toggle="modal" data-bs-target="#modalCriarTurma">
                         + Adicionar
                     </button>
                 </div>
@@ -61,7 +61,7 @@ $paginaAtiva = 'categorias';
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content border-0 shadow-lg rounded-4 p-2">
                 <div class="modal-header border-0 pb-0 justify-content-center">
-                    <h5 class="modal-title fw-bold text-center w-100 sgi-u-color-ed1c24" >
+                    <h5 class="modal-title fw-bold text-center w-100 text-primary" >
                         ADICIONAR TURMA
                     </h5>
                 </div>
@@ -87,10 +87,10 @@ $paginaAtiva = 'categorias';
                     </div>
                     <div class="modal-footer border-0 pt-0 pb-3 justify-content-end gap-2 flex-wrap">
                         <div id="msgTurma" class="w-100 text-center small mb-2"></div>
-                        <button type="button" class="btn bg-white fw-semibold rounded-3 px-4 py-2 sgi-u-color-ed1c24-border-1px-solid-ed1c24" data-bs-dismiss="modal" >
+                        <button type="button" class="btn bg-white fw-semibold rounded-3 px-4 py-2 btn-outline-primary" data-bs-dismiss="modal" >
                             Cancelar
                         </button>
-                        <button type="submit" class="btn fw-semibold rounded-3 px-4 py-2 text-white sgi-u-bg-ed1c24-border-1px-solid-ed1c24"  id="btnSalvarTurma">
+                        <button type="submit" class="btn fw-semibold rounded-3 px-4 py-2 text-white btn-primary"  id="btnSalvarTurma">
                             Adicionar
                         </button>
                     </div>
