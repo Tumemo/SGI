@@ -15,8 +15,9 @@ final class RecoveryRehearsalTest
     public static function run(): void
     {
         echo "\n  \033[1;34m[Suite 16: Ensaio sintético de recuperação]\033[0m\n";
-        $source = 'sgi_test_luna_recovery_source';
-        $restore = 'sgi_test_luna_recovery_restore';
+        $runId = preg_replace('/[^a-z0-9_]+/i', '_', (string) (getenv('SGI_TEST_RUN_ID') ?: 'luna')) ?: 'luna';
+        $source = 'sgi_test_' . strtolower($runId) . '_recovery_source';
+        $restore = 'sgi_test_' . strtolower($runId) . '_recovery_restore';
         TestDatabase::assertSafeDatabaseName($source);
         TestDatabase::assertSafeDatabaseName($restore);
 

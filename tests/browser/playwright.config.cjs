@@ -2,6 +2,8 @@ const { defineConfig } = require('@playwright/test');
 
 const chromePath = process.env.SGI_CHROME_PATH;
 const launchOptions = chromePath ? { executablePath: chromePath } : {};
+const browserOutputDir = process.env.SGI_BROWSER_OUTPUT_DIR || 'test-results';
+const browserReportDir = process.env.SGI_BROWSER_REPORT_DIR || 'playwright-report';
 
 module.exports = defineConfig({
     testDir: __dirname,
@@ -11,10 +13,10 @@ module.exports = defineConfig({
     fullyParallel: false,
     workers: 1,
     retries: process.env.CI ? 1 : 0,
-    outputDir: 'test-results',
+    outputDir: browserOutputDir,
     reporter: [
         ['list'],
-        ['html', { outputFolder: 'playwright-report', open: 'never' }]
+        ['html', { outputFolder: browserReportDir, open: 'never' }]
     ],
     use: {
         baseURL: process.env.SGI_BASE_URL || 'http://localhost/SGI/',

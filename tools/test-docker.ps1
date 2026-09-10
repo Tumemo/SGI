@@ -43,13 +43,17 @@ $started = $false
 $exitCode = 0
 try {
     Invoke-Compose @('config', '--quiet')
-    Invoke-Compose @('build', 'app', 'browser')
+    $buildServices = @('app')
+    if (-not $SkipBrowser -or $IncludeVisual) {
+        $buildServices += 'browser'
+    }
+    Invoke-Compose (@('build') + $buildServices)
 
     $started = $true
-    Invoke-Compose @('up', '-d', '--wait', 'db', 'app')
-
     Write-Host 'Executando qualidade PHP e JavaScript...'
     Invoke-Compose @('run', '--rm', '--no-deps', 'quality')
+
+    Invoke-Compose @('up', '-d', '--wait', 'db', 'app')
 
     Write-Host 'Executando integração HTTP, banco e recuperação...'
     Invoke-Compose @('run', '--rm', '--no-deps', 'integration')

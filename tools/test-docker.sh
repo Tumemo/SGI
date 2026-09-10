@@ -73,9 +73,14 @@ cleanup() {
 trap cleanup EXIT
 
 compose config --quiet
-compose build app browser
-compose up -d --wait db app
+build_services="app"
+if [ "$skip_browser" -eq 0 ] || [ "$include_visual" -eq 1 ]; then
+    build_services="$build_services browser"
+fi
+# shellcheck disable=SC2086
+compose build $build_services
 compose run --rm --no-deps quality
+compose up -d --wait db app
 compose run --rm --no-deps integration
 
 if [ "$skip_browser" -eq 0 ]; then

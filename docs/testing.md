@@ -44,6 +44,62 @@ O container usa referências Linux (`*-linux.png`) versionadas separadamente das
 referências Windows (`*-win32.png`), evitando que a plataforma do executor
 altere o resultado da comparação.
 
+## Execução local em um comando
+
+Para o desenvolvimento diário, use o executor local. Ele escolhe um PHP único,
+cria um nome exclusivo para a base, inicia o servidor HTTP, prepara sessões e
+uploads em `test-results/` e remove os processos criados ao terminar. A base
+principal é recriada pelo próprio runner antes dos cenários; não use uma base de
+trabalho.
+
+Depois de instalar as dependências uma vez (`composer install`, `npm ci` e
+`npm ci --prefix tests/browser`), execute:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File tools/test-local.ps1 -Suite all -DatabaseBackend local
+```
+
+Os perfis disponíveis são `quality`, `integration`, `browser`, `visual` e
+`all`. `quality` não inicia banco nem servidor. `browser` e `visual` preparam a
+integração uma vez antes do Playwright. Para usar apenas o banco em Docker e
+manter PHP/Node/Chromium no host:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File tools/test-local.ps1 -Suite all -DatabaseBackend docker
+```
+
+O backend local usa `SGI_TEST_DB_HOST`, `SGI_TEST_DB_PORT`, `SGI_TEST_DB_USER` e
+`SGI_TEST_DB_PASSWORD`; os parâmetros equivalentes do script têm precedência.
+Essas variáveis deixam explícito que a credencial pertence ao ambiente de
+teste, sem importar a configuração da base de trabalho. O
+backend Docker cria um container temporário com `tmpfs` e uma porta local livre.
+Ambos exigem os clientes `mysql`/`mysqldump` para o ensaio de recuperação; no
+Windows, os executáveis do XAMPP são encontrados automaticamente quando
+existem. Use `-Keep` apenas para investigar uma falha; o banco Docker e o
+servidor local serão mantidos.
+
+O executor usa um lock por checkout porque alguns cenários de recuperação
+criam bases auxiliares. Ele também passa um identificador de execução para que
+essas bases não colidam entre invocações diferentes.
+
+Para diagnosticar uma instalação, rode o perfil desejado: a validação falha
+antes de criar recursos quando PHP, `mysqli`, clientes SQL, Node ou dependências
+do navegador estão ausentes. Informe outro PHP com `-PhpPath` ou
+`SGI_PHP_PATH`. O PHP escolhido é colocado primeiro no `PATH`, portanto
+Composer, servidor e runner usam a mesma versão.
+
+Para medir o custo de um perfil em execuções repetidas, use o benchmark. Ele
+grava os tempos e códigos de saída em `test-results/` e calcula a mediana das
+execuções aprovadas:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File tools/benchmark-tests.ps1 -Suite quality -Runs 3
+```
+
+Repita com `-DatabaseBackend docker` ou outro perfil somente em uma máquina que
+já tenha as dependências correspondentes. Compare primeira execução e repetições
+com cache separadamente; o arquivo JSON preserva cada medição.
+
 ## Execução manual fora do Docker
 
 Para uma execução legada com ferramentas instaladas no host, use o servidor
