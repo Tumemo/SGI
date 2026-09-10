@@ -248,16 +248,18 @@ window.SGIPage.mount("eventos/configurar-agenda", function (pageConfig, pageScop
         const statusClass = (j.status_jogo || '').toLowerCase().replace('ã','a').replace('õ','o');
         const statusMap = { agendado: 'agendado', iniciado: 'andamento', pausado: 'pausado', concluido: 'concluido', finalizado: 'concluido' };
         const cardClass = statusMap[statusClass] || 'agendado';
+        const statusBadgeMap = { agendado: 'secondary', andamento: 'warning', pausado: 'warning', concluido: 'success' };
+        const statusBadge = statusBadgeMap[cardClass] || 'secondary';
         const statusTxt = labelStatus(j.status_jogo);
         const podeAjustar = NIVEL_USUARIO <= 1;
 
         const modalidadeTxt = [j.nome_modalidade, j.nome_categoria].filter(Boolean).join(' – ');
-        const localTxt = j.nome_local ? `<i class="bi bi-geo-alt"></i> ${escapeHtml(j.nome_local)}` : '';
+        const localTxt = j.nome_local ? `<i class="bi bi-geo-alt text-danger"></i> ${escapeHtml(j.nome_local)}` : '';
         const equipes = j.equipes_nomes ? String(j.equipes_nomes).split(' vs ') : [];
         const teamsHtml = equipes.length >= 2
-            ? `<div class="ag-event-card__teams"><span>${escapeHtml(equipes[0])}</span><span class="ag-vs">VS</span><span>${escapeHtml(equipes[1])}</span></div>`
+            ? `<div class="ag-event-card__teams bg-body-tertiary rounded p-2 d-flex align-items-center gap-2 flex-wrap mt-2 small fw-semibold text-body"><span>${escapeHtml(equipes[0])}</span><span class="ag-vs small fw-bold text-danger">VS</span><span>${escapeHtml(equipes[1])}</span></div>`
             : (equipes.length === 1
-                ? `<div class="ag-event-card__teams"><i class="bi bi-person-fill"></i> ${escapeHtml(equipes[0])}</div>`
+                ? `<div class="ag-event-card__teams bg-body-tertiary rounded p-2 d-flex align-items-center gap-2 flex-wrap mt-2 small fw-semibold text-body"><i class="bi bi-person-fill text-body-secondary"></i> ${escapeHtml(equipes[0])}</div>`
                 : '');
 
         const iniciarBtn = podeIniciar(j)
@@ -273,25 +275,25 @@ window.SGIPage.mount("eventos/configurar-agenda", function (pageConfig, pageScop
                 : '';
         const ajusteBtn =
             podeAjustar && j.status_jogo === 'Agendado'
-                ? `<button type="button" class="ag-icon-btn btn-ajuste-jogo" data-id-jogo="${j.id_jogo}" title="Ajustar data e local" aria-label="Ajustar data e local"><i class="bi bi-pencil"></i></button>`
+                ? `<button type="button" class="btn btn-sm btn-outline-secondary d-inline-flex align-items-center gap-1 ms-auto btn-ajuste-jogo" data-id-jogo="${j.id_jogo}" title="Ajustar data e local" aria-label="Ajustar data e local"><i class="bi bi-pencil"></i><span class="visually-hidden">Ajustar data e local</span></button>`
                 : '';
 
         return `
-            <div class="ag-event-card ag-event-card--${cardClass}">
-                <div class="ag-event-card__top">
-                    <div class="ag-event-card__chips">
-                        <span class="ag-meta-chip"><i class="bi bi-calendar3"></i> ${diaSem}, ${diaNum}/${mesCurto}</span>
-                        <span class="ag-meta-chip"><i class="bi bi-clock"></i> ${horario}</span>
+            <div class="ag-event-card ag-event-card--${cardClass} card border-0 shadow-sm p-3 position-relative overflow-hidden">
+                <div class="d-flex align-items-start justify-content-between gap-2 mb-2">
+                    <div class="d-flex gap-2 flex-wrap">
+                        <span class="badge text-bg-light border text-body-secondary d-inline-flex align-items-center gap-1 small"><i class="bi bi-calendar3 text-danger"></i> ${diaSem}, ${diaNum}/${mesCurto}</span>
+                        <span class="badge text-bg-light border text-body-secondary d-inline-flex align-items-center gap-1 small"><i class="bi bi-clock text-danger"></i> ${horario}</span>
                     </div>
-                    <span class="ag-status-chip ag-status-chip--${cardClass}">${escapeHtml(statusTxt)}</span>
+                    <span class="badge rounded-pill text-bg-${statusBadge} text-nowrap ag-status-chip">${escapeHtml(statusTxt)}</span>
                 </div>
-                <h3 class="ag-event-card__title">${escapeHtml(formatNomeJogo(j.nome_jogo, j))}</h3>
-                <p class="ag-event-card__subtitle">
-                    ${modalidadeTxt ? '<i class="bi bi-trophy-fill"></i> ' + escapeHtml(modalidadeTxt) : ''}
+                <h3 class="h6 fw-bold text-body mb-0">${escapeHtml(formatNomeJogo(j.nome_jogo, j))}</h3>
+                <p class="small text-body-secondary d-flex align-items-center gap-1 flex-wrap mt-1 mb-0">
+                    ${modalidadeTxt ? '<i class="bi bi-trophy-fill text-danger"></i> ' + escapeHtml(modalidadeTxt) : ''}
                     ${localTxt ? `<span class="text-body-tertiary">•</span> ${localTxt}` : ''}
                 </p>
                 ${teamsHtml}
-                <div class="ag-event-card__actions">
+                <div class="d-flex align-items-center gap-2 mt-3 flex-wrap">
                     ${iniciarBtn}${placarBtn}${verBtn}${ajusteBtn}
                 </div>
             </div>`;
@@ -313,12 +315,12 @@ window.SGIPage.mount("eventos/configurar-agenda", function (pageConfig, pageScop
         const modalidadeTxt = [j.nome_modalidade, j.nome_categoria].filter(Boolean).join(' – ');
         const equipes = j.equipes_nomes ? String(j.equipes_nomes).split(' vs ') : [];
         const equipesTxt = equipes.length ? escapeHtml(equipes.join(' VS ')) : 'Classificados ainda não definidos';
-        return `<div class="ag-event-card ag-event-card--agendado">
-            <div class="ag-event-card__top"><span class="ag-meta-chip"><i class="bi bi-calendar-x"></i> Data: A definir</span><span class="ag-status-chip ag-status-chip--agendado">Pendente</span></div>
-            <h3 class="ag-event-card__title">${escapeHtml(formatNomeJogo(j.nome_jogo, j))}</h3>
-            <p class="ag-event-card__subtitle">${modalidadeTxt ? escapeHtml(modalidadeTxt) + ' • ' : ''}${equipesTxt}</p>
+        return `<div class="ag-event-card ag-event-card--agendado card border-0 shadow-sm p-3 position-relative overflow-hidden">
+            <div class="d-flex align-items-start justify-content-between gap-2 mb-2"><span class="badge text-bg-light border text-body-secondary d-inline-flex align-items-center gap-1 small"><i class="bi bi-calendar-x text-danger"></i> Data: A definir</span><span class="badge rounded-pill text-bg-warning">Pendente</span></div>
+            <h3 class="h6 fw-bold text-body mb-0">${escapeHtml(formatNomeJogo(j.nome_jogo, j))}</h3>
+            <p class="small text-body-secondary mt-1 mb-0">${modalidadeTxt ? escapeHtml(modalidadeTxt) + ' • ' : ''}${equipesTxt}</p>
             <p class="small text-muted mb-2">Horário: ${j.inicio_jogo ? formatarHora(j.inicio_jogo) : 'A definir'} · Local: ${j.nome_local || 'A definir'}</p>
-            ${NIVEL_USUARIO <= 1 ? `<button type="button" class="ag-icon-btn btn-ajuste-jogo" data-id-jogo="${j.id_jogo}" title="Agendar jogo" aria-label="Agendar jogo"><i class="bi bi-pencil"></i> Definir agenda</button>` : ''}
+            ${NIVEL_USUARIO <= 1 ? `<button type="button" class="btn btn-sm btn-outline-secondary d-inline-flex align-items-center gap-1 align-self-start btn-ajuste-jogo" data-id-jogo="${j.id_jogo}" title="Agendar jogo" aria-label="Agendar jogo"><i class="bi bi-pencil"></i> Definir agenda</button>` : ''}
         </div>`;
     }
 
@@ -338,7 +340,7 @@ window.SGIPage.mount("eventos/configurar-agenda", function (pageConfig, pageScop
         if (pendingMob) pendingMob.innerHTML = pendentes.map(montarCardPendente).join('') || '<div class="small text-muted">Nenhum jogo pendente.</div>';
 
         if (!interclasseAtual) {
-            const msg = '<div class="ag-empty"><i class="bi bi-calendar-x"></i><p>Nenhum interclasse selecionado ou ativo.</p></div>';
+            const msg = '<div class="text-center text-body-secondary py-5"><i class="bi bi-calendar-x display-5 d-block mb-3 text-body-tertiary"></i><p class="mb-0 small">Nenhum interclasse selecionado ou ativo.</p></div>';
             containerDesk.innerHTML = msg;
             containerMob.innerHTML = msg;
             if (badge) badge.classList.add('d-none');
@@ -364,8 +366,8 @@ window.SGIPage.mount("eventos/configurar-agenda", function (pageConfig, pageScop
 
         if (lista.length === 0) {
             const msg = filtroData
-                ? '<div class="ag-empty"><i class="bi bi-calendar-x"></i><p>Nenhum jogo nesta data.</p></div>'
-                : '<div class="ag-empty"><i class="bi bi-calendar-x"></i><p>Nenhum jogo neste mês.</p></div>';
+                ? '<div class="text-center text-body-secondary py-5"><i class="bi bi-calendar-x display-5 d-block mb-3 text-body-tertiary"></i><p class="mb-0 small">Nenhum jogo nesta data.</p></div>'
+                : '<div class="text-center text-body-secondary py-5"><i class="bi bi-calendar-x display-5 d-block mb-3 text-body-tertiary"></i><p class="mb-0 small">Nenhum jogo neste mês.</p></div>';
             containerDesk.innerHTML = msg;
             containerMob.innerHTML = msg;
             const mostrarTodos = document.getElementById('container-mostrar-todos');

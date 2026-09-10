@@ -311,23 +311,15 @@ window.SGIPage.mount("competicoes/placar", function (pageConfig, pageScope) {
 
         var container = document.createElement('div');
         container.id = 'mc-overtime-actions';
-        container.className = 'mc-actions';
-        container.style.marginTop = '1rem';
-        container.style.display = 'flex';
-        container.style.alignItems = 'center';
-        container.style.gap = '.5rem';
-        container.style.flexWrap = 'wrap';
+        container.className = 'd-flex align-items-center gap-2 flex-wrap mt-3';
 
         var label = document.createElement('span');
         label.className = 'fw-bold text-danger';
-        label.style.fontSize = '.9rem';
         label.innerHTML = '<i class="bi bi-stopwatch me-1"></i>Tempo esgotado — Acréscimos:';
         container.appendChild(label);
 
         var inputGroup = document.createElement('div');
-        inputGroup.style.display = 'flex';
-        inputGroup.style.alignItems = 'center';
-        inputGroup.style.gap = '.35rem';
+        inputGroup.className = 'd-flex align-items-center gap-2';
 
         var input = document.createElement('input');
         input.type = 'number';
@@ -335,28 +327,20 @@ window.SGIPage.mount("competicoes/placar", function (pageConfig, pageScope) {
         input.min = '1';
         input.max = '30';
         input.placeholder = 'min';
-        input.style.width = '60px';
-        input.style.padding = '.4rem .5rem';
-        input.style.borderRadius = '8px';
-        input.style.border = '1.5px solid #e5e7eb';
-        input.style.fontSize = '.85rem';
-        input.style.textAlign = 'center';
+        input.className = 'form-control form-control-sm text-center w-auto';
         pageScope.listen(input, 'keydown', function(e) {
             if (e.key === 'Enter') { btn.click(); }
         });
         inputGroup.appendChild(input);
 
         var minLabel = document.createElement('span');
-        minLabel.style.fontSize = '.8rem';
-        minLabel.style.color = '#6b7280';
+        minLabel.className = 'small text-body-secondary';
         minLabel.textContent = 'min';
         inputGroup.appendChild(minLabel);
 
         var btn = document.createElement('button');
         btn.type = 'button';
-        btn.className = 'mc-action-btn mc-action-btn--start btn btn-primary d-inline-flex align-items-center gap-2';
-        btn.style.fontSize = '.8rem';
-        btn.style.padding = '.5rem 1rem';
+        btn.className = 'mc-action-btn mc-action-btn--start btn btn-primary btn-sm d-inline-flex align-items-center gap-2';
         btn.innerHTML = '<i class="bi bi-plus-circle me-1"></i>Adicionar';
         pageScope.listen(btn, 'click', function() {
             var val = parseInt(input.value, 10);
@@ -928,13 +912,12 @@ window.SGIPage.mount("competicoes/placar", function (pageConfig, pageScope) {
 
         var st = estadoJogo.status_jogo;
         if (statusEl) {
-            var badgeClass = 'mc-badge--scheduled';
+            var badgeClass = 'text-bg-warning';
             var badgeLabel = 'Agendado';
-            var dotPulse = '';
-            if (st === 'Iniciado') { badgeClass = 'mc-badge--live'; badgeLabel = 'Em andamento'; dotPulse = ' mc-badge-dot--pulse'; }
-            else if (st === 'Pausado') { badgeClass = 'mc-badge--paused'; badgeLabel = 'Pausado'; }
-            else if (st === 'Concluido' || st === 'Finalizado') { badgeClass = 'mc-badge--finished'; badgeLabel = 'Encerrado'; }
-            statusEl.innerHTML = '<span class="mc-badge ' + badgeClass + '"><span class="mc-badge-dot' + dotPulse + '"></span>' + badgeLabel + '</span>';
+            if (st === 'Iniciado') { badgeClass = 'text-bg-success'; badgeLabel = 'Em andamento'; }
+            else if (st === 'Pausado') { badgeClass = 'text-bg-info'; badgeLabel = 'Pausado'; }
+            else if (st === 'Concluido' || st === 'Finalizado') { badgeClass = 'text-bg-secondary'; badgeLabel = 'Encerrado'; }
+            statusEl.innerHTML = '<span class="badge rounded-pill ' + badgeClass + '">' + badgeLabel + '</span>';
         }
 
         acoes.innerHTML = '';
@@ -974,7 +957,7 @@ window.SGIPage.mount("competicoes/placar", function (pageConfig, pageScope) {
 
 
         if (partidasLista.length === 0) {
-            grid.innerHTML = '<div class="mc-empty"><i class="bi bi-inbox fs-2 d-block mb-2 text-body-tertiary" ></i>Não há equipes vinculadas a este jogo. Cadastre as partidas no sistema.</div>';
+            grid.innerHTML = '<div class="text-center py-5 text-body-secondary"><i class="bi bi-inbox fs-2 d-block mb-2 text-body-tertiary"></i>Não há equipes vinculadas a este jogo. Cadastre as partidas no sistema.</div>';
             return;
         }
 
@@ -1014,11 +997,11 @@ window.SGIPage.mount("competicoes/placar", function (pageConfig, pageScope) {
                     && Number(ponto.conta_no_placar == null ? 1 : ponto.conta_no_placar) === 1;
             });
             var btnMinus = readonly || !possuiPontoAtivo
-                ? '<button type="button" class="btn-score btn-score-minus" disabled><i class="bi bi-dash-lg"></i></button>'
-                : '<button type="button" class="btn-score btn-score-minus" data-idx="' + idx + '"><i class="bi bi-dash-lg"></i></button>';
+                ? '<button type="button" class="btn btn-outline-secondary btn-score btn-score-minus" disabled><i class="bi bi-dash-lg"></i></button>'
+                : '<button type="button" class="btn btn-outline-secondary btn-score btn-score-minus" data-idx="' + idx + '"><i class="bi bi-dash-lg"></i></button>';
             var btnPlus = readonly
-                ? '<button type="button" class="btn-score btn-score-plus" disabled><i class="bi bi-plus-lg"></i></button>'
-                : '<button type="button" class="btn-score btn-score-plus" data-idx="' + idx + '"><i class="bi bi-plus-lg"></i></button>';
+                ? '<button type="button" class="btn btn-primary btn-score btn-score-plus" disabled><i class="bi bi-plus-lg"></i></button>'
+                : '<button type="button" class="btn btn-primary btn-score btn-score-plus" data-idx="' + idx + '"><i class="bi bi-plus-lg"></i></button>';
 
             html += '<div class="mc-team" data-partida-idx="' + idx + '">';
             html += '<h3 class="mc-team-name">' + esc(nomeEquipe(p)) + '</h3>';
@@ -1525,7 +1508,7 @@ window.SGIPage.mount("competicoes/placar", function (pageConfig, pageScope) {
             var countEl = document.getElementById('mc-occ-count');
             if (countEl) countEl.textContent = lista.length;
             if (!lista.length) {
-                container.innerHTML = '<div class="mc-timeline-empty"><i class="bi bi-clock-history"></i><p>Nenhuma ocorrência registrada.</p></div>';
+                container.innerHTML = '<div class="text-center py-5 text-body-secondary"><i class="bi bi-clock-history fs-2 d-block mb-2 text-body-tertiary"></i><p class="mb-0">Nenhuma ocorrência registrada.</p></div>';
                 return;
             }
             container.innerHTML = lista.map(function(o, i) {
@@ -1571,7 +1554,7 @@ window.SGIPage.mount("competicoes/placar", function (pageConfig, pageScope) {
             }).join('');
         } catch (e) {
             if (placarContinuaAtivo(cicloLocal) && container && container.isConnected) {
-                container.innerHTML = '<div class="mc-timeline-empty mc-timeline-empty--error"><i class="bi bi-exclamation-circle"></i><p>Erro ao carregar ocorrências.</p></div>';
+                container.innerHTML = '<div class="alert alert-danger mb-0" role="alert"><i class="bi bi-exclamation-circle me-2"></i>Erro ao carregar ocorrências.</div>';
             }
         }
     }
@@ -1816,7 +1799,7 @@ window.SGIPage.mount("competicoes/placar", function (pageConfig, pageScope) {
             var data = await fetchJson(API + 'artilheiros?id_jogo=' + idJogo);
             if (!placarContinuaAtivo(cicloLocal) || !cards.isConnected || document.getElementById('artilheiro-cards') !== cards) return;
             if (!Array.isArray(data) || data.length === 0) {
-                cards.innerHTML = '<div class="mc-artilheiro-empty"><i class="bi bi-trophy"></i><p>Nenhuma ação registrada ainda.</p></div>';
+                cards.innerHTML = '<div class="col-12 text-center py-4 text-body-secondary"><i class="bi bi-trophy fs-2 d-block mb-2 text-body-tertiary"></i><p class="mb-0">Nenhuma ação registrada ainda.</p></div>';
                 return;
             }
             var html = '';
@@ -1829,19 +1812,20 @@ window.SGIPage.mount("competicoes/placar", function (pageConfig, pageScope) {
                 var icon = gols >= 3 ? 'bi-star-fill text-warning' : gols >= 2 ? 'bi-fire text-danger' : gols > 0 ? 'bi-circle-fill text-success' : 'bi-dash-circle text-secondary';
                 var resumo = acoes + ' ação' + (acoes !== 1 ? 'ões' : '');
                 if (anulados > 0) resumo += ' · ' + anulados + ' anulada' + (anulados !== 1 ? 's' : '');
-                html += '<div class="mc-artilheiro-card">' +
-                    '<div class="mc-artilheiro-card-icon"><i class="bi ' + icon + '"></i></div>' +
-                    '<div class="mc-artilheiro-card-info">' +
-                    '<div class="mc-artilheiro-card-nome">' + nome + '</div>' +
-                    '<div class="mc-artilheiro-card-turma">' + turma + ' · ' + esc(resumo) + '</div>' +
+                html += '<div class="col"><article class="card h-100 border-0 shadow-sm p-3">' +
+                    '<div class="d-flex align-items-center gap-3">' +
+                    '<span class="fs-4 flex-shrink-0"><i class="bi ' + icon + '"></i></span>' +
+                    '<div class="flex-grow-1 overflow-hidden">' +
+                    '<div class="fw-bold text-truncate">' + nome + '</div>' +
+                    '<div class="small text-body-secondary text-truncate">' + turma + ' · ' + esc(resumo) + '</div>' +
                     '</div>' +
-                    '<div class="mc-artilheiro-card-gols">' + gols + ' gol' + (gols > 1 ? 's' : '') + '</div>' +
-                    '</div>';
+                    '<span class="badge rounded-pill text-bg-light border text-body-secondary text-nowrap">' + gols + ' gol' + (gols > 1 ? 's' : '') + '</span>' +
+                    '</div></article></div>';
             });
             cards.innerHTML = html;
         } catch (e) {
             if (placarContinuaAtivo(cicloLocal) && cards && cards.isConnected) {
-                cards.innerHTML = '<div class="mc-artilheiro-empty"><i class="bi bi-exclamation-circle"></i><p>Erro ao carregar artilharia.</p></div>';
+                cards.innerHTML = '<div class="col-12"><div class="alert alert-danger mb-0" role="alert"><i class="bi bi-exclamation-circle me-2"></i>Erro ao carregar artilharia.</div></div>';
             }
         }
     }

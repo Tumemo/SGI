@@ -332,20 +332,35 @@ test('arrecadacao and ocorrencias lists use Bootstrap grids and badges', () => {
 test('competition list and bracket modal use native status and action variants', () => {
     const games = fs.readFileSync(path.join(root, 'resources', 'js', 'pages', 'competicoes', 'jogos.js'), 'utf8');
     const bracket = fs.readFileSync(path.join(root, 'resources', 'views', 'pages', 'competicoes', 'chaveamento.php'), 'utf8');
+    const bracketJs = fs.readFileSync(path.join(root, 'resources', 'js', 'pages', 'competicoes', 'chaveamento.js'), 'utf8');
     const css = fs.readFileSync(path.join(root, 'resources', 'css', 'source', 'admin.css'), 'utf8');
-    assert.match(games, /badge rounded-pill \$\{statusClass\}/);
+    assert.match(games, /badge rounded-pill text-bg-\$\{statusClass\}/);
+    assert.match(games, /card border-0 shadow-sm p-3 h-100/);
+    assert.match(games, /text-decoration-none text-body/);
     assert.match(bracket, /btn btn-primary/);
     assert.match(bracket, /btn btn-outline-secondary/);
+    assert.match(bracketJs, /badge rounded-pill text-bg-\$\{statusVariant\}/);
+    assert.match(bracketJs, /btn btn-sm btn-outline-success/);
+    assert.doesNotMatch(games, /\bjogo-card\b/);
+    assert.doesNotMatch(css, /\.jogo-card\b/);
+    assert.doesNotMatch(bracket + bracketJs + games + css, /\b(?:kv-badge|kv-action|game-action-btn)\b/);
+    assert.doesNotMatch(bracket + bracketJs + css, /\b(?:kv-table-card|kv-filters|kv-filter-(?:input|select)|kv-gen-card|kv-empty|kv-loading|kv-alert|kv-link-btn|kv-history-card|kv-modal)\b/);
     assert.doesNotMatch(css, /\.status-badge\s*\{|\.kv-modal \.btn-save\s*\{/);
 });
 
 test('score controls keep behavior hooks while using native Bootstrap controls', () => {
     const placar = fs.readFileSync(path.join(root, 'resources', 'js', 'pages', 'competicoes', 'placar.js'), 'utf8');
+    const placarView = fs.readFileSync(path.join(root, 'resources', 'views', 'pages', 'competicoes', 'placar.php'), 'utf8');
     const adminCss = fs.readFileSync(path.join(root, 'resources', 'css', 'source', 'admin.css'), 'utf8');
     assert.match(placar, /mc-action-btn--start btn btn-primary/);
     assert.match(placar, /mc-action-btn--finish btn btn-outline-danger/);
     assert.match(placar, /mc-duration-select form-select form-select-sm w-auto/);
     assert.match(placar, /mc-pause-btn btn btn-outline-secondary btn-sm/);
+    assert.match(placar, /badge rounded-pill ' \+ badgeClass/);
+    assert.match(placar, /btn btn-outline-secondary btn-score btn-score-minus/);
+    assert.match(placarView, /container-xxl py-4 px-3 px-md-4/);
+    assert.match(placarView, /row row-cols-1 row-cols-md-2 row-cols-xl-3 g-3/);
+    assert.doesNotMatch(placar + placarView + adminCss, /\b(?:mc-page|mc-header|mc-match-title|mc-match-meta|mc-badge|mc-actions|mc-stat-chip|mc-section-header|mc-section-title|mc-timeline-empty|mc-artilheiro-card|mc-artilheiro-empty|mc-error|mc-loading|mc-empty|mc-modal|mc-tipo-grid)\b/);
     assert.doesNotMatch(adminCss, /\.mc-action-btn\s*\{|\.mc-action-btn--start\s*\{|\.mc-action-btn--finish\s*\{|\.mc-duration-select\s*\{|\.mc-pause-btn\s*\{/);
 });
 
@@ -371,4 +386,37 @@ test('points configuration uses Bootstrap controls and feedback', () => {
     assert.match(js, /ptc-step-input, \.ptc-step-btn/);
     assert.doesNotMatch(view, /ptc-(?:container|header|title|actions|btn-(?:interclasse|salvar|default|continuar)|rank-badge|card(?:$|[^-])|card-head|card-icon|card-title|card-sub|card-value|card-label|card-foot|note|unsaved)\b/);
     assert.doesNotMatch(css, /--ptc-|\.ptc-(?:container|header|title|actions|btn-|card(?:$|[^-])|rank-badge|card-head|card-icon|card-title|card-sub|card-value|card-label|card-foot|note|unsaved)\b/);
+});
+
+test('agenda uses Bootstrap controls while keeping calendar domain geometry', () => {
+    const view = fs.readFileSync(path.join(root, 'resources', 'views', 'pages', 'eventos', 'configurar-agenda.php'), 'utf8');
+    const js = fs.readFileSync(path.join(root, 'resources', 'js', 'pages', 'eventos', 'configurar-agenda.js'), 'utf8');
+    const css = fs.readFileSync(path.join(root, 'resources', 'css', 'source', 'admin.css'), 'utf8');
+    assert.match(view, /input-group input-group-sm/);
+    assert.match(view, /form-select form-select-sm/);
+    assert.match(view, /row g-4 align-items-start/);
+    assert.match(view, /card overflow-hidden/);
+    assert.match(js, /card border-0 shadow-sm p-3 position-relative overflow-hidden/);
+    assert.match(js, /badge rounded-pill text-bg-\$\{statusBadge\}/);
+    assert.match(js, /ag-status-chip/);
+    assert.doesNotMatch(view + js + css, /ag-(?:filter-bar|search|btn-auto|btn-interclasse|badge-count|cal-nav|meta-chip|icon-btn|show-all|gcal|modal)\b/);
+    assert.doesNotMatch(css, /\.ag-event-card\s*\{|\.ag-event-card__|\.ag-cal-card\s*\{|\.ag-cal-header\s*\{|\.ag-cal-body\s*\{/);
+    assert.match(css, /\.ag-cal-day\b/);
+    assert.match(css, /\.ag-event-card::before/);
+});
+
+test('locations and regulations use native cards, actions and borders', () => {
+    const locations = fs.readFileSync(path.join(root, 'resources', 'views', 'pages', 'eventos', 'configurar-locais.php'), 'utf8');
+    const locationsJs = fs.readFileSync(path.join(root, 'resources', 'js', 'pages', 'eventos', 'configurar-locais.js'), 'utf8');
+    const studentTerms = fs.readFileSync(path.join(root, 'resources', 'views', 'pages', 'aluno', 'termos.php'), 'utf8');
+    const adminCss = fs.readFileSync(path.join(root, 'resources', 'css', 'source', 'admin.css'), 'utf8');
+    const studentCss = fs.readFileSync(path.join(root, 'resources', 'css', 'source', 'aluno-home.css'), 'utf8');
+    assert.match(locationsJs, /card border-0 shadow-sm p-4 h-100 d-flex flex-column/);
+    assert.match(locationsJs, /btn btn-sm btn-outline-secondary/);
+    assert.match(locationsJs, /btn btn-sm btn-outline-danger/);
+    assert.match(locations, /card border rounded-3 p-3/);
+    assert.match(studentTerms, /border-start border-4 border-danger ps-3 mb-3/);
+    assert.doesNotMatch(locations + locationsJs + studentTerms + adminCss + studentCss, /(?:local-card|termo-clausula|regulamento-card)\b/);
+    assert.doesNotMatch(adminCss, /\.local-card\b|\.termo-clausula\b/);
+    assert.doesNotMatch(studentCss, /\.regulamento-card\b|\.termo-clausula\b/);
 });

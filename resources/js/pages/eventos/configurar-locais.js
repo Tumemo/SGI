@@ -113,7 +113,7 @@ window.SGIPage.mount("eventos/configurar-locais", function (pageConfig, pageScop
         const carga = loc.carga_local != null && loc.carga_local !== '' ? `Capacidade: ${esc(loc.carga_local)}` : 'Capacidade não informada';
         return `
             <div class="col-12 col-md-6">
-                <div class="local-card bg-white border-0 shadow-sm p-4 h-100 d-flex flex-column">
+                <div class="card border-0 shadow-sm p-4 h-100 d-flex flex-column">
                     <div class="d-flex justify-content-between align-items-start gap-2 mb-2">
                         <h5 class="fw-bold text-dark mb-0 text-truncate" title="${esc(loc.nome_local)}">${esc(loc.nome_local)}</h5>
                         <span class="badge rounded-pill border ${isDisponivel ? 'text-success border-success' : 'text-secondary border-secondary'}">${disp}</span>
@@ -121,7 +121,7 @@ window.SGIPage.mount("eventos/configurar-locais", function (pageConfig, pageScop
                     <p class="text-muted small mb-3 mt-auto">${carga}</p>
                     <div class="d-flex justify-content-end gap-2">
                         <button type="button" 
-                                class="ta-action ta-action--edit" 
+                                class="btn btn-sm btn-outline-secondary d-inline-flex align-items-center justify-content-center"
                                 title="Editar local"
                                 data-bs-toggle="modal" 
                                 data-bs-target="#modalEditarLocal"
@@ -132,7 +132,7 @@ window.SGIPage.mount("eventos/configurar-locais", function (pageConfig, pageScop
                             <i class="bi bi-pencil"></i>
                         </button>
                         <button type="button" 
-                                class="ta-action ta-action--delete" 
+                                class="btn btn-sm btn-outline-danger d-inline-flex align-items-center justify-content-center"
                                 title="Excluir local"
                                 onclick='excluirLocal(${loc.id_local}, "${esc(loc.nome_local)}")'>
                             <i class="bi bi-trash"></i>

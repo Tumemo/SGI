@@ -10,11 +10,11 @@ $nivelUsuarioAgenda = (int)($_SESSION['nivel'] ?? -1);
 
 <!-- ═══ MOBILE ═══ -->
 <main class="d-md-none ag-mobile p-3">
-    <div class="ag-cal-card">
-        <div class="ag-cal-header">
-            <button type="button" id="btn-prev-mobile" class="ag-cal-nav"><i class="bi bi-chevron-left"></i></button>
+    <div class="card overflow-hidden">
+        <div class="bg-dark text-white d-flex align-items-center justify-content-between p-3">
+            <button type="button" id="btn-prev-mobile" class="btn btn-sm btn-link link-light p-1" aria-label="Mês anterior"><i class="bi bi-chevron-left"></i></button>
             <div class="d-flex gap-2 align-items-center">
-                <select id="select-mes" class="form-select form-select-sm border-0 text-white text-center w-auto small fw-bold" >
+                <select id="select-mes" class="form-select form-select-sm border-0 bg-transparent text-white text-center w-auto small fw-bold" >
                     <option value="0">Jan</option>
                     <option value="1">Fev</option>
                     <option value="2">Mar</option>
@@ -28,33 +28,33 @@ $nivelUsuarioAgenda = (int)($_SESSION['nivel'] ?? -1);
                     <option value="10">Nov</option>
                     <option value="11">Dez</option>
                 </select>
-                <select id="select-ano" class="form-select form-select-sm border-0 text-white text-center w-auto small fw-bold" >
+                <select id="select-ano" class="form-select form-select-sm border-0 bg-transparent text-white text-center w-auto small fw-bold" >
                 </select>
             </div>
-            <button type="button" id="btn-next-mobile" class="ag-cal-nav"><i class="bi bi-chevron-right"></i></button>
+            <button type="button" id="btn-next-mobile" class="btn btn-sm btn-link link-light p-1" aria-label="Próximo mês"><i class="bi bi-chevron-right"></i></button>
         </div>
-        <div class="ag-cal-body">
-            <div class="ag-cal-weekdays">
-                <span>D</span><span>S</span><span>T</span><span>Q</span><span>Q</span><span>S</span><span>S</span>
+        <div class="p-3">
+            <div class="d-flex text-center mb-1">
+                <span class="flex-fill small fw-bold text-body-secondary text-uppercase py-1">D</span><span class="flex-fill small fw-bold text-body-secondary text-uppercase py-1">S</span><span class="flex-fill small fw-bold text-body-secondary text-uppercase py-1">T</span><span class="flex-fill small fw-bold text-body-secondary text-uppercase py-1">Q</span><span class="flex-fill small fw-bold text-body-secondary text-uppercase py-1">Q</span><span class="flex-fill small fw-bold text-body-secondary text-uppercase py-1">S</span><span class="flex-fill small fw-bold text-body-secondary text-uppercase py-1">S</span>
             </div>
-            <div id="calendario-grade-mobile" class="ag-cal-grid"></div>
+            <div id="calendario-grade-mobile" class="ag-cal-grid d-flex flex-wrap text-center"></div>
         </div>
     </div>
 
-    <div class="ag-filter-bar justify-content-center">
-        <div class="ag-search mw-100" >
-            <i class="bi bi-search"></i>
-            <input type="text" id="agenda-busca-mobile" placeholder="Buscar time ou modalidade...">
+    <div class="d-flex flex-wrap align-items-center justify-content-center gap-2 mb-4">
+        <div class="input-group input-group-sm w-100" >
+            <span class="input-group-text"><i class="bi bi-search" aria-hidden="true"></i></span>
+            <input type="text" class="form-control" id="agenda-busca-mobile" placeholder="Buscar time ou modalidade...">
         </div>
-        <select id="agenda-select-mod-mobile" class="form-select form-select-sm mw-100" ></select>
-        <select id="agenda-select-status-mobile" class="form-select form-select-sm mw-100" >
+        <select id="agenda-select-mod-mobile" class="form-select form-select-sm w-100" ></select>
+        <select id="agenda-select-status-mobile" class="form-select form-select-sm w-100" >
             <option value="">Todos os status</option>
             <option value="Concluido">Concluídos</option>
             <option value="andamento">Em andamento</option>
             <option value="Agendado">Agendados</option>
         </select>
         <?php if ($nivelUsuarioAgenda <= 1): ?>
-            <button type="button" class="ag-btn-auto w-100 justify-content-center mt-1 btn-trigger-datas-auto">
+            <button type="button" class="btn btn-dark btn-sm w-100 d-inline-flex align-items-center justify-content-center gap-2 mt-1 btn-trigger-datas-auto">
                 <i class="bi bi-calendar2-plus"></i> Agendar automaticamente
             </button>
         <?php endif; ?>
@@ -62,15 +62,15 @@ $nivelUsuarioAgenda = (int)($_SESSION['nivel'] ?? -1);
 
     <div class="mb-3">
         <h3 class="h6 text-danger"><i class="bi bi-exclamation-circle me-1"></i>Aguardando agendamento</h3>
-        <div id="lista-pendentes-mobile" class="ag-event-list"></div>
+        <div id="lista-pendentes-mobile" class="vstack gap-3"></div>
     </div>
-    <div id="lista-eventos-mobile" class="ag-event-list"></div>
-    <div class="ag-show-all d-none" id="container-mostrar-todos-mobile" >
+    <div id="lista-eventos-mobile" class="vstack gap-3"></div>
+    <div class="d-flex justify-content-center mt-3 d-none" id="container-mostrar-todos-mobile" >
         <button type="button" class="btn btn-outline-secondary" id="btn-mostrar-todos-mobile">
             <i class="bi bi-calendar3 me-1"></i>Mostrar Todos os Jogos
         </button>
     </div>
-    <div class="ag-gcal">
+    <div class="d-flex justify-content-center mt-4">
         <a href="https://calendar.google.com" target="_blank" rel="noopener noreferrer" class="btn btn-outline-danger btn-sm">
             <i class="bi bi-box-arrow-up-right me-1"></i>Abrir no Google Calendar
         </a>
@@ -78,67 +78,67 @@ $nivelUsuarioAgenda = (int)($_SESSION['nivel'] ?? -1);
 </main>
 
 <!-- ═══ DESKTOP ═══ -->
-<main class="d-none d-md-block main-desktop-layout ag-page">
-    <div class="ag-desktop-layout">
+<main class="d-none d-md-block main-desktop-layout pb-5">
+    <div>
 
-        <div class="ag-header-row">
-            <a href="<?= \App\Shared\Http\Url::to('painel') ?>" id="btnVoltarAgendaDesk" class="ag-btn-interclasse">
+        <div class="d-flex align-items-center gap-3 flex-wrap mb-4">
+            <a href="<?= \App\Shared\Http\Url::to('painel') ?>" id="btnVoltarAgendaDesk" class="btn btn-primary d-inline-flex align-items-center gap-2 fw-bold px-3 py-2 text-decoration-none">
                 <i class="bi bi-arrow-left-circle fs-5"></i> <span id="nomeInterclasseAgenda">Interclasse</span>
             </a>
-            <div class="ag-header__text">
-                <h2><i class="bi bi-calendar3"></i> Agenda de Jogos</h2>
-                <p>Calendário de confrontos e partidas do Interclasse</p>
+            <div class="flex-grow-1">
+                <h2 class="h4 fw-bold text-body mb-0 d-flex align-items-center gap-2"><i class="bi bi-calendar3 text-danger"></i> Agenda de Jogos</h2>
+                <p class="small text-body-secondary mt-1 mb-0">Calendário de confrontos e partidas do Interclasse</p>
             </div>
-            <span class="ag-badge-count d-none" id="agenda-count-badge" >
+            <span class="badge rounded-pill text-bg-danger d-inline-flex align-items-center gap-2 ms-auto d-none" id="agenda-count-badge" >
                 <i class="bi bi-fire"></i> <span id="agenda-count-text">0 jogos</span>
             </span>
         </div>
 
-        <div class="ag-filter-bar">
-            <div class="ag-search">
-                <i class="bi bi-search"></i>
-                <input type="text" id="agenda-busca" placeholder="Buscar time ou modalidade...">
+        <div class="d-flex gap-2 align-items-center flex-wrap mb-4">
+            <div class="input-group input-group-sm flex-grow-1">
+                <span class="input-group-text"><i class="bi bi-search" aria-hidden="true"></i></span>
+                <input type="text" class="form-control" id="agenda-busca" placeholder="Buscar time ou modalidade...">
             </div>
-            <select id="agenda-select-mod" class="w-auto"></select>
-            <select id="agenda-select-status">
+            <select id="agenda-select-mod" class="form-select form-select-sm w-auto"></select>
+            <select id="agenda-select-status" class="form-select form-select-sm w-auto">
                 <option value="">Todos os status</option>
                 <option value="Concluido">Concluídos</option>
                 <option value="andamento">Em andamento</option>
                 <option value="Agendado">Agendados</option>
             </select>
             <?php if ($nivelUsuarioAgenda <= 1): ?>
-                <button type="button" class="ag-btn-auto ms-auto btn-trigger-datas-auto">
+                <button type="button" class="btn btn-dark btn-sm d-inline-flex align-items-center gap-2 ms-auto btn-trigger-datas-auto">
                     <i class="bi bi-calendar2-plus"></i> Agendar automaticamente
                 </button>
             <?php endif; ?>
         </div>
 
-        <div class="ag-desktop-grid">
-            <div>
+        <div class="row g-4 align-items-start">
+            <div class="col-12 col-xl-8">
                 <div class="mb-3">
                     <h3 class="h6 text-danger"><i class="bi bi-exclamation-circle me-1"></i>Aguardando agendamento</h3>
-                    <div id="lista-pendentes" class="ag-event-list"></div>
+                    <div id="lista-pendentes" class="vstack gap-3"></div>
                 </div>
-                <div id="lista-eventos" class="ag-event-list"></div>
-                <div class="ag-show-all d-none" id="container-mostrar-todos" >
+                <div id="lista-eventos" class="vstack gap-3"></div>
+                <div class="d-flex justify-content-center mt-3 d-none" id="container-mostrar-todos" >
                     <button type="button" class="btn btn-outline-secondary" id="btn-mostrar-todos">
                         <i class="bi bi-calendar3 me-1"></i>Mostrar Todos os Jogos
                     </button>
                 </div>
             </div>
 
-            <div class="ag-cal-sticky">
-                <div class="ag-cal-card">
-                    <div class="ag-cal-header">
-                        <button type="button" id="btn-prev" class="ag-cal-nav"><i class="bi bi-chevron-left"></i></button>
-                        <span id="calendario-mes"></span>
-                        <button type="button" id="btn-next" class="ag-cal-nav"><i class="bi bi-chevron-right"></i></button>
+            <div class="col-12 col-xl-4 ag-cal-sticky">
+                <div class="card overflow-hidden">
+                    <div class="bg-dark text-white d-flex align-items-center justify-content-between p-3">
+                        <button type="button" id="btn-prev" class="btn btn-sm btn-link link-light p-1" aria-label="Mês anterior"><i class="bi bi-chevron-left"></i></button>
+                        <span id="calendario-mes" class="small fw-bold text-uppercase"></span>
+                        <button type="button" id="btn-next" class="btn btn-sm btn-link link-light p-1" aria-label="Próximo mês"><i class="bi bi-chevron-right"></i></button>
                     </div>
-                    <div class="ag-cal-body">
-                        <div class="ag-cal-weekdays">
-                            <span>D</span><span>S</span><span>T</span><span>Q</span><span>Q</span><span>S</span><span>S</span>
+                    <div class="p-3">
+                        <div class="d-flex text-center mb-1">
+                            <span class="flex-fill small fw-bold text-body-secondary text-uppercase py-1">D</span><span class="flex-fill small fw-bold text-body-secondary text-uppercase py-1">S</span><span class="flex-fill small fw-bold text-body-secondary text-uppercase py-1">T</span><span class="flex-fill small fw-bold text-body-secondary text-uppercase py-1">Q</span><span class="flex-fill small fw-bold text-body-secondary text-uppercase py-1">Q</span><span class="flex-fill small fw-bold text-body-secondary text-uppercase py-1">S</span><span class="flex-fill small fw-bold text-body-secondary text-uppercase py-1">S</span>
                         </div>
-                        <div id="calendario-grade" class="ag-cal-grid"></div>
+                        <div id="calendario-grade" class="ag-cal-grid d-flex flex-wrap text-center"></div>
                     </div>
                 </div>
             </div>
@@ -147,7 +147,7 @@ $nivelUsuarioAgenda = (int)($_SESSION['nivel'] ?? -1);
 </main>
 
 <!-- ═══ MODAL EDITAR JOGO INDIVIDUAL ═══ -->
-<div class="modal fade ag-modal" id="modalEditarJogoAgenda" tabindex="-1" aria-hidden="true">
+<div class="modal fade" id="modalEditarJogoAgenda" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">
@@ -184,7 +184,7 @@ $nivelUsuarioAgenda = (int)($_SESSION['nivel'] ?? -1);
 </div>
 
 <!-- ═══ MODAL DATAS AUTOMÁTICAS (LOTE) ═══ -->
-<div class="modal fade ag-modal" id="modalDatasAutomaticas" tabindex="-1" aria-hidden="true">
+<div class="modal fade" id="modalDatasAutomaticas" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">

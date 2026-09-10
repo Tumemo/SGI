@@ -27,25 +27,25 @@ window.SGIPage.mount("competicoes/jogos", function (pageConfig, pageScope) {
             const container = document.getElementById('listaJogos');
 
             if (lista.length === 0) {
-                container.innerHTML = '<div class="col-12 text-center text-muted py-5"><i class="bi bi-calendar-x fs-1 d-block mb-2"></i>Nenhum jogo encontrado para este interclasse.</div>';
+                container.innerHTML = '<div class="col-12 text-center text-body-secondary py-5"><i class="bi bi-calendar-x display-5 d-block mb-3 text-body-tertiary"></i>Nenhum jogo encontrado para este interclasse.</div>';
                 return;
             }
 
             container.innerHTML = lista.map(j => {
                 const status = j.status_jogo || 'Agendado';
-                const statusClass = status === 'Concluido' ? 'bg-success text-white' :
-                                    status === 'Iniciado' || status === 'Pausado' ? 'bg-warning text-dark' :
-                                    'bg-secondary text-white';
+                const statusClass = status === 'Concluido' ? 'success' :
+                                    status === 'Iniciado' || status === 'Pausado' ? 'warning' :
+                                    'secondary';
                 const data = j.data_jogo ? new Date(j.data_jogo + 'T' + (j.inicio_jogo || '00:00')).toLocaleDateString('pt-BR') : '---';
                 const horario = j.inicio_jogo ? j.inicio_jogo.slice(0, 5) : '---';
                 const equipes = j.equipes_nomes || '---';
                 return `
                     <div class="col-12 col-md-6 col-lg-4">
-                        <a href="/jogos/placar?id_jogo=${j.id_jogo}" class="text-decoration-none text-dark">
-                            <div class="card shadow-sm jogo-card p-3 h-100">
+                        <a href="/jogos/placar?id_jogo=${j.id_jogo}" class="text-decoration-none text-body">
+                            <div class="card border-0 shadow-sm p-3 h-100">
                                 <div class="d-flex justify-content-between align-items-start mb-2">
                                     <span class="fw-bold">${j.nome_modalidade || '---'}</span>
-                                    <span class="badge rounded-pill ${statusClass}">${status}</span>
+                                    <span class="badge rounded-pill text-bg-${statusClass}">${status}</span>
                                 </div>
                                 <p class="mb-1 small text-muted">${equipes}</p>
                                 <div class="d-flex justify-content-between small text-muted">

@@ -73,14 +73,19 @@ Os lotes implementados cobrem partes das etapas 2, 3, 4, 5, 6, 7 e 8, sempre mig
 - portal do aluno (home, jogos, modalidade, perfil e ranking) convertido para cards, filtros, modais, progressos, badges e grids nativos;
 - equipes, elencos, turmas, colaboradores, arrecadação e ocorrências convertidos para cards, listas, tabelas, input groups e estados Bootstrap;
 - detalhes de modalidade e configuração de pontuação convertidos para cards, grids, alertas e controles Bootstrap, preservando os hooks de comportamento;
+- agenda convertida para controles, filtros, cards, estados vazios, colunas e modais Bootstrap; a grade do calendário e a faixa lateral de status permanecem como geometria/semântica de domínio;
+- locais e regulamento convertidos para cards, ações nativas, bordas de cláusulas e estados Bootstrap, removendo os blocos CSS duplicados correspondentes;
+- lista administrativa de jogos convertida para cards, links, estados e badges Bootstrap;
+- chaveamento convertido para cards, filtros, tabelas, ações, estados, modal de edição e feedback Bootstrap; a geometria da árvore, conectores e semântica de partidas permanecem como exceções de domínio;
+- placar convertido para cabeçalho, status, ações, chips, estados, modais e cards de artilharia Bootstrap; permanecem apenas a geometria do placar, dimensões das áreas de toque, timeline e posicionamento do botão flutuante;
 - blocos CSS órfãos de perfil, turmas, colaboradores, OCR, ranking e detalhes de modalidade removidos na mesma alteração dos consumidores;
 - testes estáticos, de JavaScript e de navegador ampliados para impedir o retorno dos padrões removidos.
 
-Após os lotes, as seis fontes CSS auditadas totalizam 106.883 bytes e 3.262 linhas, contra 230.742 bytes e 7.564 linhas na base registrada acima: redução de 123.859 bytes (53,68%) e 4.302 linhas (56,87%). A medição continua separada dos bundles Bootstrap e do SCSS próprio.
+No ponto anterior, as seis fontes CSS auditadas totalizavam 97.468 bytes e 3.075 linhas. Após este lote, totalizam 75.954 bytes e 2.512 linhas: redução adicional de 21.514 bytes (22,07%) e 563 linhas (18,31%). Em relação à base fixa registrada acima, a redução acumulada é de 154.788 bytes (67,08%) e 5.052 linhas (66,79%). A medição continua separada dos bundles Bootstrap e do SCSS próprio.
 
-A matriz Docker funcional foi executada após a correção final: 479/479 asserções HTTP e 50/50 cenários de navegador, incluindo fluxos online, offline e responsivos. O contrato visual separado permanece pendente de referências: tests/browser/visual-contract.spec.cjs-snapshots está vazio no repositório, portanto não há baseline versionado para comparação.
+A matriz Docker funcional foi executada após a correção final: 479/479 asserções HTTP e 50/50 cenários de navegador, incluindo fluxos online, offline e responsivos. O contrato visual separado permanece pendente de referências Linux: `tests/browser/visual-contract.spec.cjs-snapshots` contém somente referências Windows (`*-win32.png`), portanto o Docker não possui baseline `*-linux.png` versionado para comparação.
 
-Permanecem para os próximos lotes a revisão da agenda, detalhes de competição, pontuação avançada, locais/regulamento, placar e chaveamento; esses arquivos ainda contêm geometria de domínio e alguns controles que precisam de inspeção visual antes de uma remoção segura. A migração global só será marcada como concluída quando essas pendências forem tratadas, cada exceção estiver justificada e a suíte Docker completa continuar passando sem exceções.
+Permanecem para os próximos lotes pontuação avançada, revisão visual profunda do placar e da árvore de chaveamento e a remoção final de exceções órfãs. Agenda e locais/regulamento já foram tratados. Na agenda e no chaveamento, permanecem somente geometria, conectores e acentos sem equivalente Bootstrap como exceções documentadas. A migração global só será marcada como concluída quando as pendências forem tratadas, cada exceção estiver justificada e houver referências para o contrato visual.
 
 ## 3. Contratos que precisam ser preservados
 

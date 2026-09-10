@@ -182,22 +182,22 @@ $isColaborador = $nivelUsuario === 1;
                             Declaro para os devidos fins que aceito e assumo inteira responsabilidade pelos termos e diretrizes abaixo para a organização, mediação e gestão do Interclasse:
                         </p>
 
-                        <div class="termo-clausula mb-2">
+                        <div class="border-start border-4 border-danger ps-3 mb-3">
                             <strong>Conduta Profissional:</strong> Comprometo-me a atuar de forma ética, imparcial, respeitosa e zelosa no desempenho de minhas atribuições durante todas as etapas e eventos.
                         </div>
-                        <div class="termo-clausula mb-2">
+                        <div class="border-start border-4 border-danger ps-3 mb-3">
                             <strong>Cumprimento das Regras:</strong> Declaro conhecer integralmente o Regulamento Geral do Interclasse, aplicando-o estritamente e garantindo o respeito às decisões oficiais do evento.
                         </div>
-                        <div class="termo-clausula mb-2">
+                        <div class="border-start border-4 border-danger ps-3 mb-3">
                             <strong>Gestão de Materiais e Locais:</strong> Responsabilizo-me pelo uso adequado e supervisão dos materiais esportivos, espaços e instalações alocadas, zelando pela integridade do patrimônio institucional.
                         </div>
-                        <div class="termo-clausula mb-2">
+                        <div class="border-start border-4 border-danger ps-3 mb-3">
                             <strong>Segurança e Bem-estar:</strong> Comprometo-me a zelar pela integridade e segurança dos alunos e participantes, acionando o suporte adequado e informando a organização imediatamente diante de eventuais incidentes.
                         </div>
-                        <div class="termo-clausula mb-2">
+                        <div class="border-start border-4 border-danger ps-3 mb-3">
                             <strong>Uso de Imagem:</strong> Autorizo o uso de minha imagem e voz para fins institucionais e de divulgação oficial do evento nas mídias da instituição.
                         </div>
-                        <div class="termo-clausula mb-2">
+                        <div class="border-start border-4 border-danger ps-3 mb-3">
                             <strong>Confidencialidade e Dados:</strong> Comprometo-me a manter a confidencialidade e integridade dos dados, pontuações, classificações e registros administrativos aos quais eu tiver acesso.
                         </div>
                     </div>
@@ -206,7 +206,7 @@ $isColaborador = $nivelUsuario === 1;
                 <!-- Regulamento Geral (PDF) -->
                 <section>
                     <h2 class="fs-6 fw-bold text-dark mb-3 text-uppercase">Regulamento Oficial</h2>
-                    <div class="regulamento-card border rounded-3 p-3">
+                    <div class="card border rounded-3 p-3">
                         <p id="statusRegulamentoModal" class="text-muted mb-0 small">
                             <span class="spinner-border spinner-border-sm me-2 text-danger" role="status"></span>Carregando regulamento...
                         </p>

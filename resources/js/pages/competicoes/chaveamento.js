@@ -423,10 +423,10 @@ window.SGIPage.mount("competicoes/chaveamento", function (pageConfig, pageScope)
             eqs.forEach((eq, idx) => {
                 const nome = eq.nome_equipe || eq.nome_fantasia || eq.nome_turma || `Equipe #${eq.id_equipe}`;
                 teamsHtml += `
-                    <div class="team-row">
-                        <div class="team-row__name">${nome}</div>
-                        <div class="team-row__score">
-                            <input type="number" min="0" class="form-control edit-score-input" data-equipe-id="${eq.id_equipe}" value="${eq.gols ?? 0}">
+                    <div class="team-row bg-body-tertiary border rounded-3 p-3 d-flex align-items-center gap-3 mb-2">
+                        <div class="team-row__name flex-grow-1 fw-semibold text-body">${nome}</div>
+                        <div class="team-row__score flex-shrink-0" style="width: 72px;">
+                            <input type="number" min="0" class="form-control text-center fw-bold edit-score-input" data-equipe-id="${eq.id_equipe}" value="${eq.gols ?? 0}">
                         </div>
                     </div>`;
             });
@@ -439,9 +439,9 @@ window.SGIPage.mount("competicoes/chaveamento", function (pageConfig, pageScope)
                     const nome = eq.nome_equipe || eq.nome_fantasia || eq.nome_turma || `Equipe #${eq.id_equipe}`;
                     const checked = jogo.equipe_vencedora_id == eq.id_equipe ? 'checked' : '';
                     winnerHtml += `
-                        <div class="winner-radio">
-                            <input type="radio" name="editWinner" id="winner_${eq.id_equipe}" value="${eq.id_equipe}" ${checked}>
-                            <label for="winner_${eq.id_equipe}">${nome}</label>
+                        <div class="winner-radio form-check d-flex align-items-center gap-2">
+                            <input class="form-check-input mt-0" type="radio" name="editWinner" id="winner_${eq.id_equipe}" value="${eq.id_equipe}" ${checked}>
+                            <label class="form-check-label small fw-semibold" for="winner_${eq.id_equipe}">${nome}</label>
                         </div>`;
                 });
                 winnerOptions.innerHTML = winnerHtml;
@@ -684,20 +684,30 @@ window.SGIPage.mount("competicoes/chaveamento", function (pageConfig, pageScope)
         const tempoDecorrido = formatarDuracaoJogo(j);
         const acrescimos = formatarAcrescimosJogo(j);
         const destaque = j.artilheiro_nome || '---';
+        const statusVariants = {
+            agendado: 'warning',
+            aguardando: 'info',
+            andamento: 'primary',
+            iniciado: 'primary',
+            concluido: 'success',
+            finalizado: 'success',
+            cancelado: 'secondary'
+        };
+        const statusVariant = statusVariants[statusLower] || 'secondary';
         return `<tr>
-            <td class="td-partida">${nomePartida}</td>
-            <td class="td-modalidade">${j.nome_modalidade || '---'}</td>
-            <td class="td-data">${dataJogo}</td>
+            <td class="td-partida fw-semibold text-body">${nomePartida}</td>
+            <td class="td-modalidade text-body-secondary fw-medium">${j.nome_modalidade || '---'}</td>
+            <td class="td-data text-body-secondary text-nowrap">${dataJogo}</td>
             <td>${tempoDecorrido}</td>
             <td>${acrescimos}</td>
             <td>${destaque}</td>
-            <td><span class="kv-badge kv-badge--${statusLower}">${statusLabel}</span></td>
+            <td><span class="badge rounded-pill text-bg-${statusVariant}">${statusLabel}</span></td>
             <td>
-                <div class="kv-table-actions">
-                    <a href="/jogos/placar?id_jogo=${j.id_jogo}" class="kv-action kv-action--play" title="Acessar Jogo">
+                <div class="d-flex gap-2 justify-content-end">
+                    <a href="/jogos/placar?id_jogo=${j.id_jogo}" class="btn btn-sm btn-outline-success d-inline-flex align-items-center justify-content-center" title="Acessar Jogo" aria-label="Acessar Jogo">
                         <i class="bi bi-play-fill"></i>
                     </a>
-                    <button class="kv-action kv-action--edit" title="Editar Jogo"
+                    <button class="btn btn-sm btn-outline-secondary d-inline-flex align-items-center justify-content-center" title="Editar Jogo" aria-label="Editar Jogo"
                         data-jogo='${JSON.stringify(j).replace(/'/g, "&#39;")}'
                         onclick="editarJogo(this)">
                         <i class="bi bi-pencil"></i>
@@ -818,7 +828,7 @@ window.SGIPage.mount("competicoes/chaveamento", function (pageConfig, pageScope)
 
     /* Selo visual quando a árvore foi calculada localmente (modo offline). */
     function _badgeFonteLocal() {
-        return `<div class="kv-alert kv-alert--info mt-3 d-flex align-items-center gap-2" >
+        return `<div class="alert alert-info mt-3 d-flex align-items-center gap-2" >
             <i class="bi bi-wifi-off"></i> Offline: árvore avançada localmente com os resultados deste dispositivo.
             Será sincronizada automaticamente quando a conexão voltar.
         </div>`;
@@ -890,15 +900,15 @@ window.SGIPage.mount("competicoes/chaveamento", function (pageConfig, pageScope)
         if (!isBye && !isConcluido && jogo.id_jogo) {
             actionsHtml += '<div class="bkt-match__actions">';
             if (jogo.status_jogo === 'Agendado' && jogo.data_jogo && jogo.inicio_jogo && jogo.termino_jogo && jogo.locais_id_local) {
-                actionsHtml += `<a href="/jogos/placar?id_jogo=${jogo.id_jogo}" class="game-action-btn game-action-btn--start" title="Iniciar Jogo"><i class="bi bi-play-fill"></i>Iniciar</a>`;
+                actionsHtml += `<a href="/jogos/placar?id_jogo=${jogo.id_jogo}" class="btn btn-sm btn-outline-success d-inline-flex align-items-center gap-1" title="Iniciar Jogo"><i class="bi bi-play-fill"></i>Iniciar</a>`;
             }
-            actionsHtml += `<button class="game-action-btn game-action-btn--edit" title="Editar Jogo" onclick="editarJogoBracket(this)" data-jogo='${jogoData}'><i class="bi bi-pencil"></i>Editar</button>`;
+            actionsHtml += `<button class="btn btn-sm btn-outline-secondary d-inline-flex align-items-center gap-1" title="Editar Jogo" onclick="editarJogoBracket(this)" data-jogo='${jogoData}'><i class="bi bi-pencil"></i>Editar</button>`;
             actionsHtml += '</div>';
         }
         if (isConcluido && jogo.id_jogo) {
             actionsHtml += '<div class="bkt-match__actions">';
-            actionsHtml += `<a href="/jogos/placar?id_jogo=${jogo.id_jogo}" class="game-action-btn game-action-btn--view" title="Ver resultado"><i class="bi bi-eye"></i>Ver resultado</a>`;
-            actionsHtml += `<button class="game-action-btn game-action-btn--edit" title="Editar Jogo" data-jogo='${JSON.stringify(jogo).replace(/'/g, "&#39;")}' onclick="editarJogoBracket(this)"><i class="bi bi-pencil"></i>Editar</button>`;
+            actionsHtml += `<a href="/jogos/placar?id_jogo=${jogo.id_jogo}" class="btn btn-sm btn-outline-primary d-inline-flex align-items-center gap-1" title="Ver resultado"><i class="bi bi-eye"></i>Ver resultado</a>`;
+            actionsHtml += `<button class="btn btn-sm btn-outline-secondary d-inline-flex align-items-center gap-1" title="Editar Jogo" data-jogo='${JSON.stringify(jogo).replace(/'/g, "&#39;")}' onclick="editarJogoBracket(this)"><i class="bi bi-pencil"></i>Editar</button>`;
             actionsHtml += '</div>';
         }
 
@@ -1110,8 +1120,8 @@ window.SGIPage.mount("competicoes/chaveamento", function (pageConfig, pageScope)
 
         if (!idModalidade) {
             const emptyHtml = `
-                <div class="kv-empty kv-animate">
-                    <div class="kv-empty__icon display-1 mb-4" >
+                <div class="card border-0 shadow-sm rounded-4 text-center p-5 kv-animate">
+                    <div class="display-1 text-body-tertiary mb-4" >
                         <svg width="80" height="80" viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
                             <rect x="8" y="12" width="20" height="14" rx="3" stroke="#d1d5db" stroke-width="2" fill="#f9fafb"/>
                             <rect x="8" y="54" width="20" height="14" rx="3" stroke="#d1d5db" stroke-width="2" fill="#f9fafb"/>
@@ -1120,10 +1130,10 @@ window.SGIPage.mount("competicoes/chaveamento", function (pageConfig, pageScope)
                             <path d="M28 61 H40 V40 H52" stroke="#d1d5db" stroke-width="1.5" fill="none"/>
                         </svg>
                     </div>
-                    <div class="kv-empty__title fs-4" >Nenhum chaveamento gerado</div>
-                    <div class="kv-empty__desc mw-100" >Selecione uma modalidade acima para gerar automaticamente o chaveamento do torneio.</div>
+                    <div class="h4 fw-bold text-body mb-2" >Nenhum chaveamento gerado</div>
+                    <div class="small text-body-secondary mb-4" >Selecione uma modalidade acima para gerar automaticamente o chaveamento do torneio.</div>
                     ${pageConfig.value0 ? `
-                    <button class="kv-empty__btn px-4 py-2 small" onclick="kvs_focus('selectModalidade');" >
+                    <button class="btn btn-primary d-inline-flex align-items-center gap-2" onclick="kvs_focus('selectModalidade');" >
                         <i class="bi bi-diagram-3-fill"></i> Gerar Chaveamento
                     </button>
                     ` : ``}
@@ -1140,9 +1150,9 @@ window.SGIPage.mount("competicoes/chaveamento", function (pageConfig, pageScope)
 
         if (isIndividual) {
             const loadingHtml = `
-                <div class="kv-loading kv-animate">
-                    <div class="kv-loading__spinner"></div>
-                    <div class="kv-loading__text">Carregando ranking individual...</div>
+                <div class="card border-0 shadow-sm rounded-4 text-center p-5 kv-animate">
+                    <div class="spinner-border text-primary mb-3" role="status"><span class="visually-hidden">Carregando...</span></div>
+                    <div class="small text-body-secondary">Carregando ranking individual...</div>
                 </div>`;
             area.innerHTML = loadingHtml;
             if (areaMob) areaMob.innerHTML = loadingHtml;
@@ -1171,16 +1181,16 @@ window.SGIPage.mount("competicoes/chaveamento", function (pageConfig, pageScope)
                     });
                     rankingDisplay += '</div>';
                 } else {
-                    rankingDisplay = '<div class="kv-empty p-4" ><div class="kv-empty__icon"><i class="bi bi-award"></i></div><div class="kv-empty__title">Nenhum ranking registrado</div><div class="kv-empty__desc">Registre os colocados (1º, 2º e 3º lugar) na página do jogo.</div></div>';
+                    rankingDisplay = '<div class="text-center text-body-secondary border rounded-3 bg-body-tertiary p-4" ><div class="display-6 mb-2"><i class="bi bi-award"></i></div><div class="fw-semibold">Nenhum ranking registrado</div><div class="small mt-1">Registre os colocados (1º, 2º e 3º lugar) na página do jogo.</div></div>';
                 }
 
                 const individualHtml = `
-                    <div class="kv-history-card">
-                        <div class="kv-history-card__header d-flex justify-content-between align-items-center" >
-                            <div class="kv-history-card__title"><i class="bi bi-award-fill"></i> Ranking Atual</div>
+                    <div class="card border-0 shadow-sm rounded-4 mb-4">
+                        <div class="p-4 border-bottom d-flex justify-content-between align-items-center" >
+                            <div class="h5 fw-bold text-body mb-0"><i class="bi bi-award-fill text-danger me-2"></i>Ranking Atual</div>
                             ${jogoIndividual ? `
                             <div class="dropdown">
-                                <button class="kv-action" type="button" data-bs-toggle="dropdown" aria-expanded="false" title="Mais opções">
+                                <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="dropdown" aria-expanded="false" title="Mais opções">
                                     <i class="bi bi-three-dots-vertical"></i>
                                 </button>
                                 <ul class="dropdown-menu dropdown-menu-end shadow-sm" >
@@ -1188,11 +1198,11 @@ window.SGIPage.mount("competicoes/chaveamento", function (pageConfig, pageScope)
                                 </ul>
                             </div>` : ''}
                         </div>
-                        <div class="kv-history-card__body">
+                        <div class="p-4">
                             ${rankingDisplay}
                         </div>
                     </div>
-                    <div class="kv-alert kv-alert--info mt-3 d-flex align-items-center gap-2" >
+                    <div class="alert alert-info mt-3 d-flex align-items-center gap-2" >
                         <i class="bi bi-info-circle"></i> Os colocados (1º, 2º e 3º lugar) são registrados na página do jogo.
                     </div>`;
 
@@ -1202,7 +1212,7 @@ window.SGIPage.mount("competicoes/chaveamento", function (pageConfig, pageScope)
 
             } catch (e) {
                 console.error("Erro ao carregar ranking individual:", e);
-                const errHtml = `<div class="kv-empty kv-animate"><div class="kv-empty__icon"><i class="bi bi-exclamation-triangle text-warning" ></i></div><div class="kv-empty__title">Erro</div><div class="kv-empty__desc">Erro ao carregar dados da modalidade individual.</div></div>`;
+                const errHtml = `<div class="card border-0 shadow-sm rounded-4 text-center p-5 kv-animate"><div class="display-5 text-warning mb-3"><i class="bi bi-exclamation-triangle"></i></div><div class="h5 fw-bold text-body mb-2">Erro</div><div class="small text-body-secondary">Erro ao carregar dados da modalidade individual.</div></div>`;
                 area.innerHTML = errHtml;
                 if (areaMob) areaMob.innerHTML = errHtml;
             }
@@ -1210,9 +1220,9 @@ window.SGIPage.mount("competicoes/chaveamento", function (pageConfig, pageScope)
         }
 
         const loadingHtml = `
-            <div class="kv-loading kv-animate">
-                <div class="kv-loading__spinner"></div>
-                <div class="kv-loading__text">Carregando chaveamento...</div>
+            <div class="card border-0 shadow-sm rounded-4 text-center p-5 kv-animate">
+                <div class="spinner-border text-primary mb-3" role="status"><span class="visually-hidden">Carregando...</span></div>
+                <div class="small text-body-secondary">Carregando chaveamento...</div>
             </div>`;
         area.innerHTML = loadingHtml;
         if (areaMob) areaMob.innerHTML = loadingHtml;
@@ -1228,10 +1238,10 @@ window.SGIPage.mount("competicoes/chaveamento", function (pageConfig, pageScope)
 
             if (jogos.length === 0) {
                 const emptyHtml = `
-                    <div class="kv-empty kv-animate">
-                        <div class="kv-empty__icon"><i class="bi bi-diagram-3"></i></div>
-                        <div class="kv-empty__title">Nenhum chaveamento gerado</div>
-                        <div class="kv-empty__desc">Clique em "Gerar Chaveamento" para criar o chaveamento desta modalidade.</div>
+                    <div class="card border-0 shadow-sm rounded-4 text-center p-5 kv-animate">
+                        <div class="display-5 text-body-tertiary mb-3"><i class="bi bi-diagram-3"></i></div>
+                        <div class="h5 fw-bold text-body mb-2">Nenhum chaveamento gerado</div>
+                        <div class="small text-body-secondary">Clique em "Gerar Chaveamento" para criar o chaveamento desta modalidade.</div>
                     </div>`;
                 area.innerHTML = emptyHtml;
                 if (areaMob) areaMob.innerHTML = emptyHtml;
@@ -1253,7 +1263,7 @@ window.SGIPage.mount("competicoes/chaveamento", function (pageConfig, pageScope)
 
         } catch (e) {
             console.error("Erro ao carregar árvore:", e);
-            const errHtml = `<div class="kv-empty kv-animate"><div class="kv-empty__icon"><i class="bi bi-exclamation-triangle text-warning" ></i></div><div class="kv-empty__title">Erro de conexão</div><div class="kv-empty__desc">Não foi possível conectar ao servidor.</div></div>`;
+            const errHtml = `<div class="card border-0 shadow-sm rounded-4 text-center p-5 kv-animate"><div class="display-5 text-warning mb-3"><i class="bi bi-exclamation-triangle"></i></div><div class="h5 fw-bold text-body mb-2">Erro de conexão</div><div class="small text-body-secondary">Não foi possível conectar ao servidor.</div></div>`;
             area.innerHTML = errHtml;
             if (areaMob) areaMob.innerHTML = errHtml;
         }
@@ -1356,7 +1366,7 @@ window.SGIPage.mount("competicoes/chaveamento", function (pageConfig, pageScope)
         if (msgEl) msgEl.classList.remove('d-none');
 
         if (NIVEL_USUARIO === 2 || NIVEL_USUARIO === 3) {
-            if (msgEl) msgEl.innerHTML = '<div class="kv-alert kv-alert--error">Você não tem permissão para gerar chaveamento.</div>';
+            if (msgEl) msgEl.innerHTML = '<div class="alert alert-danger">Você não tem permissão para gerar chaveamento.</div>';
             return;
         }
 
@@ -1366,7 +1376,7 @@ window.SGIPage.mount("competicoes/chaveamento", function (pageConfig, pageScope)
             : document.getElementById('selectModalidade').value;
 
         if (!idModalidade) {
-            msgEl.innerHTML = '<div class="kv-alert kv-alert--error">Selecione uma modalidade primeiro.</div>';
+            msgEl.innerHTML = '<div class="alert alert-danger">Selecione uma modalidade primeiro.</div>';
             return;
         }
 
@@ -1374,7 +1384,7 @@ window.SGIPage.mount("competicoes/chaveamento", function (pageConfig, pageScope)
         const isIndividual = modalidadeEhIndividual(mod);
         const tipoModalidadeParam = isIndividual ? 'individual' : 'mata_mata';
 
-        msgEl.innerHTML = '<div class="kv-alert kv-alert--info">' + (isIndividual ? 'Gerando jogo da modalidade para a agenda...' : 'Gerando chaveamento...') + '</div>';
+        msgEl.innerHTML = '<div class="alert alert-info">' + (isIndividual ? 'Gerando jogo da modalidade para a agenda...' : 'Gerando chaveamento...') + '</div>';
 
         try {
             btn.disabled = true;
@@ -1389,7 +1399,7 @@ window.SGIPage.mount("competicoes/chaveamento", function (pageConfig, pageScope)
             if (data.success === false) throw new Error(data.message || 'Erro ao gerar chaveamento.');
 
             const msgDet = data.jogos_criados ? ` (${data.jogos_criados} jogo(s) gerado(s))` : '';
-            msgEl.innerHTML = `<div class="kv-alert kv-alert--success">${data.message}${msgDet}.</div>`;
+            msgEl.innerHTML = `<div class="alert alert-success">${data.message}${msgDet}.</div>`;
             const linkArvore = document.getElementById('linkVerArvore');
             if (linkArvore) linkArvore.classList.remove('d-none');
             const btnArvore = document.getElementById('btnVerArvore');
@@ -1397,7 +1407,7 @@ window.SGIPage.mount("competicoes/chaveamento", function (pageConfig, pageScope)
             carregarArvore(idModalidade);
             carregarJogos();
         } catch (err) {
-            msgEl.innerHTML = `<div class="kv-alert kv-alert--error">${err.message}</div>`;
+            msgEl.innerHTML = `<div class="alert alert-danger">${err.message}</div>`;
         } finally {
             btn.disabled = false;
             btn.innerHTML = '<i class="bi bi-diagram-3-fill me-1"></i> Gerar Chaveamento';

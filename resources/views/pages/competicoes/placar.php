@@ -9,54 +9,56 @@ $paginaAtiva = 'dashboard';
 ?>
 
 <main class="main-desktop-layout">
-    <div class="container-principal mc-page">
+    <div class="container-xxl py-4 px-3 px-md-4">
 
-        <div class="mc-header">
-            <div class="mc-match-info">
+        <div class="d-flex align-items-start justify-content-between gap-3 mb-4 flex-wrap">
+            <div class="d-flex flex-column gap-1 flex-grow-1">
                 <a href="<?= \App\Shared\Http\Url::to('edicoes/agenda') ?>" id="btnVoltarPlacar" class="btn btn-primary d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none" >
                     <i class="bi bi-arrow-left-circle fs-5"></i> <span>Voltar</span>
                 </a>
-                <h1 id="placar-titulo-jogo" class="mc-match-title">Placar</h1>
-                <span id="placar-meta" class="mc-match-meta"></span>
+                <h1 id="placar-titulo-jogo" class="h3 fw-bold lh-sm mb-0">Placar</h1>
+                <span id="placar-meta" class="small text-body-secondary"></span>
             </div>
-            <div id="mc-status-badge" class="mc-header-status"></div>
+            <div id="mc-status-badge" class="flex-shrink-0"></div>
         </div>
 
-        <div id="placar-erro" class="mc-error d-none" role="alert"></div>
-        <div id="placar-loading" class="mc-loading">Carregando partida...</div>
+        <div id="placar-erro" class="alert alert-danger d-none mb-3" role="alert"></div>
+        <div id="placar-loading" class="text-center py-5 text-body-secondary">
+            <span class="spinner-border spinner-border-sm text-primary me-2" aria-hidden="true"></span>Carregando partida...
+        </div>
 
         <div id="placar-conteudo" class="d-none d-grid gap-3">
 
-            <div id="placar-acoes" class="mc-actions"></div>
+            <div id="placar-acoes" class="d-flex flex-wrap gap-3 align-items-center"></div>
 
             <div id="placar-grid"></div>
 
-            <div class="mc-quick-stats">
-                <div class="mc-stat-chip">
+            <div class="d-flex justify-content-center gap-2 mt-3 flex-wrap">
+                <div class="badge rounded-pill text-bg-light border text-body-secondary d-inline-flex align-items-center gap-1">
                     <i class="bi bi-clock-history"></i>
                     <span id="mc-occ-count">0</span>
-                    <span class="mc-stat-chip-label">ocorrências</span>
+                    <span class="fw-normal">ocorrências</span>
                 </div>
-                <div class="mc-stat-chip">
+                <div class="badge rounded-pill text-bg-light border text-body-secondary d-inline-flex align-items-center gap-1">
                     <i class="bi bi-stopwatch"></i>
                     <span id="mc-duration-stat">--</span>
-                    <span class="mc-stat-chip-label">duração</span>
+                    <span class="fw-normal">duração</span>
                 </div>
             </div>
 
             <div id="artilheiro-section" class="d-none">
-                <div class="mc-section-header">
-                    <h2 class="mc-section-title"><i class="bi bi-trophy-fill"></i> Artilharia / Destaques</h2>
+                <div class="d-flex align-items-center justify-content-between mb-3 mt-5">
+                    <h2 class="h5 fw-bold d-flex align-items-center gap-2 mb-0"><i class="bi bi-trophy-fill text-primary"></i> Artilharia / Destaques</h2>
                 </div>
-                <div class="mc-artilheiro-grid" id="artilheiro-cards"></div>
+                <div class="row row-cols-1 row-cols-md-2 row-cols-xl-3 g-3" id="artilheiro-cards"></div>
             </div>
 
             <div id="ocorrencias-section" class="d-none">
-                <div class="mc-section-header">
-                    <h2 class="mc-section-title"><i class="bi bi-clock-history"></i> Timeline da Partida</h2>
+                <div class="d-flex align-items-center justify-content-between mb-3 mt-5">
+                    <h2 class="h5 fw-bold d-flex align-items-center gap-2 mb-0"><i class="bi bi-clock-history text-primary"></i> Timeline da Partida</h2>
                 </div>
                 <div id="lista-ocorrencias" class="mc-timeline">
-                    <div class="mc-timeline-empty"><i class="bi bi-clock-history"></i><p>Nenhuma ocorrência registrada.</p></div>
+                    <div class="text-center py-5 text-body-secondary"><i class="bi bi-clock-history fs-2 d-block mb-2 text-body-tertiary"></i><p class="mb-0">Nenhuma ocorrência registrada.</p></div>
                 </div>
             </div>
         </div>
@@ -65,12 +67,12 @@ $paginaAtiva = 'dashboard';
     </div>
 </main>
 
-<button type="button" class="mc-fab" id="btnNovaOcorrencia" onclick="abrirModalOcorrencia()" title="Nova ocorrência" aria-label="Registrar nova ocorrência">
-    <i class="bi bi-plus-lg"></i>
+<button type="button" class="mc-fab btn btn-primary rounded-circle shadow position-fixed bottom-0 end-0 mb-5 me-4 d-inline-flex align-items-center justify-content-center z-3" id="btnNovaOcorrencia" onclick="abrirModalOcorrencia()" title="Nova ocorrência" aria-label="Registrar nova ocorrência">
+    <i class="bi bi-plus-lg fs-5"></i>
 </button>
 
 <!-- Modal Ocorrência -->
-<div class="modal fade mc-modal" id="modalOcorrencia" tabindex="-1" aria-hidden="true">
+<div class="modal fade" id="modalOcorrencia" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">
@@ -81,18 +83,18 @@ $paginaAtiva = 'dashboard';
                 <div class="modal-body">
                     <div class="mb-3">
                         <label class="form-label">Tipo</label>
-                        <div class="mc-tipo-grid">
-                            <label class="btn btn-outline-warning ocorrencia-tipo-option d-flex align-items-center justify-content-center gap-1" data-tipo="Amarelo">
+                        <div class="row row-cols-1 row-cols-sm-3 g-2">
+                            <label class="col btn btn-outline-warning ocorrencia-tipo-option d-flex align-items-center justify-content-center gap-1 w-100" data-tipo="Amarelo">
                                 <i class="bi bi-square-fill text-warning small" ></i>
                                 Amarelo
                                 <input type="radio" name="tipo_ocorrencia" value="Amarelo" class="d-none">
                             </label>
-                            <label class="btn btn-outline-danger ocorrencia-tipo-option d-flex align-items-center justify-content-center gap-1" data-tipo="Vermelho">
+                            <label class="col btn btn-outline-danger ocorrencia-tipo-option d-flex align-items-center justify-content-center gap-1 w-100" data-tipo="Vermelho">
                                 <i class="bi bi-x-octagon-fill small" ></i>
                                 Vermelho
                                 <input type="radio" name="tipo_ocorrencia" value="Vermelho" class="d-none">
                             </label>
-                            <label class="btn btn-outline-suspensao ocorrencia-tipo-option d-flex align-items-center justify-content-center gap-1" data-tipo="Suspensao">
+                            <label class="col btn btn-outline-suspensao ocorrencia-tipo-option d-flex align-items-center justify-content-center gap-1 w-100" data-tipo="Suspensao">
                                 <i class="bi bi-pause-circle-fill small" ></i>
                                 Suspensão
                                 <input type="radio" name="tipo_ocorrencia" value="Suspensao" class="d-none">
@@ -138,7 +140,7 @@ $paginaAtiva = 'dashboard';
 </div>
 
 <!-- Modal Artilheiro -->
-<div class="modal fade mc-modal" id="modalArtilheiro" tabindex="-1" aria-hidden="true">
+<div class="modal fade" id="modalArtilheiro" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">
