@@ -280,17 +280,17 @@ window.SGIPage.mount("competicoes/chaveamento", function (pageConfig, pageScope)
         }));
         const nivelAtual = fases[0]?.nivel || 1;
 
-        let html = '<div class="kv-phase">';
+        let html = '<div class="d-flex align-items-center flex-nowrap">';
         fases.forEach((f, i) => {
             const isUltimo = i === 0;
-            const isPenultimo = i === fases.length - 1;
-            let cls = 'kv-phase__item';
-            if (isUltimo) cls += ' kv-phase__item--active';
-            else if (i > 0) cls += ' kv-phase__item--done';
+            let cls = 'badge rounded-pill px-3 py-2 text-uppercase';
+            if (isUltimo) cls += ' text-bg-danger';
+            else if (i > 0) cls += ' text-bg-success';
+            else cls += ' text-bg-secondary';
 
             html += `<span class="${cls}">${f.label}</span>`;
             if (i < fases.length - 1) {
-                html += '<span class="kv-phase__arrow"><i class="bi bi-arrow-right"></i></span>';
+                html += '<span class="text-body-tertiary px-2 flex-shrink-0"><i class="bi bi-arrow-right"></i></span>';
             }
         });
         html += '</div>';
@@ -866,21 +866,21 @@ window.SGIPage.mount("competicoes/chaveamento", function (pageConfig, pageScope)
         }
 
         let statusLabel = jogo.status_jogo || '---';
-        let statusCls = 'bkt-match__status';
+        let statusCls = 'bkt-match__status badge rounded-pill';
         if (isBye) {
             statusLabel = 'Bye';
-            statusCls += ' bkt-match__status--bye';
+            statusCls += ' text-bg-secondary';
         } else if (isConcluido) {
-            statusCls += ' bkt-match__status--concluido';
+            statusCls += ' text-bg-success';
             statusLabel = 'Finalizado';
         } else if (isIniciado) {
-            statusCls += ' bkt-match__status--andamento';
+            statusCls += ' text-bg-primary';
             statusLabel = 'Em andamento';
         } else if (jogo.status_jogo === 'Aguardando') {
-            statusCls += ' bkt-match__status--aguardando';
+            statusCls += ' text-bg-warning';
             statusLabel = 'Aguardando';
         } else {
-            statusCls += ' bkt-match__status--agendado';
+            statusCls += ' text-bg-light border text-body-secondary';
         }
 
         const nomeModalidade = jogo.nome_modalidade || '';
@@ -898,7 +898,7 @@ window.SGIPage.mount("competicoes/chaveamento", function (pageConfig, pageScope)
 
         let actionsHtml = '';
         if (!isBye && !isConcluido && jogo.id_jogo) {
-            actionsHtml += '<div class="bkt-match__actions">';
+            actionsHtml += '<div class="bkt-match__actions d-flex gap-1 px-2 pb-2 justify-content-end">';
             if (jogo.status_jogo === 'Agendado' && jogo.data_jogo && jogo.inicio_jogo && jogo.termino_jogo && jogo.locais_id_local) {
                 actionsHtml += `<a href="/jogos/placar?id_jogo=${jogo.id_jogo}" class="btn btn-sm btn-outline-success d-inline-flex align-items-center gap-1" title="Iniciar Jogo"><i class="bi bi-play-fill"></i>Iniciar</a>`;
             }
@@ -906,7 +906,7 @@ window.SGIPage.mount("competicoes/chaveamento", function (pageConfig, pageScope)
             actionsHtml += '</div>';
         }
         if (isConcluido && jogo.id_jogo) {
-            actionsHtml += '<div class="bkt-match__actions">';
+            actionsHtml += '<div class="bkt-match__actions d-flex gap-1 px-2 pb-2 justify-content-end">';
             actionsHtml += `<a href="/jogos/placar?id_jogo=${jogo.id_jogo}" class="btn btn-sm btn-outline-primary d-inline-flex align-items-center gap-1" title="Ver resultado"><i class="bi bi-eye"></i>Ver resultado</a>`;
             actionsHtml += `<button class="btn btn-sm btn-outline-secondary d-inline-flex align-items-center gap-1" title="Editar Jogo" data-jogo='${JSON.stringify(jogo).replace(/'/g, "&#39;")}' onclick="editarJogoBracket(this)"><i class="bi bi-pencil"></i>Editar</button>`;
             actionsHtml += '</div>';
@@ -914,8 +914,8 @@ window.SGIPage.mount("competicoes/chaveamento", function (pageConfig, pageScope)
 
         return `<div class="${cls}" data-jogo-id="${jogo.id_jogo || ''}">
             ${teamsHtml}
-            <div class="bkt-match__meta">
-                <div class="bkt-match__info">${metaParts.join(' ')}</div>
+            <div class="bkt-match__meta d-flex align-items-center justify-content-between gap-2 px-3 py-2 bg-body-tertiary border-top">
+                <div class="bkt-match__info d-flex align-items-center gap-1 flex-grow-1 overflow-hidden small text-body-secondary">${metaParts.join(' ')}</div>
                 <span class="${statusCls}">${statusLabel}</span>
             </div>
             ${actionsHtml}
@@ -960,7 +960,7 @@ window.SGIPage.mount("competicoes/chaveamento", function (pageConfig, pageScope)
             const matchCount = roundGames.length;
 
             html += '<div class="bracket-round-col">';
-            html += `<div class="bracket-round-header">${labelsFases[nivel] || formatFase(nivel)}</div>`;
+            html += `<div class="bracket-round-header badge rounded-pill bg-danger-subtle text-danger-emphasis border border-danger-subtle px-3 py-2 mb-4 text-uppercase">${labelsFases[nivel] || formatFase(nivel)}</div>`;
 
             roundGames.forEach((jogo, idx) => {
                 html += _renderBracketMatch(jogo);
@@ -978,7 +978,7 @@ window.SGIPage.mount("competicoes/chaveamento", function (pageConfig, pageScope)
 
         if (posGames.length > 0) {
             html += '<div class="bracket-round-col">';
-            html += '<div class="bracket-round-header text-primary border border-danger-subtle bg-danger-subtle" >Disputas de Posição</div>';
+            html += '<div class="bracket-round-header badge rounded-pill bg-danger-subtle text-danger-emphasis border border-danger-subtle px-3 py-2 mb-4 text-uppercase" >Disputas de Posição</div>';
             posGames.forEach(j => {
                 html += _renderBracketMatch(j);
             });
@@ -988,11 +988,11 @@ window.SGIPage.mount("competicoes/chaveamento", function (pageConfig, pageScope)
         if (campeao) {
             html += '<div class="bkt-connector sgi-u-h-120px" ></div>';
             html += '<div class="bracket-champion-col">';
-            html += '<div class="bracket-champion-card">';
-            html += '<div class="bracket-champion-card__icon">🏆</div>';
-            html += '<div class="bracket-champion-card__label">Campeão</div>';
-            html += `<div class="bracket-champion-card__name">${campeao.nome}</div>`;
-            if (campeao.modalidade) html += `<div class="bracket-champion-card__mod">${campeao.modalidade}</div>`;
+            html += '<div class="bracket-champion-card card border-warning border-2 bg-warning-subtle shadow-sm text-center p-4 w-100">';
+            html += '<div class="bracket-champion-card__icon fs-1 mb-2" aria-hidden="true">🏆</div>';
+            html += '<div class="bracket-champion-card__label small text-uppercase fw-bold text-warning-emphasis mb-2">Campeão</div>';
+            html += `<div class="bracket-champion-card__name h5 fw-bold text-warning-emphasis lh-sm mb-0">${campeao.nome}</div>`;
+            if (campeao.modalidade) html += `<div class="bracket-champion-card__mod small text-warning-emphasis mt-2">${campeao.modalidade}</div>`;
             html += '</div></div>';
         }
 
@@ -1166,18 +1166,18 @@ window.SGIPage.mount("competicoes/chaveamento", function (pageConfig, pageScope)
                 let rankingDisplay = '';
                 if (rankingAtual.length > 0) {
                     const posLabels = ['🥇 1º Lugar', '🥈 2º Lugar', '🥉 3º Lugar'];
-                    const posBg = ['kv-podium-item--first', 'kv-podium-item--second', 'kv-podium-item--third'];
-                    rankingDisplay = '<div class="kv-podium mt-3" >';
+                    const posBg = ['border-warning bg-warning-subtle', 'border-secondary bg-secondary-subtle', 'border-warning bg-warning-subtle'];
+                    rankingDisplay = '<div class="row row-cols-1 row-cols-sm-3 g-3 mt-3" >';
                     rankingAtual.forEach((r, idx) => {
                         const nome = esc(r.nome_usuario || 'Desconhecido');
                         const turma = esc(r.nome_fantasia_turma || r.nome_turma || '');
                         rankingDisplay += `
-                            <div class="kv-podium-item ${posBg[idx] || ''}">
-                                <div class="kv-podium-item__icon fs-3" >${idx === 0 ? '🥇' : idx === 1 ? '🥈' : '🥉'}</div>
-                                <div class="kv-podium-item__label">${posLabels[idx] || (idx+1)+'º Lugar'}</div>
-                                <div class="kv-podium-item__name">${nome}</div>
-                                <div class="kv-podium-item__turma small text-secondary mt-1" >${turma}</div>
-                            </div>`;
+                            <div class="col"><article class="card h-100 text-center p-4 shadow-sm border-2 ${posBg[idx] || 'border-light bg-body-tertiary'}">
+                                <div class="fs-2 mb-2" aria-hidden="true">${idx === 0 ? '🥇' : idx === 1 ? '🥈' : '🥉'}</div>
+                                <div class="small text-uppercase fw-semibold text-body-secondary mb-1">${posLabels[idx] || (idx+1)+'º Lugar'}</div>
+                                <div class="fw-bold text-body">${nome}</div>
+                                <div class="small text-body-secondary mt-1" >${turma}</div>
+                            </article></div>`;
                     });
                     rankingDisplay += '</div>';
                 } else {

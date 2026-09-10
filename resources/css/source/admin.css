@@ -1095,52 +1095,6 @@ body.sgi-offline-active {
 /* ==========================================================================
    29. CHAVEAMENTO — ÁRVORE DO TORNEIO (chaveamento_arvore.php)
    ========================================================================== */
-/* ── Phase Timeline ── */
-.kv-phase-timeline {
-    display: flex;
-    align-items: center;
-    gap: 0;
-    margin-bottom: 28px;
-    padding: 20px 24px;
-    background: #fff;
-    border-radius: 14px;
-    border: 1px solid #f0f0f5;
-    overflow-x: auto;
-    flex-wrap: nowrap;
-}
-.kv-phase {
-    display: flex;
-    align-items: center;
-    gap: 0;
-    white-space: nowrap;
-}
-.kv-phase__item {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    padding: 8px 16px;
-    border-radius: 999px;
-    font-size: 0.8rem;
-    font-weight: 600;
-    color: #9ca3af;
-    background: #f3f4f6;
-    transition: all 0.2s;
-}
-.kv-phase__item--active {
-    background: #e30613;
-    color: #fff;
-}
-.kv-phase__item--done {
-    background: #dcfce7;
-    color: #166534;
-}
-.kv-phase__arrow {
-    color: #d1d5db;
-    font-size: 0.85rem;
-    padding: 0 6px;
-    flex-shrink: 0;
-}
-
 /* ── Modern Bracket Tree ── */
 .bracket-tree {
     display: flex;
@@ -1165,21 +1119,7 @@ body.sgi-offline-active {
     position: relative;
     padding: 0 20px;
 }
-.bracket-round-header {
-    font-size: 0.72rem;
-    font-weight: 700;
-    color: #e30613;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    padding: 10px 20px;
-    background: linear-gradient(135deg, #fef2f2, #fff);
-    border: 1px solid #fecaca;
-    border-radius: 999px;
-    margin-bottom: 24px;
-    white-space: nowrap;
-}
-
-/* Champion card */
+/* Champion column remains a bracket-specific geometry hook. */
 .bracket-champion-col {
     min-width: 320px;
     flex: 0 0 320px;
@@ -1188,25 +1128,6 @@ body.sgi-offline-active {
     align-items: center;
     padding: 0 16px;
 }
-.bracket-champion-card {
-    background: linear-gradient(135deg, #fef3c7 0%, #fffbeb 50%, #fef9c3 100%);
-    border: 2px solid #f59e0b;
-    border-radius: 18px;
-    padding: 32px 24px;
-    text-align: center;
-    width: 100%;
-    box-shadow: 0 8px 32px rgba(245,158,11,0.2);
-    animation: championPulse 2s ease-in-out infinite;
-}
-.bracket-champion-card__icon { font-size: 3rem; margin-bottom: 12px; }
-.bracket-champion-card__label { font-size: 0.72rem; font-weight: 700; color: #92400e; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 8px; }
-.bracket-champion-card__name { font-size: 1.2rem; font-weight: 800; color: #78350f; line-height: 1.3; }
-.bracket-champion-card__mod { font-size: 0.8rem; color: #b45309; margin-top: 8px; font-weight: 500; }
-@keyframes championPulse {
-    0%, 100% { box-shadow: 0 8px 32px rgba(245,158,11,0.2); }
-    50% { box-shadow: 0 8px 40px rgba(245,158,11,0.35); }
-}
-
 /* Bracket match cards */
 .bkt-match {
     background: #fff;
@@ -1267,41 +1188,7 @@ body.sgi-offline-active {
     margin-left: 2px;
 }
 
-.bkt-match__meta {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 6px 14px;
-    background: #f9fafb;
-    border-top: 1px solid #f3f4f6;
-    gap: 6px;
-}
-.bkt-match__info {
-    font-size: 0.68rem;
-    color: #9ca3af;
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    flex: 1;
-    overflow: hidden;
-}
 .bkt-match__info span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.bkt-match__status {
-    font-size: 0.6rem;
-    padding: 2px 8px;
-    border-radius: 999px;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.03em;
-    white-space: nowrap;
-}
-.bkt-match__status--agendado { background: #fef3c7; color: #92400e; }
-.bkt-match__status--aguardando { background: #f3e8ff; color: #7c3aed; }
-.bkt-match__status--andamento { background: #dbeafe; color: #1e40af; animation: statusPulse 1.5s ease-in-out infinite; }
-.bkt-match__status--concluido { background: #dcfce7; color: #166534; }
-.bkt-match__status--iniciado { background: #dbeafe; color: #1e40af; animation: statusPulse 1.5s ease-in-out infinite; }
-.bkt-match__status--bye { background: #e0e7ff; color: #4338ca; }
-@keyframes statusPulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.6; } }
 
 /* Bracket connectors */
 .bkt-connector {
@@ -1324,75 +1211,11 @@ body.sgi-offline-active {
 
 /* ── Bracket Game Actions ── */
 .bkt-match__actions {
-    display: flex;
-    gap: 4px;
-    padding: 4px 10px 8px;
-    justify-content: flex-end;
     opacity: 0;
     transition: opacity 0.2s;
 }
-.bkt-match:hover .bkt-match__actions { opacity: 1; }
+.bkt-match:hover .bkt-match__actions,.bkt-match:focus-within .bkt-match__actions { opacity: 1; }
 /* ── Table ── */
-/* ── Podium ── */
-.kv-podium { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 16px; }
-.kv-podium-item {
-    text-align: center;
-    padding: 24px 16px;
-    border-radius: 14px;
-    border: 1px solid #f0f0f5;
-    transition: all 0.25s;
-}
-.kv-podium-item:hover { transform: translateY(-2px); box-shadow: 0 6px 16px rgba(0,0,0,0.06); }
-.kv-podium-item--first { background: linear-gradient(135deg, #fffbeb, #fff); border-color: #fbbf24; }
-.kv-podium-item--second { background: linear-gradient(135deg, #f9fafb, #fff); border-color: #d1d5db; }
-.kv-podium-item--third { background: linear-gradient(135deg, #fef3c7, #fff); border-color: #d97706; }
-.kv-podium-item__icon { font-size: 2rem; margin-bottom: 8px; }
-.kv-podium-item__label { font-size: 0.73rem; color: #9ca3af; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 4px; }
-.kv-podium-item__name { font-size: 1rem; font-weight: 700; color: #111827; }
-
-/* ── Classificação Geral (Todos os Campeões) ── */
-.kv-classificacao-geral { display: flex; flex-direction: column; gap: 20px; }
-.kv-classificacao-geral__item {
-    border-bottom: 1px solid #f3f4f6;
-    padding-bottom: 16px;
-}
-.kv-classificacao-geral__item:last-child { border-bottom: none; padding-bottom: 0; }
-.kv-classificacao-geral__mod {
-    font-size: 0.82rem;
-    font-weight: 700;
-    color: #6b7280;
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-    margin-bottom: 10px;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-}
-.kv-classificacao-geral__mod::before {
-    content: "";
-    width: 4px;
-    height: 16px;
-    border-radius: 2px;
-    background: #e30613;
-    flex-shrink: 0;
-}
-.kv-classificacao-geral__podium { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 12px; }
-
-/* ── Confrontos Table ── */
-.kv-confronto-row {
-    display: flex;
-    align-items: center;
-    flex-wrap: wrap;
-    padding: 12px 0;
-    border-bottom: 1px solid #f3f4f6;
-    gap: 12px;
-}
-.kv-confronto-row:last-child { border-bottom: none; }
-.kv-confronto-row__fase { font-weight: 700; font-size: 0.8rem; color: #6b7280; min-width: 120px; }
-.kv-confronto-row__winner { font-weight: 600; color: #166534; flex: 1; }
-.kv-confronto-row__score { font-weight: 800; color: #111827; font-size: 0.95rem; min-width: 50px; text-align: center; }
-.kv-confronto-row__loser { color: #9ca3af; flex: 1; text-decoration: line-through; }
-.kv-confronto-row__time { width: 100%; font-size: 0.78rem; color: #6b7280; margin-top: 4px; padding-top: 4px; border-top: 1px dashed #e5e7eb; }
 
 /* ── Responsive ── */
 @media (max-width: 991px) {
@@ -1401,14 +1224,11 @@ body.sgi-offline-active {
 }
 
 @media (max-width: 575px) {
-    .kv-podium { grid-template-columns: 1fr 1fr; }
-    .kv-phase-timeline { padding: 16px; }
     .bracket-tree { flex-direction: column; align-items: stretch; overflow-x: hidden; }
     .bracket-round-col { min-width: 100%; max-width: 100%; flex: none; padding: 0; margin-bottom: 8px; }
     .bracket-round-col .bkt-match { margin-bottom: 12px; }
     .bkt-connector { display: none; }
     .bracket-champion-col { min-width: 100%; flex: none; padding: 0; margin-top: 16px; }
-    .kv-classificacao-geral__podium { grid-template-columns: 1fr 1fr; }
 }
 
 /* ── Custom Select (KVS) ── */

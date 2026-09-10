@@ -204,7 +204,7 @@ $podeGerar = !$isNivel2 && !$isNivel3;
             </div>
         </div>
 
-        <div id="faseTimeline" class="kv-phase-timeline d-none"></div>
+        <div id="faseTimeline" class="card border-0 shadow-sm d-none p-3 mb-4 overflow-auto"></div>
 
         <div id="bracketArea">
             <div class="card border-0 shadow-sm rounded-4 text-center p-5">

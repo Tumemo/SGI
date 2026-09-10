@@ -341,11 +341,16 @@ test('competition list and bracket modal use native status and action variants',
     assert.match(bracket, /btn btn-outline-secondary/);
     assert.match(bracketJs, /badge rounded-pill text-bg-\$\{statusVariant\}/);
     assert.match(bracketJs, /btn btn-sm btn-outline-success/);
+    assert.match(bracketJs, /badge rounded-pill bg-danger-subtle text-danger-emphasis/);
+    assert.match(bracketJs, /bracket-champion-card card border-warning border-2 bg-warning-subtle shadow-sm/);
+    assert.match(bracketJs, /row row-cols-1 row-cols-sm-3 g-3 mt-3/);
     assert.doesNotMatch(games, /\bjogo-card\b/);
     assert.doesNotMatch(css, /\.jogo-card\b/);
     assert.doesNotMatch(bracket + bracketJs + games + css, /\b(?:kv-badge|kv-action|game-action-btn)\b/);
     assert.doesNotMatch(bracket + bracketJs + css, /\b(?:kv-table-card|kv-filters|kv-filter-(?:input|select)|kv-gen-card|kv-empty|kv-loading|kv-alert|kv-link-btn|kv-history-card|kv-modal)\b/);
     assert.doesNotMatch(bracket + css, /\bkv-(?:page|title|subtitle|header|back|stats|stat)\b/);
+    assert.doesNotMatch(bracketJs + css, /\b(?:kv-phase(?:__item(?:--active|--done)?|__arrow)?|kv-podium(?:-item(?:--(?:first|second|third)|__icon|__label|__name)?)?|kv-classificacao(?:-geral(?:__item|__mod|__podium)?)?|kv-confronto-row(?:__\w+)?)\b/);
+    assert.doesNotMatch(css, /\.bracket-champion-card__\w+\s*\{|\bstatusPulse\b/);
     assert.doesNotMatch(css, /\.status-badge\s*\{|\.kv-modal \.btn-save\s*\{/);
 });
 
