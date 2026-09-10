@@ -29,17 +29,17 @@ $paginaAtiva = 'perfil';
 
     <div class="card border-0 shadow-sm rounded-4 mb-3">
         <div class="card-body text-center py-4">
-            <div class="perfil-avatar-ring mx-auto" id="fotoCircleMob">
-                <div class="perfil-avatar-inner">
+            <div class="perfil-avatar-ring position-relative flex-shrink-0 mx-auto p-1 rounded-circle bg-primary shadow" id="fotoCircleMob">
+                <div class="position-relative w-100 h-100 rounded-circle overflow-hidden d-flex align-items-center justify-content-center bg-body-secondary">
                     <?php $fotoPath = $usuarioPerfil['foto_usuario'] ? \App\Shared\Http\Url::to('uploads/fotosUsuarios/' . rawurlencode($usuarioPerfil['foto_usuario'])) : ''; ?>
                     <img src="<?= $fotoPath ?>" id="fotoImgMob" class="w-100 h-100 object-fit-cover <?= $fotoPath ? '' : 'd-none' ?>" alt="Foto" onerror="this.classList.add('d-none');document.getElementById('fotoIconMob')?.classList.remove('d-none');">
-                    <i class="bi bi-person-fill <?= $fotoPath ? 'd-none' : '' ?>" id="fotoIconMob"></i>
+                    <i class="bi bi-person-fill fs-1 text-secondary <?= $fotoPath ? 'd-none' : '' ?>" id="fotoIconMob"></i>
                     <div class="placeholder-glow position-absolute top-0 start-0 w-100 h-100 rounded-circle z-1" id="fotoSkeletonMob" aria-hidden="true">
                         <span class="placeholder rounded-circle w-100 h-100"></span>
                     </div>
                 </div>
-                <button type="button" class="perfil-btn-camera btn btn-primary d-inline-flex align-items-center justify-content-center p-0" id="btnCameraMob" title="Alterar foto">
-                    <i class="bi bi-camera-fill"></i>
+                <button type="button" class="btn btn-primary rounded-circle border border-2 border-white shadow position-absolute bottom-0 end-0 z-3 d-inline-flex align-items-center justify-content-center p-2" id="btnCameraMob" title="Alterar foto">
+                    <i class="bi bi-camera-fill fs-6"></i>
                 </button>
             </div>
             <h5 class="fw-bold mt-3 mb-1" id="perfilNomeMob"><?= htmlspecialchars($usuarioPerfil['nome_usuario'] ?? '', ENT_QUOTES) ?></h5>
@@ -97,17 +97,17 @@ $paginaAtiva = 'perfil';
             <aside class="col-12 col-lg-3">
                 <div class="card border-0 shadow-sm rounded-4 position-sticky top-0">
                     <div class="card-body text-center py-5 px-4 d-flex flex-column align-items-center">
-                        <div class="perfil-avatar-ring mx-auto" id="fotoCircleDesk">
-                            <div class="perfil-avatar-inner">
+                        <div class="perfil-avatar-ring position-relative flex-shrink-0 mx-auto p-1 rounded-circle bg-primary shadow" id="fotoCircleDesk">
+                            <div class="position-relative w-100 h-100 rounded-circle overflow-hidden d-flex align-items-center justify-content-center bg-body-secondary">
                                 <?php $fotoPathDesk = $usuarioPerfil['foto_usuario'] ? \App\Shared\Http\Url::to('uploads/fotosUsuarios/' . rawurlencode($usuarioPerfil['foto_usuario'])) : ''; ?>
                                 <img src="<?= $fotoPathDesk ?>" id="fotoImgDesk" class="w-100 h-100 object-fit-cover <?= $fotoPathDesk ? '' : 'd-none' ?>" alt="Foto" onerror="this.classList.add('d-none');document.getElementById('fotoIconDesk')?.classList.remove('d-none');">
-                                <i class="bi bi-person-fill <?= $fotoPathDesk ? 'd-none' : '' ?>" id="fotoIconDesk"></i>
+                                <i class="bi bi-person-fill fs-1 text-secondary <?= $fotoPathDesk ? 'd-none' : '' ?>" id="fotoIconDesk"></i>
                                 <div class="placeholder-glow position-absolute top-0 start-0 w-100 h-100 rounded-circle z-1" id="fotoSkeletonDesk" aria-hidden="true">
                                     <span class="placeholder rounded-circle w-100 h-100"></span>
                                 </div>
                             </div>
-                            <button type="button" class="perfil-btn-camera btn btn-primary d-inline-flex align-items-center justify-content-center p-0" id="btnCameraDesk" title="Alterar foto">
-                                <i class="bi bi-camera-fill"></i>
+                            <button type="button" class="btn btn-primary rounded-circle border border-2 border-white shadow position-absolute bottom-0 end-0 z-3 d-inline-flex align-items-center justify-content-center p-2" id="btnCameraDesk" title="Alterar foto">
+                                <i class="bi bi-camera-fill fs-6"></i>
                             </button>
                         </div>
 

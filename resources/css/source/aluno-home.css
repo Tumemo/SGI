@@ -29,97 +29,15 @@
     }
 }
 
-/* Avatar ring com gradiente */
+/* Bootstrap supplies the avatar treatment; only the domain-specific size remains. */
 .perfil-avatar-ring {
-    position: relative;
     width: 150px;
     height: 150px;
-    border-radius: 50%;
-    padding: 4px;
-    background: linear-gradient(135deg, #E30613, #ff6b6b);
-    box-shadow: 0 4px 16px rgba(227, 6, 19, 0.25);
-    flex-shrink: 0;
 }
 
-.perfil-avatar-inner {
-    width: 100%;
-    height: 100%;
-    border-radius: 50%;
-    overflow: hidden;
-    background: #e8e8e8;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    position: relative;
-}
-
-.perfil-avatar-inner i {
-    font-size: 3.5rem;
-    color: #999;
-}
-
-/* Botão câmera no avatar — hover reveal */
-.perfil-btn-camera {
-    position: absolute;
-    bottom: 4px;
-    right: 4px;
-    width: 38px;
-    height: 38px;
-    border-radius: 50%;
-    background: #E30613;
-    border: 2.5px solid #fff;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: #fff;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
-    z-index: 3;
-    padding: 0;
-    line-height: 1;
-    cursor: pointer;
-    transition: transform 0.25s ease, background-color 0.2s ease, opacity 0.2s ease;
-}
-
-.perfil-btn-camera i {
-    font-size: 1.1rem;
-}
-
-.perfil-btn-camera:hover {
-    transform: scale(1.1);
-    background: #c00510;
-}
-
-@media (hover: hover) {
-    .perfil-avatar-ring .perfil-btn-camera {
-        opacity: 0;
-        transform: scale(0.85);
-    }
-    .perfil-avatar-ring:hover .perfil-btn-camera {
-        opacity: 1;
-        transform: scale(1);
-    }
-}
-
-/* Responsivo */
 @media (max-width: 767.98px) {
     .perfil-avatar-ring {
         width: 130px;
         height: 130px;
     }
-
-    .perfil-avatar-inner i {
-        font-size: 3rem;
-    }
-
-    .perfil-btn-camera {
-        width: 34px;
-        height: 34px;
-        bottom: 2px;
-        right: 2px;
-    }
-
-    .perfil-btn-camera i {
-        font-size: 0.95rem;
-    }
-
 }

@@ -284,8 +284,10 @@ test('profile layouts use Bootstrap grids, badges and input groups', () => {
     assert.match(sources, /badge rounded-pill \<\?= \$nivelBadgeClass \?\>/);
     assert.match(sources, /input-group/);
     assert.match(sources, /perfil-password-eye btn btn-outline-secondary/);
+    assert.match(sources, /perfil-avatar-ring position-relative flex-shrink-0 mx-auto p-1 rounded-circle bg-primary shadow/);
+    assert.match(sources, /position-absolute bottom-0 end-0 z-3 d-inline-flex align-items-center justify-content-center p-2/);
     assert.doesNotMatch(sources, /perfil-(?:grid|field|info-grid|info-item|card-title|badge-nivel|password-input|btn-editar|input)\b|nivel-cor-/);
-    assert.doesNotMatch(css, /\.perfil-(?:grid|field|info-grid|info-item|card-title|badge-nivel|password-input|btn-editar|input)\b|\.perfil-page\b|\.perfil-wrapper\b/);
+    assert.doesNotMatch(css, /\.perfil-(?:grid|field|info-grid|info-item|card-title|badge-nivel|password-input|btn-editar|input|avatar-inner|btn-camera)\b|\.perfil-page\b|\.perfil-wrapper\b|linear-gradient\(135deg, #E30613/);
 });
 
 test('classroom cards and search use native Bootstrap components', () => {
