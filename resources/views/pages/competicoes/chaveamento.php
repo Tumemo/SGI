@@ -11,15 +11,15 @@ $isNivel2 = $nivelUsuario === 2;
 $podeGerar = !$isNivel2 && !$isNivel3;
 ?>
 
-<main class="d-md-none kv-page sgi-u-p-20px" >
+<main class="d-md-none kv-page p-4" >
     <a href="<?= \App\Shared\Http\Url::to('painel') ?>" id="btnVoltarChaveamentoMob" class="btn btn-primary d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none" >
         <i class="bi bi-arrow-left-circle fs-5"></i> <span id="nomeInterclasseChaveamentoMob">Interclasse</span>
     </a>
     <div class="mb-3">
-        <h4 class="kv-title sgi-u-text-1-2rem" >Chaveamento</h4>
+        <h4 class="kv-title fs-4" >Chaveamento</h4>
     </div>
 
-    <div class="kv-stats sgi-u-grid-repeat-2-1fr-mb-20px" >
+    <div class="kv-stats mb-4" >
         <div class="kv-stat">
             <div class="kv-stat__icon kv-stat__icon--modalidades"><i class="bi bi-trophy"></i></div>
             <div class="kv-stat__info">
@@ -118,7 +118,7 @@ $podeGerar = !$isNivel2 && !$isNivel3;
 
 <main class="d-none d-md-block kv-page main-desktop-layout">
 
-    <div class="container-fluid sgi-u-maxw-96" >
+    <div class="container-fluid mw-100" >
 
         <div class="kv-header">
             <div class="kv-header__left">
@@ -181,7 +181,7 @@ $podeGerar = !$isNivel2 && !$isNivel3;
             <div class="kv-gen-card__note">⚠ Não há possibilidade de gerar um segundo chaveamento.Tome cuidado!</div>
             <?php endif; ?>
             <div id="msgChaveamento"></div>
-            <div id="linkVerArvore" class="d-none sgi-u-mt-12px" >
+            <div id="linkVerArvore" class="d-none mt-2" >
                 <a href="#" id="btnVerArvore" class="kv-link-btn">
                     <i class="bi bi-diagram-3-fill"></i> Ver árvore do chaveamento
                 </a>

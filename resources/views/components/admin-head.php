@@ -65,6 +65,7 @@ if ($nivelUsuario === 2) {
     <script src="<?= \App\Shared\Http\Assets::url('js/offline/chaveamento-engine.js') ?>"></script>
 <script src="<?= \App\Shared\Http\Assets::url('js/shared/http-client.js') ?>"></script>
 <script src="<?= \App\Shared\Http\Assets::url('js/shared/cronometro.js') ?>"></script>
+<script src="<?= \App\Shared\Http\Assets::url('js/shared/bootstrap-feedback.js') ?>"></script>
 <script src="<?= \App\Shared\Http\Assets::url('js/shared/page-runtime.js') ?>"></script>
 <script>
 (function () {

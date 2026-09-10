@@ -21,7 +21,7 @@ $isAdmin = $nivelUsuario === 0;
     </div>
 
     <div class="px-3">
-        <div class="ocr-grid sgi-u-grid-1fr" id="listaArrecadacaoMobile" >
+        <div class="ocr-grid" id="listaArrecadacaoMobile" >
             <div class="text-center text-muted py-5"><div class="spinner-border spinner-border-sm me-2"></div>Carregando...</div>
         </div>
     </div>

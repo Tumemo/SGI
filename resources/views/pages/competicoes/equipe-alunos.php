@@ -4,12 +4,12 @@ include SGI_ROOT . '/resources/views/components/admin-header.php';
 $paginaAtiva = 'dashboard';
 ?>
 
-<main class="d-md-none sgi-u-mb-120px" >
+<main class="d-md-none mb-5" >
     <div class="container mt-3">
         <a href="#" class="btn btn-primary d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none" id="btnVoltarEquipesMobile" >
             <i class="bi bi-arrow-left-circle fs-5"></i> <span id="nomeInterclasseEquipeAlunosMob">Interclasse</span>
         </a>
-        <div id="listaAlunosMobile" class="sgi-u-display-grid-grid-repeat-2-1fr-gap-0-75rem">
+        <div id="listaAlunosMobile" class="row row-cols-1 row-cols-sm-2 g-3">
             <p class="text-muted text-center">(Carregando alunos...)</p>
         </div>
         <button id="btnSalvarAlunosMobile" class="btn btn-primary w-100 mt-3"><i class="bi bi-check-lg"></i></button>
@@ -28,18 +28,11 @@ $paginaAtiva = 'dashboard';
             </div>
         </div>
 
-        <div id="listaAlunosDesktop" class="sgi-u-display-grid-grid-repeat-2-1fr-gap-0-75rem">
+        <div id="listaAlunosDesktop" class="row row-cols-1 row-cols-lg-2 g-3">
             <div class="aluno-loading text-center py-4 text-muted">Carregando alunos...</div>
         </div>
     </div>
 </main>
-
-<div id="toastMensagem" class="position-fixed top-0 start-50 translate-middle-x z-3 p-3 d-none mt-2" >
-    <div class="d-flex align-items-center gap-2 px-4 py-3 rounded-3 shadow-lg bg-white sgi-u-min-width-280px-border-left-5px-solid-198754" id="toastConteudo" >
-        <i class="bi fs-4" id="toastIcone"></i>
-        <span class="fw-semibold" id="toastTexto"></span>
-    </div>
-</div>
 
 <script type="application/json" data-sgi-config="competicoes/equipe-alunos"><?= json_encode([], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_THROW_ON_ERROR) ?></script>
 <script data-sgi-page src="<?= \App\Shared\Http\Assets::url('js/pages/competicoes/equipe-alunos.js') ?>"></script>

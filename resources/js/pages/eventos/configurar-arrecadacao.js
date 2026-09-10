@@ -27,22 +27,22 @@ window.SGIPage.mount("eventos/configurar-arrecadacao", function (pageConfig, pag
         const nome = esc(turma.nome_fantasia_turma || turma.nome_turma);
         const nomeJs = (turma.nome_fantasia_turma || turma.nome_turma || '').replace(/'/g, "\\'");
         return `
-            <div class="ocr-card">
-                <div class="ocr-card__icon"><i class="bi bi-people-fill"></i></div>
-                <div class="ocr-card__info">
-                    <p class="ocr-card__name">${nome}</p>
-                    <span class="ocr-card__badge">${esc(turma.nome_categoria || 'Geral')}</span>
+            <div class="card border-0 shadow-sm p-3 d-flex flex-row align-items-center gap-3">
+                <div class="bg-danger-subtle text-danger rounded-circle p-2 fs-5 d-flex align-items-center justify-content-center flex-shrink-0"><i class="bi bi-people-fill"></i></div>
+                <div class="flex-grow-1 min-w-0">
+                    <p class="mb-1 fw-semibold text-truncate">${nome}</p>
+                    <span class="badge text-bg-light">${esc(turma.nome_categoria || 'Geral')}</span>
                 </div>
-                <div class="ocr-card__input-wrap">
-                    <input type="number" step="0.1" min="0" class="ocr-card__input arrec-input"
+                <div class="input-group input-group-sm w-auto">
+                    <input type="number" step="0.1" min="0" class="form-control text-center fw-semibold arrec-input"
                         data-id-turma="${turma.id_turma}"
                         value="${getQuantidadePendente(turma)}" placeholder="0">
-                    <span class="ocr-card__input-suffix">Kg</span>
+                    <span class="input-group-text">Kg</span>
                 </div>
-                <button type="button" class="ocr-card__hist" onclick="abrirHistoricoTurma(${turma.id_turma}, '${nomeJs}')" title="Ver histórico">
+                <button type="button" class="btn btn-outline-secondary btn-sm" onclick="abrirHistoricoTurma(${turma.id_turma}, '${nomeJs}')" title="Ver histórico">
                     <i class="bi bi-clock-history"></i>
                 </button>
-                <button type="button" class="ocr-card__save" data-id-turma="${turma.id_turma}" onclick="salvarTurma(${turma.id_turma})" title="Salvar">
+                <button type="button" class="btn btn-outline-success btn-sm" data-sgi-action="save-arrecadacao" data-id-turma="${turma.id_turma}" onclick="salvarTurma(${turma.id_turma})" title="Salvar">
                     <i class="bi bi-check-lg"></i>
                 </button>
             </div>
@@ -54,7 +54,7 @@ window.SGIPage.mount("eventos/configurar-arrecadacao", function (pageConfig, pag
         const listaDesktop = document.getElementById('listaArrecadacaoDesktop');
 
         if (todasAsTurmas.length === 0) {
-            const msg = '<div class="text-center text-muted py-5 sgi-u-col-1-1" ><i class="bi bi-inbox sgi-u-text-2rem-display-block-mb-5rem" ></i>Nenhuma turma encontrada.</div>';
+            const msg = '<div class="text-center text-muted py-5 sgi-u-col-1-1" ><i class="bi bi-inbox fs-2 d-block mb-2 text-body-tertiary" ></i>Nenhuma turma encontrada.</div>';
             listaMobile.innerHTML = msg;
             listaDesktop.innerHTML = msg;
             return;
@@ -154,7 +154,7 @@ window.SGIPage.mount("eventos/configurar-arrecadacao", function (pageConfig, pag
 
         if (input) salvarLocal(idTurma, input.value);
 
-        const botoes = document.querySelectorAll(`.ocr-card__save[data-id-turma="${idTurma}"]`);
+        const botoes = document.querySelectorAll(`[data-sgi-action="save-arrecadacao"][data-id-turma="${idTurma}"]`);
         botoes.forEach(btn => {
             btn.disabled = true;
             btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';

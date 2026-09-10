@@ -45,7 +45,7 @@ function renderCards(items) {
                             <div class="card-meta">
                                 <span><i class="bi bi-calendar3"></i>${ano}</span>
                                 <span class="badge rounded-pill text-bg-${isAtivo ? 'success' : 'secondary'}">
-                                    <i class="bi bi-circle-fill sgi-u-text-0-4rem" ></i>
+                                    <i class="bi bi-circle-fill small" ></i>
                                     ${statusLabel}
                                 </span>
                             </div>

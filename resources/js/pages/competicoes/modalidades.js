@@ -45,7 +45,7 @@ window.SGIPage.mount("competicoes/modalidades", function (pageConfig, pageScope)
                                 + '</div>'
                             : '';
                         divMobile.innerHTML +=
-                            '<div class="bg-white d-flex align-items-center shadow py-3 px-4 mb-3 border border-1 rounded-3 w-100 sgi-u-maxw-90" >'
+                            '<div class="bg-white d-flex align-items-center shadow py-3 px-4 mb-3 border border-1 rounded-3 w-100 mw-100" >'
                                 + '<i class="bi bi-trophy fs-4"></i>'
                                 + '<div class="text-start px-3 w-100">'
                                     + '<h2 class="m-0 fs-5 text-truncate">' + esc(modalidade.nome_modalidade) + '</h2>'
@@ -66,7 +66,7 @@ window.SGIPage.mount("competicoes/modalidades", function (pageConfig, pageScope)
                             : '';
                         divDesktop.innerHTML +=
                             '<div class="col-12 col-md-6 col-lg-4">'
-                                + '<div class="card border border-light-subtle shadow-sm h-100 py-4 px-4 d-flex flex-row align-items-center sgi-u-radius-10px" >'
+                                + '<div class="card border border-light-subtle shadow-sm h-100 py-4 px-4 d-flex flex-row align-items-center rounded-3" >'
                                     + '<div class="d-flex align-items-center gap-3 flex-grow-1">'
                                         + '<i class="bi bi-trophy fs-4 text-dark"></i>'
                                         + '<div>'

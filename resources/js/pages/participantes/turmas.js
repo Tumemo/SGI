@@ -9,16 +9,7 @@ window.SGIPage.mount("participantes/turmas", function (pageConfig, pageScope) {
 
     /* ── TOAST ── */
     function mostrarToast(mensagem, tipo) {
-        const wrapper = document.getElementById('toastWrapper');
-        const icones = { success: 'bi-check-circle-fill', error: 'bi-x-circle-fill', info: 'bi-info-circle-fill' };
-        const el = document.createElement('div');
-        el.className = `toast-sgi toast-sgi--${tipo}`;
-        el.innerHTML = `<i class="bi ${icones[tipo] || icones.info} toast-sgi-icon"></i> ${mensagem}`;
-        wrapper.appendChild(el);
-        setTimeout(() => {
-            el.classList.add('toast-sgi--out');
-            setTimeout(() => el.remove(), 300);
-        }, 3500);
+        window.SGI.showToast(mensagem, tipo);
     }
 
     /* ── HELPERS ── */
@@ -46,19 +37,13 @@ window.SGIPage.mount("participantes/turmas", function (pageConfig, pageScope) {
     function renderizarSkeleton() {
         const html = Array.from({ length: 6 }, () => `
             <div class="col">
-                <div class="skeleton-card skeleton-shimmer">
-                    <div class="skeleton-card-top">
-                        <div class="skeleton-avatar"></div>
-                        <div class="skeleton-lines">
-                            <div class="skeleton-line skeleton-line--sm"></div>
-                            <div class="skeleton-line skeleton-line--xs"></div>
-                        </div>
+                <div class="card h-100 p-3 placeholder-glow" aria-hidden="true">
+                    <div class="d-flex gap-3 mb-3">
+                        <span class="placeholder rounded-3 flex-shrink-0 py-4 px-4"></span>
+                        <span class="placeholder col-7 align-self-start mt-2"></span>
                     </div>
-                    <div class="skeleton-meta">
-                        <div class="skeleton-badge"></div>
-                        <div class="skeleton-badge"></div>
-                    </div>
-                    <div class="skeleton-actions"></div>
+                    <span class="placeholder col-4 rounded-pill mb-2"></span>
+                    <span class="placeholder col-12"></span>
                 </div>
             </div>
         `).join('');

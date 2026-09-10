@@ -22,7 +22,7 @@ $paginaAtiva = 'ranking';
 ?>
 
 <!-- ======================== MOBILE ======================== -->
-<main class="d-md-none py-3 px-3 sgi-u-mb-100px" >
+<main class="d-md-none py-3 px-3 mb-5" >
     <div id="msgMob"></div>
 
     <header class="rk-mobile-header mb-2">
@@ -75,7 +75,7 @@ $paginaAtiva = 'ranking';
 <!-- Modal: histórico de pontuações da turma -->
 <div class="modal fade" id="modalHistoricoTurma" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
-        <div class="modal-content border-0 shadow sgi-u-radius-18px" >
+        <div class="modal-content border-0 shadow rounded-4" >
             <div class="modal-header border-0 pb-0 px-4 pt-3">
                 <h5 class="modal-title fw-bold" id="htrTitulo">Histórico de Pontos</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>

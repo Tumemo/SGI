@@ -36,3 +36,19 @@ for (const width of [390, 1440]) {
         await expect(action).toBeEnabled();
     });
 }
+
+test('feedback uses the Bootstrap Toast API and escapes message text', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 900 });
+    await page.setContent('<div class="toast-container position-fixed top-0 end-0 p-3" id="sgiToastContainer"></div>');
+    await page.addStyleTag({ path: path.join(root, 'public/assets/css/bootstrap-theme.css') });
+    await page.addScriptTag({ path: path.join(root, 'public/assets/vendor/bootstrap/js/bootstrap.bundle.min.js') });
+    await page.addScriptTag({ path: path.join(root, 'resources/js/shared/bootstrap-feedback.js') });
+
+    await page.evaluate(() => window.SGI.showToast('<b>mensagem</b>', 'error', { delay: 50 }));
+    const toast = page.locator('#sgiToastContainer .toast');
+    await expect(toast).toHaveClass(/text-bg-danger/);
+    await expect(toast).toContainText('<b>mensagem</b>');
+    await expect(toast.locator('b')).toHaveCount(0);
+    await expect(toast).toBeVisible();
+    await expect(toast).toHaveCount(0, { timeout: 1000 });
+});

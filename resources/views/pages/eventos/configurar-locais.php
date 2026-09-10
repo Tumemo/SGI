@@ -32,7 +32,7 @@ $isColaborador = $nivelUsuario === 1;
         <div class="card border-0 shadow-sm rounded-4 mb-4">
             <div class="card-body p-4 d-flex flex-column flex-lg-row justify-content-between align-items-start align-items-lg-center gap-3">
                 <div class="d-flex align-items-center gap-3">
-                    <div class="rounded-circle bg-danger-subtle p-3 d-flex align-items-center justify-content-center sgi-u-w-50px-h-50px" >
+                    <div class="rounded-circle bg-danger-subtle p-3 d-flex align-items-center justify-content-center p-3" >
                         <i class="bi bi-file-earmark-pdf-fill fs-3 text-danger"></i>
                     </div>
                     <div>

@@ -82,8 +82,8 @@ if (pageConfig.value1) {
             const anoStr = item.ano_interclasse ? item.ano_interclasse.split('-')[0] : "N/A";
             const ativo = String(item.status_interclasse) === '1';
             const statusBadge = ativo
-                ? '<span class="bg-danger rounded-3 text-white px-3 py-1 sgi-u-text-0-82rem" >Ativo</span>'
-                : '<span class="bg-secondary rounded-3 text-white px-3 py-1 sgi-u-text-0-82rem" >Inativo</span>';
+                ? '<span class="bg-danger rounded-3 text-white px-3 py-1 small" >Ativo</span>'
+                : '<span class="bg-secondary rounded-3 text-white px-3 py-1 small" >Inativo</span>';
             if (pageConfig.value0) {
             var classeCard = ativo ? '' : 'opacity-75';
             } else {
@@ -93,7 +93,7 @@ if (pageConfig.value1) {
 
             htmlMobile += `
                 <a href="/painel?id=${item.id_interclasse}" class="text-decoration-none text-dark">
-                    <div class="m-auto shadow d-flex justify-content-between align-content-center px-3 py-3 rounded-3 my-3 border border-1 ${classeCard} sgi-u-w-90" >
+                    <div class="m-auto shadow d-flex justify-content-between align-content-center px-3 py-3 rounded-3 my-3 border border-1 ${classeCard} w-100" >
                         <div>
                             <h2 class="m-0 fs-4">${nome}</h2>
                             <p class="text-secondary m-0">${anoStr}</p>
@@ -113,9 +113,7 @@ if (pageConfig.value1) {
             `;
 
             htmlDesktop += `
-                <div class="row bg-white shadow rounded-3 py-3 fs-5 mt-3 align-items-center px-2 border border-1 ${classeCard} sgi-u-cursor-pointer-transition-background-color-0-2s-ease"
-                     onmouseover="this.style.backgroundColor='#f8f9fa'"
-                     onmouseout="this.style.backgroundColor='#ffffff'"
+                <div class="row bg-white shadow rounded-3 py-3 fs-5 mt-3 align-items-center px-2 border border-1 ${classeCard} sgi-u-cursor-pointer"
                      onclick="window.location.href='/painel?id=${item.id_interclasse}'">
 
                     <div class="col-4 fw-semibold text-dark text-truncate">${nome}</div>

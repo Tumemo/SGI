@@ -6,7 +6,7 @@ $isAdmin = $nivelUsuario === 0;
 $paginaAtiva = 'dashboard';
 ?>
 
-<main class="d-md-none p-3 sgi-u-pb-5rem" >
+<main class="d-md-none p-3 pb-5" >
     <a href="<?= \App\Shared\Http\Url::to('edicoes/equipes') ?>" class="btn btn-primary d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none" id="btnVoltarElencoMob" >
         <i class="bi bi-arrow-left-circle fs-5"></i> <span id="nomeInterclasseElencoMob">Interclasse</span>
     </a>

@@ -60,22 +60,7 @@ window.SGIPage.mount("acesso/perfil", function (pageConfig, pageScope) {
     }
 
     function mostrarToast(mensagem, tipo) {
-        const toastContainer = document.getElementById('perfilToastContainer') || (() => {
-            const c = document.createElement('div');
-            c.id = 'perfilToastContainer';
-            c.className = 'perfil-toast-container';
-            document.body.appendChild(c);
-            return c;
-        })();
-        const toast = document.createElement('div');
-        toast.className = 'perfil-toast perfil-toast--' + tipo;
-        toast.innerHTML = '<i class="bi ' + (tipo === 'success' ? 'bi-check-circle-fill' : 'bi-exclamation-circle-fill') + ' me-2"></i>' + mensagem;
-        toastContainer.appendChild(toast);
-        requestAnimationFrame(() => toast.classList.add('perfil-toast--show'));
-        setTimeout(() => {
-            toast.classList.remove('perfil-toast--show');
-            setTimeout(() => toast.remove(), 300);
-        }, 3000);
+        window.SGI.showToast(mensagem, tipo);
     }
 
     function toggleCampoSenha(inputId, btn) {

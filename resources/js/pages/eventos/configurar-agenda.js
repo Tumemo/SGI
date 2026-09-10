@@ -288,7 +288,7 @@ window.SGIPage.mount("eventos/configurar-agenda", function (pageConfig, pageScop
                 <h3 class="ag-event-card__title">${escapeHtml(formatNomeJogo(j.nome_jogo, j))}</h3>
                 <p class="ag-event-card__subtitle">
                     ${modalidadeTxt ? '<i class="bi bi-trophy-fill"></i> ' + escapeHtml(modalidadeTxt) : ''}
-                    ${localTxt ? `<span class="sgi-u-color-D1D5DB">•</span> ${localTxt}` : ''}
+                    ${localTxt ? `<span class="text-body-tertiary">•</span> ${localTxt}` : ''}
                 </p>
                 ${teamsHtml}
                 <div class="ag-event-card__actions">

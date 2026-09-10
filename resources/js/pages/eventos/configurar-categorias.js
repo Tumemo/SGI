@@ -173,7 +173,7 @@ window.SGIPage.mount("eventos/configurar-categorias", function (pageConfig, page
                 const pt = qtdPartidas[cId] || 0;
 
                 divMobile.innerHTML += `
-                    <button type="button" class="categoria-item bg-white d-flex m-auto justify-content-between align-items-center shadow-sm py-3 px-4 mb-3 border border-1 rounded-3 sgi-u-w-90"  data-id="${cId}">
+                    <button type="button" class="categoria-item bg-white d-flex m-auto justify-content-between align-items-center shadow-sm py-3 px-4 mb-3 border border-1 rounded-3 w-100"  data-id="${cId}">
                         <i class="bi bi-trophy fs-3"></i>
                         <h2 class="m-0 fs-5 text-truncate px-3 w-100 text-start">${categoria.nome_categoria}</h2>
                         <picture><img src="${(window.SGI_ASSET_BASE || '/assets') + '/images/arrow-right.svg'}" alt="Seta para direita"></picture>
@@ -182,16 +182,16 @@ window.SGIPage.mount("eventos/configurar-categorias", function (pageConfig, page
 
                 divDesktop.innerHTML += `
                     <div class="col-12 col-md-6 col-lg-5 col-xl-4">
-                        <div class="categoria-item card border-0 shadow-sm h-100 p-4 sgi-u-radius-12px-cursor-pointer"  data-id="${cId}">
+                        <div class="categoria-item card border-0 shadow-sm h-100 p-4 rounded-3"  data-id="${cId}">
                             <div class="card-body p-0 d-flex flex-column">
                                 <h4 class="fw-bold text-dark mb-4 pb-2 text-truncate" title="${categoria.nome_categoria}">${categoria.nome_categoria}</h4>
                                 <div class="d-flex gap-3 mb-4">
                                     <div class="rounded-3 p-2 px-3 flex-fill border border-light-subtle shadow-sm bg-light-subtle" >
-                                        <div class="text-dark fw-medium mb-1 sgi-u-text-0-65rem" >EQUIPES</div>
+                                        <div class="text-dark fw-medium mb-1 small" >EQUIPES</div>
                                         <div class="fs-5 text-dark">${eq}</div>
                                     </div>
                                     <div class="rounded-3 p-2 px-3 flex-fill border border-light-subtle shadow-sm bg-light-subtle" >
-                                        <div class="text-dark fw-medium mb-1 sgi-u-text-0-65rem" >PARTIDAS</div>
+                                        <div class="text-dark fw-medium mb-1 small" >PARTIDAS</div>
                                         <div class="fs-5 text-dark">${pt}</div>
                                     </div>
                                 </div>

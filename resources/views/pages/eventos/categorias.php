@@ -13,7 +13,7 @@ $isMesario = $nivelUsuario === 2;
 
 
 <!-- main mobile -->
-<main class="position-relative d-md-none sgi-u-mb-120px" >
+<main class="position-relative d-md-none mb-5" >
     <a href="<?= \App\Shared\Http\Url::to('painel') ?>" id="btnVoltarCatMobile" class="btn btn-primary d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none" >
         <i class="bi bi-arrow-left-circle fs-5"></i> <span id="nomeInterclasseCatMob">Interclasse</span>
     </a>
@@ -102,7 +102,7 @@ $isMesario = $nivelUsuario === 2;
                     </div>
                     <div class="mb-3 d-flex align-items-center gap-2 flex-column">
                         <input type="file" id="arquivoUpload" class="d-none" accept=".pdf" onchange="mostrarNomeArquivo()">
-                        <p class="text-center sgi-u-text-13px" >Adicione aqui o pdf dos alunos da turma criada</p>
+                        <p class="text-center small" >Adicione aqui o pdf dos alunos da turma criada</p>
                         <label for="arquivoUpload" class="btn btn-light border rounded-circle p-3 sgi-u-cursor-pointer" >
                             <i class="bi bi-upload fs-4"></i>
                         </label>

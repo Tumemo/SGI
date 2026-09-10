@@ -6,18 +6,7 @@ let generoDaModalidade = 'MISTO';
 let _idEquipe = null;
 
 function mostrarToast(tipo, texto) {
-    const container = document.getElementById('toastMensagem');
-    const conteudo = document.getElementById('toastConteudo');
-    const icone = document.getElementById('toastIcone');
-    const txt = document.getElementById('toastTexto');
-    const cor = tipo === 'sucesso' ? '#198754' : '#dc3545';
-    const iconeNome = tipo === 'sucesso' ? 'bi-check-circle-fill text-success' : 'bi-exclamation-triangle-fill text-danger';
-    conteudo.style.borderLeftColor = cor;
-    icone.className = `bi ${iconeNome} fs-4`;
-    txt.textContent = texto;
-    container.classList.remove('d-none');
-    clearTimeout(container._timer);
-    container._timer = setTimeout(() => { container.classList.add('d-none'); }, 4000);
+    window.SGI.showToast(texto, tipo === 'sucesso' ? 'success' : 'error');
 }
 
 function cardAluno(aluno) {
@@ -25,7 +14,7 @@ function cardAluno(aluno) {
     const semInscricao = Number(aluno.inscrito || 0) === 0;
     const badge = semInscricao ? '<span class="badge-sem-inscricao">Sem inscrição</span>' : '';
     return `
-        <label class="aluno-card-item ${semInscricao ? 'sem-inscricao' : ''}">
+        <label class="col aluno-card-item ${semInscricao ? 'sem-inscricao' : ''}">
             <div>
                 <strong>${esc(aluno.nome_usuario)}</strong>${badge}
                 <div class="text-muted small">${esc(aluno.matricula_usuario)} (${aluno.genero_usuario || 'Não informado'})</div>

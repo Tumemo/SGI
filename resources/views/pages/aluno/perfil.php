@@ -21,7 +21,7 @@ include SGI_ROOT . '/resources/views/components/aluno-nav.php';
 ?>
 
 <!-- ===================== MOBILE ===================== -->
-<main class="perfil-page d-md-none p-3 sgi-u-pt-1-25rem-pb-5rem" >
+<main class="perfil-page d-md-none p-3 pt-3 pb-5" >
     <a href="<?= htmlspecialchars($urlVoltar) ?>" id="perfilBackMob" class="btn btn-primary d-inline-flex align-items-center gap-2 fw-bold mb-3 px-3 py-2 border-0 text-decoration-none" >
         <i class="bi bi-arrow-left-circle fs-5"></i> <span>Início</span>
     </a>
@@ -35,8 +35,8 @@ include SGI_ROOT . '/resources/views/components/aluno-nav.php';
                     <?php $fotoPath = $usuarioPerfil['foto_usuario'] ? \App\Shared\Http\Url::to('uploads/fotosUsuarios/' . rawurlencode($usuarioPerfil['foto_usuario'])) : ''; ?>
                     <img src="<?= $fotoPath ?>" id="fotoImgMob" class="w-100 h-100 object-fit-cover <?= $fotoPath ? '' : 'd-none' ?>" alt="Foto" onerror="this.classList.add('d-none');document.getElementById('fotoIconMob')?.classList.remove('d-none');">
                     <i class="bi bi-person-fill <?= $fotoPath ? 'd-none' : '' ?>" id="fotoIconMob"></i>
-                    <div class="perfil-avatar-skeleton" id="fotoSkeletonMob">
-                        <div class="perfil-skeleton-pulse"></div>
+                    <div class="placeholder-glow position-absolute top-0 start-0 w-100 h-100 rounded-circle z-1" id="fotoSkeletonMob" aria-hidden="true">
+                        <span class="placeholder rounded-circle w-100 h-100"></span>
                     </div>
                 </div>
                 <button type="button" class="perfil-btn-camera" id="btnCameraMob" title="Alterar foto">
@@ -103,8 +103,8 @@ include SGI_ROOT . '/resources/views/components/aluno-nav.php';
                                 <?php $fotoPathDesk = $usuarioPerfil['foto_usuario'] ? \App\Shared\Http\Url::to('uploads/fotosUsuarios/' . rawurlencode($usuarioPerfil['foto_usuario'])) : ''; ?>
                                 <img src="<?= $fotoPathDesk ?>" id="fotoImgDesk" class="w-100 h-100 object-fit-cover <?= $fotoPathDesk ? '' : 'd-none' ?>" alt="Foto" onerror="this.classList.add('d-none');document.getElementById('fotoIconDesk')?.classList.remove('d-none');">
                                 <i class="bi bi-person-fill <?= $fotoPathDesk ? 'd-none' : '' ?>" id="fotoIconDesk"></i>
-                                <div class="perfil-avatar-skeleton" id="fotoSkeletonDesk">
-                                    <div class="perfil-skeleton-pulse"></div>
+                                <div class="placeholder-glow position-absolute top-0 start-0 w-100 h-100 rounded-circle z-1" id="fotoSkeletonDesk" aria-hidden="true">
+                                    <span class="placeholder rounded-circle w-100 h-100"></span>
                                 </div>
                             </div>
                             <button type="button" class="perfil-btn-camera" id="btnCameraDesk" title="Alterar foto">
@@ -117,7 +117,7 @@ include SGI_ROOT . '/resources/views/components/aluno-nav.php';
                             <i class="<?= $nivelInfo['icon'] ?>"></i> <?= $nivelInfo['label'] ?>
                         </span>
 
-                        <div class="d-flex align-items-center justify-content-center gap-1 mt-2 sgi-u-text-0-8rem-color-888" >
+                        <div class="d-flex align-items-center justify-content-center gap-1 mt-2 small text-secondary" >
                             <span class="perfil-status-dot perfil-status-online"></span> Online
                         </div>
 
@@ -179,7 +179,7 @@ include SGI_ROOT . '/resources/views/components/aluno-nav.php';
                             </div>
                             <div class="perfil-info-item mb-0">
                                 <span class="perfil-info-label"><i class="bi bi-shield-plus"></i> Autenticação</span>
-                                <span class="perfil-info-value sgi-u-color-888-text-0-85rem" >Senha criptografada</span>
+                                <span class="perfil-info-value small text-secondary" >Senha criptografada</span>
                             </div>
                         </div>
                     </div>

@@ -11,7 +11,7 @@ $usuarioEhAdmin = (isset($_SESSION['nivel']) && (string)$_SESSION['nivel'] === '
 ?>
 
 <!-- ═══ MOBILE ═══ -->
-<main class="d-md-none sgi-u-pt-5-5rem-pb-6rem" >
+<main class="d-md-none pt-5 pb-5" >
     <div class="col-wrap">
         <a href="<?= \App\Shared\Http\Url::to('painel') ?>" id="btnVoltarColabMobile" class="btn btn-primary d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none" >
             <i class="bi bi-arrow-left-circle fs-5"></i> <span id="nomeInterclasseColabMobile">Interclasse</span>
@@ -142,8 +142,8 @@ $usuarioEhAdmin = (isset($_SESSION['nivel']) && (string)$_SESSION['nivel'] === '
                     </div>
                     <div id="msgNovoColaborador" class="text-center mb-2"></div>
                     <div class="d-flex justify-content-end gap-2">
-                        <button type="button" class="btn btn-outline-secondary sgi-u-radius-10px-weight-600-text-85rem" data-bs-dismiss="modal" >Cancelar</button>
-                        <button type="submit" class="btn btn-primary sgi-u-radius-10px-weight-700-text-85rem" id="btnSalvarColaborador" >Cadastrar</button>
+                        <button type="button" class="btn btn-outline-secondary rounded-3 fw-semibold small" data-bs-dismiss="modal" >Cancelar</button>
+                        <button type="submit" class="btn btn-primary rounded-3 fw-bold small" id="btnSalvarColaborador" >Cadastrar</button>
                     </div>
                 </form>
             </div>
@@ -182,8 +182,8 @@ $usuarioEhAdmin = (isset($_SESSION['nivel']) && (string)$_SESSION['nivel'] === '
                     </div>
                     <div id="msgEditarColaborador" class="text-center mb-2"></div>
                     <div class="d-flex justify-content-end gap-2">
-                        <button type="button" class="btn btn-outline-secondary sgi-u-radius-10px-weight-600-text-85rem" data-bs-dismiss="modal" >Cancelar</button>
-                        <button type="submit" class="btn btn-primary sgi-u-radius-10px-weight-700-text-85rem" id="btnSalvarEdicaoColaborador" >Salvar</button>
+                        <button type="button" class="btn btn-outline-secondary rounded-3 fw-semibold small" data-bs-dismiss="modal" >Cancelar</button>
+                        <button type="submit" class="btn btn-primary rounded-3 fw-bold small" id="btnSalvarEdicaoColaborador" >Salvar</button>
                     </div>
                 </form>
             </div>

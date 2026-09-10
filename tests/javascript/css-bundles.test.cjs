@@ -43,6 +43,16 @@ test('context heads do not load Bootstrap vendor CSS alongside the theme', () =>
     assert.doesNotMatch(fs.readFileSync(path.join(root, 'resources', 'views', 'pages', 'acesso', 'login.php'), 'utf8'), /css\/shared\.css/);
 });
 
+test('shared contexts load the Bootstrap feedback helper', () => {
+    const adminHead = fs.readFileSync(path.join(root, 'resources', 'views', 'components', 'admin-head.php'), 'utf8');
+    const alunoHead = fs.readFileSync(path.join(root, 'resources', 'views', 'components', 'aluno-head.php'), 'utf8');
+    const helper = fs.readFileSync(path.join(root, 'resources', 'js', 'shared', 'bootstrap-feedback.js'), 'utf8');
+    assert.match(adminHead, /js\/shared\/bootstrap-feedback\.js/);
+    assert.match(alunoHead, /js\/shared\/bootstrap-feedback\.js/);
+    assert.match(helper, /Toast\.getOrCreateInstance/);
+    assert.match(helper, /textContent = mensagem/);
+});
+
 test('legacy global Bootstrap overrides were removed from source CSS', () => {
     const admin = fs.readFileSync(path.join(root, 'resources', 'css', 'source', 'admin.css'), 'utf8');
     const login = fs.readFileSync(path.join(root, 'resources', 'css', 'source', 'login.css'), 'utf8');
@@ -94,6 +104,31 @@ test('shared utility classes all have a template or JavaScript consumer', () => 
     assert.deepEqual(unused, [], `Utilitários sem consumidor: ${unused.join(', ')}`);
 });
 
+test('shared custom utilities are restricted to documented domain exceptions', () => {
+    const utilityCss = fs.readFileSync(path.join(root, 'resources', 'css', 'source', 'utilities.css'), 'utf8');
+    const allowed = new Set([
+        'sgi-u-w-max-content-maxw-96vw-top-85',
+        'sgi-u-bottom-40px-right-5-z-1050',
+        'sgi-u-cursor-pointer',
+        'sgi-u-col-1-1',
+        'sgi-u-w-0',
+        'sgi-u-h-60px-w-60px-bottom-100px',
+        'sgi-u-animation-delay-calc-attr-data-sgi-index-type-number-07s',
+        'sgi-u-h-8px',
+        'sgi-u-w-calc-attr-data-sgi-width-type-number-1',
+        'sgi-u-h-12px',
+        'sgi-u-bottom-92px-right-16px-z-20',
+        'sgi-u-flex-1-min-width-160px-text-align-center',
+        'sgi-u-max-height-60vh-overflow-y-auto',
+        'sgi-u-w-max-content-top-85-left-50',
+        'sgi-u-h-120px',
+        'sgi-u-top-20px-left-20px-z-10',
+        'sgi-u-min-width-0',
+    ]);
+    const names = [...new Set([...utilityCss.matchAll(/\.(sgi-u-[A-Za-z0-9_-]+)/g)].map((match) => match[1]))];
+    assert.deepEqual(names.filter((name) => !allowed.has(name)), []);
+});
+
 test('legacy duplicate component blocks remain removed', () => {
     const admin = fs.readFileSync(path.join(root, 'resources', 'css', 'source', 'admin.css'), 'utf8');
     const utilities = fs.readFileSync(path.join(root, 'resources', 'css', 'source', 'utilities.css'), 'utf8');
@@ -102,6 +137,27 @@ test('legacy duplicate component blocks remain removed', () => {
     assert.doesNotMatch(admin, /--vermelho\s*:/);
     assert.doesNotMatch(utilities, /sgi-u-z-1040-h-64px|sgi-u-w-80px-top-0-bottom-0/);
     assert.doesNotMatch(utilities, /sgi-u-display-none(?:-mt-10px)?\b|sgi-u-(?:w-100|maxw-100|h-100)(?!-)|sgi-u-p-24px\b/);
+});
+
+test('feedback and data cards use Bootstrap components instead of custom duplicates', () => {
+    const adminCss = fs.readFileSync(path.join(root, 'resources', 'css', 'source', 'admin.css'), 'utf8');
+    const alunoCss = fs.readFileSync(path.join(root, 'resources', 'css', 'source', 'aluno-home.css'), 'utf8');
+    const sources = [
+        path.join(root, 'resources', 'js', 'pages', 'participantes', 'turmas.js'),
+        path.join(root, 'resources', 'js', 'pages', 'disciplina', 'ocorrencias.js'),
+        path.join(root, 'resources', 'js', 'pages', 'eventos', 'configurar-arrecadacao.js'),
+        path.join(root, 'resources', 'views', 'pages', 'participantes', 'turmas.php'),
+        path.join(root, 'resources', 'views', 'pages', 'acesso', 'perfil.php'),
+        path.join(root, 'resources', 'views', 'pages', 'aluno', 'perfil.php'),
+        path.join(root, 'resources', 'views', 'pages', 'eventos', 'dashboard.php'),
+    ].map((file) => fs.readFileSync(file, 'utf8')).join('\n');
+    assert.doesNotMatch(adminCss, /\.toast-sgi|\.skeleton-card|\.ocr-card(?:__|\s*\{)|\.dash-card|\.perfil-toast|\.perfil-avatar-skeleton/);
+    assert.doesNotMatch(alunoCss, /\.perfil-toast|\.perfil-avatar-skeleton/);
+    assert.doesNotMatch(sources, /toast-sgi|skeleton-card|ocr-card__|dash-card|perfil-toast|perfil-avatar-skeleton/);
+    assert.match(sources, /toast-container/);
+    assert.match(sources, /placeholder-glow/);
+    assert.match(sources, /data-sgi-action="save-arrecadacao"/);
+    assert.match(sources, /card h-100 p-4 text-decoration-none shadow-sm/);
 });
 
 test('native Bootstrap display and sizing utilities are used in migrated markup', () => {
@@ -196,4 +252,14 @@ test('competition list and bracket modal use native status and action variants',
     assert.match(bracket, /btn btn-primary/);
     assert.match(bracket, /btn btn-outline-secondary/);
     assert.doesNotMatch(css, /\.status-badge\s*\{|\.kv-modal \.btn-save\s*\{/);
+});
+
+test('score controls keep behavior hooks while using native Bootstrap controls', () => {
+    const placar = fs.readFileSync(path.join(root, 'resources', 'js', 'pages', 'competicoes', 'placar.js'), 'utf8');
+    const adminCss = fs.readFileSync(path.join(root, 'resources', 'css', 'source', 'admin.css'), 'utf8');
+    assert.match(placar, /mc-action-btn--start btn btn-primary/);
+    assert.match(placar, /mc-action-btn--finish btn btn-outline-danger/);
+    assert.match(placar, /mc-duration-select form-select form-select-sm w-auto/);
+    assert.match(placar, /mc-pause-btn btn btn-outline-secondary btn-sm/);
+    assert.doesNotMatch(adminCss, /\.mc-action-btn\s*\{|\.mc-action-btn--start\s*\{|\.mc-action-btn--finish\s*\{|\.mc-duration-select\s*\{|\.mc-pause-btn\s*\{/);
 });

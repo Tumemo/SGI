@@ -31,7 +31,7 @@ A última auditoria identificou oportunidades concretas:
 - `utilities.css`: eliminar aliases e utilitários arbitrários substituíveis.
 - Reavaliar regras remanescentes de layout, navegação, estados e responsividade, mesmo quando ainda têm consumidores.
 
-Na revisão anterior, build, verificações PHP/JavaScript e testes isolados passaram. A suíte HTTP não iniciou por ausência de `SGI_TEST_BASE_URL`; todas as telas autenticadas e os cenários offline ainda precisam da validação integrada no ambiente isolado.
+Na revisão anterior, build, verificações PHP/JavaScript e testes isolados passaram. A primeira execução integrada em Docker chegou a 478 de 479 asserções: o único erro era do próprio `TestClient`, que não expunha o header `Content-Type` para o teste do novo bundle Bootstrap. O suporte de teste foi corrigido para capturar o MIME real; a repetição concluiu 479/479 asserções HTTP e a suíte de navegador concluiu 50/50 cenários.
 
 ### Medição disponível
 
@@ -58,6 +58,23 @@ Registrar por lote:
 - Redução absoluta e percentual sobre uma base fixa e reproduzível.
 
 Manter framework e bibliotecas de ícones em métricas separadas. Não contar minificação, troca de finais de linha ou mudança de arquivo como eliminação de regras. Não fixar percentual de redução antes do inventário.
+
+### Execução registrada no lote atual
+
+O lote implementado junto deste plano cobre partes das etapas 2, 4, 5 e 8, sempre migrando o consumidor e removendo a regra substituída no mesmo diff:
+
+- feedback transitório de perfil, turma e equipe centralizado em `window.SGI.showToast`, com Toast nativo, live region e texto seguro;
+- skeletons de perfil e turmas substituídos por `placeholder-glow`/`placeholder`;
+- cards de ocorrências, arrecadação e dashboard convertidos para `card`, `badge`, `input-group`, botões e utilitários Bootstrap;
+- controles de placar preservando hooks JavaScript e usando `btn`, `form-select` e `btn-outline-*`;
+- grids de equipe convertidos para `row`, `row-cols-*` e `g-3`;
+- aliases utilitários substituíveis e handlers inline de hover removidos;
+- exceções restantes em `utilities.css` limitadas a geometria de domínio, offsets fixos e valores dinâmicos documentados no próprio arquivo;
+- testes estáticos, de JavaScript e de navegador ampliados para impedir o retorno dos padrões removidos.
+
+Após o lote, as seis fontes CSS auditadas totalizam 211.989 bytes e 6.709 linhas, contra 230.742 bytes e 7.564 linhas na base registrada acima: redução de 18.753 bytes (8,13%) e 855 linhas (11,30%). A medição continua separada dos bundles Bootstrap e do SCSS próprio.
+
+Permanecem para os próximos lotes a revisão tela a tela de estados vazios/erro e responsividade, a cobertura visual dos fluxos autenticados, a auditoria final de tokens e as regras de layout específicas que ainda têm consumidores. Este lote está certificado; a migração global só será marcada como concluída quando essas pendências forem tratadas e a suíte Docker completa continuar passando sem exceções.
 
 ## 3. Contratos que precisam ser preservados
 
@@ -340,4 +357,3 @@ Não fazer migração de banco nem limpar IndexedDB como parte da redução de C
 - Modais: https://getbootstrap.com/docs/5.3/components/modal/
 - Placeholders: https://getbootstrap.com/docs/5.3/components/placeholders/
 - Regras locais: AGENTS.md, docs/testing.md e tests/browser/README.md.
-

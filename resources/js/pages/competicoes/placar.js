@@ -354,7 +354,7 @@ window.SGIPage.mount("competicoes/placar", function (pageConfig, pageScope) {
 
         var btn = document.createElement('button');
         btn.type = 'button';
-        btn.className = 'mc-action-btn mc-action-btn--start';
+        btn.className = 'mc-action-btn mc-action-btn--start btn btn-primary d-inline-flex align-items-center gap-2';
         btn.style.fontSize = '.8rem';
         btn.style.padding = '.5rem 1rem';
         btn.innerHTML = '<i class="bi bi-plus-circle me-1"></i>Adicionar';
@@ -955,7 +955,7 @@ window.SGIPage.mount("competicoes/placar", function (pageConfig, pageScope) {
         if (st === 'Agendado') {
             var b = document.createElement('button');
             b.type = 'button';
-            b.className = 'mc-action-btn mc-action-btn--start';
+            b.className = 'mc-action-btn mc-action-btn--start btn btn-primary d-inline-flex align-items-center gap-2';
             b.innerHTML = '<i class="bi bi-play-fill"></i> Iniciar jogo';
             pageScope.listen(b, 'click', function() {
                 iniciarJogoServidor().catch(function(e) { alert(e.message); });
@@ -966,7 +966,7 @@ window.SGIPage.mount("competicoes/placar", function (pageConfig, pageScope) {
         if (emAndamento && partidasLista.length >= 2) {
             var b2 = document.createElement('button');
             b2.type = 'button';
-            b2.className = 'mc-action-btn mc-action-btn--finish';
+            b2.className = 'mc-action-btn mc-action-btn--finish btn btn-outline-danger d-inline-flex align-items-center gap-2';
             b2.innerHTML = '<i class="bi bi-stop-fill"></i> Finalizar jogo';
             pageScope.listen(b2, 'click', function() { finalizarJogo(); });
             acoes.appendChild(b2);
@@ -974,7 +974,7 @@ window.SGIPage.mount("competicoes/placar", function (pageConfig, pageScope) {
 
 
         if (partidasLista.length === 0) {
-            grid.innerHTML = '<div class="mc-empty"><i class="bi bi-inbox sgi-u-text-2rem-display-block-mb-5rem-2" ></i>Não há equipes vinculadas a este jogo. Cadastre as partidas no sistema.</div>';
+            grid.innerHTML = '<div class="mc-empty"><i class="bi bi-inbox fs-2 d-block mb-2 text-body-tertiary" ></i>Não há equipes vinculadas a este jogo. Cadastre as partidas no sistema.</div>';
             return;
         }
 
@@ -994,9 +994,9 @@ window.SGIPage.mount("competicoes/placar", function (pageConfig, pageScope) {
                 String(Math.floor(duracaoJogo / 60)).padStart(2, '0') + ':' +
                 String(duracaoJogo % 60).padStart(2, '0') + '</div>';
             html += '<div class="mc-timer-controls">';
-            html += '<select id="select-duracao" class="mc-duration-select"' + (emAndamento ? ' disabled' : '') + '>' + selOpts + '</select>';
+            html += '<select id="select-duracao" class="mc-duration-select form-select form-select-sm w-auto"' + (emAndamento ? ' disabled' : '') + '>' + selOpts + '</select>';
             if (emAndamento) {
-                html += '<button type="button" class="mc-pause-btn" id="btn-pausar">' + (pausado ? 'Retomar' : 'Pausar') + '</button>';
+                html += '<button type="button" class="mc-pause-btn btn btn-outline-secondary btn-sm" id="btn-pausar">' + (pausado ? 'Retomar' : 'Pausar') + '</button>';
             }
             html += '</div></div>';
         } else {
@@ -1141,7 +1141,7 @@ window.SGIPage.mount("competicoes/placar", function (pageConfig, pageScope) {
         if (acoes && statusIndividualAtual === 'Agendado') {
             var iniciar = document.createElement('button');
             iniciar.type = 'button';
-            iniciar.className = 'mc-action-btn mc-action-btn--start';
+            iniciar.className = 'mc-action-btn mc-action-btn--start btn btn-primary d-inline-flex align-items-center gap-2';
             iniciar.id = 'btnIniciarProvaIndividual';
             iniciar.innerHTML = '<i class="bi bi-play-fill"></i> Iniciar prova';
             pageScope.listen(iniciar, 'click', function() {
@@ -1183,18 +1183,18 @@ window.SGIPage.mount("competicoes/placar", function (pageConfig, pageScope) {
             var posIcons = ['🥇', '🥈', '🥉'];
             var posBg = ['#fef9c3', '#f3f4f6', '#fde8e8'];
             var posBd = ['#fde68a', '#e5e7eb', '#fecaca'];
-            podiumHtml = '<div class="sgi-u-display-flex-gap-16px-flex-wrap-wrap">';
+            podiumHtml = '<div class="d-flex gap-3 flex-wrap justify-content-center mt-3">';
             rankingOrdenado.forEach(function(r, idx) {
                 podiumHtml += '<div class="sgi-u-flex-1-min-width-160px-text-align-center">' +
-                    '<div class="sgi-u-text-1-6rem">' + (posIcons[idx] || '') + '</div>' +
-                    '<div class="sgi-u-weight-700-mt-6px">' + (posLabels[idx] || '') + '</div>' +
+                    '<div class="fs-3">' + (posIcons[idx] || '') + '</div>' +
+                    '<div class="fw-bold mt-1">' + (posLabels[idx] || '') + '</div>' +
                     '<div class="fw-semibold mt-1">' + esc(r.nome_usuario || 'Desconhecido') + '</div>' +
-                    '<div class="sgi-u-text-78rem-color-6b7280-mt-4px">' + esc(r.nome_fantasia_turma || r.nome_turma || '') + '</div>' +
+                    '<div class="small text-secondary mt-1">' + esc(r.nome_fantasia_turma || r.nome_turma || '') + '</div>' +
                 '</div>';
             });
             podiumHtml += '</div>';
         } else {
-            podiumHtml = '<div class="text-center py-4 text-muted sgi-u-text-9rem" ><i class="bi bi-award d-block mb-2 sgi-u-text-2rem-color-d1d5db" ></i>Nenhum resultado registrado ainda.</div>';
+            podiumHtml = '<div class="text-center py-4 text-muted small" ><i class="bi bi-award d-block mb-2 fs-2 text-body-tertiary" ></i>Nenhum resultado registrado ainda.</div>';
         }
 
         var statusIndividual = estadoJogo && estadoJogo.status_jogo;
@@ -1211,31 +1211,31 @@ window.SGIPage.mount("competicoes/placar", function (pageConfig, pageScope) {
                         : '')));
 
         grid.innerHTML =
-            '<div class="w-100 sgi-u-maxw-760px-background-fff">' +
-                '<div class="sgi-u-display-flex-align-items-center-gap-5rem">' +
+            '<div class="w-100 bg-white rounded-4 border p-4 shadow-sm">' +
+                '<div class="d-flex align-items-center gap-2 fw-bold text-body">' +
                     '<i class="bi bi-trophy-fill text-warning"></i> Registrar Resultado Individual' +
                 '</div>' +
                 estadoParticipantes +
                 '<div class="row g-3 mt-1">' +
                     '<div class="col-md-4">' +
-                        '<label class="form-label fw-semibold sgi-u-text-8rem-color-6b7280" for="indSelectPrimeiro">🥇 1º Lugar</label>' +
-                        '<select class="form-select sgi-u-text-88rem" id="indSelectPrimeiro" aria-label="1º lugar"' + (individualBloqueado ? ' disabled' : '') + '>' + partOpts + '</select>' +
+                        '<label class="form-label fw-semibold small text-secondary" for="indSelectPrimeiro">🥇 1º Lugar</label>' +
+                        '<select class="form-select small" id="indSelectPrimeiro" aria-label="1º lugar"' + (individualBloqueado ? ' disabled' : '') + '>' + partOpts + '</select>' +
                     '</div>' +
                     '<div class="col-md-4">' +
-                        '<label class="form-label fw-semibold sgi-u-text-8rem-color-6b7280" for="indSelectSegundo">🥈 2º Lugar</label>' +
-                        '<select class="form-select sgi-u-text-88rem" id="indSelectSegundo" aria-label="2º lugar"' + (individualBloqueado ? ' disabled' : '') + '>' + partOpts + '</select>' +
+                        '<label class="form-label fw-semibold small text-secondary" for="indSelectSegundo">🥈 2º Lugar</label>' +
+                        '<select class="form-select small" id="indSelectSegundo" aria-label="2º lugar"' + (individualBloqueado ? ' disabled' : '') + '>' + partOpts + '</select>' +
                     '</div>' +
                     '<div class="col-md-4">' +
-                        '<label class="form-label fw-semibold sgi-u-text-8rem-color-6b7280" for="indSelectTerceiro">🥉 3º Lugar</label>' +
-                        '<select class="form-select sgi-u-text-88rem" id="indSelectTerceiro" aria-label="3º lugar"' + (individualBloqueado ? ' disabled' : '') + '>' + partOpts + '</select>' +
+                        '<label class="form-label fw-semibold small text-secondary" for="indSelectTerceiro">🥉 3º Lugar</label>' +
+                        '<select class="form-select small" id="indSelectTerceiro" aria-label="3º lugar"' + (individualBloqueado ? ' disabled' : '') + '>' + partOpts + '</select>' +
                     '</div>' +
                 '</div>' +
-                '<div class="sgi-u-display-flex-align-items-center-gap-12px">' +
-                    '<button type="button" class="mc-action-btn mc-action-btn--start" id="btnSalvarIndRanking"' + (individualBloqueado ? ' disabled' : '') + '><i class="bi bi-check-lg"></i> Salvar Ranking</button>' +
+                '<div class="d-flex align-items-center gap-3 mt-3">' +
+                    '<button type="button" class="mc-action-btn mc-action-btn--start btn btn-primary d-inline-flex align-items-center gap-2" id="btnSalvarIndRanking"' + (individualBloqueado ? ' disabled' : '') + '><i class="bi bi-check-lg"></i> Salvar Ranking</button>' +
                     '<span id="msgIndRanking" class="small" role="status" aria-live="polite"></span>' +
                 '</div>' +
                 '<div class="mt-4">' +
-                    '<div class="sgi-u-weight-800-text-9rem-color-111827"><i class="bi bi-award-fill me-1"></i>Ranking Atual</div>' +
+                    '<div class="fw-bold small text-body"><i class="bi bi-award-fill me-1"></i>Ranking Atual</div>' +
                     podiumHtml +
                 '</div>' +
             '</div>';
@@ -2062,12 +2062,12 @@ window.SGIPage.mount("competicoes/placar", function (pageConfig, pageScope) {
         var nome = nomeAluno || 'Jogador(a)';
         container.innerHTML =
             '<div class="alert d-flex align-items-center gap-3 py-3 px-4 mb-0 rounded-3 shadow-sm border-0 bg-danger-subtle text-danger-emphasis" role="alert" >' +
-                '<span class="sgi-u-w-36px-h-36px-text-1rem">V</span>' +
+                '<span class="p-2 rounded-circle bg-danger text-white d-inline-flex align-items-center justify-content-center flex-shrink-0 fw-bold">V</span>' +
                 '<div class="flex-grow-1">' +
-                    '<strong class="d-block mb-1 sgi-u-text-85rem" >SEGUNDO CARTÃO AMARELO</strong>' +
-                    '<span class="sgi-u-text-82rem">' + esc(nome) + ' recebeu o segundo amarelo e foi expulso(a) da partida (Cartão Vermelho automático).</span>' +
+                    '<strong class="d-block mb-1 small" >SEGUNDO CARTÃO AMARELO</strong>' +
+                    '<span class="small">' + esc(nome) + ' recebeu o segundo amarelo e foi expulso(a) da partida (Cartão Vermelho automático).</span>' +
                 '</div>' +
-                '<button type="button" class="btn-close sgi-u-text-75rem" data-bs-dismiss="alert" aria-label="Fechar" ></button>' +
+                '<button type="button" class="btn-close small" data-bs-dismiss="alert" aria-label="Fechar" ></button>' +
             '</div>';
         setTimeout(function() {
             var alert = container.querySelector('.alert');

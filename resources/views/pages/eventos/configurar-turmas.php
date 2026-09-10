@@ -68,16 +68,16 @@ $paginaAtiva = 'categorias';
                 <form id="formTurma">
                     <div class="modal-body pt-3 pb-3">
                         <div class="mb-3">
-                            <label class="text-dark mb-1 fw-medium sgi-u-text-0-95rem" >Nome da turma:</label>
-                            <input type="text" class="form-control form-control-lg shadow-sm rounded-3 text-secondary sgi-u-text-0-95rem-border-1px-solid-dee2e6" placeholder="Ex: 9º Ano A"  id="inputNomeTurma" required>
+                            <label class="text-dark mb-1 fw-medium small" >Nome da turma:</label>
+                            <input type="text" class="form-control form-control-lg shadow-sm rounded-3 text-secondary small border" placeholder="Ex: 9º Ano A"  id="inputNomeTurma" required>
                         </div>
                         <div class="mb-3">
-                            <label class="text-dark mb-1 fw-medium sgi-u-text-0-95rem" >Nome fantasia:</label>
-                            <input type="text" class="form-control form-control-lg shadow-sm rounded-3 text-secondary sgi-u-text-0-95rem-border-1px-solid-dee2e6" placeholder="Ex: Turma dos Campeões"  id="inputNomeFantasiaTurma">
+                            <label class="text-dark mb-1 fw-medium small" >Nome fantasia:</label>
+                            <input type="text" class="form-control form-control-lg shadow-sm rounded-3 text-secondary small border" placeholder="Ex: Turma dos Campeões"  id="inputNomeFantasiaTurma">
                         </div>
                         <div class="mb-3">
-                            <label class="text-dark mb-1 fw-medium sgi-u-text-0-95rem" >Turno:</label>
-                            <select class="form-select form-select-lg shadow-sm rounded-3 text-secondary sgi-u-text-0-95rem-border-1px-solid-dee2e6"  id="inputTurnoTurma">
+                            <label class="text-dark mb-1 fw-medium small" >Turno:</label>
+                            <select class="form-select form-select-lg shadow-sm rounded-3 text-secondary small border"  id="inputTurnoTurma">
                                 <option value="">Selecione o turno</option>
                                 <option value="Manhã">Manhã</option>
                                 <option value="Tarde">Tarde</option>

@@ -83,17 +83,17 @@ $paginaAtiva = 'dashboard';
                         <label class="form-label">Tipo</label>
                         <div class="mc-tipo-grid">
                             <label class="btn btn-outline-warning ocorrencia-tipo-option d-flex align-items-center justify-content-center gap-1" data-tipo="Amarelo">
-                                <i class="bi bi-square-fill text-warning sgi-u-text-7rem" ></i>
+                                <i class="bi bi-square-fill text-warning small" ></i>
                                 Amarelo
                                 <input type="radio" name="tipo_ocorrencia" value="Amarelo" class="d-none">
                             </label>
                             <label class="btn btn-outline-danger ocorrencia-tipo-option d-flex align-items-center justify-content-center gap-1" data-tipo="Vermelho">
-                                <i class="bi bi-x-octagon-fill sgi-u-text-7rem" ></i>
+                                <i class="bi bi-x-octagon-fill small" ></i>
                                 Vermelho
                                 <input type="radio" name="tipo_ocorrencia" value="Vermelho" class="d-none">
                             </label>
                             <label class="btn btn-outline-suspensao ocorrencia-tipo-option d-flex align-items-center justify-content-center gap-1" data-tipo="Suspensao">
-                                <i class="bi bi-pause-circle-fill sgi-u-text-7rem" ></i>
+                                <i class="bi bi-pause-circle-fill small" ></i>
                                 Suspensão
                                 <input type="radio" name="tipo_ocorrencia" value="Suspensao" class="d-none">
                             </label>

@@ -103,6 +103,7 @@ class TestClient
 
         $raw = curl_exec($ch);
         $code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        $contentType = curl_getinfo($ch, CURLINFO_CONTENT_TYPE);
         $err = curl_error($ch);
         curl_close($ch);
 
@@ -116,7 +117,10 @@ class TestClient
             'code' => $code,
             'body' => $raw,
             'json' => $json,
-            'error' => $err
+            'error' => $err,
+            'headers' => [
+                'Content-Type' => is_string($contentType) ? $contentType : '',
+            ],
         ];
     }
 

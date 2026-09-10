@@ -59,16 +59,16 @@ window.SGIPage.mount("disciplina/ocorrencias", function (pageConfig, pageScope) 
     function carregarLista() {
         function renderCard(turma) {
             return `
-                <div class="ocr-card">
-                    <div class="ocr-card__icon"><i class="bi bi-people-fill"></i></div>
-                    <div class="ocr-card__info">
-                        <p class="ocr-card__name">${esc(turma.nome_fantasia_turma || turma.nome_turma)}</p>
-                        <span class="ocr-card__badge">${esc(turma.nome_categoria || 'Geral')}</span>
+                <div class="card border-0 shadow-sm p-3 d-flex flex-row align-items-center gap-3">
+                    <div class="bg-danger-subtle text-danger rounded-circle p-2 fs-5 d-flex align-items-center justify-content-center flex-shrink-0"><i class="bi bi-people-fill"></i></div>
+                    <div class="flex-grow-1 min-w-0">
+                        <p class="mb-1 fw-semibold text-truncate">${esc(turma.nome_fantasia_turma || turma.nome_turma)}</p>
+                        <span class="badge text-bg-light">${esc(turma.nome_categoria || 'Geral')}</span>
                     </div>
-                    <button class="ocr-card__hist" onclick="abrirHistoricoTurma(${turma.id_turma}, '${esc(turma.nome_fantasia_turma || turma.nome_turma)}')" title="Ver histórico">
+                    <button class="btn btn-outline-secondary btn-sm" onclick="abrirHistoricoTurma(${turma.id_turma}, '${esc(turma.nome_fantasia_turma || turma.nome_turma)}')" title="Ver histórico">
                         <i class="bi bi-clock-history"></i>
                     </button>
-                    <button class="ocr-card__add" onclick="abrirModalOcorrencia(${turma.id_turma}, '${esc(turma.nome_fantasia_turma || turma.nome_turma)}')" title="Adicionar ocorrência">
+                    <button class="btn btn-outline-danger btn-sm" data-sgi-action="add-ocorrencia" onclick="abrirModalOcorrencia(${turma.id_turma}, '${esc(turma.nome_fantasia_turma || turma.nome_turma)}')" title="Adicionar ocorrência">
                         <i class="bi bi-plus-lg"></i>
                     </button>
                 </div>`;
@@ -79,7 +79,7 @@ window.SGIPage.mount("disciplina/ocorrencias", function (pageConfig, pageScope) 
         const turmas = turmasFiltradas();
 
         if (turmas.length === 0) {
-            const msg = '<div class="text-center text-muted py-5 sgi-u-col-1-1" ><i class="bi bi-inbox sgi-u-text-2rem-display-block-mb-5rem" ></i>Nenhuma turma encontrada.</div>';
+            const msg = '<div class="text-center text-muted py-5 sgi-u-col-1-1" ><i class="bi bi-inbox fs-2 d-block mb-2 text-body-tertiary" ></i>Nenhuma turma encontrada.</div>';
             listaDesk.innerHTML = msg;
             listaMob.innerHTML = msg;
         } else {

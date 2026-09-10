@@ -21,7 +21,7 @@ $isAdmin = $nivelUsuario === 0;
     </div>
 
     <div class="px-3">
-        <div class="ocr-grid sgi-u-grid-1fr" id="listaOcorrenciasMobile" >
+        <div class="ocr-grid" id="listaOcorrenciasMobile" >
             <div class="text-center text-muted py-5"><div class="spinner-border spinner-border-sm me-2"></div>Carregando...</div>
         </div>
     </div>
@@ -60,16 +60,16 @@ $isAdmin = $nivelUsuario === 0;
             </div>
             <div class="modal-body">
                 <div class="mb-3">
-                    <label class="form-label fw-semibold sgi-u-text-78rem-color-6B7280" >Título</label>
-                    <input type="text" class="form-control sgi-u-radius-10px" id="ocrTituloModal" placeholder="Ex: Conduta antidesportiva" >
+                    <label class="form-label fw-semibold small text-secondary" >Título</label>
+                    <input type="text" class="form-control rounded-3" id="ocrTituloModal" placeholder="Ex: Conduta antidesportiva" >
                 </div>
                 <div class="mb-3">
-                    <label class="form-label fw-semibold sgi-u-text-78rem-color-6B7280" >Pontos a descontar</label>
-                    <input type="number" min="0" class="form-control sgi-u-radius-10px" id="ocrPontosModal" placeholder="0" >
+                    <label class="form-label fw-semibold small text-secondary" >Pontos a descontar</label>
+                    <input type="number" min="0" class="form-control rounded-3" id="ocrPontosModal" placeholder="0" >
                 </div>
-                <div id="msgOcrModal" class="mt-3 sgi-u-text-85rem" ></div>
+                <div id="msgOcrModal" class="mt-3 small" ></div>
             </div>
-                  <div class="modal-footer border-0 sgi-u-p-0-1-5rem-1-25rem" >
+                  <div class="modal-footer border-0 px-4 pb-3" >
                 <button type="button" class="ocr-btn-cancel btn btn-outline-secondary" data-bs-dismiss="modal" >Cancelar</button>
                 <button type="button" class="btn btn-primary" id="btnSalvarOcrModal" onclick="salvarOcorrenciaModal()" >
                     <i class="bi bi-check-lg me-1"></i>Registrar

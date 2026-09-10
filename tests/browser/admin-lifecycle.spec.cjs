@@ -237,10 +237,10 @@ test.describe.serial('Gestão Administrativa Completa (Admin Lifecycle)', () => 
         await page.goto(`ocorrencias?id=${idEdicaoCriada}`, { waitUntil: 'domcontentloaded' });
         const gridOcorrencias = page.locator('#listaOcorrenciasDesktop');
         await expect(gridOcorrencias).toBeVisible({ timeout: 15_000 });
-        await expect(gridOcorrencias.locator('.ocr-card').first()).toBeVisible({ timeout: 15_000 });
+        await expect(gridOcorrencias.locator('.card').first()).toBeVisible({ timeout: 15_000 });
 
         // Clicar no botão de adicionar ocorrência no primeiro card de turma
-        const btnAddOcr = gridOcorrencias.locator('.ocr-card__add').first();
+        const btnAddOcr = gridOcorrencias.locator('[data-sgi-action="add-ocorrencia"]').first();
         await btnAddOcr.click();
 
         const modalOcr = page.locator('#modalNovaOcorrencia');
@@ -254,11 +254,11 @@ test.describe.serial('Gestão Administrativa Completa (Admin Lifecycle)', () => 
         await page.goto(`edicoes/arrecadacao?id=${idEdicaoCriada}`, { waitUntil: 'domcontentloaded' });
         const gridArrecadacao = page.locator('#listaArrecadacaoDesktop');
         await expect(gridArrecadacao).toBeVisible({ timeout: 15_000 });
-        await expect(gridArrecadacao.locator('.ocr-card').first()).toBeVisible({ timeout: 15_000 });
+        await expect(gridArrecadacao.locator('.card').first()).toBeVisible({ timeout: 15_000 });
 
-        const primeiroCard = gridArrecadacao.locator('.ocr-card').first();
-        const inputQtd = primeiroCard.locator('.ocr-card__input');
-        const btnSalvarArr = primeiroCard.locator('.ocr-card__save');
+        const primeiroCard = gridArrecadacao.locator('.card').first();
+        const inputQtd = primeiroCard.locator('.arrec-input');
+        const btnSalvarArr = primeiroCard.locator('[data-sgi-action="save-arrecadacao"]');
 
         await inputQtd.fill('35');
 
@@ -268,7 +268,7 @@ test.describe.serial('Gestão Administrativa Completa (Admin Lifecycle)', () => 
         await dialog.accept();
 
         // Aguarda a finalização do salvamento
-        await expect(primeiroCard.locator('.ocr-card__save')).not.toBeDisabled({ timeout: 10_000 });
+        await expect(primeiroCard.locator('[data-sgi-action="save-arrecadacao"]')).not.toBeDisabled({ timeout: 10_000 });
 
         // 3. Consultar a tela de Ranking Geral
         await page.goto(`ranking?id=${idEdicaoCriada}`, { waitUntil: 'domcontentloaded' });

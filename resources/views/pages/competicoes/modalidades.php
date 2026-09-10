@@ -8,20 +8,20 @@ include SGI_ROOT . '/resources/views/components/admin-header.php';
 $paginaAtiva = 'modalidades';
 ?>
 
-<main class="position-relative d-md-none sgi-u-mb-120px" >
+<main class="position-relative d-md-none mb-5" >
     <section id="listaModalidadesMobile" class="d-flex flex-column align-items-center w-100 mt-4">
         <p class="text-muted small">(Carregando modalidades...)</p>
     </section>
 
     <div class="position-fixed sgi-u-bottom-92px-right-16px-z-20" >
-        <button class="btn btn-primary rounded-circle d-flex align-items-center justify-content-center shadow sgi-u-w-56px-h-56px"  data-bs-toggle="modal" data-bs-target="#modalCriarModalidade">
+        <button class="btn btn-primary rounded-circle d-flex align-items-center justify-content-center shadow p-3"  data-bs-toggle="modal" data-bs-target="#modalCriarModalidade">
             <i class="bi bi-plus-lg text-white fs-4"></i>
         </button>
     </div>
 </main>
 
 <main class="d-none d-md-block main-desktop-layout">
-    <div class="sgi-u-radius-12px">
+    <div class="rounded-3">
         <div class="mb-5">
             <a href="<?= \App\Shared\Http\Url::to('painel') ?>" id="btnVoltarModalidades" class="btn btn-primary d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none" >
                 <i class="bi bi-arrow-left-circle fs-5"></i> <span id="nomeInterclasseModalidades">Interclasse</span>
@@ -33,7 +33,7 @@ $paginaAtiva = 'modalidades';
         </div>
     </div>
 
-    <div class="position-fixed d-flex flex-row align-items-center gap-4 py-3 px-5 sgi-u-bottom-0-right-0-z-1050" >
+    <div class="position-fixed d-flex flex-row align-items-center gap-4 py-3 px-5 bottom-0 end-0 z-3 bg-transparent" >
         <span class="text-muted small fw-medium">Não tem a modalidade que você quer?</span>
 
         <button type="button" class="btn bg-white fw-bold px-4 py-2 d-flex align-items-center justify-content-center gap-2 shadow-sm btn-outline-primary"  data-bs-toggle="modal" data-bs-target="#modalCriarModalidade">

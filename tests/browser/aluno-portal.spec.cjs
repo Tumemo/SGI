@@ -170,7 +170,7 @@ test.describe.serial('Portal do Aluno — Jornada Interativa e Regras de Negóci
         await page.waitForURL(/\/aluno\/inicio/, { timeout: 15_000 });
 
         await expect(page.locator('nav a[aria-label="Rankings publicados"], nav a[title="Rankings publicados"]')).toHaveCount(0);
-        await expect(page.locator('.aluno-card[data-status="active"] .btn-card').first()).toContainText('Ver Detalhes');
+        await expect(page.locator('.aluno-card[data-status="active"] a.btn').first()).toContainText('Ver Detalhes');
 
         // 1. Tela de Jogos
         await page.goto(`aluno/jogos?id=${fixture.idInterclasse}`, { waitUntil: 'domcontentloaded' });

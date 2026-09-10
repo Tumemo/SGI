@@ -8,10 +8,10 @@ $paginaAtiva = 'categorias';
 ?>
 
 <!-- Toast -->
-<div class="toast-wrapper" id="toastWrapper"></div>
+<div class="toast-container position-fixed top-0 end-0 p-3" id="sgiToastContainer" aria-live="polite" aria-atomic="true"></div>
 
 <!-- Mobile -->
-<main class="position-relative d-md-none sgi-u-mb-120px" >
+<main class="position-relative d-md-none mb-5" >
     <div class="p-3">
         <div class="d-flex align-items-center gap-2 mb-3">
             <a href="<?= \App\Shared\Http\Url::to('painel') ?>" id="btnVoltarCatMob" class="btn btn-primary d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none" >
@@ -90,7 +90,7 @@ $paginaAtiva = 'categorias';
                     </div>
                     <div class="mb-3 d-flex align-items-center gap-2 flex-column">
                         <input type="file" id="arquivoUpload" class="d-none" accept=".pdf" onchange="mostrarNomeArquivo()">
-                        <p class="sgi-u-text-14px">Adicione aqui o pdf dos alunos da turma criada</p>
+                        <p class="small">Adicione aqui o pdf dos alunos da turma criada</p>
 
                         <label for="arquivoUpload" class="">
                             <i class="bi bi-upload"></i>

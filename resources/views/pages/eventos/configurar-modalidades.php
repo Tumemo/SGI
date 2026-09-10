@@ -98,7 +98,7 @@ $paginaAtiva = 'dashboard';
     <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
         <div class="modal-content rounded-4" >
             <div class="modal-header border-0">
-                <h5 class="modal-title text-danger fw-bold" id="modalDestaquesLabel"><i class="bi bi-star-fill me-2 sgi-u-color-f5b301" ></i>Alunos Destaques</h5>
+                <h5 class="modal-title text-danger fw-bold" id="modalDestaquesLabel"><i class="bi bi-star-fill me-2 text-warning" ></i>Alunos Destaques</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
             </div>
             <div class="modal-body" id="corpoDestaques">

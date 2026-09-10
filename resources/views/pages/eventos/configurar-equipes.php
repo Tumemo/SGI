@@ -6,7 +6,7 @@ $isAdmin = $nivelUsuario === 0;
 $paginaAtiva = 'dashboard';
 ?>
 
-<main class="d-md-none p-3 sgi-u-pb-5rem" >
+<main class="d-md-none p-3 pb-5" >
     <a href="<?= \App\Shared\Http\Url::to('painel') ?>" id="btnVoltarEquipesMobile" class="btn btn-primary d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none" >
         <i class="bi bi-arrow-left-circle fs-5"></i> <span id="nomeInterclasseEquipesMob">Interclasse</span>
     </a>
@@ -49,18 +49,18 @@ $paginaAtiva = 'dashboard';
 <div class="modal fade" id="modalCriarEquipe" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content border-0 shadow-lg rounded-4" >
-            <div class="modal-header border-0 sgi-u-p-1-25rem-1-5rem-0" >
+            <div class="modal-header border-0 pt-3 px-4" >
                 <h5 class="modal-title text-primary fw-semibold" ><i class="bi bi-plus-circle me-2"></i>Criar nova equipe</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body pt-3 px-4 pb-4" >
                 <form id="formCriarEquipe">
                     <label for="selectModalidadeEquipe" class="form-label small text-muted fw-semibold">Modalidade</label>
-                    <select id="selectModalidadeEquipe" class="form-select mb-3 sgi-u-radius-var-border-color-var"  required>
+                    <select id="selectModalidadeEquipe" class="form-select mb-3 rounded-3"  required>
                         <option value="" selected disabled>Carregando modalidades...</option>
                     </select>
                     <label for="selectTurmaEquipe" class="form-label small text-muted fw-semibold">Turma</label>
-                    <select id="selectTurmaEquipe" class="form-select mb-3 sgi-u-radius-var-border-color-var"  required>
+                    <select id="selectTurmaEquipe" class="form-select mb-3 rounded-3"  required>
                         <option value="" selected disabled>Carregando turmas...</option>
                     </select>
                     <div id="msgCriarEquipe" class="text-center mb-2 small"></div>

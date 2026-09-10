@@ -48,6 +48,7 @@ echo json_encode(\App\Shared\Http\Url::to('assets'), JSON_HEX_TAG | JSON_HEX_AMP
     <script src="<?= \App\Shared\Http\Assets::url('js/offline/offline-core.js') ?>"></script>
     <script src="<?= \App\Shared\Http\Assets::url('js/offline/offline-form.js') ?>"></script>
     <script src="<?= \App\Shared\Http\Assets::url('js/shared/http-client.js') ?>"></script>
+    <script src="<?= \App\Shared\Http\Assets::url('js/shared/bootstrap-feedback.js') ?>"></script>
 
 <script src="<?= \App\Shared\Http\Assets::url('js/shared/page-runtime.js') ?>"></script>
 <script>

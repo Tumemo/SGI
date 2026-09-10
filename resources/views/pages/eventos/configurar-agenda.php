@@ -14,7 +14,7 @@ $nivelUsuarioAgenda = (int)($_SESSION['nivel'] ?? -1);
         <div class="ag-cal-header">
             <button type="button" id="btn-prev-mobile" class="ag-cal-nav"><i class="bi bi-chevron-left"></i></button>
             <div class="d-flex gap-2 align-items-center">
-                <select id="select-mes" class="form-select form-select-sm border-0 text-white text-center sgi-u-w-auto-text-82rem-weight-700" >
+                <select id="select-mes" class="form-select form-select-sm border-0 text-white text-center w-auto small fw-bold" >
                     <option value="0">Jan</option>
                     <option value="1">Fev</option>
                     <option value="2">Mar</option>
@@ -28,7 +28,7 @@ $nivelUsuarioAgenda = (int)($_SESSION['nivel'] ?? -1);
                     <option value="10">Nov</option>
                     <option value="11">Dez</option>
                 </select>
-                <select id="select-ano" class="form-select form-select-sm border-0 text-white text-center sgi-u-w-auto-text-82rem-weight-700" >
+                <select id="select-ano" class="form-select form-select-sm border-0 text-white text-center w-auto small fw-bold" >
                 </select>
             </div>
             <button type="button" id="btn-next-mobile" class="ag-cal-nav"><i class="bi bi-chevron-right"></i></button>
@@ -42,12 +42,12 @@ $nivelUsuarioAgenda = (int)($_SESSION['nivel'] ?? -1);
     </div>
 
     <div class="ag-filter-bar justify-content-center">
-        <div class="ag-search sgi-u-maxw-260px" >
+        <div class="ag-search mw-100" >
             <i class="bi bi-search"></i>
             <input type="text" id="agenda-busca-mobile" placeholder="Buscar time ou modalidade...">
         </div>
-        <select id="agenda-select-mod-mobile" class="form-select form-select-sm sgi-u-maxw-260px" ></select>
-        <select id="agenda-select-status-mobile" class="form-select form-select-sm sgi-u-maxw-260px" >
+        <select id="agenda-select-mod-mobile" class="form-select form-select-sm mw-100" ></select>
+        <select id="agenda-select-status-mobile" class="form-select form-select-sm mw-100" >
             <option value="">Todos os status</option>
             <option value="Concluido">Concluídos</option>
             <option value="andamento">Em andamento</option>
@@ -99,7 +99,7 @@ $nivelUsuarioAgenda = (int)($_SESSION['nivel'] ?? -1);
                 <i class="bi bi-search"></i>
                 <input type="text" id="agenda-busca" placeholder="Buscar time ou modalidade...">
             </div>
-            <select id="agenda-select-mod" class="sgi-u-maxw-280px"></select>
+            <select id="agenda-select-mod" class="w-auto"></select>
             <select id="agenda-select-status">
                 <option value="">Todos os status</option>
                 <option value="Concluido">Concluídos</option>
@@ -176,8 +176,8 @@ $nivelUsuarioAgenda = (int)($_SESSION['nivel'] ?? -1);
                 </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-outline-secondary sgi-u-radius-10px-weight-600-text-85rem" data-bs-dismiss="modal" >Cancelar</button>
-                <button type="button" class="btn btn-primary sgi-u-radius-10px-weight-600-text-85rem" id="edit-jogo-salvar" >Salvar</button>
+                <button type="button" class="btn btn-outline-secondary rounded-3 fw-semibold small" data-bs-dismiss="modal" >Cancelar</button>
+                <button type="button" class="btn btn-primary rounded-3 fw-semibold small" id="edit-jogo-salvar" >Salvar</button>
             </div>
         </div>
     </div>
@@ -247,9 +247,9 @@ $nivelUsuarioAgenda = (int)($_SESSION['nivel'] ?? -1);
                 </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-outline-secondary sgi-u-radius-10px-weight-600-text-85rem" data-bs-dismiss="modal" >Cancelar</button>
-                <button type="button" class="btn btn-outline-danger sgi-u-radius-10px-weight-600-text-85rem" id="seq-simular-btn"><i class="bi bi-eye me-1"></i>Calcular prévia</button>
-                <button type="button" class="btn btn-primary sgi-u-radius-10px-weight-600-text-85rem" id="seq-salvar-btn" disabled><i class="bi bi-check-lg me-1"></i>Confirmar agenda</button>
+                <button type="button" class="btn btn-outline-secondary rounded-3 fw-semibold small" data-bs-dismiss="modal" >Cancelar</button>
+                <button type="button" class="btn btn-outline-danger rounded-3 fw-semibold small" id="seq-simular-btn"><i class="bi bi-eye me-1"></i>Calcular prévia</button>
+                <button type="button" class="btn btn-primary rounded-3 fw-semibold small" id="seq-salvar-btn" disabled><i class="bi bi-check-lg me-1"></i>Confirmar agenda</button>
             </div>
         </div>
     </div>

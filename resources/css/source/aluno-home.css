@@ -256,28 +256,6 @@
     box-shadow: 0 0 0 2px rgba(25, 135, 84, 0.2);
 }
 
-/* Skeleton loading */
-.perfil-avatar-skeleton {
-    position: absolute;
-    inset: 0;
-    border-radius: 50%;
-    background: #e0e0e0;
-    overflow: hidden;
-    z-index: 1;
-}
-
-.perfil-skeleton-pulse {
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.5), transparent);
-    animation: perfilSkeletonShimmer 1.4s infinite;
-}
-
-@keyframes perfilSkeletonShimmer {
-    0%   { transform: translateX(-100%); }
-    100% { transform: translateX(100%); }
-}
-
 /* Título dos cards internos */
 .perfil-card-title {
     font-size: 0.75rem;
@@ -479,45 +457,6 @@
     box-shadow: 0 0 0 2px rgba(227, 6, 19, 0.15) !important;
 }
 
-/* Toast container */
-.perfil-toast-container {
-    position: fixed;
-    bottom: 2rem;
-    right: 2rem;
-    z-index: 9999;
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-    pointer-events: none;
-}
-
-.perfil-toast {
-    display: flex;
-    align-items: center;
-    padding: 0.75rem 1.25rem;
-    border-radius: 12px;
-    font-size: 0.85rem;
-    font-weight: 500;
-    color: #fff;
-    box-shadow: 0 6px 20px rgba(0,0,0,0.15);
-    pointer-events: auto;
-    transform: translateX(120%);
-    transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
-    max-width: 360px;
-}
-
-.perfil-toast--show {
-    transform: translateX(0);
-}
-
-.perfil-toast--success {
-    background: #198754;
-}
-
-.perfil-toast--error {
-    background: #E30613;
-}
-
 /* Responsivo */
 @media (max-width: 767.98px) {
     .perfil-avatar-ring {
@@ -540,15 +479,6 @@
         font-size: 0.95rem;
     }
 
-    .perfil-toast-container {
-        bottom: 5rem;
-        right: 1rem;
-        left: 1rem;
-    }
-
-    .perfil-toast {
-        max-width: 100%;
-    }
 }
 
 @media (max-width: 991.98px) {

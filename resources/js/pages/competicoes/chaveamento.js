@@ -96,7 +96,7 @@ window.SGIPage.mount("competicoes/chaveamento", function (pageConfig, pageScope)
                     const ativa = select.value === '' ? ' kvs__opcao--ativa' : '';
                     html += `<button type="button" class="kvs__opcao${ativa}" data-value="">
                         <span class="kvs__opcao-nome">Todas modalidades</span>
-                        <span class="kvs__opcao-tipo kvs__opcao-tipo--coletiva sgi-u-opacity-55" >Mostrar tudo</span>
+                        <span class="kvs__opcao-tipo kvs__opcao-tipo--coletiva opacity-50" >Mostrar tudo</span>
                     </button>`;
                 }
             }
@@ -840,8 +840,8 @@ window.SGIPage.mount("competicoes/chaveamento", function (pageConfig, pageScope)
 
         let teamsHtml = '';
         if (eqs.length === 0) {
-            teamsHtml = `<div class="bkt-team"><span class="bkt-team__name sgi-u-color-9ca3af-font-style-italic" >A definir</span><span class="bkt-team__score">-</span></div>
-                         <div class="bkt-team"><span class="bkt-team__name sgi-u-color-9ca3af-font-style-italic" >A definir</span><span class="bkt-team__score">-</span></div>`;
+            teamsHtml = `<div class="bkt-team"><span class="bkt-team__name text-body-tertiary fst-italic" >A definir</span><span class="bkt-team__score">-</span></div>
+                         <div class="bkt-team"><span class="bkt-team__name text-body-tertiary fst-italic" >A definir</span><span class="bkt-team__score">-</span></div>`;
         } else {
             eqs.forEach(eq => {
                 const nome = eq.nome_equipe || eq.nome_fantasia || eq.nome_turma || `Equipe #${eq.id_equipe}`;
@@ -968,7 +968,7 @@ window.SGIPage.mount("competicoes/chaveamento", function (pageConfig, pageScope)
 
         if (posGames.length > 0) {
             html += '<div class="bracket-round-col">';
-            html += '<div class="bracket-round-header text-primary sgi-u-border-color-fecaca-background-linear-gradient-135deg-fff5f5-fff" >Disputas de Posição</div>';
+            html += '<div class="bracket-round-header text-primary border border-danger-subtle bg-danger-subtle" >Disputas de Posição</div>';
             posGames.forEach(j => {
                 html += _renderBracketMatch(j);
             });
@@ -1111,7 +1111,7 @@ window.SGIPage.mount("competicoes/chaveamento", function (pageConfig, pageScope)
         if (!idModalidade) {
             const emptyHtml = `
                 <div class="kv-empty kv-animate">
-                    <div class="kv-empty__icon sgi-u-text-5rem-mb-24px" >
+                    <div class="kv-empty__icon display-1 mb-4" >
                         <svg width="80" height="80" viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
                             <rect x="8" y="12" width="20" height="14" rx="3" stroke="#d1d5db" stroke-width="2" fill="#f9fafb"/>
                             <rect x="8" y="54" width="20" height="14" rx="3" stroke="#d1d5db" stroke-width="2" fill="#f9fafb"/>
@@ -1120,10 +1120,10 @@ window.SGIPage.mount("competicoes/chaveamento", function (pageConfig, pageScope)
                             <path d="M28 61 H40 V40 H52" stroke="#d1d5db" stroke-width="1.5" fill="none"/>
                         </svg>
                     </div>
-                    <div class="kv-empty__title sgi-u-text-1-4rem" >Nenhum chaveamento gerado</div>
-                    <div class="kv-empty__desc sgi-u-maxw-450px" >Selecione uma modalidade acima para gerar automaticamente o chaveamento do torneio.</div>
+                    <div class="kv-empty__title fs-4" >Nenhum chaveamento gerado</div>
+                    <div class="kv-empty__desc mw-100" >Selecione uma modalidade acima para gerar automaticamente o chaveamento do torneio.</div>
                     ${pageConfig.value0 ? `
-                    <button class="kv-empty__btn sgi-u-p-12px-28px-text-0-95rem" onclick="kvs_focus('selectModalidade');" >
+                    <button class="kv-empty__btn px-4 py-2 small" onclick="kvs_focus('selectModalidade');" >
                         <i class="bi bi-diagram-3-fill"></i> Gerar Chaveamento
                     </button>
                     ` : ``}
@@ -1157,16 +1157,16 @@ window.SGIPage.mount("competicoes/chaveamento", function (pageConfig, pageScope)
                 if (rankingAtual.length > 0) {
                     const posLabels = ['🥇 1º Lugar', '🥈 2º Lugar', '🥉 3º Lugar'];
                     const posBg = ['kv-podium-item--first', 'kv-podium-item--second', 'kv-podium-item--third'];
-                    rankingDisplay = '<div class="kv-podium sgi-u-mt-20px" >';
+                    rankingDisplay = '<div class="kv-podium mt-3" >';
                     rankingAtual.forEach((r, idx) => {
                         const nome = esc(r.nome_usuario || 'Desconhecido');
                         const turma = esc(r.nome_fantasia_turma || r.nome_turma || '');
                         rankingDisplay += `
                             <div class="kv-podium-item ${posBg[idx] || ''}">
-                                <div class="kv-podium-item__icon sgi-u-text-1-6rem" >${idx === 0 ? '🥇' : idx === 1 ? '🥈' : '🥉'}</div>
+                                <div class="kv-podium-item__icon fs-3" >${idx === 0 ? '🥇' : idx === 1 ? '🥈' : '🥉'}</div>
                                 <div class="kv-podium-item__label">${posLabels[idx] || (idx+1)+'º Lugar'}</div>
                                 <div class="kv-podium-item__name">${nome}</div>
-                                <div class="kv-podium-item__turma sgi-u-text-0-78rem-color-6b7280-mt-4px" >${turma}</div>
+                                <div class="kv-podium-item__turma small text-secondary mt-1" >${turma}</div>
                             </div>`;
                     });
                     rankingDisplay += '</div>';
@@ -1183,8 +1183,8 @@ window.SGIPage.mount("competicoes/chaveamento", function (pageConfig, pageScope)
                                 <button class="kv-action" type="button" data-bs-toggle="dropdown" aria-expanded="false" title="Mais opções">
                                     <i class="bi bi-three-dots-vertical"></i>
                                 </button>
-                                <ul class="dropdown-menu dropdown-menu-end sgi-u-min-width-180px-radius-10px-box-shadow-0-8px-24px-0-0-0-0-12" >
-                                    <li><a class="dropdown-item sgi-u-text-0-88rem-display-flex-align-items-center" href="#" onclick="editarJogoIndividual(event)" ><i class="bi bi-pencil"></i> Editar Jogo</a></li>
+                                <ul class="dropdown-menu dropdown-menu-end shadow-sm" >
+                                    <li><a class="dropdown-item small d-flex align-items-center gap-2" href="#" onclick="editarJogoIndividual(event)" ><i class="bi bi-pencil"></i> Editar Jogo</a></li>
                                 </ul>
                             </div>` : ''}
                         </div>
@@ -1192,7 +1192,7 @@ window.SGIPage.mount("competicoes/chaveamento", function (pageConfig, pageScope)
                             ${rankingDisplay}
                         </div>
                     </div>
-                    <div class="kv-alert kv-alert--info sgi-u-mt-20px-display-flex-align-items-center" >
+                    <div class="kv-alert kv-alert--info mt-3 d-flex align-items-center gap-2" >
                         <i class="bi bi-info-circle"></i> Os colocados (1º, 2º e 3º lugar) são registrados na página do jogo.
                     </div>`;
 

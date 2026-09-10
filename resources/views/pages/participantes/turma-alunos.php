@@ -13,7 +13,7 @@ $podeResetarSenha = in_array($nivelUsuario, [0], true);
 
 
 <!-- main mobile -->
-<main class="d-md-none ta-page-bg p-3 sgi-u-pt-5-5rem-pb-6rem" >
+<main class="d-md-none ta-page-bg p-3 pt-5 pb-5" >
     <a href="#" class="ta-btn-interclasse" id="btnVoltarTurmaAlunosMob">
         <i class="bi bi-arrow-left-circle fs-5"></i> <span id="nomeInterclasseTurmaAlunosMob">Interclasse</span>
     </a>
