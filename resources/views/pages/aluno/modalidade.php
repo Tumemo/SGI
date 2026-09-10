@@ -8,39 +8,39 @@ include SGI_ROOT . '/resources/views/components/aluno-head.php';
 
 
 
-<main class="modalidade-layout">
+<main class="modalidade-layout py-4 px-3 px-lg-4">
 
-    <header class="page-header">
-        <div class="page-header-inner">
-            <span class="trophy-icon"><i class="bi bi-trophy-fill"></i></span>
+    <header class="mb-4">
+        <div class="d-flex align-items-center gap-3">
+            <span class="bg-primary text-white rounded-3 p-3 fs-3 d-inline-flex shadow"><i class="bi bi-trophy-fill"></i></span>
             <div>
-                <h1>Escolha suas modalidades</h1>
-                <p class="subtitle">Selecione até 3 modalidades para participar do Interclasse.</p>
+                <h1 class="h3 fw-bold mb-1">Escolha suas modalidades</h1>
+                <p class="text-body-secondary mb-0">Selecione até 3 modalidades para participar do Interclasse.</p>
             </div>
         </div>
     </header>
 
-    <section class="secao d-none" id="secaoInscricoes">
-        <div class="secao-titulo">
-            <span class="secao-titulo-icone"><i class="bi bi-person-check-fill"></i></span>
-            <div class="secao-titulo-texto">
-                <h2>Suas inscrições</h2>
-                <p>Modalidades em que você já está confirmado.</p>
+    <section class="mb-4 d-none" id="secaoInscricoes">
+        <div class="d-flex align-items-center gap-3 mb-3">
+            <span class="bg-primary-subtle text-primary rounded-3 p-2 d-inline-flex fs-5"><i class="bi bi-person-check-fill"></i></span>
+            <div class="flex-grow-1">
+                <h2 class="h5 fw-bold mb-1">Suas inscrições</h2>
+                <p class="small text-body-secondary mb-0">Modalidades em que você já está confirmado.</p>
             </div>
-            <span class="secao-badge" id="badgeInscricoes">0/3</span>
+            <span class="badge rounded-pill text-bg-primary" id="badgeInscricoes">0/3</span>
         </div>
         <div id="inscricoesAtuais"></div>
     </section>
 
-    <section class="secao" id="secaoDisponiveis">
-        <div class="secao-titulo">
-            <span class="secao-titulo-icone"><i class="bi bi-grid-1x2-fill"></i></span>
-            <div class="secao-titulo-texto">
-                <h2>Disponíveis para escolha</h2>
-                <p>Selecione até 3 modalidades para participar.</p>
+    <section class="mb-4" id="secaoDisponiveis">
+        <div class="d-flex align-items-center gap-3 mb-3">
+            <span class="bg-primary-subtle text-primary rounded-3 p-2 d-inline-flex fs-5"><i class="bi bi-grid-1x2-fill"></i></span>
+            <div class="flex-grow-1">
+                <h2 class="h5 fw-bold mb-1">Disponíveis para escolha</h2>
+                <p class="small text-body-secondary mb-0">Selecione até 3 modalidades para participar.</p>
             </div>
         </div>
-        <div class="modalidades-grid" id="modalidadesGrid">
+        <div class="row row-cols-1 row-cols-sm-2 row-cols-lg-3 g-3" id="modalidadesGrid">
             <div class="col-12 text-center py-5">
                 <div class="spinner-border spinner-border-sm me-2" role="status"></div>
                 Carregando modalidades...
@@ -48,35 +48,33 @@ include SGI_ROOT . '/resources/views/components/aluno-head.php';
         </div>
     </section>
 
-    <div id="acoesInscricao" class="d-none">
-        <div class="resumo-selecao">
-            <div class="counter-box">
-                <span class="counter-label">Modalidades escolhidas</span>
-                <div class="counter-value"><span id="counterNum">0</span>&nbsp;<span class="counter-total">/ 3</span></div>
-                <span id="statusDefault" class="badge rounded-pill text-bg-secondary">Em andamento</span>
-                <span id="limiteBadge" class="badge rounded-pill text-bg-success d-none"><i class="bi bi-check-circle-fill"></i> Limite atingido</span>
-            </div>
-
-            <div class="resumo-progress">
-                <div class="progress-header">
-                    <span>Modalidades selecionadas</span>
-                    <span id="progressCount" class="progress-count">0 de 3</span>
+    <div id="acoesInscricao" class="d-none position-sticky bottom-0 z-3 bg-body border-top py-3 mt-4">
+        <div class="card border-0 shadow-sm p-3">
+            <div class="row align-items-center g-3">
+                <div class="col-auto">
+                    <span class="small text-uppercase fw-semibold text-body-secondary d-block">Modalidades escolhidas</span>
+                    <div class="h2 fw-bold text-primary mb-1"><span id="counterNum">0</span><span class="fs-5 text-body-secondary"> / 3</span></div>
+                    <span id="statusDefault" class="badge rounded-pill text-bg-secondary">Em andamento</span>
+                    <span id="limiteBadge" class="badge rounded-pill text-bg-success d-none"><i class="bi bi-check-circle-fill"></i> Limite atingido</span>
                 </div>
-                <div class="progress-track" id="progressTrack">
-                    <div class="progress-seg"></div>
-                    <div class="progress-seg"></div>
-                    <div class="progress-seg"></div>
+                <div class="col">
+                    <div class="d-flex justify-content-between align-items-center small text-body-secondary mb-2">
+                        <span>Modalidades selecionadas</span>
+                        <span id="progressCount" class="fw-semibold">0 de 3</span>
+                    </div>
+                    <div class="progress" role="progressbar" aria-label="Modalidades selecionadas" aria-valuemin="0" aria-valuemax="3" aria-valuenow="0">
+                        <div id="progressBar" class="progress-bar" style="width: 0%"></div>
+                    </div>
                 </div>
-            </div>
-
-            <div class="resumo-actions">
-                <button type="button" class="btn btn-primary px-4 py-2" id="btnSalvar" onclick="salvarEscolhas()" disabled>
-                    <i class="bi bi-check-lg"></i> Salvar
-                </button>
+                <div class="col-auto">
+                    <button type="button" class="btn btn-primary px-4 py-2" id="btnSalvar" onclick="salvarEscolhas()" disabled>
+                        <i class="bi bi-check-lg"></i> Salvar
+                    </button>
+                </div>
             </div>
         </div>
 
-        <p class="bottom-label small text-secondary" id="msgFeedback"></p>
+        <p class="small text-secondary text-center mb-0 mt-2" id="msgFeedback"></p>
 
         <p id="contador" class="visually-hidden"></p>
     </div>
@@ -85,7 +83,7 @@ include SGI_ROOT . '/resources/views/components/aluno-head.php';
 
 <div class="modal fade" id="modalDetalhes" tabindex="-1" aria-labelledby="modalDetalhesTitle" aria-hidden="true">
     <div class="modal-dialog modal-dialog-scrollable">
-        <div class="modal-content">
+        <div class="modal-content border-0 shadow rounded-4">
             <div class="modal-header">
                 <h5 class="modal-title fw-bold" id="modalDetalhesTitle">Detalhes</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
@@ -97,7 +95,7 @@ include SGI_ROOT . '/resources/views/components/aluno-head.php';
 
 <div class="modal fade" id="modalEquipes" tabindex="-1" aria-labelledby="modalEquipesTitle" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
-        <div class="modal-content">
+        <div class="modal-content border-0 shadow rounded-4">
             <div class="modal-header">
                 <div>
                     <h5 class="modal-title fw-bold" id="modalEquipesTitle">Escolha a equipe</h5>

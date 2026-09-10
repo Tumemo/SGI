@@ -30,7 +30,7 @@ window.SGIPage.mount("eventos/configurar-equipes", function (pageConfig, pageSco
         let contador = '';
         if (limite > 0) {
             const cor = excedeu ? 'text-danger' : 'text-success';
-            contador = `<span class="aluno-equipe-contador ${cor}"><i class="bi bi-people-fill me-1"></i>${total}/${limite}</span>`;
+            contador = `<span class="small fw-semibold ${cor}"><i class="bi bi-people-fill me-1"></i>${total}/${limite}</span>`;
         }
         return { excedeu, contador };
     }
@@ -90,10 +90,10 @@ window.SGIPage.mount("eventos/configurar-equipes", function (pageConfig, pageSco
                 const eqsTurma = equipesPorTurma[idTurma] || [];
                 const qtd = eqsTurma.length;
                 const temExcedida = eqsTurma.some(eq => infoEquipe(eq).excedeu);
-                return `<div class="aluno-turma-item">
+                return `<div class="d-flex align-items-center justify-content-between gap-3 p-3 mb-2 border rounded-3 bg-body">
                         <div>
                             <div class="fw-semibold">${esc(t.nome_turma)}</div>
-                            <div class="aluno-turma-contador"><i class="bi bi-people-fill me-1"></i>${qtd} equipe${qtd === 1 ? '' : 's'}${temExcedida ? '<i class="fas fa-exclamation-triangle aluno-turma-alerta" title="Esta turma possui equipe com alunos acima do limite"></i>' : ''}</div>
+                            <div class="small text-secondary d-inline-flex align-items-center gap-1 fw-semibold"><i class="bi bi-people-fill"></i>${qtd} equipe${qtd === 1 ? '' : 's'}${temExcedida ? '<i class="fas fa-exclamation-triangle text-danger small" title="Esta turma possui equipe com alunos acima do limite"></i>' : ''}</div>
                         </div>
                         <button type="button" class="btn btn-outline-primary btn-sm ver-equipes-btn" data-mod="${m.id_modalidade}" data-turma="${idTurma}" data-turma-nome="${esc(t.nome_turma)}" title="Ver equipes">
                             <i class="fas fa-users-cog"></i>
@@ -102,19 +102,21 @@ window.SGIPage.mount("eventos/configurar-equipes", function (pageConfig, pageSco
             }).join('');
         }
 
-        return `<div class="aluno-card" data-mod="${m.id_modalidade}" data-mod-cat="${m.categorias_id_categoria}" data-mod-nome="${esc(m.nome_modalidade)}">
-            <div class="card-header-custom">
+        return `<div class="col w-100">
+        <article class="aluno-card card h-100 border-0 shadow-sm rounded-4 overflow-hidden" data-mod="${m.id_modalidade}" data-mod-cat="${m.categorias_id_categoria}" data-mod-nome="${esc(m.nome_modalidade)}">
+            <div class="card-header border-0 bg-body-tertiary d-flex align-items-center justify-content-between gap-2 p-3">
                 <span>${esc(m.nome_modalidade)}</span>
                 <button type="button" class="btn btn-outline-secondary btn-sm aluno-voltar-btn voltar-btn" title="Voltar às turmas">
                     <i class="bi bi-arrow-left"></i>
                 </button>
             </div>
-            <div class="card-body-custom">
+            <div class="card-body p-3">
                 <div class="aluno-card-view turmas-view active">${htmlTurmas}</div>
                 <div class="aluno-card-view equipes-view">
                     <div class="aluno-equipes-content"></div>
                 </div>
             </div>
+        </article>
         </div>`;
     }
 
@@ -137,7 +139,7 @@ window.SGIPage.mount("eventos/configurar-equipes", function (pageConfig, pageSco
                 nome_modalidade: modNome || ''
             });
             const hrefElenco = `/equipes/elenco?${qElenco.toString()}`;
-            return `<div class="aluno-equipe-item ${info.excedeu ? 'equipe-excedida' : ''}">
+            return `<div class="d-flex align-items-center justify-content-between gap-3 p-3 mb-2 border rounded-3 bg-body ${info.excedeu ? 'border-danger-subtle bg-danger-subtle text-danger-emphasis' : ''}">
                     <div>
                         <div class="aluno-equipe-nome">${esc(eq.nome_equipe || eq.nome_turma)}</div>
                         <div>${info.contador}</div>
@@ -209,7 +211,7 @@ window.SGIPage.mount("eventos/configurar-equipes", function (pageConfig, pageSco
         const desk = document.getElementById('listaEquipesDesktop');
         if (!idInterclasseEq) {
             mob.innerHTML = '<p class="text-muted text-center">Nenhuma edição selecionada.</p>';
-            desk.innerHTML = '<div class="aluno-empty"><div class="empty-icon"><i class="bi bi-folder-x"></i></div><h5>Nenhuma edição</h5><p>Selecione um interclasse para ver as equipes.</p></div>';
+            desk.innerHTML = '<div class="text-center py-5 text-body-secondary"><i class="bi bi-folder-x fs-1 d-block mb-3" aria-hidden="true"></i><h5 class="fw-semibold mb-2">Nenhuma edição</h5><p class="small mb-0">Selecione um interclasse para ver as equipes.</p></div>';
             return;
         }
 
@@ -224,7 +226,7 @@ window.SGIPage.mount("eventos/configurar-equipes", function (pageConfig, pageSco
         }
 
         mob.innerHTML = '<p class="text-muted text-center">Carregando…</p>';
-        desk.innerHTML = '<div class="aluno-loading text-center py-4 text-muted">Carregando...</div>';
+        desk.innerHTML = '<div class="text-center py-5 text-body-secondary"><span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Carregando...</div>';
 
         const idCategoriaFiltro = obterIdCategoriaFiltro();
 
@@ -255,7 +257,7 @@ window.SGIPage.mount("eventos/configurar-equipes", function (pageConfig, pageSco
 
             if (!mods.length) {
                 mob.innerHTML = '<p class="text-muted text-center w-100">Nenhuma modalidade encontrada para o filtro selecionado.</p>';
-                desk.innerHTML = '<div class="aluno-empty"><div class="empty-icon"><i class="bi bi-folder-x"></i></div><h5>Nenhuma modalidade</h5><p>Nenhuma modalidade encontrada para o filtro selecionado.</p></div>';
+                desk.innerHTML = '<div class="text-center py-5 text-body-secondary"><i class="bi bi-folder-x fs-1 d-block mb-3" aria-hidden="true"></i><h5 class="fw-semibold mb-2">Nenhuma modalidade</h5><p class="small mb-0">Nenhuma modalidade encontrada para o filtro selecionado.</p></div>';
                 return;
             }
 
@@ -293,7 +295,7 @@ window.SGIPage.mount("eventos/configurar-equipes", function (pageConfig, pageSco
             }
 
             mob.innerHTML = htmlMob;
-            desk.innerHTML = htmlDesk ? `<div class="aluno-card-grid">${htmlDesk}</div>` : '';
+            desk.innerHTML = htmlDesk ? `<div class="row row-cols-1 row-cols-lg-2 g-4">${htmlDesk}</div>` : '';
 
             restaurarCardsAbertos(mob);
             restaurarCardsAbertos(desk);

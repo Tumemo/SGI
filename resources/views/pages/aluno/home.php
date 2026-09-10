@@ -21,16 +21,6 @@ include SGI_ROOT . '/resources/views/components/aluno-nav.php';
         </div>
       </div>
 
-      <!-- <div class="aluno-section-header">
-        <h2><i class="bi bi-trophy"></i>Interclasses</h2>
-        <div class="d-flex gap-2 flex-wrap align-items-center">
-          <div class="aluno-search w-100" >
-            <i class="bi bi-search search-icon"></i>
-            <input type="text" class="form-control" id="searchInput" placeholder="Pesquisar...">
-          </div>
-        </div>
-      </div> -->
-
       <div class="d-flex gap-2 flex-wrap mb-4" id="filterPills">
         <button type="button" class="btn btn-sm btn-outline-primary rounded-pill filter-pill active" data-filter="active" aria-pressed="true">Em Andamento</button>
         <button type="button" class="btn btn-sm btn-outline-primary rounded-pill filter-pill" data-filter="all" aria-pressed="false">Todos</button>
@@ -38,7 +28,7 @@ include SGI_ROOT . '/resources/views/components/aluno-nav.php';
       </div>
 
       <section id="listaInterclassesAluno">
-        <div class="aluno-loading">
+        <div class="text-center py-5 text-body-secondary">
           <div class="spinner-border spinner-border-sm text-danger me-2" role="status">
             <span class="visually-hidden">Carregando...</span>
           </div>

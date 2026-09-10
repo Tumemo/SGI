@@ -138,14 +138,14 @@ async function carregar() {
         const arr = Array.isArray(lista) ? lista : [];
 
         if (arr.length === 0) {
-            const msg = '<div class="aluno-empty"><div class="empty-icon"><i class="bi bi-people"></i></div><h5>Elenco vazio</h5><p>Nenhum jogador vinculado a esta equipe ainda.</p></div>';
+            const msg = '<div class="text-center py-5 text-body-secondary"><i class="bi bi-people fs-1 d-block mb-3" aria-hidden="true"></i><h5 class="fw-semibold mb-2">Elenco vazio</h5><p class="small mb-0">Nenhum jogador vinculado a esta equipe ainda.</p></div>';
             mob.innerHTML = msg;
             tbody.innerHTML = `<tr><td colspan="${isAdmin ? 3 : 2}" class="text-muted px-3 py-4">Nenhum jogador vinculado a esta equipe ainda.</td></tr>`;
             return;
         }
 
         mob.innerHTML = arr.map(u => `
-            <div class="aluno-member-item">
+            <div class="d-flex align-items-center justify-content-between gap-3 border rounded-3 p-3 bg-body mb-2">
                 <div>
                     <div class="fw-medium">${esc(u.nome_usuario)}</div>
                     <div class="text-muted small">${esc(u.matricula_usuario)}</div>

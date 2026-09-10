@@ -47,7 +47,7 @@ window.SGIPage.mount("resultados/ranking", function (pageConfig, pageScope) {
             return;
         }
 
-        const loading = '<div class="rk-loading"><div class="spinner-border text-danger"></div></div>';
+        const loading = '<div class="text-center py-5 text-body-secondary"><div class="spinner-border text-danger" role="status"><span class="visually-hidden">Carregando ranking...</span></div></div>';
         document.getElementById('listaMob').innerHTML = loading;
         document.getElementById('listaDesk').innerHTML = loading;
 
@@ -130,7 +130,7 @@ window.SGIPage.mount("resultados/ranking", function (pageConfig, pageScope) {
         cDesk.innerHTML = '';
 
         if (!turmas.length) {
-            const empty = '<div class="rk-empty"><i class="bi bi-inbox"></i><p>Nenhuma turma nesta categoria.</p></div>';
+            const empty = '<div class="text-center py-5 text-body-secondary"><i class="bi bi-inbox display-6 d-block mb-2"></i><p class="mb-0">Nenhuma turma nesta categoria.</p></div>';
             cMob.innerHTML = empty;
             cDesk.innerHTML = empty;
             return;
@@ -146,48 +146,52 @@ window.SGIPage.mount("resultados/ranking", function (pageConfig, pageScope) {
             const perdeu = ptsBrutos - ptsLiquidos;
             const porcentagemSem = (ptsBrutos / maxPontos) * 100;
             const porcentagemCom = (ptsLiquidos / maxPontos) * 100;
-            const classeDestaque = posicao <= 3 ? `posicao-${posicao}` : '';
             const isTop3 = posicao <= 3;
+            const destaqueClasses = posicao === 1
+                ? 'border-warning border-2 bg-warning-subtle'
+                : posicao === 2
+                    ? 'border-secondary border-2 bg-secondary-subtle'
+                    : posicao === 3
+                        ? 'border-danger-subtle border-2 bg-danger-subtle'
+                        : 'border-light';
+            const posicaoClasses = isTop3 ? 'bg-dark text-white' : 'bg-body-secondary text-body-secondary';
 
             const html = `
-                <div class="rk-card-wrapper ${isTop3 ? 'rk-card-wrapper--top' : ''} sgi-u-animation-delay-calc-attr-data-sgi-index-type-number-07s"  data-sgi-index="${index}">
-                    <div class="card card-turma rk-rank-card ${classeDestaque} ${isTop3 ? 'rk-rank-card--podium' : ''}">
-                        ${isTop3 ? `<div class="rk-rank-card__medal">${medals[posicao - 1]}</div>` : ''}
+                <div class="mb-3" data-sgi-index="${index}">
+                    <div class="card position-relative ${destaqueClasses} card-turma p-3 p-md-4">
+                        ${isTop3 ? `<span class="position-absolute top-0 end-0 translate-middle fs-3" aria-hidden="true">${medals[posicao - 1]}</span>` : ''}
 
-                        <div class="rk-rank-card__head">
-                            <div class="rk-rank-card__pos ${isTop3 ? 'rk-rank-card__pos--podium' : ''}">${posicao}°</div>
-                            <div class="rk-rank-card__info">
-                                <div class="rk-rank-card__name">${t.nome_turma}</div>
-                                <div class="rk-rank-card__detail"><i class="bi bi-mortarboard-fill"></i> ${t.nome_fantasia_turma || t.turno_turma}</div>
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="d-flex align-items-center justify-content-center rounded-circle ${posicaoClasses} flex-shrink-0" style="width: 2.75rem; height: 2.75rem;">${posicao}°</div>
+                            <div class="flex-grow-1 sgi-u-min-width-0">
+                                <div class="h5 fw-semibold mb-1 text-truncate">${t.nome_turma}</div>
+                                <div class="small text-body-secondary"><i class="bi bi-mortarboard-fill me-1"></i>${t.nome_fantasia_turma || t.turno_turma}</div>
                             </div>
-                            <div class="rk-rank-card__badge badge-pontos ${isTop3 ? 'rk-rank-card__badge--podium' : ''}">
-                                <span class="rk-rank-card__pts">${ptsLiquidos}</span>
-                                <span class="rk-rank-card__pts-label">pts</span>
-                            </div>
+                            <div class="badge text-bg-primary fs-6 flex-shrink-0"><span>${ptsLiquidos}</span> <small>pts</small></div>
                         </div>
 
-                        <div class="rk-rank-card__bars">
-                            <div class="rk-bar-group">
-                                <div class="rk-bar-group__header">
-                            <span><i class="bi bi-star"></i> Pontuação bruta</span>
-                            <span class="rk-bar-group__val">${ptsBrutos} pts</span>
+                        <div class="d-flex flex-column gap-2 mt-3">
+                            <div>
+                                <div class="d-flex justify-content-between align-items-center small text-body-secondary mb-1">
+                                    <span><i class="bi bi-star me-1"></i>Pontuação bruta</span>
+                                    <span class="fw-semibold">${ptsBrutos} pts</span>
                                 </div>
-                                <div class="barra-fundo sgi-u-h-8px" >
-                                    <div class="barra-progresso rk-bar--expected sgi-u-w-calc-attr-data-sgi-width-type-number-1"  data-sgi-width="${porcentagemSem}"></div>
+                                <div class="progress" style="height: 8px" role="progressbar" aria-label="Pontuação bruta" aria-valuenow="${porcentagemSem}" aria-valuemin="0" aria-valuemax="100">
+                                    <div class="progress-bar bg-secondary" style="width: ${porcentagemSem}%"></div>
                                 </div>
                             </div>
-                            <div class="rk-bar-group">
-                                <div class="rk-bar-group__header">
-                            <span class="text-danger fw-semibold"><i class="bi bi-flag-fill"></i> Pontuação líquida</span>
-                            <span class="rk-bar-group__val fw-bold">${ptsLiquidos} pts${perdeu > 0 ? ` <span class="text-danger">(-${perdeu})</span>` : ''}</span>
+                            <div>
+                                <div class="d-flex justify-content-between align-items-center small text-body-secondary mb-1">
+                                    <span class="text-danger fw-semibold"><i class="bi bi-flag-fill me-1"></i>Pontuação líquida</span>
+                                    <span class="fw-bold">${ptsLiquidos} pts${perdeu > 0 ? ` <span class="text-danger">(-${perdeu})</span>` : ''}</span>
                                 </div>
-                                <div class="barra-fundo sgi-u-h-12px" >
-                                    <div class="barra-progresso rk-bar--final sgi-u-w-calc-attr-data-sgi-width-type-number-1"  data-sgi-width="${porcentagemCom}"></div>
+                                <div class="progress" style="height: 12px" role="progressbar" aria-label="Pontuação líquida" aria-valuenow="${porcentagemCom}" aria-valuemin="0" aria-valuemax="100">
+                                    <div class="progress-bar bg-primary" style="width: ${porcentagemCom}%"></div>
                                 </div>
                             </div>
                         </div>
 
-                        <div class="rk-hist-footer">
+                        <div class="mt-3 d-print-none">
                             <button type="button" class="btn btn-sm btn-outline-secondary w-100" onclick="abrirHistorico(${t.id_turma}, '${jsEsc(t.nome_turma)}')">
                                 <i class="bi bi-clock-history"></i> Ver histórico de pontos
                             </button>
@@ -229,16 +233,16 @@ window.SGIPage.mount("resultados/ranking", function (pageConfig, pageScope) {
     function badgeColocacao(pos) {
         if (pos === null || pos === undefined) return '';
         const medalha = medalhas[pos] || '';
-        return `<span class="htr-colocacao">${medalha}${pos}º</span>`;
+        return `<span class="badge text-bg-secondary">${medalha}${pos}º</span>`;
     }
 
     function secaoAbertura(icone, titulo, contagem) {
         return `
-            <div class="htr-secao">
-                <div class="htr-secao__head">
-                    <i class="bi bi-${icone}"></i><span>${titulo}</span>
-                    <span class="htr-secao__count">${contagem}</span>
-                </div>`;
+            <section class="px-3 pb-3">
+                <h6 class="d-flex align-items-center gap-2 fw-bold text-body-secondary border-bottom pb-2 mb-3">
+                    <i class="bi bi-${icone} text-primary"></i><span>${titulo}</span>
+                    <span class="badge text-bg-light border text-body-secondary ms-auto">${contagem}</span>
+                </h6>`;
     }
 
     function renderHistorico(d) {
@@ -252,109 +256,108 @@ window.SGIPage.mount("resultados/ranking", function (pageConfig, pageScope) {
         let html = '';
 
         html += `
-            <div class="htr-titulo">
+            <div class="bg-dark text-white d-flex align-items-center justify-content-between gap-3 flex-wrap p-4">
                 <div>
-                    <div class="htr-turma-nome">${esc(t.nome_turma)}</div>
-                    <div class="htr-turma-sub">${esc(t.nome_fantasia_turma || '')} · ${esc(t.nome_categoria)} · ${esc(t.turno_turma || '')}</div>
+                    <div class="h5 fw-bold mb-1">${esc(t.nome_turma)}</div>
+                    <div class="small text-white-50">${esc(t.nome_fantasia_turma || '')} · ${esc(t.nome_categoria)} · ${esc(t.turno_turma || '')}</div>
                 </div>
-                <div class="htr-total">${liquido}<small>pts líquidos</small></div>
-                <div class="htr-turma-sub">Bruto registrado: ${bruto} pts</div>
+                <div class="text-end"><div class="h3 fw-bold text-warning mb-0">${liquido}</div><small class="text-white-50">pts líquidos</small><div class="small text-white-50 mt-1">Bruto registrado: ${bruto} pts</div></div>
             </div>
-            <div class="htr-resumo">
-                <div class="htr-chip htr-chip--verde">
+            <div class="row row-cols-1 row-cols-sm-3 g-2 p-3">
+                <div class="col"><div class="card border-0 bg-success-subtle text-success-emphasis text-center p-2 h-100">
                     <i class="bi bi-box-seam"></i>
-                    <span class="htr-chip__valor">+${d.arrecadacao.pontos} pts</span>
-                    <span class="htr-chip__rotulo">Arrecadação</span>
-                </div>
-                <div class="htr-chip htr-chip--roxo">
+                    <span class="fw-semibold">+${d.arrecadacao.pontos} pts</span>
+                    <span class="small text-uppercase">Arrecadação</span>
+                </div></div>
+                <div class="col"><div class="card border-0 bg-primary-subtle text-primary-emphasis text-center p-2 h-100">
                     <i class="bi bi-trophy"></i>
-                    <span class="htr-chip__valor">+${d.esportes.pontos_total} pts</span>
-                    <span class="htr-chip__rotulo">Esportes</span>
-                </div>
-                ${ajuste !== 0 ? `<div class="htr-chip htr-chip--amarelo"><i class="bi bi-question-circle"></i><span class="htr-chip__valor">${ajuste > 0 ? '+' : ''}${ajuste} pts</span><span class="htr-chip__rotulo">Ajuste sem origem detalhada</span></div>` : ''}
-                <div class="htr-chip htr-chip--vermelho">
+                    <span class="fw-semibold">+${d.esportes.pontos_total} pts</span>
+                    <span class="small text-uppercase">Esportes</span>
+                </div></div>
+                ${ajuste !== 0 ? `<div class="col"><div class="card border-0 bg-warning-subtle text-warning-emphasis text-center p-2 h-100"><i class="bi bi-question-circle"></i><span class="fw-semibold">${ajuste > 0 ? '+' : ''}${ajuste} pts</span><span class="small text-uppercase">Ajuste sem origem detalhada</span></div></div>` : ''}
+                <div class="col"><div class="card border-0 bg-danger-subtle text-danger-emphasis text-center p-2 h-100">
                     <i class="bi bi-flag"></i>
-                    <span class="htr-chip__valor">-${d.penalidades.pontos_total} pts</span>
-                    <span class="htr-chip__rotulo">Penalidades</span>
-                </div>
+                    <span class="fw-semibold">-${d.penalidades.pontos_total} pts</span>
+                    <span class="small text-uppercase">Penalidades</span>
+                </div></div>
             </div>
-            ${difere ? `<div class="htr-aviso"><i class="bi bi-info-circle"></i> Soma das parcelas líquidas: ${soma} pts. O total líquido é ${liquido} pts (diferença de ${Math.abs(soma - liquido)} pts).</div>` : ''}
-            ${d.ajuste?.pendente_origem ? `<div class="htr-aviso"><i class="bi bi-info-circle"></i> ${esc(d.ajuste.origem || 'Há saldo sem origem detalhada.')} (${ajuste} pts).</div>` : ''}
+            ${difere ? `<div class="alert alert-warning mx-3 mb-3 py-2 small"><i class="bi bi-info-circle me-1"></i>Soma das parcelas líquidas: ${soma} pts. O total líquido é ${liquido} pts (diferença de ${Math.abs(soma - liquido)} pts).</div>` : ''}
+            ${d.ajuste?.pendente_origem ? `<div class="alert alert-warning mx-3 mb-3 py-2 small"><i class="bi bi-info-circle me-1"></i>${esc(d.ajuste.origem || 'Há saldo sem origem detalhada.')} (${ajuste} pts).</div>` : ''}
         `;
 
         /* Arrecadação */
         html += secaoAbertura('box-seam', 'Arrecadação', d.arrecadacao.registros.length);
         if (d.arrecadacao.registros.length) {
-            html += '<div class="htr-lista">';
+            html += '<div class="d-flex flex-column">';
             d.arrecadacao.registros.forEach(r => {
                 html += `
-                    <div class="htr-linha">
-                        <div class="htr-linha__info">
-                            <div class="htr-linha__titulo">${r.quantidade} kg</div>
-                            <div class="htr-linha__sub">${fmtDataHora(r.data)} · por ${esc(r.registrado_por)}</div>
+                    <div class="d-flex align-items-center justify-content-between gap-3 py-2 border-bottom">
+                        <div>
+                            <div class="fw-semibold small">${r.quantidade} kg</div>
+                            <div class="small text-body-secondary">${fmtDataHora(r.data)} · por ${esc(r.registrado_por)}</div>
                         </div>
-                        <span class="htr-linha__pts htr-pts--mais">+${r.pontos}</span>
+                        <span class="fw-bold text-success flex-shrink-0">+${r.pontos}</span>
                     </div>`;
             });
             html += '</div>';
-            html += `<div class="htr-secao-total">Total: <b>${d.arrecadacao.itens} kg</b> × ${d.interclasse.valor_item_arrecadacao} pts = <b>+${d.arrecadacao.pontos} pts</b></div>`;
+            html += `<div class="small text-body-secondary text-end mt-2">Total: <b>${d.arrecadacao.itens} kg</b> × ${d.interclasse.valor_item_arrecadacao} pts = <b>+${d.arrecadacao.pontos} pts</b></div>`;
         } else {
-            html += '<div class="htr-vazio">Nenhuma arrecadação registrada.</div>';
+            html += '<div class="text-center text-body-secondary py-3 small">Nenhuma arrecadação registrada.</div>';
         }
-        html += '</div>';
+        html += '</section>';
 
         /* Esportes */
         html += secaoAbertura('trophy', 'Esportes', d.esportes.modalidades.length);
         if (d.esportes.modalidades.length) {
-            html += '<div class="htr-mods">';
+            html += '<div class="d-flex flex-column gap-2">';
             d.esportes.modalidades.forEach(m => {
                 html += `
-                    <div class="htr-mod">
-                        <div class="htr-mod__head">
-                            <div class="htr-mod__nome">
+                    <div class="card border bg-body-tertiary p-3">
+                        <div class="d-flex align-items-center justify-content-between gap-2 flex-wrap">
+                            <div class="d-flex align-items-center gap-2 flex-wrap small">
                                 ${badgeColocacao(m.colocacao)}
                                 <b>${esc(m.nome_modalidade)}</b>
-                                <span class="htr-mod__tipo">${esc(m.tipo)} · ${esc(m.nome_categoria)}</span>
+                                <span class="text-body-secondary">${esc(m.tipo)} · ${esc(m.nome_categoria)}</span>
                             </div>
-                            <span class="htr-mod__pts">+${m.pontos} pts</span>
+                            <span class="fw-bold text-success">+${m.pontos} pts</span>
                         </div>
-                        ${m.alunos.length ? `<div class="htr-mod__alunos">${m.alunos.map(a => `<span class="htr-aluno">${esc(a.nome_usuario)}</span>`).join('')}</div>` : ''}
-                        ${m.itens.length ? `<div class="htr-lista htr-lista--mod">${m.itens.map(it => `
-                            <div class="htr-linha">
-                                <div class="htr-linha__info">
-                                    <div class="htr-linha__titulo">${esc(it.descricao)}</div>
-                                    <div class="htr-linha__sub">${esc(it.detalhe)}</div>
+                        ${m.alunos.length ? `<div class="d-flex flex-wrap gap-1 mt-2">${m.alunos.map(a => `<span class="badge text-bg-light border text-body-secondary">${esc(a.nome_usuario)}</span>`).join('')}</div>` : ''}
+                        ${m.itens.length ? `<div class="d-flex flex-column mt-2 border rounded overflow-hidden">${m.itens.map(it => `
+                            <div class="d-flex align-items-center justify-content-between gap-3 p-2 border-bottom">
+                                <div>
+                                    <div class="small fw-semibold">${esc(it.descricao)}</div>
+                                    <div class="small text-body-secondary">${esc(it.detalhe)}</div>
                                 </div>
-                                <span class="htr-linha__pts htr-pts--mais">+${it.pontos}</span>
+                                <span class="fw-bold text-success flex-shrink-0">+${it.pontos}</span>
                             </div>`).join('')}</div>` : ''}
                     </div>`;
             });
             html += '</div>';
         } else {
-            html += '<div class="htr-vazio">Nenhuma pontuação esportiva até o momento.</div>';
+            html += '<div class="text-center text-body-secondary py-3 small">Nenhuma pontuação esportiva até o momento.</div>';
         }
-        html += '</div>';
+        html += '</section>';
 
         /* Penalidades */
         html += secaoAbertura('flag', 'Penalidades', d.penalidades.ocorrencias.length);
         if (d.penalidades.ocorrencias.length) {
-            html += '<div class="htr-lista">';
+            html += '<div class="d-flex flex-column">';
             d.penalidades.ocorrencias.forEach(o => {
                 html += `
-                    <div class="htr-linha">
-                        <div class="htr-linha__info">
-                            <div class="htr-linha__titulo">${esc(o.titulo)}${o.aluno ? ` <span class="htr-aluno">${esc(o.aluno)}</span>` : ''}</div>
-                            <div class="htr-linha__sub">${fmtData(o.data)}${o.descricao ? ' · ' + esc(o.descricao) : ''}</div>
+                    <div class="d-flex align-items-center justify-content-between gap-3 py-2 border-bottom">
+                        <div>
+                            <div class="small fw-semibold">${esc(o.titulo)}${o.aluno ? ` <span class="badge text-bg-light border text-body-secondary">${esc(o.aluno)}</span>` : ''}</div>
+                            <div class="small text-body-secondary">${fmtData(o.data)}${o.descricao ? ' · ' + esc(o.descricao) : ''}</div>
                         </div>
-                        <span class="htr-linha__pts htr-pts--menos">-${o.pontos}</span>
+                        <span class="fw-bold text-danger flex-shrink-0">-${o.pontos}</span>
                     </div>`;
             });
             html += '</div>';
-            html += `<div class="htr-secao-total">Total descontado: <b>-${d.penalidades.pontos_total} pts</b></div>`;
+            html += `<div class="small text-body-secondary text-end mt-2">Total descontado: <b>-${d.penalidades.pontos_total} pts</b></div>`;
         } else {
-            html += '<div class="htr-vazio">Nenhuma penalidade applied.</div>';
+            html += '<div class="text-center text-body-secondary py-3 small">Nenhuma penalidade aplicada.</div>';
         }
-        html += '</div>';
+        html += '</section>';
 
         document.getElementById('htrCorpo').innerHTML = html;
     }

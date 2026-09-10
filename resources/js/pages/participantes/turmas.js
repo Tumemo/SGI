@@ -54,11 +54,13 @@ window.SGIPage.mount("participantes/turmas", function (pageConfig, pageScope) {
     /* ── EMPTY STATE ── */
     function renderizarEmptyState(mensagem, botao) {
         const html = `
-            <div class="empty-state">
-                <div class="empty-state-icon"><i class="bi bi-people"></i></div>
-                <h3>${mensagem || 'Nenhuma turma encontrada'}</h3>
-                <p>${botao || 'Nenhuma turma cadastrada neste interclasse ainda.'}</p>
+            <div class="col-12">
+                <div class="text-center py-5 text-body-secondary">
+                    <i class="bi bi-people fs-1 d-block mb-3 text-body-tertiary"></i>
+                    <h3 class="h5 fw-semibold text-body">${mensagem || 'Nenhuma turma encontrada'}</h3>
+                    <p class="mb-3">${botao || 'Nenhuma turma cadastrada neste interclasse ainda.'}</p>
                 ${NIVEL_USUARIO === 0 ? '<button class="btn btn-primary px-4" data-bs-toggle="modal" data-bs-target="#exampleModal"><i class="bi bi-plus-lg me-1"></i>Criar Turma</button>' : ''}
+                </div>
             </div>`;
         document.getElementById('listaTurmasMobile').innerHTML = html;
         document.getElementById('listaTurmasDesktop').innerHTML = html;
@@ -70,37 +72,37 @@ window.SGIPage.mount("participantes/turmas", function (pageConfig, pageScope) {
         const turno = esc(turma.turno_turma || '');
 
         const adminBtns = NIVEL_USUARIO === 0 ? `
-            <div class="turma-card-admin">
-                <button class="btn-icon" title="Editar" onclick='editarTurma(${turma.id_turma})'>
+            <div class="d-flex gap-1">
+                <button class="btn btn-outline-secondary btn-sm" title="Editar" onclick='editarTurma(${turma.id_turma})'>
                     <i class="bi bi-pencil"></i>
                 </button>
-                <button class="btn-icon btn-icon--delete" title="Excluir" onclick="abrirModalExcluir(${Number(turma.id_turma) || 0})">
+                <button class="btn btn-outline-danger btn-sm" title="Excluir" onclick="abrirModalExcluir(${Number(turma.id_turma) || 0})">
                     <i class="bi bi-trash"></i>
                 </button>
             </div>` : '';
 
         return `
             <div class="col">
-                <div class="turma-card">
-                    <div class="turma-card-top">
-                        <div class="turma-avatar bg-primary" >${avatarLetra}</div>
-                        <div class="turma-card-info">
-                            <div class="turma-card-name">${esc(turma.nome_turma)}</div>
-                            ${turma.nome_fantasia_turma ? `<div class="turma-card-fantasy">${esc(turma.nome_fantasia_turma)}</div>` : ''}
+                <article class="card h-100 border-0 shadow-sm p-3">
+                    <div class="d-flex align-items-start gap-3 mb-3">
+                        <div class="rounded-3 bg-primary text-white d-flex align-items-center justify-content-center flex-shrink-0 p-3 fs-5 fw-bold">${avatarLetra}</div>
+                        <div class="flex-grow-1 sgi-u-min-width-0">
+                            <h3 class="h6 fw-bold mb-1 text-truncate">${esc(turma.nome_turma)}</h3>
+                            ${turma.nome_fantasia_turma ? `<p class="small text-body-secondary mb-0 text-truncate">${esc(turma.nome_fantasia_turma)}</p>` : ''}
                         </div>
                     </div>
-                    <div class="turma-card-meta">
-                        ${turno ? `<span class="turma-badge"><i class="bi bi-clock"></i> ${turno}</span>` : ''}
-                        <span class="turma-badge"><i class="bi bi-bookmark"></i> ${esc(turma.nome_categoria || 'Categoria')}</span>
-                        <span class="turma-badge"><i class="bi bi-people"></i> ${turma.qtd_alunos || 0}</span>
+                    <div class="d-flex flex-wrap gap-2 mb-3">
+                        ${turno ? `<span class="badge rounded-pill text-bg-light text-body-secondary"><i class="bi bi-clock me-1"></i>${turno}</span>` : ''}
+                        <span class="badge rounded-pill text-bg-light text-body-secondary"><i class="bi bi-bookmark me-1"></i>${esc(turma.nome_categoria || 'Categoria')}</span>
+                        <span class="badge rounded-pill text-bg-light text-body-secondary"><i class="bi bi-people me-1"></i>${turma.qtd_alunos || 0}</span>
                     </div>
-                    <div class="turma-card-actions">
+                    <div class="d-flex align-items-center justify-content-between gap-2 mt-auto pt-3 border-top">
                         ${adminBtns}
-                        <a href="/turmas/alunos?id=${interclasse.id_interclasse}&id_turma=${turma.id_turma}&id_categoria=${turma.categorias_id_categoria}" class="turma-card-btn-detalhes ms-auto">
+                        <a href="/turmas/alunos?id=${interclasse.id_interclasse}&id_turma=${turma.id_turma}&id_categoria=${turma.categorias_id_categoria}" class="btn btn-primary btn-sm ms-auto d-inline-flex align-items-center gap-1">
                             Ver detalhes <i class="bi bi-arrow-right"></i>
                         </a>
                     </div>
-                </div>
+                </article>
             </div>`;
     }
 
@@ -122,10 +124,10 @@ window.SGIPage.mount("participantes/turmas", function (pageConfig, pageScope) {
         Object.entries(grupos).forEach(([catNome, lista]) => {
             const cardsHtml = lista.map(t => renderizarCard(t, interclasse)).join('');
             html += `
-                <div class="turma-section mb-5">
-                    <div class="turma-section-header">
-                        <h2>${esc(catNome)}</h2>
-                        <span class="turma-section-count">${lista.length} turma${lista.length !== 1 ? 's' : ''}</span>
+                <div class="mb-5">
+                    <div class="d-flex align-items-center gap-2 mb-3 pb-2 border-bottom">
+                        <h2 class="h5 fw-bold mb-0">${esc(catNome)}</h2>
+                        <span class="badge rounded-pill text-bg-light text-body-secondary">${lista.length} turma${lista.length !== 1 ? 's' : ''}</span>
                     </div>
                     <div class="row row-cols-1 row-cols-md-2 row-cols-xl-4 g-4">
                         ${cardsHtml}

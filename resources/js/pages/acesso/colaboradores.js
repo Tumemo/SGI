@@ -50,20 +50,24 @@ window.SGIPage.mount("acesso/colaboradores", function (pageConfig, pageScope) {
         const ri = roleIcon(item.nivel_usuario);
         const nivel = String(item.nivel_usuario);
 
+        const roleBadge = {admin: 'text-bg-danger', mesario: 'text-bg-primary', colab: 'text-bg-secondary'}[rc] || 'text-bg-secondary';
+
         return `
-            <div class="col-card col-card--${rc}" data-id="${item.id_usuario}" data-nivel="${nivel}">
-                <div class="col-avatar col-avatar--${rc}">${avatarInitial(item.nome_usuario)}</div>
-                <div class="col-info">
-                    <p class="col-info__name">${esc(item.nome_usuario)}</p>
-                    <div class="col-info__meta">
-                        <span class="col-info__detail"><i class="bi bi-hash"></i>${esc(item.matricula_usuario || '')}</span>
-                        <span class="col-role col-role--${rc}"><i class="bi ${ri}"></i>${rn}</span>
+            <div class="col">
+                <article class="card h-100 border-0 shadow-sm p-3 d-flex flex-row align-items-center gap-3" data-id="${item.id_usuario}" data-nivel="${nivel}">
+                    <div class="rounded-3 bg-body-secondary text-body d-inline-flex align-items-center justify-content-center flex-shrink-0 p-3 fs-5 fw-bold">${avatarInitial(item.nome_usuario)}</div>
+                    <div class="flex-grow-1 sgi-u-min-width-0">
+                        <p class="fw-semibold mb-1 text-truncate">${esc(item.nome_usuario)}</p>
+                        <div class="d-flex align-items-center gap-2 flex-wrap small text-body-secondary">
+                            <span><i class="bi bi-hash me-1"></i>${esc(item.matricula_usuario || '')}</span>
+                            <span class="badge rounded-pill ${roleBadge}"><i class="bi ${ri} me-1"></i>${rn}</span>
+                        </div>
                     </div>
-                </div>
-                <div class="col-actions">
-                    <button type="button" class="col-action col-action--edit" data-editar="${item.id_usuario}" title="Editar"><i class="bi bi-pencil"></i></button>
-                    ${nivel !== '0' ? `<button type="button" class="col-action col-action--delete" data-remover="${item.id_usuario}" title="Excluir"><i class="bi bi-trash"></i></button>` : ''}
-                </div>
+                    <div class="d-flex gap-1 flex-shrink-0">
+                        <button type="button" class="btn btn-outline-secondary btn-sm" data-editar="${item.id_usuario}" title="Editar"><i class="bi bi-pencil"></i></button>
+                        ${nivel !== '0' ? `<button type="button" class="btn btn-outline-danger btn-sm" data-remover="${item.id_usuario}" title="Excluir"><i class="bi bi-trash"></i></button>` : ''}
+                    </div>
+                </article>
             </div>`;
     }
 
@@ -101,15 +105,17 @@ window.SGIPage.mount("acesso/colaboradores", function (pageConfig, pageScope) {
         ['filtrosMob', 'filtrosDesk'].forEach(id => {
             const el = document.getElementById(id);
             if (!el) return;
-            el.innerHTML = '<button class="col-chip col-chip--active" data-filtro="todos">Todos</button>';
+            el.innerHTML = '<button class="btn btn-sm btn-primary" data-filtro="todos">Todos</button>';
             niveis.forEach(n => {
-                el.innerHTML += `<button class="col-chip" data-filtro="${n}">${nomes[n] || 'Nível ' + n}</button>`;
+                el.innerHTML += `<button class="btn btn-sm btn-outline-primary" data-filtro="${n}">${nomes[n] || 'Nível ' + n}</button>`;
             });
-            el.querySelectorAll('.col-chip').forEach(chip => {
+            el.querySelectorAll('[data-filtro]').forEach(chip => {
                 pageScope.listen(chip, 'click', () => {
                     filtroNivelAtual = chip.dataset.filtro;
-                    el.querySelectorAll('.col-chip').forEach(c => c.classList.remove('col-chip--active'));
-                    chip.classList.add('col-chip--active');
+                    el.querySelectorAll('[data-filtro]').forEach(c => {
+                        c.classList.toggle('btn-primary', c === chip);
+                        c.classList.toggle('btn-outline-primary', c !== chip);
+                    });
                     aplicarFiltros();
                 });
             });
@@ -132,7 +138,7 @@ window.SGIPage.mount("acesso/colaboradores", function (pageConfig, pageScope) {
 
         const html = lista.length
             ? lista.map(cardColaborador).join('')
-            : '<div class="col-empty"><i class="bi bi-people"></i><p>Nenhum colaborador encontrado.</p><button class="col-add-btn" data-bs-toggle="modal" data-bs-target="#modalAdicionarColaborador"><i class="bi bi-plus-lg"></i> Adicionar colaborador</button></div>';
+            : '<div class="col-12 text-center text-body-secondary py-5"><i class="bi bi-people fs-1 d-block mb-3 text-body-tertiary"></i><p class="mb-3">Nenhum colaborador encontrado.</p><button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalAdicionarColaborador"><i class="bi bi-plus-lg me-1"></i>Adicionar colaborador</button></div>';
 
         const desk = document.getElementById('listaColaboradoresDesktop');
         const mob = document.getElementById('listaColaboradoresMobile');
@@ -144,7 +150,7 @@ window.SGIPage.mount("acesso/colaboradores", function (pageConfig, pageScope) {
     async function carregarColaboradores() {
         const desk = document.getElementById('listaColaboradoresDesktop');
         const mob = document.getElementById('listaColaboradoresMobile');
-        const loading = '<div class="col-loading"><div class="spinner-border text-danger me-2"></div>Carregando colaboradores...</div>';
+        const loading = '<div class="col-12 text-center text-body-secondary py-5"><div class="spinner-border text-primary me-2" role="status"></div>Carregando colaboradores...</div>';
         if (desk) desk.innerHTML = loading;
         if (mob) mob.innerHTML = loading;
 
@@ -158,7 +164,7 @@ window.SGIPage.mount("acesso/colaboradores", function (pageConfig, pageScope) {
             montarFiltros(lista);
             aplicarFiltros();
         } catch (error) {
-            const msg = `<div class="col-empty"><i class="bi bi-exclamation-triangle"></i><p class="text-danger">${error.message}</p></div>`;
+            const msg = `<div class="col-12 text-center py-5"><i class="bi bi-exclamation-triangle text-danger fs-1 d-block mb-3"></i><p class="text-danger mb-0">${error.message}</p></div>`;
             if (desk) desk.innerHTML = msg;
             if (mob) mob.innerHTML = msg;
         }

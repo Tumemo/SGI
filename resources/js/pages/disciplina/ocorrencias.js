@@ -59,9 +59,9 @@ window.SGIPage.mount("disciplina/ocorrencias", function (pageConfig, pageScope) 
     function carregarLista() {
         function renderCard(turma) {
             return `
-                <div class="card border-0 shadow-sm p-3 d-flex flex-row align-items-center gap-3">
+                <div class="col"><article class="card h-100 border-0 shadow-sm p-3 d-flex flex-row align-items-center gap-3">
                     <div class="bg-danger-subtle text-danger rounded-circle p-2 fs-5 d-flex align-items-center justify-content-center flex-shrink-0"><i class="bi bi-people-fill"></i></div>
-                    <div class="flex-grow-1 min-w-0">
+                    <div class="flex-grow-1 sgi-u-min-width-0">
                         <p class="mb-1 fw-semibold text-truncate">${esc(turma.nome_fantasia_turma || turma.nome_turma)}</p>
                         <span class="badge text-bg-light">${esc(turma.nome_categoria || 'Geral')}</span>
                     </div>
@@ -71,7 +71,7 @@ window.SGIPage.mount("disciplina/ocorrencias", function (pageConfig, pageScope) 
                     <button class="btn btn-outline-danger btn-sm" data-sgi-action="add-ocorrencia" onclick="abrirModalOcorrencia(${turma.id_turma}, '${esc(turma.nome_fantasia_turma || turma.nome_turma)}')" title="Adicionar ocorrência">
                         <i class="bi bi-plus-lg"></i>
                     </button>
-                </div>`;
+                </article></div>`;
         }
 
         const listaDesk = document.getElementById('listaOcorrenciasDesktop');
@@ -79,7 +79,7 @@ window.SGIPage.mount("disciplina/ocorrencias", function (pageConfig, pageScope) 
         const turmas = turmasFiltradas();
 
         if (turmas.length === 0) {
-            const msg = '<div class="text-center text-muted py-5 sgi-u-col-1-1" ><i class="bi bi-inbox fs-2 d-block mb-2 text-body-tertiary" ></i>Nenhuma turma encontrada.</div>';
+            const msg = '<div class="col-12 text-center text-body-secondary py-5"><i class="bi bi-inbox fs-2 d-block mb-2 text-body-tertiary"></i>Nenhuma turma encontrada.</div>';
             listaDesk.innerHTML = msg;
             listaMob.innerHTML = msg;
         } else {
@@ -185,7 +185,7 @@ window.SGIPage.mount("disciplina/ocorrencias", function (pageConfig, pageScope) 
                 html += '<td class="small text-muted">' + esc(r.data_ocorrencia) + '</td>';
                 html += '<td>' + esc(r.titulo_ocorrencia) + '</td>';
                 html += '<td class="small text-muted">' + esc(r.descricao_ocorrencia || '-') + '</td>';
-                html += '<td class="text-center"><span class="ocr-badge ocr-badge--pontos">-' + r.pontos_descontados + ' pts</span></td>';
+                html += '<td class="text-center"><span class="badge text-bg-danger">-' + r.pontos_descontados + ' pts</span></td>';
                 html += '<td class="text-center">';
                 html += '<button class="btn btn-outline-danger btn-sm" title="Remover" onclick="removerOcorrencia(' + r.id_ocorrencia_turma + ')"><i class="bi bi-trash"></i></button>';
                 html += '</td></tr>';

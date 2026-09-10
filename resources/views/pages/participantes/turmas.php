@@ -17,16 +17,16 @@ $paginaAtiva = 'categorias';
             <a href="<?= \App\Shared\Http\Url::to('painel') ?>" id="btnVoltarCatMob" class="btn btn-primary d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none" >
                 <i class="bi bi-arrow-left-circle fs-5"></i> <span id="nomeInterclasseCatMob">Interclasse</span>
             </a>
-            <div class="turma-search-wrapper flex-grow-1">
-                <i class="bi bi-search turma-search-icon"></i>
-                <input type="text" id="buscaTurmaMob" placeholder="Buscar turma..." oninput="filtrarTurmas()">
+            <div class="input-group flex-grow-1">
+                <span class="input-group-text"><i class="bi bi-search"></i></span>
+                <input type="text" class="form-control" id="buscaTurmaMob" placeholder="Buscar turma..." oninput="filtrarTurmas()">
             </div>
         </div>
         <div id="listaTurmasMobile"></div>
     </div>
 
     <?php if ($nivelUsuario === 0): ?>
-    <button class="border border-none bg-danger rounded-circle p-3 fs-2 d-flex align-items-center justify-content-center position-fixed sgi-u-h-60px-w-60px-bottom-100px"  data-bs-toggle="modal" data-bs-target="#exampleModal">
+    <button class="btn btn-primary rounded-circle p-3 fs-2 d-flex align-items-center justify-content-center position-fixed sgi-u-h-60px-w-60px-bottom-100px" data-bs-toggle="modal" data-bs-target="#exampleModal">
         <i class="bi bi-plus-lg text-white"></i>
     </button>
     <?php endif; ?>
@@ -41,9 +41,9 @@ $paginaAtiva = 'categorias';
             </a>
         </div>
         <div class="d-flex align-items-center gap-3 flex-shrink-0">
-            <div class="turma-search-wrapper">
-                <i class="bi bi-search turma-search-icon"></i>
-                <input type="text" id="buscaTurmaDesk" placeholder="Buscar turma..." oninput="filtrarTurmas()">
+            <div class="input-group w-auto">
+                <span class="input-group-text"><i class="bi bi-search"></i></span>
+                <input type="text" class="form-control" id="buscaTurmaDesk" placeholder="Buscar turma..." oninput="filtrarTurmas()">
             </div>
             <?php if ($nivelUsuario === 0): ?>
             <button class="btn btn-primary d-inline-flex align-items-center gap-2 fw-bold px-3 py-2 border-0 rounded-3"  data-bs-toggle="modal" data-bs-target="#exampleModal">
@@ -157,12 +157,12 @@ $paginaAtiva = 'categorias';
     <div class="modal-dialog modal-dialog-centered modal-sm">
         <div class="modal-content rounded-4" >
             <div class="modal-body text-center py-4">
-                <div class="modal-excluir-icon">
+                <div class="rounded-circle bg-danger-subtle text-danger d-inline-flex align-items-center justify-content-center p-3 fs-3 mb-2">
                     <i class="bi bi-exclamation-triangle"></i>
                 </div>
                 <h5 class="fw-bold mb-1">Excluir Turma</h5>
                 <p class="text-muted small mb-3">
-                    Tem certeza que deseja excluir <strong class="modal-excluir-nome" id="excluirTurmaNome"></strong>?
+                    Tem certeza que deseja excluir <strong class="text-danger" id="excluirTurmaNome"></strong>?
                     <br>Esta ação não pode ser desfeita.
                 </p>
                 <div class="d-flex justify-content-center gap-3">

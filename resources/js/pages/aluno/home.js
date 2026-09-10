@@ -14,15 +14,15 @@ function renderCards(items) {
 
     if (!items || items.length === 0) {
         container.innerHTML = `
-            <div class="aluno-empty">
-                <div class="empty-icon"><i class="bi bi-folder-x"></i></div>
-                <h5>Nenhum interclasse encontrado</h5>
-                <p>No momento não há competições disponíveis com os filtros selecionados.</p>
+            <div class="text-center py-5 text-body-secondary">
+                <i class="bi bi-folder-x fs-1 d-block mb-3" aria-hidden="true"></i>
+                <h5 class="fw-semibold mb-2">Nenhum interclasse encontrado</h5>
+                <p class="small mb-0">No momento não há competições disponíveis com os filtros selecionados.</p>
             </div>`;
         return;
     }
 
-    container.innerHTML = `<div class="aluno-card-grid">${
+    container.innerHTML = `<div class="row row-cols-1 row-cols-md-2 row-cols-xl-3 g-4">${
         items.map(item => {
             const nome = escapeHTML(item.nome_interclasse);
             const ano = item.ano_interclasse ? escapeHTML(String(item.ano_interclasse).split('-')[0]) : 'N/A';
@@ -34,15 +34,16 @@ function renderCards(items) {
             const btnLabel = isAtivo ? 'Ver Detalhes <i class="bi bi-arrow-right"></i>' : 'Ver Ranking <i class="bi bi-bar-chart"></i>';
 
             return `
-                <div class="aluno-card" data-status="${statusClass}">
-                    <div class="card-accent ${statusClass}"></div>
+                <div class="col">
+                <article class="aluno-card card h-100 p-4 shadow-sm position-relative overflow-hidden" data-status="${statusClass}">
+                    <span class="card-accent position-absolute top-0 start-0 h-100 border-start border-4 border-${isAtivo ? 'success' : 'secondary'}" aria-hidden="true"></span>
                     <div class="d-flex align-items-start gap-3">
-                        <div class="card-icon ${iconClass}">
+                        <div class="card-icon bg-${isAtivo ? 'primary' : 'secondary'}-subtle text-${isAtivo ? 'primary' : 'secondary'} rounded-3 p-3 fs-4 d-inline-flex align-items-center justify-content-center flex-shrink-0">
                             <i class="bi bi-trophy-fill"></i>
                         </div>
-                        <div class="card-body">
-                            <div class="card-title">${nome}</div>
-                            <div class="card-meta">
+                        <div class="d-flex flex-column flex-grow-1 sgi-u-min-width-0">
+                            <div class="card-title h5 fw-semibold mb-2">${nome}</div>
+                            <div class="card-meta d-flex align-items-center gap-3 mb-3 small text-secondary">
                                 <span><i class="bi bi-calendar3"></i>${ano}</span>
                                 <span class="badge rounded-pill text-bg-${isAtivo ? 'success' : 'secondary'}">
                                     <i class="bi bi-circle-fill small" ></i>
@@ -54,6 +55,7 @@ function renderCards(items) {
                             </div>
                         </div>
                     </div>
+                </article>
                 </div>`;
         }).join('')
     }</div>`;
@@ -101,10 +103,9 @@ async function carregarInterclassesAluno() {
     } catch (error) {
         console.error('Erro ao buscar dados:', error);
         document.getElementById('listaInterclassesAluno').innerHTML = `
-            <div class="aluno-empty">
-                <div class="empty-icon"><i class="bi bi-exclamation-triangle-fill"></i></div>
-                <h5>Erro ao carregar</h5>
-                <p>Não foi possível carregar as competições. Tente novamente mais tarde.</p>
+            <div class="alert alert-danger d-flex align-items-center gap-2" role="alert">
+                <i class="bi bi-exclamation-triangle-fill" aria-hidden="true"></i>
+                <span><strong>Erro ao carregar.</strong> Não foi possível carregar as competições. Tente novamente mais tarde.</span>
             </div>`;
     }
 }

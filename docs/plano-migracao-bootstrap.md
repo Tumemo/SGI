@@ -59,9 +59,9 @@ Registrar por lote:
 
 Manter framework e bibliotecas de ícones em métricas separadas. Não contar minificação, troca de finais de linha ou mudança de arquivo como eliminação de regras. Não fixar percentual de redução antes do inventário.
 
-### Execução registrada no lote atual
+### Execução registrada nos lotes implementados
 
-O lote implementado junto deste plano cobre partes das etapas 2, 4, 5 e 8, sempre migrando o consumidor e removendo a regra substituída no mesmo diff:
+Os lotes implementados cobrem partes das etapas 2, 3, 4, 5, 6, 7 e 8, sempre migrando o consumidor e removendo a regra substituída no mesmo diff:
 
 - feedback transitório de perfil, turma e equipe centralizado em `window.SGI.showToast`, com Toast nativo, live region e texto seguro;
 - skeletons de perfil e turmas substituídos por `placeholder-glow`/`placeholder`;
@@ -70,11 +70,17 @@ O lote implementado junto deste plano cobre partes das etapas 2, 4, 5 e 8, sempr
 - grids de equipe convertidos para `row`, `row-cols-*` e `g-3`;
 - aliases utilitários substituíveis e handlers inline de hover removidos;
 - exceções restantes em `utilities.css` limitadas a geometria de domínio, offsets fixos e valores dinâmicos documentados no próprio arquivo;
+- portal do aluno (home, jogos, modalidade, perfil e ranking) convertido para cards, filtros, modais, progressos, badges e grids nativos;
+- equipes, elencos, turmas, colaboradores, arrecadação e ocorrências convertidos para cards, listas, tabelas, input groups e estados Bootstrap;
+- detalhes de modalidade e configuração de pontuação convertidos para cards, grids, alertas e controles Bootstrap, preservando os hooks de comportamento;
+- blocos CSS órfãos de perfil, turmas, colaboradores, OCR, ranking e detalhes de modalidade removidos na mesma alteração dos consumidores;
 - testes estáticos, de JavaScript e de navegador ampliados para impedir o retorno dos padrões removidos.
 
-Após o lote, as seis fontes CSS auditadas totalizam 211.989 bytes e 6.709 linhas, contra 230.742 bytes e 7.564 linhas na base registrada acima: redução de 18.753 bytes (8,13%) e 855 linhas (11,30%). A medição continua separada dos bundles Bootstrap e do SCSS próprio.
+Após os lotes, as seis fontes CSS auditadas totalizam 106.883 bytes e 3.262 linhas, contra 230.742 bytes e 7.564 linhas na base registrada acima: redução de 123.859 bytes (53,68%) e 4.302 linhas (56,87%). A medição continua separada dos bundles Bootstrap e do SCSS próprio.
 
-Permanecem para os próximos lotes a revisão tela a tela de estados vazios/erro e responsividade, a cobertura visual dos fluxos autenticados, a auditoria final de tokens e as regras de layout específicas que ainda têm consumidores. Este lote está certificado; a migração global só será marcada como concluída quando essas pendências forem tratadas e a suíte Docker completa continuar passando sem exceções.
+A matriz Docker funcional foi executada após a correção final: 479/479 asserções HTTP e 50/50 cenários de navegador, incluindo fluxos online, offline e responsivos. O contrato visual separado permanece pendente de referências: tests/browser/visual-contract.spec.cjs-snapshots está vazio no repositório, portanto não há baseline versionado para comparação.
+
+Permanecem para os próximos lotes a revisão da agenda, detalhes de competição, pontuação avançada, locais/regulamento, placar e chaveamento; esses arquivos ainda contêm geometria de domínio e alguns controles que precisam de inspeção visual antes de uma remoção segura. A migração global só será marcada como concluída quando essas pendências forem tratadas, cada exceção estiver justificada e a suíte Docker completa continuar passando sem exceções.
 
 ## 3. Contratos que precisam ser preservados
 

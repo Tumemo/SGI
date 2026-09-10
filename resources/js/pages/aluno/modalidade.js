@@ -99,17 +99,12 @@ window.SGIPage.mount("aluno/modalidade", function (pageConfig, pageScope) {
             statusDefault.classList.toggle('d-none', atingiu);
         }
 
-        const resumo = document.querySelector('.resumo-selecao');
-        if (resumo) resumo.classList.toggle('atingiu', total >= 3);
-
         const countEl = document.getElementById('progressCount');
         if (countEl) countEl.textContent = `${total} de 3`;
-
-        const segs = document.querySelectorAll('#progressTrack .progress-seg');
-        segs.forEach((seg, i) => {
-            if (i < total) seg.classList.add('active');
-            else seg.classList.remove('active');
-        });
+        const progress = document.querySelector('#acoesInscricao .progress');
+        const progressBar = document.getElementById('progressBar');
+        if (progress) progress.setAttribute('aria-valuenow', String(total));
+        if (progressBar) progressBar.style.width = `${(total / 3) * 100}%`;
 
         const btn = document.getElementById('btnSalvar');
         if (btn && btn.innerHTML.indexOf('Salvando') === -1) {
@@ -138,12 +133,23 @@ window.SGIPage.mount("aluno/modalidade", function (pageConfig, pageScope) {
         const inscritos = parseInt(mod.qtd_inscritos_turma) || 0;
         const restantes = capacidade - inscritos;
         if (restantes <= 0) {
-            return { cls: 'vagas-lotado', icon: 'bi-x-circle-fill', label: 'Lotado' };
+            return { state: 'lotado', badge: 'text-bg-danger', icon: 'bi-x-circle-fill', label: 'Lotado' };
         }
         if (restantes <= 2) {
-            return { cls: 'vagas-poucas', icon: 'bi-exclamation-triangle-fill', label: 'Poucas vagas' };
+            return { state: 'limited', badge: 'text-bg-warning', icon: 'bi-exclamation-triangle-fill', label: 'Poucas vagas' };
         }
-        return { cls: '', icon: '', label: '' };
+        return { state: '', badge: '', icon: '', label: '' };
+    }
+
+    function atualizarEstadoCard(card, selecionado) {
+        card.classList.toggle('selected', selecionado);
+        card.classList.toggle('border-primary', selecionado);
+        card.classList.toggle('bg-primary-subtle', selecionado);
+        card.classList.toggle('shadow', selecionado);
+        const chip = card.querySelector('.card-equipe');
+        if (chip) chip.classList.toggle('d-none', !selecionado);
+        const check = card.querySelector('.card-check');
+        if (check) check.classList.toggle('d-none', !selecionado);
     }
 
     function renderizarSelecao() {
@@ -181,16 +187,16 @@ window.SGIPage.mount("aluno/modalidade", function (pageConfig, pageScope) {
             const col = document.createElement('div');
             col.className = 'col';
             const vagas = statusVagas(mod);
-            const lotado = vagas.cls === 'vagas-lotado';
+            const lotado = vagas.state === 'lotado';
             col.innerHTML = `
-                <div class="modalidade-card${lotado ? ' lotado' : ''}" data-id="${mod.id_modalidade}" data-nome="${esc(mod.nome_modalidade)}" onclick="abrirEquipesModalidade(this)">
-                    <span class="card-check"><i class="bi bi-check-lg"></i></span>
-                    ${vagas.label ? `<span class="card-vagas ${vagas.cls}"><i class="bi ${vagas.icon}"></i>${vagas.label}</span>` : ''}
-                    <div class="card-icon-wrap"><i class="bi ${iconeModalidade(mod.nome_modalidade)}"></i></div>
-                    <div class="card-info">
-                        <span class="card-nome">${esc(mod.nome_modalidade)}</span>
-                        <span class="card-categoria">${esc(mod.nome_categoria || 'Categoria')}</span>
-                        <span class="card-equipe"></span>
+                <div class="modalidade-card card border shadow-sm position-relative h-100 p-4 text-center d-flex flex-column align-items-center gap-2 sgi-u-cursor-pointer${lotado ? ' lotado opacity-50' : ''}" data-id="${mod.id_modalidade}" data-nome="${esc(mod.nome_modalidade)}" onclick="abrirEquipesModalidade(this)">
+                    <span class="card-check position-absolute top-0 end-0 translate-middle badge rounded-circle text-bg-primary d-none"><i class="bi bi-check-lg"></i></span>
+                    ${vagas.label ? `<span class="badge ${vagas.badge} position-absolute top-0 start-0 translate-middle-y ms-2"><i class="bi ${vagas.icon} me-1"></i>${vagas.label}</span>` : ''}
+                    <div class="card-icon-wrap bg-primary-subtle text-primary rounded-3 p-3 fs-3 d-inline-flex"><i class="bi ${iconeModalidade(mod.nome_modalidade)}"></i></div>
+                    <div class="card-info d-flex flex-column align-items-center gap-1">
+                        <span class="card-nome fw-semibold">${esc(mod.nome_modalidade)}</span>
+                        <span class="card-categoria badge text-bg-light border text-body-secondary text-uppercase">${esc(mod.nome_categoria || 'Categoria')}</span>
+                        <span class="card-equipe badge bg-primary-subtle text-primary d-none"></span>
                     </div>
                 </div>
             `;
@@ -220,7 +226,7 @@ window.SGIPage.mount("aluno/modalidade", function (pageConfig, pageScope) {
             const col = document.createElement('div');
             col.className = 'col';
             col.innerHTML = `
-                <div class="card-inscrito h-100" data-equipe="${mod.id_equipe}">
+                <div class="card border-0 border-start border-4 border-success shadow-sm p-3 h-100" data-equipe="${mod.id_equipe}">
                     <div class="d-flex align-items-center gap-2 mb-2">
                         <i class="bi bi-trophy fs-4 text-success"></i>
                         <div>
@@ -236,7 +242,7 @@ window.SGIPage.mount("aluno/modalidade", function (pageConfig, pageScope) {
                         </div>
                     </div>
                     <div class="text-center mt-2">
-                        <button type="button" class="btn btn-outline-danger btn-sm btn-ver-detalhes"
+                        <button type="button" class="btn btn-outline-danger btn-sm d-inline-flex align-items-center gap-1"
                             data-modalidade-id="${mod.id_modalidade}"
                             data-modalidade-nome="${esc(mod.nome_modalidade)}"
                             onclick="verDetalhesModalidade(this)">
@@ -285,7 +291,7 @@ window.SGIPage.mount("aluno/modalidade", function (pageConfig, pageScope) {
             corpo.innerHTML = lista.map(j => {
                 const status = j.status_jogo || 'Agendado';
                 const ehFinalizado = String(status).toLowerCase() === 'concluido';
-                const badgeCls = ehFinalizado ? 'bg-success-subtle text-success' : 'bg-warning-subtle text-dark';
+                const badgeCls = ehFinalizado ? 'text-bg-success' : 'text-bg-warning';
                 const badgeTxt = ehFinalizado ? 'Finalizado' : (String(status).toLowerCase() === 'iniciado' ? 'Em andamento' : 'Agendado');
 
                 const hora = j.inicio_jogo ? String(j.inicio_jogo).substring(0, 5) : '--:--';
@@ -294,17 +300,17 @@ window.SGIPage.mount("aluno/modalidade", function (pageConfig, pageScope) {
                 const confronto = j.equipes_nomes || 'A definir';
 
                 return `
-                    <div class="jogo-detalhe-item">
+                    <div class="py-3 border-bottom">
                         <div class="d-flex justify-content-between align-items-center mb-1">
-                            <span class="detalhe-data"><i class="bi bi-calendar-event me-2 text-danger"></i>${formatarData(j.data_jogo)}</span>
+                            <span class="fw-semibold"><i class="bi bi-calendar-event me-2 text-primary"></i>${formatarData(j.data_jogo)}</span>
                             <span class="badge rounded-pill ${badgeCls}">${badgeTxt}</span>
                         </div>
-                        <div class="detalhe-meta">
+                        <div class="small text-body-secondary">
                             <i class="bi bi-clock me-1"></i>${hora}${horaFim ? ' - ' + horaFim : ''}
                             <span class="mx-2">|</span>
                             <i class="bi bi-geo-alt me-1"></i>${esc(local)}
                         </div>
-                        <div class="detalhe-meta mt-1">
+                        <div class="small text-body-secondary mt-1">
                             <i class="bi bi-shield me-1"></i>${esc(confronto)}
                         </div>
                     </div>
@@ -324,10 +330,10 @@ window.SGIPage.mount("aluno/modalidade", function (pageConfig, pageScope) {
             const data = await res.json();
             const membros = Array.isArray(data) ? data : [];
 
-            container.innerHTML = '<div class="fw-semibold small text-muted mb-1"><i class="bi bi-people-fill me-1"></i>Sua equipe:</div>';
+            container.innerHTML = '<div class="fw-semibold small text-body-secondary mb-1"><i class="bi bi-people-fill me-1"></i>Sua equipe:</div>';
 
             if (membros.length === 0) {
-                container.innerHTML += '<div class="text-muted small">Nenhum colega na equipe ainda.</div>';
+                container.innerHTML += '<div class="text-body-secondary small">Nenhum colega na equipe ainda.</div>';
                 return;
             }
 
@@ -335,9 +341,9 @@ window.SGIPage.mount("aluno/modalidade", function (pageConfig, pageScope) {
             membros.forEach(m => {
                 const ehVoce = String(m.id_usuario) === String(userId);
                 const div = document.createElement('div');
-                div.className = 'membro-equipe';
+                div.className = 'd-flex align-items-center gap-2 py-1';
                 const img = document.createElement('img');
-                img.className = 'rounded-circle d-none object-fit-cover membro-foto';
+                img.className = 'rounded-circle d-none object-fit-cover';
                 img.width = 26; img.height = 26;
                 img.alt = '';
                 img.onload = function() { img.classList.remove('d-none'); icon.classList.add('d-none'); };
@@ -347,7 +353,7 @@ window.SGIPage.mount("aluno/modalidade", function (pageConfig, pageScope) {
                 div.appendChild(img);
                 div.appendChild(icon);
                 const span = document.createElement('span');
-                span.className = ehVoce ? 'voce' : '';
+                span.className = ehVoce ? 'fw-semibold text-success' : '';
                 span.textContent = esc(m.nome_usuario) + (ehVoce ? ' (Você)' : '');
                 div.appendChild(span);
                 container.appendChild(div);
@@ -368,14 +374,14 @@ window.SGIPage.mount("aluno/modalidade", function (pageConfig, pageScope) {
 
         if (card.classList.contains('lotado')) {
             document.getElementById('msgFeedback').textContent = 'Modalidade lotada. Não é possível se inscrever.';
-            card.classList.add('shake');
-            setTimeout(() => card.classList.remove('shake'), 500);
+            card.classList.add('border-danger');
+            setTimeout(() => card.classList.remove('border-danger'), 500);
             setTimeout(() => document.getElementById('msgFeedback').textContent = '', 2500);
             return;
         }
 
         if (card.classList.contains('selected')) {
-            card.classList.remove('selected');
+            atualizarEstadoCard(card, false);
             delete card.dataset.equipe;
             delete card.dataset.equipeNome;
             const chip = card.querySelector('.card-equipe');
@@ -389,8 +395,8 @@ window.SGIPage.mount("aluno/modalidade", function (pageConfig, pageScope) {
 
         if (selecionados + inscritos >= 3) {
             document.getElementById('msgFeedback').textContent = 'Você já selecionou o número máximo de modalidades.';
-            card.classList.add('shake');
-            setTimeout(() => card.classList.remove('shake'), 500);
+            card.classList.add('border-danger');
+            setTimeout(() => card.classList.remove('border-danger'), 500);
             setTimeout(() => document.getElementById('msgFeedback').textContent = '', 2500);
             return;
         }
@@ -416,13 +422,13 @@ window.SGIPage.mount("aluno/modalidade", function (pageConfig, pageScope) {
             
             const corpo = document.getElementById('modalEquipesCorpo');
             corpo.innerHTML = equipes.map(e => `
-                <div class="equipe-pick-row" data-equipe="${e.id_equipe}" data-equipe-nome="${esc(e.nome_equipe)}" onclick="selecionarEquipe(this, '${idModalidade}')">
-                    <div class="equipe-pick-icon"><i class="bi bi-people-fill"></i></div>
-                    <div class="equipe-pick-info">
-                        <div class="equipe-pick-nome">${esc(e.nome_equipe)}</div>
-                        <div class="equipe-pick-sub">Equipe da turma</div>
+                <div class="equipe-pick-row d-flex align-items-center gap-3 p-3 mb-2 border rounded-3 bg-body sgi-u-cursor-pointer" data-equipe="${e.id_equipe}" data-equipe-nome="${esc(e.nome_equipe)}" onclick="selecionarEquipe(this, '${idModalidade}')">
+                    <div class="bg-primary-subtle text-primary rounded-circle p-2 d-inline-flex"><i class="bi bi-people-fill"></i></div>
+                    <div class="flex-grow-1">
+                        <div class="fw-semibold">${esc(e.nome_equipe)}</div>
+                        <div class="small text-body-secondary">Equipe da turma</div>
                     </div>
-                    <div class="equipe-pick-check d-none"><i class="bi bi-check-lg"></i></div>
+                    <div class="d-none bg-primary text-white rounded-circle p-1"><i class="bi bi-check-lg"></i></div>
                 </div>
             `).join('');
             
@@ -441,7 +447,7 @@ window.SGIPage.mount("aluno/modalidade", function (pageConfig, pageScope) {
 
         document.querySelectorAll('.modalidade-card').forEach(card => {
             if (String(card.dataset.id) === String(idModalidade)) {
-                card.classList.add('selected');
+                atualizarEstadoCard(card, true);
                 card.dataset.equipe = equipe;
                 card.dataset.equipeNome = equipeNome;
                 const chip = card.querySelector('.card-equipe');
@@ -456,7 +462,7 @@ window.SGIPage.mount("aluno/modalidade", function (pageConfig, pageScope) {
     function removerEquipeSelecionada(idModalidade) {
         document.querySelectorAll('.modalidade-card').forEach(card => {
             if (String(card.dataset.id) === String(idModalidade)) {
-                card.classList.remove('selected');
+                atualizarEstadoCard(card, false);
                 delete card.dataset.equipe;
                 delete card.dataset.equipeNome;
                 const chip = card.querySelector('.card-equipe');
@@ -480,7 +486,7 @@ window.SGIPage.mount("aluno/modalidade", function (pageConfig, pageScope) {
         if (lotados.length > 0) {
             document.getElementById('msgFeedback').textContent = 'Uma ou mais modalidades selecionadas ficaram lotadas. Remova-as e tente novamente.';
             lotados.forEach(c => {
-                c.classList.remove('selected');
+                atualizarEstadoCard(c, false);
                 delete c.dataset.equipe;
                 delete c.dataset.equipeNome;
                 const chip = c.querySelector('.card-equipe');
@@ -520,17 +526,17 @@ window.SGIPage.mount("aluno/modalidade", function (pageConfig, pageScope) {
             const result = await res.json();
             document.getElementById('msgFeedback').textContent = result.message;
             if (result.success) {
-                document.getElementById('msgFeedback').className = 'bottom-label text-success small';
+                document.getElementById('msgFeedback').className = 'small text-success text-center mb-0 mt-2';
                 setTimeout(() => window.location.href = '/aluno/inicio', 1500);
             } else {
-                document.getElementById('msgFeedback').className = 'bottom-label text-danger small';
+                document.getElementById('msgFeedback').className = 'small text-danger text-center mb-0 mt-2';
                 btn.disabled = false;
                 btn.innerHTML = '<i class="bi bi-check-lg"></i> Salvar';
             }
         } catch (e) {
             console.error(e);
             document.getElementById('msgFeedback').textContent = 'Erro de conexão. Tente novamente.';
-            document.getElementById('msgFeedback').className = 'bottom-label text-danger small';
+            document.getElementById('msgFeedback').className = 'small text-danger text-center mb-0 mt-2';
             btn.disabled = false;
             btn.innerHTML = '<i class="bi bi-check-lg"></i> Salvar';
         }

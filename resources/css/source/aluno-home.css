@@ -2,14 +2,6 @@
 
 /* Tela inicial do portal do aluno */
 /* ==================== DESIGN SYSTEM ==================== */
-/* A home usa cards mais largos em telas grandes; os demais contextos
-   reutilizam a grade compartilhada com minmax menor. */
-@media (min-width: 992px) {
-  .aluno-page .aluno-card-grid {
-    grid-template-columns: repeat(auto-fill, minmax(420px, 1fr));
-  }
-}
-
 /* Modal overrides */
 #modalTermo .modal-content {
   border: none;
@@ -21,53 +13,8 @@
   border-bottom: none;
 }
 
-/* Ranking do portal do aluno */
-.rk-stat-chip { font-size: .9rem; padding: .55rem 1.1rem; }
-.rk-hist-footer { margin-top: .9rem; position: relative; z-index: 1; }
-.htr-modal-body { padding: 0; }
-.htr-titulo { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 18px 22px; background: linear-gradient(135deg, #1F2937, #111827); color: #fff; }
-.htr-turma-nome { font-size: 1.25rem; font-weight: 800; }
-.htr-turma-sub { font-size: .78rem; opacity: .7; }
-.htr-total { text-align: right; font-size: 1.8rem; font-weight: 900; color: #ffd166; line-height: 1; }
-.htr-total small { display: block; font-size: .7rem; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; opacity: .7; }
-.htr-resumo { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; padding: 14px 18px; }
-.htr-chip { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 10px 8px; border-radius: 12px; font-weight: 700; }
-.htr-chip i { font-size: 1rem; }
-.htr-chip__valor { font-size: .95rem; }
-.htr-chip__rotulo { font-size: .68rem; text-transform: uppercase; letter-spacing: .05em; opacity: .8; font-weight: 600; }
-.htr-chip--verde { background: #ecfdf5; color: #047857; }
-.htr-chip--roxo { background: #f3e8ff; color: #7c3aed; }
-.htr-chip--vermelho { background: #fef2f2; color: #dc2626; }
-.htr-aviso { margin: 0 18px 10px; padding: 8px 12px; border-radius: 10px; background: #fffbeb; color: #b45309; font-size: .78rem; }
-.htr-secao { padding: 6px 18px 16px; }
-.htr-secao__head { display: flex; align-items: center; gap: 8px; font-weight: 800; color: #374151; padding: 8px 0 10px; border-bottom: 1px solid #f1f5f9; margin-bottom: 10px; }
-.htr-secao__head i { color: #dc3545; }
-.htr-secao__count { margin-left: auto; font-size: .72rem; background: #f3f4f6; color: #6b7280; border-radius: 999px; padding: 2px 10px; font-weight: 700; }
-.htr-lista { display: flex; flex-direction: column; }
-.htr-lista--mod { border: 1px solid #f1f5f9; border-radius: 12px; overflow: hidden; }
-.htr-linha { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 9px 12px; border-bottom: 1px solid #f8fafc; }
-.htr-linha:last-child { border-bottom: none; }
-.htr-linha__titulo { font-weight: 600; font-size: .85rem; color: #1f2937; }
-.htr-linha__sub { font-size: .74rem; color: #9ca3af; }
-.htr-linha__pts { font-weight: 800; font-size: .9rem; flex-shrink: 0; }
-.htr-pts--mais { color: #16a34a; }
-.htr-pts--menos { color: #dc2626; }
-.htr-secao-total { margin-top: 8px; font-size: .8rem; color: #6b7280; text-align: right; }
-.htr-vazio { padding: 18px; text-align: center; color: #9ca3af; font-size: .85rem; border: 1px dashed #e5e7eb; border-radius: 12px; }
-.htr-mods { display: flex; flex-direction: column; gap: 12px; }
-.htr-mod { border: 1px solid #eef2f7; border-radius: 14px; padding: 12px 14px; background: #fbfcfe; }
-.htr-mod__head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
-.htr-mod__nome { display: flex; align-items: center; gap: 6px; font-size: .92rem; flex-wrap: wrap; }
-.htr-mod__tipo { font-size: .72rem; color: #9ca3af; font-weight: 600; }
-.htr-mod__pts { font-weight: 800; color: #16a34a; flex-shrink: 0; }
-.htr-mod__alunos { display: flex; flex-wrap: wrap; gap: 5px; margin: 9px 0 4px; }
-.htr-colocacao { font-size: .78rem; font-weight: 800; color: #7c3aed; background: #f3e8ff; border-radius: 999px; padding: 2px 9px; white-space: nowrap; }
-.htr-aluno { font-size: .72rem; background: #f3f4f6; color: #374151; border-radius: 999px; padding: 2px 9px; font-weight: 600; }
-.htr-lista--mod .htr-aluno { background: #fff; border: 1px solid #eef2f7; }
-@media (max-width: 575.98px) { .htr-resumo { grid-template-columns: 1fr; } .htr-titulo { flex-direction: column; align-items: flex-start; } }
-
 @media print {
-    header, nav, footer, .rk-mobile-header, #filtrosMob, #filtrosDesk, .btn-imprimir, .rk-hist-footer {
+    header, nav, footer, #filtrosMob, #filtrosDesk, .btn-imprimir, .d-print-none {
         display: none !important;
     }
     body, main {
@@ -75,81 +22,12 @@
         margin: 0 !important;
         padding: 0 !important;
     }
-    .rk-rank-card {
+    #listaMob .card, #listaDesk .card {
         border: 1px solid #ccc !important;
         box-shadow: none !important;
         break-inside: avoid;
         margin-bottom: 15px !important;
     }
-}
-
-/* Perfil do portal do aluno */
-/* ==================== PERFIL (alunos/perfil.php) ==================== */
-.perfil-page {
-    font-weight: 300;
-}
-
-.perfil-desktop {
-    padding: 2rem 2.5rem 3rem;
-}
-
-/* Wrapper full-width */
-.perfil-wrapper {
-    width: 100%;
-    max-width: 100%;
-    margin: 0;
-}
-
-/* Topbar */
-.perfil-topbar {
-    display: flex;
-    align-items: center;
-    gap: 1.5rem;
-    margin-bottom: 1.75rem;
-    flex-wrap: wrap;
-}
-
-.perfil-topbar-title h1 {
-    font-size: 1.6rem;
-    font-weight: 700;
-    margin: 0;
-    color: #1a1a1a;
-}
-
-.perfil-topbar-subtitle {
-    font-size: 0.85rem;
-    color: #888;
-    margin: 0.1rem 0 0;
-}
-
-/* Grid 260px + 1fr */
-.perfil-grid {
-    display: grid;
-    grid-template-columns: 260px 1fr;
-    gap: 1.75rem;
-    align-items: start;
-}
-
-.perfil-grid-left {
-    min-width: 0;
-}
-
-.perfil-grid-right {
-    display: flex;
-    flex-direction: column;
-    gap: 1.25rem;
-    min-width: 0;
-}
-
-.perfil-card-identity {
-    position: sticky;
-    top: 6rem;
-}
-
-.perfil-card-identity .card-body {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
 }
 
 /* Avatar ring com gradiente */
@@ -223,240 +101,6 @@
     }
 }
 
-/* Badge de nível de acesso */
-.perfil-badge-nivel {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.4rem;
-    font-size: 0.8rem;
-    font-weight: 600;
-    color: var(--nivel-color, #E30613);
-    background: color-mix(in srgb, var(--nivel-color, #E30613) 12%, transparent);
-    padding: 0.25rem 0.75rem;
-    border-radius: 100px;
-    letter-spacing: 0.3px;
-}
-
-.perfil-badge-nivel--sm {
-    font-size: 0.7rem;
-    padding: 0.15rem 0.5rem;
-}
-
-/* Status online dot */
-.perfil-status-dot {
-    display: inline-block;
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    flex-shrink: 0;
-}
-
-.perfil-status-online {
-    background: #198754;
-    box-shadow: 0 0 0 2px rgba(25, 135, 84, 0.2);
-}
-
-/* Título dos cards internos */
-.perfil-card-title {
-    font-size: 0.75rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.6px;
-    color: #888;
-    display: flex;
-    align-items: center;
-    border-bottom: 1px solid #f0f0f0;
-    padding-bottom: 0.75rem;
-}
-
-.perfil-card-title i {
-    font-size: 0.9rem;
-    color: #aaa;
-}
-
-/* Grid de informações (Informações Pessoais) */
-.perfil-info-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 0.75rem 1.5rem;
-}
-
-.perfil-security-grid {
-    display: flex;
-    flex-direction: column;
-    gap: 0.75rem;
-}
-
-.perfil-info-item {
-    padding: 0.5rem 0;
-    border-bottom: 1px solid #f5f5f5;
-}
-
-.perfil-info-item.mb-0,
-.perfil-info-item:last-child {
-    border-bottom: none;
-}
-
-.perfil-info-label {
-    display: flex;
-    align-items: center;
-    gap: 0.4rem;
-    font-size: 0.7rem;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.4px;
-    color: #999;
-    margin-bottom: 0.2rem;
-}
-
-.perfil-info-label i {
-    font-size: 0.8rem;
-    color: #bbb;
-}
-
-.perfil-info-value {
-    font-size: 0.92rem;
-    font-weight: 500;
-    color: #1a1a1a;
-    display: flex;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 0.25rem;
-}
-
-/* Field rows (mobile) */
-.perfil-field {
-    display: flex;
-    align-items: baseline;
-    padding: 0.6rem 0;
-    border-bottom: 1px solid #f0f0f0;
-}
-
-.perfil-field:last-of-type,
-.perfil-field.mb-0 {
-    border-bottom: none;
-}
-
-.perfil-field-label {
-    width: 100px;
-    min-width: 100px;
-    font-size: 0.75rem;
-    font-weight: 600;
-    color: #888;
-    text-transform: uppercase;
-    letter-spacing: 0.4px;
-    display: flex;
-    align-items: center;
-    gap: 0.4rem;
-}
-
-.perfil-field-label i {
-    font-size: 0.85rem;
-    color: #bbb;
-}
-
-.perfil-field-value {
-    flex: 1;
-    font-size: 0.9rem;
-    font-weight: 500;
-    color: #1a1a1a;
-    display: flex;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 0.25rem;
-}
-
-/* Eye toggle senha */
-.perfil-eye-btn {
-    background: none;
-    border: none;
-    color: #999;
-    cursor: pointer;
-    padding: 0 0 0 0.5rem;
-    font-size: 0.95rem;
-    line-height: 1;
-    transition: color 0.2s;
-}
-
-.perfil-eye-btn:hover {
-    color: #E30613;
-}
-
-/* Máscara de senha (somente leitura) */
-.perfil-mask {
-    letter-spacing: 0.15em;
-    font-weight: 600;
-    color: #555;
-}
-
-/* Grupo de input de senha com olhinho */
-.perfil-password-input {
-    position: relative;
-}
-
-.perfil-password-eye {
-    position: absolute;
-    top: 50%;
-    right: 0.6rem;
-    transform: translateY(-50%);
-    background: none;
-    border: none;
-    color: #999;
-    cursor: pointer;
-    padding: 0.25rem;
-    font-size: 1rem;
-    line-height: 1;
-    transition: color 0.2s;
-    z-index: 2;
-}
-
-.perfil-password-eye:hover {
-    color: #E30613;
-}
-
-/* Botão editar */
-.perfil-btn-editar {
-    background-color: #E30613;
-    color: #fff;
-    border: none;
-    border-radius: 10px;
-    padding: 0.6rem 1.75rem;
-    font-weight: 500;
-    font-size: 0.88rem;
-    transition: background-color 0.2s ease, transform 0.15s ease;
-    display: inline-flex;
-    align-items: center;
-}
-
-.perfil-btn-editar:hover {
-    background-color: #c00510;
-    color: #fff;
-    transform: translateY(-1px);
-}
-
-.perfil-btn-editar:active {
-    transform: translateY(0);
-}
-
-.perfil-btn-excluir:disabled {
-    opacity: 0.35;
-    cursor: not-allowed;
-    pointer-events: none;
-}
-
-/* Input padrão */
-.perfil-input {
-    background: #f5f5f5 !important;
-    border: none !important;
-    border-radius: 10px !important;
-    font-weight: 300;
-}
-
-.perfil-input:focus {
-    background: #fff !important;
-    box-shadow: 0 0 0 2px rgba(227, 6, 19, 0.15) !important;
-}
-
 /* Responsivo */
 @media (max-width: 767.98px) {
     .perfil-avatar-ring {
@@ -479,27 +123,6 @@
         font-size: 0.95rem;
     }
 
-}
-
-@media (max-width: 991.98px) {
-    .perfil-grid {
-        grid-template-columns: 1fr;
-    }
-
-    .perfil-card-identity {
-        position: static;
-    }
-
-    .perfil-card-identity .card-body {
-        flex-direction: row;
-        flex-wrap: wrap;
-        justify-content: center;
-        gap: 0.5rem 1.5rem;
-    }
-
-    .perfil-info-grid {
-        grid-template-columns: 1fr;
-    }
 }
 
 /* Termos do portal do aluno */

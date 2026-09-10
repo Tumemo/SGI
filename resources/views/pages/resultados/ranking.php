@@ -25,9 +25,9 @@ $paginaAtiva = 'ranking';
 <main class="d-md-none py-3 px-3 mb-5" >
     <div id="msgMob"></div>
 
-    <header class="rk-mobile-header mb-2">
+    <header class="d-flex align-items-center justify-content-between gap-3 mb-2">
         <div>
-            <h1 class="rk-mobile-header__title d-none" id="nomeInterclasse"></h1>
+            <h1 class="d-none" id="nomeInterclasse"></h1>
         </div>
         <div class="d-flex align-items-center gap-2">
             <?php if ($eAdmin): ?>
@@ -36,15 +36,15 @@ $paginaAtiva = 'ranking';
                 </button>
             <?php endif; ?>
 
-            <div class="rk-stat-chip">
+            <div class="badge text-bg-light border text-body-secondary p-2 fw-semibold">
                 <span>&#x1F465;</span>
                 <span id="totalTurmas">0 Turmas</span>
             </div>
         </div>
     </header>
 
-    <div id="filtrosMob" class="rk-filters-mobile"></div>
-    <div id="listaMob" class="rk-ranking-list"></div>
+    <div id="filtrosMob" class="d-flex flex-nowrap overflow-auto gap-2 pb-2 mb-3"></div>
+    <div id="listaMob" class="d-flex flex-column"></div>
 </main>
 
 <!-- ======================== DESKTOP ======================== -->
@@ -60,7 +60,7 @@ $paginaAtiva = 'ranking';
                     </button>
                 <?php endif; ?>
 
-                <div class="rk-stat-chip flex-shrink-0">
+                <div class="badge text-bg-light border text-body-secondary p-2 fw-semibold flex-shrink-0">
                     <span>&#x1F465;</span>
                     <span id="totalTurmasDesk">0 Turmas</span>
                 </div>
@@ -80,7 +80,7 @@ $paginaAtiva = 'ranking';
                 <h5 class="modal-title fw-bold" id="htrTitulo">Histórico de Pontos</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
             </div>
-            <div class="modal-body htr-modal-body" id="htrCorpo">
+            <div class="modal-body p-0" id="htrCorpo">
                 <div class="text-center py-5"><div class="spinner-border text-danger"></div></div>
             </div>
         </div>

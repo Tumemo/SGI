@@ -29,9 +29,6 @@ window.SGIPage.mount("eventos/configurar-pontuacao", function (pageConfig, pageS
         const el = document.getElementById(id);
         if (!el) return;
         el.value = Math.max(0, getPontos(id) + delta);
-        el.classList.remove('ptc-pop');
-        void el.offsetWidth;
-        el.classList.add('ptc-pop');
         marcarMudancas();
     };
 

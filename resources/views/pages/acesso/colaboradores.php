@@ -11,98 +11,98 @@ $usuarioEhAdmin = (isset($_SESSION['nivel']) && (string)$_SESSION['nivel'] === '
 ?>
 
 <!-- ═══ MOBILE ═══ -->
-<main class="d-md-none pt-5 pb-5" >
-    <div class="col-wrap">
+<main class="d-md-none pt-5 pb-5">
+    <div class="container-fluid px-3">
         <a href="<?= \App\Shared\Http\Url::to('painel') ?>" id="btnVoltarColabMobile" class="btn btn-primary d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none" >
             <i class="bi bi-arrow-left-circle fs-5"></i> <span id="nomeInterclasseColabMobile">Interclasse</span>
         </a>
 
-        <div class="col-header">
-            <div class="col-header__top">
+        <div class="mb-4">
+            <div class="d-flex align-items-start justify-content-between gap-3 flex-wrap">
                 <div>
-                    <h1 class="col-header__title">Colaboradores</h1>
-                    <p class="col-header__sub">Gerencie todos os usuários responsáveis pelo interclasse.</p>
+                    <h1 class="h3 fw-bold mb-1">Colaboradores</h1>
+                    <p class="text-body-secondary mb-0">Gerencie todos os usuários responsáveis pelo interclasse.</p>
                 </div>
-                <button class="col-add-btn" data-bs-toggle="modal" data-bs-target="#modalAdicionarColaborador">
+                <button class="btn btn-primary d-inline-flex align-items-center gap-2" data-bs-toggle="modal" data-bs-target="#modalAdicionarColaborador">
                     <i class="bi bi-plus-lg"></i> Adicionar
                 </button>
             </div>
         </div>
 
-        <div class="col-stats" id="statsMobile">
-            <div class="col-stat"><div class="col-stat__icon col-stat__icon--total"><i class="bi bi-people-fill"></i></div><div><div class="col-stat__num" id="statTotalMob">-</div><div class="col-stat__label">Usuários</div></div></div>
-            <div class="col-stat"><div class="col-stat__icon col-stat__icon--admin"><i class="bi bi-shield-fill"></i></div><div><div class="col-stat__num" id="statAdminMob">-</div><div class="col-stat__label">Admins</div></div></div>
-            <div class="col-stat"><div class="col-stat__icon col-stat--mesario"><i class="bi bi-clipboard-check"></i></div><div><div class="col-stat__num" id="statMesarioMob">-</div><div class="col-stat__label">Mesários</div></div></div>
-            <div class="col-stat"><div class="col-stat__icon col-stat__icon--colab"><i class="bi bi-person"></i></div><div><div class="col-stat__num" id="statColabMob">-</div><div class="col-stat__label">Colaboradores</div></div></div>
+        <div class="row row-cols-2 g-3 mb-4" id="statsMobile">
+            <div class="col"><div class="card border-0 shadow-sm h-100 p-3 d-flex flex-row align-items-center gap-3"><span class="rounded-3 bg-danger-subtle text-danger d-inline-flex align-items-center justify-content-center p-2 fs-5"><i class="bi bi-people-fill"></i></span><div><div class="fs-4 fw-bold" id="statTotalMob">-</div><div class="small text-body-secondary text-uppercase">Usuários</div></div></div></div>
+            <div class="col"><div class="card border-0 shadow-sm h-100 p-3 d-flex flex-row align-items-center gap-3"><span class="rounded-3 bg-danger-subtle text-danger d-inline-flex align-items-center justify-content-center p-2 fs-5"><i class="bi bi-shield-fill"></i></span><div><div class="fs-4 fw-bold" id="statAdminMob">-</div><div class="small text-body-secondary text-uppercase">Admins</div></div></div></div>
+            <div class="col"><div class="card border-0 shadow-sm h-100 p-3 d-flex flex-row align-items-center gap-3"><span class="rounded-3 bg-primary-subtle text-primary d-inline-flex align-items-center justify-content-center p-2 fs-5"><i class="bi bi-clipboard-check"></i></span><div><div class="fs-4 fw-bold" id="statMesarioMob">-</div><div class="small text-body-secondary text-uppercase">Mesários</div></div></div></div>
+            <div class="col"><div class="card border-0 shadow-sm h-100 p-3 d-flex flex-row align-items-center gap-3"><span class="rounded-3 bg-secondary-subtle text-secondary d-inline-flex align-items-center justify-content-center p-2 fs-5"><i class="bi bi-person"></i></span><div><div class="fs-4 fw-bold" id="statColabMob">-</div><div class="small text-body-secondary text-uppercase">Colaboradores</div></div></div></div>
         </div>
 
-        <div class="col-toolbar flex-column align-items-stretch" >
-            <div class="col-search">
-                <i class="bi bi-search col-search__icon"></i>
-                <input type="text" class="col-search__input" id="buscaColabMob" placeholder="Pesquisar colaborador...">
+        <div class="d-flex flex-column align-items-stretch gap-3 mb-4">
+            <div class="input-group">
+                <span class="input-group-text"><i class="bi bi-search"></i></span>
+                <input type="text" class="form-control" id="buscaColabMob" placeholder="Pesquisar colaborador...">
             </div>
-            <div class="col-filters" id="filtrosMob">
-                <button class="col-chip col-chip--active" data-filtro="todos">Todos</button>
+            <div class="d-flex flex-wrap gap-2" id="filtrosMob">
+                <button class="btn btn-sm btn-primary" data-filtro="todos">Todos</button>
             </div>
         </div>
 
-        <div class="col-list" id="listaColaboradoresMobile">
-            <div class="col-loading"><div class="spinner-border text-danger me-2"></div>Carregando colaboradores...</div>
+        <div class="row row-cols-1 g-3" id="listaColaboradoresMobile">
+            <div class="col text-center text-body-secondary py-5"><div class="spinner-border text-primary me-2" role="status"></div>Carregando colaboradores...</div>
         </div>
     </div>
 </main>
 
 <!-- ═══ DESKTOP ═══ -->
-<main class="d-none d-md-block main-desktop-layout col-page">
-    <div class="col-wrap">
+<main class="d-none d-md-block main-desktop-layout pb-5">
+    <div class="container-fluid px-4">
         <a href="<?= \App\Shared\Http\Url::to('painel') ?>" id="btnVoltarColabDesk" class="btn btn-primary d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none" >
             <i class="bi bi-arrow-left-circle fs-5"></i> <span id="nomeInterclasseColabDesk">Interclasse</span>
         </a>
 
-        <div class="col-header">
-            <div class="col-header__top">
+        <div class="mb-4">
+            <div class="d-flex align-items-start justify-content-between gap-3 flex-wrap">
                 <div>
-                    <h1 class="col-header__title">Colaboradores</h1>
-                    <p class="col-header__sub">Gerencie todos os usuários responsáveis pelo interclasse.</p>
+                    <h1 class="h3 fw-bold mb-1">Colaboradores</h1>
+                    <p class="text-body-secondary mb-0">Gerencie todos os usuários responsáveis pelo interclasse.</p>
                 </div>
-                <button class="col-add-btn" data-bs-toggle="modal" data-bs-target="#modalAdicionarColaborador">
+                <button class="btn btn-primary d-inline-flex align-items-center gap-2" data-bs-toggle="modal" data-bs-target="#modalAdicionarColaborador">
                     <i class="bi bi-plus-lg"></i> Adicionar colaborador
                 </button>
             </div>
         </div>
 
-        <div class="col-stats" id="statsDesktop">
-            <div class="col-stat"><div class="col-stat__icon col-stat__icon--total"><i class="bi bi-people-fill"></i></div><div><div class="col-stat__num" id="statTotalDesk">-</div><div class="col-stat__label">Usuários</div></div></div>
-            <div class="col-stat"><div class="col-stat__icon col-stat__icon--admin"><i class="bi bi-shield-fill"></i></div><div><div class="col-stat__num" id="statAdminDesk">-</div><div class="col-stat__label">Admins</div></div></div>
-            <div class="col-stat"><div class="col-stat__icon col-stat--mesario"><i class="bi bi-clipboard-check"></i></div><div><div class="col-stat__num" id="statMesarioDesk">-</div><div class="col-stat__label">Mesários</div></div></div>
-            <div class="col-stat"><div class="col-stat__icon col-stat__icon--colab"><i class="bi bi-person"></i></div><div><div class="col-stat__num" id="statColabDesk">-</div><div class="col-stat__label">Colaboradores</div></div></div>
+        <div class="row row-cols-2 row-cols-lg-4 g-3 mb-4" id="statsDesktop">
+            <div class="col"><div class="card border-0 shadow-sm h-100 p-3 d-flex flex-row align-items-center gap-3"><span class="rounded-3 bg-danger-subtle text-danger d-inline-flex align-items-center justify-content-center p-2 fs-5"><i class="bi bi-people-fill"></i></span><div><div class="fs-4 fw-bold" id="statTotalDesk">-</div><div class="small text-body-secondary text-uppercase">Usuários</div></div></div></div>
+            <div class="col"><div class="card border-0 shadow-sm h-100 p-3 d-flex flex-row align-items-center gap-3"><span class="rounded-3 bg-danger-subtle text-danger d-inline-flex align-items-center justify-content-center p-2 fs-5"><i class="bi bi-shield-fill"></i></span><div><div class="fs-4 fw-bold" id="statAdminDesk">-</div><div class="small text-body-secondary text-uppercase">Admins</div></div></div></div>
+            <div class="col"><div class="card border-0 shadow-sm h-100 p-3 d-flex flex-row align-items-center gap-3"><span class="rounded-3 bg-primary-subtle text-primary d-inline-flex align-items-center justify-content-center p-2 fs-5"><i class="bi bi-clipboard-check"></i></span><div><div class="fs-4 fw-bold" id="statMesarioDesk">-</div><div class="small text-body-secondary text-uppercase">Mesários</div></div></div></div>
+            <div class="col"><div class="card border-0 shadow-sm h-100 p-3 d-flex flex-row align-items-center gap-3"><span class="rounded-3 bg-secondary-subtle text-secondary d-inline-flex align-items-center justify-content-center p-2 fs-5"><i class="bi bi-person"></i></span><div><div class="fs-4 fw-bold" id="statColabDesk">-</div><div class="small text-body-secondary text-uppercase">Colaboradores</div></div></div></div>
         </div>
 
-        <div class="col-toolbar">
-            <div class="col-search">
-                <i class="bi bi-search col-search__icon"></i>
-                <input type="text" class="col-search__input" id="buscaColabDesk" placeholder="Pesquisar colaborador...">
+        <div class="d-flex gap-3 align-items-center flex-wrap mb-4">
+            <div class="input-group flex-grow-1">
+                <span class="input-group-text"><i class="bi bi-search"></i></span>
+                <input type="text" class="form-control" id="buscaColabDesk" placeholder="Pesquisar colaborador...">
             </div>
-            <div class="col-filters" id="filtrosDesk">
-                <button class="col-chip col-chip--active" data-filtro="todos">Todos</button>
+            <div class="d-flex flex-wrap gap-2" id="filtrosDesk">
+                <button class="btn btn-sm btn-primary" data-filtro="todos">Todos</button>
             </div>
         </div>
 
-        <div class="col-list" id="listaColaboradoresDesktop">
-            <div class="col-loading"><div class="spinner-border text-danger me-2"></div>Carregando colaboradores...</div>
+        <div class="row row-cols-1 row-cols-lg-2 g-3" id="listaColaboradoresDesktop">
+            <div class="col text-center text-body-secondary py-5"><div class="spinner-border text-primary me-2" role="status"></div>Carregando colaboradores...</div>
         </div>
     </div>
 </main>
 
 <!-- ═══ MODAL ADICIONAR ═══ -->
-<div class="modal fade col-modal" id="modalAdicionarColaborador" tabindex="-1" aria-hidden="true">
+<div class="modal fade" id="modalAdicionarColaborador" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header border-0">
                 <h5 class="modal-title"><i class="bi bi-person-plus text-danger me-2"></i>Adicionar colaborador</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
-            <div class="modal-body">
+            <div class="modal-body pt-0">
                 <form id="formNovoColaborador">
                     <div class="mb-3">
                         <label class="form-label">Nome</label>
@@ -152,14 +152,14 @@ $usuarioEhAdmin = (isset($_SESSION['nivel']) && (string)$_SESSION['nivel'] === '
 </div>
 
 <!-- ═══ MODAL EDITAR ═══ -->
-<div class="modal fade col-modal" id="modalEditarColaborador" tabindex="-1" aria-hidden="true">
+<div class="modal fade" id="modalEditarColaborador" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header border-0">
                 <h5 class="modal-title"><i class="bi bi-pencil-square text-danger me-2"></i>Editar colaborador</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
-            <div class="modal-body">
+            <div class="modal-body pt-0">
                 <form id="formEditarColaborador">
                     <div class="mb-3">
                         <label class="form-label">Nome</label>

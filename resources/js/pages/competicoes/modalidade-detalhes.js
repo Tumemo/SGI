@@ -41,85 +41,88 @@ window.SGIPage.mount("competicoes/modalidade-detalhes", function (pageConfig, pa
             });
 
             const btnExcluir = PERMITE_EXCLUIR
-                ? '<button class="mdd-btn-delete" onclick="excluirModalidade()"><i class="bi bi-trash3"></i> Excluir</button>'
+                ? '<button class="mdd-btn-delete btn btn-outline-danger d-inline-flex align-items-center gap-2" onclick="excluirModalidade()"><i class="bi bi-trash3"></i> Excluir</button>'
                 : '';
 
             const resumoHtml = `
-                <div class="mdd-hero__top">
-                    <div class="mdd-hero__name">
-                        <h2 class="mdd-hero__name-text">${nomeModalidade}</h2>
-                        ${modalidade.nome_categoria ? `<span class="mdd-badge"><i class="bi bi-tag"></i> ${esc(modalidade.nome_categoria)}</span>` : ''}
+                <div class="d-flex justify-content-between align-items-start gap-3 flex-wrap mb-4">
+                    <div class="d-flex align-items-center gap-2 flex-wrap">
+                        <h2 class="h4 fw-bold text-body mb-0">${nomeModalidade}</h2>
+                        ${modalidade.nome_categoria ? `<span class="badge rounded-pill text-bg-primary-subtle text-primary-emphasis"><i class="bi bi-tag me-1"></i> ${esc(modalidade.nome_categoria)}</span>` : ''}
                     </div>
-                    <div class="mdd-hero__actions">
-                        <button class="mdd-btn-edit" onclick="abrirModalEdicao()"><i class="bi bi-pencil-square"></i> Editar</button>
+                    <div class="d-flex gap-2 flex-wrap">
+                        <button class="btn btn-primary d-inline-flex align-items-center gap-2" onclick="abrirModalEdicao()"><i class="bi bi-pencil-square"></i> Editar</button>
                         ${btnExcluir}
                     </div>
                 </div>
-                <div class="mdd-info">
-                    <div class="mdd-info__item">
-                        <div class="mdd-info__label">Categoria</div>
-                        <div class="mdd-info__value">${esc(modalidade.nome_categoria || '-')}</div>
+                <div class="row row-cols-1 row-cols-sm-2 row-cols-xl-4 g-3 mb-4">
+                    <div class="col"><div class="bg-body-tertiary border rounded-3 p-3 h-100">
+                        <div class="small text-uppercase fw-semibold text-body-secondary mb-1">Categoria</div>
+                        <div class="fs-4 fw-bold text-body">${esc(modalidade.nome_categoria || '-')}</div>
                     </div>
-                    <div class="mdd-info__item">
-                        <div class="mdd-info__label">Tipo</div>
-                        <div class="mdd-info__value">${esc(modalidade.nome_tipo_modalidade || '-')}</div>
                     </div>
-                    <div class="mdd-info__item">
-                        <div class="mdd-info__label">Limite de inscritos</div>
-                        <div class="mdd-info__value">${esc(modalidade.max_inscrito_modalidade || 'Ilimitado')}</div>
+                    <div class="col"><div class="bg-body-tertiary border rounded-3 p-3 h-100">
+                        <div class="small text-uppercase fw-semibold text-body-secondary mb-1">Tipo</div>
+                        <div class="fs-4 fw-bold text-body">${esc(modalidade.nome_tipo_modalidade || '-')}</div>
                     </div>
-                    <div class="mdd-info__item">
-                        <div class="mdd-info__label">Máx. equipes por turma</div>
-                        <div class="mdd-info__value">${esc(modalidade.max_equipes || 'Ilimitado')}</div>
+                    </div>
+                    <div class="col"><div class="bg-body-tertiary border rounded-3 p-3 h-100">
+                        <div class="small text-uppercase fw-semibold text-body-secondary mb-1">Limite de inscritos</div>
+                        <div class="fs-4 fw-bold text-body">${esc(modalidade.max_inscrito_modalidade || 'Ilimitado')}</div>
+                    </div>
+                    </div>
+                    <div class="col"><div class="bg-body-tertiary border rounded-3 p-3 h-100">
+                        <div class="small text-uppercase fw-semibold text-body-secondary mb-1">Máx. equipes por turma</div>
+                        <div class="fs-4 fw-bold text-body">${esc(modalidade.max_equipes || 'Ilimitado')}</div>
                     </div>
                 </div>
-                <div class="mdd-hero__footer">
-                    <div class="mdd-stat">
-                        <div class="mdd-stat__icon"><i class="bi bi-people"></i></div>
+                <div class="row row-cols-1 row-cols-sm-2 g-3 pt-3 border-top">
+                    <div class="col"><div class="d-flex align-items-center gap-3 border rounded-3 p-3 h-100">
+                        <div class="rounded-3 bg-primary-subtle text-primary p-2 d-inline-flex fs-5"><i class="bi bi-people"></i></div>
                         <div>
-                            <div class="mdd-stat__num">${qtdEquipes}</div>
-                            <div class="mdd-stat__label">Equipes cadastradas</div>
+                            <div class="fs-3 fw-bold text-primary lh-1 mb-1">${qtdEquipes}</div>
+                            <div class="small text-body-secondary">Equipes cadastradas</div>
                         </div>
-                    </div>
-                    <div class="mdd-stat">
-                        <div class="mdd-stat__icon"><i class="bi bi-mortarboard"></i></div>
+                    </div></div>
+                    <div class="col"><div class="d-flex align-items-center gap-3 border rounded-3 p-3 h-100">
+                        <div class="rounded-3 bg-primary-subtle text-primary p-2 d-inline-flex fs-5"><i class="bi bi-mortarboard"></i></div>
                         <div>
-                            <div class="mdd-stat__num">${turmasUnicas.length}</div>
-                            <div class="mdd-stat__label">Turmas vinculadas</div>
+                            <div class="fs-3 fw-bold text-primary lh-1 mb-1">${turmasUnicas.length}</div>
+                            <div class="small text-body-secondary">Turmas vinculadas</div>
                         </div>
-                    </div>
+                    </div></div>
                 </div>
             `;
             document.getElementById('resumoModalidadeDesktop').innerHTML = resumoHtml;
 
             const htmlTurmas = turmasUnicas.length
                 ? turmasUnicas.map((nome) => `
-                    <div class="mdd-turma">
-                        <div class="mdd-turma__icon"><i class="bi bi-mortarboard-fill"></i></div>
-                        <div>
-                            <div class="mdd-turma__name">${esc(nome)}</div>
-                            <div class="mdd-turma__meta">Turma participante</div>
+                    <div class="col"><article class="card h-100 border shadow-sm p-3 d-flex flex-row align-items-center gap-3">
+                        <div class="rounded-3 bg-primary-subtle text-primary p-2 d-inline-flex fs-5"><i class="bi bi-mortarboard-fill"></i></div>
+                        <div class="sgi-u-min-width-0">
+                            <div class="fw-bold text-body text-truncate">${esc(nome)}</div>
+                            <div class="small text-body-secondary">Turma participante</div>
                         </div>
-                    </div>`).join('')
-                : `<div class="mdd-empty">
-                    <div class="mdd-empty__icon"><i class="bi bi-inbox"></i></div>
-                    <div class="mdd-empty__title">Nenhuma turma vinculada</div>
-                    <p class="mdd-empty__desc">Esta modalidade ainda não possui turmas vinculadas.</p>
-                   </div>`;
+                    </article></div>`).join('')
+                : `<div class="col-12"><div class="text-center py-4 border rounded-3 bg-body-tertiary">
+                    <div class="fs-3 text-body-secondary mb-2"><i class="bi bi-inbox"></i></div>
+                    <div class="fw-semibold text-body-secondary">Nenhuma turma vinculada</div>
+                    <p class="small text-body-secondary mb-0">Esta modalidade ainda não possui turmas vinculadas.</p>
+                   </div></div>`;
             const htmlEquipes = qtdEquipes
                 ? equipes.map((item) => `
-                    <div class="mdd-equipe">
-                        <div class="mdd-equipe__icon"><i class="bi bi-shield-fill"></i></div>
-                        <div>
-                            <div class="mdd-equipe__name">${item.nome_equipe ? esc(item.nome_equipe) : `Equipe #${esc(item.id_equipe)}`}</div>
-                            <div class="mdd-equipe__meta">${esc(item.nome_turma || 'Turma não informada')}</div>
+                    <div class="col"><article class="card h-100 border shadow-sm p-3 d-flex flex-row align-items-center gap-3">
+                        <div class="rounded-3 bg-primary-subtle text-primary p-2 d-inline-flex fs-5"><i class="bi bi-shield-fill"></i></div>
+                        <div class="sgi-u-min-width-0">
+                            <div class="fw-bold text-body text-truncate">${item.nome_equipe ? esc(item.nome_equipe) : `Equipe #${esc(item.id_equipe)}`}</div>
+                            <div class="small text-body-secondary text-truncate">${esc(item.nome_turma || 'Turma não informada')}</div>
                         </div>
-                    </div>`).join('')
-                : `<div class="mdd-empty">
-                    <div class="mdd-empty__icon"><i class="bi bi-inbox"></i></div>
-                    <div class="mdd-empty__title">Nenhuma equipe cadastrada</div>
-                    <p class="mdd-empty__desc">Esta modalidade ainda não possui equipes cadastradas.</p>
-                   </div>`;
+                    </article></div>`).join('')
+                : `<div class="col-12"><div class="text-center py-4 border rounded-3 bg-body-tertiary">
+                    <div class="fs-3 text-body-secondary mb-2"><i class="bi bi-inbox"></i></div>
+                    <div class="fw-semibold text-body-secondary">Nenhuma equipe cadastrada</div>
+                    <p class="small text-body-secondary mb-0">Esta modalidade ainda não possui equipes cadastradas.</p>
+                   </div></div>`;
 
             document.getElementById('listaTurmasDesktop').innerHTML = htmlTurmas;
             document.getElementById('listaEquipesDesktop').innerHTML = htmlEquipes;

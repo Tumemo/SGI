@@ -110,13 +110,8 @@ test('shared custom utilities are restricted to documented domain exceptions', (
         'sgi-u-w-max-content-maxw-96vw-top-85',
         'sgi-u-bottom-40px-right-5-z-1050',
         'sgi-u-cursor-pointer',
-        'sgi-u-col-1-1',
         'sgi-u-w-0',
         'sgi-u-h-60px-w-60px-bottom-100px',
-        'sgi-u-animation-delay-calc-attr-data-sgi-index-type-number-07s',
-        'sgi-u-h-8px',
-        'sgi-u-w-calc-attr-data-sgi-width-type-number-1',
-        'sgi-u-h-12px',
         'sgi-u-bottom-92px-right-16px-z-20',
         'sgi-u-flex-1-min-width-160px-text-align-center',
         'sgi-u-max-height-60vh-overflow-y-auto',
@@ -225,12 +220,33 @@ test('team actions use native Bootstrap button variants', () => {
     assert.doesNotMatch(adminCss, /\.btn-filter-cat\s*\{/);
 });
 
+test('team and roster views use Bootstrap layout and component utilities', () => {
+    const adminCss = fs.readFileSync(path.join(root, 'resources', 'css', 'source', 'admin.css'), 'utf8');
+    const sharedCss = fs.readFileSync(path.join(root, 'resources', 'css', 'source', 'aluno-shared.css'), 'utf8');
+    const sources = [
+        path.join(root, 'resources', 'views', 'pages', 'competicoes', 'equipe-alunos.php'),
+        path.join(root, 'resources', 'views', 'pages', 'competicoes', 'elenco-equipe.php'),
+        path.join(root, 'resources', 'views', 'pages', 'eventos', 'configurar-equipes.php'),
+        path.join(root, 'resources', 'js', 'pages', 'competicoes', 'equipe-alunos.js'),
+        path.join(root, 'resources', 'js', 'pages', 'competicoes', 'elenco-equipe.js'),
+        path.join(root, 'resources', 'js', 'pages', 'eventos', 'configurar-equipes.js'),
+    ].map((file) => fs.readFileSync(file, 'utf8')).join('\n');
+    assert.match(sources, /table table-hover align-middle mb-0/);
+    assert.match(sources, /row row-cols-1 row-cols-lg-2 g-4/);
+    assert.match(sources, /card h-100 border-0 shadow-sm rounded-4/);
+    assert.doesNotMatch(adminCss, /\.aluno-page-header|\.aluno-table|\.aluno-card-grid|\.aluno-card-item|\.card-header-custom|\.card-body-custom|\.aluno-turma-item|\.aluno-equipe-item|\.aluno-member-item|\.aluno-empty|\.aluno-search/);
+    assert.doesNotMatch(sharedCss, /\.aluno-section-header|\.aluno-page-header|\.aluno-empty|\.aluno-loading|\.aluno-search/);
+});
+
 test('portal cards use native Bootstrap actions and status badges', () => {
     const js = fs.readFileSync(path.join(root, 'resources', 'js', 'pages', 'aluno', 'home.js'), 'utf8');
     const css = fs.readFileSync(path.join(root, 'resources', 'css', 'source', 'aluno-shared.css'), 'utf8');
     assert.match(js, /btn btn-primary btn-sm/);
     assert.match(js, /badge rounded-pill text-bg-/);
+    assert.match(js, /row row-cols-1 row-cols-md-2 row-cols-xl-3 g-4/);
+    assert.match(js, /aluno-card card h-100 p-4 shadow-sm/);
     assert.doesNotMatch(js, /\bbtn-card\b|\baluno-status-badge\b/);
+    assert.doesNotMatch(css, /\.aluno-card-grid|\.aluno-card\s*\{|\.aluno-card:hover/);
     assert.doesNotMatch(css, /\.aluno-card \.btn-card|\.aluno-status-badge/);
 });
 
@@ -242,6 +258,75 @@ test('student status and enrollment actions use Bootstrap components', () => {
     assert.match(jogos, /text-bg-primary/);
     assert.match(modalidade, /class="btn btn-primary px-4 py-2"/);
     assert.doesNotMatch(css, /\.status-badge|\.status-andamento|\.btn-save\s*\{/);
+});
+
+test('student modality enrollment uses native Bootstrap cards and progress', () => {
+    const js = fs.readFileSync(path.join(root, 'resources', 'js', 'pages', 'aluno', 'modalidade.js'), 'utf8');
+    const view = fs.readFileSync(path.join(root, 'resources', 'views', 'pages', 'aluno', 'modalidade.php'), 'utf8');
+    const css = fs.readFileSync(path.join(root, 'resources', 'css', 'source', 'aluno-pages.css'), 'utf8');
+    assert.match(js, /modalidade-card card border shadow-sm position-relative h-100 p-4/);
+    assert.match(view, /row row-cols-1 row-cols-sm-2 row-cols-lg-3 g-3/);
+    assert.match(view, /id="progressBar" class="progress-bar"/);
+    assert.doesNotMatch(js, /btn-ver-detalhes|bottom-label/);
+    assert.doesNotMatch(css, /\.modalidades-grid|\.card-vagas|\.resumo-selecao|\.progress-track|\.progress-seg|\.card-inscrito|\.equipe-pick-row/);
+    assert.doesNotMatch(css, /--md-(?:surface|border|primary|success|text-secondary)\s*:/);
+});
+
+test('profile layouts use Bootstrap grids, badges and input groups', () => {
+    const sources = [
+        path.join(root, 'resources', 'views', 'pages', 'aluno', 'perfil.php'),
+        path.join(root, 'resources', 'views', 'pages', 'acesso', 'perfil.php'),
+    ].map((file) => fs.readFileSync(file, 'utf8')).join('\n');
+    const css = [
+        path.join(root, 'resources', 'css', 'source', 'aluno-home.css'),
+        path.join(root, 'resources', 'css', 'source', 'admin.css'),
+    ].map((file) => fs.readFileSync(file, 'utf8')).join('\n');
+    assert.match(sources, /row g-4 align-items-start/);
+    assert.match(sources, /badge rounded-pill \<\?= \$nivelBadgeClass \?\>/);
+    assert.match(sources, /input-group/);
+    assert.match(sources, /perfil-password-eye btn btn-outline-secondary/);
+    assert.doesNotMatch(sources, /perfil-(?:grid|field|info-grid|info-item|card-title|badge-nivel|password-input|btn-editar|input)\b|nivel-cor-/);
+    assert.doesNotMatch(css, /\.perfil-(?:grid|field|info-grid|info-item|card-title|badge-nivel|password-input|btn-editar|input)\b|\.perfil-page\b|\.perfil-wrapper\b/);
+});
+
+test('classroom cards and search use native Bootstrap components', () => {
+    const js = fs.readFileSync(path.join(root, 'resources', 'js', 'pages', 'participantes', 'turmas.js'), 'utf8');
+    const view = fs.readFileSync(path.join(root, 'resources', 'views', 'pages', 'participantes', 'turmas.php'), 'utf8');
+    const css = fs.readFileSync(path.join(root, 'resources', 'css', 'source', 'admin.css'), 'utf8');
+    assert.match(js, /article class="card h-100 border-0 shadow-sm p-3"/);
+    assert.match(js, /badge rounded-pill text-bg-light/);
+    assert.match(view, /input-group/);
+    assert.doesNotMatch(js, /turma-card|turma-badge|empty-state|turma-section-header|turma-search-wrapper/);
+    assert.doesNotMatch(css, /\.turma-card|\.turma-badge|\.empty-state|\.turma-section-header|\.turma-search-wrapper/);
+});
+
+test('collaborator management uses Bootstrap cards, filters and controls', () => {
+    const js = fs.readFileSync(path.join(root, 'resources', 'js', 'pages', 'acesso', 'colaboradores.js'), 'utf8');
+    const view = fs.readFileSync(path.join(root, 'resources', 'views', 'pages', 'acesso', 'colaboradores.php'), 'utf8');
+    const css = fs.readFileSync(path.join(root, 'resources', 'css', 'source', 'admin.css'), 'utf8');
+    assert.match(js, /article class="card h-100 border-0 shadow-sm p-3 d-flex flex-row/);
+    assert.match(js, /badge rounded-pill \$\{roleBadge\}/);
+    assert.match(view, /row row-cols-2 row-cols-lg-4 g-3/);
+    assert.match(view, /input-group/);
+    assert.doesNotMatch(js, /col-card|col-role|col-action|col-empty|col-loading|col-chip/);
+    assert.doesNotMatch(css, /\.col-card|\.col-role|\.col-action|\.col-empty|\.col-loading|\.col-chip|\.col-wrap|\.col-toolbar/);
+});
+
+test('arrecadacao and ocorrencias lists use Bootstrap grids and badges', () => {
+    const js = [
+        path.join(root, 'resources', 'js', 'pages', 'eventos', 'configurar-arrecadacao.js'),
+        path.join(root, 'resources', 'js', 'pages', 'disciplina', 'ocorrencias.js'),
+    ].map((file) => fs.readFileSync(file, 'utf8')).join('\n');
+    const views = [
+        path.join(root, 'resources', 'views', 'pages', 'eventos', 'configurar-arrecadacao.php'),
+        path.join(root, 'resources', 'views', 'pages', 'disciplina', 'ocorrencias.php'),
+    ].map((file) => fs.readFileSync(file, 'utf8')).join('\n');
+    const css = fs.readFileSync(path.join(root, 'resources', 'css', 'source', 'admin.css'), 'utf8');
+    assert.match(js, /article class="card h-100 border-0 shadow-sm p-3 d-flex flex-row/);
+    assert.match(js, /badge text-bg-danger/);
+    assert.match(views, /row row-cols-1 row-cols-lg-2 g-3/);
+    assert.doesNotMatch(js + views, /ocr-(?:page|container|header|grid|modal|badge|btn-cancel)|sgi-u-col-1-1/);
+    assert.doesNotMatch(css, /\.ocr-(?:page|container|header|grid|modal|badge)/);
 });
 
 test('competition list and bracket modal use native status and action variants', () => {
@@ -262,4 +347,28 @@ test('score controls keep behavior hooks while using native Bootstrap controls',
     assert.match(placar, /mc-duration-select form-select form-select-sm w-auto/);
     assert.match(placar, /mc-pause-btn btn btn-outline-secondary btn-sm/);
     assert.doesNotMatch(adminCss, /\.mc-action-btn\s*\{|\.mc-action-btn--start\s*\{|\.mc-action-btn--finish\s*\{|\.mc-duration-select\s*\{|\.mc-pause-btn\s*\{/);
+});
+
+test('modality details use Bootstrap cards, grids and actions', () => {
+    const js = fs.readFileSync(path.join(root, 'resources', 'js', 'pages', 'competicoes', 'modalidade-detalhes.js'), 'utf8');
+    const view = fs.readFileSync(path.join(root, 'resources', 'views', 'pages', 'competicoes', 'modalidade-detalhes.php'), 'utf8');
+    const css = fs.readFileSync(path.join(root, 'resources', 'css', 'source', 'admin.css'), 'utf8');
+    assert.match(js, /card h-100 border shadow-sm p-3 d-flex flex-row/);
+    assert.match(js, /btn btn-primary d-inline-flex align-items-center gap-2/);
+    assert.match(view, /card h-100 border-0 shadow-sm rounded-4 p-4/);
+    assert.match(view, /row row-cols-1 row-cols-sm-2 g-3/);
+    assert.doesNotMatch(js + view, /mdd-(?:container|head|hero|panel|list|turma|equipe|empty|btn-edit)\b/);
+    assert.doesNotMatch(css, /\.mdd-/);
+});
+
+test('points configuration uses Bootstrap controls and feedback', () => {
+    const view = fs.readFileSync(path.join(root, 'resources', 'views', 'pages', 'eventos', 'configurar-pontuacao.php'), 'utf8');
+    const js = fs.readFileSync(path.join(root, 'resources', 'js', 'pages', 'eventos', 'configurar-pontuacao.js'), 'utf8');
+    const css = fs.readFileSync(path.join(root, 'resources', 'css', 'source', 'admin.css'), 'utf8');
+    assert.match(view, /card .*border-start border-4/);
+    assert.match(view, /ptc-step-input form-control form-control-lg/);
+    assert.match(view, /alert alert-info/);
+    assert.match(js, /ptc-step-input, \.ptc-step-btn/);
+    assert.doesNotMatch(view, /ptc-(?:container|header|title|actions|btn-(?:interclasse|salvar|default|continuar)|rank-badge|card(?:$|[^-])|card-head|card-icon|card-title|card-sub|card-value|card-label|card-foot|note|unsaved)\b/);
+    assert.doesNotMatch(css, /--ptc-|\.ptc-(?:container|header|title|actions|btn-|card(?:$|[^-])|rank-badge|card-head|card-icon|card-title|card-sub|card-value|card-label|card-foot|note|unsaved)\b/);
 });

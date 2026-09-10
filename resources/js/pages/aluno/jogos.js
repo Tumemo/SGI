@@ -118,7 +118,7 @@ window.SGIPage.mount("aluno/jogos", function (pageConfig, pageScope) {
             const ativo = listaInter.find(i => String(i.status_interclasse) === '1');
 
             if (!ativo) {
-                container.innerHTML = '<div class="text-center text-muted py-5"><i class="bi bi-calendar-x fs-1 d-block mb-2"></i>Nenhuma competição ativa no momento.</div>';
+                container.innerHTML = '<div class="col-12 text-center text-body-secondary py-5"><i class="bi bi-calendar-x display-5 d-block mb-2"></i>Nenhuma competição ativa no momento.</div>';
                 return;
             }
 
@@ -166,7 +166,7 @@ window.SGIPage.mount("aluno/jogos", function (pageConfig, pageScope) {
             todosOsJogos = Object.values(jogosAgrupados);
 
             if (todosOsJogos.length === 0) {
-                container.innerHTML = '<div class="text-center text-muted py-5"><i class="bi bi-inbox fs-1 d-block mb-2"></i>Nenhum jogo agendado ainda.</div>';
+                container.innerHTML = '<div class="col-12 text-center text-body-secondary py-5"><i class="bi bi-inbox display-5 d-block mb-2"></i>Nenhum jogo agendado ainda.</div>';
                 return;
             }
 
@@ -179,8 +179,8 @@ window.SGIPage.mount("aluno/jogos", function (pageConfig, pageScope) {
         } catch (error) {
             console.error("Erro ao carregar jogos:", error);
             container.innerHTML = `
-                <div class="text-center text-danger py-5">
-                    <i class="bi bi-exclamation-triangle fs-1 d-block mb-2"></i>
+                <div class="col-12 text-center text-danger py-5">
+                    <i class="bi bi-exclamation-triangle display-5 d-block mb-2"></i>
                     Erro ao carregar a tabela de jogos. Tente novamente mais tarde.
                 </div>`;
         }
@@ -247,7 +247,7 @@ window.SGIPage.mount("aluno/jogos", function (pageConfig, pageScope) {
         }
 
         if (jogosFiltrados.length === 0) {
-            container.innerHTML = '<div class="text-center text-muted py-5"><i class="bi bi-search fs-1 d-block mb-2"></i>Nenhum jogo encontrado para este filtro.</div>';
+            container.innerHTML = '<div class="col-12 text-center text-body-secondary py-5"><i class="bi bi-search display-5 d-block mb-2"></i>Nenhum jogo encontrado para este filtro.</div>';
             return;
         }
 
@@ -262,45 +262,47 @@ window.SGIPage.mount("aluno/jogos", function (pageConfig, pageScope) {
             const placarB = isFinalizado ? (eqB.placar ?? '0') : '-';
 
             const metaInfo = `
-                <span class="meta-item"><i class="bi bi-calendar3"></i>${formatarData(jogo.data_jogo)}</span>
-                <span class="meta-item"><i class="bi bi-clock"></i>${formatarHora(jogo.inicio_jogo)}${jogo.termino_jogo ? '–' + formatarHora(jogo.termino_jogo) : ''}</span>
-                <span class="meta-item"><i class="bi bi-geo-alt"></i>${esc(jogo.nome_local || 'Quadra')}</span>
+                <span class="d-inline-flex align-items-center gap-1"><i class="bi bi-calendar3 text-primary"></i>${formatarData(jogo.data_jogo)}</span>
+                <span class="d-inline-flex align-items-center gap-1"><i class="bi bi-clock text-primary"></i>${formatarHora(jogo.inicio_jogo)}${jogo.termino_jogo ? '–' + formatarHora(jogo.termino_jogo) : ''}</span>
+                <span class="d-inline-flex align-items-center gap-1"><i class="bi bi-geo-alt text-primary"></i>${esc(jogo.nome_local || 'Quadra')}</span>
             `;
 
             const dot = status.dot ? '<i class="bi bi-circle-fill me-1" aria-hidden="true"></i>' : '';
 
             return `
-                <div class="jogo-card" data-jogo-id="${esc(jogo.id_jogo)}"
+                <div class="col">
+                <article class="card h-100 border-0 shadow-sm p-3 p-lg-4" data-jogo-id="${esc(jogo.id_jogo)}"
                      onclick="abrirDetalhesJogo(this)" role="button" tabindex="0">
-                    <div class="jogo-top">
-                        <div class="jogo-meta">${metaInfo}</div>
+                    <div class="d-flex justify-content-between align-items-start gap-3">
+                        <div class="d-flex flex-wrap gap-3 small text-body-secondary">${metaInfo}</div>
                         <span class="badge rounded-pill ${status.classe}">${dot}${esc(status.texto)}</span>
                     </div>
 
-                    <div class="modalidade-row">
-                        <span class="modalidade-chip">
+                    <div class="d-flex flex-wrap align-items-center gap-2 mt-3">
+                        <span class="badge text-bg-primary d-inline-flex align-items-center gap-1">
                             <i class="bi ${iconeModalidade(jogo.nome_modalidade)}"></i>${esc(jogo.nome_modalidade)}
                         </span>
-                        <span class="fase-tag"><i class="bi bi-diagram-3 me-1"></i>${esc(jogo.nome_jogo)}</span>
+                        <span class="badge text-bg-light border text-body-secondary"><i class="bi bi-diagram-3 me-1"></i>${esc(jogo.nome_jogo)}</span>
                     </div>
 
-                    <div class="confronto-area">
-                        <div class="equipe">
-                            <span class="turma-tag">${esc(eqA.tag)}</span>
-                            <span class="equipe-nome">${esc(eqA.nome)}</span>
+                    <div class="d-flex align-items-center justify-content-between gap-2 mt-3">
+                        <div class="d-flex flex-column align-items-center flex-grow-1 text-center gap-1">
+                            <span class="badge text-bg-primary text-uppercase">${esc(eqA.tag)}</span>
+                            <span class="fw-semibold text-truncate w-100">${esc(eqA.nome)}</span>
                         </div>
 
-                        <div class="placar-box">
-                            <span class="${isFinalizado ? 'placar-num' : 'placar-pendente'}">${esc(placarA)}</span>
-                            <span class="vs-text mx-1">x</span>
-                            <span class="${isFinalizado ? 'placar-num' : 'placar-pendente'}">${esc(placarB)}</span>
+                        <div class="d-flex align-items-baseline justify-content-center gap-2 bg-body-tertiary border rounded-3 px-3 py-2 fs-3 fw-bold flex-shrink-0">
+                            <span class="${isFinalizado ? 'text-primary' : 'text-body-tertiary'}">${esc(placarA)}</span>
+                            <span class="small text-body-secondary">x</span>
+                            <span class="${isFinalizado ? 'text-primary' : 'text-body-tertiary'}">${esc(placarB)}</span>
                         </div>
 
-                        <div class="equipe">
-                            <span class="turma-tag">${esc(eqB.tag)}</span>
-                            <span class="equipe-nome">${esc(eqB.nome)}</span>
+                        <div class="d-flex flex-column align-items-center flex-grow-1 text-center gap-1">
+                            <span class="badge text-bg-primary text-uppercase">${esc(eqB.tag)}</span>
+                            <span class="fw-semibold text-truncate w-100">${esc(eqB.nome)}</span>
                         </div>
                     </div>
+                </article>
                 </div>
             `;
         }).join('');
@@ -317,7 +319,7 @@ window.SGIPage.mount("aluno/jogos", function (pageConfig, pageScope) {
             '<i class="bi bi-trophy-fill me-2"></i>Resumo da Partida';
 
         corpo.innerHTML = `
-            <div class="text-center text-muted py-4">
+            <div class="text-center text-body-secondary py-4">
                 <div class="spinner-border spinner-border-sm text-danger me-2" role="status"></div>
                 Carregando detalhes...
             </div>`;
@@ -327,8 +329,8 @@ window.SGIPage.mount("aluno/jogos", function (pageConfig, pageScope) {
 
         if (!jogo) {
             corpo.innerHTML = `
-                <div class="modal-empty">
-                    <i class="bi bi-exclamation-triangle fs-1 d-block mb-2 text-danger"></i>
+                <div class="text-center text-body-secondary py-4">
+                    <i class="bi bi-exclamation-triangle display-6 d-block mb-2 text-danger"></i>
                     Partida não encontrada.
                 </div>`;
             return;
@@ -348,8 +350,8 @@ window.SGIPage.mount("aluno/jogos", function (pageConfig, pageScope) {
         } catch (e) {
             console.error('Erro ao carregar resumo da partida:', e);
             corpo.innerHTML = `
-                <div class="modal-empty">
-                    <i class="bi bi-exclamation-triangle fs-1 d-block mb-2 text-danger"></i>
+                <div class="text-center text-body-secondary py-4">
+                    <i class="bi bi-exclamation-triangle display-6 d-block mb-2 text-danger"></i>
                     Erro ao carregar o resumo da partida. Tente novamente.
                 </div>`;
         }
@@ -369,22 +371,22 @@ window.SGIPage.mount("aluno/jogos", function (pageConfig, pageScope) {
         let html = '';
 
         // ===== CONFRONTO =====
-        html += '<div class="modal-section">';
-        html += '<div class="modal-section-title"><i class="bi bi-shield-fill"></i>Partida</div>';
+        html += '<section class="mb-4">';
+        html += '<h6 class="d-flex align-items-center gap-2 text-uppercase small fw-bold text-body-secondary mb-3"><i class="bi bi-shield-fill text-primary"></i>Partida</h6>';
         html += `
-            <div class="confronto-area mb-3">
-                <div class="equipe">
-                    <span class="turma-tag">${esc(eqA.tag)}</span>
-                    <span class="equipe-nome">${esc(eqA.nome)}</span>
+            <div class="d-flex align-items-center justify-content-between gap-2 mb-3">
+                <div class="d-flex flex-column align-items-center flex-grow-1 text-center gap-1">
+                    <span class="badge text-bg-primary text-uppercase">${esc(eqA.tag)}</span>
+                    <span class="fw-semibold text-truncate w-100">${esc(eqA.nome)}</span>
                 </div>
-                <div class="placar-box">
-                    <span class="${isFinalizado ? 'placar-num' : 'placar-pendente'}">${esc(placarA)}</span>
-                    <span class="vs-text mx-1">x</span>
-                    <span class="${isFinalizado ? 'placar-num' : 'placar-pendente'}">${esc(placarB)}</span>
+                <div class="d-flex align-items-baseline justify-content-center gap-2 bg-body-tertiary border rounded-3 px-3 py-2 fs-3 fw-bold flex-shrink-0">
+                    <span class="${isFinalizado ? 'text-primary' : 'text-body-tertiary'}">${esc(placarA)}</span>
+                    <span class="small text-body-secondary">x</span>
+                    <span class="${isFinalizado ? 'text-primary' : 'text-body-tertiary'}">${esc(placarB)}</span>
                 </div>
-                <div class="equipe">
-                    <span class="turma-tag">${esc(eqB.tag)}</span>
-                    <span class="equipe-nome">${esc(eqB.nome)}</span>
+                <div class="d-flex flex-column align-items-center flex-grow-1 text-center gap-1">
+                    <span class="badge text-bg-primary text-uppercase">${esc(eqB.tag)}</span>
+                    <span class="fw-semibold text-truncate w-100">${esc(eqB.nome)}</span>
                 </div>
             </div>
             <div class="text-center">
@@ -394,8 +396,8 @@ window.SGIPage.mount("aluno/jogos", function (pageConfig, pageScope) {
         html += '</div>';
 
         // ===== DESTAQUE DA PARTIDA =====
-        html += '<div class="modal-section">';
-        html += '<div class="modal-section-title"><i class="bi bi-lightning-charge-fill"></i>Destaque da Partida</div>';
+        html += '<section class="mb-4">';
+        html += '<h6 class="d-flex align-items-center gap-2 text-uppercase small fw-bold text-body-secondary mb-3"><i class="bi bi-lightning-charge-fill text-primary"></i>Destaque da Partida</h6>';
 
         const artilheiros = Array.isArray(destaques) ? destaques : [];
         const artilheiroTop = artilheiros[0];
@@ -403,25 +405,25 @@ window.SGIPage.mount("aluno/jogos", function (pageConfig, pageScope) {
             const temFotoReal = artilheiroTop.foto_usuario && !/^default\.(jpg|jpeg|png|gif|webp)$/i.test(artilheiroTop.foto_usuario);
             const foto = temFotoReal ? `${APP_BASE}/uploads/fotosUsuarios/${encodeURIComponent(artilheiroTop.foto_usuario)}` : '';
             html += `
-                <div class="destaque-card">
+                <div class="d-flex align-items-center gap-3 p-3 border rounded-3 bg-body">
                     ${foto
-                        ? `<img class="destaque-foto" src="${foto}" alt="${esc(artilheiroTop.nome_usuario)}" onerror="this.classList.add('d-none');this.nextElementSibling.classList.remove('d-none');">`
+                        ? `<img class="rounded-circle object-fit-cover flex-shrink-0" style="width: 44px; height: 44px;" src="${foto}" alt="${esc(artilheiroTop.nome_usuario)}" onerror="this.classList.add('d-none');this.nextElementSibling.classList.remove('d-none');">`
                         : ''}
-                    <span class="destaque-icone ${foto ? 'd-none' : ''}"><i class="bi bi-award-fill"></i></span>
-                    <div>
-                        <div class="destaque-nome">${esc(artilheiroTop.nome_usuario)} <i class="bi bi-star-fill text-warning"></i></div>
-                        <div class="destaque-sub">${esc(artilheiroTop.nome_fantasia_turma || artilheiroTop.nome_turma || '')}</div>
+                    <span class="bg-primary-subtle text-primary rounded-circle p-2 d-inline-flex ${foto ? 'd-none' : ''}"><i class="bi bi-award-fill"></i></span>
+                    <div class="flex-grow-1">
+                        <div class="fw-semibold">${esc(artilheiroTop.nome_usuario)} <i class="bi bi-star-fill text-warning"></i></div>
+                        <div class="small text-body-secondary">${esc(artilheiroTop.nome_fantasia_turma || artilheiroTop.nome_turma || '')}</div>
                     </div>
-                    <div class="destaque-valor">${esc(artilheiroTop.total_gols)}<small>gols</small></div>
+                    <div class="fw-bold text-primary text-end">${esc(artilheiroTop.total_gols)}<small class="d-block text-body-secondary">gols</small></div>
                 </div>`;
         } else {
-            html += '<div class="modal-empty"><i class="bi bi-person-dash d-block mb-1"></i>Ainda não há destaque registrado para esta partida.</div>';
+            html += '<div class="text-center text-body-secondary py-3"><i class="bi bi-person-dash d-block mb-1"></i>Ainda não há destaque registrado para esta partida.</div>';
         }
         html += '</div>';
 
         // ===== EQUIPES DA PARTIDA =====
-        html += '<div class="modal-section">';
-        html += '<div class="modal-section-title"><i class="bi bi-people-fill"></i>Equipes da Partida</div>';
+        html += '<section class="mb-4">';
+        html += '<h6 class="d-flex align-items-center gap-2 text-uppercase small fw-bold text-body-secondary mb-3"><i class="bi bi-people-fill text-primary"></i>Equipes da Partida</h6>';
 
         const equipesMap = {};
         (Array.isArray(partidas) ? partidas : []).forEach(row => {
@@ -437,7 +439,7 @@ window.SGIPage.mount("aluno/jogos", function (pageConfig, pageScope) {
         const equipesLista = Object.values(equipesMap);
 
         if (equipesLista.length > 0) {
-            html += '<div class="accordion accordion-soft" id="accordionEquipes">';
+            html += '<div class="accordion" id="accordionEquipes">';
             html += equipesLista.map(e => `
                 <div class="accordion-item">
                     <h2 class="accordion-header">
@@ -446,14 +448,14 @@ window.SGIPage.mount("aluno/jogos", function (pageConfig, pageScope) {
                             data-bs-target="#equipe-${e.id_equipe}"
                             aria-expanded="false"
                             aria-controls="equipe-${e.id_equipe}">
-                            <span class="turma-tag me-2">${esc(e.tag)}</span>
+                            <span class="badge text-bg-primary me-2">${esc(e.tag)}</span>
                             <span class="flex-grow-1 text-start">${esc(e.nome)}</span>
                         </button>
                     </h2>
                     <div id="equipe-${e.id_equipe}" class="accordion-collapse collapse"
                         data-bs-parent="#accordionEquipes">
                         <div class="accordion-body">
-                            <div class="membros-carregando text-muted small py-2">
+                            <div class="text-body-secondary small py-2">
                                 <span class="spinner-border spinner-border-sm me-1" role="status"></span>
                                 Carregando integrantes...
                             </div>
@@ -463,13 +465,13 @@ window.SGIPage.mount("aluno/jogos", function (pageConfig, pageScope) {
             `).join('');
             html += '</div>';
         } else {
-            html += '<div class="modal-empty"><i class="bi bi-people d-block mb-1"></i>Nenhuma equipe vinculada a esta partida.</div>';
+            html += '<div class="text-center text-body-secondary py-3"><i class="bi bi-people d-block mb-1"></i>Nenhuma equipe vinculada a esta partida.</div>';
         }
         html += '</div>';
 
         // ===== INFORMAÇÕES DA PARTIDA =====
-        html += '<div class="modal-section">';
-        html += '<div class="modal-section-title"><i class="bi bi-info-circle-fill"></i>Informações</div>';
+        html += '<section class="mb-4">';
+        html += '<h6 class="d-flex align-items-center gap-2 text-uppercase small fw-bold text-body-secondary mb-3"><i class="bi bi-info-circle-fill text-primary"></i>Informações</h6>';
 
         const itens = [
             { icone: 'bi-calendar3', rotulo: 'Data', valor: formatarData(jogo.data_jogo) },
@@ -481,10 +483,10 @@ window.SGIPage.mount("aluno/jogos", function (pageConfig, pageScope) {
         ];
 
         html += itens.map(item => `
-            <div class="fase-item">
-                <i class="bi ${item.icone} text-danger"></i>
-                <span class="text-muted">${esc(item.rotulo)}:</span>
-                <span class="fase-nome">${esc(item.valor)}</span>
+            <div class="d-flex align-items-center gap-2 py-2 border-bottom">
+                <i class="bi ${item.icone} text-primary"></i>
+                <span class="text-body-secondary small">${esc(item.rotulo)}:</span>
+                <span class="fw-semibold">${esc(item.valor)}</span>
             </div>
         `).join('');
         html += '</div>';
@@ -537,19 +539,19 @@ window.SGIPage.mount("aluno/jogos", function (pageConfig, pageScope) {
             const lista = Array.isArray(membros) ? membros : [];
 
             if (lista.length === 0) {
-                corpo.innerHTML = '<div class="modal-empty text-start p-0 py-1">Nenhum integrante vinculado a esta equipe.</div>';
+                corpo.innerHTML = '<div class="text-body-secondary small py-1">Nenhum integrante vinculado a esta equipe.</div>';
                 return;
             }
 
             corpo.innerHTML = lista.map(m => `
-                <div class="membro-item">
-                    <i class="bi bi-person-circle fs-5"></i>
+                <div class="d-flex align-items-center gap-2 py-2">
+                    <i class="bi bi-person-circle fs-5 text-body-secondary"></i>
                     <span>${esc(m.nome_usuario)}</span>
                 </div>
             `).join('');
         } catch (e) {
             console.error('Erro ao carregar integrantes:', e);
-            corpo.innerHTML = '<div class="text-danger small">Erro ao carregar integrantes.</div>';
+            corpo.innerHTML = '<div class="text-danger small py-2">Erro ao carregar integrantes.</div>';
         }
     }
 

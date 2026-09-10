@@ -12,6 +12,7 @@ $labelNiveis = [
     3 => ['label' => 'Usuário',       'icon' => 'bi-person-fill',       'color' => '#198754'],
 ];
 $nivelInfo = $labelNiveis[$nivelUsuario] ?? ['label' => 'Desconhecido', 'icon' => 'bi-question-circle', 'color' => '#6c757d'];
+$nivelBadgeClass = [0 => 'text-bg-danger', 1 => 'text-bg-primary', 2 => 'text-bg-secondary', 3 => 'text-bg-success'][$nivelUsuario] ?? 'text-bg-secondary';
 
 include SGI_ROOT . '/resources/views/components/aluno-head.php';
 
@@ -21,7 +22,7 @@ include SGI_ROOT . '/resources/views/components/aluno-nav.php';
 ?>
 
 <!-- ===================== MOBILE ===================== -->
-<main class="perfil-page d-md-none p-3 pt-3 pb-5" >
+<main class="d-md-none p-3 pt-3 pb-5">
     <a href="<?= htmlspecialchars($urlVoltar) ?>" id="perfilBackMob" class="btn btn-primary d-inline-flex align-items-center gap-2 fw-bold mb-3 px-3 py-2 border-0 text-decoration-none" >
         <i class="bi bi-arrow-left-circle fs-5"></i> <span>Início</span>
     </a>
@@ -39,12 +40,12 @@ include SGI_ROOT . '/resources/views/components/aluno-nav.php';
                         <span class="placeholder rounded-circle w-100 h-100"></span>
                     </div>
                 </div>
-                <button type="button" class="perfil-btn-camera" id="btnCameraMob" title="Alterar foto">
+                <button type="button" class="perfil-btn-camera btn btn-primary d-inline-flex align-items-center justify-content-center p-0" id="btnCameraMob" title="Alterar foto">
                     <i class="bi bi-camera-fill"></i>
                 </button>
             </div>
             <h5 class="fw-bold mt-3 mb-1" id="perfilNomeMob"><?= htmlspecialchars($usuarioPerfil['nome_usuario'] ?? '', ENT_QUOTES) ?></h5>
-            <span class="perfil-badge-nivel nivel-cor-<?= (int)$nivelUsuario ?>">
+            <span class="badge rounded-pill <?= $nivelBadgeClass ?>">
                 <i class="<?= $nivelInfo['icon'] ?>"></i> <?= $nivelInfo['label'] ?>
             </span>
             <div class="d-flex justify-content-center gap-2 mt-3">
@@ -56,19 +57,19 @@ include SGI_ROOT . '/resources/views/components/aluno-nav.php';
 
     <div class="card border-0 shadow-sm rounded-4 mb-3">
         <div class="card-body">
-            <h6 class="perfil-card-title mb-3"><i class="bi bi-person-vcard me-2"></i>Informações Pessoais</h6>
-            <div class="perfil-field"><span class="perfil-field-label"><i class="bi bi-person-badge"></i> Matrícula</span><span class="perfil-field-value" id="perfilEmailMob"><?= htmlspecialchars($usuarioPerfil['matricula_usuario'] ?? '', ENT_QUOTES) ?></span></div>
-            <div class="perfil-field"><span class="perfil-field-label"><i class="bi bi-briefcase"></i> Cargo</span><span class="perfil-field-value"><?= $nivelInfo['label'] ?></span></div>
-            <div class="perfil-field mb-0"><span class="perfil-field-label"><i class="bi bi-envelope"></i> E-mail</span><span class="perfil-field-value"><?= htmlspecialchars($usuarioPerfil['matricula_usuario'] ?? '', ENT_QUOTES) ?></span></div>
+            <h6 class="d-flex align-items-center gap-2 border-bottom pb-3 mb-3 text-uppercase small fw-bold text-body-secondary"><i class="bi bi-person-vcard"></i>Informações Pessoais</h6>
+            <div class="row align-items-baseline g-2 py-2 border-bottom"><span class="col-4 d-flex align-items-center gap-2 text-uppercase small fw-semibold text-body-secondary"><i class="bi bi-person-badge"></i> Matrícula</span><span class="col d-flex align-items-center flex-wrap gap-1" id="perfilEmailMob"><?= htmlspecialchars($usuarioPerfil['matricula_usuario'] ?? '', ENT_QUOTES) ?></span></div>
+            <div class="row align-items-baseline g-2 py-2 border-bottom"><span class="col-4 d-flex align-items-center gap-2 text-uppercase small fw-semibold text-body-secondary"><i class="bi bi-briefcase"></i> Cargo</span><span class="col d-flex align-items-center flex-wrap gap-1"><?= $nivelInfo['label'] ?></span></div>
+            <div class="row align-items-baseline g-2 py-2"><span class="col-4 d-flex align-items-center gap-2 text-uppercase small fw-semibold text-body-secondary"><i class="bi bi-envelope"></i> E-mail</span><span class="col d-flex align-items-center flex-wrap gap-1"><?= htmlspecialchars($usuarioPerfil['matricula_usuario'] ?? '', ENT_QUOTES) ?></span></div>
         </div>
     </div>
 
     <div class="card border-0 shadow-sm rounded-4 mb-3">
         <div class="card-body">
-            <h6 class="perfil-card-title mb-3"><i class="bi bi-shield-lock me-2"></i>Segurança e Acesso</h6>
-            <div class="perfil-field"><span class="perfil-field-label"><i class="bi bi-lock"></i> Senha</span><span class="perfil-field-value"><span class="perfil-mask">&#8226;&#8226;&#8226;&#8226;&#8226;&#8226;&#8226;&#8226;</span></span></div>
-            <div class="perfil-field"><span class="perfil-field-label"><i class="bi bi-shield-check"></i> Nível</span><span class="perfil-field-value"><span class="perfil-badge-nivel perfil-badge-nivel--sm nivel-cor-<?= (int)$nivelUsuario ?>"><i class="<?= $nivelInfo['icon'] ?>"></i> <?= $nivelInfo['label'] ?></span></span></div>
-            <div class="perfil-field mb-0"><span class="perfil-field-label"><i class="bi bi-key"></i> Alterar</span><span class="perfil-field-value"><button class="btn btn-link btn-sm text-decoration-none p-0 text-danger fw-semibold" data-bs-toggle="modal" data-bs-target="#modalAlterarSenha">Alterar senha</button></span></div>
+            <h6 class="d-flex align-items-center gap-2 border-bottom pb-3 mb-3 text-uppercase small fw-bold text-body-secondary"><i class="bi bi-shield-lock"></i>Segurança e Acesso</h6>
+            <div class="row align-items-baseline g-2 py-2 border-bottom"><span class="col-4 d-flex align-items-center gap-2 text-uppercase small fw-semibold text-body-secondary"><i class="bi bi-lock"></i> Senha</span><span class="col d-flex align-items-center flex-wrap gap-1"><span class="font-monospace text-body-secondary">&#8226;&#8226;&#8226;&#8226;&#8226;&#8226;&#8226;&#8226;</span></span></div>
+            <div class="row align-items-baseline g-2 py-2 border-bottom"><span class="col-4 d-flex align-items-center gap-2 text-uppercase small fw-semibold text-body-secondary"><i class="bi bi-shield-check"></i> Nível</span><span class="col d-flex align-items-center flex-wrap gap-1"><span class="badge rounded-pill <?= $nivelBadgeClass ?>"><i class="<?= $nivelInfo['icon'] ?>"></i> <?= $nivelInfo['label'] ?></span></span></div>
+            <div class="row align-items-baseline g-2 py-2"><span class="col-4 d-flex align-items-center gap-2 text-uppercase small fw-semibold text-body-secondary"><i class="bi bi-key"></i> Alterar</span><span class="col d-flex align-items-center flex-wrap gap-1"><button class="btn btn-link btn-sm text-decoration-none p-0 text-danger fw-semibold" data-bs-toggle="modal" data-bs-target="#modalAlterarSenha">Alterar senha</button></span></div>
         </div>
     </div>
 
@@ -79,25 +80,25 @@ include SGI_ROOT . '/resources/views/components/aluno-nav.php';
 
 
 <!-- ===================== DESKTOP ===================== -->
-<main class="perfil-page perfil-desktop d-none d-md-block">
-    <div class="perfil-wrapper">
+<main class="d-none d-md-block p-4 p-lg-5">
+    <div class="container-fluid px-0">
         <!-- Topbar -->
-        <div class="perfil-topbar">
+        <div class="d-flex align-items-center gap-4 mb-4 flex-wrap">
             <a href="<?= htmlspecialchars($urlVoltar) ?>" id="perfilBackDesk" class="perfil-btn-voltar btn btn-primary d-inline-flex align-items-center gap-2 fw-bold px-3 py-2 border-0 text-decoration-none" >
                 <i class="bi bi-arrow-left-circle fs-5"></i> <span>Início</span>
             </a>
-            <div class="perfil-topbar-title">
-                <h1><i class="bi bi-person-circle me-2 text-primary" ></i>Meu Perfil</h1>
-                <p class="perfil-topbar-subtitle">Gerencie suas informações, segurança e acompanhe sua participação</p>
+            <div>
+                <h1 class="fs-4 fw-bold mb-0"><i class="bi bi-person-circle me-2 text-primary"></i>Meu Perfil</h1>
+                <p class="small text-body-secondary mb-0">Gerencie suas informações, segurança e acompanhe sua participação</p>
             </div>
         </div>
 
         <!-- Grid: 260px + 1fr -->
-        <div class="perfil-grid">
+        <div class="row g-4 align-items-start">
             <!-- === COLUNA ESQUERDA: Identidade Visual === -->
-            <aside class="perfil-grid-left">
-                <div class="card border-0 shadow-sm rounded-4 perfil-card-identity">
-                    <div class="card-body text-center py-5 px-4">
+            <aside class="col-12 col-lg-3">
+                <div class="card border-0 shadow-sm rounded-4 position-sticky top-0">
+                    <div class="card-body text-center py-5 px-4 d-flex flex-column align-items-center">
                         <div class="perfil-avatar-ring mx-auto" id="fotoCircleDesk">
                             <div class="perfil-avatar-inner">
                                 <?php $fotoPathDesk = $usuarioPerfil['foto_usuario'] ? \App\Shared\Http\Url::to('uploads/fotosUsuarios/' . rawurlencode($usuarioPerfil['foto_usuario'])) : ''; ?>
@@ -107,18 +108,18 @@ include SGI_ROOT . '/resources/views/components/aluno-nav.php';
                                     <span class="placeholder rounded-circle w-100 h-100"></span>
                                 </div>
                             </div>
-                            <button type="button" class="perfil-btn-camera" id="btnCameraDesk" title="Alterar foto">
+                            <button type="button" class="perfil-btn-camera btn btn-primary d-inline-flex align-items-center justify-content-center p-0" id="btnCameraDesk" title="Alterar foto">
                                 <i class="bi bi-camera-fill"></i>
                             </button>
                         </div>
 
                         <h5 class="fw-bold mt-3 mb-1" id="perfilNomeDesk"><?= htmlspecialchars($usuarioPerfil['nome_usuario'] ?? '', ENT_QUOTES) ?></h5>
-                        <span class="perfil-badge-nivel nivel-cor-<?= (int)$nivelUsuario ?>">
+                        <span class="badge rounded-pill <?= $nivelBadgeClass ?>">
                             <i class="<?= $nivelInfo['icon'] ?>"></i> <?= $nivelInfo['label'] ?>
                         </span>
 
                         <div class="d-flex align-items-center justify-content-center gap-1 mt-2 small text-secondary" >
-                            <span class="perfil-status-dot perfil-status-online"></span> Online
+                            <span class="d-inline-block rounded-circle bg-success p-1"></span> Online
                         </div>
 
                         <div class="d-flex justify-content-center gap-2 mt-4">
@@ -130,28 +131,28 @@ include SGI_ROOT . '/resources/views/components/aluno-nav.php';
             </aside>
 
             <!-- === COLUNA DIREITA: Cards Funcionais === -->
-            <div class="perfil-grid-right">
+            <div class="col-12 col-lg-9 d-flex flex-column gap-3">
 
                 <!-- Card 1: Informações Pessoais -->
                 <div class="card border-0 shadow-sm rounded-4">
                     <div class="card-body p-4">
-                        <h6 class="perfil-card-title mb-3"><i class="bi bi-person-vcard me-2"></i>Informações Pessoais</h6>
-                        <div class="perfil-info-grid">
-                            <div class="perfil-info-item">
-                                <span class="perfil-info-label"><i class="bi bi-person"></i> Nome Completo</span>
-                                <span class="perfil-info-value" id="perfilNomeInfo"><?= htmlspecialchars($usuarioPerfil['nome_usuario'] ?? '', ENT_QUOTES) ?></span>
+                        <h6 class="d-flex align-items-center gap-2 border-bottom pb-3 mb-3 text-uppercase small fw-bold text-body-secondary"><i class="bi bi-person-vcard"></i>Informações Pessoais</h6>
+                        <div class="row row-cols-1 row-cols-lg-2 g-3">
+                            <div class="border-bottom pb-2">
+                                <span class="d-flex align-items-center gap-2 small fw-semibold text-uppercase text-body-secondary mb-1"><i class="bi bi-person"></i> Nome Completo</span>
+                                <span class="d-flex align-items-center flex-wrap gap-1" id="perfilNomeInfo"><?= htmlspecialchars($usuarioPerfil['nome_usuario'] ?? '', ENT_QUOTES) ?></span>
                             </div>
-                            <div class="perfil-info-item">
-                                <span class="perfil-info-label"><i class="bi bi-briefcase"></i> Cargo / Função</span>
-                                <span class="perfil-info-value">Competidor</span>
+                            <div class="border-bottom pb-2">
+                                <span class="d-flex align-items-center gap-2 small fw-semibold text-uppercase text-body-secondary mb-1"><i class="bi bi-briefcase"></i> Cargo / Função</span>
+                                <span class="d-flex align-items-center flex-wrap gap-1">Competidor</span>
                             </div>
-                            <div class="perfil-info-item">
-                                <span class="perfil-info-label"><i class="bi bi-person-badge"></i> Matrícula</span>
-                                <span class="perfil-info-value" id="perfilEmailDesk"><?= htmlspecialchars($usuarioPerfil['matricula_usuario'] ?? '', ENT_QUOTES) ?></span>
+                            <div class="border-bottom pb-2">
+                                <span class="d-flex align-items-center gap-2 small fw-semibold text-uppercase text-body-secondary mb-1"><i class="bi bi-person-badge"></i> Matrícula</span>
+                                <span class="d-flex align-items-center flex-wrap gap-1" id="perfilEmailDesk"><?= htmlspecialchars($usuarioPerfil['matricula_usuario'] ?? '', ENT_QUOTES) ?></span>
                             </div>
-                            <div class="perfil-info-item">
-                                <span class="perfil-info-label"><i class="bi bi-envelope"></i> E-mail</span>
-                                <span class="perfil-info-value"><?= htmlspecialchars($usuarioPerfil['matricula_usuario'] ?? '', ENT_QUOTES) ?></span>
+                            <div class="border-bottom pb-2">
+                                <span class="d-flex align-items-center gap-2 small fw-semibold text-uppercase text-body-secondary mb-1"><i class="bi bi-envelope"></i> E-mail</span>
+                                <span class="d-flex align-items-center flex-wrap gap-1"><?= htmlspecialchars($usuarioPerfil['matricula_usuario'] ?? '', ENT_QUOTES) ?></span>
                             </div>
                         </div>
                     </div>
@@ -160,26 +161,26 @@ include SGI_ROOT . '/resources/views/components/aluno-nav.php';
                 <!-- Card 2: Segurança e Acesso -->
                 <div class="card border-0 shadow-sm rounded-4">
                     <div class="card-body p-4">
-                        <h6 class="perfil-card-title mb-3"><i class="bi bi-shield-lock me-2"></i>Segurança e Acesso</h6>
-                        <div class="perfil-security-grid">
-                            <div class="perfil-info-item">
-                                <span class="perfil-info-label"><i class="bi bi-lock"></i> Senha</span>
-                                <span class="perfil-info-value">
-                                    <span class="perfil-mask">&#8226;&#8226;&#8226;&#8226;&#8226;&#8226;&#8226;&#8226;</span>
+                        <h6 class="d-flex align-items-center gap-2 border-bottom pb-3 mb-3 text-uppercase small fw-bold text-body-secondary"><i class="bi bi-shield-lock"></i>Segurança e Acesso</h6>
+                        <div class="d-flex flex-column gap-3">
+                            <div class="border-bottom pb-2">
+                                <span class="d-flex align-items-center gap-2 small fw-semibold text-uppercase text-body-secondary mb-1"><i class="bi bi-lock"></i> Senha</span>
+                                <span class="d-flex align-items-center flex-wrap gap-1">
+                                    <span class="font-monospace text-body-secondary">&#8226;&#8226;&#8226;&#8226;&#8226;&#8226;&#8226;&#8226;</span>
                                     <button class="btn btn-link btn-sm text-decoration-none p-0 ms-2 text-danger fw-semibold" data-bs-toggle="modal" data-bs-target="#modalAlterarSenha">Alterar senha</button>
                                 </span>
                             </div>
-                            <div class="perfil-info-item">
-                                <span class="perfil-info-label"><i class="bi bi-shield-check"></i> Nível de Acesso</span>
-                                <span class="perfil-info-value">
-                                    <span class="perfil-badge-nivel perfil-badge-nivel--sm nivel-cor-<?= (int)$nivelUsuario ?>">
+                            <div class="border-bottom pb-2">
+                                <span class="d-flex align-items-center gap-2 small fw-semibold text-uppercase text-body-secondary mb-1"><i class="bi bi-shield-check"></i> Nível de Acesso</span>
+                                <span class="d-flex align-items-center flex-wrap gap-1">
+                                    <span class="badge rounded-pill <?= $nivelBadgeClass ?>">
                                         <i class="<?= $nivelInfo['icon'] ?>"></i> <?= $nivelInfo['label'] ?>
                                     </span>
                                 </span>
                             </div>
-                            <div class="perfil-info-item mb-0">
-                                <span class="perfil-info-label"><i class="bi bi-shield-plus"></i> Autenticação</span>
-                                <span class="perfil-info-value small text-secondary" >Senha criptografada</span>
+                            <div>
+                                <span class="d-flex align-items-center gap-2 small fw-semibold text-uppercase text-body-secondary mb-1"><i class="bi bi-shield-plus"></i> Autenticação</span>
+                                <span class="d-flex align-items-center flex-wrap gap-1 small text-secondary">Senha criptografada</span>
                             </div>
                         </div>
                     </div>
@@ -187,7 +188,7 @@ include SGI_ROOT . '/resources/views/components/aluno-nav.php';
 
                 <!-- Barra de ações -->
                 <div class="d-flex justify-content-end">
-                    <button type="button" class="perfil-btn-editar" data-bs-toggle="modal" data-bs-target="#modalEditarPerfil">
+                    <button type="button" class="btn btn-primary d-inline-flex align-items-center gap-2 px-4" data-bs-toggle="modal" data-bs-target="#modalEditarPerfil">
                         <i class="bi bi-pencil-square me-2"></i>Editar perfil
                     </button>
                 </div>
@@ -207,7 +208,7 @@ include SGI_ROOT . '/resources/views/components/aluno-nav.php';
                 <div class="modal-body px-4">
                     <div class="mb-3">
                         <label class="form-label small text-muted fw-semibold"><i class="bi bi-person me-1"></i>Nome</label>
-                        <input type="text" name="nome_usuario" class="form-control rounded-3 perfil-input" id="editarNome" required>
+                        <input type="text" name="nome_usuario" class="form-control rounded-3" id="editarNome" required>
                     </div>
                     <div id="msgEditarPerfil" class="small text-center mt-2"></div>
                 </div>
@@ -231,23 +232,23 @@ include SGI_ROOT . '/resources/views/components/aluno-nav.php';
                 <div class="modal-body px-4">
                     <div class="mb-3">
                         <label class="form-label small text-muted fw-semibold">Senha Atual</label>
-                        <div class="perfil-password-input">
-                            <input type="password" name="senha_atual" class="form-control rounded-3 perfil-input pe-5" id="editarSenhaAtual" required autocomplete="current-password">
-                            <button type="button" class="perfil-password-eye" data-target="editarSenhaAtual" tabindex="-1" aria-label="Mostrar senha"><i class="bi bi-eye-slash"></i></button>
+                        <div class="input-group">
+                            <input type="password" name="senha_atual" class="form-control rounded-start-3" id="editarSenhaAtual" required autocomplete="current-password">
+                            <button type="button" class="perfil-password-eye btn btn-outline-secondary" data-target="editarSenhaAtual" tabindex="-1" aria-label="Mostrar senha"><i class="bi bi-eye-slash"></i></button>
                         </div>
                     </div>
                     <div class="mb-3">
                         <label class="form-label small text-muted fw-semibold">Nova Senha</label>
-                        <div class="perfil-password-input">
-                            <input type="password" name="nova_senha" class="form-control rounded-3 perfil-input pe-5" id="editarNovaSenha" required minlength="6" autocomplete="new-password">
-                            <button type="button" class="perfil-password-eye" data-target="editarNovaSenha" tabindex="-1" aria-label="Mostrar senha"><i class="bi bi-eye-slash"></i></button>
+                        <div class="input-group">
+                            <input type="password" name="nova_senha" class="form-control rounded-start-3" id="editarNovaSenha" required minlength="6" autocomplete="new-password">
+                            <button type="button" class="perfil-password-eye btn btn-outline-secondary" data-target="editarNovaSenha" tabindex="-1" aria-label="Mostrar senha"><i class="bi bi-eye-slash"></i></button>
                         </div>
                     </div>
                     <div class="mb-3">
                         <label class="form-label small text-muted fw-semibold">Confirmar Nova Senha</label>
-                        <div class="perfil-password-input">
-                            <input type="password" name="confirmar_senha" class="form-control rounded-3 perfil-input pe-5" id="editarConfirmarSenha" required autocomplete="new-password">
-                            <button type="button" class="perfil-password-eye" data-target="editarConfirmarSenha" tabindex="-1" aria-label="Mostrar senha"><i class="bi bi-eye-slash"></i></button>
+                        <div class="input-group">
+                            <input type="password" name="confirmar_senha" class="form-control rounded-start-3" id="editarConfirmarSenha" required autocomplete="new-password">
+                            <button type="button" class="perfil-password-eye btn btn-outline-secondary" data-target="editarConfirmarSenha" tabindex="-1" aria-label="Mostrar senha"><i class="bi bi-eye-slash"></i></button>
                         </div>
                     </div>
                     <div id="msgAlterarSenha" class="small text-center mt-2"></div>

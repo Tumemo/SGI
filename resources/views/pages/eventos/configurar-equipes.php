@@ -23,10 +23,10 @@ $paginaAtiva = 'dashboard';
 </main>
 
 <main class="d-none d-md-block main-desktop-layout">
-    <div class="aluno-page container-fluid py-4 px-4">
-        <div class="aluno-page-header">
-            <div class="header-left">
-                <a href="<?= \App\Shared\Http\Url::to('painel') ?>" id="btnVoltarEquipesDesk" class="btn btn-primary d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none" >
+    <div class="container-fluid py-4 px-4 text-body">
+        <div class="d-flex align-items-center gap-3 mb-4 pb-3 border-bottom border-2">
+            <div class="d-flex align-items-center gap-3">
+                <a href="<?= \App\Shared\Http\Url::to('painel') ?>" id="btnVoltarEquipesDesk" class="btn btn-primary d-inline-flex align-items-center gap-2 fw-bold px-3 py-2 border-0 text-decoration-none" >
                     <i class="bi bi-arrow-left-circle fs-5"></i> <span id="nomeInterclasseEquipesDesk">Interclasse</span>
                 </a>
                 <h1 id="nomeInterclasseEquipes" class="d-none">Equipes</h1>
@@ -41,7 +41,7 @@ $paginaAtiva = 'dashboard';
         <div id="filtroCategoria" class="d-flex flex-wrap gap-2 mb-4"></div>
 
         <div id="listaEquipesDesktop">
-            <div class="aluno-loading text-center py-4 text-muted">Carregando...</div>
+            <div class="text-center py-4 text-body-secondary">Carregando...</div>
         </div>
     </div>
 </main>

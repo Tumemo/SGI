@@ -27,9 +27,9 @@ window.SGIPage.mount("eventos/configurar-arrecadacao", function (pageConfig, pag
         const nome = esc(turma.nome_fantasia_turma || turma.nome_turma);
         const nomeJs = (turma.nome_fantasia_turma || turma.nome_turma || '').replace(/'/g, "\\'");
         return `
-            <div class="card border-0 shadow-sm p-3 d-flex flex-row align-items-center gap-3">
+            <div class="col"><article class="card h-100 border-0 shadow-sm p-3 d-flex flex-row align-items-center gap-3">
                 <div class="bg-danger-subtle text-danger rounded-circle p-2 fs-5 d-flex align-items-center justify-content-center flex-shrink-0"><i class="bi bi-people-fill"></i></div>
-                <div class="flex-grow-1 min-w-0">
+                <div class="flex-grow-1 sgi-u-min-width-0">
                     <p class="mb-1 fw-semibold text-truncate">${nome}</p>
                     <span class="badge text-bg-light">${esc(turma.nome_categoria || 'Geral')}</span>
                 </div>
@@ -45,7 +45,7 @@ window.SGIPage.mount("eventos/configurar-arrecadacao", function (pageConfig, pag
                 <button type="button" class="btn btn-outline-success btn-sm" data-sgi-action="save-arrecadacao" data-id-turma="${turma.id_turma}" onclick="salvarTurma(${turma.id_turma})" title="Salvar">
                     <i class="bi bi-check-lg"></i>
                 </button>
-            </div>
+            </article></div>
         `;
     }
 
@@ -54,7 +54,7 @@ window.SGIPage.mount("eventos/configurar-arrecadacao", function (pageConfig, pag
         const listaDesktop = document.getElementById('listaArrecadacaoDesktop');
 
         if (todasAsTurmas.length === 0) {
-            const msg = '<div class="text-center text-muted py-5 sgi-u-col-1-1" ><i class="bi bi-inbox fs-2 d-block mb-2 text-body-tertiary" ></i>Nenhuma turma encontrada.</div>';
+            const msg = '<div class="col-12 text-center text-body-secondary py-5"><i class="bi bi-inbox fs-2 d-block mb-2 text-body-tertiary"></i>Nenhuma turma encontrada.</div>';
             listaMobile.innerHTML = msg;
             listaDesktop.innerHTML = msg;
             return;

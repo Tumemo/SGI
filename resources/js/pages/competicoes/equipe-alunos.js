@@ -12,9 +12,9 @@ function mostrarToast(tipo, texto) {
 function cardAluno(aluno) {
     const estaNaEquipe = alunosNaEquipe.some(a => a.id_usuario === aluno.id_usuario);
     const semInscricao = Number(aluno.inscrito || 0) === 0;
-    const badge = semInscricao ? '<span class="badge-sem-inscricao">Sem inscrição</span>' : '';
+    const badge = semInscricao ? '<span class="badge text-bg-primary ms-2">Sem inscrição</span>' : '';
     return `
-        <label class="col aluno-card-item ${semInscricao ? 'sem-inscricao' : ''}">
+        <label class="col d-flex align-items-center justify-content-between gap-3 border rounded-3 p-3 bg-body ${semInscricao ? 'border-2 border-primary bg-primary-subtle' : ''}">
             <div>
                 <strong>${esc(aluno.nome_usuario)}</strong>${badge}
                 <div class="text-muted small">${esc(aluno.matricula_usuario)} (${aluno.genero_usuario || 'Não informado'})</div>
@@ -29,7 +29,7 @@ function renderizar(lista) {
     const desktop = document.getElementById('listaAlunosDesktop');
 
     if (!lista.length) {
-        const msg = '<div class="aluno-empty"><div class="empty-icon"><i class="bi bi-people"></i></div><h5>Nenhum aluno disponível</h5><p>Nenhum aluno foi encontrado para esta turma com o gênero compatível com a modalidade.</p></div>';
+        const msg = '<div class="text-center py-5 text-body-secondary"><i class="bi bi-people fs-1 d-block mb-3" aria-hidden="true"></i><h5 class="fw-semibold mb-2">Nenhum aluno disponível</h5><p class="small mb-0">Nenhum aluno foi encontrado para esta turma com o gênero compatível com a modalidade.</p></div>';
         mobile.innerHTML = msg;
         desktop.innerHTML = msg;
         return;

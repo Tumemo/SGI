@@ -52,30 +52,37 @@ $ptcCards = [
         'desc'    => 'Fator aplicado sobre os kg arrecadados pela turma.'
     ],
 ];
+
+$ptcTheme = [
+    'gold' => ['card' => 'border-warning bg-warning-subtle', 'icon' => 'bg-warning text-dark', 'badge' => 'text-bg-warning'],
+    'silver' => ['card' => 'border-secondary bg-secondary-subtle', 'icon' => 'bg-secondary text-white', 'badge' => 'text-bg-secondary'],
+    'bronze' => ['card' => 'border-warning bg-warning-subtle', 'icon' => 'bg-warning text-dark', 'badge' => 'text-bg-warning'],
+    'multi' => ['card' => 'border-danger bg-danger-subtle', 'icon' => 'bg-danger text-white', 'badge' => 'text-bg-danger'],
+];
 ?>
 
-<main class="main-desktop-layout main-ptc-layout">
-    <div class="px-0 ptc-container">
+<main class="main-desktop-layout">
+    <div class="container-fluid px-0">
 
-        <div class="ptc-header">
-            <a href="<?= \App\Shared\Http\Url::to('painel') ?>" id="btnVoltarPontuacao" class="ptc-btn-interclasse">
+        <div class="d-flex align-items-center gap-3 flex-wrap mb-5">
+            <a href="<?= \App\Shared\Http\Url::to('painel') ?>" id="btnVoltarPontuacao" class="btn btn-primary d-inline-flex align-items-center gap-2 fw-semibold text-decoration-none">
                 <i class="bi bi-arrow-left-circle fs-5"></i> <span id="nomeInterclassePontuacao">Interclasse</span>
             </a>
-            <div class="ptc-title-wrap">
-                <h1 class="ptc-title"><i class="bi bi-award"></i> Edição de Pontuações</h1>
-                <p class="ptc-subtitle">Ajuste os pontos de cada colocação e os multiplicadores de evento</p>
+            <div class="flex-grow-1">
+                <h1 class="h3 fw-bold text-body mb-1"><i class="bi bi-award text-primary me-1"></i> Edição de Pontuações</h1>
+                <p class="small text-body-secondary mb-0">Ajuste os pontos de cada colocação e os multiplicadores de evento</p>
             </div>
-            <div class="ptc-actions">
-                <span class="ptc-unsaved d-none" id="ptcUnsaved">
+            <div class="d-flex align-items-center gap-2 flex-wrap">
+                <span class="badge text-bg-warning d-none" id="ptcUnsaved">
                     <i class="bi bi-exclamation-circle-fill"></i> Alterações não salvas
                 </span>
-                <button type="button" class="btn ptc-btn-default" id="btnRestaurarPadrao" onclick="restaurarPadrao()" disabled>
+                <button type="button" class="btn btn-outline-secondary d-inline-flex align-items-center gap-2" id="btnRestaurarPadrao" onclick="restaurarPadrao()" disabled>
                     <i class="bi bi-arrow-counterclockwise"></i> Restaurar Padrão
                 </button>
-                <button type="button" class="btn btn-primary ptc-btn-salvar" id="btnSalvarPontuacao" onclick="salvarPontuacao()" disabled>
+                <button type="button" class="btn btn-primary d-inline-flex align-items-center gap-2" id="btnSalvarPontuacao" onclick="salvarPontuacao()" disabled>
                     <i class="bi bi-check-lg"></i> Salvar
                 </button>
-                <a href="#" id="btnContinuarPontuacao" class="btn ptc-btn-continuar d-none">
+                <a href="#" id="btnContinuarPontuacao" class="btn btn-dark d-inline-flex align-items-center gap-2 d-none">
                     Continuar <i class="bi bi-arrow-right-circle"></i>
                 </a>
             </div>
@@ -84,38 +91,39 @@ $ptcCards = [
         <div class="row g-4">
             <?php foreach ($ptcCards as $c): ?>
             <div class="col-12 col-md-6 col-xl-3">
-                <div class="ptc-card ptc-card--<?= $c['classe'] ?>">
-                    <span class="ptc-rank-badge"><?= $c['badge'] ?></span>
+                <?php $theme = $ptcTheme[$c['classe']]; ?>
+                <div class="card <?= $theme['card'] ?> border-start border-4 h-100 shadow-sm p-3 position-relative">
+                    <span class="badge <?= $theme['badge'] ?> position-absolute top-0 end-0 m-3"><?= $c['badge'] ?></span>
 
-                    <div class="ptc-card-head">
-                        <div class="ptc-card-icon"><i class="bi <?= $c['icone'] ?>"></i></div>
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="rounded-3 <?= $theme['icon'] ?> p-2 fs-5 d-inline-flex"><i class="bi <?= $c['icone'] ?>"></i></div>
                         <div>
-                            <div class="ptc-card-title"><?= $c['titulo'] ?></div>
-                            <div class="ptc-card-sub"><?= $c['sub'] ?></div>
+                            <div class="fw-bold text-body"><?= $c['titulo'] ?></div>
+                            <div class="small text-body-secondary"><?= $c['sub'] ?></div>
                         </div>
                     </div>
 
-                    <div class="ptc-card-value">
-                        <span class="ptc-card-label"><?= $c['label'] ?></span>
-                        <div class="ptc-stepper">
-                            <button type="button" class="ptc-step-btn ptc-step-btn--minus" aria-label="Diminuir <?= $c['titulo'] ?>" disabled>
+                    <div class="text-center my-4">
+                        <span class="small text-uppercase fw-bold text-body-secondary"><?= $c['label'] ?></span>
+                        <div class="ptc-stepper d-flex align-items-center justify-content-center gap-2 mt-2">
+                            <button type="button" class="ptc-step-btn ptc-step-btn--minus btn btn-outline-secondary btn-lg rounded-circle p-0" aria-label="Diminuir <?= $c['titulo'] ?>" disabled>
                                 <i class="bi bi-dash-lg"></i>
                             </button>
-                            <input type="number" class="ptc-step-input" id="pontos-<?= $c['key'] ?>"
+                            <input type="number" class="ptc-step-input form-control form-control-lg text-center fw-bold" id="pontos-<?= $c['key'] ?>"
                                    value="<?= $c['valor'] ?>" min="0" step="1" inputmode="numeric" disabled>
-                            <button type="button" class="ptc-step-btn ptc-step-btn--plus" aria-label="Aumentar <?= $c['titulo'] ?>" disabled>
+                            <button type="button" class="ptc-step-btn ptc-step-btn--plus btn btn-outline-secondary btn-lg rounded-circle p-0" aria-label="Aumentar <?= $c['titulo'] ?>" disabled>
                                 <i class="bi bi-plus-lg"></i>
                             </button>
                         </div>
                     </div>
 
-                    <div class="ptc-card-foot"><?= $c['desc'] ?></div>
+                    <p class="small text-body-secondary text-center border-top pt-2 mt-0 mb-0"><?= $c['desc'] ?></p>
                 </div>
             </div>
             <?php endforeach; ?>
         </div>
 
-        <div class="ptc-note">
+        <div class="alert alert-info d-flex align-items-center gap-2 mt-4 mb-0">
             <i class="bi bi-info-circle"></i>
             <span>Os valores são aplicados ao Interclasse ativo. Altere com os botões <strong>+</strong> e <strong>&minus;</strong> ou digite diretamente no campo central.</span>
         </div>
