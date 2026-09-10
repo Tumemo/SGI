@@ -369,11 +369,16 @@ test('score controls keep behavior hooks while using native Bootstrap controls',
     assert.match(placar, /mc-vs col-12 col-md-auto d-flex align-items-center justify-content-center/);
     assert.match(placar, /badge rounded-pill ' \+ badgeClass/);
     assert.match(placar, /btn btn-outline-secondary btn-score btn-score-minus/);
+    assert.match(placar, /btn-score-minus rounded-4 d-inline-flex align-items-center justify-content-center lh-1 flex-shrink-0/);
+    assert.match(placar, /mc-score score-number fw-bolder text-body lh-1 text-center/);
+    assert.match(placar, /mc-timer-time fw-bolder text-body lh-1/);
+    assert.match(placar, /mc-timer-time mc-timer-time--idle fw-bolder text-body-tertiary lh-1/);
     assert.match(placar, /row row-cols-1 row-cols-sm-3 g-3 mt-3/);
     assert.match(placar, /card h-100 border-2/);
     assert.doesNotMatch(placar, /sgi-u-flex-1-min-width-160px-text-align-center/);
     assert.match(placarView, /container-xxl py-4 px-3 px-md-4/);
     assert.match(placarView, /row row-cols-1 row-cols-md-2 row-cols-xl-3 g-3/);
+    assert.match(placarView, /id="placar-grid" class="card border-0 shadow-sm rounded-4 p-4 d-flex flex-column align-items-center position-relative overflow-hidden"/);
     assert.doesNotMatch(placar + placarView + adminCss, /\b(?:mc-page|mc-header|mc-match-title|mc-match-meta|mc-badge|mc-actions|mc-stat-chip|mc-section-header|mc-section-title|mc-timeline-empty|mc-artilheiro-card|mc-artilheiro-empty|mc-error|mc-loading|mc-empty|mc-modal|mc-tipo-grid)\b/);
     assert.doesNotMatch(adminCss, /\.mc-action-btn\s*\{|\.mc-action-btn--start\s*\{|\.mc-action-btn--finish\s*\{|\.mc-duration-select\s*\{|\.mc-pause-btn\s*\{/);
     assert.doesNotMatch(adminCss, /\.mc-(?:timer-section|timer-controls|teams|team|team-name|score-row|vs)\b/);
@@ -387,6 +392,9 @@ test('score controls keep behavior hooks while using native Bootstrap controls',
     assert.doesNotMatch(placar + adminCss, /\b(?:tl-badge|tl-action-btn(?:--edit|--delete)?)\b/);
     assert.doesNotMatch(adminCss, /\.mc-timeline\s*\{|\.tl-event\s*\{|\.tl-event-body\s*\{|\.tl-event-top\s*\{|\.tl-event-icon\s*\{|\.tl-event-label\s*\{|\.tl-event-player\s*\{|\.tl-event-desc\s*\{/);
     assert.match(placar, /input\.classList\.add\('is-invalid'\)/);
+    assert.doesNotMatch(adminCss, /#placar-grid\{[^}]*background/);
+    assert.doesNotMatch(adminCss, /\.mc-score\{[^}]*font-weight/);
+    assert.doesNotMatch(adminCss, /\.btn-score\{[^}]*display/);
 });
 
 test('modality details use Bootstrap cards, grids and actions', () => {

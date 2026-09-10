@@ -31,7 +31,7 @@ $paginaAtiva = 'dashboard';
 
             <div id="placar-acoes" class="d-flex flex-wrap gap-3 align-items-center"></div>
 
-            <div id="placar-grid"></div>
+            <div id="placar-grid" class="card border-0 shadow-sm rounded-4 p-4 d-flex flex-column align-items-center position-relative overflow-hidden"></div>
 
             <div class="d-flex justify-content-center gap-2 mt-3 flex-wrap">
                 <div class="badge rounded-pill text-bg-light border text-body-secondary d-inline-flex align-items-center gap-1">

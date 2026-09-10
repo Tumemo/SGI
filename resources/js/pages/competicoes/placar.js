@@ -976,7 +976,7 @@ window.SGIPage.mount("competicoes/placar", function (pageConfig, pageScope) {
             }).join('');
 
             html += '<div class="text-center w-100 border-bottom pb-4 mb-4">';
-            html += '<div class="mc-timer-time" id="timer-placar">' +
+            html += '<div class="mc-timer-time fw-bolder text-body lh-1" id="timer-placar">' +
                 String(Math.floor(duracaoJogo / 60)).padStart(2, '0') + ':' +
                 String(duracaoJogo % 60).padStart(2, '0') + '</div>';
             html += '<div class="d-flex align-items-center justify-content-center gap-3 mt-3">';
@@ -986,7 +986,7 @@ window.SGIPage.mount("competicoes/placar", function (pageConfig, pageScope) {
             }
             html += '</div></div>';
         } else {
-            html += '<div class="text-center w-100 border-bottom pb-4 mb-4"><div class="mc-timer-time mc-timer-time--idle" id="timer-placar">--:--</div></div>';
+            html += '<div class="text-center w-100 border-bottom pb-4 mb-4"><div class="mc-timer-time mc-timer-time--idle fw-bolder text-body-tertiary lh-1" id="timer-placar">--:--</div></div>';
         }
 
         // Teams
@@ -1000,17 +1000,17 @@ window.SGIPage.mount("competicoes/placar", function (pageConfig, pageScope) {
                     && Number(ponto.conta_no_placar == null ? 1 : ponto.conta_no_placar) === 1;
             });
             var btnMinus = readonly || !possuiPontoAtivo
-                ? '<button type="button" class="btn btn-outline-secondary btn-score btn-score-minus" disabled><i class="bi bi-dash-lg"></i></button>'
-                : '<button type="button" class="btn btn-outline-secondary btn-score btn-score-minus" data-idx="' + idx + '"><i class="bi bi-dash-lg"></i></button>';
+                ? '<button type="button" class="btn btn-outline-secondary btn-score btn-score-minus rounded-4 d-inline-flex align-items-center justify-content-center lh-1 flex-shrink-0" disabled><i class="bi bi-dash-lg"></i></button>'
+                : '<button type="button" class="btn btn-outline-secondary btn-score btn-score-minus rounded-4 d-inline-flex align-items-center justify-content-center lh-1 flex-shrink-0" data-idx="' + idx + '"><i class="bi bi-dash-lg"></i></button>';
             var btnPlus = readonly
-                ? '<button type="button" class="btn btn-primary btn-score btn-score-plus" disabled><i class="bi bi-plus-lg"></i></button>'
-                : '<button type="button" class="btn btn-primary btn-score btn-score-plus" data-idx="' + idx + '"><i class="bi bi-plus-lg"></i></button>';
+                ? '<button type="button" class="btn btn-primary btn-score btn-score-plus rounded-4 d-inline-flex align-items-center justify-content-center lh-1 flex-shrink-0" disabled><i class="bi bi-plus-lg"></i></button>'
+                : '<button type="button" class="btn btn-primary btn-score btn-score-plus rounded-4 d-inline-flex align-items-center justify-content-center lh-1 flex-shrink-0" data-idx="' + idx + '"><i class="bi bi-plus-lg"></i></button>';
 
             html += '<div class="col-12 col-md-5 text-center" data-partida-idx="' + idx + '">';
             html += '<h3 class="mc-team-name h5 fw-bold text-body mb-3 text-truncate">' + esc(nomeEquipe(p)) + '</h3>';
             html += '<div class="mc-score-row d-flex align-items-center justify-content-center gap-3">';
             html += btnMinus;
-            html += '<span class="mc-score score-number" data-gols="' + idx + '">' + String(gols).padStart(2, '0') + '</span>';
+            html += '<span class="mc-score score-number fw-bolder text-body lh-1 text-center" data-gols="' + idx + '">' + String(gols).padStart(2, '0') + '</span>';
             html += btnPlus;
             html += '</div></div>';
 
@@ -1196,7 +1196,7 @@ window.SGIPage.mount("competicoes/placar", function (pageConfig, pageScope) {
                         : '')));
 
         grid.innerHTML =
-            '<div class="w-100 bg-white rounded-4 border p-4 shadow-sm">' +
+            '<div class="w-100">' +
                 '<div class="d-flex align-items-center gap-2 fw-bold text-body">' +
                     '<i class="bi bi-trophy-fill text-warning"></i> Registrar Resultado Individual' +
                 '</div>' +
