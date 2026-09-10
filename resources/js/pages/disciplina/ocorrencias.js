@@ -177,7 +177,7 @@ window.SGIPage.mount("disciplina/ocorrencias", function (pageConfig, pageScope) 
                 return;
             }
 
-            let html = '<div class="table-responsive"><table class="table sgi-table table-hover align-middle">';
+            let html = '<div class="table-responsive"><table class="table table-hover align-middle">';
             html += '<thead><tr class="table-light"><th>Data</th><th>Título</th><th>Descrição</th><th class="text-center">Pontos</th><th class="text-center">Ação</th></tr></thead><tbody>';
 
             historicoRegistros.forEach(r => {

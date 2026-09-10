@@ -486,3 +486,15 @@ test('locations and regulations use native cards, actions and borders', () => {
     assert.doesNotMatch(adminCss, /\.local-card\b|\.termo-clausula\b/);
     assert.doesNotMatch(studentCss, /\.regulamento-card\b|\.termo-clausula\b/);
 });
+
+test('shared data tables use native Bootstrap table classes', () => {
+    const sources = [
+        path.join(root, 'resources', 'views', 'pages', 'competicoes', 'chaveamento.php'),
+        path.join(root, 'resources', 'js', 'pages', 'disciplina', 'ocorrencias.js'),
+        path.join(root, 'resources', 'js', 'pages', 'eventos', 'configurar-arrecadacao.js'),
+        path.join(root, 'resources', 'css', 'source', 'admin.css'),
+    ].map((file) => fs.readFileSync(file, 'utf8')).join('\n');
+    assert.match(sources, /table table-hover align-middle/);
+    assert.doesNotMatch(sources, /sgi-table/);
+    assert.doesNotMatch(sources, /table\.sgi-table/);
+});

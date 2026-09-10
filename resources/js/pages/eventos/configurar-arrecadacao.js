@@ -290,7 +290,7 @@ window.SGIPage.mount("eventos/configurar-arrecadacao", function (pageConfig, pag
             return;
         }
 
-        let html = '<div class="table-responsive"><table class="table sgi-table table-hover align-middle">';
+        let html = '<div class="table-responsive"><table class="table table-hover align-middle">';
         html += '<thead><tr class="table-light"><th>Data</th><th class="text-center">Kg</th><th class="text-center">Pts</th>';
 
         if (isAdminPage && filtroHistoricoAtual === 'adicionados') {

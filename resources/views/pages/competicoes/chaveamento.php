@@ -100,7 +100,7 @@ $podeGerar = !$isNivel2 && !$isNivel3;
                  <input type="text" class="form-control form-control-sm w-100" placeholder="Buscar partida..." id="inputBuscaJogoMob" >
             </div>
             <div class="table-responsive">
-                <table class="table sgi-table table-hover align-middle">
+                <table class="table table-hover align-middle">
                     <thead>
                         <tr>
                             <th>Partida</th>
@@ -236,7 +236,7 @@ $podeGerar = !$isNivel2 && !$isNivel3;
                     </select>
                 </div>
                 <div class="table-responsive">
-                    <table class="table sgi-table table-hover align-middle">
+                    <table class="table table-hover align-middle">
                         <thead>
                             <tr>
                                 <th>Partida</th>
