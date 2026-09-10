@@ -57,7 +57,7 @@ $paginaAtiva = 'dashboard';
                 <div class="d-flex align-items-center justify-content-between mb-3 mt-5">
                     <h2 class="h5 fw-bold d-flex align-items-center gap-2 mb-0"><i class="bi bi-clock-history text-primary"></i> Timeline da Partida</h2>
                 </div>
-                <div id="lista-ocorrencias" class="mc-timeline">
+                <div id="lista-ocorrencias" class="mc-timeline ps-3 ps-md-4">
                     <div class="text-center py-5 text-body-secondary"><i class="bi bi-clock-history fs-2 d-block mb-2 text-body-tertiary"></i><p class="mb-0">Nenhuma ocorrência registrada.</p></div>
                 </div>
             </div>

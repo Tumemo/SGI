@@ -380,7 +380,12 @@ test('score controls keep behavior hooks while using native Bootstrap controls',
     assert.match(placar, /badge text-bg-danger/);
     assert.match(placar, /btn btn-sm btn-light border text-primary/);
     assert.match(placar, /btn btn-sm btn-light border text-danger/);
+    assert.match(placar, /card flex-grow-1 overflow-hidden/);
+    assert.match(placar, /tl-event-top d-flex align-items-center gap-2 mb-2 flex-wrap/);
+    assert.match(placar, /small text-body-secondary lh-sm/);
+    assert.match(placarView, /mc-timeline ps-3 ps-md-4/);
     assert.doesNotMatch(placar + adminCss, /\b(?:tl-badge|tl-action-btn(?:--edit|--delete)?)\b/);
+    assert.doesNotMatch(adminCss, /\.mc-timeline\s*\{|\.tl-event\s*\{|\.tl-event-body\s*\{|\.tl-event-top\s*\{|\.tl-event-icon\s*\{|\.tl-event-label\s*\{|\.tl-event-player\s*\{|\.tl-event-desc\s*\{/);
     assert.match(placar, /input\.classList\.add\('is-invalid'\)/);
 });
 

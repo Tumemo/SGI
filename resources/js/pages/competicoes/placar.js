@@ -1522,6 +1522,8 @@ window.SGIPage.mount("competicoes/placar", function (pageConfig, pageScope) {
                 var cls = isAmarelo ? 'amarelo' : (isVermelho ? 'vermelho' : 'suspensao');
                 var icon = isAmarelo ? 'bi-square-fill' : (isVermelho ? 'bi-x-octagon-fill' : 'bi-pause-circle-fill');
                 var label = isAmarelo ? 'Cartão Amarelo' : (isVermelho ? 'Cartão Vermelho' : 'Suspensão');
+                var iconTone = isAmarelo ? 'bg-warning text-dark' : (isVermelho ? 'bg-danger text-white' : 'bg-primary-subtle text-primary-emphasis');
+                var dotTone = isAmarelo ? 'bg-warning' : (isVermelho ? 'bg-danger' : 'bg-primary');
 
                 var pts = parseInt(o.penalidade, 10);
                 var ptsHtml = pts > 0 ? '<span class="badge text-bg-danger">-' + pts + ' pts</span>' : '';
@@ -1537,20 +1539,22 @@ window.SGIPage.mount("competicoes/placar", function (pageConfig, pageScope) {
                         '</div>';
                 }
 
-                return '<div class="tl-event tl-event--' + cls + (isLast ? ' tl-event--last' : '') + '">' +
-                    '<div class="tl-event-track">' +
-                        '<div class="tl-event-dot"></div>' +
-                        '<div class="tl-event-line"></div>' +
+                return '<div class="tl-event tl-event--' + cls + ' d-flex gap-3 pb-4 position-relative' + (isLast ? ' tl-event--last pb-0' : '') + '">' +
+                    '<div class="tl-event-track d-flex flex-column align-items-center flex-shrink-0">' +
+                        '<div class="tl-event-dot rounded-circle flex-shrink-0 ' + dotTone + '"></div>' +
+                        '<div class="tl-event-line bg-secondary-subtle' + (isLast ? ' d-none' : '') + '"></div>' +
                     '</div>' +
-                    '<div class="tl-event-body">' +
-                        '<div class="tl-event-top">' +
-                            '<span class="tl-event-icon"><i class="bi ' + icon + '"></i></span>' +
-                            '<span class="tl-event-label">' + label + '</span>' +
+                    '<div class="card flex-grow-1 overflow-hidden">' +
+                        '<div class="card-body p-3">' +
+                        '<div class="tl-event-top d-flex align-items-center gap-2 mb-2 flex-wrap">' +
+                            '<span class="tl-event-icon rounded-2 d-inline-flex align-items-center justify-content-center p-2 fs-6 flex-shrink-0 ' + iconTone + '"><i class="bi ' + icon + '"></i></span>' +
+                            '<span class="tl-event-label fw-bold text-body small">' + label + '</span>' +
                             ptsHtml +
                         '</div>' +
-                        '<div class="tl-event-player">' + esc(o.nome_usuario) + '</div>' +
-                        '<div class="tl-event-desc">' + esc(limparDescricaoOcorrencia(o.descricao_ocorrencia)) + '</div>' +
+                        '<div class="tl-event-player fw-semibold text-body-secondary small mb-1">' + esc(o.nome_usuario) + '</div>' +
+                        '<div class="tl-event-desc small text-body-secondary lh-sm">' + esc(limparDescricaoOcorrencia(o.descricao_ocorrencia)) + '</div>' +
                         acoesHtml +
+                        '</div>' +
                     '</div>' +
                 '</div>';
             }).join('');
