@@ -1347,9 +1347,6 @@ body.sgi-offline-active {
 .kvs__opcao-tipo--individual { background: #f3e8ff; color: #7c3aed; }
 .kvs__vazio { padding: 22px 10px; text-align: center; color: #9ca3af; font-size: .85rem; }
 
-/* ── Animations ── */
-@keyframes kv-fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
-.kv-animate { animation: kv-fadeIn 0.35s ease-out; }
 /* ==========================================================================
    20. NAVEGAÇÃO — NAV AVATAR E MOBILE NAV (componentes/nav.php)
    ========================================================================== */

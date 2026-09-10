@@ -113,7 +113,6 @@ test('shared custom utilities are restricted to documented domain exceptions', (
         'sgi-u-w-0',
         'sgi-u-h-60px-w-60px-bottom-100px',
         'sgi-u-bottom-92px-right-16px-z-20',
-        'sgi-u-flex-1-min-width-160px-text-align-center',
         'sgi-u-max-height-60vh-overflow-y-auto',
         'sgi-u-w-max-content-top-85-left-50',
         'sgi-u-h-120px',
@@ -350,6 +349,7 @@ test('competition list and bracket modal use native status and action variants',
     assert.doesNotMatch(bracket + bracketJs + css, /\b(?:kv-table-card|kv-filters|kv-filter-(?:input|select)|kv-gen-card|kv-empty|kv-loading|kv-alert|kv-link-btn|kv-history-card|kv-modal)\b/);
     assert.doesNotMatch(bracket + css, /\bkv-(?:page|title|subtitle|header|back|stats|stat)\b/);
     assert.doesNotMatch(bracketJs + css, /\b(?:kv-phase(?:__item(?:--active|--done)?|__arrow)?|kv-podium(?:-item(?:--(?:first|second|third)|__icon|__label|__name)?)?|kv-classificacao(?:-geral(?:__item|__mod|__podium)?)?|kv-confronto-row(?:__\w+)?)\b/);
+    assert.doesNotMatch(bracketJs + css, /\bkv-animate\b|@keyframes\s+kv-fadeIn/);
     assert.doesNotMatch(css, /\.bracket-champion-card__\w+\s*\{|\bstatusPulse\b/);
     assert.doesNotMatch(css, /\.status-badge\s*\{|\.kv-modal \.btn-save\s*\{/);
 });
@@ -364,6 +364,9 @@ test('score controls keep behavior hooks while using native Bootstrap controls',
     assert.match(placar, /mc-pause-btn btn btn-outline-secondary btn-sm/);
     assert.match(placar, /badge rounded-pill ' \+ badgeClass/);
     assert.match(placar, /btn btn-outline-secondary btn-score btn-score-minus/);
+    assert.match(placar, /row row-cols-1 row-cols-sm-3 g-3 mt-3/);
+    assert.match(placar, /card h-100 border-2/);
+    assert.doesNotMatch(placar, /sgi-u-flex-1-min-width-160px-text-align-center/);
     assert.match(placarView, /container-xxl py-4 px-3 px-md-4/);
     assert.match(placarView, /row row-cols-1 row-cols-md-2 row-cols-xl-3 g-3/);
     assert.doesNotMatch(placar + placarView + adminCss, /\b(?:mc-page|mc-header|mc-match-title|mc-match-meta|mc-badge|mc-actions|mc-stat-chip|mc-section-header|mc-section-title|mc-timeline-empty|mc-artilheiro-card|mc-artilheiro-empty|mc-error|mc-loading|mc-empty|mc-modal|mc-tipo-grid)\b/);
@@ -372,6 +375,7 @@ test('score controls keep behavior hooks while using native Bootstrap controls',
     assert.match(placar, /btn btn-sm btn-light border text-primary/);
     assert.match(placar, /btn btn-sm btn-light border text-danger/);
     assert.doesNotMatch(placar + adminCss, /\b(?:tl-badge|tl-action-btn(?:--edit|--delete)?)\b/);
+    assert.match(placar, /input\.classList\.add\('is-invalid'\)/);
 });
 
 test('modality details use Bootstrap cards, grids and actions', () => {

@@ -1120,7 +1120,7 @@ window.SGIPage.mount("competicoes/chaveamento", function (pageConfig, pageScope)
 
         if (!idModalidade) {
             const emptyHtml = `
-                <div class="card border-0 shadow-sm rounded-4 text-center p-5 kv-animate">
+                <div class="card border-0 shadow-sm rounded-4 text-center p-5">
                     <div class="display-1 text-body-tertiary mb-4" >
                         <svg width="80" height="80" viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
                             <rect x="8" y="12" width="20" height="14" rx="3" stroke="#d1d5db" stroke-width="2" fill="#f9fafb"/>
@@ -1150,7 +1150,7 @@ window.SGIPage.mount("competicoes/chaveamento", function (pageConfig, pageScope)
 
         if (isIndividual) {
             const loadingHtml = `
-                <div class="card border-0 shadow-sm rounded-4 text-center p-5 kv-animate">
+                <div class="card border-0 shadow-sm rounded-4 text-center p-5">
                     <div class="spinner-border text-primary mb-3" role="status"><span class="visually-hidden">Carregando...</span></div>
                     <div class="small text-body-secondary">Carregando ranking individual...</div>
                 </div>`;
@@ -1212,7 +1212,7 @@ window.SGIPage.mount("competicoes/chaveamento", function (pageConfig, pageScope)
 
             } catch (e) {
                 console.error("Erro ao carregar ranking individual:", e);
-                const errHtml = `<div class="card border-0 shadow-sm rounded-4 text-center p-5 kv-animate"><div class="display-5 text-warning mb-3"><i class="bi bi-exclamation-triangle"></i></div><div class="h5 fw-bold text-body mb-2">Erro</div><div class="small text-body-secondary">Erro ao carregar dados da modalidade individual.</div></div>`;
+                const errHtml = `<div class="card border-0 shadow-sm rounded-4 text-center p-5"><div class="display-5 text-warning mb-3"><i class="bi bi-exclamation-triangle"></i></div><div class="h5 fw-bold text-body mb-2">Erro</div><div class="small text-body-secondary">Erro ao carregar dados da modalidade individual.</div></div>`;
                 area.innerHTML = errHtml;
                 if (areaMob) areaMob.innerHTML = errHtml;
             }
@@ -1220,7 +1220,7 @@ window.SGIPage.mount("competicoes/chaveamento", function (pageConfig, pageScope)
         }
 
         const loadingHtml = `
-            <div class="card border-0 shadow-sm rounded-4 text-center p-5 kv-animate">
+            <div class="card border-0 shadow-sm rounded-4 text-center p-5">
                 <div class="spinner-border text-primary mb-3" role="status"><span class="visually-hidden">Carregando...</span></div>
                 <div class="small text-body-secondary">Carregando chaveamento...</div>
             </div>`;
@@ -1238,7 +1238,7 @@ window.SGIPage.mount("competicoes/chaveamento", function (pageConfig, pageScope)
 
             if (jogos.length === 0) {
                 const emptyHtml = `
-                    <div class="card border-0 shadow-sm rounded-4 text-center p-5 kv-animate">
+                    <div class="card border-0 shadow-sm rounded-4 text-center p-5">
                         <div class="display-5 text-body-tertiary mb-3"><i class="bi bi-diagram-3"></i></div>
                         <div class="h5 fw-bold text-body mb-2">Nenhum chaveamento gerado</div>
                         <div class="small text-body-secondary">Clique em "Gerar Chaveamento" para criar o chaveamento desta modalidade.</div>
@@ -1263,7 +1263,7 @@ window.SGIPage.mount("competicoes/chaveamento", function (pageConfig, pageScope)
 
         } catch (e) {
             console.error("Erro ao carregar árvore:", e);
-            const errHtml = `<div class="card border-0 shadow-sm rounded-4 text-center p-5 kv-animate"><div class="display-5 text-warning mb-3"><i class="bi bi-exclamation-triangle"></i></div><div class="h5 fw-bold text-body mb-2">Erro de conexão</div><div class="small text-body-secondary">Não foi possível conectar ao servidor.</div></div>`;
+            const errHtml = `<div class="card border-0 shadow-sm rounded-4 text-center p-5"><div class="display-5 text-warning mb-3"><i class="bi bi-exclamation-triangle"></i></div><div class="h5 fw-bold text-body mb-2">Erro de conexão</div><div class="small text-body-secondary">Não foi possível conectar ao servidor.</div></div>`;
             area.innerHTML = errHtml;
             if (areaMob) areaMob.innerHTML = errHtml;
         }

@@ -345,10 +345,13 @@ window.SGIPage.mount("competicoes/placar", function (pageConfig, pageScope) {
         pageScope.listen(btn, 'click', function() {
             var val = parseInt(input.value, 10);
             if (!val || val < 1) {
-                input.style.borderColor = '#e30613';
+                input.classList.add('is-invalid');
+                input.setAttribute('aria-invalid', 'true');
                 input.focus();
                 return;
             }
+            input.classList.remove('is-invalid');
+            input.removeAttribute('aria-invalid');
             adicionarTempoExtra(val * 60);
         });
         inputGroup.appendChild(btn);
@@ -1164,16 +1167,15 @@ window.SGIPage.mount("competicoes/placar", function (pageConfig, pageScope) {
         if (rankingOrdenado.length > 0) {
             var posLabels = ['1º Lugar', '2º Lugar', '3º Lugar'];
             var posIcons = ['🥇', '🥈', '🥉'];
-            var posBg = ['#fef9c3', '#f3f4f6', '#fde8e8'];
-            var posBd = ['#fde68a', '#e5e7eb', '#fecaca'];
-            podiumHtml = '<div class="d-flex gap-3 flex-wrap justify-content-center mt-3">';
+            var posCard = ['border-warning bg-warning-subtle', 'border-secondary bg-secondary-subtle', 'border-danger-subtle bg-danger-subtle'];
+            podiumHtml = '<div class="row row-cols-1 row-cols-sm-3 g-3 mt-3">';
             rankingOrdenado.forEach(function(r, idx) {
-                podiumHtml += '<div class="sgi-u-flex-1-min-width-160px-text-align-center">' +
-                    '<div class="fs-3">' + (posIcons[idx] || '') + '</div>' +
+                podiumHtml += '<div class="col"><article class="card h-100 border-2 ' + (posCard[idx] || 'border-light bg-body-tertiary') + ' text-center p-3 shadow-sm">' +
+                    '<div class="fs-3" aria-hidden="true">' + (posIcons[idx] || '') + '</div>' +
                     '<div class="fw-bold mt-1">' + (posLabels[idx] || '') + '</div>' +
                     '<div class="fw-semibold mt-1">' + esc(r.nome_usuario || 'Desconhecido') + '</div>' +
                     '<div class="small text-secondary mt-1">' + esc(r.nome_fantasia_turma || r.nome_turma || '') + '</div>' +
-                '</div>';
+                '</article></div>';
             });
             podiumHtml += '</div>';
         } else {
