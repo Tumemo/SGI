@@ -40,9 +40,9 @@ $onclickSair = "onclick=\"return confirm('Deseja realmente sair?')\"";
         <li>
             <a href="<?= $item['url'] ?>" class="<?= $classeLink($key) ?> nav-link p-1 d-flex align-items-center justify-content-center <?= $key === $paginaAtiva ? 'active-nav-icon' : '' ?>" aria-label="<?= $item['label'] ?>">
                 <?php if ($key === 'perfil' && !empty($fotoUsuario)): ?>
-                    <img src="<?= htmlspecialchars(\App\Shared\Http\Url::to('uploads/fotosUsuarios/' . rawurlencode($fotoUsuario))) ?>" class="nav-avatar-img-mobile" alt="Perfil">
+                    <img src="<?= htmlspecialchars(\App\Shared\Http\Url::to('uploads/fotosUsuarios/' . rawurlencode($fotoUsuario))) ?>" class="nav-avatar-img-mobile object-fit-cover rounded-circle border border-2 border-white" alt="Perfil">
                 <?php elseif ($key === 'perfil'): ?>
-                    <span class="nav-avatar-fallback-mobile"><?= $inicialNome ?></span>
+                    <span class="nav-avatar-fallback-mobile d-inline-flex align-items-center justify-content-center rounded-circle bg-white text-danger fw-semibold border border-2 border-white small"><?= $inicialNome ?></span>
                 <?php else: ?>
                     <i class="bi <?= $iconeNav($item['icon'], $key) ?>"></i>
                 <?php endif; ?>
@@ -82,9 +82,9 @@ $onclickSair = "onclick=\"return confirm('Deseja realmente sair?')\"";
         <li>
             <a href="<?= $item['url'] ?>" class="text-white d-flex align-items-center justify-content-center position-relative <?= $key === $paginaAtiva ? 'active-nav-icon' : '' ?>" title="<?= $item['label'] ?>">
                 <?php if ($key === 'perfil' && !empty($fotoUsuario)): ?>
-                    <img src="<?= htmlspecialchars(\App\Shared\Http\Url::to('uploads/fotosUsuarios/' . rawurlencode($fotoUsuario))) ?>" class="nav-avatar-img" alt="Perfil">
+                    <img src="<?= htmlspecialchars(\App\Shared\Http\Url::to('uploads/fotosUsuarios/' . rawurlencode($fotoUsuario))) ?>" class="nav-avatar-img object-fit-cover rounded-circle border border-2 border-white" alt="Perfil">
                 <?php elseif ($key === 'perfil'): ?>
-                    <span class="nav-avatar-fallback"><?= $inicialNome ?></span>
+                    <span class="nav-avatar-fallback d-inline-flex align-items-center justify-content-center rounded-circle bg-white text-danger fw-semibold border border-2 border-white small"><?= $inicialNome ?></span>
                 <?php else: ?>
                     <i class="bi <?= $iconeNav($item['icon'], $key) ?>"></i>
                 <?php endif; ?>

@@ -290,6 +290,18 @@ test('profile layouts use Bootstrap grids, badges and input groups', () => {
     assert.doesNotMatch(css, /\.perfil-(?:grid|field|info-grid|info-item|card-title|badge-nivel|password-input|btn-editar|input|avatar-inner|btn-camera)\b|\.perfil-page\b|\.perfil-wrapper\b|linear-gradient\(135deg, #E30613/);
 });
 
+test('navigation avatars use Bootstrap presentation utilities', () => {
+    const sources = [
+        path.join(root, 'resources', 'views', 'components', 'admin-nav.php'),
+        path.join(root, 'resources', 'views', 'components', 'aluno-nav.php'),
+    ].map((file) => fs.readFileSync(file, 'utf8')).join('\n');
+    const css = fs.readFileSync(path.join(root, 'resources', 'css', 'source', 'admin.css'), 'utf8');
+    assert.match(sources, /object-fit-cover rounded-circle border border-2 border-white/);
+    assert.match(sources, /d-inline-flex align-items-center justify-content-center rounded-circle bg-white text-danger fw-semibold border border-2 border-white small/);
+    assert.doesNotMatch(css, /\.nav-avatar-(?:img|fallback)(?:-mobile)?\s*\{[^}]*\b(?:object-fit|border-radius|background|color|display|align-items|justify-content|font-weight|font-size)\b/);
+    assert.doesNotMatch(css, /active-nav-icon \.nav-avatar-(?:img|fallback)/);
+});
+
 test('classroom cards and search use native Bootstrap components', () => {
     const js = fs.readFileSync(path.join(root, 'resources', 'js', 'pages', 'participantes', 'turmas.js'), 'utf8');
     const view = fs.readFileSync(path.join(root, 'resources', 'views', 'pages', 'participantes', 'turmas.php'), 'utf8');
