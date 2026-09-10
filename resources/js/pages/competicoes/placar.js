@@ -1522,16 +1522,16 @@ window.SGIPage.mount("competicoes/placar", function (pageConfig, pageScope) {
                 var label = isAmarelo ? 'Cartão Amarelo' : (isVermelho ? 'Cartão Vermelho' : 'Suspensão');
 
                 var pts = parseInt(o.penalidade, 10);
-                var ptsHtml = pts > 0 ? '<span class="tl-badge">-' + pts + ' pts</span>' : '';
+                var ptsHtml = pts > 0 ? '<span class="badge text-bg-danger">-' + pts + ' pts</span>' : '';
                 var isLast = i === lista.length - 1;
 
                 var acoesHtml = '';
                 if (!jogoEncerrado()) {
                     var idOcorrenciaHtml = String(o.id_ocorrencia == null ? '' : o.id_ocorrencia)
                         .replace(/\\/g, '\\\\').replace(/'/g, "\\'");
-                    acoesHtml = '<div class="tl-event-actions">' +
-                        '<button type="button" class="tl-action-btn tl-action-btn--edit" onclick="editarOcorrencia(\'' + idOcorrenciaHtml + '\')" title="Editar"><i class="bi bi-pencil-square"></i></button>' +
-                        '<button type="button" class="tl-action-btn tl-action-btn--delete" onclick="excluirOcorrencia(\'' + idOcorrenciaHtml + '\')" title="Excluir"><i class="bi bi-trash3"></i></button>' +
+                    acoesHtml = '<div class="tl-event-actions d-flex gap-1 mt-2">' +
+                        '<button type="button" class="btn btn-sm btn-light border text-primary px-2 py-1" onclick="editarOcorrencia(\'' + idOcorrenciaHtml + '\')" title="Editar" aria-label="Editar ocorrência"><i class="bi bi-pencil-square"></i></button>' +
+                        '<button type="button" class="btn btn-sm btn-light border text-danger px-2 py-1" onclick="excluirOcorrencia(\'' + idOcorrenciaHtml + '\')" title="Excluir" aria-label="Excluir ocorrência"><i class="bi bi-trash3"></i></button>' +
                         '</div>';
                 }
 

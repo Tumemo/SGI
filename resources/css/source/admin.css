@@ -777,10 +777,6 @@ table.sgi-table tbody tr:last-child > * {
 }
 
 /* ==========================================================================
-   23d. PONTUAÇÕES (edicao_pontuacao.php)
-    ========================================================================== */
-
-/* ==========================================================================
     23e. LOCAIS E REGULAMENTO (edicao_locais.php)
     ========================================================================== */
 
@@ -1750,16 +1746,10 @@ body.sgi-offline-active {
 .tl-event--vermelho .tl-event-icon{background:#ef4444}
 .tl-event--suspensao .tl-event-icon{background:#8b5cf6}
 .tl-event-label{font-size:.85rem;font-weight:700;color:#1f2937}
-.tl-badge{font-size:.7rem;font-weight:700;padding:.15rem .5rem;border-radius:999px;background:#fef2f2;color:#dc2626}
 .tl-event-player{font-size:.85rem;font-weight:600;color:#374151;margin-bottom:.15rem}
 .tl-event-desc{font-size:.8rem;color:#9ca3af;line-height:1.4}
-.tl-event-actions{display:flex;gap:.35rem;margin-top:.5rem;opacity:0;transition:opacity .2s}
-.tl-event:hover .tl-event-actions{opacity:1}
-.tl-action-btn{width:30px;height:30px;border-radius:8px;border:none;display:inline-flex;align-items:center;justify-content:center;font-size:.8rem;cursor:pointer;transition:all .15s}
-.tl-action-btn--edit{background:#f3f4f6;color:#6b7280}
-.tl-action-btn--edit:hover{background:#dbeafe;color:#2563eb}
-.tl-action-btn--delete{background:#f3f4f6;color:#6b7280}
-.tl-action-btn--delete:hover{background:#fef2f2;color:#dc2626}
+.tl-event-actions{opacity:0;transition:opacity .2s}
+.tl-event:hover .tl-event-actions,.tl-event:focus-within .tl-event-actions{opacity:1}
 /* --- FAB --- */
 .mc-fab{width:62px;height:62px;transition:transform .25s cubic-bezier(.4,0,.2,1)}
 .mc-fab:hover{transform:scale(1.08) translateY(-2px)}

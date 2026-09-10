@@ -363,6 +363,10 @@ test('score controls keep behavior hooks while using native Bootstrap controls',
     assert.match(placarView, /row row-cols-1 row-cols-md-2 row-cols-xl-3 g-3/);
     assert.doesNotMatch(placar + placarView + adminCss, /\b(?:mc-page|mc-header|mc-match-title|mc-match-meta|mc-badge|mc-actions|mc-stat-chip|mc-section-header|mc-section-title|mc-timeline-empty|mc-artilheiro-card|mc-artilheiro-empty|mc-error|mc-loading|mc-empty|mc-modal|mc-tipo-grid)\b/);
     assert.doesNotMatch(adminCss, /\.mc-action-btn\s*\{|\.mc-action-btn--start\s*\{|\.mc-action-btn--finish\s*\{|\.mc-duration-select\s*\{|\.mc-pause-btn\s*\{/);
+    assert.match(placar, /badge text-bg-danger/);
+    assert.match(placar, /btn btn-sm btn-light border text-primary/);
+    assert.match(placar, /btn btn-sm btn-light border text-danger/);
+    assert.doesNotMatch(placar + adminCss, /\b(?:tl-badge|tl-action-btn(?:--edit|--delete)?)\b/);
 });
 
 test('modality details use Bootstrap cards, grids and actions', () => {

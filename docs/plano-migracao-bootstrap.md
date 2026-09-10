@@ -79,10 +79,11 @@ Os lotes implementados cobrem partes das etapas 2, 3, 4, 5, 6, 7 e 8, sempre mig
 - chaveamento convertido para cards, filtros, tabelas, ações, estados, modal de edição e feedback Bootstrap; a geometria da árvore, conectores e semântica de partidas permanecem como exceções de domínio;
 - shell do chaveamento (contêiner, cabeçalho e métricas) convertido para `row`, `card`, `bg-*-subtle` e utilitários Bootstrap, removendo a camada genérica `kv-*`;
 - placar convertido para cabeçalho, status, ações, chips, estados, modais e cards de artilharia Bootstrap; permanecem apenas a geometria do placar, dimensões das áreas de toque, timeline e posicionamento do botão flutuante;
+- ações e penalidades da timeline do placar convertidas para `btn`, `badge` e utilitários Bootstrap; permanece apenas a regra de revelar os comandos quando a ocorrência recebe foco/hover;
 - blocos CSS órfãos de perfil, turmas, colaboradores, OCR, ranking e detalhes de modalidade removidos na mesma alteração dos consumidores;
 - testes estáticos, de JavaScript e de navegador ampliados para impedir o retorno dos padrões removidos.
 
-No ponto anterior, as seis fontes CSS auditadas totalizavam 75.954 bytes e 2.512 linhas. Após este lote, totalizam 73.087 bytes e 2.422 linhas: redução adicional de 2.867 bytes (3,77%) e 90 linhas (3,58%). Em relação à base fixa registrada acima, a redução acumulada é de 157.655 bytes (68,33%) e 5.142 linhas (67,98%). A medição continua separada dos bundles Bootstrap e do SCSS próprio.
+Antes dos lotes de telas finais, as seis fontes CSS auditadas totalizavam 75.954 bytes e 2.512 linhas. O lote do shell do chaveamento reduziu o total para 73.087 bytes e 2.422 linhas; este lote da timeline e da limpeza de seção órfã reduz o total para 72.329 bytes e 2.412 linhas, uma redução adicional de 758 bytes (1,04%) e 10 linhas (0,41%). Em relação à base fixa registrada acima, a redução acumulada é de 158.413 bytes (68,65%) e 5.152 linhas (68,11%). A medição continua separada dos bundles Bootstrap e do SCSS próprio.
 
 A matriz Docker funcional foi executada após a correção final: 479/479 asserções HTTP e 50/50 cenários de navegador, incluindo fluxos online, offline e responsivos. O contrato visual separado permanece pendente de referências Linux: `tests/browser/visual-contract.spec.cjs-snapshots` contém somente referências Windows (`*-win32.png`), portanto o Docker não possui baseline `*-linux.png` versionado para comparação.
 
