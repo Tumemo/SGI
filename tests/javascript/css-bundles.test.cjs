@@ -352,6 +352,8 @@ test('bracket cards preserve domain states without decorative hover motion', () 
     assert.doesNotMatch(css, /\.bkt-match\s*\{[^}]*transition/);
     assert.doesNotMatch(css, /\.bkt-match:hover\s*\{[^}]*transform|\.bkt-match--(?:concluido|bye):hover|\.bkt-team:hover\s*\{/);
     assert.doesNotMatch(css, /\.bkt-match--posicao\s*\{[^}]*gradient/);
+    assert.doesNotMatch(css, /\.bkt-match__actions\s*\{[^}]*transition\s*:/);
+    assert.doesNotMatch(css, /\.tl-event-actions\s*\{[^}]*transition\s*:/);
 });
 
 test('student term modal uses Bootstrap presentation classes', () => {
