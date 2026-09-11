@@ -418,6 +418,13 @@ test('classroom cards and search use native Bootstrap components', () => {
     assert.doesNotMatch(css, /\.turma-card|\.turma-badge|\.empty-state|\.turma-section-header|\.turma-search-wrapper/);
 });
 
+test('classroom floating action uses the native Bootstrap shadow utility', () => {
+    const view = fs.readFileSync(path.join(root, 'resources', 'views', 'pages', 'participantes', 'turmas.php'), 'utf8');
+    const utilities = fs.readFileSync(path.join(root, 'resources', 'css', 'source', 'utilities.css'), 'utf8');
+    assert.match(view, /btn btn-primary[^\n]*shadow[^\n]*sgi-u-h-60px-w-60px-bottom-100px/);
+    assert.doesNotMatch(utilities, /\.sgi-u-h-60px-w-60px-bottom-100px\s*\{[^}]*box-shadow\s*:/);
+});
+
 test('collaborator management uses Bootstrap cards, filters and controls', () => {
     const js = fs.readFileSync(path.join(root, 'resources', 'js', 'pages', 'acesso', 'colaboradores.js'), 'utf8');
     const view = fs.readFileSync(path.join(root, 'resources', 'views', 'pages', 'acesso', 'colaboradores.php'), 'utf8');

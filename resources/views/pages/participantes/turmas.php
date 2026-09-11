@@ -26,7 +26,7 @@ $paginaAtiva = 'categorias';
     </div>
 
     <?php if ($nivelUsuario === 0): ?>
-    <button class="btn btn-primary rounded-circle p-3 fs-2 d-flex align-items-center justify-content-center position-fixed sgi-u-h-60px-w-60px-bottom-100px" data-bs-toggle="modal" data-bs-target="#exampleModal">
+    <button class="btn btn-primary rounded-circle p-3 fs-2 d-flex align-items-center justify-content-center position-fixed shadow sgi-u-h-60px-w-60px-bottom-100px" data-bs-toggle="modal" data-bs-target="#exampleModal">
         <i class="bi bi-plus-lg text-white"></i>
     </button>
     <?php endif; ?>
