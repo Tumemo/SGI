@@ -386,6 +386,7 @@ test('agenda and bracket custom controls keep state styles without decorative mo
     assert.match(css, /\.ag-cal-day:hover \{ background:/);
     assert.doesNotMatch(css, /\.kvs__trigger\s*\{[^}]*transition|\.kvs__chevron\s*\{[^}]*transition|\.kvs__panel\s*\{[^}]*transition|\.kvs__panel\s*\{[^}]*transform|\.kvs__search\s*\{[^}]*transition|\.kvs__opcao\s*\{[^}]*transition|\.ag-cal-day\s*\{[^}]*transition/);
     assert.doesNotMatch(css, /\.kvs--aberto \.kvs__panel\s*\{[^}]*transform/);
+    assert.doesNotMatch(css, /\.kvs__panel\s*\{[^}]*box-shadow\s*:/);
 });
 
 test('searchable bracket control inherits the shared Bootstrap typography', () => {
