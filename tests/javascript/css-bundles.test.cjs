@@ -367,6 +367,18 @@ test('bracket cards preserve domain states without decorative hover motion', () 
     assert.doesNotMatch(css, /\.tl-event-actions\s*\{[^}]*transition\s*:/);
 });
 
+test('bracket teams use Bootstrap layout and badge utilities for presentation', () => {
+    const source = fs.readFileSync(path.join(root, 'resources', 'js', 'pages', 'competicoes', 'chaveamento.js'), 'utf8');
+    const css = fs.readFileSync(path.join(root, 'resources', 'css', 'source', 'admin.css'), 'utf8');
+    assert.match(source, /const teamBaseCls = 'bkt-team d-flex align-items-center gap-2 py-2 px-3';/);
+    assert.match(source, /bkt-team__score badge rounded-pill text-bg-light fs-6 fw-bold/);
+    assert.match(source, /bg-success-subtle text-success-emphasis/);
+    assert.match(css, /\.bkt-team \{\s*min-width: 0;\s*\}/);
+    assert.doesNotMatch(css, /\.bkt-team\s*\{[^}]*\b(?:display|align-items|padding|gap|background|opacity)\s*:/);
+    assert.doesNotMatch(css, /\.bkt-team__score\s*\{[^}]*\b(?:font-size|font-weight|color|background|border-radius|padding)\s*:/);
+    assert.doesNotMatch(css, /\.bkt-team__trophy\s*\{/);
+});
+
 test('student term modal uses Bootstrap presentation classes', () => {
     const view = fs.readFileSync(path.join(root, 'resources', 'views', 'pages', 'aluno', 'home.php'), 'utf8');
     const css = fs.readFileSync(path.join(root, 'resources', 'css', 'source', 'aluno-home.css'), 'utf8');

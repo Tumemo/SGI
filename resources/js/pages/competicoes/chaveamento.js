@@ -849,19 +849,22 @@ window.SGIPage.mount("competicoes/chaveamento", function (pageConfig, pageScope)
         if (isPosicao) cls += ' bkt-match--posicao';
 
         let teamsHtml = '';
+        const teamBaseCls = 'bkt-team d-flex align-items-center gap-2 py-2 px-3';
         if (eqs.length === 0) {
-            teamsHtml = `<div class="bkt-team"><span class="bkt-team__name text-body-tertiary fst-italic" >A definir</span><span class="bkt-team__score">-</span></div>
-                         <div class="bkt-team"><span class="bkt-team__name text-body-tertiary fst-italic" >A definir</span><span class="bkt-team__score">-</span></div>`;
+            teamsHtml = `<div class="${teamBaseCls}"><span class="bkt-team__name text-body-tertiary fst-italic" >A definir</span><span class="bkt-team__score badge rounded-pill text-bg-light fs-6 fw-bold">-</span></div>
+                         <div class="${teamBaseCls}"><span class="bkt-team__name text-body-tertiary fst-italic" >A definir</span><span class="bkt-team__score badge rounded-pill text-bg-light fs-6 fw-bold">-</span></div>`;
         } else {
             eqs.forEach(eq => {
                 const nome = eq.nome_equipe || eq.nome_fantasia || eq.nome_turma || `Equipe #${eq.id_equipe}`;
                 const isWinner = isConcluido && vencId && eq.id_equipe == vencId;
                 const isLoser = isConcluido && vencId && eq.id_equipe != vencId && eqs.length > 1;
-                let teamCls = 'bkt-team';
-                if (isWinner) teamCls += ' bkt-team--winner';
-                if (isLoser) teamCls += ' bkt-team--loser';
-                const trophy = isWinner ? '<span class="bkt-team__trophy"><i class="bi bi-trophy-fill"></i></span>' : '';
-                teamsHtml += `<div class="${teamCls}"><span class="bkt-team__name">${nome}</span>${trophy}<span class="bkt-team__score">${eq.gols ?? 0}</span></div>`;
+                let teamCls = teamBaseCls;
+                if (isWinner) teamCls += ' bkt-team--winner bg-success-subtle';
+                if (isLoser) teamCls += ' bkt-team--loser opacity-50';
+                const nameCls = 'bkt-team__name flex-grow-1 text-truncate small fw-medium text-body' + (isWinner ? ' fw-bold text-success-emphasis' : '');
+                const trophy = isWinner ? '<span class="bkt-team__trophy text-warning small ms-1"><i class="bi bi-trophy-fill"></i></span>' : '';
+                const scoreCls = 'bkt-team__score badge rounded-pill text-bg-light fs-6 fw-bold' + (isWinner ? ' bg-success-subtle text-success-emphasis' : '');
+                teamsHtml += `<div class="${teamCls}"><span class="${nameCls}">${nome}</span>${trophy}<span class="${scoreCls}">${eq.gols ?? 0}</span></div>`;
             });
         }
 

@@ -207,39 +207,17 @@ body.sgi-offline-active {
 .bkt-match--posicao { border-color: #e30613; border-width: 2px; }
 
 .bkt-team {
-    display: flex;
-    align-items: center;
-    padding: 10px 14px;
-    gap: 8px;
+    min-width: 0;
 }
 .bkt-team + .bkt-team { border-top: 1px solid #f3f4f6; }
-.bkt-team--winner { background: #f0fdf4; }
-.bkt-team--loser { opacity: 0.55; }
 .bkt-team__name {
-    flex: 1;
-    font-size: 0.82rem;
-    font-weight: 500;
-    color: #1f2937;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
 }
-.bkt-team--winner .bkt-team__name { font-weight: 700; color: #166534; }
 .bkt-team__score {
-    font-size: 0.95rem;
-    font-weight: 800;
-    color: #111827;
     min-width: 28px;
     text-align: center;
-    background: #f3f4f6;
-    border-radius: 6px;
-    padding: 2px 8px;
-}
-.bkt-team--winner .bkt-team__score { background: #dcfce7; color: #166534; }
-.bkt-team__trophy {
-    font-size: 0.7rem;
-    color: #f59e0b;
-    margin-left: 2px;
 }
 
 .bkt-match__info span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
