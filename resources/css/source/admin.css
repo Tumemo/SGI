@@ -85,42 +85,6 @@
    11. PLACAR (placar.php)
    ========================================================================== */
 
-.ocorrencia-tipo-option {
-    transition: background 0.15s, color 0.15s, border-color 0.15s, box-shadow 0.15s;
-}
-
-.ocorrencia-tipo-option.active.btn-outline-warning {
-    background: #ffc107 !important;
-    color: #000 !important;
-    border-color: #ffc107 !important;
-    box-shadow: 0 0 0 2px rgba(255,193,7,0.3) !important;
-}
-
-.ocorrencia-tipo-option.active.btn-outline-danger {
-    background: #dc3545 !important;
-    color: #fff !important;
-    border-color: #dc3545 !important;
-    box-shadow: 0 0 0 2px rgba(220,53,69,0.3) !important;
-}
-
-.btn-outline-suspensao {
-    border: 1px solid #6f42c1;
-    color: #6f42c1;
-    background: transparent;
-}
-
-.btn-outline-suspensao:hover {
-    background: #6f42c1;
-    color: #fff;
-}
-
-.ocorrencia-tipo-option.active.btn-outline-suspensao {
-    background: #6f42c1 !important;
-    color: #fff !important;
-    border-color: #6f42c1 !important;
-    box-shadow: 0 0 0 2px rgba(111,66,193,0.3) !important;
-}
-
 /* O histórico de jogos tem muitas colunas. Em telas estreitas, mantenha a
    leitura das células e concentre o overflow no contêiner horizontal. */
 #secaoJogos .table-responsive,

@@ -459,6 +459,16 @@ test('score controls keep behavior hooks while using native Bootstrap controls',
     assert.doesNotMatch(adminCss, /timer-pulse|fab-enter|alert-slide-in|\.mc-timer-time\.timer-expired|\.btn-score:(?:active|disabled)|\.btn-score-plus:hover|\.tl-event:hover \.tl-event-dot|\.mc-fab:hover|\.mc-fab:active|\.mc-fab i/);
 });
 
+test('occurrence type choices use native Bootstrap outline variants', () => {
+    const view = fs.readFileSync(path.join(root, 'resources', 'views', 'pages', 'competicoes', 'placar.php'), 'utf8');
+    const css = fs.readFileSync(path.join(root, 'resources', 'css', 'source', 'admin.css'), 'utf8');
+    assert.match(view, /btn btn-outline-warning ocorrencia-tipo-option/);
+    assert.match(view, /btn btn-outline-danger ocorrencia-tipo-option/);
+    assert.match(view, /btn btn-outline-secondary ocorrencia-tipo-option[^]*data-tipo="Suspensao"/);
+    assert.doesNotMatch(view + css, /btn-outline-suspensao/);
+    assert.doesNotMatch(css, /\.ocorrencia-tipo-option|#6f42c1|rgba\(111,66,193/);
+});
+
 test('modality details use Bootstrap cards, grids and actions', () => {
     const js = fs.readFileSync(path.join(root, 'resources', 'js', 'pages', 'competicoes', 'modalidade-detalhes.js'), 'utf8');
     const view = fs.readFileSync(path.join(root, 'resources', 'views', 'pages', 'competicoes', 'modalidade-detalhes.php'), 'utf8');
