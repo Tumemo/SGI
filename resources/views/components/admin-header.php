@@ -3,8 +3,9 @@ $mostrarVoltar = $mostrarVoltar ?? true;
 $urlVoltar = $urlVoltar ?? \App\Shared\Http\Url::to('aluno/inicio');
 $titulo = $titulo ?? '';
 $nivelUsuario = (int)($_SESSION['nivel'] ?? -1);
+$compacteCabecalho = (bool)($compacteCabecalho ?? false);
 ?>
-<section class="d-md-none position-relative sgi-u-h-120px" >
+<section class="d-md-none position-relative sgi-u-h-120px<?= $compacteCabecalho ? ' sgi-compact-header' : '' ?>" >
     <?php if ($mostrarVoltar): ?>
     <a href="<?= htmlspecialchars($urlVoltar) ?>" class="bi bi-arrow-left position-absolute text-white fs-3 text-decoration-none sgi-u-top-20px-left-20px-z-10" ></a>
     <?php endif; ?>

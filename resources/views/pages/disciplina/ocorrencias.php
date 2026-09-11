@@ -8,7 +8,7 @@ $nivelUsuario = (int)($_SESSION['nivel'] ?? -1);
 $isAdmin = $nivelUsuario === 0;
 ?>
 
-<main class="d-md-none pt-5 pb-5">
+<main class="d-md-none sgi-ocorrencias-mobile pt-5 pb-5">
     <div class="px-3 mt-3">
         <a href="<?= \App\Shared\Http\Url::to('painel') ?>" id="btnVoltarOcrMob" class="btn btn-primary d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none" >
             <i class="bi bi-arrow-left-circle fs-5"></i> <span id="nomeInterclasseOcrMob">Interclasse</span>
@@ -27,7 +27,7 @@ $isAdmin = $nivelUsuario === 0;
     </div>
 </main>
 
-<main class="d-none d-md-block main-desktop-layout pb-5">
+<main class="d-none d-md-block main-desktop-layout sgi-ocorrencias-desktop pb-5">
     <div class="container-fluid px-4">
         <div class="mb-4">
             <a href="<?= \App\Shared\Http\Url::to('painel') ?>" id="btnVoltarOcr" class="btn btn-primary d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none" >

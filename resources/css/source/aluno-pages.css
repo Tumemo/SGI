@@ -28,7 +28,15 @@ body {
         #acoesInscricao { bottom: 0; }
     }
 
+    @media (max-width: 1199.98px) {
+        body {
+            padding-bottom: 0;
+        }
 
+        #acoesInscricao {
+            bottom: 0;
+        }
+    }
 
 
 
@@ -174,4 +182,8 @@ body {
 
 
 
-.home-main--with-footer { margin-bottom: 120px; }
+
+
+@media (max-width: 1199.98px) {
+    .home-main--with-footer { margin-bottom: 0; }
+}

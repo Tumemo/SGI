@@ -146,11 +146,11 @@
     top: 0;
     left: 0;
     right: 0;
-    z-index: 1080;
+    z-index: 1040;
 }
 
 body.sgi-offline-active {
-    padding-top: 42px;
+    padding-top: var(--sgi-offline-banner-height, 42px);
 }
 
 
@@ -523,4 +523,591 @@ body.sgi-offline-active {
     .mc-score{font-size:3.5rem}
     .mc-timer-time{font-size:2rem}
     .btn-score{width:44px;height:44px;font-size:1.15rem}
+}
+
+/* ========================================================================
+   COMPOSIÇÃO COMPACTA — CELULAR XIAOMI FULL HD EM PAISAGEM (< 1200px CSS)
+   ======================================================================== */
+@media (max-width: 1199.98px) {
+    /* Cabeçalho de páginas administrativas: mantém espaço útil para o conteúdo
+       enquanto a navegação compacta fica disponível pelo botão flutuante. */
+    section.sgi-u-h-120px {
+        height: 72px !important;
+        min-height: 72px !important;
+    }
+
+    section.sgi-u-h-120px > a.sgi-u-top-20px-left-20px-z-10 {
+        width: 48px;
+        height: 48px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    /* Dashboard do Mesário: duas colunas mesmo em 640px CSS em paisagem,
+       mantendo cada atalho como uma área de toque ampla. */
+    #conteudo-principal [class~="main-dashboard-layout"] {
+        min-width: 0;
+    }
+
+    .main-dashboard-layout > .container-fluid {
+        min-width: 0;
+    }
+
+    .main-dashboard-layout > .container-fluid > .btn {
+        min-height: 48px;
+    }
+
+    .main-dashboard-layout .row {
+        --bs-gutter-x: .75rem;
+        --bs-gutter-y: .75rem;
+    }
+
+    .main-dashboard-layout .row > .col-12.col-md-6 {
+        flex: 0 0 50%;
+        max-width: 50%;
+    }
+
+    .main-dashboard-layout .row > [class*="col-"] .card {
+        min-width: 0;
+        min-height: 112px;
+        padding: .75rem !important;
+    }
+
+    .main-dashboard-layout .row > [class*="col-"] .card p {
+        font-size: .8125rem;
+        line-height: 1.3;
+        overflow-wrap: anywhere;
+    }
+
+    .main-dashboard-layout .row > [class*="col-"] .card .p-3 {
+        padding: .625rem !important;
+    }
+
+    /* Lista de jogos: a largura do cartão acompanha o mesmo par de colunas
+       do Dashboard, sem exigir uma terceira grade para tablets. */
+    .sgi-jogos-lista {
+        min-width: 0;
+    }
+
+    .sgi-jogos-lista #listaJogos {
+        --bs-gutter-x: .75rem;
+        --bs-gutter-y: .75rem;
+    }
+
+    .sgi-jogos-lista #listaJogos > .col-12 {
+        flex: 0 0 50%;
+        max-width: 50%;
+        min-width: 0;
+    }
+
+    .sgi-jogos-lista #listaJogos > .col-12 > a {
+        display: block;
+        height: 100%;
+        min-width: 0;
+    }
+
+    .sgi-jogos-lista #listaJogos .card {
+        min-width: 0;
+        min-height: 140px;
+        padding: .75rem !important;
+    }
+
+    .sgi-jogos-lista #listaJogos .card p,
+    .sgi-jogos-lista #listaJogos .card span {
+        overflow-wrap: anywhere;
+    }
+
+    /* Perfil: o conteúdo continua em uma coluna e os comandos de foto e
+       formulários permanecem alcançáveis com toque e teclado. */
+    .sgi-perfil-mobile {
+        min-width: 0;
+        padding: .75rem !important;
+    }
+
+    .sgi-perfil-mobile .card-body {
+        min-width: 0;
+        padding: .75rem !important;
+    }
+
+    .sgi-perfil-mobile .row > span {
+        min-width: 0;
+        overflow-wrap: anywhere;
+    }
+
+    .sgi-perfil-mobile .btn:not(.btn-close),
+    #modalEditarPerfil .btn:not(.btn-close),
+    #modalAlterarSenha .btn:not(.btn-close) {
+        min-height: 48px;
+    }
+
+    .sgi-perfil-mobile #btnCameraMob {
+        width: 48px;
+        height: 48px;
+        min-width: 48px;
+    }
+
+    /* Agenda: a variante móvel usa cartões e controles empilhados; não carrega
+       o espaçamento reservado pela barra inferior legada. */
+    .sgi-agenda-mobile {
+        min-width: 0;
+        padding: .75rem !important;
+    }
+
+    .sgi-agenda-mobile .card,
+    .sgi-agenda-mobile [class~="ag-event-card"] {
+        min-width: 0;
+    }
+
+    .sgi-agenda-mobile .form-control,
+    .sgi-agenda-mobile .form-select,
+    .sgi-agenda-mobile .btn {
+        min-height: 48px;
+    }
+
+    .sgi-agenda-mobile .bg-dark .btn {
+        width: 48px;
+        min-width: 48px;
+        padding: .5rem !important;
+    }
+
+    .sgi-agenda-mobile .bg-dark .form-select {
+        min-height: 40px;
+    }
+
+    .sgi-agenda-mobile .ag-cal-day {
+        height: 40px;
+        min-height: 40px;
+    }
+
+    .sgi-agenda-mobile .ag-event-card .btn,
+    .sgi-agenda-mobile .ag-event-card .btn-ajuste-jogo {
+        min-height: 48px;
+    }
+
+    .sgi-agenda-mobile .ag-cal-sticky {
+        position: static;
+    }
+
+    /* Chaveamento: empilha as fases na largura CSS compacta. A árvore desktop
+       continua horizontal a partir de 1200px. */
+    .sgi-chaveamento-mobile {
+        min-width: 0;
+        padding: .75rem !important;
+    }
+
+    #bracketAreaMob {
+        min-width: 0;
+        padding: .75rem !important;
+        text-align: left !important;
+    }
+
+    #bracketAreaMob .bracket-tree {
+        flex-direction: column;
+        align-items: stretch;
+        overflow-x: hidden;
+        padding: .75rem 0 1rem;
+    }
+
+    #bracketAreaMob .bracket-round-col,
+    #bracketAreaMob .bracket-champion-col {
+        min-width: 100%;
+        max-width: 100%;
+        flex: none;
+        padding: 0;
+        margin: 0 0 .75rem;
+    }
+
+    #bracketAreaMob .bracket-champion-col {
+        margin-top: .25rem;
+        margin-bottom: 0;
+    }
+
+    #bracketAreaMob .bracket-round-col .bkt-match {
+        margin-bottom: .75rem;
+    }
+
+    #bracketAreaMob .bkt-connector {
+        display: none;
+    }
+
+    #bracketAreaMob .bkt-match__actions {
+        opacity: 1;
+    }
+
+    #bracketAreaMob .bkt-team__name,
+    #bracketAreaMob .bkt-match__info span {
+        white-space: normal;
+        overflow-wrap: anywhere;
+    }
+
+    /* O histórico mantém as oito informações, mas vira uma sequência de
+       cartões legíveis no celular, sem rolagem horizontal da página. */
+    #secaoJogosMob {
+        min-width: 0;
+    }
+
+    #secaoJogosMob .form-control,
+    #secaoJogosMob .form-select,
+    #bracketAreaMob .btn {
+        min-height: 48px;
+    }
+
+    #secaoJogosMob .table-responsive {
+        overflow: visible;
+    }
+
+    #secaoJogosMob .table {
+        min-width: 0;
+        display: block;
+        margin-bottom: 0;
+    }
+
+    #secaoJogosMob .table thead {
+        display: none;
+    }
+
+    #secaoJogosMob .table tbody,
+    #secaoJogosMob .table tr {
+        display: block;
+    }
+
+    #secaoJogosMob .table tr {
+        margin: 0 0 .75rem;
+        padding: .75rem;
+        border: 1px solid var(--bs-border-color);
+        border-radius: .75rem;
+        background: var(--bs-body-bg);
+    }
+
+    #secaoJogosMob .table td {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: .75rem;
+        padding: .35rem 0;
+        border: 0;
+        white-space: normal;
+        text-align: right;
+        overflow-wrap: anywhere;
+    }
+
+    #secaoJogosMob .table td::before {
+        flex: 0 0 42%;
+        color: var(--bs-secondary-color);
+        font-size: .75rem;
+        font-weight: 600;
+        text-align: left;
+    }
+
+    #secaoJogosMob .table td:nth-child(1)::before { content: "Partida"; }
+    #secaoJogosMob .table td:nth-child(2)::before { content: "Modalidade"; }
+    #secaoJogosMob .table td:nth-child(3)::before { content: "Data"; }
+    #secaoJogosMob .table td:nth-child(4)::before { content: "Tempo"; }
+    #secaoJogosMob .table td:nth-child(5)::before { content: "Acréscimos"; }
+    #secaoJogosMob .table td:nth-child(6)::before { content: "Artilheiro/Destaque"; }
+    #secaoJogosMob .table td:nth-child(7)::before { content: "Status"; }
+    #secaoJogosMob .table td:nth-child(8) {
+        justify-content: flex-end;
+        padding-top: .65rem;
+    }
+    #secaoJogosMob .table td:nth-child(8)::before { content: "Ações"; margin-right: auto; }
+    #secaoJogosMob .table td:nth-child(8) .btn {
+        min-width: 48px;
+        min-height: 48px;
+    }
+    #secaoJogosMob .table td[colspan] {
+        display: block;
+        padding: .75rem 0;
+        text-align: center;
+    }
+    #secaoJogosMob .table td[colspan]::before { content: none; }
+
+    /* Ocorrências: cartões de turma preservam nomes longos e deixam as duas
+       ações sempre acessíveis por toque. */
+    .sgi-ocorrencias-mobile {
+        min-width: 0;
+        padding-top: .75rem !important;
+        padding-bottom: .75rem !important;
+    }
+
+    .sgi-ocorrencias-mobile #listaOcorrenciasMobile {
+        min-width: 0;
+    }
+
+    .sgi-ocorrencias-mobile #listaOcorrenciasMobile .card {
+        min-width: 0;
+        padding: .75rem !important;
+    }
+
+    .sgi-ocorrencias-mobile #listaOcorrenciasMobile .card .btn {
+        width: 48px;
+        min-width: 48px;
+        min-height: 48px;
+        padding: .5rem;
+    }
+
+    #modalNovaOcorrencia .modal-dialog,
+    #modalHistoricoOcorrencias .modal-dialog,
+    #modalEditarJogo .modal-dialog,
+    #modalEditarJogoAgenda .modal-dialog,
+    #modalDatasAutomaticas .modal-dialog {
+        max-width: none;
+        margin: .5rem;
+    }
+
+    #modalNovaOcorrencia .modal-content,
+    #modalHistoricoOcorrencias .modal-content,
+    #modalEditarJogo .modal-content,
+    #modalEditarJogoAgenda .modal-content,
+    #modalDatasAutomaticas .modal-content {
+        max-height: calc(100dvh - 1rem);
+    }
+
+    #modalNovaOcorrencia .modal-body,
+    #modalHistoricoOcorrencias .modal-body,
+    #modalEditarJogo .modal-body,
+    #modalEditarJogoAgenda .modal-body,
+    #modalDatasAutomaticas .modal-body {
+        overflow-y: auto;
+    }
+
+    #modalNovaOcorrencia .modal-footer .btn,
+    #modalEditarJogo .modal-footer .btn,
+    #modalEditarJogoAgenda .modal-footer .btn,
+    #modalDatasAutomaticas .modal-footer .btn {
+        min-height: 48px;
+    }
+
+    #modalNovaOcorrencia .btn-close,
+    #modalHistoricoOcorrencias .btn-close,
+    #modalEditarJogo .btn-close,
+    #modalEditarJogoAgenda .btn-close,
+    #modalDatasAutomaticas .btn-close {
+        min-width: 48px;
+        min-height: 48px;
+    }
+
+    .sgi-compact-header {
+        display: none !important;
+    }
+
+    .sgi-placar {
+        min-height: 0;
+        padding: .5rem .75rem .75rem;
+    }
+
+    .sgi-placar > .container-xxl {
+        max-width: none;
+        padding-left: 0 !important;
+        padding-right: 0 !important;
+    }
+
+    .sgi-placar .sgi-placar-header {
+        align-items: center;
+        margin-bottom: .5rem !important;
+        gap: .5rem !important;
+        padding-right: 3.25rem;
+    }
+
+    .sgi-placar .sgi-placar-header #btnVoltarPlacar {
+        margin-bottom: 0 !important;
+        min-width: 48px;
+        min-height: 48px;
+        padding: .5rem !important;
+    }
+
+    .sgi-placar .sgi-placar-header #btnVoltarPlacar span {
+        position: absolute !important;
+        width: 1px !important;
+        height: 1px !important;
+        padding: 0 !important;
+        margin: -1px !important;
+        overflow: hidden !important;
+        clip: rect(0, 0, 0, 0) !important;
+        white-space: nowrap !important;
+        border: 0 !important;
+    }
+
+    .sgi-placar .sgi-placar-header h1 {
+        font-size: 1.125rem;
+        max-width: 55vw;
+        overflow-wrap: anywhere;
+    }
+
+    .sgi-placar #placar-meta {
+        font-size: .75rem;
+        line-height: 1.2;
+        max-width: 65vw;
+        overflow-wrap: anywhere;
+    }
+
+    .sgi-placar #placar-acoes {
+        gap: .5rem !important;
+        margin-bottom: .5rem;
+    }
+
+    .sgi-placar #placar-acoes .btn,
+    .sgi-placar .mc-pause-btn,
+    .sgi-placar [class~="mc-duration-select"] {
+        min-height: 48px;
+    }
+
+    .sgi-placar .mc-individual-ranking-row {
+        --bs-gutter-x: .5rem;
+        --bs-gutter-y: .5rem;
+    }
+
+    .sgi-placar .mc-individual-ranking-row > .col-md-4 {
+        flex: 0 0 33.333333%;
+        max-width: 33.333333%;
+        min-width: 0;
+    }
+
+    .sgi-placar .mc-individual-ranking-row .form-select,
+    .sgi-placar #btnSalvarIndRanking {
+        min-height: 48px;
+    }
+
+    .sgi-placar .mc-individual-ranking-row .form-label {
+        display: block;
+        min-height: 2.5em;
+        overflow-wrap: anywhere;
+    }
+
+    .sgi-placar #placar-grid {
+        padding: .625rem !important;
+        border-radius: .75rem !important;
+    }
+
+    .sgi-placar .mc-scoreboard-main {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) clamp(104px, 18vw, 144px) minmax(0, 1fr);
+        align-items: center;
+        gap: .5rem;
+        width: 100%;
+    }
+
+    .sgi-placar .mc-timer-panel {
+        grid-column: 2;
+        grid-row: 1;
+        min-width: 0;
+        border: 0 !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        z-index: 1;
+    }
+
+    .sgi-placar .mc-timer-time {
+        font-size: clamp(2rem, 6vw, 3rem);
+    }
+
+    .sgi-placar .mc-timer-panel .d-flex {
+        flex-direction: column;
+        gap: .25rem !important;
+        margin-top: .25rem !important;
+    }
+
+    .sgi-placar [class~="mc-teams-row"] {
+        grid-column: 1 / -1;
+        grid-row: 1;
+        display: grid !important;
+        grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+        align-items: center;
+        gap: .5rem !important;
+        width: 100%;
+    }
+
+    .sgi-placar [class~="mc-teams-row"] > [data-partida-idx] {
+        width: auto !important;
+        max-width: none !important;
+        padding: 0 !important;
+        min-width: 0;
+    }
+
+    .sgi-placar [class~="mc-teams-row"] > [data-partida-idx]:first-child { grid-column: 1; }
+    .sgi-placar [class~="mc-teams-row"] > [data-partida-idx]:last-child { grid-column: 3; }
+    .sgi-placar [class~="mc-teams-row"] > [class~="mc-vs"] { grid-column: 2; grid-row: 1; width: auto !important; }
+
+    /* O separador desktop não deve competir com o cronômetro central. */
+    .sgi-placar [class~="mc-vs"] {
+        display: none !important;
+    }
+
+    .sgi-placar [class~="mc-team-name"] {
+        white-space: normal !important;
+        overflow: visible !important;
+        text-overflow: clip !important;
+        overflow-wrap: anywhere;
+        font-size: .9rem;
+        min-height: 2.25em;
+        margin-bottom: .25rem !important;
+    }
+
+    .sgi-placar [class~="mc-score-row"] {
+        gap: .375rem !important;
+        flex-wrap: wrap;
+    }
+
+    .sgi-placar .mc-score {
+        font-size: clamp(2.75rem, 8vw, 4rem);
+        min-width: 3.25rem;
+    }
+
+    .sgi-placar .btn-score {
+        width: 48px;
+        height: 48px;
+        flex: 0 0 48px;
+    }
+
+    .sgi-placar-fab {
+        position: static !important;
+        width: auto;
+        height: 48px;
+        min-height: 48px;
+        border-radius: .5rem !important;
+        margin: .5rem .75rem 0 !important;
+        padding-inline: 1rem;
+    }
+
+    .sgi-placar .tl-event-actions,
+    .sgi-placar .bkt-match__actions {
+        opacity: 1;
+    }
+
+    .sgi-offline-banner {
+        z-index: 1040;
+    }
+
+    .sgi-offline-banner > .container-fluid {
+        justify-content: flex-start !important;
+        overflow-x: auto;
+        flex-wrap: nowrap !important;
+        min-height: 40px;
+    }
+
+    .sgi-offline-banner .btn {
+        flex: 0 0 auto;
+        min-height: 36px;
+    }
+
+    .sgi-feedback-modal .modal-dialog {
+        margin: .5rem;
+        max-width: none;
+    }
+
+    .sgi-feedback-modal .modal-content {
+        max-height: calc(100dvh - 1rem);
+    }
+
+    .sgi-feedback-modal .modal-body {
+        overflow-y: auto;
+    }
+}
+
+@media (min-width: 1200px) {
+    .sgi-placar .mc-fab {
+        width: 62px;
+        height: 62px;
+    }
 }

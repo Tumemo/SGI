@@ -9,7 +9,7 @@ $nivelUsuarioAgenda = (int)($_SESSION['nivel'] ?? -1);
 ?>
 
 <!-- ═══ MOBILE ═══ -->
-<main class="d-md-none ag-mobile p-3">
+<main class="d-md-none ag-mobile sgi-agenda-mobile p-3">
     <div class="card overflow-hidden">
         <div class="bg-dark text-white d-flex align-items-center justify-content-between p-3">
             <button type="button" id="btn-prev-mobile" class="btn btn-sm btn-link link-light p-1" aria-label="Mês anterior"><i class="bi bi-chevron-left"></i></button>
@@ -78,7 +78,7 @@ $nivelUsuarioAgenda = (int)($_SESSION['nivel'] ?? -1);
 </main>
 
 <!-- ═══ DESKTOP ═══ -->
-<main class="d-none d-md-block main-desktop-layout pb-5">
+<main class="d-none d-md-block main-desktop-layout sgi-agenda-desktop pb-5">
     <div>
 
         <div class="d-flex align-items-center gap-3 flex-wrap mb-4">

@@ -206,8 +206,48 @@ window.SGIPage.mount("competicoes/chaveamento", function (pageConfig, pageScope)
     pageScope.listen(window, 'scroll', () => {
         if (kvs_instanciaAtiva) { kvs_instanciaAtiva.classList.remove('kvs--aberto'); kvs_instanciaAtiva = null; }
     }, { passive: true });
+    function composicaoCompactaAtiva() {
+        return typeof window.matchMedia === 'function'
+            ? window.matchMedia('(max-width: 1199.98px)').matches
+            : window.innerWidth < 1200;
+    }
+
+    let frameRedesenhoConectores = null;
+
+    function agendarRedesenhoConectores() {
+        if (frameRedesenhoConectores !== null) return;
+        const executar = () => {
+            frameRedesenhoConectores = null;
+            if (!pageScope.active) return;
+            redesenharConectoresVisiveis();
+        };
+        if (typeof window.requestAnimationFrame === 'function') {
+            frameRedesenhoConectores = window.requestAnimationFrame(executar);
+        } else {
+            frameRedesenhoConectores = window.setTimeout(executar, 0);
+        }
+    }
+
+    function redesenharConectoresVisiveis() {
+        const area = document.getElementById('bracketArea');
+        const areaMob = document.getElementById('bracketAreaMob');
+        if (area) _drawConnectors(area);
+        if (areaMob) _drawConnectors(areaMob);
+    }
+
+    pageScope.onDeactivate(() => {
+        if (frameRedesenhoConectores === null) return;
+        if (typeof window.cancelAnimationFrame === 'function') {
+            window.cancelAnimationFrame(frameRedesenhoConectores);
+        } else {
+            window.clearTimeout(frameRedesenhoConectores);
+        }
+        frameRedesenhoConectores = null;
+    });
+
     pageScope.listen(window, 'resize', () => {
         if (kvs_instanciaAtiva) { kvs_instanciaAtiva.classList.remove('kvs--aberto'); kvs_instanciaAtiva = null; }
+        agendarRedesenhoConectores();
     });
 
     async function resolverInterclasse() {
@@ -1013,8 +1053,13 @@ window.SGIPage.mount("competicoes/chaveamento", function (pageConfig, pageScope)
     }
 
     function _drawConnectors(container) {
+        if (!container) return;
         const tree = container.querySelector('.bracket-tree');
-        if (!tree) return;
+        if (!tree || !container.isConnected || container.getClientRects().length === 0) return;
+        /* A árvore compacta empilha as fases e oculta os conectores. Evite
+           criar SVGs de dimensões zero; ao cruzar 1200px o listener de resize
+           redesenha somente a raiz que ficou visível. */
+        if (composicaoCompactaAtiva()) return;
         const cols = tree.querySelectorAll('.bracket-round-col');
         const connectors = tree.querySelectorAll('.bkt-connector');
 

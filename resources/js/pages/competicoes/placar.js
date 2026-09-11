@@ -983,7 +983,7 @@ window.SGIPage.mount("competicoes/placar", function (pageConfig, pageScope) {
         var podeTimer = emAndamento || st === 'Agendado';
         var readonly = encerrado || st === 'Agendado' || tempoEsgotado;
 
-        var html = '';
+        var html = '<div class="mc-scoreboard-main">';
 
         // Timer
         if (podeTimer) {
@@ -991,7 +991,7 @@ window.SGIPage.mount("competicoes/placar", function (pageConfig, pageScope) {
                 return '<option value="' + v + '"' + (duracaoJogo === v*60 ? ' selected' : '') + '>' + v + ' min</option>';
             }).join('');
 
-            html += '<div class="text-center w-100 border-bottom pb-4 mb-4">';
+            html += '<div class="mc-timer-panel text-center w-100 border-bottom pb-4 mb-4">';
             html += '<div class="mc-timer-time fw-bolder text-body lh-1" id="timer-placar">' +
                 String(Math.floor(duracaoJogo / 60)).padStart(2, '0') + ':' +
                 String(duracaoJogo % 60).padStart(2, '0') + '</div>';
@@ -1002,11 +1002,11 @@ window.SGIPage.mount("competicoes/placar", function (pageConfig, pageScope) {
             }
             html += '</div></div>';
         } else {
-            html += '<div class="text-center w-100 border-bottom pb-4 mb-4"><div class="mc-timer-time mc-timer-time--idle fw-bolder text-body-tertiary lh-1" id="timer-placar">--:--</div></div>';
+            html += '<div class="mc-timer-panel text-center w-100 border-bottom pb-4 mb-4"><div class="mc-timer-time mc-timer-time--idle fw-bolder text-body-tertiary lh-1" id="timer-placar">--:--</div></div>';
         }
 
         // Teams
-        html += '<div class="row w-100 align-items-center justify-content-center g-4">';
+        html += '<div class="mc-teams-row row w-100 align-items-center justify-content-center g-4">';
 
         partidasLista.forEach(function(p, idx) {
             var gols = Math.max(0, parseInt(p.resultado_partida, 10) || 0);
@@ -1035,7 +1035,7 @@ window.SGIPage.mount("competicoes/placar", function (pageConfig, pageScope) {
             }
         });
 
-        html += '</div>';
+        html += '</div></div>';
 
         grid.innerHTML = html;
 
@@ -1231,7 +1231,7 @@ window.SGIPage.mount("competicoes/placar", function (pageConfig, pageScope) {
                     '<i class="bi bi-trophy-fill text-warning"></i> Registrar Resultado Individual' +
                 '</div>' +
                 estadoParticipantes +
-                '<div class="row g-3 mt-1">' +
+                '<div class="mc-individual-ranking-row row g-3 mt-1">' +
                     '<div class="col-md-4">' +
                         '<label class="form-label fw-semibold small text-secondary" for="indSelectPrimeiro">🥇 1º Lugar</label>' +
                         '<select class="form-select small" id="indSelectPrimeiro" aria-label="1º lugar"' + (individualBloqueado ? ' disabled' : '') + '>' + partOpts + '</select>' +

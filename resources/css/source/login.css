@@ -103,3 +103,74 @@ body > main {
 .login-desktop-logo { max-width: 280px; }
 .login-desktop-form { max-width: 420px; border-radius: 15px; }
 .login-field { border-radius: 10px; }
+
+/* A entrada pública não carrega shared.css. Repita somente a troca de shell
+   neste contexto para que 800–915px CSS continuem sendo celular horizontal. */
+@media (min-width: 768px) and (max-width: 1199.98px) {
+    body > main.login-mobile-layout {
+        display: flex !important;
+    }
+
+    body > main.d-none.d-md-flex {
+        display: none !important;
+    }
+}
+
+/* O alvo móvel é paisagem. A composição vertical original, adequada ao
+   retrato, empurrava o formulário para fora de 360px de altura ao usar a
+   largura inteira no banner. Em paisagem, imagem e acesso dividem a faixa
+   útil para manter os campos operáveis sem zoom. */
+@media (orientation: landscape) and (max-width: 1199.98px) {
+    .login-mobile-layout {
+        flex-direction: row !important;
+        align-items: center;
+        justify-content: center;
+        gap: clamp(.75rem, 3vw, 2rem);
+        padding: .75rem;
+    }
+
+    .login-mobile-banner {
+        flex: 0 1 46vw;
+        width: 46vw;
+        height: calc(100svh - 1.5rem);
+        max-height: calc(100svh - 1.5rem);
+    }
+
+    .login-mobile-banner-border,
+    .login-mobile-banner-image {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .login-mobile-form {
+        flex: 0 1 42vw;
+        width: 42vw !important;
+        max-width: 360px;
+        margin: 0;
+    }
+
+    .login-mobile-form .form-control {
+        height: 48px;
+        min-height: 48px;
+        padding: .625rem .75rem;
+        font-size: 1rem;
+    }
+
+    .login-mobile-forgot {
+        margin-top: .75rem;
+        font-size: .8rem;
+    }
+
+    .login-mobile-button {
+        height: 48px;
+        min-height: 48px;
+        margin-top: .75rem;
+        padding: .5rem 1rem;
+        font-size: 1rem;
+    }
+
+    .login-mobile-brand {
+        margin-top: 1rem;
+    }
+}

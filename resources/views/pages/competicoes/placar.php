@@ -1,6 +1,7 @@
 <?php
 $titulo = 'Placar';
 $mostrarVoltar = true;
+$compacteCabecalho = true;
 $urlVoltar = \App\Shared\Http\Url::to('painel');
 
 include SGI_ROOT . '/resources/views/components/admin-head.php';
@@ -8,10 +9,10 @@ include SGI_ROOT . '/resources/views/components/admin-header.php';
 $paginaAtiva = 'dashboard';
 ?>
 
-<main class="main-desktop-layout">
+<main class="main-desktop-layout sgi-placar">
     <div class="container-xxl py-4 px-3 px-md-4">
 
-        <div class="d-flex align-items-start justify-content-between gap-3 mb-4 flex-wrap">
+        <div class="sgi-placar-header d-flex align-items-start justify-content-between gap-3 mb-4 flex-wrap">
             <div class="d-flex flex-column gap-1 flex-grow-1">
                 <a href="<?= \App\Shared\Http\Url::to('edicoes/agenda') ?>" id="btnVoltarPlacar" class="btn btn-primary d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none" >
                     <i class="bi bi-arrow-left-circle fs-5"></i> <span>Voltar</span>
@@ -67,7 +68,7 @@ $paginaAtiva = 'dashboard';
     </div>
 </main>
 
-<button type="button" class="mc-fab btn btn-primary rounded-circle shadow position-fixed bottom-0 end-0 mb-5 me-4 d-inline-flex align-items-center justify-content-center z-3" id="btnNovaOcorrencia" onclick="abrirModalOcorrencia()" title="Nova ocorrência" aria-label="Registrar nova ocorrência">
+<button type="button" class="mc-fab sgi-placar-fab btn btn-primary rounded-circle shadow position-fixed bottom-0 end-0 mb-5 me-4 d-inline-flex align-items-center justify-content-center z-3" id="btnNovaOcorrencia" onclick="abrirModalOcorrencia()" title="Nova ocorrência" aria-label="Registrar nova ocorrência">
     <i class="bi bi-plus-lg fs-5"></i>
 </button>
 

@@ -20,7 +20,7 @@ $paginaAtiva = 'perfil';
 
 
 <!-- ===================== MOBILE ===================== -->
-<main class="d-md-none p-3 pt-5 pb-5">
+<main class="d-md-none sgi-perfil-mobile p-3 pt-5 pb-5">
     <a href="<?= htmlspecialchars($urlVoltar) ?>" id="perfilBackMob" class="btn btn-primary d-inline-flex align-items-center gap-2 fw-bold mb-3 px-3 py-2 border-0 text-decoration-none" >
         <i class="bi bi-arrow-left-circle fs-5"></i> <span id="perfilNomeInterMobile">Interclasse</span>
     </a>
@@ -78,7 +78,7 @@ $paginaAtiva = 'perfil';
 
 
 <!-- ===================== DESKTOP ===================== -->
-<main class="main-desktop-layout d-none d-md-block p-4 p-lg-5">
+<main class="main-desktop-layout sgi-perfil-desktop d-none d-md-block p-4 p-lg-5">
     <div class="container-fluid px-0">
         <!-- Topbar -->
         <div class="d-flex align-items-center gap-4 mb-4 mt-5 flex-wrap">

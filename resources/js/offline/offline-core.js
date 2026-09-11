@@ -1459,6 +1459,16 @@
             '</div>';
         document.body.appendChild(b);
 
+        function atualizarAlturaBanner() {
+            var altura = b.getBoundingClientRect().height;
+            document.documentElement.style.setProperty('--sgi-offline-banner-height', altura + 'px');
+        }
+        atualizarAlturaBanner();
+        if (typeof ResizeObserver === 'function') {
+            var observer = new ResizeObserver(atualizarAlturaBanner);
+            observer.observe(b);
+        }
+
         var btn = b.querySelector('.sgi-offline-banner-btn');
         if (btn) {
             btn.addEventListener('click', function () {

@@ -11,7 +11,7 @@ $isNivel2 = $nivelUsuario === 2;
 $podeGerar = !$isNivel2 && !$isNivel3;
 ?>
 
-<main class="d-md-none p-4 bg-body-tertiary min-vh-100" >
+<main class="d-md-none sgi-chaveamento-mobile p-4 bg-body-tertiary min-vh-100" >
     <a href="<?= \App\Shared\Http\Url::to('painel') ?>" id="btnVoltarChaveamentoMob" class="btn btn-primary d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none" >
         <i class="bi bi-arrow-left-circle fs-5"></i> <span id="nomeInterclasseChaveamentoMob">Interclasse</span>
     </a>
@@ -124,7 +124,7 @@ $podeGerar = !$isNivel2 && !$isNivel3;
     </div>
 </main>
 
-<main class="d-none d-md-block main-desktop-layout bg-body-tertiary min-vh-100">
+<main class="d-none d-md-block main-desktop-layout sgi-chaveamento-desktop bg-body-tertiary min-vh-100">
 
     <div class="container-fluid mw-100" >
 

@@ -9,7 +9,7 @@ $paginaAtiva = 'dashboard';
 
 
 
-<main class="container py-4 main-desktop-layout">
+<main class="container py-4 main-desktop-layout sgi-jogos-lista">
 
     <div class="row g-3" id="listaJogos">
         <div class="col-12 text-center text-muted py-5">

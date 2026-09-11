@@ -423,6 +423,10 @@
         // Perifericos fora do <main>: FAB e modais (ex.: jogos)
         var vistos = {};
         doc.body.querySelectorAll('[data-bs-toggle="modal"],[data-bs-target],[id*="modal" i],[class*="fab"]').forEach(function (el) {
+            // A navegação compacta já pertence à casca inicial. Não a copie
+            // para cada tela, pois isso criaria dois gatilhos/offcanvas após
+            // uma troca de rota na SPA.
+            if (el.matches('.sgi-mobile-menu-trigger, .sgi-mobile-menu') || el.closest('.sgi-mobile-menu')) return;
             if (el.closest('main')) return;
             var tag = el.tagName;
             if (tag === 'NAV' || tag === 'FOOTER' || tag === 'SCRIPT' || tag === 'STYLE') return;

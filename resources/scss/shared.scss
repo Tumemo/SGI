@@ -1,6 +1,8 @@
 :root {
   --sgi-sidebar-width: 5rem;
   --sgi-mobile-nav-height: 4rem;
+  --sgi-compact-breakpoint: 1200px;
+  --sgi-offline-banner-height: 0px;
 
   --aluno-primary: var(--bs-primary);
   --aluno-radius-lg: 16px;
@@ -98,7 +100,7 @@ body {
     margin-left: 0;
     width: 100%;
     padding: 1rem;
-    padding-bottom: calc(var(--sgi-mobile-nav-height) + 2rem);
+    padding-bottom: 1rem;
   }
 }
 
@@ -110,5 +112,72 @@ body {
     transition-duration: 0.01ms !important;
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
+  }
+}
+
+/* Keep this block last in the shared bundle so it wins over the legacy
+   d-md-* and 768px shell rules above. */
+@media (max-width: 1199.98px) {
+  .d-none.d-md-block,
+  .d-none.d-md-flex,
+  .d-none.d-md-grid {
+    display: none !important;
+  }
+
+  .d-md-none:not(.d-none):not(.d-flex):not(.sgi-mobile-menu-trigger) {
+    display: block !important;
+  }
+
+  .d-md-none.d-flex {
+    display: flex !important;
+  }
+
+  .main-desktop-layout,
+  .sgi-main,
+  main.aluno-page,
+  main.jogos-layout,
+  main.perfil-desktop,
+  main.container.py-4:not(.main-desktop-layout) {
+    margin-left: 0;
+    width: 100%;
+  }
+
+  .main-desktop-layout,
+  .sgi-main {
+    padding: .75rem;
+    padding-bottom: .75rem;
+  }
+
+  body.sgi-offline-active {
+    padding-top: var(--sgi-offline-banner-height);
+  }
+
+  .sgi-mobile-menu-trigger {
+    position: fixed;
+    top: calc(var(--sgi-offline-banner-height, 0px) + max(.5rem, env(safe-area-inset-top, 0px)));
+    right: max(.75rem, env(safe-area-inset-right, 0px));
+    z-index: 1046;
+    width: 48px;
+    height: 48px;
+    display: inline-flex !important;
+    padding: 0;
+    border-radius: .75rem;
+  }
+
+  .sgi-mobile-menu {
+    --bs-offcanvas-width: min(88vw, 360px);
+    z-index: 1045;
+  }
+
+  .sgi-mobile-menu-link {
+    min-height: 48px;
+    font-size: 1rem;
+    text-decoration: none;
+  }
+
+  .sgi-mobile-menu-link:focus-visible,
+  .sgi-mobile-menu-trigger:focus-visible {
+    outline: 3px solid var(--bs-warning);
+    outline-offset: 2px;
   }
 }
