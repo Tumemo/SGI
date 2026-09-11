@@ -316,7 +316,17 @@ async function marcarPartida(page, pontos) {
     }
 
     await page.locator('button.mc-action-btn--finish').click();
+    const confirmacao = page.locator('.sgi-feedback-modal').filter({ hasText: 'O placar final será gravado no sistema.' });
+    if (await confirmacao.count()) {
+        await expect(confirmacao).toBeVisible();
+        await confirmacao.getByRole('button', { name: 'Encerrar jogo' }).click();
+    }
     await expect(page.locator('#mc-status-badge')).toContainText('Encerrado');
+    if (await page.evaluate(() => !navigator.onLine)) {
+        const feedback = page.getByRole('dialog');
+        await expect(feedback).toContainText(/offline/i, { timeout: 10_000 });
+        await feedback.getByRole('button', { name: 'Entendi' }).click();
+    }
 }
 
 test.describe.serial('Mesário — torneio completo online e offline', () => {
@@ -325,7 +335,6 @@ test.describe.serial('Mesário — torneio completo online e offline', () => {
         const fixture = await criarChaveFixture(request);
         const pageErrors = [];
         const ariaWarnings = [];
-        page.on('dialog', async (dialog) => dialog.accept());
         page.on('pageerror', (error) => pageErrors.push(error.message));
         page.on('console', (message) => {
             if (/Blocked aria-hidden/i.test(message.text())) ariaWarnings.push(message.text());
@@ -553,8 +562,7 @@ test.describe.serial('Mesário — torneio completo online e offline', () => {
         expect(new Set(vencedoresSemisServidor)).toEqual(new Set(finalistasEsperados));
         expect(Number(porTag['MM:2:0:N'].equipe_vencedora_id)).toBe(campeaoOfflineEsperado);
         expect(porTag['MM:1:0:N']).toBeUndefined();
-        expect(dialogs.some((message) => /Campeão definido offline/i.test(message))).toBeTruthy();
-        expect(dialogs.some((message) => /erro|falha/i.test(message))).toBeFalsy();
+        expect(dialogs).toEqual([]);
         expect(pageErrors).toEqual([]);
         expect(ariaWarnings).toEqual([]);
 

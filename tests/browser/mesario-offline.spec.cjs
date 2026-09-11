@@ -215,7 +215,15 @@ test.describe('Mesário — fluxo visual completo offline', () => {
         // Finaliza 1x0 localmente: a UI muda imediatamente e a mesma mutação
         // fica na fila para o servidor, junto com início, placar e ocorrência.
         await page.locator('button.mc-action-btn--finish').click();
+        const confirmacao = page.locator('.sgi-feedback-modal').filter({ hasText: 'O placar final será gravado no sistema.' });
+        if (await confirmacao.count()) {
+            await expect(confirmacao).toBeVisible();
+            await confirmacao.getByRole('button', { name: 'Encerrar jogo' }).click();
+        }
         await expect(page.locator('#mc-status-badge')).toContainText('Encerrado');
+        const feedback = page.getByRole('dialog');
+        await expect(feedback).toContainText(/Jogo encerrado offline/i, { timeout: 10_000 });
+        await feedback.getByRole('button', { name: 'Entendi' }).click();
         await expect(page.locator('#sgi-offline-banner')).toContainText('alteracao', { timeout: 10_000 });
         await expect.poll(() => page.evaluate(() => window.SGIOffline.getState().pending), { timeout: 20_000 }).toBeGreaterThanOrEqual(4);
         await expect.poll(() => page.evaluate(async (id) => {
@@ -289,8 +297,7 @@ test.describe('Mesário — fluxo visual completo offline', () => {
             return response.json();
         }, fixture.idJogo);
         expect(ocorrenciasServidor.some((item) => /Registro visual offline/i.test(item.descricao_ocorrencia || ''))).toBeTruthy();
-        expect(dialogs.some((message) => /Jogo encerrado offline/i.test(message))).toBeTruthy();
-        expect(dialogs.some((message) => /erro|falha/i.test(message))).toBeFalsy();
+        expect(dialogs).toEqual([]);
         expect(pageErrors).toEqual([]);
 
         await capturarTela(page, testInfo, '06-sincronizado-online');
