@@ -94,7 +94,7 @@ $paginaAtiva = 'dashboard';
                                 Vermelho
                                 <input type="radio" name="tipo_ocorrencia" value="Vermelho" class="d-none">
                             </label>
-                            <label class="col btn btn-outline-suspensao ocorrencia-tipo-option d-flex align-items-center justify-content-center gap-1 w-100" data-tipo="Suspensao">
+                            <label class="col btn btn-outline-secondary ocorrencia-tipo-option d-flex align-items-center justify-content-center gap-1 w-100" data-tipo="Suspensao">
                                 <i class="bi bi-pause-circle-fill small" ></i>
                                 Suspensão
                                 <input type="radio" name="tipo_ocorrencia" value="Suspensao" class="d-none">
