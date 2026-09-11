@@ -352,6 +352,14 @@ test('bracket cards preserve domain states without decorative hover motion', () 
     assert.doesNotMatch(css, /\.bkt-match:hover\s*\{[^}]*transform|\.bkt-match--(?:concluido|bye):hover|\.bkt-team:hover\s*\{/);
 });
 
+test('student term modal uses Bootstrap presentation classes', () => {
+    const view = fs.readFileSync(path.join(root, 'resources', 'views', 'pages', 'aluno', 'home.php'), 'utf8');
+    const css = fs.readFileSync(path.join(root, 'resources', 'css', 'source', 'aluno-home.css'), 'utf8');
+    assert.match(view, /modal-content border-0 shadow/);
+    assert.match(view, /modal-header bg-primary text-white border-0/);
+    assert.doesNotMatch(css, /#modalTermo \.modal-(?:content|header)/);
+});
+
 test('offline banner uses Bootstrap utilities while keeping runtime hooks', () => {
     const offline = fs.readFileSync(path.join(root, 'resources', 'js', 'offline', 'offline-core.js'), 'utf8');
     const css = [

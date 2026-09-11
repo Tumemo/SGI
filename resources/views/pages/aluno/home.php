@@ -42,8 +42,8 @@ include SGI_ROOT . '/resources/views/components/aluno-nav.php';
 
 <div class="modal fade" id="modalTermo" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
-        <div class="modal-content">
-            <div class="modal-header">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header bg-primary text-white border-0">
                 <h5 class="modal-title fw-bold">
                     <i class="bi bi-file-earmark-text me-2"></i>Termo de Responsabilidade e Regulamento
                 </h5>
