@@ -1,37 +1,10 @@
 :root {
-  --sgi-red: #e30613;
-  --sgi-red-dark: #bb0812;
-  --sgi-red-active: #a00610;
   --sgi-sidebar-width: 5rem;
   --sgi-mobile-nav-height: 4rem;
-  --sgi-shadow-card: 0 0.125rem 0.5rem rgba(0, 0, 0, 0.06);
-  --sgi-shadow-elevated: 0 0.5rem 1.5rem rgba(0, 0, 0, 0.08);
-  --sgi-motion-duration: 0.2s;
 
   --aluno-primary: var(--bs-primary);
-  --aluno-primary-dark: var(--sgi-red-dark);
-  --aluno-primary-light: var(--bs-primary-bg-subtle);
-  --aluno-primary-subtle: var(--bs-primary-bg-subtle);
-  --aluno-primary-soft: var(--bs-primary-bg-subtle);
-  --aluno-success: var(--bs-success);
-  --aluno-warning: var(--bs-warning);
-  --aluno-info: var(--bs-info);
-  --aluno-bg: var(--bs-body-bg);
-  --aluno-surface: var(--bs-body-bg);
-  --aluno-border: var(--bs-border-color);
-  --aluno-text: var(--bs-body-color);
-  --aluno-text-secondary: var(--bs-secondary-color);
-  --aluno-text-muted: var(--bs-tertiary-color);
-  --aluno-radius-sm: 8px;
-  --aluno-radius-md: 12px;
   --aluno-radius-lg: 16px;
   --aluno-radius-xl: 24px;
-  --aluno-radius: 16px;
-  --aluno-shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.06);
-  --aluno-shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
-  --aluno-shadow-hover: 0 12px 28px rgba(0, 0, 0, 0.15);
-  --aluno-shadow: 0 6px 20px rgba(30, 30, 60, 0.08);
-  --aluno-transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 body {
@@ -48,19 +21,6 @@ body {
   min-height: var(--sgi-mobile-nav-height);
   z-index: 1040;
   padding-bottom: env(safe-area-inset-bottom);
-}
-
-.main-desktop-layout,
-.sgi-main,
-main.aluno-page,
-main.jogos-layout,
-main.modalidade-layout {
-  animation: sgi-page-fade-in 0.3s ease;
-}
-
-@keyframes sgi-page-fade-in {
-  from { opacity: 0; transform: translateY(6px); }
-  to { opacity: 1; transform: translateY(0); }
 }
 
 .sidebar-nav {

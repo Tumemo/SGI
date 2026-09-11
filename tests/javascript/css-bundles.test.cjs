@@ -360,6 +360,16 @@ test('student term modal uses Bootstrap presentation classes', () => {
     assert.doesNotMatch(css, /#modalTermo \.modal-(?:content|header)/);
 });
 
+test('shared shell keeps layout tokens without decorative page motion', () => {
+    const shared = fs.readFileSync(path.join(root, 'resources', 'scss', 'shared.scss'), 'utf8');
+    assert.match(shared, /--sgi-sidebar-width:/);
+    assert.match(shared, /--sgi-mobile-nav-height:/);
+    assert.match(shared, /--aluno-primary:\s+var\(--bs-primary\)/);
+    assert.doesNotMatch(shared, /@keyframes\s+sgi-page-fade-in|animation:\s*sgi-page-fade-in/);
+    assert.doesNotMatch(shared, /--sgi-(?:red(?:-dark|-active)?|shadow-(?:card|elevated)|motion-duration)\s*:/);
+    assert.doesNotMatch(shared, /--aluno-(?:primary-(?:dark|light|subtle|soft)|success|warning|info|(?:bg|surface|border|text(?:-secondary|-muted)?)|radius-(?:sm|md)|radius|shadow(?:-(?:sm|md|hover))?|transition)\s*:/);
+});
+
 test('offline banner uses Bootstrap utilities while keeping runtime hooks', () => {
     const offline = fs.readFileSync(path.join(root, 'resources', 'js', 'offline', 'offline-core.js'), 'utf8');
     const css = [
