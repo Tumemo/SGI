@@ -1,107 +1,248 @@
-# Guia de Arquitetura e Engenharia do SGI (Sistema de Gestão de Interclasses)
+# Guia de engenharia do SGI
 
-Este documento foi elaborado para orientar **Agentes de IA** e **Desenvolvedores** na manutenção, extensão e operação do ecossistema SGI.
+Este arquivo orienta agentes de IA e desenvolvedores na manutenção e evolução do Sistema de Gestão de Interclasses do SESI. Aplica-se a todo o repositório.
 
----
+Para instalar e explorar a aplicação, siga o [README](README.md). Consulte também [arquitetura](docs/architecture.md), [testes](docs/testing.md) e [implantação e recuperação](docs/deployment.md). Ao alterar um fluxo, confira sua implementação, rotas, migrações e testes atuais; exemplos históricos na documentação não substituem esses contratos.
 
-## 1. Visão Geral da Aplicação
+## 1. Contexto e mapa do código
 
-O **SGI (Sistema de Gestão de Interclasses)** é uma aplicação web monolítica em **PHP / Vanilla JavaScript** desenvolvida para gerenciar competições esportivas e culturais escolares (Interclasses) no SESI.
+O SGI é uma aplicação web monolítica modular em PHP 8.2+ com MySQLi e MySQL/MariaDB, HTML, CSS e JavaScript sem framework de frontend. Gerencia edições, participantes, competições, resultados, arrecadações e disciplina. O mesário opera offline depois de preparar a sessão e os dados no navegador.
 
-### Principais Funcionalidades:
-- **Gestão de Edições (Interclasses):** Criação e alternância de edições anuais com geração automática de turmas, modalidades e equipes padrão.
-- **Importação de Alunos via PDF:** Extração automática de dados de alunos (Nome, RM/RA, Data de Nascimento e Gênero) a partir de listas em PDF e distribuição em turmas.
-- **Inscrição de Competidores:** Painel para alunos escolherem suas modalidades esportivas (com validação de regras de gênero, limites e categorias).
-- **Chaveamento e Mata-Mata:** Gerador e visualizador interativo de chaves com suporte a modalidades individuais e mata-mata.
-- **Placar e Operação Offline (Mesário):** Operação de partidas em tempo real (cronômetro, gols, cartões, ocorrências e avanço de chaves) funcionando offline via IndexedDB e casca SPA previamente preparada, com sincronização bidirecional na reconexão.
-- **Ranking Geral e Arrecadações:** Pontuação de turmas por pódios esportivos, arrecadação de alimentos e desconto automático por ocorrências disciplinares.
+| Local | Responsabilidade |
+| --- | --- |
+| `public/index.php` | Única entrada HTTP; o servidor publica somente `public/`. |
+| `bootstrap/autoload.php` e `bootstrap/app.php` | Autoload, ambiente e composição da aplicação. |
+| `config/routes.php` | Rotas `/api/v1` e composição explícita das dependências. |
+| `config/routes/web.php` | Rotas das páginas. |
+| `src/Modules/` | Módulos `Acesso`, `Eventos`, `Participantes`, `Competicoes`, `Resultados`, `Disciplina` e `Sincronizacao`. |
+| `src/Shared/` | Infraestrutura e contratos compartilhados de HTTP, configuração, transações e armazenamento. |
+| `resources/views/` | Templates e componentes privados. |
+| `resources/js/`, `resources/css/`, `resources/images/` | Fontes dos assets. |
+| `public/assets/` | Saída gerada pelo build, não versionada. |
+| `database/migrations/` | Esquema e evolução versionada do banco. |
+| `database/seeders/` | Fixtures exclusivos de testes. |
+| `storage/` | Sessões, uploads e importações, fora da raiz pública. |
+| `tests/` e `tools/` | Testes, build e executores de validação. |
 
----
+Não recrie o módulo genérico `Interclasses` nem endpoints PHP procedurais. O nome da URL não determina o módulo: `/api/v1/resultados`, por exemplo, é atendido por `Competicoes/Presentation/Http/ResultadoController`, enquanto ranking e pontuação geral pertencem a `Resultados`.
 
-## 2. Níveis de Acesso e Permissões (`nivel_usuario`)
+## 2. Novas implementações e fronteiras entre camadas
 
-| Nível | Papel | Descrição e Permissões |
-| :---: | :--- | :--- |
-| **`0`** | **Administrador** | Acesso total. Cria edições, gerencia usuários, configura pontuações, turmas, locais e modalidades, além de visualizar todos os relatórios. |
-| **`1`** | **Colaborador** | Acesso operacional. Lança pontuações, agenda jogos, gerencia ocorrências e visualiza ranking e chaveamento. Não pode excluir edições ou resetar credenciais mestras. |
-| **`2`** | **Mesário** | Operador de campo/quadra. Executa em Single Page Application com cache local. Opera exclusivamente sobre a edição **ativa**, controlando cronômetro, placar, artilharia, ocorrências e avanço de chaves (online e offline). |
-| **`3`** | **Competidor / Aluno** | Acesso restrito via RM/RA e senha. Aceita termos de participação, visualiza agenda de jogos, histórico da sua turma e se inscreve em até 3 modalidades. |
+- **Domain:** regras e contratos de negócio.
+- **Application:** casos de uso que coordenam regras, repositórios e contratos de transação.
+- **Infrastructure:** SQL, persistência, arquivos e implementações dos contratos.
+- **Presentation/Http:** adaptação de requisições, autorização e respostas; sem SQL ou transações diretas.
 
----
+`Domain` e `Application` não acessam superglobais HTTP/sessão, MySQLi, `ConnectionFactory` ou classes de apresentação/infraestrutura. Para transações coordenadas por um serviço, use `TransactionRunner`, implementado por `MysqliTransactionRunner`; não abra transações SQL no serviço.
 
-## 3. Arquitetura do Banco de Dados (MySQL)
+Componha as dependências em `config/routes.php`. Entre módulos, prefira contratos e serviços públicos existentes; não importe implementações concretas de outro módulo em controladores. As exceções atuais verificadas em `tests/Unit/Architecture/` não autorizam ampliar o acoplamento em código novo. Evite criar abstrações sem necessidade do caso de uso.
 
-### Tabelas Principais:
-1. `interclasses`: Edições do evento (`id_interclasse`, `nome_interclasse`, `ano_interclasse`, `status_interclasse`, `ponto_1_lugar`, `ponto_2_lugar`, `ponto_3_lugar`, `valor_item_arrecadacao`).
-2. `categorias`: Segmentação escolar (`id_categoria`, `nome_categoria`, `interclasses_id_interclasse`). Ex: Categoria I (6º ao 8º) e Categoria II (9º ao 3º Médio).
-3. `turmas`: Turmas escolares (`id_turma`, `nome_turma`, `turno_turma`, `pontuacao_turma`, `qtd_itens_arrecadados`).
-4. `modalidades`: Esportes/provas (`id_modalidade`, `nome_modalidade`, `genero_modalidade`, `max_inscrito_modalidade`, `max_equipes`, `tipos_modalidades_id_tipo_modalidade`).
-5. `equipes`: Vínculo turma x modalidade (`id_equipe`, `nome_equipe`, `modalidades_id_modalidade`, `turmas_id_turma`).
-6. `usuarios`: Contas de acesso (`id_usuario`, `matricula_usuario`, `senha_usuario`, `nivel_usuario`, `turmas_id_turma`, `interclasses_id_interclasse`, `chave_usuario_edicao`).
-7. `equipes_has_usuarios`: Inscrição de competidores nas equipes (`equipes_id_equipe`, `usuarios_id_usuario`).
-8. `jogos`: Partidas agendadas e ao vivo (`id_jogo`, `nome_jogo`, `data_jogo`, `inicio_jogo`, `termino_jogo`, `status_jogo`, `duracao_jogo`, `tempo_restante_jogo`, `tempo_extra_jogo`).
-9. `partidas`: Times participantes em cada jogo e placar (`id_partida`, `jogos_id_jogo`, `equipes_id_equipe`, `resultado_partida`).
-10. `artilheiros`: Registro de gols e pontuadores individuais (`id_artilheiro`, `usuarios_id_usuario`, `jogos_id_jogo`, `num_gol`).
-11. `ocorrencias`: Ocorrências disciplinares individuais com perda de pontos.
-12. `ocorrencias_turmas`: Ocorrências disciplinares atribuídas diretamente à turma.
-13. `historico_arrecadacoes`: Registro detalhado de doações e arrecadação de itens por turma.
-14. `tipos_modalidades`: 'Mata-Mata' ou 'Individual'.
-15. `locais`: Quadras, campos e salas (`id_local`, `nome_local`, `disponivel_local`, `carga_local`).
+Normalize e valide entradas antes de persistir; mantenha também as restrições necessárias no banco. Use consultas preparadas para valores externos e listas permitidas para identificadores SQL dinâmicos. Preserve a atomicidade de operações que alteram mais de uma entidade, incluindo resultado, avanço de chaveamento e pontuação. Transações aninhadas usam a infraestrutura existente com savepoints.
 
----
+Ao corrigir um defeito, cubra o comportamento que falhava com um teste de regressão na camada adequada. Uma mudança de caso de uso deve ter cobertura unitária; alterações no contrato público exigem teste HTTP. Não enfraqueça validações, regras de arquitetura ou asserções para fazer a suíte passar.
 
-## 4. Arquitetura do Modo Offline (Perfil Mesário)
+## 3. Permissões, sessão e segurança
 
-O subsistema offline está localizado em `resources/js/offline/` e opera em conjunto com `/api/v1/resultados` e a página atual de placar (template em `resources/views/pages/competicoes/placar.php`):
+| `nivel_usuario` | Perfil | Escopo |
+| --- | --- | --- |
+| `0` | Administrador | Gestão completa, incluindo edições, usuários e configurações. |
+| `1` | Colaborador | Operação administrativa conforme a autorização de cada rota; sem os privilégios exclusivos do administrador. |
+| `2` | Mesário | Operação de partidas exclusivamente na edição ativa, online e offline após preparo. |
+| `3` | Aluno | Acesso por matrícula, termos, agenda e inscrições em até três modalidades, respeitando as regras da edição. |
 
-1. **`offline-core.js`:**
-   - Intercepta chamadas de rede (`fetch`, `XMLHttpRequest`, `axios`).
-   - Se offline ou em falha de conexão ("soft-offline"), enfileira mutações POST/PUT/DELETE no IndexedDB (`fila_sincronizacao`).
-   - Monitora eventos `window.addEventListener('online', ...)` e dispara `syncQueue()` para descarregar a fila automaticamente.
+A tabela resume os papéis; a permissão concreta deve ser verificada no código e testada no servidor.
 
-2. **`mesario-data.js`:**
-   - Banco de dados local IndexedDB (`sgi_mesario_dados`) contendo stores para `jogos`, `partidas`, `turmas`, `modalidades`, `categorias`, `locais`, `atletas`, `ocorrencias`, `ocorrencias_turmas` e `chaveamentos`.
-   - Projeta alterações otimistas imediatamente na UI para garantir fluidez.
+- Reutilize `AccessGuard`, `CompetitionAccess`, as políticas de edição e os middlewares existentes. Valide também a edição e o vínculo do recurso solicitado; esconder um botão não protege uma API.
+- Preserve a revalidação de sessão por `SessionRevalidator` e o mecanismo `auth_version` ao alterar usuários, senhas ou permissões. Não confie apenas no nível enviado pelo cliente ou em uma sessão antiga.
+- Mutações devem respeitar `CsrfGuard`; não crie exceção de CSRF para testes. Os testes obtêm tokens pelo mesmo fluxo da aplicação.
+- Use `password_hash($senha, PASSWORD_DEFAULT)` e `password_verify`. O primeiro administrador é criado por `php bin/sgi.php admin:create`; credenciais de fixtures não pertencem às migrações nem à instalação normal.
+- Use `Request` e `Response` e mantenha respostas JSON coerentes com o contrato do cliente. Falhas internas devem ir para o log, sem expor SQL, credenciais ou caminhos locais.
+- Escape dados ao renderizar HTML e serialize configurações de página como JSON seguro. Não coloque SQL nem programas JavaScript inline em templates.
+- Resolva arquivos persistentes por `StoragePaths`. Valide tipo/conteúdo e destino de uploads, além de autorização e vínculo com a edição, antes de salvar. Preserve as proteções e a serialização da importação PDF.
+- Não versione `.env`, senhas, uploads ou dados pessoais. Variáveis do processo têm prioridade sobre `.env`; confira o ambiente antes de executar comandos de banco.
 
-3. **`mesario-offline.js`:**
-   - SPA Shell para Mesário: pré-carrega as páginas HTML e scripts no login (`preload`).
-   - Reidrata as telas pelo cache versionado atual, reinicializando os scripts publicados sem interpretar ou executar o formato legado de scripts serializados.
+## 4. Banco e regras que precisam ser preservadas
 
-4. **`chaveamento-engine.js`:**
-   - Motor híbrido em JavaScript: quando um jogo é concluído offline, `promoverVencedorLocal(idJogo)` avança o vencedor para a próxima fase localmente, gerando partidas derivadas com IDs temporários negativos (`id_jogo < 0`).
+O esquema completo resulta de **todas** as migrações em `database/migrations/`, não apenas de `001_initial_schema.sql`. Consulte as migrações e os repositórios antes de assumir nomes de colunas, relações ou valores de status.
 
-5. **`api/lancar_resultado.php`:**
-   - Recebe as mutações sincronizadas.
-   - Quando `$idJogo <= 0` (partida gerada offline), resolve o jogo real criado no MySQL utilizando a tag mata-mata (`nome_jogo`, ex.: `MM:2:0:N`) ou as equipes participantes, aplicando o placar e avançando o chaveamento no servidor.
+As entidades centrais são `interclasses`, `categorias`, `turmas`, `modalidades`, `equipes`, `usuarios`, `equipes_has_usuarios`, `jogos`, `partidas`, `artilheiros`, `ocorrencias`, `ocorrencias_turmas`, `historico_arrecadacoes`, `tipos_modalidades` e `locais`. Há também vínculos de participação/termos, registros de pontuação e controle de sincronização; esta lista não é um inventário exaustivo.
 
----
+- Matrículas de alunos usam a unicidade por edição `uk_matricula_interclasse` (`matricula_usuario`, `interclasses_id_interclasse`). Não imponha unicidade global que impeça participação em anos diferentes.
+- Penalidades são armazenadas como magnitudes não negativas; o ranking aplica o desconto uma vez. Preserve as restrições introduzidas em `009_occurrence_penalty_invariant.sql`.
+- Jogos novos usam `exige_vinculo_ponto=1`: preserve a vinculação dos pontos individuais, a chave da jogada, autoria e anulação, e a consistência com o placar. O histórico anterior recebe tratamento explícito em `010_vinculo_obrigatorio_pontos.sql`; não desative a regra dos jogos novos para aceitar um resultado inconsistente.
+- Ao alterar ranking ou acesso às edições, considere também os campos de publicação do ranking e as políticas de acesso atuais. Não deduza visibilidade apenas pelo status da edição.
+- Preserve as regras de capacidade de equipes, inscrição, gênero, categoria e agendamento nos serviços e nos testes correspondentes.
+- Nunca adicione trigger que atualize a mesma tabela que disparou o evento (erro 1442 em MySQL/MariaDB).
 
-## 5. Convenções e Diretrizes para Modificações
+Migrações aplicadas são imutáveis: adicione uma nova migração numerada. `MigrationRunner` verifica checksum, trava e estado de aplicação incompleta. Não apague o marcador de falha para forçar uma repetição. DDL pode fazer commit implícito; não presuma rollback transacional de uma mudança de esquema.
 
-- **Compatibilidade MySQL / MariaDB:** Nunca adicione triggers que executem `UPDATE` na mesma tabela que disparou o evento (evita Erro 1442).
-- **Unicidade de Matrículas:** Alunos utilizam a chave composta `uk_matricula_interclasse` (`matricula_usuario`, `interclasses_id_interclasse`), permitindo que a mesma matrícula participe em anos diferentes.
-- **Senhas:** Sempre utilize `password_hash($senha, PASSWORD_DEFAULT)` e `password_verify($senha, $hash)`.
-- **Rotas:** APIs novas ficam em `/api/v1`; templates físicos ficam em `resources/views`. A migração das chamadas relativas ainda existentes está registrada em L04/L05 do plano de limpeza; use `SGI_ROOT` para includes e `Assets`/`Url` para novos links.
+Valide instalação vazia, atualização com dados existentes e repetição sem efeitos duplicados. Use os dois motores da matriz para alterações específicas de SQL. Backups e restauração de instalações reais seguem o guia de implantação; os dumps sintéticos de testes não substituem backup de produção.
 
----
+## 5. Offline e sincronização
 
-## 6. Testes Automatizados e Rede de Segurança
+O fluxo atual está em `resources/js/offline/` e usa a página `resources/views/pages/competicoes/placar.php` e as APIs versionadas.
 
-Antes e após qualquer refatoração, execute a suite completa de testes automatizados:
+| Componente | Responsabilidade atual |
+| --- | --- |
+| `offline-core.js` | Interceptação de rede, cache GET, fila de mutações e reenvio. Banco `sgi_offline`, stores `api_get_cache` e `mutation_queue`; coordenação entre abas em `sgi_offline_coord`. |
+| `mesario-data.js` | Projeções locais em `sgi_mesario_dados`, incluindo jogos, partidas, equipes, atletas, pontos, ocorrências e a projeção `fila_sincronizacao`. Essa store não é a fila principal de transporte. |
+| `mesario-offline.js` | Casca SPA previamente preparada; restaura páginas e reinicializa os scripts publicados no formato de cache atual. |
+| `chaveamento-engine.js` | Avanço local do mata-mata, com identificadores temporários negativos. |
+| `ResultadoController` e `ResultadoService` em `Competicoes` | Recepção e validação de resultados em `/api/v1/resultados`. A composição usa `MysqliPartidaGateway`, `MysqliPontoRepository`, o contrato de transação e o serviço de pontuação. |
+| `MutationAction` e `MysqliMutationStore` em `Sincronizacao` | Identidade, serialização de reenvios e confirmação da mutação junto com os dados. |
 
-```bash
-# Executar a suíte HTTP em servidor e banco isolados (docs/testing.md):
-php tests/run_all.php
+Para evoluir esse fluxo:
 
-# Dados de demonstração apenas no mesmo ambiente de teste:
-php tests/seed_interclasse_demo.php
+- Preserve os identificadores da mutação nos reenvios, a ordem/dependências da fila e o isolamento por operador/sessão. A mesma chave com outro conteúdo ou operador deve ser recusada.
+- Preserve a confirmação atômica entre alteração de dados e registro de idempotência. Reenviar a mesma operação não pode duplicar pontos, ocorrências ou avanço de fase.
+- Atualize o token CSRF da sessão ao reenviar; não transporte credenciais antigas em exportações da fila.
+- Só remova operações após confirmação de sucesso reconhecida pelo protocolo. HTTP 200 com HTML, JSON inválido ou resultado de erro não é confirmação. Operações recusadas permanecem disponíveis para revisão.
+- Resolva jogos temporários pela lógica existente, incluindo modalidade, edição, tag do chaveamento e participantes; não escolha arbitrariamente um jogo quando a resolução for ambígua.
+- Preserve o schema e dados offline enquanto houver operações pendentes. Uma mudança de versão exige estratégia explícita de migração/recuperação e testes; limpar IndexedDB não é uma correção aceitável para perda de sincronização.
+- A entrega não exige recriar APIs procedurais de versões anteriores. Isso não permite remover os aliases/formatos que ainda são necessários para filas persistidas e cobertos pelos testes atuais.
+
+Não há Service Worker. Login e preparação exigem conexão; refresh, nova aba ou abertura fria sem rede não são fluxos suportados. Teste na mesma aba preparada. Para um servidor em `127.0.0.1`, use Offline no DevTools/Playwright: desligar o Wi-Fi não interrompe o loopback.
+
+## 6. Frontend, URLs e ciclo de vida
+
+Edite as fontes em `resources/` e execute `npm run build`. Não edite a saída `public/assets/` nem dependa de CDN para os recursos necessários offline. Preserve os lockfiles e o build reproduzível; atualize dependências deliberadamente, sem executar atualizações gerais como parte de uma correção não relacionada.
+
+Use `Assets`/`Url` para URLs e `SGI_ROOT` para includes. Novas APIs ficam em `/api/v1`; não crie chamadas relativas a arquivos PHP físicos nem links fixos em `/SGI`. Confira raiz e subdiretório quando alterar roteamento ou geração de URLs.
+
+Siga `resources/js/shared/page-runtime.js` e os utilitários compartilhados. Inicialização e reativação de página devem evitar duplicar listeners, timers, requisições periódicas e ações de modais. Ao sair da página, libere os recursos correspondentes. Verifique navegação normal e reentrada pela casca offline.
+
+## 7. Testes e critérios de entrega
+
+Antes e depois de refatorações, execute a suíte completa em ambiente isolado. Para mudanças funcionais, adicione a cobertura adequada e execute as verificações de qualidade e as suítes afetadas; antes da entrega de uma implementação, valide também integração e navegador. Alterações exclusivamente documentais exigem conferir caminhos, links e comandos com o código, além de `git diff --check`; não exigem recriar o banco ou executar toda a aplicação.
+
+### Preparação e execução recomendada
+
+O [README](README.md) explica a instalação das ferramentas. Na raiz do projeto:
+
+```powershell
+composer install
+npm ci --ignore-scripts
+npm ci --prefix tests/browser
+npx --prefix tests/browser playwright install chromium
 ```
 
-## 7. Estrutura após a refatoração
+No Windows, use o executor que prepara banco exclusivo, servidor, sessões e uploads de teste:
 
-- A aplicação inicia em `bootstrap/app.php`; `public/index.php` contém somente a entrada HTTP e o tratamento final de falhas.
-- Os módulos são Acesso, Eventos, Participantes, Competicoes, Resultados, Disciplina e Sincronizacao. Não recrie o módulo genérico Interclasses.
-- Edite JavaScript, CSS e imagens em `resources/`; execute `npm run build` para preparar `public/assets/`.
-- Execute também `composer verify`, `npm run check`, `npm test` e `npm --prefix tests/browser test`. O guia completo está em `docs/testing.md`.
-- Migrações aplicadas não devem ser reescritas. Adicione uma nova em `database/migrations/` e teste atualização e repetição.
-- Preserve os identificadores das mutações e o schema offline atual enquanto houver dados pendentes no cliente. A versão entregue não precisa manter contratos de versões anteriores da aplicação.
+```powershell
+powershell -ExecutionPolicy Bypass -File tools/test-local.ps1 -Suite all -DatabaseBackend local
+```
+
+Configure `SGI_TEST_DB_HOST`, `SGI_TEST_DB_PORT`, `SGI_TEST_DB_USER` e `SGI_TEST_DB_PASSWORD` **no terminal**, ou passe os parâmetros equivalentes. O script não importa as credenciais do `.env` de trabalho. O usuário SQL precisa criar/remover bases de teste e o ensaio de recuperação precisa de `mysql`/`mysqldump`. Use `-PhpPath` ou `SGI_PHP_PATH` para selecionar o PHP.
+
+Para executar somente qualidade, sem banco/servidor:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File tools/test-local.ps1 -Suite quality
+```
+
+O perfil `all` inclui `composer verify`, build, `npm run check`, `npm test`, `php tests/run_all.php` e testes de navegador. `composer verify` reúne PHPUnit, lint PHP, PHPStan e verificação de estilo. O contrato visual é adicional: use `-IncludeVisual` quando alterar aparência/layout. O executor também oferece os perfis `integration`, `browser` e `visual`.
+
+Alternativa descartável com Docker/Compose em execução:
+
+```powershell
+powershell -File tools/test-docker.ps1 -Database mariadb
+```
+
+No Linux/macOS: `sh tools/test-docker.sh --database mariadb`. Para MySQL, use `-Database mysql`/`--database mysql`. Para visual, acrescente `-IncludeVisual`/`--include-visual`. O backend `docker` do executor local disponibiliza apenas o banco em container; o executor `test-docker` disponibiliza também as ferramentas de execução.
+
+### Isolamento obrigatório
+
+- Nunca rode resets ou seeds em uma base de trabalho/produção. Não desative `TestDatabaseSafety` nem a conferência da base pela saúde HTTP.
+- Não execute `php tests/run_all.php`, `php tests/seed_interclasse_demo.php` ou `npm --prefix tests/browser test` isoladamente sem o preparo descrito em [testes](docs/testing.md). O seed de demonstração não é uma etapa obrigatória após a suíte.
+- Não execute duas suítes que alteram banco simultaneamente no mesmo checkout. Preserve o lock do executor e os nomes exclusivos das bases auxiliares.
+- Não use a base de desenvolvimento em `8080` para os testes HTTP. O executor inicia seu próprio servidor e usa dados sintéticos.
+
+### Escolher cobertura e registrar evidências
+
+| Alteração | Cobertura relevante |
+| --- | --- |
+| Regras/casos de uso | `tests/Unit/`, com entradas válidas, inválidas e limites. |
+| APIs, autorização ou edição | Integração HTTP: sucesso, acesso negado, CSRF, recurso de outra edição e persistência. |
+| SQL, migração ou transação | Instalação, atualização, repetição, rollback de dados e recuperação; concorrência quando houver disputa/reenvio. |
+| Placar, pontos ou chaveamento | Regras, contrato HTTP e fluxo completo no navegador; consistência entre eventos, resultado e avanço. |
+| Fila/offline | Testes JavaScript e Playwright com IndexedDB real, reenvio, reconexão, erros de confirmação, IDs temporários e isolamento. |
+| Página, modal ou navegação | Testes de ciclo de vida e navegador; contrato visual quando a aparência mudar. |
+
+Consulte `tests/browser/offline-queue-regression.spec.cjs` para regressões da fila e os testes de arquitetura em `tests/Unit/Architecture/` para fronteiras entre camadas. Testes devem validar comportamento observável, sem depender de credenciais reais, dados pessoais, atrasos arbitrários ou IDs não preparados pelo cenário. Só atualize snapshots após inspecionar a mudança visual intencional; preserve referências por plataforma.
+
+A matriz declarada em `.github/workflows/ci.yml` valida qualidade em PHP 8.2/8.4, integração/navegador em MySQL 8.4 e MariaDB 10.11 e contrato visual Linux. Referências Windows atendem à execução local Windows. Uma execução local não comprova os demais alvos nem uma execução remota do CI.
+
+Na entrega, informe o que mudou, quais comandos foram executados, seus resultados e limitações. Registre falhas preexistentes e pré-requisitos ausentes sem declarar aprovação. Revise `git diff --check` e o diff final, preserve alterações do usuário e atualize README/guias quando houver mudança de configuração, operação ou contrato.
+
+## 8. Obrigação de prevenir regressões
+
+Para toda implementação ou correção funcional, siga este ciclo:
+
+1. **Antes de editar**, identifique os contratos afetados e execute os testes existentes relevantes para registrar a situação inicial. Em refatorações, execute a suíte completa antes e depois.
+2. **Crie ou amplie testes automatizados junto com a mudança.** Uma funcionalidade nova precisa de cenários de sucesso, entradas inválidas e limites relevantes. Uma correção precisa de um teste que reproduza o defeito e falhe sem a correção, quando viável demonstrar isso sem desfazer alterações do usuário.
+3. Cubra também os comportamentos existentes que compartilham o fluxo alterado. Quando aplicável, inclua permissões, isolamento de edição, persistência, rollback, duplicidade/reenvio e operação online/offline. Use a tabela da seção 7 para escolher as camadas.
+4. Execute primeiro a regressão específica; depois, a suíte completa pelo perfil `all`. Inclua `-IncludeVisual` para alterações de aparência/layout e valide os motores SQL pertinentes quando alterar banco/migrações.
+5. Inspecione as falhas e corrija as introduzidas pela mudança. Não remova testes, não use skips, não relaxe asserções nem atualize snapshots apenas para obter uma execução verde. Uma alteração intencional de contrato deve atualizar os testes com justificativa e manter cobertura do restante do comportamento.
+6. Só declare a implementação validada depois de os testes exigidos passarem. Se houver impedimento de ambiente ou falha preexistente, descreva exatamente o que foi e não foi validado; não apresente uma execução parcial como suíte completa aprovada.
+
+Testes novos devem verificar resultados observáveis e ser descobertos pelos executores existentes. Não deixe a regressão apenas em um script avulso ou em um teste manual. Build, lint e análise estática não substituem testes de comportamento; teste unitário não substitui integração HTTP/banco ou navegador quando essas fronteiras mudam. Evite testes que apenas repitam a implementação sem detectar uma quebra real.
+
+A exceção para alterações exclusivamente documentais continua sendo a da seção 7. Não é necessário criar testes artificiais para texto, mas comandos e instruções devem ser conferidos contra os scripts reais.
+
+## 9. Quando for solicitado subir o projeto para testes
+
+Pedidos como “suba o projeto”, “rode localmente” ou “deixe disponível para eu testar” devem resultar em uma aplicação acessível e verificada, quando os pré-requisitos estiverem disponíveis. Execute o preparo necessário e informe a URL; não responda apenas com instruções. Use o contexto para distinguir exploração manual de execução da suíte automatizada.
+
+### Aplicação local para exploração manual
+
+1. Confira a pasta do projeto, PHP/extensões, Composer, Node, dependências, `.env`, banco e portas disponíveis. Preserve a configuração existente e os dados do usuário. Se já houver um servidor deste projeto, confira se atende à solicitação antes de iniciar outro.
+2. Em instalação nova, siga o README: `composer install`, `npm ci --ignore-scripts`, `npm run build`, configuração de uma base local vazia e `php bin/sgi.php migrate`. Em instalação existente, verifique a necessidade e o impacto de migrações; não resete a base nem execute fixtures sobre dados de trabalho. Não reinstale dependências sem necessidade, mas regenere os assets se as fontes mudaram.
+3. Confira `SGI_APP_URL=http://127.0.0.1:8080/` e `SGI_BASE_PATH` vazio para o exemplo na raiz. Se usar outra porta ou subdiretório, mantenha configuração e URL coerentes. Não sobrescreva `.env` com `.env.example` quando já existir.
+4. Inicie o servidor na raiz do projeto:
+
+   ```powershell
+   php -S 127.0.0.1:8080 -t public public/index.php
+   ```
+
+5. Para deixá-lo disponível depois da resposta, mantenha um processo de servidor persistente. Se usar `Start-Process` no Windows, use `-WindowStyle Hidden`, diretório de trabalho explícito e redirecione stdout/stderr para arquivos distintos em `test-results/`. Registre o PID e os caminhos dos logs. Não encerre outros processos para liberar uma porta; escolha outra porta livre.
+6. Verifique por HTTP que a página de login responde e que CSS/JavaScript são servidos. Quando houver credenciais de teste disponíveis e o pedido incluir validação funcional, confira também login e a tela relevante; uma página de login carregada não comprova acesso ao banco ou funcionamento completo.
+7. Entregue a URL clicável, o que foi verificado, como acessar com a conta local e como encerrar o processo criado. Não afirme que `admin`/`123` funciona na base normal. Se faltar o primeiro administrador, use o procedimento `admin:create` do README, sem redefinir contas existentes nem expor senhas nos logs.
+
+Não publique o servidor na rede externa para atender a um pedido de teste local: use `127.0.0.1`. Não limpe IndexedDB nem filas pendentes para preparar o navegador. Se faltar um pré-requisito, informe qual é e o erro observado; não declare o servidor disponível sem verificar a resposta HTTP.
+
+### Executar testes automatizados e encerrar
+
+Use o perfil `all` da seção 7. Esse executor prepara recursos isolados e encerra o servidor no final; não serve para deixar a aplicação aberta para exploração posterior. No executor local, `-Keep` preserva a base/container para investigação, mas o servidor HTTP ainda é encerrado no bloco de limpeza.
+
+### Deixar uma base de demonstração isolada acessível
+
+Quando o pedido exigir dados prontos para testar manualmente, use o fluxo manual de [testes](docs/testing.md), com banco descartável e servidor próprios. Confirme que o nome escolhido não corresponde a uma base de trabalho ou a outra sessão em uso.
+
+Configure **nos dois terminais**, ajustando as credenciais ao banco local:
+
+```powershell
+$env:SGI_DB_HOST = '127.0.0.1'
+$env:SGI_DB_PORT = '3306'
+$env:SGI_DB_USER = 'root'
+$env:SGI_DB_PASSWORD = ''
+$env:SGI_TEST_DB_NAME = 'sgi_test_manual'
+$env:SGI_TEST_BASE_URL = 'http://127.0.0.1:8099'
+$env:SGI_APP_URL = 'http://127.0.0.1:8099/'
+$env:SGI_BASE_PATH = ''
+```
+
+No terminal do servidor, execute e mantenha o processo ativo:
+
+```powershell
+powershell -File tools/start-test-server.ps1 -Database sgi_test_manual -Port 8099
+```
+
+O script usa o PHP do XAMPP por padrão; passe `-PhpPath` com o caminho correto quando necessário. Antes de iniciar, prepare as dependências e execute `npm run build`. No segundo terminal, prepare e valide a base isolada:
+
+```powershell
+php tests/run_all.php
+```
+
+Esse comando recria a base de teste e carrega os fixtures; não o execute sobre uma sessão cujos dados manuais precisam ser preservados. Verifique o resultado da suíte e o acesso HTTP antes de entregar [http://127.0.0.1:8099/](http://127.0.0.1:8099/). As contas dos fixtures estão no README. Não acrescente o seed de demonstração automaticamente após a suíte; use-o apenas se o cenário solicitado exigir esse preparo adicional, sempre na mesma base isolada.
+
+Mantenha o servidor disponível enquanto o usuário testa, registre como encerrá-lo e não remova a base ao entregar a URL. Para limpar depois, confirme a identidade dos recursos criados nesta execução e preserve tudo o que não pertence a ela. A exploração manual não substitui o ciclo de regressão automatizado da seção 8.
