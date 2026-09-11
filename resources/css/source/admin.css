@@ -1,71 +1,3 @@
-/* ==========================================================================
-   SGI - Folha de Estilos Principal
-   ==========================================================================
-   
-   SUMÁRIO
-   -------
-   1.  Importações e Fontes
-   2.  Reset e Estilos Globais
-   3.  Variáveis CSS (Custom Properties)
-   4.  Sobrescrições do Bootstrap
-   5.  Layout Geral (Desktop)
-   6.  Navbar / Navegação
-   7.  Dashboard (dashboard.php)
-   8.  Home (home.php)
-   9.  Categorias (categorias.php / edicao_categorias.php)
-   10. Locais (edicao_locais.php)
-   11. Colaboradores (colaboradores.php)
-   12. Agenda (agenda.php / edicao_agenda.php)
-   13. Jogos (jogos.php)
-   14. Chaveamento (chaveamento_arvore.php / pontuacao.php)
-   15. Pontuações (pontuacoes.php / edicao_pontuacao.php)
-   16. Ranking (ranking.php)
-   17. Ranking Individual (individual_ranking.php)
-   18. Perfil (perfil.php) — Full-width Dashboard
-   ========================================================================== */
-
-
-/* ==========================================================================
-   1. IMPORTAÇÕES E FONTES
-   ========================================================================== */
-
-/* Bootstrap supplies Reboot, typography and component states. This file is
-   limited to administrative and mesário components. */
-
-
-
-/* ==========================================================================
-   3. VARIÁVEIS CSS (CUSTOM PROPERTIES)
-   ========================================================================== */
-
-/* ==========================================================================
-   2. LAYOUT GERAL (DESKTOP)
-   ========================================================================== */
-
-/* ==========================================================================
-   6. NAVBAR / NAVEGAÇÃO (componentes/nav.php)
-   ========================================================================== */
-
-/* ==========================================================================
-   7. DASHBOARD (dashboard.php)
-   ========================================================================== */
-
-/* ==========================================================================
-   8. HOME (home.php)
-   ========================================================================== */
-
-/* ==========================================================================
-   9. CATEGORIAS (categorias.php / edicao_categorias.php)
-   ========================================================================== */
-
-/* ==========================================================================
-   10. LOCAIS (edicao_locais.php)
-   ========================================================================== */
-
-/* ==========================================================================
-   11. PLACAR (placar.php)
-   ========================================================================== */
-
 /* O histórico de jogos tem muitas colunas. Em telas estreitas, mantenha a
    leitura das células e concentre o overflow no contêiner horizontal. */
 #secaoJogos .table-responsive,
@@ -74,7 +6,6 @@
     overscroll-behavior-inline: contain;
     -webkit-overflow-scrolling: touch;
 }
-
 #secaoJogos .table,
 #secaoJogosMob .table {
     min-width: 980px;
@@ -89,17 +20,7 @@
 }
 
 /* ==========================================================================
-   12. RANKING (ranking.php)
-   ========================================================================== */
-
-/* ── Layout ─────────────────────────────────────────────────────────────── */
-
-/* ==========================================================================
-   17. RANKING INDIVIDUAL (individual_ranking.php)
-   ========================================================================== */
-
-/* ==========================================================================
-   19. PERFIL (perfil.php) — Full-width Dashboard
+   PERFIL (perfil.php)
    ========================================================================== */
 
 /* Bootstrap supplies the avatar treatment; only the domain-specific size remains. */
@@ -114,29 +35,6 @@
         height: 130px;
     }
 }
-
-/* ==============================
-   Tablet / Desktop pequeno (< 992px)
-   ============================== */
-/* ==========================================================================
-   20. EQUIPES (edicao_equipes.php)
-   ========================================================================== */
-
-/* ==========================================================================
-   21. MODALIDADES (edicao_modalidades.php)
-   ========================================================================== */
-
-/* ==========================================================================
-    22. LISTA DE JOGOS (jogos_lista.php)
-    ========================================================================== */
-
-/* ==========================================================================
-    23. TURMAS (turmas.php) - Cards Reformulados
-    ========================================================================== */
-
-/* ==========================================================================
-    23e. LOCAIS E REGULAMENTO (edicao_locais.php)
-    ========================================================================== */
 
 /* ==========================================================================
    SGI OFFLINE — Banner de status (modo offline / sincronização)
@@ -153,9 +51,8 @@ body.sgi-offline-active {
     padding-top: var(--sgi-offline-banner-height, 42px);
 }
 
-
 /* ==========================================================================
-   28. DESIGN SYSTEM ALUNO — EQUIPES/ELENCO (elenco_equipe.php, equipe_alunos.php, edicao_equipes.php)
+   EQUIPES E ELENCO DO ALUNO (elenco_equipe.php, equipe_alunos.php, edicao_equipes.php)
    ========================================================================== */
 .aluno-card-view { display: none; }
 .aluno-card-view.active { display: block; }
@@ -163,7 +60,7 @@ body.sgi-offline-active {
 .aluno-card.equipes-aberta .aluno-voltar-btn { display: inline-flex; }
 
 /* ==========================================================================
-   29. CHAVEAMENTO — ÁRVORE DO TORNEIO (chaveamento_arvore.php)
+   CHAVEAMENTO — ÁRVORE DO TORNEIO (chaveamento_arvore.php)
    ========================================================================== */
 /* ── Modern Bracket Tree ── */
 .bracket-tree {
@@ -246,7 +143,6 @@ body.sgi-offline-active {
     opacity: 0;
 }
 .bkt-match:hover .bkt-match__actions,.bkt-match:focus-within .bkt-match__actions { opacity: 1; }
-/* ── Table ── */
 
 /* ── Responsive ── */
 @media (max-width: 991px) {
@@ -358,7 +254,7 @@ body.sgi-offline-active {
 .kvs__vazio { padding: 22px 10px; text-align: center; color: #9ca3af; font-size: .85rem; }
 
 /* ==========================================================================
-   20. NAVEGAÇÃO — NAV AVATAR E MOBILE NAV (componentes/nav.php)
+   NAVEGAÇÃO — AVATAR E NAVEGAÇÃO MÓVEL (componentes/nav.php)
    ========================================================================== */
 
 .mobile-nav .nav {
@@ -410,9 +306,8 @@ body.sgi-offline-active {
     height: 26px;
 }
 
-
 /* ==========================================================================
-   21. AGENDA — EDITOR DE AGENDA (edicao_agenda.php)
+   AGENDA — EDITOR DE AGENDA (edicao_agenda.php)
    ========================================================================== */
 
 /* ── Calendário: apenas a grade específica do domínio permanece própria. ── */
@@ -446,21 +341,8 @@ body.sgi-offline-active {
     .ag-mobile { padding-top: 5.5rem; padding-bottom: 5rem; }
 }
 
-
 /* ==========================================================================
-   22. COLABORADORES (colaboradores.php)
-   ========================================================================== */
-
-/* ==========================================================================
-   23. ARRECADAÇÕES (edicao_arrecadacao.php)
-   ========================================================================== */
-
-/* ==========================================================================
-   24. OCORRÊNCIAS (ocorrencias.php)
-   ========================================================================== */
-
-/* ==========================================================================
-   25. RANKING DETALHADO — HISTÓRICO DE TURMA (ranking.php staff)
+   RANKING DETALHADO — HISTÓRICO DE TURMA (ranking.php)
    ========================================================================== */
 
 @media print {
@@ -480,9 +362,8 @@ body.sgi-offline-active {
     }
 }
 
-
 /* ==========================================================================
-   26. CENTRO DE PARTIDA — MESÁRIO (jogos.php)
+   CENTRO DE PARTIDA — MESÁRIO (jogos.php)
    ========================================================================== */
 
 /* ==========================================================

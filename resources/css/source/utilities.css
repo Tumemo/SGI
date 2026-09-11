@@ -6,7 +6,7 @@
  * SGI, valores calculados pelos renderizadores e offsets da navegação fixa.
  */
 .sgi-u-w-max-content-maxw-96vw-top-85 {
-width: max-content;
+    width: max-content;
     max-width: 96vw;
     top: 85%;
     left: 50%;
@@ -14,17 +14,17 @@ width: max-content;
 }
 
 .sgi-u-bottom-40px-right-5-z-1050 {
-bottom: 40px;
+    bottom: 40px;
     right: 5%;
     z-index: 1050;
 }
 
 .sgi-u-cursor-pointer {
-cursor: pointer;
+    cursor: pointer;
 }
 
 .sgi-u-h-60px-w-60px-bottom-100px {
-height: 60px;
+    height: 60px;
     width: 60px;
     bottom: 100px;
     right: 20px;
@@ -39,12 +39,12 @@ bottom: 92px;
 }
 
 .sgi-u-max-height-60vh-overflow-y-auto {
-max-height: 60vh;
+    max-height: 60vh;
     overflow-y: auto;
 }
 
 .sgi-u-w-max-content-top-85-left-50 {
-width: max-content;
+    width: max-content;
     top: 85%;
     left: 50%;
     z-index: 10;
@@ -52,7 +52,7 @@ width: max-content;
 }
 
 .sgi-u-h-120px {
-height: 120px;
+    height: 120px;
 }
 
 .sgi-u-top-20px-left-20px-z-10 {

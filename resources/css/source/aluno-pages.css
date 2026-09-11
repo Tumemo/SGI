@@ -1,188 +1,41 @@
-/* SGI - estilos migrados dos templates PHP. */
+/* Estilos específicos das páginas do portal do aluno. */
 
-/* Estilos compartilhados do portal do aluno */
 body {
-            background-color: var(--bs-body-bg);
-            padding-bottom: var(--sgi-mobile-nav-height); /* compensação da navegação fixa */
-        }
+    background-color: var(--bs-body-bg);
+    padding-bottom: var(--sgi-mobile-nav-height); /* compensação da navegação fixa */
+}
 
-        @media (min-width: 768px) {
-            body {
-                padding-bottom: 0;
-            }
-        }
+@media (min-width: 768px) {
+    body {
+        padding-bottom: 0;
+    }
+}
 
-        .header-banner-container {
-            max-height: 180px;
-            overflow: hidden;
-        }
-        .header-banner-img {
-            object-fit: cover;
-            height: 180px;
-        }
+.header-banner-container {
+    max-height: 180px;
+    overflow: hidden;
+}
 
+.header-banner-img {
+    object-fit: cover;
+    height: 180px;
+}
 
-    /* A barra de inscrição usa os componentes Bootstrap do template. */
-    #acoesInscricao { bottom: var(--sgi-mobile-nav-height); }
-    @media (min-width: 768px) {
-        #acoesInscricao { bottom: 0; }
+#acoesInscricao { bottom: var(--sgi-mobile-nav-height); }
+
+@media (min-width: 768px) {
+    #acoesInscricao { bottom: 0; }
+}
+
+@media (max-width: 1199.98px) {
+    body {
+        padding-bottom: 0;
     }
 
-    @media (max-width: 1199.98px) {
-        body {
-            padding-bottom: 0;
-        }
-
-        #acoesInscricao {
-            bottom: 0;
-        }
+    #acoesInscricao {
+        bottom: 0;
     }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+}
 
 @media (max-width: 1199.98px) {
     .home-main--with-footer { margin-bottom: 0; }
