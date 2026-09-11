@@ -107,13 +107,11 @@ window.SGIPage.mount("aluno/ranking", function (pageConfig, pageScope) {
             btn.className = 'btn btn-sm btn-outline-primary rounded-pill btn-categoria';
             btn.setAttribute('aria-pressed', 'false');
             btn.textContent = cat;
-            btn.onclick = () => filtrarCategoria(cat);
+            btn.dataset.categoria = cat;
 
             const btnM = btn.cloneNode(true);
-            btnM.onclick = () => filtrarCategoria(cat);
             fMob.appendChild(btnM);
             const btnD = btn.cloneNode(true);
-            btnD.onclick = () => filtrarCategoria(cat);
             fDesk.appendChild(btnD);
         });
     }
@@ -147,6 +145,7 @@ window.SGIPage.mount("aluno/ranking", function (pageConfig, pageScope) {
 
         const maxPontos = Math.max(...turmas.map(t => t.pontuacao_bruta ?? t.pontuacao_sem_penalidade ?? t.pontuacao_turma)) || 1;
         const medals = ['&#x1F947;', '&#x1F948;', '&#x1F949;'];
+        let htmlRanking = '';
 
         turmas.forEach((t, index) => {
             const posicao = index + 1;
@@ -173,8 +172,8 @@ window.SGIPage.mount("aluno/ranking", function (pageConfig, pageScope) {
                         <div class="d-flex align-items-center gap-3">
                             <div class="d-flex align-items-center justify-content-center rounded-circle ${posicaoClasses} flex-shrink-0" style="width: 2.75rem; height: 2.75rem;">${posicao}°</div>
                             <div class="flex-grow-1 sgi-u-min-width-0">
-                                <div class="h5 fw-semibold mb-1 text-truncate">${t.nome_turma}</div>
-                                <div class="small text-body-secondary"><i class="bi bi-mortarboard-fill me-1"></i>${t.nome_fantasia_turma || t.turno_turma}</div>
+                                <div class="h5 fw-semibold mb-1 text-truncate">${esc(t.nome_turma)}</div>
+                                <div class="small text-body-secondary"><i class="bi bi-mortarboard-fill me-1"></i>${esc(t.nome_fantasia_turma || t.turno_turma)}</div>
                             </div>
                             <div class="badge text-bg-primary fs-6 flex-shrink-0"><span>${ptsLiquidos}</span> <small>pts</small></div>
                         </div>
@@ -201,16 +200,17 @@ window.SGIPage.mount("aluno/ranking", function (pageConfig, pageScope) {
                         </div>
 
                         <div class="mt-3 d-print-none">
-                            <button type="button" class="btn btn-sm btn-outline-secondary w-100" onclick="abrirHistorico(${t.id_turma}, '${jsEsc(t.nome_turma)}')">
+                            <button type="button" class="btn btn-sm btn-outline-secondary w-100" data-sgi-action="history-ranking" data-id-turma="${esc(t.id_turma)}" data-nome-turma="${esc(t.nome_turma)}">
                                 <i class="bi bi-clock-history"></i> Ver histórico de pontos
                             </button>
                         </div>
                     </div>
                 </div>
             `;
-            cMob.innerHTML += html;
-            cDesk.innerHTML += html;
+            htmlRanking += html;
         });
+        cMob.innerHTML = htmlRanking;
+        cDesk.innerHTML = htmlRanking;
     }
 
     function exibirMensagem(texto, tipo) {
@@ -223,6 +223,19 @@ window.SGIPage.mount("aluno/ranking", function (pageConfig, pageScope) {
 
     function esc(s) { const d = document.createElement('div'); d.textContent = s == null ? '' : String(s); return d.innerHTML; }
     function jsEsc(s) { return String(s == null ? '' : s).replace(/'/g, "\\'").replace(/"/g, '&quot;'); }
+
+    function vincularEventos() {
+        const filtros = [document.getElementById('filtrosMob'), document.getElementById('filtrosDesk')];
+        const listas = [document.getElementById('listaMob'), document.getElementById('listaDesk')];
+        filtros.forEach((container) => pageScope.listen(container, 'click', (event) => {
+            const button = event.target.closest('[data-sgi-action="filter-ranking"], .btn-categoria');
+            if (button) filtrarCategoria(button.dataset.categoria);
+        }));
+        listas.forEach((container) => pageScope.listen(container, 'click', (event) => {
+            const button = event.target.closest('[data-sgi-action="history-ranking"]');
+            if (button) abrirHistorico(button.dataset.idTurma, button.dataset.nomeTurma);
+        }));
+    }
 
     function fmtData(s) {
         if (!s) return '—';
@@ -398,7 +411,10 @@ window.SGIPage.mount("aluno/ranking", function (pageConfig, pageScope) {
         }
     }
 
-    window.SGIPage.ready( init);
+    window.SGIPage.ready(() => {
+        vincularEventos();
+        init();
+    });
 
 return {init, bloquearAcessoRanking, carregarDados, renderizarFiltros, filtrarCategoria, renderizarRanking, exibirMensagem, esc, jsEsc, fmtData, fmtDataHora, badgeColocacao, secaoAbertura, renderHistorico, abrirHistorico};
 });

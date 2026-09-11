@@ -11,7 +11,7 @@ if ((int) ($_SESSION['nivel'] ?? -1) >= 0) {
 }
 ?>
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -20,6 +20,7 @@ if ((int) ($_SESSION['nivel'] ?? -1) >= 0) {
     <link rel="stylesheet" href="<?= \App\Shared\Http\Assets::url('css/login.css') ?>">
     <?php include SGI_ROOT . '/resources/views/components/page-title.php'; ?>
     <script type="text/javascript">window.SGI_BASE_PATH = <?= json_encode(\App\Shared\Http\Url::basePath(), JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>; window.SGI_API_BASE = <?= json_encode(\App\Shared\Http\Url::to('api/v1/'), JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;</script>
+    <script src="<?= \App\Shared\Http\Assets::url('js/shared/html-utils.js') ?>"></script>
     <script src="<?= \App\Shared\Http\Assets::url('js/shared/page-runtime.js') ?>"></script>
 </head>
 <body>
@@ -29,12 +30,14 @@ if ((int) ($_SESSION['nivel'] ?? -1) >= 0) {
             <img src="<?= \App\Shared\Http\Assets::url('images/borda-banner-login.png') ?>" alt="" aria-hidden="true" class="login-mobile-banner-border">
             <img src="<?= \App\Shared\Http\Assets::url('images/banner-login.png') ?>" alt="Imagem dos desenvolvedores" class="login-mobile-banner-image">
         </div>
-        <form id="form_mobile" class="w-100 login-mobile-form" >
-            <input type="text" class="form-control ipt-matricula" placeholder="email" required>
-            <input type="password" class="form-control ipt-senha" placeholder="senha" required>
+        <form id="form_mobile" class="w-100 login-mobile-form">
+            <label for="matricula_mobile" class="visually-hidden">Matrícula (RA/NIF)</label>
+            <input id="matricula_mobile" name="matricula" type="text" class="form-control ipt-matricula" placeholder="Matrícula (RA/NIF)" autocomplete="username" required>
+            <label for="senha_mobile" class="visually-hidden">Senha</label>
+            <input id="senha_mobile" name="senha" type="password" class="form-control ipt-senha" placeholder="Senha" autocomplete="current-password" required>
             <span class="login-mobile-forgot">Esqueci minha senha</span>
             <button type="submit" class="btn btn-primary w-100 login-mobile-button">Entrar</button>
-            <div id="msg_erro_mobile" class="text-danger mt-2"></div>
+            <div id="msg_erro_mobile" class="text-danger mt-2" aria-live="polite"></div>
         </form>
         <div class="login-mobile-brand" aria-label="Logo SESI">
             <img src="<?= \App\Shared\Http\Assets::url('images/logo-SGI-SESI.png') ?>" alt="Logo do SESI">
@@ -43,25 +46,27 @@ if ((int) ($_SESSION['nivel'] ?? -1) >= 0) {
     <!-- VERSÃO DESKTOP CENTRALIZADA -->
     <main class="d-none d-md-flex vh-100">
         <picture class="w-75 vh-100 position-relative d-block shadow-lg">
-            <img src="<?= \App\Shared\Http\Assets::url('images/banner-login-desktop2.png') ?>" class="position-absolute top-0 start-0 w-100 h-100 object-fit-cover login-desktop-banner-image" >
-            <img src="<?= \App\Shared\Http\Assets::url('images/borda-banner-login-desktop.png') ?>" class="position-absolute top-0 start-0 w-100 h-100 object-fit-cover login-desktop-banner-border" >
+            <img src="<?= \App\Shared\Http\Assets::url('images/banner-login-desktop2.png') ?>" alt="" aria-hidden="true" class="position-absolute top-0 start-0 w-100 h-100 object-fit-cover login-desktop-banner-image" >
+            <img src="<?= \App\Shared\Http\Assets::url('images/borda-banner-login-desktop.png') ?>" alt="" aria-hidden="true" class="position-absolute top-0 start-0 w-100 h-100 object-fit-cover login-desktop-banner-border" >
         </picture>
         <section class="w-50 h-100 d-flex flex-column justify-content-center align-items-center p-4">
             <picture class="mb-4">
                 <img src="<?= \App\Shared\Http\Assets::url('images/logo-SGI-SESI.png') ?>" alt="Logo do sesi" class="img-fluid login-desktop-logo" >
             </picture>
-            <form id="form_desktop" class="text-center d-flex flex-column align-items-center bg-light p-4 w-100 login-desktop-form" >
+            <form id="form_desktop" class="text-center d-flex flex-column align-items-center bg-light p-4 w-100 login-desktop-form">
                 <h2 class="text-danger mb-4">Acesso ao sistema</h2>
                 <div class="position-relative mb-3 w-100">
                     <i class="bi bi-person-circle position-absolute top-50 start-0 translate-middle-y ms-3 text-dark"></i>
-                    <input type="text" class="form-control ps-5 py-2 ipt-matricula login-field" placeholder="Matrícula (RA/NIF)"  required>
+                    <label for="matricula_desktop" class="visually-hidden">Matrícula (RA/NIF)</label>
+                    <input id="matricula_desktop" name="matricula" type="text" class="form-control ps-5 py-2 ipt-matricula login-field" placeholder="Matrícula (RA/NIF)" autocomplete="username" required>
                 </div>
                 <div class="position-relative mb-3 w-100">
                     <i class="bi bi-lock position-absolute top-50 start-0 translate-middle-y ms-3 text-dark"></i>
-                    <input type="password" class="form-control ps-5 py-2 ipt-senha login-field" placeholder="Senha"  required>
+                    <label for="senha_desktop" class="visually-hidden">Senha</label>
+                    <input id="senha_desktop" name="senha" type="password" class="form-control ps-5 py-2 ipt-senha login-field" placeholder="Senha" autocomplete="current-password" required>
                 </div>
                 <button type="submit" class="btn btn-primary w-100 mt-2">Entrar</button>
-                <div id="msg_erro_desktop" class="text-danger mt-2"></div>
+                <div id="msg_erro_desktop" class="text-danger mt-2" aria-live="polite"></div>
             </form>
         </section>
     </main>

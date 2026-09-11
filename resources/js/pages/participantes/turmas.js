@@ -382,7 +382,7 @@ window.SGIPage.mount("participantes/turmas", function (pageConfig, pageScope) {
                 carregarTurmasAtivas();
             }, 800);
         } catch (err) {
-            msg.innerHTML = `<p class="text-danger text-center fw-bold mb-0">${err.message}</p>`;
+            msg.innerHTML = `<p class="text-danger text-center fw-bold mb-0">${esc(err.message)}</p>`;
         } finally {
             btn.disabled = false;
             btn.innerHTML = 'Salvar Alterações';

@@ -262,10 +262,10 @@ test.describe.serial('Gestão Administrativa Completa (Admin Lifecycle)', () => 
 
         await inputQtd.fill('35');
 
-        const dialogPromise = page.waitForEvent('dialog');
         await btnSalvarArr.click();
-        const dialog = await dialogPromise;
-        await dialog.accept();
+        const feedback = page.getByRole('dialog');
+        await expect(feedback).toContainText(/Dados salvos com sucesso/i, { timeout: 10_000 });
+        await feedback.getByRole('button', { name: 'Entendi' }).click();
 
         // Aguarda a finalização do salvamento
         await expect(primeiroCard.locator('[data-sgi-action="save-arrecadacao"]')).not.toBeDisabled({ timeout: 10_000 });

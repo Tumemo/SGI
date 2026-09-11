@@ -164,7 +164,7 @@ window.SGIPage.mount("acesso/colaboradores", function (pageConfig, pageScope) {
             montarFiltros(lista);
             aplicarFiltros();
         } catch (error) {
-            const msg = `<div class="col-12 text-center py-5"><i class="bi bi-exclamation-triangle text-danger fs-1 d-block mb-3"></i><p class="text-danger mb-0">${error.message}</p></div>`;
+            const msg = `<div class="col-12 text-center py-5"><i class="bi bi-exclamation-triangle text-danger fs-1 d-block mb-3"></i><p class="text-danger mb-0">${esc(error.message)}</p></div>`;
             if (desk) desk.innerHTML = msg;
             if (mob) mob.innerHTML = msg;
         }
@@ -173,7 +173,7 @@ window.SGIPage.mount("acesso/colaboradores", function (pageConfig, pageScope) {
     function vincularEventosLista() {
         document.querySelectorAll('[data-remover]').forEach((btn) => {
             pageScope.listen(btn, 'click', async () => {
-                if (!confirm('Remover este colaborador?')) return;
+                if (!await SGI.confirm({ titulo: 'Remover colaborador?', mensagem: 'O colaborador será removido do acesso ao SGI.', textoConfirmar: 'Remover', destrutivo: true })) return;
                 const id = btn.getAttribute('data-remover');
                 const body = new URLSearchParams();
                 body.append('acao', 'excluir_colaborador');
@@ -186,7 +186,7 @@ window.SGIPage.mount("acesso/colaboradores", function (pageConfig, pageScope) {
                 });
                 const json = await resp.json();
                 if (json.status !== 'sucesso') {
-                    alert(json.mensagem || 'Erro ao remover.');
+                    SGI.alert(json.mensagem || 'Erro ao remover.');
                     return;
                 }
                 await carregarColaboradores();
@@ -271,7 +271,7 @@ window.SGIPage.mount("acesso/colaboradores", function (pageConfig, pageScope) {
             document.getElementById('formNovoColaborador').reset();
             setTimeout(() => bootstrap.Modal.getInstance(document.getElementById('modalAdicionarColaborador')).hide(), 700);
         } catch (error) {
-            msg.innerHTML = `<p class="text-danger fw-bold mb-0">${error.message}</p>`;
+            msg.innerHTML = `<p class="text-danger fw-bold mb-0">${esc(error.message)}</p>`;
         } finally {
             btn.disabled = false;
             btn.innerText = 'Cadastrar';
@@ -318,7 +318,7 @@ window.SGIPage.mount("acesso/colaboradores", function (pageConfig, pageScope) {
             msg.innerHTML = '<p class="text-success fw-bold mb-0">Colaborador atualizado.</p>';
             setTimeout(() => bootstrap.Modal.getInstance(document.getElementById('modalEditarColaborador')).hide(), 700);
         } catch (error) {
-            msg.innerHTML = `<p class="text-danger fw-bold mb-0">${error.message}</p>`;
+            msg.innerHTML = `<p class="text-danger fw-bold mb-0">${esc(error.message)}</p>`;
         } finally {
             btn.disabled = false;
             btn.innerText = 'Salvar';

@@ -25,7 +25,6 @@ window.SGIPage.mount("eventos/configurar-arrecadacao", function (pageConfig, pag
 
     function renderCard(turma) {
         const nome = esc(turma.nome_fantasia_turma || turma.nome_turma);
-        const nomeJs = (turma.nome_fantasia_turma || turma.nome_turma || '').replace(/'/g, "\\'");
         return `
             <div class="col"><article class="card h-100 border-0 shadow-sm p-3 d-flex flex-row align-items-center gap-3">
                 <div class="bg-danger-subtle text-danger rounded-circle p-2 fs-5 d-flex align-items-center justify-content-center flex-shrink-0"><i class="bi bi-people-fill"></i></div>
@@ -39,10 +38,10 @@ window.SGIPage.mount("eventos/configurar-arrecadacao", function (pageConfig, pag
                         value="${getQuantidadePendente(turma)}" placeholder="0">
                     <span class="input-group-text">Kg</span>
                 </div>
-                <button type="button" class="btn btn-outline-secondary btn-sm" onclick="abrirHistoricoTurma(${turma.id_turma}, '${nomeJs}')" title="Ver histórico">
+                <button type="button" class="btn btn-outline-secondary btn-sm" data-sgi-action="history-arrecadacao" data-id-turma="${turma.id_turma}" data-nome-turma="${nome}" title="Ver histórico">
                     <i class="bi bi-clock-history"></i>
                 </button>
-                <button type="button" class="btn btn-outline-success btn-sm" data-sgi-action="save-arrecadacao" data-id-turma="${turma.id_turma}" onclick="salvarTurma(${turma.id_turma})" title="Salvar">
+                <button type="button" class="btn btn-outline-success btn-sm" data-sgi-action="save-arrecadacao" data-id-turma="${turma.id_turma}" title="Salvar">
                     <i class="bi bi-check-lg"></i>
                 </button>
             </article></div>
@@ -64,6 +63,7 @@ window.SGIPage.mount("eventos/configurar-arrecadacao", function (pageConfig, pag
         listaDesktop.innerHTML = todasAsTurmas.map(renderCard).join('');
 
         vincularEventosInputs();
+        vincularEventosAcoes();
     }
 
     function getInputVisivel(idTurma) {
@@ -92,6 +92,15 @@ window.SGIPage.mount("eventos/configurar-arrecadacao", function (pageConfig, pag
                     if (inp !== e.target) inp.value = valor;
                 });
             });
+        });
+    }
+
+    function vincularEventosAcoes() {
+        document.querySelectorAll('[data-sgi-action="history-arrecadacao"]').forEach((button) => {
+            pageScope.listen(button, 'click', () => abrirHistoricoTurma(button.dataset.idTurma, button.dataset.nomeTurma));
+        });
+        document.querySelectorAll('[data-sgi-action="save-arrecadacao"]').forEach((button) => {
+            pageScope.listen(button, 'click', () => salvarTurma(button.dataset.idTurma));
         });
     }
 
@@ -148,7 +157,7 @@ window.SGIPage.mount("eventos/configurar-arrecadacao", function (pageConfig, pag
         const quantidade = getQuantidadeAtual(idTurma);
 
         if (!quantidade || quantidade <= 0) {
-            alert('Informe a quantidade em kg a adicionar.');
+            SGI.alert('Informe a quantidade em kg a adicionar.');
             return;
         }
 
@@ -183,12 +192,12 @@ window.SGIPage.mount("eventos/configurar-arrecadacao", function (pageConfig, pag
                 document.querySelectorAll(`.arrec-input[data-id-turma="${idTurma}"]`).forEach(inp => {
                     inp.value = '0';
                 });
-                alert('Dados salvos com sucesso!');
+                SGI.alert('Dados salvos com sucesso!');
             } else {
-                alert('Erro do servidor: ' + result.message);
+                SGI.alert('Erro do servidor: ' + result.message);
             }
         } catch (error) {
-            alert('Erro de comunicação: Verifique se o ficheiro api/v1/arrecadacao existe e se o banco de dados está online.');
+            SGI.alert('Erro de comunicação: Verifique se o ficheiro api/v1/arrecadacao existe e se o banco de dados está online.');
             console.error('Falha no salvamento:', error);
         } finally {
             botoes.forEach(btn => {
@@ -318,7 +327,7 @@ window.SGIPage.mount("eventos/configurar-arrecadacao", function (pageConfig, pag
                 html += '<td class="text-center fw-bold text-success">+' + r.pontos_adicionados + '</td>';
                 if (isAdminPage) {
                     html += '<td class="text-center">';
-                    html += '<button class="btn btn-outline-danger btn-sm" title="Remover e reverter pontos" onclick="deletarHistorico(' + r.id_historico + ')">';
+                    html += '<button type="button" class="btn btn-outline-danger btn-sm" title="Remover e reverter pontos" data-sgi-action="delete-historico" data-id-historico="' + esc(r.id_historico) + '">';
                     html += '<i class="bi bi-trash"></i>';
                     html += '</button>';
                     html += '</td>';
@@ -330,10 +339,13 @@ window.SGIPage.mount("eventos/configurar-arrecadacao", function (pageConfig, pag
 
         html += '</tbody></table></div>';
         conteudo.innerHTML = html;
+        conteudo.querySelectorAll('[data-sgi-action="delete-historico"]').forEach((button) => {
+            pageScope.listen(button, 'click', () => deletarHistorico(button.dataset.idHistorico));
+        });
     }
 
     async function deletarHistorico(idHistorico) {
-        if (!confirm('Tem certeza que deseja remover este registro?\nOs pontos serão subtraídos automaticamente do ranking.')) {
+        if (!await SGI.confirm({ titulo: 'Remover registro?', mensagem: 'Os pontos serão subtraídos automaticamente do ranking.', textoConfirmar: 'Remover registro', destrutivo: true })) {
             return;
         }
 
@@ -349,18 +361,24 @@ window.SGIPage.mount("eventos/configurar-arrecadacao", function (pageConfig, pag
             const result = await res.json();
 
             if (result.success) {
-                alert('Registro removido e pontos revertidos com sucesso!');
+                SGI.alert('Registro removido e pontos revertidos com sucesso!');
                 carregarHistorico(historicoTurmaId);
             } else {
-                alert('Erro: ' + result.message);
+                SGI.alert('Erro: ' + result.message);
             }
         } catch (error) {
             console.error("Erro ao deletar:", error);
-            alert('Erro de comunicação ao tentar remover o registro.');
+            SGI.alert('Erro de comunicação ao tentar remover o registro.');
         }
     }
 
     window.SGIPage.ready( carregarDados);
+
+    window.SGIPage.ready(() => {
+        document.querySelectorAll('[data-filtro-historico]').forEach((button) => {
+            pageScope.listen(button, 'click', () => filtrarHistorico(button.dataset.filtroHistorico));
+        });
+    });
 
 return {esc, getQuantidadePendente, salvarLocal, renderCard, renderizarTelas, getInputVisivel, getQuantidadeAtual, vincularEventosInputs, carregarDados, salvarTurma, abrirHistoricoTurma, carregarHistorico, filtrarHistorico, renderizarHistoricoFiltrado, deletarHistorico};
 });

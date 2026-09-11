@@ -43,14 +43,14 @@
         window.SGIOffline.submit(url, method, payload)
             .then(function (res) {
                 if (res && res.offline) {
-                    alert('Sem conexao: dados salvos localmente. Serao enviados quando houver conexao.');
+                    SGI.alert('Sem conexao: dados salvos localmente. Serao enviados quando houver conexao.');
                 } else {
-                    alert('Dados enviados com sucesso!');
+                    SGI.alert('Dados enviados com sucesso!');
                 }
                 form.reset();
             })
             .catch(function () {
-                alert('Falha ao enviar os dados. Tente novamente.');
+                SGI.alert('Falha ao enviar os dados. Tente novamente.');
             })
             .finally(function () {
                 if (botao) botao.disabled = false;

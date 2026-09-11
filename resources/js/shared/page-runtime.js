@@ -60,6 +60,7 @@
                 scope.active = false;
                 globalListeners.forEach(function (r) { r.target.removeEventListener(r.type, r.callback, r.options); });
                 cleanups.forEach(function (callback) { callback(); });
+                if (global.SGI && typeof global.SGI.cancelDialogs === 'function') global.SGI.cancelDialogs();
             }
         };
         return scope;

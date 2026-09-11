@@ -189,7 +189,7 @@ window.SGIPage.mount("aluno/modalidade", function (pageConfig, pageScope) {
             const vagas = statusVagas(mod);
             const lotado = vagas.state === 'lotado';
             col.innerHTML = `
-                <div class="modalidade-card card border shadow-sm position-relative h-100 p-4 text-center d-flex flex-column align-items-center gap-2 sgi-u-cursor-pointer${lotado ? ' lotado opacity-50' : ''}" data-id="${mod.id_modalidade}" data-nome="${esc(mod.nome_modalidade)}" onclick="abrirEquipesModalidade(this)">
+                <div class="modalidade-card card border shadow-sm position-relative h-100 p-4 text-center d-flex flex-column align-items-center gap-2 sgi-u-cursor-pointer${lotado ? ' lotado opacity-50' : ''}" role="button" tabindex="0" data-sgi-action="open-equipe" data-id="${esc(mod.id_modalidade)}" data-nome="${esc(mod.nome_modalidade)}">
                     <span class="card-check position-absolute top-0 end-0 translate-middle badge rounded-circle text-bg-primary d-none"><i class="bi bi-check-lg"></i></span>
                     ${vagas.label ? `<span class="badge ${vagas.badge} position-absolute top-0 start-0 translate-middle-y ms-2"><i class="bi ${vagas.icon} me-1"></i>${vagas.label}</span>` : ''}
                     <div class="card-icon-wrap bg-primary-subtle text-primary rounded-3 p-3 fs-3 d-inline-flex"><i class="bi ${iconeModalidade(mod.nome_modalidade)}"></i></div>
@@ -245,7 +245,7 @@ window.SGIPage.mount("aluno/modalidade", function (pageConfig, pageScope) {
                         <button type="button" class="btn btn-outline-danger btn-sm d-inline-flex align-items-center gap-1"
                             data-modalidade-id="${mod.id_modalidade}"
                             data-modalidade-nome="${esc(mod.nome_modalidade)}"
-                            onclick="verDetalhesModalidade(this)">
+                            data-sgi-action="details-modalidade">
                             <i class="bi bi-calendar-event me-1"></i> Ver detalhes
                         </button>
                     </div>
@@ -354,7 +354,7 @@ window.SGIPage.mount("aluno/modalidade", function (pageConfig, pageScope) {
                 div.appendChild(icon);
                 const span = document.createElement('span');
                 span.className = ehVoce ? 'fw-semibold text-success' : '';
-                span.textContent = esc(m.nome_usuario) + (ehVoce ? ' (Você)' : '');
+                span.textContent = String(m.nome_usuario || '') + (ehVoce ? ' (Você)' : '');
                 div.appendChild(span);
                 container.appendChild(div);
                 fetch('/api/v1/foto?user_id=' + m.id_usuario)
@@ -422,7 +422,7 @@ window.SGIPage.mount("aluno/modalidade", function (pageConfig, pageScope) {
             
             const corpo = document.getElementById('modalEquipesCorpo');
             corpo.innerHTML = equipes.map(e => `
-                <div class="equipe-pick-row d-flex align-items-center gap-3 p-3 mb-2 border rounded-3 bg-body sgi-u-cursor-pointer" data-equipe="${e.id_equipe}" data-equipe-nome="${esc(e.nome_equipe)}" onclick="selecionarEquipe(this, '${idModalidade}')">
+                <div class="equipe-pick-row d-flex align-items-center gap-3 p-3 mb-2 border rounded-3 bg-body sgi-u-cursor-pointer" role="button" tabindex="0" data-sgi-action="select-equipe" data-modalidade-id="${esc(idModalidade)}" data-equipe="${esc(e.id_equipe)}" data-equipe-nome="${esc(e.nome_equipe)}">
                     <div class="bg-primary-subtle text-primary rounded-circle p-2 d-inline-flex"><i class="bi bi-people-fill"></i></div>
                     <div class="flex-grow-1">
                         <div class="fw-semibold">${esc(e.nome_equipe)}</div>
@@ -542,7 +542,39 @@ window.SGIPage.mount("aluno/modalidade", function (pageConfig, pageScope) {
         }
     }
 
-    window.SGIPage.ready( carregarDados);
+    function vincularEventos() {
+        const grid = document.getElementById('modalidadesGrid');
+        const inscricoes = document.getElementById('inscricoesAtuais');
+        const equipes = document.getElementById('modalEquipesCorpo');
+
+        const ativar = (event) => {
+            if (event.type === 'keydown' && event.key !== 'Enter' && event.key !== ' ') return;
+            if (event.type === 'keydown') event.preventDefault();
+            const card = event.target.closest('[data-sgi-action="open-equipe"]');
+            if (card) abrirEquipesModalidade(card);
+        };
+        pageScope.listen(grid, 'click', ativar);
+        pageScope.listen(grid, 'keydown', ativar);
+
+        pageScope.listen(inscricoes, 'click', (event) => {
+            const button = event.target.closest('[data-sgi-action="details-modalidade"]');
+            if (button) verDetalhesModalidade(button);
+        });
+
+        const selecionar = (event) => {
+            if (event.type === 'keydown' && event.key !== 'Enter' && event.key !== ' ') return;
+            if (event.type === 'keydown') event.preventDefault();
+            const row = event.target.closest('[data-sgi-action="select-equipe"]');
+            if (row) selecionarEquipe(row, row.dataset.modalidadeId);
+        };
+        pageScope.listen(equipes, 'click', selecionar);
+        pageScope.listen(equipes, 'keydown', selecionar);
+    }
+
+    window.SGIPage.ready(() => {
+        vincularEventos();
+        carregarDados();
+    });
     window.SGIPage.ready( inicializarProgresso);
 
 return {esc, iconeModalidade, carregarDados, atualizarContador, atualizarProgresso, inicializarProgresso, statusVagas, renderizarSelecao, renderizarInscricoes, formatarData, verDetalhesModalidade, carregarMembros, abrirEquipesModalidade, selecionarEquipe, removerEquipeSelecionada, salvarEscolhas};

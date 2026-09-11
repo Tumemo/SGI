@@ -139,10 +139,6 @@ test.describe('Autenticação, RBAC e Segurança de Rotas', () => {
     });
 
     test('logout encerra sessão com segurança e impede reentrada pelo histórico', async ({ page }) => {
-        page.on('dialog', async (dialog) => {
-            await dialog.accept();
-        });
-
         // 1. Login como admin
         await page.goto('login', { waitUntil: 'domcontentloaded' });
         await page.locator('#form_desktop .ipt-matricula').fill('admin');
@@ -156,6 +152,8 @@ test.describe('Autenticação, RBAC e Segurança de Rotas', () => {
         const logoutLink = page.locator('a[href*="api/v1/logout"]:visible');
         await expect(logoutLink).toBeVisible();
         await logoutLink.click();
+        await expect(page.getByRole('dialog')).toContainText(/Sair do SGI/i);
+        await page.getByRole('dialog').getByRole('button', { name: 'Sair' }).click();
 
         // 3. Confirmar que redirecionou para tela de login
         await page.waitForURL(/login/, { timeout: 15_000 });

@@ -168,9 +168,12 @@ window.SGIPage.mount("eventos/configurar-modalidades", function (pageConfig, pag
         try {
             const response = await axios.get('/api/v1/tipos-modalidade');
             const tipos = response.data;
-            selectTipo.innerHTML = '<option value="" disabled selected>Selecione um tipo...</option>';
+            const placeholder = new Option('Selecione um tipo...', '');
+            placeholder.disabled = true;
+            placeholder.selected = true;
+            selectTipo.replaceChildren(placeholder);
             tipos.forEach(tipo => {
-                selectTipo.innerHTML += `<option value="${tipo.id_tipo_modalidade}">${tipo.nome_tipo_modalidade}</option>`;
+                selectTipo.add(new Option(String(tipo.nome_tipo_modalidade || ''), String(tipo.id_tipo_modalidade)));
             });
         } catch (error) {
             console.error("Erro ao carregar tipos:", error);
@@ -186,10 +189,14 @@ window.SGIPage.mount("eventos/configurar-modalidades", function (pageConfig, pag
         try {
             const response = await axios.get(`/api/v1/categorias?id_interclasse=${idInterclasse}`);
             const categorias = response.data;
-            selectCat.innerHTML = '<option value="" disabled selected>Selecione uma categoria...</option>';
+            const placeholder = new Option('Selecione uma categoria...', '');
+            placeholder.disabled = true;
+            placeholder.selected = !idCategoria;
+            selectCat.replaceChildren(placeholder);
             categorias.forEach((cat) => {
-                const selected = idCategoria && String(idCategoria) === String(cat.id_categoria) ? 'selected' : '';
-                selectCat.innerHTML += `<option value="${cat.id_categoria}" ${selected}>${cat.nome_categoria}</option>`;
+                const option = new Option(String(cat.nome_categoria || ''), String(cat.id_categoria));
+                option.selected = Boolean(idCategoria && String(idCategoria) === String(cat.id_categoria));
+                selectCat.add(option);
             });
         } catch (error) {
             console.error("Erro ao carregar categorias:", error);

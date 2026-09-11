@@ -146,7 +146,7 @@ window.SGIPage.mount("eventos/configurar-equipes", function (pageConfig, pageSco
                     </div>
                     <div class="d-flex gap-1">
                         <a class="btn btn-outline-primary btn-sm" href="${hrefElenco}" title="Ver elenco"><i class="bi bi-people-fill"></i></a>
-                        ${isAdmin ? `<button class="btn btn-outline-danger btn-sm" onclick="excluirEquipe(${eq.id_equipe}, '${esc(eq.nome_turma || 'Turma')}')" title="Excluir equipe"><i class="bi bi-trash"></i></button>` : ''}
+                        ${isAdmin ? `<button type="button" class="btn btn-outline-danger btn-sm" data-sgi-action="delete-equipe" data-id-equipe="${eq.id_equipe}" data-nome-equipe="${esc(eq.nome_turma || 'Turma')}" title="Excluir equipe"><i class="bi bi-trash"></i></button>` : ''}
                     </div>
                 </div>`;
         }).join('');
@@ -195,6 +195,12 @@ window.SGIPage.mount("eventos/configurar-equipes", function (pageConfig, pageSco
     }
 
     function handleCardClick(e) {
+        const btnExcluir = e.target.closest('[data-sgi-action="delete-equipe"]');
+        if (btnExcluir) {
+            e.stopPropagation();
+            window.excluirEquipe(btnExcluir.dataset.idEquipe, btnExcluir.dataset.nomeEquipe);
+            return;
+        }
         const btnEquipes = e.target.closest('.ver-equipes-btn');
         if (btnEquipes) {
             abrirEquipes(btnEquipes.closest('.aluno-card'), btnEquipes.dataset.mod, btnEquipes.dataset.turma);
@@ -425,7 +431,7 @@ window.SGIPage.mount("eventos/configurar-equipes", function (pageConfig, pageSco
     });
 
     window.excluirEquipe = async function(id, nome) {
-        if (!confirm(`Excluir a equipe "${nome}"?`)) return;
+        if (!await SGI.confirm({ titulo: 'Excluir equipe?', mensagem: `A equipe "${nome}" será excluída.`, textoConfirmar: 'Excluir equipe', destrutivo: true })) return;
         try {
                 const resp = await fetch(`${API}equipes`, {
                 method: 'DELETE',
@@ -436,7 +442,7 @@ window.SGIPage.mount("eventos/configurar-equipes", function (pageConfig, pageSco
             if (data.success === false) throw new Error(data.message || 'Erro ao excluir.');
             carregarEquipes();
         } catch (err) {
-            alert(err.message);
+            SGI.alert(err.message);
         }
     };
 

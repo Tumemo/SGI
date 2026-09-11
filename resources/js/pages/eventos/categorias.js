@@ -1,5 +1,9 @@
 window.SGIPage.mount("eventos/categorias", function (pageConfig, pageScope) {
 
+    const esc = (value) => window.SGIHtml
+        ? window.SGIHtml.escape(value)
+        : String(value == null ? '' : value).replace(/[&<>"']/g, (character) => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[character]));
+
     const urlParams = new URLSearchParams(window.location.search);
     let idInterclasse = urlParams.get('id');
     const isAdmin = pageConfig.value1;
@@ -246,7 +250,7 @@ window.SGIPage.mount("eventos/categorias", function (pageConfig, pageScope) {
                     carregarCategorias();
                 }, 800);
             } catch (err) {
-                msg.innerHTML = `<p class="text-danger text-center fw-bold mb-0">${err.message}</p>`;
+                msg.innerHTML = `<p class="text-danger text-center fw-bold mb-0">${esc(err.message)}</p>`;
             } finally {
                 btn.disabled = false;
                 btn.innerHTML = 'Salvar';
@@ -256,7 +260,7 @@ window.SGIPage.mount("eventos/categorias", function (pageConfig, pageScope) {
         // -- Admin: excluir categoria --
         window.excluirCategoria = async function() {
             if (!categoriaSelecionada) return;
-            if (!confirm('Tem certeza que deseja excluir esta categoria?')) return;
+            if (!await SGI.confirm({ titulo: 'Excluir categoria?', mensagem: 'Esta ação não pode ser desfeita.', textoConfirmar: 'Excluir categoria', destrutivo: true })) return;
 
             const btn = document.getElementById('btnExcluirCategoriaDesktop');
             const btnMob = document.getElementById('btnExcluirCategoriaMobile');
@@ -273,7 +277,7 @@ window.SGIPage.mount("eventos/categorias", function (pageConfig, pageScope) {
                 if (data.success === false) throw new Error(data.message || 'Erro ao excluir.');
                 carregarCategorias();
             } catch (err) {
-                alert(err.message);
+                SGI.alert(err.message);
             } finally {
                 desabilitar(false);
             }
@@ -313,7 +317,7 @@ window.SGIPage.mount("eventos/categorias", function (pageConfig, pageScope) {
         pageScope.listen(document.getElementById('formNovaTurmaCategoria'), 'submit', (e) => {
             e.preventDefault();
             if (!categoriaSelecionada) {
-                alert("Selecione uma categoria antes de criar a turma.");
+                SGI.alert("Selecione uma categoria antes de criar a turma.");
                 return;
             }
 
@@ -373,7 +377,7 @@ window.SGIPage.mount("eventos/categorias", function (pageConfig, pageScope) {
                 }, 900);
             })
             .catch((error) => {
-                msg.innerHTML = `<p class="text-danger fw-bold mb-0">${error.message || 'Erro ao criar turma.'}</p>`;
+                msg.innerHTML = `<p class="text-danger fw-bold mb-0">${esc(error.message || 'Erro ao criar turma.')}</p>`;
             })
             .finally(() => {
                 btn.disabled = false;
@@ -402,7 +406,7 @@ window.SGIPage.mount("eventos/categorias", function (pageConfig, pageScope) {
                 id = await window.SGIInterclasse.resolveId();
             }
             if (!id) {
-                alert("Nenhum interclasse ativo disponível.");
+                SGI.alert("Nenhum interclasse ativo disponível.");
                 return;
             }
             idInterclasse = id;
@@ -434,11 +438,11 @@ window.SGIPage.mount("eventos/categorias", function (pageConfig, pageScope) {
                     modalObj.hide();
                     carregarCategorias();
                 } else {
-                    alert("Erro: " + (result.message || "Não foi possível criar a categoria."));
+                    SGI.alert("Erro: " + (result.message || "Não foi possível criar a categoria."));
                 }
             } catch (error) {
                 console.error("Erro ao criar categoria:", error);
-                alert("Erro de conexão com o servidor ao criar categoria.");
+                SGI.alert("Erro de conexão com o servidor ao criar categoria.");
             } finally {
                 btnSalvar.disabled = false;
                 btnSalvar.innerHTML = "Criar";

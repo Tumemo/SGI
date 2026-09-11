@@ -136,19 +136,19 @@ window.SGIPage.mount("participantes/turma-alunos", function (pageConfig, pageSco
         } else {
             const acoesMob = (u) => `
                 <div class="d-flex gap-1">
-                    <button type="button" class="btn btn-sm btn-light border text-primary px-2 py-1" data-bs-toggle="tooltip" title="Visualizar" onclick="verAlunoId(${u.id_usuario})">
+                    <button type="button" class="btn btn-sm btn-light border text-primary px-2 py-1" data-bs-toggle="tooltip" title="Visualizar" aria-label="Visualizar aluno" data-sgi-action="view-student" data-id-usuario="${esc(u.id_usuario)}">
                         <i class="bi bi-eye"></i>
                     </button>
                     ${podeGerenciar ? `
-                    <button type="button" class="btn btn-sm btn-light border text-secondary px-2 py-1" data-bs-toggle="tooltip" title="Editar" onclick="abrirModalAlunoId(${u.id_usuario})">
+                    <button type="button" class="btn btn-sm btn-light border text-secondary px-2 py-1" data-bs-toggle="tooltip" title="Editar" aria-label="Editar aluno" data-sgi-action="edit-student" data-id-usuario="${esc(u.id_usuario)}">
                         <i class="bi bi-pencil"></i>
                     </button>` : ''}
                     ${podeExcluir ? `
-                    <button type="button" class="btn btn-sm btn-light border text-danger px-2 py-1" data-bs-toggle="tooltip" title="Excluir" onclick="confirmarExcluir(${u.id_usuario})">
+                    <button type="button" class="btn btn-sm btn-light border text-danger px-2 py-1" data-bs-toggle="tooltip" title="Excluir" aria-label="Excluir aluno" data-sgi-action="delete-student" data-id-usuario="${esc(u.id_usuario)}">
                         <i class="bi bi-trash"></i>
                     </button>` : ''}
                     ${podeResetarSenha ? `
-                    <button type="button" class="btn btn-sm btn-light border text-warning-emphasis px-2 py-1" data-bs-toggle="tooltip" title="Resetar senha" onclick="resetarSenha(${u.id_usuario})">
+                    <button type="button" class="btn btn-sm btn-light border text-warning-emphasis px-2 py-1" data-bs-toggle="tooltip" title="Resetar senha" aria-label="Resetar senha do aluno" data-sgi-action="reset-student-password" data-id-usuario="${esc(u.id_usuario)}">
                         <i class="bi bi-key-fill"></i>
                     </button>` : ''}
                 </div>`;
@@ -165,19 +165,19 @@ window.SGIPage.mount("participantes/turma-alunos", function (pageConfig, pageSco
 
             const acoesDesk = (u) => `
                 <div class="d-flex gap-1 justify-content-center">
-                    <button type="button" class="btn btn-sm btn-light border text-primary px-2 py-1" data-bs-toggle="tooltip" title="Visualizar" onclick="verAlunoId(${u.id_usuario})">
+                    <button type="button" class="btn btn-sm btn-light border text-primary px-2 py-1" data-bs-toggle="tooltip" title="Visualizar" aria-label="Visualizar aluno" data-sgi-action="view-student" data-id-usuario="${esc(u.id_usuario)}">
                         <i class="bi bi-eye"></i>
                     </button>
                     ${podeGerenciar ? `
-                    <button type="button" class="btn btn-sm btn-light border text-secondary px-2 py-1" data-bs-toggle="tooltip" title="Editar" onclick="abrirModalAlunoId(${u.id_usuario})">
+                    <button type="button" class="btn btn-sm btn-light border text-secondary px-2 py-1" data-bs-toggle="tooltip" title="Editar" aria-label="Editar aluno" data-sgi-action="edit-student" data-id-usuario="${esc(u.id_usuario)}">
                         <i class="bi bi-pencil"></i>
                     </button>` : ''}
                     ${podeExcluir ? `
-                    <button type="button" class="btn btn-sm btn-light border text-danger px-2 py-1" data-bs-toggle="tooltip" title="Excluir" onclick="confirmarExcluir(${u.id_usuario})">
+                    <button type="button" class="btn btn-sm btn-light border text-danger px-2 py-1" data-bs-toggle="tooltip" title="Excluir" aria-label="Excluir aluno" data-sgi-action="delete-student" data-id-usuario="${esc(u.id_usuario)}">
                         <i class="bi bi-trash"></i>
                     </button>` : ''}
                     ${podeResetarSenha ? `
-                    <button type="button" class="btn btn-sm btn-light border text-warning-emphasis px-2 py-1" data-bs-toggle="tooltip" title="Resetar senha" onclick="resetarSenha(${u.id_usuario})">
+                    <button type="button" class="btn btn-sm btn-light border text-warning-emphasis px-2 py-1" data-bs-toggle="tooltip" title="Resetar senha" aria-label="Resetar senha do aluno" data-sgi-action="reset-student-password" data-id-usuario="${esc(u.id_usuario)}">
                         <i class="bi bi-key-fill"></i>
                     </button>` : ''}
                 </div>`;
@@ -323,7 +323,7 @@ window.SGIPage.mount("participantes/turma-alunos", function (pageConfig, pageSco
             if (js.status === 'sucesso') {
                 bootstrap.Modal.getInstance(document.getElementById('modalAluno')).hide();
                 if (js.senha_temporaria) {
-                    alert(`${js.mensagem || 'Aluno cadastrado.'}\nSenha temporária: ${js.senha_temporaria}`);
+                    SGI.alert({ mensagem: `${js.mensagem || 'Aluno cadastrado.'}\nSenha temporária: ${js.senha_temporaria}`, tipo: 'success', restoreModal: false });
                 }
                 carregarAlunos();
             } else {
@@ -357,10 +357,10 @@ window.SGIPage.mount("participantes/turma-alunos", function (pageConfig, pageSco
             if (js.status === 'sucesso') {
                 carregarAlunos();
             } else {
-                alert(js.mensagem || 'Erro ao excluir.');
+                SGI.alert({ mensagem: js.mensagem || 'Erro ao excluir.', restoreModal: false });
             }
         } catch (_) {
-            alert('Falha de conexão.');
+            SGI.alert({ mensagem: 'Falha de conexão.', tipo: 'error', restoreModal: false });
         } finally {
             btn.disabled = false;
         }
@@ -386,13 +386,13 @@ window.SGIPage.mount("participantes/turma-alunos", function (pageConfig, pageSco
             bootstrap.Modal.getInstance(document.getElementById('modalResetarSenha')).hide();
             if (js.status === 'sucesso') {
                 const temporaryPassword = js.senha_temporaria ? `\nSenha temporária: ${js.senha_temporaria}` : '';
-                alert(`${js.mensagem || 'Senha temporária gerada.'}${temporaryPassword}`);
+                SGI.alert({ mensagem: `${js.mensagem || 'Senha temporária gerada.'}${temporaryPassword}`, tipo: 'success', restoreModal: false });
                 carregarAlunos();
             } else {
-                alert(js.mensagem || 'Erro ao resetar a senha.');
+                SGI.alert({ mensagem: js.mensagem || 'Erro ao resetar a senha.', restoreModal: false });
             }
         } catch (_) {
-            alert('Falha de conexão.');
+            SGI.alert({ mensagem: 'Falha de conexão.', tipo: 'error', restoreModal: false });
         } finally {
             btn.disabled = false;
         }
@@ -522,7 +522,24 @@ window.SGIPage.mount("participantes/turma-alunos", function (pageConfig, pageSco
         });
     }
 
+    function vincularAcoesAlunos() {
+        const acoes = {
+            'view-student': verAlunoId,
+            'edit-student': abrirModalAlunoId,
+            'delete-student': confirmarExcluir,
+            'reset-student-password': resetarSenha,
+        };
+        const handler = (event) => {
+            const button = event.target.closest('[data-sgi-action]');
+            const action = button && acoes[button.dataset.sgiAction];
+            if (action) action(button.dataset.idUsuario);
+        };
+        pageScope.listen(document.getElementById('listaAlunosTurmaMob'), 'click', handler);
+        pageScope.listen(document.getElementById('tbodyAlunosTurmaDesk'), 'click', handler);
+    }
+
     window.SGIPage.ready( () => {
+        vincularAcoesAlunos();
         carregarAlunos();
 
         pageScope.listen(document.getElementById('formAluno'), 'submit', salvarAluno);

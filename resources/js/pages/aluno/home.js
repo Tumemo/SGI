@@ -3,8 +3,9 @@ window.SGIPage.mount("aluno/home", function (pageConfig, pageScope) {
 const APP_BASE = window.SGI_BASE_PATH || '';
 
 function escapeHTML(string) {
-    const mapa = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#x27;' };
-    return String(string || '').replace(/[&<>"']/g, (s) => mapa[s]);
+    return window.SGIHtml
+        ? window.SGIHtml.escape(string)
+        : String(string == null ? '' : string).replace(/[&<>"']/g, (s) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[s]));
 }
 
 let allInterclasses = [];
@@ -30,7 +31,8 @@ function renderCards(items) {
             const statusLabel = isAtivo ? 'Em Andamento' : 'Encerrado';
             const statusClass = isAtivo ? 'active' : 'inactive';
             const iconClass = isAtivo ? 'active' : 'inactive';
-            const href = isAtivo ? `/aluno/modalidades?id=${item.id_interclasse}` : `/aluno/ranking?id=${item.id_interclasse}`;
+            const idInterclasse = encodeURIComponent(String(item.id_interclasse));
+            const href = isAtivo ? `/aluno/modalidades?id=${idInterclasse}` : `/aluno/ranking?id=${idInterclasse}`;
             const btnLabel = isAtivo ? 'Ver Detalhes <i class="bi bi-arrow-right"></i>' : 'Ver Ranking <i class="bi bi-bar-chart"></i>';
 
             return `
@@ -177,11 +179,11 @@ async function salvarNovaSenha() {
         if (res.status === 401) { window.location.href = `${APP_BASE}/aluno/login`; return; }
         const data = await res.json();
         if (data.success) {
-            msgEl.innerHTML = '<span class="text-success fw-semibold"><i class="bi bi-check-circle-fill me-1"></i>' + data.message + '</span>';
+            msgEl.innerHTML = '<span class="text-success fw-semibold"><i class="bi bi-check-circle-fill me-1"></i>' + escapeHTML(data.message || 'Senha alterada com sucesso.') + '</span>';
             btn.disabled = true;
             setTimeout(() => window.location.reload(), 1500);
         } else {
-            msgEl.innerHTML = '<span class="text-danger">' + (data.message || 'Erro ao alterar a senha.') + '</span>';
+            msgEl.innerHTML = '<span class="text-danger">' + escapeHTML(data.message || 'Erro ao alterar a senha.') + '</span>';
         }
     } catch (error) {
         msgEl.innerHTML = '<span class="text-danger">Erro de conexão. Tente novamente.</span>';

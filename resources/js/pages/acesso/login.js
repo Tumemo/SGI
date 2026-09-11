@@ -8,7 +8,8 @@ window.SGIPage.mount("acesso/login", function (pageConfig, pageScope) {
             const form = e.target;
             const msgErro = form.querySelector('[id^="msg_erro"]');
 
-            msgErro.innerText = "";
+            if (!msgErro) return;
+            msgErro.textContent = "";
 
             const matriculaInput = form.querySelector('.ipt-matricula');
             const senhaInput = form.querySelector('.ipt-senha');
@@ -32,10 +33,10 @@ window.SGIPage.mount("acesso/login", function (pageConfig, pageScope) {
                 if (response.ok && data.status === 'sucesso') {
                     window.location.href = data.redirect;
                 } else {
-                    msgErro.innerText = data.mensagem || "Erro ao realizar o login.";
+                    msgErro.textContent = data.mensagem || "Erro ao realizar o login.";
                 }
             } catch (err) {
-                msgErro.innerText = "Erro ao conectar com o servidor.";
+                msgErro.textContent = "Erro ao conectar com o servidor.";
             }
         }
 

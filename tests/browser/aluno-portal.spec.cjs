@@ -229,10 +229,11 @@ test.describe.serial('Portal do Aluno — Jornada Interativa e Regras de Negóci
         await expect(modalSenha).toBeHidden({ timeout: 15_000 });
 
         // 4. Logout e reautenticação com a nova senha
-        page.on('dialog', async (dialog) => dialog.accept());
         const linkLogout = page.locator('a[href*="api/v1/logout"]:visible');
         await expect(linkLogout).toBeVisible({ timeout: 10_000 });
         await linkLogout.click();
+        await expect(page.getByRole('dialog')).toContainText(/Sair do SGI/i);
+        await page.getByRole('dialog').getByRole('button', { name: 'Sair' }).click();
         await page.waitForURL(/login/, { timeout: 15_000 });
 
         // Tentativa com senha antiga deve falhar

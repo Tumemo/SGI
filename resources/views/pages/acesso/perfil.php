@@ -32,7 +32,7 @@ $paginaAtiva = 'perfil';
             <div class="perfil-avatar-ring position-relative flex-shrink-0 mx-auto p-1 rounded-circle bg-primary shadow" id="fotoCircleMob">
                 <div class="position-relative w-100 h-100 rounded-circle overflow-hidden d-flex align-items-center justify-content-center bg-body-secondary">
                     <?php $fotoPath = $usuarioPerfil['foto_usuario'] ? \App\Shared\Http\Url::to('uploads/fotosUsuarios/' . rawurlencode($usuarioPerfil['foto_usuario'])) : ''; ?>
-                    <img src="<?= $fotoPath ?>" id="fotoImgMob" class="w-100 h-100 object-fit-cover <?= $fotoPath ? '' : 'd-none' ?>" alt="Foto" onerror="this.classList.add('d-none');document.getElementById('fotoIconMob')?.classList.remove('d-none');">
+                                <img src="<?= htmlspecialchars($fotoPath, ENT_QUOTES, 'UTF-8') ?>" id="fotoImgMob" class="w-100 h-100 object-fit-cover <?= $fotoPath ? '' : 'd-none' ?>" alt="Foto" onerror="this.classList.add('d-none');document.getElementById('fotoIconMob')?.classList.remove('d-none');">
                     <i class="bi bi-person-fill fs-1 text-secondary <?= $fotoPath ? 'd-none' : '' ?>" id="fotoIconMob"></i>
                     <div class="placeholder-glow position-absolute top-0 start-0 w-100 h-100 rounded-circle z-1" id="fotoSkeletonMob" aria-hidden="true">
                         <span class="placeholder rounded-circle w-100 h-100"></span>
@@ -100,7 +100,7 @@ $paginaAtiva = 'perfil';
                         <div class="perfil-avatar-ring position-relative flex-shrink-0 mx-auto p-1 rounded-circle bg-primary shadow" id="fotoCircleDesk">
                             <div class="position-relative w-100 h-100 rounded-circle overflow-hidden d-flex align-items-center justify-content-center bg-body-secondary">
                                 <?php $fotoPathDesk = $usuarioPerfil['foto_usuario'] ? \App\Shared\Http\Url::to('uploads/fotosUsuarios/' . rawurlencode($usuarioPerfil['foto_usuario'])) : ''; ?>
-                                <img src="<?= $fotoPathDesk ?>" id="fotoImgDesk" class="w-100 h-100 object-fit-cover <?= $fotoPathDesk ? '' : 'd-none' ?>" alt="Foto" onerror="this.classList.add('d-none');document.getElementById('fotoIconDesk')?.classList.remove('d-none');">
+                                <img src="<?= htmlspecialchars($fotoPathDesk, ENT_QUOTES, 'UTF-8') ?>" id="fotoImgDesk" class="w-100 h-100 object-fit-cover <?= $fotoPathDesk ? '' : 'd-none' ?>" alt="Foto" onerror="this.classList.add('d-none');document.getElementById('fotoIconDesk')?.classList.remove('d-none');">
                                 <i class="bi bi-person-fill fs-1 text-secondary <?= $fotoPathDesk ? 'd-none' : '' ?>" id="fotoIconDesk"></i>
                                 <div class="placeholder-glow position-absolute top-0 start-0 w-100 h-100 rounded-circle z-1" id="fotoSkeletonDesk" aria-hidden="true">
                                     <span class="placeholder rounded-circle w-100 h-100"></span>
@@ -205,7 +205,7 @@ $paginaAtiva = 'perfil';
             <form id="formEditarPerfil">
                 <div class="modal-body px-4">
                     <div class="mb-3">
-                        <label class="form-label small text-muted fw-semibold"><i class="bi bi-person me-1"></i>Nome</label>
+                        <label for="editarNome" class="form-label small text-muted fw-semibold"><i class="bi bi-person me-1"></i>Nome</label>
                         <input type="text" name="nome_usuario" class="form-control rounded-3" id="editarNome" required>
                     </div>
                     <div id="msgEditarPerfil" class="small text-center mt-2"></div>
@@ -229,21 +229,21 @@ $paginaAtiva = 'perfil';
             <form id="formAlterarSenha">
                 <div class="modal-body px-4">
                     <div class="mb-3">
-                        <label class="form-label small text-muted fw-semibold">Senha Atual</label>
+                        <label for="editarSenhaAtual" class="form-label small text-muted fw-semibold">Senha Atual</label>
                         <div class="input-group">
                             <input type="password" name="senha_atual" class="form-control rounded-start-3" id="editarSenhaAtual" required autocomplete="current-password">
                             <button type="button" class="perfil-password-eye btn btn-outline-secondary" data-target="editarSenhaAtual" tabindex="-1" aria-label="Mostrar senha"><i class="bi bi-eye-slash"></i></button>
                         </div>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label small text-muted fw-semibold">Nova Senha</label>
+                        <label for="editarNovaSenha" class="form-label small text-muted fw-semibold">Nova Senha</label>
                         <div class="input-group">
                             <input type="password" name="nova_senha" class="form-control rounded-start-3" id="editarNovaSenha" required minlength="6" autocomplete="new-password">
                             <button type="button" class="perfil-password-eye btn btn-outline-secondary" data-target="editarNovaSenha" tabindex="-1" aria-label="Mostrar senha"><i class="bi bi-eye-slash"></i></button>
                         </div>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label small text-muted fw-semibold">Confirmar Nova Senha</label>
+                        <label for="editarConfirmarSenha" class="form-label small text-muted fw-semibold">Confirmar Nova Senha</label>
                         <div class="input-group">
                             <input type="password" name="confirmar_senha" class="form-control rounded-start-3" id="editarConfirmarSenha" required autocomplete="new-password">
                             <button type="button" class="perfil-password-eye btn btn-outline-secondary" data-target="editarConfirmarSenha" tabindex="-1" aria-label="Mostrar senha"><i class="bi bi-eye-slash"></i></button>

@@ -87,7 +87,7 @@ async function carregarAlertaLimite() {
         let msg = `<i class="bi bi-exclamation-triangle-fill"></i>`;
         msg += `<span class="flex-grow-1"><strong>Limite excedido:</strong> esta equipe possui <strong>${total}</strong> inscritos e o limite da modalidade é <strong>${limite}</strong>.</span>`;
         if (isAdmin) {
-            msg += `<button type="button" class="btn btn-primary btn-sm flex-shrink-0" onclick="redistribuirElenco()"><i class="bi bi-shuffle"></i> Enviar alunos para as outras equipes</button>`;
+            msg += '<button type="button" class="btn btn-primary btn-sm flex-shrink-0" data-sgi-action="redistribute-roster"><i class="bi bi-shuffle"></i> Enviar alunos para as outras equipes</button>';
         }
 
         if (mob) { mob.innerHTML = msg; mob.classList.remove('d-none'); }
@@ -98,7 +98,7 @@ async function carregarAlertaLimite() {
 }
 
 async function redistribuirElenco() {
-    if (!confirm('Enviar os alunos excedentes para as outras equipes desta turma?')) return;
+    if (!await SGI.confirm({ titulo: 'Redistribuir alunos?', mensagem: 'Os alunos excedentes serão enviados para outras equipes desta turma.', textoConfirmar: 'Redistribuir' })) return;
     try {
         const resp = await fetch(`${API}equipes`, {
             method: 'POST',
@@ -111,10 +111,10 @@ async function redistribuirElenco() {
         });
         const data = await resp.json();
         if (data.success === false) throw new Error(data.message || 'Falha ao redistribuir.');
-        alert(data.message || 'Redistribuição concluída.');
+        SGI.alert(data.message || 'Redistribuição concluída.');
         carregar();
     } catch (err) {
-        alert(err.message || 'Erro de conexão ao redistribuir.');
+        SGI.alert(err.message || 'Erro de conexão ao redistribuir.');
     }
 }
 
@@ -151,7 +151,7 @@ async function carregar() {
                     <div class="text-muted small">${esc(u.matricula_usuario)}</div>
                 </div>
                 ${isAdmin ? `
-                    <button onclick="removerAluno(${u.id_usuario}, ${idEquipe})" class="btn btn-outline-danger btn-sm px-3 py-1 small" >
+                    <button type="button" data-sgi-action="remove-roster-student" data-id-usuario="${esc(u.id_usuario)}" data-id-equipe="${esc(idEquipe)}" class="btn btn-outline-danger btn-sm px-3 py-1 small" aria-label="Remover aluno da equipe">
                         <i class="bi bi-trash"></i>
                     </button>
                 ` : ''}
@@ -164,7 +164,7 @@ async function carregar() {
                 <td>${esc(u.matricula_usuario)}</td>
                 ${isAdmin ? `
                     <td class="text-end">
-                        <button onclick="removerAluno(${u.id_usuario}, ${idEquipe})" class="btn btn-outline-danger btn-sm px-3 py-1 small" >
+                        <button type="button" data-sgi-action="remove-roster-student" data-id-usuario="${esc(u.id_usuario)}" data-id-equipe="${esc(idEquipe)}" class="btn btn-outline-danger btn-sm px-3 py-1 small" aria-label="Remover aluno da equipe">
                             <i class="bi bi-trash"></i>
                         </button>
                     </td>
@@ -180,7 +180,7 @@ async function carregar() {
 }
 
 async function removerAluno(idUsuario, idEquipe) {
-    if (!confirm('Deseja realmente remover este aluno da equipe?')) return;
+    if (!await SGI.confirm({ titulo: 'Remover aluno da equipe?', mensagem: 'O vínculo do aluno com esta equipe será removido.', textoConfirmar: 'Remover aluno', destrutivo: true })) return;
 
     try {
         const response = await fetch(`${API}equipes`, {
@@ -196,14 +196,28 @@ async function removerAluno(idUsuario, idEquipe) {
         if (res.success) {
             carregar();
         } else {
-            alert(res.message || 'Erro ao remover aluno.');
+            SGI.alert(res.message || 'Erro ao remover aluno.');
         }
     } catch (e) {
         console.error('Erro de requisição:', e);
-        alert('Erro de conexão ao tentar remover o aluno.');
+        SGI.alert('Erro de conexão ao tentar remover o aluno.');
     }
 }
 
+function vincularEventos() {
+    [document.getElementById('alertaLimiteMob'), document.getElementById('alertaLimiteDesk')]
+        .forEach((container) => pageScope.listen(container, 'click', (event) => {
+            const button = event.target.closest('[data-sgi-action="redistribute-roster"]');
+            if (button) redistribuirElenco();
+        }));
+    [document.getElementById('listaElencoMob'), document.getElementById('tbodyElencoDesk')]
+        .forEach((container) => pageScope.listen(container, 'click', (event) => {
+            const button = event.target.closest('[data-sgi-action="remove-roster-student"]');
+            if (button) removerAluno(button.dataset.idUsuario, button.dataset.idEquipe);
+        }));
+}
+
+vincularEventos();
 pageScope.listen(window, 'pageshow', carregar);
 
 return {esc, montarVoltar, carregarNomeInterclasse, montarGerenciar, carregarAlertaLimite, redistribuirElenco, carregar, removerAluno};

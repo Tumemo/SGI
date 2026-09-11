@@ -1,5 +1,9 @@
 window.SGIPage.mount("competicoes/modalidade-detalhes", function (pageConfig, pageScope) {
 
+    const esc = (value) => window.SGIHtml
+        ? window.SGIHtml.escape(value)
+        : String(value == null ? '' : value).replace(/[&<>"']/g, (character) => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[character]));
+
     let modalidadeAtual = null;
     let idInterclasseAtual = null;
     const PERMITE_EXCLUIR = pageConfig.value2;
@@ -41,7 +45,7 @@ window.SGIPage.mount("competicoes/modalidade-detalhes", function (pageConfig, pa
             });
 
             const btnExcluir = PERMITE_EXCLUIR
-                ? '<button class="mdd-btn-delete btn btn-outline-danger d-inline-flex align-items-center gap-2" onclick="excluirModalidade()"><i class="bi bi-trash3"></i> Excluir</button>'
+                ? '<button type="button" class="mdd-btn-delete btn btn-outline-danger d-inline-flex align-items-center gap-2" data-sgi-action="delete-modalidade"><i class="bi bi-trash3"></i> Excluir</button>'
                 : '';
 
             const resumoHtml = `
@@ -51,7 +55,7 @@ window.SGIPage.mount("competicoes/modalidade-detalhes", function (pageConfig, pa
                         ${modalidade.nome_categoria ? `<span class="badge rounded-pill text-bg-primary-subtle text-primary-emphasis"><i class="bi bi-tag me-1"></i> ${esc(modalidade.nome_categoria)}</span>` : ''}
                     </div>
                     <div class="d-flex gap-2 flex-wrap">
-                        <button class="btn btn-primary d-inline-flex align-items-center gap-2" onclick="abrirModalEdicao()"><i class="bi bi-pencil-square"></i> Editar</button>
+                        <button type="button" class="btn btn-primary d-inline-flex align-items-center gap-2" data-sgi-action="edit-modalidade"><i class="bi bi-pencil-square"></i> Editar</button>
                         ${btnExcluir}
                     </div>
                 </div>
@@ -134,7 +138,7 @@ window.SGIPage.mount("competicoes/modalidade-detalhes", function (pageConfig, pa
             setCount('countTurmasDesktop', turmasUnicas.length);
             setCount('countEquipesDesktop', qtdEquipes);
         } catch (error) {
-            document.getElementById('resumoModalidadeDesktop').innerHTML = `<p class="text-danger m-0">${error.message}</p>`;
+            document.getElementById('resumoModalidadeDesktop').innerHTML = `<p class="text-danger m-0">${esc(error.message)}</p>`;
             document.getElementById('listaTurmasDesktop').innerHTML = '<p class="text-danger">Erro ao carregar.</p>';
             document.getElementById('listaEquipesDesktop').innerHTML = '<p class="text-danger">Erro ao carregar.</p>';
         }
@@ -145,13 +149,19 @@ window.SGIPage.mount("competicoes/modalidade-detalhes", function (pageConfig, pa
         try {
             const resp = await fetch('/api/v1/tipos-modalidade');
             const tipos = await resp.json();
-            select.innerHTML = '<option value="" disabled>Selecione...</option>';
+            const placeholder = new Option('Selecione...', '');
+            placeholder.disabled = true;
+            placeholder.selected = !selectedId;
+            select.replaceChildren(placeholder);
             tipos.forEach(t => {
-                const sel = t.id_tipo_modalidade == selectedId ? 'selected' : '';
-                select.innerHTML += `<option value="${t.id_tipo_modalidade}" ${sel}>${t.nome_tipo_modalidade}</option>`;
+                const option = new Option(String(t.nome_tipo_modalidade || ''), String(t.id_tipo_modalidade));
+                option.selected = String(t.id_tipo_modalidade) === String(selectedId);
+                select.add(option);
             });
         } catch (e) {
-            select.innerHTML = '<option value="" disabled selected>Erro ao carregar</option>';
+            select.replaceChildren(new Option('Erro ao carregar', ''));
+            select.options[0].disabled = true;
+            select.options[0].selected = true;
         }
     }
 
@@ -161,13 +171,19 @@ window.SGIPage.mount("competicoes/modalidade-detalhes", function (pageConfig, pa
         try {
             const resp = await fetch(`/api/v1/categorias?id_interclasse=${idInterclasse}`);
             const cats = await resp.json();
-            select.innerHTML = '<option value="" disabled>Selecione...</option>';
+            const placeholder = new Option('Selecione...', '');
+            placeholder.disabled = true;
+            placeholder.selected = !selectedId;
+            select.replaceChildren(placeholder);
             cats.forEach(c => {
-                const sel = c.id_categoria == selectedId ? 'selected' : '';
-                select.innerHTML += `<option value="${c.id_categoria}" ${sel}>${c.nome_categoria}</option>`;
+                const option = new Option(String(c.nome_categoria || ''), String(c.id_categoria));
+                option.selected = String(c.id_categoria) === String(selectedId);
+                select.add(option);
             });
         } catch (e) {
-            select.innerHTML = '<option value="" disabled selected>Erro ao carregar</option>';
+            select.replaceChildren(new Option('Erro ao carregar', ''));
+            select.options[0].disabled = true;
+            select.options[0].selected = true;
         }
     }
 
@@ -191,7 +207,7 @@ window.SGIPage.mount("competicoes/modalidade-detalhes", function (pageConfig, pa
 
     async function excluirModalidade() {
         if (!modalidadeAtual) return;
-        if (!confirm(`Tem certeza que deseja excluir a modalidade "${modalidadeAtual.nome_modalidade}"?`)) return;
+        if (!await SGI.confirm({ titulo: 'Excluir modalidade?', mensagem: `A modalidade "${modalidadeAtual.nome_modalidade}" será excluída. Esta ação não pode ser desfeita.`, textoConfirmar: 'Excluir modalidade', destrutivo: true })) return;
 
         const btn = document.querySelector('.mdd-btn-delete');
         const originalText = btn?.innerHTML || '';
@@ -206,7 +222,7 @@ window.SGIPage.mount("competicoes/modalidade-detalhes", function (pageConfig, pa
             const data = await resp.json();
 
             if (!resp.ok || data.success === false) {
-                alert(data.message || 'Erro ao excluir.');
+                SGI.alert(data.message || 'Erro ao excluir.');
                 return;
             }
 
@@ -215,7 +231,7 @@ window.SGIPage.mount("competicoes/modalidade-detalhes", function (pageConfig, pa
                 ? `/edicoes/modalidades?id=${idInterclasse}&modo=view`
                 : '/edicoes/modalidades';
         } catch (e) {
-            alert('Erro de conexão.');
+            SGI.alert('Erro de conexão.');
         } finally {
             if (btn) { btn.disabled = false; btn.innerHTML = originalText; }
         }
@@ -266,14 +282,23 @@ window.SGIPage.mount("competicoes/modalidade-detalhes", function (pageConfig, pa
                 carregarDetalhesModalidade();
             }, 800);
         } catch (err) {
-            msg.innerHTML = `<p class="text-danger text-center fw-bold mb-0">${err.message}</p>`;
+            msg.innerHTML = `<p class="text-danger text-center fw-bold mb-0">${esc(err.message)}</p>`;
         } finally {
             btn.disabled = false;
             btn.innerHTML = 'Salvar Alterações';
         }
     });
 
-    window.SGIPage.ready( carregarDetalhesModalidade);
+    window.SGIPage.ready(() => {
+        const resumo = document.getElementById('resumoModalidadeDesktop');
+        pageScope.listen(resumo, 'click', (event) => {
+            const action = event.target.closest('[data-sgi-action]');
+            if (!action) return;
+            if (action.dataset.sgiAction === 'edit-modalidade') abrirModalEdicao();
+            if (action.dataset.sgiAction === 'delete-modalidade') excluirModalidade();
+        });
+        carregarDetalhesModalidade();
+    });
 
 return {carregarDetalhesModalidade, carregarTiposEdicao, carregarCategoriasEdicao, abrirModalEdicao, excluirModalidade};
 });

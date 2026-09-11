@@ -134,7 +134,9 @@ window.SGIPage.mount("eventos/configurar-locais", function (pageConfig, pageScop
                         <button type="button" 
                                 class="btn btn-sm btn-outline-danger d-inline-flex align-items-center justify-content-center"
                                 title="Excluir local"
-                                onclick='excluirLocal(${loc.id_local}, "${esc(loc.nome_local)}")'>
+                                data-sgi-action="delete-local"
+                                data-id-local="${loc.id_local}"
+                                data-nome-local="${esc(loc.nome_local)}">
                             <i class="bi bi-trash"></i>
                         </button>
                     </div>
@@ -143,7 +145,7 @@ window.SGIPage.mount("eventos/configurar-locais", function (pageConfig, pageScop
     }
 
     window.excluirLocal = async function(idLocal, nomeLocal) {
-        if (!confirm(`Deseja excluir o local "${nomeLocal}"?\nEsta ação não pode ser desfeita.`)) {
+        if (!await SGI.confirm({ titulo: 'Excluir local?', mensagem: `O local "${nomeLocal}" será excluído. Esta ação não pode ser desfeita.`, textoConfirmar: 'Excluir local', destrutivo: true })) {
             return;
         }
         try {
@@ -156,7 +158,7 @@ window.SGIPage.mount("eventos/configurar-locais", function (pageConfig, pageScop
             }
             await carregarLocais();
         } catch (error) {
-            alert(error.message);
+            SGI.alert(error.message);
         }
     };
 
@@ -209,6 +211,12 @@ window.SGIPage.mount("eventos/configurar-locais", function (pageConfig, pageScop
         await carregarLocais();
         await carregarRegulamento();
 
+        pageScope.listen(document.getElementById('listaLocaisDesktop'), 'click', (event) => {
+            const button = event.target.closest('[data-sgi-action="delete-local"]');
+            if (!button) return;
+            window.excluirLocal(button.dataset.idLocal, button.dataset.nomeLocal);
+        });
+
         // Envio do FORMULÁRIO REGULAMENTO
         // Envio do FORMULÁRIO REGULAMENTO (Popup de Sucesso)
         pageScope.listen(document.getElementById('formRegulamento'), 'submit', async (e) => {
@@ -223,12 +231,12 @@ window.SGIPage.mount("eventos/configurar-locais", function (pageConfig, pageScop
             }
 
             if (!idInterclasse) {
-                alert('Nenhuma edição do interclasse encontrada ou ativa.');
+                SGI.alert('Nenhuma edição do interclasse encontrada ou ativa.');
                 return;
             }
 
             if (!fileInput.files || fileInput.files.length === 0) {
-                alert('Por favor, selecione um arquivo PDF.');
+                SGI.alert('Por favor, selecione um arquivo PDF.');
                 return;
             }
 
@@ -256,13 +264,13 @@ window.SGIPage.mount("eventos/configurar-locais", function (pageConfig, pageScop
                 document.getElementById('formRegulamento').reset();
 
                 // 3. Exibe o Popup de Sucesso 🎉
-                alert('Regulamento enviado e atualizado com sucesso! :)');
+                SGI.alert('Regulamento enviado e atualizado com sucesso! :)');
 
                 // 4. Recarrega as informações na tela
                 await carregarRegulamento();
 
             } catch (err) {
-                alert(err.message || 'Erro no envio do regulamento.');
+                SGI.alert(err.message || 'Erro no envio do regulamento.');
             } finally {
                 btn.disabled = false;
             }

@@ -14,6 +14,48 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+.sgi-feedback-modal .modal-dialog {
+  max-width: 440px;
+  margin-inline: 1rem;
+}
+
+.sgi-feedback-modal .modal-content {
+  background: var(--bs-body-bg);
+}
+
+.sgi-feedback-modal__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  background: color-mix(in srgb, currentColor 12%, transparent);
+  font-size: 1.25rem;
+}
+
+.sgi-feedback-modal__message {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.sgi-feedback-modal .modal-footer .btn {
+  min-height: 2.625rem;
+  min-width: 7rem;
+}
+
+@media (max-width: 575.98px) {
+  .sgi-feedback-modal .modal-footer {
+    flex-direction: column-reverse;
+    align-items: stretch;
+  }
+
+  .sgi-feedback-modal .modal-footer .btn {
+    width: 100%;
+  }
+}
+
 /* Bootstrap already provides reset, colors and component states. These are
    only shared hooks for the two navigation shells and the existing runtime. */
 .mobile-nav {

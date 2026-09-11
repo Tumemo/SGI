@@ -23,17 +23,24 @@ window.SGIPage.mount("eventos/configurar-agenda", function (pageConfig, pageScop
     let filtroStatus = '';
     let buscaAtual = '';
 
-    function jogoEhIndividual(jogo) {
-        if (!jogo) return false;
-        if (jogo.tipo_competicao === 'individual') return true;
-        if (jogo.tipo_competicao === 'mata_mata') return false;
+    function resolverTipoCompeticao(jogo) {
+        if (!jogo) return null;
+        if (jogo.tipo_competicao === 'individual') return 'individual';
+        if (jogo.tipo_competicao === 'mata_mata') return 'mata_mata';
         const nomeTipo = String(jogo.nome_tipo_modalidade || '').trim().toLowerCase();
-        if (nomeTipo === 'individual' || nomeTipo === 'prova individual') return true;
-        if (nomeTipo === 'mata-mata' || nomeTipo === 'mata mata') return false;
-        return !jogo.tipo_competicao && !jogo.nome_tipo_modalidade && Number(jogo.tipos_modalidades_id_tipo_modalidade) === 2;
+        if (nomeTipo === 'individual' || nomeTipo === 'prova individual' || nomeTipo === 'individualizada') return 'individual';
+        if (nomeTipo === 'mata-mata' || nomeTipo === 'mata mata' || nomeTipo === 'mata-mata (eliminatório)' || nomeTipo === 'mata-mata (eliminatória)' || nomeTipo === 'eliminatório' || nomeTipo === 'eliminatória' || nomeTipo === 'eliminatoria') return 'mata_mata';
+        return null;
+    }
+
+    function jogoEhIndividual(jogo) {
+        return resolverTipoCompeticao(jogo) === 'individual';
     }
 
     function formatNomeJogo(nomeJogo, jogo = null) {
+        if (jogo && resolverTipoCompeticao(jogo) === null) {
+            return 'Tipo não configurado';
+        }
         if (jogoEhIndividual(jogo)) {
             return 'Competição Individual';
         }
@@ -451,7 +458,7 @@ window.SGIPage.mount("eventos/configurar-agenda", function (pageConfig, pageScop
                     await carregarJogosDoInterclasse();
                     atualizarTelas();
                 } catch (e) {
-                    alert(e.message || 'Erro ao iniciar o jogo.');
+                    SGI.alert(e.message || 'Erro ao iniciar o jogo.');
                 }
             });
         });
@@ -788,7 +795,7 @@ window.SGIPage.mount("eventos/configurar-agenda", function (pageConfig, pageScop
             if (!jogoEmEdicao) return;
             const data = document.getElementById('edit-jogo-data').value;
             if (data && data < hojeISO()) {
-                alert('Não é permitido agendar um jogo para uma data passada.');
+                SGI.alert('Não é permitido agendar um jogo para uma data passada.');
                 return;
             }
             const ini = document.getElementById('edit-jogo-inicio').value;
@@ -813,7 +820,7 @@ window.SGIPage.mount("eventos/configurar-agenda", function (pageConfig, pageScop
                 await carregarJogosDoInterclasse();
                 atualizarTelas();
             } catch (e) {
-                alert(e.message || 'Erro ao salvar.');
+                SGI.alert(e.message || 'Erro ao salvar.');
             }
         });
 
@@ -950,8 +957,8 @@ window.SGIPage.mount("eventos/configurar-agenda", function (pageConfig, pageScop
             const fim = document.getElementById('seq-proxima-fim').value || '11:30';
             const local = Number(document.getElementById('seq-local').value);
             const anterior = valorDiasSequenciais().at(-1);
-            if (!data || !inicio || !local) { alert('Informe a data, o horário e o local da próxima sessão.'); return; }
-            if (anterior && data !== proximaDataSessao(anterior.data)) { alert('A próxima sessão deve seguir a cadência terça-feira e quinta-feira.'); return; }
+            if (!data || !inicio || !local) { SGI.alert('Informe a data, o horário e o local da próxima sessão.'); return; }
+            if (anterior && data !== proximaDataSessao(anterior.data)) { SGI.alert('A próxima sessão deve seguir a cadência terça-feira e quinta-feira.'); return; }
             diasSequenciaisAdicionados.push({ data, inicio, fim, local });
             document.getElementById('seq-proximo-dia').classList.add('d-none');
             if (btnSeqSimular) btnSeqSimular.click();
@@ -969,9 +976,9 @@ window.SGIPage.mount("eventos/configurar-agenda", function (pageConfig, pageScop
                 agendaSequencialAtual = null;
                 await carregarJogosDoInterclasse();
                 atualizarTelas();
-                alert(`${json.programados || 0} jogo(s) programado(s) com sucesso.`);
+                SGI.alert(`${json.programados || 0} jogo(s) programado(s) com sucesso.`);
             } catch (error) {
-                alert(error.message || 'Não foi possível confirmar a agenda.');
+                SGI.alert(error.message || 'Não foi possível confirmar a agenda.');
                 btnSeqConfirmar.disabled = false;
             }
         });

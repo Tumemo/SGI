@@ -52,3 +52,81 @@ test('feedback uses the Bootstrap Toast API and escapes message text', async ({ 
     await expect(toast).toBeVisible();
     await expect(toast).toHaveCount(0, { timeout: 1000 });
 });
+
+test('feedback dialogs are modal, accessible, queued and safe', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 900 });
+    await page.setContent('<button id="origin">Abrir</button>');
+    await page.addStyleTag({ path: path.join(root, 'public/assets/css/bootstrap-theme.css') });
+    await page.addStyleTag({ path: path.join(root, 'public/assets/css/shared.css') });
+    await page.addScriptTag({ path: path.join(root, 'public/assets/vendor/bootstrap/js/bootstrap.bundle.min.js') });
+    await page.addScriptTag({ path: path.join(root, 'resources/js/shared/bootstrap-feedback.js') });
+
+    await page.evaluate(() => {
+        window.__sgiFirstDialog = window.SGI.alert({
+            titulo: 'Mensagem segura',
+            mensagem: '<script>alert(1)</script>\nlinha 2',
+            tipo: 'error'
+        });
+    });
+    const modal = page.locator('.sgi-feedback-modal');
+    await expect(modal).toBeVisible();
+    await expect(modal).toHaveAttribute('role', 'dialog');
+    await expect(modal).toContainText('<script>alert(1)</script>');
+    await expect(modal.locator('script')).toHaveCount(0);
+    await expect(modal.locator('.sgi-feedback-modal__message')).toHaveCSS('white-space', 'pre-wrap');
+    await modal.getByRole('button', { name: 'Entendi' }).click();
+    await page.evaluate(() => window.__sgiFirstDialog);
+    await expect(modal).toHaveCount(0);
+
+    await page.evaluate(() => {
+        window.__sgiConfirmation = window.SGI.confirm({
+            titulo: 'Excluir registro?',
+            mensagem: 'A ação não pode ser desfeita.',
+            textoConfirmar: 'Excluir',
+            destrutivo: true
+        });
+    });
+    await expect(page.getByRole('dialog')).toBeVisible();
+    await expect(page.getByRole('dialog').getByRole('button', { name: 'Excluir' })).toHaveClass(/btn-danger/);
+    await page.getByRole('dialog').getByRole('button', { name: 'Cancelar' }).click();
+    expect(await page.evaluate(() => window.__sgiConfirmation)).toBeFalsy();
+
+    await page.evaluate(() => {
+        document.body.insertAdjacentHTML('beforeend', `
+            <div class="modal fade" id="sourceModal" tabindex="-1" aria-hidden="true">
+                <div class="modal-dialog"><div class="modal-content">
+                    <div class="modal-body"><input id="sourceField" value="valor preservado"></div>
+                </div></div>
+            </div>
+        `);
+        const source = document.getElementById('sourceModal');
+        const sourceInstance = bootstrap.Modal.getOrCreateInstance(source);
+        source.addEventListener('shown.bs.modal', () => {
+            document.getElementById('sourceField').focus();
+            window.__sgiSourceFeedback = window.SGI.alert('A mensagem veio do formulário.');
+        }, { once: true });
+        sourceInstance.show();
+    });
+    await expect(page.locator('#sourceModal')).toBeVisible();
+    await expect(page.getByRole('dialog').filter({ hasText: 'A mensagem veio do formulário.' })).toBeVisible();
+    await expect(page.locator('#sourceModal')).toBeHidden();
+    await page.getByRole('dialog').getByRole('button', { name: 'Entendi' }).click();
+    await page.evaluate(() => window.__sgiSourceFeedback);
+    await expect(page.locator('#sourceModal')).toBeVisible();
+    await expect(page.locator('#sourceField')).toHaveValue('valor preservado');
+    await expect(page.locator('#sourceField')).toBeFocused();
+    await page.evaluate(() => bootstrap.Modal.getInstance(document.getElementById('sourceModal')).hide());
+    await expect(page.locator('#sourceModal')).toBeHidden();
+
+    await page.evaluate(() => {
+        window.__sgiQueuedOne = window.SGI.alert('primeira');
+        window.__sgiQueuedTwo = window.SGI.alert('segunda');
+    });
+    await expect(page.getByRole('dialog')).toContainText('primeira');
+    await page.getByRole('dialog').getByRole('button', { name: 'Entendi' }).click();
+    await page.evaluate(() => window.__sgiQueuedOne);
+    await expect(page.getByRole('dialog')).toContainText('segunda');
+    await page.getByRole('dialog').getByRole('button', { name: 'Entendi' }).click();
+    await page.evaluate(() => window.__sgiQueuedTwo);
+    await expect(page.getByRole('dialog')).toHaveCount(0);
+});

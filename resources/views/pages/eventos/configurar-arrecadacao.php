@@ -64,10 +64,10 @@ $isAdmin = $nivelUsuario === 0;
             <div class="modal-body pt-0">
                 <?php if ($isAdmin): ?>
                 <div class="d-flex gap-2 mb-3">
-                    <button type="button" id="btnFiltroAdicionados" class="btn btn-sm btn-primary rounded-3 px-3 py-1 fw-semibold active" aria-pressed="true" onclick="filtrarHistorico('adicionados')">
+                    <button type="button" id="btnFiltroAdicionados" class="btn btn-sm btn-primary rounded-3 px-3 py-1 fw-semibold active" aria-pressed="true" data-filtro-historico="adicionados">
                         <i class="bi bi-plus-circle me-1"></i>Adicionados
                     </button>
-                    <button type="button" id="btnFiltroExcluidos" class="btn btn-sm btn-outline-secondary rounded-3 px-3 py-1 fw-semibold" aria-pressed="false" onclick="filtrarHistorico('excluidos')">
+                    <button type="button" id="btnFiltroExcluidos" class="btn btn-sm btn-outline-secondary rounded-3 px-3 py-1 fw-semibold" aria-pressed="false" data-filtro-historico="excluidos">
                         <i class="bi bi-trash me-1"></i>Excluídos
                     </button>
                 </div>

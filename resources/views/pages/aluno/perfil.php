@@ -207,7 +207,7 @@ include SGI_ROOT . '/resources/views/components/aluno-nav.php';
             <form id="formEditarPerfil">
                 <div class="modal-body px-4">
                     <div class="mb-3">
-                        <label class="form-label small text-muted fw-semibold"><i class="bi bi-person me-1"></i>Nome</label>
+                        <label for="editarNome" class="form-label small text-muted fw-semibold"><i class="bi bi-person me-1"></i>Nome</label>
                         <input type="text" name="nome_usuario" class="form-control rounded-3" id="editarNome" required>
                     </div>
                     <div id="msgEditarPerfil" class="small text-center mt-2"></div>
@@ -231,21 +231,21 @@ include SGI_ROOT . '/resources/views/components/aluno-nav.php';
             <form id="formAlterarSenha">
                 <div class="modal-body px-4">
                     <div class="mb-3">
-                        <label class="form-label small text-muted fw-semibold">Senha Atual</label>
+                        <label for="editarSenhaAtual" class="form-label small text-muted fw-semibold">Senha Atual</label>
                         <div class="input-group">
                             <input type="password" name="senha_atual" class="form-control rounded-start-3" id="editarSenhaAtual" required autocomplete="current-password">
                             <button type="button" class="perfil-password-eye btn btn-outline-secondary" data-target="editarSenhaAtual" tabindex="-1" aria-label="Mostrar senha"><i class="bi bi-eye-slash"></i></button>
                         </div>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label small text-muted fw-semibold">Nova Senha</label>
+                        <label for="editarNovaSenha" class="form-label small text-muted fw-semibold">Nova Senha</label>
                         <div class="input-group">
                             <input type="password" name="nova_senha" class="form-control rounded-start-3" id="editarNovaSenha" required minlength="6" autocomplete="new-password">
                             <button type="button" class="perfil-password-eye btn btn-outline-secondary" data-target="editarNovaSenha" tabindex="-1" aria-label="Mostrar senha"><i class="bi bi-eye-slash"></i></button>
                         </div>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label small text-muted fw-semibold">Confirmar Nova Senha</label>
+                        <label for="editarConfirmarSenha" class="form-label small text-muted fw-semibold">Confirmar Nova Senha</label>
                         <div class="input-group">
                             <input type="password" name="confirmar_senha" class="form-control rounded-start-3" id="editarConfirmarSenha" required autocomplete="new-password">
                             <button type="button" class="perfil-password-eye btn btn-outline-secondary" data-target="editarConfirmarSenha" tabindex="-1" aria-label="Mostrar senha"><i class="bi bi-eye-slash"></i></button>

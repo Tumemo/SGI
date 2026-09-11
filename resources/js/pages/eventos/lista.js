@@ -2,8 +2,9 @@ window.SGIPage.mount("eventos/lista", function (pageConfig, pageScope) {
 
 
 function escaparHTML(string) {
-    const mapa = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#x27;' };
-    return String(string || '').replace(/[&<>"']/g, (s) => mapa[s]);
+    return window.SGIHtml
+        ? window.SGIHtml.escape(string)
+        : String(string == null ? '' : string).replace(/[&<>"']/g, (s) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[s]));
 }
 
 
@@ -90,16 +91,19 @@ if (pageConfig.value1) {
             var classeCard = (pageConfig.value2 ? cardClassStatus(ativo) : "");
             }
             const nome = escaparHTML(item.nome_interclasse);
+            const id = escaparHTML(item.id_interclasse);
+            const idUrl = encodeURIComponent(String(item.id_interclasse));
+            const ano = escaparHTML(anoStr);
 
             htmlMobile += `
-                <a href="/painel?id=${item.id_interclasse}" class="text-decoration-none text-dark">
+                <a href="/painel?id=${idUrl}" class="text-decoration-none text-dark">
                     <div class="m-auto shadow d-flex justify-content-between align-content-center px-3 py-3 rounded-3 my-3 border border-1 ${classeCard} w-100" >
                         <div>
                             <h2 class="m-0 fs-4">${nome}</h2>
-                            <p class="text-secondary m-0">${anoStr}</p>
+                            <p class="text-secondary m-0">${ano}</p>
                             ${pageConfig.value2 ? `
                             <label class="form-check form-switch mt-2 mb-0">
-                              <input class="form-check-input status-switch" type="checkbox" data-id="${item.id_interclasse}" ${ativo ? 'checked' : ''}>
+                              <input class="form-check-input status-switch" type="checkbox" data-id="${id}" ${ativo ? 'checked' : ''}>
                               <span class="small text-muted">Interclasse ativo</span>
                             </label>
                             ` : ``}
@@ -114,15 +118,15 @@ if (pageConfig.value1) {
 
             htmlDesktop += `
                 <div class="row bg-white shadow rounded-3 py-3 fs-5 mt-3 align-items-center px-2 border border-1 ${classeCard} sgi-u-cursor-pointer"
-                     onclick="window.location.href='/painel?id=${item.id_interclasse}'">
+                     role="link" tabindex="0" data-sgi-action="open-interclasse" data-id-interclasse="${id}">
 
                     <div class="col-4 fw-semibold text-dark text-truncate">${nome}</div>
-                    <div class="col-4 text-center text-secondary">${anoStr}</div>
+                    <div class="col-4 text-center text-secondary">${ano}</div>
                     <div class="col-4 text-center">
                         ${statusBadge}
                         ${pageConfig.value2 ? `
                         <div class="form-check form-switch d-flex justify-content-center mt-2">
-                            <input class="form-check-input status-switch" type="checkbox" data-id="${item.id_interclasse}" ${ativo ? 'checked' : ''}>
+                            <input class="form-check-input status-switch" type="checkbox" data-id="${id}" ${ativo ? 'checked' : ''}>
                         </div>
                         ` : ``}
                     </div>
@@ -161,13 +165,26 @@ function registrarEventosStatus() {
                 }
                 await listarInterclasses();
             } catch (error) {
-                alert(error.message || 'Erro ao atualizar status do interclasse.');
+                SGI.alert(error.message || 'Erro ao atualizar status do interclasse.');
                 await listarInterclasses();
             } finally {
                 event.target.disabled = false;
             }
         });
     });
+}
+
+function registrarEventosNavegacao() {
+    const container = document.getElementById('listaDesktop');
+    const navegar = (event) => {
+        if (event.target.closest('.status-switch')) return;
+        if (event.type === 'keydown' && event.key !== 'Enter' && event.key !== ' ') return;
+        if (event.type === 'keydown') event.preventDefault();
+        const card = event.target.closest('[data-sgi-action="open-interclasse"]');
+        if (card) window.location.href = `/painel?id=${encodeURIComponent(card.dataset.idInterclasse)}`;
+    };
+    pageScope.listen(container, 'click', navegar);
+    pageScope.listen(container, 'keydown', navegar);
 }
 
 
@@ -203,7 +220,7 @@ pageScope.listen(document.getElementById('formulario'), 'submit', async (event) 
         }
     } catch (error) {
         const msgErro = error.response?.data?.message || error.message || "Erro desconhecido";
-        document.getElementById('caixaMensagem').innerHTML = `<p class="text-danger text-center mt-3 mb-0 fw-bold">Erro: ${msgErro}</p>`;
+        document.getElementById('caixaMensagem').innerHTML = `<p class="text-danger text-center mt-3 mb-0 fw-bold">Erro: ${escaparHTML(msgErro)}</p>`;
     } finally {
         document.getElementById('btnCriar').disabled = false;
         document.getElementById('btnCriar').innerText = "Criar";
@@ -243,7 +260,10 @@ async function redirecionarParaInterclasseAtivo() {
 
 window.SGIPage.ready( redirecionarParaInterclasseAtivo);
 } else {
-window.SGIPage.ready( listarInterclasses);
+window.SGIPage.ready(() => {
+    registrarEventosNavegacao();
+    listarInterclasses();
+});
 }
 
 return {escaparHTML, anoInterclasse, statusAtivo, atualizarStatusInterclasse, ativarComExclusividade, cardClassStatus, listarInterclasses, registrarEventosStatus};

@@ -3,6 +3,20 @@ window.SGIPage.mount("competicoes/modalidades", function (pageConfig, pageScope)
     const nivelUsuario = pageConfig.value2;
     let idInterclasse = null;
 
+    const esc = (value) => window.SGIHtml
+        ? window.SGIHtml.escape(value)
+        : String(value == null ? '' : value).replace(/[&<>"']/g, (character) => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[character]));
+
+    function botoesAdmin(modalidade) {
+        if (nivelUsuario !== 0) return '';
+        const id = encodeURIComponent(String(modalidade.id_modalidade));
+        const interclasse = encodeURIComponent(String(idInterclasse));
+        return '<div class="d-flex gap-1 ms-2">'
+            + '<a class="btn btn-sm btn-outline-primary" href="/modalidades/detalhes?id=' + interclasse + '&id_modalidade=' + id + '" title="Editar" aria-label="Editar modalidade"><i class="bi bi-pencil"></i></a>'
+            + '<button type="button" class="btn btn-sm btn-outline-danger" data-sgi-action="delete-modalidade" data-id-modalidade="' + esc(modalidade.id_modalidade) + '" title="Excluir" aria-label="Excluir modalidade"><i class="bi bi-trash"></i></button>'
+            + '</div>';
+    }
+
     async function carregarModalidades() {
         const divMobile = document.getElementById('listaModalidadesMobile');
         const divDesktop = document.getElementById('listaModalidadesDesktop');
@@ -32,54 +46,41 @@ window.SGIPage.mount("competicoes/modalidades", function (pageConfig, pageScope)
                 modalidadesPorCategoria[categoria].push(modalidade);
             });
 
+            let htmlMobile = '';
+            let htmlDesktop = '';
             Object.keys(modalidadesPorCategoria).forEach((categoria) => {
                 const mods = modalidadesPorCategoria[categoria];
 
-                if (divMobile) {
-                    divMobile.innerHTML += '<h5 class="mt-4 mb-3 text-muted px-3">' + esc(categoria) + '</h5>';
-                    mods.forEach((modalidade) => {
-                        const botoesAdmin = nivelUsuario === 0
-                            ? '<div class="d-flex gap-1 ms-2">'
-                                + '<a class="btn btn-sm btn-outline-primary" href="/modalidades/detalhes?id=' + idInterclasse + '&id_modalidade=' + modalidade.id_modalidade + '" title="Editar"><i class="bi bi-pencil"></i></a>'
-                                + '<button class="btn btn-sm btn-outline-danger" onclick="excluirModalidade(' + modalidade.id_modalidade + ')" title="Excluir"><i class="bi bi-trash"></i></button>'
-                                + '</div>'
-                            : '';
-                        divMobile.innerHTML +=
-                            '<div class="bg-white d-flex align-items-center shadow py-3 px-4 mb-3 border border-1 rounded-3 w-100 mw-100" >'
-                                + '<i class="bi bi-trophy fs-4"></i>'
-                                + '<div class="text-start px-3 w-100">'
-                                    + '<h2 class="m-0 fs-5 text-truncate">' + esc(modalidade.nome_modalidade) + '</h2>'
-                                + '</div>'
-                                + botoesAdmin
-                            + '</div>';
-                    });
-                }
+                htmlMobile += '<h5 class="mt-4 mb-3 text-muted px-3">' + esc(categoria) + '</h5>';
+                htmlMobile += mods.map((modalidade) =>
+                    '<div class="bg-white d-flex align-items-center shadow py-3 px-4 mb-3 border border-1 rounded-3 w-100 mw-100" >'
+                        + '<i class="bi bi-trophy fs-4" aria-hidden="true"></i>'
+                        + '<div class="text-start px-3 w-100">'
+                            + '<h2 class="m-0 fs-5 text-truncate">' + esc(modalidade.nome_modalidade) + '</h2>'
+                        + '</div>'
+                        + botoesAdmin(modalidade)
+                    + '</div>'
+                ).join('');
 
-                if (divDesktop) {
-                    divDesktop.innerHTML += '<h4 class="mt-4 mb-3 text-muted">' + esc(categoria) + '</h4><div class="row g-4">';
-                    mods.forEach((modalidade) => {
-                        const botoesAdmin = nivelUsuario === 0
-                            ? '<div class="d-flex gap-1 ms-2">'
-                                + '<a class="btn btn-sm btn-outline-primary" href="/modalidades/detalhes?id=' + idInterclasse + '&id_modalidade=' + modalidade.id_modalidade + '" title="Editar"><i class="bi bi-pencil"></i></a>'
-                                + '<button class="btn btn-sm btn-outline-danger" onclick="excluirModalidade(' + modalidade.id_modalidade + ')" title="Excluir"><i class="bi bi-trash"></i></button>'
+                htmlDesktop += '<h4 class="mt-4 mb-3 text-muted">' + esc(categoria) + '</h4><div class="row g-4">';
+                htmlDesktop += mods.map((modalidade) =>
+                    '<div class="col-12 col-md-6 col-lg-4">'
+                        + '<div class="card border border-light-subtle shadow-sm h-100 py-4 px-4 d-flex flex-row align-items-center rounded-3" >'
+                            + '<div class="d-flex align-items-center gap-3 flex-grow-1">'
+                                + '<i class="bi bi-trophy fs-4 text-dark" aria-hidden="true"></i>'
+                                + '<div>'
+                                    + '<h5 class="m-0 fw-bold fs-6">' + esc(modalidade.nome_modalidade) + '</h5>'
                                 + '</div>'
-                            : '';
-                        divDesktop.innerHTML +=
-                            '<div class="col-12 col-md-6 col-lg-4">'
-                                + '<div class="card border border-light-subtle shadow-sm h-100 py-4 px-4 d-flex flex-row align-items-center rounded-3" >'
-                                    + '<div class="d-flex align-items-center gap-3 flex-grow-1">'
-                                        + '<i class="bi bi-trophy fs-4 text-dark"></i>'
-                                        + '<div>'
-                                            + '<h5 class="m-0 fw-bold fs-6">' + esc(modalidade.nome_modalidade) + '</h5>'
-                                        + '</div>'
-                                    + '</div>'
-                                    + botoesAdmin
-                                + '</div>'
-                            + '</div>';
-                    });
-                    divDesktop.innerHTML += '</div>';
-                }
+                            + '</div>'
+                            + botoesAdmin(modalidade)
+                        + '</div>'
+                    + '</div>'
+                ).join('');
+                htmlDesktop += '</div>';
             });
+
+            if (divMobile) divMobile.innerHTML = htmlMobile;
+            if (divDesktop) divDesktop.innerHTML = htmlDesktop;
         } catch (error) {
             console.error('Erro ao carregar lista:', error);
         }
@@ -93,13 +94,18 @@ window.SGIPage.mount("competicoes/modalidades", function (pageConfig, pageScope)
             const response = await axios.get('/api/v1/tipos-modalidade');
             const tipos = response.data;
 
-            selectTipo.innerHTML = '<option value="" disabled selected>Selecione um tipo...</option>';
+            const placeholder = new Option('Selecione um tipo...', '');
+            placeholder.disabled = true;
+            placeholder.selected = true;
+            selectTipo.replaceChildren(placeholder);
             tipos.forEach(tipo => {
-                selectTipo.innerHTML += '<option value="' + esc(tipo.id_tipo_modalidade) + '">' + esc(tipo.nome_tipo_modalidade) + '</option>';
+                selectTipo.add(new Option(String(tipo.nome_tipo_modalidade || ''), String(tipo.id_tipo_modalidade)));
             });
         } catch (error) {
             console.error('Erro ao carregar tipos:', error);
-            selectTipo.innerHTML = '<option value="" disabled selected>Erro ao carregar</option>';
+            selectTipo.replaceChildren(new Option('Erro ao carregar', ''));
+            selectTipo.options[0].disabled = true;
+            selectTipo.options[0].selected = true;
         }
     }
 
@@ -111,18 +117,23 @@ window.SGIPage.mount("competicoes/modalidades", function (pageConfig, pageScope)
             const response = await axios.get('/api/v1/categorias?id_interclasse=' + idInterclasse);
             const categorias = response.data;
 
-            selectCat.innerHTML = '<option value="" disabled selected>Selecione uma categoria...</option>';
+            const placeholder = new Option('Selecione uma categoria...', '');
+            placeholder.disabled = true;
+            placeholder.selected = true;
+            selectCat.replaceChildren(placeholder);
             categorias.forEach((cat) => {
-                selectCat.innerHTML += '<option value="' + esc(cat.id_categoria) + '">' + esc(cat.nome_categoria) + '</option>';
+                selectCat.add(new Option(String(cat.nome_categoria || ''), String(cat.id_categoria)));
             });
         } catch (error) {
             console.error('Erro ao carregar categorias:', error);
-            selectCat.innerHTML = '<option value="" disabled selected>Erro ao carregar</option>';
+            selectCat.replaceChildren(new Option('Erro ao carregar', ''));
+            selectCat.options[0].disabled = true;
+            selectCat.options[0].selected = true;
         }
     }
 
     async function excluirModalidade(id) {
-        if (!confirm('Tem certeza que deseja excluir esta modalidade?')) return;
+        if (!await SGI.confirm({ titulo: 'Excluir modalidade?', mensagem: 'Esta ação não pode ser desfeita.', textoConfirmar: 'Excluir modalidade', destrutivo: true })) return;
 
         try {
             const res = await axios.put('/api/v1/modalidades', {
@@ -132,10 +143,10 @@ window.SGIPage.mount("competicoes/modalidades", function (pageConfig, pageScope)
             if (res.data.success) {
                 carregarModalidades();
             } else {
-                alert('Erro ao excluir modalidade.');
+                SGI.alert('Erro ao excluir modalidade.');
             }
         } catch (error) {
-            alert('Erro ao excluir modalidade.');
+            SGI.alert('Erro ao excluir modalidade.');
             console.error(error);
         }
     }
@@ -180,10 +191,19 @@ window.SGIPage.mount("competicoes/modalidades", function (pageConfig, pageScope)
         }
     });
 
+    function vincularEventosLista() {
+        [document.getElementById('listaModalidadesMobile'), document.getElementById('listaModalidadesDesktop')]
+            .forEach((container) => pageScope.listen(container, 'click', (event) => {
+                const button = event.target.closest('[data-sgi-action="delete-modalidade"]');
+                if (button) excluirModalidade(button.dataset.idModalidade);
+            }));
+    }
+
     window.SGIPage.ready( async () => {
+        vincularEventosLista();
         idInterclasse = await window.SGIInterclasse.resolveId();
         if (!idInterclasse) {
-            alert('Nenhum interclasse ativo encontrado.');
+            await SGI.alert({ titulo: 'Interclasse não encontrado', mensagem: 'Nenhum interclasse ativo foi encontrado.', tipo: 'warning' });
             window.location.href = '/edicoes';
             return;
         }

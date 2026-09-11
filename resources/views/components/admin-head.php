@@ -22,7 +22,7 @@ if (!headers_sent()) {
 }
 ?>
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -66,14 +66,28 @@ if ($nivelUsuario === 2) {
 <script src="<?= \App\Shared\Http\Assets::url('js/shared/http-client.js') ?>"></script>
 <script src="<?= \App\Shared\Http\Assets::url('js/shared/cronometro.js') ?>"></script>
 <script src="<?= \App\Shared\Http\Assets::url('js/shared/bootstrap-feedback.js') ?>"></script>
+<script src="<?= \App\Shared\Http\Assets::url('js/shared/html-utils.js') ?>"></script>
 <script src="<?= \App\Shared\Http\Assets::url('js/shared/page-runtime.js') ?>"></script>
 <script>
 (function () {
-    document.addEventListener('click', function (event) {
+    document.addEventListener('click', async function (event) {
         var link = event.target.closest && event.target.closest('[data-sgi-logout]');
         if (!link) return;
         if (event.defaultPrevented) return;
+        if (link.dataset.sgiLogoutPending === '1') return;
         event.preventDefault();
+        link.dataset.sgiLogoutPending = '1';
+        if (window.SGI && typeof window.SGI.confirm === 'function') {
+            var autorizado = await window.SGI.confirm({
+                titulo: 'Sair do SGI?',
+                mensagem: 'Sua sessão será encerrada neste dispositivo.',
+                textoConfirmar: 'Sair'
+            });
+            if (!autorizado) {
+                delete link.dataset.sgiLogoutPending;
+                return;
+            }
+        }
         fetch(link.href, {
             method: 'POST',
             credentials: 'same-origin',

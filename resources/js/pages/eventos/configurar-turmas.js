@@ -12,8 +12,8 @@ window.SGIPage.mount("eventos/configurar-turmas", function (pageConfig, pageScop
     }
 
     if (!idInterclasse) {
-        alert("Erro: Nenhum interclasse selecionado! Você será redirecionado.");
-        window.location.href = "/edicoes";
+        SGI.alert({ titulo: 'Interclasse não selecionado', mensagem: 'Nenhum interclasse foi selecionado. Você será redirecionado.', tipo: 'warning' })
+            .then(() => { window.location.href = "/edicoes"; });
     }
 
     function getEl(id) {
@@ -143,7 +143,7 @@ window.SGIPage.mount("eventos/configurar-turmas", function (pageConfig, pageScop
             e.preventDefault();
 
             if (!categoriaSelecionadaId) {
-                alert("Por favor, selecione uma categoria na lista ao lado primeiro!");
+                SGI.alert("Por favor, selecione uma categoria na lista ao lado primeiro!");
                 const modalEl = getEl('modalCriarTurma');
                 const modal = bootstrap.Modal.getInstance(modalEl);
                 if (modal) modal.hide();
@@ -206,12 +206,12 @@ window.SGIPage.mount("eventos/configurar-turmas", function (pageConfig, pageScop
                         msg.innerHTML = '';
                     }, 1500);
                 } else {
-                    alert("Erro ao criar turma: " + (result.message || "Erro desconhecido."));
+                    SGI.alert("Erro ao criar turma: " + (result.message || "Erro desconhecido."));
                     msg.innerHTML = "";
                 }
             } catch (error) {
                 console.error("Erro na requisição:", error);
-                alert("Erro de conexão.");
+                SGI.alert("Erro de conexão.");
                 msg.innerHTML = "";
             } finally {
                 btnSalvar.disabled = false;

@@ -27,7 +27,6 @@ if (!$termoAceito) {
 
 $classeLink = fn($key) => $key === $paginaAtiva ? 'text-white fw-bold' : 'text-white-50';
 $iconeNav = fn($icon, $key) => $key === $paginaAtiva ? $icon . '-fill' : $icon;
-$onclickSair = "onclick=\"return confirm('Deseja realmente sair?')\"";
 ?>
 
 <!-- Estilos para a foto redonda no menu de navegação -->
@@ -38,11 +37,11 @@ $onclickSair = "onclick=\"return confirm('Deseja realmente sair?')\"";
     <ul class="nav justify-content-around flex-nowrap fs-5 list-unstyled mb-0 gap-0 px-1 align-items-center h-100">
         <?php foreach ($navItens as $key => $item): ?>
         <li>
-            <a href="<?= $item['url'] ?>" class="<?= $classeLink($key) ?> nav-link p-1 d-flex align-items-center justify-content-center <?= $key === $paginaAtiva ? 'active-nav-icon' : '' ?>" aria-label="<?= $item['label'] ?>">
+            <a href="<?= htmlspecialchars($item['url'], ENT_QUOTES, 'UTF-8') ?>" class="<?= $classeLink($key) ?> nav-link p-1 d-flex align-items-center justify-content-center <?= $key === $paginaAtiva ? 'active-nav-icon' : '' ?>" aria-label="<?= htmlspecialchars($item['label'], ENT_QUOTES, 'UTF-8') ?>">
                 <?php if ($key === 'perfil' && !empty($fotoUsuario)): ?>
                     <img src="<?= htmlspecialchars(\App\Shared\Http\Url::to('uploads/fotosUsuarios/' . rawurlencode($fotoUsuario))) ?>" class="nav-avatar-img-mobile object-fit-cover rounded-circle border border-2 border-white" alt="Perfil">
                 <?php elseif ($key === 'perfil'): ?>
-                    <span class="nav-avatar-fallback-mobile d-inline-flex align-items-center justify-content-center rounded-circle bg-white text-danger fw-semibold border border-2 border-white small"><?= $inicialNome ?></span>
+                    <span class="nav-avatar-fallback-mobile d-inline-flex align-items-center justify-content-center rounded-circle bg-white text-danger fw-semibold border border-2 border-white small"><?= htmlspecialchars($inicialNome, ENT_QUOTES, 'UTF-8') ?></span>
                 <?php else: ?>
                     <i class="bi <?= $iconeNav($item['icon'], $key) ?>"></i>
                 <?php endif; ?>
@@ -50,7 +49,7 @@ $onclickSair = "onclick=\"return confirm('Deseja realmente sair?')\"";
         </li>
         <?php endforeach; ?>
         <li>
-            <a href="<?= \App\Shared\Http\Url::to('api/v1/logout') ?>" class="text-white-50 nav-link p-1" aria-label="Sair" data-sgi-logout <?= $onclickSair ?>>
+            <a href="<?= \App\Shared\Http\Url::to('api/v1/logout') ?>" class="text-white-50 nav-link p-1" aria-label="Sair" data-sgi-logout>
                 <i class="bi bi-box-arrow-right"></i>
             </a>
         </li>
@@ -80,11 +79,11 @@ $onclickSair = "onclick=\"return confirm('Deseja realmente sair?')\"";
     <ul class="nav flex-column align-items-center h-100 py-4 gap-4 fs-3 sidebar-nav-list">
         <?php foreach ($navItens as $key => $item): ?>
         <li>
-            <a href="<?= $item['url'] ?>" class="text-white d-flex align-items-center justify-content-center position-relative <?= $key === $paginaAtiva ? 'active-nav-icon' : '' ?>" title="<?= $item['label'] ?>">
+            <a href="<?= htmlspecialchars($item['url'], ENT_QUOTES, 'UTF-8') ?>" class="text-white d-flex align-items-center justify-content-center position-relative <?= $key === $paginaAtiva ? 'active-nav-icon' : '' ?>" title="<?= htmlspecialchars($item['label'], ENT_QUOTES, 'UTF-8') ?>">
                 <?php if ($key === 'perfil' && !empty($fotoUsuario)): ?>
                     <img src="<?= htmlspecialchars(\App\Shared\Http\Url::to('uploads/fotosUsuarios/' . rawurlencode($fotoUsuario))) ?>" class="nav-avatar-img object-fit-cover rounded-circle border border-2 border-white" alt="Perfil">
                 <?php elseif ($key === 'perfil'): ?>
-                    <span class="nav-avatar-fallback d-inline-flex align-items-center justify-content-center rounded-circle bg-white text-danger fw-semibold border border-2 border-white small"><?= $inicialNome ?></span>
+                    <span class="nav-avatar-fallback d-inline-flex align-items-center justify-content-center rounded-circle bg-white text-danger fw-semibold border border-2 border-white small"><?= htmlspecialchars($inicialNome, ENT_QUOTES, 'UTF-8') ?></span>
                 <?php else: ?>
                     <i class="bi <?= $iconeNav($item['icon'], $key) ?>"></i>
                 <?php endif; ?>
@@ -92,7 +91,7 @@ $onclickSair = "onclick=\"return confirm('Deseja realmente sair?')\"";
         </li>
         <?php endforeach; ?>
         <li>
-            <a href="<?= \App\Shared\Http\Url::to('api/v1/logout') ?>" class="text-white" data-sgi-logout <?= $onclickSair ?> title="Sair">
+            <a href="<?= \App\Shared\Http\Url::to('api/v1/logout') ?>" class="text-white" data-sgi-logout title="Sair">
                 <i class="bi bi-box-arrow-right"></i>
             </a>
         </li>

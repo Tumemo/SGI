@@ -62,21 +62,28 @@ window.SGIPage.mount("competicoes/placar", function (pageConfig, pageScope) {
     let tempoEsgotado = false;
     let equipesCache = {};
     let ehIndividual = false;
+    let tipoCompeticaoAtual = null;
     let indParticipantes = [];
     let indRankingAtual = [];
+    let indParticipantesErro = false;
+    let indRankingErro = false;
     let indDadosErro = false;
     var __sgiPlacarCiclo = 0;
     var relogioOffsetMs = 0;
     var Cronometro = window.SGICronometro;
 
-    function jogoEhIndividual(jogo) {
-        if (!jogo) return false;
-        if (jogo.tipo_competicao === 'individual') return true;
-        if (jogo.tipo_competicao === 'mata_mata') return false;
+    function resolverTipoCompeticao(jogo) {
+        if (!jogo) return null;
+        if (jogo.tipo_competicao === 'individual') return 'individual';
+        if (jogo.tipo_competicao === 'mata_mata') return 'mata_mata';
         var nomeTipo = String(jogo.nome_tipo_modalidade || '').trim().toLowerCase();
-        if (nomeTipo === 'individual' || nomeTipo === 'prova individual') return true;
-        if (nomeTipo === 'mata-mata' || nomeTipo === 'mata mata') return false;
-        return !jogo.tipo_competicao && parseInt(jogo.tipos_modalidades_id_tipo_modalidade, 10) === 2;
+        if (nomeTipo === 'individual' || nomeTipo === 'prova individual' || nomeTipo === 'individualizada') return 'individual';
+        if (nomeTipo === 'mata-mata' || nomeTipo === 'mata mata' || nomeTipo === 'mata-mata (eliminatório)' || nomeTipo === 'mata-mata (eliminatória)' || nomeTipo === 'eliminatório' || nomeTipo === 'eliminatória' || nomeTipo === 'eliminatoria') return 'mata_mata';
+        return null;
+    }
+
+    function jogoEhIndividual(jogo) {
+        return resolverTipoCompeticao(jogo) === 'individual';
     }
 
     var __sgiPlacarClickHandler = null;
@@ -403,7 +410,7 @@ window.SGIPage.mount("competicoes/placar", function (pageConfig, pageScope) {
             renderTudo();
             iniciarTimerDisplay();
         } catch (e) {
-            alert('Erro ao adicionar tempo extra: ' + (e.message || 'Erro de conexão'));
+            SGI.alert('Erro ao adicionar tempo extra: ' + (e.message || 'Erro de conexão'));
         }
     }
 
@@ -473,7 +480,7 @@ window.SGIPage.mount("competicoes/placar", function (pageConfig, pageScope) {
             renderTudo();
             iniciarTimerDisplay();
         } catch (e) {
-            alert('Erro ao ' + (target === 'Pausado' ? 'pausar' : 'retomar') + ': ' + (e.message || 'Erro de conexão'));
+            SGI.alert('Erro ao ' + (target === 'Pausado' ? 'pausar' : 'retomar') + ': ' + (e.message || 'Erro de conexão'));
         }
     }
 
@@ -509,7 +516,7 @@ window.SGIPage.mount("competicoes/placar", function (pageConfig, pageScope) {
             if (saveChains[chave] === atual) delete saveChains[chave];
         }, function(error) {
             if (saveChains[chave] === atual) delete saveChains[chave];
-            alert('Erro ao salvar o placar: ' + ((error && error.message) || 'não foi possível gravar a alteração local.'));
+            SGI.alert('Erro ao salvar o placar: ' + ((error && error.message) || 'não foi possível gravar a alteração local.'));
         });
         return atual;
     }
@@ -605,7 +612,7 @@ window.SGIPage.mount("competicoes/placar", function (pageConfig, pageScope) {
     }
 
     async function finalizarJogo() {
-        if (!confirm('Encerrar o jogo e gravar o placar final no sistema?')) return;
+        if (!await SGI.confirm({ titulo: 'Encerrar jogo?', mensagem: 'O placar final será gravado no sistema.', textoConfirmar: 'Encerrar jogo' })) return;
         var resultados = partidasLista.map(function(p) {
             return {
                 id_equipe: parseInt(p.equipes_id_equipe, 10),
@@ -613,7 +620,7 @@ window.SGIPage.mount("competicoes/placar", function (pageConfig, pageScope) {
             };
         });
         if (resultados.length >= 2 && resultados[0].gols === resultados[1].gols) {
-            alert('O jogo não pode terminar empatado! Registre o placar correto antes de finalizar.');
+            SGI.alert('O jogo não pode terminar empatado! Registre o placar correto antes de finalizar.');
             return;
         }
 
@@ -656,7 +663,7 @@ window.SGIPage.mount("competicoes/placar", function (pageConfig, pageScope) {
             pararTimer();
             await carregarDados();
         } catch (e) {
-            alert(e.message || 'Erro ao finalizar.');
+            SGI.alert(e.message || 'Erro ao finalizar.');
         }
     }
 
@@ -697,7 +704,7 @@ window.SGIPage.mount("competicoes/placar", function (pageConfig, pageScope) {
             if (lockData) {
                 var lock = JSON.parse(lockData);
                 if (agora - lock.ts < 60000) {
-                    alert('Este jogo está sendo finalizado. Aguarde um momento.');
+                    SGI.alert('Este jogo está sendo finalizado. Aguarde um momento.');
                     return;
                 }
             }
@@ -707,7 +714,7 @@ window.SGIPage.mount("competicoes/placar", function (pageConfig, pageScope) {
         var totalGols = resultados.reduce(function(s, r) { return s + r.gols; }, 0);
         if (totalGols === 0) {
             liberarLock();
-            alert('Não é possível finalizar um jogo com placar 0x0. Registre o placar correto.');
+            SGI.alert('Não é possível finalizar um jogo com placar 0x0. Registre o placar correto.');
             return;
         }
 
@@ -716,7 +723,7 @@ window.SGIPage.mount("competicoes/placar", function (pageConfig, pageScope) {
         // reabre a versão antiga Agendado/Iniciado do mesmo jogo.
         if (!(window.SGIOffline && typeof window.SGIOffline.queueMutation === 'function')) {
             liberarLock();
-            alert('Sem conexão com o servidor. Tente novamente quando estiver online.');
+            SGI.alert('Sem conexão com o servidor. Tente novamente quando estiver online.');
             return;
         }
 
@@ -727,7 +734,7 @@ window.SGIPage.mount("competicoes/placar", function (pageConfig, pageScope) {
             await aguardarGravacoesPartidas();
         } catch (e) {
             liberarLock();
-            alert('Não foi possível salvar o placar antes de finalizar: ' + ((e && e.message) || 'tente novamente.'));
+            SGI.alert('Não foi possível salvar o placar antes de finalizar: ' + ((e && e.message) || 'tente novamente.'));
             return;
         }
         if (window.SGIDataLayer && typeof window.SGIDataLayer.upsert === 'function') {
@@ -797,23 +804,23 @@ window.SGIPage.mount("competicoes/placar", function (pageConfig, pageScope) {
                 try {
                     var r = await window.SGIChaveamento.promoverVencedorLocal(idJogo);
                     if (!r || !r.promoveu) {
-                        alert('Jogo encerrado offline! Resultado salvo neste dispositivo e será enviado ao servidor quando a conexão voltar.');
+                        SGI.alert('Jogo encerrado offline! Resultado salvo neste dispositivo e será enviado ao servidor quando a conexão voltar.');
                     } else if (r.encerrado) {
-                        alert('Campeão definido offline: a final foi concluída neste dispositivo. Tudo será sincronizado com o servidor.');
+                        SGI.alert('Campeão definido offline: a final foi concluída neste dispositivo. Tudo será sincronizado com o servidor.');
                     } else if (r.pai.formada) {
-                        alert('Vencedor avançou! Nova partida liberada: ' + r.pai.nome_display + '.');
+                        SGI.alert('Vencedor avançou! Nova partida liberada: ' + r.pai.nome_display + '.');
                     } else {
-                        alert('Vencedor aguardando adversário em: ' + r.pai.nome_display + '.');
+                        SGI.alert('Vencedor aguardando adversário em: ' + r.pai.nome_display + '.');
                     }
                 } catch (_) {
-                    alert('Jogo encerrado offline! (Não foi possível calcular a próxima fase agora.)');
+                    SGI.alert('Jogo encerrado offline! (Não foi possível calcular a próxima fase agora.)');
                 }
                 return;
             }
-            alert('Jogo encerrado offline! O resultado foi salvo neste dispositivo e será enviado ao servidor automaticamente quando a conexão voltar.');
+            SGI.alert('Jogo encerrado offline! O resultado foi salvo neste dispositivo e será enviado ao servidor automaticamente quando a conexão voltar.');
         } catch (_) {
             liberarLock();
-            alert('Não foi possível registrar o resultado no armazenamento local. O jogo permanece em andamento para evitar perda de dados.');
+            SGI.alert('Não foi possível registrar o resultado no armazenamento local. O jogo permanece em andamento para evitar perda de dados.');
         }
     }
 
@@ -844,8 +851,13 @@ window.SGIPage.mount("competicoes/placar", function (pageConfig, pageScope) {
                 if (mod) {
                     if (!estadoJogo.nome_modalidade) estadoJogo.nome_modalidade = mod.nome_modalidade;
                     if (!estadoJogo.tipos_modalidades_id_tipo_modalidade) estadoJogo.tipos_modalidades_id_tipo_modalidade = mod.tipos_modalidades_id_tipo_modalidade;
+                    if (!estadoJogo.nome_tipo_modalidade) estadoJogo.nome_tipo_modalidade = mod.nome_tipo_modalidade;
+                    if (!estadoJogo.tipo_competicao) estadoJogo.tipo_competicao = mod.tipo_competicao;
                 }
             }
+            tipoCompeticaoAtual = resolverTipoCompeticao(estadoJogo);
+            if (!tipoCompeticaoAtual) throw new Error('O tipo da modalidade não está configurado.');
+            ehIndividual = tipoCompeticaoAtual === 'individual';
             var locais = await DL.read('locais').catch(function() { return []; });
             if (!placarContinuaAtivo(ciclo)) return false;
             if (Array.isArray(locais)) {
@@ -948,7 +960,7 @@ window.SGIPage.mount("competicoes/placar", function (pageConfig, pageScope) {
             b.className = 'mc-action-btn mc-action-btn--start btn btn-primary d-inline-flex align-items-center gap-2';
             b.innerHTML = '<i class="bi bi-play-fill"></i> Iniciar jogo';
             pageScope.listen(b, 'click', function() {
-                iniciarJogoServidor().catch(function(e) { alert(e.message); });
+                iniciarJogoServidor().catch(function(e) { SGI.alert(e.message); });
             });
             acoes.appendChild(b);
         }
@@ -1083,27 +1095,37 @@ window.SGIPage.mount("competicoes/placar", function (pageConfig, pageScope) {
         if (!idModalidade) {
             indParticipantes = [];
             indRankingAtual = [];
+            indParticipantesErro = false;
+            indRankingErro = false;
             indDadosErro = false;
-            return;
+            return true;
         }
+        var participantesOk = true;
+        var rankingOk = true;
         try {
             var resPart = await fetch(API + 'chaveamentos?tipo_modalidade=individual&acao=participantes&id_modalidade=' + idModalidade);
-            var resRank = await fetch(API + 'chaveamentos?tipo_modalidade=individual&acao=ranking&id_modalidade=' + idModalidade);
             var dadosPart = await resPart.json();
-            var dadosRank = await resRank.json();
-            if (!resPart.ok || !resRank.ok || dadosPart.success === false || dadosRank.success === false) {
-                throw new Error((dadosPart && dadosPart.message) || (dadosRank && dadosRank.message) || 'Não foi possível carregar os participantes.');
-            }
+            if (!resPart.ok || dadosPart.success === false) throw new Error('Não foi possível carregar os participantes.');
             indParticipantes = (dadosPart.success && Array.isArray(dadosPart.participantes)) ? dadosPart.participantes : [];
+        } catch (e) {
+            participantesOk = false;
+        }
+        try {
+            var resRank = await fetch(API + 'chaveamentos?tipo_modalidade=individual&acao=ranking&id_modalidade=' + idModalidade);
+            var dadosRank = await resRank.json();
+            if (!resRank.ok || dadosRank.success === false) throw new Error('Não foi possível carregar o ranking.');
             indRankingAtual = (dadosRank.success && Array.isArray(dadosRank.ranking))
                 ? dadosRank.ranking.map(function(ranking) {
                     return Object.assign({}, ranking, { posicao: Number(ranking.posicao) });
                 })
                 : [];
-            indDadosErro = false;
         } catch (e) {
-            indDadosErro = true;
+            rankingOk = false;
         }
+        indParticipantesErro = !participantesOk;
+        indRankingErro = !rankingOk;
+        indDadosErro = !participantesOk || !rankingOk;
+        return participantesOk && rankingOk;
     }
 
     function atualizarSelectsIndividual() {
@@ -1138,7 +1160,7 @@ window.SGIPage.mount("competicoes/placar", function (pageConfig, pageScope) {
                 iniciar.disabled = true;
                 iniciarJogoServidor().catch(function(e) {
                     iniciar.disabled = false;
-                    alert(e.message || 'Não foi possível iniciar a prova.');
+                    SGI.alert(e.message || 'Não foi possível iniciar a prova.');
                 });
             });
             acoes.appendChild(iniciar);
@@ -1169,16 +1191,17 @@ window.SGIPage.mount("competicoes/placar", function (pageConfig, pageScope) {
             return Number(a.posicao || 0) - Number(b.posicao || 0);
         });
         if (rankingOrdenado.length > 0) {
-            var posLabels = ['1º Lugar', '2º Lugar', '3º Lugar'];
-            var posIcons = ['🥇', '🥈', '🥉'];
-            var posCard = ['border-warning bg-warning-subtle', 'border-secondary bg-secondary-subtle', 'border-danger-subtle bg-danger-subtle'];
+            var posLabels = { 1: '1º Lugar', 2: '2º Lugar', 3: '3º Lugar' };
+            var posIcons = { 1: '🥇', 2: '🥈', 3: '🥉' };
+            var posCard = { 1: 'border-warning bg-warning-subtle', 2: 'border-secondary bg-secondary-subtle', 3: 'border-danger-subtle bg-danger-subtle' };
             podiumHtml = '<div class="row row-cols-1 row-cols-sm-3 g-3 mt-3">';
-            rankingOrdenado.forEach(function(r, idx) {
-                podiumHtml += '<div class="col"><article class="card h-100 border-2 ' + (posCard[idx] || 'border-light bg-body-tertiary') + ' text-center p-3 shadow-sm">' +
-                    '<div class="fs-3" aria-hidden="true">' + (posIcons[idx] || '') + '</div>' +
-                    '<div class="fw-bold mt-1">' + (posLabels[idx] || '') + '</div>' +
+            rankingOrdenado.forEach(function(r) {
+                var posicao = Number(r.posicao);
+                podiumHtml += '<div class="col"><article class="card h-100 border-2 ' + (posCard[posicao] || 'border-light bg-body-tertiary') + ' text-center p-3 shadow-sm">' +
+                    '<div class="fs-3" aria-hidden="true">' + (posIcons[posicao] || '') + '</div>' +
+                    '<div class="fw-bold mt-1">' + (posLabels[posicao] || (posicao + 'º Lugar')) + '</div>' +
                     '<div class="fw-semibold mt-1">' + esc(r.nome_usuario || 'Desconhecido') + '</div>' +
-                    '<div class="small text-secondary mt-1">' + esc(r.nome_fantasia_turma || r.nome_turma || '') + '</div>' +
+                    '<div class="small text-secondary mt-1">' + esc(r.nome_turma || r.nome_fantasia_turma || '') + '</div>' +
                 '</article></div>';
             });
             podiumHtml += '</div>';
@@ -1189,7 +1212,7 @@ window.SGIPage.mount("competicoes/placar", function (pageConfig, pageScope) {
         var statusIndividual = estadoJogo && estadoJogo.status_jogo;
         var individualOperavel = ['Iniciado', 'Pausado', 'Concluido', 'Finalizado'].indexOf(statusIndividual) !== -1;
         var individualBloqueado = indParticipantes.length < 3 || !individualOperavel || indDadosErro;
-        var estadoParticipantes = indDadosErro
+        var estadoParticipantes = indParticipantesErro
             ? '<div class="small text-danger mb-2" role="alert">Não foi possível atualizar os participantes. Tente recarregar.</div>'
             : (indParticipantes.length === 0
                 ? '<div class="small text-muted mb-2">Não há participantes vinculados a esta modalidade.</div>'
@@ -1199,6 +1222,9 @@ window.SGIPage.mount("competicoes/placar", function (pageConfig, pageScope) {
                         ? '<div class="small text-warning mb-2">Inicie o jogo pela agenda antes de registrar o ranking.</div>'
                         : '')));
 
+        var avisoRanking = indRankingErro
+            ? '<div class="small text-warning mb-2" role="status">Não foi possível atualizar o ranking atual. Tente recarregar antes de salvar.</div>'
+            : '';
         grid.innerHTML =
             '<div class="w-100">' +
                 '<div class="d-flex align-items-center gap-2 fw-bold text-body">' +
@@ -1225,6 +1251,7 @@ window.SGIPage.mount("competicoes/placar", function (pageConfig, pageScope) {
                 '</div>' +
                 '<div class="mt-4">' +
                     '<div class="fw-bold small text-body"><i class="bi bi-award-fill me-1"></i>Ranking Atual</div>' +
+                    avisoRanking +
                     podiumHtml +
                 '</div>' +
             '</div>';
@@ -1266,6 +1293,7 @@ window.SGIPage.mount("competicoes/placar", function (pageConfig, pageScope) {
         btn.disabled = true;
         btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Salvando...';
         msg.innerHTML = '';
+        var cicloSalvar = __sgiPlacarCiclo;
 
         try {
             var resp = await fetch(API + 'chaveamentos', {
@@ -1281,16 +1309,32 @@ window.SGIPage.mount("competicoes/placar", function (pageConfig, pageScope) {
             var data = await resp.json();
             if (!resp.ok || !data.success) throw new Error(data.message || 'Erro ao salvar.');
             var pendente = Boolean(data.offline || data.queued);
-            estadoJogo.status_jogo = 'Concluido';
-            if (window.SGIDataLayer && window.SGIDataLayer.upsert) {
-                await window.SGIDataLayer.upsert('jogos', estadoJogo.id_jogo, Object.assign({}, estadoJogo, { _pendente: pendente }));
+            if (!pendente) {
+                var idConfirmado = Number(data.id_jogo || (data.detalhes && data.detalhes.id_jogo) || 0);
+                if (idConfirmado !== Number(estadoJogo.id_jogo)) {
+                    throw new Error('O servidor não confirmou o mesmo jogo da prova.');
+                }
             }
-            await carregarIndDados();
+            estadoJogo.status_jogo = 'Concluido';
+            if (!placarContinuaAtivo(cicloSalvar)) return;
+            var cacheAtualizado = true;
+            if (window.SGIDataLayer && window.SGIDataLayer.upsert) {
+                try {
+                    await window.SGIDataLayer.upsert('jogos', estadoJogo.id_jogo, Object.assign({}, estadoJogo, { _pendente: pendente }));
+                } catch (_) {
+                    cacheAtualizado = false;
+                }
+            }
+            if (!placarContinuaAtivo(cicloSalvar)) return;
+            var leituraAtualizada = await carregarIndDados();
+            if (!placarContinuaAtivo(cicloSalvar)) return;
             renderTudo();
             var mensagem = document.getElementById('msgIndRanking');
             if (mensagem) mensagem.innerHTML = pendente
                 ? '<span class="text-warning fw-bold">Ranking salvo neste dispositivo; aguardando sincronização.</span>'
-                : '<span class="text-success fw-bold">Ranking salvo com sucesso!</span>';
+                : (!cacheAtualizado || !leituraAtualizada
+                    ? '<span class="text-warning fw-bold">Resultado salvo; não foi possível atualizar a visualização. Tente recarregar.</span>'
+                    : '<span class="text-success fw-bold">Ranking salvo com sucesso!</span>');
         } catch (e) {
             msg.innerHTML = '<span class="text-danger fw-bold">' + esc(e.message) + '</span>';
         } finally {
@@ -1340,8 +1384,25 @@ window.SGIPage.mount("competicoes/placar", function (pageConfig, pageScope) {
             estadoJogo = lista[0];
             normalizarJogoRecebido(estadoJogo);
             if (!estadoJogo.nome_modalidade) estadoJogo.nome_modalidade = '';
+            tipoCompeticaoAtual = resolverTipoCompeticao(estadoJogo);
+            if (!tipoCompeticaoAtual) throw new Error('O tipo da modalidade não está configurado.');
+            ehIndividual = tipoCompeticaoAtual === 'individual';
             if (estadoJogo.status_jogo === 'Concluido' || estadoJogo.status_jogo === 'Finalizado') {
                 tempoEsgotado = true;
+            }
+
+            if (ehIndividual) {
+                partidasLista = [];
+                pontosLista = [];
+                await carregarIndDados();
+                if (!placarContinuaAtivo(ciclo)) return;
+                precarregarDadosOffline();
+                load.classList.add('d-none');
+                cont.classList.remove('d-none');
+                renderTudo();
+                iniciarOcorrencias(ciclo);
+                acompanharSincronizacaoPlacar();
+                return;
             }
 
             partidasLista = await fetchJson(API + 'partidas?id_jogo=' + idJogo);
@@ -1357,12 +1418,6 @@ window.SGIPage.mount("competicoes/placar", function (pageConfig, pageScope) {
             await enriquecerPartidasComTurmas();
             if (!placarContinuaAtivo(ciclo)) return;
             precarregarDadosOffline();
-
-            ehIndividual = jogoEhIndividual(estadoJogo);
-            if (ehIndividual) {
-                await carregarIndDados();
-                if (!placarContinuaAtivo(ciclo)) return;
-            }
 
             // Restaurar duração do jogo do servidor
             if (estadoJogo.duracao_jogo) {
@@ -1535,11 +1590,9 @@ window.SGIPage.mount("competicoes/placar", function (pageConfig, pageScope) {
 
                 var acoesHtml = '';
                 if (!jogoEncerrado()) {
-                    var idOcorrenciaHtml = String(o.id_ocorrencia == null ? '' : o.id_ocorrencia)
-                        .replace(/\\/g, '\\\\').replace(/'/g, "\\'");
                     acoesHtml = '<div class="tl-event-actions d-flex gap-1 mt-2">' +
-                        '<button type="button" class="btn btn-sm btn-light border text-primary px-2 py-1" onclick="editarOcorrencia(\'' + idOcorrenciaHtml + '\')" title="Editar" aria-label="Editar ocorrência"><i class="bi bi-pencil-square"></i></button>' +
-                        '<button type="button" class="btn btn-sm btn-light border text-danger px-2 py-1" onclick="excluirOcorrencia(\'' + idOcorrenciaHtml + '\')" title="Excluir" aria-label="Excluir ocorrência"><i class="bi bi-trash3"></i></button>' +
+                        '<button type="button" class="btn btn-sm btn-light border text-primary px-2 py-1" data-sgi-action="edit-occurrence" data-id-ocorrencia="' + esc(o.id_ocorrencia) + '" title="Editar" aria-label="Editar ocorrência"><i class="bi bi-pencil-square"></i></button>' +
+                        '<button type="button" class="btn btn-sm btn-light border text-danger px-2 py-1" data-sgi-action="delete-occurrence" data-id-ocorrencia="' + esc(o.id_ocorrencia) + '" title="Excluir" aria-label="Excluir ocorrência"><i class="bi bi-trash3"></i></button>' +
                         '</div>';
                 }
 
@@ -1581,7 +1634,7 @@ window.SGIPage.mount("competicoes/placar", function (pageConfig, pageScope) {
 
     function abrirModalOcorrencia() {
         if (jogoEncerrado()) {
-            alert('O jogo já foi encerrado. Não é possível registrar ocorrências.');
+            SGI.alert('O jogo já foi encerrado. Não é possível registrar ocorrências.');
             return;
         }
         cancelarFechamentoOcorrenciaPendente();
@@ -1602,7 +1655,7 @@ window.SGIPage.mount("competicoes/placar", function (pageConfig, pageScope) {
 
     async function editarOcorrencia(id) {
         if (jogoEncerrado()) {
-            alert('O jogo já foi encerrado. Não é possível editar ocorrências.');
+            SGI.alert('O jogo já foi encerrado. Não é possível editar ocorrências.');
             return;
         }
         cancelarFechamentoOcorrenciaPendente();
@@ -1655,16 +1708,16 @@ window.SGIPage.mount("competicoes/placar", function (pageConfig, pageScope) {
         } catch (e) {
             _editandoOcorrenciaId = null;
             document.getElementById('btnSalvarOcorrencia').innerHTML = '<i class="bi bi-check-lg me-1"></i>Registrar';
-            alert(e && e.message ? e.message : 'Ocorrência não disponível neste dispositivo.');
+            SGI.alert(e && e.message ? e.message : 'Ocorrência não disponível neste dispositivo.');
         }
     }
 
     async function excluirOcorrencia(id) {
         if (jogoEncerrado()) {
-            alert('O jogo já foi encerrado. Não é possível excluir ocorrências.');
+            SGI.alert('O jogo já foi encerrado. Não é possível excluir ocorrências.');
             return;
         }
-        if (!confirm('Tem certeza que deseja excluir esta ocorrência?')) return;
+        if (!await SGI.confirm({ titulo: 'Excluir ocorrência?', mensagem: 'Esta ação não pode ser desfeita.', textoConfirmar: 'Excluir ocorrência', destrutivo: true })) return;
         try {
             await fetchJson(API + 'ocorrencias', {
                 method: 'PUT',
@@ -1673,14 +1726,14 @@ window.SGIPage.mount("competicoes/placar", function (pageConfig, pageScope) {
             });
             carregarOcorrencias();
         } catch (e) {
-            alert('Erro ao excluir ocorrência.');
+            SGI.alert('Erro ao excluir ocorrência.');
         }
     }
 
     async function salvarOcorrencia(e) {
         e.preventDefault();
         if (jogoEncerrado()) {
-            alert('O jogo já foi encerrado. Não é possível salvar ocorrências.');
+            SGI.alert('O jogo já foi encerrado. Não é possível salvar ocorrências.');
             return;
         }
         var btn = document.getElementById('btnSalvarOcorrencia');
@@ -1762,7 +1815,7 @@ window.SGIPage.mount("competicoes/placar", function (pageConfig, pageScope) {
                     carregarOcorrencias();
                 }, 600);
             } else {
-                msg.innerHTML = '<span class="text-danger">' + (result.message || 'Erro ao salvar.') + '</span>';
+                msg.innerHTML = '<span class="text-danger">' + esc(result.message || 'Erro ao salvar.') + '</span>';
                 btn.disabled = false;
                 btn.innerHTML = isUpdate ? '<i class="bi bi-check-lg me-1"></i>Atualizar' : '<i class="bi bi-check-lg me-1"></i>Registrar';
             }
@@ -1895,7 +1948,7 @@ window.SGIPage.mount("competicoes/placar", function (pageConfig, pageScope) {
 
     function abrirModalArtilheiro(idEquipe) {
         if (jogoEncerrado()) {
-            alert('O jogo já foi encerrado. Não é possível registrar artilharia.');
+            SGI.alert('O jogo já foi encerrado. Não é possível registrar artilharia.');
             return;
         }
         _artilheiroEquipeAtual = idEquipe;
@@ -1913,7 +1966,7 @@ window.SGIPage.mount("competicoes/placar", function (pageConfig, pageScope) {
     async function salvarPonto(e) {
         e.preventDefault();
         if (jogoEncerrado()) {
-            alert('O jogo já foi encerrado. Não é possível registrar ponto.');
+            SGI.alert('O jogo já foi encerrado. Não é possível registrar ponto.');
             return;
         }
         var btn = document.getElementById('btnSalvarArtilheiro');
@@ -1990,7 +2043,7 @@ window.SGIPage.mount("competicoes/placar", function (pageConfig, pageScope) {
                     if (m) m.hide();
                 }, 600);
             } else {
-                msg.innerHTML = '<span class="text-danger">' + (result.message || 'Erro ao registrar.') + '</span>';
+                msg.innerHTML = '<span class="text-danger">' + esc(result.message || 'Erro ao registrar.') + '</span>';
                 btn.disabled = false;
                 btn.innerHTML = '<i class="bi bi-check-lg me-1"></i>Registrar ponto';
             }
@@ -2012,7 +2065,7 @@ window.SGIPage.mount("competicoes/placar", function (pageConfig, pageScope) {
         });
         var ponto = pontos[pontos.length - 1];
         if (!ponto) {
-            alert('Não há ponto vinculado a um atleta para anular.');
+            SGI.alert('Não há ponto vinculado a um atleta para anular.');
             return;
         }
         try {
@@ -2043,7 +2096,7 @@ window.SGIPage.mount("competicoes/placar", function (pageConfig, pageScope) {
             renderTudo();
             carregarArtilheiros();
         } catch (error) {
-            alert(error.message || 'Não foi possível anular o ponto.');
+            SGI.alert(error.message || 'Não foi possível anular o ponto.');
         }
     }
 
@@ -2097,6 +2150,15 @@ window.SGIPage.mount("competicoes/placar", function (pageConfig, pageScope) {
         // aqui evita que a segunda saída deixe timers/callbacks ativos.
         if (!__sgiPlacarClickHandler) {
             __sgiPlacarClickHandler = function(e) {
+                var action = e.target.closest('[data-sgi-action]');
+                if (action && action.dataset.sgiAction === 'edit-occurrence') {
+                    editarOcorrencia(action.dataset.idOcorrencia);
+                    return;
+                }
+                if (action && action.dataset.sgiAction === 'delete-occurrence') {
+                    excluirOcorrencia(action.dataset.idOcorrencia);
+                    return;
+                }
                 var opt = e.target.closest('.ocorrencia-tipo-option');
                 if (opt) {
                     document.querySelectorAll('.ocorrencia-tipo-option').forEach(function(el) {
@@ -2116,5 +2178,5 @@ window.SGIPage.mount("competicoes/placar", function (pageConfig, pageScope) {
 
     window.SGIPage.ready( ativarTelaPlacar);
 
-return {obterIdJogoAtual, paginaOrigem, definirLinkVoltar, formatNomeJogo, jogoEhIndividual, nomeEquipe, enriquecerPartidasComTurmas, esc, fetchJson, pararTimer, atualizarDisplayTimer, tocarAlertaSonoro, bloquearPontuacao, mostrarBotoesTempoExtra, adicionarTempoExtra, iniciarTimerDisplay, togglePause, mudarDuracao, agendarSalvarPartida, salvarPartida, persistirJogoLocal, jogoEncerrado, iniciarJogoServidor, finalizarJogo, aplicarFinalizacaoUI, finalizarLocalmente, placarContinuaAtivo, carregarJogoLocalTemporario, renderTudo, ajustarGols, ehFutsal, carregarIndDados, renderIndividual, salvarIndRanking, carregarDados, iniciarOcorrencias, precarregarDadosOffline, carregarTurmasOcorrencia, carregarAlunosOcorrencia, limparDescricaoOcorrencia, carregarOcorrencias, abrirModalOcorrencia, editarOcorrencia, excluirOcorrencia, salvarOcorrencia, iniciarArtilheiro, acompanharSincronizacaoPlacar, carregarArtilheiros, carregarEquipesArtilheiro, carregarAlunosArtilheiro, abrirModalArtilheiro, salvarPonto, salvarArtilheiro, anularUltimoPonto, mostrarAlertaSegundoAmarelo, prepararFechamentoAcessivelModais, ativarTelaPlacar};
+return {obterIdJogoAtual, paginaOrigem, definirLinkVoltar, formatNomeJogo, resolverTipoCompeticao, jogoEhIndividual, nomeEquipe, enriquecerPartidasComTurmas, esc, fetchJson, pararTimer, atualizarDisplayTimer, tocarAlertaSonoro, bloquearPontuacao, mostrarBotoesTempoExtra, adicionarTempoExtra, iniciarTimerDisplay, togglePause, mudarDuracao, agendarSalvarPartida, salvarPartida, persistirJogoLocal, jogoEncerrado, iniciarJogoServidor, finalizarJogo, aplicarFinalizacaoUI, finalizarLocalmente, placarContinuaAtivo, carregarJogoLocalTemporario, renderTudo, ajustarGols, ehFutsal, carregarIndDados, renderIndividual, salvarIndRanking, carregarDados, iniciarOcorrencias, precarregarDadosOffline, carregarTurmasOcorrencia, carregarAlunosOcorrencia, limparDescricaoOcorrencia, carregarOcorrencias, abrirModalOcorrencia, editarOcorrencia, excluirOcorrencia, salvarOcorrencia, iniciarArtilheiro, acompanharSincronizacaoPlacar, carregarArtilheiros, carregarEquipesArtilheiro, carregarAlunosArtilheiro, abrirModalArtilheiro, salvarPonto, salvarArtilheiro, anularUltimoPonto, mostrarAlertaSegundoAmarelo, prepararFechamentoAcessivelModais, ativarTelaPlacar};
 });

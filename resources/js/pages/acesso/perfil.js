@@ -8,6 +8,9 @@ window.SGIPage.mount("acesso/perfil", function (pageConfig, pageScope) {
         nivel: pageConfig.value5
     };
     const API_FOTO = API_BASE + 'foto';
+    const esc = (value) => window.SGIHtml
+        ? window.SGIHtml.escape(value)
+        : String(value == null ? '' : value).replace(/[&<>"']/g, (character) => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[character]));
 
     let fotoPreviewFile = null;
     let temFotoAtual = false;
@@ -157,7 +160,7 @@ window.SGIPage.mount("acesso/perfil", function (pageConfig, pageScope) {
 
         document.querySelectorAll('[id^="btnExcluirFoto"]').forEach(btn => {
             pageScope.listen(btn, 'click', async () => {
-                if (!confirm('Remover foto de perfil?')) return;
+                if (!await SGI.confirm({ titulo: 'Remover foto de perfil?', mensagem: 'A foto atual será removida do seu perfil.', textoConfirmar: 'Remover foto', destrutivo: true })) return;
                 try {
                     const fd = new FormData();
                     fd.append('acao', 'remover_foto');
@@ -206,7 +209,7 @@ window.SGIPage.mount("acesso/perfil", function (pageConfig, pageScope) {
                     msgEl.innerHTML = '';
                 }, 800);
             } else {
-                msgEl.innerHTML = '<span class="text-danger">' + (data.message || 'Erro ao salvar.') + '</span>';
+                msgEl.innerHTML = '<span class="text-danger">' + esc(data.message || 'Erro ao salvar.') + '</span>';
             }
         } catch (err) {
             msgEl.innerHTML = '<span class="text-danger">Erro de conexão.</span>';
@@ -256,7 +259,7 @@ window.SGIPage.mount("acesso/perfil", function (pageConfig, pageScope) {
                     msgEl.innerHTML = '';
                 }, 800);
             } else {
-                msgEl.innerHTML = '<span class="text-danger">' + (data.message || 'Erro ao alterar senha.') + '</span>';
+                msgEl.innerHTML = '<span class="text-danger">' + esc(data.message || 'Erro ao alterar senha.') + '</span>';
             }
         } catch (err) {
             msgEl.innerHTML = '<span class="text-danger">Erro de conexão.</span>';

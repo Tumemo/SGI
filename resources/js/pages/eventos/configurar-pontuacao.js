@@ -41,8 +41,8 @@ window.SGIPage.mount("eventos/configurar-pontuacao", function (pageConfig, pageS
         marcarMudancas();
     };
 
-    window.restaurarPadrao = function () {
-        if (!confirm('Restaurar os valores padrão (1º: 10, 2º: 7, 3º: 5, Multiplicador: 2)?')) return;
+    window.restaurarPadrao = async function () {
+        if (!await SGI.confirm({ titulo: 'Restaurar valores padrão?', mensagem: '1º: 10, 2º: 7, 3º: 5, multiplicador: 2.', textoConfirmar: 'Restaurar' })) return;
         Object.entries(PADRAO).forEach(([id, v]) => {
             const el = document.getElementById(id);
             if (el) el.value = v;
@@ -64,7 +64,7 @@ window.SGIPage.mount("eventos/configurar-pontuacao", function (pageConfig, pageS
             idInterclasse = ativo?.id_interclasse || null;
         }
         if (!idInterclasse) {
-            alert("Nenhum interclasse ativo encontrado.");
+            await SGI.alert({ titulo: 'Interclasse não encontrado', mensagem: 'Nenhum interclasse ativo foi encontrado.', tipo: 'warning' });
             window.location.href = "/edicoes";
             return null;
         }
@@ -136,7 +136,7 @@ window.SGIPage.mount("eventos/configurar-pontuacao", function (pageConfig, pageS
                 btn.innerHTML = '<i class="bi bi-check-lg me-1"></i> Salvar';
             }, 2000);
         } catch (err) {
-            alert(err.message);
+            SGI.alert(err.message);
             btn.disabled = false;
             btn.innerHTML = '<i class="bi bi-check-lg me-1"></i> Salvar';
         }
