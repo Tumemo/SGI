@@ -39,13 +39,13 @@ Valores atuais da auditoria do recorte de seis fontes. A série histórica abaix
 
 | Fonte em resources/css/source | Linhas | Bytes |
 |---|---:|---:|
-| admin.css | 573 | 20.465 |
+| admin.css | 572 | 20.418 |
 | aluno-pages.css | 178 | 1.170 |
 | aluno-home.css | 35 | 912 |
 | aluno-shared.css | 48 | 833 |
-| utilities.css | 68 | 1.260 |
+| utilities.css | 67 | 1.213 |
 | login.css | 106 | 2.302 |
-| Total dessas seis fontes | 1.008 | 26.890 |
+| Total dessas seis fontes | 1.006 | 26.796 |
 
 Esse total não inclui o SCSS próprio. Não apresentá-lo como total de personalização do projeto. O histórico de seis fontes tinha 263.997 bytes, mas não é uma comparação completa quando regras foram transferidas para SCSS.
 
