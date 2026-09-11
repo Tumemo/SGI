@@ -7,6 +7,7 @@ Consulte [o guia de execução](../../docs/testing.md) para preparar banco, serv
 - `aluno-portal.spec.cjs`: termos, inscrições, agenda e perfil.
 - `frontend-regression.spec.cjs`: navegação, conteúdo e layout das telas de todos os perfis.
 - `mesario-offline.spec.cjs`: partida offline com gol, ocorrência e sincronização.
+- `mesario-responsive.spec.cjs`: composição compacta Xiaomi horizontal, desktop Full HD, alvos de toque e remontagem SPA do placar.
 - `tournament-offline.spec.cjs`: sete partidas online e sete sem rede, com confirmação do campeão.
 - `offline-tournament-bracket.spec.cjs`: projeções locais e árvore completa do torneio.
 

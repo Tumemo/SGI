@@ -1,6 +1,6 @@
 # Plano de responsividade do SGI para implementação pelo Luna
 
-Data: 11/09/2026. Estado: planejado; implementação ainda não iniciada.
+Data: 11/09/2026. Estado: base responsiva implementada e em validação; a homologação física do Xiaomi continua pendente.
 
 ## 1. Objetivo e limites
 
@@ -9,6 +9,10 @@ Entregar somente duas composições de interface: computador com monitor Full HD
 Limitar a responsividade significa limitar os layouts projetados e homologados. Não bloquear acesso por marca, resolução, user agent ou orientação; não fixar o documento em 1920 ou 1080 pixels. Tamanhos fora da matriz recebem o layout correspondente à largura, sem uma terceira composição específica para tablets. Manter rolagem, zoom e acesso às funções.
 
 Este documento resulta de revisão estática de templates, CSS, renderização JavaScript, casca offline e configuração de testes. Os riscos abaixo foram identificados no código; ainda não houve inspeção visual da aplicação nem homologação em Xiaomi físico nesta tarefa.
+
+### Estado desta revisão
+
+A base entregue nesta rodada já aplica o limite de 1200px CSS ao shell compartilhado e à entrada pública, organiza o placar coletivo em equipe A–cronômetro–equipe B no celular horizontal, adapta Dashboard, lista de jogos, Agenda, Chaveamento (incluindo histórico), Ocorrências e Perfil, preserva a composição desktop Full HD, mede a altura variável do aviso offline e cobre redimensionamento/remontagem com testes de regressão. A navegação compacta agora usa Menu offcanvas com os mesmos destinos e permissões; as demais páginas P2 e a homologação física continuam como etapas para o Luna implementar e validar.
 
 ### Resolução física não é largura CSS
 
@@ -173,7 +177,7 @@ Tabelas administrativas largas podem manter scroll local com indicação “Desl
 ## 6. Organização técnica e invariantes
 
 - Tokens comuns em `resources/scss/shared.scss`: espaçamentos, alturas de navegação, limites do conteúdo e tamanho mínimo de alvo.
-- Estilos de mesário em novo `resources/css/source/mesario.css`, incluído depois de `admin.css` no bundle `admin` de `tools/css-bundles.json`. Mover as regras de placar correspondentes, retirando duplicatas antigas em vez de acumular overrides.
+- Estilos específicos de mesário ficam escopados em `resources/css/source/admin.css` nesta etapa, que já é o bundle administrativo carregado pela casca; se forem extraídos depois para `mesario.css`, manter essa folha depois de `admin.css` no bundle `admin`. Retirar duplicatas antigas em vez de acumular overrides.
 - Adicionar uma classe de página, por exemplo `.sgi-placar`, ao main do placar; seletores devem funcionar tanto na página direta quanto dentro de `#conteudo-principal`. Evitar depender de classe de `body` que a casca pode não transportar.
 - Ajustes comuns de modalidade/árvore permanecem no CSS compartilhado pelo componente, não globalizados para todos os cards Bootstrap.
 - Publicar pelo pipeline existente: `npm run build`. Não editar `public/assets/` manualmente. Conferir manifesto e conteúdo publicado, inclusive se houver arquivo bloqueado no Windows.
@@ -257,7 +261,7 @@ Aceite: resultados verificáveis e nenhuma mudança funcional fora de escopo. Fa
 
 - Documento sem overflow horizontal: `scrollWidth <= clientWidth + 1`, após carregamento e abertura dos componentes relevantes. Exceções de tabela/árvore são internas ao contêiner, nunca à página.
 - Botões críticos com bounding box de pelo menos 48 × 48px no mobile e clique efetivo. `toBeVisible()` sozinho não prova ausência de sobreposição: verificar geometria/interseção com navegação/banner e a ação real.
-- Na referência 640 × 360 (simulação do painel Full HD horizontal com DPR 3), verificar cronômetro, pausa e comandos das duas equipes dentro da área útil no estado normal descrito em 4.1. Repetir em 640 × 280 aceitando rolagem vertical, sem recorte ou sobreposição dos comandos. Repetir em 800 × 360 e 915 × 412 para comprovar que o celular não ativa o shell desktop ao ultrapassar 768px.
+- Na referência 640 × 360 (simulação do painel Full HD horizontal com DPR 3), verificar cronômetro, pausa e comandos das duas equipes dentro da área útil no estado normal descrito em 4.1. Repetir em 640 × 280 aceitando rolagem vertical, sem recorte ou sobreposição dos comandos. Repetir em 800 × 360 e 915 × 412 para comprovar que o celular não ativa o shell desktop abaixo de 1200px.
 - Nomes longos, placar de três dígitos, descrição longa, listas vazias e mensagem de erro sem recortes.
 - Modal aberto: fechamento, confirmação, foco e rolagem. Simulação de menor altura não substitui teste do teclado Android real.
 - Resize e ida/volta pela SPA: não reiniciar relógio, duplicar ponto/listener, perder filtro ou trocar equipe associada ao comando.
@@ -308,4 +312,4 @@ Para contrato visual e configurações opcionais, seguir os perfis de `docs/test
 
 ## 9. Prompt pronto para o Luna
 
-> Implemente o plano de `docs/plano-responsividade-luna.md`, seguindo R00 a R07 em ordem. O SGI terá duas composições: desktop Full HD e celular Xiaomi Full HD sempre horizontal, com prioridade para todas as telas do mesário online/offline. Use 640 × 360 pixels CSS com DPR 3 como referência mobile sintética e 1200px CSS como limite único entre composição compacta e desktop. No celular, disponha equipe A, cronômetro e equipe B lado a lado e use Menu offcanvas em vez de barra inferior fixa. Não projetar modo retrato. Leia `AGENTS.md`, preserve alterações locais existentes e registre o progresso em `docs/status-responsividade-luna.md`. Comece pela baseline em ambiente isolado, depois shell, placar, modais/aviso offline, demais telas do mesário e páginas dos outros perfis. Edite fontes em `resources/` e gere assets pelo build. Não altere regras de negócio, permissões, contratos da fila ou esquema IndexedDB. Valide CSS pixels, toque, teclado, sobreposições, cronômetro e reconexão conforme o documento. Não encerre após o placar nem declare homologação de aparelho físico sem evidência. Entregue arquivos alterados, testes executados, capturas e limitações reais.
+> Implemente o plano de `docs/plano-responsividade-luna.md`, seguindo R00 a R07 em ordem. O SGI terá duas composições: desktop Full HD e celular Xiaomi Full HD sempre horizontal, com prioridade para todas as telas do mesário online/offline. Use 640 × 360 pixels CSS com DPR 3 como referência mobile sintética e 1200px CSS como limite único entre composição compacta e desktop. No celular, disponha equipe A, cronômetro e equipe B lado a lado. Não projetar modo retrato. Leia `AGENTS.md`, preserve alterações locais existentes e registre o progresso em `docs/status-responsividade-luna.md`. Comece pela baseline em ambiente isolado, depois shell, placar, modais/aviso offline, demais telas do mesário e páginas dos outros perfis. Edite fontes em `resources/` e gere assets pelo build. Não altere regras de negócio, permissões, contratos da fila ou esquema IndexedDB. Valide CSS pixels, toque, teclado, sobreposições, cronômetro e reconexão conforme o documento. Não encerre após o placar nem declare homologação de aparelho físico sem evidência. Entregue arquivos alterados, testes executados, capturas e limitações reais.
