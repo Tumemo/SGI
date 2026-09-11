@@ -370,6 +370,14 @@ test('shared shell keeps layout tokens without decorative page motion', () => {
     assert.doesNotMatch(shared, /--aluno-(?:primary-(?:dark|light|subtle|soft)|success|warning|info|(?:bg|surface|border|text(?:-secondary|-muted)?)|radius-(?:sm|md)|radius|shadow(?:-(?:sm|md|hover))?|transition)\s*:/);
 });
 
+test('agenda and bracket custom controls keep state styles without decorative motion', () => {
+    const css = fs.readFileSync(path.join(root, 'resources', 'css', 'source', 'admin.css'), 'utf8');
+    assert.match(css, /\.kvs--aberto \.kvs__panel \{ opacity: 1; visibility: visible; \}/);
+    assert.match(css, /\.ag-cal-day:hover \{ background:/);
+    assert.doesNotMatch(css, /\.kvs__trigger\s*\{[^}]*transition|\.kvs__chevron\s*\{[^}]*transition|\.kvs__panel\s*\{[^}]*transition|\.kvs__panel\s*\{[^}]*transform|\.kvs__search\s*\{[^}]*transition|\.kvs__opcao\s*\{[^}]*transition|\.ag-cal-day\s*\{[^}]*transition/);
+    assert.doesNotMatch(css, /\.kvs--aberto \.kvs__panel\s*\{[^}]*transform/);
+});
+
 test('offline banner uses Bootstrap utilities while keeping runtime hooks', () => {
     const offline = fs.readFileSync(path.join(root, 'resources', 'js', 'offline', 'offline-core.js'), 'utf8');
     const css = [
