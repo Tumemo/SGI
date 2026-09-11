@@ -51,6 +51,8 @@ final class MysqliIndividualRepository
               AND e.status_equipe = \'1\'
               AND u.status_usuario = \'1\'
               AND u.nivel_usuario = \'3\'
+              AND u.turmas_id_turma = t.id_turma
+              AND t.interclasses_id_interclasse = m.interclasses_id_interclasse
               AND u.interclasses_id_interclasse = m.interclasses_id_interclasse
             ORDER BY t.nome_turma, u.nome_usuario, e.id_equipe';
         $st = $conn->prepare($sql);
@@ -73,20 +75,41 @@ final class MysqliIndividualRepository
         $row = null;
         if ($idJogo !== null && $idJogo > 0) {
             $st = $conn->prepare('SELECT id_jogo, status_jogo, nome_jogo, modalidades_id_modalidade FROM jogos WHERE id_jogo = ? AND modalidades_id_modalidade = ? LIMIT 1 FOR UPDATE');
+            if (!$st) {
+                throw new \RuntimeException($conn->error);
+            }
             $st->bind_param('ii', $idJogo, $idModalidade);
+            $st->execute();
+            $row = $st->get_result()->fetch_assoc() ?: null;
+            $st->close();
         } else {
             $tag = \App\Modules\Competicoes\Domain\IndividualRules::tag($idModalidade);
-            $st = $conn->prepare('SELECT id_jogo, status_jogo, nome_jogo, modalidades_id_modalidade FROM jogos WHERE modalidades_id_modalidade = ? AND nome_jogo = ? LIMIT 1 FOR UPDATE');
+            // A tag é a identidade canônica da prova. Não escolher o primeiro
+            // registro quando uma instalação antiga possui duas provas com a
+            // mesma tag: isso esconderia a ambiguidade e poderia creditar o
+            // pódio no jogo errado.
+            $st = $conn->prepare('SELECT id_jogo, status_jogo, nome_jogo, modalidades_id_modalidade FROM jogos WHERE modalidades_id_modalidade = ? AND nome_jogo = ? ORDER BY id_jogo ASC FOR UPDATE');
+            if (!$st) {
+                throw new \RuntimeException($conn->error);
+            }
             $st->bind_param('is', $idModalidade, $tag);
             $st->execute();
-            $row = $st->get_result()->fetch_assoc();
+            $tagRows = $st->get_result()->fetch_all(\MYSQLI_ASSOC);
             $st->close();
+            if (count($tagRows) > 1) {
+                throw new \RuntimeException('Há mais de uma prova individual com a mesma identidade; faça a auditoria antes de registrar o ranking.');
+            }
+            $row = $tagRows[0] ?? null;
             if ($row !== null) {
                 return ['id_jogo' => (int) $row['id_jogo'], 'status_jogo' => $row['status_jogo'], 'nome_jogo' => (string) $row['nome_jogo'], 'modalidades_id_modalidade' => (int) $row['modalidades_id_modalidade']];
             }
-            // Sem a tag oficial, somente um registro legado pode ser
-            // reaproveitado automaticamente. Vários jogos exigem auditoria.
+            // Sem a tag oficial, um único registro legado pode ser exposto
+            // para diagnóstico/leitura. Os caminhos de preparação e gravação
+            // validam a identidade antes de aceitar qualquer alteração.
             $st = $conn->prepare('SELECT id_jogo, status_jogo, nome_jogo, modalidades_id_modalidade FROM jogos WHERE modalidades_id_modalidade = ? ORDER BY id_jogo ASC FOR UPDATE');
+            if (!$st) {
+                throw new \RuntimeException($conn->error);
+            }
             $st->bind_param('i', $idModalidade);
             $st->execute();
             $rows = $st->get_result()->fetch_all(\MYSQLI_ASSOC);
@@ -163,6 +186,7 @@ final class MysqliIndividualRepository
         if ($jogo === \null) {
             throw new \RuntimeException('Prepare o jogo da modalidade individual antes de registrar o ranking.');
         } else {
+            self::validarIdentidadeJogo($jogo, $idModalidade);
             $idJogo = $jogo['id_jogo'];
             $jaConcluido = $jogo['status_jogo'] === 'Concluido' || $jogo['status_jogo'] === 'Finalizado';
             if (!$jaConcluido && !in_array($jogo['status_jogo'], ['Iniciado', 'Pausado'], true)) {
@@ -360,6 +384,9 @@ final class MysqliIndividualRepository
         // idempotente mesmo se as equipes tiverem sido desativadas depois do
         // encerramento.
         $jogo = \App\Modules\Competicoes\Infrastructure\MysqliIndividualRepository::buscarJogoExistente($conn, $idModalidade);
+        if ($jogo !== null) {
+            self::validarIdentidadeJogo($jogo, $idModalidade);
+        }
         if ($jogo !== null && in_array($jogo['status_jogo'], ['Concluido', 'Finalizado'], true)) {
             return ['success' => \true, 'message' => 'O jogo individual já foi concluído e permanece disponível na agenda.', 'id_jogo' => $jogo['id_jogo'], 'jogos_criados' => 0];
         }
@@ -415,6 +442,15 @@ final class MysqliIndividualRepository
         }
         if (!\App\Modules\Competicoes\Domain\TipoCompeticaoRules::isIndividual($modality)) {
             throw new \RuntimeException('A modalidade informada não é individual.');
+        }
+    }
+
+    /** @param array<string,mixed> $jogo */
+    private static function validarIdentidadeJogo(array $jogo, int $idModalidade): void
+    {
+        $esperada = \App\Modules\Competicoes\Domain\IndividualRules::tag($idModalidade);
+        if ((string) ($jogo['nome_jogo'] ?? '') !== $esperada) {
+            throw new \RuntimeException('A prova individual encontrada tem identidade incompatível; faça a auditoria antes de registrar o ranking.');
         }
     }
 }

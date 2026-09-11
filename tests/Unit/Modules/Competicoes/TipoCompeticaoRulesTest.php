@@ -33,4 +33,11 @@ final class TipoCompeticaoRulesTest extends TestCase
             'nome_tipo_modalidade' => 'Formato futuro',
         ]));
     }
+
+    public function testIdHistoricoSemNomeNaoDefineOFormato(): void
+    {
+        self::assertNull(TipoCompeticaoRules::resolve([
+            'tipos_modalidades_id_tipo_modalidade' => 2,
+        ]));
+    }
 }

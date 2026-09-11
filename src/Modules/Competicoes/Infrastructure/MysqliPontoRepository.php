@@ -93,8 +93,7 @@ final class MysqliPontoRepository implements PontoRepository
                     j.exige_vinculo_ponto, j.nome_jogo,
                     j.modalidades_id_modalidade AS modalidade_id,
                     m.tipos_modalidades_id_tipo_modalidade, tm.nome_tipo_modalidade,
-                    CASE WHEN m.tipos_modalidades_id_tipo_modalidade = 2
-                              OR LOWER(COALESCE(tm.nome_tipo_modalidade, \'\')) = \'individual\'
+                    CASE WHEN LOWER(TRIM(COALESCE(tm.nome_tipo_modalidade, \'\'))) IN (\'individual\', \'prova individual\', \'individualizada\')
                          THEN 1 ELSE 0 END AS individual
              FROM partidas p
              INNER JOIN jogos j ON j.id_jogo = p.jogos_id_jogo

@@ -40,6 +40,14 @@ final class CronometroService
         if (!is_int($agora) || $agora < 0) {
             throw new InvalidArgumentException('O relógio do cronômetro é inválido.');
         }
+        $tipoCompeticao = TipoCompeticaoRules::resolve($state);
+        $requestedStatus = $data['status_jogo'] ?? null;
+        if ($requestedStatus === null && is_array($data['cronometro'] ?? null)) {
+            $requestedStatus = $data['cronometro']['status_jogo'] ?? null;
+        }
+        if ($tipoCompeticao === null && $requestedStatus !== null) {
+            throw new InvalidArgumentException('O tipo da modalidade não está configurado.');
+        }
         if ($this->ehConclusaoIndividual($state, $data)) {
             throw new InvalidArgumentException('Modalidades individuais devem ser concluídas pelo lançamento do pódio.');
         }

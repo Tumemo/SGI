@@ -83,7 +83,20 @@ final class MysqliChaveamentoSyncGateway
                 if (!is_array($ranking) || !isset($ranking['primeiro'], $ranking['segundo'], $ranking['terceiro'])) {
                     throw new \InvalidArgumentException('Dados de ranking incompletos para modalidade individual.');
                 }
-                $gameId = isset($data['id_jogo']) && is_numeric($data['id_jogo']) ? (int) $data['id_jogo'] : null;
+                $gameId = null;
+                if (array_key_exists('id_jogo', $data)) {
+                    $rawGameId = $data['id_jogo'];
+                    if (is_int($rawGameId)) {
+                        $gameId = $rawGameId;
+                    } elseif (is_string($rawGameId) && preg_match('/^[1-9][0-9]*$/', trim($rawGameId)) === 1) {
+                        $gameId = filter_var(trim($rawGameId), FILTER_VALIDATE_INT, [
+                            'options' => ['min_range' => 1, 'max_range' => PHP_INT_MAX],
+                        ]);
+                    }
+                    if (!is_int($gameId) || $gameId <= 0) {
+                        throw new \InvalidArgumentException('O ID do jogo deve ser um inteiro positivo.');
+                    }
+                }
                 $result = $this->individual->registrar($modalityId, [
                     'primeiro' => $ranking['primeiro'],
                     'segundo' => $ranking['segundo'],

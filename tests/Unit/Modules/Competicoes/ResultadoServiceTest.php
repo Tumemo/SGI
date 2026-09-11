@@ -183,6 +183,7 @@ final class ResultadoRepositoryFake implements ResultadoRepository
             'modalidade_id' => 7,
             'interclasse_id' => 1,
             'tipos_modalidades_id_tipo_modalidade' => $this->modalityType,
+            'nome_tipo_modalidade' => $this->modalityType === 2 ? 'Individual' : 'Mata-Mata',
         ];
     }
 

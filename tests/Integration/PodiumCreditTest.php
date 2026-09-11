@@ -102,18 +102,19 @@ final class PodiumCreditTest
         if ($modalityId <= 0 || count($users) < 3) {
             throw new \RuntimeException('O cenário individual não encontrou modalidade e competidores suficientes.');
         }
-        $teams = [];
-        foreach ($users as $index => $user) {
-            $name = 'Podio individual T14 ' . $index . ' ' . bin2hex(random_bytes(3));
-            $team = $connection->prepare("INSERT INTO equipes (status_equipe, modalidades_id_modalidade, turmas_id_turma, nome_equipe) VALUES ('1', ?, ?, ?)");
-            $classId = (int) $user['turmas_id_turma'];
-            $team->bind_param('iis', $modalityId, $classId, $name);
-            $team->execute();
-            $teams[] = (int) $connection->insert_id;
-            $team->close();
+        // Os três colocados podem pertencer à mesma equipe; a equipe é o
+        // vínculo técnico da inscrição, não uma restrição de pódio.
+        $team = $connection->prepare("INSERT INTO equipes (status_equipe, modalidades_id_modalidade, turmas_id_turma, nome_equipe) VALUES ('1', ?, ?, ?)");
+        $classId = (int) $users[0]['turmas_id_turma'];
+        $name = 'Podio individual T14 mesma equipe ' . bin2hex(random_bytes(3));
+        $team->bind_param('iis', $modalityId, $classId, $name);
+        $team->execute();
+        $teamId = (int) $connection->insert_id;
+        $team->close();
+        foreach ($users as $user) {
             $membership = $connection->prepare('INSERT INTO equipes_has_usuarios (equipes_id_equipe, usuarios_id_usuario) VALUES (?, ?)');
             $userId = (int) $user['id_usuario'];
-            $membership->bind_param('ii', $teams[$index], $userId);
+            $membership->bind_param('ii', $teamId, $userId);
             $membership->execute();
             $membership->close();
         }
@@ -133,8 +134,11 @@ final class PodiumCreditTest
         $gamesBeforePreparation = (int) $connection->query("SELECT COUNT(*) FROM jogos WHERE nome_jogo = 'IND:" . $modalityId . "'")->fetch_column();
         Assertions::assert('Ranking individual sem preparação é rejeitado sem criar jogo', $rejectedBeforePreparation && $gamesBeforePreparation === 0);
         \App\Modules\Competicoes\Infrastructure\MysqliIndividualRepository::criarJogoAgenda($connection, $modalityId);
-        $connection->query("UPDATE jogos SET status_jogo = 'Iniciado' WHERE nome_jogo = 'IND:" . $modalityId . "'");
-        \App\Modules\Competicoes\Infrastructure\MysqliIndividualRepository::salvarRanking($connection, $modalityId, $ranking);
+        $gameRow = $connection->query("SELECT id_jogo FROM jogos WHERE nome_jogo = 'IND:" . $modalityId . "' ORDER BY id_jogo DESC LIMIT 1")->fetch_assoc();
+        $gameId = (int) ($gameRow['id_jogo'] ?? 0);
+        $connection->query("UPDATE jogos SET status_jogo = 'Iniciado' WHERE id_jogo = " . $gameId);
+        $savedWithExplicitGame = \App\Modules\Competicoes\Infrastructure\MysqliIndividualRepository::salvarRanking($connection, $modalityId, $ranking, $gameId);
+        Assertions::assert('Ranking individual usa o jogo explícito enviado pela tela', $savedWithExplicitGame['id_jogo'] === $gameId && $gameId > 0);
         $points = self::podiumValues($connection, $editionId);
         $afterFirst = self::classPoints($connection, $classes);
         $expectedFirst = self::withClassDeltas($before, $classes, [1 => $points[1], 2 => $points[2], 3 => $points[3]]);
@@ -151,6 +155,32 @@ final class PodiumCreditTest
         $reprepare = \App\Modules\Competicoes\Infrastructure\MysqliIndividualRepository::criarJogoAgenda($connection, $modalityId);
         $partidasAfterReprepare = (int) $connection->query("SELECT COUNT(*) FROM partidas p INNER JOIN jogos j ON j.id_jogo = p.jogos_id_jogo WHERE j.nome_jogo = 'IND:" . $modalityId . "'")->fetch_column();
         Assertions::assert('Preparar novamente pódio concluído não cria placeholders nem altera partidas', $reprepare['jogos_criados'] === 0 && $partidasAfterReprepare === $partidasBeforeReprepare);
+
+        // Uma tag de mata-mata na mesma modalidade não pode ser aceita como a
+        // prova individual apenas porque o ID do jogo é válido.
+        $connection->query("INSERT INTO jogos (nome_jogo, data_jogo, inicio_jogo, termino_jogo, status_jogo, modalidades_id_modalidade, locais_id_local) VALUES ('MM:2:0:N', NULL, NULL, NULL, 'Iniciado', {$modalityId}, NULL)");
+        $wrongGameId = (int) $connection->insert_id;
+        $wrongIdentityRejected = false;
+        try {
+            \App\Modules\Competicoes\Infrastructure\MysqliIndividualRepository::salvarRanking($connection, $modalityId, $ranking, $wrongGameId);
+        } catch (\RuntimeException) {
+            $wrongIdentityRejected = true;
+        }
+        $connection->query('DELETE FROM jogos WHERE id_jogo = ' . $wrongGameId);
+        Assertions::assert('Ranking individual rejeita jogo explícito com identidade de mata-mata', $wrongIdentityRejected);
+
+        // Sem ID explícito, duas provas canônicas também são ambíguas e não
+        // podem ser resolvidas por LIMIT 1.
+        $connection->query("INSERT INTO jogos (nome_jogo, data_jogo, inicio_jogo, termino_jogo, status_jogo, modalidades_id_modalidade, locais_id_local) VALUES ('IND:{$modalityId}', NULL, NULL, NULL, 'Agendado', {$modalityId}, NULL)");
+        $duplicateGameId = (int) $connection->insert_id;
+        $duplicateRejected = false;
+        try {
+            \App\Modules\Competicoes\Infrastructure\MysqliIndividualRepository::salvarRanking($connection, $modalityId, $ranking);
+        } catch (\RuntimeException) {
+            $duplicateRejected = true;
+        }
+        $connection->query('DELETE FROM jogos WHERE id_jogo = ' . $duplicateGameId);
+        Assertions::assert('Ranking individual não escolhe uma prova entre tags duplicadas', $duplicateRejected);
     }
 
     private static function runSemifinalInvalidationScenario(\mysqli $connection, int $editionId, int $modalityId): void

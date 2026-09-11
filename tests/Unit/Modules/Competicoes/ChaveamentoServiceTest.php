@@ -21,7 +21,10 @@ final class ChaveamentoServiceTest extends TestCase
     public function testActualIndividualTypeSchedulesWithoutCreatingKnockoutGames(): void
     {
         $repository = $this->createMock(ChaveamentoManagement::class);
-        $repository->method('modality')->with(7)->willReturn(['tipos_modalidades_id_tipo_modalidade' => 2]);
+        $repository->method('modality')->with(7)->willReturn([
+            'tipos_modalidades_id_tipo_modalidade' => 37,
+            'nome_tipo_modalidade' => 'Individual',
+        ]);
         $repository->expects(self::never())->method('createBracket');
         $repository->expects(self::once())->method('saveIndividual')->with(7, null)->willReturn(['success' => true]);
         self::assertTrue((new ChaveamentoService($repository))->gerar(7, false, null)['success']);

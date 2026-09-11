@@ -28,14 +28,9 @@ final class TipoCompeticaoRules
                 }
             }
         }
-        // Compatibilidade com mocks/instalações antigas que ainda não retornam
-        // o JOIN do tipo. As consultas de produção sempre expõem o nome.
-        if ((int) ($modality['tipos_modalidades_id_tipo_modalidade'] ?? 0) === 2) {
-            return self::INDIVIDUAL;
-        }
-        if ((int) ($modality['tipos_modalidades_id_tipo_modalidade'] ?? 0) === 1) {
-            return self::MATA_MATA;
-        }
+        // O ID não tem semântica estável entre instalações. Sem o nome/código
+        // semântico vindo do cadastro, a competição fica deliberadamente
+        // desconhecida para não cair silenciosamente no mata-mata.
         return null;
     }
 
@@ -52,7 +47,7 @@ final class TipoCompeticaoRules
         if (in_array($value, ['individual', 'prova individual', 'individualizada'], true)) {
             return self::INDIVIDUAL;
         }
-        if (in_array($value, ['mata-mata', 'mata mata', 'mata-mata (eliminatório)', 'eliminatório', 'eliminatoria'], true)) {
+        if (in_array($value, ['mata-mata', 'mata mata', 'mata-mata (eliminatório)', 'mata-mata (eliminatória)', 'eliminatório', 'eliminatória', 'eliminatoria'], true)) {
             return self::MATA_MATA;
         }
         return null;

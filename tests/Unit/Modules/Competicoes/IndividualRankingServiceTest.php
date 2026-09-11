@@ -54,6 +54,16 @@ final class IndividualRankingServiceTest extends TestCase
         self::assertSame([7, ['primeiro' => 11, 'segundo' => 12, 'terceiro' => 13]], $repository->rankingCall);
     }
 
+    public function testPreservaIdExplicitoDoJogoQueVeioDaTela(): void
+    {
+        $repository = new IndividualRankingRepositoryFake();
+        $service = new IndividualRankingService($repository);
+
+        $service->registrar(7, ['primeiro' => 11, 'segundo' => 12, 'terceiro' => 13], 22);
+
+        self::assertSame(22, $repository->gameIdCall);
+    }
+
     /** @dataProvider invalidRankingIds */
     public function testRejeitaIdsQueParecemNumericosMasNaoSaoInteirosPositivos(mixed $value): void
     {
@@ -83,10 +93,12 @@ final class IndividualRankingRepositoryFake implements IndividualRankingReposito
 {
     /** @var array{0:int,1:array{primeiro:int,segundo:int,terceiro:int}}|null */
     public ?array $rankingCall = null;
+    public ?int $gameIdCall = null;
 
     public function salvarRanking(int $modalityId, array $ranking, ?int $gameId = null): array
     {
         $this->rankingCall = [$modalityId, $ranking];
+        $this->gameIdCall = $gameId;
         return ['success' => true];
     }
 

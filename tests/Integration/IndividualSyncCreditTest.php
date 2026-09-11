@@ -74,6 +74,17 @@ final class IndividualSyncCreditTest
             $invalid = true;
         }
         Assertions::assert('Lote individual inválido reverte sem escrita parcial', $invalid && self::classPoints($connection, $classes) === $invalidBefore);
+
+        $invalidGameId = false;
+        try {
+            $sync->sync($modalityId, 'individual', [
+                'id_jogo' => '20abc',
+                'ranking' => $ranking,
+            ]);
+        } catch (\InvalidArgumentException) {
+            $invalidGameId = true;
+        }
+        Assertions::assert('Sincronização rejeita ID de jogo malformado sem alterar pontos', $invalidGameId && self::classPoints($connection, $classes) === $invalidBefore);
     }
 
     private static function assertMataMataSyncRestoresCredit(\mysqli $connection, int $editionId, int $modalityId): void

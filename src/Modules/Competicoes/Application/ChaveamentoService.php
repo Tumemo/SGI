@@ -48,6 +48,9 @@ final class ChaveamentoService
         if ($id <= 0) {
             throw new InvalidArgumentException('Informe o ID da modalidade.');
         }
+        if ($gameId !== null && $gameId <= 0) {
+            throw new InvalidArgumentException('O ID do jogo deve ser um inteiro positivo.');
+        }
         if ($individual) {
             if (!$rankingInformado && $ranking === null) {
                 return $this->repository->saveIndividual($id, null);

@@ -13,7 +13,8 @@ final class CronometroServiceTest extends TestCase
     public function testConclusaoPorSnapshotDeModalidadeIndividualERecusada(): void
     {
         $repository = new CronometroRepositoryFake();
-        $repository->state['tipos_modalidades_id_tipo_modalidade'] = 2;
+        $repository->state['tipos_modalidades_id_tipo_modalidade'] = 37;
+        $repository->state['nome_tipo_modalidade'] = 'Individual';
         $service = new CronometroService($repository, static fn (): int => 1000);
 
         try {
@@ -36,13 +37,25 @@ final class CronometroServiceTest extends TestCase
     public function testInicioEPausaContinuamPermitidosParaModalidadeIndividual(): void
     {
         $repository = new CronometroRepositoryFake();
-        $repository->state['tipos_modalidades_id_tipo_modalidade'] = 2;
+        $repository->state['tipos_modalidades_id_tipo_modalidade'] = 37;
+        $repository->state['nome_tipo_modalidade'] = 'Individual';
         $service = new CronometroService($repository, static fn (): int => 1000);
 
         $service->atualizar(12, ['status_jogo' => 'Pausado']);
 
         self::assertSame(1, $repository->saveCalls);
         self::assertSame('Pausado', $repository->saved['status_jogo']);
+    }
+
+    public function testTipoDesconhecidoNaoPodeSerIniciadoPeloCronometro(): void
+    {
+        $repository = new CronometroRepositoryFake();
+        unset($repository->state['nome_tipo_modalidade']);
+        $service = new CronometroService($repository, static fn (): int => 1000);
+
+        $this->expectException(\InvalidArgumentException::class);
+        $service->atualizar(12, ['status_jogo' => 'Iniciado']);
+        self::assertSame(0, $repository->saveCalls);
     }
 }
 
@@ -60,6 +73,7 @@ final class CronometroRepositoryFake implements CronometroRepository
         'tempo_restante_jogo' => 3600,
         'data_inicio_real' => 1000,
         'tipos_modalidades_id_tipo_modalidade' => 1,
+        'nome_tipo_modalidade' => 'Mata-Mata',
     ];
     public int $saveCalls = 0;
     /** @var array<string,mixed> */

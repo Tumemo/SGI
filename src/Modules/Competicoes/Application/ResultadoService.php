@@ -62,7 +62,11 @@ final class ResultadoService
                 throw new \RuntimeException('Não foi possível identificar o jogo no servidor.');
             }
             $state = $this->repository->lockGame($resolvedGameId);
-            if (TipoCompeticaoRules::isIndividual($state)) {
+            $tipoCompeticao = TipoCompeticaoRules::resolve($state);
+            if ($tipoCompeticao === null) {
+                throw new InvalidArgumentException('O tipo da modalidade não está configurado.');
+            }
+            if ($tipoCompeticao === TipoCompeticaoRules::INDIVIDUAL) {
                 throw new InvalidArgumentException('Modalidades individuais devem ser concluídas pelo lançamento do pódio.');
             }
             $closed = ChaveamentoRules::jogoEstaEncerrado($state['status_jogo']);

@@ -136,9 +136,16 @@ final class MysqliJogoGateway
         if ($current === null) {
             return false;
         }
-        if (\App\Modules\Competicoes\Domain\TipoCompeticaoRules::isIndividual($current)
-            && in_array($data['status_jogo'] ?? null, ['Concluido', 'Finalizado'], true)) {
-            throw new \InvalidArgumentException('Modalidades individuais devem ser concluídas pelo lançamento do pódio.');
+        $requestedStatus = $data['status_jogo'] ?? null;
+        if ($requestedStatus !== null && in_array($requestedStatus, ['Agendado', 'Iniciado', 'Pausado', 'Concluido', 'Finalizado'], true)) {
+            $tipoCompeticao = \App\Modules\Competicoes\Domain\TipoCompeticaoRules::resolve($current);
+            if ($tipoCompeticao === null) {
+                throw new \InvalidArgumentException('O tipo da modalidade não está configurado.');
+            }
+            if ($tipoCompeticao === \App\Modules\Competicoes\Domain\TipoCompeticaoRules::INDIVIDUAL
+                && in_array($requestedStatus, ['Concluido', 'Finalizado'], true)) {
+                throw new \InvalidArgumentException('Modalidades individuais devem ser concluídas pelo lançamento do pódio.');
+            }
         }
         $fields = [];
         $values = [];

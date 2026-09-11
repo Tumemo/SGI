@@ -61,6 +61,14 @@ final class ChaveamentoController
                     (string) $request->query('acao', $individual ? 'ranking' : 'arvore'),
                 ));
             }
+            // O mesário pode operar uma prova individual já preparada, mas a
+            // criação/programação do jogo continua sendo uma ação de gestão.
+            // Um POST sem ranking é preparação; não permitir que esse caminho
+            // seja usado para ampliar a permissão operacional do mesário.
+            $rankingInformado = array_key_exists('ranking', $body);
+            if ($individual && !$rankingInformado && (int) ($_SESSION['nivel'] ?? -1) === 2) {
+                return Response::json(['success' => false, 'message' => 'Mesários não podem preparar modalidades individuais.'], 403);
+            }
             $denied = $individual ? $this->access->authorize() : AccessGuard::requireWrite();
             if ($denied !== null) {
                 return $denied;
@@ -68,9 +76,21 @@ final class ChaveamentoController
             if ($individual && (int) $_SESSION['nivel'] === 2 && $this->service->edition($id) !== (int) $_SESSION['id_interclasse']) {
                 return Response::json(['success' => false, 'message' => 'Mesários só podem registrar resultados da edição ativa.'], 403);
             }
-            $rankingInformado = array_key_exists('ranking', $body);
             $ranking = $rankingInformado && is_array($body['ranking']) ? $body['ranking'] : null;
-            $gameId = isset($body['id_jogo']) && is_numeric($body['id_jogo']) ? (int) $body['id_jogo'] : null;
+            $gameId = null;
+            if (array_key_exists('id_jogo', $body)) {
+                $rawGameId = $body['id_jogo'];
+                if (is_int($rawGameId)) {
+                    $gameId = $rawGameId;
+                } elseif (is_string($rawGameId) && preg_match('/^[1-9][0-9]*$/', trim($rawGameId)) === 1) {
+                    $gameId = filter_var(trim($rawGameId), FILTER_VALIDATE_INT, [
+                        'options' => ['min_range' => 1, 'max_range' => PHP_INT_MAX],
+                    ]);
+                }
+                if (!is_int($gameId) || $gameId <= 0) {
+                    throw new \InvalidArgumentException('O ID do jogo deve ser um inteiro positivo.');
+                }
+            }
             return Response::json($this->service->gerar($id, $individual, $ranking, $rankingInformado, $gameId));
         } catch (\mysqli_sql_exception $exception) {
             error_log('Falha de persistência no chaveamento: ' . $exception->getMessage());
