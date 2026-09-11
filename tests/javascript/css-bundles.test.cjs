@@ -333,6 +333,16 @@ test('navigation avatars use Bootstrap presentation utilities', () => {
     assert.doesNotMatch(css, /active-nav-icon \.nav-avatar-(?:img|fallback)/);
 });
 
+test('navigation active state keeps semantic hooks without custom motion effects', () => {
+    const sources = [
+        path.join(root, 'resources', 'views', 'components', 'admin-nav.php'),
+        path.join(root, 'resources', 'views', 'components', 'aluno-nav.php'),
+    ].map((file) => fs.readFileSync(file, 'utf8')).join('\n');
+    const css = fs.readFileSync(path.join(root, 'resources', 'css', 'source', 'admin.css'), 'utf8');
+    assert.match(sources, /active-nav-icon/);
+    assert.doesNotMatch(css, /\.nav li a:hover|\.active-nav-icon\s*\{|\.nav li a i\.bi/);
+});
+
 test('offline banner uses Bootstrap utilities while keeping runtime hooks', () => {
     const offline = fs.readFileSync(path.join(root, 'resources', 'js', 'offline', 'offline-core.js'), 'utf8');
     const css = [

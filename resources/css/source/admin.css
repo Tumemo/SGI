@@ -46,25 +46,6 @@
    6. NAVBAR / NAVEGAÇÃO (componentes/nav.php)
    ========================================================================== */
 
-.nav li a:hover {
-    opacity: 1 !important;
-    transition: 0.3s;
-}
-
-.active-nav-icon {
-    opacity: 1 !important;
-    color: #fff !important;
-    transform: scale(1.15);
-    filter: drop-shadow(0 0 6px rgba(255,255,255,0.45));
-    transition: transform 0.25s ease, filter 0.25s ease;
-}
-
-.nav li a i.bi {
-    transition: transform 0.25s ease;
-}
-
-
-
 /* ==========================================================================
    7. DASHBOARD (dashboard.php)
    ========================================================================== */
