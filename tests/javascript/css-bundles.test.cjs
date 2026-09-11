@@ -343,6 +343,15 @@ test('navigation active state keeps semantic hooks without custom motion effects
     assert.doesNotMatch(css, /\.nav li a:hover|\.active-nav-icon\s*\{|\.nav li a i\.bi/);
 });
 
+test('bracket cards preserve domain states without decorative hover motion', () => {
+    const css = fs.readFileSync(path.join(root, 'resources', 'css', 'source', 'admin.css'), 'utf8');
+    assert.match(css, /\.bkt-match--concluido \{ border-color:/);
+    assert.match(css, /\.bkt-match--bye \{ opacity:/);
+    assert.match(css, /\.bkt-match:hover \.bkt-match__actions/);
+    assert.doesNotMatch(css, /\.bkt-match\s*\{[^}]*transition/);
+    assert.doesNotMatch(css, /\.bkt-match:hover\s*\{[^}]*transform|\.bkt-match--(?:concluido|bye):hover|\.bkt-team:hover\s*\{/);
+});
+
 test('offline banner uses Bootstrap utilities while keeping runtime hooks', () => {
     const offline = fs.readFileSync(path.join(root, 'resources', 'js', 'offline', 'offline-core.js'), 'utf8');
     const css = [

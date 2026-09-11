@@ -205,19 +205,11 @@ body.sgi-offline-active {
     border-radius: 12px;
     overflow: hidden;
     width: 100%;
-    transition: all 0.25s ease;
     position: relative;
     margin-bottom: 16px;
 }
-.bkt-match:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 24px rgba(0,0,0,0.08);
-    border-color: #d1d5db;
-}
 .bkt-match--concluido { border-color: #10b981; border-width: 2px; }
-.bkt-match--concluido:hover { box-shadow: 0 8px 24px rgba(16,185,129,0.12); }
 .bkt-match--bye { opacity: 0.55; border-style: dashed; }
-.bkt-match--bye:hover { opacity: 0.7; }
 .bkt-match--posicao { border-color: #e30613; border-width: 2px; background: linear-gradient(135deg, #fff5f5, #fff); }
 
 .bkt-team {
@@ -225,10 +217,8 @@ body.sgi-offline-active {
     align-items: center;
     padding: 10px 14px;
     gap: 8px;
-    transition: background 0.15s;
 }
 .bkt-team + .bkt-team { border-top: 1px solid #f3f4f6; }
-.bkt-team:hover { background: #f9fafb; }
 .bkt-team--winner { background: #f0fdf4; }
 .bkt-team--loser { opacity: 0.55; }
 .bkt-team__name {
