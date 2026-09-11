@@ -406,9 +406,12 @@ test('score controls keep behavior hooks while using native Bootstrap controls',
     assert.doesNotMatch(placar + adminCss, /\b(?:tl-badge|tl-action-btn(?:--edit|--delete)?)\b/);
     assert.doesNotMatch(adminCss, /\.mc-timeline\s*\{|\.tl-event\s*\{|\.tl-event-body\s*\{|\.tl-event-top\s*\{|\.tl-event-icon\s*\{|\.tl-event-label\s*\{|\.tl-event-player\s*\{|\.tl-event-desc\s*\{/);
     assert.match(placar, /input\.classList\.add\('is-invalid'\)/);
+    assert.match(placar, /el\.classList\.toggle\('text-danger', expirado\)/);
+    assert.match(placar, /border-start border-4 border-danger bg-danger-subtle/);
     assert.doesNotMatch(adminCss, /#placar-grid\{[^}]*background/);
     assert.doesNotMatch(adminCss, /\.mc-score\{[^}]*font-weight/);
     assert.doesNotMatch(adminCss, /\.btn-score\{[^}]*display/);
+    assert.doesNotMatch(adminCss, /timer-pulse|fab-enter|alert-slide-in|\.mc-timer-time\.timer-expired|\.btn-score:(?:active|disabled)|\.btn-score-plus:hover|\.tl-event:hover \.tl-event-dot|\.mc-fab:hover|\.mc-fab:active|\.mc-fab i/);
 });
 
 test('modality details use Bootstrap cards, grids and actions', () => {

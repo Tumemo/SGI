@@ -138,16 +138,6 @@
     box-shadow: 0 0 0 2px rgba(111,66,193,0.3) !important;
 }
 
-#alerta-segundo-amarelo .alert {
-    animation: alert-slide-in 0.35s ease-out;
-    border-left: 4px solid var(--bs-primary) !important;
-}
-
-@keyframes alert-slide-in {
-    0%   { opacity: 0; transform: translateY(-8px); }
-    100% { opacity: 1; transform: translateY(0); }
-}
-
 /* ===========================================================================
    TABELAS ADMINISTRATIVAS — base compartilhada
    ========================================================================== */
@@ -754,40 +744,23 @@ body.sgi-offline-active {
 /* --- Scoreboard Card --- */
 #placar-grid.score-blocked::after{content:"Tempo esgotado";position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.6);color:#fff;font-size:1.25rem;font-weight:800;border-radius:inherit;backdrop-filter:blur(4px);z-index:5;letter-spacing:.02em}
 
-/* --- Timer Typography --- */
-.mc-timer-time{font-size:3.5rem;font-variant-numeric:tabular-nums;letter-spacing:.03em;transition:color .3s,text-shadow .3s}
-.mc-timer-time.timer-expired{color:#E30613;text-shadow:0 0 30px rgba(227,6,19,.25);animation:timer-pulse .8s ease-in-out infinite alternate}
+/* --- Timer Typography: size and tabular digits are domain-specific. --- */
+.mc-timer-time{font-size:3.5rem;font-variant-numeric:tabular-nums}
 /* --- Score Typography --- */
-.mc-score{font-size:6.5rem;min-width:5rem;font-variant-numeric:tabular-nums;letter-spacing:-.03em;transition:color .2s}
+.mc-score{font-size:6.5rem;min-width:5rem;font-variant-numeric:tabular-nums}
 
-/* --- Score Buttons --- */
-.btn-score{width:56px;height:56px;font-size:1.5rem;transition:transform .15s ease}
-.btn-score:active:not(:disabled){transform:scale(.85)}
-.btn-score:disabled{opacity:.25;cursor:not-allowed}
-.btn-score-plus:hover:not(:disabled){transform:translateY(-1px)}
+/* --- Score Buttons: touch target and icon size are domain-specific. --- */
+.btn-score{width:56px;height:56px;font-size:1.5rem}
 
-/* --- Score Animation --- */
 /* --- Timeline Geometry --- */
 .tl-event-track{width:16px}
-.tl-event-dot{width:12px;height:12px;z-index:1;margin-top:6px;transition:transform .2s}
-.tl-event:hover .tl-event-dot{transform:scale(1.3)}
+.tl-event-dot{width:12px;height:12px;z-index:1;margin-top:6px}
 .tl-event-line{width:2px;flex:1;margin-top:4px}
 .tl-event-actions{opacity:0;transition:opacity .2s}
 .tl-event:hover .tl-event-actions,.tl-event:focus-within .tl-event-actions{opacity:1}
-/* --- FAB --- */
-.mc-fab{width:62px;height:62px;transition:transform .25s cubic-bezier(.4,0,.2,1)}
-.mc-fab:hover{transform:scale(1.08) translateY(-2px)}
-.mc-fab:active{transform:scale(.95)}
-.mc-fab i{line-height:1;transition:transform .2s}
-.mc-fab:hover i{transform:rotate(90deg)}
 
-/* --- Animations --- */
-@keyframes timer-pulse{0%{opacity:1}100%{opacity:.55}}
-@keyframes alert-slide-in{0%{opacity:0;transform:translateY(-8px)}100%{opacity:1;transform:translateY(0)}}
-@keyframes fab-enter{0%{opacity:0;transform:scale(.5)}100%{opacity:1;transform:scale(1)}}
-
-/* --- Alert Second Yellow --- */
-#alerta-segundo-amarelo .alert{animation:alert-slide-in .35s ease-out;border-left:4px solid #E30613!important;border-radius:14px!important;background:#fef2f2!important;color:#991b1b!important}
+/* --- FAB: fixed touch target is domain-specific. --- */
+.mc-fab{width:62px;height:62px}
 
 /* --- Responsive --- */
 @media(max-width:767px){

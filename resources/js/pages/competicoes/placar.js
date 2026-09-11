@@ -265,7 +265,11 @@ window.SGIPage.mount("competicoes/placar", function (pageConfig, pageScope) {
         var m = String(Math.floor(Math.max(0, tempoRestante) / 60)).padStart(2, '0');
         var s = String(Math.max(0, tempoRestante) % 60).padStart(2, '0');
         el.textContent = m + ':' + s;
-        el.classList.toggle('timer-expired', tempoRestante <= 0 && tempoEsgotado);
+        var expirado = tempoRestante <= 0 && tempoEsgotado;
+        el.classList.toggle('timer-expired', expirado);
+        el.classList.toggle('text-danger', expirado);
+        el.classList.toggle('text-body', !expirado && !el.classList.contains('mc-timer-time--idle'));
+        el.classList.toggle('text-body-tertiary', !expirado && el.classList.contains('mc-timer-time--idle'));
         var statTimer = document.getElementById('mc-duration-stat');
         if (statTimer) statTimer.textContent = m + ':' + s;
     }
@@ -2051,7 +2055,7 @@ window.SGIPage.mount("competicoes/placar", function (pageConfig, pageScope) {
         if (!container) return;
         var nome = nomeAluno || 'Jogador(a)';
         container.innerHTML =
-            '<div class="alert d-flex align-items-center gap-3 py-3 px-4 mb-0 rounded-3 shadow-sm border-0 bg-danger-subtle text-danger-emphasis" role="alert" >' +
+            '<div class="alert d-flex align-items-center gap-3 py-3 px-4 mb-0 rounded-3 shadow-sm border-start border-4 border-danger bg-danger-subtle text-danger-emphasis" role="alert" >' +
                 '<span class="p-2 rounded-circle bg-danger text-white d-inline-flex align-items-center justify-content-center flex-shrink-0 fw-bold">V</span>' +
                 '<div class="flex-grow-1">' +
                     '<strong class="d-block mb-1 small" >SEGUNDO CARTÃO AMARELO</strong>' +
