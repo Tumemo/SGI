@@ -290,6 +290,19 @@ test('profile layouts use Bootstrap grids, badges and input groups', () => {
     assert.doesNotMatch(css, /\.perfil-(?:grid|field|info-grid|info-item|card-title|badge-nivel|password-input|btn-editar|input|avatar-inner|btn-camera)\b|\.perfil-page\b|\.perfil-wrapper\b|linear-gradient\(135deg, #E30613/);
 });
 
+test('category selection and bracket filtering use Bootstrap utility states', () => {
+    const categoryJs = [
+        path.join(root, 'resources', 'js', 'pages', 'eventos', 'categorias.js'),
+        path.join(root, 'resources', 'js', 'pages', 'eventos', 'configurar-categorias.js'),
+    ].map((file) => fs.readFileSync(file, 'utf8')).join('\n');
+    const bracketJs = fs.readFileSync(path.join(root, 'resources', 'js', 'pages', 'competicoes', 'chaveamento.js'), 'utf8');
+    const css = fs.readFileSync(path.join(root, 'resources', 'css', 'source', 'admin.css'), 'utf8');
+    assert.match(categoryJs, /classList\.add\('border-primary', 'border-2', 'shadow'\)/);
+    assert.match(bracketJs, /classList\.add\('d-none'\)/);
+    assert.doesNotMatch(categoryJs + bracketJs, /categoria-item--selected|tr-filtro-oculto/);
+    assert.doesNotMatch(css, /\.categoria-item--selected|\.status\s*\{|\.tr-filtro-oculto|#filtro(?:Categoria|Modalidade)Jogos/);
+});
+
 test('navigation avatars use Bootstrap presentation utilities', () => {
     const sources = [
         path.join(root, 'resources', 'views', 'components', 'admin-nav.php'),

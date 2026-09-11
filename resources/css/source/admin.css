@@ -88,12 +88,6 @@
    9. CATEGORIAS (categorias.php / edicao_categorias.php)
    ========================================================================== */
 
-.categoria-item--selected {
-    border: 2px solid #ed1c24 !important;
-    box-shadow: 0 0.25rem 0.75rem rgba(237, 28, 36, 0.12) !important;
-}
-
-
 /* ==========================================================================
    10. LOCAIS (edicao_locais.php)
    ========================================================================== */
@@ -189,23 +183,6 @@
         padding-bottom: .35rem;
     }
 }
-
-.status {
-    padding: 6px 12px;
-    border-radius: 999px;
-    font-size: .8rem;
-    font-weight: 600;
-}
-
-.tr-filtro-oculto {
-    display: none !important;
-}
-
-#filtroCategoriaJogos, #filtroModalidadeJogos {
-    border-radius: 10px;
-    height: 40px;
-}
-
 
 /* ==========================================================================
    12. RANKING (ranking.php)

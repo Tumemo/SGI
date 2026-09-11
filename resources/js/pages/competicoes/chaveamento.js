@@ -1419,14 +1419,14 @@ window.SGIPage.mount("competicoes/chaveamento", function (pageConfig, pageScope)
         var linhas = document.querySelectorAll('#tbodyJogos tr');
         linhas.forEach(function(tr) {
             if (termo === '') {
-                tr.classList.remove('tr-filtro-oculto');
+                tr.classList.remove('d-none');
                 return;
             }
             var texto = tr.textContent.toLowerCase();
             if (texto.indexOf(termo) !== -1) {
-                tr.classList.remove('tr-filtro-oculto');
+                tr.classList.remove('d-none');
             } else {
-                tr.classList.add('tr-filtro-oculto');
+                tr.classList.add('d-none');
             }
         });
     });
@@ -1436,14 +1436,14 @@ window.SGIPage.mount("competicoes/chaveamento", function (pageConfig, pageScope)
         var linhas = document.querySelectorAll('#tbodyJogosMob tr');
         linhas.forEach(function(tr) {
             if (termo === '') {
-                tr.classList.remove('tr-filtro-oculto');
+                tr.classList.remove('d-none');
                 return;
             }
             var texto = tr.textContent.toLowerCase();
             if (texto.indexOf(termo) !== -1) {
-                tr.classList.remove('tr-filtro-oculto');
+                tr.classList.remove('d-none');
             } else {
-                tr.classList.add('tr-filtro-oculto');
+                tr.classList.add('d-none');
             }
         });
     });

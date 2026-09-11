@@ -12,13 +12,13 @@ window.SGIPage.mount("eventos/categorias", function (pageConfig, pageScope) {
     function selecionarCategoria(idCategoria, el) {
         if (categoriaSelecionada === Number(idCategoria)) {
             categoriaSelecionada = null;
-            el.classList.remove('categoria-item--selected');
+            el.classList.remove('border-primary', 'border-2', 'shadow');
         } else {
             categoriaSelecionada = Number(idCategoria);
             document.querySelectorAll('.categoria-item').forEach((item) => {
-                item.classList.remove('categoria-item--selected');
+                item.classList.remove('border-primary', 'border-2', 'shadow');
             });
-            el.classList.add('categoria-item--selected');
+            el.classList.add('border-primary', 'border-2', 'shadow');
         }
         atualizarAcoesCategoria();
     }
