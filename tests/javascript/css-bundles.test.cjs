@@ -351,7 +351,11 @@ test('navigation shell dimensions are defined by the shared Bootstrap bundle', (
 });
 
 test('bracket cards preserve domain states without decorative hover motion', () => {
+    const source = fs.readFileSync(path.join(root, 'resources', 'js', 'pages', 'competicoes', 'chaveamento.js'), 'utf8');
     const css = fs.readFileSync(path.join(root, 'resources', 'css', 'source', 'admin.css'), 'utf8');
+    assert.match(source, /let cls = 'bkt-match card w-100 overflow-hidden position-relative mb-3';/);
+    assert.match(css, /\.bkt-match \{\s*position: relative;\s*\}/);
+    assert.doesNotMatch(css, /^\.bkt-match\s*\{[^}]*\b(?:background|border|border-radius|overflow|width|margin-bottom)\s*:/m);
     assert.match(css, /\.bkt-match--concluido \{ border-color:/);
     assert.match(css, /\.bkt-match--bye \{ opacity:/);
     assert.match(css, /\.bkt-match--posicao \{ border-color: #e30613; border-width: 2px; \}/);

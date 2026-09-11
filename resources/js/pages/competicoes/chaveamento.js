@@ -843,7 +843,7 @@ window.SGIPage.mount("competicoes/chaveamento", function (pageConfig, pageScope)
         const vencId = jogo.equipe_vencedora_id;
         const jogoData = JSON.stringify(jogo).replace(/'/g, "&#39;").replace(/"/g, "&quot;");
 
-        let cls = 'bkt-match';
+        let cls = 'bkt-match card w-100 overflow-hidden position-relative mb-3';
         if (isConcluido) cls += ' bkt-match--concluido';
         if (isBye) cls += ' bkt-match--bye';
         if (isPosicao) cls += ' bkt-match--posicao';

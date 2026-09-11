@@ -200,13 +200,7 @@ body.sgi-offline-active {
 }
 /* Bracket match cards */
 .bkt-match {
-    background: #fff;
-    border: 1px solid #e5e7eb;
-    border-radius: 12px;
-    overflow: hidden;
-    width: 100%;
     position: relative;
-    margin-bottom: 16px;
 }
 .bkt-match--concluido { border-color: #10b981; border-width: 2px; }
 .bkt-match--bye { opacity: 0.55; border-style: dashed; }
