@@ -388,6 +388,11 @@ test('agenda and bracket custom controls keep state styles without decorative mo
     assert.doesNotMatch(css, /\.kvs--aberto \.kvs__panel\s*\{[^}]*transform/);
 });
 
+test('searchable bracket control inherits the shared Bootstrap typography', () => {
+    const css = fs.readFileSync(path.join(root, 'resources', 'css', 'source', 'admin.css'), 'utf8');
+    assert.doesNotMatch(css, /\.kvs__(?:trigger|search|opcao)\s*\{[^}]*font-family\s*:/);
+});
+
 test('offline banner uses Bootstrap utilities while keeping runtime hooks', () => {
     const offline = fs.readFileSync(path.join(root, 'resources', 'js', 'offline', 'offline-core.js'), 'utf8');
     const css = [

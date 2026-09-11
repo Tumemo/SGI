@@ -304,7 +304,6 @@ body.sgi-offline-active {
     background: #fff;
     border: 1px solid #e5e7eb;
     border-radius: 12px;
-    font-family: "Inter", sans-serif;
     font-size: 0.9rem;
     color: #9ca3af;
     cursor: pointer;
@@ -341,7 +340,6 @@ body.sgi-offline-active {
     padding: 10px 12px 10px 36px;
     border: 1px solid #e5e7eb;
     border-radius: 10px;
-    font-family: "Inter", sans-serif;
     font-size: .85rem;
     outline: none;
     background: #f8f9fc;
@@ -381,7 +379,6 @@ body.sgi-offline-active {
     border: none;
     background: transparent;
     border-radius: 9px;
-    font-family: "Inter", sans-serif;
     font-size: .86rem;
     color: #1f2937;
     cursor: pointer;
