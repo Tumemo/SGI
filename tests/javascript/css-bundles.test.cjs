@@ -347,9 +347,11 @@ test('bracket cards preserve domain states without decorative hover motion', () 
     const css = fs.readFileSync(path.join(root, 'resources', 'css', 'source', 'admin.css'), 'utf8');
     assert.match(css, /\.bkt-match--concluido \{ border-color:/);
     assert.match(css, /\.bkt-match--bye \{ opacity:/);
+    assert.match(css, /\.bkt-match--posicao \{ border-color: #e30613; border-width: 2px; \}/);
     assert.match(css, /\.bkt-match:hover \.bkt-match__actions/);
     assert.doesNotMatch(css, /\.bkt-match\s*\{[^}]*transition/);
     assert.doesNotMatch(css, /\.bkt-match:hover\s*\{[^}]*transform|\.bkt-match--(?:concluido|bye):hover|\.bkt-team:hover\s*\{/);
+    assert.doesNotMatch(css, /\.bkt-match--posicao\s*\{[^}]*gradient/);
 });
 
 test('student term modal uses Bootstrap presentation classes', () => {

@@ -210,7 +210,7 @@ body.sgi-offline-active {
 }
 .bkt-match--concluido { border-color: #10b981; border-width: 2px; }
 .bkt-match--bye { opacity: 0.55; border-style: dashed; }
-.bkt-match--posicao { border-color: #e30613; border-width: 2px; background: linear-gradient(135deg, #fff5f5, #fff); }
+.bkt-match--posicao { border-color: #e30613; border-width: 2px; }
 
 .bkt-team {
     display: flex;
