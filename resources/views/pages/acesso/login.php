@@ -40,18 +40,18 @@ if ((int) ($_SESSION['nivel'] ?? -1) >= 0) {
             <div id="msg_erro_mobile" class="text-danger mt-2" aria-live="polite"></div>
         </form>
         <div class="login-mobile-brand" aria-label="Logo SESI">
-            <img src="<?= \App\Shared\Http\Assets::url('images/logo-SGI-SESI.png') ?>" alt="Logo do SESI">
+            <img src="<?= \App\Shared\Http\Assets::url('images/logo-sgi-sesi.png') ?>" alt="Logo do SESI">
         </div>
     </main>
     <!-- VERSÃO DESKTOP CENTRALIZADA -->
     <main class="d-none d-md-flex vh-100">
         <picture class="w-75 vh-100 position-relative d-block shadow-lg">
-            <img src="<?= \App\Shared\Http\Assets::url('images/banner-login-desktop2.png') ?>" alt="" aria-hidden="true" class="position-absolute top-0 start-0 w-100 h-100 object-fit-cover login-desktop-banner-image" >
+            <img src="<?= \App\Shared\Http\Assets::url('images/banner-login-desktop.png') ?>" alt="" aria-hidden="true" class="position-absolute top-0 start-0 w-100 h-100 object-fit-cover login-desktop-banner-image" >
             <img src="<?= \App\Shared\Http\Assets::url('images/borda-banner-login-desktop.png') ?>" alt="" aria-hidden="true" class="position-absolute top-0 start-0 w-100 h-100 object-fit-cover login-desktop-banner-border" >
         </picture>
         <section class="w-50 h-100 d-flex flex-column justify-content-center align-items-center p-4">
             <picture class="mb-4">
-                <img src="<?= \App\Shared\Http\Assets::url('images/logo-SGI-SESI.png') ?>" alt="Logo do sesi" class="img-fluid login-desktop-logo" >
+                <img src="<?= \App\Shared\Http\Assets::url('images/logo-sgi-sesi.png') ?>" alt="Logo do sesi" class="img-fluid login-desktop-logo" >
             </picture>
             <form id="form_desktop" class="text-center d-flex flex-column align-items-center bg-light p-4 w-100 login-desktop-form">
                 <h2 class="text-danger mb-4">Acesso ao sistema</h2>

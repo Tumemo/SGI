@@ -220,7 +220,7 @@ $isMesario = $nivelUsuario === 2;
             <div class="col-12 col-md-6 col-lg-4">
                 <a href="<?= \App\Shared\Http\Url::to('colaboradores') ?>" id="linkColaboradores" class="card h-100 p-4 text-decoration-none shadow-sm">
 <div class="d-flex align-items-center gap-3 mb-3">
-                        <div class="bg-danger-subtle text-danger rounded-circle p-3 d-inline-flex align-items-center justify-content-center flex-shrink-0 fs-4"><img src="<?= \App\Shared\Http\Assets::url('images/icon_equipes.png') ?>" alt="Icone de equipe"></div>
+                        <div class="bg-danger-subtle text-danger rounded-circle p-3 d-inline-flex align-items-center justify-content-center flex-shrink-0 fs-4"><img src="<?= \App\Shared\Http\Assets::url('images/icone-equipes.png') ?>" alt="Icone de equipe"></div>
                         <h5 class="h5 mb-0 fw-semibold text-body">COLABORADORES</h5>
                     </div>
                     <p class="card-text text-body-secondary mb-0">Gerencie a equipe de organização, voluntários, comissão técnica e juízes do evento.</p>
