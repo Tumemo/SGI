@@ -1447,15 +1447,15 @@
         if (document.getElementById('sgi-offline-banner')) return;
         var b = document.createElement('div');
         b.id = 'sgi-offline-banner';
-        b.className = 'sgi-offline-banner sgi-hidden';
+        b.className = 'sgi-offline-banner bg-danger text-white d-none sgi-hidden';
         b.innerHTML =
-            '<div class="sgi-offline-banner-inner">' +
-            '<span class="sgi-offline-banner-tag">OFFLINE</span>' +
-            '<span class="sgi-offline-banner-text"></span>' +
-            '<button type="button" class="sgi-offline-banner-btn sgi-hidden">Sincronizar agora</button>' +
-            '<button type="button" class="sgi-offline-banner-export sgi-hidden">Exportar pendências</button>' +
-            '<button type="button" class="sgi-offline-banner-import">Importar pendências</button>' +
-            '<input type="file" class="sgi-offline-banner-file sgi-hidden" accept="application/json,.json">' +
+            '<div class="container-fluid d-flex align-items-center justify-content-center gap-2 py-2 px-3 flex-wrap text-center">' +
+            '<span class="sgi-offline-banner-tag badge rounded-pill text-bg-light small fw-bold">OFFLINE</span>' +
+            '<span class="sgi-offline-banner-text small"></span>' +
+            '<button type="button" class="sgi-offline-banner-btn btn btn-sm btn-outline-light rounded-pill fw-semibold d-none sgi-hidden">Sincronizar agora</button>' +
+            '<button type="button" class="sgi-offline-banner-export btn btn-sm btn-outline-light rounded-pill fw-semibold d-none sgi-hidden">Exportar pendências</button>' +
+            '<button type="button" class="sgi-offline-banner-import btn btn-sm btn-outline-light rounded-pill fw-semibold">Importar pendências</button>' +
+            '<input type="file" class="sgi-offline-banner-file d-none sgi-hidden" accept="application/json,.json">' +
             '</div>';
         document.body.appendChild(b);
 
@@ -1534,17 +1534,17 @@
         var exportBtn = b.querySelector('.sgi-offline-banner-export');
 
         if (state.online && !servidorIndisponivel() && state.pending === 0) {
-            b.classList.add('sgi-hidden');
+            b.classList.add('d-none', 'sgi-hidden');
             document.body.classList.remove('sgi-offline-active');
             return;
         }
 
-        b.classList.remove('sgi-hidden');
+        b.classList.remove('d-none', 'sgi-hidden');
         document.body.classList.add('sgi-offline-active');
 
         if (state.online && !servidorIndisponivel()) {
-            b.classList.remove('sgi-offline-banner--offline');
-            b.classList.add('sgi-offline-banner--syncing');
+            b.classList.remove('bg-danger', 'text-white');
+            b.classList.add('bg-warning', 'text-dark');
             if (state.needsReview > 0) {
                 if (tag) tag.textContent = 'REVISAR';
                 if (text) text.textContent = state.lastSyncError ||
@@ -1555,11 +1555,14 @@
                     ? '1 alteração aguardando envio.'
                     : state.pending + ' alterações aguardando envio.';
             }
-            if (btn) btn.classList.remove('sgi-hidden');
-            if (exportBtn) exportBtn.classList.toggle('sgi-hidden', state.pending === 0);
+            if (btn) btn.classList.remove('d-none', 'sgi-hidden');
+            if (exportBtn) {
+                exportBtn.classList.toggle('d-none', state.pending === 0);
+                exportBtn.classList.toggle('sgi-hidden', state.pending === 0);
+            }
         } else {
-            b.classList.add('sgi-offline-banner--offline');
-            b.classList.remove('sgi-offline-banner--syncing');
+            b.classList.add('bg-danger', 'text-white');
+            b.classList.remove('bg-warning', 'text-dark');
             if (tag) tag.textContent = 'OFFLINE';
             if (text) {
                 text.textContent = (state.server === 'sessao' && state.serverError
@@ -1569,8 +1572,14 @@
                     : 'Modo offline — os dados podem estar desatualizados. ') +
                     (state.pending > 0 ? ' ' + state.pending + ' alteracao(oes) aguardando envio.' : '');
             }
-            if (btn) btn.classList.toggle('sgi-hidden', state.pending === 0);
-            if (exportBtn) exportBtn.classList.toggle('sgi-hidden', state.pending === 0);
+            if (btn) {
+                btn.classList.toggle('d-none', state.pending === 0);
+                btn.classList.toggle('sgi-hidden', state.pending === 0);
+            }
+            if (exportBtn) {
+                exportBtn.classList.toggle('d-none', state.pending === 0);
+                exportBtn.classList.toggle('sgi-hidden', state.pending === 0);
+            }
         }
     }
 

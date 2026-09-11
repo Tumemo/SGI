@@ -315,6 +315,20 @@ test('navigation avatars use Bootstrap presentation utilities', () => {
     assert.doesNotMatch(css, /active-nav-icon \.nav-avatar-(?:img|fallback)/);
 });
 
+test('offline banner uses Bootstrap utilities while keeping runtime hooks', () => {
+    const offline = fs.readFileSync(path.join(root, 'resources', 'js', 'offline', 'offline-core.js'), 'utf8');
+    const css = [
+        path.join(root, 'resources', 'css', 'source', 'admin.css'),
+        path.join(root, 'resources', 'css', 'source', 'aluno-shared.css'),
+    ].map((file) => fs.readFileSync(file, 'utf8')).join('\n');
+    assert.match(offline, /bg-danger text-white d-none sgi-hidden/);
+    assert.match(offline, /container-fluid d-flex align-items-center justify-content-center gap-2 py-2 px-3 flex-wrap text-center/);
+    assert.match(offline, /btn btn-sm btn-outline-light rounded-pill fw-semibold d-none sgi-hidden/);
+    assert.match(offline, /classList\.add\('d-none', 'sgi-hidden'\)/);
+    assert.match(offline, /bg-warning.*text-dark/);
+    assert.doesNotMatch(css, /\.sgi-hidden\s*\{|\.sgi-offline-banner-inner|\.sgi-offline-banner--syncing|\.sgi-offline-banner-(?:tag|btn|export|import)\s*[,{]/);
+});
+
 test('classroom cards and search use native Bootstrap components', () => {
     const js = fs.readFileSync(path.join(root, 'resources', 'js', 'pages', 'participantes', 'turmas.js'), 'utf8');
     const view = fs.readFileSync(path.join(root, 'resources', 'views', 'pages', 'participantes', 'turmas.php'), 'utf8');
