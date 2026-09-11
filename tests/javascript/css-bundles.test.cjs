@@ -387,6 +387,16 @@ test('searchable bracket group counts use the Bootstrap badge component', () => 
     assert.doesNotMatch(css, /\.kvs__grupo-qtd\s*\{[^}]*\b(?:background|color|border-radius|padding|font-size|font-weight)\s*:/);
 });
 
+test('searchable bracket type labels use Bootstrap badge variants', () => {
+    const source = fs.readFileSync(path.join(root, 'resources', 'js', 'pages', 'competicoes', 'chaveamento.js'), 'utf8');
+    const css = fs.readFileSync(path.join(root, 'resources', 'css', 'source', 'admin.css'), 'utf8');
+    assert.match(source, /badge rounded-pill bg-primary-subtle text-primary-emphasis/);
+    assert.match(source, /badge rounded-pill bg-danger-subtle text-danger-emphasis/);
+    assert.match(css, /\.kvs__opcao-tipo \{\s*flex-shrink: 0;\s*letter-spacing: \.02em;\s*\}/);
+    assert.doesNotMatch(css, /\.kvs__opcao-tipo\s*\{[^}]*\b(?:font-size|font-weight|padding|border-radius|background|color)\s*:/);
+    assert.doesNotMatch(css, /\.kvs__opcao-tipo--(?:coletiva|individual)\s*\{/);
+});
+
 test('student term modal uses Bootstrap presentation classes', () => {
     const view = fs.readFileSync(path.join(root, 'resources', 'views', 'pages', 'aluno', 'home.php'), 'utf8');
     const css = fs.readFileSync(path.join(root, 'resources', 'css', 'source', 'aluno-home.css'), 'utf8');

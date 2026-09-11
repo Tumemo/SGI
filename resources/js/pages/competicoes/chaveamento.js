@@ -96,7 +96,7 @@ window.SGIPage.mount("competicoes/chaveamento", function (pageConfig, pageScope)
                     const ativa = select.value === '' ? ' kvs__opcao--ativa' : '';
                     html += `<button type="button" class="kvs__opcao${ativa}" data-value="">
                         <span class="kvs__opcao-nome">Todas modalidades</span>
-                        <span class="kvs__opcao-tipo kvs__opcao-tipo--coletiva opacity-50" >Mostrar tudo</span>
+                        <span class="kvs__opcao-tipo badge rounded-pill bg-light text-body-secondary opacity-50" >Mostrar tudo</span>
                     </button>`;
                 }
             }
@@ -108,7 +108,9 @@ window.SGIPage.mount("competicoes/chaveamento", function (pageConfig, pageScope)
                     <div class="kvs__grupo-titulo"><i class="bi bi-trophy-fill"></i>${esc(g.nome)}<span class="kvs__grupo-qtd badge rounded-pill text-bg-light text-body-secondary">${opcoes.length}</span></div>`;
                 opcoes.forEach(o => {
                     const ativa = String(select.value) === o.valor ? ' kvs__opcao--ativa' : '';
-                    const tipoCls = o.tipo === 'Individual' ? 'kvs__opcao-tipo--individual' : 'kvs__opcao-tipo--coletiva';
+                    const tipoCls = o.tipo === 'Individual'
+                        ? 'badge rounded-pill bg-primary-subtle text-primary-emphasis'
+                        : 'badge rounded-pill bg-danger-subtle text-danger-emphasis';
                     html += `<button type="button" class="kvs__opcao${ativa}" data-value="${o.valor}">
                         <span class="kvs__opcao-nome">${esc(o.nome)}</span>
                         <span class="kvs__opcao-tipo ${tipoCls}">${o.tipo}</span>

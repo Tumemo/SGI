@@ -353,14 +353,8 @@ body.sgi-offline-active {
 .kvs__opcao-nome { min-width: 0; }
 .kvs__opcao-tipo {
     flex-shrink: 0;
-    font-size: .66rem;
-    font-weight: 700;
-    padding: 2px 8px;
-    border-radius: 999px;
     letter-spacing: .02em;
 }
-.kvs__opcao-tipo--coletiva { background: #fee2e2; color: #dc2626; }
-.kvs__opcao-tipo--individual { background: #f3e8ff; color: #7c3aed; }
 .kvs__vazio { padding: 22px 10px; text-align: center; color: #9ca3af; font-size: .85rem; }
 
 /* ==========================================================================
