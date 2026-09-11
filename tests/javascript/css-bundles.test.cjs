@@ -379,6 +379,14 @@ test('bracket teams use Bootstrap layout and badge utilities for presentation', 
     assert.doesNotMatch(css, /\.bkt-team__trophy\s*\{/);
 });
 
+test('searchable bracket group counts use the Bootstrap badge component', () => {
+    const source = fs.readFileSync(path.join(root, 'resources', 'js', 'pages', 'competicoes', 'chaveamento.js'), 'utf8');
+    const css = fs.readFileSync(path.join(root, 'resources', 'css', 'source', 'admin.css'), 'utf8');
+    assert.match(source, /kvs__grupo-qtd badge rounded-pill text-bg-light text-body-secondary/);
+    assert.match(css, /\.kvs__grupo-qtd \{\s*margin-left: auto;\s*\}/);
+    assert.doesNotMatch(css, /\.kvs__grupo-qtd\s*\{[^}]*\b(?:background|color|border-radius|padding|font-size|font-weight)\s*:/);
+});
+
 test('student term modal uses Bootstrap presentation classes', () => {
     const view = fs.readFileSync(path.join(root, 'resources', 'views', 'pages', 'aluno', 'home.php'), 'utf8');
     const css = fs.readFileSync(path.join(root, 'resources', 'css', 'source', 'aluno-home.css'), 'utf8');

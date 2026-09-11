@@ -105,7 +105,7 @@ window.SGIPage.mount("competicoes/chaveamento", function (pageConfig, pageScope)
                 const opcoes = g.opcoes.filter(o => !t || o.nome.toLowerCase().includes(t) || g.nome.toLowerCase().includes(t));
                 if (!opcoes.length) return;
                 html += `<div class="kvs__grupo">
-                    <div class="kvs__grupo-titulo"><i class="bi bi-trophy-fill"></i>${esc(g.nome)}<span class="kvs__grupo-qtd">${opcoes.length}</span></div>`;
+                    <div class="kvs__grupo-titulo"><i class="bi bi-trophy-fill"></i>${esc(g.nome)}<span class="kvs__grupo-qtd badge rounded-pill text-bg-light text-body-secondary">${opcoes.length}</span></div>`;
                 opcoes.forEach(o => {
                     const ativa = String(select.value) === o.valor ? ' kvs__opcao--ativa' : '';
                     const tipoCls = o.tipo === 'Individual' ? 'kvs__opcao-tipo--individual' : 'kvs__opcao-tipo--coletiva';

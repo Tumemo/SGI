@@ -332,12 +332,6 @@ body.sgi-offline-active {
 .kvs__grupo-titulo i { color: #e30613; font-size: .8rem; }
 .kvs__grupo-qtd {
     margin-left: auto;
-    background: #f3f4f6;
-    color: #6b7280;
-    border-radius: 999px;
-    padding: 1px 8px;
-    font-size: .68rem;
-    font-weight: 700;
 }
 .kvs__opcao {
     width: 100%;
