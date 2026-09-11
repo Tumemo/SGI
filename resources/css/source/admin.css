@@ -69,17 +69,6 @@
    7. DASHBOARD (dashboard.php)
    ========================================================================== */
 
-/* Dashboard mobile: layout único, sem offset da sidebar e com cards compactos */
-@media (max-width: 767.98px) {
-    .main-dashboard-layout {
-        margin-left: 0 !important;
-        padding: 16px !important;
-        padding-bottom: 96px !important; /* espaço para a navbar fixa de 64px */
-    }
-
-}
-
-
 /* ==========================================================================
    8. HOME (home.php)
    ========================================================================== */
@@ -130,36 +119,6 @@
     color: #fff !important;
     border-color: #6f42c1 !important;
     box-shadow: 0 0 0 2px rgba(111,66,193,0.3) !important;
-}
-
-/* ===========================================================================
-   TABELAS ADMINISTRATIVAS — base compartilhada
-   ========================================================================== */
-
-.table-responsive {
-    scrollbar-color: #cbd5e1 transparent;
-    scrollbar-width: thin;
-}
-
-.table-responsive::-webkit-scrollbar {
-    height: 8px;
-}
-
-.table-responsive::-webkit-scrollbar-track {
-    background: transparent;
-}
-
-.table-responsive::-webkit-scrollbar-thumb {
-    background: #cbd5e1;
-    border-radius: 999px;
-}
-
-.table.table-hover {
-    --bs-table-hover-bg: #f8fafc;
-}
-
-.table.table-hover > tbody > tr > * {
-    transition: background-color .15s ease;
 }
 
 /* O histórico de jogos tem muitas colunas. Em telas estreitas, mantenha a
@@ -233,15 +192,6 @@
 /* ==========================================================================
     23e. LOCAIS E REGULAMENTO (edicao_locais.php)
     ========================================================================== */
-
-/* Locais mobile: layout único, sem offset da sidebar */
-@media (max-width: 767.98px) {
-    .main-locais-layout {
-        margin-left: 0 !important;
-        padding: 16px !important;
-        padding-bottom: 96px !important; /* espaço para a navbar fixa de 64px */
-    }
-}
 
 /* ==========================================================================
    SGI OFFLINE — Banner de status (modo offline / sincronização)

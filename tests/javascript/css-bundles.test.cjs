@@ -303,6 +303,14 @@ test('category selection and bracket filtering use Bootstrap utility states', ()
     assert.doesNotMatch(css, /\.categoria-item--selected|\.status\s*\{|\.tr-filtro-oculto|#filtro(?:Categoria|Modalidade)Jogos/);
 });
 
+test('shared mobile shells and table presentation rely on Bootstrap defaults', () => {
+    const css = fs.readFileSync(path.join(root, 'resources', 'css', 'source', 'admin.css'), 'utf8');
+    assert.match(css, /#secaoJogos \.table-responsive/);
+    assert.match(css, /#secaoJogos \.table,\s*#secaoJogosMob \.table/);
+    assert.doesNotMatch(css, /^\.table-responsive\s*\{|^\.table\.table-hover\s*\{|^\.table\.table-hover > tbody > tr > \*/m);
+    assert.doesNotMatch(css, /\.main-(?:dashboard|locais)-layout\s*\{/);
+});
+
 test('navigation avatars use Bootstrap presentation utilities', () => {
     const sources = [
         path.join(root, 'resources', 'views', 'components', 'admin-nav.php'),

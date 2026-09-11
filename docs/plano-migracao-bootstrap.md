@@ -35,17 +35,17 @@ Na revisão anterior, build, verificações PHP/JavaScript e testes isolados pas
 
 ### Medição disponível
 
-Valores da última auditoria; recapturar antes do primeiro lote.
+Valores atuais da auditoria do recorte de seis fontes. A série histórica abaixo mantém como base comparável o ponto de 75.954 bytes e 2.512 linhas.
 
 | Fonte em resources/css/source | Linhas | Bytes |
 |---|---:|---:|
-| admin.css | 4.831 | 168.786 |
-| aluno-pages.css | 1.168 | 29.997 |
-| aluno-home.css | 578 | 14.308 |
-| aluno-shared.css | 362 | 7.240 |
-| utilities.css | 519 | 8.214 |
-| login.css | 106 | 2.197 |
-| Total dessas seis fontes | 7.564 | 230.742 |
+| admin.css | 650 | 22.817 |
+| aluno-pages.css | 178 | 1.170 |
+| aluno-home.css | 44 | 1.115 |
+| aluno-shared.css | 80 | 1.544 |
+| utilities.css | 68 | 1.260 |
+| login.css | 106 | 2.302 |
+| Total dessas seis fontes | 1.126 | 30.208 |
 
 Esse total não inclui o SCSS próprio. Não apresentá-lo como total de personalização do projeto. O histórico de seis fontes tinha 263.997 bytes, mas não é uma comparação completa quando regras foram transferidas para SCSS.
 
@@ -95,9 +95,10 @@ Os lotes implementados cobrem partes das etapas 2, 3, 4, 5, 6, 7 e 8, sempre mig
 - blocos CSS órfãos de perfil, turmas, colaboradores, OCR, ranking e detalhes de modalidade removidos na mesma alteração dos consumidores;
 - seleção de categorias e ocultação de linhas do chaveamento convertidas para estados utilitários Bootstrap, removendo o estilo de status órfão e os overrides dos filtros nativos;
 - banner offline dos contextos administrativo e aluno convertido para contêiner, badge, botões, cores e ocultação Bootstrap, mantendo os hooks de runtime/teste e apenas o posicionamento fixo e o deslocamento do conteúdo em CSS;
+- overrides móveis redundantes do dashboard/locais e estilos genéricos de scrollbar/hover de tabelas removidos, preservando no CSS somente o overflow, a largura mínima e o suporte de toque do histórico de jogos;
 - testes estáticos, de JavaScript e de navegador ampliados para impedir o retorno dos padrões removidos.
 
-Antes dos lotes de telas finais, as seis fontes CSS auditadas totalizavam 75.954 bytes e 2.512 linhas. O lote do shell do chaveamento reduziu o total para 73.087 bytes e 2.422 linhas; o lote da timeline e da limpeza de seção órfã reduziu para 72.329 bytes e 2.412 linhas; o sublote visual da árvore reduziu o total para 66.089 bytes e 2.232 linhas; o lote do pódio individual e da remoção do alias de animação reduziu o total para 65.716 bytes e 2.221 linhas; o lote de modalidades e destaques reduziu o total para 56.898 bytes e 1.826 linhas; o lote do layout interno do placar reduziu para 55.853 bytes e 1.812 linhas; o lote da timeline reduziu para 54.085 bytes e 1.792 linhas; o lote de alunos da turma reduziu para 41.762 bytes e 1.569 linhas; o lote do contêiner e dos controles avançados do placar reduziu para 41.145 bytes e 1.566 linhas; o lote das tabelas compartilhadas reduziu para 40.277 bytes e 1.532 linhas; o lote dos avatares de perfil reduziu para 36.802 bytes e 1.366 linhas; o lote dos avatares da navegação reduziu para 35.851 bytes e 1.338 linhas; o lote de revisão dos efeitos do placar reduziu para 34.404 bytes e 1.311 linhas; o lote de seleção e filtros reduziu para 33.981 bytes e 1.288 linhas; este lote do banner offline reduz o total para 31.523 bytes e 1.176 linhas, uma redução adicional de 2.458 bytes (7,23%) e 112 linhas (8,70%). Em relação à base fixa registrada acima, a redução acumulada é de 44.431 bytes (58,50%) e 1.336 linhas (53,18%). A medição continua separada dos bundles Bootstrap e do SCSS próprio.
+Antes dos lotes de telas finais, as seis fontes CSS auditadas totalizavam 75.954 bytes e 2.512 linhas. O lote do shell do chaveamento reduziu o total para 73.087 bytes e 2.422 linhas; o lote da timeline e da limpeza de seção órfã reduziu para 72.329 bytes e 2.412 linhas; o sublote visual da árvore reduziu o total para 66.089 bytes e 2.232 linhas; o lote do pódio individual e da remoção do alias de animação reduziu o total para 65.716 bytes e 2.221 linhas; o lote de modalidades e destaques reduziu para 56.898 bytes e 1.826 linhas; o lote do layout interno do placar reduziu para 55.853 bytes e 1.812 linhas; o lote da timeline reduziu para 54.085 bytes e 1.792 linhas; o lote de alunos da turma reduziu para 41.762 bytes e 1.569 linhas; o lote do contêiner e dos controles avançados do placar reduziu para 41.145 bytes e 1.566 linhas; o lote das tabelas compartilhadas reduziu para 40.277 bytes e 1.532 linhas; o lote dos avatares de perfil reduziu para 36.802 bytes e 1.366 linhas; o lote dos avatares da navegação reduziu para 35.851 bytes e 1.338 linhas; o lote de revisão dos efeitos do placar reduziu para 34.404 bytes e 1.311 linhas; o lote de seleção e filtros reduziu para 33.981 bytes e 1.288 linhas; o lote do banner offline reduziu o total para 31.523 bytes e 1.176 linhas; este lote de limpeza de overrides reduz o total para 30.208 bytes e 1.126 linhas, uma redução adicional de 1.315 bytes (4,17%) e 50 linhas (4,25%). Em relação à base fixa registrada acima, a redução acumulada é de 45.746 bytes (60,23%) e 1.386 linhas (55,18%). A medição continua separada dos bundles Bootstrap e do SCSS próprio.
 
 A matriz Docker funcional foi executada após a correção final: 479/479 asserções HTTP e 50/50 cenários de navegador, incluindo fluxos online, offline e responsivos. O contrato visual separado permanece pendente de referências Linux: `tests/browser/visual-contract.spec.cjs-snapshots` contém somente referências Windows (`*-win32.png`), portanto o Docker não possui baseline `*-linux.png` versionado para comparação.
 
