@@ -213,11 +213,7 @@ body.sgi-offline-active {
    28. DESIGN SYSTEM ALUNO — EQUIPES/ELENCO (elenco_equipe.php, equipe_alunos.php, edicao_equipes.php)
    ========================================================================== */
 .aluno-card-view { display: none; }
-.aluno-card-view.active { display: block; animation: alunoCardFadeIn 0.3s ease; }
-@keyframes alunoCardFadeIn {
-  from { opacity: 0; transform: translateX(16px); }
-  to { opacity: 1; transform: translateX(0); }
-}
+.aluno-card-view.active { display: block; }
 .aluno-voltar-btn { display: none; }
 .aluno-card.equipes-aberta .aluno-voltar-btn { display: inline-flex; }
 

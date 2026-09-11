@@ -311,6 +311,16 @@ test('shared mobile shells and table presentation rely on Bootstrap defaults', (
     assert.doesNotMatch(css, /\.main-(?:dashboard|locais)-layout\s*\{/);
 });
 
+test('team card switching keeps functional visibility hooks without decorative animation', () => {
+    const js = fs.readFileSync(path.join(root, 'resources', 'js', 'pages', 'eventos', 'configurar-equipes.js'), 'utf8');
+    const css = fs.readFileSync(path.join(root, 'resources', 'css', 'source', 'admin.css'), 'utf8');
+    assert.match(css, /\.aluno-card-view \{ display: none; \}/);
+    assert.match(css, /\.aluno-card-view\.active \{ display: block; \}/);
+    assert.match(css, /\.aluno-card\.equipes-aberta \.aluno-voltar-btn \{ display: inline-flex; \}/);
+    assert.match(js, /classList\.add\('equipes-aberta'\)/);
+    assert.doesNotMatch(css, /alunoCardFadeIn|animation\s*:/);
+});
+
 test('navigation avatars use Bootstrap presentation utilities', () => {
     const sources = [
         path.join(root, 'resources', 'views', 'components', 'admin-nav.php'),
