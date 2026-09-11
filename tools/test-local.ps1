@@ -118,13 +118,13 @@ function Get-FreePort {
 }
 
 function Wait-TcpPort {
-    param([Parameter(Mandatory)][string] $Host, [Parameter(Mandatory)][int] $PortNumber, [int] $TimeoutSeconds = 60)
+    param([Parameter(Mandatory)][string] $TargetHost, [Parameter(Mandatory)][int] $PortNumber, [int] $TimeoutSeconds = 60)
 
     $deadline = (Get-Date).AddSeconds($TimeoutSeconds)
     do {
         try {
             $client = [System.Net.Sockets.TcpClient]::new()
-            $task = $client.ConnectAsync($Host, $PortNumber)
+            $task = $client.ConnectAsync($TargetHost, $PortNumber)
             if ($task.Wait(500) -and $client.Connected) {
                 $client.Dispose()
                 return
@@ -135,7 +135,7 @@ function Wait-TcpPort {
         }
         Start-Sleep -Milliseconds 500
     } while ((Get-Date) -lt $deadline)
-    throw "A porta $Host`:$PortNumber não ficou disponível em $TimeoutSeconds segundos."
+    throw "A porta $TargetHost`:$PortNumber não ficou disponível em $TimeoutSeconds segundos."
 }
 
 function Wait-Health {
@@ -239,7 +239,7 @@ function Start-DockerDatabase {
     $args = @('run', '--detach', '--name', $containerName, '--tmpfs', '/var/lib/mysql', '-e', "MYSQL_ROOT_PASSWORD=$script:dbPassword", '-e', "MYSQL_DATABASE=$databaseName", '-e', "MARIADB_ROOT_PASSWORD=$script:dbPassword", '-e', "MARIADB_DATABASE=$databaseName", '-p', "127.0.0.1:$($script:databasePort):3306", $image)
     $script:dockerContainer = (& $docker @args).Trim()
     if ($LASTEXITCODE -ne 0 -or -not $script:dockerContainer) { throw 'Não foi possível iniciar o banco de testes no Docker.' }
-    Wait-TcpPort -Host '127.0.0.1' -PortNumber $script:databasePort
+    Wait-TcpPort -TargetHost '127.0.0.1' -PortNumber $script:databasePort
 }
 
 function Start-TestServer {
