@@ -343,6 +343,13 @@ test('navigation active state keeps semantic hooks without custom motion effects
     assert.doesNotMatch(css, /\.nav li a:hover|\.active-nav-icon\s*\{|\.nav li a i\.bi/);
 });
 
+test('navigation shell dimensions are defined by the shared Bootstrap bundle', () => {
+    const admin = fs.readFileSync(path.join(root, 'resources', 'css', 'source', 'admin.css'), 'utf8');
+    const shared = fs.readFileSync(path.join(root, 'resources', 'scss', 'shared.scss'), 'utf8');
+    assert.match(shared, /\.mobile-nav\s*\{[^}]*height:\s*var\(--sgi-mobile-nav-height\)/);
+    assert.doesNotMatch(admin, /\.mobile-nav\s*\{[^}]*height:\s*var\(--sgi-mobile-nav-height\)/);
+});
+
 test('bracket cards preserve domain states without decorative hover motion', () => {
     const css = fs.readFileSync(path.join(root, 'resources', 'css', 'source', 'admin.css'), 'utf8');
     assert.match(css, /\.bkt-match--concluido \{ border-color:/);

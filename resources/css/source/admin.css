@@ -401,10 +401,6 @@ body.sgi-offline-active {
    20. NAVEGAÇÃO — NAV AVATAR E MOBILE NAV (componentes/nav.php)
    ========================================================================== */
 
-.mobile-nav {
-    height: var(--sgi-mobile-nav-height);
-    z-index: 1040;
-}
 .mobile-nav .nav {
     flex-wrap: nowrap;
     height: 100%;
