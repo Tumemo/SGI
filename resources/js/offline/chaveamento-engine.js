@@ -1031,8 +1031,15 @@
                             if (mObj) {
                                 if (!rowJogo.nome_modalidade) rowJogo.nome_modalidade = mObj.nome_modalidade;
                                 if (!rowJogo.tipos_modalidades_id_tipo_modalidade) rowJogo.tipos_modalidades_id_tipo_modalidade = mObj.tipos_modalidades_id_tipo_modalidade;
+                                if (!rowJogo.nome_tipo_modalidade) rowJogo.nome_tipo_modalidade = mObj.nome_tipo_modalidade;
                             }
                         }
+                        // O confronto foi gerado pelo motor de mata-mata, mas
+                        // o snapshot local pode não trazer a descrição do tipo.
+                        // Preserve a semântica explicitamente para que a agenda
+                        // não trate a partida derivada como tipo desconhecido.
+                        if (!rowJogo.tipo_competicao) rowJogo.tipo_competicao = 'mata_mata';
+                        if (!rowJogo.nome_tipo_modalidade) rowJogo.nome_tipo_modalidade = 'Mata-Mata';
                         escritas.push(DL.upsert('jogos', b.id_jogo, rowJogo));
 
                         (b.equipes || []).forEach(function (eq, i) {
