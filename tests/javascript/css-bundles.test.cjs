@@ -362,6 +362,14 @@ test('student term modal uses Bootstrap presentation classes', () => {
     assert.doesNotMatch(css, /#modalTermo \.modal-(?:content|header)/);
 });
 
+test('student home hero uses Bootstrap background and radius utilities', () => {
+    const view = fs.readFileSync(path.join(root, 'resources', 'views', 'pages', 'aluno', 'home.php'), 'utf8');
+    const css = fs.readFileSync(path.join(root, 'resources', 'css', 'source', 'aluno-shared.css'), 'utf8');
+    assert.match(view, /aluno-hero bg-primary rounded-4 mb-4 text-white/);
+    assert.doesNotMatch(css, /linear-gradient|\.aluno-hero::(?:before|after)/);
+    assert.doesNotMatch(css, /\.aluno-hero\s*\{[^}]*\b(?:background|border-radius|color)\s*:/);
+});
+
 test('shared shell keeps layout tokens without decorative page motion', () => {
     const shared = fs.readFileSync(path.join(root, 'resources', 'scss', 'shared.scss'), 'utf8');
     assert.match(shared, /--sgi-sidebar-width:/);
