@@ -103,6 +103,22 @@ ficam fora dessa lista e só recebem serviços, contratos e adaptadores de HTTP.
    1442 em MySQL/MariaDB). Matrículas permanecem únicas por edição e senhas
    usam `password_hash`/`password_verify`.
 
+## Limites e status de modalidade
+
+`max_inscrito_modalidade` e `max_equipes` usam inteiros `INT` assinados no
+banco. Os dois limites aceitam inteiro ou texto de algarismos inteiros entre
+1 e 2.147.483.647. Para manter a semântica existente de ilimitado, também
+aceitam `NULL`, texto vazio e zero (numérico ou texto); a persistência pode
+representar ilimitado como `0` ou `NULL` para compatibilidade com registros
+anteriores. Se ambos os limites forem positivos, a capacidade por turma é o
+produto de inscritos por equipe e quantidade de equipes.
+
+Valores negativos, fracionários, booleanos, arrays, texto que não contenha
+somente algarismos e valores acima do `INT` assinado são inválidos. O status da
+modalidade aceita somente `1`/`"1"` (ativa) e `0`/`"0"` (inativa), conforme o
+ENUM existente no banco. Atualizações parciais aplicam as mesmas regras aos
+campos informados.
+
 ## Assets e ciclo de vida offline
 
 O build copia fontes e dependências fixadas no lockfile para `public/assets`, inclui licenças e gera um manifesto de checksums. URLs emitidas por `Assets` têm versão derivada do conteúdo.
@@ -113,7 +129,9 @@ O modal de ocorrência cancela fechamentos atrasados quando uma nova edição co
 
 ## Migrações e sincronização
 
-O gerenciamento de chaveamento usa `ChaveamentoController` e `ChaveamentoService`, com persistência por `ChaveamentoManagement`. A URL antiga encaminha para `/api/v1/chaveamentos`. A criação coletiva continua restrita a administrador/colaborador; o mesário registra resultados individuais somente na edição ativa. A criação de jogos e os avanços automáticos são confirmados na mesma transação.
+O gerenciamento de chaveamento usa `ChaveamentoController` e `ChaveamentoService`, com persistência por `ChaveamentoManagement` no endpoint versionado `/api/v1/chaveamentos`. A criação coletiva continua restrita a administrador/colaborador; o mesário registra resultados individuais somente na edição ativa. A criação de jogos e os avanços automáticos são confirmados na mesma transação.
+
+O agendamento manual, a edição de horário/local e a confirmação de blocos compartilham a trava da linha do local, adquirida em ordem crescente quando há mais de um local. Operações no mesmo local serializam durante a validação e gravação; depois da trava, o repositório reconsulta jogos e reservas conflitantes com leitura atual dentro da transação. Conflitos continuam usando o intervalo de troca de dez minutos, enquanto outros locais, datas e faixas não conflitantes permanecem válidos.
 
 A importação por PDF usa `ImportacaoTurmaController`, `ImportacaoTurmaService`, um contrato de leitura e um repositório de persistência em `/api/v1/importacoes/turma-pdf`. A turma e a edição são validadas antes de salvar arquivos; o conteúdo precisa ter cabeçalho PDF. Um bloqueio de arquivo serializa importações da mesma turma para preservar o par PDF/CSV durante a extração. A deduplicação de matrículas por edição permanece no importador existente.
 
@@ -139,6 +157,6 @@ Elas cobrem autenticação, ciclo de edição, importação de PDF, modalidades,
 agendamento, placar, ranking, portal do aluno, fronteira pública, operação
 offline e chaveamento completo.
 
-A matriz declarada no CI adiciona PHP 8.4, MySQL 8.4, MariaDB 10.11 e comparação visual Windows aos checks locais. Quando esses ambientes não estão disponíveis, o resultado deve permanecer como pendência explícita no registro de execução, não como aprovação implícita.
+A matriz declarada no CI executa qualidade em PHP 8.2 e 8.4; integração e navegador em PHP 8.4 com MySQL 8.4 e MariaDB 10.11; e comparação visual usando referências Linux. Uma execução local não cobre automaticamente os demais alvos. Quando não estiverem disponíveis, devem permanecer como pendência explícita no registro, não como aprovação implícita.
 
 O procedimento reproduzível está em [testes](testing.md). Não há exceção de CSRF baseada em `SGI_APP_ENV=test`.

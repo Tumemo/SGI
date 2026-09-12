@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Modules\Competicoes\Infrastructure;
 
 use App\Modules\Competicoes\Domain\JogoRepository;
+use App\Shared\Database\Transaction;
 use mysqli;
 use RuntimeException;
 
@@ -19,39 +20,26 @@ final class MysqliJogoRepository implements JogoRepository
         if ($start === '' || $end === '' || $start === '00:00:00' || $end === '00:00:00') {
             return null;
         }
-        $sql = "SELECT nome_jogo FROM jogos
-                WHERE data_jogo = ? AND locais_id_local = ?
-                  AND status_jogo IN ('Agendado', 'Iniciado', 'Pausado')
-                  AND ? < ADDTIME(termino_jogo, '00:10:00')
-                  AND ADDTIME(?, '00:10:00') > inicio_jogo";
-        $types = 'siss';
-        $params = [$date, $localId, $start, $end];
-        if ($currentId !== null && $currentId > 0) {
-            $sql .= ' AND id_jogo != ?';
-            $types .= 'i';
-            $params[] = $currentId;
-        }
-        $sql .= ' LIMIT 1';
-        $statement = $this->connection->prepare($sql);
-        if ($statement === false) {
-            throw new RuntimeException('Não foi possível validar conflito de horário.');
-        }
-        $statement->bind_param($types, ...$params);
-        if (!$statement->execute()) {
-            $statement->close();
-            throw new RuntimeException('Não foi possível validar conflito de horário.');
-        }
-        $row = $statement->get_result()->fetch_assoc();
-        $statement->close();
-        return $row
-            ? 'Já existe um jogo agendado neste mesmo local com conflito de horário (' . $row['nome_jogo'] . ').'
-            : null;
+        return MysqliLocalScheduleGuard::conflict($this->connection, $date, $localId, $start, $end, $currentId);
     }
 
     public function create(array $data): int
     {
-        $this->connection->begin_transaction();
+        Transaction::begin($this->connection);
         try {
+            $localId = (int) ($data['locais_id_local'] ?? 0);
+            MysqliLocalScheduleGuard::lockLocals($this->connection, [$localId]);
+            $conflict = MysqliLocalScheduleGuard::conflict(
+                $this->connection,
+                (string) $data['data_jogo'],
+                $localId,
+                (string) $data['inicio_jogo'],
+                (string) $data['termino_jogo'],
+                lockRows: true,
+            );
+            if ($conflict !== null) {
+                throw new \App\Modules\Competicoes\Application\JogoConflitoException($conflict);
+            }
             $id = $this->insertGame($data);
             $teamIds = array_values(array_map('intval', is_array($data['equipes'] ?? null) ? $data['equipes'] : []));
             if ($teamIds !== []) {
@@ -87,10 +75,10 @@ final class MysqliJogoRepository implements JogoRepository
                 $check->close();
                 $partida->close();
             }
-            $this->connection->commit();
+            Transaction::commit($this->connection);
             return $id;
         } catch (\Throwable $exception) {
-            $this->connection->rollback();
+            Transaction::rollback($this->connection);
             throw $exception;
         }
     }

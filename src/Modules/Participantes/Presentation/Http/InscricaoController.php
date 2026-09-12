@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Modules\Participantes\Presentation\Http;
 
 use App\Modules\Participantes\Application\InscricaoService;
+use App\Modules\Participantes\Domain\InscricaoRecusadaException;
 use App\Shared\Http\AccessGuard;
 use App\Shared\Http\Request;
 use App\Shared\Http\Response;
@@ -26,7 +27,7 @@ final class InscricaoController
         try {
             $userId = (int) ($_SESSION['id_usuario'] ?? $_SESSION['id'] ?? 0);
             return Response::json($this->service->inscrever($userId, $request->allInput()));
-        } catch (\InvalidArgumentException|\RuntimeException $exception) {
+        } catch (\InvalidArgumentException|InscricaoRecusadaException $exception) {
             return Response::json(['success' => false, 'message' => $exception->getMessage()], 400);
         } catch (\Throwable $exception) {
             error_log('Falha ao processar inscrição: ' . $exception->getMessage());

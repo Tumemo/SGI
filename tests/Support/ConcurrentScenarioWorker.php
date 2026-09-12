@@ -4,12 +4,22 @@ declare(strict_types=1);
 
 require dirname(__DIR__, 2) . '/bootstrap/autoload.php';
 require __DIR__ . '/TestDatabase.php';
+require __DIR__ . '/AnnulmentBarrierPontoRepository.php';
+require __DIR__ . '/ConcurrentScheduleBarrierRepository.php';
 
 use App\Modules\Competicoes\Infrastructure\MysqliEquipePadraoRepositoryAdapter;
 use App\Modules\Competicoes\Infrastructure\MysqliEquipeRepository;
+use App\Modules\Competicoes\Infrastructure\MysqliAgendamentoBlocoRepository;
+use App\Modules\Competicoes\Infrastructure\MysqliJogoGateway;
+use App\Modules\Competicoes\Infrastructure\MysqliJogoRepository;
+use App\Modules\Competicoes\Infrastructure\MysqliPartidaGateway;
+use App\Modules\Competicoes\Infrastructure\MysqliPontoRepository;
+use App\Modules\Competicoes\Application\JogoService;
+use App\Modules\Competicoes\Application\PontoService;
 use App\Modules\Eventos\Infrastructure\MysqliEdicaoRepository;
 use App\Modules\Participantes\Infrastructure\MysqliInscricaoRepository;
 use App\Modules\Resultados\Infrastructure\MysqliArrecadacaoRepository;
+use App\Shared\Database\MysqliTransactionRunner;
 use SGITests\Support\TestDatabase;
 
 $database = getenv('SGI_TEST_DB_NAME') ?: 'sgi_test';
@@ -20,7 +30,7 @@ $connection = TestDatabase::connect($database);
  * T13 already used this worker with (historyId, editionId). Keep that
  * invocation intact while allowing T18 to coordinate distinct scenarios.
  */
-if (count($argv) <= 3 || !in_array((string) ($argv[1] ?? ''), ['arrecadacao', 'inscricao', 'equipe', 'edicao'], true)) {
+if (count($argv) <= 3 || !in_array((string) ($argv[1] ?? ''), ['arrecadacao', 'inscricao', 'equipe', 'edicao', 'ponto-anular', 'resultado-finalizar', 'resultado-finalizar-snapshot', 'jogo-criar', 'jogo-editar', 'agenda-confirmar'], true)) {
     $historyId = (int) ($argv[1] ?? 0);
     $editionId = (int) ($argv[2] ?? 0);
 
@@ -46,7 +56,11 @@ if ($barrier === '' || $workerId === '') {
 
 $ready = $barrier . DIRECTORY_SEPARATOR . 'ready-' . $workerId;
 $release = $barrier . DIRECTORY_SEPARATOR . 'release';
-if (@file_put_contents($ready, json_encode(['pid' => getmypid(), 'worker' => $workerId], JSON_THROW_ON_ERROR), LOCK_EX) === false) {
+if (@file_put_contents($ready, json_encode([
+    'pid' => getmypid(),
+    'db_thread' => $connection->thread_id,
+    'worker' => $workerId,
+], JSON_THROW_ON_ERROR), LOCK_EX) === false) {
     fwrite(STDERR, 'Não foi possível anunciar o worker concorrente.');
     exit(1);
 }
@@ -66,12 +80,38 @@ try {
         'inscricao' => subscribe($connection, (int) ($argv[4] ?? 0), (int) ($argv[5] ?? 0), (int) ($argv[6] ?? 0)),
         'equipe' => createTeam($connection, (int) ($argv[4] ?? 0), (int) ($argv[5] ?? 0), (string) ($argv[6] ?? '')),
         'edicao' => edition($connection, (string) ($argv[4] ?? ''), array_slice($argv, 5)),
+        'ponto-anular' => annulPoint(
+            $connection,
+            (int) ($argv[4] ?? 0),
+            (int) ($argv[5] ?? 0),
+            $barrier,
+        ),
+        'resultado-finalizar' => finalizeGame(
+            $connection,
+            (int) ($argv[4] ?? 0),
+            (int) ($argv[5] ?? 0),
+            (int) ($argv[6] ?? 0),
+            (int) ($argv[7] ?? 0),
+        ),
+        'resultado-finalizar-snapshot' => finalizeGameAfterSnapshot(
+            $connection,
+            (int) ($argv[4] ?? 0),
+            (int) ($argv[5] ?? 0),
+            (int) ($argv[6] ?? 0),
+            (int) ($argv[7] ?? 0),
+            (string) ($argv[8] ?? ''),
+        ),
+        'jogo-criar' => createScheduledGame($connection, $barrier, $workerId, array_slice($argv, 4)),
+        'jogo-editar' => updateScheduledGame($connection, array_slice($argv, 4)),
+        'agenda-confirmar' => confirmScheduleBlock($connection, array_slice($argv, 4)),
         default => throw new RuntimeException('Cenário concorrente desconhecido.'),
     };
     echo json_encode(['result' => $result], JSON_THROW_ON_ERROR);
 } catch (mysqli_sql_exception $exception) {
     fwrite(STDERR, $exception->getMessage());
     exit(1);
+} catch (InvalidArgumentException $exception) {
+    echo json_encode(['result' => 'rejected', 'message' => $exception->getMessage()], JSON_THROW_ON_ERROR);
 } catch (RuntimeException $exception) {
     // Rejeições de regra são resultados normais do cenário; falhas de processo
     // continuam sendo representadas por erro e exit 1 no bloco externo.
@@ -105,6 +145,116 @@ function createTeam(mysqli $connection, int $modalityId, int $classId, string $n
         'status_equipe' => '1',
         'nome_equipe' => $name === '' ? null : $name,
     ]);
+    return 'accepted';
+}
+
+function annulPoint(mysqli $connection, int $pointId, int $operatorId, string $barrier): string
+{
+    (new MysqliTransactionRunner($connection))->run(
+        static fn (): array => (new PontoService(
+            new AnnulmentBarrierPontoRepository(new MysqliPontoRepository($connection), $barrier),
+        ))->anular($pointId, $operatorId),
+    );
+    return 'accepted';
+}
+
+function finalizeGame(mysqli $connection, int $gameId, int $modalityId, int $firstTeamId, int $secondTeamId): string
+{
+    $result = (new MysqliPartidaGateway($connection))->launch($gameId, null, $modalityId, [
+        ['id_equipe' => $firstTeamId, 'gols' => 1],
+        ['id_equipe' => $secondTeamId, 'gols' => 0],
+    ]);
+    return ($result['success'] ?? false) === true ? 'accepted' : 'rejected';
+}
+
+function finalizeGameAfterSnapshot(mysqli $connection, int $gameId, int $modalityId, int $firstTeamId, int $secondTeamId, string $barrier): string
+{
+    if ($barrier === '') {
+        throw new RuntimeException('Barreira de snapshot ausente.');
+    }
+    $gateway = new MysqliPartidaGateway($connection);
+    $results = [
+        ['id_equipe' => $firstTeamId, 'gols' => 1],
+        ['id_equipe' => $secondTeamId, 'gols' => 0],
+    ];
+    $result = (new MysqliTransactionRunner($connection))->run(
+        static function () use ($gateway, $gameId, $modalityId, $results, $barrier): array {
+            // Establish a REPEATABLE READ snapshot before the annulment commits.
+            $gateway->resolveAndValidate($gameId, null, $modalityId, $results);
+            if (@file_put_contents($barrier . DIRECTORY_SEPARATOR . 'snapshot', 'ready', LOCK_EX) === false) {
+                throw new RuntimeException('Não foi possível sinalizar o snapshot da finalização.');
+            }
+            awaitBarrier($barrier . DIRECTORY_SEPARATOR . 'continue', 'snapshot da finalização');
+            return $gateway->launch($gameId, null, $modalityId, $results);
+        },
+    );
+    return ($result['success'] ?? false) === true ? 'accepted' : 'rejected';
+}
+
+function awaitBarrier(string $path, string $description): void
+{
+    $deadline = microtime(true) + 10.0;
+    while (!is_file($path) && microtime(true) < $deadline) {
+        usleep(10000);
+    }
+    if (!is_file($path)) {
+        throw new RuntimeException('A barreira não foi liberada: ' . $description . '.');
+    }
+}
+
+/** @param list<string> $arguments */
+function createScheduledGame(mysqli $connection, string $barrier, string $workerId, array $arguments): string
+{
+    [$name, $date, $start, $end, $modality, $local, $firstTeam, $secondTeam] = array_pad($arguments, 8, '');
+    (new JogoService(new \SGITests\Support\ConcurrentScheduleBarrierRepository(
+        new MysqliJogoRepository($connection),
+        $barrier,
+        $workerId,
+    )))->agendar([
+        'nome_jogo' => $name,
+        'data_jogo' => $date,
+        'inicio_jogo' => $start,
+        'termino_jogo' => $end,
+        'modalidades_id_modalidade' => (int) $modality,
+        'locais_id_local' => (int) $local,
+        'equipes' => [(int) $firstTeam, (int) $secondTeam],
+    ]);
+
+    return 'accepted';
+}
+
+/** @param list<string> $arguments */
+function updateScheduledGame(mysqli $connection, array $arguments): string
+{
+    [$game, $date, $start, $end, $local] = array_pad($arguments, 5, '');
+    (new MysqliJogoGateway($connection))->update((int) $game, [
+        'data_jogo' => $date,
+        'inicio_jogo' => $start,
+        'termino_jogo' => $end,
+        'locais_id_local' => (int) $local,
+    ]);
+
+    return 'accepted';
+}
+
+/** @param list<string> $arguments */
+function confirmScheduleBlock(mysqli $connection, array $arguments): string
+{
+    [$edition, $modality, $user, $game, $date, $start, $end, $local, $idempotency] = array_pad($arguments, 9, '');
+    (new MysqliAgendamentoBlocoRepository($connection))->confirm([
+        'id_interclasse' => (int) $edition,
+        'id_modalidade' => (int) $modality,
+        'jogos' => [['id_jogo' => (int) $game]],
+        'janelas' => [[
+            'data' => $date,
+            'inicio' => substr($start, 0, 5),
+            'fim' => substr($end, 0, 5),
+            'locais' => [(int) $local],
+        ]],
+        'opcoes' => ['duracao_min' => 30, 'intervalo_troca_min' => 10],
+        'idempotencia' => $idempotency,
+    ], (int) $edition, (int) $user);
+
     return 'accepted';
 }
 

@@ -22,11 +22,129 @@ final class MesarioResourceScopeTest
         $editionB = $fixture['by_edition']['B'];
         $userId = (int) $editionB['atleta_ids'][0];
         $gameId = (int) $editionB['jogo_ids'][0];
+        $partidaIdB = (int) $editionB['partida_ids'][0];
+        $teamIdB = (int) $editionB['equipe_ids'][0];
+
+        $activateAthlete = $connection->prepare("UPDATE usuarios SET status_usuario = '1' WHERE id_usuario = ?");
+        $activateAthlete->bind_param('i', $userId);
+        $activateAthlete->execute();
+        $activateAthlete->close();
+        $startGame = $connection->prepare("UPDATE jogos SET status_jogo = 'Iniciado' WHERE id_jogo = ?");
+        $startGame->bind_param('i', $gameId);
+        $startGame->execute();
+        $startGame->close();
+
+        $seedKey = 'scope-fixture-' . bin2hex(random_bytes(8));
+        $seedPoint = $connection->prepare(
+            "INSERT INTO artilheiros (usuarios_id_usuario, jogos_id_jogo, partidas_id_partida,
+                equipes_id_equipe, num_gol, conta_no_placar, status_artilheiro, chave_jogada)
+             VALUES (?, ?, ?, ?, 1, 1, 'ativo', ?)",
+        );
+        $seedPoint->bind_param('iiiis', $userId, $gameId, $partidaIdB, $teamIdB, $seedKey);
+        $seedPoint->execute();
+        $pointIdB = (int) $seedPoint->insert_id;
+        $seedPoint->close();
+        $scorePoint = $connection->prepare('UPDATE partidas SET resultado_partida = 1 WHERE id_partida = ?');
+        $scorePoint->bind_param('i', $partidaIdB);
+        $scorePoint->execute();
+        $scorePoint->close();
+
         $before = self::countGoals($connection, $userId, $gameId);
 
         try {
             $mesario = new TestClient();
             $mesario->login('mesario', '123');
+
+            $beforeBMatch = self::partida($connection, $partidaIdB);
+            $pointsB = $mesario->get('api/v1/pontos?id_jogo=' . $gameId);
+            $athletesByGameB = $mesario->get('api/v1/pontos?acao=atletas&id_jogo=' . $gameId . '&id_equipe=' . $teamIdB);
+            $athletesByTeamB = $mesario->get('api/v1/pontos?acao=atletas&id_equipe=' . $teamIdB);
+            $createPointB = $mesario->postJson('api/v1/pontos', [
+                'jogos_id_jogo' => $gameId,
+                'id_partida' => $partidaIdB,
+                'equipes_id_equipe' => $teamIdB,
+                'usuarios_id_usuario' => $userId,
+                'chave_jogada' => 'scope-point-' . bin2hex(random_bytes(8)),
+            ]);
+            $cancelPointB = $mesario->putJson('api/v1/pontos', ['id_ponto' => $pointIdB]);
+            $afterBMatch = self::partida($connection, $partidaIdB);
+
+            Assertions::assert(
+                'Mesário não consulta pontos da edição B quando A está ativa',
+                $pointsB['code'] === 403 && ($pointsB['json']['success'] ?? true) === false,
+            );
+            Assertions::assert(
+                'Mesário não consulta atletas de B por jogo nem por equipe',
+                $athletesByGameB['code'] === 403
+                && ($athletesByGameB['json']['success'] ?? true) === false
+                && $athletesByTeamB['code'] === 403
+                && ($athletesByTeamB['json']['success'] ?? true) === false,
+            );
+            Assertions::assert(
+                'Mesário não registra nem anula pontos da edição B',
+                $createPointB['code'] === 403
+                && ($createPointB['json']['success'] ?? true) === false
+                && $cancelPointB['code'] === 403
+                && ($cancelPointB['json']['success'] ?? true) === false
+                && self::countGoals($connection, $userId, $gameId) === $before
+                && $afterBMatch === $beforeBMatch
+                && self::pointStatus($connection, $pointIdB) === 'ativo',
+            );
+
+            $admin = new TestClient();
+            $admin->login('admin', '123');
+            $adminPointsB = $admin->get('api/v1/pontos?id_jogo=' . $gameId);
+            $collaborator = new TestClient();
+            $collaborator->login('colab', '123');
+            $collaboratorPointsB = $collaborator->get('api/v1/pontos?id_jogo=' . $gameId);
+            Assertions::assert(
+                'Administrador e colaborador mantêm acesso à consulta de pontos de outra edição',
+                $adminPointsB['code'] === 200
+                && ($adminPointsB['json']['success'] ?? false) === true
+                && $collaboratorPointsB['code'] === 200
+                && ($collaboratorPointsB['json']['success'] ?? false) === true,
+            );
+
+            $gameAForMismatch = (int) $fixture['by_edition']['A']['jogo_ids'][0];
+            $mismatchedPoints = $mesario->get('api/v1/pontos?id_jogo=' . $gameAForMismatch . '&id_equipe=' . $teamIdB);
+            $mismatchedAthletes = $mesario->get('api/v1/pontos?acao=atletas&id_jogo=' . $gameAForMismatch . '&id_equipe=' . $teamIdB);
+            Assertions::assert(
+                'Combinações de jogo e equipe de edições diferentes são rejeitadas',
+                $mismatchedPoints['code'] === 422
+                && $mismatchedAthletes['code'] === 422,
+            );
+
+            $missingGame = max($fixture['ids']['jogos']) + 100000;
+            $missingPoints = $mesario->get('api/v1/pontos?id_jogo=' . $missingGame);
+            Assertions::assert(
+                'Jogo inexistente tem resposta distinta do recurso proibido',
+                $missingPoints['code'] === 404
+                && ($missingPoints['json']['success'] ?? true) === false,
+            );
+
+            $editionAId = (int) $fixture['by_edition']['A']['interclasse_id'];
+            $disableEdition = $connection->prepare("UPDATE interclasses SET status_interclasse = '0' WHERE id_interclasse = ?");
+            $disableEdition->bind_param('i', $editionAId);
+            $disableEdition->execute();
+            $disableEdition->close();
+            $noActiveEdition = $mesario->get('api/v1/pontos?id_jogo=' . $gameId);
+            $restoreEdition = $connection->prepare("UPDATE interclasses SET status_interclasse = '1' WHERE id_interclasse = ?");
+            $restoreEdition->bind_param('i', $editionAId);
+            $restoreEdition->execute();
+            $restoreEdition->close();
+            Assertions::assert(
+                'Mesário sem edição ativa continua sem consultar pontos',
+                $noActiveEdition['code'] === 403 && ($noActiveEdition['json']['success'] ?? true) === false,
+            );
+
+            $student = new TestClient();
+            $student->login('2879', '123');
+            $studentPointsB = $student->get('api/v1/pontos?id_jogo=' . $gameId);
+            Assertions::assert(
+                'Aluno continua sem acesso ao endpoint administrativo de pontos',
+                $studentPointsB['code'] === 403 && ($studentPointsB['json']['success'] ?? true) === false,
+            );
+
             $response = $mesario->postJson('api/v1/artilheiros', [
                 'usuarios_id_usuario' => $userId,
                 'jogos_id_jogo' => $gameId,
@@ -188,6 +306,16 @@ final class MesarioResourceScopeTest
         $count = (int) $statement->get_result()->fetch_column();
         $statement->close();
         return $count;
+    }
+
+    private static function pointStatus(\mysqli $connection, int $pointId): string
+    {
+        $statement = $connection->prepare('SELECT status_artilheiro FROM artilheiros WHERE id_artilheiro = ? LIMIT 1');
+        $statement->bind_param('i', $pointId);
+        $statement->execute();
+        $status = (string) ($statement->get_result()->fetch_column() ?: '');
+        $statement->close();
+        return $status;
     }
 
     /** @return array{jogos_id_jogo:int,equipes_id_equipe:int,resultado_partida:int} */

@@ -16,10 +16,13 @@ final class MysqliEquipePadraoRepository
     {
         $stmt = $conn->prepare('SELECT nome_turma FROM turmas WHERE id_turma = ? LIMIT 1');
         if (!$stmt) {
-            return \null;
+            throw new \RuntimeException('Não foi possível consultar a turma da equipe.');
         }
         $stmt->bind_param('i', $idTurma);
-        $stmt->execute();
+        if (!$stmt->execute()) {
+            $stmt->close();
+            throw new \RuntimeException('Não foi possível consultar a turma da equipe.');
+        }
         $row = $stmt->get_result()->fetch_assoc();
         $stmt->close();
         return $row ? \trim((string) $row['nome_turma']) : \null;
@@ -33,10 +36,13 @@ final class MysqliEquipePadraoRepository
              FROM modalidades WHERE id_modalidade = ? LIMIT 1 FOR UPDATE',
         );
         if (!$modality) {
-            return \null;
+            throw new \RuntimeException('Não foi possível consultar a modalidade da equipe.');
         }
         $modality->bind_param('i', $idModalidade);
-        $modality->execute();
+        if (!$modality->execute()) {
+            $modality->close();
+            throw new \RuntimeException('Não foi possível consultar a modalidade da equipe.');
+        }
         $modalityRow = $modality->get_result()->fetch_assoc() ?: null;
         $modality->close();
         if ($modalityRow === null || (string) $modalityRow['status_modalidade'] !== '1') {
@@ -48,10 +54,13 @@ final class MysqliEquipePadraoRepository
              FROM turmas WHERE id_turma = ? LIMIT 1 FOR UPDATE',
         );
         if (!$class) {
-            return \null;
+            throw new \RuntimeException('Não foi possível consultar a turma da equipe.');
         }
         $class->bind_param('i', $idTurma);
-        $class->execute();
+        if (!$class->execute()) {
+            $class->close();
+            throw new \RuntimeException('Não foi possível consultar a turma da equipe.');
+        }
         $classRow = $class->get_result()->fetch_assoc() ?: null;
         $class->close();
         if ($classRow === null || (string) $classRow['status_turma'] !== '1') {
@@ -71,10 +80,13 @@ final class MysqliEquipePadraoRepository
              WHERE modalidades_id_modalidade = ? AND turmas_id_turma = ? AND status_equipe = '1'",
         );
         if (!$statement) {
-            return 0;
+            throw new \RuntimeException('Não foi possível contar as equipes ativas.');
         }
         $statement->bind_param('ii', $idModalidade, $idTurma);
-        $statement->execute();
+        if (!$statement->execute()) {
+            $statement->close();
+            throw new \RuntimeException('Não foi possível contar as equipes ativas.');
+        }
         $count = (int) $statement->get_result()->fetch_column();
         $statement->close();
         return $count;
@@ -88,10 +100,13 @@ final class MysqliEquipePadraoRepository
         $stmt = $conn->prepare('SELECT id_modalidade, nome_modalidade, max_inscrito_modalidade, max_equipes
          FROM modalidades WHERE id_modalidade = ? LIMIT 1');
         if (!$stmt) {
-            return \null;
+            throw new \RuntimeException('Não foi possível consultar a modalidade.');
         }
         $stmt->bind_param('i', $idModalidade);
-        $stmt->execute();
+        if (!$stmt->execute()) {
+            $stmt->close();
+            throw new \RuntimeException('Não foi possível consultar a modalidade.');
+        }
         $row = $stmt->get_result()->fetch_assoc();
         $stmt->close();
         return $row ?: \null;
@@ -107,9 +122,9 @@ final class MysqliEquipePadraoRepository
             $id = self::buscarOuCriarEquipePadraoSemTransacao($conn, $idModalidade, $idTurma);
             Transaction::commit($conn);
             return $id;
-        } catch (\Throwable) {
+        } catch (\Throwable $exception) {
             Transaction::rollback($conn);
-            return null;
+            throw $exception;
         }
     }
 
@@ -128,23 +143,30 @@ final class MysqliEquipePadraoRepository
         // 1. Tenta pela convenção de nome ("{Modalidade} - 1").
         if ($nomePadrao !== \null) {
             $stmt = $conn->prepare("SELECT id_equipe FROM equipes\r\n             WHERE modalidades_id_modalidade = ? AND turmas_id_turma = ?\r\n               AND nome_equipe = ? AND status_equipe = '1'\r\n             ORDER BY id_equipe ASC LIMIT 1");
-            if ($stmt) {
-                $stmt->bind_param('iis', $idModalidade, $idTurma, $nomePadrao);
-                $stmt->execute();
-                $row = $stmt->get_result()->fetch_assoc();
+            if (!$stmt) {
+                throw new \RuntimeException('Não foi possível consultar a equipe padrão.');
+            }
+            $stmt->bind_param('iis', $idModalidade, $idTurma, $nomePadrao);
+            if (!$stmt->execute()) {
                 $stmt->close();
-                if ($row) {
-                    return (int) $row['id_equipe'];
-                }
+                throw new \RuntimeException('Não foi possível consultar a equipe padrão.');
+            }
+            $row = $stmt->get_result()->fetch_assoc();
+            $stmt->close();
+            if ($row) {
+                return (int) $row['id_equipe'];
             }
         }
         // 2. Fallback: primeira equipe ativa da combinação (equipes criadas antes da nova convenção).
         $stmt = $conn->prepare("SELECT id_equipe FROM equipes\r\n         WHERE modalidades_id_modalidade = ? AND turmas_id_turma = ? AND status_equipe = '1'\r\n         ORDER BY id_equipe ASC LIMIT 1");
         if (!$stmt) {
-            return \null;
+            throw new \RuntimeException('Não foi possível consultar as equipes da turma.');
         }
         $stmt->bind_param('ii', $idModalidade, $idTurma);
-        $stmt->execute();
+        if (!$stmt->execute()) {
+            $stmt->close();
+            throw new \RuntimeException('Não foi possível consultar as equipes da turma.');
+        }
         $row = $stmt->get_result()->fetch_assoc();
         $stmt->close();
         if ($row) {
@@ -156,12 +178,12 @@ final class MysqliEquipePadraoRepository
         // 3. Cria a Equipe Padrão.
         $stmt = $conn->prepare("INSERT INTO equipes (status_equipe, modalidades_id_modalidade, turmas_id_turma, nome_equipe)\r\n         VALUES ('1', ?, ?, ?)");
         if (!$stmt) {
-            return \null;
+            throw new \RuntimeException('Não foi possível criar a equipe padrão.');
         }
         $stmt->bind_param('iis', $idModalidade, $idTurma, $nomePadrao);
         if (!$stmt->execute()) {
             $stmt->close();
-            return \null;
+            throw new \RuntimeException('Não foi possível criar a equipe padrão.');
         }
         $id = (int) $stmt->insert_id;
         $stmt->close();
@@ -185,14 +207,18 @@ final class MysqliEquipePadraoRepository
         $stmtModalidades = $conn->prepare('SELECT id_modalidade, nome_modalidade, categorias_id_categoria FROM modalidades
          WHERE status_modalidade = \'1\' AND interclasses_id_interclasse = ?');
         if (!$stmtTurmas || !$stmtModalidades) {
-            return ['criadas' => 0, 'erros' => ['Falha ao preparar consulta de turmas/modalidades.']];
+            throw new \RuntimeException('Não foi possível preparar a geração de equipes padrão.');
         }
         $stmtTurmas->bind_param('i', $idInterclasse);
-        $stmtTurmas->execute();
+        if (!$stmtTurmas->execute()) {
+            throw new \RuntimeException('Não foi possível consultar as turmas da edição.');
+        }
         $turmas = $stmtTurmas->get_result()->fetch_all(\MYSQLI_ASSOC);
         $stmtTurmas->close();
         $stmtModalidades->bind_param('i', $idInterclasse);
-        $stmtModalidades->execute();
+        if (!$stmtModalidades->execute()) {
+            throw new \RuntimeException('Não foi possível consultar as modalidades da edição.');
+        }
         $modalidades = $stmtModalidades->get_result()->fetch_all(\MYSQLI_ASSOC);
         $stmtModalidades->close();
         foreach ($turmas as $turma) {
@@ -222,10 +248,13 @@ final class MysqliEquipePadraoRepository
         $sql = "SELECT e.id_equipe, e.nome_equipe, COUNT(u.id_usuario) AS total\r\n            FROM equipes e\r\n            LEFT JOIN equipes_has_usuarios eu ON eu.equipes_id_equipe = e.id_equipe\r\n            LEFT JOIN usuarios u ON u.id_usuario = eu.usuarios_id_usuario AND u.status_usuario = '1'\r\n            WHERE e.modalidades_id_modalidade = ? AND e.turmas_id_turma = ?\r\n              AND e.id_equipe != ? AND e.status_equipe = '1'\r\n            GROUP BY e.id_equipe\r\n            ORDER BY e.id_equipe ASC";
         $stmt = $conn->prepare($sql);
         if (!$stmt) {
-            return $secundarias;
+            throw new \RuntimeException('Não foi possível consultar as equipes secundárias.');
         }
         $stmt->bind_param('iii', $idModalidade, $idTurma, $idEquipePadrao);
-        $stmt->execute();
+        if (!$stmt->execute()) {
+            $stmt->close();
+            throw new \RuntimeException('Não foi possível consultar as equipes secundárias.');
+        }
         $res = $stmt->get_result();
         while ($row = $res->fetch_assoc()) {
             $secundarias[(int) $row['id_equipe']] = ['numero' => \App\Modules\Competicoes\Domain\EquipeRules::numeroEquipe($row['nome_equipe']), 'ocupados' => (int) $row['total']];
@@ -267,12 +296,12 @@ final class MysqliEquipePadraoRepository
         $nome = $mod ? \App\Modules\Competicoes\Domain\EquipeRules::nomeEquipeTurma($nomeTurma, (string) $mod['nome_modalidade'], $numero) : \null;
         $stmt = $conn->prepare("INSERT INTO equipes (status_equipe, modalidades_id_modalidade, turmas_id_turma, nome_equipe)\r\n         VALUES ('1', ?, ?, ?)");
         if (!$stmt) {
-            return \null;
+            throw new \RuntimeException('Não foi possível criar uma equipe secundária.');
         }
         $stmt->bind_param('iis', $idModalidade, $idTurma, $nome);
         if (!$stmt->execute()) {
             $stmt->close();
-            return \null;
+            throw new \RuntimeException('Não foi possível criar uma equipe secundária.');
         }
         $novoId = (int) $stmt->insert_id;
         $stmt->close();
@@ -308,10 +337,13 @@ final class MysqliEquipePadraoRepository
          WHERE eu.equipes_id_equipe = ? AND u.status_usuario = \'1\'
          ORDER BY eu.usuarios_id_usuario ASC');
         if (!$stmt) {
-            return ['success' => \false, 'message' => 'Falha ao consultar alunos da equipe padrão.'];
+            throw new \RuntimeException('Não foi possível consultar os alunos da equipe padrão.');
         }
         $stmt->bind_param('i', $idEquipePadrao);
-        $stmt->execute();
+        if (!$stmt->execute()) {
+            $stmt->close();
+            throw new \RuntimeException('Não foi possível consultar os alunos da equipe padrão.');
+        }
         $res = $stmt->get_result();
         $alunos = [];
         while ($row = $res->fetch_assoc()) {
@@ -330,7 +362,7 @@ final class MysqliEquipePadraoRepository
             $sqlRemover = $conn->prepare('DELETE FROM equipes_has_usuarios WHERE equipes_id_equipe = ? AND usuarios_id_usuario = ?');
             $sqlInserir = $conn->prepare('INSERT IGNORE INTO equipes_has_usuarios (equipes_id_equipe, usuarios_id_usuario) VALUES (?, ?)');
             if (!$sqlRemover || !$sqlInserir) {
-                throw new \RuntimeException('Falha ao preparar comandos de movimentação de alunos.');
+                throw new \RuntimeException('Não foi possível preparar a redistribuição dos alunos.');
             }
             $redistribuidos = 0;
             $naoRedistribuidos = 0;
@@ -341,10 +373,14 @@ final class MysqliEquipePadraoRepository
                     continue;
                 }
                 $sqlInserir->bind_param('ii', $alvo, $idUsuario);
-                $sqlInserir->execute();
+                if (!$sqlInserir->execute()) {
+                    throw new \RuntimeException('Não foi possível inserir um aluno na equipe de destino.');
+                }
                 if ($sqlInserir->affected_rows === 1) {
                     $sqlRemover->bind_param('ii', $idEquipePadrao, $idUsuario);
-                    $sqlRemover->execute();
+                    if (!$sqlRemover->execute()) {
+                        throw new \RuntimeException('Não foi possível retirar um aluno da equipe padrão.');
+                    }
                     $redistribuidos++;
                 } else {
                     $naoRedistribuidos++;
@@ -354,10 +390,23 @@ final class MysqliEquipePadraoRepository
             $sqlInserir->close();
             $conn->commit();
             $totalFinal = $total - $redistribuidos;
+            if ($redistribuidos === 0 && $naoRedistribuidos > 0) {
+                return [
+                    'success' => \false,
+                    'message' => 'Não há vagas disponíveis em equipes secundárias para redistribuir os alunos excedentes.',
+                    'modalidades_id_modalidade' => $idModalidade,
+                    'turmas_id_turma' => $idTurma,
+                    'total_alunos' => $totalFinal,
+                    'limite_maximo' => $limite,
+                    'redistribuidos' => 0,
+                    'nao_redistribuidos' => $naoRedistribuidos,
+                    'excedeu_limite' => $totalFinal > $limite,
+                ];
+            }
             return ['success' => \true, 'message' => $redistribuidos > 0 ? $redistribuidos . ' aluno(s) redistribuído(s) para equipe(s) secundária(s).' : 'Nenhum aluno pôde ser redistribuído.', 'modalidades_id_modalidade' => $idModalidade, 'turmas_id_turma' => $idTurma, 'total_alunos' => $totalFinal, 'limite_maximo' => $limite, 'redistribuidos' => $redistribuidos, 'nao_redistribuidos' => $naoRedistribuidos, 'excedeu_limite' => $totalFinal > $limite];
         } catch (\Throwable $e) {
             $conn->rollback();
-            return ['success' => \false, 'message' => 'Falha na redistribuição: ' . $e->getMessage()];
+            throw $e;
         }
     }
 }

@@ -5,6 +5,9 @@ declare(strict_types=1);
 namespace App\Modules\Competicoes\Infrastructure;
 
 use App\Modules\Competicoes\Domain\ModalidadeRepository;
+use App\Modules\Competicoes\Domain\ModalidadeScopeRules;
+use App\Shared\Database\Transaction;
+use InvalidArgumentException;
 use mysqli;
 use RuntimeException;
 
@@ -85,33 +88,58 @@ final class MysqliModalidadeRepository implements ModalidadeRepository
 
     public function create(array $data): int
     {
-        $statement = $this->connection->prepare(
-            'INSERT INTO modalidades (nome_modalidade, genero_modalidade, max_inscrito_modalidade, max_equipes,
-                tipos_modalidades_id_tipo_modalidade, status_modalidade, categorias_id_categoria, interclasses_id_interclasse)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-        );
-        if ($statement === false) {
-            throw new RuntimeException('Não foi possível criar modalidade.');
-        }
-        $name = (string) $data['nome_modalidade'];
-        $gender = (string) $data['genero_modalidade'];
-        $maxInscritos = (int) $data['max_inscrito_modalidade'];
-        $maxEquipes = $data['max_equipes'] === null ? 0 : (int) $data['max_equipes'];
-        $typeId = (int) $data['tipos_modalidades_id_tipo_modalidade'];
-        $status = (string) $data['status_modalidade'];
-        $categoryId = (int) $data['categorias_id_categoria'];
-        $interclasseId = (int) $data['interclasses_id_interclasse'];
-        $statement->bind_param('ssiisiii', $name, $gender, $maxInscritos, $maxEquipes, $typeId, $status, $categoryId, $interclasseId);
-        if (!$statement->execute()) {
+        Transaction::begin($this->connection);
+        try {
+            $categoryId = (int) $data['categorias_id_categoria'];
+            $interclasseId = (int) $data['interclasses_id_interclasse'];
+            $this->lockEditions([$interclasseId]);
+            $categories = $this->lockCategories([$categoryId]);
+            ModalidadeScopeRules::assertCategoryMatchesEdition(
+                (int) $categories[$categoryId]['interclasses_id_interclasse'],
+                $interclasseId,
+                (string) $categories[$categoryId]['status_categoria'],
+            );
+
+            $statement = $this->connection->prepare(
+                'INSERT INTO modalidades (nome_modalidade, genero_modalidade, max_inscrito_modalidade, max_equipes,
+                    tipos_modalidades_id_tipo_modalidade, status_modalidade, categorias_id_categoria, interclasses_id_interclasse)
+                 VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+            );
+            if ($statement === false) {
+                throw new RuntimeException('Não foi possível criar modalidade.');
+            }
+            $name = (string) $data['nome_modalidade'];
+            $gender = (string) $data['genero_modalidade'];
+            $maxInscritos = (int) $data['max_inscrito_modalidade'];
+            $maxEquipes = $data['max_equipes'] === null ? 0 : (int) $data['max_equipes'];
+            $typeId = (int) $data['tipos_modalidades_id_tipo_modalidade'];
+            $status = (string) $data['status_modalidade'];
+            $statement->bind_param('ssiisiii', $name, $gender, $maxInscritos, $maxEquipes, $typeId, $status, $categoryId, $interclasseId);
+            if (!$statement->execute()) {
+                $statement->close();
+                throw new RuntimeException('Não foi possível criar modalidade.');
+            }
+            $id = (int) $this->connection->insert_id;
             $statement->close();
-            throw new RuntimeException('Não foi possível criar modalidade.');
+            Transaction::commit($this->connection);
+            return $id;
+        } catch (\Throwable $exception) {
+            Transaction::rollback($this->connection);
+            throw $exception;
         }
-        $id = $this->connection->insert_id;
-        $statement->close();
-        return $id;
     }
 
     public function update(int $id, array $data): bool
+    {
+        if (array_key_exists('categorias_id_categoria', $data) || array_key_exists('interclasses_id_interclasse', $data)) {
+            return $this->updateScope($id, $data);
+        }
+
+        return $this->persistUpdates($id, $data);
+    }
+
+    /** @param array<string, mixed> $data */
+    private function persistUpdates(int $id, array $data): bool
     {
         $fields = [];
         $values = [];
@@ -149,6 +177,172 @@ final class MysqliModalidadeRepository implements ModalidadeRepository
         }
         $statement->close();
         return $found;
+    }
+
+    /** @param array<string, mixed> $data */
+    private function updateScope(int $id, array $data): bool
+    {
+        Transaction::begin($this->connection);
+        try {
+            $initial = $this->modalityScope($id, false);
+            if ($initial === null) {
+                Transaction::rollback($this->connection);
+                return false;
+            }
+
+            $targetCategoryId = (int) ($data['categorias_id_categoria'] ?? $initial['categorias_id_categoria']);
+            $targetEditionId = (int) ($data['interclasses_id_interclasse'] ?? $initial['interclasses_id_interclasse']);
+            $this->lockEditions([$initial['interclasses_id_interclasse'], $targetEditionId]);
+            $categories = $this->lockCategories([$initial['categorias_id_categoria'], $targetCategoryId]);
+            $current = $this->modalityScope($id, true);
+            if ($current === null) {
+                Transaction::rollback($this->connection);
+                return false;
+            }
+            if ($current !== $initial) {
+                throw new InvalidArgumentException('A modalidade foi alterada por outra operação. Recarregue os dados.');
+            }
+
+            ModalidadeScopeRules::assertCategoryMatchesEdition(
+                (int) $categories[$targetCategoryId]['interclasses_id_interclasse'],
+                $targetEditionId,
+                (string) $categories[$targetCategoryId]['status_categoria'],
+            );
+            $hasRelatedData = $current['interclasses_id_interclasse'] !== $targetEditionId
+                && $this->hasRelatedData($id);
+            ModalidadeScopeRules::assertEditionTransferAllowed(
+                $current['interclasses_id_interclasse'],
+                $targetEditionId,
+                $hasRelatedData,
+            );
+
+            $updated = $this->persistUpdates($id, $data);
+            Transaction::commit($this->connection);
+            return $updated;
+        } catch (\Throwable $exception) {
+            Transaction::rollback($this->connection);
+            throw $exception;
+        }
+    }
+
+    /** @param list<int> $editionIds */
+    private function lockEditions(array $editionIds): void
+    {
+        $editionIds = array_values(array_unique($editionIds));
+        sort($editionIds, SORT_NUMERIC);
+        $placeholders = implode(', ', array_fill(0, count($editionIds), '?'));
+        $statement = $this->connection->prepare(
+            'SELECT id_interclasse FROM interclasses WHERE id_interclasse IN (' . $placeholders . ') ORDER BY id_interclasse FOR UPDATE',
+        );
+        if ($statement === false) {
+            throw new RuntimeException('Não foi possível validar a edição da modalidade.');
+        }
+        $types = str_repeat('i', count($editionIds));
+        $statement->bind_param($types, ...$editionIds);
+        if (!$statement->execute()) {
+            $statement->close();
+            throw new RuntimeException('Não foi possível validar a edição da modalidade.');
+        }
+        $found = $statement->get_result()->num_rows;
+        $statement->close();
+        if ($found !== count($editionIds)) {
+            throw new InvalidArgumentException('A edição informada não foi encontrada.');
+        }
+    }
+
+    /**
+     * @param list<int> $categoryIds
+     * @return array<int, array{status_categoria:string,interclasses_id_interclasse:int}>
+     */
+    private function lockCategories(array $categoryIds): array
+    {
+        $categoryIds = array_values(array_unique($categoryIds));
+        sort($categoryIds, SORT_NUMERIC);
+        $placeholders = implode(', ', array_fill(0, count($categoryIds), '?'));
+        $statement = $this->connection->prepare(
+            'SELECT id_categoria, status_categoria, interclasses_id_interclasse
+             FROM categorias WHERE id_categoria IN (' . $placeholders . ') ORDER BY id_categoria FOR UPDATE',
+        );
+        if ($statement === false) {
+            throw new RuntimeException('Não foi possível validar a categoria da modalidade.');
+        }
+        $types = str_repeat('i', count($categoryIds));
+        $statement->bind_param($types, ...$categoryIds);
+        if (!$statement->execute()) {
+            $statement->close();
+            throw new RuntimeException('Não foi possível validar a categoria da modalidade.');
+        }
+        $rows = $statement->get_result()->fetch_all(MYSQLI_ASSOC);
+        $statement->close();
+        if (count($rows) !== count($categoryIds)) {
+            throw new InvalidArgumentException('A categoria informada não foi encontrada.');
+        }
+
+        $categories = [];
+        foreach ($rows as $row) {
+            $categories[(int) $row['id_categoria']] = [
+                'status_categoria' => (string) $row['status_categoria'],
+                'interclasses_id_interclasse' => (int) $row['interclasses_id_interclasse'],
+            ];
+        }
+        return $categories;
+    }
+
+    /** @return array{categorias_id_categoria:int,interclasses_id_interclasse:int}|null */
+    private function modalityScope(int $id, bool $forUpdate): ?array
+    {
+        $sql = 'SELECT categorias_id_categoria, interclasses_id_interclasse FROM modalidades WHERE id_modalidade = ? LIMIT 1';
+        if ($forUpdate) {
+            $sql .= ' FOR UPDATE';
+        }
+        $statement = $this->connection->prepare($sql);
+        if ($statement === false) {
+            throw new RuntimeException('Não foi possível consultar a modalidade.');
+        }
+        $statement->bind_param('i', $id);
+        if (!$statement->execute()) {
+            $statement->close();
+            throw new RuntimeException('Não foi possível consultar a modalidade.');
+        }
+        $row = $statement->get_result()->fetch_assoc();
+        $statement->close();
+        if ($row === null) {
+            return null;
+        }
+        return [
+            'categorias_id_categoria' => (int) $row['categorias_id_categoria'],
+            'interclasses_id_interclasse' => (int) $row['interclasses_id_interclasse'],
+        ];
+    }
+
+    private function hasRelatedData(int $modalityId): bool
+    {
+        $queries = [
+            'SELECT 1 FROM equipes WHERE modalidades_id_modalidade = ? LIMIT 1 FOR UPDATE',
+            'SELECT 1 FROM equipes_has_usuarios eu
+             INNER JOIN equipes e ON e.id_equipe = eu.equipes_id_equipe
+             WHERE e.modalidades_id_modalidade = ? LIMIT 1 FOR UPDATE',
+            'SELECT 1 FROM jogos WHERE modalidades_id_modalidade = ? LIMIT 1 FOR UPDATE',
+            'SELECT 1 FROM agenda_reservas WHERE id_modalidade = ? LIMIT 1 FOR UPDATE',
+            'SELECT 1 FROM pontuacoes_podio WHERE id_modalidade = ? LIMIT 1 FOR UPDATE',
+        ];
+        foreach ($queries as $sql) {
+            $statement = $this->connection->prepare($sql);
+            if ($statement === false) {
+                throw new RuntimeException('Não foi possível verificar os vínculos da modalidade.');
+            }
+            $statement->bind_param('i', $modalityId);
+            if (!$statement->execute()) {
+                $statement->close();
+                throw new RuntimeException('Não foi possível verificar os vínculos da modalidade.');
+            }
+            $found = $statement->get_result()->num_rows > 0;
+            $statement->close();
+            if ($found) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public function deactivate(int $id): bool

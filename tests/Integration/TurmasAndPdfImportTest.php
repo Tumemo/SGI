@@ -5,6 +5,7 @@ namespace SGITests\Integration;
 
 use SGITests\Support\TestClient;
 use SGITests\Support\Assertions;
+use SGITests\Support\TestDatabase;
 use CURLFile;
 
 class TurmasAndPdfImportTest
@@ -33,6 +34,36 @@ class TurmasAndPdfImportTest
         }
 
         if (file_exists($pdfPath) && $idTurma > 0) {
+            $database = TestDatabase::connect(getenv('SGI_TEST_DB_NAME') ?: 'sgi_test');
+            $beforeInternalFailure = self::countStudents($database, $idTurma, $idEdicao);
+            $database->query(
+                "CREATE TRIGGER sgi_n07_import_failure BEFORE INSERT ON usuarios FOR EACH ROW
+                 SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'N07_IMPORT_SQL_MARKER C:/synthetic/private/Importer.php:47 #0'",
+            );
+            try {
+                $internalFailure = $admin->postForm('api/v1/importacoes/turma-pdf', [
+                    'pdf_arquivo' => new CURLFile($pdfPath, 'application/pdf', '6EFB.pdf'),
+                    'id_turma' => (string) $idTurma,
+                    'id_interclasse' => (string) $idEdicao,
+                ]);
+                Assertions::assert(
+                    'Falha SQL da importação retorna 500 sem caminho, parser ou stack no envelope',
+                    ($internalFailure['code'] ?? 0) === 500
+                        && ($internalFailure['json']['success'] ?? true) === false
+                        && !str_contains((string) ($internalFailure['body'] ?? ''), 'N07_IMPORT_SQL_MARKER')
+                        && !str_contains((string) ($internalFailure['body'] ?? ''), 'synthetic/private')
+                        && !str_contains((string) ($internalFailure['body'] ?? ''), '#0'),
+                    (string) ($internalFailure['body'] ?? ''),
+                );
+                Assertions::assert(
+                    'Erro interno da importação faz rollback de todos os alunos do arquivo',
+                    self::countStudents($database, $idTurma, $idEdicao) === $beforeInternalFailure,
+                );
+            } finally {
+                $database->query('DROP TRIGGER IF EXISTS sgi_n07_import_failure');
+                $database->close();
+            }
+
             $cfile = new CURLFile($pdfPath, 'application/pdf', '6EFB.pdf');
             $resUpload = $admin->postForm('api/v1/importacoes/turma-pdf', [
                 'pdf_arquivo' => $cfile,
@@ -84,5 +115,18 @@ class TurmasAndPdfImportTest
         }
 
         return $idTurma;
+    }
+
+    private static function countStudents(\mysqli $database, int $classId, int $editionId): int
+    {
+        $statement = $database->prepare(
+            "SELECT COUNT(*) FROM usuarios WHERE nivel_usuario = '3' AND turmas_id_turma = ? AND interclasses_id_interclasse = ?",
+        );
+        $statement->bind_param('ii', $classId, $editionId);
+        $statement->execute();
+        $count = (int) ($statement->get_result()->fetch_column() ?: 0);
+        $statement->close();
+
+        return $count;
     }
 }

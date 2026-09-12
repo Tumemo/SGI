@@ -137,7 +137,7 @@ final class PdfAlunoImporter
             return ['status' => 'sucesso', 'cadastrados' => $cadastrados, 'duplicados' => $duplicados, 'erros' => $erros];
         } catch (\Throwable $e) {
             $conn->rollback();
-            return ['status' => 'erro', 'mensagem' => 'Erro na importação: ' . $e->getMessage()];
+            throw $e;
         }
     }
 }

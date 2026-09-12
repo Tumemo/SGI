@@ -197,6 +197,20 @@ test.describe('Mesário — fluxo visual completo offline', () => {
         await expect(page.locator('#modalArtilheiro')).toBeHidden({ timeout: 10_000 });
         await expect(page.locator('.score-number').first()).toHaveText('01');
 
+        // Uma segunda jogada é criada e anulada ainda sem rede. A fila deve
+        // sincronizar primeiro o POST e depois o PUT com o ID real resolvido.
+        await page.locator('.btn-score-plus').first().click();
+        await expect(page.locator('#modalArtilheiro')).toBeVisible();
+        await expect.poll(() => page.locator('#selectAlunoArtilheiro option').count()).toBeGreaterThan(1);
+        await page.locator('#selectAlunoArtilheiro').selectOption({ index: 1 });
+        await page.locator('#btnSalvarArtilheiro').click();
+        await expect(page.locator('#msgArtilheiro')).toContainText('Ponto registrado', { timeout: 10_000 });
+        await expect(page.locator('#modalArtilheiro')).toBeHidden({ timeout: 10_000 });
+        await expect(page.locator('.score-number').first()).toHaveText('02');
+        await page.locator('.btn-score-minus').first().click();
+        await expect(page.locator('.score-number').first()).toHaveText('01');
+        await expect.poll(() => page.evaluate(() => window.SGIOffline.getState().pending)).toBeGreaterThanOrEqual(3);
+
         // Registra uma ocorrência disciplinar usando as listas locais.
         await page.locator('#btnNovaOcorrencia').click();
         await expect(page.locator('#modalOcorrencia')).toBeVisible();
@@ -269,7 +283,7 @@ test.describe('Mesário — fluxo visual completo offline', () => {
 
         const offlineState = await page.evaluate(() => window.SGIOffline.getState());
         expect(offlineState.online).toBe(false);
-        expect(offlineState.pending).toBeGreaterThanOrEqual(4);
+        expect(offlineState.pending).toBeGreaterThanOrEqual(6);
 
         // Reconexão: o evento online dispara a sincronização automática.
         await context.setOffline(false);
@@ -279,6 +293,14 @@ test.describe('Mesário — fluxo visual completo offline', () => {
         await expect(page.locator('#artilheiro-cards')).toContainText('Atleta E2E Offline', { timeout: 10_000 });
         await expect(page.locator('#artilheiro-cards')).toContainText('1 gol', { timeout: 10_000 });
         await expect(page.locator('#lista-ocorrencias')).toContainText('Registro visual offline', { timeout: 10_000 });
+        const pontosSincronizados = await page.evaluate(async (id) => {
+            const response = await fetch(`/api/v1/pontos?id_jogo=${id}`);
+            const payload = await response.json();
+            return payload.pontos || [];
+        }, fixture.idJogo);
+        expect(pontosSincronizados).toHaveLength(2);
+        expect(pontosSincronizados.filter((ponto) => ponto.status_artilheiro === 'anulado')).toHaveLength(1);
+        expect(pontosSincronizados.filter((ponto) => ponto.status_artilheiro === 'ativo' && Number(ponto.conta_no_placar) === 1)).toHaveLength(1);
 
         // O perfil mesário consulta apenas a fila operacional; após concluído,
         // o jogo sai deliberadamente dessa fila. A auditoria final usa o

@@ -28,34 +28,43 @@ final class ResultadoService
         return $this->repository->inspectResult($gameId, $tag, $modalityId);
     }
 
-    /** @param list<array<string, mixed>> $results @return array<string, mixed> */
+    /** @param array<mixed> $results @param array<mixed> $points @return array<string, mixed> */
     public function lancar(int $gameId, ?string $tag, int $modalityId, array $results, array $points = [], int $operatorId = 0): array
     {
-        $results = array_values(array_filter($results, 'is_array'));
+        $results = array_values($results);
         if ($results === []) {
             throw new InvalidArgumentException('Nenhuma equipe foi informada para o resultado.');
         }
         $teamIds = [];
+        $scores = [];
+        $normalizedResults = [];
         foreach ($results as $result) {
-            if ((int) ($result['id_equipe'] ?? 0) <= 0) {
+            if (!is_array($result)) {
+                throw new InvalidArgumentException('Cada item do resultado deve representar uma equipe.');
+            }
+            $teamId = self::normalizarIdEquipe($result['id_equipe'] ?? null);
+            if ($teamId <= 0) {
                 throw new InvalidArgumentException('As equipes do resultado devem ser válidas.');
             }
-            $teamId = (int) $result['id_equipe'];
             if (in_array($teamId, $teamIds, true)) {
                 throw new InvalidArgumentException('As equipes do resultado devem ser válidas e distintas.');
             }
             $teamIds[] = $teamId;
-            if (array_key_exists('gols', $result) && !is_numeric($result['gols'])) {
-                throw new InvalidArgumentException('O resultado da partida deve ser numérico.');
-            }
-            if ((int) ($result['gols'] ?? 0) < 0) {
-                throw new InvalidArgumentException('O resultado da partida não pode ser negativo.');
+            $score = PlacarService::normalizarPontuacao(array_key_exists('gols', $result) ? $result['gols'] : 0);
+            $scores[] = $score;
+            $normalizedResults[] = array_replace($result, ['id_equipe' => $teamId, 'gols' => $score]);
+        }
+        $results = $normalizedResults;
+
+        $points = array_values($points);
+        foreach ($points as $point) {
+            if (!is_array($point)) {
+                throw new InvalidArgumentException('Cada ponto offline deve representar um evento válido.');
             }
         }
-
-        $scores = array_map(static fn (array $result): int => (int) ($result['gols'] ?? 0), $results);
-
-        $points = array_values(array_filter($points, 'is_array'));
+        if ($points !== [] && $operatorId <= 0) {
+            throw new InvalidArgumentException('Operador inválido para sincronizar pontos offline.');
+        }
         return $this->transactions->run(function () use ($gameId, $tag, $modalityId, $results, $scores, $points, $operatorId): array {
             $resolvedGameId = $this->repository->resolveAndValidate($gameId, $tag, $modalityId, $results);
             if ($resolvedGameId <= 0) {
@@ -70,30 +79,22 @@ final class ResultadoService
                 throw new InvalidArgumentException('Modalidades individuais devem ser concluídas pelo lançamento do pódio.');
             }
             $closed = ChaveamentoRules::jogoEstaEncerrado($state['status_jogo']);
+            if ($closed) {
+                (new PlacarService())->validarAlteracao($scores);
+            } else {
+                (new PlacarService())->validarFinalizacao($scores);
+            }
             $oldWinner = $closed
                 ? ChaveamentoRules::vencedorDePartidas($this->repository->carregarPartidas($resolvedGameId))
                 : null;
             if ($this->pontos !== null && ($gameId < 0 || $points !== [])) {
                 $this->pontos->garantirPartidas($resolvedGameId, $results);
                 if ($points !== []) {
-                    $this->pontos->persistirPontosOffline($resolvedGameId, array_map(
-                        static function (array $point) use ($operatorId): array {
-                            if (!isset($point['registrado_por']) && $operatorId > 0) {
-                                $point['registrado_por'] = $operatorId;
-                            }
-                            return $point;
-                        },
-                        $points,
-                    ));
+                    $this->pontos->persistirPontosOffline($resolvedGameId, $points, $operatorId, (string) $state['status_jogo']);
                 }
             }
             if ($this->pontos !== null) {
                 $this->pontos->validarPlacarVinculado($resolvedGameId, $results);
-            }
-            if ($closed) {
-                (new PlacarService())->validarAlteracao($scores);
-            } else {
-                (new PlacarService())->validarFinalizacao($scores);
             }
             if ($this->pontos === null || !$this->pontos->exigeVinculo($resolvedGameId)) {
                 $this->repository->persistirPlacar($resolvedGameId, $results);
@@ -118,5 +119,31 @@ final class ResultadoService
 
             return ['success' => true, 'message' => 'Resultado lançado!', 'id_jogo' => $resolvedGameId];
         });
+    }
+
+    private static function normalizarIdEquipe(mixed $id): int
+    {
+        if (is_int($id)) {
+            $normalized = $id;
+        } elseif (is_string($id)) {
+            $digits = trim($id);
+            if (preg_match('/^[0-9]+$/D', $digits) !== 1) {
+                throw new InvalidArgumentException('As equipes do resultado devem ser válidas.');
+            }
+            $digits = ltrim($digits, '0');
+            $digits = $digits === '' ? '0' : $digits;
+            if (strlen($digits) > 10 || (strlen($digits) === 10 && strcmp($digits, '2147483647') > 0)) {
+                throw new InvalidArgumentException('As equipes do resultado devem ser válidas.');
+            }
+            $normalized = (int) $digits;
+        } else {
+            throw new InvalidArgumentException('As equipes do resultado devem ser válidas.');
+        }
+
+        if ($normalized <= 0 || $normalized > 2147483647) {
+            throw new InvalidArgumentException('As equipes do resultado devem ser válidas.');
+        }
+
+        return $normalized;
     }
 }

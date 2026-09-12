@@ -2,13 +2,15 @@
 
 Data da verificação estrutural: 06/09/2026. Branch: `codex/refatoracao-arquitetura-limpeza`.
 
+> Registro histórico encerrado em 08/09/2026. O workflow e a documentação operacional atuais estão em [`.github/workflows/ci.yml`](../.github/workflows/ci.yml), [`docs/testing.md`](testing.md) e [`docs/architecture.md`](architecture.md); as notas antigas abaixo descrevem a matriz e os aliases daquele fechamento.
+
 ## Atualização funcional do plano Luna — 08/09/2026
 
 As tarefas T00–T29 do plano de implementação foram executadas no mesmo branch e registradas em [`docs/plano-implementacao-luna/STATUS.md`](plano-implementacao-luna/STATUS.md). A validação local final aprovou `380/380` asserções HTTP, `163` testes PHPUnit com `1.815` asserções, PHPStan `213/213`, PHP CS Fixer `275/275`, `16/16` testes JavaScript e `32/32` cenários Playwright, incluindo operação online/offline, aliases, fila legada, subdiretório `/SGI` e o ensaio sintético de backup/restauração.
 
 Durante a revisão final foi reproduzida e corrigida uma corrida em que o timer de fechamento de uma ocorrência anterior fechava um novo modal de edição offline. O fluxo de duas ocorrências, criação temporária, edição antes do POST, sincronização e inativação passou depois da correção. A auditoria original continua preservada como histórico dos defeitos que motivaram o plano.
 
-A matriz CI continua sendo a evidência prevista para PHP 8.2/8.4, MySQL 8.4, MariaDB 10.11 e comparação visual Windows. Esses alvos externos não foram executados neste host local e permanecem pendência operacional explícita; não houve publicação nem deploy.
+Naquele fechamento, a matriz CI prevista incluía PHP 8.2/8.4, MySQL 8.4, MariaDB 10.11 e comparação visual Windows. O workflow atual executa o contrato visual em Ubuntu/Linux, conforme a documentação operacional vigente. Esses alvos externos não foram executados naquele host local; não houve publicação nem deploy.
 
 ## Estado atual
 

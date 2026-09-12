@@ -42,7 +42,7 @@ window.SGIPage.mount("aluno/ranking", function (pageConfig, pageScope) {
             <div class="text-center py-5">
                 <i class="bi bi-lock-fill text-warning display-1"></i>
                 <h3 class="fw-bold mt-3">Ranking Oculto</h3>
-                <p class="text-muted fs-6">O ranking será exibido após o encerramento do Interclasse.</p>
+                <p class="text-muted fs-6">O ranking será exibido após o encerramento e a publicação do Interclasse.</p>
             </div>
         `;
         const mob = document.getElementById('listaMob');

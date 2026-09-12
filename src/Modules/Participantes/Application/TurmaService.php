@@ -5,9 +5,10 @@ declare(strict_types=1);
 namespace App\Modules\Participantes\Application;
 
 use App\Modules\Participantes\Domain\TurmaRepository;
+use App\Modules\Participantes\Domain\TurmaRankingUpdater;
 use InvalidArgumentException;
 
-final class TurmaService
+final class TurmaService implements TurmaRankingUpdater
 {
     public function __construct(private readonly TurmaRepository $turmas)
     {
@@ -64,36 +65,27 @@ final class TurmaService
             throw new InvalidArgumentException('O ID da turma é obrigatório.');
         }
 
-        $updates = [];
-        if (array_key_exists('interclasses_id_interclasse', $data)) {
-            $value = (int) $data['interclasses_id_interclasse'];
-            if ($value <= 0) {
-                throw new InvalidArgumentException('O interclasse informado é inválido.');
-            }
-            $updates['interclasses_id_interclasse'] = $value;
-        }
-        if (array_key_exists('categorias_id_categoria', $data)) {
-            $value = (int) $data['categorias_id_categoria'];
-            if ($value <= 0) {
-                throw new InvalidArgumentException('A categoria informada é inválida.');
-            }
-            $updates['categorias_id_categoria'] = $value;
-        }
-        foreach (['nome_turma', 'turno_turma', 'nome_fantasia_turma', 'status_turma'] as $field) {
-            if (array_key_exists($field, $data)) {
-                $value = trim((string) $data[$field]);
-                if ($field === 'nome_turma' && $value === '') {
-                    throw new InvalidArgumentException('O nome da turma não pode ser vazio.');
-                }
-                $updates[$field] = $value;
-            }
-        }
+        $updates = $this->normalizeUpdates($data, false);
         if ($updates === []) {
             throw new InvalidArgumentException('Nenhum campo enviado para atualização.');
         }
         if (!$this->turmas->update($id, $updates)) {
             throw new TurmaNaoEncontradaException();
         }
+    }
+
+    /** @param array<string, mixed> $data */
+    public function atualizarPeloRanking(array $data): bool
+    {
+        $id = (int) ($data['id_turma'] ?? 0);
+        if ($id <= 0) {
+            throw new InvalidArgumentException('Dados inválidos ou ID da turma ausente.');
+        }
+        $updates = $this->normalizeUpdates($data, true);
+        if ($updates === []) {
+            throw new InvalidArgumentException('Nenhum campo enviado para atualização.');
+        }
+        return $this->turmas->update($id, $updates);
     }
 
     public function excluir(int $id): void
@@ -104,5 +96,42 @@ final class TurmaService
         if (!$this->turmas->delete($id)) {
             throw new TurmaNaoEncontradaException();
         }
+    }
+
+    /**
+     * @param array<string, mixed> $data
+     * @return array<string, int|string>
+     */
+    private function normalizeUpdates(array $data, bool $allowScore): array
+    {
+        $updates = [];
+        foreach ([
+            'interclasses_id_interclasse' => 'int',
+            'categorias_id_categoria' => 'int',
+            'nome_turma' => 'string',
+            'turno_turma' => 'string',
+            'nome_fantasia_turma' => 'string',
+            'status_turma' => 'string',
+            ...($allowScore ? ['pontuacao_turma' => 'int'] : []),
+        ] as $field => $type) {
+            if (!array_key_exists($field, $data)) {
+                continue;
+            }
+            $value = $type === 'int' ? (int) $data[$field] : trim((string) $data[$field]);
+            if ($field === 'interclasses_id_interclasse' && $value <= 0) {
+                throw new InvalidArgumentException('O interclasse informado é inválido.');
+            }
+            if ($field === 'categorias_id_categoria' && $value <= 0) {
+                throw new InvalidArgumentException('A categoria informada é inválida.');
+            }
+            if ($field === 'nome_turma' && $value === '') {
+                throw new InvalidArgumentException('O nome da turma não pode ser vazio.');
+            }
+            if ($field === 'pontuacao_turma' && $value < 0) {
+                throw new InvalidArgumentException('A pontuação não pode ser negativa.');
+            }
+            $updates[$field] = $value;
+        }
+        return $updates;
     }
 }

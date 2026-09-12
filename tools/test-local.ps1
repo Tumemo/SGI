@@ -287,13 +287,21 @@ function Start-TestServer {
 function Invoke-Quality {
     Invoke-Composer -Arguments @('validate', '--no-check-publish') -Description 'Validação do Composer'
     Invoke-Composer -Arguments @('verify') -Description 'Qualidade PHP'
+    $powerShell = Get-CommandPath @('powershell.exe', 'pwsh.exe')
+    if (-not $powerShell) { throw 'PowerShell não foi encontrado para testar o cleanup do executor.' }
+    Invoke-Checked -FilePath $powerShell -Arguments @('-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', (Join-Path $root 'tools/test-local-cleanup.test.ps1')) -Description 'Regressão do cleanup do executor'
     Invoke-Checked -FilePath $script:npm -Arguments @('run', 'build') -Description 'Build de assets'
     Invoke-Checked -FilePath $script:npm -Arguments @('run', 'check') -Description 'Checks JavaScript'
     Invoke-Checked -FilePath $script:npm -Arguments @('test') -Description 'Testes JavaScript'
 }
 
 function Invoke-Integration {
-    Invoke-Checked -FilePath $script:php -Arguments @('tests/run_all.php') -Description 'Integração HTTP, banco e recuperação'
+    $arguments = @()
+    if ($env:SGI_SESSION_DIR -and (Test-Path -LiteralPath $env:SGI_SESSION_DIR)) {
+        $arguments += @('-d', "session.save_path=$env:SGI_SESSION_DIR")
+    }
+    $arguments += 'tests/run_all.php'
+    Invoke-Checked -FilePath $script:php -Arguments $arguments -Description 'Integração HTTP, banco e recuperação'
 }
 
 function Invoke-Browser {
@@ -311,7 +319,7 @@ function Remove-LocalTestDatabase {
     $query = "DROP DATABASE IF EXISTS ``$databaseName``"
     & $script:mysqlClient "--host=$script:dbHost" "--port=$script:databasePort" "--user=$script:dbUser" "--password=$script:dbPassword" '-e' $query 2>$null
     if ($LASTEXITCODE -ne 0) {
-        Write-Warning "Não foi possível remover a base temporária '$databaseName'. Remova-a manualmente após verificar que ela pertence a esta execução."
+        throw "Não foi possível remover a base temporária '$databaseName'."
     }
 }
 
@@ -344,18 +352,46 @@ try {
     $exitCode = 1
     Write-Error $_
 } finally {
+    $cleanupActions = @()
     if ($script:serverProcess) {
-        try { Stop-Process -Id $script:serverProcess.Id -Force -ErrorAction SilentlyContinue } catch { }
+        $cleanupActions += [pscustomobject]@{
+            Name = 'servidor temporário'
+            Run = { Stop-Process -Id $script:serverProcess.Id -Force -ErrorAction Stop }
+        }
     }
-    Remove-LocalTestDatabase
+    if ($requiresDatabase) {
+        $cleanupActions += [pscustomobject]@{
+            Name = 'banco local temporário'
+            Run = { Remove-LocalTestDatabase }
+        }
+    }
     if ($script:dockerContainer -and -not $Keep) {
-        $docker = Get-CommandPath @('docker.exe', 'docker')
-        if ($docker) { & $docker rm -f $script:dockerContainer | Out-Null }
+        $cleanupActions += [pscustomobject]@{
+            Name = 'container temporário'
+            Run = {
+            $docker = Get-CommandPath @('docker.exe', 'docker')
+                if (-not $docker) { throw 'Cliente Docker não encontrado.' }
+                & $docker rm -f $script:dockerContainer | Out-Null
+                if ($LASTEXITCODE -ne 0) { throw 'Docker recusou a remoção do container temporário.' }
+            }
+        }
     } elseif ($script:dockerContainer -and $Keep) {
         Write-Host "Banco Docker mantido: $script:dockerContainer"
     }
-    if ($lockStream) { $lockStream.Dispose() }
-    Restore-TestEnvironment
+    if ($lockStream) {
+        $cleanupActions += [pscustomobject]@{
+            Name = 'lock do executor'
+            Run = { $lockStream.Dispose() }
+        }
+    }
+    if ($originalEnvironment.Count -gt 0) {
+        $cleanupActions += [pscustomobject]@{
+            Name = 'ambiente do processo'
+            Run = { Restore-TestEnvironment }
+        }
+    }
+    . (Join-Path $PSScriptRoot 'test-local-cleanup.ps1')
+    Invoke-TestLocalCleanupActions -Actions $cleanupActions
 }
 
 exit $exitCode

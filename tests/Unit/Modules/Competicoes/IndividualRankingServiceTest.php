@@ -6,6 +6,7 @@ namespace Tests\Unit\Modules\Competicoes;
 
 use App\Modules\Competicoes\Application\IndividualRankingService;
 use App\Modules\Competicoes\Domain\IndividualRankingRepository;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 
 final class IndividualRankingServiceTest extends TestCase
@@ -39,9 +40,12 @@ final class IndividualRankingServiceTest extends TestCase
         $repository = new IndividualRankingRepositoryFake();
         $service = new IndividualRankingService($repository);
 
-        $this->expectException(\InvalidArgumentException::class);
-        $service->registrar(7, ['primeiro' => 11, 'segundo' => 12]);
-        self::assertNull($repository->rankingCall);
+        try {
+            $service->registrar(7, ['primeiro' => 11, 'segundo' => 12]);
+            self::fail('Ranking incompleto deveria ser rejeitado.');
+        } catch (\InvalidArgumentException) {
+            self::assertNull($repository->rankingCall);
+        }
     }
 
     public function testAceitaIdsComoStringsDecimaisSemCoercaoPermissiva(): void
@@ -64,15 +68,18 @@ final class IndividualRankingServiceTest extends TestCase
         self::assertSame(22, $repository->gameIdCall);
     }
 
-    /** @dataProvider invalidRankingIds */
+    #[DataProvider('invalidRankingIds')]
     public function testRejeitaIdsQueParecemNumericosMasNaoSaoInteirosPositivos(mixed $value): void
     {
         $repository = new IndividualRankingRepositoryFake();
         $service = new IndividualRankingService($repository);
 
-        $this->expectException(\InvalidArgumentException::class);
-        $service->registrar(7, ['primeiro' => $value, 'segundo' => 12, 'terceiro' => 13]);
-        self::assertNull($repository->rankingCall);
+        try {
+            $service->registrar(7, ['primeiro' => $value, 'segundo' => 12, 'terceiro' => 13]);
+            self::fail('O ID inválido deveria ser rejeitado.');
+        } catch (\InvalidArgumentException) {
+            self::assertNull($repository->rankingCall);
+        }
     }
 
     /** @return iterable<string,array{mixed}> */

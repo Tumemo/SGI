@@ -16,6 +16,40 @@ final class MysqliPontoRepository implements PontoRepository
     {
     }
 
+    public function edicaoDoJogo(int $gameId): ?int
+    {
+        return $this->editionId(
+            'SELECT m.interclasses_id_interclasse
+             FROM jogos j
+             INNER JOIN modalidades m ON m.id_modalidade = j.modalidades_id_modalidade
+             WHERE j.id_jogo = ? LIMIT 1 FOR UPDATE',
+            $gameId,
+        );
+    }
+
+    public function edicaoDaEquipe(int $teamId): ?int
+    {
+        return $this->editionId(
+            'SELECT m.interclasses_id_interclasse
+             FROM equipes e
+             INNER JOIN modalidades m ON m.id_modalidade = e.modalidades_id_modalidade
+             WHERE e.id_equipe = ? LIMIT 1 FOR UPDATE',
+            $teamId,
+        );
+    }
+
+    public function edicaoDoPonto(int $pointId): ?int
+    {
+        return $this->editionId(
+            'SELECT m.interclasses_id_interclasse
+             FROM artilheiros a
+             INNER JOIN jogos j ON j.id_jogo = a.jogos_id_jogo
+             INNER JOIN modalidades m ON m.id_modalidade = j.modalidades_id_modalidade
+             WHERE a.id_artilheiro = ? LIMIT 1 FOR UPDATE',
+            $pointId,
+        );
+    }
+
     /** @return list<array<string, mixed>> */
     public function listarAtletas(int $gameId, int $teamId): array
     {
@@ -139,6 +173,7 @@ final class MysqliPontoRepository implements PontoRepository
         $userId = (int) $data['usuarios_id_usuario'];
         $key = (string) $data['chave_jogada'];
         $operatorId = (int) ($data['registrado_por'] ?? 0);
+        $this->assertOperator($operatorId);
         return $this->inserirEvento($gameId, $matchId, $teamId, $userId, $key, $operatorId, true);
     }
 
@@ -149,29 +184,62 @@ final class MysqliPontoRepository implements PontoRepository
     }
 
     /** @return array<string, mixed> */
-    public function anular(int $pointId, int $operatorId): array
+    public function anular(int $pointId, int $operatorId, ?string $expectedGameStatus = null): array
     {
-        $point = $this->one(
-            'SELECT a.id_artilheiro, a.partidas_id_partida, a.status_artilheiro,
-                    a.conta_no_placar, p.jogos_id_jogo, p.equipes_id_equipe,
-                    p.resultado_partida
-             FROM artilheiros a
-             INNER JOIN partidas p ON p.id_partida = a.partidas_id_partida
-             WHERE a.id_artilheiro = ? LIMIT 1 FOR UPDATE',
+        $this->assertOperator($operatorId);
+        $target = $this->one(
+            'SELECT jogos_id_jogo, partidas_id_partida
+             FROM artilheiros
+             WHERE id_artilheiro = ? LIMIT 1',
             'i',
             [$pointId],
         );
-        if ($point === null) {
+        if ($target === null) {
+            throw new InvalidArgumentException('Ponto não encontrado.');
+        }
+
+        // Finalização também trava jogo antes de partidas e pontos. Releia o estado
+        // com uma locking read, pois a validação anterior do serviço pode estar obsoleta.
+        $gameId = (int) $target['jogos_id_jogo'];
+        $partidaId = (int) $target['partidas_id_partida'];
+        $game = $this->one(
+            'SELECT status_jogo FROM jogos WHERE id_jogo = ? LIMIT 1 FOR UPDATE',
+            'i',
+            [$gameId],
+        );
+        if ($game === null) {
+            throw new InvalidArgumentException('Ponto não encontrado.');
+        }
+        $lockedGameStatus = (string) $game['status_jogo'];
+        if ($expectedGameStatus !== null && $lockedGameStatus !== $expectedGameStatus) {
+            throw new InvalidArgumentException('O estado do jogo mudou durante a anulação do ponto.');
+        }
+
+        $match = $this->one(
+            'SELECT id_partida, jogos_id_jogo, equipes_id_equipe, resultado_partida
+             FROM partidas
+             WHERE id_partida = ? AND jogos_id_jogo = ? LIMIT 1 FOR UPDATE',
+            'ii',
+            [$partidaId, $gameId],
+        );
+        $point = $this->one(
+            'SELECT id_artilheiro, partidas_id_partida, status_artilheiro, conta_no_placar
+             FROM artilheiros
+             WHERE id_artilheiro = ? AND jogos_id_jogo = ? AND partidas_id_partida = ?
+             LIMIT 1 FOR UPDATE',
+            'iii',
+            [$pointId, $gameId, $partidaId],
+        );
+        if ($match === null || $point === null) {
             throw new InvalidArgumentException('Ponto não encontrado.');
         }
         if ((string) $point['status_artilheiro'] === 'anulado' || (int) $point['conta_no_placar'] !== 1) {
-            return $this->buscar($pointId) ?? $point;
+            return $this->pointQuery('a.id_artilheiro = ?', 'i', [$pointId], true) ?? $point;
         }
-        if ((int) $point['resultado_partida'] <= 0) {
+        if ((int) $match['resultado_partida'] <= 0) {
             throw new InvalidArgumentException('O ponto não pode ser anulado porque o placar já está zerado.');
         }
         $updatePartida = $this->prepare('UPDATE partidas SET resultado_partida = resultado_partida - 1 WHERE id_partida = ? AND resultado_partida > 0');
-        $partidaId = (int) $point['partidas_id_partida'];
         $updatePartida->bind_param('i', $partidaId);
         if (!$updatePartida->execute() || $updatePartida->affected_rows !== 1) {
             $updatePartida->close();
@@ -179,19 +247,14 @@ final class MysqliPontoRepository implements PontoRepository
         }
         $updatePartida->close();
 
-        if ($operatorId > 0) {
-            $update = $this->prepare("UPDATE artilheiros SET status_artilheiro = 'anulado', conta_no_placar = 0, anulado_por = ?, anulado_em = CURRENT_TIMESTAMP WHERE id_artilheiro = ?");
-            $update->bind_param('ii', $operatorId, $pointId);
-        } else {
-            $update = $this->prepare("UPDATE artilheiros SET status_artilheiro = 'anulado', conta_no_placar = 0, anulado_por = NULL, anulado_em = CURRENT_TIMESTAMP WHERE id_artilheiro = ?");
-            $update->bind_param('i', $pointId);
-        }
-        if (!$update->execute()) {
+        $update = $this->prepare("UPDATE artilheiros SET status_artilheiro = 'anulado', conta_no_placar = 0, anulado_por = ?, anulado_em = CURRENT_TIMESTAMP WHERE id_artilheiro = ? AND status_artilheiro = 'ativo' AND conta_no_placar = 1");
+        $update->bind_param('ii', $operatorId, $pointId);
+        if (!$update->execute() || $update->affected_rows !== 1) {
             $update->close();
             throw new RuntimeException('Não foi possível preservar a anulação do ponto.');
         }
         $update->close();
-        return $this->buscar($pointId) ?? $point;
+        return $this->pointQuery('a.id_artilheiro = ?', 'i', [$pointId], true) ?? $point;
     }
 
     public function exigeVinculo(int $gameId): bool
@@ -225,28 +288,39 @@ final class MysqliPontoRepository implements PontoRepository
         if (!$this->exigeVinculo($gameId)) {
             return;
         }
+        usort($results, static fn (array $left, array $right): int => (int) ($left['id_equipe'] ?? 0) <=> (int) ($right['id_equipe'] ?? 0));
         foreach ($results as $result) {
             $teamId = (int) ($result['id_equipe'] ?? 0);
             $expected = (int) ($result['gols'] ?? 0);
             $row = $this->one(
-                'SELECT p.resultado_partida,
-                        COALESCE(SUM(CASE WHEN a.status_artilheiro = \'ativo\' AND a.conta_no_placar = 1 THEN 1 ELSE 0 END), 0) AS pontos_ativos
-                 FROM partidas p
-                 LEFT JOIN artilheiros a ON a.partidas_id_partida = p.id_partida
-                 WHERE p.jogos_id_jogo = ? AND p.equipes_id_equipe = ?
-                 GROUP BY p.id_partida, p.resultado_partida',
+                'SELECT id_partida, resultado_partida
+                 FROM partidas
+                 WHERE jogos_id_jogo = ? AND equipes_id_equipe = ? LIMIT 1 FOR UPDATE',
                 'ii',
                 [$gameId, $teamId],
             );
-            if ($row === null || (int) $row['resultado_partida'] !== $expected || (int) $row['pontos_ativos'] !== $expected) {
+            if ($row === null) {
+                throw new InvalidArgumentException('O placar só pode conter pontos vinculados a atletas inscritos e ativos.');
+            }
+            $partidaId = (int) $row['id_partida'];
+            $activePoints = $this->queryRows(
+                "SELECT id_artilheiro
+                 FROM artilheiros
+                 WHERE partidas_id_partida = ? AND status_artilheiro = 'ativo' AND conta_no_placar = 1
+                 FOR UPDATE",
+                'i',
+                [$partidaId],
+            );
+            if ((int) $row['resultado_partida'] !== $expected || count($activePoints) !== $expected) {
                 throw new InvalidArgumentException('O placar só pode conter pontos vinculados a atletas inscritos e ativos.');
             }
         }
     }
 
     /** @param list<mixed> $points */
-    public function persistirPontosOffline(int $gameId, array $points): void
+    public function persistirPontosOffline(int $gameId, array $points, int $operatorId, ?string $expectedGameStatus = null): void
     {
+        $this->assertOperator($operatorId);
         foreach ($points as $point) {
             if (!is_array($point)) {
                 throw new InvalidArgumentException('Evento de ponto offline inválido.');
@@ -254,7 +328,6 @@ final class MysqliPontoRepository implements PontoRepository
             $teamId = (int) ($point['id_equipe'] ?? $point['equipes_id_equipe'] ?? 0);
             $userId = (int) ($point['usuarios_id_usuario'] ?? $point['id_usuario'] ?? 0);
             $key = trim((string) ($point['chave_jogada'] ?? ''));
-            $operatorId = (int) ($point['registrado_por'] ?? 0);
             $pointId = (int) ($point['id_ponto'] ?? $point['id_artilheiro'] ?? 0);
             $isCancellation = (string) ($point['status_artilheiro'] ?? '') === 'anulado';
             if ($isCancellation && $pointId > 0) {
@@ -266,7 +339,7 @@ final class MysqliPontoRepository implements PontoRepository
                     throw new InvalidArgumentException('O cancelamento offline referencia uma jogada inválida.');
                 }
                 if ((string) ($existingPoint['status_artilheiro'] ?? '') !== 'anulado') {
-                    $this->anular($pointId, $operatorId);
+                    $this->anular($pointId, $operatorId, $expectedGameStatus);
                 }
                 continue;
             }
@@ -281,7 +354,7 @@ final class MysqliPontoRepository implements PontoRepository
                     throw new InvalidArgumentException('A identificação de uma jogada offline foi reutilizada com dados diferentes.');
                 }
                 if ($isCancellation && (string) ($existing['status_artilheiro'] ?? '') !== 'anulado') {
-                    $this->anular((int) ($existing['id_artilheiro'] ?? 0), $operatorId);
+                    $this->anular((int) ($existing['id_artilheiro'] ?? 0), $operatorId, $expectedGameStatus);
                 }
                 continue;
             }
@@ -302,21 +375,13 @@ final class MysqliPontoRepository implements PontoRepository
 
     private function inserirHistoricoAnulado(int $gameId, int $matchId, int $teamId, int $userId, string $key, int $operatorId): void
     {
-        if ($operatorId > 0) {
-            $statement = $this->prepare(
-                "INSERT INTO artilheiros (usuarios_id_usuario, jogos_id_jogo, partidas_id_partida,
-                    equipes_id_equipe, num_gol, conta_no_placar, status_artilheiro, chave_jogada, registrado_por, anulado_por, anulado_em)
-                 VALUES (?, ?, ?, ?, 1, 0, 'anulado', ?, ?, ?, CURRENT_TIMESTAMP)",
-            );
-            $statement->bind_param('iiiisii', $userId, $gameId, $matchId, $teamId, $key, $operatorId, $operatorId);
-        } else {
-            $statement = $this->prepare(
-                "INSERT INTO artilheiros (usuarios_id_usuario, jogos_id_jogo, partidas_id_partida,
-                    equipes_id_equipe, num_gol, conta_no_placar, status_artilheiro, chave_jogada, registrado_por, anulado_em)
-                 VALUES (?, ?, ?, ?, 1, 0, 'anulado', ?, NULL, CURRENT_TIMESTAMP)",
-            );
-            $statement->bind_param('iiiis', $userId, $gameId, $matchId, $teamId, $key);
-        }
+        $this->assertOperator($operatorId);
+        $statement = $this->prepare(
+            "INSERT INTO artilheiros (usuarios_id_usuario, jogos_id_jogo, partidas_id_partida,
+                equipes_id_equipe, num_gol, conta_no_placar, status_artilheiro, chave_jogada, registrado_por, anulado_por, anulado_em)
+             VALUES (?, ?, ?, ?, 1, 0, 'anulado', ?, ?, ?, CURRENT_TIMESTAMP)",
+        );
+        $statement->bind_param('iiiisii', $userId, $gameId, $matchId, $teamId, $key, $operatorId, $operatorId);
         if (!$statement->execute()) {
             $message = $statement->error;
             $statement->close();
@@ -328,25 +393,17 @@ final class MysqliPontoRepository implements PontoRepository
     /** @return array<string, mixed> */
     private function inserirEvento(int $gameId, int $matchId, int $teamId, int $userId, string $key, int $operatorId, bool $checkGameStatus): array
     {
+        $this->assertOperator($operatorId);
         $existing = $this->buscarPorChave($key);
         if ($existing !== null) {
             return $existing;
         }
-        if ($operatorId > 0) {
-            $statement = $this->prepare(
-                'INSERT INTO artilheiros (usuarios_id_usuario, jogos_id_jogo, partidas_id_partida,
-                    equipes_id_equipe, num_gol, conta_no_placar, status_artilheiro, chave_jogada, registrado_por)
-                 VALUES (?, ?, ?, ?, 1, 1, \'ativo\', ?, ?)',
-            );
-            $statement->bind_param('iiiisi', $userId, $gameId, $matchId, $teamId, $key, $operatorId);
-        } else {
-            $statement = $this->prepare(
-                'INSERT INTO artilheiros (usuarios_id_usuario, jogos_id_jogo, partidas_id_partida,
-                    equipes_id_equipe, num_gol, conta_no_placar, status_artilheiro, chave_jogada, registrado_por)
-                 VALUES (?, ?, ?, ?, 1, 1, \'ativo\', ?, NULL)',
-            );
-            $statement->bind_param('iiiis', $userId, $gameId, $matchId, $teamId, $key);
-        }
+        $statement = $this->prepare(
+            'INSERT INTO artilheiros (usuarios_id_usuario, jogos_id_jogo, partidas_id_partida,
+                equipes_id_equipe, num_gol, conta_no_placar, status_artilheiro, chave_jogada, registrado_por)
+             VALUES (?, ?, ?, ?, 1, 1, \'ativo\', ?, ?)',
+        );
+        $statement->bind_param('iiiisi', $userId, $gameId, $matchId, $teamId, $key, $operatorId);
         if (!$statement->execute()) {
             $message = $statement->error;
             $statement->close();
@@ -389,8 +446,15 @@ final class MysqliPontoRepository implements PontoRepository
                   )";
     }
 
+    private function assertOperator(int $operatorId): void
+    {
+        if ($operatorId <= 0) {
+            throw new InvalidArgumentException('Operador inválido para registrar ou anular pontos.');
+        }
+    }
+
     /** @return array<string, mixed>|null */
-    private function pointQuery(string $where, string $types, array $params): ?array
+    private function pointQuery(string $where, string $types, array $params, bool $forUpdate = false): ?array
     {
         return $this->one(
             'SELECT a.id_artilheiro, a.id_artilheiro AS id_ponto, a.usuarios_id_usuario, a.jogos_id_jogo,
@@ -404,7 +468,7 @@ final class MysqliPontoRepository implements PontoRepository
              LEFT JOIN partidas p ON p.id_partida = a.partidas_id_partida
              LEFT JOIN jogos j ON j.id_jogo = a.jogos_id_jogo
              LEFT JOIN equipes e ON e.id_equipe = a.equipes_id_equipe
-             WHERE ' . $where . ' LIMIT 1',
+             WHERE ' . $where . ' LIMIT 1' . ($forUpdate ? ' FOR UPDATE' : ''),
             $types,
             $params,
         );
@@ -441,5 +505,15 @@ final class MysqliPontoRepository implements PontoRepository
             throw new RuntimeException('Não foi possível preparar a operação de pontos.');
         }
         return $statement;
+    }
+
+    private function editionId(string $sql, int $resourceId): ?int
+    {
+        $row = $this->one($sql, 'i', [$resourceId]);
+        if ($row === null) {
+            return null;
+        }
+        $editionId = (int) ($row['interclasses_id_interclasse'] ?? 0);
+        return $editionId > 0 ? $editionId : null;
     }
 }

@@ -12,8 +12,4 @@ interface RankingRepository
      */
     public function list(array $filters): array;
 
-    /**
-     * @param array<string, mixed> $data
-     */
-    public function updateTeam(int $id, array $data): bool;
 }

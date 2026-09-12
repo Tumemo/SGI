@@ -93,7 +93,14 @@ final class PartidaController
                 return Response::json(['success' => false, 'message' => 'Partida não pertence ao jogo persistido.'], 422);
             }
             try {
-                $this->queries->launch($gameId, null, 0, $results);
+                $this->queries->launch(
+                    $gameId,
+                    null,
+                    0,
+                    $results,
+                    [],
+                    (int) ($_SESSION['id_usuario'] ?? $_SESSION['id'] ?? 0),
+                );
                 return Response::json(['success' => true, 'message' => 'Resultado salvo e jogo finalizado!']);
             } catch (\InvalidArgumentException $exception) {
                 return Response::json(['success' => false, 'message' => $exception->getMessage()], 422);

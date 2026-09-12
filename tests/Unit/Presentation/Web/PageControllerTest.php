@@ -6,6 +6,7 @@ namespace Tests\Unit\Presentation\Web;
 
 use App\Presentation\Web\PageController;
 use App\Shared\Http\Request;
+use App\Shared\Http\SessionManager;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 
@@ -14,16 +15,23 @@ final class PageControllerTest extends TestCase
     /** @var array<string, mixed>|null */
     private ?array $previousSession = null;
 
+    private bool $sessionWasActive = false;
+
     protected function setUp(): void
     {
         parent::setUp();
+        $this->sessionWasActive = session_status() === PHP_SESSION_ACTIVE;
         $this->previousSession = isset($_SESSION) ? $_SESSION : null;
+        SessionManager::start();
         $_SESSION = [];
     }
 
     protected function tearDown(): void
     {
         $_SESSION = $this->previousSession ?? [];
+        if (!$this->sessionWasActive && session_status() === PHP_SESSION_ACTIVE) {
+            session_write_close();
+        }
         parent::tearDown();
     }
 
@@ -70,7 +78,7 @@ final class PageControllerTest extends TestCase
         ];
     }
 
-    /** @dataProvider forbiddenPagesForMesario */
+    #[DataProvider('forbiddenPagesForMesario')]
     public function testMesarioCannotOpenAdministrativePages(string $path, string $template): void
     {
         $_SESSION['nivel'] = 2;

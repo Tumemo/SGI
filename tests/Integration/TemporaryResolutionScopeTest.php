@@ -102,7 +102,36 @@ final class TemporaryResolutionScopeTest
                 && $afterAmbiguous === $beforeAmbiguous,
             );
             self::deleteGame($connection, $ambiguousGame);
-            $retryAmbiguous = $mesario->postJson('api/v1/resultados', [
+            $operatorId = self::userId($connection, 'mesario');
+            $forgedAuthorId = self::userId($connection, 'admin');
+            $offlinePoints = [
+                ...self::offlinePoints($teamA1, (int) $editionA['atleta_ids'][0], 4, 'retry-point-a'),
+                ...self::offlinePoints($teamA2, (int) $editionA['atleta_ids'][1], 1, 'retry-point-b'),
+            ];
+            $offlinePoints[0]['registrado_por'] = $forgedAuthorId;
+            $offlinePoints[1]['registrado_por'] = 0;
+            $offlinePoints[2]['registrado_por'] = null;
+            $pointsBeforeFailedRetry = self::pointCount($connection, $gameA);
+            $gameBeforeFailedRetry = self::gameSnapshot($connection, $gameA);
+            $invalidRetry = $mesario->postJson('api/v1/resultados', [
+                'id_jogo' => -503,
+                'nome_jogo' => $ambiguousTag,
+                'id_modalidade' => $modalityA,
+                'resultados' => [
+                    ['id_equipe' => $teamA1, 'gols' => 5],
+                    ['id_equipe' => $teamA2, 'gols' => 1],
+                ],
+                'pontos' => $offlinePoints,
+            ], $mutation);
+            Assertions::assertStatus('Placar incompatível rejeita a sincronização de pontos offline', $invalidRetry, 422);
+            Assertions::assert(
+                'Falha da sincronização desfaz placar e eventos e deixa a mutação disponível',
+                self::gameSnapshot($connection, $gameA) === $gameBeforeFailedRetry
+                && self::pointCount($connection, $gameA) === $pointsBeforeFailedRetry
+                && self::mutationCount($connection, (string) $mutation['X-SGI-Mutation-Id']) === 0,
+            );
+
+            $retryBody = [
                 'id_jogo' => -503,
                 'nome_jogo' => $ambiguousTag,
                 'id_modalidade' => $modalityA,
@@ -110,17 +139,31 @@ final class TemporaryResolutionScopeTest
                     ['id_equipe' => $teamA1, 'gols' => 4],
                     ['id_equipe' => $teamA2, 'gols' => 1],
                 ],
-                'pontos' => [
-                    ...self::offlinePoints($teamA1, (int) $editionA['atleta_ids'][0], 4, 'retry-point-a'),
-                    ...self::offlinePoints($teamA2, (int) $editionA['atleta_ids'][1], 1, 'retry-point-b'),
-                ],
-            ], $mutation);
+                'pontos' => $offlinePoints,
+            ];
+            $retryAmbiguous = $mesario->postJson('api/v1/resultados', $retryBody, $mutation);
             $retrySnapshot = self::gameSnapshot($connection, $gameA);
             Assertions::assert(
                 'Retry do fallback ambíguo permanece disponível na fila',
                 ($retryAmbiguous['json']['success'] ?? false) === true
                 && ($retrySnapshot['scores'][$teamA1] ?? null) === 4,
                 json_encode(['response' => $retryAmbiguous, 'snapshot' => $retrySnapshot], JSON_UNESCAPED_UNICODE),
+            );
+            $authors = self::pointAuthors($connection, $gameA, 'retry-point-');
+            Assertions::assert(
+                'Pontos sincronizados ignoram autoria forjada, zero, nula ou ausente',
+                count($authors) === 5
+                && array_column($authors, 'registrado_por') === array_fill(0, 5, $operatorId)
+                && $forgedAuthorId !== $operatorId,
+                json_encode($authors, JSON_UNESCAPED_UNICODE),
+            );
+            $retryReplay = $mesario->postJson('api/v1/resultados', $retryBody, $mutation);
+            Assertions::assert(
+                'Replay do resultado conserva resposta, pontos e placar sem duplicação',
+                $retryReplay['json'] === $retryAmbiguous['json']
+                && self::pointCount($connection, $gameA) === 5
+                && self::mutationCount($connection, (string) $mutation['X-SGI-Mutation-Id']) === 1
+                && self::gameSnapshot($connection, $gameA) === $retrySnapshot,
             );
 
             $syncName = 'T05 Sync ' . bin2hex(random_bytes(5));
@@ -216,6 +259,57 @@ final class TemporaryResolutionScopeTest
     {
         $statement = $connection->prepare('SELECT COUNT(*) FROM partidas WHERE jogos_id_jogo = ?');
         $statement->bind_param('i', $gameId);
+        $statement->execute();
+        $count = (int) $statement->get_result()->fetch_column();
+        $statement->close();
+        return $count;
+    }
+
+    private static function userId(\mysqli $connection, string $registration): int
+    {
+        $statement = $connection->prepare('SELECT id_usuario FROM usuarios WHERE matricula_usuario = ? LIMIT 1');
+        $statement->bind_param('s', $registration);
+        $statement->execute();
+        $id = (int) $statement->get_result()->fetch_column();
+        $statement->close();
+        return $id;
+    }
+
+    private static function pointCount(\mysqli $connection, int $gameId): int
+    {
+        $statement = $connection->prepare('SELECT COUNT(*) FROM artilheiros WHERE jogos_id_jogo = ?');
+        $statement->bind_param('i', $gameId);
+        $statement->execute();
+        $count = (int) $statement->get_result()->fetch_column();
+        $statement->close();
+        return $count;
+    }
+
+    /** @return list<array{chave_jogada:string,registrado_por:?int,anulado_por:?int}> */
+    private static function pointAuthors(\mysqli $connection, int $gameId, string $prefix): array
+    {
+        $statement = $connection->prepare(
+            'SELECT chave_jogada, registrado_por, anulado_por
+             FROM artilheiros
+             WHERE jogos_id_jogo = ? AND chave_jogada LIKE ?
+             ORDER BY chave_jogada',
+        );
+        $like = $prefix . '%';
+        $statement->bind_param('is', $gameId, $like);
+        $statement->execute();
+        $rows = $statement->get_result()->fetch_all(MYSQLI_ASSOC);
+        $statement->close();
+        return array_map(static fn (array $row): array => [
+            'chave_jogada' => (string) $row['chave_jogada'],
+            'registrado_por' => $row['registrado_por'] === null ? null : (int) $row['registrado_por'],
+            'anulado_por' => $row['anulado_por'] === null ? null : (int) $row['anulado_por'],
+        ], $rows);
+    }
+
+    private static function mutationCount(\mysqli $connection, string $key): int
+    {
+        $statement = $connection->prepare('SELECT COUNT(*) FROM sincronizacoes_idempotentes WHERE rota = \'lancar_resultado\' AND chave_mutacao = ?');
+        $statement->bind_param('s', $key);
         $statement->execute();
         $count = (int) $statement->get_result()->fetch_column();
         $statement->close();

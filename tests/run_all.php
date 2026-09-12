@@ -23,6 +23,8 @@ require_once __DIR__ . '/Integration/PodiumCreditTest.php';
 require_once __DIR__ . '/Integration/IndividualSyncCreditTest.php';
 require_once __DIR__ . '/Integration/HistoryRankingReconciliationTest.php';
 require_once __DIR__ . '/Integration/ConcurrentInvariantsTest.php';
+require_once __DIR__ . '/Integration/ConcurrentPontoFinalizationTest.php';
+require_once __DIR__ . '/Integration/ConcurrentScheduleTest.php';
 require_once __DIR__ . '/Integration/TurmasAndPdfImportTest.php';
 require_once __DIR__ . '/Integration/ModalidadesAndEquipesTest.php';
 require_once __DIR__ . '/Integration/InscricaoModalidadesTest.php';
@@ -34,6 +36,8 @@ require_once __DIR__ . '/Integration/OcorrenciasAndRankingTest.php';
 require_once __DIR__ . '/Integration/HistoricoTurmaAndClassificacaoTest.php';
 require_once __DIR__ . '/Integration/FotoPerfilAndUsuariosTest.php';
 require_once __DIR__ . '/Integration/AlunosPortalTest.php';
+require_once __DIR__ . '/Integration/RankingPublicationTest.php';
+require_once __DIR__ . '/Integration/TurmaScopeConsistencyTest.php';
 require_once __DIR__ . '/Integration/PublicBoundaryTest.php';
 require_once __DIR__ . '/Integration/RefactorContractsTest.php';
 require_once __DIR__ . '/Integration/MigrationsTest.php';
@@ -59,6 +63,8 @@ use SGITests\Integration\PodiumCreditTest;
 use SGITests\Integration\IndividualSyncCreditTest;
 use SGITests\Integration\HistoryRankingReconciliationTest;
 use SGITests\Integration\ConcurrentInvariantsTest;
+use SGITests\Integration\ConcurrentPontoFinalizationTest;
+use SGITests\Integration\ConcurrentScheduleTest;
 use SGITests\Integration\TurmasAndPdfImportTest;
 use SGITests\Integration\ModalidadesAndEquipesTest;
 use SGITests\Integration\InscricaoModalidadesTest;
@@ -70,6 +76,8 @@ use SGITests\Integration\OcorrenciasAndRankingTest;
 use SGITests\Integration\HistoricoTurmaAndClassificacaoTest;
 use SGITests\Integration\FotoPerfilAndUsuariosTest;
 use SGITests\Integration\AlunosPortalTest;
+use SGITests\Integration\RankingPublicationTest;
+use SGITests\Integration\TurmaScopeConsistencyTest;
 use SGITests\Integration\PublicBoundaryTest;
 use SGITests\Integration\MataMataEdgeCasesTest;
 use SGITests\E2E\FullOfflineTournamentTest;
@@ -131,6 +139,7 @@ try {
     $equipesIds = $dadosJogos['equipes_ids'];
     AgendamentoBlocoTest::run($idEdicao, $idModalidade, $dadosJogos);
     AgendamentoSequencialTest::run($idEdicao, $idModalidade, $dadosJogos);
+    ConcurrentScheduleTest::run($idEdicao, $idModalidade, $dadosJogos);
 
     // 6.1 Persistência e replay do cronômetro
     CronometroPersistenceTest::run($idModalidade, $idJogo1);
@@ -150,6 +159,8 @@ try {
 
     // 11. Portal do Aluno
     AlunosPortalTest::run();
+    RankingPublicationTest::run();
+    TurmaScopeConsistencyTest::run();
 
     // 12. Casos Limites do Motor de Chaveamento
     MataMataEdgeCasesTest::run($idEdicao, $idTurma, $idJogo1, $idModalidade, $equipesIds);
@@ -160,6 +171,7 @@ try {
     IndividualSyncCreditTest::run($idEdicao, $idModalidade);
     HistoryRankingReconciliationTest::run($idEdicao, $idTurma);
     ConcurrentInvariantsTest::run($idEdicao, $idTurma);
+    ConcurrentPontoFinalizationTest::run($idEdicao, $idTurma);
 
     // 14. Fronteira pública e proteção de arquivos internos
     PublicBoundaryTest::run();

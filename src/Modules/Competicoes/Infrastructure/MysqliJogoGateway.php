@@ -7,6 +7,7 @@ namespace App\Modules\Competicoes\Infrastructure;
 use App\Modules\Competicoes\Application\JogoConflitoException;
 use App\Modules\Competicoes\Domain\CronometroRules;
 use App\Shared\Database\SqlFilters;
+use App\Shared\Database\Transaction;
 use mysqli;
 use RuntimeException;
 
@@ -187,29 +188,69 @@ final class MysqliJogoGateway
             throw new RuntimeException('Nenhum dado enviado para atualização.');
         }
 
-        $candidate = [
-            'data_jogo' => array_key_exists('data_jogo', $data) ? $this->nullableString($data['data_jogo']) : $current['data_jogo'],
-            'inicio_jogo' => array_key_exists('inicio_jogo', $data) ? $this->nullableString($data['inicio_jogo']) : $current['inicio_jogo'],
-            'termino_jogo' => array_key_exists('termino_jogo', $data) ? $this->nullableString($data['termino_jogo']) : $current['termino_jogo'],
-            'locais_id_local' => array_key_exists('locais_id_local', $data) ? ((int) $data['locais_id_local'] > 0 ? (int) $data['locais_id_local'] : null) : ($current['locais_id_local'] === null ? null : (int) $current['locais_id_local']),
-        ];
-        if ($candidate['data_jogo'] !== null && $candidate['inicio_jogo'] !== null && $candidate['termino_jogo'] !== null && $candidate['locais_id_local'] !== null) {
-            $conflict = $this->scheduleConflict($candidate['data_jogo'], $candidate['locais_id_local'], $candidate['inicio_jogo'], $candidate['termino_jogo'], $id);
-            if ($conflict !== null) {
-                throw new JogoConflitoException($conflict);
+        $observedLocal = $current['locais_id_local'] === null ? null : (int) $current['locais_id_local'];
+        $requestedLocal = array_key_exists('locais_id_local', $data)
+            ? ((int) $data['locais_id_local'] > 0 ? (int) $data['locais_id_local'] : null)
+            : $observedLocal;
+
+        Transaction::begin($this->connection);
+        try {
+            MysqliLocalScheduleGuard::lockLocals(
+                $this->connection,
+                array_values(array_filter([$observedLocal, $requestedLocal], static fn (?int $local): bool => $local !== null)),
+            );
+            $lockedCurrent = $this->findForUpdate($id);
+            if ($lockedCurrent === null) {
+                Transaction::commit($this->connection);
+                return false;
             }
+            $lockedLocal = $lockedCurrent['locais_id_local'] === null ? null : (int) $lockedCurrent['locais_id_local'];
+            if ($lockedLocal !== $observedLocal) {
+                throw new JogoConflitoException('A programação do jogo mudou durante a edição. Atualize a página e tente novamente.');
+            }
+
+            $candidate = [
+                'data_jogo' => array_key_exists('data_jogo', $data) ? $this->nullableString($data['data_jogo']) : $lockedCurrent['data_jogo'],
+                'inicio_jogo' => array_key_exists('inicio_jogo', $data) ? $this->nullableString($data['inicio_jogo']) : $lockedCurrent['inicio_jogo'],
+                'termino_jogo' => array_key_exists('termino_jogo', $data) ? $this->nullableString($data['termino_jogo']) : $lockedCurrent['termino_jogo'],
+                'locais_id_local' => $requestedLocal,
+            ];
+            $activeStatus = (string) ($data['status_jogo'] ?? $lockedCurrent['status_jogo']);
+            if ($candidate['data_jogo'] !== null
+                && $candidate['inicio_jogo'] !== null
+                && $candidate['termino_jogo'] !== null
+                && $candidate['locais_id_local'] !== null
+                && in_array($activeStatus, ['Agendado', 'Iniciado', 'Pausado'], true)) {
+                $conflict = MysqliLocalScheduleGuard::conflict(
+                    $this->connection,
+                    $candidate['data_jogo'],
+                    $candidate['locais_id_local'],
+                    (string) $candidate['inicio_jogo'],
+                    (string) $candidate['termino_jogo'],
+                    $id,
+                    true,
+                );
+                if ($conflict !== null) {
+                    throw new JogoConflitoException($conflict);
+                }
+            }
+
+            $values[] = $id;
+            $types .= 'i';
+            $statement = $this->prepare('UPDATE jogos SET ' . implode(', ', $fields) . ' WHERE id_jogo = ?');
+            $statement->bind_param($types, ...$values);
+            $success = $statement->execute();
+            $message = $statement->error;
+            $statement->close();
+            if (!$success) {
+                throw new RuntimeException($message !== '' ? $message : 'Não foi possível atualizar jogo.');
+            }
+            Transaction::commit($this->connection);
+            return true;
+        } catch (\Throwable $exception) {
+            Transaction::rollback($this->connection);
+            throw $exception;
         }
-        $values[] = $id;
-        $types .= 'i';
-        $statement = $this->prepare('UPDATE jogos SET ' . implode(', ', $fields) . ' WHERE id_jogo = ?');
-        $statement->bind_param($types, ...$values);
-        $success = $statement->execute();
-        $message = $statement->error;
-        $statement->close();
-        if (!$success) {
-            throw new RuntimeException($message !== '' ? $message : 'Não foi possível atualizar jogo.');
-        }
-        return true;
     }
 
     private function nullableString(mixed $value): ?string
@@ -218,20 +259,18 @@ final class MysqliJogoGateway
         return $text === '' ? null : $text;
     }
 
-    private function scheduleConflict(string $date, int $localId, string $start, string $end, int $currentId): ?string
+    private function findForUpdate(int $id): ?array
     {
-        $statement = $this->prepare("SELECT nome_jogo FROM jogos
-            WHERE data_jogo = ? AND locais_id_local = ?
-              AND status_jogo IN ('Agendado', 'Iniciado', 'Pausado')
-              AND id_jogo <> ?
-              AND ? < ADDTIME(termino_jogo, '00:10:00')
-              AND ADDTIME(?, '00:10:00') > inicio_jogo
-            LIMIT 1");
-        $statement->bind_param('siiss', $date, $localId, $currentId, $start, $end);
-        $statement->execute();
+        $statement = $this->prepare('SELECT * FROM jogos WHERE id_jogo = ? LIMIT 1 FOR UPDATE');
+        $statement->bind_param('i', $id);
+        if (!$statement->execute()) {
+            $message = $statement->error;
+            $statement->close();
+            throw new RuntimeException($message !== '' ? $message : 'Não foi possível bloquear a programação do jogo.');
+        }
         $row = $statement->get_result()->fetch_assoc() ?: null;
         $statement->close();
-        return $row === null ? null : 'Já existe um jogo agendado neste mesmo local com conflito de horário (' . $row['nome_jogo'] . ').';
+        return $row;
     }
 
     private function prepare(string $sql): \mysqli_stmt

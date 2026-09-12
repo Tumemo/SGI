@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Modules\Resultados\Presentation\Http;
 
 use App\Modules\Resultados\Application\RankingService;
-use App\Modules\Eventos\Infrastructure\MysqliEdicaoConsultaRepository;
+use App\Modules\Eventos\Domain\EdicaoConsulta;
 use App\Shared\Http\AccessGuard;
 use App\Shared\Http\Request;
 use App\Shared\Http\Response;
@@ -13,7 +13,7 @@ use Throwable;
 
 final class RankingController
 {
-    public function __construct(private readonly RankingService $service, private readonly MysqliEdicaoConsultaRepository $edicoes)
+    public function __construct(private readonly RankingService $service, private readonly EdicaoConsulta $edicoes)
     {
     }
 
@@ -54,8 +54,8 @@ final class RankingController
         if ($isAluno && $editionId <= 0) {
             return Response::json(['success' => false, 'message' => 'Selecione uma edição encerrada.'], 400);
         }
-        if ($isAluno && $this->edicoes->isActive($editionId)) {
-            return Response::json(['success' => false, 'bloqueado' => true, 'message' => 'O ranking será exibido após o encerramento do Interclasse.'], 403);
+        if ($isAluno && ($this->edicoes->isActive($editionId) || !$this->edicoes->isRankingPublished($editionId))) {
+            return Response::json(['success' => false, 'bloqueado' => true, 'message' => 'O ranking será exibido após o encerramento e a publicação do Interclasse.'], 403);
         }
         $data = $this->service->listar([
             'id_turma' => (int) $request->query('id_turma', 0),

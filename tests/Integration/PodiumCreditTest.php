@@ -59,6 +59,7 @@ final class PodiumCreditTest
                     self::pointAdjustments($connection, $gameId, $winner, 1),
                     self::pointAdjustments($connection, $gameId, $runnerUp, 5),
                 ),
+                self::operatorId($connection),
             );
             Assertions::assert('Retificação da final aceita para reconciliar o pódio', ($result['success'] ?? false) === true);
         } catch (\Throwable $exception) {
@@ -235,6 +236,7 @@ final class PodiumCreditTest
                 self::pointAdjustments($connection, $semiId, $winner, 0),
                 self::pointAdjustments($connection, $semiId, $loser, 2),
             ),
+            self::operatorId($connection),
         );
         $activeCredits = (int) $connection->query(
             'SELECT COUNT(*) FROM pontuacoes_podio WHERE id_interclasse = ' . $editionId
@@ -278,6 +280,7 @@ final class PodiumCreditTest
                 self::pointAdjustments($connection, $finalId, $finalTeams[0], 2),
                 self::pointAdjustments($connection, $finalId, $finalTeams[1], 0),
             ),
+            self::operatorId($connection),
         );
         Assertions::assert('Nova final concede o pódio sem duplicar créditos', self::classPoints($connection, array_merge($classes, $newClasses)) === $expectedFinal);
     }
@@ -334,6 +337,7 @@ final class PodiumCreditTest
                     self::pointAdjustments($connection, $finalId, $currentWinner, 0),
                     self::pointAdjustments($connection, $finalId, $currentRunner, 2),
                 ),
+                self::operatorId($connection),
             );
         } finally {
             $restore = $connection->prepare('UPDATE interclasses SET ponto_1_lugar = ?, ponto_2_lugar = ?, ponto_3_lugar = ? WHERE id_interclasse = ?');
@@ -383,6 +387,7 @@ final class PodiumCreditTest
                 self::pointAdjustments($connection, $thirdId, $teams[0], 1),
                 self::pointAdjustments($connection, $thirdId, $teams[1], 0),
             ),
+            self::operatorId($connection),
         );
         $classFirst = self::teamClass($connection, $teams[0]);
         $classSecond = self::teamClass($connection, $teams[1]);
@@ -402,6 +407,7 @@ final class PodiumCreditTest
                 self::pointAdjustments($connection, $thirdId, $teams[0], 0),
                 self::pointAdjustments($connection, $thirdId, $teams[1], 1),
             ),
+            self::operatorId($connection),
         );
         $expectedSecond = $afterFirst;
         $expectedSecond[$classFirst] -= $points;
@@ -448,6 +454,17 @@ final class PodiumCreditTest
         $afterScores->close();
         $sources = (int) $connection->query('SELECT COUNT(*) FROM pontuacoes_podio WHERE id_interclasse = ' . $editionId . ' AND id_modalidade = ' . $modalityId . ' AND posicao IN (1, 2)')->fetch_column();
         Assertions::assert('Retificação sem pódio conciliado falha sem escrita', $rejected && $after === $beforeScores && $sources === 2);
+    }
+
+    private static function operatorId(\mysqli $connection): int
+    {
+        $statement = $connection->prepare('SELECT id_usuario FROM usuarios WHERE matricula_usuario = ? LIMIT 1');
+        $registration = 'admin';
+        $statement->bind_param('s', $registration);
+        $statement->execute();
+        $operatorId = (int) $statement->get_result()->fetch_column();
+        $statement->close();
+        return $operatorId;
     }
 
     /** @return list<array<string, mixed>> */

@@ -6,6 +6,12 @@ namespace App\Modules\Competicoes\Domain;
 
 interface PontoRepository
 {
+    public function edicaoDoJogo(int $gameId): ?int;
+
+    public function edicaoDaEquipe(int $teamId): ?int;
+
+    public function edicaoDoPonto(int $pointId): ?int;
+
     /** @return list<array<string, mixed>> */
     public function listarAtletas(int $gameId, int $teamId): array;
 
@@ -27,7 +33,7 @@ interface PontoRepository
     public function buscar(int $pointId): ?array;
 
     /** @return array<string, mixed> */
-    public function anular(int $pointId, int $operatorId): array;
+    public function anular(int $pointId, int $operatorId, ?string $expectedGameStatus = null): array;
 
     public function exigeVinculo(int $gameId): bool;
 
@@ -38,5 +44,5 @@ interface PontoRepository
     public function validarPlacarVinculado(int $gameId, array $results): void;
 
     /** @param list<array<string, mixed>> $points */
-    public function persistirPontosOffline(int $gameId, array $points): void;
+    public function persistirPontosOffline(int $gameId, array $points, int $operatorId, ?string $expectedGameStatus = null): void;
 }

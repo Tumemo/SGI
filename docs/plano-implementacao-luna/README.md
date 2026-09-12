@@ -1,5 +1,8 @@
 # Roteiro de implementação do SGI — Luna / Extra alto
 
+> Arquivo histórico: as tarefas T00–T29 foram concluídas. Para as correções
+> posteriores e o estado atual, consulte o [plano de melhorias de 11/09/2026](../plano-melhorias-luna-2026-09-11/README.md) e seu [STATUS](../plano-melhorias-luna-2026-09-11/STATUS.md).
+
 Este é o ponto de entrada do plano detalhado solicitado em 07/09/2026. Destina-se à execução pelo modelo Luna com o esforço Extra alto selecionado pelo usuário. Não altera a configuração do modelo nem inicia a implementação.
 
 Objetivo: corrigir os achados A1–A10 da [auditoria](../auditoria-arquitetura-2026-09-07.md), concluir as fronteiras de aplicação e comprovar a compatibilidade HTTP, banco e offline. Referência original: commit `aedbc420ea34aa759db1b14a8307abe4eb478cfa`.

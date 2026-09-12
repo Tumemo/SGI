@@ -150,6 +150,31 @@ final class MysqliAgendamentoBlocoRepository
                 throw new AgendaRevisaoException('A programação mudou enquanto a prévia estava aberta. Gere uma nova prévia.');
             }
 
+            $proposals = array_values((array) ($simulation['proposta'] ?? []));
+            $proposalLocalIds = array_map(
+                static fn (array $reservation): int => (int) ($reservation['locais_id_local'] ?? 0),
+                $proposals,
+            );
+            MysqliLocalScheduleGuard::lockLocals($this->connection, $proposalLocalIds);
+            $selectedGameIds = array_values(array_unique(array_filter(array_map(
+                static fn (array $reservation): int => (int) ($reservation['id_jogo'] ?? 0),
+                $proposals,
+            ), static fn (int $gameId): bool => $gameId > 0)));
+            foreach ($proposals as $reservation) {
+                $conflict = MysqliLocalScheduleGuard::conflictWithGames(
+                    $this->connection,
+                    (string) $reservation['data_jogo'],
+                    (int) $reservation['locais_id_local'],
+                    (string) $reservation['inicio_jogo'],
+                    (string) $reservation['termino_jogo'],
+                    $selectedGameIds,
+                    true,
+                );
+                if ($conflict !== null) {
+                    throw new InvalidArgumentException($conflict);
+                }
+            }
+
             $paramsJson = (string) json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR);
             $block = $this->prepare('INSERT INTO agenda_blocos (id_interclasse, id_usuario, chave_idempotencia, parametros_json, revisao) VALUES (?, ?, ?, ?, ?)');
             $revision = (int) $simulation['revisao'] + 1;
@@ -531,7 +556,6 @@ final class MysqliAgendamentoBlocoRepository
         if ($this->one('SELECT id_interclasse FROM interclasses WHERE id_interclasse = ? FOR UPDATE', 'i', [$edition]) === null) {
             throw new InvalidArgumentException('A edição informada não foi encontrada.');
         }
-        $this->connection->query('SELECT id_reserva FROM agenda_reservas WHERE id_interclasse = ' . (int) $edition . ' FOR UPDATE');
     }
 
     private function fingerprint(array $payload): string

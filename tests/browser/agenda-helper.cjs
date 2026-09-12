@@ -22,25 +22,20 @@ async function agendarBloco(request, {
     chaveTags = [],
     label = 'agendamento do fixture',
 }) {
-    const locais = await jsonOrThrow(
-        await request.get(`api/v1/locais?id_interclasse=${idInterclasse}&disponivel=1`),
-        'locais disponíveis',
-    );
-    const listaLocais = Array.isArray(locais) ? locais : (Array.isArray(locais?.data) ? locais.data : []);
-    let local = listaLocais.find((item) => Number(item.id_local) > 0);
-    if (!local) {
-        const criado = await jsonOrThrow(await request.post('api/v1/locais', {
-            data: {
-                nome_local: `Local fixture ${idInterclasse} ${Date.now()}`,
-                disponivel_local: '1',
-                carga_local: 0,
-                interclasses_id_interclasse: Number(idInterclasse),
-            },
-        }), 'criação do local do fixture');
-        const idLocal = Number(criado.id_local);
-        if (!idLocal) throw new Error(`A API não retornou o local criado: ${JSON.stringify(criado)}`);
-        local = { id_local: idLocal };
-    }
+    // Cada teste recebe um local próprio. Specs paralelas compartilham a
+    // edição e o mesmo dia; reutilizar o primeiro local disponível faria os
+    // fixtures disputarem horários reais da agenda.
+    const criado = await jsonOrThrow(await request.post('api/v1/locais', {
+        data: {
+            nome_local: `Fixture ${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 9)}`,
+            disponivel_local: '1',
+            carga_local: 0,
+            interclasses_id_interclasse: Number(idInterclasse),
+        },
+    }), 'criação do local do fixture');
+    const idLocal = Number(criado.id_local);
+    if (!idLocal) throw new Error(`A API não retornou o local criado: ${JSON.stringify(criado)}`);
+    const local = { id_local: idLocal };
 
     const payload = {
         acao: 'confirmar',

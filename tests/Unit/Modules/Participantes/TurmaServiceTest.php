@@ -59,6 +59,29 @@ final class TurmaServiceTest extends TestCase
             'nome_turma' => '6EF',
         ]);
     }
+
+    public function testRankingUpdateKeepsAllowedScoreAdjustmentInTheSharedTurmaService(): void
+    {
+        $repository = new InMemoryTurmaRepository();
+        $repository->rows[7] = ['nome_turma' => '6EF', 'pontuacao_turma' => 0];
+
+        self::assertTrue((new TurmaService($repository))->atualizarPeloRanking([
+            'id_turma' => 7,
+            'nome_fantasia_turma' => 'Azul',
+            'pontuacao_turma' => 18,
+        ]));
+        self::assertSame('Azul', $repository->rows[7]['nome_fantasia_turma']);
+        self::assertSame(18, $repository->rows[7]['pontuacao_turma']);
+    }
+
+    public function testRankingUpdateRejectsNegativeScore(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        (new TurmaService(new InMemoryTurmaRepository()))->atualizarPeloRanking([
+            'id_turma' => 7,
+            'pontuacao_turma' => -1,
+        ]);
+    }
 }
 
 final class InMemoryTurmaRepository implements TurmaRepository

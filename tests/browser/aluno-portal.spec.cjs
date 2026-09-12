@@ -123,7 +123,7 @@ test.describe.serial('Portal do Aluno — Jornada Interativa e Regras de Negóci
         await page.waitForURL(/\/aluno\/inicio/, { timeout: 15_000 });
     });
 
-    test('inscrição em modalidades, escolha de equipe e validação de regras', async ({ page }) => {
+    test('inscrição em modalidades, escolha de equipe e validação de regras', async ({ page, baseURL }) => {
         // Login com o aluno
         await page.goto('login', { waitUntil: 'domcontentloaded' });
         await page.locator('#form_desktop .ipt-matricula').fill(fixture.matricula);
@@ -152,16 +152,73 @@ test.describe.serial('Portal do Aluno — Jornada Interativa e Regras de Negóci
         // Confirmar que o card recebeu a classe de selecionado
         await expect(page.locator('.modalidade-card.selected')).toHaveCount(1);
 
+        const inelegivel = await page.evaluate(async ({ idInterclasse, idTurma }) => {
+            const turmasResponse = await fetch(`/api/v1/turmas?id_interclasse=${idInterclasse}`);
+            const turmas = await turmasResponse.json();
+            const turma = Array.isArray(turmas)
+                ? turmas.find((item) => Number(item.id_turma) === Number(idTurma))
+                : null;
+            if (!turma) return { setupError: 'Fixture não encontrou a turma do aluno.' };
+
+            const modalidadesResponse = await fetch(`/api/v1/modalidades?id_interclasse=${idInterclasse}`);
+            const modalidades = await modalidadesResponse.json();
+            const modalidadeFeminina = Array.isArray(modalidades)
+                ? modalidades.find((item) =>
+                    String(item.genero_modalidade).toUpperCase() === 'FEM'
+                    && Number(item.categorias_id_categoria) === Number(turma.categorias_id_categoria),
+                )
+                : null;
+            if (!modalidadeFeminina) return { setupError: 'Fixture não possui modalidade FEM na categoria do aluno.' };
+
+            const equipesResponse = await fetch(
+                `/api/v1/equipes?id_modalidade=${modalidadeFeminina.id_modalidade}&id_turma=${idTurma}`,
+            );
+            const equipes = await equipesResponse.json();
+            const equipe = Array.isArray(equipes) ? equipes.find((item) => Number(item.id_equipe) > 0) : null;
+            if (!equipe) return { setupError: 'Fixture não possui equipe FEM na turma do aluno.' };
+
+            const response = await fetch('/api/v1/inscricoes', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id_interclasse: idInterclasse, id_equipes: [Number(equipe.id_equipe)] }),
+            });
+            return { status: response.status, body: await response.json() };
+        }, { idInterclasse: fixture.idInterclasse, idTurma: fixture.idTurma });
+        expect(inelegivel.setupError).toBeUndefined();
+        expect(inelegivel.status).toBe(400);
+        expect(inelegivel.body.success).toBe(false);
+        expect(inelegivel.body.message).toMatch(/gênero/i);
+
         // Salva a escolha
         const btnSalvar = page.locator('#btnSalvar');
         await expect(btnSalvar).toBeEnabled({ timeout: 10_000 });
+        const requisicaoInicial = page.waitForRequest((request) =>
+            request.url().includes('/api/v1/inscricoes') && request.method() === 'POST',
+        );
         await btnSalvar.click();
+        const corpoInicial = (await requisicaoInicial).postDataJSON();
 
         // Confirma feedback de salvamento
         await expect(page.locator('#msgFeedback')).toContainText(/sucesso|salvo/i, { timeout: 10_000 });
+
+        const retry = await page.evaluate(async (payload) => {
+            const response = await fetch('/api/v1/inscricoes', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload),
+            });
+            return { status: response.status, body: await response.json() };
+        }, corpoInicial);
+        expect(retry.status).toBe(200);
+        expect(retry.body.success).toBe(true);
+        expect(retry.body.insercoes).toBe(0);
+        expect(retry.body.ja_existentes).toBe(1);
+
+        const inicioEsperado = new URL('aluno/inicio', baseURL).pathname;
+        await page.waitForURL((url) => url.pathname === inicioEsperado, { timeout: 10_000 });
     });
 
-    test('navegação e consulta da agenda de jogos e do ranking pelo aluno', async ({ page }) => {
+    test('navegação e consulta da agenda e do ranking publicado pelo aluno', async ({ page, request }) => {
         // Login com o aluno
         await page.goto('login', { waitUntil: 'domcontentloaded' });
         await page.locator('#form_desktop .ipt-matricula').fill(fixture.matricula);
@@ -182,6 +239,52 @@ test.describe.serial('Portal do Aluno — Jornada Interativa e Regras de Negóci
         await expect(page.locator('main:visible')).toBeVisible({ timeout: 15_000 });
         await expect(page.locator('main:visible')).toContainText('Ranking Oculto', { timeout: 15_000 });
         await expect(page.locator('body')).not.toContainText(/Fatal error|Warning:/i);
+
+        // Publica uma edição sintética sem jogos e verifica o ranking pela
+        // sessão real do aluno depois de manter encerrada a edição original.
+        await jsonOrThrow(await request.post('api/v1/login', {
+            data: { matricula: 'admin', senha: '123' }
+        }), 'login administrativo para publicar ranking');
+        const criada = await jsonOrThrow(await request.post('api/v1/edicoes', {
+            data: {
+                nome_interclasse: `E2E Ranking ${Date.now()}`,
+                ano_interclasse: '2026-01-01 00:00:00',
+            }
+        }), 'criação de edição sintética para ranking');
+        const idEdicaoPublicada = Number(criada.id);
+        expect(idEdicaoPublicada).toBeGreaterThan(0);
+
+        try {
+            const encerrada = await jsonOrThrow(await request.post(`api/v1/edicoes?id=${idEdicaoPublicada}`, {
+                data: { status_interclasse: '0' }
+            }), 'encerramento da edição sintética');
+            expect(encerrada.success).toBe(true);
+
+            const reativadaOriginal = await jsonOrThrow(await request.post(`api/v1/edicoes?id=${fixture.idInterclasse}`, {
+                data: { status_interclasse: '1' }
+            }), 'restauração da edição original');
+            expect(reativadaOriginal.success).toBe(true);
+
+            const publicada = await jsonOrThrow(await request.post(
+                `api/v1/edicoes?acao=publicar_ranking&id=${idEdicaoPublicada}`,
+                { data: {} },
+            ), 'publicação do ranking sintético');
+            expect(publicada.success).toBe(true);
+        } finally {
+            const encerramentoFinal = await request.post(`api/v1/edicoes?id=${idEdicaoPublicada}`, {
+                data: { status_interclasse: '0' }
+            });
+            expect(encerramentoFinal.ok()).toBeTruthy();
+            const restauracaoFinal = await request.post(`api/v1/edicoes?id=${fixture.idInterclasse}`, {
+                data: { status_interclasse: '1' }
+            });
+            expect(restauracaoFinal.ok()).toBeTruthy();
+        }
+
+        await page.goto(`aluno/ranking?id=${idEdicaoPublicada}`, { waitUntil: 'domcontentloaded' });
+        await expect(page.locator('#totalTurmasDesk')).not.toHaveText('0 Turmas', { timeout: 15_000 });
+        await expect(page.locator('#listaDesk .card-turma').first()).toBeVisible();
+        await expect(page.locator('main:visible')).not.toContainText('Ranking Oculto');
     });
 
     test('gestão de perfil, validação de senha e alteração com reautenticação', async ({ page }) => {

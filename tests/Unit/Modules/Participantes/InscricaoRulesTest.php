@@ -25,4 +25,17 @@ final class InscricaoRulesTest extends TestCase
     {
         self::assertSame([8, 3], InscricaoRules::normalizarIds(['8', 8, 0, -1, 3]));
     }
+
+    public function testChecksGenderAndCategoryEligibility(): void
+    {
+        self::assertTrue(InscricaoRules::modalidadeCompativel('MASC', 'MASC', 4, 4));
+        self::assertTrue(InscricaoRules::modalidadeCompativel('FEM', 'FEM', 4, 4));
+        self::assertTrue(InscricaoRules::modalidadeCompativel('MASC', 'MISTO', 4, 4));
+        self::assertTrue(InscricaoRules::modalidadeCompativel('FEM', 'MISTO', 4, 4));
+        self::assertFalse(InscricaoRules::modalidadeCompativel('MASC', 'FEM', 4, 4));
+        self::assertFalse(InscricaoRules::modalidadeCompativel('FEM', 'MASC', 4, 4));
+        self::assertFalse(InscricaoRules::modalidadeCompativel('MASC', 'MASC', 4, 5));
+        self::assertFalse(InscricaoRules::modalidadeCompativel('OUTRO', 'MISTO', 4, 4));
+        self::assertFalse(InscricaoRules::modalidadeCompativel('MASC', 'MASC', 0, 0));
+    }
 }

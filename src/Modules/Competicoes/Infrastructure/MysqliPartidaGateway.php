@@ -213,14 +213,14 @@ final class MysqliPartidaGateway implements ResultadoRepository
     }
 
     /** @param list<array<string, mixed>> $results @param list<array<string, mixed>> $points */
-    public function launch(int $gameId, ?string $gameTag, int $modalityId, array $results, array $points = []): array
+    public function launch(int $gameId, ?string $gameTag, int $modalityId, array $results, array $points = [], int $operatorId = 0): array
     {
         return (new ResultadoService(
             $this,
             new MysqliTransactionRunner($this->connection),
             new PontuacaoService(new MysqliPodioRepository($this->connection)),
             new MysqliPontoRepository($this->connection),
-        ))->lancar($gameId, $gameTag, $modalityId, $results, $points, (int) ($_SESSION['id_usuario'] ?? $_SESSION['id'] ?? 0));
+        ))->lancar($gameId, $gameTag, $modalityId, $results, $points, $operatorId);
     }
 
     private function resolveGame(int $gameId, ?string $tag, int $modalityId, array $results): int

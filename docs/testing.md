@@ -128,7 +128,7 @@ php tests/run_all.php
 
 O runner reconstrói **apenas** a base de testes, executa migrações e carrega os fixtures. Antes do reset, confere o nome da base com a resposta de saúde do servidor em modo `test`. Os cenários HTTP usam os mesmos tokens CSRF do navegador; não há exceção de segurança para testes.
 
-Não execute duas suítes que alteram o banco simultaneamente. Os cenários de integração montam uma edição compartilhada em sequência. O teste específico de concorrência usa dois processos independentes para reenviar a mesma mutação e conferir a ausência de duplicação.
+Não execute duas suítes que alteram o banco simultaneamente. Os cenários de integração montam uma edição compartilhada em sequência. Regressões concorrentes usam processos e conexões independentes: cobrem replay da mesma mutação, anulação contra conclusão do jogo e disputa de local/horário entre criação manual, edição e confirmação de bloco. As barreiras de teste sincronizam os participantes da corrida sem atrasos arbitrários.
 
 ## Navegador em execução manual
 
@@ -150,7 +150,7 @@ referências.
 
 Os testes cobrem administração, portal do aluno, permissões, todas as telas principais e torneios com sete partidas. Os cenários offline desabilitam a rede do navegador, verificam IndexedDB e conferem no servidor o resultado após a reconexão.
 
-`offline-queue-regression.spec.cjs` usa o IndexedDB real do Chromium e respostas HTTP controladas, sem alterar o banco SQL. Cobre a ordem entre alterações novas e pendentes, respostas sem confirmação de sucesso (vazias, HTML, JSON truncado ou `status: erro`), compatibilidade com `status: sucesso`, dependências de ocorrências nas rotas v1, jogos temporários intercalados, aborto de transação local, aplicação de resultados v1 no chaveamento, sondagem do servidor local, coordenação entre abas e exportação/importação idempotente sem credencial CSRF. Para rodar apenas essas regressões: `npm --prefix tests/browser test -- offline-queue-regression.spec.cjs`. Os testes JavaScript também verificam a captura dos cadastros e a projeção de placares pelas rotas v1.
+`offline-queue-regression.spec.cjs` usa o IndexedDB real do Chromium e respostas HTTP controladas, sem alterar o banco SQL. Cobre a ordem entre alterações novas e pendentes, respostas sem confirmação de sucesso (vazias, HTML, JSON truncado ou `status: erro`), compatibilidade com `status: sucesso`, dependências de ocorrências nas rotas v1, jogos temporários intercalados, aborto de transação local, aplicação de resultados v1 no chaveamento, sondagem do servidor local, coordenação entre abas e exportação/importação idempotente sem credencial CSRF. Para rodar apenas essas regressões: `npm --prefix tests/browser test -- tests/browser/offline-queue-regression.spec.cjs`. Os testes JavaScript também verificam a captura dos cadastros e a projeção de placares pelas rotas v1.
 
 O cenário de chaveamento ímpar prepara três equipes com elenco e exige um avanço automático inicial. Se a preparação falhar, a suíte falha. A retificação de placar usa os identificadores criados pelo próprio teste e consulta os valores persistidos depois da alteração.
 

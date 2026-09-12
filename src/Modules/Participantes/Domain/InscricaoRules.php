@@ -8,6 +8,32 @@ use InvalidArgumentException;
 
 final class InscricaoRules
 {
+    public static function modalidadeCompativel(
+        string $generoAluno,
+        string $generoModalidade,
+        int $categoriaTurma,
+        int $categoriaModalidade,
+    ): bool {
+        return self::categoriaCompativel($categoriaTurma, $categoriaModalidade)
+            && self::generoCompativel($generoAluno, $generoModalidade);
+    }
+
+    public static function categoriaCompativel(int $categoriaTurma, int $categoriaModalidade): bool
+    {
+        return $categoriaTurma > 0 && $categoriaTurma === $categoriaModalidade;
+    }
+
+    public static function generoCompativel(string $generoAluno, string $generoModalidade): bool
+    {
+        $studentGender = strtoupper(trim($generoAluno));
+        $modalityGender = strtoupper(trim($generoModalidade));
+        if (!in_array($studentGender, ['MASC', 'FEM'], true)) {
+            return false;
+        }
+
+        return $modalityGender === 'MISTO' || $modalityGender === $studentGender;
+    }
+
     /** @param array<int, mixed> $ids @return list<int> */
     public static function normalizarIds(array $ids): array
     {

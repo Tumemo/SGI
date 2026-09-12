@@ -38,6 +38,9 @@ final class ResultadoController
         if (!isset($data['id_jogo'], $data['resultados']) || !is_array($data['resultados'])) {
             return Response::json(['success' => false, 'message' => 'Dados insuficientes.'], 400);
         }
+        if (array_key_exists('pontos', $data) && $data['pontos'] !== null && !is_array($data['pontos'])) {
+            return Response::json(['success' => false, 'message' => 'Os pontos offline devem ser enviados em uma lista.'], 422);
+        }
         try {
             $context = $this->service->inspecionar(
                 (int) $data['id_jogo'],
@@ -64,8 +67,8 @@ final class ResultadoController
                     (int) $data['id_jogo'],
                     isset($data['nome_jogo']) ? (string) $data['nome_jogo'] : null,
                     (int) ($data['id_modalidade'] ?? 0),
-                    array_values(array_filter($data['resultados'], 'is_array')),
-                    array_values(array_filter($data['pontos'] ?? [], 'is_array')),
+                    $data['resultados'],
+                    $data['pontos'] ?? [],
                     (int) ($_SESSION['id_usuario'] ?? $_SESSION['id'] ?? 0),
                 );
                 return Response::json($result);

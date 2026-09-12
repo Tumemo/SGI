@@ -213,7 +213,7 @@ class AlunosPortalTest
         }
         $database->close();
 
-        // 8.3 Ranking do aluno: a publicação manual não é pré-requisito.
+        // 8.3 Ranking do aluno exige encerramento e publicação explícita.
         $edicoes = $aluno->get('api/v1/edicoes?regulamento=true');
         $edicaoAtiva = null;
         foreach (($edicoes['json'] ?? []) as $edicao) {
@@ -232,16 +232,35 @@ class AlunosPortalTest
 
             $admin = new TestClient();
             $admin->login('admin', '123');
-            $fechada = $admin->postJson("api/v1/edicoes?id=$idEdicao", ['status_interclasse' => '0']);
-            Assertions::assertJsonSuccess('Encerramento da edição para validar ranking automático', $fechada);
+            $publicationConnection = TestDatabase::connect(getenv('SGI_TEST_DB_NAME') ?: 'sgi_test');
+            $readPublication = $publicationConnection->prepare('SELECT ranking_publicado_em FROM interclasses WHERE id_interclasse = ? LIMIT 1');
+            $readPublication->bind_param('i', $idEdicao);
+            $readPublication->execute();
+            $originalPublication = $readPublication->get_result()->fetch_column();
+            $readPublication->close();
+            $unpublish = $publicationConnection->prepare('UPDATE interclasses SET ranking_publicado_em = NULL WHERE id_interclasse = ?');
+            $unpublish->bind_param('i', $idEdicao);
+            $unpublish->execute();
+            $unpublish->close();
 
             try {
-                $ranking = $aluno->get("api/v1/ranking?id_interclasse=$idEdicao");
-                Assertions::assertStatus('Aluno consulta ranking após encerramento', $ranking, 200);
-                Assertions::assert('Ranking encerrado retorna turmas sem publicação manual', is_array($ranking['json'] ?? null) && count($ranking['json']) > 0);
+                $fechada = $admin->postJson("api/v1/edicoes?id=$idEdicao", ['status_interclasse' => '0']);
+                Assertions::assertJsonSuccess('Encerramento da edição para validar ranking', $fechada);
+                $unpublishedRanking = $aluno->get("api/v1/ranking?id_interclasse=$idEdicao");
+                Assertions::assert(
+                    'Aluno não consulta ranking encerrado que ainda não foi publicado',
+                    $unpublishedRanking['code'] === 403
+                    && ($unpublishedRanking['json']['success'] ?? true) === false
+                    && !str_contains((string) $unpublishedRanking['body'], 'nome_turma'),
+                );
             } finally {
                 $reativada = $admin->postJson("api/v1/edicoes?id=$idEdicao", ['status_interclasse' => '1']);
                 Assertions::assertJsonSuccess('Restauração da edição ativa após teste do ranking', $reativada);
+                $restorePublication = $publicationConnection->prepare('UPDATE interclasses SET ranking_publicado_em = ? WHERE id_interclasse = ?');
+                $restorePublication->bind_param('si', $originalPublication, $idEdicao);
+                $restorePublication->execute();
+                $restorePublication->close();
+                $publicationConnection->close();
             }
         }
     }

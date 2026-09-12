@@ -32,10 +32,10 @@ final class ImportacaoTurmaController
             return Response::json($this->storage->process($file, $class, fn (string $path): array => $this->service->importar($path, $class, $edition)));
         } catch (\InvalidArgumentException $exception) {
             // O contrato JSON mantém o campo success também para validações.
-            return Response::json(['success' => false, 'message' => $exception->getMessage()]);
+            return Response::json(['success' => false, 'message' => $exception->getMessage()], 400);
         } catch (\Throwable $exception) {
             error_log('Falha ao importar PDF da turma: ' . $exception->getMessage());
-            return Response::json(['success' => false, 'message' => 'Não foi possível importar os alunos.']);
+            return Response::json(['success' => false, 'message' => 'Não foi possível importar os alunos.'], 500);
         }
     }
 }

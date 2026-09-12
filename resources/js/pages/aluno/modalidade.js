@@ -527,7 +527,7 @@ window.SGIPage.mount("aluno/modalidade", function (pageConfig, pageScope) {
             document.getElementById('msgFeedback').textContent = result.message;
             if (result.success) {
                 document.getElementById('msgFeedback').className = 'small text-success text-center mb-0 mt-2';
-                setTimeout(() => window.location.href = '/aluno/inicio', 1500);
+                setTimeout(() => window.location.href = APP_BASE + '/aluno/inicio', 1500);
             } else {
                 document.getElementById('msgFeedback').className = 'small text-danger text-center mb-0 mt-2';
                 btn.disabled = false;

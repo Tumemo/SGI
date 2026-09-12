@@ -6,11 +6,24 @@ namespace Tests\Unit\Modules\Competicoes;
 
 use App\Modules\Competicoes\Application\PontoService;
 use App\Modules\Competicoes\Domain\PontoRepository;
+use App\Modules\Competicoes\Domain\PontoRules;
 use InvalidArgumentException;
 use PHPUnit\Framework\TestCase;
 
 final class PontoServiceTest extends TestCase
 {
+    public function testEditionLookupsUseTheRepositoryAndRejectInvalidIds(): void
+    {
+        $service = new PontoService(new InMemoryPontoRepository());
+
+        self::assertSame(5, $service->edicaoDoJogo(10));
+        self::assertSame(5, $service->edicaoDaEquipe(30));
+        self::assertSame(5, $service->edicaoDoPonto(7));
+        self::assertNull($service->edicaoDoJogo(0));
+        self::assertNull($service->edicaoDaEquipe(-1));
+        self::assertNull($service->edicaoDoPonto(0));
+    }
+
     public function testBlocksPointWithoutAthleteWithTheUserFacingMessage(): void
     {
         $this->expectExceptionObject(new InvalidArgumentException(
@@ -75,7 +88,18 @@ final class PontoServiceTest extends TestCase
         self::assertSame('anulado', $result['status_artilheiro']);
         self::assertSame(0, $result['conta_no_placar']);
         self::assertSame(1, $repository->anulations);
+        self::assertSame(2, $repository->lastAnulationOperatorId);
+        self::assertSame('Iniciado', $repository->lastAnulationExpectedGameStatus);
         self::assertFalse($repository->deleted);
+    }
+
+    public function testAnulationStatusRuleAllowsOnlyRunningOrPausedGames(): void
+    {
+        self::assertTrue(PontoRules::permiteAnulacao('Iniciado'));
+        self::assertTrue(PontoRules::permiteAnulacao('Pausado'));
+        self::assertFalse(PontoRules::permiteAnulacao('Agendado'));
+        self::assertFalse(PontoRules::permiteAnulacao('Concluido'));
+        self::assertFalse(PontoRules::permiteAnulacao(''));
     }
 }
 
@@ -85,7 +109,24 @@ final class InMemoryPontoRepository implements PontoRepository
     public ?array $point = null;
     public int $insertions = 0;
     public int $anulations = 0;
+    public ?int $lastAnulationOperatorId = null;
+    public ?string $lastAnulationExpectedGameStatus = null;
     public bool $deleted = false;
+
+    public function edicaoDoJogo(int $gameId): ?int
+    {
+        return $gameId === 10 ? 5 : null;
+    }
+
+    public function edicaoDaEquipe(int $teamId): ?int
+    {
+        return $teamId === 30 ? 5 : null;
+    }
+
+    public function edicaoDoPonto(int $pointId): ?int
+    {
+        return $pointId === 7 ? 5 : null;
+    }
 
     public function listarAtletas(int $gameId, int $teamId): array
     {
@@ -134,9 +175,11 @@ final class InMemoryPontoRepository implements PontoRepository
         return $this->point;
     }
 
-    public function anular(int $pointId, int $operatorId): array
+    public function anular(int $pointId, int $operatorId, ?string $expectedGameStatus = null): array
     {
         $this->anulations++;
+        $this->lastAnulationOperatorId = $operatorId;
+        $this->lastAnulationExpectedGameStatus = $expectedGameStatus;
         if ($this->point !== null) {
             $this->point['status_artilheiro'] = 'anulado';
             $this->point['conta_no_placar'] = 0;
@@ -158,7 +201,7 @@ final class InMemoryPontoRepository implements PontoRepository
     {
     }
 
-    public function persistirPontosOffline(int $gameId, array $points): void
+    public function persistirPontosOffline(int $gameId, array $points, int $operatorId, ?string $expectedGameStatus = null): void
     {
     }
 }

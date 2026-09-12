@@ -10,5 +10,7 @@ interface EdicaoConsulta
 
     public function isActive(int $editionId): bool;
 
+    public function isRankingPublished(int $editionId): bool;
+
     public function isUserEditionClosed(int $userId): bool;
 }

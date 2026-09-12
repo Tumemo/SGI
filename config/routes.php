@@ -107,7 +107,12 @@ $router->add(['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'], '/api/v1/modalidades',
 ));
 $router->add(['GET', 'PUT', 'OPTIONS'], '/api/v1/ranking', $withDatabase(
     static fn (mysqli $conn): RankingController => new RankingController(
-        new RankingService(new MysqliRankingRepository($conn)),
+        new RankingService(
+            new MysqliRankingRepository($conn),
+            new \App\Modules\Participantes\Application\TurmaService(
+                new \App\Modules\Participantes\Infrastructure\MysqliTurmaRepository($conn),
+            ),
+        ),
         new \App\Modules\Eventos\Infrastructure\MysqliEdicaoConsultaRepository($conn),
     ),
 ));

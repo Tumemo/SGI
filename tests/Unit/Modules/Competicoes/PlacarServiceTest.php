@@ -16,6 +16,15 @@ final class PlacarServiceTest extends TestCase
         self::assertTrue(true);
     }
 
+    public function testAllowsZeroForTheLosingTeamWhenTheMatchHasAResult(): void
+    {
+        $service = new PlacarService();
+        $service->validarFinalizacao([0, 1]);
+        $service->validarAlteracao([0, 1]);
+
+        self::assertTrue(true);
+    }
+
     public function testRejectsZeroScoreWhenFinalizing(): void
     {
         $this->expectExceptionMessage('Não é possível finalizar um jogo com placar 0x0.');

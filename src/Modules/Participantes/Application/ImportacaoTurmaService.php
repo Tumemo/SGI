@@ -7,6 +7,7 @@ namespace App\Modules\Participantes\Application;
 use App\Modules\Participantes\Domain\AlunoPdfReader;
 use App\Modules\Participantes\Domain\ImportacaoTurmaRepository;
 use InvalidArgumentException;
+use RuntimeException;
 
 final class ImportacaoTurmaService
 {
@@ -49,7 +50,8 @@ final class ImportacaoTurmaService
         unset($student);
         $result = $this->repository->import($students, $class, $destination['edicao']);
         if ($result['status'] !== 'sucesso') {
-            return ['success' => false, 'message' => $result['mensagem'] ?? 'Erro desconhecido na importação.'];
+            $message = $result['mensagem'] ?? 'Falha interna ao importar alunos.';
+            throw new RuntimeException(is_string($message) && $message !== '' ? $message : 'Falha interna ao importar alunos.');
         }
         $parts = [];
         if ($result['cadastrados'] > 0) {

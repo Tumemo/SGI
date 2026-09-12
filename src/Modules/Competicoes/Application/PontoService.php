@@ -5,12 +5,28 @@ declare(strict_types=1);
 namespace App\Modules\Competicoes\Application;
 
 use App\Modules\Competicoes\Domain\PontoRepository;
+use App\Modules\Competicoes\Domain\PontoRules;
 use InvalidArgumentException;
 
 final class PontoService
 {
     public function __construct(private readonly PontoRepository $pontos)
     {
+    }
+
+    public function edicaoDoJogo(int $gameId): ?int
+    {
+        return $gameId > 0 ? $this->pontos->edicaoDoJogo($gameId) : null;
+    }
+
+    public function edicaoDaEquipe(int $teamId): ?int
+    {
+        return $teamId > 0 ? $this->pontos->edicaoDaEquipe($teamId) : null;
+    }
+
+    public function edicaoDoPonto(int $pointId): ?int
+    {
+        return $pointId > 0 ? $this->pontos->edicaoDoPonto($pointId) : null;
     }
 
     /** @return list<array<string, mixed>> */
@@ -105,9 +121,9 @@ final class PontoService
         if ((int) ($point['conta_no_placar'] ?? 0) !== 1) {
             return $point;
         }
-        if (!in_array((string) ($point['status_jogo'] ?? ''), ['Iniciado', 'Pausado'], true)) {
+        if (!PontoRules::permiteAnulacao((string) ($point['status_jogo'] ?? ''))) {
             throw new InvalidArgumentException('O ponto só pode ser anulado durante a partida.');
         }
-        return $this->pontos->anular($pointId, $operatorId);
+        return $this->pontos->anular($pointId, $operatorId, (string) $point['status_jogo']);
     }
 }

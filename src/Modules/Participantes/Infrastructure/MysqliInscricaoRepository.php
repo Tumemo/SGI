@@ -6,6 +6,7 @@ namespace App\Modules\Participantes\Infrastructure;
 
 use App\Modules\Competicoes\Domain\EquipePadraoRepository;
 use App\Modules\Participantes\Domain\InscricaoRepository;
+use App\Modules\Participantes\Domain\InscricaoRecusadaException;
 use App\Modules\Participantes\Domain\InscricaoRules;
 use App\Shared\Database\Transaction;
 use mysqli;
@@ -29,32 +30,29 @@ final class MysqliInscricaoRepository implements InscricaoRepository
         try {
             $this->lockEdition($editionId);
             $user = $this->one(
-                'SELECT turmas_id_turma, interclasses_id_interclasse, status_usuario
+                'SELECT turmas_id_turma, interclasses_id_interclasse, status_usuario, genero_usuario
                  FROM usuarios WHERE id_usuario = ? LIMIT 1 FOR UPDATE',
                 'i',
                 [$userId],
             );
             if ($user === null) {
-                throw new RuntimeException('Usuário não encontrado.');
+                throw new InscricaoRecusadaException('Usuário não encontrado.');
             }
             if ((int) ($user['interclasses_id_interclasse'] ?? 0) !== $editionId || (string) ($user['status_usuario'] ?? '0') !== '1') {
-                throw new RuntimeException('Usuário não pertence a este interclasse.');
+                throw new InscricaoRecusadaException('Usuário não pertence a este interclasse.');
             }
             $classId = (int) ($user['turmas_id_turma'] ?? 0);
             if ($classId <= 0) {
-                throw new RuntimeException('Usuário não possui turma vinculada.');
+                throw new InscricaoRecusadaException('Usuário não possui turma vinculada.');
             }
-            $this->lockClass($classId, $editionId);
+            $classCategoryId = $this->lockClass($classId, $editionId);
 
-            $validTeams = [];
+            $candidateTeams = [];
             $errors = [];
             foreach ($teamIds as $teamId) {
                 $row = $this->one(
-                    'SELECT e.id_equipe, e.turmas_id_turma, e.modalidades_id_modalidade,
-                            m.interclasses_id_interclasse
-                     FROM equipes e
-                     INNER JOIN modalidades m ON m.id_modalidade = e.modalidades_id_modalidade
-                     WHERE e.id_equipe = ? AND e.status_equipe = \'1\' LIMIT 1',
+                    'SELECT id_equipe, modalidades_id_modalidade
+                     FROM equipes WHERE id_equipe = ? LIMIT 1',
                     'i',
                     [$teamId],
                 );
@@ -62,26 +60,76 @@ final class MysqliInscricaoRepository implements InscricaoRepository
                     $errors[] = "Equipe {$teamId} não encontrada.";
                     continue;
                 }
-                if ((int) $row['turmas_id_turma'] !== $classId) {
-                    $errors[] = 'Você só pode se inscrever em equipes da sua turma.';
-                    continue;
-                }
-                if ((int) $row['interclasses_id_interclasse'] !== $editionId) {
-                    $errors[] = "Equipe {$teamId} não pertence a este interclasse.";
-                    continue;
-                }
-                $validTeams[] = [
+                $candidateTeams[] = [
                     'id_equipe' => (int) $row['id_equipe'],
                     'id_modalidade' => (int) $row['modalidades_id_modalidade'],
                 ];
             }
+            if ($candidateTeams === []) {
+                throw new InscricaoRecusadaException('Nenhuma equipe válida informada.' . ($errors !== [] ? ' ' . implode(' ', array_unique($errors)) : ''));
+            }
+
+            $candidateModalityIds = array_values(array_unique(array_column($candidateTeams, 'id_modalidade')));
+            sort($candidateModalityIds, SORT_NUMERIC);
+            $lockedModalities = $this->lockModalities($candidateModalityIds);
+
+            $validTeams = [];
+            foreach ($candidateTeams as $candidate) {
+                $teamId = $candidate['id_equipe'];
+                $modalityId = $candidate['id_modalidade'];
+                $modality = $lockedModalities[$modalityId] ?? null;
+                if ($modality === null) {
+                    $errors[] = "Modalidade {$modalityId} não encontrada.";
+                    continue;
+                }
+                if ((int) $modality['interclasses_id_interclasse'] !== $editionId) {
+                    $errors[] = "Modalidade {$modalityId} não pertence a este interclasse.";
+                    continue;
+                }
+                if ((string) $modality['status_modalidade'] !== '1') {
+                    $errors[] = "Modalidade {$modalityId} está inativa.";
+                    continue;
+                }
+
+                $team = $this->one(
+                    'SELECT id_equipe, status_equipe, turmas_id_turma, modalidades_id_modalidade
+                     FROM equipes WHERE id_equipe = ? AND modalidades_id_modalidade = ? LIMIT 1 FOR UPDATE',
+                    'ii',
+                    [$teamId, $modalityId],
+                );
+                if ($team === null) {
+                    $errors[] = "Equipe {$teamId} foi alterada durante a inscrição.";
+                    continue;
+                }
+                if ((string) $team['status_equipe'] !== '1') {
+                    $errors[] = "Equipe {$teamId} está inativa.";
+                    continue;
+                }
+                if ((int) $team['turmas_id_turma'] !== $classId) {
+                    $errors[] = 'Você só pode se inscrever em equipes da sua turma.';
+                    continue;
+                }
+                $categoryId = (int) $modality['categorias_id_categoria'];
+                $studentGender = (string) $user['genero_usuario'];
+                $modalityGender = (string) $modality['genero_modalidade'];
+                if (!InscricaoRules::modalidadeCompativel($studentGender, $modalityGender, $classCategoryId, $categoryId)) {
+                    $errors[] = !InscricaoRules::categoriaCompativel($classCategoryId, $categoryId)
+                        ? "Categoria da modalidade {$modalityId} não corresponde à categoria da sua turma."
+                        : "Gênero incompatível com a modalidade {$modalityId}.";
+                    continue;
+                }
+
+                $validTeams[] = [
+                    'id_equipe' => $teamId,
+                    'id_modalidade' => $modalityId,
+                ];
+            }
             if ($validTeams === []) {
-                throw new RuntimeException('Nenhuma equipe válida informada.' . ($errors !== [] ? ' ' . implode(' ', array_unique($errors)) : ''));
+                throw new InscricaoRecusadaException('Nenhuma equipe válida informada.' . ($errors !== [] ? ' ' . implode(' ', array_unique($errors)) : ''));
             }
 
             $modalities = array_values(array_unique(array_column($validTeams, 'id_modalidade')));
             sort($modalities, SORT_NUMERIC);
-            $this->lockModalities($modalities, $editionId);
 
             $already = [];
             $statement = $this->prepare(
@@ -102,14 +150,14 @@ final class MysqliInscricaoRepository implements InscricaoRepository
             try {
                 $union = InscricaoRules::uniaoModalidades(array_keys($already), $modalities);
             } catch (\InvalidArgumentException $exception) {
-                throw new RuntimeException($exception->getMessage(), 0, $exception);
+                throw new InscricaoRecusadaException($exception->getMessage(), 0, $exception);
             }
             $newModalities = array_values(array_filter($union, static fn (int $id): bool => !isset($already[$id])));
+            $existingModalities = array_fill_keys(array_values(array_intersect($modalities, array_keys($already))), true);
 
             $insertions = 0;
-            $existing = 0;
             foreach ($newModalities as $modalityId) {
-                $modality = $this->one('SELECT max_inscrito_modalidade, max_equipes FROM modalidades WHERE id_modalidade = ? LIMIT 1', 'i', [$modalityId]);
+                $modality = $lockedModalities[$modalityId] ?? null;
                 $maxStudents = (int) ($modality['max_inscrito_modalidade'] ?? 0);
                 $maxTeams = isset($modality['max_equipes']) ? (int) $modality['max_equipes'] : 0;
                 $capacity = $maxStudents > 0 && $maxTeams > 0 ? $maxStudents * $maxTeams : 0;
@@ -138,7 +186,7 @@ final class MysqliInscricaoRepository implements InscricaoRepository
                 }
                 $check = $this->one('SELECT 1 FROM equipes_has_usuarios WHERE equipes_id_equipe = ? AND usuarios_id_usuario = ? LIMIT 1', 'ii', [$teamId, $userId]);
                 if ($check !== null) {
-                    $existing++;
+                    $existingModalities[$modalityId] = true;
                     continue;
                 }
                 $statement = $this->prepare('INSERT INTO equipes_has_usuarios (equipes_id_equipe, usuarios_id_usuario) VALUES (?, ?)');
@@ -150,6 +198,7 @@ final class MysqliInscricaoRepository implements InscricaoRepository
                 $statement->close();
                 $insertions++;
             }
+            $existing = count($existingModalities);
             Transaction::commit($this->connection);
         } catch (\Throwable $exception) {
             Transaction::rollback($this->connection);
@@ -178,37 +227,39 @@ final class MysqliInscricaoRepository implements InscricaoRepository
     {
         $row = $this->one('SELECT id_interclasse FROM interclasses WHERE id_interclasse = ? LIMIT 1 FOR UPDATE', 'i', [$editionId]);
         if ($row === null) {
-            throw new RuntimeException('Interclasse não encontrado.');
+            throw new InscricaoRecusadaException('Interclasse não encontrado.');
         }
     }
 
-    private function lockClass(int $classId, int $editionId): void
+    private function lockClass(int $classId, int $editionId): int
     {
         $row = $this->one(
-            'SELECT id_turma FROM turmas WHERE id_turma = ? AND interclasses_id_interclasse = ? AND status_turma = \'1\' LIMIT 1 FOR UPDATE',
+            'SELECT categorias_id_categoria FROM turmas WHERE id_turma = ? AND interclasses_id_interclasse = ? AND status_turma = \'1\' LIMIT 1 FOR UPDATE',
             'ii',
             [$classId, $editionId],
         );
         if ($row === null) {
-            throw new RuntimeException('Turma do usuário não pertence a este interclasse.');
+            throw new InscricaoRecusadaException('Turma do usuário não pertence a este interclasse.');
         }
+
+        return (int) $row['categorias_id_categoria'];
     }
 
-    /** @param list<int> $modalityIds */
-    private function lockModalities(array $modalityIds, int $editionId): void
+    /** @param list<int> $modalityIds @return array<int, array<string, mixed>|null> */
+    private function lockModalities(array $modalityIds): array
     {
+        $modalities = [];
         foreach ($modalityIds as $modalityId) {
-            $row = $this->one(
-                'SELECT id_modalidade FROM modalidades
-                 WHERE id_modalidade = ? AND interclasses_id_interclasse = ? AND status_modalidade = \'1\'
-                 LIMIT 1 FOR UPDATE',
-                'ii',
-                [$modalityId, $editionId],
+            $modalities[$modalityId] = $this->one(
+                'SELECT id_modalidade, interclasses_id_interclasse, status_modalidade,
+                        genero_modalidade, categorias_id_categoria, max_inscrito_modalidade, max_equipes
+                 FROM modalidades WHERE id_modalidade = ? LIMIT 1 FOR UPDATE',
+                'i',
+                [$modalityId],
             );
-            if ($row === null) {
-                throw new RuntimeException("Modalidade {$modalityId} não pertence a este interclasse.");
-            }
         }
+
+        return $modalities;
     }
 
     /** @param list<int> $params @return array<string, mixed>|null */

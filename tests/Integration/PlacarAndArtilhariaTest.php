@@ -5,6 +5,7 @@ namespace SGITests\Integration;
 
 use SGITests\Support\TestClient;
 use SGITests\Support\Assertions;
+use SGITests\Support\TestDatabase;
 
 class PlacarAndArtilhariaTest
 {
@@ -62,6 +63,7 @@ class PlacarAndArtilhariaTest
             'equipes_id_equipe' => $e1,
             'usuarios_id_usuario' => $atleta1,
             'chave_jogada' => 'regressao-ponto-' . bin2hex(random_bytes(5)),
+            'registrado_por' => self::userId('admin'),
         ];
         $pointMutation = ['X-SGI-Mutation-Id' => 'regressao-ponto-' . bin2hex(random_bytes(6))];
         $resPonto = $mesario->postJson('api/v1/pontos', $pontoBase, $pointMutation);
@@ -100,12 +102,30 @@ class PlacarAndArtilhariaTest
                 break;
             }
         }
-        $anulado = $mesario->putJson('api/v1/pontos', ['id_ponto' => $pontoParaAnular]);
+        $anulador = new TestClient();
+        $loginAnulador = $anulador->login('admin', '123');
+        Assertions::assertJsonSuccess('Outro operador administrativo autenticado para anular o ponto', $loginAnulador);
+        $cancelMutation = ['X-SGI-Mutation-Id' => 'regressao-anulacao-' . bin2hex(random_bytes(6))];
+        $anulado = $anulador->putJson('api/v1/pontos', ['id_ponto' => $pontoParaAnular], $cancelMutation);
+        $anuladoReplay = $anulador->putJson('api/v1/pontos', ['id_ponto' => $pontoParaAnular], $cancelMutation);
+        $audit = self::pointAudit($pontoParaAnular);
         Assertions::assertJsonSuccess('Anulação retira o ponto do placar', $anulado);
         Assertions::assert('Anulação preserva o evento individual como anulado',
             (int) ($anulado['json']['placar'] ?? -1) === 2
             && ($anulado['json']['ponto']['status_artilheiro'] ?? '') === 'anulado'
             && (int) ($anulado['json']['ponto']['conta_no_placar'] ?? 1) === 0,
+        );
+        Assertions::assert(
+            'Autor original é preservado e a anulação registra o operador atual',
+            $audit !== null
+            && $audit['registrado_por'] === self::userId('mesario')
+            && $audit['anulado_por'] === self::userId('admin'),
+            json_encode($audit, JSON_UNESCAPED_UNICODE),
+        );
+        Assertions::assert(
+            'Replay da anulação devolve a resposta original sem descontar o placar duas vezes',
+            $anuladoReplay['json'] === $anulado['json']
+            && (int) ($anuladoReplay['json']['placar'] ?? -1) === 2,
         );
         Assertions::assertStatus('Endpoint antigo de artilharia não cria pontuação isolada', $mesario->postJson('api/v1/artilheiros', [
             'usuarios_id_usuario' => $atleta1,
@@ -190,5 +210,153 @@ class PlacarAndArtilhariaTest
             ]
         ]);
         Assertions::assertJsonSuccess("Finalização da partida com placar válido (3x1)", $resFin);
+
+        $scoresBeforeInvalidResults = self::scoresForGame($idJogo);
+        $pointsBeforeInvalidResults = self::pointCountForGame($idJogo);
+        Assertions::assertStatus('Placar em string decimal é rejeitado pelo endpoint', $mesario->postJson('api/v1/resultados', [
+            'id_jogo' => $idJogo,
+            'nome_jogo' => 'MM:4:0:N',
+            'id_modalidade' => $idModalidade,
+            'resultados' => [
+                ['id_equipe' => $e1, 'gols' => '3.9'],
+                ['id_equipe' => $e2, 'gols' => 1],
+            ],
+        ]), 422);
+        Assertions::assert('Entrada decimal não altera placar nem partidas', self::scoresForGame($idJogo) === $scoresBeforeInvalidResults);
+
+        Assertions::assertStatus('Linha escalar em resultados rejeita o lote completo', $mesario->postJson('api/v1/resultados', [
+            'id_jogo' => $idJogo,
+            'nome_jogo' => 'MM:4:0:N',
+            'id_modalidade' => $idModalidade,
+            'resultados' => [
+                ['id_equipe' => $e1, 'gols' => 3],
+                ['id_equipe' => $e2, 'gols' => 1],
+                'not-a-result-row',
+            ],
+        ]), 422);
+        Assertions::assert('Linha escalar não altera placar nem pontos', self::scoresForGame($idJogo) === $scoresBeforeInvalidResults
+            && self::pointCountForGame($idJogo) === $pointsBeforeInvalidResults);
+
+        Assertions::assertStatus('Evento escalar em pontos rejeita o lote completo', $mesario->postJson('api/v1/resultados', [
+            'id_jogo' => $idJogo,
+            'nome_jogo' => 'MM:4:0:N',
+            'id_modalidade' => $idModalidade,
+            'resultados' => [
+                ['id_equipe' => $e1, 'gols' => 3],
+                ['id_equipe' => $e2, 'gols' => 1],
+            ],
+            'pontos' => ['not-an-offline-event'],
+        ]), 422);
+        Assertions::assert('Evento escalar não altera placar nem pontos', self::scoresForGame($idJogo) === $scoresBeforeInvalidResults
+            && self::pointCountForGame($idJogo) === $pointsBeforeInvalidResults);
+
+        Assertions::assertStatus('Tipo escalar na raiz de pontos retorna 422', $mesario->postJson('api/v1/resultados', [
+            'id_jogo' => $idJogo,
+            'nome_jogo' => 'MM:4:0:N',
+            'id_modalidade' => $idModalidade,
+            'resultados' => [
+                ['id_equipe' => $e1, 'gols' => 3],
+                ['id_equipe' => $e2, 'gols' => 1],
+            ],
+            'pontos' => 'not-a-list',
+        ]), 422);
+        Assertions::assert('Tipo escalar de pontos não altera placar nem eventos', self::scoresForGame($idJogo) === $scoresBeforeInvalidResults
+            && self::pointCountForGame($idJogo) === $pointsBeforeInvalidResults);
+
+        $rollbackKey = 'n08-atomic-rollback-' . bin2hex(random_bytes(5));
+        $rollback = $mesario->postJson('api/v1/resultados', [
+            'id_jogo' => $idJogo,
+            'nome_jogo' => 'MM:4:0:N',
+            'id_modalidade' => $idModalidade,
+            'resultados' => [
+                ['id_equipe' => $e1, 'gols' => 5],
+                ['id_equipe' => $e2, 'gols' => 1],
+            ],
+            'pontos' => [[
+                'id_equipe' => $e1,
+                'usuarios_id_usuario' => $atleta1,
+                'chave_jogada' => $rollbackKey,
+            ]],
+        ]);
+        Assertions::assertStatus('Inconsistência entre eventos e placar retorna 4xx', $rollback, 422);
+        Assertions::assert('Rejeição de evento offline desfaz ponto e placar da transação',
+            self::scoresForGame($idJogo) === $scoresBeforeInvalidResults
+            && self::pointCountForGame($idJogo) === $pointsBeforeInvalidResults,
+        );
+
+        $integerStrings = $mesario->postJson('api/v1/resultados', [
+            'id_jogo' => $idJogo,
+            'nome_jogo' => 'MM:4:0:N',
+            'id_modalidade' => $idModalidade,
+            'resultados' => [
+                ['id_equipe' => $e1, 'gols' => '03'],
+                ['id_equipe' => $e2, 'gols' => '1'],
+            ],
+        ]);
+        Assertions::assertJsonSuccess('Strings de placar inteiro continuam compatíveis com o formulário', $integerStrings);
     }
+
+    private static function userId(string $registration): int
+    {
+        $database = getenv('SGI_TEST_DB_NAME') ?: 'sgi_test';
+        $connection = TestDatabase::connect($database);
+        $statement = $connection->prepare('SELECT id_usuario FROM usuarios WHERE matricula_usuario = ? LIMIT 1');
+        $statement->bind_param('s', $registration);
+        $statement->execute();
+        $id = (int) $statement->get_result()->fetch_column();
+        $statement->close();
+        $connection->close();
+        return $id;
+    }
+
+    /** @return array{registrado_por:?int,anulado_por:?int}|null */
+    private static function pointAudit(int $pointId): ?array
+    {
+        $database = getenv('SGI_TEST_DB_NAME') ?: 'sgi_test';
+        $connection = TestDatabase::connect($database);
+        $statement = $connection->prepare('SELECT registrado_por, anulado_por FROM artilheiros WHERE id_artilheiro = ? LIMIT 1');
+        $statement->bind_param('i', $pointId);
+        $statement->execute();
+        $row = $statement->get_result()->fetch_assoc();
+        $statement->close();
+        $connection->close();
+        if ($row === null) {
+            return null;
+        }
+        return [
+            'registrado_por' => $row['registrado_por'] === null ? null : (int) $row['registrado_por'],
+            'anulado_por' => $row['anulado_por'] === null ? null : (int) $row['anulado_por'],
+        ];
+    }
+
+    /** @return array<int, int> */
+    private static function scoresForGame(int $gameId): array
+    {
+        $database = getenv('SGI_TEST_DB_NAME') ?: 'sgi_test';
+        $connection = TestDatabase::connect($database);
+        $statement = $connection->prepare('SELECT equipes_id_equipe, resultado_partida FROM partidas WHERE jogos_id_jogo = ? ORDER BY equipes_id_equipe');
+        $statement->bind_param('i', $gameId);
+        $statement->execute();
+        $scores = [];
+        foreach ($statement->get_result()->fetch_all(\MYSQLI_ASSOC) as $row) {
+            $scores[(int) $row['equipes_id_equipe']] = (int) $row['resultado_partida'];
+        }
+        $statement->close();
+        $connection->close();
+        return $scores;
+    }
+
+    private static function pointCountForGame(int $gameId): int
+    {
+        $database = getenv('SGI_TEST_DB_NAME') ?: 'sgi_test';
+        $connection = TestDatabase::connect($database);
+        $statement = $connection->prepare('SELECT COUNT(*) FROM artilheiros WHERE jogos_id_jogo = ?');
+        $statement->bind_param('i', $gameId);
+        $statement->execute();
+        $count = (int) $statement->get_result()->fetch_column();
+        $statement->close();
+        $connection->close();
+        return $count;
+    }
+
 }

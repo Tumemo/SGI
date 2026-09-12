@@ -9,6 +9,8 @@ use InvalidArgumentException;
 
 final class ModalidadeService
 {
+    private const MAX_LIMIT = 2147483647;
+
     public function __construct(private readonly ModalidadeRepository $modalidades)
     {
     }
@@ -35,15 +37,15 @@ final class ModalidadeService
             throw new InvalidArgumentException('Dados incompletos.');
         }
 
-        $maxInscritos = (int) ($data['max_inscrito_modalidade'] ?? 0);
-        $maxEquipes = $this->optionalPositiveInt($data['max_equipes'] ?? null);
+        $maxInscritos = self::normalizarLimite($data['max_inscrito_modalidade'] ?? null) ?? 0;
+        $maxEquipes = self::normalizarLimite($data['max_equipes'] ?? null);
         return $this->modalidades->create([
             'nome_modalidade' => $nome,
             'genero_modalidade' => $this->normalizarGenero((string) ($data['genero_modalidade'] ?? '')),
             'max_inscrito_modalidade' => $maxInscritos,
             'max_equipes' => $maxEquipes,
             'tipos_modalidades_id_tipo_modalidade' => $tipoId,
-            'status_modalidade' => (string) ($data['status_modalidade'] ?? '1'),
+            'status_modalidade' => self::normalizarStatus(array_key_exists('status_modalidade', $data) ? $data['status_modalidade'] : '1'),
             'categorias_id_categoria' => $categoriaId,
             'interclasses_id_interclasse' => $interclasseId,
         ]);
@@ -67,13 +69,13 @@ final class ModalidadeService
                     if ($value === '') {
                         throw new InvalidArgumentException('O nome da modalidade não pode ser vazio.');
                     }
-                } elseif (in_array($field, ['tipos_modalidades_id_tipo_modalidade', 'categorias_id_categoria', 'interclasses_id_interclasse'], true)) {
+                } elseif ($field === 'status_modalidade') {
+                    $value = self::normalizarStatus($value);
+                } else {
                     $value = (int) $value;
                     if ($value <= 0) {
                         throw new InvalidArgumentException('Os vínculos da modalidade devem ser válidos.');
                     }
-                } else {
-                    $value = (string) $value;
                 }
                 $updates[$field] = $value;
             }
@@ -82,10 +84,10 @@ final class ModalidadeService
             $updates['genero_modalidade'] = $this->normalizarGenero((string) $data['genero_modalidade']);
         }
         if (array_key_exists('max_inscrito_modalidade', $data)) {
-            $updates['max_inscrito_modalidade'] = (int) $data['max_inscrito_modalidade'];
+            $updates['max_inscrito_modalidade'] = self::normalizarLimite($data['max_inscrito_modalidade']) ?? 0;
         }
         if (array_key_exists('max_equipes', $data)) {
-            $updates['max_equipes'] = $this->optionalPositiveInt($data['max_equipes']);
+            $updates['max_equipes'] = self::normalizarLimite($data['max_equipes']);
         }
         if ($updates === []) {
             throw new InvalidArgumentException('Nenhum dado fornecido para atualização.');
@@ -105,16 +107,52 @@ final class ModalidadeService
         }
     }
 
-    private function optionalPositiveInt(mixed $value): ?int
+    private static function normalizarLimite(mixed $value): ?int
     {
-        if ($value === null || $value === '' || (int) $value === 0) {
+        if ($value === null) {
             return null;
         }
-        $number = (int) $value;
+
+        if (is_int($value)) {
+            $number = $value;
+        } elseif (is_string($value)) {
+            $digits = trim($value);
+            if ($digits === '') {
+                return null;
+            }
+            if (preg_match('/^[0-9]+$/D', $digits) !== 1) {
+                throw new InvalidArgumentException('Os limites da modalidade devem ser números inteiros não negativos.');
+            }
+            $digits = ltrim($digits, '0');
+            $digits = $digits === '' ? '0' : $digits;
+            if (strlen($digits) > 10 || (strlen($digits) === 10 && strcmp($digits, (string) self::MAX_LIMIT) > 0)) {
+                throw new InvalidArgumentException('Os limites da modalidade excedem o máximo permitido.');
+            }
+            $number = (int) $digits;
+        } else {
+            throw new InvalidArgumentException('Os limites da modalidade devem ser números inteiros não negativos.');
+        }
+
         if ($number < 0) {
             throw new InvalidArgumentException('Os limites da modalidade não podem ser negativos.');
         }
-        return $number;
+        if ($number > self::MAX_LIMIT) {
+            throw new InvalidArgumentException('Os limites da modalidade excedem o máximo permitido.');
+        }
+
+        return $number === 0 ? null : $number;
+    }
+
+    private static function normalizarStatus(mixed $status): string
+    {
+        if (is_int($status) && ($status === 0 || $status === 1)) {
+            return (string) $status;
+        }
+        if (is_string($status) && in_array($status, ['0', '1'], true)) {
+            return $status;
+        }
+
+        throw new InvalidArgumentException('Status da modalidade inválido.');
     }
 
     private function normalizarGenero(string $genero): string
