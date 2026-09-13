@@ -2,6 +2,7 @@ window.SGIPage.mount("competicoes/equipe-alunos", function (pageConfig, pageScop
 
 let alunos = [];
 let alunosNaEquipe = [];
+let alunosSelecionados = new Set();
 let generoDaModalidade = 'MISTO';
 let _idEquipe = null;
 
@@ -10,16 +11,19 @@ function mostrarToast(tipo, texto) {
 }
 
 function cardAluno(aluno) {
-    const estaNaEquipe = alunosNaEquipe.some(a => a.id_usuario === aluno.id_usuario);
+    const idAluno = String(aluno.id_usuario || '');
+    const estaNaEquipe = alunosNaEquipe.some(a => String(a.id_usuario) === idAluno);
+    const selecionado = estaNaEquipe || alunosSelecionados.has(idAluno);
     const semInscricao = Number(aluno.inscrito || 0) === 0;
     const badge = semInscricao ? '<span class="badge text-bg-primary ms-2">Sem inscrição</span>' : '';
+    const badgeEquipe = estaNaEquipe ? '<span class="badge text-bg-secondary ms-2">Já na equipe</span>' : '';
     return `
         <label class="col d-flex align-items-center justify-content-between gap-3 border rounded-3 p-3 bg-body ${semInscricao ? 'border-2 border-primary bg-primary-subtle' : ''}">
             <div>
-                <strong>${esc(aluno.nome_usuario)}</strong>${badge}
-                <div class="text-muted small">${esc(aluno.matricula_usuario)} (${aluno.genero_usuario || 'Não informado'})</div>
+                <strong>${window.SGIHtml.escape(aluno.nome_usuario)}</strong>${badge}${badgeEquipe}
+                <div class="text-muted small">${window.SGIHtml.escape(aluno.matricula_usuario)} (${window.SGIHtml.escape(aluno.genero_usuario || 'Não informado')})</div>
             </div>
-            <input class="form-check-input aluno-check" type="checkbox" value="${aluno.id_usuario}" ${estaNaEquipe ? 'checked' : ''}>
+            <input class="form-check-input aluno-check" type="checkbox" value="${window.SGIHtml.escape(idAluno)}" ${selecionado ? 'checked' : ''} ${estaNaEquipe ? 'disabled aria-label="Aluno já vinculado à equipe"' : 'aria-label="Adicionar aluno à equipe"'}>
         </label>
     `;
 }
@@ -47,6 +51,32 @@ function filtrar(termo) {
         String(aluno.matricula_usuario || '').toLowerCase().includes(t)
     );
     renderizar(filtrados);
+}
+
+function sincronizarSelecao(event) {
+    const checkbox = event.target;
+    if (!checkbox?.classList?.contains('aluno-check')) return;
+
+    const idAluno = String(checkbox.value);
+    if (alunosNaEquipe.some(aluno => String(aluno.id_usuario) === idAluno)) {
+        checkbox.checked = true;
+        return;
+    }
+    if (checkbox.checked) alunosSelecionados.add(idAluno);
+    else alunosSelecionados.delete(idAluno);
+
+    document.querySelectorAll('.aluno-check').forEach(outro => {
+        if (String(outro.value) === idAluno) outro.checked = checkbox.checked;
+    });
+}
+
+function sincronizarBusca(event) {
+    const valor = event.target.value;
+    ['buscaAlunosDesktop', 'buscaAlunosMobile'].forEach(id => {
+        const campo = document.getElementById(id);
+        if (campo && campo !== event.target) campo.value = valor;
+    });
+    filtrar(valor);
 }
 
 async function carregar() {
@@ -115,13 +145,17 @@ async function carregar() {
         const resEquipe = await fetch(`/api/v1/equipes?id_equipe=${_idEquipe}&_t=${ts}`);
         const rawEq = await resEquipe.json();
         alunosNaEquipe = Array.isArray(rawEq) ? rawEq : [];
+        alunosSelecionados = new Set(alunosNaEquipe.map(aluno => String(aluno.id_usuario)));
 
         const generoParam = (generoDaModalidade === 'MISTO' || generoDaModalidade === 'MISTA') ? '' : `&genero=${generoDaModalidade}`;
         const res = await fetch(`/api/v1/usuarios?acao=listar_competidores&id_turma=${idTurma}${generoParam}&_t=${ts}`);
         const data = await res.json();
         alunos = (data && data.competidores) ? data.competidores : (Array.isArray(data) ? data : []);
 
-        renderizar(alunos);
+        const termoBusca = document.getElementById('buscaAlunosDesktop')?.value
+            ?? document.getElementById('buscaAlunosMobile')?.value
+            ?? '';
+        filtrar(termoBusca);
     } catch (error) {
         console.error("Erro ao carregar dados:", error);
         document.getElementById('listaAlunosMobile').innerHTML = '<p class="text-danger text-center">Erro ao carregar alunos.</p>';
@@ -131,10 +165,12 @@ async function carregar() {
 
 async function salvar() {
     const checks = Array.from(document.querySelectorAll('.aluno-check:checked'));
-    const ids = checks.map(item => Number(item.value)).filter(Boolean);
+    const membros = new Set(alunosNaEquipe.map(aluno => String(aluno.id_usuario)));
+    const ids = [...new Set(checks.map(item => Number(item.value)).filter(Boolean))]
+        .filter(id => !membros.has(String(id)));
 
     if (!ids.length) {
-        mostrarToast('erro', 'Selecione pelo menos um aluno.');
+        mostrarToast('erro', 'Selecione pelo menos um novo aluno para adicionar.');
         return;
     }
 
@@ -170,6 +206,10 @@ async function salvar() {
 
 pageScope.listen(document.getElementById('btnSalvarAlunosDesktop'), 'click', salvar);
 pageScope.listen(document.getElementById('btnSalvarAlunosMobile'), 'click', salvar);
+pageScope.listen(document.getElementById('listaAlunosDesktop'), 'change', sincronizarSelecao);
+pageScope.listen(document.getElementById('listaAlunosMobile'), 'change', sincronizarSelecao);
+pageScope.listen(document.getElementById('buscaAlunosDesktop'), 'input', sincronizarBusca);
+pageScope.listen(document.getElementById('buscaAlunosMobile'), 'input', sincronizarBusca);
 
 pageScope.listen(window, 'pageshow', carregar);
 

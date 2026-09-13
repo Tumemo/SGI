@@ -60,7 +60,11 @@ final class ImportacaoTurmaService
         if ($result['duplicados'] > 0) {
             $parts[] = $result['duplicados'] . ' duplicados ignorados';
         }
-        $response = ['success' => true, 'message' => 'Importação concluída: ' . ($parts ? implode(', ', $parts) : '0 registros inseridos')];
+        $message = 'Importação concluída: ' . ($parts ? implode(', ', $parts) : '0 registros inseridos');
+        if ((int) ($result['cadastrados'] ?? 0) > 0) {
+            $message .= '. Senha inicial: sesi-senai. A troca é obrigatória no primeiro acesso.';
+        }
+        $response = ['success' => true, 'message' => $message];
         if (!empty($result['erros'])) {
             $response['avisos'] = $result['erros'];
         }

@@ -11,7 +11,7 @@ x-test-environment: &test-environment
   SGI_TEST_DB_NAME: ${SGI_TEST_DB_NAME:-sgi_test}
   SGI_TEST_BASE_URL: http://sgi-web:8099
   SGI_BASE_URL: http://sgi-web:8099/
-  SGI_BASE_PATH: ${SGI_BASE_PATH:-}
+  SGI_BASE_PATH: ""
   SGI_UPLOAD_DIR: /app/test-results/uploads
   SGI_REGULAMENTOS_DIR: /app/test-results/uploads/regulamentos
   SGI_FOTOS_DIR: /app/test-results/uploads/fotos
@@ -102,6 +102,7 @@ services:
       - sh
       - -lc
       - |
+        set -e
         composer validate --no-check-publish
         composer verify
         npm run build

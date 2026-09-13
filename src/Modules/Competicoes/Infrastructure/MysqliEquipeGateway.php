@@ -38,13 +38,6 @@ final class MysqliEquipeGateway
             $res = $stmt->get_result();
             return $res->fetch_all(MYSQLI_ASSOC);
         }
-        if (empty($filters['_read_only']) && !empty($filters['id_modalidade']) && !empty($filters['id_turma'])) {
-            $id_modalidade_get = intval($filters['id_modalidade']);
-            $id_turma_get = intval($filters['id_turma']);
-            if ($id_modalidade_get > 0 && $id_turma_get > 0) {
-                \App\Modules\Competicoes\Infrastructure\MysqliEquipePadraoRepository::buscarOuCriarEquipePadrao($this->connection, $id_modalidade_get, $id_turma_get);
-            }
-        }
         $filtro = \App\Shared\Database\SqlFilters::aplicarFiltrosEquipes($filters);
         $sql = "SELECT\n                    equipes.id_equipe,\n                    equipes.nome_equipe,\n                    equipes.status_equipe,\n                    equipes.modalidades_id_modalidade,\n                    equipes.turmas_id_turma,\n                    modalidades.nome_modalidade,\n                    modalidades.max_inscrito_modalidade AS limite_maximo,\n                    turmas.nome_turma,\n                    interclasses.nome_interclasse,\n                    (SELECT COUNT(*) FROM equipes_has_usuarios eu WHERE eu.equipes_id_equipe = equipes.id_equipe) AS total_alunos,\n                    (SELECT COUNT(*) FROM equipes_has_usuarios eu2 WHERE eu2.equipes_id_equipe = equipes.id_equipe) AS qtd_membros\n                FROM equipes\n                INNER JOIN modalidades ON modalidades.id_modalidade = equipes.modalidades_id_modalidade\n                INNER JOIN turmas ON turmas.id_turma = equipes.turmas_id_turma\n                INNER JOIN interclasses ON interclasses.id_interclasse = turmas.interclasses_id_interclasse\n                WHERE 1=1" . $filtro['sql'] . "\n                ORDER BY equipes.id_equipe ASC";
         $stmt = $this->connection->prepare($sql);

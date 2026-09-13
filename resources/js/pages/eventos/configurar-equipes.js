@@ -18,9 +18,7 @@ window.SGIPage.mount("eventos/configurar-equipes", function (pageConfig, pageSco
     }
 
     function esc(s) {
-        const d = document.createElement('div');
-        d.textContent = s == null ? '' : String(s);
-        return d.innerHTML;
+        return window.SGIHtml.escape(s);
     }
 
     function infoEquipe(eq) {

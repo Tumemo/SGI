@@ -32,7 +32,6 @@ final class AssetResponder
             foreach ([
                 'uploads/regulamentos' => StoragePaths::regulamentos(),
                 'uploads/fotosUsuarios' => StoragePaths::fotosUsuarios(),
-                'uploads/turmas' => StoragePaths::turmaPdfs(),
             ] as $prefix => $directory) {
                 if (str_starts_with($path, $prefix . '/')) {
                     $file = $this->files->resolve(substr($path, strlen($prefix) + 1), $directory);

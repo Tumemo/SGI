@@ -33,7 +33,7 @@ final class LoginService
             'usuario' => $usuario,
             'interclasse_ativo' => $interclasseAtivo,
             'exige_troca_senha' => $nivel === 3
-                && password_verify('123', (string) ($usuario['senha_usuario'] ?? '')),
+                && (int) ($usuario['senha_troca_pendente'] ?? 0) === 1,
         ];
     }
 }

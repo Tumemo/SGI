@@ -10,6 +10,7 @@ return [
     '/aluno/perfil' => 'resources/views/pages/aluno/perfil.php',
     '/aluno/ranking' => 'resources/views/pages/aluno/ranking.php',
     '/aluno/termos' => 'resources/views/pages/aluno/termos.php',
+    '/aluno/trocar-senha' => 'resources/views/pages/aluno/trocar-senha.php',
     '/categorias' => 'resources/views/pages/eventos/categorias.php',
     '/chaveamento' => 'resources/views/pages/competicoes/chaveamento.php',
     '/colaboradores' => 'resources/views/pages/acesso/colaboradores.php',

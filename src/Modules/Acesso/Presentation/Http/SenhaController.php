@@ -14,7 +14,7 @@ final class SenhaController
     public function __invoke(\App\Shared\Http\Request $request): \App\Shared\Http\Response
     {
         $status = 200;
-        $headers = [];
+        $headers = ['Cache-Control' => 'no-store'];
         $query = $request->allQuery();
         $post = $request->allInput();
         $headers['Content-Type'] = 'application/json; charset=utf-8';
@@ -27,23 +27,28 @@ final class SenhaController
         }
         \App\Shared\Http\SessionManager::start();
         $idUsuario = (int) ($_SESSION['id'] ?? $_SESSION['id_usuario'] ?? 0);
+        $authVersion = (int) ($_SESSION['auth_version'] ?? 0);
+        $trocaInicial = (int) ($_SESSION['nivel'] ?? -1) === 3 && !empty($_SESSION['senha_troca_pendente']);
         $payload = $request->allInput();
         try {
             $senhaAtual = (string) ($payload['senha_atual'] ?? '');
-            // The only password-less migration path is the first-login flow for
-            // a student whose stored password is still the generated default.
-            if ($senhaAtual === '' && !empty($_SESSION['exige_troca_senha'])) {
-                $senhaAtual = '123';
-            }
             $this->service->trocar(
                 $idUsuario,
                 (string) ($payload['nova_senha'] ?? ''),
                 (string) ($payload['confirmar_senha'] ?? ''),
                 $senhaAtual,
+                $trocaInicial,
+                $authVersion,
             );
             $_SESSION['exige_troca_senha'] = false;
-            $_SESSION['auth_version'] = (int) ($_SESSION['auth_version'] ?? 1) + 1;
-            return \App\Shared\Http\Response::json(['success' => true, 'message' => 'Senha alterada com sucesso!'], $status, $headers);
+            $_SESSION['senha_troca_pendente'] = false;
+            $_SESSION['auth_version'] = $authVersion + 1;
+            $response = ['success' => true, 'message' => 'Senha alterada com sucesso!'];
+            if ((int) ($_SESSION['nivel'] ?? -1) === 3) {
+                $destino = empty($_SESSION['termo_aceito']) ? 'aluno/termos' : 'aluno/inicio';
+                $response['redirect'] = \App\Shared\Http\Url::to($destino);
+            }
+            return \App\Shared\Http\Response::json($response, $status, $headers);
         } catch (\InvalidArgumentException $exception) {
             $status = $idUsuario > 0 ? 200 : 401;
             return \App\Shared\Http\Response::json(['success' => false, 'message' => $exception->getMessage()], $status, $headers);

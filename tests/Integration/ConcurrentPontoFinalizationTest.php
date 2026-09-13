@@ -8,6 +8,7 @@ use App\Modules\Competicoes\Infrastructure\MysqliPartidaGateway;
 use mysqli;
 use RuntimeException;
 use SGITests\Support\Assertions;
+use SGITests\Support\ProcessExitCode;
 use SGITests\Support\TestDatabase;
 use Throwable;
 
@@ -321,8 +322,6 @@ final class ConcurrentPontoFinalizationTest
         $command = [
             PHP_BINARY,
             '-d',
-            'extension=mysqli',
-            '-d',
             'display_startup_errors=0',
             dirname(__DIR__) . '/Support/ConcurrentScenarioWorker.php',
             $scenario,
@@ -371,9 +370,11 @@ final class ConcurrentPontoFinalizationTest
     /** @param array{process:resource,pipes:array<int,resource>,thread_id:int} $worker @return array<string,mixed> */
     private static function collectWorker(array $worker): array
     {
+        $observedExitCode = -1;
         $deadline = microtime(true) + 10.0;
         do {
             $status = proc_get_status($worker['process']);
+            $observedExitCode = ProcessExitCode::observe($observedExitCode, $status) ?? -1;
             if (!$status['running']) {
                 break;
             }
@@ -401,7 +402,8 @@ final class ConcurrentPontoFinalizationTest
         $errors = stream_get_contents($worker['pipes'][2]);
         fclose($worker['pipes'][1]);
         fclose($worker['pipes'][2]);
-        if (proc_close($worker['process']) !== 0) {
+        $closeExitCode = proc_close($worker['process']);
+        if (ProcessExitCode::resolve($closeExitCode, $observedExitCode) !== 0) {
             throw new RuntimeException('Falha no worker concorrente de N11: ' . $errors);
         }
         $result = json_decode($output, true, 512, JSON_THROW_ON_ERROR);

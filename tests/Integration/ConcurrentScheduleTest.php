@@ -9,6 +9,7 @@ use App\Modules\Competicoes\Infrastructure\MysqliJogoRepository;
 use mysqli;
 use RuntimeException;
 use SGITests\Support\Assertions;
+use SGITests\Support\ProcessExitCode;
 use SGITests\Support\TestDatabase;
 
 final class ConcurrentScheduleTest
@@ -577,17 +578,17 @@ final class ConcurrentScheduleTest
         return $path;
     }
 
-    /** @param list<int|string> $arguments @return array{process:resource,pipes:array<int,resource>,thread_id:int} */
+    /** @param list<int|string> $arguments @return array{process:resource,pipes:array<int,resource>,thread_id:int,exit_code:int} */
     private static function startWorker(string $barrier, string $id, string $scenario, array $arguments): array
     {
-        $command = [PHP_BINARY, '-d', 'extension=mysqli', '-d', 'display_startup_errors=0', dirname(__DIR__) . '/Support/ConcurrentScenarioWorker.php', $scenario, $barrier, $id, ...array_map('strval', $arguments)];
+        $command = [PHP_BINARY, '-d', 'display_startup_errors=0', dirname(__DIR__) . '/Support/ConcurrentScenarioWorker.php', $scenario, $barrier, $id, ...array_map('strval', $arguments)];
         $pipes = [];
         $process = proc_open($command, [0 => ['pipe', 'r'], 1 => ['pipe', 'w'], 2 => ['pipe', 'w']], $pipes);
         if (!is_resource($process)) {
             throw new RuntimeException('Não foi possível iniciar worker concorrente de agendamento.');
         }
         fclose($pipes[0]);
-        $worker = ['process' => $process, 'pipes' => $pipes, 'thread_id' => 0];
+        $worker = ['process' => $process, 'pipes' => $pipes, 'thread_id' => 0, 'exit_code' => -1];
         $readyFile = $barrier . DIRECTORY_SEPARATOR . 'ready-' . $id;
         self::waitForFile($readyFile, $worker, 'conexão independente ' . $id);
         $ready = json_decode((string) file_get_contents($readyFile), true);
@@ -600,7 +601,7 @@ final class ConcurrentScheduleTest
         return $worker;
     }
 
-    /** @param array{process:resource,pipes:array<int,resource>,thread_id:int} $worker */
+    /** @param array{process:resource,pipes:array<int,resource>,thread_id:int,exit_code:int} $worker */
     private static function waitForFile(string $path, array $worker, string $description): void
     {
         $deadline = microtime(true) + 8.0;
@@ -629,7 +630,7 @@ final class ConcurrentScheduleTest
         }
     }
 
-    /** @param array{process:resource,pipes:array<int,resource>,thread_id:int} $worker */
+    /** @param array{process:resource,pipes:array<int,resource>,thread_id:int,exit_code:int} $worker */
     private static function waitForGameUpdateLock(mysqli $connection, array $worker, string $description): void
     {
         $deadline = microtime(true) + 8.0;
@@ -647,12 +648,14 @@ final class ConcurrentScheduleTest
         throw new RuntimeException('Worker não alcançou a gravação bloqueada de ' . $description . '; SQL observado: ' . self::processInfo($connection, $worker['thread_id']));
     }
 
-    /** @param array{process:resource,pipes:array<int,resource>,thread_id:int} $worker @return 'completed'|'local-lock' */
-    private static function waitForManualBoundary(mysqli $connection, array $worker): string
+    /** @param array{process:resource,pipes:array<int,resource>,thread_id:int,exit_code:int} $worker @return 'completed'|'local-lock' */
+    private static function waitForManualBoundary(mysqli $connection, array &$worker): string
     {
         $deadline = microtime(true) + 8.0;
         do {
-            if (!proc_get_status($worker['process'])['running']) {
+            $status = proc_get_status($worker['process']);
+            $worker['exit_code'] = ProcessExitCode::observe($worker['exit_code'], $status);
+            if (!$status['running']) {
                 return 'completed';
             }
             $info = strtoupper(self::processInfo($connection, $worker['thread_id']));
@@ -664,12 +667,14 @@ final class ConcurrentScheduleTest
         throw new RuntimeException('Worker manual não terminou nem aguardou a trava do local; SQL observado: ' . self::processInfo($connection, $worker['thread_id']));
     }
 
-    /** @param array{process:resource,pipes:array<int,resource>,thread_id:int} $worker */
-    private static function waitForCompletion(array $worker, float $timeout): bool
+    /** @param array{process:resource,pipes:array<int,resource>,thread_id:int,exit_code:int} $worker */
+    private static function waitForCompletion(array &$worker, float $timeout): bool
     {
         $deadline = microtime(true) + $timeout;
         do {
-            if (!proc_get_status($worker['process'])['running']) {
+            $status = proc_get_status($worker['process']);
+            $worker['exit_code'] = ProcessExitCode::observe($worker['exit_code'], $status);
+            if (!$status['running']) {
                 return true;
             }
             usleep(10000);
@@ -687,12 +692,14 @@ final class ConcurrentScheduleTest
         return $info;
     }
 
-    /** @param array{process:resource,pipes:array<int,resource>,thread_id:int} $worker @return array<string,mixed> */
+    /** @param array{process:resource,pipes:array<int,resource>,thread_id:int,exit_code:int} $worker @return array<string,mixed> */
     private static function collectWorker(array $worker): array
     {
+        $observedExitCode = $worker['exit_code'];
         $deadline = microtime(true) + 12.0;
         do {
             $status = proc_get_status($worker['process']);
+            $observedExitCode = ProcessExitCode::observe($observedExitCode, $status);
             if (!$status['running']) {
                 break;
             }
@@ -706,7 +713,8 @@ final class ConcurrentScheduleTest
         $errors = stream_get_contents($worker['pipes'][2]);
         fclose($worker['pipes'][1]);
         fclose($worker['pipes'][2]);
-        if (proc_close($worker['process']) !== 0) {
+        $closeExitCode = proc_close($worker['process']);
+        if (ProcessExitCode::resolve($closeExitCode, $observedExitCode) !== 0) {
             throw new RuntimeException('Falha no worker concorrente de agendamento: ' . $errors);
         }
         $decoded = json_decode($output, true, 512, JSON_THROW_ON_ERROR);
@@ -716,7 +724,7 @@ final class ConcurrentScheduleTest
         return $decoded;
     }
 
-    /** @param list<array{process:resource,pipes:array<int,resource>,thread_id:int}|null> $workers */
+    /** @param list<array{process:resource,pipes:array<int,resource>,thread_id:int,exit_code:int}|null> $workers */
     private static function stopWorkers(array $workers): void
     {
         foreach ($workers as $worker) {
@@ -726,7 +734,7 @@ final class ConcurrentScheduleTest
         }
     }
 
-    /** @param array{process:resource,pipes:array<int,resource>,thread_id:int} $worker */
+    /** @param array{process:resource,pipes:array<int,resource>,thread_id:int,exit_code:int} $worker */
     private static function stopWorker(array $worker): void
     {
         if (is_resource($worker['process']) && proc_get_status($worker['process'])['running']) {

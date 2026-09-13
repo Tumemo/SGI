@@ -30,16 +30,42 @@ final class LoginServiceTest extends TestCase
                 return [
                     'id_usuario' => 7,
                     'nivel_usuario' => '3',
-                    'senha_usuario' => password_hash('123', PASSWORD_DEFAULT),
+                    'senha_usuario' => password_hash('sesi-senai', PASSWORD_DEFAULT),
+                    'senha_troca_pendente' => '1',
                 ];
             }
         };
 
-        $result = (new LoginService($users, $interclasses))->autenticar('2879', '123');
+        $result = (new LoginService($users, $interclasses))->autenticar('2879', 'sesi-senai');
 
         self::assertNotNull($result);
         self::assertSame(42, $users->receivedEdition);
         self::assertTrue($result['exige_troca_senha']);
+    }
+
+    public function testDoesNotInferPasswordChangeFromPasswordHash(): void
+    {
+        $interclasses = new class () implements InterclasseRepository {
+            public function findActiveId(): ?int
+            {
+                return null;
+            }
+        };
+        $users = new class () implements UsuarioRepository {
+            public function findActiveByMatricula(string $matricula, ?int $activeInterclasseId): ?array
+            {
+                return [
+                    'nivel_usuario' => '3',
+                    'senha_usuario' => password_hash('sesi-senai', PASSWORD_DEFAULT),
+                    'senha_troca_pendente' => '0',
+                ];
+            }
+        };
+
+        $result = (new LoginService($users, $interclasses))->autenticar('2879', 'sesi-senai');
+
+        self::assertNotNull($result);
+        self::assertFalse($result['exige_troca_senha']);
     }
 
     public function testRejectsAnInvalidPasswordWithoutLeakingUserExistence(): void

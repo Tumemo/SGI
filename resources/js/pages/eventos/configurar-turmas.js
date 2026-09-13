@@ -6,9 +6,7 @@ window.SGIPage.mount("eventos/configurar-turmas", function (pageConfig, pageScop
     const idCategoriaUrl = urlParams.get('id_categoria');
 
     function esc(s) {
-        const d = document.createElement('div');
-        d.textContent = s == null ? '' : String(s);
-        return d.innerHTML;
+        return window.SGIHtml.escape(s);
     }
 
     if (!idInterclasse) {
@@ -53,7 +51,10 @@ window.SGIPage.mount("eventos/configurar-turmas", function (pageConfig, pageScop
                     const btn = document.createElement('button');
                     btn.className = 'list-group-item list-group-item-action d-flex justify-content-between align-items-center p-4 border-bottom border-0 fs-6 fw-medium text-secondary';
                     btn.style.cursor = 'pointer';
-                    btn.innerHTML = `${cat.nome_categoria} <i class="bi bi-chevron-right text-muted"></i>`;
+                    btn.append(document.createTextNode(cat.nome_categoria == null ? '' : String(cat.nome_categoria)));
+                    const icon = document.createElement('i');
+                    icon.className = 'bi bi-chevron-right text-muted';
+                    btn.append(icon);
 
                     btn.onclick = () => {
                         document.querySelectorAll('#listaCategorias button').forEach(b => {

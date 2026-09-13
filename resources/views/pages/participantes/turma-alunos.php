@@ -283,7 +283,7 @@ $podeResetarSenha = in_array($nivelUsuario, [0], true);
                 <i class="bi bi-key-fill text-warning fs-1"></i>
                 <p class="mt-3 mb-1 fw-medium">Resetar senha do aluno?</p>
                 <p class="text-muted small mb-1" id="nomeAlunoResetar"></p>
-                <p class="text-muted small">Será gerada uma senha temporária aleatória. Entregue-a ao aluno por um canal seguro.</p>
+                <p class="text-muted small">A senha será redefinida para <strong>sesi-senai</strong>, e a troca será obrigatória no próximo acesso.</p>
             </div>
             <div class="modal-footer justify-content-center border-0 pt-0">
                 <button type="button" class="btn btn-secondary btn-sm rounded-3" data-bs-dismiss="modal">Cancelar</button>

@@ -76,7 +76,7 @@ final class PageController
                 };
                 return new Response('', 302, ['Location' => Url::to($destino)]);
             }
-            if ($level === 3 && $path !== '/aluno/termos' && empty($_SESSION['termo_aceito'])) {
+            if ($level === 3 && !in_array($path, ['/aluno/termos', '/aluno/trocar-senha'], true) && empty($_SESSION['termo_aceito'])) {
                 return new Response('', 302, [
                     'Location' => Url::to('aluno/termos'),
                     'Cache-Control' => 'no-store',
@@ -100,6 +100,14 @@ final class PageController
         if (in_array($path, ['/aluno/modalidades', '/aluno/jogos'], true)) {
             $data = (new MysqliPortalAlunoRepository(ConnectionFactory::get()))->context((int) ($_SESSION['id'] ?? 0), (int) $request->query('id', 0));
         }
-        return (new ViewRenderer())->render($template, $data);
+        $response = (new ViewRenderer())->render($template, $data);
+        if ($path === '/aluno/trocar-senha') {
+            return new Response($response->body(), $response->status(), array_merge(
+                $response->headers(),
+                ['Cache-Control' => 'no-store'],
+            ));
+        }
+
+        return $response;
     }
 }

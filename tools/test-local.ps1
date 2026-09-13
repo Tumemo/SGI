@@ -256,6 +256,8 @@ function Start-TestServer {
     $values = @{
         SGI_APP_ENV = 'test'
         SGI_APP_DEBUG = '0'
+        SGI_APP_URL = "$($script:baseUrl)/"
+        SGI_BASE_PATH = ''
         SGI_DB_HOST = $script:dbHost
         SGI_DB_PORT = [string] $script:databasePort
         SGI_DB_NAME = $databaseName

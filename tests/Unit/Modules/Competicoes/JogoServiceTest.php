@@ -50,6 +50,33 @@ final class JogoServiceTest extends TestCase
         $this->expectException(InvalidArgumentException::class);
         (new JogoService(new InMemoryJogoRepository()))->agendar(['nome_jogo' => 'Jogo']);
     }
+
+    public function testRejectsInvalidCalendarDateAndTime(): void
+    {
+        $invalidCases = [
+            ['2026-02-30', '08:00', '09:00'],
+            ['2026-09-04', '25:00', '26:00'],
+        ];
+
+        foreach ($invalidCases as [$date, $start, $end]) {
+            $repository = new InMemoryJogoRepository();
+            $rejected = false;
+            try {
+                (new JogoService($repository))->agendar([
+                    'nome_jogo' => 'Jogo',
+                    'data_jogo' => $date,
+                    'inicio_jogo' => $start,
+                    'termino_jogo' => $end,
+                    'modalidades_id_modalidade' => 2,
+                    'locais_id_local' => 3,
+                ]);
+            } catch (InvalidArgumentException) {
+                $rejected = true;
+            }
+            self::assertTrue($rejected, 'Esperava rejeição para data/horário inválido.');
+            self::assertSame([], $repository->created, 'Entrada inválida não deve chegar à persistência.');
+        }
+    }
 }
 
 final class InMemoryJogoRepository implements JogoRepository

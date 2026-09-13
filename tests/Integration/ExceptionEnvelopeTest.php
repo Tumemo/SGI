@@ -77,6 +77,7 @@ final class ExceptionEnvelopeTest
                     $userQueries,
                     new MysqliUsuarioManagementRepository($connection),
                     new LocalFotoStorage(StoragePaths::fotosUsuarios()),
+                    new MysqliTransactionRunner($connection),
                 ),
                 new \App\Modules\Acesso\Application\UsuarioAdministrativoService(
                     new \App\Modules\Acesso\Infrastructure\MysqliUsuarioAdministrativoRepository($connection),

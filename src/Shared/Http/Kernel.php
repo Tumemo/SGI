@@ -38,7 +38,7 @@ final class Kernel
                 if (!SessionRevalidator::valid()) {
                     SessionManager::clearAuthentication();
                     if (str_starts_with($path, '/api/v1/')) {
-                        Response::json(['success' => false, 'message' => 'Sessão expirada. Faça login novamente.'], 401)->send();
+                        Response::json(['success' => false, 'message' => 'Sessão expirada. Faça login novamente.'], 401, ['Cache-Control' => 'no-store'])->send();
                     } else {
                         Response::empty(302, ['Location' => Url::to('login'), 'Cache-Control' => 'no-store'])->send();
                     }
@@ -46,8 +46,51 @@ final class Kernel
                 }
             } catch (\Throwable $exception) {
                 error_log('Falha ao revalidar sessão: ' . $exception->getMessage());
-                Response::json(['success' => false, 'message' => 'Serviço temporariamente indisponível.'], 503)->send();
+                Response::json(['success' => false, 'message' => 'Serviço temporariamente indisponível.'], 503, ['Cache-Control' => 'no-store'])->send();
                 return;
+            }
+        }
+        if ($protectedRoute && !$this->isPublicPath($path) && !$deprecatedRegistrationValidation) {
+            $studentPasswordPending = (int) ($_SESSION['nivel'] ?? -1) === 3
+                && !empty($_SESSION['senha_troca_pendente']);
+
+            if ($path === '/aluno/trocar-senha' && !$studentPasswordPending) {
+                $destination = (int) ($_SESSION['nivel'] ?? -1) === 3
+                    ? (empty($_SESSION['termo_aceito']) ? 'aluno/termos' : 'aluno/inicio')
+                    : match ((int) ($_SESSION['nivel'] ?? -1)) {
+                        0, 1 => 'edicoes',
+                        2 => 'painel',
+                        default => 'login',
+                    };
+                Response::empty(302, [
+                    'Location' => Url::to($destination),
+                    'Cache-Control' => 'no-store',
+                ])->send();
+                return;
+            }
+
+            if ($studentPasswordPending) {
+                $method = strtoupper($request->method());
+                $passwordPageAllowed = $path === '/aluno/trocar-senha'
+                    && in_array($method, ['GET', 'HEAD'], true);
+                $passwordMutationAllowed = $path === '/api/v1/senha' && $method === 'POST';
+                $logoutAllowed = $path === '/api/v1/logout';
+                if (!$passwordPageAllowed && !$passwordMutationAllowed && !$logoutAllowed) {
+                    $redirect = Url::to('aluno/trocar-senha');
+                    if (str_starts_with($path, '/api/v1/')) {
+                        Response::json([
+                            'success' => false,
+                            'message' => 'Troque sua senha para continuar.',
+                            'redirect' => $redirect,
+                        ], 403, ['Cache-Control' => 'no-store'])->send();
+                    } else {
+                        Response::empty(302, [
+                            'Location' => $redirect,
+                            'Cache-Control' => 'no-store',
+                        ])->send();
+                    }
+                    return;
+                }
             }
         }
         if ($protectedRoute
@@ -118,7 +161,17 @@ final class Kernel
 
     private function studentTermsAreRequired(Request $request, string $path): bool
     {
-        if ($path === '/aluno/termos' || $path === '/api/v1/termos') {
+        if (in_array($path, ['/aluno/termos', '/aluno/trocar-senha', '/api/v1/termos'], true)) {
+            return false;
+        }
+
+        // O primeiro acesso precisa trocar a senha antes de aceitar os termos.
+        // Deixe a mutação passar por este gate para que CsrfGuard valide o token
+        // antes de o controlador processar a troca.
+        if ($path === '/api/v1/senha'
+            && strtoupper($request->method()) === 'POST'
+            && (int) ($_SESSION['nivel'] ?? -1) === 3
+            && !empty($_SESSION['senha_troca_pendente'])) {
             return false;
         }
 

@@ -99,6 +99,14 @@ php bin/sgi.php migrate
 
 O comando deve terminar com **Banco atualizado.** Não é necessário importar um dump SQL. Para atualizar uma instalação com dados existentes, consulte [implantação e recuperação](docs/deployment.md).
 
+Ao aplicar a migração `012_student_first_login_password.sql`, os alunos existentes ficam obrigados a trocar a senha. Em um banco local de desenvolvimento, para definir a senha inicial compartilhada `sesi-senai` para esses alunos e revogar sessões anteriores, execute depois da migração:
+
+```powershell
+php bin/sgi.php students:senha-inicial --confirm-database=sgi
+```
+
+Troque `sgi` pelo valor exato de `SGI_DB_NAME`. O comando exige `SGI_APP_ENV=development`, substitui as senhas dos alunos pela senha inicial compartilhada e pode ser repetido sem alterar alunos já inicializados. Instalações novas sem alunos existentes não precisam executá-lo. Alunos criados por cadastro ou importação e senhas redefinidas pela administração já usam essa senha inicial e precisam trocá-la no primeiro acesso.
+
 ### 4. Criar o primeiro administrador
 
 As migrações não criam usuários de demonstração. No PowerShell, escolha seu login, nome e uma senha de pelo menos 12 caracteres:

@@ -18,8 +18,7 @@ final class UsuarioAdministrativoServiceTest extends TestCase
         $repository = new InMemoryUsuarioAdministrativoRepository();
         $temporaryPassword = (new UsuarioAdministrativoService($repository))->resetarSenhaAluno(4);
 
-        self::assertNotSame('123', $repository->hash);
-        self::assertNotSame('123', $temporaryPassword);
+        self::assertSame('sesi-senai', $temporaryPassword);
         self::assertTrue(password_verify($temporaryPassword, $repository->hash));
     }
 

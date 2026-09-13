@@ -19,7 +19,11 @@ final class MesarioResourceScopeTest
         $connection = TestDatabase::connect($database);
         $previousActiveId = AuditFixtures::activeEditionId($connection);
         $fixture = AuditFixtures::createAuthorizationFixture($connection);
+        $editionA = $fixture['by_edition']['A'];
         $editionB = $fixture['by_edition']['B'];
+        $occurrenceUserA = (int) $editionA['atleta_ids'][0];
+        $occurrenceGameA = (int) $editionA['jogo_ids'][0];
+        $occurrenceClassA = (int) $editionA['turma_ids'][0];
         $userId = (int) $editionB['atleta_ids'][0];
         $gameId = (int) $editionB['jogo_ids'][0];
         $partidaIdB = (int) $editionB['partida_ids'][0];
@@ -175,6 +179,159 @@ final class MesarioResourceScopeTest
                 && self::countOccurrences($connection, $userId) === $beforeOccurrences,
             );
 
+            $classB = (int) $editionB['turma_ids'][0];
+            $gameB = (int) $editionB['jogo_ids'][0];
+            $beforeOccurrenceA = self::countOccurrences($connection, $occurrenceUserA);
+            $forgedPost = $mesario->postJson('api/v1/ocorrencias', [
+                'titulo_ocorrencia' => 'Auditoria L09 POST',
+                'descricao_ocorrencia' => "[JOGO:{$gameB}][TURMA:{$classB}] Marcadores não autorizados",
+                'data_ocorrencia' => '2026-09-07',
+                'usuarios_id_usuario' => $occurrenceUserA,
+                'penalidade' => 0,
+            ]);
+            Assertions::assert(
+                'POST rejeita referências textuais de outra edição sem criar ocorrência',
+                $forgedPost['code'] === 403
+                && self::countOccurrences($connection, $occurrenceUserA) === $beforeOccurrenceA,
+                json_encode($forgedPost, JSON_UNESCAPED_UNICODE),
+            );
+
+            $countBeforeConflict = self::countOccurrences($connection, $occurrenceUserA);
+            $conflictingPost = $mesario->postJson('api/v1/ocorrencias', [
+                'titulo_ocorrencia' => 'Auditoria L09 conflito',
+                'descricao_ocorrencia' => "[JOGO:{$gameB}][TURMA:{$classB}] Referências divergentes",
+                'data_ocorrencia' => '2026-09-07',
+                'usuarios_id_usuario' => $occurrenceUserA,
+                'id_jogo' => $occurrenceGameA,
+                'id_turma' => $occurrenceClassA,
+                'penalidade' => 0,
+            ]);
+            Assertions::assert(
+                'POST rejeita marcadores divergentes dos campos estruturados',
+                $conflictingPost['code'] === 422
+                && self::countOccurrences($connection, $occurrenceUserA) === $countBeforeConflict,
+                json_encode($conflictingPost, JSON_UNESCAPED_UNICODE),
+            );
+
+            $countBeforeEmbeddedMarker = self::countOccurrences($connection, $occurrenceUserA);
+            $embeddedMarkerPost = $mesario->postJson('api/v1/ocorrencias', [
+                'titulo_ocorrencia' => 'Auditoria L09 marcador no texto',
+                'descricao_ocorrencia' => "Texto livre [JOGO:{$gameB}] com marcador embutido",
+                'data_ocorrencia' => '2026-09-07',
+                'usuarios_id_usuario' => $occurrenceUserA,
+                'id_jogo' => $occurrenceGameA,
+                'id_turma' => $occurrenceClassA,
+                'penalidade' => 0,
+            ]);
+            Assertions::assert(
+                'POST rejeita marcadores duplicados ou no meio do texto',
+                $embeddedMarkerPost['code'] === 422
+                && self::countOccurrences($connection, $occurrenceUserA) === $countBeforeEmbeddedMarker,
+                json_encode($embeddedMarkerPost, JSON_UNESCAPED_UNICODE),
+            );
+
+            $legacyPayload = [
+                'titulo_ocorrencia' => 'Auditoria L09 legado',
+                'descricao_ocorrencia' => "[JOGO:{$occurrenceGameA}][TURMA:{$occurrenceClassA}]Prefixo legado válido",
+                'data_ocorrencia' => '2026-09-07',
+                'usuarios_id_usuario' => $occurrenceUserA,
+                'penalidade' => 0,
+            ];
+            $legacyMutationId = 'l09-legacy-' . bin2hex(random_bytes(8));
+            $legacyPost = $mesario->postJson('api/v1/ocorrencias', $legacyPayload, [
+                'X-SGI-Mutation-Id' => $legacyMutationId,
+            ]);
+            $legacyReplay = $mesario->postJson('api/v1/ocorrencias', $legacyPayload, [
+                'X-SGI-Mutation-Id' => $legacyMutationId,
+            ]);
+            $legacyId = (int) ($legacyPost['json']['id'] ?? 0);
+            Assertions::assert(
+                'POST preserva prefixo legado somente depois de autorizar suas referências',
+                $legacyPost['code'] === 201
+                && $legacyId > 0
+                && self::occurrenceDescription($connection, $legacyId)
+                    === "[JOGO:{$occurrenceGameA}][TURMA:{$occurrenceClassA}]Prefixo legado válido"
+                && $legacyReplay['code'] === 201
+                && ($legacyReplay['json']['id'] ?? null) === $legacyId
+                && self::countOccurrences($connection, $occurrenceUserA) === $countBeforeEmbeddedMarker + 1,
+                json_encode(['post' => $legacyPost, 'replay' => $legacyReplay], JSON_UNESCAPED_UNICODE),
+            );
+
+            $occurrencesInA = $mesario->get('api/v1/ocorrencias?id_jogo=' . $occurrenceGameA);
+            $occurrencesInB = $mesario->get('api/v1/ocorrencias?id_jogo=' . $gameB);
+            Assertions::assert(
+                'Listagem por jogo mantém a ocorrência somente no jogo autorizado',
+                self::containsOccurrence($occurrencesInA, $legacyId)
+                && !self::containsOccurrence($occurrencesInB, $legacyId),
+                json_encode(['A' => $occurrencesInA, 'B' => $occurrencesInB], JSON_UNESCAPED_UNICODE),
+            );
+
+            $classOnlyPost = $mesario->postJson('api/v1/ocorrencias', [
+                'titulo_ocorrencia' => 'Auditoria L09 sem jogo',
+                'descricao_ocorrencia' => 'Referência estruturada somente à turma',
+                'data_ocorrencia' => '2026-09-07',
+                'usuarios_id_usuario' => $occurrenceUserA,
+                'id_turma' => $occurrenceClassA,
+                'penalidade' => 0,
+            ]);
+            $classOnlyId = (int) ($classOnlyPost['json']['id'] ?? 0);
+            Assertions::assert(
+                'POST sem jogo persiste a referência de turma estruturada',
+                $classOnlyPost['code'] === 201
+                && $classOnlyId > 0
+                && self::occurrenceDescription($connection, $classOnlyId)
+                    === "[TURMA:{$occurrenceClassA}]Referência estruturada somente à turma",
+                json_encode($classOnlyPost, JSON_UNESCAPED_UNICODE),
+            );
+
+            $occurrenceA = $mesario->postJson('api/v1/ocorrencias', [
+                'titulo_ocorrencia' => 'Auditoria L09 edição',
+                'descricao_ocorrencia' => 'Descrição original autorizada',
+                'data_ocorrencia' => '2026-09-07',
+                'usuarios_id_usuario' => $occurrenceUserA,
+                'id_jogo' => $occurrenceGameA,
+                'id_turma' => $occurrenceClassA,
+                'penalidade' => 0,
+            ]);
+            $occurrenceAId = (int) ($occurrenceA['json']['id'] ?? 0);
+            $originalDescription = "[JOGO:{$occurrenceGameA}][TURMA:{$occurrenceClassA}]Descrição original autorizada";
+            $forgedPut = $mesario->putJson('api/v1/ocorrencias', [
+                'id_ocorrencia' => $occurrenceAId,
+                'descricao_ocorrencia' => "[JOGO:{$gameB}][TURMA:{$classB}] Troca não autorizada",
+            ]);
+            Assertions::assert(
+                'PUT rejeita referências textuais de outra edição e preserva as originais',
+                $occurrenceA['code'] === 201
+                && $occurrenceAId > 0
+                && $forgedPut['code'] === 422
+                && self::occurrenceDescription($connection, $occurrenceAId) === $originalDescription,
+                json_encode(['create' => $occurrenceA, 'update' => $forgedPut], JSON_UNESCAPED_UNICODE),
+            );
+
+            $cleanPut = $mesario->putJson('api/v1/ocorrencias', [
+                'id_ocorrencia' => $occurrenceAId,
+                'descricao_ocorrencia' => 'Descrição editada sem metadados',
+            ]);
+            Assertions::assert(
+                'PUT sem prefixo mantém as referências autorizadas do registro',
+                $cleanPut['code'] === 200
+                && self::occurrenceDescription($connection, $occurrenceAId)
+                    === "[JOGO:{$occurrenceGameA}][TURMA:{$occurrenceClassA}]Descrição editada sem metadados",
+                json_encode($cleanPut, JSON_UNESCAPED_UNICODE),
+            );
+
+            self::runAutomaticRedRegression(
+                $connection,
+                $admin,
+                $mesario,
+                $editionAId,
+                $occurrenceUserA,
+                $occurrenceGameA,
+                $occurrenceClassA,
+                (int) $editionA['atleta_ids'][1],
+                (int) $editionA['turma_ids'][1],
+            );
+
             $partidaId = (int) $editionB['partida_ids'][0];
             $gameA = (int) $fixture['by_edition']['A']['jogo_ids'][0];
             $teamB = (int) $editionB['equipe_ids'][0];
@@ -277,6 +434,8 @@ final class MesarioResourceScopeTest
                 ], JSON_UNESCAPED_UNICODE),
             );
         } finally {
+            $fixtureUserIds = array_map('intval', array_merge($editionA['atleta_ids'], $editionB['atleta_ids']));
+            self::deleteOccurrences($connection, $fixtureUserIds);
             $connection->close();
             AuditFixtures::restoreAndRemove(
                 TestDatabase::connect($database),
@@ -284,6 +443,179 @@ final class MesarioResourceScopeTest
                 $previousActiveId,
             );
         }
+    }
+
+    private static function runAutomaticRedRegression(
+        \mysqli $connection,
+        TestClient $admin,
+        TestClient $mesario,
+        int $editionId,
+        int $userId,
+        int $gameId,
+        int $classId,
+        int $legacyUserId,
+        int $legacyClassId,
+    ): void {
+        $date = date('Y-m-d');
+        $legacy = $mesario->postJson('api/v1/ocorrencias', [
+            'titulo_ocorrencia' => 'Vermelho',
+            'descricao_ocorrencia' => "[JOGO:{$gameId}][TURMA:{$legacyClassId}]Segundo cartão amarelo — expulso automático",
+            'data_ocorrencia' => $date,
+            'usuarios_id_usuario' => $legacyUserId,
+            'id_jogo' => $gameId,
+            'id_turma' => $legacyClassId,
+            'penalidade' => 1,
+        ]);
+        $legacyId = (int) ($legacy['json']['id'] ?? 0);
+        $legacyBefore = $legacyId > 0 ? self::occurrenceSnapshot($connection, $legacyId) : null;
+        $rankingBefore = self::rankingScore($admin, $editionId, $classId);
+
+        $first = $mesario->postJson('api/v1/ocorrencias', [
+            'titulo_ocorrencia' => 'Amarelo',
+            'descricao_ocorrencia' => 'L10 primeiro amarelo',
+            'data_ocorrencia' => $date,
+            'usuarios_id_usuario' => $userId,
+            'id_jogo' => $gameId,
+            'id_turma' => $classId,
+            'penalidade' => 0,
+        ], ['X-SGI-Mutation-Id' => 'l10-yellow-first-' . bin2hex(random_bytes(6))]);
+        $secondPayload = [
+            'titulo_ocorrencia' => 'Amarelo',
+            'descricao_ocorrencia' => 'L10 segundo amarelo',
+            'data_ocorrencia' => $date,
+            'usuarios_id_usuario' => $userId,
+            'id_jogo' => $gameId,
+            'id_turma' => $classId,
+            'penalidade' => 0,
+        ];
+        $secondKey = 'l10-yellow-second-' . bin2hex(random_bytes(6));
+        $second = $mesario->postJson('api/v1/ocorrencias', $secondPayload, ['X-SGI-Mutation-Id' => $secondKey]);
+        $secondId = (int) ($second['json']['id'] ?? 0);
+        $retrySecond = $mesario->postJson('api/v1/ocorrencias', $secondPayload, ['X-SGI-Mutation-Id' => $secondKey]);
+        $autoAfterSecond = self::automaticRedRows($connection, $userId, $gameId);
+        Assertions::assert(
+            'Dois amarelos criam exatamente um vermelho automático',
+            $legacy['code'] === 201
+            && $first['code'] === 201
+            && $second['code'] === 201
+            && ($second['json']['evento'] ?? null) === 'segundo_amarelo'
+            && count(array_filter($autoAfterSecond, static fn (array $row): bool => $row['status_ocorrencia'] === '1')) === 1,
+            json_encode(['first' => $first, 'second' => $second, 'auto' => $autoAfterSecond], JSON_UNESCAPED_UNICODE),
+        );
+        Assertions::assert(
+            'O vermelho automático aponta para o segundo amarelo estruturado',
+            count($autoAfterSecond) === 1
+            && (int) ($autoAfterSecond[0]['ocorrencia_amarela_origem_id'] ?? 0) === $secondId,
+            json_encode($autoAfterSecond, JSON_UNESCAPED_UNICODE),
+        );
+        Assertions::assert(
+            'Retry do segundo amarelo preserva a mesma ocorrência e não duplica cartão',
+            $secondId > 0
+            && $retrySecond['code'] === 201
+            && (int) ($retrySecond['json']['id'] ?? 0) === $secondId
+            && self::countActiveYellows($connection, $userId, $gameId) === 2
+            && count(self::automaticRedRows($connection, $userId, $gameId)) === 1,
+            json_encode($retrySecond, JSON_UNESCAPED_UNICODE),
+        );
+
+        $athletesAfterSecond = $mesario->get("api/v1/ocorrencias?acao=listar_atletas&id_jogo={$gameId}&id_turma={$classId}");
+        $redId = (int) ($autoAfterSecond[0]['id_ocorrencia'] ?? 0);
+        Assertions::assert(
+            'Vermelho automático remove atleta apto e desconta um ponto no ranking',
+            $redId > 0
+            && !self::athleteListed($athletesAfterSecond, $userId)
+            && self::rankingScore($admin, $editionId, $classId) === $rankingBefore - 1,
+            json_encode(['athletes' => $athletesAfterSecond, 'ranking' => self::rankingScore($admin, $editionId, $classId)], JSON_UNESCAPED_UNICODE),
+        );
+        $redBeforeDirectEdit = self::occurrenceSnapshot($connection, $redId);
+        $directAutoRedEdit = $mesario->putJson('api/v1/ocorrencias', [
+            'id_ocorrencia' => $redId,
+            'status_ocorrencia' => '0',
+        ], ['X-SGI-Mutation-Id' => 'l10-direct-red-edit-' . bin2hex(random_bytes(6))]);
+        Assertions::assert(
+            'A API rejeita edição direta do vermelho derivado sem alterar a ocorrência',
+            $directAutoRedEdit['code'] === 409
+            && self::occurrenceSnapshot($connection, $redId) === $redBeforeDirectEdit
+            && self::automaticRedRows($connection, $userId, $gameId) === $autoAfterSecond,
+            json_encode(['response' => $directAutoRedEdit, 'red' => self::occurrenceSnapshot($connection, $redId)], JSON_UNESCAPED_UNICODE),
+        );
+
+        $deactivateSecond = $mesario->putJson('api/v1/ocorrencias', [
+            'id_ocorrencia' => $secondId,
+            'status_ocorrencia' => '0',
+        ], ['X-SGI-Mutation-Id' => 'l10-deactivate-' . bin2hex(random_bytes(6))]);
+        $athletesAfterCorrection = $mesario->get("api/v1/ocorrencias?acao=listar_atletas&id_jogo={$gameId}&id_turma={$classId}");
+        $autoAfterCorrection = self::occurrenceSnapshot($connection, $redId);
+        Assertions::assert(
+            'Corrigir o segundo amarelo retira somente o efeito automático',
+            $deactivateSecond['code'] === 200
+            && ($autoAfterCorrection['status_ocorrencia'] ?? null) === '0'
+            && self::athleteListed($athletesAfterCorrection, $userId)
+            && self::rankingScore($admin, $editionId, $classId) === $rankingBefore,
+            json_encode(['update' => $deactivateSecond, 'auto' => $autoAfterCorrection, 'athletes' => $athletesAfterCorrection], JSON_UNESCAPED_UNICODE),
+        );
+
+        $manual = $mesario->postJson('api/v1/ocorrencias', [
+            'titulo_ocorrencia' => 'Vermelho',
+            'descricao_ocorrencia' => 'L10 cartão vermelho manual',
+            'data_ocorrencia' => $date,
+            'usuarios_id_usuario' => $userId,
+            'id_jogo' => $gameId,
+            'id_turma' => $classId,
+            'penalidade' => 1,
+        ], ['X-SGI-Mutation-Id' => 'l10-manual-red-' . bin2hex(random_bytes(6))]);
+        $manualId = (int) ($manual['json']['id'] ?? 0);
+        $manualBeforeReactivation = $manualId > 0 ? self::occurrenceSnapshot($connection, $manualId) : null;
+        $reactivateSecond = $mesario->putJson('api/v1/ocorrencias', [
+            'id_ocorrencia' => $secondId,
+            'status_ocorrencia' => '1',
+        ], ['X-SGI-Mutation-Id' => 'l10-reactivate-' . bin2hex(random_bytes(6))]);
+        $autoAfterReactivation = self::automaticRedRows($connection, $userId, $gameId);
+        $manualAfterReactivation = $manualId > 0 ? self::occurrenceSnapshot($connection, $manualId) : null;
+        Assertions::assert(
+            'Reativar amarelo reativa o mesmo derivado e preserva o vermelho manual',
+            $manual['code'] === 201
+            && $manualId > 0
+            && $reactivateSecond['code'] === 200
+            && count($autoAfterReactivation) === 1
+            && (int) ($autoAfterReactivation[0]['id_ocorrencia'] ?? 0) === $redId
+            && ($autoAfterReactivation[0]['status_ocorrencia'] ?? null) === '1'
+            && (int) ($autoAfterReactivation[0]['ocorrencia_amarela_origem_id'] ?? 0) === $secondId
+            && $manualBeforeReactivation !== null
+            && $manualAfterReactivation === $manualBeforeReactivation,
+            json_encode(['auto' => $autoAfterReactivation, 'manual' => $manualAfterReactivation], JSON_UNESCAPED_UNICODE),
+        );
+
+        $thirdPayload = [
+            'titulo_ocorrencia' => 'Amarelo',
+            'descricao_ocorrencia' => 'L10 terceiro amarelo',
+            'data_ocorrencia' => $date,
+            'usuarios_id_usuario' => $userId,
+            'id_jogo' => $gameId,
+            'id_turma' => $classId,
+            'penalidade' => 0,
+        ];
+        $thirdKey = 'l10-yellow-third-' . bin2hex(random_bytes(6));
+        $third = $mesario->postJson('api/v1/ocorrencias', $thirdPayload, ['X-SGI-Mutation-Id' => $thirdKey]);
+        $retryThird = $mesario->postJson('api/v1/ocorrencias', $thirdPayload, ['X-SGI-Mutation-Id' => $thirdKey]);
+        $autoAfterThird = self::automaticRedRows($connection, $userId, $gameId);
+        Assertions::assert(
+            'Terceiro amarelo e retry mantêm um único vermelho automático ativo',
+            $third['code'] === 201
+            && (int) ($retryThird['json']['id'] ?? 0) === (int) ($third['json']['id'] ?? 0)
+            && self::countActiveYellows($connection, $userId, $gameId) === 3
+            && count(array_filter($autoAfterThird, static fn (array $row): bool => $row['status_ocorrencia'] === '1')) === 1
+            && ($manualAfterReactivation['status_ocorrencia'] ?? null) === '1',
+            json_encode(['third' => $third, 'retry' => $retryThird, 'auto' => $autoAfterThird], JSON_UNESCAPED_UNICODE),
+        );
+        Assertions::assert(
+            'Cartão legado sem relação estruturada permanece inalterado',
+            $legacyId > 0
+            && $legacyBefore !== null
+            && self::occurrenceSnapshot($connection, $legacyId) === $legacyBefore,
+            json_encode(['before' => $legacyBefore, 'after' => $legacyId > 0 ? self::occurrenceSnapshot($connection, $legacyId) : null], JSON_UNESCAPED_UNICODE),
+        );
+        self::deleteOccurrences($connection, [$userId, $legacyUserId]);
     }
 
     private static function countGoals(\mysqli $connection, int $userId, int $gameId): int
@@ -306,6 +638,129 @@ final class MesarioResourceScopeTest
         $count = (int) $statement->get_result()->fetch_column();
         $statement->close();
         return $count;
+    }
+
+    /** @return list<array{id_ocorrencia:int,status_ocorrencia:string,penalidade:int,descricao_ocorrencia:string,ocorrencia_amarela_origem_id:int}> */
+    private static function automaticRedRows(\mysqli $connection, int $userId, int $gameId): array
+    {
+        $statement = $connection->prepare(
+            'SELECT o.id_ocorrencia, o.status_ocorrencia, o.penalidade, o.descricao_ocorrencia,
+                    a.ocorrencia_amarela_origem_id
+             FROM ocorrencias_vermelhos_automaticos a
+             INNER JOIN ocorrencias o ON o.id_ocorrencia = a.ocorrencia_vermelha_id
+             WHERE a.usuarios_id_usuario = ? AND a.jogos_id_jogo = ?
+             ORDER BY o.id_ocorrencia',
+        );
+        $statement->bind_param('ii', $userId, $gameId);
+        $statement->execute();
+        $rows = $statement->get_result()->fetch_all(MYSQLI_ASSOC);
+        $statement->close();
+        return array_map(static fn (array $row): array => [
+            'id_ocorrencia' => (int) $row['id_ocorrencia'],
+            'status_ocorrencia' => (string) $row['status_ocorrencia'],
+            'penalidade' => (int) $row['penalidade'],
+            'descricao_ocorrencia' => (string) $row['descricao_ocorrencia'],
+            'ocorrencia_amarela_origem_id' => (int) $row['ocorrencia_amarela_origem_id'],
+        ], $rows);
+    }
+
+    private static function countActiveYellows(\mysqli $connection, int $userId, int $gameId): int
+    {
+        $statement = $connection->prepare(
+            "SELECT COUNT(*) FROM ocorrencias
+             WHERE usuarios_id_usuario = ? AND titulo_ocorrencia = 'Amarelo'
+               AND status_ocorrencia = '1' AND descricao_ocorrencia LIKE ?",
+        );
+        $gameMarker = '%[JOGO:' . $gameId . ']%';
+        $statement->bind_param('is', $userId, $gameMarker);
+        $statement->execute();
+        $count = (int) $statement->get_result()->fetch_column();
+        $statement->close();
+        return $count;
+    }
+
+    /** @param array<string, mixed> $response */
+    private static function athleteListed(array $response, int $userId): bool
+    {
+        foreach (($response['json']['atletas'] ?? []) as $athlete) {
+            if ((int) ($athlete['id_usuario'] ?? 0) === $userId) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static function rankingScore(TestClient $admin, int $editionId, int $classId): int
+    {
+        $response = $admin->get("api/v1/ranking?id_interclasse={$editionId}&id_turma={$classId}");
+        foreach (($response['json'] ?? []) as $row) {
+            if ((int) ($row['id_turma'] ?? 0) === $classId) {
+                return (int) ($row['pontuacao_liquida'] ?? PHP_INT_MIN);
+            }
+        }
+        return PHP_INT_MIN;
+    }
+
+    /** @return array{id_ocorrencia:int,titulo_ocorrencia:string,descricao_ocorrencia:string,status_ocorrencia:string,penalidade:int}|null */
+    private static function occurrenceSnapshot(\mysqli $connection, int $occurrenceId): ?array
+    {
+        $statement = $connection->prepare(
+            'SELECT id_ocorrencia, titulo_ocorrencia, descricao_ocorrencia, status_ocorrencia, penalidade FROM ocorrencias WHERE id_ocorrencia = ? LIMIT 1',
+        );
+        $statement->bind_param('i', $occurrenceId);
+        $statement->execute();
+        $row = $statement->get_result()->fetch_assoc() ?: null;
+        $statement->close();
+        if ($row === null) {
+            return null;
+        }
+        return [
+            'id_ocorrencia' => (int) $row['id_ocorrencia'],
+            'titulo_ocorrencia' => (string) $row['titulo_ocorrencia'],
+            'descricao_ocorrencia' => (string) $row['descricao_ocorrencia'],
+            'status_ocorrencia' => (string) $row['status_ocorrencia'],
+            'penalidade' => (int) $row['penalidade'],
+        ];
+    }
+
+    private static function occurrenceDescription(\mysqli $connection, int $occurrenceId): ?string
+    {
+        $statement = $connection->prepare('SELECT descricao_ocorrencia FROM ocorrencias WHERE id_ocorrencia = ? LIMIT 1');
+        $statement->bind_param('i', $occurrenceId);
+        $statement->execute();
+        $value = $statement->get_result()->fetch_column();
+        $statement->close();
+        return $value === null || $value === false ? null : (string) $value;
+    }
+
+    /** @param array<string, mixed> $response */
+    private static function containsOccurrence(array $response, int $occurrenceId): bool
+    {
+        foreach (($response['json'] ?? []) as $row) {
+            if ((int) ($row['id_ocorrencia'] ?? 0) === $occurrenceId) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /** @param list<int> $userIds */
+    private static function deleteOccurrences(\mysqli $connection, array $userIds): void
+    {
+        if ($userIds === []) {
+            return;
+        }
+        $placeholders = implode(',', array_fill(0, count($userIds), '?'));
+        $links = $connection->prepare("DELETE FROM ocorrencias_vermelhos_automaticos WHERE usuarios_id_usuario IN ({$placeholders})");
+        $types = str_repeat('i', count($userIds));
+        $userIds = array_map('intval', $userIds);
+        $links->bind_param($types, ...$userIds);
+        $links->execute();
+        $links->close();
+        $statement = $connection->prepare("DELETE FROM ocorrencias WHERE usuarios_id_usuario IN ({$placeholders})");
+        $statement->bind_param($types, ...$userIds);
+        $statement->execute();
+        $statement->close();
     }
 
     private static function pointStatus(\mysqli $connection, int $pointId): string

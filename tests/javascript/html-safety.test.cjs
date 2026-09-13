@@ -32,7 +32,6 @@ test('mensagens vindas de APIs são escapadas antes de entrar em innerHTML', () 
     const contracts = [
         ['resources/js/pages/aluno/perfil.js', /esc\(data\.message \|\| 'Erro ao salvar\.'/],
         ['resources/js/pages/acesso/perfil.js', /esc\(data\.message \|\| 'Erro ao salvar\.'/],
-        ['resources/js/pages/aluno/home.js', /escapeHTML\(data\.message \|\| 'Senha alterada com sucesso\.'/],
         ['resources/js/pages/acesso/colaboradores.js', /esc\(error\.message\)/],
         ['resources/js/pages/competicoes/chaveamento.js', /esc\(err\.message\)/],
         ['resources/js/pages/competicoes/modalidade-detalhes.js', /esc\(error\.message\)/],
@@ -44,6 +43,12 @@ test('mensagens vindas de APIs são escapadas antes de entrar em innerHTML', () 
     ];
 
     for (const [file, pattern] of contracts) assert.match(read(file), pattern, file);
+});
+
+test('mensagens da troca obrigatória de senha são renderizadas como texto', () => {
+    const source = read('resources/js/pages/aluno/trocar-senha.js');
+    assert.match(source, /message\.textContent = text/);
+    assert.doesNotMatch(source, /message\.innerHTML/);
 });
 
 test('ações com dados de usuário não são serializadas em handlers inline', () => {

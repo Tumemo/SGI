@@ -53,7 +53,6 @@ final class CronometroRules
             'acrescentar' => self::acrescentar($estado, $agora, $dados),
             'duracao' => self::alterarDuracao($estado, $agora, $dados),
             'saldo' => self::salvarSaldo($estado, $agora, $dados),
-            'concluir' => self::concluir($estado, $agora),
             default => throw new InvalidArgumentException('Operação de cronômetro inválida.'),
         };
     }
@@ -118,15 +117,6 @@ final class CronometroRules
     {
         $estado['tempo_restante_jogo'] = self::inteiro($dados['tempo_restante_jogo'] ?? null, 'tempo_restante_jogo', false);
         self::atualizarReferencia($estado, $agora);
-        return $estado;
-    }
-
-    /** @param array{status_jogo:string,duracao_jogo:int,tempo_extra_jogo:int,tempo_restante_jogo:int|null,data_inicio_real:int|null} $estado */
-    private static function concluir(array $estado, int $agora): array
-    {
-        $estado['tempo_restante_jogo'] = self::saldoAtual($estado, $agora);
-        $estado['status_jogo'] = 'Concluido';
-        $estado['data_inicio_real'] = null;
         return $estado;
     }
 

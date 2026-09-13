@@ -14,15 +14,19 @@ final class MysqliSenhaRepository implements SenhaRepository
     {
     }
 
-    public function alterarSenha(int $usuarioId, string $hash): bool
+    public function alterarSenha(int $usuarioId, string $hash, int $authVersion, bool $trocaInicial): bool
     {
+        $pending = $trocaInicial ? 1 : 0;
         $statement = $this->connection->prepare(
-            "UPDATE usuarios SET senha_usuario = ?, auth_version = auth_version + 1 WHERE id_usuario = ? AND status_usuario = '1'",
+            "UPDATE usuarios
+             SET senha_usuario = ?, senha_troca_pendente = 0, auth_version = auth_version + 1
+             WHERE id_usuario = ? AND status_usuario = '1'
+               AND auth_version = ? AND senha_troca_pendente = ?",
         );
         if ($statement === false) {
             throw new RuntimeException('Não foi possível alterar a senha.');
         }
-        $statement->bind_param('si', $hash, $usuarioId);
+        $statement->bind_param('siii', $hash, $usuarioId, $authVersion, $pending);
         if (!$statement->execute()) {
             $statement->close();
             throw new RuntimeException('Não foi possível alterar a senha.');

@@ -8,5 +8,5 @@ interface SenhaRepository
 {
     public function senhaAtualValida(int $usuarioId, string $senha): bool;
 
-    public function alterarSenha(int $usuarioId, string $hash): bool;
+    public function alterarSenha(int $usuarioId, string $hash, int $authVersion, bool $trocaInicial): bool;
 }

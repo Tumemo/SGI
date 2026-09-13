@@ -15,7 +15,7 @@ final class MysqliPerfilRepository implements PerfilRepository
 
     public function find(int $id): ?array
     {
-        $statement = $this->connection->prepare("SELECT id_usuario, nome_usuario, matricula_usuario, foto_usuario, nivel_usuario, senha_usuario FROM usuarios WHERE id_usuario = ? AND status_usuario = '1' LIMIT 1");
+        $statement = $this->connection->prepare("SELECT id_usuario, nome_usuario, matricula_usuario, foto_usuario, nivel_usuario, senha_usuario, senha_troca_pendente, auth_version FROM usuarios WHERE id_usuario = ? AND status_usuario = '1' LIMIT 1");
         $statement->bind_param('i', $id);
         $statement->execute();
         $row = $statement->get_result()->fetch_assoc();
@@ -23,12 +23,36 @@ final class MysqliPerfilRepository implements PerfilRepository
         return $row;
     }
 
-    public function update(int $id, string $name, ?string $passwordHash): void
+    public function update(int $id, string $name, ?string $passwordHash, ?int $expectedAuthVersion = null): bool
     {
-        $statement = $this->connection->prepare('UPDATE usuarios SET nome_usuario = ?, senha_usuario = COALESCE(?, senha_usuario), auth_version = auth_version + IF(? IS NULL, 0, 1) WHERE id_usuario = ?');
-        $statement->bind_param('sssi', $name, $passwordHash, $passwordHash, $id);
-        $statement->execute();
+        if ($passwordHash === null) {
+            $statement = $this->connection->prepare("UPDATE usuarios SET nome_usuario = ? WHERE id_usuario = ? AND status_usuario = '1'");
+        } else {
+            if ($expectedAuthVersion === null) {
+                return false;
+            }
+            $statement = $this->connection->prepare(
+                "UPDATE usuarios
+                 SET nome_usuario = ?, senha_usuario = ?, auth_version = auth_version + 1
+                 WHERE id_usuario = ? AND status_usuario = '1'
+                   AND auth_version = ? AND senha_troca_pendente = 0",
+            );
+        }
+        if ($statement === false) {
+            return false;
+        }
+        if ($passwordHash === null) {
+            $statement->bind_param('si', $name, $id);
+        } else {
+            $statement->bind_param('ssii', $name, $passwordHash, $id, $expectedAuthVersion);
+        }
+        if (!$statement->execute()) {
+            $statement->close();
+            return false;
+        }
+        $updated = $passwordHash === null || $statement->affected_rows === 1;
         $statement->close();
+        return $updated;
     }
 
     public function setPhoto(int $id, ?string $filename): void

@@ -452,7 +452,7 @@ window.SGIPage.mount("participantes/turma-alunos", function (pageConfig, pageSco
             try { js = JSON.parse(xhr.responseText); } catch (_) { js = {}; }
             if (xhr.status >= 200 && xhr.status < 300 && js.success !== false) {
                 if (cfg) cfg.done();
-                msgEl.innerHTML = '<span class="text-success">Importação concluída. Atualizando…</span>';
+                msgEl.innerHTML = `<span class="text-success">${esc(js.message || 'Importação concluída.')}. Atualizando…</span>`;
                 setTimeout(() => window.location.reload(), 1200);
             } else {
                 if (cfg) cfg.reset();

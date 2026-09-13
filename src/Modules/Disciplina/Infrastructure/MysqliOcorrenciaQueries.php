@@ -6,6 +6,7 @@ namespace App\Modules\Disciplina\Infrastructure;
 
 use App\Modules\Competicoes\Infrastructure\MysqliChaveamentoRepository;
 use App\Modules\Competicoes\Domain\ChaveamentoRules;
+use App\Modules\Disciplina\Domain\OcorrenciaDescricao;
 use mysqli;
 
 final class MysqliOcorrenciaQueries
@@ -124,14 +125,6 @@ final class MysqliOcorrenciaQueries
     /** @return array{gameId:int,classId:int} */
     public function referencesFromDescription(string $description): array
     {
-        $gameId = 0;
-        $classId = 0;
-        if (preg_match('/\[JOGO:(\d+)\]/', $description, $gameMatch) === 1) {
-            $gameId = (int) $gameMatch[1];
-        }
-        if (preg_match('/\[TURMA:(\d+)\]/', $description, $classMatch) === 1) {
-            $classId = (int) $classMatch[1];
-        }
-        return ['gameId' => $gameId, 'classId' => $classId];
+        return OcorrenciaDescricao::fromStored($description);
     }
 }

@@ -57,6 +57,89 @@ final class CronometroServiceTest extends TestCase
         $service->atualizar(12, ['status_jogo' => 'Iniciado']);
         self::assertSame(0, $repository->saveCalls);
     }
+
+    public function testConclusaoDiretaDeModalidadeColetivaDeveSerRecusada(): void
+    {
+        $repository = new CronometroRepositoryFake();
+        $service = new CronometroService($repository, static fn (): int => 1000);
+
+        try {
+            $service->atualizar(12, ['status_jogo' => 'Concluido']);
+            self::fail('O cronômetro não pode concluir uma partida coletiva sem o resultado.');
+        } catch (\InvalidArgumentException $exception) {
+            self::assertStringContainsString('resultado', $exception->getMessage());
+        }
+
+        self::assertSame(0, $repository->saveCalls);
+    }
+
+    public function testSnapshotTerminalNaoConcluiPartidaColetivaAberta(): void
+    {
+        $repository = new CronometroRepositoryFake();
+        $service = new CronometroService($repository, static fn (): int => 1000);
+
+        try {
+            $service->atualizar(12, [
+                'status_jogo' => 'Concluido',
+                'cronometro' => [
+                    'versao' => 2,
+                    'saldo_segundos' => 0,
+                    'referencia_epoch_ms' => 1000000,
+                ],
+            ]);
+            self::fail('Um snapshot terminal não pode concluir uma partida coletiva sem o resultado.');
+        } catch (\InvalidArgumentException $exception) {
+            self::assertStringContainsString('resultado', $exception->getMessage());
+        }
+
+        self::assertSame(0, $repository->saveCalls);
+    }
+
+    public function testSnapshotAtrasadoNaoReabrePartidaEncerrada(): void
+    {
+        foreach (['Iniciado', 'Pausado'] as $status) {
+            $repository = new CronometroRepositoryFake();
+            $repository->state['status_jogo'] = 'Concluido';
+            $service = new CronometroService($repository, static fn (): int => 1000);
+
+            try {
+                $service->atualizar(12, [
+                    'status_jogo' => $status,
+                    'cronometro' => [
+                        'versao' => 2,
+                        'saldo_segundos' => 30,
+                        'referencia_epoch_ms' => 990000,
+                    ],
+                ]);
+                self::fail('Snapshot atrasado de ' . $status . ' não pode reabrir a partida.');
+            } catch (\InvalidArgumentException $exception) {
+                self::assertStringContainsString('encerrado', $exception->getMessage());
+            }
+
+            self::assertSame(0, $repository->saveCalls);
+            self::assertSame('Concluido', $repository->state['status_jogo']);
+        }
+    }
+
+    public function testSnapshotTerminalLegadoEmPartidaEncerradaEConfirmadoSemGravar(): void
+    {
+        $repository = new CronometroRepositoryFake();
+        $repository->state['status_jogo'] = 'Concluido';
+        $service = new CronometroService($repository, static fn (): int => 1000);
+
+        $result = $service->atualizar(12, [
+            'status_jogo' => 'Concluido',
+            'cronometro' => [
+                'versao' => 2,
+                'saldo_segundos' => 1200,
+                'referencia_epoch_ms' => 1000000,
+            ],
+        ]);
+
+        self::assertSame('Concluido', $result['snapshot']['status_jogo']);
+        self::assertSame(0, $repository->saveCalls);
+        self::assertSame('Concluido', $repository->state['status_jogo']);
+    }
 }
 
 final class CronometroRepositoryFake implements CronometroRepository

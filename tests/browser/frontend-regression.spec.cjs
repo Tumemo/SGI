@@ -11,7 +11,7 @@ async function jsonOrThrow(response, label) {
     return payload;
 }
 
-async function obterContexto(request) {
+async function obterContexto(request, { criarCompetidor = true } = {}) {
     await jsonOrThrow(await request.post('api/v1/login', {
         data: { matricula: 'admin', senha: '123' }
     }), 'login de preparação do frontend');
@@ -66,11 +66,12 @@ async function obterContexto(request) {
     const jogo = listaJogos.find((item) => Number(item.id_jogo) > 0) || {};
     const idTurma = Number(equipe.turmas_id_turma || equipe.id_turma || turma.id_turma || 0);
 
-    // Cria um competidor efêmero para que a suíte não dependa do estado de um
-    // RM importado por uma execução anterior (ou que tenha sido desativado).
+    // Quando solicitado, cria um competidor efêmero para que a suíte não dependa
+    // do estado de um RM importado por uma execução anterior ou desativado.
     const matriculaAluno = `98${Date.now().toString().slice(-7)}`;
     let senhaAluno = '';
-    if (idTurma > 0) {
+    let idAluno = 0;
+    if (criarCompetidor && idTurma > 0) {
         const aluno = await jsonOrThrow(await request.post('api/v1/usuarios?acao=criar_aluno', {
             data: {
                 nome_usuario: 'Aluno Frontend E2E',
@@ -81,6 +82,7 @@ async function obterContexto(request) {
             }
         }), 'competidor efêmero do frontend');
         if (aluno.status !== 'sucesso') throw new Error(`Não foi possível criar o competidor visual: ${JSON.stringify(aluno)}`);
+        idAluno = Number(aluno.id_usuario || 0);
         senhaAluno = String(aluno.senha_temporaria || '');
         if (senhaAluno === '') throw new Error('A API não retornou a senha temporária do competidor visual.');
     }
@@ -92,6 +94,7 @@ async function obterContexto(request) {
         idTurma,
         idEquipe: Number(equipe.id_equipe || 0),
         idJogo: Number(jogo.id_jogo || 0),
+        idAluno,
         matriculaAluno,
         senhaAluno,
         categorias: Array.isArray(categorias) ? categorias : [],
@@ -174,6 +177,130 @@ test.describe('Frontend — regressão visual por perfil', () => {
         await expect(page.locator('#form_mobile')).toBeVisible();
         await capturarTela(page, testInfo, '02-login-mobile');
         expect(erros).toEqual([]);
+    });
+
+    test('adicionar atletas funciona em página nova, com busca e seleção sincronizada', async ({ page, request }) => {
+        const erros = ouvirErros(page);
+        const ctx = await obterContexto(request, { criarCompetidor: false });
+        const dadosModalidade = await jsonOrThrow(await request.get(
+            `api/v1/modalidades?id_modalidade=${ctx.idModalidade}`,
+        ), 'modalidade da regressão L12');
+        const modalidadesEncontradas = Array.isArray(dadosModalidade) ? dadosModalidade : [dadosModalidade];
+        const modalidade = modalidadesEncontradas.find((item) => Number(item.id_modalidade) === ctx.idModalidade);
+        const genero = String(modalidade?.genero_modalidade || 'MISTO') === 'FEM' ? 'FEM' : 'MASC';
+        const sufixo = Date.now().toString().slice(-7);
+        const matriculas = [`96${sufixo}`, `97${sufixo}`];
+        const alunosCriados = [];
+
+        try {
+            const atletasCriados = [];
+            for (const [indice, matricula] of matriculas.entries()) {
+                const aluno = await jsonOrThrow(await request.post('api/v1/usuarios?acao=criar_aluno', {
+                    data: {
+                        nome_usuario: `L12 atleta ${indice + 1}`,
+                        matricula_usuario: matricula,
+                        genero_usuario: genero,
+                        data_nasc_usuario: '2010-02-03',
+                        turmas_id_turma: ctx.idTurma,
+                    },
+                }), `atleta ${indice + 1} da regressão L12`);
+                const idUsuario = Number(aluno.id_usuario || 0);
+                if (idUsuario > 0) alunosCriados.push(idUsuario);
+                expect(aluno.status).toBe('sucesso');
+                expect(idUsuario).toBeGreaterThan(0);
+                atletasCriados.push(aluno);
+            }
+            const [primeiro, segundo] = atletasCriados;
+
+            const lista = await jsonOrThrow(await request.get(
+                `api/v1/usuarios?acao=listar_competidores&id_turma=${ctx.idTurma}&genero=${genero}`,
+            ), 'consulta dos atletas L12');
+            const competidores = Array.isArray(lista.competidores) ? lista.competidores : [];
+            const primeiroDaLista = competidores.find((item) => item.matricula_usuario === matriculas[0]);
+            const segundoDaLista = competidores.find((item) => item.matricula_usuario === matriculas[1]);
+            expect(primeiroDaLista?.id_usuario).toBe(Number(primeiro.id_usuario));
+            expect(segundoDaLista?.id_usuario).toBe(Number(segundo.id_usuario));
+
+            await entrar(page, 'admin');
+            await page.goto(
+                `equipes/alunos?id=${ctx.idInterclasse}&id_turma=${ctx.idTurma}&id_equipe=${ctx.idEquipe}&id_categoria=${ctx.idCategoria}&id_modalidade=${ctx.idModalidade}`,
+                { waitUntil: 'domcontentloaded' },
+            );
+            const desktopList = page.locator('#listaAlunosDesktop');
+            const mobileList = page.locator('#listaAlunosMobile');
+            await expect(desktopList).toContainText(matriculas[0]);
+            await expect(desktopList).toContainText(matriculas[1]);
+            await expect(desktopList).not.toContainText('Erro ao carregar alunos.');
+            await expect(desktopList.locator('img, svg[onload]')).toHaveCount(0);
+
+            await page.locator('#buscaAlunosDesktop').fill(matriculas[0]);
+            await expect(desktopList.locator('label')).toHaveCount(1);
+            const firstDesktopCheck = desktopList.locator('label').filter({ hasText: matriculas[0] }).locator('input');
+            await firstDesktopCheck.check();
+            const firstMobileCheck = mobileList.locator('label').filter({ hasText: matriculas[0] }).locator('input');
+            await expect(firstMobileCheck).toBeChecked();
+
+            await page.setViewportSize({ width: 390, height: 844 });
+            await page.locator('#buscaAlunosMobile').fill(matriculas[1]);
+            await expect(mobileList.locator('label')).toHaveCount(1);
+            const secondMobileCheck = mobileList.locator('label').filter({ hasText: matriculas[1] }).locator('input');
+            await secondMobileCheck.check();
+            const secondDesktopCheck = desktopList.locator('label').filter({ hasText: matriculas[1] }).locator('input');
+            await expect(secondDesktopCheck).toBeChecked();
+
+            await secondMobileCheck.uncheck();
+            await expect(secondDesktopCheck).not.toBeChecked();
+            await secondMobileCheck.check();
+            await page.setViewportSize({ width: 1280, height: 900 });
+            await secondDesktopCheck.uncheck();
+            await expect(secondMobileCheck).not.toBeChecked();
+
+            await page.locator('#buscaAlunosDesktop').fill(matriculas[0]);
+            await expect(desktopList.locator('label')).toHaveCount(1);
+            await expect(firstDesktopCheck).toBeChecked();
+
+            const saveResponse = page.waitForResponse((response) =>
+                response.url().includes('/api/v1/equipes') && response.request().method() === 'POST',
+            );
+            const saveRequest = page.waitForRequest((request) =>
+                request.url().includes('/api/v1/equipes') && request.method() === 'POST',
+            );
+            await page.locator('#btnSalvarAlunosDesktop').click();
+            const saved = await saveResponse;
+            const submitted = await saveRequest;
+            expect(saved.status()).toBe(200);
+            expect(JSON.parse(submitted.postData() || '{}').usuarios).toEqual([Number(primeiro.id_usuario)]);
+            await expect(page.locator('#btnSalvarAlunosDesktop')).toBeEnabled();
+            await expect(page.locator('#buscaAlunosDesktop')).toHaveValue(matriculas[0]);
+            await expect(desktopList.locator('label')).toHaveCount(1);
+            await expect(desktopList).toContainText(matriculas[0]);
+            await expect(desktopList).not.toContainText(matriculas[1]);
+
+            const roster = await jsonOrThrow(await request.get(`api/v1/equipes?id_equipe=${ctx.idEquipe}`), 'equipe após adição L12');
+            const rosterIds = roster.map((item) => Number(item.id_usuario));
+            expect(rosterIds).toContain(Number(primeiro.id_usuario));
+            expect(rosterIds).not.toContain(Number(segundo.id_usuario));
+            expect(erros).toEqual([]);
+        } finally {
+            const errosLimpeza = [];
+            for (const idUsuario of alunosCriados) {
+                try {
+                    await jsonOrThrow(await request.post('api/v1/equipes', {
+                        data: { acao: 'remover_aluno', id_equipe: ctx.idEquipe, id_usuario: idUsuario },
+                    }), 'limpeza do vínculo criado pela regressão L12');
+                } catch (error) {
+                    errosLimpeza.push(error);
+                }
+                try {
+                    await jsonOrThrow(await request.post('api/v1/usuarios?acao=excluir_aluno', {
+                        data: { id_usuario: idUsuario },
+                    }), 'desativação do aluno criado pela regressão L12');
+                } catch (error) {
+                    errosLimpeza.push(error);
+                }
+            }
+            if (errosLimpeza.length > 0) throw new Error(`Falha na limpeza L12: ${errosLimpeza.map((error) => error.message).join('; ')}`);
+        }
     });
 
     test('todas as telas administrativas com dados reais da edição ativa', async ({ page, request }, testInfo) => {

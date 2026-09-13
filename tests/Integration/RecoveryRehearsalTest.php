@@ -18,12 +18,41 @@ final class RecoveryRehearsalTest
         $runId = preg_replace('/[^a-z0-9_]+/i', '_', (string) (getenv('SGI_TEST_RUN_ID') ?: 'luna')) ?: 'luna';
         $source = 'sgi_test_' . strtolower($runId) . '_recovery_source';
         $restore = 'sgi_test_' . strtolower($runId) . '_recovery_restore';
+        $upgrade = 'sgi_test_' . strtolower($runId) . '_recovery_upgrade';
         TestDatabase::assertSafeDatabaseName($source);
         TestDatabase::assertSafeDatabaseName($restore);
 
         $backup = dirname(__DIR__, 2) . '/test-results/t28-recovery-' . bin2hex(random_bytes(4)) . '.sql';
         $manifest = $backup . '.json';
+        $legacyMigrations = dirname(__DIR__, 2) . '/test-results/recovery-migrations-' . bin2hex(random_bytes(4));
         try {
+            self::createDatabase($upgrade);
+            $upgradeConnection = TestDatabase::connect($upgrade);
+            $legacyVersions = self::migrationVersionsThrough(10);
+            $legacyDirectory = self::createLegacyMigrationDirectory($legacyMigrations, 10);
+            $appliedLegacy = (new MigrationRunner($upgradeConnection, $legacyDirectory))->migrate();
+            self::seedSyntheticData($upgradeConnection);
+            $legacyOccurrence = self::legacyOccurrenceSnapshot($upgradeConnection);
+            $legacyStudentHash = (string) ($upgradeConnection->query('SELECT senha_usuario FROM usuarios WHERE id_usuario = 1')->fetch_column() ?: '');
+            $appliedUpgrade = (new MigrationRunner($upgradeConnection, self::migrationDirectory()))->migrate();
+            $upgradedOccurrence = self::legacyOccurrenceSnapshot($upgradeConnection);
+            $linkedLegacyCount = (int) $upgradeConnection->query(
+                'SELECT COUNT(*) FROM ocorrencias_vermelhos_automaticos WHERE ocorrencia_vermelha_id = 1',
+            )->fetch_column();
+            $studentPasswordState = $upgradeConnection->query('SELECT senha_usuario, senha_troca_pendente FROM usuarios WHERE id_usuario = 1')->fetch_assoc() ?: [];
+            $repeatedUpgrade = (new MigrationRunner($upgradeConnection, self::migrationDirectory()))->migrate();
+            Assertions::assert(
+                'Upgrade 010→012 preserva dados legados, marca aluno pendente e é repetível',
+                $appliedLegacy === $legacyVersions
+                && $appliedUpgrade === ['011_occurrence_automatic_red_links.sql', '012_student_first_login_password.sql']
+                && $legacyOccurrence === $upgradedOccurrence
+                && $linkedLegacyCount === 0
+                && (string) ($studentPasswordState['senha_usuario'] ?? '') === $legacyStudentHash
+                && (int) ($studentPasswordState['senha_troca_pendente'] ?? 0) === 1
+                && $repeatedUpgrade === [],
+            );
+            $upgradeConnection->close();
+
             self::createDatabase($source);
             $connection = TestDatabase::connect($source);
             $appliedInitial = (new MigrationRunner($connection, self::migrationDirectory()))->migrate();
@@ -67,6 +96,8 @@ final class RecoveryRehearsalTest
         } finally {
             self::dropDatabase($source);
             self::dropDatabase($restore);
+            self::dropDatabase($upgrade);
+            self::removeDirectory($legacyMigrations);
         }
     }
 
@@ -78,6 +109,57 @@ final class RecoveryRehearsalTest
             'history' => $connection->query('SELECT id_historico, quantidade, pontos_adicionados, status_historico FROM historico_arrecadacoes ORDER BY id_historico')->fetch_all(MYSQLI_ASSOC),
             'triggers' => array_column($connection->query('SHOW TRIGGERS')->fetch_all(MYSQLI_ASSOC), 'Trigger'),
         ];
+    }
+
+    /** @return array<string,mixed>|null */
+    private static function legacyOccurrenceSnapshot(mysqli $connection): ?array
+    {
+        return $connection->query(
+            'SELECT id_ocorrencia, titulo_ocorrencia, descricao_ocorrencia, data_ocorrencia,
+                    hora_ocorrencia, usuarios_id_usuario, status_ocorrencia, penalidade
+             FROM ocorrencias WHERE id_ocorrencia = 1',
+        )->fetch_assoc() ?: null;
+    }
+
+    /** @return list<string> */
+    private static function migrationVersionsThrough(int $lastVersion): array
+    {
+        $versions = [];
+        foreach (glob(self::migrationDirectory() . '/*.sql') ?: [] as $file) {
+            if (preg_match('/^(\d+)_/', basename($file), $match) === 1 && (int) $match[1] <= $lastVersion) {
+                $versions[] = basename($file);
+            }
+        }
+        sort($versions);
+        return $versions;
+    }
+
+    private static function createLegacyMigrationDirectory(string $directory, int $lastVersion): string
+    {
+        if (!mkdir($directory, 0777, true) && !is_dir($directory)) {
+            throw new RuntimeException('Não foi possível preparar migrações legadas sintéticas.');
+        }
+        foreach (glob(self::migrationDirectory() . '/*.sql') ?: [] as $file) {
+            if (preg_match('/^(\d+)_/', basename($file), $match) !== 1 || (int) $match[1] > $lastVersion) {
+                continue;
+            }
+            if (!copy($file, $directory . '/' . basename($file))) {
+                throw new RuntimeException('Não foi possível copiar migração legada sintética.');
+            }
+        }
+        return $directory;
+    }
+
+    private static function removeDirectory(string $directory): void
+    {
+        foreach (glob($directory . '/*') ?: [] as $file) {
+            if (is_file($file)) {
+                unlink($file);
+            }
+        }
+        if (is_dir($directory)) {
+            rmdir($directory);
+        }
     }
 
     private static function seedSyntheticData(mysqli $connection): void
@@ -97,7 +179,7 @@ final class RecoveryRehearsalTest
             "INSERT INTO artilheiros (id_artilheiro, usuarios_id_usuario, jogos_id_jogo, num_gol) VALUES (1, 1, 1, 1)",
             "INSERT INTO pontuacoes VALUES (1, 'Final', 10, 1, NULL)",
             "INSERT INTO historico_arrecadacoes VALUES (1, 1, 1, 1.50, 3, '2026-10-02 10:00:00', 1, '1')",
-            "INSERT INTO ocorrencias VALUES (1, 'Advertência', 'Recuperação sintética', '2026-10-03 12:00:00', '12:00:00', 1, '1', 1)",
+            "INSERT INTO ocorrencias VALUES (1, 'Vermelho', '[JOGO:1][TURMA:1]Segundo cartão amarelo — expulso automático', '2026-10-03 12:00:00', '12:00:00', 1, '1', 1)",
             "INSERT INTO ocorrencias_turmas VALUES (1, 1, 1, 'Ajuste', 'Recuperação sintética', 1, '2026-10-03', 1, '2026-10-03 12:00:00')",
             "INSERT INTO sincronizacoes_idempotentes (rota, chave_mutacao, status_http, resposta_json) VALUES ('/api/v1/resultados', 'recovery-current', 200, '{\"ok\":true}')",
         ];

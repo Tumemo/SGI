@@ -27,12 +27,31 @@ try {
             (string) getenv('SGI_ADMIN_PASSWORD'),
         );
         echo 'Administrador inicial criado: ' . $id . PHP_EOL;
+    } elseif ($command === 'students:senha-inicial') {
+        $environment = \App\Shared\Config\Env::get('SGI_APP_ENV');
+        $database = \App\Shared\Config\Env::get('SGI_DB_NAME', 'sgi') ?? 'sgi';
+        $confirmation = null;
+        foreach ($argv as $argument) {
+            if (str_starts_with($argument, '--confirm-database=')) {
+                $confirmation = substr($argument, strlen('--confirm-database='));
+                break;
+            }
+        }
+        if ($environment !== 'development') {
+            throw new RuntimeException('A inicialização da senha compartilhada só pode ser executada em SGI_APP_ENV=development.');
+        }
+        if (!is_string($confirmation) || $confirmation === '' || !hash_equals($database, $confirmation)) {
+            throw new RuntimeException('Confirme explicitamente o banco local com --confirm-database=<SGI_DB_NAME>.');
+        }
+        $updated = (new \App\Modules\Acesso\Infrastructure\MysqliStudentPasswordInitializer(\App\Shared\Database\ConnectionFactory::get()))->initialize();
+        echo "Alunos inicializados: {$updated}. A senha inicial é sesi-senai e exige troca no próximo acesso.\n";
     } elseif ($command === 'pontuacao:diagnosticar') {
         $diagnostico = (new \App\Modules\Resultados\Infrastructure\MysqliPodioRepository(\App\Shared\Database\ConnectionFactory::get()))->diagnosticar();
         echo json_encode($diagnostico, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR) . PHP_EOL;
     } else {
         echo "Uso: php bin/sgi.php migrate\n";
         echo "     php bin/sgi.php admin:create (SGI_ADMIN_LOGIN, SGI_ADMIN_NAME, SGI_ADMIN_PASSWORD)\n";
+        echo "     php bin/sgi.php students:senha-inicial --confirm-database=<SGI_DB_NAME> (somente desenvolvimento)\n";
         echo "     php bin/sgi.php pontuacao:diagnosticar\n";
     }
 } catch (Throwable $exception) {

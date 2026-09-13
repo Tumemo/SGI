@@ -114,7 +114,7 @@ async function criarChaveFixture(request) {
         });
     }
     equipes = equipes.slice(0, 8);
-    await garantirAtletas(request, idInterclasse, equipes);
+    await garantirAtletas(request, idInterclasse, Number(modalidade.id_modalidade), equipes);
 
     const jogos = [
         { tag: 'MM:8:0:N', a: equipes[0], b: equipes[1] },
@@ -185,19 +185,41 @@ async function criarChaveFixture(request) {
     };
 }
 
-async function garantirAtletas(request, idInterclasse, equipes) {
+async function garantirAtletas(request, idInterclasse, idModalidade, equipes) {
+    // L04 permits one team per student in a modality. The edition's original
+    // teams can already contain students, so reserve those IDs before filling
+    // the synthetic teams below; choosing the first active student repeatedly
+    // made this fixture depend on INSERT IGNORE accepting invalid rosters.
+    const equipesDaModalidade = await jsonOrThrow(
+        await request.get(`api/v1/equipes?id_modalidade=${idModalidade}`),
+        `equipes existentes da modalidade ${idModalidade}`,
+    );
+    const membrosPorEquipe = new Map();
+    const usuariosVinculados = new Set();
+    for (const item of equipesDaModalidade) {
+        const membros = await jsonOrThrow(
+            await request.get(`api/v1/equipes?id_equipe=${Number(item.id_equipe)}`),
+            `membros da equipe ${item.id_equipe}`,
+        );
+        membrosPorEquipe.set(Number(item.id_equipe), membros);
+        for (const membro of membros) {
+            const idUsuario = Number(membro.id_usuario);
+            if (idUsuario > 0) usuariosVinculados.add(idUsuario);
+        }
+    }
+
     for (let index = 0; index < equipes.length; index += 1) {
         const equipe = equipes[index];
-        const membros = await jsonOrThrow(
-            await request.get(`api/v1/equipes?id_equipe=${Number(equipe.id_equipe)}`),
-            `membros da equipe ${equipe.id_equipe}`,
-        );
+        const membros = membrosPorEquipe.get(Number(equipe.id_equipe)) || [];
         if (membros.some((membro) => Number(membro.id_usuario) > 0)) continue;
         const alunos = await jsonOrThrow(
             await request.get(`api/v1/usuarios?acao=listar_competidores&id_turma=${Number(equipe.turmas_id_turma)}&id_interclasse=${idInterclasse}`),
             `alunos da equipe ${equipe.id_equipe}`,
         );
-        let idUsuario = (alunos.competidores || []).find((aluno) => String(aluno.status_usuario || '1') === '1')?.id_usuario;
+        let idUsuario = (alunos.competidores || []).find((aluno) =>
+            String(aluno.status_usuario || '1') === '1'
+            && !usuariosVinculados.has(Number(aluno.id_usuario))
+        )?.id_usuario;
         if (!Number(idUsuario)) {
             const criado = await jsonOrThrow(await request.post('api/v1/usuarios?acao=criar_aluno', {
                 data: {
@@ -213,6 +235,7 @@ async function garantirAtletas(request, idInterclasse, equipes) {
         await jsonOrThrow(await request.post('api/v1/equipes', {
             data: { acao: 'adicionar_usuarios', id_equipe: Number(equipe.id_equipe), usuarios: [Number(idUsuario)] },
         }), `vínculo do atleta ${equipe.id_equipe}`);
+        usuariosVinculados.add(Number(idUsuario));
     }
 }
 

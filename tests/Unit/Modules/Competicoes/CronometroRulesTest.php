@@ -80,7 +80,7 @@ final class CronometroRulesTest extends TestCase
         self::assertSame(1440, CronometroRules::saldoAtual($updated, 1030));
     }
 
-    public function testExplicitBalanceBecomesTheNewRunningReferenceAndConclusionFreezesIt(): void
+    public function testExplicitBalanceBecomesTheNewRunningReferenceAndPauseFreezesIt(): void
     {
         $saved = CronometroRules::transicionar(
             $this->state(1200, 0, 1000, 900),
@@ -91,11 +91,17 @@ final class CronometroRulesTest extends TestCase
         self::assertSame(700, CronometroRules::saldoAtual($saved, 2000));
         self::assertSame(690, CronometroRules::saldoAtual($saved, 2010));
 
-        $closed = CronometroRules::transicionar($saved, 'concluir', 2010);
-        self::assertSame('Concluido', $closed['status_jogo']);
-        self::assertSame(690, $closed['tempo_restante_jogo']);
-        self::assertNull($closed['data_inicio_real']);
-        self::assertSame(690, CronometroRules::saldoAtual($closed, 5000));
+        $paused = CronometroRules::transicionar($saved, 'pausar', 2010);
+        self::assertSame('Pausado', $paused['status_jogo']);
+        self::assertSame(690, $paused['tempo_restante_jogo']);
+        self::assertNull($paused['data_inicio_real']);
+        self::assertSame(690, CronometroRules::saldoAtual($paused, 5000));
+    }
+
+    public function testCronometroNaoExpoeOperacaoDeConclusaoCompetitiva(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        CronometroRules::transicionar($this->state(1200, 0, 1000, 900), 'concluir', 2010);
     }
 
     public function testFutureReferenceDoesNotIncreaseBalanceAndImpossibleValuesAreRejected(): void

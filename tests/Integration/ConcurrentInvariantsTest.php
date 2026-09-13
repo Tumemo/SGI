@@ -11,6 +11,7 @@ use App\Modules\Competicoes\Infrastructure\MysqliEquipeRepository;
 use App\Modules\Resultados\Infrastructure\MysqliArrecadacaoRepository;
 use mysqli;
 use SGITests\Support\Assertions;
+use SGITests\Support\ProcessExitCode;
 use SGITests\Support\TestDatabase;
 use RuntimeException;
 
@@ -29,10 +30,15 @@ final class ConcurrentInvariantsTest
         $fixture = self::createFixture($connection, $editionId, $classId);
 
         try {
+            $fixture['occurrence_game_id'] = self::createOccurrenceGame($connection, $fixture);
             $fixture['history_ids'][] = self::runEstorno($connection, $fixture);
+            self::runAutomaticRedConcurrency($connection, $fixture);
             self::runInscricao($connection, $fixture);
             self::runEquipes($connection, $fixture);
             self::runAdditionalTeamCases($connection, $fixture);
+            self::runRosterSignupCompetition($connection, $fixture);
+            self::runTeamTransferSnapshotRace($connection, $editionId, $classId);
+            self::runTeamTransferGameInsertRace($connection, $editionId, $classId);
             self::runEditionConcurrency($connection, $editionId);
         } finally {
             self::restoreFixture($connection, $fixture);
@@ -261,6 +267,504 @@ final class ConcurrentInvariantsTest
             $failed = true;
         }
         Assertions::assert('Falha de vínculo de equipe não persiste parcialmente', $failed && self::teamCount($connection, $limitOne, $classId) === $beforeFailure);
+    }
+
+    /** @param array<string, mixed> $fixture */
+    private static function runRosterSignupCompetition(mysqli $connection, array $fixture): void
+    {
+        $editionId = (int) $fixture['edition_id'];
+        $classId = (int) $fixture['class_id'];
+        $modalityId = (int) $fixture['limit_one_modality_id'];
+        $teamId = (int) $fixture['team_ids'][5];
+        $studentIds = [];
+        $student = $connection->prepare(
+            "INSERT INTO usuarios (sigla_usuario, matricula_usuario, nome_usuario, senha_usuario, nivel_usuario,
+                                  genero_usuario, data_nasc_usuario, foto_usuario, status_usuario,
+                                  turmas_id_turma, interclasses_id_interclasse)
+             VALUES ('RM', ?, ?, ?, '3', 'MASC', '2010-01-01', '', '1', ?, ?)",
+        );
+        foreach (['gestão', 'portal'] as $source) {
+            $registration = 't18_roster_' . bin2hex(random_bytes(6));
+            $password = password_hash('t18-roster-secret', PASSWORD_DEFAULT);
+            $name = 'Concorrente ' . $source . ' T18';
+            $student->bind_param('sssii', $registration, $name, $password, $classId, $editionId);
+            $student->execute();
+            $studentIds[] = (int) $connection->insert_id;
+        }
+        $student->close();
+        [$adminStudentId, $portalStudentId] = $studentIds;
+
+        try {
+            $scenario = self::runWorkerScenarios(
+                $connection,
+                [
+                    ['scenario' => 'equipe-vincular', 'args' => [$teamId, $adminStudentId]],
+                    ['scenario' => 'inscricao', 'args' => [$portalStudentId, $editionId, $teamId]],
+                ],
+                static function (mysqli $parent) use ($editionId): void {
+                    $statement = $parent->prepare('SELECT id_interclasse FROM interclasses WHERE id_interclasse = ? LIMIT 1 FOR UPDATE');
+                    $statement->bind_param('i', $editionId);
+                    $statement->execute();
+                    $statement->close();
+                },
+            );
+            Assertions::assert(
+                'Inclusão administrativa e inscrição disputam a última vaga sob a barreira da edição',
+                $scenario['waited'],
+                $scenario['diagnostic'],
+            );
+            $results = array_map(static fn (array $row): string => (string) ($row['result'] ?? ''), $scenario['results']);
+            sort($results);
+            Assertions::assert(
+                'A corrida entre gestão e portal aceita apenas um novo membro',
+                $results === ['accepted', 'rejected'],
+                json_encode($scenario['results']),
+            );
+            $statement = $connection->prepare(
+                'SELECT COUNT(*) FROM equipes_has_usuarios WHERE equipes_id_equipe = ?',
+            );
+            $statement->bind_param('i', $teamId);
+            $statement->execute();
+            $memberCount = (int) $statement->get_result()->fetch_column();
+            $statement->close();
+            Assertions::assert(
+                'A vaga concorrida mantém exatamente um vínculo persistido',
+                $memberCount === 1,
+                'Membros após a corrida: ' . $memberCount . ', modalidade: ' . $modalityId,
+            );
+        } finally {
+            $deleteLink = $connection->prepare(
+                'DELETE FROM equipes_has_usuarios WHERE equipes_id_equipe = ? AND usuarios_id_usuario = ?',
+            );
+            $deleteStudent = $connection->prepare('DELETE FROM usuarios WHERE id_usuario = ?');
+            foreach ($studentIds as $studentId) {
+                $deleteLink->bind_param('ii', $teamId, $studentId);
+                $deleteLink->execute();
+                $deleteStudent->bind_param('i', $studentId);
+                $deleteStudent->execute();
+            }
+            $deleteLink->close();
+            $deleteStudent->close();
+        }
+    }
+
+    private static function runTeamTransferSnapshotRace(mysqli $connection, int $editionId, int $classId): void
+    {
+        $categoryStatement = $connection->prepare(
+            'SELECT categorias_id_categoria FROM turmas WHERE id_turma = ? AND interclasses_id_interclasse = ? LIMIT 1',
+        );
+        $categoryStatement->bind_param('ii', $classId, $editionId);
+        $categoryStatement->execute();
+        $categoryId = (int) ($categoryStatement->get_result()->fetch_column() ?: 0);
+        $categoryStatement->close();
+        $typeId = (int) $connection->query("SELECT id_tipo_modalidade FROM tipos_modalidades WHERE status_tipo_modalidade = '1' ORDER BY id_tipo_modalidade LIMIT 1")->fetch_column();
+        if ($categoryId <= 0 || $typeId <= 0) {
+            throw new RuntimeException('A corrida L05 exige turma e tipo de modalidade válidos.');
+        }
+
+        $marker = bin2hex(random_bytes(6));
+        $modalityIds = [];
+        $teamId = 0;
+        $studentId = 0;
+        $modalityInsert = $connection->prepare(
+            "INSERT INTO modalidades (nome_modalidade, genero_modalidade, max_inscrito_modalidade, max_equipes,
+                status_modalidade, tipos_modalidades_id_tipo_modalidade, categorias_id_categoria, interclasses_id_interclasse)
+             VALUES (?, 'MASC', 2, 10, '1', ?, ?, ?)",
+        );
+        foreach (['origem', 'destino'] as $namePart) {
+            $name = 'L05 corrida ' . $namePart . ' ' . $marker;
+            $modalityInsert->bind_param('siii', $name, $typeId, $categoryId, $editionId);
+            $modalityInsert->execute();
+            $modalityIds[] = (int) $connection->insert_id;
+        }
+        $modalityInsert->close();
+        [$sourceModalityId, $targetModalityId] = $modalityIds;
+
+        $teamName = 'L05 equipe concorrente ' . $marker;
+        $team = $connection->prepare(
+            "INSERT INTO equipes (status_equipe, modalidades_id_modalidade, turmas_id_turma, nome_equipe)
+             VALUES ('1', ?, ?, ?)",
+        );
+        $team->bind_param('iis', $sourceModalityId, $classId, $teamName);
+        $team->execute();
+        $teamId = (int) $connection->insert_id;
+        $team->close();
+
+        $registration = 'l05_' . $marker . '_' . bin2hex(random_bytes(4));
+        $studentName = 'L05 aluno concorrente ' . $marker;
+        $password = password_hash(bin2hex(random_bytes(16)), PASSWORD_DEFAULT);
+        $student = $connection->prepare(
+            "INSERT INTO usuarios (sigla_usuario, matricula_usuario, nome_usuario, senha_usuario, nivel_usuario,
+                genero_usuario, data_nasc_usuario, foto_usuario, status_usuario, turmas_id_turma,
+                interclasses_id_interclasse, chave_usuario_edicao)
+             VALUES ('RM', ?, ?, ?, '3', 'MASC', '2010-01-01', '', '1', ?, ?, NULL)",
+        );
+        $student->bind_param('sssii', $registration, $studentName, $password, $classId, $editionId);
+        $student->execute();
+        $studentId = (int) $connection->insert_id;
+        $student->close();
+
+        $barrier = dirname(__DIR__, 2) . '/test-results/concurrency-l05-' . bin2hex(random_bytes(8));
+        if (!mkdir($barrier, 0777, true) && !is_dir($barrier)) {
+            self::deleteTeamTransferRaceFixture($connection, $studentId, $teamId, $modalityIds);
+            throw new RuntimeException('Não foi possível criar a barreira da corrida L05.');
+        }
+
+        $locker = TestDatabase::connect(getenv('SGI_TEST_DB_NAME') ?: 'sgi_test');
+        $locker->begin_transaction();
+        $lock = $locker->prepare('SELECT id_modalidade FROM modalidades WHERE id_modalidade = ? FOR UPDATE');
+        $lock->bind_param('i', $targetModalityId);
+        $lock->execute();
+        $lock->close();
+        $pipes = [];
+        $process = null;
+        $transactionOpen = true;
+        try {
+            $command = [
+                PHP_BINARY,
+                '-d',
+                'display_startup_errors=0',
+                dirname(__DIR__) . '/Support/ConcurrentScenarioWorker.php',
+                'equipe-transfer',
+                $barrier,
+                '0',
+                (string) $teamId,
+                (string) $targetModalityId,
+            ];
+            $process = proc_open($command, [0 => ['pipe', 'r'], 1 => ['pipe', 'w'], 2 => ['pipe', 'w']], $pipes);
+            if (!is_resource($process)) {
+                throw new RuntimeException('Não foi possível iniciar o worker de transferência L05.');
+            }
+            fclose($pipes[0]);
+
+            $readyPath = $barrier . DIRECTORY_SEPARATOR . 'ready-0';
+            $deadline = microtime(true) + 5.0;
+            while (!is_file($readyPath) && microtime(true) < $deadline) {
+                usleep(10000);
+            }
+            if (!is_file($readyPath)) {
+                throw new RuntimeException('Worker de transferência L05 não anunciou prontidão.');
+            }
+            if (@file_put_contents($barrier . DIRECTORY_SEPARATOR . 'release', 'go', LOCK_EX) === false) {
+                throw new RuntimeException('Não foi possível liberar a barreira da corrida L05.');
+            }
+
+            [$waited, $diagnostic] = self::waitForLockWaiters($locker, true);
+            $adder = TestDatabase::connect(getenv('SGI_TEST_DB_NAME') ?: 'sgi_test');
+            try {
+                (new MysqliEquipeRepository($adder))->addUsers($teamId, [$studentId]);
+            } finally {
+                $adder->close();
+            }
+            $locker->commit();
+            $transactionOpen = false;
+
+            $stdout = stream_get_contents($pipes[1]);
+            $stderr = stream_get_contents($pipes[2]);
+            fclose($pipes[1]);
+            fclose($pipes[2]);
+            $exitCode = proc_close($process);
+            $process = null;
+            if ($exitCode !== 0) {
+                throw new RuntimeException('Worker de transferência L05 falhou: ' . trim((string) $stderr));
+            }
+            $result = json_decode((string) $stdout, true, 512, JSON_THROW_ON_ERROR);
+
+            $state = $connection->prepare(
+                'SELECT e.modalidades_id_modalidade, e.turmas_id_turma,
+                    (SELECT COUNT(*) FROM equipes_has_usuarios eu WHERE eu.equipes_id_equipe = e.id_equipe) AS members
+                 FROM equipes e WHERE e.id_equipe = ? LIMIT 1',
+            );
+            $state->bind_param('i', $teamId);
+            $state->execute();
+            $row = $state->get_result()->fetch_assoc() ?: [];
+            $state->close();
+
+            Assertions::assert(
+                'Transferência L05 aguardou a inserção concorrente de elenco',
+                $waited,
+                $diagnostic,
+            );
+            Assertions::assert(
+                'A equipe não se transfere após a inserção concorrente do aluno',
+                ($result['result'] ?? '') === 'rejected'
+                    && (int) ($row['modalidades_id_modalidade'] ?? 0) === $sourceModalityId
+                    && (int) ($row['turmas_id_turma'] ?? 0) === $classId
+                    && (int) ($row['members'] ?? 0) === 1,
+                json_encode(['resultado' => $result, 'estado' => $row]),
+            );
+        } finally {
+            if ($transactionOpen) {
+                $locker->rollback();
+            }
+            $locker->close();
+            if (is_resource($process)) {
+                file_put_contents($barrier . DIRECTORY_SEPARATOR . 'release', 'go', LOCK_EX);
+                $status = proc_get_status($process);
+                if ($status['running']) {
+                    proc_terminate($process);
+                }
+                foreach ([1, 2] as $pipeIndex) {
+                    if (isset($pipes[$pipeIndex]) && is_resource($pipes[$pipeIndex])) {
+                        fclose($pipes[$pipeIndex]);
+                    }
+                }
+                proc_close($process);
+            }
+            foreach (glob($barrier . '/*') ?: [] as $file) {
+                @unlink($file);
+            }
+            @rmdir($barrier);
+            self::deleteTeamTransferRaceFixture($connection, $studentId, $teamId, $modalityIds);
+        }
+    }
+
+    /** @param list<int> $modalityIds */
+    private static function deleteTeamTransferRaceFixture(mysqli $connection, int $studentId, int $teamId, array $modalityIds): void
+    {
+        if ($teamId > 0) {
+            $deleteLink = $connection->prepare('DELETE FROM equipes_has_usuarios WHERE equipes_id_equipe = ?');
+            $deleteLink->bind_param('i', $teamId);
+            $deleteLink->execute();
+            $deleteLink->close();
+            $deleteTeam = $connection->prepare('DELETE FROM equipes WHERE id_equipe = ?');
+            $deleteTeam->bind_param('i', $teamId);
+            $deleteTeam->execute();
+            $deleteTeam->close();
+        }
+        if ($studentId > 0) {
+            $deleteStudent = $connection->prepare('DELETE FROM usuarios WHERE id_usuario = ?');
+            $deleteStudent->bind_param('i', $studentId);
+            $deleteStudent->execute();
+            $deleteStudent->close();
+        }
+        foreach ($modalityIds as $modalityId) {
+            $deleteModality = $connection->prepare('DELETE FROM modalidades WHERE id_modalidade = ?');
+            $deleteModality->bind_param('i', $modalityId);
+            $deleteModality->execute();
+            $deleteModality->close();
+        }
+    }
+
+    private static function runTeamTransferGameInsertRace(mysqli $connection, int $editionId, int $classId): void
+    {
+        $categoryStatement = $connection->prepare(
+            'SELECT categorias_id_categoria FROM turmas WHERE id_turma = ? AND interclasses_id_interclasse = ? LIMIT 1',
+        );
+        $categoryStatement->bind_param('ii', $classId, $editionId);
+        $categoryStatement->execute();
+        $categoryId = (int) ($categoryStatement->get_result()->fetch_column() ?: 0);
+        $categoryStatement->close();
+        $typeId = (int) $connection->query("SELECT id_tipo_modalidade FROM tipos_modalidades WHERE status_tipo_modalidade = '1' ORDER BY id_tipo_modalidade LIMIT 1")->fetch_column();
+        if ($categoryId <= 0 || $typeId <= 0) {
+            throw new RuntimeException('A corrida de partida L05 exige turma e tipo de modalidade válidos.');
+        }
+
+        $marker = bin2hex(random_bytes(6));
+        $modalityIds = [];
+        $localId = 0;
+        $teamId = 0;
+        $modalityInsert = $connection->prepare(
+            "INSERT INTO modalidades (nome_modalidade, genero_modalidade, max_inscrito_modalidade, max_equipes,
+                status_modalidade, tipos_modalidades_id_tipo_modalidade, categorias_id_categoria, interclasses_id_interclasse)
+             VALUES (?, 'MASC', 2, 10, '1', ?, ?, ?)",
+        );
+        foreach (['origem', 'destino'] as $namePart) {
+            $name = 'L05 jogo concorrente ' . $namePart . ' ' . $marker;
+            $modalityInsert->bind_param('siii', $name, $typeId, $categoryId, $editionId);
+            $modalityInsert->execute();
+            $modalityIds[] = (int) $connection->insert_id;
+        }
+        $modalityInsert->close();
+        [$sourceModalityId, $targetModalityId] = $modalityIds;
+
+        $teamName = 'L05 equipe jogo ' . $marker;
+        $team = $connection->prepare(
+            "INSERT INTO equipes (status_equipe, modalidades_id_modalidade, turmas_id_turma, nome_equipe)
+             VALUES ('1', ?, ?, ?)",
+        );
+        $team->bind_param('iis', $sourceModalityId, $classId, $teamName);
+        $team->execute();
+        $teamId = (int) $connection->insert_id;
+        $team->close();
+
+        $gameName = 'L05 corrida jogo ' . $marker;
+
+        $localName = 'L05 local ' . $marker;
+        $local = $connection->prepare(
+            "INSERT INTO locais (nome_local, disponivel_local, status_local, interclasses_id_interclasse)
+             VALUES (?, '1', '1', ?)",
+        );
+        $local->bind_param('si', $localName, $editionId);
+        $local->execute();
+        $localId = (int) $connection->insert_id;
+        $local->close();
+
+        $barrier = dirname(__DIR__, 2) . '/test-results/concurrency-l05-game-' . bin2hex(random_bytes(8));
+        if (!mkdir($barrier, 0777, true) && !is_dir($barrier)) {
+            self::deleteTeamGameRaceFixture($connection, $teamId, $modalityIds, $localId, $gameName);
+            throw new RuntimeException('Não foi possível criar a barreira da inserção de partida L05.');
+        }
+
+        $updater = TestDatabase::connect(getenv('SGI_TEST_DB_NAME') ?: 'sgi_test');
+        \App\Shared\Database\Transaction::begin($updater);
+        $outerTransactionOpen = true;
+        $teamLock = $updater->prepare('SELECT id_equipe FROM equipes WHERE id_equipe = ? FOR UPDATE');
+        $teamLock->bind_param('i', $teamId);
+        $teamLock->execute();
+        $teamLock->close();
+        (new MysqliEquipeRepository($updater))->update($teamId, [
+            'modalidades_id_modalidade' => $targetModalityId,
+        ]);
+
+        $pipes = [];
+        $process = null;
+        try {
+            $command = [
+                PHP_BINARY,
+                '-d',
+                'display_startup_errors=0',
+                dirname(__DIR__) . '/Support/ConcurrentScenarioWorker.php',
+                'jogo-partida',
+                $barrier,
+                '0',
+                $gameName,
+                '2049-09-12',
+                '08:00:00',
+                '08:30:00',
+                (string) $sourceModalityId,
+                (string) $localId,
+                (string) $teamId,
+            ];
+            $process = proc_open($command, [0 => ['pipe', 'r'], 1 => ['pipe', 'w'], 2 => ['pipe', 'w']], $pipes);
+            if (!is_resource($process)) {
+                throw new RuntimeException('Não foi possível iniciar o worker de partida L05.');
+            }
+            fclose($pipes[0]);
+
+            $readyPath = $barrier . DIRECTORY_SEPARATOR . 'ready-0';
+            $deadline = microtime(true) + 5.0;
+            while (!is_file($readyPath) && microtime(true) < $deadline) {
+                usleep(10000);
+            }
+            if (!is_file($readyPath)) {
+                throw new RuntimeException('Worker de partida L05 não anunciou prontidão.');
+            }
+            if (@file_put_contents($barrier . DIRECTORY_SEPARATOR . 'release', 'go', LOCK_EX) === false) {
+                throw new RuntimeException('Não foi possível liberar a barreira da inserção de partida L05.');
+            }
+
+            [$waited, $diagnostic] = self::waitForLockWaiters($updater, true);
+            \App\Shared\Database\Transaction::commit($updater);
+            $outerTransactionOpen = false;
+
+            $stdout = stream_get_contents($pipes[1]);
+            $stderr = stream_get_contents($pipes[2]);
+            fclose($pipes[1]);
+            fclose($pipes[2]);
+            $exitCode = proc_close($process);
+            $process = null;
+            if ($exitCode !== 0) {
+                throw new RuntimeException('Worker de partida L05 falhou: ' . trim((string) $stderr));
+            }
+            $result = json_decode((string) $stdout, true, 512, JSON_THROW_ON_ERROR);
+
+            $gameCount = $connection->prepare('SELECT COUNT(*) FROM jogos WHERE nome_jogo = ?');
+            $gameCount->bind_param('s', $gameName);
+            $gameCount->execute();
+            $createdGames = (int) $gameCount->get_result()->fetch_column();
+            $gameCount->close();
+            $partidaCount = $connection->prepare('SELECT COUNT(*) FROM partidas WHERE equipes_id_equipe = ?');
+            $partidaCount->bind_param('i', $teamId);
+            $partidaCount->execute();
+            $createdMatches = (int) $partidaCount->get_result()->fetch_column();
+            $partidaCount->close();
+            $teamState = $connection->prepare('SELECT modalidades_id_modalidade FROM equipes WHERE id_equipe = ?');
+            $teamState->bind_param('i', $teamId);
+            $teamState->execute();
+            $currentModality = (int) ($teamState->get_result()->fetch_column() ?: 0);
+            $teamState->close();
+
+            Assertions::assert(
+                'Criação de partida aguarda uma transferência concorrente da equipe',
+                $waited,
+                $diagnostic,
+            );
+            Assertions::assert(
+                'Partida não é anexada à equipe após sua transferência de modalidade',
+                ($result['result'] ?? '') === 'rejected'
+                    && $currentModality === $targetModalityId
+                    && $createdGames === 0
+                    && $createdMatches === 0,
+                json_encode([
+                    'resultado' => $result,
+                    'modalidade_equipe' => $currentModality,
+                    'jogos_criados' => $createdGames,
+                    'partidas_criadas' => $createdMatches,
+                ]),
+            );
+        } finally {
+            if ($outerTransactionOpen) {
+                \App\Shared\Database\Transaction::rollback($updater);
+            }
+            $updater->close();
+            if (is_resource($process)) {
+                file_put_contents($barrier . DIRECTORY_SEPARATOR . 'release', 'go', LOCK_EX);
+                $status = proc_get_status($process);
+                if ($status['running']) {
+                    proc_terminate($process);
+                }
+                foreach ([1, 2] as $pipeIndex) {
+                    if (isset($pipes[$pipeIndex]) && is_resource($pipes[$pipeIndex])) {
+                        fclose($pipes[$pipeIndex]);
+                    }
+                }
+                proc_close($process);
+            }
+            foreach (glob($barrier . '/*') ?: [] as $file) {
+                @unlink($file);
+            }
+            @rmdir($barrier);
+            self::deleteTeamGameRaceFixture($connection, $teamId, $modalityIds, $localId, $marker);
+        }
+    }
+
+    /** @param list<int> $modalityIds */
+    private static function deleteTeamGameRaceFixture(mysqli $connection, int $teamId, array $modalityIds, int $localId, string $gameName): void
+    {
+        $deleteGames = $connection->prepare('SELECT id_jogo FROM jogos WHERE nome_jogo = ?');
+        $deleteGames->bind_param('s', $gameName);
+        $deleteGames->execute();
+        $gameIds = array_map('intval', array_column($deleteGames->get_result()->fetch_all(MYSQLI_ASSOC), 'id_jogo'));
+        $deleteGames->close();
+        foreach ($gameIds as $gameId) {
+            $deleteMatches = $connection->prepare('DELETE FROM partidas WHERE jogos_id_jogo = ?');
+            $deleteMatches->bind_param('i', $gameId);
+            $deleteMatches->execute();
+            $deleteMatches->close();
+            $deleteGame = $connection->prepare('DELETE FROM jogos WHERE id_jogo = ?');
+            $deleteGame->bind_param('i', $gameId);
+            $deleteGame->execute();
+            $deleteGame->close();
+        }
+        if ($teamId > 0) {
+            $deleteTeam = $connection->prepare('DELETE FROM equipes WHERE id_equipe = ?');
+            $deleteTeam->bind_param('i', $teamId);
+            $deleteTeam->execute();
+            $deleteTeam->close();
+        }
+        foreach ($modalityIds as $modalityId) {
+            $deleteModality = $connection->prepare('DELETE FROM modalidades WHERE id_modalidade = ?');
+            $deleteModality->bind_param('i', $modalityId);
+            $deleteModality->execute();
+            $deleteModality->close();
+        }
+        if ($localId > 0) {
+            $deleteLocal = $connection->prepare('DELETE FROM locais WHERE id_local = ?');
+            $deleteLocal->bind_param('i', $localId);
+            $deleteLocal->execute();
+            $deleteLocal->close();
+        }
     }
 
     private static function runEditionConcurrency(mysqli $connection, int $baseEditionId): void
@@ -519,6 +1023,21 @@ final class ConcurrentInvariantsTest
      */
     private static function runWorkers(mysqli $connection, string $scenario, array $workerArgs, callable $lock, array ...$additionalArgs): array
     {
+        $workers = [['scenario' => $scenario, 'args' => $workerArgs]];
+        foreach ($additionalArgs as $args) {
+            $workers[] = ['scenario' => $scenario, 'args' => $args];
+        }
+
+        return self::runWorkerScenarios($connection, $workers, $lock);
+    }
+
+    /**
+     * @param list<array{scenario:string,args:list<int|string>}> $workers
+     * @param callable(mysqli):void $lock
+     * @return array{waited:bool,diagnostic:string,results:list<array<string,mixed>>}
+     */
+    private static function runWorkerScenarios(mysqli $connection, array $workers, callable $lock): array
+    {
         $connection->begin_transaction();
         $transactionOpen = true;
         $barrier = dirname(__DIR__, 2) . '/test-results/concurrency-t18-' . bin2hex(random_bytes(8));
@@ -534,24 +1053,21 @@ final class ConcurrentInvariantsTest
             if (is_callable($candidateRelease)) {
                 $releaseLock = $candidateRelease;
             }
-            $allArgs = [$workerArgs, ...$additionalArgs];
-            foreach ($allArgs as $index => $args) {
+            foreach ($workers as $index => $worker) {
                 $pipes = [];
                 $command = [
                     PHP_BINARY,
                     '-d',
-                    'extension=mysqli',
-                    '-d',
                     'display_startup_errors=0',
                     dirname(__DIR__) . '/Support/ConcurrentScenarioWorker.php',
-                    $scenario,
+                    $worker['scenario'],
                     $barrier,
                     (string) $index,
-                    ...array_map(static fn (int|string $value): string => (string) $value, $args),
+                    ...array_map(static fn (int|string $value): string => (string) $value, $worker['args']),
                 ];
                 $process = proc_open($command, [0 => ['pipe', 'r'], 1 => ['pipe', 'w'], 2 => ['pipe', 'w']], $pipes);
                 if (!is_resource($process)) {
-                    throw new RuntimeException('Não foi possível iniciar processo concorrente de ' . $scenario . '.');
+                    throw new RuntimeException('Não foi possível iniciar processo concorrente de ' . $worker['scenario'] . '.');
                 }
                 fclose($pipes[0]);
                 $processes[] = [$process, $pipes];
@@ -560,7 +1076,7 @@ final class ConcurrentInvariantsTest
             $deadline = microtime(true) + 5.0;
             while (microtime(true) < $deadline) {
                 $ready = true;
-                foreach (array_keys($allArgs) as $index) {
+                foreach (array_keys($workers) as $index) {
                     if (!is_file($barrier . '/ready-' . $index)) {
                         $ready = false;
                         break;
@@ -571,9 +1087,9 @@ final class ConcurrentInvariantsTest
                 }
                 usleep(10000);
             }
-            foreach (array_keys($allArgs) as $index) {
+            foreach (array_keys($workers) as $index) {
                 if (!is_file($barrier . '/ready-' . $index)) {
-                    throw new RuntimeException('Worker ' . $index . ' não anunciou pronto em ' . $scenario . '.');
+                    throw new RuntimeException('Worker ' . $index . ' não anunciou pronto em ' . $workers[$index]['scenario'] . '.');
                 }
             }
             file_put_contents($barrier . '/release', 'go', LOCK_EX);
@@ -622,9 +1138,11 @@ final class ConcurrentInvariantsTest
     {
         $results = [];
         foreach ($processes as [$process, $pipes]) {
+            $observedExitCode = -1;
             $deadline = microtime(true) + 10.0;
             do {
                 $status = proc_get_status($process);
+                $observedExitCode = ProcessExitCode::observe($observedExitCode, $status) ?? -1;
                 if (!$status['running']) {
                     break;
                 }
@@ -638,7 +1156,8 @@ final class ConcurrentInvariantsTest
             $errors = stream_get_contents($pipes[2]);
             fclose($pipes[1]);
             fclose($pipes[2]);
-            if (proc_close($process) !== 0) {
+            $closeExitCode = proc_close($process);
+            if (ProcessExitCode::resolve($closeExitCode, $observedExitCode) !== 0) {
                 throw new RuntimeException('Falha no worker concorrente: ' . $errors);
             }
             $decoded = json_decode($output, true, 512, JSON_THROW_ON_ERROR);
@@ -794,7 +1313,7 @@ final class ConcurrentInvariantsTest
         $editionValue = (int) $editionStatement->get_result()->fetch_column();
         $editionStatement->close();
 
-        return [
+        $fixture = [
             'edition_id' => $editionId,
             'class_id' => $classId,
             'user_id' => $userId,
@@ -812,6 +1331,100 @@ final class ConcurrentInvariantsTest
             ],
             'original_edition_value' => $editionValue,
         ];
+        return $fixture;
+    }
+
+    /** @param array<string,mixed> $fixture */
+    private static function runAutomaticRedConcurrency(mysqli $connection, array $fixture): void
+    {
+        $userId = (int) $fixture['user_id'];
+        $gameId = (int) $fixture['occurrence_game_id'];
+        $classId = (int) $fixture['class_id'];
+        $scenario = self::runWorkers(
+            $connection,
+            'ocorrencia-amarelo',
+            [$userId, $gameId, $classId, 'worker-a'],
+            static function (mysqli $parent) use ($userId): void {
+                $statement = $parent->prepare('SELECT id_usuario FROM usuarios WHERE id_usuario = ? FOR UPDATE');
+                $statement->bind_param('i', $userId);
+                $statement->execute();
+                $statement->close();
+            },
+            [$userId, $gameId, $classId, 'worker-b'],
+        );
+        $results = array_map(static fn (array $row): string => (string) ($row['result'] ?? ''), $scenario['results']);
+        sort($results);
+        Assertions::assert(
+            'Criação de amarelos concorrente aguarda o bloqueio do atleta',
+            $scenario['waited'] && $results === ['created', 'created'],
+            $scenario['diagnostic'] . ' ' . json_encode($scenario['results']),
+        );
+
+        $statement = $connection->prepare(
+            "SELECT COUNT(*) FROM ocorrencias
+             WHERE usuarios_id_usuario = ? AND titulo_ocorrencia = 'Amarelo'
+               AND status_ocorrencia = '1' AND descricao_ocorrencia LIKE ?",
+        );
+        $marker = '%[JOGO:' . $gameId . ']%';
+        $statement->bind_param('is', $userId, $marker);
+        $statement->execute();
+        $yellowCount = (int) $statement->get_result()->fetch_column();
+        $statement->close();
+        $red = $connection->prepare(
+            "SELECT COUNT(*) AS total, SUM(o.status_ocorrencia = '1') AS active
+             FROM ocorrencias_vermelhos_automaticos a
+             INNER JOIN ocorrencias o ON o.id_ocorrencia = a.ocorrencia_vermelha_id
+             WHERE a.usuarios_id_usuario = ? AND a.jogos_id_jogo = ?",
+        );
+        $red->bind_param('ii', $userId, $gameId);
+        $red->execute();
+        $redRow = $red->get_result()->fetch_assoc() ?: [];
+        $red->close();
+        Assertions::assert(
+            'Duas criações simultâneas produzem dois amarelos e um único vermelho ativo',
+            $yellowCount === 2 && (int) ($redRow['total'] ?? 0) === 1 && (int) ($redRow['active'] ?? 0) === 1,
+            json_encode(['yellows' => $yellowCount, 'automatic_red' => $redRow]),
+        );
+    }
+
+    /** @param array<string,mixed> $fixture */
+    private static function createOccurrenceGame(mysqli $connection, array $fixture): int
+    {
+        $editionId = (int) $fixture['edition_id'];
+        $modalityId = (int) $fixture['team_modality_id'];
+        $local = $connection->prepare(
+            "SELECT id_local FROM locais WHERE interclasses_id_interclasse = ? AND status_local = '1'
+             ORDER BY id_local LIMIT 1",
+        );
+        $local->bind_param('i', $editionId);
+        $local->execute();
+        $localId = (int) $local->get_result()->fetch_column();
+        $local->close();
+        if ($localId <= 0) {
+            throw new RuntimeException('Fixture concorrente não encontrou local ativo.');
+        }
+        $name = 'L10 concorrência ' . bin2hex(random_bytes(4));
+        $date = date('Y-m-d');
+        $start = '00:00:00';
+        $end = '00:01:00';
+        $status = 'Agendado';
+        $statement = $connection->prepare(
+            'INSERT INTO jogos (nome_jogo, data_jogo, inicio_jogo, termino_jogo, status_jogo,
+                modalidades_id_modalidade, locais_id_local) VALUES (?, ?, ?, ?, ?, ?, ?)',
+        );
+        $statement->bind_param('sssssii', $name, $date, $start, $end, $status, $modalityId, $localId);
+        $statement->execute();
+        $gameId = (int) $statement->insert_id;
+        $statement->close();
+        $teamId = (int) $fixture['team_ids'][4];
+        $partida = $connection->prepare(
+            "INSERT INTO partidas (jogos_id_jogo, equipes_id_equipe, resultado_partida, status_partida)
+             VALUES (?, ?, 0, '1')",
+        );
+        $partida->bind_param('ii', $gameId, $teamId);
+        $partida->execute();
+        $partida->close();
+        return $gameId;
     }
 
     /** @param array<string,mixed> $fixture */
@@ -821,6 +1434,17 @@ final class ConcurrentInvariantsTest
         $editionId = (int) $fixture['edition_id'];
         $modalityIds = array_map('intval', $fixture['modality_ids']);
         $historyIds = array_map('intval', $fixture['history_ids'] ?? []);
+        $userId = (int) $fixture['user_id'];
+        $connection->query('DELETE FROM ocorrencias_vermelhos_automaticos WHERE usuarios_id_usuario = ' . $userId);
+        $deleteOccurrences = $connection->prepare('DELETE FROM ocorrencias WHERE usuarios_id_usuario = ?');
+        $deleteOccurrences->bind_param('i', $userId);
+        $deleteOccurrences->execute();
+        $deleteOccurrences->close();
+        $gameId = (int) ($fixture['occurrence_game_id'] ?? 0);
+        if ($gameId > 0) {
+            $connection->query('DELETE FROM partidas WHERE jogos_id_jogo = ' . $gameId);
+            $connection->query('DELETE FROM jogos WHERE id_jogo = ' . $gameId);
+        }
         if ($historyIds !== []) {
             $connection->query('DELETE FROM historico_arrecadacoes WHERE id_historico IN (' . implode(',', $historyIds) . ')');
         }
@@ -830,7 +1454,6 @@ final class ConcurrentInvariantsTest
         $connection->query('DELETE FROM equipes WHERE modalidades_id_modalidade IN (' . implode(',', $modalityIds) . ')');
         $connection->query('DELETE FROM modalidades WHERE id_modalidade IN (' . implode(',', $modalityIds) . ')');
         $deleteUser = $connection->prepare('DELETE FROM usuarios WHERE id_usuario = ?');
-        $userId = (int) $fixture['user_id'];
         $deleteUser->bind_param('i', $userId);
         $deleteUser->execute();
         $deleteUser->close();

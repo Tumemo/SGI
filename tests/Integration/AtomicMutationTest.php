@@ -39,7 +39,7 @@ final class AtomicMutationTest
         for ($i = 0; $i < 2; $i++) {
             $pipes = [];
             $process = proc_open([
-                PHP_BINARY, '-d', 'extension=mysqli', '-d', 'display_startup_errors=0',
+                PHP_BINARY, '-d', 'display_startup_errors=0',
                 dirname(__DIR__) . '/Support/MutationWorker.php', $key, (string) $gameId,
             ], [0 => ['pipe', 'r'], 1 => ['pipe', 'w'], 2 => ['pipe', 'w']], $pipes);
             if (!is_resource($process)) {

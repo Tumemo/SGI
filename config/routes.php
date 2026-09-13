@@ -219,6 +219,7 @@ $router->add(['GET', 'POST', 'PUT'], '/api/v1/usuarios', $withDatabase(
             new \App\Modules\Acesso\Infrastructure\MysqliUsuarioConsultaRepository($conn),
             new \App\Modules\Acesso\Infrastructure\MysqliUsuarioManagementRepository($conn),
             new \App\Modules\Acesso\Infrastructure\LocalFotoStorage(\App\Shared\Storage\StoragePaths::fotosUsuarios()),
+            new \App\Shared\Database\MysqliTransactionRunner($conn),
         ),
         new \App\Modules\Acesso\Application\UsuarioAdministrativoService(new \App\Modules\Acesso\Infrastructure\MysqliUsuarioAdministrativoRepository($conn)),
         new \App\Modules\Eventos\Infrastructure\MysqliEdicaoConsultaRepository($conn),

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Modules\Competicoes\Application;
 
 use App\Modules\Competicoes\Domain\JogoRepository;
+use App\Modules\Competicoes\Domain\JogoScheduleRules;
 use InvalidArgumentException;
 
 final class JogoService
@@ -19,17 +20,18 @@ final class JogoService
     public function agendar(array $data): int
     {
         $name = trim((string) ($data['nome_jogo'] ?? ''));
-        $date = trim((string) ($data['data_jogo'] ?? ''));
+        $date = JogoScheduleRules::normalizeDate($data['data_jogo'] ?? null);
         $modalityId = (int) ($data['modalidades_id_modalidade'] ?? 0);
         $localId = (int) ($data['locais_id_local'] ?? 0);
-        if ($name === '' || $date === '' || $modalityId <= 0 || $localId <= 0) {
+        if ($name === '' || $date === null || $modalityId <= 0 || $localId <= 0) {
             throw new InvalidArgumentException('Dados incompletos.');
         }
-        $start = $this->formatTime($data['inicio_jogo'] ?? null);
-        $end = $this->formatTime($data['termino_jogo'] ?? $data['terminno_jogo'] ?? null);
-        if ($start === null || $end === null || $this->minutes($end) <= $this->minutes($start)) {
+        $start = JogoScheduleRules::normalizeTime($data['inicio_jogo'] ?? null);
+        $end = JogoScheduleRules::normalizeTime($data['termino_jogo'] ?? $data['terminno_jogo'] ?? null);
+        if ($start === null || $end === null) {
             throw new InvalidArgumentException('Informe um horário de início e término válidos.');
         }
+        JogoScheduleRules::assertWindow($start, $end);
         $teams = [];
         if (array_key_exists('equipes', $data)) {
             if (!is_array($data['equipes'])) {
@@ -61,21 +63,4 @@ final class JogoService
         ]);
     }
 
-    private function formatTime(mixed $value): ?string
-    {
-        if ($value === null) {
-            return null;
-        }
-        $time = trim((string) $value);
-        if ($time === '' || $time === '00:00' || $time === '00:00:00') {
-            return null;
-        }
-        return strlen($time) === 5 ? $time . ':00' : $time;
-    }
-
-    private function minutes(string $time): int
-    {
-        [$hours, $minutes] = array_map('intval', explode(':', substr($time, 0, 5)));
-        return $hours * 60 + $minutes;
-    }
 }

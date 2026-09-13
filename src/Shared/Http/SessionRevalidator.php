@@ -24,7 +24,7 @@ final class SessionRevalidator
 
         $connection = ConnectionFactory::get();
         $statement = $connection->prepare(
-            "SELECT u.nivel_usuario, u.status_usuario, u.auth_version,
+            "SELECT u.nivel_usuario, u.status_usuario, u.auth_version, u.senha_troca_pendente,
                     CASE
                         WHEN u.nivel_usuario <> '3' THEN 1
                         WHEN EXISTS (
@@ -68,6 +68,9 @@ final class SessionRevalidator
         // sessão antiga nunca mantenha acesso depois de perder o aceite.
         $_SESSION['termo_aceito'] = $sessionLevel !== 3
             || (int) ($row['termo_aceito'] ?? 0) === 1;
+        $_SESSION['senha_troca_pendente'] = $sessionLevel === 3
+            && (int) ($row['senha_troca_pendente'] ?? 0) === 1;
+        $_SESSION['exige_troca_senha'] = $_SESSION['senha_troca_pendente'];
 
         // The active edition may change while a mesário keeps the browser
         // open. Refresh that operational context on every protected request

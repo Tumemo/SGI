@@ -136,7 +136,7 @@ final class UsuarioController
                     $temporaryPassword = $this->administrative->resetarSenhaAluno($id);
                     return Response::json([
                         'status' => 'sucesso',
-                        'mensagem' => 'Senha temporária gerada. Entregue-a ao aluno por um canal seguro.',
+                        'mensagem' => 'Senha redefinida para sesi-senai. O aluno deverá trocá-la no próximo acesso.',
                         'senha_temporaria' => $temporaryPassword,
                     ]);
                 }

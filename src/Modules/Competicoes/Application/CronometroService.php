@@ -52,6 +52,25 @@ final class CronometroService
             throw new InvalidArgumentException('Modalidades individuais devem ser concluídas pelo lançamento do pódio.');
         }
 
+        $stateClosed = $this->isTerminalStatus($state['status_jogo']);
+        $requestedClosed = $this->isTerminalStatus($requestedStatus);
+        if ($requestedClosed && !$stateClosed) {
+            throw new InvalidArgumentException('Partidas devem ser concluídas pelo lançamento do resultado.');
+        }
+        if ($stateClosed) {
+            if (!$requestedClosed) {
+                throw new InvalidArgumentException('Um jogo encerrado não pode ser reaberto nem ter o cronômetro alterado.');
+            }
+            if (array_key_exists('cronometro', $data)) {
+                $candidate = $this->aplicarSnapshot($state, $data, $agora);
+                if (!$this->isTerminalStatus($candidate['status_jogo'])) {
+                    throw new InvalidArgumentException('Um jogo encerrado não pode ser reaberto por snapshot.');
+                }
+            }
+
+            return ['snapshot' => $this->persistedSnapshot($state), 'agora' => $agora];
+        }
+
         $state = $this->prepararEstadoInicial($state, $data);
         $hasSnapshot = array_key_exists('cronometro', $data);
         $snapshot = $hasSnapshot
@@ -112,6 +131,22 @@ final class CronometroService
         ];
     }
 
+    /** @param array<string,mixed> $state @return array{status_jogo:string,duracao_jogo:int,tempo_extra_jogo:int,tempo_restante_jogo:int|null,data_inicio_real:int|null} */
+    private function persistedSnapshot(array $state): array
+    {
+        return [
+            'status_jogo' => (string) $state['status_jogo'],
+            'duracao_jogo' => (int) ($state['duracao_jogo'] ?? 0),
+            'tempo_extra_jogo' => (int) ($state['tempo_extra_jogo'] ?? 0),
+            'tempo_restante_jogo' => $state['tempo_restante_jogo'] === null
+                ? null
+                : (int) $state['tempo_restante_jogo'],
+            'data_inicio_real' => $state['data_inicio_real'] === null
+                ? null
+                : (int) $state['data_inicio_real'],
+        ];
+    }
+
     /**
      * @param array<string,mixed> $state
      * @param array<string,mixed> $data
@@ -137,7 +172,6 @@ final class CronometroService
         return match ($data['status_jogo']) {
             'Iniciado' => CronometroRules::transicionar($state, 'retomar', $agora),
             'Pausado' => CronometroRules::transicionar($state, 'pausar', $agora),
-            'Concluido' => CronometroRules::transicionar($state, 'concluir', $agora),
             'Agendado' => $this->keepScheduled($state, $agora),
             default => throw new InvalidArgumentException('Status de cronômetro inválido.'),
         };
@@ -163,7 +197,7 @@ final class CronometroService
             throw new InvalidArgumentException('A referência do cronômetro está fora do limite.');
         }
         $reference = intdiv($referenceMs, 1000);
-        $status = $data['status_jogo'] ?? $state['status_jogo'];
+        $status = $data['status_jogo'] ?? $payload['status_jogo'] ?? $state['status_jogo'];
         if (!is_string($status)) {
             throw new InvalidArgumentException('Status de cronômetro inválido.');
         }
@@ -219,5 +253,10 @@ final class CronometroService
             $status = $data['cronometro']['status_jogo'] ?? null;
         }
         return in_array($status, ['Concluido', 'Finalizado'], true);
+    }
+
+    private function isTerminalStatus(mixed $status): bool
+    {
+        return is_string($status) && in_array($status, ['Concluido', 'Finalizado'], true);
     }
 }

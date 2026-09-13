@@ -1,5 +1,5 @@
 const { test, expect, request: requestFactory } = require('./fixtures.cjs');
-const { agendarBloco } = require('./agenda-helper.cjs');
+const { agendarBloco, trocarSenhaInicial } = require('./agenda-helper.cjs');
 
 async function jsonOrThrow(response, label) {
     if (!response.ok()) throw new Error(`${label}: HTTP ${response.status()} ${await response.text()}`);
@@ -60,8 +60,14 @@ async function criarFixture(request) {
         jogos: [{ id_jogo: idJogo }],
         label: 'T11-occurrence',
     });
+    const jogosAgendados = await jsonOrThrow(
+        await request.get(api(`api/v1/jogos?id_modalidade=${Number(modalidade.id_modalidade)}`)),
+        'consulta do jogo agendado',
+    );
+    const jogoAgendado = jogosAgendados.find((item) => Number(item.id_jogo) === idJogo);
+    if (!jogoAgendado || !jogoAgendado.data_jogo) throw new Error('O jogo agendado não possui data persistida.');
     const turma = Number(equipesDaModalidade[0].turmas_id_turma);
-    const matriculaAtleta = String(910000000 + (Date.now() % 100000));
+    const matriculaAtleta = `91${Date.now()}${String(Math.floor(Math.random() * 1000)).padStart(3, '0')}`;
     const aluno = await jsonOrThrow(await request.post(api('api/v1/usuarios?acao=criar_aluno'), {
         data: {
             nome_usuario: 'Atleta T11 Ocorrência',
@@ -79,6 +85,7 @@ async function criarFixture(request) {
         await jsonOrThrow(await alunoApi.post(api('api/v1/login'), {
             data: { matricula: matriculaAtleta, senha: senhaAtleta },
         }), 'login do atleta fixture');
+        await trocarSenhaInicial(alunoApi, api('api/v1/senha'));
         await jsonOrThrow(await alunoApi.post(api('api/v1/termos'), { data: {} }), 'aceite dos termos do atleta fixture');
         await jsonOrThrow(await alunoApi.post(api('api/v1/inscricoes'), {
             data: { id_interclasse: idInterclasse, id_equipes: [Number(equipesDaModalidade[0].id_equipe)] },
@@ -92,7 +99,7 @@ async function criarFixture(request) {
     );
     const atleta = atletas.atletas && (atletas.atletas.find((item) => String(item.matricula_usuario) === matriculaAtleta) || atletas.atletas[0]);
     if (!atleta) throw new Error(`O fixture não encontrou o atleta inscrito no jogo: ${JSON.stringify({ aluno, atletas })}`);
-    const dataOcorrencia = String(jogo.data_jogo || new Date().toISOString().slice(0, 10));
+    const dataOcorrencia = String(jogoAgendado.data_jogo);
     const criarOcorrencia = (descricao, data) => request.post(api('api/v1/ocorrencias'), {
         data: {
             titulo_ocorrencia: 'Amarelo',

@@ -17,7 +17,7 @@ final class MysqliTermosRepository implements TermosRepository
     public function findUser(int $userId): ?array
     {
         $statement = $this->connection->prepare(
-            'SELECT u.id_usuario, u.interclasses_id_interclasse, u.senha_usuario, u.nivel_usuario,
+            'SELECT u.id_usuario, u.interclasses_id_interclasse, u.senha_troca_pendente, u.nivel_usuario,
                     ui.aceito_termo
              FROM usuarios u
              LEFT JOIN usuarios_has_interclasses ui

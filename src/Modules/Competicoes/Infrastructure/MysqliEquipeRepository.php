@@ -7,6 +7,7 @@ namespace App\Modules\Competicoes\Infrastructure;
 use App\Modules\Competicoes\Application\EquipeLimiteException;
 use App\Modules\Competicoes\Domain\EquipeCapacityRules;
 use App\Modules\Competicoes\Domain\EquipeRepository;
+use App\Modules\Competicoes\Domain\EquipeRosterRules;
 use App\Shared\Database\Transaction;
 use mysqli;
 use RuntimeException;
@@ -57,29 +58,228 @@ final class MysqliEquipeRepository implements EquipeRepository
 
     public function addUsers(int $teamId, array $userIds): void
     {
-        $this->connection->begin_transaction();
+        if ($userIds === []) {
+            return;
+        }
+
+        $lockIds = array_values(array_unique(array_map('intval', $userIds)));
+        sort($lockIds, SORT_NUMERIC);
+
+        // Find the serialization lock before opening the transaction. A plain
+        // read here would establish a REPEATABLE READ snapshot; if this request
+        // then waited on the edition lock, later capacity counts could miss a
+        // member committed by the request that held it.
+        $teamSeed = $this->one(
+            'SELECT e.modalidades_id_modalidade, e.turmas_id_turma,
+                    m.interclasses_id_interclasse
+             FROM equipes e
+             INNER JOIN modalidades m ON m.id_modalidade = e.modalidades_id_modalidade
+             WHERE e.id_equipe = ? LIMIT 1',
+            'i',
+            [$teamId],
+        );
+        if ($teamSeed === null) {
+            throw new \InvalidArgumentException('Equipe não encontrada.');
+        }
+
+        $editionId = (int) $teamSeed['interclasses_id_interclasse'];
+        Transaction::begin($this->connection);
         try {
-            $statement = $this->connection->prepare(
-                'INSERT IGNORE INTO equipes_has_usuarios (equipes_id_equipe, usuarios_id_usuario) VALUES (?, ?)',
-            );
-            if ($statement === false) {
-                throw new RuntimeException('Não foi possível vincular usuários à equipe.');
+            if ($this->one(
+                'SELECT id_interclasse FROM interclasses WHERE id_interclasse = ? LIMIT 1 FOR UPDATE',
+                'i',
+                [$editionId],
+            ) === null) {
+                throw new \InvalidArgumentException('Edição da equipe não encontrada.');
             }
-            $userId = 0;
-            $statement->bind_param('ii', $teamId, $userId);
-            foreach ($userIds as $candidate) {
-                $userId = (int) $candidate;
-                if (!$statement->execute()) {
-                    $statement->close();
+
+            $students = [];
+            foreach ($lockIds as $userId) {
+                $student = $this->one(
+                    'SELECT id_usuario, nivel_usuario, status_usuario, genero_usuario,
+                            turmas_id_turma, interclasses_id_interclasse
+                     FROM usuarios WHERE id_usuario = ? LIMIT 1 FOR UPDATE',
+                    'i',
+                    [$userId],
+                );
+                if ($student === null) {
+                    throw new \InvalidArgumentException('Um ou mais usuários informados não existem.');
+                }
+                $students[$userId] = $student;
+            }
+
+            // Match the modality -> class order used by team creation and roster
+            // redistribution. Portal enrollment is serialized by the edition row.
+            $modalityId = (int) $teamSeed['modalidades_id_modalidade'];
+            $classId = (int) $teamSeed['turmas_id_turma'];
+            $modality = $this->one(
+                'SELECT id_modalidade, status_modalidade, genero_modalidade,
+                        categorias_id_categoria, interclasses_id_interclasse,
+                        max_inscrito_modalidade, max_equipes
+                 FROM modalidades WHERE id_modalidade = ? LIMIT 1 FOR UPDATE',
+                'i',
+                [$modalityId],
+            );
+            $class = $this->one(
+                'SELECT id_turma, status_turma, interclasses_id_interclasse, categorias_id_categoria
+                 FROM turmas WHERE id_turma = ? LIMIT 1 FOR UPDATE',
+                'i',
+                [$classId],
+            );
+            $team = $this->one(
+                'SELECT id_equipe, status_equipe, modalidades_id_modalidade, turmas_id_turma
+                 FROM equipes WHERE id_equipe = ? LIMIT 1 FOR UPDATE',
+                'i',
+                [$teamId],
+            );
+            if ($modality === null || $class === null || $team === null
+                || (int) $team['modalidades_id_modalidade'] !== $modalityId
+                || (int) $team['turmas_id_turma'] !== $classId
+            ) {
+                throw new \InvalidArgumentException('A turma, modalidade ou equipe foi alterada durante a vinculação. Tente novamente.');
+            }
+
+            EquipeRosterRules::validarContexto($team, $class, $modality);
+            if ((int) $modality['interclasses_id_interclasse'] !== $editionId) {
+                throw new \InvalidArgumentException('A edição da equipe foi alterada durante a vinculação.');
+            }
+
+            $newUserIds = [];
+            foreach ($lockIds as $userId) {
+                $student = $students[$userId];
+                $memberships = $this->activeMembershipsInEdition($userId, $editionId);
+                $alreadyOnTarget = false;
+                foreach ($memberships as $membership) {
+                    if ((int) $membership['id_modalidade'] !== $modalityId) {
+                        continue;
+                    }
+                    if ((int) $membership['id_equipe'] === $teamId) {
+                        $alreadyOnTarget = true;
+                        continue;
+                    }
+                    throw new \InvalidArgumentException('O aluno já está vinculado a outra equipe desta modalidade.');
+                }
+                if ($alreadyOnTarget) {
+                    // Replaying the same administrative request remains idempotent,
+                    // even if the student's eligibility changed after it succeeded.
+                    continue;
+                }
+
+                EquipeRosterRules::validarAluno($student, $team, $class, $modality);
+                $existingModalityIds = array_values(array_unique(array_map(
+                    static fn (array $membership): int => (int) $membership['id_modalidade'],
+                    $memberships,
+                )));
+                EquipeRosterRules::validarLimiteModalidades($existingModalityIds, $modalityId);
+                $newUserIds[] = $userId;
+            }
+
+            $newMembers = count($newUserIds);
+            if ($newMembers > 0) {
+                $teamMembers = $this->activeMemberCountForTeam($teamId);
+                $maxMembers = $modality['max_inscrito_modalidade'] === null
+                    ? null
+                    : (int) $modality['max_inscrito_modalidade'];
+                EquipeRosterRules::validarCapacidadeEquipe($teamMembers, $newMembers, $maxMembers);
+
+                $modalityMembers = $this->activeMemberCountForModalityClass($modalityId, $classId);
+                $maxTeams = $modality['max_equipes'] === null ? null : (int) $modality['max_equipes'];
+                EquipeRosterRules::validarCapacidadeModalidade($modalityMembers, $newMembers, $maxMembers, $maxTeams);
+
+                $statement = $this->connection->prepare(
+                    'INSERT IGNORE INTO equipes_has_usuarios (equipes_id_equipe, usuarios_id_usuario) VALUES (?, ?)',
+                );
+                if ($statement === false) {
                     throw new RuntimeException('Não foi possível vincular usuários à equipe.');
                 }
+                $userId = 0;
+                $statement->bind_param('ii', $teamId, $userId);
+                foreach ($newUserIds as $userId) {
+                    if (!$statement->execute()) {
+                        $statement->close();
+                        throw new RuntimeException('Não foi possível vincular usuários à equipe.');
+                    }
+                }
+                $statement->close();
             }
-            $statement->close();
-            $this->connection->commit();
+
+            Transaction::commit($this->connection);
         } catch (\Throwable $exception) {
-            $this->connection->rollback();
+            Transaction::rollback($this->connection);
             throw $exception;
         }
+    }
+
+    /** @return list<array{id_equipe:int,id_modalidade:int}> */
+    private function activeMembershipsInEdition(int $userId, int $editionId): array
+    {
+        $statement = $this->connection->prepare(
+            "SELECT e.id_equipe, m.id_modalidade
+             FROM equipes_has_usuarios eu
+             INNER JOIN equipes e ON e.id_equipe = eu.equipes_id_equipe AND e.status_equipe = '1'
+             INNER JOIN modalidades m ON m.id_modalidade = e.modalidades_id_modalidade
+             WHERE eu.usuarios_id_usuario = ? AND m.interclasses_id_interclasse = ?
+             ORDER BY m.id_modalidade, e.id_equipe",
+        );
+        if ($statement === false) {
+            throw new RuntimeException('Não foi possível consultar as modalidades do aluno.');
+        }
+        $statement->bind_param('ii', $userId, $editionId);
+        if (!$statement->execute()) {
+            $statement->close();
+            throw new RuntimeException('Não foi possível consultar as modalidades do aluno.');
+        }
+        $rows = $statement->get_result()->fetch_all(MYSQLI_ASSOC);
+        $statement->close();
+
+        return array_map(
+            static fn (array $row): array => [
+                'id_equipe' => (int) $row['id_equipe'],
+                'id_modalidade' => (int) $row['id_modalidade'],
+            ],
+            $rows,
+        );
+    }
+
+    private function activeMemberCountForTeam(int $teamId): int
+    {
+        return $this->count(
+            "SELECT COUNT(DISTINCT eu.usuarios_id_usuario)
+             FROM equipes_has_usuarios eu
+             INNER JOIN usuarios u ON u.id_usuario = eu.usuarios_id_usuario AND u.status_usuario = '1'
+             WHERE eu.equipes_id_equipe = ?",
+            [$teamId],
+        );
+    }
+
+    private function activeMemberCountForModalityClass(int $modalityId, int $classId): int
+    {
+        return $this->count(
+            "SELECT COUNT(DISTINCT eu.usuarios_id_usuario)
+             FROM equipes_has_usuarios eu
+             INNER JOIN equipes e ON e.id_equipe = eu.equipes_id_equipe AND e.status_equipe = '1'
+             INNER JOIN usuarios u ON u.id_usuario = eu.usuarios_id_usuario AND u.status_usuario = '1'
+             WHERE e.modalidades_id_modalidade = ? AND e.turmas_id_turma = ?",
+            [$modalityId, $classId],
+        );
+    }
+
+    /** @param list<int> $params */
+    private function count(string $sql, array $params): int
+    {
+        $statement = $this->connection->prepare($sql);
+        if ($statement === false) {
+            throw new RuntimeException('Não foi possível contar os alunos da equipe.');
+        }
+        $statement->bind_param(str_repeat('i', count($params)), ...$params);
+        if (!$statement->execute()) {
+            $statement->close();
+            throw new RuntimeException('Não foi possível contar os alunos da equipe.');
+        }
+        $count = (int) $statement->get_result()->fetch_column();
+        $statement->close();
+
+        return $count;
     }
 
     public function removeUser(int $teamId, int $userId): void
@@ -121,26 +321,44 @@ final class MysqliEquipeRepository implements EquipeRepository
 
         Transaction::begin($this->connection);
         try {
+            $teamSeed = $this->one(
+                'SELECT modalidades_id_modalidade, turmas_id_turma, status_equipe
+                 FROM equipes WHERE id_equipe = ? LIMIT 1',
+                'i',
+                [$id],
+            );
+            if ($teamSeed === null) {
+                Transaction::rollback($this->connection);
+                return false;
+            }
+            $targetModality = array_key_exists('modalidades_id_modalidade', $data)
+                ? (int) $data['modalidades_id_modalidade']
+                : (int) $teamSeed['modalidades_id_modalidade'];
+            $targetClass = array_key_exists('turmas_id_turma', $data)
+                ? (int) $data['turmas_id_turma']
+                : (int) $teamSeed['turmas_id_turma'];
+            $targetStatus = array_key_exists('status_equipe', $data)
+                ? (string) $data['status_equipe']
+                : (string) $teamSeed['status_equipe'];
+            $scope = $this->lockScope($targetModality, $targetClass);
             $current = $this->one(
                 'SELECT modalidades_id_modalidade, turmas_id_turma, status_equipe
                  FROM equipes WHERE id_equipe = ? LIMIT 1 FOR UPDATE',
                 'i',
                 [$id],
             );
-            if ($current === null) {
-                Transaction::rollback($this->connection);
-                return false;
+            if ($current === null
+                || (int) $current['modalidades_id_modalidade'] !== (int) $teamSeed['modalidades_id_modalidade']
+                || (int) $current['turmas_id_turma'] !== (int) $teamSeed['turmas_id_turma']
+                || (string) $current['status_equipe'] !== (string) $teamSeed['status_equipe']
+            ) {
+                throw new \InvalidArgumentException('A equipe foi alterada durante a atualização. Tente novamente.');
             }
-            $targetModality = array_key_exists('modalidades_id_modalidade', $data)
-                ? (int) $data['modalidades_id_modalidade']
-                : (int) $current['modalidades_id_modalidade'];
-            $targetClass = array_key_exists('turmas_id_turma', $data)
-                ? (int) $data['turmas_id_turma']
-                : (int) $current['turmas_id_turma'];
-            $targetStatus = array_key_exists('status_equipe', $data)
-                ? (string) $data['status_equipe']
-                : (string) $current['status_equipe'];
-            $scope = $this->lockScope($targetModality, $targetClass);
+            $changesScope = $targetModality !== (int) $current['modalidades_id_modalidade']
+                || $targetClass !== (int) $current['turmas_id_turma'];
+            if ($changesScope && $this->hasStructuralDependents($id)) {
+                throw new \InvalidArgumentException('A equipe com elenco ou histórico não pode trocar de modalidade ou turma.');
+            }
             if ($targetStatus === '1') {
                 $this->assertCapacity($scope['max_equipes'], $this->activeCount($targetModality, $targetClass, $id));
             }
@@ -239,6 +457,33 @@ final class MysqliEquipeRepository implements EquipeRepository
             throw new RuntimeException('Modalidade e turma não pertencem à mesma categoria.');
         }
         return ['max_equipes' => $modality['max_equipes'] === null ? null : (int) $modality['max_equipes']];
+    }
+
+    private function hasStructuralDependents(int $teamId): bool
+    {
+        foreach ([
+            'SELECT 1 FROM equipes_has_usuarios WHERE equipes_id_equipe = ? LIMIT 1 FOR UPDATE',
+            'SELECT 1 FROM partidas WHERE equipes_id_equipe = ? LIMIT 1 FOR UPDATE',
+            'SELECT 1 FROM artilheiros WHERE equipes_id_equipe = ? LIMIT 1 FOR UPDATE',
+            'SELECT 1 FROM pontuacoes_podio WHERE id_equipe = ? LIMIT 1 FOR UPDATE',
+        ] as $sql) {
+            $statement = $this->connection->prepare($sql);
+            if ($statement === false) {
+                throw new RuntimeException('Não foi possível verificar os vínculos da equipe.');
+            }
+            $statement->bind_param('i', $teamId);
+            if (!$statement->execute()) {
+                $statement->close();
+                throw new RuntimeException('Não foi possível verificar os vínculos da equipe.');
+            }
+            $hasRows = $statement->get_result()->fetch_row() !== null;
+            $statement->close();
+            if ($hasRows) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private function activeCount(int $modalityId, int $classId, ?int $excludeId = null): int

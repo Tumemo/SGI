@@ -205,6 +205,41 @@
         return method === 'POST' || method === 'PUT' || method === 'PATCH' || method === 'DELETE';
     }
 
+    function requestUrl(input) {
+        if (typeof input === 'string') return input;
+        if (input && typeof input.href === 'string') return input.href;
+        if (input && typeof input.url === 'string') return input.url;
+        return String(input || '');
+    }
+
+    function isPasswordChangeEndpoint(url) {
+        try {
+            var requested = new URL(resolveUrl(url), window.location.href);
+            var passwordEndpoint = new URL(resolveUrl('/api/v1/senha'), window.location.href);
+            return requested.origin === passwordEndpoint.origin
+                && requested.pathname.replace(/\/+$/, '') === passwordEndpoint.pathname.replace(/\/+$/, '');
+        } catch (e) {
+            return false;
+        }
+    }
+
+    function lerCorpoRequestParaFila(request) {
+        if (!request || request.body === null) return Promise.resolve(null);
+        var clone;
+        try { clone = request.clone(); }
+        catch (err) { return Promise.reject(err); }
+        var contentType = '';
+        try { contentType = request.headers && request.headers.get('Content-Type') || ''; } catch (e) {}
+        if (/^multipart\/form-data(?:\s*;|$)/i.test(contentType) && typeof clone.formData === 'function') {
+            return clone.formData();
+        }
+        if (/^text\//i.test(contentType) || /^application\/x-www-form-urlencoded(?:\s*;|$)/i.test(contentType) ||
+            /^application\/(?:[a-z0-9.+-]*\+)?json(?:\s*;|$)/i.test(contentType)) {
+            return clone.text();
+        }
+        return clone.arrayBuffer();
+    }
+
     function fetchComTimeout(input, init, timeoutMs) {
         if (!originalFetch) return Promise.reject(new Error('fetch indisponivel'));
         var controller = typeof AbortController === 'function' ? new AbortController() : null;
@@ -496,6 +531,9 @@
     }
 
     function idbQueueAdd(item) {
+        if (item && isPasswordChangeEndpoint(item.url)) {
+            return Promise.reject(new Error('Troca de senha não pode ser armazenada offline. Conecte-se para continuar.'));
+        }
         item.session = SESSION_KEY;
         return openDB().then(function (db) {
             return new Promise(function (resolve, reject) {
@@ -513,15 +551,26 @@
     function idbQueueAll() {
         return openDB().then(function (db) {
             return new Promise(function (resolve, reject) {
-                var tx = db.transaction(STORE_QUEUE, 'readonly');
-                var req = tx.objectStore(STORE_QUEUE).getAll();
+                // Limpa eventual mutação antiga: credenciais nunca devem
+                // continuar na fila, ser exportadas ou chegar ao sync.
+                var tx = db.transaction(STORE_QUEUE, 'readwrite');
+                var store = tx.objectStore(STORE_QUEUE);
+                var req = store.getAll();
+                var todos = [];
                 req.onsuccess = function () {
-                    var todos = req.result || [];
-                    resolve(todos.filter(function (i) {
-                        return i && String(i.session || '') === SESSION_KEY;
-                    }));
+                    (req.result || []).forEach(function (item) {
+                        if (!item) return;
+                        if (isPasswordChangeEndpoint(item.url)) {
+                            store.delete(item.id);
+                            return;
+                        }
+                        if (String(item.session || '') === SESSION_KEY) todos.push(item);
+                    });
                 };
                 req.onerror = function () { reject(req.error); };
+                tx.oncomplete = function () { resolve(todos); };
+                tx.onerror = function () { reject(tx.error); };
+                tx.onabort = function () { reject(tx.error || new Error('A leitura da fila foi interrompida.')); };
             });
         });
     }
@@ -538,6 +587,9 @@
     }
 
     function idbQueueUpdate(item) {
+        if (item && isPasswordChangeEndpoint(item.url)) {
+            return Promise.reject(new Error('Troca de senha não pode ser armazenada offline. Conecte-se para continuar.'));
+        }
         return openDB().then(function (db) {
             return new Promise(function (resolve, reject) {
                 var tx = db.transaction(STORE_QUEUE, 'readwrite');
@@ -665,6 +717,11 @@
             if (payload.items.length > MAX_IMPORT_ITEMS) {
                 throw new Error('O arquivo de pendências contém itens demais.');
             }
+            if (payload.items.some(function (item) {
+                return item && isPasswordChangeEndpoint(item.url);
+            })) {
+                throw new Error('Arquivos de pendências não podem conter troca de senha. Faça a alteração conectado ao SGI.');
+            }
             return idbQueueAll().then(function (atuais) {
                 var conhecidos = {};
                 (atuais || []).forEach(function (item) { var id = mutationId(item); if (id) conhecidos[id] = true; });
@@ -739,6 +796,10 @@
 
     /* ------------------------- Fila de mutacoes ------------------------- */
     function queueMutation(method, url, body, headers) {
+        method = String(method || '').toUpperCase();
+        if (isPasswordChangeEndpoint(url)) {
+            return Promise.reject(new Error('Troca de senha não pode ser armazenada offline. Conecte-se para continuar.'));
+        }
         var storedHeaders = garantirIdMutacao(headers);
 
         var isFormData = typeof FormData !== 'undefined' && body instanceof FormData;
@@ -1026,6 +1087,12 @@
     }
 
     function processarItemDaFila(item, summary) {
+        if (item && isPasswordChangeEndpoint(item.url)) {
+            // Defesa adicional para uma linha criada por outra aba antiga.
+            return idbQueueDelete(item.id).then(function () {
+                summary.failed += 1;
+            });
+        }
         var reservaValida = verificarReservaSync().then(function (ok) {
             if (!ok) throw erroInterrompeFila(true, 'A reserva desta sincronização foi assumida por outra aba.');
         });
@@ -1173,8 +1240,14 @@
     function wrappedFetch(input, init) {
         if (!originalFetch) return Promise.reject(new Error('fetch indisponivel'));
         init = init || {};
-        var url = typeof input === 'string' ? input : (input && input.url) || '';
+        var url = requestUrl(input);
         var method = (init.method || (input && input.method) || 'GET').toUpperCase();
+
+        // Troca de senha é uma operação de autenticação e nunca pode ficar
+        // persistida na fila offline nem receber uma resposta simulada.
+        if (isMutation(method) && isPasswordChangeEndpoint(url)) {
+            return originalFetch(input, init);
+        }
 
         // O mesmo identificador acompanha a tentativa online e uma eventual
         // entrada posterior na fila. Assim a API pode reconhecer tentativas
@@ -1268,16 +1341,37 @@
         }
 
         if (isMutation(method)) {
-            var bodyStr = init.body ? String(init.body) : '';
-            var ehNegativo = bodyStr.indexOf('"id_jogo":-') > -1 || absUrl.indexOf('id_jogo=-') > -1;
-            if (!state.online || navigator.onLine === false || estaSoftOffline() || servidorIndisponivel() || ehNegativo || state.pending > 0 || syncing) {
-                return queueMutation(method, absUrl, init.body, init.headers).then(function (item) {
-                    return fakeResponse({ success: true, offline: true, queued: true, mutation_id: item.id, mensagem: 'Salvo localmente. Sera sincronizado quando houver conexao.' });
-                });
-            }
-            return fetchComTimeout(input, init, REQUEST_TIMEOUT_MS).catch(function () {
-                return queueMutation(method, absUrl, init.body, init.headers).then(function (item) {
-                    return fakeResponse({ success: true, offline: true, queued: true, mutation_id: item.id, mensagem: 'Salvo localmente. Sera sincronizado quando houver conexao.' });
+            var temBodyExplicito = Object.prototype.hasOwnProperty.call(init, 'body');
+            var entradaRequest = typeof Request === 'function' && input instanceof Request;
+            var bodyInitDisponivel = temBodyExplicito && init.body != null;
+            var bodyRequestDisponivel = entradaRequest && input.body !== null;
+            var bodyParaFila = bodyInitDisponivel
+                ? Promise.resolve(init.body)
+                : (bodyRequestDisponivel
+                    ? lerCorpoRequestParaFila(input)
+                    : Promise.resolve(temBodyExplicito ? init.body : null));
+            return bodyParaFila.then(function (body) {
+                var idJogoTemporario = false;
+                if (typeof body === 'string') {
+                    try {
+                        var payload = JSON.parse(body);
+                        idJogoTemporario = !!payload
+                            && typeof payload.id_jogo === 'number'
+                            && isFinite(payload.id_jogo)
+                            && payload.id_jogo < 0;
+                    } catch (e) {}
+                }
+                var ehNegativo = idJogoTemporario || absUrl.indexOf('id_jogo=-') > -1;
+                function enfileirar() {
+                    return queueMutation(method, absUrl, body, init.headers).then(function (item) {
+                        return fakeResponse({ success: true, offline: true, queued: true, mutation_id: item.id, mensagem: 'Salvo localmente. Sera sincronizado quando houver conexao.' });
+                    });
+                }
+                if (!state.online || navigator.onLine === false || estaSoftOffline() || servidorIndisponivel() || ehNegativo || state.pending > 0 || syncing) {
+                    return enfileirar();
+                }
+                return fetchComTimeout(input, init, REQUEST_TIMEOUT_MS).catch(function () {
+                    return enfileirar();
                 });
             });
         }
@@ -1321,6 +1415,12 @@
                 if (!isSameOrigin(_url)) return send.call(xhr, body);
 
                 var absUrl = resolveUrl(_url);
+
+                // Mesmo que outro cliente escolha XHR, senha não é mutação
+                // sincronizável nem pode ter confirmação sintética.
+                if (isMutation(_method) && isPasswordChangeEndpoint(absUrl)) {
+                    return send.call(xhr, body);
+                }
 
                 if (_method === 'GET') {
                     var h = function () {
@@ -1647,7 +1747,19 @@
         },
         // A ação explícita do usuário pode tentar novamente uma entrada que
         // ficou em revisão; o envio automático nunca a descarta silenciosamente.
-        syncNow: function () { return syncQueue(true); },
+        syncNow: function () {
+            return verificarAcesso(true).then(function (ok) {
+                if (ok) return syncQueue(true);
+                return {
+                    synced: 0,
+                    failed: 0,
+                    needsReview: 0,
+                    pending: state.pending,
+                    busy: false,
+                    blocked: true
+                };
+            });
+        },
         // O cliente pode solicitar o envio automático depois de persistir uma
         // mutação, sem ignorar entradas que exigem revisão humana.
         sync: function () { return syncQueue(false); },

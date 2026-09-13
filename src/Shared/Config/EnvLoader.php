@@ -12,6 +12,10 @@ final class EnvLoader
 
     public static function load(string $path): void
     {
+        if (getenv('SGI_APP_ENV') === 'test') {
+            return;
+        }
+
         if (!is_file($path) || !is_readable($path)) {
             return;
         }

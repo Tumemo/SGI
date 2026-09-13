@@ -8,6 +8,7 @@ use App\Modules\Acesso\Application\UsuarioService;
 use App\Modules\Acesso\Domain\FotoStorage;
 use App\Modules\Acesso\Domain\UsuarioConsultaRepository;
 use App\Modules\Acesso\Domain\UsuarioManagementRepository;
+use App\Shared\Application\TransactionRunner;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
 
@@ -17,7 +18,7 @@ final class UsuarioServiceTest extends TestCase
     {
         $queries = new InMemoryUsuarioConsultaRepository();
         $queries->validated = ['id_usuario' => 9, 'nivel_usuario' => '3'];
-        $service = new UsuarioService($queries, new InMemoryUsuarioManagementRepository(), new InMemoryFotoStorage());
+        $service = new UsuarioService($queries, new InMemoryUsuarioManagementRepository(), new InMemoryFotoStorage(), new InMemoryTransactionRunner());
 
         self::assertSame($queries->validated, $service->validarInscricao('RM-009', '04/09/2010', 7));
         self::assertSame(['009', '2010-09-04', 7], $queries->validationArguments);
@@ -26,7 +27,7 @@ final class UsuarioServiceTest extends TestCase
     public function testInvalidEnrollmentNeverReachesRepository(): void
     {
         $queries = new InMemoryUsuarioConsultaRepository();
-        $service = new UsuarioService($queries, new InMemoryUsuarioManagementRepository(), new InMemoryFotoStorage());
+        $service = new UsuarioService($queries, new InMemoryUsuarioManagementRepository(), new InMemoryFotoStorage(), new InMemoryTransactionRunner());
 
         self::assertNull($service->validarInscricao('RM-009', '31/02/2010', 7));
         self::assertNull($queries->validationArguments);
@@ -36,7 +37,7 @@ final class UsuarioServiceTest extends TestCase
     {
         $management = new InMemoryUsuarioManagementRepository();
         $storage = new InMemoryFotoStorage();
-        $service = new UsuarioService(new InMemoryUsuarioConsultaRepository(), $management, $storage);
+        $service = new UsuarioService(new InMemoryUsuarioConsultaRepository(), $management, $storage, new InMemoryTransactionRunner());
 
         $service->criarAluno([
             'nome_usuario' => '  Aluno  ',
@@ -63,11 +64,34 @@ final class UsuarioServiceTest extends TestCase
     public function testInvalidStudentDoesNotWrite(): void
     {
         $management = new InMemoryUsuarioManagementRepository();
-        $service = new UsuarioService(new InMemoryUsuarioConsultaRepository(), $management, new InMemoryFotoStorage());
+        $service = new UsuarioService(new InMemoryUsuarioConsultaRepository(), $management, new InMemoryFotoStorage(), new InMemoryTransactionRunner());
 
         $this->expectException(RuntimeException::class);
         $service->criarAluno(['nome_usuario' => 'Aluno'], 7);
         self::assertNull($management->student);
+    }
+
+    public function testStaffRoleChangeRunsWithinTransaction(): void
+    {
+        $management = new InMemoryUsuarioManagementRepository();
+        $transactions = new InMemoryTransactionRunner();
+        $service = new UsuarioService(new InMemoryUsuarioConsultaRepository(), $management, new InMemoryFotoStorage(), $transactions);
+
+        $service->atualizarColaborador(['id_usuario' => 42, 'is_mesario_clicado' => '1'], 7);
+
+        self::assertSame(1, $transactions->calls);
+        self::assertSame([['id_usuario' => 42, 'is_mesario_clicado' => '1'], 7], $management->staffRoleUpdate);
+    }
+}
+
+final class InMemoryTransactionRunner implements TransactionRunner
+{
+    public int $calls = 0;
+
+    public function run(callable $callback): mixed
+    {
+        $this->calls++;
+        return $callback();
     }
 }
 
@@ -111,6 +135,9 @@ final class InMemoryUsuarioManagementRepository implements UsuarioManagementRepo
 
     public ?string $staffPhoto = null;
 
+    /** @var array{array<string, mixed>, int}|null */
+    public ?array $staffRoleUpdate = null;
+
     public function createStudent(array $data, int $editionId): array
     {
         $this->student = $data;
@@ -130,6 +157,7 @@ final class InMemoryUsuarioManagementRepository implements UsuarioManagementRepo
 
     public function updateStaffRole(array $data, int $editionId): void
     {
+        $this->staffRoleUpdate = [$data, $editionId];
     }
 
     public function updateStaffDetails(array $data, int $editionId): void

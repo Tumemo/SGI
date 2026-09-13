@@ -8,6 +8,7 @@ use App\Modules\Acesso\Domain\FotoStorage;
 use App\Modules\Acesso\Domain\UsuarioConsultaRepository;
 use App\Modules\Acesso\Domain\UsuarioManagementRepository;
 use App\Modules\Participantes\Domain\MatriculaRules;
+use App\Shared\Application\TransactionRunner;
 use RuntimeException;
 
 final class UsuarioService
@@ -16,6 +17,7 @@ final class UsuarioService
         private readonly UsuarioConsultaRepository $consultas,
         private readonly UsuarioManagementRepository $usuarios,
         private readonly FotoStorage $fotos,
+        private readonly TransactionRunner $transactions,
     ) {
     }
 
@@ -98,7 +100,9 @@ final class UsuarioService
         if ((int) ($data['id_usuario'] ?? 0) <= 0) {
             throw new RuntimeException('ID do colaborador inválido.');
         }
-        $this->usuarios->updateStaffRole($data, $editionId);
+        $this->transactions->run(function () use ($data, $editionId): void {
+            $this->usuarios->updateStaffRole($data, $editionId);
+        });
     }
 
     /** @param array<string, mixed> $data */

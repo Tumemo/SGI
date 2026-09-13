@@ -7,9 +7,106 @@ test.beforeEach(async ({ page }) => {
         contentType: 'text/html', body: '<html><body></body></html>',
     }));
     await page.goto('https://offline.sgi.test/');
-    await page.evaluate(() => { window.SGI_CACHE_KEY = 'queue-audit'; });
+    await page.evaluate(() => {
+        window.SGI_CACHE_KEY = 'queue-audit';
+        window.SGI_SESSION_ID = '7';
+    });
     await page.addScriptTag({ path: path.resolve(__dirname, '../../resources/js/offline/offline-core.js') });
+    await page.route('**/api/v1/health', route => route.fulfill({
+        json: { success: true, status: 'ok', service: 'sgi' },
+    }));
+    await page.route('**/api/v1/session', route => route.fulfill({
+        json: { success: true, usuario: { id: 7, nivel: 2 } },
+    }));
     await page.evaluate(() => window.SGIOffline.getPendingList());
+});
+
+test('troca de senha não entra na fila nem é importada ou reenviada como mutação offline', async ({ page }) => {
+    const enviados = [];
+    await page.route('**/api/v1/senha', route => {
+        enviados.push(route.request().postData());
+        return route.fulfill({ status: 403, json: { success: false, message: 'Conecte-se para continuar.' } });
+    });
+
+    const resultado = await page.evaluate(async () => {
+        window.SGI_BASE_PATH = '/sgi';
+        const endpoint = `${location.origin}/sgi/api/v1/senha`;
+        const segredo = 'Senha-que-nao-pode-ser-enfileirada';
+        const headers = { 'Content-Type': 'application/json' };
+        let directQueueRejected = false;
+        let importRejected = false;
+
+        try {
+            await SGIOffline.queueMutation('POST', endpoint, JSON.stringify({ nova_senha: segredo }), headers);
+        } catch (error) {
+            directQueueRejected = /não pode ser armazenada offline/i.test(error.message);
+        }
+
+        try {
+            await SGIOffline.importPending(JSON.stringify({
+                schemaVersion: 1,
+                items: [{
+                    method: 'POST',
+                    url: endpoint,
+                    body: JSON.stringify({ nova_senha: segredo }),
+                    headers: { 'X-SGI-Mutation-Id': 'queue-audit-import' },
+                }],
+            }));
+        } catch (error) {
+            importRejected = /não podem conter troca de senha/i.test(error.message);
+        }
+
+        const countBeforeRequest = (await SGIOffline.getPendingList()).length;
+        Object.defineProperty(navigator, 'onLine', { configurable: true, value: false });
+        let fetchStatus = 0;
+        try {
+            // O Fetch API aceita URL como objeto, além de string e Request.
+            const response = await fetch(new URL(endpoint), {
+                method: 'POST',
+                headers,
+                body: JSON.stringify({ nova_senha: segredo }),
+            });
+            fetchStatus = response.status;
+        } finally {
+            Object.defineProperty(navigator, 'onLine', { configurable: true, value: true });
+        }
+
+        // Simule uma linha gravada por um cliente antigo. O carregamento/sync
+        // deve descartá-la antes de enviar ou expor o corpo no export.
+        const database = await new Promise((resolve, reject) => {
+            const opening = indexedDB.open('sgi_offline');
+            opening.onsuccess = () => resolve(opening.result);
+            opening.onerror = () => reject(opening.error);
+        });
+        await new Promise((resolve, reject) => {
+            const transaction = database.transaction('mutation_queue', 'readwrite');
+            transaction.objectStore('mutation_queue').add({
+                method: 'POST',
+                url: endpoint,
+                body: JSON.stringify({ nova_senha: 'segredo-legado' }),
+                headers: {},
+                session: 'queue-audit',
+            });
+            transaction.oncomplete = resolve;
+            transaction.onerror = () => reject(transaction.error);
+            transaction.onabort = () => reject(transaction.error);
+        });
+        database.close();
+
+        const sync = await SGIOffline.syncNow();
+        const pending = await SGIOffline.getPendingList();
+        const exported = await SGIOffline.exportPending();
+        return { directQueueRejected, importRejected, countBeforeRequest, fetchStatus, sync, pending, exported };
+    });
+
+    expect(resultado.directQueueRejected).toBe(true);
+    expect(resultado.importRejected).toBe(true);
+    expect(resultado.countBeforeRequest).toBe(0);
+    expect(resultado.fetchStatus).toBe(403);
+    expect(resultado.sync.synced).toBe(0);
+    expect(resultado.pending).toEqual([]);
+    expect(resultado.exported.items).toEqual([]);
+    expect(enviados).toEqual([JSON.stringify({ nova_senha: 'Senha-que-nao-pode-ser-enfileirada' })]);
 });
 
 test('alteração nova respeita a fila ainda pendente após reconexão', async ({ page }) => {
@@ -26,6 +123,243 @@ test('alteração nova respeita a fila ainda pendente após reconexão', async (
         await SGIOffline.syncNow();
     });
     expect(enviados).toEqual([1, 2]);
+});
+
+test('Request com corpo é preservado na fila offline e no reenvio', async ({ page }) => {
+    const enviados = [];
+    await page.route('**/api/v1/partidas', route => {
+        enviados.push({
+            body: route.request().postData(),
+            mutationId: route.request().headers()['x-sgi-mutation-id'],
+        });
+        return route.fulfill({ json: { success: true } });
+    });
+
+    const resultado = await page.evaluate(async () => {
+        const body = JSON.stringify({ id_partida: 12, resultado_partida: 4 });
+        Object.defineProperty(navigator, 'onLine', { configurable: true, value: false });
+        try {
+            await fetch(new Request('/api/v1/partidas', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body,
+            }));
+            const fila = await SGIOffline.getPendingList();
+            Object.defineProperty(navigator, 'onLine', { configurable: true, value: true });
+            await SGIOffline.syncNow();
+            return {
+                body,
+                queuedBody: fila[0] && fila[0].body,
+                mutationId: fila[0] && fila[0].headers['X-SGI-Mutation-Id'],
+                remaining: await SGIOffline.getPendingList(),
+            };
+        } finally {
+            Object.defineProperty(navigator, 'onLine', { configurable: true, value: true });
+        }
+    });
+
+    expect(resultado.queuedBody).toBe(resultado.body);
+    expect(resultado.remaining).toEqual([]);
+    expect(enviados).toEqual([{
+        body: resultado.body,
+        mutationId: resultado.mutationId,
+    }]);
+});
+
+test('Request sem corpo e init.body explícito mantêm a semântica da fila', async ({ page }) => {
+    const enviados = [];
+    await page.route('**/api/v1/partidas', route => {
+        enviados.push(route.request().postData());
+        return route.fulfill({ json: { success: true } });
+    });
+
+    const resultado = await page.evaluate(async () => {
+        Object.defineProperty(navigator, 'onLine', { configurable: true, value: false });
+        try {
+            await fetch(new Request('/api/v1/partidas', { method: 'POST' }));
+            await fetch(new Request('/api/v1/partidas', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id_partida: 13, resultado_partida: 1 }),
+            }), {
+                body: JSON.stringify({ id_partida: 13, resultado_partida: 5 }),
+            });
+            await fetch(new Request('/api/v1/partidas', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id_partida: 13, resultado_partida: 6 }),
+            }), { body: null });
+            await fetch(new Request('/api/v1/partidas', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id_partida: 13, resultado_partida: 7 }),
+            }), { body: undefined });
+            const fila = await SGIOffline.getPendingList();
+            Object.defineProperty(navigator, 'onLine', { configurable: true, value: true });
+            await SGIOffline.syncNow();
+            return { bodies: fila.map((item) => item.body), remaining: await SGIOffline.getPendingList() };
+        } finally {
+            Object.defineProperty(navigator, 'onLine', { configurable: true, value: true });
+        }
+    });
+
+    expect(resultado.bodies).toEqual([
+        null,
+        JSON.stringify({ id_partida: 13, resultado_partida: 5 }),
+        JSON.stringify({ id_partida: 13, resultado_partida: 6 }),
+        JSON.stringify({ id_partida: 13, resultado_partida: 7 }),
+    ]);
+    expect(resultado.remaining).toEqual([]);
+    expect(enviados).toEqual(resultado.bodies);
+});
+
+test('Request com corpo online chega intacto ao transporte original', async ({ page }) => {
+    const enviados = [];
+    await page.route('**/api/v1/partidas', route => {
+        enviados.push(route.request().postData());
+        return route.fulfill({ json: { success: true } });
+    });
+
+    const resultado = await page.evaluate(async () => {
+        const body = JSON.stringify({ id_partida: 14, resultado_partida: 2 });
+        const request = new Request('/api/v1/partidas', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body,
+        });
+        const response = await fetch(request);
+        return { ok: response.ok, pending: await SGIOffline.getPendingList() };
+    });
+
+    expect(resultado.ok).toBe(true);
+    expect(resultado.pending).toEqual([]);
+    expect(enviados).toEqual([JSON.stringify({ id_partida: 14, resultado_partida: 2 })]);
+});
+
+test('Request com jogo temporário é enfileirado com o ID negativo preservado', async ({ page }) => {
+    const enviados = [];
+    await page.route('**/api/v1/resultados', route => {
+        enviados.push(route.request().postDataJSON());
+        return route.fulfill({ json: { success: true } });
+    });
+
+    const resultado = await page.evaluate(async () => {
+        const body = '{"id_jogo": -101, "id_modalidade": 1}';
+        const resposta = await fetch(new Request('/api/v1/resultados', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body,
+        }));
+        const fila = await SGIOffline.getPendingList();
+        return { status: resposta.status, body, fila };
+    });
+
+    expect(resultado.status).toBe(200);
+    expect(resultado.fila).toHaveLength(1);
+    expect(resultado.fila[0].body).toBe(resultado.body);
+    expect(resultado.fila[0].needsReview).toBe(false);
+    expect(enviados).toEqual([]);
+});
+
+test('falha QuotaExceededError na projeção mantém fila e retoma projeção antes do envio', async ({ page }) => {
+    let enviouAposRetomada = false;
+    await page.addScriptTag({ path: path.resolve(__dirname, '../../resources/js/offline/mesario-data.js') });
+    await page.route('**/api/v1/partidas', async route => {
+        enviouAposRetomada = await page.evaluate(() => window.__sgiProjectionResumed === true);
+        return route.fulfill({ json: { success: true } });
+    });
+
+    const resultado = await page.evaluate(async () => {
+        const originalPut = IDBObjectStore.prototype.put;
+        let falhasQuota = 0;
+        window.__sgiProjectionResumed = false;
+        IDBObjectStore.prototype.put = function (...args) {
+            if (this.transaction.db.name === 'sgi_mesario_dados' && this.name === 'partidas') {
+                if (falhasQuota === 0) {
+                    falhasQuota += 1;
+                    throw new DOMException('Quota de teste excedida.', 'QuotaExceededError');
+                }
+                const transacao = this.transaction;
+                transacao.addEventListener('complete', () => { window.__sgiProjectionResumed = true; });
+            }
+            return originalPut.apply(this, args);
+        };
+
+        let antes;
+        let sync;
+        let restantes;
+        try {
+            await SGIOffline.queueMutation('PUT', '/api/v1/partidas', JSON.stringify({
+                id_partida: 81,
+                resultado_partida: 3,
+            }), { 'Content-Type': 'application/json' });
+            const fila = await SGIOffline.getPendingList();
+            antes = {
+                falhasQuota,
+                body: fila[0] && fila[0].body,
+                id: fila[0] && fila[0].id,
+                projectionPending: fila[0] && fila[0].projectionPending,
+                projectionError: fila[0] && fila[0].projectionError,
+            };
+            sync = await SGIOffline.syncNow();
+            restantes = await SGIOffline.getPendingList();
+        } finally {
+            IDBObjectStore.prototype.put = originalPut;
+        }
+        return {
+            antes,
+            retomada: window.__sgiProjectionResumed,
+            restantes,
+            sync,
+        };
+    });
+
+    expect(resultado.antes.falhasQuota).toBe(1);
+    expect(resultado.antes.id).toBeGreaterThan(0);
+    expect(resultado.antes.body).toBe(JSON.stringify({ id_partida: 81, resultado_partida: 3 }));
+    expect(resultado.antes.projectionPending).toBe(true);
+    expect(resultado.antes.projectionError).toContain('Quota de teste excedida.');
+    expect(enviouAposRetomada).toBe(true);
+    expect(resultado.retomada).toBe(true);
+    expect(resultado.restantes).toEqual([]);
+});
+
+test('troca de sessão antes de syncNow mantém fila sem enviar POST', async ({ page }) => {
+    let posts = 0;
+    let consultasSessao = 0;
+    let idOperador = 7;
+    await page.route('**/api/v1/session', route => {
+        consultasSessao += 1;
+        return route.fulfill({ json: { success: true, usuario: { id: idOperador, nivel: 2 } } });
+    });
+    await page.route('**/api/v1/partidas', route => {
+        posts += 1;
+        return route.fulfill({ json: { success: true } });
+    });
+
+    const preparado = await page.evaluate(async () => {
+        const acesso = await SGIOffline.checkAccess(true);
+        await SGIOffline.queueMutation('PUT', '/api/v1/partidas', JSON.stringify({
+            id_partida: 82,
+            resultado_partida: 4,
+        }), { 'Content-Type': 'application/json' });
+        return { acesso, fila: await SGIOffline.getPendingList() };
+    });
+    expect(preparado.acesso).toBe(true);
+    expect(preparado.fila).toHaveLength(1);
+
+    idOperador = 8;
+    const resultado = await page.evaluate(async () => {
+        const sync = await SGIOffline.syncNow();
+        return { sync, fila: await SGIOffline.getPendingList() };
+    });
+
+    expect(consultasSessao).toBeGreaterThan(1);
+    expect(posts).toBe(0);
+    expect(resultado.sync.blocked).toBe(true);
+    expect(resultado.fila).toHaveLength(1);
+    expect(resultado.fila[0].body).toBe(JSON.stringify({ id_partida: 82, resultado_partida: 4 }));
+    expect(resultado.fila[0].needsReview).toBe(false);
 });
 
 for (const body of ['<html>Servidor em manutenção</html>', '', '{"success":', '{}', '{"status":"erro","mensagem":"Dados inválidos"}']) {
@@ -70,8 +404,16 @@ test('edição de ocorrência temporária resolve o ID nas rotas v1', async ({ p
 test('jogos temporários intercalados enviam resultado antes de seus pontos vinculados', async ({ page }) => {
     const enviados = [];
     await page.route('**/api/v1/*', route => {
-        const dados = route.request().postDataJSON();
-        enviados.push(`${route.request().url().split('/').pop()}:${dados.id_jogo || dados.jogos_id_jogo}`);
+        const requisicao = route.request();
+        const url = new URL(requisicao.url());
+        if (requisicao.method() === 'GET' && url.pathname.endsWith('/health')) {
+            return route.fulfill({ json: { success: true, status: 'ok', service: 'sgi' } });
+        }
+        if (requisicao.method() === 'GET' && url.pathname.endsWith('/session')) {
+            return route.fulfill({ json: { success: true, usuario: { id: 7, nivel: 2 } } });
+        }
+        const dados = requisicao.postDataJSON() || {};
+        enviados.push(`${url.pathname.split('/').pop()}:${dados.id_jogo || dados.jogos_id_jogo}`);
         return route.fulfill({ json: { success: true } });
     });
     await page.evaluate(async () => {
@@ -183,8 +525,17 @@ test('duas abas do mesmo operador não sincronizam a fila simultaneamente', asyn
         contentType: 'text/html', body: '<html><body></body></html>',
     }));
     await segundaAba.goto('https://offline.sgi.test/');
-    await segundaAba.evaluate(() => { window.SGI_CACHE_KEY = 'queue-audit'; });
+    await segundaAba.evaluate(() => {
+        window.SGI_CACHE_KEY = 'queue-audit';
+        window.SGI_SESSION_ID = '7';
+    });
     await segundaAba.addScriptTag({ path: path.resolve(__dirname, '../../resources/js/offline/offline-core.js') });
+    await segundaAba.route('**/api/v1/health', route => route.fulfill({
+        json: { success: true, status: 'ok', service: 'sgi' },
+    }));
+    await segundaAba.route('**/api/v1/session', route => route.fulfill({
+        json: { success: true, usuario: { id: 7, nivel: 2 } },
+    }));
     await segundaAba.route('**/api/v1/partidas', responder);
     await page.evaluate(() => SGIOffline.queueMutation('PUT', '/api/v1/partidas', JSON.stringify({ id_partida: 9, resultado_partida: 3 }), {}));
     const resultados = await Promise.all([

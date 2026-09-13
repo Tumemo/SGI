@@ -9,6 +9,7 @@ declare(strict_types=1);
 require_once __DIR__ . '/Support/TestClient.php';
 require_once __DIR__ . '/Support/Assertions.php';
 require_once __DIR__ . '/Support/TestDatabase.php';
+require_once __DIR__ . '/Support/ProcessExitCode.php';
 require_once __DIR__ . '/Support/AuditFixtures.php';
 require_once __DIR__ . '/Integration/AuditFixturesTest.php';
 require_once __DIR__ . '/Integration/MesarioResourceScopeTest.php';
@@ -17,6 +18,7 @@ require_once __DIR__ . '/Integration/ExceptionEnvelopeTest.php';
 require_once __DIR__ . '/Integration/CronometroPersistenceTest.php';
 require_once __DIR__ . '/Integration/AuthAndRbacTest.php';
 require_once __DIR__ . '/Integration/InterclasseLifecycleTest.php';
+require_once __DIR__ . '/Integration/FirstLoginPasswordChangeTest.php';
 require_once __DIR__ . '/Integration/PontuacaoReconciliationTest.php';
 require_once __DIR__ . '/Integration/ArrecadacaoConsistencyTest.php';
 require_once __DIR__ . '/Integration/PodiumCreditTest.php';
@@ -44,6 +46,7 @@ require_once __DIR__ . '/Integration/MigrationsTest.php';
 require_once __DIR__ . '/Integration/RecoveryRehearsalTest.php';
 require_once __DIR__ . '/Integration/ConsistencyGuardsTest.php';
 require_once __DIR__ . '/Integration/InitialAdminTest.php';
+require_once __DIR__ . '/Integration/StudentPasswordInitializerTest.php';
 require_once __DIR__ . '/Integration/AtomicMutationTest.php';
 require_once __DIR__ . '/Integration/MataMataEdgeCasesTest.php';
 require_once __DIR__ . '/E2E/FullOfflineTournamentTest.php';
@@ -57,6 +60,7 @@ use SGITests\Integration\ExceptionEnvelopeTest;
 use SGITests\Integration\CronometroPersistenceTest;
 use SGITests\Integration\AuthAndRbacTest;
 use SGITests\Integration\InterclasseLifecycleTest;
+use SGITests\Integration\FirstLoginPasswordChangeTest;
 use SGITests\Integration\PontuacaoReconciliationTest;
 use SGITests\Integration\ArrecadacaoConsistencyTest;
 use SGITests\Integration\PodiumCreditTest;
@@ -120,6 +124,7 @@ try {
 
     // 3. Turmas e importação de PDF
     $idTurma = TurmasAndPdfImportTest::run($idEdicao);
+    FirstLoginPasswordChangeTest::run($idEdicao);
     PontuacaoReconciliationTest::run($idEdicao, $idTurma);
     ArrecadacaoConsistencyTest::run($idEdicao, $idTurma);
 
@@ -180,6 +185,7 @@ try {
     \SGITests\Integration\RecoveryRehearsalTest::run();
     \SGITests\Integration\ConsistencyGuardsTest::run();
     \SGITests\Integration\InitialAdminTest::run();
+    \SGITests\Integration\StudentPasswordInitializerTest::run();
 
 } catch (Throwable $e) {
     $aborted = true;

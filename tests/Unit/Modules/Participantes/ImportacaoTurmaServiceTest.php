@@ -25,7 +25,10 @@ final class ImportacaoTurmaServiceTest extends TestCase
         ]);
         $result = (new ImportacaoTurmaService($repository, $reader))->importar('lista.pdf', 7, 0);
         self::assertTrue($result['success']);
-        self::assertSame('Importação concluída: 1 registros inseridos, 2 duplicados ignorados', $result['message']);
+        self::assertSame(
+            'Importação concluída: 1 registros inseridos, 2 duplicados ignorados. Senha inicial: sesi-senai. A troca é obrigatória no primeiro acesso.',
+            $result['message'],
+        );
         self::assertSame(['RM 456: data de nascimento inválida.'], $result['avisos']);
     }
 

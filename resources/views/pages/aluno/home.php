@@ -90,37 +90,6 @@ include SGI_ROOT . '/resources/views/components/aluno-nav.php';
 
 <script type="application/json" data-sgi-config="aluno/home"><?= json_encode([], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_THROW_ON_ERROR) ?></script>
 <script data-sgi-page src="<?= \App\Shared\Http\Assets::url('js/pages/aluno/home.js') ?>"></script>
-<div class="modal fade" id="modalTrocarSenha" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title fw-bold">
-                    <i class="bi bi-shield-lock me-2"></i>Alterar Senha
-                </h5>
-            </div>
-            <div class="modal-body p-4">
-                <p class="text-muted mb-3">Por segurança, defina uma senha pessoal e confidencial. A senha padrão é a mesma para todos os alunos.</p>
-                <form id="formTrocarSenha" novalidate>
-                    <div class="mb-3">
-                        <label for="novaSenha" class="form-label small fw-semibold text-secondary">Nova Senha</label>
-                        <input type="password" class="form-control" id="novaSenha" name="nova_senha" minlength="6" maxlength="72" required autocomplete="new-password">
-                    </div>
-                    <div class="mb-3">
-                        <label for="confirmarNovaSenha" class="form-label small fw-semibold text-secondary">Confirmar Nova Senha</label>
-                        <input type="password" class="form-control" id="confirmarNovaSenha" name="confirmar_senha" minlength="6" maxlength="72" required autocomplete="new-password">
-                    </div>
-                    <div id="msgTrocarSenha" class="small mt-2 text-center"></div>
-                </form>
-            </div>
-            <div class="modal-footer border-0 justify-content-end gap-2 bg-light px-4 py-3">
-                <button type="button" class="btn btn-primary px-4 fw-semibold" id="btnSalvarNovaSenha">
-                    <i class="bi bi-check-lg me-1"></i>Salvar Senha
-                </button>
-            </div>
-        </div>
-    </div>
-</div>
-
 <script src="<?= \App\Shared\Http\Assets::url('vendor/bootstrap/js/bootstrap.bundle.min.js') ?>" crossorigin="anonymous"></script>
 </body>
 </html>

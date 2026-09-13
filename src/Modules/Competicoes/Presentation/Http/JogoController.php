@@ -138,7 +138,7 @@ final class JogoController
         // CronometroService; caso contrário, o status atual enviado pelo
         // formulário de agenda seria confundido com uma mutação do timer.
         return array_key_exists('status_jogo', $data)
-            && in_array($data['status_jogo'], ['Iniciado', 'Pausado', 'Concluido'], true);
+            && in_array($data['status_jogo'], ['Iniciado', 'Pausado', 'Concluido', 'Finalizado'], true);
     }
 
     /** @param array<string,mixed> $data */

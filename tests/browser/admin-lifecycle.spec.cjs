@@ -1,5 +1,14 @@
 const { test, expect } = require('./fixtures.cjs');
 
+async function abrirModalAteConclusao(botao, modal) {
+    const transicaoConcluida = modal.evaluate((element) => new Promise((resolve) => {
+        element.addEventListener('shown.bs.modal', resolve, { once: true });
+    }));
+    await botao.click();
+    await transicaoConcluida;
+    await expect(modal).toBeVisible();
+}
+
 async function entrarComoAdmin(page) {
     await page.goto('login', { waitUntil: 'domcontentloaded' });
     await expect(page.locator('#form_desktop')).toBeVisible();
@@ -184,10 +193,8 @@ test.describe.serial('Gestão Administrativa Completa (Admin Lifecycle)', () => 
         const nomeCategoria = `Categoria E2E ${Date.now()}`;
         const btnNovaCat = page.locator('button[data-bs-target="#modalCriarCategoria"]:visible');
         await expect(btnNovaCat).toBeVisible();
-        await btnNovaCat.click();
-
         const modalCat = page.locator('#modalCriarCategoria');
-        await expect(modalCat).toBeVisible();
+        await abrirModalAteConclusao(btnNovaCat, modalCat);
         await page.locator('#inputNomeCategoriaNova').fill(nomeCategoria);
         await page.locator('#btnSalvarCategoria').click();
         await expect(modalCat).toBeHidden({ timeout: 10_000 });
@@ -202,10 +209,8 @@ test.describe.serial('Gestão Administrativa Completa (Admin Lifecycle)', () => 
         const nomeModalidade = `Queimada E2E ${Date.now()}`;
         const btnNovaMod = page.locator('button[data-bs-target="#exampleModal"]:visible');
         await expect(btnNovaMod).toBeVisible();
-        await btnNovaMod.click();
-
         const modalMod = page.locator('#exampleModal');
-        await expect(modalMod).toBeVisible();
+        await abrirModalAteConclusao(btnNovaMod, modalMod);
 
         await page.locator('#inputNomeModalidade').fill(nomeModalidade);
         await page.locator('#inputGeneroModalidade').selectOption('MISTO');

@@ -5,7 +5,9 @@ declare(strict_types=1);
 namespace App\Modules\Competicoes\Infrastructure;
 
 use App\Modules\Competicoes\Application\JogoConflitoException;
+use App\Modules\Competicoes\Domain\ChaveamentoRules;
 use App\Modules\Competicoes\Domain\CronometroRules;
+use App\Modules\Competicoes\Domain\JogoScheduleRules;
 use App\Shared\Database\SqlFilters;
 use App\Shared\Database\Transaction;
 use mysqli;
@@ -151,6 +153,7 @@ final class MysqliJogoGateway
         $fields = [];
         $values = [];
         $types = '';
+        $normalized = [];
         $nullableSchedule = ['data_jogo', 'inicio_jogo', 'termino_jogo', 'locais_id_local'];
         foreach ([
             'nome_jogo' => 's', 'data_jogo' => 's', 'inicio_jogo' => 's',
@@ -165,18 +168,40 @@ final class MysqliJogoGateway
             if ($data[$field] === null || ($type === 's' && in_array($field, ['data_jogo', 'inicio_jogo', 'termino_jogo'], true) && trim((string) $data[$field]) === '')) {
                 if (in_array($field, $nullableSchedule, true)) {
                     $fields[] = $field . ' = NULL';
+                    $normalized[$field] = null;
                     continue;
                 }
                 throw new \InvalidArgumentException('O campo ' . $field . ' não pode ser nulo.');
             }
             if ($type === 'i' && $field === 'locais_id_local' && (int) $data[$field] <= 0) {
                 $fields[] = $field . ' = NULL';
+                $normalized[$field] = null;
                 continue;
             }
-            $value = $type === 'i' ? (int) $data[$field] : (string) $data[$field];
+            if ($field === 'data_jogo') {
+                $value = JogoScheduleRules::normalizeDate($data[$field]);
+                if ($value === null) {
+                    $fields[] = $field . ' = NULL';
+                    $normalized[$field] = null;
+                    continue;
+                }
+            } elseif (in_array($field, ['inicio_jogo', 'termino_jogo'], true)) {
+                $value = JogoScheduleRules::normalizeTime($data[$field]);
+                if ($value === null) {
+                    $fields[] = $field . ' = NULL';
+                    $normalized[$field] = null;
+                    continue;
+                }
+            } else {
+                $value = $type === 'i' ? (int) $data[$field] : (string) $data[$field];
+            }
+            if ($field === 'modalidades_id_modalidade' && (int) $value <= 0) {
+                throw new \InvalidArgumentException('A modalidade informada é inválida.');
+            }
             $fields[] = $field . ' = ?';
             $values[] = $value;
             $types .= $type;
+            $normalized[$field] = $value;
         }
         if (($data['status_jogo'] ?? null) === 'Iniciado' && !array_key_exists('data_inicio_real', $data)) {
             $fields[] = 'data_inicio_real = NOW()';
@@ -192,6 +217,10 @@ final class MysqliJogoGateway
         $requestedLocal = array_key_exists('locais_id_local', $data)
             ? ((int) $data['locais_id_local'] > 0 ? (int) $data['locais_id_local'] : null)
             : $observedLocal;
+        $observedModality = (int) $current['modalidades_id_modalidade'];
+        $requestedModality = array_key_exists('modalidades_id_modalidade', $data)
+            ? (int) $data['modalidades_id_modalidade']
+            : $observedModality;
 
         Transaction::begin($this->connection);
         try {
@@ -199,6 +228,7 @@ final class MysqliJogoGateway
                 $this->connection,
                 array_values(array_filter([$observedLocal, $requestedLocal], static fn (?int $local): bool => $local !== null)),
             );
+            $modalityEditions = MysqliLocalScheduleGuard::lockModalities($this->connection, [$observedModality, $requestedModality]);
             $lockedCurrent = $this->findForUpdate($id);
             if ($lockedCurrent === null) {
                 Transaction::commit($this->connection);
@@ -208,13 +238,45 @@ final class MysqliJogoGateway
             if ($lockedLocal !== $observedLocal) {
                 throw new JogoConflitoException('A programação do jogo mudou durante a edição. Atualize a página e tente novamente.');
             }
+            if ((int) $lockedCurrent['modalidades_id_modalidade'] !== $observedModality) {
+                throw new JogoConflitoException('A modalidade do jogo mudou durante a edição. Atualize a página e tente novamente.');
+            }
 
             $candidate = [
-                'data_jogo' => array_key_exists('data_jogo', $data) ? $this->nullableString($data['data_jogo']) : $lockedCurrent['data_jogo'],
-                'inicio_jogo' => array_key_exists('inicio_jogo', $data) ? $this->nullableString($data['inicio_jogo']) : $lockedCurrent['inicio_jogo'],
-                'termino_jogo' => array_key_exists('termino_jogo', $data) ? $this->nullableString($data['termino_jogo']) : $lockedCurrent['termino_jogo'],
+                'nome_jogo' => array_key_exists('nome_jogo', $normalized) ? (string) $normalized['nome_jogo'] : (string) $lockedCurrent['nome_jogo'],
+                'data_jogo' => array_key_exists('data_jogo', $normalized) ? $normalized['data_jogo'] : $this->nullableString($lockedCurrent['data_jogo']),
+                'inicio_jogo' => array_key_exists('inicio_jogo', $normalized) ? $normalized['inicio_jogo'] : JogoScheduleRules::normalizeTime($lockedCurrent['inicio_jogo']),
+                'termino_jogo' => array_key_exists('termino_jogo', $normalized) ? $normalized['termino_jogo'] : JogoScheduleRules::normalizeTime($lockedCurrent['termino_jogo']),
+                'modalidades_id_modalidade' => $requestedModality,
                 'locais_id_local' => $requestedLocal,
             ];
+            $candidate['data_jogo'] = JogoScheduleRules::normalizeDate($candidate['data_jogo']);
+            JogoScheduleRules::assertWindow($candidate['inicio_jogo'], $candidate['termino_jogo']);
+            $oldEdition = $modalityEditions[$observedModality];
+            $targetEdition = $modalityEditions[$requestedModality];
+            if ($targetEdition !== $oldEdition) {
+                throw new \InvalidArgumentException('O jogo não pode ser transferido para modalidade de outra edição.');
+            }
+            if ($requestedLocal !== null) {
+                MysqliLocalScheduleGuard::assertLocalBelongsToEdition($this->connection, $requestedLocal, $targetEdition);
+            }
+
+            $oldName = (string) $lockedCurrent['nome_jogo'];
+            if ($oldName !== $candidate['nome_jogo']
+                && (ChaveamentoRules::parse($oldName) !== null || ChaveamentoRules::parse($candidate['nome_jogo']) !== null)) {
+                throw new \InvalidArgumentException('A identidade de chaveamento do jogo não pode ser alterada pela agenda.');
+            }
+            if ($requestedModality !== $observedModality) {
+                if (ChaveamentoRules::parse($oldName) !== null || $this->hasCompetitionRecords($id)) {
+                    throw new \InvalidArgumentException('A modalidade não pode ser alterada depois que o jogo possui participantes, resultados, pódio ou reserva.');
+                }
+            }
+
+            $reservation = $this->reservationForUpdate($id);
+            if ($reservation !== null) {
+                $this->assertReservationMatchesCandidate($reservation, $candidate, $targetEdition);
+            }
+
             $activeStatus = (string) ($data['status_jogo'] ?? $lockedCurrent['status_jogo']);
             if ($candidate['data_jogo'] !== null
                 && $candidate['inicio_jogo'] !== null
@@ -257,6 +319,64 @@ final class MysqliJogoGateway
     {
         $text = trim((string) $value);
         return $text === '' ? null : $text;
+    }
+
+    private function hasCompetitionRecords(int $gameId): bool
+    {
+        foreach ([
+            ['partidas', 'jogos_id_jogo'],
+            ['pontuacoes', 'jogos_id_jogo'],
+            ['artilheiros', 'jogos_id_jogo'],
+            ['pontuacoes_podio', 'id_jogo'],
+            ['agenda_reservas', 'id_jogo'],
+        ] as [$table, $column]) {
+            $statement = $this->prepare("SELECT 1 FROM {$table} WHERE {$column} = ? LIMIT 1 FOR UPDATE");
+            $statement->bind_param('i', $gameId);
+            if (!$statement->execute()) {
+                $message = $statement->error;
+                $statement->close();
+                throw new RuntimeException($message !== '' ? $message : 'Não foi possível conferir os vínculos do jogo.');
+            }
+            $exists = $statement->get_result()->num_rows > 0;
+            $statement->close();
+            if ($exists) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /** @return array<string, mixed>|null */
+    private function reservationForUpdate(int $gameId): ?array
+    {
+        $statement = $this->prepare('SELECT id_interclasse, id_modalidade, chave_tag, data_reserva, inicio_reserva, termino_reserva, id_local FROM agenda_reservas WHERE id_jogo = ? LIMIT 1 FOR UPDATE');
+        $statement->bind_param('i', $gameId);
+        if (!$statement->execute()) {
+            $message = $statement->error;
+            $statement->close();
+            throw new RuntimeException($message !== '' ? $message : 'Não foi possível conferir a reserva do jogo.');
+        }
+        $row = $statement->get_result()->fetch_assoc() ?: null;
+        $statement->close();
+        return $row;
+    }
+
+    /** @param array<string, mixed> $reservation @param array<string, mixed> $candidate */
+    private function assertReservationMatchesCandidate(array $reservation, array $candidate, int $editionId): void
+    {
+        $reservationStart = JogoScheduleRules::normalizeTime($reservation['inicio_reserva'] ?? null);
+        $reservationEnd = JogoScheduleRules::normalizeTime($reservation['termino_reserva'] ?? null);
+        $candidateStart = $candidate['inicio_jogo'];
+        $candidateEnd = $candidate['termino_jogo'];
+        if ((int) $reservation['id_interclasse'] !== $editionId
+            || (int) $reservation['id_modalidade'] !== (int) $candidate['modalidades_id_modalidade']
+            || (string) $reservation['chave_tag'] !== (string) $candidate['nome_jogo']
+            || $this->nullableString($reservation['data_reserva'] ?? null) !== $candidate['data_jogo']
+            || $reservationStart !== $candidateStart
+            || $reservationEnd !== $candidateEnd
+            || ($reservation['id_local'] === null ? null : (int) $reservation['id_local']) !== $candidate['locais_id_local']) {
+            throw new \InvalidArgumentException('O jogo está vinculado a uma reserva; reprograme-o pelo fluxo de agenda em bloco.');
+        }
     }
 
     private function findForUpdate(int $id): ?array

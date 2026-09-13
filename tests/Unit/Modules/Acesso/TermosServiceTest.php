@@ -11,11 +11,11 @@ use PHPUnit\Framework\TestCase;
 
 final class TermosServiceTest extends TestCase
 {
-    public function testReportsAgreementAndDefaultPasswordRequirement(): void
+    public function testReportsAgreementAndPersistedPasswordChangeRequirement(): void
     {
         $service = new TermosService(new InMemoryTermosRepository([
             'nivel_usuario' => '3',
-            'senha_usuario' => password_hash('123', PASSWORD_DEFAULT),
+            'senha_troca_pendente' => '1',
             'aceito_termo' => 'sim',
             'interclasses_id_interclasse' => 4,
         ]));
@@ -26,11 +26,28 @@ final class TermosServiceTest extends TestCase
         ], $service->consultar(9));
     }
 
+    public function testDoesNotInferPasswordChangeRequirementFromPasswordHash(): void
+    {
+        $service = new TermosService(new InMemoryTermosRepository([
+            'nivel_usuario' => '3',
+            'senha_usuario' => password_hash('sesi-senai', PASSWORD_DEFAULT),
+            'senha_troca_pendente' => '0',
+            'aceito_termo' => 'sim',
+            'interclasses_id_interclasse' => 4,
+        ]));
+
+        self::assertSame([
+            'termo_aceito' => true,
+            'exige_troca_senha' => false,
+        ], $service->consultar(9));
+    }
+
     public function testAssignsActiveEditionBeforeAccepting(): void
     {
         $repository = new InMemoryTermosRepository([
             'nivel_usuario' => '3',
             'senha_usuario' => password_hash('outra', PASSWORD_DEFAULT),
+            'senha_troca_pendente' => '0',
             'aceito_termo' => null,
             'interclasses_id_interclasse' => null,
         ]);

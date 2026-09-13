@@ -132,6 +132,83 @@ final class CronometroPersistenceTest
             && $beforeInvalid === $afterInvalid,
         );
 
+        self::setState($timerId, $modalityId, 'Iniciado', 1200, 0, 1200, 'past');
+        $beforeDirectConclusion = self::readState($timerId);
+        $directConclusion = $mesario->putJson('api/v1/jogos', [
+            'id_jogo' => $timerId,
+            'status_jogo' => 'Concluido',
+        ]);
+        Assertions::assert('PUT direto não encerra uma partida coletiva sem placar',
+            $directConclusion['code'] >= 400
+            && self::readState($timerId) === $beforeDirectConclusion,
+        );
+
+        self::setState($timerId, $modalityId, 'Iniciado', 1200, 0, 1200, 'past');
+        $beforeSnapshotConclusion = self::readState($timerId);
+        $snapshotConclusion = $mesario->putJson('api/v1/jogos', [
+            'id_jogo' => $timerId,
+            'status_jogo' => 'Concluido',
+            'cronometro' => [
+                'versao' => 2,
+                'saldo_segundos' => 0,
+                'referencia_epoch_ms' => (int) ((time() - 30) * 1000),
+            ],
+        ]);
+        Assertions::assert('Snapshot v2 não encerra uma partida coletiva sem placar',
+            $snapshotConclusion['code'] >= 400
+            && self::readState($timerId) === $beforeSnapshotConclusion,
+        );
+
+        self::setState($timerId, $modalityId, 'Iniciado', 1200, 0, 1200, 'past');
+        $beforeLegacyConclusion = self::readState($timerId);
+        $legacyConclusion = $mesario->putJson('api/v1/jogos', [
+            'id_jogo' => $timerId,
+            'status_jogo' => 'Finalizado',
+        ]);
+        Assertions::assert('PUT legado Finalizado também não contorna o fluxo de resultado',
+            $legacyConclusion['code'] >= 400
+            && self::readState($timerId) === $beforeLegacyConclusion,
+        );
+
+        foreach (['Iniciado', 'Pausado'] as $staleStatus) {
+            self::setState($timerId, $modalityId, 'Concluido', 1200, 0, 600, null);
+            $beforeStaleSnapshot = self::readState($timerId);
+            $staleSnapshot = $mesario->putJson('api/v1/jogos', [
+                'id_jogo' => $timerId,
+                'status_jogo' => $staleStatus,
+                'cronometro' => [
+                    'versao' => 2,
+                    'saldo_segundos' => 30,
+                    'referencia_epoch_ms' => (int) (time() * 1000),
+                ],
+            ]);
+            Assertions::assert('Snapshot atrasado ' . $staleStatus . ' não reabre jogo concluído',
+                $staleSnapshot['code'] >= 400
+                && self::readState($timerId) === $beforeStaleSnapshot,
+            );
+        }
+
+        self::setState($timerId, $modalityId, 'Concluido', 1200, 0, 600, null);
+        $beforeTerminalReplay = self::readState($timerId);
+        $legacyMutation = 'cronometro-terminal-legacy-' . bin2hex(random_bytes(8));
+        $legacyBody = [
+            'id_jogo' => $timerId,
+            'status_jogo' => 'Concluido',
+            'cronometro' => [
+                'versao' => 2,
+                'saldo_segundos' => 600,
+                'referencia_epoch_ms' => (int) (time() * 1000),
+            ],
+        ];
+        $legacyFirst = $mesario->putJson('api/v1/jogos', $legacyBody, ['X-SGI-Mutation-Id' => $legacyMutation]);
+        $legacyRetry = $mesario->putJson('api/v1/jogos', $legacyBody, ['X-SGI-Mutation-Id' => $legacyMutation]);
+        Assertions::assert('Snapshot terminal legado recebe confirmação idempotente sem alterar o resultado',
+            ($legacyFirst['json']['success'] ?? false) === true
+            && ($legacyRetry['json'] ?? null) === ($legacyFirst['json'] ?? null)
+            && self::readState($timerId) === $beforeTerminalReplay
+            && self::countMutations('jogos.put', $legacyMutation) === 1,
+        );
+
         self::setState($timerId, $modalityId, 'Pausado', 1200, 0, 1170, null);
         $beforeRollback = self::readState($timerId);
         $connection = TestDatabase::connect($name);

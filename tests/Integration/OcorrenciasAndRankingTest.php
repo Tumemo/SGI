@@ -18,7 +18,7 @@ class OcorrenciasAndRankingTest
         // 7.1 Lançar ocorrência disciplinar individual (Cartão Amarelo)
         $resOcorrAluno = $admin->postJson('api/v1/ocorrencias', [
             'titulo_ocorrencia' => 'Amarelo',
-            'descricao_ocorrencia' => '[JOGO:1][TURMA:' . $idTurma . '] Falta tática no contra-ataque',
+            'descricao_ocorrencia' => 'Falta tática no contra-ataque',
             'data_ocorrencia' => date('Y-m-d'),
             'hora_ocorrencia' => date('H:i:s'),
             'usuarios_id_usuario' => 1,

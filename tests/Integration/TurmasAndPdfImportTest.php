@@ -35,6 +35,32 @@ class TurmasAndPdfImportTest
 
         if (file_exists($pdfPath) && $idTurma > 0) {
             $database = TestDatabase::connect(getenv('SGI_TEST_DB_NAME') ?: 'sgi_test');
+            $uploadDirectory = (string) (getenv('SGI_UPLOAD_DIR') ?: '');
+            $persistedPdfPath = $uploadDirectory . DIRECTORY_SEPARATOR . 'turma_' . $idTurma . '.pdf';
+            $oldPdfHash = hash_file('sha256', $pdfPath);
+            $seededPreviousPdf = $uploadDirectory !== ''
+                && (is_dir($uploadDirectory) || @mkdir($uploadDirectory, 0770, true))
+                && @copy($pdfPath, $persistedPdfPath);
+            Assertions::assert(
+                'Fixture de upload prepara PDF anterior na pasta isolada do runner',
+                $seededPreviousPdf && is_string($oldPdfHash),
+            );
+
+            $replacementPdfPath = tempnam(sys_get_temp_dir(), 'sgi-pdf-replacement-');
+            $sourcePdfContents = file_get_contents($pdfPath);
+            $replacementPdfContents = is_string($sourcePdfContents)
+                ? $sourcePdfContents . "\n% tentativa sintética de atualização\n"
+                : false;
+            $replacementPdfReady = is_string($replacementPdfPath)
+                && is_string($replacementPdfContents)
+                && file_put_contents($replacementPdfPath, $replacementPdfContents) !== false;
+            Assertions::assert(
+                'PDF enviado para a falha tem conteúdo diferente do arquivo anterior',
+                $replacementPdfReady
+                    && is_string($oldPdfHash)
+                    && hash_file('sha256', $replacementPdfPath) !== $oldPdfHash,
+            );
+
             $beforeInternalFailure = self::countStudents($database, $idTurma, $idEdicao);
             $database->query(
                 "CREATE TRIGGER sgi_n07_import_failure BEFORE INSERT ON usuarios FOR EACH ROW
@@ -42,7 +68,7 @@ class TurmasAndPdfImportTest
             );
             try {
                 $internalFailure = $admin->postForm('api/v1/importacoes/turma-pdf', [
-                    'pdf_arquivo' => new CURLFile($pdfPath, 'application/pdf', '6EFB.pdf'),
+                    'pdf_arquivo' => new CURLFile((string) $replacementPdfPath, 'application/pdf', '6EFB-atualizado.pdf'),
                     'id_turma' => (string) $idTurma,
                     'id_interclasse' => (string) $idEdicao,
                 ]);
@@ -56,14 +82,28 @@ class TurmasAndPdfImportTest
                     (string) ($internalFailure['body'] ?? ''),
                 );
                 Assertions::assert(
+                    'Falha da importação preserva o PDF válido já publicado para a turma',
+                    is_string($oldPdfHash)
+                        && is_file($persistedPdfPath)
+                        && hash_file('sha256', $persistedPdfPath) === $oldPdfHash,
+                    is_file($persistedPdfPath)
+                        ? 'hash anterior=' . (string) $oldPdfHash . '; hash atual=' . (string) hash_file('sha256', $persistedPdfPath)
+                        : 'PDF anterior removido',
+                );
+                Assertions::assert(
                     'Erro interno da importação faz rollback de todos os alunos do arquivo',
                     self::countStudents($database, $idTurma, $idEdicao) === $beforeInternalFailure,
                 );
             } finally {
                 $database->query('DROP TRIGGER IF EXISTS sgi_n07_import_failure');
                 $database->close();
+                if (is_string($replacementPdfPath) && is_file($replacementPdfPath)) {
+                    @unlink($replacementPdfPath);
+                }
             }
 
+            $lastUserIdBeforeImport = self::lastUserId($database = TestDatabase::connect(getenv('SGI_TEST_DB_NAME') ?: 'sgi_test'));
+            $database->close();
             $cfile = new CURLFile($pdfPath, 'application/pdf', '6EFB.pdf');
             $resUpload = $admin->postForm('api/v1/importacoes/turma-pdf', [
                 'pdf_arquivo' => $cfile,
@@ -71,6 +111,17 @@ class TurmasAndPdfImportTest
                 'id_interclasse' => (string) $idEdicao
             ]);
             Assertions::assertJsonSuccess("Upload e extração automática de alunos via PDF", $resUpload);
+            $database = TestDatabase::connect(getenv('SGI_TEST_DB_NAME') ?: 'sgi_test');
+            $importedStudents = self::studentsCreatedAfter($database, $idTurma, $idEdicao, $lastUserIdBeforeImport);
+            Assertions::assert(
+                'Importação grava senha compartilhada somente como hash e marca troca obrigatória',
+                count($importedStudents) >= 20
+                    && count(array_filter($importedStudents, static fn (array $student): bool =>
+                        (int) $student['senha_troca_pendente'] === 1
+                        && password_verify('sesi-senai', (string) $student['senha_usuario']),
+                    )) === count($importedStudents),
+            );
+            $database->close();
 
             // 3.3 Listar competidores cadastrados
             $resAlunos = $admin->get("api/v1/usuarios?acao=listar_competidores&id_turma=$idTurma&id_interclasse=$idEdicao");
@@ -128,5 +179,25 @@ class TurmasAndPdfImportTest
         $statement->close();
 
         return $count;
+    }
+
+    private static function lastUserId(\mysqli $database): int
+    {
+        return (int) ($database->query('SELECT COALESCE(MAX(id_usuario), 0) FROM usuarios')->fetch_column() ?: 0);
+    }
+
+    /** @return list<array{senha_usuario: string, senha_troca_pendente: int}> */
+    private static function studentsCreatedAfter(\mysqli $database, int $classId, int $editionId, int $lastUserId): array
+    {
+        $statement = $database->prepare(
+            "SELECT senha_usuario, senha_troca_pendente
+             FROM usuarios
+             WHERE nivel_usuario = '3' AND turmas_id_turma = ? AND interclasses_id_interclasse = ? AND id_usuario > ?",
+        );
+        $statement->bind_param('iii', $classId, $editionId, $lastUserId);
+        $statement->execute();
+        $students = $statement->get_result()->fetch_all(MYSQLI_ASSOC);
+        $statement->close();
+        return $students;
     }
 }

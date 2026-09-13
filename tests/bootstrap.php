@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 require dirname(__DIR__) . '/vendor/autoload.php';
+require_once __DIR__ . '/Support/ProcessExitCode.php';
 
 // Unit tests must not use the web server's session directory or cookies.
 $unitSessionDirectory = dirname(__DIR__) . '/test-results/unit-sessions/' . getmypid();

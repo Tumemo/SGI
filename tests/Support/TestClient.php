@@ -40,14 +40,31 @@ class TestClient
         return $this->cookieFile;
     }
 
-    public function request(string $endpoint, string $method = 'GET', $data = null, array $headers = []): array
+    public function request(string $endpoint, string $method = 'GET', $data = null, array $headers = [], bool $followRedirects = true): array
     {
         $url = str_starts_with($endpoint, 'http') ? $endpoint : ($this->baseUrl . '/' . ltrim($endpoint, '/'));
         $ch = curl_init($url);
 
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+        curl_setopt($ch, CURLOPT_FOLLOWLOCATION, $followRedirects);
         curl_setopt($ch, CURLOPT_TIMEOUT, 20);
+
+        $responseHeaders = [];
+        curl_setopt($ch, CURLOPT_HEADERFUNCTION, static function ($handle, string $line) use (&$responseHeaders): int {
+            $length = strlen($line);
+            $trimmed = trim($line);
+            if (str_starts_with($trimmed, 'HTTP/')) {
+                $responseHeaders = [];
+                return $length;
+            }
+            $separator = strpos($trimmed, ':');
+            if ($separator !== false) {
+                $name = trim(substr($trimmed, 0, $separator));
+                $value = trim(substr($trimmed, $separator + 1));
+                $responseHeaders[$name] = $value;
+            }
+            return $length;
+        });
 
         if ($this->cookieFile) {
             curl_setopt($ch, CURLOPT_COOKIEJAR, $this->cookieFile);
@@ -55,6 +72,9 @@ class TestClient
         }
 
         $methodUpper = strtoupper($method);
+        if ($methodUpper === 'HEAD') {
+            curl_setopt($ch, CURLOPT_NOBODY, true);
+        }
         if (in_array($methodUpper, ['POST', 'PUT', 'PATCH', 'DELETE'], true) && $this->csrfToken !== null) {
             $hasCsrfHeader = false;
             foreach (array_keys($headers) as $headerName) {
@@ -119,6 +139,7 @@ class TestClient
             'json' => $json,
             'error' => $err,
             'headers' => [
+                ...$responseHeaders,
                 'Content-Type' => is_string($contentType) ? $contentType : '',
             ],
         ];
@@ -127,6 +148,11 @@ class TestClient
     public function get(string $endpoint, array $headers = []): array
     {
         return $this->request($endpoint, 'GET', null, $headers);
+    }
+
+    public function getWithoutRedirects(string $endpoint, array $headers = []): array
+    {
+        return $this->request($endpoint, 'GET', null, $headers, false);
     }
 
     public function postJson(string $endpoint, array $data, array $headers = []): array
@@ -162,5 +188,13 @@ class TestClient
         $this->csrfToken = is_string($token) && $token !== '' ? $token : null;
 
         return $response;
+    }
+
+    public function changeFirstLoginPassword(string $newPassword = 'SenhaAluno#2026'): array
+    {
+        return $this->postJson('api/v1/senha', [
+            'nova_senha' => $newPassword,
+            'confirmar_senha' => $newPassword,
+        ]);
     }
 }

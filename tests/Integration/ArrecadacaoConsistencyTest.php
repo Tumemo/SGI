@@ -110,8 +110,6 @@ final class ArrecadacaoConsistencyTest
                 $process = proc_open([
                     PHP_BINARY,
                     '-d',
-                    'extension=mysqli',
-                    '-d',
                     'display_startup_errors=0',
                     __DIR__ . '/../Support/ConcurrentScenarioWorker.php',
                     (string) $historyId,

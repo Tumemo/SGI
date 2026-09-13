@@ -37,15 +37,32 @@ final class TurmaPdfStorage
         if ($lock === false) {
             throw new RuntimeException('Falha ao preparar importação.');
         }
+        $stagedPath = null;
+        $staged = false;
         try {
             if (!flock($lock, LOCK_EX)) {
                 throw new RuntimeException('Falha ao bloquear importação simultânea.');
             }
-            if (!@move_uploaded_file($temporary, $path)) {
+            $stagedPath = $this->directory
+                . DIRECTORY_SEPARATOR . '.turma_' . $class . '.' . bin2hex(random_bytes(12)) . '.pdf';
+            if (!@move_uploaded_file($temporary, $stagedPath)) {
                 throw new RuntimeException('Falha ao salvar o arquivo no servidor.');
             }
-            return $import($path);
+            $staged = true;
+
+            $result = $import($stagedPath);
+            if (($result['success'] ?? true) !== false) {
+                if (!@rename($stagedPath, $path)) {
+                    throw new RuntimeException('Falha ao publicar o arquivo importado.');
+                }
+                $staged = false;
+            }
+
+            return $result;
         } finally {
+            if ($staged && $stagedPath !== null && is_file($stagedPath)) {
+                @unlink($stagedPath);
+            }
             flock($lock, LOCK_UN);
             fclose($lock);
         }

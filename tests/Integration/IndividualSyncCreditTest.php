@@ -19,6 +19,7 @@ final class IndividualSyncCreditTest
         $connection = TestDatabase::connect($database);
         self::assertIndividualSyncIsIdempotent($connection, $editionId);
         self::assertMataMataSyncRestoresCredit($connection, $editionId, $mataModalityId);
+        self::assertThirdPlaceSyncRestoresCredit($connection, $editionId, $mataModalityId);
         $connection->close();
     }
 
@@ -137,6 +138,75 @@ final class IndividualSyncCreditTest
             $restored = self::classPoints($connection, $classes);
             $active = (int) $connection->query('SELECT COUNT(*) FROM pontuacoes_podio WHERE id_interclasse = ' . $editionId . ' AND id_modalidade = ' . $modalityId . ' AND posicao IN (1, 2) AND ativo = 1')->fetch_column();
             Assertions::assert('Lote mata-mata reconcilia o pódio sem reaplicar crédito', $restored === $before && $active === 2);
+        } finally {
+            Transaction::rollback($connection);
+        }
+    }
+
+    private static function assertThirdPlaceSyncRestoresCredit(\mysqli $connection, int $editionId, int $modalityId): void
+    {
+        $gameStatement = $connection->prepare(
+            "SELECT id_jogo, nome_jogo FROM jogos
+             WHERE modalidades_id_modalidade = ? AND nome_jogo LIKE 'POS:3:%'
+               AND status_jogo IN ('Concluido', 'Finalizado')
+             ORDER BY id_jogo DESC LIMIT 1",
+        );
+        $gameStatement->bind_param('i', $modalityId);
+        $gameStatement->execute();
+        $game = $gameStatement->get_result()->fetch_assoc();
+        $gameStatement->close();
+        if ($game === null) {
+            throw new \RuntimeException('O lote não encontrou disputa de terceiro lugar concluída.');
+        }
+        $gameId = (int) $game['id_jogo'];
+        $partsStatement = $connection->prepare('SELECT equipes_id_equipe, resultado_partida FROM partidas WHERE jogos_id_jogo = ? ORDER BY id_partida');
+        $partsStatement->bind_param('i', $gameId);
+        $partsStatement->execute();
+        $parts = $partsStatement->get_result()->fetch_all(\MYSQLI_ASSOC);
+        $partsStatement->close();
+        $creditStatement = $connection->prepare(
+            'SELECT id_pontuacao, id_turma, pontos FROM pontuacoes_podio
+             WHERE id_interclasse = ? AND id_modalidade = ? AND id_jogo = ? AND posicao = 3 AND ativo = 1',
+        );
+        $creditStatement->bind_param('iii', $editionId, $modalityId, $gameId);
+        $creditStatement->execute();
+        $credit = $creditStatement->get_result()->fetch_assoc();
+        $creditStatement->close();
+        if (count($parts) !== 2 || $credit === null) {
+            throw new \RuntimeException('A disputa de terceiro lugar não possui duas equipes e crédito ativo.');
+        }
+
+        $classId = (int) $credit['id_turma'];
+        $points = (int) $credit['pontos'];
+        $before = self::classPoints($connection, [$classId]);
+        Transaction::begin($connection);
+        try {
+            $subtract = $connection->prepare('UPDATE turmas SET pontuacao_turma = pontuacao_turma - ? WHERE id_turma = ?');
+            $subtract->bind_param('ii', $points, $classId);
+            $subtract->execute();
+            $subtract->close();
+            $disable = $connection->prepare('UPDATE pontuacoes_podio SET ativo = 0 WHERE id_pontuacao = ?');
+            $creditId = (int) $credit['id_pontuacao'];
+            $disable->bind_param('i', $creditId);
+            $disable->execute();
+            $disable->close();
+
+            $payload = [[
+                'nome_jogo' => (string) $game['nome_jogo'],
+                'status_jogo' => 'Concluido',
+                'partidas' => array_map(static fn (array $part): array => [
+                    'id_equipe' => (int) $part['equipes_id_equipe'],
+                    'resultado' => (int) $part['resultado_partida'],
+                ], $parts),
+            ]];
+            (new MysqliChaveamentoSyncGateway($connection))->sync($modalityId, 'mata_mata', ['jogos' => $payload]);
+            $restored = self::classPoints($connection, [$classId]);
+            $active = (int) $connection->query('SELECT COUNT(*) FROM pontuacoes_podio WHERE id_pontuacao = ' . $creditId . ' AND ativo = 1')->fetch_column();
+            Assertions::assert(
+                'Lote coletivo reconcilia crédito da disputa de terceiro lugar sem reaplicar pontos',
+                $restored === $before && $active === 1,
+                json_encode(['antes' => $before, 'depois' => $restored, 'crédito_ativo' => $active], JSON_UNESCAPED_UNICODE),
+            );
         } finally {
             Transaction::rollback($connection);
         }

@@ -218,6 +218,32 @@ test('projeção PUT preserva referências e POST temporário preserva os aliase
     assert.equal(editada._pendente, true);
 
     await layer.onQueued({
+        id: 14,
+        method: 'PUT',
+        url: 'https://sgi.test/api/v1/ocorrencias',
+        body: JSON.stringify({
+            id_ocorrencia: 11,
+            descricao_ocorrencia: '[JOGO:99][TURMA:88]Tentativa de trocar referências',
+        }),
+    });
+    const referenciasPreservadas = (await layer.read('ocorrencias')).find((row) => row.id_ocorrencia === 11);
+    assert.equal(referenciasPreservadas.descricao_ocorrencia, '[JOGO:7][TURMA:3]Tentativa de trocar referências');
+
+    await layer.upsert('ocorrencias', 13, {
+        id_ocorrencia: 13,
+        descricao_ocorrencia: '[JOGO:-5][TURMA:3]Referência temporária antiga',
+        id_jogo: -5,
+    });
+    await layer.onQueued({
+        id: 15,
+        method: 'PUT',
+        url: 'https://sgi.test/api/v1/ocorrencias',
+        body: JSON.stringify({ id_ocorrencia: 13, descricao_ocorrencia: 'Referência temporária editada' }),
+    });
+    const temporariaEditada = (await layer.read('ocorrencias')).find((row) => row.id_ocorrencia === 13);
+    assert.equal(temporariaEditada.descricao_ocorrencia, '[JOGO:-5][TURMA:3]Referência temporária editada');
+
+    await layer.onQueued({
         id: 13,
         method: 'POST',
         url: 'https://sgi.test/api/v1/ocorrencias',

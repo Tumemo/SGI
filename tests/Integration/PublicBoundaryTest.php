@@ -6,6 +6,7 @@ namespace SGITests\Integration;
 
 use SGITests\Support\Assertions;
 use SGITests\Support\TestClient;
+use App\Shared\Storage\StoragePaths;
 
 final class PublicBoundaryTest
 {
@@ -39,6 +40,48 @@ final class PublicBoundaryTest
                 str_contains((string) ($asset['headers']['Content-Type'] ?? ''), 'text/css')
                     || str_contains((string) ($asset['body'] ?? ''), 'SGI'),
             );
+        }
+
+        $testResultsRoot = realpath(dirname(__DIR__, 2) . '/test-results');
+        $uploadDirectory = realpath(StoragePaths::turmaPdfs());
+        $isolatedUploadDirectory = $testResultsRoot !== false
+            && $uploadDirectory !== false
+            && str_starts_with(
+                strtolower($uploadDirectory . DIRECTORY_SEPARATOR),
+                strtolower(rtrim($testResultsRoot, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR),
+            );
+        Assertions::assert('Fixture sintética de PDF fica em diretório isolado de test-results', $isolatedUploadDirectory);
+        if ($isolatedUploadDirectory) {
+            $filename = 'turma_public_boundary_' . bin2hex(random_bytes(8)) . '.pdf';
+            $pdfPath = $uploadDirectory . DIRECTORY_SEPARATOR . $filename;
+            $marker = "%PDF-1.4\nSGI-PRIVATE-TURMA-PDF-FIXTURE\n";
+            $written = file_put_contents($pdfPath, $marker);
+            Assertions::assert('Fixture de PDF privado foi criada', $written === strlen($marker));
+            if ($written === strlen($marker)) {
+                try {
+                    $pdfUrl = 'uploads/turmas/' . rawurlencode($filename);
+                    $student = new TestClient();
+                    Assertions::assertJsonSuccess('Login do aluno para testar a URL antiga do PDF', $student->login('2879', '123'));
+                    $mesario = new TestClient();
+                    Assertions::assertJsonSuccess('Login do mesário para testar a URL antiga do PDF', $mesario->login('mesario', '123'));
+                    $administrator = new TestClient();
+                    Assertions::assertJsonSuccess('Login do administrador para testar a URL antiga do PDF', $administrator->login('admin', '123'));
+
+                    foreach ([
+                        'Anônimo' => $client,
+                        'Aluno' => $student,
+                        'Mesário' => $mesario,
+                        'Administrador' => $administrator,
+                    ] as $profile => $viewer) {
+                        $response = $viewer->get($pdfUrl);
+                        Assertions::assertStatus("URL pública antiga do PDF de turma recusada para {$profile}", $response, 404);
+                        Assertions::assert("Corpo sintético do PDF não é exposto para {$profile}", !str_contains((string) ($response['body'] ?? ''), 'SGI-PRIVATE-TURMA-PDF-FIXTURE'));
+                    }
+                    Assertions::assertStatus('HEAD da URL pública antiga do PDF é recusado', $client->request($pdfUrl, 'HEAD'), 404);
+                } finally {
+                    @unlink($pdfPath);
+                }
+            }
         }
 
         $publicSource = $client->get('public/index.php');

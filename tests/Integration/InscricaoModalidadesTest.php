@@ -38,6 +38,7 @@ class InscricaoModalidadesTest
         $aluno = new TestClient();
         $loginAluno = $aluno->login($matricula, $senha);
         Assertions::assertJsonSuccess('Aluno de teste autenticado para inscrição', $loginAluno);
+        Assertions::assertJsonSuccess('Aluno conclui a troca obrigatória antes dos termos', $aluno->changeFirstLoginPassword('Inscricao#2026'));
         Assertions::assertJsonSuccess(
             'Aluno de teste aceita os termos antes da inscrição',
             $aluno->postJson('api/v1/termos', []),
@@ -449,7 +450,7 @@ class InscricaoModalidadesTest
     /** @return array{client:TestClient,id:int} */
     private static function createStudent(TestClient $admin, int $classId, string $gender): array
     {
-        $registration = '8' . date('ymdHis') . random_int(10, 99);
+        $registration = '8' . date('ymdHis') . random_int(1000000000, 9999999999);
         $created = $admin->postJson('api/v1/usuarios?acao=criar_aluno', [
             'nome_usuario' => 'Aluno Elegibilidade ' . $gender,
             'matricula_usuario' => $registration,
@@ -462,6 +463,7 @@ class InscricaoModalidadesTest
         $student = new TestClient();
         $login = $student->login($registration, (string) ($created['json']['senha_temporaria'] ?? ''));
         Assertions::assertJsonSuccess("Aluno {$gender} autenticado para regressão", $login);
+        Assertions::assertJsonSuccess("Aluno {$gender} conclui a troca obrigatória", $student->changeFirstLoginPassword('Elegivel#2026'));
         Assertions::assertJsonSuccess("Aluno {$gender} aceita termos para regressão", $student->postJson('api/v1/termos', []));
 
         return ['client' => $student, 'id' => $id];

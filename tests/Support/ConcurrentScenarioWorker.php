@@ -16,6 +16,8 @@ use App\Modules\Competicoes\Infrastructure\MysqliPartidaGateway;
 use App\Modules\Competicoes\Infrastructure\MysqliPontoRepository;
 use App\Modules\Competicoes\Application\JogoService;
 use App\Modules\Competicoes\Application\PontoService;
+use App\Modules\Disciplina\Domain\OcorrenciaDescricao;
+use App\Modules\Disciplina\Infrastructure\MysqliOcorrenciaRepository;
 use App\Modules\Eventos\Infrastructure\MysqliEdicaoRepository;
 use App\Modules\Participantes\Infrastructure\MysqliInscricaoRepository;
 use App\Modules\Resultados\Infrastructure\MysqliArrecadacaoRepository;
@@ -30,7 +32,7 @@ $connection = TestDatabase::connect($database);
  * T13 already used this worker with (historyId, editionId). Keep that
  * invocation intact while allowing T18 to coordinate distinct scenarios.
  */
-if (count($argv) <= 3 || !in_array((string) ($argv[1] ?? ''), ['arrecadacao', 'inscricao', 'equipe', 'edicao', 'ponto-anular', 'resultado-finalizar', 'resultado-finalizar-snapshot', 'jogo-criar', 'jogo-editar', 'agenda-confirmar'], true)) {
+if (count($argv) <= 3 || !in_array((string) ($argv[1] ?? ''), ['arrecadacao', 'inscricao', 'equipe', 'equipe-vincular', 'equipe-transfer', 'jogo-partida', 'edicao', 'ponto-anular', 'resultado-finalizar', 'resultado-finalizar-snapshot', 'jogo-criar', 'jogo-editar', 'agenda-confirmar', 'ocorrencia-amarelo'], true)) {
     $historyId = (int) ($argv[1] ?? 0);
     $editionId = (int) ($argv[2] ?? 0);
 
@@ -79,6 +81,9 @@ try {
         'arrecadacao' => remove($connection, (int) ($argv[4] ?? 0), (int) ($argv[5] ?? 0)),
         'inscricao' => subscribe($connection, (int) ($argv[4] ?? 0), (int) ($argv[5] ?? 0), (int) ($argv[6] ?? 0)),
         'equipe' => createTeam($connection, (int) ($argv[4] ?? 0), (int) ($argv[5] ?? 0), (string) ($argv[6] ?? '')),
+        'equipe-vincular' => addRosterMember($connection, (int) ($argv[4] ?? 0), (int) ($argv[5] ?? 0)),
+        'equipe-transfer' => transferTeam($connection, (int) ($argv[4] ?? 0), (int) ($argv[5] ?? 0)),
+        'jogo-partida' => createGameWithTeam($connection, array_slice($argv, 4)),
         'edicao' => edition($connection, (string) ($argv[4] ?? ''), array_slice($argv, 5)),
         'ponto-anular' => annulPoint(
             $connection,
@@ -104,6 +109,13 @@ try {
         'jogo-criar' => createScheduledGame($connection, $barrier, $workerId, array_slice($argv, 4)),
         'jogo-editar' => updateScheduledGame($connection, array_slice($argv, 4)),
         'agenda-confirmar' => confirmScheduleBlock($connection, array_slice($argv, 4)),
+        'ocorrencia-amarelo' => createYellow(
+            $connection,
+            (int) ($argv[4] ?? 0),
+            (int) ($argv[5] ?? 0),
+            (int) ($argv[6] ?? 0),
+            (string) ($argv[7] ?? ''),
+        ),
         default => throw new RuntimeException('Cenário concorrente desconhecido.'),
     };
     echo json_encode(['result' => $result], JSON_THROW_ON_ERROR);
@@ -134,7 +146,41 @@ function subscribe(mysqli $connection, int $userId, int $editionId, int $teamId)
         $connection,
         new MysqliEquipePadraoRepositoryAdapter($connection),
     ))->subscribe($userId, $editionId, [$teamId]);
+    if (($result['success'] ?? false) !== true) {
+        return 'rejected';
+    }
     return ($result['insercoes'] ?? 0) > 0 ? 'accepted' : 'existing';
+}
+
+function addRosterMember(mysqli $connection, int $teamId, int $userId): string
+{
+    (new MysqliEquipeRepository($connection))->addUsers($teamId, [$userId]);
+    return 'accepted';
+}
+
+function transferTeam(mysqli $connection, int $teamId, int $targetModalityId): string
+{
+    (new MysqliEquipeRepository($connection))->update($teamId, [
+        'modalidades_id_modalidade' => $targetModalityId,
+    ]);
+    return 'accepted';
+}
+
+/** @param list<string> $arguments */
+function createGameWithTeam(mysqli $connection, array $arguments): string
+{
+    [$name, $date, $start, $end, $modality, $local, $team] = array_pad($arguments, 7, '');
+    (new MysqliJogoRepository($connection))->create([
+        'nome_jogo' => $name,
+        'data_jogo' => $date,
+        'inicio_jogo' => $start,
+        'termino_jogo' => $end,
+        'status_jogo' => 'Agendado',
+        'modalidades_id_modalidade' => (int) $modality,
+        'locais_id_local' => (int) $local,
+        'equipes' => [(int) $team],
+    ]);
+    return 'accepted';
 }
 
 function createTeam(mysqli $connection, int $modalityId, int $classId, string $name): string
@@ -200,6 +246,20 @@ function awaitBarrier(string $path, string $description): void
     if (!is_file($path)) {
         throw new RuntimeException('A barreira não foi liberada: ' . $description . '.');
     }
+}
+
+function createYellow(mysqli $connection, int $userId, int $gameId, int $classId, string $workerId): string
+{
+    $result = (new MysqliOcorrenciaRepository($connection))->create([
+        'titulo_ocorrencia' => 'Amarelo',
+        'descricao_ocorrencia' => OcorrenciaDescricao::withReferences($gameId, $classId, 'Concorrência L10 ' . $workerId),
+        'data_ocorrencia' => date('Y-m-d'),
+        'usuarios_id_usuario' => $userId,
+        'penalidade' => 0,
+        'id_jogo' => $gameId,
+        'id_turma' => $classId,
+    ]);
+    return (int) ($result['id'] ?? 0) > 0 ? 'created' : 'failed';
 }
 
 /** @param list<string> $arguments */

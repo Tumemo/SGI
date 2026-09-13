@@ -143,12 +143,13 @@
         return jogo;
     }
     function preservarReferenciasOcorrencia(old, merged) {
-        if (!old || !old.descricao_ocorrencia || !merged.descricao_ocorrencia) return merged;
-        var refs = String(old.descricao_ocorrencia).match(/^(?:\[JOGO:-?\d+\])?(?:\[TURMA:-?\d+\])?/)[0];
-        if (refs && String(merged.descricao_ocorrencia).indexOf('[JOGO:') !== 0 &&
-            String(merged.descricao_ocorrencia).indexOf('[TURMA:') !== 0) {
-            merged.descricao_ocorrencia = refs + String(merged.descricao_ocorrencia);
-        }
+        var original = String(old && old.descricao_ocorrencia || '');
+        var game = original.match(/\[JOGO:-?\d+\]/);
+        var team = original.match(/\[TURMA:-?\d+\]/);
+        var refs = (game ? game[0] : '') + (team ? team[0] : '');
+        var description = String(merged.descricao_ocorrencia || '')
+            .replace(/\[(?:JOGO|TURMA):-?\d+\]/g, '').trim();
+        merged.descricao_ocorrencia = refs + description;
         return merged;
     }
 

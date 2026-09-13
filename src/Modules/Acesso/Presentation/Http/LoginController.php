@@ -62,8 +62,11 @@ final class LoginController
             $_SESSION['id_interclasse'] = (int) ($usuario['interclasses_id_interclasse'] ?? 0);
         }
         $_SESSION['exige_troca_senha'] = $authenticated['exige_troca_senha'];
+        $_SESSION['senha_troca_pendente'] = $authenticated['exige_troca_senha'];
         $destino = match ($nivel) {
-            3 => $_SESSION['termo_aceito'] ? '/aluno/inicio' : '/aluno/termos',
+            3 => $_SESSION['senha_troca_pendente']
+                ? '/aluno/trocar-senha'
+                : ($_SESSION['termo_aceito'] ? '/aluno/inicio' : '/aluno/termos'),
             0, 1 => '/edicoes',
             2 => '/painel',
             default => '/login',

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Modules\Disciplina\Application;
 
 use App\Modules\Disciplina\Domain\OcorrenciaRepository;
+use App\Modules\Disciplina\Domain\OcorrenciaDescricao;
 use InvalidArgumentException;
 
 final class OcorrenciaService
@@ -20,7 +21,7 @@ final class OcorrenciaService
     public function registrar(array $data): array
     {
         $title = trim((string) ($data['titulo_ocorrencia'] ?? ''));
-        $description = (string) ($data['descricao_ocorrencia'] ?? '');
+        $description = trim((string) ($data['descricao_ocorrencia'] ?? ''));
         $date = trim((string) ($data['data_ocorrencia'] ?? ''));
         $userId = (int) ($data['usuarios_id_usuario'] ?? 0);
         if ($title === '' || $description === '' || $date === '' || $userId <= 0) {
@@ -30,11 +31,13 @@ final class OcorrenciaService
         if ($penalty < 0) {
             throw new InvalidArgumentException('A penalidade não pode ser negativa.');
         }
+        $description = OcorrenciaDescricao::parseSubmitted($description)['text'];
+        if ($description === '') {
+            throw new InvalidArgumentException('Dados incompletos.');
+        }
         $gameId = (int) ($data['id_jogo'] ?? 0);
         $teamId = (int) ($data['id_turma'] ?? 0);
-        $storedDescription = $gameId > 0
-            ? '[JOGO:' . $gameId . ']' . ($teamId > 0 ? '[TURMA:' . $teamId . ']' : '') . $description
-            : $description;
+        $storedDescription = OcorrenciaDescricao::withReferences($gameId, $teamId, $description);
         return $this->ocorrencias->create([
             'titulo_ocorrencia' => $title,
             'descricao_ocorrencia' => $storedDescription,
@@ -61,6 +64,19 @@ final class OcorrenciaService
                 $value = trim((string) $data[$field]);
                 if ($field !== 'status_ocorrencia' && $value === '') {
                     throw new InvalidArgumentException('Os dados textuais da ocorrência não podem ser vazios.');
+                }
+                if ($field === 'descricao_ocorrencia') {
+                    $submitted = OcorrenciaDescricao::parseSubmitted($value);
+                    $existing = $this->ocorrencias->find($id);
+                    if ($existing === null) {
+                        throw new InvalidArgumentException('Ocorrência não encontrada.');
+                    }
+                    $references = OcorrenciaDescricao::fromStored((string) ($existing['descricao_ocorrencia'] ?? ''));
+                    $value = OcorrenciaDescricao::withReferences(
+                        $references['gameId'],
+                        $references['classId'],
+                        $submitted['text'],
+                    );
                 }
                 $updates[$field] = $value;
             }

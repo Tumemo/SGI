@@ -34,6 +34,57 @@ final class MysqliLocalScheduleGuard
         $statement->close();
     }
 
+    /** @param list<int> $modalityIds @return array<int, int> modality id to edition id */
+    public static function lockModalities(mysqli $connection, array $modalityIds): array
+    {
+        $modalityIds = array_values(array_unique(array_filter(array_map('intval', $modalityIds), static fn (int $id): bool => $id > 0)));
+        sort($modalityIds, SORT_NUMERIC);
+        $statement = $connection->prepare('SELECT interclasses_id_interclasse FROM modalidades WHERE id_modalidade = ? LIMIT 1 FOR UPDATE');
+        if ($statement === false) {
+            throw new RuntimeException('Não foi possível bloquear a modalidade do jogo.');
+        }
+        $editions = [];
+        foreach ($modalityIds as $modalityId) {
+            $statement->bind_param('i', $modalityId);
+            if (!$statement->execute()) {
+                $statement->close();
+                throw new RuntimeException('Não foi possível bloquear a modalidade do jogo.');
+            }
+            $editionId = $statement->get_result()->fetch_column();
+            if ($editionId === null) {
+                $statement->close();
+                throw new InvalidArgumentException('A modalidade informada não foi encontrada.');
+            }
+            $editions[$modalityId] = (int) $editionId;
+        }
+        $statement->close();
+        return $editions;
+    }
+
+    public static function assertLocalBelongsToEdition(mysqli $connection, int $localId, int $editionId): void
+    {
+        $statement = $connection->prepare('SELECT interclasses_id_interclasse, status_local, disponivel_local FROM locais WHERE id_local = ? LIMIT 1 FOR UPDATE');
+        if ($statement === false) {
+            throw new RuntimeException('Não foi possível validar o local do jogo.');
+        }
+        $statement->bind_param('i', $localId);
+        if (!$statement->execute()) {
+            $statement->close();
+            throw new RuntimeException('Não foi possível validar o local do jogo.');
+        }
+        $local = $statement->get_result()->fetch_assoc() ?: null;
+        $statement->close();
+        if ($local === null) {
+            throw new InvalidArgumentException('O local informado não foi encontrado.');
+        }
+        if ((int) $local['interclasses_id_interclasse'] !== $editionId) {
+            throw new InvalidArgumentException('O local e a modalidade devem pertencer à mesma edição.');
+        }
+        if ((string) $local['status_local'] !== '1' || (string) $local['disponivel_local'] !== '1') {
+            throw new InvalidArgumentException('O local informado está inativo ou indisponível.');
+        }
+    }
+
     public static function conflict(
         mysqli $connection,
         string $date,

@@ -141,58 +141,6 @@ async function carregarRegulamentoModal() {
     }
 }
 
-let modalTrocarSenhaInstance = null;
-
-function abrirModalTrocarSenha() {
-    const modalEl = document.getElementById('modalTrocarSenha');
-    if (!modalEl || modalTrocarSenhaInstance) return;
-    modalTrocarSenhaInstance = new bootstrap.Modal(modalEl, { backdrop: 'static', keyboard: false });
-    modalTrocarSenhaInstance.show();
-}
-
-async function salvarNovaSenha() {
-    const msgEl = document.getElementById('msgTrocarSenha');
-    const btn = document.getElementById('btnSalvarNovaSenha');
-    msgEl.innerHTML = '';
-
-    const novaSenha = document.getElementById('novaSenha').value;
-    const confirmarSenha = document.getElementById('confirmarNovaSenha').value;
-
-    if (novaSenha.length < 6) {
-        msgEl.innerHTML = '<span class="text-danger">A senha deve ter no mínimo 6 caracteres.</span>';
-        return;
-    }
-    if (novaSenha !== confirmarSenha) {
-        msgEl.innerHTML = '<span class="text-danger">As senhas não coincidem.</span>';
-        return;
-    }
-
-    btn.disabled = true;
-    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status"></span>Salvando...';
-
-    try {
-        const res = await fetch('/api/v1/senha', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ nova_senha: novaSenha, confirmar_senha: confirmarSenha })
-        });
-        if (res.status === 401) { window.location.href = `${APP_BASE}/aluno/login`; return; }
-        const data = await res.json();
-        if (data.success) {
-            msgEl.innerHTML = '<span class="text-success fw-semibold"><i class="bi bi-check-circle-fill me-1"></i>' + escapeHTML(data.message || 'Senha alterada com sucesso.') + '</span>';
-            btn.disabled = true;
-            setTimeout(() => window.location.reload(), 1500);
-        } else {
-            msgEl.innerHTML = '<span class="text-danger">' + escapeHTML(data.message || 'Erro ao alterar a senha.') + '</span>';
-        }
-    } catch (error) {
-        msgEl.innerHTML = '<span class="text-danger">Erro de conexão. Tente novamente.</span>';
-    } finally {
-        btn.disabled = false;
-        btn.textContent = 'Salvar Senha';
-    }
-}
-
 async function initModalTermo() {
     const modalElement = document.getElementById('modalTermo');
     const modalTermo = new bootstrap.Modal(modalElement, { backdrop: 'static', keyboard: false });
@@ -200,15 +148,11 @@ async function initModalTermo() {
     const btnRecusar = document.getElementById('btnRecusarTermo');
     const avisoRecusa = document.getElementById('avisoRecusa');
 
-    let precisaTrocarSenha = false;
-
     try {
         const checagem = await fetch('/api/v1/termos', { method: 'GET' });
         if (checagem.status === 401) return;
         const resCheck = await checagem.json();
-        precisaTrocarSenha = !!resCheck.exige_troca_senha;
         if (resCheck.success && resCheck.termo_aceito === true) {
-            if (precisaTrocarSenha) abrirModalTrocarSenha();
             return;
         }
     } catch (e) {
@@ -232,7 +176,6 @@ async function initModalTermo() {
             if (data.success) {
                 avisoRecusa.classList.add('d-none');
                 modalTermo.hide();
-                if (data.exige_troca_senha || precisaTrocarSenha) abrirModalTrocarSenha();
             } else {
                 avisoRecusa.textContent = data.message || 'Erro ao salvar aceite. Tente novamente.';
                 avisoRecusa.classList.remove('d-none');
@@ -260,14 +203,6 @@ window.SGIPage.ready( function() {
     carregarInterclassesAluno();
     initModalTermo();
 
-    pageScope.listen(document.getElementById('formTrocarSenha'), 'submit', function(e) {
-        e.preventDefault();
-        salvarNovaSenha();
-    });
-    pageScope.listen(document.getElementById('btnSalvarNovaSenha'), 'click', function() {
-        document.getElementById('formTrocarSenha')?.requestSubmit();
-    });
-
     pageScope.listen(document.getElementById('searchInput'), 'input', filterAndRender);
 
     document.querySelectorAll('.filter-pill').forEach(pill => {
@@ -283,5 +218,5 @@ window.SGIPage.ready( function() {
     });
 });
 
-return {escapeHTML, renderCards, filterAndRender, carregarInterclassesAluno, carregarRegulamentoModal, abrirModalTrocarSenha, salvarNovaSenha, initModalTermo};
+return {escapeHTML, renderCards, filterAndRender, carregarInterclassesAluno, carregarRegulamentoModal, initModalTermo};
 });

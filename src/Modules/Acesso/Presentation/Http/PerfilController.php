@@ -37,7 +37,13 @@ final class PerfilController
         }
         try {
             $name = trim((string) $request->input('nome_usuario', ''));
-            $this->service->update($id, $name, (string) $request->input('senha_atual', ''), (string) $request->input('nova_senha', ''));
+            $this->service->update(
+                $id,
+                $name,
+                (string) $request->input('senha_atual', ''),
+                (string) $request->input('nova_senha', ''),
+                (int) ($_SESSION['auth_version'] ?? 0),
+            );
             $_SESSION['nome'] = $name;
             if ((string) $request->input('nova_senha', '') !== '') {
                 $_SESSION['auth_version'] = (int) ($_SESSION['auth_version'] ?? 1) + 1;

@@ -89,8 +89,8 @@ final class PdfAlunoImporter
         $duplicados = 0;
         $sqlUser = 'INSERT INTO usuarios (
         sigla_usuario, matricula_usuario, nome_usuario, senha_usuario, nivel_usuario, genero_usuario, data_nasc_usuario,
-        foto_usuario, status_usuario, turmas_id_turma, interclasses_id_interclasse, chave_usuario_edicao
-    ) VALUES (\'RM\', ?, ?, ?, \'3\', ?, ?, \'default.jpg\', \'1\', ?, ?, ?)';
+        senha_troca_pendente, foto_usuario, status_usuario, turmas_id_turma, interclasses_id_interclasse, chave_usuario_edicao
+    ) VALUES (\'RM\', ?, ?, ?, \'3\', ?, ?, 1, \'default.jpg\', \'1\', ?, ?, ?)';
         $sqlExiste = 'SELECT id_usuario FROM usuarios WHERE chave_usuario_edicao = ? LIMIT 1';
         $conn->begin_transaction();
         try {
@@ -120,7 +120,7 @@ final class PdfAlunoImporter
                     $duplicados++;
                     continue;
                 }
-                $senhaHash = \password_hash('123', \PASSWORD_DEFAULT);
+                $senhaHash = \password_hash(\App\Shared\Security\StudentInitialPassword::VALUE, \PASSWORD_DEFAULT);
                 $stmtU->bind_param('sssssiis', $rm, $nome, $senhaHash, $genero, $dataNasc, $idTurma, $idInterclasse, $chaveEdicao);
                 if (!$stmtU->execute()) {
                     if ($stmtU->errno === 1062) {

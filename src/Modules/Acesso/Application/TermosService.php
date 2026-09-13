@@ -27,7 +27,7 @@ final class TermosService
         return [
             'termo_aceito' => ($user['aceito_termo'] ?? null) === 'sim',
             'exige_troca_senha' => (int) ($user['nivel_usuario'] ?? -1) === 3
-                && password_verify('123', (string) ($user['senha_usuario'] ?? '')),
+                && (int) ($user['senha_troca_pendente'] ?? 0) === 1,
         ];
     }
 
@@ -43,7 +43,7 @@ final class TermosService
         }
 
         $exigeTroca = (int) ($user['nivel_usuario'] ?? -1) === 3
-            && password_verify('123', (string) ($user['senha_usuario'] ?? ''));
+            && (int) ($user['senha_troca_pendente'] ?? 0) === 1;
         $editionId = (int) ($user['interclasses_id_interclasse'] ?? 0);
         if ($editionId <= 0) {
             $editionId = $this->termos->findActiveEdition() ?? 0;

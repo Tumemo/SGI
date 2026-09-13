@@ -1,5 +1,5 @@
 const { test, expect, request: playwrightRequest } = require('./fixtures.cjs');
-const { agendarBloco } = require('./agenda-helper.cjs');
+const { agendarBloco, trocarSenhaInicial } = require('./agenda-helper.cjs');
 
 async function jsonOrThrow(response, label) {
     if (!response.ok()) {
@@ -12,6 +12,15 @@ async function capturarTela(page, testInfo, nome) {
     const caminho = testInfo.outputPath(`${nome}.png`);
     await page.screenshot({ path: caminho, fullPage: true });
     await testInfo.attach(`${nome}.png`, { path: caminho, contentType: 'image/png' });
+}
+
+async function selecionarAtletaE2EOffline(page, nomeAtleta) {
+    const select = page.locator('#selectAlunoArtilheiro');
+    const atleta = select.locator('option').filter({ hasText: nomeAtleta });
+    await expect(atleta).toHaveCount(1);
+    const value = await atleta.getAttribute('value');
+    if (!value) throw new Error('O atleta do fixture não possui valor selecionável.');
+    await select.selectOption(value);
 }
 
 async function criarPartidaFixture(request) {
@@ -54,10 +63,12 @@ async function criarPartidaFixture(request) {
     // Cria um atleta efêmero pela própria API administrativa e faz a inscrição
     // real no fluxo do portal. Assim o modal de artilharia tem dados locais
     // suficientes para ser exercitado visualmente.
-    const matriculaAtleta = String(900000000 + (Date.now() % 100000));
+    const identificadorAtleta = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    const matriculaAtleta = `9${Date.now()}${String(Math.floor(Math.random() * 1000)).padStart(3, '0')}`;
+    const nomeAtleta = `Atleta E2E Offline ${identificadorAtleta}`;
     const alunoResponse = await request.post('api/v1/usuarios?acao=criar_aluno', {
         data: {
-            nome_usuario: 'Atleta E2E Offline',
+            nome_usuario: nomeAtleta,
             matricula_usuario: matriculaAtleta,
             genero_usuario: 'MASC',
             data_nasc_usuario: '2008-01-01',
@@ -79,6 +90,7 @@ async function criarPartidaFixture(request) {
             data: { matricula: matriculaAtleta, senha: senhaAtleta }
         });
         await jsonOrThrow(alunoLogin, 'login do atleta fixture');
+        await trocarSenhaInicial(alunoApi);
         await jsonOrThrow(await alunoApi.post('api/v1/termos', { data: {} }), 'aceite dos termos do atleta fixture');
         const inscricao = await alunoApi.post('api/v1/inscricoes', {
             data: {
@@ -126,6 +138,7 @@ async function criarPartidaFixture(request) {
     return {
         idJogo,
         nomeJogo,
+        nomeAtleta,
         idModalidade: Number(modalidade.id_modalidade),
         idInterclasse
     };
@@ -191,7 +204,7 @@ test.describe('Mesário — fluxo visual completo offline', () => {
         await expect(page.locator('#msgArtilheiro')).toContainText('Selecione o aluno responsável pela jogada', { timeout: 10_000 });
         await expect(page.locator('.score-number').first()).toHaveText('00');
         await expect.poll(() => page.locator('#selectAlunoArtilheiro option').count()).toBeGreaterThan(1);
-        await page.locator('#selectAlunoArtilheiro').selectOption({ index: 1 });
+        await selecionarAtletaE2EOffline(page, fixture.nomeAtleta);
         await page.locator('#btnSalvarArtilheiro').click();
         await expect(page.locator('#msgArtilheiro')).toContainText('Ponto registrado', { timeout: 10_000 });
         await expect(page.locator('#modalArtilheiro')).toBeHidden({ timeout: 10_000 });
@@ -202,7 +215,7 @@ test.describe('Mesário — fluxo visual completo offline', () => {
         await page.locator('.btn-score-plus').first().click();
         await expect(page.locator('#modalArtilheiro')).toBeVisible();
         await expect.poll(() => page.locator('#selectAlunoArtilheiro option').count()).toBeGreaterThan(1);
-        await page.locator('#selectAlunoArtilheiro').selectOption({ index: 1 });
+        await selecionarAtletaE2EOffline(page, fixture.nomeAtleta);
         await page.locator('#btnSalvarArtilheiro').click();
         await expect(page.locator('#msgArtilheiro')).toContainText('Ponto registrado', { timeout: 10_000 });
         await expect(page.locator('#modalArtilheiro')).toBeHidden({ timeout: 10_000 });
@@ -230,10 +243,8 @@ test.describe('Mesário — fluxo visual completo offline', () => {
         // fica na fila para o servidor, junto com início, placar e ocorrência.
         await page.locator('button.mc-action-btn--finish').click();
         const confirmacao = page.locator('.sgi-feedback-modal').filter({ hasText: 'O placar final será gravado no sistema.' });
-        if (await confirmacao.count()) {
-            await expect(confirmacao).toBeVisible();
-            await confirmacao.getByRole('button', { name: 'Encerrar jogo' }).click();
-        }
+        await expect(confirmacao).toBeVisible();
+        await confirmacao.getByRole('button', { name: 'Encerrar jogo' }).click();
         await expect(page.locator('#mc-status-badge')).toContainText('Encerrado');
         const feedback = page.getByRole('dialog');
         await expect(feedback).toContainText(/Jogo encerrado offline/i, { timeout: 10_000 });
@@ -290,7 +301,7 @@ test.describe('Mesário — fluxo visual completo offline', () => {
         await expect.poll(() => page.evaluate(() => navigator.onLine)).toBe(true);
         await expect.poll(() => page.evaluate(() => window.SGIOffline.getState().pending), { timeout: 45_000 }).toBe(0);
         await expect(page.locator('#sgi-offline-banner')).toHaveClass(/sgi-hidden/);
-        await expect(page.locator('#artilheiro-cards')).toContainText('Atleta E2E Offline', { timeout: 10_000 });
+        await expect(page.locator('#artilheiro-cards')).toContainText(fixture.nomeAtleta, { timeout: 10_000 });
         await expect(page.locator('#artilheiro-cards')).toContainText('1 gol', { timeout: 10_000 });
         await expect(page.locator('#lista-ocorrencias')).toContainText('Registro visual offline', { timeout: 10_000 });
         const pontosSincronizados = await page.evaluate(async (id) => {

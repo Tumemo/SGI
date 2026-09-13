@@ -29,6 +29,9 @@ final class MysqliJogoRepository implements JogoRepository
         try {
             $localId = (int) ($data['locais_id_local'] ?? 0);
             MysqliLocalScheduleGuard::lockLocals($this->connection, [$localId]);
+            $modalityId = (int) ($data['modalidades_id_modalidade'] ?? 0);
+            $modalityEditions = MysqliLocalScheduleGuard::lockModalities($this->connection, [$modalityId]);
+            MysqliLocalScheduleGuard::assertLocalBelongsToEdition($this->connection, $localId, $modalityEditions[$modalityId]);
             $conflict = MysqliLocalScheduleGuard::conflict(
                 $this->connection,
                 (string) $data['data_jogo'],
@@ -43,10 +46,11 @@ final class MysqliJogoRepository implements JogoRepository
             $id = $this->insertGame($data);
             $teamIds = array_values(array_map('intval', is_array($data['equipes'] ?? null) ? $data['equipes'] : []));
             if ($teamIds !== []) {
+                sort($teamIds, SORT_NUMERIC);
                 $check = $this->connection->prepare(
                     "SELECT 1 FROM equipes
                      WHERE id_equipe = ? AND modalidades_id_modalidade = ? AND status_equipe = '1'
-                     LIMIT 1",
+                     LIMIT 1 FOR UPDATE",
                 );
                 $partida = $this->connection->prepare(
                     'INSERT INTO partidas (jogos_id_jogo, equipes_id_equipe, resultado_partida, status_partida)

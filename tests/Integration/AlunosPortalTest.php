@@ -154,6 +154,7 @@ class AlunosPortalTest
         $userStatement->close();
         $idUsuarioBanco = (int) ($alunoBanco['id_usuario'] ?? 0);
         $idEdicaoBanco = (int) ($alunoBanco['interclasses_id_interclasse'] ?? 0);
+        self::assertEquipeGetIsReadOnly($aluno, $database, $idEdicaoBanco);
 
         $aceiteStatement = $database->prepare(
             'SELECT aceito_termo, status_termo
@@ -263,5 +264,81 @@ class AlunosPortalTest
                 $publicationConnection->close();
             }
         }
+    }
+
+    private static function assertEquipeGetIsReadOnly(TestClient $aluno, \mysqli $database, int $idEdicao): void
+    {
+        $scopeStatement = $database->prepare(
+            "SELECT m.categorias_id_categoria, m.tipos_modalidades_id_tipo_modalidade,
+                    m.genero_modalidade, t.id_turma
+             FROM modalidades m
+             INNER JOIN turmas t ON t.categorias_id_categoria = m.categorias_id_categoria
+             INNER JOIN categorias c ON c.id_categoria = m.categorias_id_categoria
+             WHERE m.interclasses_id_interclasse = ? AND t.interclasses_id_interclasse = ?
+               AND m.status_modalidade = '1' AND t.status_turma = '1' AND c.status_categoria = '1'
+             ORDER BY m.id_modalidade, t.id_turma LIMIT 1",
+        );
+        $scopeStatement->bind_param('ii', $idEdicao, $idEdicao);
+        $scopeStatement->execute();
+        $scope = $scopeStatement->get_result()->fetch_assoc() ?: null;
+        $scopeStatement->close();
+
+        Assertions::assert('Existe modalidade e turma ativa para a regressão de GET de equipes', is_array($scope));
+        if ($scope === null) {
+            return;
+        }
+
+        $admin = new TestClient();
+        $admin->login('admin', '123');
+        $name = 'L03 leitura ' . bin2hex(random_bytes(6));
+        $created = $admin->postJson('api/v1/modalidades', [
+            'nome_modalidade' => $name,
+            'genero_modalidade' => (string) $scope['genero_modalidade'],
+            'max_inscrito_modalidade' => 10,
+            'max_equipes' => 2,
+            'tipos_modalidades_id_tipo_modalidade' => (int) $scope['tipos_modalidades_id_tipo_modalidade'],
+            'categorias_id_categoria' => (int) $scope['categorias_id_categoria'],
+            'interclasses_id_interclasse' => $idEdicao,
+        ]);
+        Assertions::assertStatus('Modalidade vazia sintética criada para testar GET sem escrita', $created, 201);
+        $modalityId = (int) ($created['json']['id_modalidade'] ?? 0);
+        Assertions::assert('Modalidade da regressão criada com ID', $modalityId > 0);
+        if ($modalityId <= 0) {
+            return;
+        }
+
+        $classId = (int) $scope['id_turma'];
+        try {
+            $studentResponse = $aluno->get("api/v1/equipes?id_modalidade=$modalityId&id_turma=$classId");
+            Assertions::assertStatus('GET do aluno de equipe continua disponível após aceite', $studentResponse, 200);
+            Assertions::assert('Primeiro GET do aluno não cria equipe na modalidade vazia', self::countTeamsForModality($database, $modalityId) === 0);
+
+            $studentRepeat = $aluno->get("api/v1/equipes?id_modalidade=$modalityId&id_turma=$classId");
+            Assertions::assertStatus('GET repetido do aluno continua disponível', $studentRepeat, 200);
+            Assertions::assert('GET repetido do aluno mantém a modalidade sem equipes', self::countTeamsForModality($database, $modalityId) === 0);
+
+            $adminResponse = $admin->get("api/v1/equipes?id_modalidade=$modalityId&id_turma=$classId");
+            Assertions::assertStatus('GET administrativo de equipe continua disponível', $adminResponse, 200);
+            Assertions::assert('GET administrativo não cria equipe', self::countTeamsForModality($database, $modalityId) === 0);
+        } finally {
+            $deleteTeams = $database->prepare('DELETE FROM equipes WHERE modalidades_id_modalidade = ?');
+            $deleteTeams->bind_param('i', $modalityId);
+            $deleteTeams->execute();
+            $deleteTeams->close();
+            $deleteModality = $database->prepare('DELETE FROM modalidades WHERE id_modalidade = ?');
+            $deleteModality->bind_param('i', $modalityId);
+            $deleteModality->execute();
+            $deleteModality->close();
+        }
+    }
+
+    private static function countTeamsForModality(\mysqli $database, int $modalityId): int
+    {
+        $statement = $database->prepare('SELECT COUNT(*) FROM equipes WHERE modalidades_id_modalidade = ?');
+        $statement->bind_param('i', $modalityId);
+        $statement->execute();
+        $count = (int) $statement->get_result()->fetch_column();
+        $statement->close();
+        return $count;
     }
 }

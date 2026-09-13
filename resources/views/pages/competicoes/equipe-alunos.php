@@ -9,6 +9,9 @@ $paginaAtiva = 'dashboard';
         <a href="#" class="btn btn-primary d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none" id="btnVoltarEquipesMobile" >
             <i class="bi bi-arrow-left-circle fs-5"></i> <span id="nomeInterclasseEquipeAlunosMob">Interclasse</span>
         </a>
+        <label for="buscaAlunosMobile" class="visually-hidden">Buscar aluno por nome ou matrícula</label>
+        <input id="buscaAlunosMobile" class="form-control mb-2" type="search" placeholder="Buscar aluno por nome ou matrícula" autocomplete="off">
+        <p class="small text-body-secondary mb-3">Marque novos alunos para adicioná-los. Alunos já vinculados permanecem na equipe; desmarcar não remove ninguém.</p>
         <div id="listaAlunosMobile" class="row row-cols-1 row-cols-sm-2 g-3">
             <p class="text-muted text-center">(Carregando alunos...)</p>
         </div>
@@ -28,6 +31,9 @@ $paginaAtiva = 'dashboard';
             </div>
         </div>
 
+        <label for="buscaAlunosDesktop" class="visually-hidden">Buscar aluno por nome ou matrícula</label>
+        <input id="buscaAlunosDesktop" class="form-control mb-2" type="search" placeholder="Buscar aluno por nome ou matrícula" autocomplete="off">
+        <p class="small text-body-secondary mb-3">Marque novos alunos para adicioná-los. Alunos já vinculados permanecem na equipe; desmarcar não remove ninguém.</p>
         <div id="listaAlunosDesktop" class="row row-cols-1 row-cols-lg-2 g-3">
             <div class="text-center py-4 text-body-secondary">Carregando alunos...</div>
         </div>

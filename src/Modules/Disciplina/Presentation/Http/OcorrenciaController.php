@@ -7,6 +7,8 @@ namespace App\Modules\Disciplina\Presentation\Http;
 use App\Modules\Acesso\Presentation\Http\CompetitionAccess;
 use App\Modules\Competicoes\Domain\ChaveamentoRules;
 use App\Modules\Disciplina\Application\OcorrenciaService;
+use App\Modules\Disciplina\Domain\AutomaticOccurrenceConflict;
+use App\Modules\Disciplina\Domain\OcorrenciaDescricao;
 use App\Modules\Disciplina\Infrastructure\MysqliOcorrenciaQueries;
 use App\Modules\Sincronizacao\Presentation\Http\MutationAction;
 use App\Shared\Http\AccessGuard;
@@ -67,6 +69,14 @@ final class OcorrenciaController
                     if (!isset($data['titulo_ocorrencia'], $data['descricao_ocorrencia'], $data['data_ocorrencia'], $data['usuarios_id_usuario'])) {
                         return Response::json(['success' => false, 'message' => 'Dados incompletos.'], 400);
                     }
+                    try {
+                        $submittedDescription = OcorrenciaDescricao::parseSubmitted(
+                            (string) $data['descricao_ocorrencia'],
+                            true,
+                        );
+                    } catch (\InvalidArgumentException $exception) {
+                        return Response::json(['success' => false, 'message' => $exception->getMessage()], 422);
+                    }
                     $game = (int) ($data['id_jogo'] ?? 0);
                     if ($game < 0) {
                         $tag = trim((string) ($data['nome_jogo'] ?? ''));
@@ -86,15 +96,33 @@ final class OcorrenciaController
                         return Response::json(['success' => false, 'message' => 'A partida temporária ainda não foi materializada. O registro continuará na fila para evitar perda de dados.'], 409);
                     }
                     $structuredGame = $resolved > 0 ? $resolved : 0;
+                    $descriptionGame = $submittedDescription['gameId'];
+                    if ($descriptionGame < 0) {
+                        if ($game >= 0 || $descriptionGame !== $game || $structuredGame <= 0) {
+                            return Response::json(['success' => false, 'message' => 'A referência textual do jogo não pode ser resolvida.'], 422);
+                        }
+                        $descriptionGame = $structuredGame;
+                    }
+                    if ($structuredGame > 0 && $descriptionGame > 0 && $descriptionGame !== $structuredGame) {
+                        return Response::json(['success' => false, 'message' => 'A descrição não pode substituir o jogo informado.'], 422);
+                    }
+                    $effectiveGame = $structuredGame > 0 ? $structuredGame : $descriptionGame;
                     $structuredClass = (int) ($data['id_turma'] ?? 0);
+                    if ($structuredClass > 0 && $submittedDescription['classId'] > 0
+                        && $submittedDescription['classId'] !== $structuredClass) {
+                        return Response::json(['success' => false, 'message' => 'A descrição não pode substituir a turma informada.'], 422);
+                    }
+                    $effectiveClass = $structuredClass > 0 ? $structuredClass : $submittedDescription['classId'];
                     if (($denied = $this->authorizeReferences(
                         (int) $data['usuarios_id_usuario'],
-                        $structuredGame,
-                        $structuredClass,
+                        $effectiveGame,
+                        $effectiveClass,
                     )) !== null) {
                         return $denied;
                     }
-                    $data['id_jogo'] = $structuredGame;
+                    $data['id_jogo'] = $effectiveGame;
+                    $data['id_turma'] = $effectiveClass;
+                    $data['descricao_ocorrencia'] = $submittedDescription['text'];
                     $result = $this->service->registrar($data);
                     $payload = ['success' => true, 'message' => 'Ocorrência registrada com sucesso!', 'id' => $result['id']];
                     if ($result['evento'] !== null) {
@@ -111,6 +139,9 @@ final class OcorrenciaController
                     if ($existing === null) {
                         return Response::json(['success' => false, 'message' => 'Ocorrência não encontrada.'], 404);
                     }
+                    if ((int) ($existing['automatico_derivado'] ?? 0) === 1) {
+                        return Response::json(['success' => false, 'message' => 'Vermelho automático é atualizado pelos cartões amarelos de origem.'], 409);
+                    }
                     $references = $this->queries->referencesFromDescription((string) $existing['descricao_ocorrencia']);
                     if (($denied = $this->authorizeReferences(
                         (int) $existing['usuarios_id_usuario'],
@@ -119,23 +150,23 @@ final class OcorrenciaController
                     )) !== null) {
                         return $denied;
                     }
-                    if (array_key_exists('id_jogo', $data) && (int) $data['id_jogo'] > 0
-                        && $references['gameId'] > 0 && (int) $data['id_jogo'] !== $references['gameId']) {
+                    if (array_key_exists('id_jogo', $data)
+                        && (int) $data['id_jogo'] !== $references['gameId']) {
                         return Response::json(['success' => false, 'message' => 'O jogo da ocorrência não pode ser trocado por outro recurso.'], 422);
                     }
-                    if (array_key_exists('id_turma', $data) && (int) $data['id_turma'] > 0
-                        && $references['classId'] > 0 && (int) $data['id_turma'] !== $references['classId']) {
+                    if (array_key_exists('id_turma', $data)
+                        && (int) $data['id_turma'] !== $references['classId']) {
                         return Response::json(['success' => false, 'message' => 'A turma da ocorrência não pode ser trocada por outro recurso.'], 422);
                     }
                     if (array_key_exists('descricao_ocorrencia', $data)) {
-                        $description = trim((string) $data['descricao_ocorrencia']);
-                        $prefix = '';
-                        if (preg_match('/^(?:\[JOGO:\d+\])?(?:\[TURMA:\d+\])?/', (string) $existing['descricao_ocorrencia'], $match) === 1) {
-                            $prefix = (string) $match[0];
+                        try {
+                            $submittedDescription = OcorrenciaDescricao::parseSubmitted(
+                                (string) $data['descricao_ocorrencia'],
+                            );
+                        } catch (\InvalidArgumentException $exception) {
+                            return Response::json(['success' => false, 'message' => $exception->getMessage()], 422);
                         }
-                        if ($prefix !== '' && !str_starts_with($description, '[JOGO:') && !str_starts_with($description, '[TURMA:')) {
-                            $data['descricao_ocorrencia'] = $prefix . $description;
-                        }
+                        $data['descricao_ocorrencia'] = $submittedDescription['text'];
                     }
                     $this->service->atualizar($data);
                     return Response::json(['success' => true, 'message' => 'Ocorrência atualizada com sucesso!']);
@@ -144,6 +175,8 @@ final class OcorrenciaController
             return Response::json(['success' => false, 'message' => 'Método não permitido'], 405);
         } catch (\InvalidArgumentException $exception) {
             return Response::json(['success' => false, 'message' => $exception->getMessage()], 400);
+        } catch (AutomaticOccurrenceConflict $exception) {
+            return Response::json(['success' => false, 'message' => $exception->getMessage()], 409);
         } catch (\Throwable $exception) {
             error_log('Falha ao processar ocorrência: ' . $exception->getMessage());
             return Response::json(['success' => false, 'message' => $request->method() === 'PUT' ? 'Não foi possível atualizar ocorrência.' : 'Não foi possível registrar ocorrência.'], 500);

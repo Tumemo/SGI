@@ -6,8 +6,24 @@ async function jsonOrThrow(response, label) {
 }
 
 function dataFutura(dias = 0) {
-    const data = new Date(Date.now() + (dias * 24 * 60 * 60 * 1000));
-    return data.toISOString().slice(0, 10);
+    const data = new Date();
+    data.setDate(data.getDate() + dias);
+    const ano = data.getFullYear();
+    const mes = String(data.getMonth() + 1).padStart(2, '0');
+    const dia = String(data.getDate()).padStart(2, '0');
+    return `${ano}-${mes}-${dia}`;
+}
+
+async function trocarSenhaInicial(request, endpoint = 'api/v1/senha') {
+    const novaSenha = 'SenhaFixture#2026';
+    const resposta = await request.post(endpoint, {
+        data: { nova_senha: novaSenha, confirmar_senha: novaSenha },
+    });
+    const payload = await jsonOrThrow(resposta, 'troca inicial de senha do aluno fixture');
+    if (payload.success !== true) {
+        throw new Error(`troca inicial de senha do aluno fixture: ${payload.message || JSON.stringify(payload)}`);
+    }
+    return payload;
 }
 
 /**
@@ -71,4 +87,4 @@ async function agendarBloco(request, {
     }), label);
 }
 
-module.exports = { agendarBloco, dataFutura, jsonOrThrow };
+module.exports = { agendarBloco, dataFutura, jsonOrThrow, trocarSenhaInicial };

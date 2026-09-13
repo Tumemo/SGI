@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Modules\Acesso\Application;
 
 use App\Modules\Acesso\Domain\UsuarioAdministrativoRepository;
+use App\Shared\Security\StudentInitialPassword;
 use InvalidArgumentException;
 
 final class UsuarioAdministrativoService
@@ -24,7 +25,7 @@ final class UsuarioAdministrativoService
     public function resetarSenhaAluno(int $id): string
     {
         $this->validateId($id);
-        $temporaryPassword = rtrim(strtr(base64_encode(random_bytes(9)), '+/', '-_'), '=');
+        $temporaryPassword = StudentInitialPassword::VALUE;
         $hash = password_hash($temporaryPassword, PASSWORD_DEFAULT);
         if (!$this->usuarios->resetStudentPassword($id, $hash)) {
             throw new UsuarioNaoEncontradoException();

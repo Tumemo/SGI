@@ -118,7 +118,7 @@ test.describe('Autenticação, RBAC e Segurança de Rotas', () => {
             }
         }), 'criação do aluno');
         const senhaAluno = String(aluno.senha_temporaria || '');
-        if (senhaAluno === '') throw new Error('A API não retornou a senha temporária do aluno RBAC.');
+        if (senhaAluno !== 'sesi-senai') throw new Error('A API não retornou a senha inicial compartilhada do aluno RBAC.');
 
         // Loga como aluno
         await page.goto('login', { waitUntil: 'domcontentloaded' });
@@ -126,6 +126,11 @@ test.describe('Autenticação, RBAC e Segurança de Rotas', () => {
         await page.locator('#form_desktop .ipt-senha').fill(senhaAluno);
         await page.locator('#form_desktop button[type="submit"]').click();
 
+        await page.waitForURL(/\/aluno\/trocar-senha/, { timeout: 15_000 });
+        await expect(page.locator('#formPrimeiroAcesso')).toBeVisible();
+        await page.locator('#novaSenhaPrimeiroAcesso').fill('AlunoRbac#2026');
+        await page.locator('#confirmarSenhaPrimeiroAcesso').fill('AlunoRbac#2026');
+        await page.locator('#btnSalvarSenhaPrimeiroAcesso').click();
         await page.waitForURL(/\/aluno\/termos/, { timeout: 15_000 });
         await expect(page).toHaveURL(/\/aluno\/termos/);
 

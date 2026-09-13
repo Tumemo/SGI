@@ -66,6 +66,50 @@ test.describe.serial('Portal do Aluno — Jornada Interativa e Regras de Negóci
         await page.locator('#form_desktop .ipt-senha').fill(fixture.senhaOriginal);
         await page.locator('#form_desktop button[type="submit"]').click();
 
+        await page.waitForURL(/\/aluno\/trocar-senha/, { timeout: 15_000 });
+        await expect(page.locator('#formPrimeiroAcesso')).toBeVisible();
+
+        // A senha inicial só libera a tela de troca: nem uma URL direta deve
+        // abrir uma página do portal antes da mudança persistida.
+        await page.goto('aluno/jogos', { waitUntil: 'domcontentloaded' });
+        await expect(page).toHaveURL(/\/aluno\/trocar-senha/);
+        await expect(page.locator('#formPrimeiroAcesso')).toBeVisible();
+        await expect(page.locator('body')).not.toContainText('Cronograma de Jogos');
+
+        fixture.senhaOriginal = 'PortalAluno#2026';
+        await page.context().setOffline(true);
+        await page.locator('#novaSenhaPrimeiroAcesso').fill(fixture.senhaOriginal);
+        await page.locator('#confirmarSenhaPrimeiroAcesso').fill(fixture.senhaOriginal);
+        await page.locator('#btnSalvarSenhaPrimeiroAcesso').click();
+        await expect(page.locator('#msgPrimeiroAcesso')).toContainText('Conecte-se à internet para salvar sua senha.');
+        await expect(page).toHaveURL(/\/aluno\/trocar-senha/);
+        const offlineMutations = await page.evaluate(async () => new Promise((resolve, reject) => {
+            const opening = indexedDB.open('sgi_offline');
+            opening.onerror = () => reject(opening.error || new Error('Não foi possível abrir o banco offline.'));
+            opening.onsuccess = () => {
+                const database = opening.result;
+                if (!database.objectStoreNames.contains('mutation_queue')) {
+                    database.close();
+                    resolve([]);
+                    return;
+                }
+                const transaction = database.transaction('mutation_queue', 'readonly');
+                const request = transaction.objectStore('mutation_queue').getAll();
+                request.onerror = () => reject(request.error || new Error('Não foi possível consultar a fila offline.'));
+                request.onsuccess = () => {
+                    const entries = request.result || [];
+                    database.close();
+                    resolve(entries);
+                };
+            };
+        }));
+        expect(offlineMutations.some((entry) =>
+            String(entry.url || '').includes('/api/v1/senha')
+            || JSON.stringify(entry).includes(fixture.senhaOriginal),
+        )).toBe(false);
+        await page.context().setOffline(false);
+        await expect(page.locator('#btnSalvarSenhaPrimeiroAcesso')).toBeEnabled();
+        await page.locator('#btnSalvarSenhaPrimeiroAcesso').click();
         await page.waitForURL(/\/aluno\/termos/, { timeout: 15_000 });
         await expect(page.locator('main')).toBeVisible();
 
