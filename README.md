@@ -23,10 +23,10 @@ Os exemplos abaixo usam **Windows e PowerShell**, executados na pasta do projeto
 
 Instale ou disponibilize:
 
-- **PHP 8.2 ou superior** (a matriz do projeto valida 8.2 e 8.4), com `mysqli`, `mbstring` e `fileinfo`. Para as ferramentas e os testes, habilite também DOM/XML, XMLWriter e cURL.
+- **PHP 8.2 ou superior**, com `mysqli`, `mbstring` e `fileinfo`. Para as ferramentas e os testes, habilite também DOM/XML, XMLWriter e cURL. O CI executa os testes em PHP 8.4.
 - **Composer 2**, para as dependências PHP.
 - **Node.js 22 e npm**, para gerar os arquivos usados pelo navegador.
-- **MySQL ou MariaDB** em execução. A matriz de testes usa MySQL 8.4 e MariaDB 10.11.
+- **MySQL ou MariaDB** em execução. O CI testa com MariaDB 10.11; MySQL continua disponível como opção nos executores locais.
 - **Git**, se for obter o projeto por clone. Também é possível extrair o pacote recebido.
 
 Abra a pasta que contém `composer.json`, `package.json` e `README.md` no editor e abra um terminal nessa pasta. Confira:

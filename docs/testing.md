@@ -164,10 +164,10 @@ Imagens, traces e relatório ficam em `tests/browser/test-results/` e `tests/bro
 
 ## Matriz e recuperação
 
-O CI executa todos os testes em containers descartáveis: qualidade em PHP 8.2 e
-8.4, integração e navegador em MySQL 8.4 e MariaDB 10.11, além do contrato
-visual nas referências Linux. A configuração está em `.github/workflows/ci.yml`;
-uma execução local em outro motor não substitui os alvos que não foram
-instalados.
+O CI executa qualidade apenas em PHP 8.4. Integração HTTP/banco/recuperação,
+navegador e contrato visual usam PHP 8.4 e MariaDB 10.11; o visual usa as
+referências Linux. A configuração está em `.github/workflows/ci.yml`. A matriz
+do CI usa uma única versão de PHP e MariaDB; MySQL e PHP 8.2 continuam disponíveis
+para execuções locais pelo executor Docker.
 
 `php tests/run_all.php` também executa o ensaio sintético de recuperação. Ele cria bases temporárias com nomes próprios, gera um `mysqldump` contendo schema/dados/triggers, grava hash e versão em `test-results/t28-recovery-*.json`, atualiza uma cópia com as migrações e restaura o dump em outra base. As bases são removidas ao final; os dumps e manifestos permanecem como evidência ignorada pelo Git. O ensaio não aponta para base de trabalho e não limpa filas IndexedDB.

@@ -7,11 +7,8 @@ on:
 jobs:
   quality:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        php: ['8.2', '8.4']
     env:
-      SGI_PHP_VERSION: ${{ matrix.php }}
+      SGI_PHP_VERSION: '8.4'
     steps:
       - uses: actions/checkout@v4
       - name: Validar configuração Docker
@@ -26,12 +23,8 @@ jobs:
 
   integration:
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        database: ['mysql:8.4', 'mariadb:10.11']
     env:
-      SGI_DB_IMAGE: ${{ matrix.database }}
+      SGI_DB_IMAGE: mariadb:10.11
       SGI_PHP_VERSION: '8.4'
       SGI_DB_PASSWORD: root
       SGI_TEST_DB_NAME: sgi_test

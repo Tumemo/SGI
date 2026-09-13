@@ -157,6 +157,6 @@ Elas cobrem autenticação, ciclo de edição, importação de PDF, modalidades,
 agendamento, placar, ranking, portal do aluno, fronteira pública, operação
 offline e chaveamento completo.
 
-A matriz declarada no CI executa qualidade em PHP 8.2 e 8.4; integração e navegador em PHP 8.4 com MySQL 8.4 e MariaDB 10.11; e comparação visual usando referências Linux. Uma execução local não cobre automaticamente os demais alvos. Quando não estiverem disponíveis, devem permanecer como pendência explícita no registro, não como aprovação implícita.
+O CI executa qualidade apenas em PHP 8.4. Integração, navegador e comparação visual usam PHP 8.4 e MariaDB 10.11; o contrato visual usa as referências Linux. MySQL 8.4 e PHP 8.2 podem ser selecionados nos executores locais, mas não fazem parte da validação do CI.
 
 O procedimento reproduzível está em [testes](testing.md). Não há exceção de CSRF baseada em `SGI_APP_ENV=test`.

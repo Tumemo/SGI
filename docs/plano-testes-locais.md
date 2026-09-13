@@ -31,7 +31,7 @@ Não substituir MySQL/MariaDB por SQLite: os testes exercitam migrações, trigg
 - O acesso ao daemon Docker foi negado nesta sessão. Não foi feito benchmark nem executada a suíte. As conclusões de desempenho são hipóteses fundamentadas no fluxo, não tempos medidos.
 - `tests/run_all.php` encadeia cenários que compartilham dados. Playwright usa um worker. `SGI_E2E_RESET=1` executa toda a suíte HTTP, não somente um seed.
 - O ensaio de recuperação precisa de clientes SQL/dump e cria duas bases com nomes fixos. Tornar apenas o schema principal único não basta para permitir execuções simultâneas.
-- O CI cobre qualidade em PHP 8.2/8.4 e integração/navegador em MySQL 8.4/MariaDB 10.11 com PHP 8.4; contrato visual roda separadamente no Linux.
+- O CI executa qualidade apenas em PHP 8.4; integração, navegador e contrato visual usam MariaDB 10.11 com PHP 8.4. MySQL 8.4 e PHP 8.2 ficam disponíveis para execuções locais.
 
 ## Comparação
 

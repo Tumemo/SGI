@@ -170,7 +170,7 @@ No Linux/macOS: `sh tools/test-docker.sh --database mariadb`. Para MySQL, use `-
 
 Consulte `tests/browser/offline-queue-regression.spec.cjs` para regressões da fila e os testes de arquitetura em `tests/Unit/Architecture/` para fronteiras entre camadas. Testes devem validar comportamento observável, sem depender de credenciais reais, dados pessoais, atrasos arbitrários ou IDs não preparados pelo cenário. Só atualize snapshots após inspecionar a mudança visual intencional; preserve referências por plataforma.
 
-A matriz declarada em `.github/workflows/ci.yml` valida qualidade em PHP 8.2/8.4, integração/navegador em MySQL 8.4 e MariaDB 10.11 e contrato visual Linux. Referências Windows atendem à execução local Windows. Uma execução local não comprova os demais alvos nem uma execução remota do CI.
+A matriz declarada em `.github/workflows/ci.yml` valida qualidade apenas em PHP 8.4. Integração, navegador e contrato visual usam PHP 8.4 e MariaDB 10.11; o contrato visual usa as referências Linux. PHP 8.2 e MySQL 8.4 continuam disponíveis nos executores locais, mas não fazem parte da validação do CI. Uma execução local não comprova a execução remota do CI.
 
 Na entrega, informe o que mudou, quais comandos foram executados, seus resultados e limitações. Registre falhas preexistentes e pré-requisitos ausentes sem declarar aprovação. Revise `git diff --check` e o diff final, preserve alterações do usuário e atualize README/guias quando houver mudança de configuração, operação ou contrato.
 
