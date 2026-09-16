@@ -28,6 +28,16 @@ O banco padrão é `sgi_test`, com usuário `root` e senha `sgi-test-only`.
 Esses dados são exclusivos do ambiente de teste. `-Keep`/`--keep` mantém os
 containers para investigação; sem essa opção o Compose executa `down --volumes`.
 
+Quando o serviço `app` publica a porta HTTP no host, o bind padrão é
+`127.0.0.1:8099`, evitando exposição acidental na rede. A porta pode ser alterada
+com `SGI_TEST_HOST_PORT`. Para uma homologação que precise ser acessível por
+outros dispositivos da rede local, configure explicitamente
+`SGI_TEST_BIND_ADDRESS=0.0.0.0`, restrinja o firewall à sub-rede autorizada e
+confirme a URL antes de compartilhar. O servidor dentro do container continua
+escutando em `0.0.0.0:8099` somente para permitir o acesso entre os serviços
+Compose pelo alias `sgi-web`; esse bind interno não publica a aplicação na rede
+do host por si só.
+
 As imagens usam PHP 8.4 por padrão. Para validar PHP 8.2:
 
 ```bash

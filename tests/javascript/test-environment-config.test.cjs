@@ -29,6 +29,14 @@ test('executores de teste usam URLs na raiz e fixam a base vazia', () => {
     assert.match(startServer, /\$script:baseUrl\s*=\s*"http:\/\/127\.0\.0\.1:/);
 });
 
+test('Compose publica o servidor de teste apenas no loopback por padrão', () => {
+    const compose = fs.readFileSync(composePath, 'utf8');
+    assert.match(
+        compose,
+        /- "\$\{SGI_TEST_BIND_ADDRESS:-127\.0\.0\.1\}:\$\{SGI_TEST_HOST_PORT:-8099\}:8099"/,
+    );
+});
+
 test('Compose quality falha quando qualquer verificação obrigatória falha', () => {
     const compose = fs.readFileSync(composePath, 'utf8');
     const start = compose.indexOf('\n  quality:');

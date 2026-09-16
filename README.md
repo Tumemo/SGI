@@ -196,7 +196,7 @@ No Linux/macOS:
 sh tools/test-docker.sh --database mariadb
 ```
 
-Use `-Database mysql` (ou `--database mysql`) para MySQL 8.4. `-IncludeVisual`/`--include-visual` inclui o contrato visual. Sem `-Keep`/`--keep`, os containers são removidos ao final. Esse fluxo valida o projeto; não é o servidor de desenvolvimento do passo 5.
+Use `-Database mysql` (ou `--database mysql`) para MySQL 8.4. `-IncludeVisual`/`--include-visual` inclui o contrato visual. Sem `-Keep`/`--keep`, os containers são removidos ao final. Quando a porta HTTP do Compose for publicada no host, o padrão é o loopback `127.0.0.1`; use `SGI_TEST_BIND_ADDRESS=0.0.0.0` somente quando a homologação precisar de acesso explícito pela rede local. Esse fluxo valida o projeto; não é o servidor de desenvolvimento do passo 5.
 
 Os relatórios ficam em `test-results/` e, conforme o executor, em `tests/browser/test-results/` e `tests/browser/playwright-report/`. Consulte [o guia de testes](docs/testing.md) para perfis, execução manual de `php tests/run_all.php`, configuração do Playwright e diagnóstico.
 

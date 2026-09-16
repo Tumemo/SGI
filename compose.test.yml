@@ -75,6 +75,8 @@ services:
         condition: service_healthy
     expose:
       - "8099"
+    ports:
+      - "${SGI_TEST_BIND_ADDRESS:-127.0.0.1}:${SGI_TEST_HOST_PORT:-8099}:8099"
     command:
       - php
       - -d
