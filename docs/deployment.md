@@ -6,7 +6,7 @@ Instale as dependências com `composer install --no-dev --optimize-autoloader` e
 
 `public/assets/` é gerado e não é versionado. Edite as fontes em `resources/`. O build inclui versões fixadas das bibliotecas e suas licenças. `public/index.php` é a única entrada HTTP; não publique a raiz do repositório.
 
-Para uploads, o PHP precisa de um `upload_tmp_dir` existente e gravável pelo usuário do servidor. Mantenha `display_errors=0` e `log_errors=1` fora do desenvolvimento; avisos emitidos durante o upload podem ser adicionados ao corpo da resposta e invalidar o JSON da API. O diretório persistente de regulamentos continua sendo configurado por `SGI_REGULAMENTOS_DIR`.
+Para uploads, o PHP precisa de um `upload_tmp_dir` existente e gravável pelo usuário do servidor. Mantenha `display_errors=0` e `log_errors=1` fora do desenvolvimento; avisos emitidos durante o upload podem ser adicionados ao corpo da resposta e invalidar o JSON da API. O `docker-test-entrypoint` cria o `upload_tmp_dir` informado no comando do PHP e os diretórios definidos por `SGI_SESSION_DIR`, `SGI_UPLOAD_DIR`, `SGI_REGULAMENTOS_DIR`, `SGI_FOTOS_DIR` e `SGI_IMPORT_DIR` antes de iniciar o processo. O diretório persistente de regulamentos continua sendo configurado por `SGI_REGULAMENTOS_DIR`.
 
 ## Banco novo
 

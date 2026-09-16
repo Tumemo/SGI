@@ -46,6 +46,28 @@ test('Compose quality falha quando qualquer verificação obrigatória falha', (
     assert.match(qualityService, /- \|\r?\n\s{8,}set -e\r?\n/);
 });
 
+test('container prepara uploads e não vaza avisos PHP para respostas JSON', () => {
+    const compose = fs.readFileSync(composePath, 'utf8');
+    const entrypoint = fs.readFileSync(path.join(root, 'tools/docker-test-entrypoint.sh'), 'utf8');
+    const dockerfile = fs.readFileSync(path.join(root, 'Dockerfile.test'), 'utf8');
+    const phpIni = fs.readFileSync(path.join(root, 'tools/docker-php.ini'), 'utf8');
+
+    assert.match(compose, /SGI_UPLOAD_TMP_DIR:\s*\/app\/test-results\/upload-tmp/);
+    assert.match(compose, /- display_errors=0\r?\n/);
+    assert.match(compose, /- display_startup_errors=0\r?\n/);
+    assert.match(compose, /- log_errors=1\r?\n/);
+    assert.match(compose, /- error_log=\/proc\/self\/fd\/2/);
+    assert.match(entrypoint, /SGI_UPLOAD_TMP_DIR/);
+    assert.match(entrypoint, /upload_tmp_dir=\*\)/);
+    assert.match(entrypoint, /SGI_SESSION_DIR/);
+    assert.match(entrypoint, /SGI_IMPORT_DIR/);
+    assert.match(dockerfile, /COPY tools\/docker-php\.ini \/usr\/local\/etc\/php\/conf\.d\/99-sgi-runtime\.ini/);
+    assert.match(phpIni, /display_errors\s*=\s*0/);
+    assert.match(phpIni, /display_startup_errors\s*=\s*0/);
+    assert.match(phpIni, /log_errors\s*=\s*1/);
+    assert.match(phpIni, /error_log\s*=\s*\/proc\/self\/fd\/2/);
+});
+
 test('Compose resolve a base vazia mesmo com .env sintético conflitante', (t) => {
     const version = spawnSync('docker', ['compose', 'version'], {
         cwd: root,

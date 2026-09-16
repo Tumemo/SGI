@@ -17,6 +17,7 @@ x-test-environment: &test-environment
   SGI_FOTOS_DIR: /app/test-results/uploads/fotos
   SGI_IMPORT_DIR: /app/test-results/imports
   SGI_SESSION_DIR: /app/test-results/sessions
+  SGI_UPLOAD_TMP_DIR: /app/test-results/upload-tmp
   SGI_MYSQL_PATH: sgi-mysql
   SGI_MYSQLDUMP_PATH: sgi-mysqldump
 
@@ -83,6 +84,14 @@ services:
       - session.save_path=/app/test-results/sessions
       - -d
       - upload_tmp_dir=/app/test-results/upload-tmp
+      - -d
+      - display_errors=0
+      - -d
+      - display_startup_errors=0
+      - -d
+      - log_errors=1
+      - -d
+      - error_log=/proc/self/fd/2
       - -S
       - 0.0.0.0:8099
       - -t

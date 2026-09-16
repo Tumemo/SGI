@@ -48,6 +48,7 @@ COPY . .
 RUN npm run build
 
 COPY tools/docker-test-entrypoint.sh /usr/local/bin/docker-test-entrypoint
+COPY tools/docker-php.ini /usr/local/etc/php/conf.d/99-sgi-runtime.ini
 RUN chmod +x /usr/local/bin/docker-test-entrypoint \
     && mkdir -p \
         /app/test-results/sessions \
