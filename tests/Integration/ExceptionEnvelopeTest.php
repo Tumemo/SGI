@@ -30,12 +30,14 @@ use App\Shared\Http\SessionManager;
 use App\Shared\Database\MysqliTransactionRunner;
 use App\Shared\Storage\StoragePaths;
 use SGITests\Support\Assertions;
+use SGITests\Support\TestDatabase;
 
 final class ExceptionEnvelopeTest
 {
     public static function run(): void
     {
         echo "\n  [Suite 0.3: Envelopes seguros para falhas internas]\n";
+        TestDatabase::assertDisposableContainerRuntime();
 
         $previousHandler = set_error_handler(
             static function (int $severity, string $message, string $file, int $line): bool {

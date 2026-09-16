@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 /**
  * Runner Principal da Suite Completa de Testes Automatizados do SGI
- * Execute via terminal: php tests/run_all.php
+ * Execute somente por um executor que criou o container descartável.
  */
 
 require_once __DIR__ . '/Support/TestClient.php';
@@ -99,6 +99,7 @@ if ($testBaseUrl === false || trim($testBaseUrl) === '') {
 }
 
 try {
+    TestDatabase::assertDisposableContainerRuntime();
     TestDatabase::resetFromSchema($testDatabase);
 } catch (Throwable $e) {
     fwrite(STDERR, "Falha ao preparar ambiente de teste: " . $e->getMessage() . "\n");

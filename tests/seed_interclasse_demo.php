@@ -10,8 +10,15 @@ require_once __DIR__ . '/Support/TestClient.php';
 require_once __DIR__ . '/Support/TestDatabase.php';
 $baseUrl = rtrim((string) getenv('SGI_TEST_BASE_URL'), '/');
 $testDatabase = (string) getenv('SGI_TEST_DB_NAME');
+try {
+    \SGITests\Support\TestDatabase::assertDisposableContainerRuntime();
+} catch (\Throwable $exception) {
+    fwrite(STDERR, $exception->getMessage() . "\n");
+    exit(2);
+}
 \SGITests\Support\TestDatabase::assertSafeDatabaseName($testDatabase);
-if ($baseUrl === '' || ((new \SGITests\Support\TestClient($baseUrl))->get('api/v1/health')['json']['test_environment']['database'] ?? null) !== $testDatabase) {
+$health = $baseUrl === '' ? [] : (new \SGITests\Support\TestClient($baseUrl))->get('api/v1/health');
+if ($baseUrl === '' || ($health['json']['test_environment']['database'] ?? null) !== $testDatabase || ($health['json']['test_environment']['database_runtime'] ?? null) !== 'container') {
     fwrite(STDERR, "Configure um servidor isolado e SGI_TEST_BASE_URL/SGI_TEST_DB_NAME antes da carga de demonstração.\n");
     exit(2);
 }

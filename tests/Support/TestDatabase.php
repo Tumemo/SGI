@@ -11,13 +11,27 @@ use RuntimeException;
 
 final class TestDatabase
 {
+    public static function assertDisposableContainerRuntime(): void
+    {
+        if (getenv('SGI_TEST_DB_RUNTIME') !== 'container') {
+            throw new RuntimeException(
+                'Testes com banco exigem o executor Docker e SGI_TEST_DB_RUNTIME=container. '
+                . 'Use tools/test-docker.ps1/.sh ou tools/test-local.ps1; nenhum banco local será alterado.',
+            );
+        }
+    }
+
     public static function resetFromSchema(string $databaseName): void
     {
         require_once dirname(__DIR__, 2) . '/bootstrap/autoload.php';
+        self::assertDisposableContainerRuntime();
         self::assertSafeDatabaseName($databaseName);
         $server = (new TestClient())->get('api/v1/health');
         if (($server['json']['test_environment']['database'] ?? null) !== $databaseName) {
             throw new RuntimeException('O servidor HTTP não confirmou o mesmo banco isolado de teste. Nenhum banco foi alterado.');
+        }
+        if (($server['json']['test_environment']['database_runtime'] ?? null) !== 'container') {
+            throw new RuntimeException('O servidor HTTP não confirmou um banco em container. Nenhum banco foi alterado.');
         }
         $connection = self::connect();
         $connection->query('DROP DATABASE IF EXISTS `' . $databaseName . '`');
@@ -33,6 +47,7 @@ final class TestDatabase
 
     public static function connect(?string $database = null): mysqli
     {
+        self::assertDisposableContainerRuntime();
         mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
         $connection = new mysqli(getenv('SGI_DB_HOST') ?: '127.0.0.1', getenv('SGI_DB_USER') ?: 'root', getenv('SGI_DB_PASSWORD') ?: '', $database, (int) (getenv('SGI_DB_PORT') ?: 3306));
         $connection->set_charset('utf8mb4');
