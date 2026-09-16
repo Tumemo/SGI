@@ -107,6 +107,8 @@ Não há Service Worker. Login e preparação exigem conexão; refresh, nova aba
 
 Edite as fontes em `resources/` e execute `npm run build`. Não edite a saída `public/assets/` nem dependa de CDN para os recursos necessários offline. Preserve os lockfiles e o build reproduzível; atualize dependências deliberadamente, sem executar atualizações gerais como parte de uma correção não relacionada.
 
+Para qualquer mudança de estilização, planeje primeiro um design system coeso e alinhado aos padrões já existentes, contemplando tokens reutilizáveis de cores, tipografia, espaçamento, raios, sombras, estados, breakpoints, componentes e acessibilidade. Reutilize ou estenda os estilos compartilhados em `resources/css/`; não crie novos arquivos CSS, não aplique CSS inline em HTML/PHP/JavaScript e não espalhe estilos pontuais em templates. Centralize tokens e padrões, prefira componentes e classes reutilizáveis e valide responsividade, contraste, foco/teclado e o impacto nas páginas existentes. Se a base compartilhada não oferecer suporte suficiente, organize-a antes de estilizar uma tela isolada.
+
 Use `Assets`/`Url` para URLs e `SGI_ROOT` para includes. Novas APIs ficam em `/api/v1`; não crie chamadas relativas a arquivos PHP físicos nem links fixos em `/SGI`. Confira raiz e subdiretório quando alterar roteamento ou geração de URLs.
 
 Siga `resources/js/shared/page-runtime.js` e os utilitários compartilhados. Inicialização e reativação de página devem evitar duplicar listeners, timers, requisições periódicas e ações de modais. Ao sair da página, libere os recursos correspondentes. Verifique navegação normal e reentrada pela casca offline.
@@ -170,6 +172,13 @@ No Linux/macOS: `sh tools/test-docker.sh --database mariadb`. Para MySQL, use `-
 
 Consulte `tests/browser/offline-queue-regression.spec.cjs` para regressões da fila e os testes de arquitetura em `tests/Unit/Architecture/` para fronteiras entre camadas. Testes devem validar comportamento observável, sem depender de credenciais reais, dados pessoais, atrasos arbitrários ou IDs não preparados pelo cenário. Só atualize snapshots após inspecionar a mudança visual intencional; preserve referências por plataforma.
 
+### Logs e investigação de falhas
+
+- Toda execução de homologação deve produzir logs claros, consistentes e fáceis de correlacionar. Registre, quando aplicável, data/hora com fuso, nível, ambiente/versão, identificador de requisição ou execução, método e rota, status, duração, módulo/caso de uso, entidade envolvida, código da falha e contexto suficiente para reproduzir o problema.
+- Separe logs de aplicação, acesso HTTP, testes e servidor quando possível; documente no resultado da execução onde cada log foi salvo, seu formato, como localizar uma execução específica e como correlacionar uma falha do navegador com a API e o servidor. Em caso de erro, registre também a operação tentada, o resultado esperado e o resultado observado, incluindo stack trace no log interno quando disponível.
+- Não registre senhas, tokens, credenciais, dados pessoais desnecessários, SQL com valores sensíveis ou outros segredos. Logs precisam ser detalhados para diagnóstico sem criar risco de exposição; aplique rotação e retenção compatíveis com o ambiente.
+- Ao entregar uma homologação ou relatar uma falha, informe a URL/ambiente, versão ou commit, comando e horário da execução, cenário reproduzido, resultado esperado, resultado observado e caminhos dos logs relevantes. Não declare funcionamento sem registrar também as limitações e os erros encontrados.
+
 A matriz declarada em `.github/workflows/ci.yml` valida qualidade apenas em PHP 8.4. Integração, navegador e contrato visual usam PHP 8.4 e MariaDB 10.11; o contrato visual usa as referências Linux. PHP 8.2 e MySQL 8.4 continuam disponíveis nos executores locais, mas não fazem parte da validação do CI. Uma execução local não comprova a execução remota do CI.
 
 Na entrega, informe o que mudou, quais comandos foram executados, seus resultados e limitações. Registre falhas preexistentes e pré-requisitos ausentes sem declarar aprovação. Revise `git diff --check` e o diff final, preserve alterações do usuário e atualize README/guias quando houver mudança de configuração, operação ou contrato.
@@ -208,7 +217,13 @@ Pedidos como “suba o projeto”, “rode localmente” ou “deixe disponível
 6. Verifique por HTTP que a página de login responde e que CSS/JavaScript são servidos. Quando houver credenciais de teste disponíveis e o pedido incluir validação funcional, confira também login e a tela relevante; uma página de login carregada não comprova acesso ao banco ou funcionamento completo.
 7. Entregue a URL clicável, o que foi verificado, como acessar com a conta local e como encerrar o processo criado. Não afirme que `admin`/`123` funciona na base normal. Se faltar o primeiro administrador, use o procedimento `admin:create` do README, sem redefinir contas existentes nem expor senhas nos logs.
 
-Não publique o servidor na rede externa para atender a um pedido de teste local: use `127.0.0.1`. Não limpe IndexedDB nem filas pendentes para preparar o navegador. Se faltar um pré-requisito, informe qual é e o erro observado; não declare o servidor disponível sem verificar a resposta HTTP.
+Para exploração manual local, não publique o servidor na rede: use `127.0.0.1`. Isso não se aplica à homologação na rede local, que possui o procedimento abaixo. Não limpe IndexedDB nem filas pendentes para preparar o navegador. Se faltar um pré-requisito, informe qual é e o erro observado; não declare o servidor disponível sem verificar a resposta HTTP.
+
+### Homologação acessível na rede local
+
+Quando o pedido for de homologação ou de testes por mais de uma máquina, disponibilize a aplicação para os dispositivos da mesma rede local à qual a máquina está conectada, e não apenas em `127.0.0.1`. Configure o bind no IP da interface local apropriada ou em `0.0.0.0`, ajuste porta, firewall, hostname e `SGI_APP_URL` de forma coerente e verifique o acesso HTTP a partir de outro dispositivo da mesma rede antes de entregar a URL.
+
+Restrinja o firewall à sub-rede local autorizada e nunca publique esse serviço na internet. Use base, uploads, sessões, credenciais e logs isolados para homologação; não exponha a base de trabalho/produção. Registre a interface, sub-rede, porta, URL, versão implantada, processo responsável, forma de encerramento e localização dos logs. A acessibilidade na rede local não dispensa autenticação, CSRF, autorização, isolamento de edição ou as demais proteções da aplicação.
 
 ### Executar testes automatizados e encerrar
 
@@ -246,3 +261,9 @@ php tests/run_all.php
 Esse comando recria a base de teste e carrega os fixtures; não o execute sobre uma sessão cujos dados manuais precisam ser preservados. Verifique o resultado da suíte e o acesso HTTP antes de entregar [http://127.0.0.1:8099/](http://127.0.0.1:8099/). As contas dos fixtures estão no README. Não acrescente o seed de demonstração automaticamente após a suíte; use-o apenas se o cenário solicitado exigir esse preparo adicional, sempre na mesma base isolada.
 
 Mantenha o servidor disponível enquanto o usuário testa, registre como encerrá-lo e não remova a base ao entregar a URL. Para limpar depois, confirme a identidade dos recursos criados nesta execução e preserve tudo o que não pertence a ela. A exploração manual não substitui o ciclo de regressão automatizado da seção 8.
+
+## 10. Commits e organização do stage
+
+- Faça sempre commits atômicos e semânticos: cada commit deve representar uma única alteração coerente e completa, com mensagem clara e orientada à ação, usando o prefixo apropriado (`feat:`, `fix:`, `docs:`, `refactor:`, `test:`, `chore:` ou equivalente adotado pelo repositório).
+- Nunca acumule alterações distintas no stage. Antes de cada commit, revise `git status`, `git diff` e `git diff --cached`, adicione somente os arquivos ou trechos pertencentes ao escopo do commit e separe mudanças não relacionadas em commits independentes.
+- Preserve alterações existentes do usuário: não as inclua no stage nem as misture ao commit atual. Ao concluir uma implementação, deixe o histórico pronto para revisão, sem arquivos ou mudanças não relacionadas staged.
