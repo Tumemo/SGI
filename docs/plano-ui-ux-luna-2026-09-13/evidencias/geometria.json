@@ -1,0 +1,2760 @@
+{
+  "method": "Renderização estática com dados sintéticos; sem JS/API/banco; fonte fallback. Não representa jornadas autenticadas.",
+  "reference": "914ff13c",
+  "measurements": [
+    {
+      "file": "resources/views/pages/acesso/colaboradores.php",
+      "width": 320,
+      "height": 568,
+      "scrollWidth": 350,
+      "sidebar": null,
+      "mains": [
+        {
+          "x": 0,
+          "y": 72,
+          "width": 320,
+          "height": 774.3125
+        }
+      ]
+    },
+    {
+      "file": "resources/views/pages/acesso/colaboradores.php",
+      "width": 390,
+      "height": 844,
+      "scrollWidth": 390,
+      "sidebar": null,
+      "mains": [
+        {
+          "x": 0,
+          "y": 72,
+          "width": 390,
+          "height": 775.453125
+        }
+      ]
+    },
+    {
+      "file": "resources/views/pages/acesso/colaboradores.php",
+      "width": 640,
+      "height": 360,
+      "scrollWidth": 640,
+      "sidebar": null,
+      "mains": [
+        {
+          "x": 0,
+          "y": 72,
+          "width": 640,
+          "height": 701.5
+        }
+      ]
+    },
+    {
+      "file": "resources/views/pages/acesso/colaboradores.php",
+      "width": 1024,
+      "height": 768,
+      "scrollWidth": 1024,
+      "sidebar": null,
+      "mains": [
+        {
+          "x": 0,
+          "y": 72,
+          "width": 1024,
+          "height": 707.71875
+        }
+      ]
+    },
+    {
+      "file": "resources/views/pages/acesso/colaboradores.php",
+      "width": 1440,
+      "height": 900,
+      "scrollWidth": 1440,
+      "sidebar": {
+        "box": {
+          "x": 0,
+          "y": 0,
+          "width": 80,
+          "height": 900
+        },
+        "bg": "rgb(227, 6, 19)",
+        "linkColor": "rgb(255, 255, 255)"
+      },
+      "mains": [
+        {
+          "x": 80,
+          "y": 0,
+          "width": 1360,
+          "height": 597.59375
+        }
+      ]
+    },
+    {
+      "file": "resources/views/pages/acesso/login.php",
+      "width": 320,
+      "height": 568,
+      "scrollWidth": 320,
+      "sidebar": null,
+      "mains": [
+        {
+          "x": 0,
+          "y": 0,
+          "width": 320,
+          "height": 627.609375
+        }
+      ]
+    },
+    {
+      "file": "resources/views/pages/acesso/login.php",
+      "width": 390,
+      "height": 844,
+      "scrollWidth": 390,
+      "sidebar": null,
+      "mains": [
+        {
+          "x": 0,
+          "y": 0,
+          "width": 390,
+          "height": 844
+        }
+      ]
+    },
+    {
+      "file": "resources/views/pages/acesso/login.php",
+      "width": 640,
+      "height": 360,
+      "scrollWidth": 640,
+      "sidebar": null,
+      "mains": [
+        {
+          "x": 0,
+          "y": 0,
+          "width": 640,
+          "height": 360
+        }
+      ]
+    },
+    {
+      "file": "resources/views/pages/acesso/login.php",
+      "width": 1024,
+      "height": 768,
+      "scrollWidth": 1024,
+      "sidebar": null,
+      "mains": [
+        {
+          "x": 0,
+          "y": 0,
+          "width": 1024,
+          "height": 768
+        }
+      ]
+    },
+    {
+      "file": "resources/views/pages/acesso/login.php",
+      "width": 1440,
+      "height": 900,
+      "scrollWidth": 1440,
+      "sidebar": null,
+      "mains": [
+        {
+          "x": 0,
+          "y": 0,
+          "width": 1440,
+          "height": 900
+        }
+      ]
+    },
+    {
+      "file": "resources/views/pages/acesso/perfil.php",
+      "width": 320,
+      "height": 568,
+      "scrollWidth": 320,
+      "sidebar": null,
+      "mains": [
+        {
+          "x": 0,
+          "y": 72,
+          "width": 320,
+          "height": 949.28125
+        }
+      ]
+    },
+    {
+      "file": "resources/views/pages/acesso/perfil.php",
+      "width": 390,
+      "height": 844,
+      "scrollWidth": 390,
+      "sidebar": null,
+      "mains": [
+        {
+          "x": 0,
+          "y": 72,
+          "width": 390,
+          "height": 931.28125
+        }
+      ]
+    },
+    {
+      "file": "resources/views/pages/acesso/perfil.php",
+      "width": 640,
+      "height": 360,
+      "scrollWidth": 640,
+      "sidebar": null,
+      "mains": [
+        {
+          "x": 0,
+          "y": 72,
+          "width": 640,
+          "height": 931.28125
+        }
+      ]
+    },
+    {
+      "file": "resources/views/pages/acesso/perfil.php",
+      "width": 1024,
+      "height": 768,
+      "scrollWidth": 1024,
+      "sidebar": null,
+      "mains": [
+        {
+          "x": 0,
+          "y": 72,
+          "width": 1024,
+          "height": 951.28125
+        }
+      ]
+    },
+    {
+      "file": "resources/views/pages/acesso/perfil.php",
+      "width": 1440,
+      "height": 900,
+      "scrollWidth": 1440,
+      "sidebar": {
+        "box": {
+          "x": 0,
+          "y": 0,
+          "width": 80,
+          "height": 900
+        },
+        "bg": "rgb(227, 6, 19)",
+        "linkColor": "rgb(255, 255, 255)"
+      },
+      "mains": [
+        {
+          "x": 80,
+          "y": 0,
+          "width": 1360,
+          "height": 806.265625
+        }
+      ]
+    },
+    {
+      "file": "resources/views/pages/aluno/home.php",
+      "width": 320,
+      "height": 568,
+      "scrollWidth": 320,
+      "sidebar": null,
+      "mains": [
+        {
+          "x": 0,
+          "y": 0,
+          "width": 320,
+          "height": 563.8125
+        }
+      ]
+    },
+    {
+      "file": "resources/views/pages/aluno/home.php",
+      "width": 390,
+      "height": 844,
+      "scrollWidth": 390,
+      "sidebar": null,
+      "mains": [
+        {
+          "x": 0,
+          "y": 0,
+          "width": 390,
+          "height": 474.90625
+        }
+      ]
+    },
+    {
+      "file": "resources/views/pages/aluno/home.php",
+      "width": 640,
+      "height": 360,
+      "scrollWidth": 640,
+      "sidebar": null,
+      "mains": [
+        {
+          "x": 0,
+          "y": 0,
+          "width": 640,
+          "height": 450.90625
+        }
+      ]
+    },
+    {
+      "file": "resources/views/pages/aluno/home.php",
+      "width": 1024,
+      "height": 768,
+      "scrollWidth": 1024,
+      "sidebar": null,
+      "mains": [
+        {
+          "x": 0,
+          "y": 0,
+          "width": 1024,
+          "height": 490.59375
+        }
+      ]
+    },
+    {
+      "file": "resources/views/pages/aluno/home.php",
+      "width": 1440,
+      "height": 900,
+      "scrollWidth": 1440,
+      "sidebar": {
+        "box": {
+          "x": 0,
+          "y": 0,
+          "width": 80,
+          "height": 900
+        },
+        "bg": "rgba(0, 0, 0, 0)",
+        "linkColor": "rgb(255, 255, 255)"
+      },
+      "mains": [
+        {
+          "x": 80,
+          "y": 0,
+          "width": 1360,
+          "height": 490.59375
+        }
+      ]
+    },
+    {
+      "file": "resources/views/pages/aluno/jogos.php",
+      "width": 320,
+      "height": 568,
+      "scrollWidth": 320,
+      "sidebar": null,
+      "mains": [
+        {
+          "x": 0,
+          "y": 0,
+          "width": 320,
+          "height": 435.5
+        }
+      ]
+    },
+    {
+      "file": "resources/views/pages/aluno/jogos.php",
+      "width": 390,
+      "height": 844,
+      "scrollWidth": 390,
+      "sidebar": null,
+      "mains": [
+        {
+          "x": 0,
+          "y": 0,
+          "width": 390,
+          "height": 369.765625
+        }
+      ]
+    },
+    {
+      "file": "resources/views/pages/aluno/jogos.php",
+      "width": 640,
+      "height": 360,
+      "scrollWidth": 640,
+      "sidebar": null,
+      "mains": [
+        {
+          "x": 0,
+          "y": 0,
+          "width": 640,
+          "height": 358.953125
+        }
+      ]
+    },
+    {
+      "file": "resources/views/pages/aluno/jogos.php",
+      "width": 1024,
+      "height": 768,
+      "scrollWidth": 1024,
+      "sidebar": null,
+      "mains": [
+        {
+          "x": 0,
+          "y": 0,
+          "width": 1024,
+          "height": 323.40625
+        }
+      ]
+    },
+    {
+      "file": "resources/views/pages/aluno/jogos.php",
+      "width": 1440,
+      "height": 900,
+      "scrollWidth": 1440,
+      "sidebar": {
+        "box": {
+          "x": 0,
+          "y": 0,
+          "width": 80,
+          "height": 900
+        },
+        "bg": "rgba(0, 0, 0, 0)",
+        "linkColor": "rgb(255, 255, 255)"
+      },
+      "mains": [
+        {
+          "x": 80,
+          "y": 0,
+          "width": 1360,
+          "height": 325
+        }
+      ]
+    },
+    {
+      "file": "resources/views/pages/aluno/modalidade.php",
+      "width": 320,
+      "height": 568,
+      "scrollWidth": 320,
+      "sidebar": null,
+      "mains": [
+        {
+          "x": 0,
+          "y": 0,
+          "width": 320,
+          "height": 408.5
+        }
+      ]
+    },
+    {
+      "file": "resources/views/pages/aluno/modalidade.php",
+      "width": 390,
+      "height": 844,
+      "scrollWidth": 390,
+      "sidebar": null,
+      "mains": [
+        {
+          "x": 0,
+          "y": 0,
+          "width": 390,
+          "height": 360.765625
+        }
+      ]
+    },
+    {
+      "file": "resources/views/pages/aluno/modalidade.php",
+      "width": 640,
+      "height": 360,
+      "scrollWidth": 640,
+      "sidebar": null,
+      "mains": [
+        {
+          "x": 0,
+          "y": 0,
+          "width": 640,
+          "height": 349.953125
+        }
+      ]
+    },
+    {
+      "file": "resources/views/pages/aluno/modalidade.php",
+      "width": 1024,
+      "height": 768,
+      "scrollWidth": 1024,
+      "sidebar": null,
+      "mains": [
+        {
+          "x": 0,
+          "y": 0,
+          "width": 1024,
+          "height": 353.40625
+        }
+      ]
+    },
+    {
+      "file": "resources/views/pages/aluno/modalidade.php",
+      "width": 1440,
+      "height": 900,
+      "scrollWidth": 1440,
+      "sidebar": {
+        "box": {
+          "x": 0,
+          "y": 0,
+          "width": 80,
+          "height": 900
+        },
+        "bg": "rgba(0, 0, 0, 0)",
+        "linkColor": "rgb(255, 255, 255)"
+      },
+      "mains": [
+        {
+          "x": 0,
+          "y": 0,
+          "width": 1440,
+          "height": 355
+        }
+      ]
+    },
+    {
+      "file": "resources/views/pages/aluno/perfil.php",
+      "width": 320,
+      "height": 568,
+      "scrollWidth": 320,
+      "sidebar": null,
+      "mains": [
+        {
+          "x": 0,
+          "y": 0,
+          "width": 320,
+          "height": 961.28125
+        }
+      ]
+    },
+    {
+      "file": "resources/views/pages/aluno/perfil.php",
+      "width": 390,
+      "height": 844,
+      "scrollWidth": 390,
+      "sidebar": null,
+      "mains": [
+        {
+          "x": 0,
+          "y": 0,
+          "width": 390,
+          "height": 961.28125
+        }
+      ]
+    },
+    {
+      "file": "resources/views/pages/aluno/perfil.php",
+      "width": 640,
+      "height": 360,
+      "scrollWidth": 640,
+      "sidebar": null,
+      "mains": [
+        {
+          "x": 0,
+          "y": 0,
+          "width": 640,
+          "height": 961.28125
+        }
+      ]
+    },
+    {
+      "file": "resources/views/pages/aluno/perfil.php",
+      "width": 1024,
+      "height": 768,
+      "scrollWidth": 1024,
+      "sidebar": null,
+      "mains": [
+        {
+          "x": 0,
+          "y": 0,
+          "width": 1024,
+          "height": 981.28125
+        }
+      ]
+    },
+    {
+      "file": "resources/views/pages/aluno/perfil.php",
+      "width": 1440,
+      "height": 900,
+      "scrollWidth": 1440,
+      "sidebar": {
+        "box": {
+          "x": 0,
+          "y": 0,
+          "width": 80,
+          "height": 900
+        },
+        "bg": "rgba(0, 0, 0, 0)",
+        "linkColor": "rgb(255, 255, 255)"
+      },
+      "mains": [
+        {
+          "x": 0,
+          "y": 0,
+          "width": 1440,
+          "height": 758.265625
+        }
+      ]
+    },
+    {
+      "file": "resources/views/pages/aluno/ranking.php",
+      "width": 320,
+      "height": 568,
+      "scrollWidth": 320,
+      "sidebar": null,
+      "mains": [
+        {
+          "x": 0,
+          "y": 0,
+          "width": 320,
+          "height": 94
+        }
+      ]
+    },
+    {
+      "file": "resources/views/pages/aluno/ranking.php",
+      "width": 390,
+      "height": 844,
+      "scrollWidth": 390,
+      "sidebar": null,
+      "mains": [
+        {
+          "x": 0,
+          "y": 0,
+          "width": 390,
+          "height": 94
+        }
+      ]
+    },
+    {
+      "file": "resources/views/pages/aluno/ranking.php",
+      "width": 640,
+      "height": 360,
+      "scrollWidth": 640,
+      "sidebar": null,
+      "mains": [
+        {
+          "x": 0,
+          "y": 0,
+          "width": 640,
+          "height": 94
+        }
+      ]
+    },
+    {
+      "file": "resources/views/pages/aluno/ranking.php",
+      "width": 1024,
+      "height": 768,
+      "scrollWidth": 1024,
+      "sidebar": null,
+      "mains": [
+        {
+          "x": 0,
+          "y": 0,
+          "width": 1024,
+          "height": 94
+        }
+      ]
+    },
+    {
+      "file": "resources/views/pages/aluno/ranking.php",
+      "width": 1440,
+      "height": 900,
+      "scrollWidth": 1440,
+      "sidebar": {
+        "box": {
+          "x": 0,
+          "y": 0,
+          "width": 80,
+          "height": 900
+        },
+        "bg": "rgba(0, 0, 0, 0)",
+        "linkColor": "rgb(255, 255, 255)"
+      },
+      "mains": [
+        {
+          "x": 80,
+          "y": 0,
+          "width": 1360,
+          "height": 174
+        }
+      ]
+    },
+    {
+      "file": "resources/views/pages/aluno/termos.php",
+      "width": 320,
+      "height": 568,
+      "scrollWidth": 320,
+      "sidebar": null,
+      "mains": [
+        {
+          "x": 0,
+          "y": 0,
+          "width": 320,
+          "height": 1518
+        }
+      ]
+    },
+    {
+      "file": "resources/views/pages/aluno/termos.php",
+      "width": 390,
+      "height": 844,
+      "scrollWidth": 390,
+      "sidebar": null,
+      "mains": [
+        {
+          "x": 0,
+          "y": 0,
+          "width": 390,
+          "height": 1302
+        }
+      ]
+    },
+    {
+      "file": "resources/views/pages/aluno/termos.php",
+      "width": 640,
+      "height": 360,
+      "scrollWidth": 640,
+      "sidebar": null,
+      "mains": [
+        {
+          "x": 0,
+          "y": 0,
+          "width": 540,
+          "height": 1110
+        }
+      ]
+    },
+    {
+      "file": "resources/views/pages/aluno/termos.php",
+      "width": 1024,
+      "height": 768,
+      "scrollWidth": 1024,
+      "sidebar": null,
+      "mains": [
+        {
+          "x": 0,
+          "y": 0,
+          "width": 960,
+          "height": 894
+        }
+      ]
+    },
+    {
+      "file": "resources/views/pages/aluno/termos.php",
+      "width": 1440,
+      "height": 900,
+      "scrollWidth": 1440,
+      "sidebar": {
+        "box": {
+          "x": 0,
+          "y": 0,
+          "width": 80,
+          "height": 900
+        },
+        "bg": "rgba(0, 0, 0, 0)",
+        "linkColor": "rgb(255, 255, 255)"
+      },
+      "mains": [
+        {
+          "x": 80,
+          "y": 0,
+          "width": 1320,
+          "height": 798
+        }
+      ]
+    },
+    {
+      "file": "resources/views/pages/aluno/trocar-senha.php",
+      "width": 320,
+      "height": 568,
+      "scrollWidth": 320,
+      "sidebar": null,
+      "mains": [
+        {
+          "x": 0,
+          "y": 0,
+          "width": 320,
+          "height": 542.25
+        }
+      ]
+    },
+    {
+      "file": "resources/views/pages/aluno/trocar-senha.php",
+      "width": 390,
+      "height": 844,
+      "scrollWidth": 390,
+      "sidebar": null,
+      "mains": [
+        {
+          "x": 0,
+          "y": 0,
+          "width": 390,
+          "height": 542.765625
+        }
+      ]
+    },
+    {
+      "file": "resources/views/pages/aluno/trocar-senha.php",
+      "width": 640,
+      "height": 360,
+      "scrollWidth": 640,
+      "sidebar": null,
+      "mains": [
+        {
+          "x": 50,
+          "y": 0,
+          "width": 540,
+          "height": 520.5625
+        }
+      ]
+    },
+    {
+      "file": "resources/views/pages/aluno/trocar-senha.php",
+      "width": 1024,
+      "height": 768,
+      "scrollWidth": 1024,
+      "sidebar": null,
+      "mains": [
+        {
+          "x": 32,
+          "y": 0,
+          "width": 960,
+          "height": 595.3125
+        }
+      ]
+    },
+    {
+      "file": "resources/views/pages/aluno/trocar-senha.php",
+      "width": 1440,
+      "height": 900,
+      "scrollWidth": 1440,
+      "sidebar": null,
+      "mains": [
+        {
+          "x": 60,
+          "y": 0,
+          "width": 1320,
+          "height": 572.59375
+        }
+      ]
+    },
+    {
+      "file": "resources/views/pages/competicoes/chaveamento.php",
+      "width": 320,
+      "height": 568,
+      "scrollWidth": 320,
+      "sidebar": null,
+      "mains": [
+        {
+          "x": 0,
+          "y": 72,
+          "width": 320,
+          "height": 1107.25
+        }
+      ]
+    },
+    {
+      "file": "resources/views/pages/competicoes/chaveamento.php",
+      "width": 390,
+      "height": 844,
+      "scrollWidth": 390,
+      "sidebar": null,
+      "mains": [
+        {
+          "x": 0,
+          "y": 72,
+          "width": 390,
+          "height": 1061.53125
+        }
+      ]
+    },
+    {
+      "file": "resources/views/pages/competicoes/chaveamento.php",
+      "width": 640,
+      "height": 360,
+      "scrollWidth": 640,
+      "sidebar": null,
+      "mains": [
+        {
+          "x": 0,
+          "y": 72,
+          "width": 640,
+          "height": 1027.625
+        }
+      ]
+    },
+    {
+      "file": "resources/views/pages/competicoes/chaveamento.php",
+      "width": 1024,
+      "height": 768,
+      "scrollWidth": 1024,
+      "sidebar": null,
+      "mains": [
+        {
+          "x": 0,
+          "y": 72,
+          "width": 1024,
+          "height": 1034.46875
+        }
+      ]
+    },
+    {
+      "file": "resources/views/pages/competicoes/chaveamento.php",
+      "width": 1440,
+      "height": 900,
+      "scrollWidth": 1440,
+      "sidebar": {
+        "box": {
+          "x": 0,
+          "y": 0,
+          "width": 80,
+          "height": 900
+        },
+        "bg": "rgb(227, 6, 19)",
+        "linkColor": "rgb(255, 255, 255)"
+      },
+      "mains": [
+        {
+          "x": 80,
+          "y": 0,
+          "width": 1360,
+          "height": 1063.59375
+        }
+      ]
+    },
+    {
+      "file": "resources/views/pages/competicoes/elenco-equipe.php",
+      "width": 320,
+      "height": 568,
+      "scrollWidth": 320,
+      "sidebar": null,
+      "mains": [
+        {
+          "x": 0,
+          "y": 72,
+          "width": 320,
+          "height": 196
+        }
+      ]
+    },
+    {
+      "file": "resources/views/pages/competicoes/elenco-equipe.php",
+      "width": 390,
+      "height": 844,
+      "scrollWidth": 390,
+      "sidebar": null,
+      "mains": [
+        {
+          "x": 0,
+          "y": 72,
+          "width": 390,
+          "height": 196
+        }
+      ]
+    },
+    {
+      "file": "resources/views/pages/competicoes/elenco-equipe.php",
+      "width": 640,
+      "height": 360,
+      "scrollWidth": 640,
+      "sidebar": null,
+      "mains": [
+        {
+          "x": 0,
+          "y": 72,
+          "width": 640,
+          "height": 196
+        }
+      ]
+    },
+    {
+      "file": "resources/views/pages/competicoes/elenco-equipe.php",
+      "width": 1024,
+      "height": 768,
+      "scrollWidth": 1024,
+      "sidebar": null,
+      "mains": [
+        {
+          "x": 0,
+          "y": 72,
+          "width": 1024,
+          "height": 196
+        }
+      ]
+    },
+    {
+      "file": "resources/views/pages/competicoes/elenco-equipe.php",
+      "width": 1440,
+      "height": 900,
+      "scrollWidth": 1440,
+      "sidebar": {
+        "box": {
+          "x": 0,
+          "y": 0,
+          "width": 80,
+          "height": 900
+        },
+        "bg": "rgb(227, 6, 19)",
+        "linkColor": "rgb(255, 255, 255)"
+      },
+      "mains": [
+        {
+          "x": 80,
+          "y": 0,
+          "width": 1360,
+          "height": 257
+        }
+      ]
+    },
+    {
+      "file": "resources/views/pages/competicoes/equipe-alunos.php",
+      "width": 320,
+      "height": 568,
+      "scrollWidth": 320,
+      "sidebar": null,
+      "mains": [
+        {
+          "x": 0,
+          "y": 88,
+          "width": 320,
+          "height": 289
+        }
+      ]
+    },
+    {
+      "file": "resources/views/pages/competicoes/equipe-alunos.php",
+      "width": 390,
+      "height": 844,
+      "scrollWidth": 390,
+      "sidebar": null,
+      "mains": [
+        {
+          "x": 0,
+          "y": 88,
+          "width": 390,
+          "height": 289
+        }
+      ]
+    },
+    {
+      "file": "resources/views/pages/competicoes/equipe-alunos.php",
+      "width": 640,
+      "height": 360,
+      "scrollWidth": 640,
+      "sidebar": null,
+      "mains": [
+        {
+          "x": 0,
+          "y": 88,
+          "width": 640,
+          "height": 268
+        }
+      ]
+    },
+    {
+      "file": "resources/views/pages/competicoes/equipe-alunos.php",
+      "width": 1024,
+      "height": 768,
+      "scrollWidth": 1024,
+      "sidebar": null,
+      "mains": [
+        {
+          "x": 0,
+          "y": 88,
+          "width": 1024,
+          "height": 247
+        }
+      ]
+    },
+    {
+      "file": "resources/views/pages/competicoes/equipe-alunos.php",
+      "width": 1440,
+      "height": 900,
+      "scrollWidth": 1440,
+      "sidebar": {
+        "box": {
+          "x": 0,
+          "y": 0,
+          "width": 80,
+          "height": 900
+        },
+        "bg": "rgb(227, 6, 19)",
+        "linkColor": "rgb(255, 255, 255)"
+      },
+      "mains": [
+        {
+          "x": 80,
+          "y": 0,
+          "width": 1360,
+          "height": 371
+        }
+      ]
+    },
+    {
+      "file": "resources/views/pages/competicoes/jogos.php",
+      "width": 320,
+      "height": 568,
+      "scrollWidth": 320,
+      "sidebar": null,
+      "mains": [
+        {
+          "x": 0,
+          "y": 72,
+          "width": 320,
+          "height": 192
+        }
+      ]
+    },
+    {
+      "file": "resources/views/pages/competicoes/jogos.php",
+      "width": 390,
+      "height": 844,
+      "scrollWidth": 390,
+      "sidebar": null,
+      "mains": [
+        {
+          "x": 0,
+          "y": 72,
+          "width": 390,
+          "height": 168
+        }
+      ]
+    },
+    {
+      "file": "resources/views/pages/competicoes/jogos.php",
+      "width": 640,
+      "height": 360,
+      "scrollWidth": 640,
+      "sidebar": null,
+      "mains": [
+        {
+          "x": 0,
+          "y": 72,
+          "width": 540,
+          "height": 168
+        }
+      ]
+    },
+    {
+      "file": "resources/views/pages/competicoes/jogos.php",
+      "width": 1024,
+      "height": 768,
+      "scrollWidth": 1024,
+      "sidebar": null,
+      "mains": [
+        {
+          "x": 0,
+          "y": 72,
+          "width": 960,
+          "height": 168
+        }
+      ]
+    },
+    {
+      "file": "resources/views/pages/competicoes/jogos.php",
+      "width": 1440,
+      "height": 900,
+      "scrollWidth": 1440,
+      "sidebar": {
+        "box": {
+          "x": 0,
+          "y": 0,
+          "width": 80,
+          "height": 900
+        },
+        "bg": "rgb(227, 6, 19)",
+        "linkColor": "rgb(255, 255, 255)"
+      },
+      "mains": [
+        {
+          "x": 80,
+          "y": 0,
+          "width": 1320,
+          "height": 168
+        }
+      ]
+    },
+    {
+      "file": "resources/views/pages/competicoes/modalidade-detalhes.php",
+      "width": 320,
+      "height": 568,
+      "scrollWidth": 320,
+      "sidebar": null,
+      "mains": [
+        {
+          "x": 0,
+          "y": 72,
+          "width": 320,
+          "height": 616.890625
+        }
+      ]
+    },
+    {
+      "file": "resources/views/pages/competicoes/modalidade-detalhes.php",
+      "width": 390,
+      "height": 844,
+      "scrollWidth": 390,
+      "sidebar": null,
+      "mains": [
+        {
+          "x": 0,
+          "y": 72,
+          "width": 390,
+          "height": 609.640625
+        }
+      ]
+    },
+    {
+      "file": "resources/views/pages/competicoes/modalidade-detalhes.php",
+      "width": 640,
+      "height": 360,
+      "scrollWidth": 640,
+      "sidebar": null,
+      "mains": [
+        {
+          "x": 0,
+          "y": 72,
+          "width": 640,
+          "height": 612.34375
+        }
+      ]
+    },
+    {
+      "file": "resources/views/pages/competicoes/modalidade-detalhes.php",
+      "width": 1024,
+      "height": 768,
+      "scrollWidth": 1024,
+      "sidebar": null,
+      "mains": [
+        {
+          "x": 0,
+          "y": 72,
+          "width": 1024,
+          "height": 496.5
+        }
+      ]
+    },
+    {
+      "file": "resources/views/pages/competicoes/modalidade-detalhes.php",
+      "width": 1440,
+      "height": 900,
+      "scrollWidth": 1440,
+      "sidebar": {
+        "box": {
+          "x": 0,
+          "y": 0,
+          "width": 80,
+          "height": 900
+        },
+        "bg": "rgb(227, 6, 19)",
+        "linkColor": "rgb(255, 255, 255)"
+      },
+      "mains": [
+        {
+          "x": 80,
+          "y": 0,
+          "width": 1360,
+          "height": 554.390625
+        }
+      ]
+    },
+    {
+      "file": "resources/views/pages/competicoes/modalidades.php",
+      "width": 320,
+      "height": 568,
+      "scrollWidth": 320,
+      "sidebar": null,
+      "mains": [
+        {
+          "x": 0,
+          "y": 96,
+          "width": 320,
+          "height": 37
+        }
+      ]
+    },
+    {
+      "file": "resources/views/pages/competicoes/modalidades.php",
+      "width": 390,
+      "height": 844,
+      "scrollWidth": 390,
+      "sidebar": null,
+      "mains": [
+        {
+          "x": 0,
+          "y": 96,
+          "width": 390,
+          "height": 37
+        }
+      ]
+    },
+    {
+      "file": "resources/views/pages/competicoes/modalidades.php",
+      "width": 640,
+      "height": 360,
+      "scrollWidth": 640,
+      "sidebar": null,
+      "mains": [
+        {
+          "x": 0,
+          "y": 96,
+          "width": 640,
+          "height": 37
+        }
+      ]
+    },
+    {
+      "file": "resources/views/pages/competicoes/modalidades.php",
+      "width": 1024,
+      "height": 768,
+      "scrollWidth": 1024,
+      "sidebar": null,
+      "mains": [
+        {
+          "x": 0,
+          "y": 96,
+          "width": 1024,
+          "height": 37
+        }
+      ]
+    },
+    {
+      "file": "resources/views/pages/competicoes/modalidades.php",
+      "width": 1440,
+      "height": 900,
+      "scrollWidth": 1440,
+      "sidebar": {
+        "box": {
+          "x": 0,
+          "y": 0,
+          "width": 80,
+          "height": 900
+        },
+        "bg": "rgb(227, 6, 19)",
+        "linkColor": "rgb(255, 255, 255)"
+      },
+      "mains": [
+        {
+          "x": 80,
+          "y": 0,
+          "width": 1360,
+          "height": 238
+        }
+      ]
+    },
+    {
+      "file": "resources/views/pages/competicoes/placar.php",
+      "width": 320,
+      "height": 568,
+      "scrollWidth": 320,
+      "sidebar": null,
+      "mains": [
+        {
+          "x": 0,
+          "y": 72,
+          "width": 320,
+          "height": 274.5
+        }
+      ]
+    },
+    {
+      "file": "resources/views/pages/competicoes/placar.php",
+      "width": 390,
+      "height": 844,
+      "scrollWidth": 390,
+      "sidebar": null,
+      "mains": [
+        {
+          "x": 0,
+          "y": 72,
+          "width": 390,
+          "height": 274.5
+        }
+      ]
+    },
+    {
+      "file": "resources/views/pages/competicoes/placar.php",
+      "width": 640,
+      "height": 360,
+      "scrollWidth": 640,
+      "sidebar": null,
+      "mains": [
+        {
+          "x": 0,
+          "y": 72,
+          "width": 640,
+          "height": 274.5
+        }
+      ]
+    },
+    {
+      "file": "resources/views/pages/competicoes/placar.php",
+      "width": 1024,
+      "height": 768,
+      "scrollWidth": 1024,
+      "sidebar": null,
+      "mains": [
+        {
+          "x": 0,
+          "y": 72,
+          "width": 1024,
+          "height": 274.5
+        }
+      ]
+    },
+    {
+      "file": "resources/views/pages/competicoes/placar.php",
+      "width": 1440,
+      "height": 900,
+      "scrollWidth": 1440,
+      "sidebar": {
+        "box": {
+          "x": 0,
+          "y": 0,
+          "width": 80,
+          "height": 900
+        },
+        "bg": "rgb(227, 6, 19)",
+        "linkColor": "rgb(255, 255, 255)"
+      },
+      "mains": [
+        {
+          "x": 80,
+          "y": 0,
+          "width": 1360,
+          "height": 385
+        }
+      ]
+    },
+    {
+      "file": "resources/views/pages/disciplina/ocorrencias.php",
+      "width": 320,
+      "height": 568,
+      "scrollWidth": 320,
+      "sidebar": null,
+      "mains": [
+        {
+          "x": 0,
+          "y": 72,
+          "width": 320,
+          "height": 333.25
+        }
+      ]
+    },
+    {
+      "file": "resources/views/pages/disciplina/ocorrencias.php",
+      "width": 390,
+      "height": 844,
+      "scrollWidth": 390,
+      "sidebar": null,
+      "mains": [
+        {
+          "x": 0,
+          "y": 72,
+          "width": 390,
+          "height": 333.765625
+        }
+      ]
+    },
+    {
+      "file": "resources/views/pages/disciplina/ocorrencias.php",
+      "width": 640,
+      "height": 360,
+      "scrollWidth": 640,
+      "sidebar": null,
+      "mains": [
+        {
+          "x": 0,
+          "y": 72,
+          "width": 640,
+          "height": 311.5625
+        }
+      ]
+    },
+    {
+      "file": "resources/views/pages/disciplina/ocorrencias.php",
+      "width": 1024,
+      "height": 768,
+      "scrollWidth": 1024,
+      "sidebar": null,
+      "mains": [
+        {
+          "x": 0,
+          "y": 72,
+          "width": 1024,
+          "height": 314.3125
+        }
+      ]
+    },
+    {
+      "file": "resources/views/pages/disciplina/ocorrencias.php",
+      "width": 1440,
+      "height": 900,
+      "scrollWidth": 1440,
+      "sidebar": {
+        "box": {
+          "x": 0,
+          "y": 0,
+          "width": 80,
+          "height": 900
+        },
+        "bg": "rgb(227, 6, 19)",
+        "linkColor": "rgb(255, 255, 255)"
+      },
+      "mains": [
+        {
+          "x": 80,
+          "y": 0,
+          "width": 1360,
+          "height": 387.59375
+        }
+      ]
+    },
+    {
+      "file": "resources/views/pages/eventos/categorias.php",
+      "width": 320,
+      "height": 568,
+      "scrollWidth": 320,
+      "sidebar": null,
+      "mains": [
+        {
+          "x": 0,
+          "y": 72,
+          "width": 320,
+          "height": 123
+        }
+      ]
+    },
+    {
+      "file": "resources/views/pages/eventos/categorias.php",
+      "width": 390,
+      "height": 844,
+      "scrollWidth": 390,
+      "sidebar": null,
+      "mains": [
+        {
+          "x": 0,
+          "y": 72,
+          "width": 390,
+          "height": 123
+        }
+      ]
+    },
+    {
+      "file": "resources/views/pages/eventos/categorias.php",
+      "width": 640,
+      "height": 360,
+      "scrollWidth": 640,
+      "sidebar": null,
+      "mains": [
+        {
+          "x": 0,
+          "y": 72,
+          "width": 640,
+          "height": 123
+        }
+      ]
+    },
+    {
+      "file": "resources/views/pages/eventos/categorias.php",
+      "width": 1024,
+      "height": 768,
+      "scrollWidth": 1024,
+      "sidebar": null,
+      "mains": [
+        {
+          "x": 0,
+          "y": 72,
+          "width": 1024,
+          "height": 123
+        }
+      ]
+    },
+    {
+      "file": "resources/views/pages/eventos/categorias.php",
+      "width": 1440,
+      "height": 900,
+      "scrollWidth": 1440,
+      "sidebar": {
+        "box": {
+          "x": 0,
+          "y": 0,
+          "width": 80,
+          "height": 900
+        },
+        "bg": "rgb(227, 6, 19)",
+        "linkColor": "rgb(255, 255, 255)"
+      },
+      "mains": [
+        {
+          "x": 80,
+          "y": 0,
+          "width": 1360,
+          "height": 238
+        }
+      ]
+    },
+    {
+      "file": "resources/views/pages/eventos/configurar-agenda.php",
+      "width": 320,
+      "height": 568,
+      "scrollWidth": 320,
+      "sidebar": null,
+      "mains": [
+        {
+          "x": 0,
+          "y": 72,
+          "width": 320,
+          "height": 530.1875
+        }
+      ]
+    },
+    {
+      "file": "resources/views/pages/eventos/configurar-agenda.php",
+      "width": 390,
+      "height": 844,
+      "scrollWidth": 390,
+      "sidebar": null,
+      "mains": [
+        {
+          "x": 0,
+          "y": 72,
+          "width": 390,
+          "height": 530.1875
+        }
+      ]
+    },
+    {
+      "file": "resources/views/pages/eventos/configurar-agenda.php",
+      "width": 640,
+      "height": 360,
+      "scrollWidth": 640,
+      "sidebar": null,
+      "mains": [
+        {
+          "x": 0,
+          "y": 72,
+          "width": 640,
+          "height": 530.1875
+        }
+      ]
+    },
+    {
+      "file": "resources/views/pages/eventos/configurar-agenda.php",
+      "width": 1024,
+      "height": 768,
+      "scrollWidth": 1024,
+      "sidebar": null,
+      "mains": [
+        {
+          "x": 0,
+          "y": 72,
+          "width": 1024,
+          "height": 530.1875
+        }
+      ]
+    },
+    {
+      "file": "resources/views/pages/eventos/configurar-agenda.php",
+      "width": 1440,
+      "height": 900,
+      "scrollWidth": 1440,
+      "sidebar": {
+        "box": {
+          "x": 0,
+          "y": 0,
+          "width": 80,
+          "height": 900
+        },
+        "bg": "rgb(227, 6, 19)",
+        "linkColor": "rgb(255, 255, 255)"
+      },
+      "mains": [
+        {
+          "x": 80,
+          "y": 0,
+          "width": 1360,
+          "height": 389.796875
+        }
+      ]
+    },
+    {
+      "file": "resources/views/pages/eventos/configurar-arrecadacao.php",
+      "width": 320,
+      "height": 568,
+      "scrollWidth": 320,
+      "sidebar": null,
+      "mains": [
+        {
+          "x": 0,
+          "y": 72,
+          "width": 320,
+          "height": 405.25
+        }
+      ]
+    },
+    {
+      "file": "resources/views/pages/eventos/configurar-arrecadacao.php",
+      "width": 390,
+      "height": 844,
+      "scrollWidth": 390,
+      "sidebar": null,
+      "mains": [
+        {
+          "x": 0,
+          "y": 72,
+          "width": 390,
+          "height": 381.765625
+        }
+      ]
+    },
+    {
+      "file": "resources/views/pages/eventos/configurar-arrecadacao.php",
+      "width": 640,
+      "height": 360,
+      "scrollWidth": 640,
+      "sidebar": null,
+      "mains": [
+        {
+          "x": 0,
+          "y": 72,
+          "width": 640,
+          "height": 383.5625
+        }
+      ]
+    },
+    {
+      "file": "resources/views/pages/eventos/configurar-arrecadacao.php",
+      "width": 1024,
+      "height": 768,
+      "scrollWidth": 1024,
+      "sidebar": null,
+      "mains": [
+        {
+          "x": 0,
+          "y": 72,
+          "width": 1024,
+          "height": 386.3125
+        }
+      ]
+    },
+    {
+      "file": "resources/views/pages/eventos/configurar-arrecadacao.php",
+      "width": 1440,
+      "height": 900,
+      "scrollWidth": 1440,
+      "sidebar": {
+        "box": {
+          "x": 0,
+          "y": 0,
+          "width": 80,
+          "height": 900
+        },
+        "bg": "rgb(227, 6, 19)",
+        "linkColor": "rgb(255, 255, 255)"
+      },
+      "mains": [
+        {
+          "x": 80,
+          "y": 0,
+          "width": 1360,
+          "height": 387.59375
+        }
+      ]
+    },
+    {
+      "file": "resources/views/pages/eventos/configurar-categorias.php",
+      "width": 320,
+      "height": 568,
+      "scrollWidth": 320,
+      "sidebar": null,
+      "mains": [
+        {
+          "x": 0,
+          "y": 72,
+          "width": 320,
+          "height": 123
+        }
+      ]
+    },
+    {
+      "file": "resources/views/pages/eventos/configurar-categorias.php",
+      "width": 390,
+      "height": 844,
+      "scrollWidth": 390,
+      "sidebar": null,
+      "mains": [
+        {
+          "x": 0,
+          "y": 72,
+          "width": 390,
+          "height": 123
+        }
+      ]
+    },
+    {
+      "file": "resources/views/pages/eventos/configurar-categorias.php",
+      "width": 640,
+      "height": 360,
+      "scrollWidth": 640,
+      "sidebar": null,
+      "mains": [
+        {
+          "x": 0,
+          "y": 72,
+          "width": 640,
+          "height": 123
+        }
+      ]
+    },
+    {
+      "file": "resources/views/pages/eventos/configurar-categorias.php",
+      "width": 1024,
+      "height": 768,
+      "scrollWidth": 1024,
+      "sidebar": null,
+      "mains": [
+        {
+          "x": 0,
+          "y": 72,
+          "width": 1024,
+          "height": 123
+        }
+      ]
+    },
+    {
+      "file": "resources/views/pages/eventos/configurar-categorias.php",
+      "width": 1440,
+      "height": 900,
+      "scrollWidth": 1440,
+      "sidebar": {
+        "box": {
+          "x": 0,
+          "y": 0,
+          "width": 80,
+          "height": 900
+        },
+        "bg": "rgb(227, 6, 19)",
+        "linkColor": "rgb(255, 255, 255)"
+      },
+      "mains": [
+        {
+          "x": 80,
+          "y": 0,
+          "width": 1360,
+          "height": 238
+        }
+      ]
+    },
+    {
+      "file": "resources/views/pages/eventos/configurar-equipes.php",
+      "width": 320,
+      "height": 568,
+      "scrollWidth": 320,
+      "sidebar": null,
+      "mains": [
+        {
+          "x": 0,
+          "y": 72,
+          "width": 320,
+          "height": 270
+        }
+      ]
+    },
+    {
+      "file": "resources/views/pages/eventos/configurar-equipes.php",
+      "width": 390,
+      "height": 844,
+      "scrollWidth": 390,
+      "sidebar": null,
+      "mains": [
+        {
+          "x": 0,
+          "y": 72,
+          "width": 390,
+          "height": 249
+        }
+      ]
+    },
+    {
+      "file": "resources/views/pages/eventos/configurar-equipes.php",
+      "width": 640,
+      "height": 360,
+      "scrollWidth": 640,
+      "sidebar": null,
+      "mains": [
+        {
+          "x": 0,
+          "y": 72,
+          "width": 640,
+          "height": 249
+        }
+      ]
+    },
+    {
+      "file": "resources/views/pages/eventos/configurar-equipes.php",
+      "width": 1024,
+      "height": 768,
+      "scrollWidth": 1024,
+      "sidebar": null,
+      "mains": [
+        {
+          "x": 0,
+          "y": 72,
+          "width": 1024,
+          "height": 249
+        }
+      ]
+    },
+    {
+      "file": "resources/views/pages/eventos/configurar-equipes.php",
+      "width": 1440,
+      "height": 900,
+      "scrollWidth": 1440,
+      "sidebar": {
+        "box": {
+          "x": 0,
+          "y": 0,
+          "width": 80,
+          "height": 900
+        },
+        "bg": "rgb(227, 6, 19)",
+        "linkColor": "rgb(255, 255, 255)"
+      },
+      "mains": [
+        {
+          "x": 80,
+          "y": 0,
+          "width": 1360,
+          "height": 312
+        }
+      ]
+    },
+    {
+      "file": "resources/views/pages/eventos/configurar-locais.php",
+      "width": 320,
+      "height": 568,
+      "scrollWidth": 320,
+      "sidebar": null,
+      "mains": [
+        {
+          "x": 0,
+          "y": 96,
+          "width": 320,
+          "height": 476
+        }
+      ]
+    },
+    {
+      "file": "resources/views/pages/eventos/configurar-locais.php",
+      "width": 390,
+      "height": 844,
+      "scrollWidth": 390,
+      "sidebar": null,
+      "mains": [
+        {
+          "x": 0,
+          "y": 96,
+          "width": 390,
+          "height": 448.703125
+        }
+      ]
+    },
+    {
+      "file": "resources/views/pages/eventos/configurar-locais.php",
+      "width": 640,
+      "height": 360,
+      "scrollWidth": 640,
+      "sidebar": null,
+      "mains": [
+        {
+          "x": 0,
+          "y": 96,
+          "width": 640,
+          "height": 450.953125
+        }
+      ]
+    },
+    {
+      "file": "resources/views/pages/eventos/configurar-locais.php",
+      "width": 1024,
+      "height": 768,
+      "scrollWidth": 1024,
+      "sidebar": null,
+      "mains": [
+        {
+          "x": 0,
+          "y": 96,
+          "width": 1024,
+          "height": 342.40625
+        }
+      ]
+    },
+    {
+      "file": "resources/views/pages/eventos/configurar-locais.php",
+      "width": 1440,
+      "height": 900,
+      "scrollWidth": 1440,
+      "sidebar": {
+        "box": {
+          "x": 0,
+          "y": 0,
+          "width": 80,
+          "height": 900
+        },
+        "bg": "rgb(227, 6, 19)",
+        "linkColor": "rgb(255, 255, 255)"
+      },
+      "mains": [
+        {
+          "x": 80,
+          "y": 24,
+          "width": 1360,
+          "height": 400
+        }
+      ]
+    },
+    {
+      "file": "resources/views/pages/eventos/configurar-modalidades.php",
+      "width": 320,
+      "height": 568,
+      "scrollWidth": 416,
+      "sidebar": null,
+      "mains": [
+        {
+          "x": 0,
+          "y": 72,
+          "width": 320,
+          "height": 312.25
+        }
+      ]
+    },
+    {
+      "file": "resources/views/pages/eventos/configurar-modalidades.php",
+      "width": 390,
+      "height": 844,
+      "scrollWidth": 416,
+      "sidebar": null,
+      "mains": [
+        {
+          "x": 0,
+          "y": 72,
+          "width": 390,
+          "height": 312.765625
+        }
+      ]
+    },
+    {
+      "file": "resources/views/pages/eventos/configurar-modalidades.php",
+      "width": 640,
+      "height": 360,
+      "scrollWidth": 640,
+      "sidebar": null,
+      "mains": [
+        {
+          "x": 0,
+          "y": 72,
+          "width": 640,
+          "height": 232.5625
+        }
+      ]
+    },
+    {
+      "file": "resources/views/pages/eventos/configurar-modalidades.php",
+      "width": 1024,
+      "height": 768,
+      "scrollWidth": 1024,
+      "sidebar": null,
+      "mains": [
+        {
+          "x": 0,
+          "y": 72,
+          "width": 1024,
+          "height": 235.3125
+        }
+      ]
+    },
+    {
+      "file": "resources/views/pages/eventos/configurar-modalidades.php",
+      "width": 1440,
+      "height": 900,
+      "scrollWidth": 1440,
+      "sidebar": {
+        "box": {
+          "x": 0,
+          "y": 0,
+          "width": 80,
+          "height": 900
+        },
+        "bg": "rgb(227, 6, 19)",
+        "linkColor": "rgb(255, 255, 255)"
+      },
+      "mains": [
+        {
+          "x": 80,
+          "y": 0,
+          "width": 1360,
+          "height": 292.59375
+        }
+      ]
+    },
+    {
+      "file": "resources/views/pages/eventos/configurar-pontuacao.php",
+      "width": 320,
+      "height": 568,
+      "scrollWidth": 320,
+      "sidebar": null,
+      "mains": [
+        {
+          "x": 0,
+          "y": 72,
+          "width": 320,
+          "height": 1545.25
+        }
+      ]
+    },
+    {
+      "file": "resources/views/pages/eventos/configurar-pontuacao.php",
+      "width": 390,
+      "height": 844,
+      "scrollWidth": 390,
+      "sidebar": null,
+      "mains": [
+        {
+          "x": 0,
+          "y": 72,
+          "width": 390,
+          "height": 1500.765625
+        }
+      ]
+    },
+    {
+      "file": "resources/views/pages/eventos/configurar-pontuacao.php",
+      "width": 640,
+      "height": 360,
+      "scrollWidth": 640,
+      "sidebar": null,
+      "mains": [
+        {
+          "x": 0,
+          "y": 72,
+          "width": 640,
+          "height": 1334.5625
+        }
+      ]
+    },
+    {
+      "file": "resources/views/pages/eventos/configurar-pontuacao.php",
+      "width": 1024,
+      "height": 768,
+      "scrollWidth": 1024,
+      "sidebar": null,
+      "mains": [
+        {
+          "x": 0,
+          "y": 72,
+          "width": 1024,
+          "height": 723.3125
+        }
+      ]
+    },
+    {
+      "file": "resources/views/pages/eventos/configurar-pontuacao.php",
+      "width": 1440,
+      "height": 900,
+      "scrollWidth": 1440,
+      "sidebar": {
+        "box": {
+          "x": 0,
+          "y": 0,
+          "width": 80,
+          "height": 900
+        },
+        "bg": "rgb(227, 6, 19)",
+        "linkColor": "rgb(255, 255, 255)"
+      },
+      "mains": [
+        {
+          "x": 80,
+          "y": 0,
+          "width": 1360,
+          "height": 533.59375
+        }
+      ]
+    },
+    {
+      "file": "resources/views/pages/eventos/configurar-resumo.php",
+      "width": 320,
+      "height": 568,
+      "scrollWidth": 320,
+      "sidebar": null,
+      "mains": [
+        {
+          "x": 0,
+          "y": 96,
+          "width": 320,
+          "height": 380
+        }
+      ]
+    },
+    {
+      "file": "resources/views/pages/eventos/configurar-resumo.php",
+      "width": 390,
+      "height": 844,
+      "scrollWidth": 390,
+      "sidebar": null,
+      "mains": [
+        {
+          "x": 0,
+          "y": 96,
+          "width": 390,
+          "height": 380
+        }
+      ]
+    },
+    {
+      "file": "resources/views/pages/eventos/configurar-resumo.php",
+      "width": 640,
+      "height": 360,
+      "scrollWidth": 640,
+      "sidebar": null,
+      "mains": [
+        {
+          "x": 0,
+          "y": 96,
+          "width": 640,
+          "height": 380
+        }
+      ]
+    },
+    {
+      "file": "resources/views/pages/eventos/configurar-resumo.php",
+      "width": 1024,
+      "height": 768,
+      "scrollWidth": 1024,
+      "sidebar": null,
+      "mains": [
+        {
+          "x": 0,
+          "y": 96,
+          "width": 1024,
+          "height": 380
+        }
+      ]
+    },
+    {
+      "file": "resources/views/pages/eventos/configurar-resumo.php",
+      "width": 1440,
+      "height": 900,
+      "scrollWidth": 1440,
+      "sidebar": {
+        "box": {
+          "x": 0,
+          "y": 0,
+          "width": 80,
+          "height": 900
+        },
+        "bg": "rgb(227, 6, 19)",
+        "linkColor": "rgb(255, 255, 255)"
+      },
+      "mains": [
+        {
+          "x": 80,
+          "y": 0,
+          "width": 1360,
+          "height": 662.75
+        }
+      ]
+    },
+    {
+      "file": "resources/views/pages/eventos/configurar-turmas.php",
+      "width": 320,
+      "height": 568,
+      "scrollWidth": 320,
+      "sidebar": null,
+      "mains": [
+        {
+          "x": 0,
+          "y": 72,
+          "width": 320,
+          "height": 197
+        }
+      ]
+    },
+    {
+      "file": "resources/views/pages/eventos/configurar-turmas.php",
+      "width": 390,
+      "height": 844,
+      "scrollWidth": 390,
+      "sidebar": null,
+      "mains": [
+        {
+          "x": 0,
+          "y": 72,
+          "width": 390,
+          "height": 197
+        }
+      ]
+    },
+    {
+      "file": "resources/views/pages/eventos/configurar-turmas.php",
+      "width": 640,
+      "height": 360,
+      "scrollWidth": 640,
+      "sidebar": null,
+      "mains": [
+        {
+          "x": 0,
+          "y": 72,
+          "width": 640,
+          "height": 197
+        }
+      ]
+    },
+    {
+      "file": "resources/views/pages/eventos/configurar-turmas.php",
+      "width": 1024,
+      "height": 768,
+      "scrollWidth": 1024,
+      "sidebar": null,
+      "mains": [
+        {
+          "x": 0,
+          "y": 72,
+          "width": 1024,
+          "height": 197
+        }
+      ]
+    },
+    {
+      "file": "resources/views/pages/eventos/configurar-turmas.php",
+      "width": 1440,
+      "height": 900,
+      "scrollWidth": 1440,
+      "sidebar": {
+        "box": {
+          "x": 0,
+          "y": 0,
+          "width": 80,
+          "height": 900
+        },
+        "bg": "rgb(227, 6, 19)",
+        "linkColor": "rgb(255, 255, 255)"
+      },
+      "mains": [
+        {
+          "x": 80,
+          "y": 0,
+          "width": 1360,
+          "height": 314
+        }
+      ]
+    },
+    {
+      "file": "resources/views/pages/eventos/dashboard.php",
+      "width": 320,
+      "height": 568,
+      "scrollWidth": 414,
+      "sidebar": null,
+      "mains": [
+        {
+          "x": 0,
+          "y": 72,
+          "width": 320,
+          "height": 1418
+        }
+      ]
+    },
+    {
+      "file": "resources/views/pages/eventos/dashboard.php",
+      "width": 390,
+      "height": 844,
+      "scrollWidth": 449,
+      "sidebar": null,
+      "mains": [
+        {
+          "x": 0,
+          "y": 72,
+          "width": 390,
+          "height": 1267.546875
+        }
+      ]
+    },
+    {
+      "file": "resources/views/pages/eventos/dashboard.php",
+      "width": 640,
+      "height": 360,
+      "scrollWidth": 640,
+      "sidebar": null,
+      "mains": [
+        {
+          "x": 0,
+          "y": 72,
+          "width": 640,
+          "height": 1029.59375
+        }
+      ]
+    },
+    {
+      "file": "resources/views/pages/eventos/dashboard.php",
+      "width": 1024,
+      "height": 768,
+      "scrollWidth": 1024,
+      "sidebar": null,
+      "mains": [
+        {
+          "x": 0,
+          "y": 72,
+          "width": 1024,
+          "height": 953.90625
+        }
+      ]
+    },
+    {
+      "file": "resources/views/pages/eventos/dashboard.php",
+      "width": 1440,
+      "height": 900,
+      "scrollWidth": 1440,
+      "sidebar": {
+        "box": {
+          "x": 0,
+          "y": 0,
+          "width": 80,
+          "height": 900
+        },
+        "bg": "rgb(227, 6, 19)",
+        "linkColor": "rgb(255, 255, 255)"
+      },
+      "mains": [
+        {
+          "x": 80,
+          "y": 0,
+          "width": 1360,
+          "height": 1007
+        }
+      ]
+    },
+    {
+      "file": "resources/views/pages/eventos/lista.php",
+      "width": 320,
+      "height": 568,
+      "scrollWidth": 320,
+      "sidebar": null,
+      "mains": [
+        {
+          "x": 0,
+          "y": 88,
+          "width": 320,
+          "height": 142
+        }
+      ]
+    },
+    {
+      "file": "resources/views/pages/eventos/lista.php",
+      "width": 390,
+      "height": 844,
+      "scrollWidth": 390,
+      "sidebar": null,
+      "mains": [
+        {
+          "x": 0,
+          "y": 88,
+          "width": 390,
+          "height": 142
+        }
+      ]
+    },
+    {
+      "file": "resources/views/pages/eventos/lista.php",
+      "width": 640,
+      "height": 360,
+      "scrollWidth": 640,
+      "sidebar": null,
+      "mains": [
+        {
+          "x": 0,
+          "y": 88,
+          "width": 640,
+          "height": 142
+        }
+      ]
+    },
+    {
+      "file": "resources/views/pages/eventos/lista.php",
+      "width": 1024,
+      "height": 768,
+      "scrollWidth": 1024,
+      "sidebar": null,
+      "mains": [
+        {
+          "x": 0,
+          "y": 88,
+          "width": 1024,
+          "height": 142
+        }
+      ]
+    },
+    {
+      "file": "resources/views/pages/eventos/lista.php",
+      "width": 1440,
+      "height": 900,
+      "scrollWidth": 1440,
+      "sidebar": {
+        "box": {
+          "x": 0,
+          "y": 0,
+          "width": 80,
+          "height": 900
+        },
+        "bg": "rgb(227, 6, 19)",
+        "linkColor": "rgb(255, 255, 255)"
+      },
+      "mains": [
+        {
+          "x": 80,
+          "y": 0,
+          "width": 1360,
+          "height": 324
+        }
+      ]
+    },
+    {
+      "file": "resources/views/pages/participantes/turma-alunos.php",
+      "width": 320,
+      "height": 568,
+      "scrollWidth": 320,
+      "sidebar": null,
+      "mains": [
+        {
+          "x": 0,
+          "y": 72,
+          "width": 320,
+          "height": 568
+        }
+      ]
+    },
+    {
+      "file": "resources/views/pages/participantes/turma-alunos.php",
+      "width": 390,
+      "height": 844,
+      "scrollWidth": 390,
+      "sidebar": null,
+      "mains": [
+        {
+          "x": 0,
+          "y": 72,
+          "width": 390,
+          "height": 844
+        }
+      ]
+    },
+    {
+      "file": "resources/views/pages/participantes/turma-alunos.php",
+      "width": 640,
+      "height": 360,
+      "scrollWidth": 640,
+      "sidebar": null,
+      "mains": [
+        {
+          "x": 0,
+          "y": 72,
+          "width": 640,
+          "height": 442.5625
+        }
+      ]
+    },
+    {
+      "file": "resources/views/pages/participantes/turma-alunos.php",
+      "width": 1024,
+      "height": 768,
+      "scrollWidth": 1024,
+      "sidebar": null,
+      "mains": [
+        {
+          "x": 0,
+          "y": 72,
+          "width": 1024,
+          "height": 768
+        }
+      ]
+    },
+    {
+      "file": "resources/views/pages/participantes/turma-alunos.php",
+      "width": 1440,
+      "height": 900,
+      "scrollWidth": 1440,
+      "sidebar": {
+        "box": {
+          "x": 0,
+          "y": 0,
+          "width": 80,
+          "height": 900
+        },
+        "bg": "rgb(227, 6, 19)",
+        "linkColor": "rgb(255, 255, 255)"
+      },
+      "mains": [
+        {
+          "x": 80,
+          "y": 0,
+          "width": 1360,
+          "height": 479.59375
+        }
+      ]
+    },
+    {
+      "file": "resources/views/pages/participantes/turmas.php",
+      "width": 320,
+      "height": 568,
+      "scrollWidth": 320,
+      "sidebar": null,
+      "mains": [
+        {
+          "x": 0,
+          "y": 72,
+          "width": 320,
+          "height": 118
+        }
+      ]
+    },
+    {
+      "file": "resources/views/pages/participantes/turmas.php",
+      "width": 390,
+      "height": 844,
+      "scrollWidth": 390,
+      "sidebar": null,
+      "mains": [
+        {
+          "x": 0,
+          "y": 72,
+          "width": 390,
+          "height": 118
+        }
+      ]
+    },
+    {
+      "file": "resources/views/pages/participantes/turmas.php",
+      "width": 640,
+      "height": 360,
+      "scrollWidth": 640,
+      "sidebar": null,
+      "mains": [
+        {
+          "x": 0,
+          "y": 72,
+          "width": 640,
+          "height": 118
+        }
+      ]
+    },
+    {
+      "file": "resources/views/pages/participantes/turmas.php",
+      "width": 1024,
+      "height": 768,
+      "scrollWidth": 1024,
+      "sidebar": null,
+      "mains": [
+        {
+          "x": 0,
+          "y": 72,
+          "width": 1024,
+          "height": 118
+        }
+      ]
+    },
+    {
+      "file": "resources/views/pages/participantes/turmas.php",
+      "width": 1440,
+      "height": 900,
+      "scrollWidth": 1440,
+      "sidebar": {
+        "box": {
+          "x": 0,
+          "y": 0,
+          "width": 80,
+          "height": 900
+        },
+        "bg": "rgb(227, 6, 19)",
+        "linkColor": "rgb(255, 255, 255)"
+      },
+      "mains": [
+        {
+          "x": 80,
+          "y": 0,
+          "width": 1360,
+          "height": 174
+        }
+      ]
+    },
+    {
+      "file": "resources/views/pages/resultados/ranking.php",
+      "width": 320,
+      "height": 568,
+      "scrollWidth": 320,
+      "sidebar": null,
+      "mains": [
+        {
+          "x": 0,
+          "y": 72,
+          "width": 320,
+          "height": 95
+        }
+      ]
+    },
+    {
+      "file": "resources/views/pages/resultados/ranking.php",
+      "width": 390,
+      "height": 844,
+      "scrollWidth": 390,
+      "sidebar": null,
+      "mains": [
+        {
+          "x": 0,
+          "y": 72,
+          "width": 390,
+          "height": 95
+        }
+      ]
+    },
+    {
+      "file": "resources/views/pages/resultados/ranking.php",
+      "width": 640,
+      "height": 360,
+      "scrollWidth": 640,
+      "sidebar": null,
+      "mains": [
+        {
+          "x": 0,
+          "y": 72,
+          "width": 640,
+          "height": 95
+        }
+      ]
+    },
+    {
+      "file": "resources/views/pages/resultados/ranking.php",
+      "width": 1024,
+      "height": 768,
+      "scrollWidth": 1024,
+      "sidebar": null,
+      "mains": [
+        {
+          "x": 0,
+          "y": 72,
+          "width": 1024,
+          "height": 95
+        }
+      ]
+    },
+    {
+      "file": "resources/views/pages/resultados/ranking.php",
+      "width": 1440,
+      "height": 900,
+      "scrollWidth": 1440,
+      "sidebar": {
+        "box": {
+          "x": 0,
+          "y": 0,
+          "width": 80,
+          "height": 900
+        },
+        "bg": "rgb(227, 6, 19)",
+        "linkColor": "rgb(255, 255, 255)"
+      },
+      "mains": [
+        {
+          "x": 80,
+          "y": 0,
+          "width": 1360,
+          "height": 182
+        }
+      ]
+    }
+  ]
+}
