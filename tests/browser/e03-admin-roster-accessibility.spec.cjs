@@ -35,6 +35,12 @@ const fixture = {
         matricula_usuario: 'E03-9901',
         nivel_usuario: '1',
         genero_usuario: 'FEM',
+    }, {
+        id_usuario: 9904,
+        nome_usuario: 'Administrador protegido',
+        matricula_usuario: 'E03-9904',
+        nivel_usuario: '0',
+        genero_usuario: 'MASC',
     }],
     students: [
         { id_usuario: 9902, nome_usuario: 'Ana Pereira', matricula_usuario: 'E03-9902', genero_usuario: 'FEM', inscrito: 1 },
@@ -110,7 +116,7 @@ test.describe('E03 — formulários, modais e controles de equipe', () => {
 
     test('colaboradores associa campos e agrupa os papéis sem mudar opções administrativas', async ({ page }) => {
         await page.goto('colaboradores?id=901', { waitUntil: 'domcontentloaded' });
-        await expect(page.locator('#listaColaboradoresDesktop article')).toHaveCount(1);
+        await expect(page.locator('#listaColaboradoresDesktop article')).toHaveCount(2);
         await expect(page.locator('main.d-none.d-md-block').getByLabel('Pesquisar colaboradores')).toBeVisible();
 
         const abrirAdicionar = page.locator('button[data-bs-target="#modalAdicionarColaborador"]:visible');
@@ -138,6 +144,9 @@ test.describe('E03 — formulários, modais e controles de equipe', () => {
             .toHaveAttribute('aria-label', 'Editar colaborador Colaboradora de teste');
         await expect(page.locator('#listaColaboradoresDesktop button[data-remover="9901"]'))
             .toHaveAttribute('aria-label', 'Excluir colaborador Colaboradora de teste');
+        await expect(page.locator('#listaColaboradoresDesktop button[data-editar="9904"]')).toHaveCount(0);
+        await expect(page.locator('#listaColaboradoresDesktop button[data-remover="9904"]'))
+            .toHaveAttribute('aria-label', 'Excluir colaborador Administrador protegido');
         await page.locator('#listaColaboradoresDesktop button[data-editar="9901"]').click();
         const modalEditar = page.locator('#modalEditarColaborador');
         await expect(page.getByRole('dialog', { name: 'Editar colaborador' })).toBeVisible();

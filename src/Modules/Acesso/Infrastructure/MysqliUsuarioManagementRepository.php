@@ -234,7 +234,26 @@ final class MysqliUsuarioManagementRepository implements UsuarioManagementReposi
         return 'sgi_admin_role_' . substr(hash('sha256', $database), 0, 32);
     }
 
-    public function updateStaffDetails(array $data, int $editionId): void
+    public function findStaffLevel(int $id, int $editionId): ?string
+    {
+        $statement = $this->prepare(
+            "SELECT nivel_usuario FROM usuarios
+             WHERE id_usuario = ?
+               AND (interclasses_id_interclasse = ? OR interclasses_id_interclasse IS NULL)
+             LIMIT 1",
+        );
+        $statement->bind_param('ii', $id, $editionId);
+        if (!$statement->execute()) {
+            $statement->close();
+            throw new RuntimeException('Não foi possível consultar colaborador.');
+        }
+        $level = $statement->get_result()->fetch_column();
+        $statement->close();
+
+        return $level === false || $level === null ? null : (string) $level;
+    }
+
+    public function updateStaffDetails(array $data, int $editionId, int $currentUserId): void
     {
         $id = (int) ($data['id_usuario'] ?? 0);
         $name = trim((string) ($data['nome_usuario'] ?? ''));
@@ -266,7 +285,9 @@ final class MysqliUsuarioManagementRepository implements UsuarioManagementReposi
         $values[] = $id;
         $values[] = $editionId;
         $types .= 'ii';
-        $statement = $this->prepare('UPDATE usuarios SET ' . implode(', ', $fields) . ' WHERE id_usuario = ? AND (interclasses_id_interclasse = ? OR interclasses_id_interclasse IS NULL)');
+        $values[] = $currentUserId;
+        $types .= 'i';
+        $statement = $this->prepare('UPDATE usuarios SET ' . implode(', ', $fields) . ' WHERE id_usuario = ? AND (interclasses_id_interclasse = ? OR interclasses_id_interclasse IS NULL) AND nivel_usuario IN (\'0\', \'1\', \'2\') AND (nivel_usuario <> \'0\' OR id_usuario = ?)');
         $statement->bind_param($types, ...$values);
         if (!$statement->execute()) {
             $statement->close();

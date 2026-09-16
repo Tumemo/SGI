@@ -106,16 +106,27 @@ final class UsuarioService
     }
 
     /** @param array<string, mixed> $data */
-    public function atualizarDadosColaborador(array $data, int $editionId): void
+    public function atualizarDadosColaborador(array $data, int $editionId, int $currentUserId): void
     {
+        $id = (int) ($data['id_usuario'] ?? 0);
         $data['nome_usuario'] = trim((string) ($data['nome_usuario'] ?? ''));
         $registration = trim((string) ($data['matricula_usuario'] ?? ''));
-        if ((int) ($data['id_usuario'] ?? 0) <= 0 || $data['nome_usuario'] === '' || $registration === '') {
+        if ($id <= 0 || $data['nome_usuario'] === '' || $registration === '') {
             throw new RuntimeException('Nome e matrícula são obrigatórios.');
+        }
+        if ($currentUserId <= 0) {
+            throw new RuntimeException('Sessão inválida. Faça login novamente.');
+        }
+        $level = $this->usuarios->findStaffLevel($id, $editionId);
+        if ($level === null || !in_array($level, ['0', '1', '2'], true)) {
+            throw new RuntimeException('Colaborador não encontrado ou fora da edição ativa.');
+        }
+        if ($level === '0' && $id !== $currentUserId) {
+            throw new UsuarioProtegidoException('Não é possível alterar os dados de outro administrador.');
         }
         $data['matricula_usuario'] = MatriculaRules::normalizarRa($registration) ?: $registration;
         $data['genero_usuario'] = $this->gender($data['genero_usuario'] ?? 'MASC');
-        $this->usuarios->updateStaffDetails($data, $editionId);
+        $this->usuarios->updateStaffDetails($data, $editionId, $currentUserId);
     }
 
     /** @param array<string, mixed> $data */

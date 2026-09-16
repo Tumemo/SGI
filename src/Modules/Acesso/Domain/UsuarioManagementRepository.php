@@ -18,7 +18,9 @@ interface UsuarioManagementRepository
     public function updateStaffRole(array $data, int $editionId): void;
 
     /** @param array<string, mixed> $data */
-    public function updateStaffDetails(array $data, int $editionId): void;
+    public function updateStaffDetails(array $data, int $editionId, int $currentUserId): void;
+
+    public function findStaffLevel(int $id, int $editionId): ?string;
 
     /** @param array<string, mixed> $data */
     public function updateStudent(array $data, int $editionId): void;

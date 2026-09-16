@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Unit\Modules\Acesso;
 
 use App\Modules\Acesso\Application\UsuarioService;
+use App\Modules\Acesso\Application\UsuarioProtegidoException;
 use App\Modules\Acesso\Domain\FotoStorage;
 use App\Modules\Acesso\Domain\UsuarioConsultaRepository;
 use App\Modules\Acesso\Domain\UsuarioManagementRepository;
@@ -82,6 +83,38 @@ final class UsuarioServiceTest extends TestCase
         self::assertSame(1, $transactions->calls);
         self::assertSame([['id_usuario' => 42, 'is_mesario_clicado' => '1'], 7], $management->staffRoleUpdate);
     }
+
+    public function testCannotUpdateDetailsOfAnotherAdministrator(): void
+    {
+        $management = new InMemoryUsuarioManagementRepository();
+        $management->staffLevel = '0';
+        $service = new UsuarioService(new InMemoryUsuarioConsultaRepository(), $management, new InMemoryFotoStorage(), new InMemoryTransactionRunner());
+
+        $this->expectException(UsuarioProtegidoException::class);
+        $service->atualizarDadosColaborador([
+            'id_usuario' => 42,
+            'nome_usuario' => 'Administrador alterado',
+            'matricula_usuario' => 'NIF-42',
+            'senha_usuario' => 'senha-alterada',
+        ], 7, 10);
+
+        self::assertNull($management->staffDetailsUpdate);
+    }
+
+    public function testAllowsUpdatingOwnAdministratorDetails(): void
+    {
+        $management = new InMemoryUsuarioManagementRepository();
+        $management->staffLevel = '0';
+        $service = new UsuarioService(new InMemoryUsuarioConsultaRepository(), $management, new InMemoryFotoStorage(), new InMemoryTransactionRunner());
+
+        $service->atualizarDadosColaborador([
+            'id_usuario' => 42,
+            'nome_usuario' => 'Administrador atualizado',
+            'matricula_usuario' => 'NIF-42',
+        ], 7, 42);
+
+        self::assertSame([['id_usuario' => 42, 'nome_usuario' => 'Administrador atualizado', 'matricula_usuario' => '42', 'genero_usuario' => 'MASC'], 7, 42], $management->staffDetailsUpdate);
+    }
 }
 
 final class InMemoryTransactionRunner implements TransactionRunner
@@ -138,6 +171,11 @@ final class InMemoryUsuarioManagementRepository implements UsuarioManagementRepo
     /** @var array{array<string, mixed>, int}|null */
     public ?array $staffRoleUpdate = null;
 
+    public string $staffLevel = '1';
+
+    /** @var array{array<string, mixed>, int, int}|null */
+    public ?array $staffDetailsUpdate = null;
+
     public function createStudent(array $data, int $editionId): array
     {
         $this->student = $data;
@@ -160,8 +198,14 @@ final class InMemoryUsuarioManagementRepository implements UsuarioManagementRepo
         $this->staffRoleUpdate = [$data, $editionId];
     }
 
-    public function updateStaffDetails(array $data, int $editionId): void
+    public function updateStaffDetails(array $data, int $editionId, int $currentUserId): void
     {
+        $this->staffDetailsUpdate = [$data, $editionId, $currentUserId];
+    }
+
+    public function findStaffLevel(int $id, int $editionId): ?string
+    {
+        return $this->staffLevel;
     }
 
     public function updateStudent(array $data, int $editionId): void

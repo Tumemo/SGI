@@ -22,13 +22,24 @@ final class UsuarioAdministrativoServiceTest extends TestCase
         self::assertTrue(password_verify($temporaryPassword, $repository->hash));
     }
 
-    public function testProtectsAdministratorAndOwnAccount(): void
+    public function testProtectsOwnAccount(): void
     {
         $repository = new InMemoryUsuarioAdministrativoRepository();
+        $repository->level = '0';
         $service = new UsuarioAdministrativoService($repository);
 
         $this->expectException(UsuarioProtegidoException::class);
         $service->excluirColaborador(2, 10, 2);
+    }
+
+    public function testAllowsDeletingAnotherAdministrator(): void
+    {
+        $repository = new InMemoryUsuarioAdministrativoRepository();
+        $repository->level = '0';
+
+        (new UsuarioAdministrativoService($repository))->excluirColaborador(2, 10, 1);
+
+        self::assertSame(2, $repository->deactivatedId);
     }
 
     public function testRejectsUnknownStudent(): void
@@ -46,6 +57,10 @@ final class InMemoryUsuarioAdministrativoRepository implements UsuarioAdministra
 
     public string $hash = '';
 
+    public string $level = '1';
+
+    public ?int $deactivatedId = null;
+
     public function deactivateStudent(int $id): bool
     {
         return $this->studentExists;
@@ -59,11 +74,12 @@ final class InMemoryUsuarioAdministrativoRepository implements UsuarioAdministra
 
     public function findLevel(int $id): ?string
     {
-        return '1';
+        return $this->level;
     }
 
     public function deactivateCollaborator(int $id, ?int $interclasseId): bool
     {
+        $this->deactivatedId = $id;
         return true;
     }
 }

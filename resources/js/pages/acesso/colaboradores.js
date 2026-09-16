@@ -1,6 +1,7 @@
 window.SGIPage.mount("acesso/colaboradores", function (pageConfig, pageScope) {
 
     const usuarioEhAdmin = pageConfig.value2;
+    const usuarioAtualId = Number(pageConfig.value3 || 0);
     const API_BASE = String(window.SGI_API_BASE || `${window.SGI_BASE_PATH || ''}/api/v1/`).replace(/\/?$/, '/');
     const BASE_PATH = String(window.SGI_BASE_PATH || '').replace(/\/$/, '');
     const paramsColab = new URLSearchParams(window.location.search);
@@ -100,8 +101,8 @@ window.SGIPage.mount("acesso/colaboradores", function (pageConfig, pageScope) {
                         </div>
                     </div>
                     <div class="d-flex gap-1 flex-shrink-0">
-                        <button type="button" class="btn btn-outline-secondary btn-sm" data-editar="${item.id_usuario}" title="Editar" aria-label="Editar colaborador ${escAttr(item.nome_usuario)}"><i class="bi bi-pencil"></i></button>
-                        ${nivel !== '0' ? `<button type="button" class="btn btn-outline-danger btn-sm" data-remover="${item.id_usuario}" title="Excluir" aria-label="Excluir colaborador ${escAttr(item.nome_usuario)}"><i class="bi bi-trash"></i></button>` : ''}
+                        ${nivel !== '0' || Number(item.id_usuario) === usuarioAtualId ? `<button type="button" class="btn btn-outline-secondary btn-sm" data-editar="${item.id_usuario}" title="Editar" aria-label="Editar colaborador ${escAttr(item.nome_usuario)}"><i class="bi bi-pencil"></i></button>` : ''}
+                        ${nivel !== '0' || Number(item.id_usuario) !== usuarioAtualId ? `<button type="button" class="btn btn-outline-danger btn-sm" data-remover="${item.id_usuario}" title="Excluir" aria-label="Excluir colaborador ${escAttr(item.nome_usuario)}"><i class="bi bi-trash"></i></button>` : ''}
                     </div>
                 </article>
             </div>`;

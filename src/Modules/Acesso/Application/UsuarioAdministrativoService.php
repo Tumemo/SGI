@@ -43,9 +43,6 @@ final class UsuarioAdministrativoService
         if ($level === null) {
             throw new UsuarioNaoEncontradoException();
         }
-        if ($level === '0') {
-            throw new UsuarioProtegidoException('Não é possível remover um administrador.');
-        }
         if (!$this->usuarios->deactivateCollaborator($id, $interclasseId)) {
             throw new UsuarioNaoEncontradoException();
         }

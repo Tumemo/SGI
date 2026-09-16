@@ -8,6 +8,7 @@ $paginaAtiva = 'colaboradores';
 
 // Verifica se o usuário logado é administrador
 $usuarioEhAdmin = (isset($_SESSION['nivel']) && (string)$_SESSION['nivel'] === '0');
+$usuarioAtualId = (int) ($_SESSION['id'] ?? $_SESSION['id_usuario'] ?? 0);
 ?>
 
 <!-- ═══ MOBILE ═══ -->
@@ -206,7 +207,7 @@ $usuarioEhAdmin = (isset($_SESSION['nivel']) && (string)$_SESSION['nivel'] === '
     </div>
 </div>
 
-<script type="application/json" data-sgi-config="acesso/colaboradores"><?= json_encode(['value2' => ($usuarioEhAdmin)], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_THROW_ON_ERROR) ?></script>
+<script type="application/json" data-sgi-config="acesso/colaboradores"><?= json_encode(['value2' => ($usuarioEhAdmin), 'value3' => $usuarioAtualId], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_THROW_ON_ERROR) ?></script>
 <script data-sgi-page src="<?= \App\Shared\Http\Assets::url('js/pages/acesso/colaboradores.js') ?>"></script>
 
 <?php

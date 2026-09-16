@@ -335,6 +335,20 @@ class FotoPerfilAndUsuariosTest
     }
 
     /** @return array<string, mixed>|null */
+    private static function readUserPersonalData(mysqli $connection, int $userId): ?array
+    {
+        $statement = $connection->prepare(
+            'SELECT nome_usuario, matricula_usuario, genero_usuario, senha_usuario, auth_version
+             FROM usuarios WHERE id_usuario = ?',
+        );
+        $statement->bind_param('i', $userId);
+        $statement->execute();
+        $user = $statement->get_result()->fetch_assoc() ?: null;
+        $statement->close();
+        return $user;
+    }
+
+    /** @return array<string, mixed>|null */
     private static function studentDetails(mysqli $connection, int $studentId): ?array
     {
         $statement = $connection->prepare(
@@ -390,6 +404,43 @@ class FotoPerfilAndUsuariosTest
             $adminA = $createStaff($root, 'administrador A', true);
             $clientA = new TestClient();
             Assertions::assertJsonSuccess('Login do administrador A sintético', $clientA->login($adminA['registration'], $adminA['password']));
+
+            $adminNotLogged = $createStaff($root, 'administrador protegido', true);
+            $personalDataBefore = self::readUserPersonalData($connection, $adminNotLogged['id']);
+            $blockedDetails = $root->postJson('api/v1/usuarios?acao=atualizar_dados_colaborador', [
+                'id_usuario' => $adminNotLogged['id'],
+                'nome_usuario' => 'Administrador indevidamente alterado',
+                'matricula_usuario' => 'A14-ADMIN-ALTERADO',
+                'genero_usuario' => 'FEM',
+                'senha_usuario' => 'Senha indevida 2026',
+            ]);
+            Assertions::assertStatus('Administrador não pode alterar dados pessoais de outro administrador', $blockedDetails, 400);
+            Assertions::assert(
+                'Bloqueio de edição preserva nome, NIF, gênero e senha do administrador',
+                self::readUserPersonalData($connection, $adminNotLogged['id']) === $personalDataBefore,
+            );
+
+            $removeAdmin = $root->postJson('api/v1/usuarios?acao=excluir_colaborador', [
+                'id_usuario' => $adminNotLogged['id'],
+            ]);
+            Assertions::assertJsonSuccess('Administrador pode excluir outro administrador não logado', $removeAdmin);
+            $removedAdmin = self::readUser($connection, $adminNotLogged['id']);
+            Assertions::assert(
+                'Exclusão de outro administrador desativa a conta e revoga sua versão de autenticação',
+                $removedAdmin !== null
+                && $removedAdmin['status_usuario'] === '0'
+                && (int) $removedAdmin['auth_version'] === (int) $personalDataBefore['auth_version'] + 1,
+            );
+
+            $selfRemoval = $root->postJson('api/v1/usuarios?acao=excluir_colaborador', [
+                'id_usuario' => $rootId,
+            ]);
+            Assertions::assertStatus('Administrador não pode excluir a própria conta', $selfRemoval, 400);
+            $rootAfterSelfRemoval = self::readUser($connection, $rootId);
+            Assertions::assert(
+                'Tentativa de autoexclusão preserva a conta do administrador atual',
+                $rootAfterSelfRemoval !== null && $rootAfterSelfRemoval['status_usuario'] === '1',
+            );
 
             $rootBefore = self::readUser($connection, $rootId);
             $demoteRoot = $setRole($clientA, $rootId, 'staff');

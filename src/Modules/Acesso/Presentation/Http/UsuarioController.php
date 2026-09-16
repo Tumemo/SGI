@@ -108,7 +108,11 @@ final class UsuarioController
                 if ($action === 'atualizar_colaborador') {
                     $this->usuarios->atualizarColaborador($data, $edition);
                 } else {
-                    $this->usuarios->atualizarDadosColaborador($data, $edition);
+                    $this->usuarios->atualizarDadosColaborador(
+                        $data,
+                        $edition,
+                        (int) ($_SESSION['id'] ?? $_SESSION['id_usuario'] ?? 0),
+                    );
                 }
                 return Response::json(['status' => 'sucesso', 'mensagem' => 'Colaborador atualizado.']);
             }

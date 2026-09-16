@@ -65,7 +65,7 @@ final class MysqliUsuarioAdministrativoRepository implements UsuarioAdministrati
     public function deactivateCollaborator(int $id, ?int $interclasseId): bool
     {
         $sql = "UPDATE usuarios SET status_usuario = '0', auth_version = auth_version + 1 WHERE id_usuario = ?
-                AND nivel_usuario IN ('1', '2')
+                AND nivel_usuario IN ('0', '1', '2')
                 AND (interclasses_id_interclasse = ? OR interclasses_id_interclasse IS NULL)";
         $statement = $this->connection->prepare($sql);
         if ($statement === false) {
