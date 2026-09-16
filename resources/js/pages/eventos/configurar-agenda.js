@@ -929,17 +929,9 @@ window.SGIPage.mount("eventos/configurar-agenda", function (pageConfig, pageScop
 
         function dataSessaoInicial() {
             const hoje = new Date();
-            const distancia = (2 - hoje.getDay() + 7) % 7; // terça-feira
+            const distancia = (1 - hoje.getDay() + 7) % 7; // segunda-feira
             hoje.setDate(hoje.getDate() + distancia);
             return dataLocalISO(hoje);
-        }
-
-        function proximaDataSessao(data) {
-            const atual = new Date(`${data}T00:00:00`);
-            const alvo = atual.getDay() === 2 ? 4 : 2; // terça → quinta → terça
-            const distancia = (alvo - atual.getDay() + 7) % 7 || 7;
-            atual.setDate(atual.getDate() + distancia);
-            return dataLocalISO(atual);
         }
 
         function valorDiasSequenciais() {
@@ -1099,9 +1091,7 @@ window.SGIPage.mount("eventos/configurar-agenda", function (pageConfig, pageScop
             const inicio = document.getElementById('seq-proxima-inicio').value;
             const fim = document.getElementById('seq-proxima-fim').value || '11:30';
             const local = Number(document.getElementById('seq-local').value);
-            const anterior = valorDiasSequenciais().at(-1);
             if (!data || !inicio || !local) { SGI.alert('Informe a data, o horário e o local da próxima sessão.'); return; }
-            if (anterior && data !== proximaDataSessao(anterior.data)) { SGI.alert('A próxima sessão deve seguir a cadência terça-feira e quinta-feira.'); return; }
             diasSequenciaisAdicionados.push({ data, inicio, fim, local });
             document.getElementById('seq-proximo-dia').classList.add('d-none');
             if (btnSeqSimular) btnSeqSimular.click();

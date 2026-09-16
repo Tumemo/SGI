@@ -11,9 +11,10 @@ use InvalidArgumentException;
 /**
  * Coordena a agenda operacional em sessões sucessivas.
  *
- * A primeira sessão começa numa terça-feira e as próximas alternam entre
- * quinta-feira e terça-feira. O limite de término é diário: um jogo que não
- * couber até esse horário fica pendente para a próxima sessão informada.
+ * Segunda-feira e quinta-feira são a sugestão padrão para sessões sucessivas,
+ * mas o responsável pode informar qualquer data. O limite de término é
+ * diário: um jogo que não couber até esse horário fica pendente para a
+ * próxima sessão informada.
  */
 final class AgendamentoSequencialScheduler
 {
@@ -74,12 +75,12 @@ final class AgendamentoSequencialScheduler
         return (int) $interval;
     }
 
-    /** Retorna a próxima data da cadência terça → quinta → terça. */
+    /** Retorna uma sugestão da próxima sessão na cadência padrão segunda/quinta. */
     public function nextSessionDate(string $date): string
     {
         $current = $this->date($date);
         $weekday = (int) $current->format('N');
-        $target = $weekday === 2 ? 4 : 2;
+        $target = $weekday === 1 ? 4 : 1;
         $distance = ($target - $weekday + 7) % 7;
         if ($distance === 0) {
             $distance = 7;
@@ -87,12 +88,12 @@ final class AgendamentoSequencialScheduler
         return $current->modify('+' . $distance . ' days')->format('Y-m-d');
     }
 
-    /** Retorna a próxima terça-feira a partir da data informada, inclusive. */
+    /** Retorna a próxima segunda-feira a partir da data informada, inclusive. */
     public function firstSessionDate(?string $from = null): string
     {
         $current = $from === null ? new DateTimeImmutable('today', new DateTimeZone('America/Sao_Paulo')) : $this->date($from);
         $weekday = (int) $current->format('N');
-        $distance = (2 - $weekday + 7) % 7;
+        $distance = (1 - $weekday + 7) % 7;
         return $current->modify('+' . $distance . ' days')->format('Y-m-d');
     }
 
@@ -104,7 +105,7 @@ final class AgendamentoSequencialScheduler
         }
 
         $normalised = [];
-        foreach ($days as $index => $day) {
+        foreach ($days as $day) {
             $data = trim((string) ($day['data'] ?? $day['data_jogo'] ?? ''));
             $start = trim((string) ($day['inicio'] ?? $day['inicio_jogo'] ?? self::DEFAULT_START));
             $end = trim((string) ($day['fim'] ?? $day['termino'] ?? $day['termino_jogo'] ?? self::DEFAULT_CUTOFF));
@@ -117,17 +118,6 @@ final class AgendamentoSequencialScheduler
             }
             if ($local <= 0) {
                 throw new InvalidArgumentException('Informe um local válido para cada sessão.');
-            }
-            $weekday = (int) $date->format('N');
-            if ($index === 0 && $weekday !== 2) {
-                throw new InvalidArgumentException('A primeira sessão de jogos deve começar numa terça-feira.');
-            }
-            if ($index > 0) {
-                $previous = $normalised[$index - 1]['data'];
-                $expected = $this->nextSessionDate($previous);
-                if ($data !== $expected) {
-                    throw new InvalidArgumentException('A próxima sessão deve ser a quinta-feira após a terça-feira, alternando depois entre terça e quinta.');
-                }
             }
             $normalised[] = [
                 'data' => $date->format('Y-m-d'),

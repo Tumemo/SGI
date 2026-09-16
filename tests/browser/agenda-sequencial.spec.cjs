@@ -32,6 +32,7 @@ async function prepararTela(page, respostaPost) {
     const idModalidade = 987654321;
     const idModalidadeIndividual = 987654322;
     let payloadPost = null;
+    let postCount = 0;
 
     await page.route('**/api/v1/modalidades*', async (route) => {
         await fulfillJson(route, [{
@@ -90,7 +91,11 @@ async function prepararTela(page, respostaPost) {
     await page.route((url) => url.pathname.endsWith('/api/v1/agenda-blocos'), async (route) => {
         if (route.request().method() === 'POST') {
             payloadPost = route.request().postDataJSON();
-            await fulfillJson(route, respostaPost.body, respostaPost.status);
+            const resposta = Array.isArray(respostaPost)
+                ? respostaPost[Math.min(postCount, respostaPost.length - 1)]
+                : respostaPost;
+            postCount += 1;
+            await fulfillJson(route, resposta.body, resposta.status);
             return;
         }
         await fulfillJson(route, []);
@@ -110,6 +115,63 @@ async function prepararTela(page, respostaPost) {
 }
 
 test.describe('Agendamento automático sequencial', () => {
+    test('usa segunda como padrão e aceita datas livres e dia adicional', async ({ page }) => {
+        const tela = await prepararTela(page, [
+            {
+                status: 200,
+                body: {
+                    success: true,
+                    revisao: 4,
+                    proposta: [{ chave_tag: 'MM:2:0:N', data_jogo: '2026-09-16', inicio_jogo: '08:00:00', termino_jogo: '09:00:00', locais_id_local: 77 }],
+                    pendencias: [{ chave_tag: 'MM:4:0:N', motivo: 'Ainda não há espaço nesta sessão.' }],
+                    resumo: { encaixados: 1, pendentes: 1 },
+                    proximo_dia_sugerido: '2026-09-17',
+                    proximo_inicio_sugerido: '08:00:00',
+                    proximo_termino_sugerido: '11:30',
+                },
+            },
+            {
+                status: 200,
+                body: {
+                    success: true,
+                    revisao: 5,
+                    proposta: [
+                        { chave_tag: 'MM:2:0:N', data_jogo: '2026-09-16', inicio_jogo: '08:00:00', termino_jogo: '09:00:00', locais_id_local: 77 },
+                        { chave_tag: 'MM:4:0:N', data_jogo: '2026-09-20', inicio_jogo: '08:00:00', termino_jogo: '09:00:00', locais_id_local: 77 },
+                    ],
+                    pendencias: [],
+                    resumo: { encaixados: 2, pendentes: 0 },
+                },
+            },
+        ]);
+
+        const datas = await page.evaluate(() => {
+            const ymd = (date) => `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+            const proximaQuarta = new Date();
+            proximaQuarta.setDate(proximaQuarta.getDate() + ((3 - proximaQuarta.getDay() + 7) % 7));
+            const proximoSabado = new Date(proximaQuarta);
+            proximoSabado.setDate(proximoSabado.getDate() + 3);
+            return { arbitraria: ymd(proximaQuarta), adicional: ymd(proximoSabado) };
+        });
+        const weekday = await page.locator('#seq-data').evaluate((input) => new Date(`${input.value}T12:00:00`).getDay());
+        expect(weekday).toBe(1);
+
+        await page.locator('#seq-data').fill(datas.arbitraria);
+        await page.locator('#seq-simular-btn').click();
+        await expect(page.locator('#seq-proximo-dia')).toBeVisible();
+        await page.locator('#seq-proxima-data').fill(datas.adicional);
+        await page.locator('#seq-adicionar-dia').click();
+        await expect(page.locator('#seq-salvar-btn')).toBeEnabled();
+
+        expect(tela.getPayload()).toMatchObject({
+            acao: 'simular_sequencial',
+            dias: [
+                { data: datas.arbitraria, inicio: '08:00', fim: '11:30', local: 77 },
+                { data: datas.adicional, inicio: '08:00', fim: '11:30', local: 77 },
+            ],
+        });
+    });
+
     test('envia o contrato da tela e renderiza a prévia', async ({ page }) => {
         const tela = await prepararTela(page, {
             status: 200,

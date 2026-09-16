@@ -15,12 +15,12 @@ final class AgendamentoSequencialTest
     /** @param array<string,mixed> $jogos */
     public static function run(int $edition, int $modality, array $jogos): void
     {
-        echo "\n  \033[1;34m[Suite 6.2: Agendamento automático terça/quinta]\033[0m\n";
+        echo "\n  \033[1;34m[Suite 6.2: Agendamento automático segunda/quinta e dias livres]\033[0m\n";
         $admin = new TestClient();
         $admin->login('admin', '123');
 
-        $firstDay = self::nextTuesday();
-        $secondDay = (new DateTimeImmutable($firstDay, new DateTimeZone('America/Sao_Paulo')))->modify('+2 days')->format('Y-m-d');
+        $firstDay = self::nextMonday();
+        $secondDay = (new DateTimeImmutable($firstDay, new DateTimeZone('America/Sao_Paulo')))->modify('+3 days')->format('Y-m-d');
         $payload = [
             'id_interclasse' => $edition,
             'id_modalidade' => $modality,
@@ -33,13 +33,21 @@ final class AgendamentoSequencialTest
             'opcoes' => ['duracao_min' => 60, 'intervalo_troca_min' => 10],
         ];
 
+        $freeDaysPayload = $payload;
+        $freeDaysPayload['dias'] = [
+            ['data' => (new DateTimeImmutable($firstDay, new DateTimeZone('America/Sao_Paulo')))->modify('+1 day')->format('Y-m-d'), 'inicio' => '08:00', 'fim' => '11:30', 'local' => (int) $jogos['id_local']],
+            ['data' => (new DateTimeImmutable($firstDay, new DateTimeZone('America/Sao_Paulo')))->modify('+5 days')->format('Y-m-d'), 'inicio' => '08:00', 'fim' => '11:30', 'local' => (int) $jogos['id_local']],
+        ];
+        $freeDaysPreview = $admin->postJson('api/v1/agenda-blocos', array_merge($freeDaysPayload, ['acao' => 'simular_sequencial']));
+        Assertions::assertJsonSuccess('Prévia aceita dias fora do padrão segunda/quinta', $freeDaysPreview);
+
         $payloadFromScreen = $payload;
         unset($payloadFromScreen['reprogramar']);
         $screenPreview = $admin->postJson('api/v1/agenda-blocos', array_merge($payloadFromScreen, ['acao' => 'simular_sequencial']));
         Assertions::assertJsonSuccess('Payload da tela calcula a prévia sem reprogramação implícita', $screenPreview);
 
         $preview = $admin->postJson('api/v1/agenda-blocos', array_merge($payload, ['acao' => 'simular_sequencial']));
-        Assertions::assertJsonSuccess('Prévia sequencial terça/quinta retorna sucesso', $preview);
+        Assertions::assertJsonSuccess('Prévia sequencial segunda/quinta retorna sucesso', $preview);
         Assertions::assert(
             'Prévia sequencial aplica limite de 11h30 e intervalo de 10 minutos',
             ($preview['json']['intervalo_troca_min'] ?? 0) === 10
@@ -121,7 +129,7 @@ final class AgendamentoSequencialTest
                 'id_modalidade' => $modality,
                 'todos_jogos' => true,
                 'dias' => [[
-                    'data' => self::nextTuesday(),
+                    'data' => self::nextMonday(),
                     'inicio' => '08:00',
                     'fim' => '11:30',
                     'local' => (int) $jogos['id_local'],
@@ -145,10 +153,10 @@ final class AgendamentoSequencialTest
         }
     }
 
-    private static function nextTuesday(): string
+    private static function nextMonday(): string
     {
         $today = new DateTimeImmutable('today', new DateTimeZone('America/Sao_Paulo'));
-        $distance = (2 - (int) $today->format('N') + 7) % 7;
+        $distance = (1 - (int) $today->format('N') + 7) % 7;
         return $today->modify('+' . $distance . ' days')->format('Y-m-d');
     }
 }

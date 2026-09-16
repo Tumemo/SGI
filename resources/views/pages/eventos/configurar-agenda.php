@@ -203,14 +203,14 @@ $nivelUsuarioAgenda = (int)($_SESSION['nivel'] ?? -1);
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
             </div>
             <div class="modal-body">
-                <p class="small text-muted mb-3">Defina o primeiro jogo. O sistema agenda a chave na ordem correta, usando terça-feira e depois quinta-feira, sem ultrapassar 11h30. Se ainda houver jogos, o próximo dia será solicitado automaticamente.</p>
+                <p class="small text-muted mb-3">Defina o primeiro jogo. Segunda-feira e quinta-feira são os dias padrão, mas você pode escolher qualquer dia da semana para as sessões, sem ultrapassar o limite informado. Se ainda houver jogos, adicione outra data e recalcule a prévia.</p>
                 <div class="mb-3">
                     <label class="form-label" for="auto-modalidade">Modalidade</label>
                     <select class="form-select" id="auto-modalidade"></select>
                 </div>
                 <div class="row g-2 mb-3">
                     <div class="col-6">
-                        <label class="form-label" for="seq-data">Primeiro dia (terça-feira)</label>
+                        <label class="form-label" for="seq-data">Primeiro dia</label>
                         <input type="date" class="form-control" id="seq-data">
                     </div>
                     <div class="col-6">
