@@ -370,7 +370,7 @@ test('bracket cards preserve domain states without decorative hover motion', () 
     assert.doesNotMatch(css, /^\.bkt-match\s*\{[^}]*\b(?:background|border|border-radius|overflow|width|margin-bottom)\s*:/m);
     assert.match(css, /\.bkt-match--concluido \{ border-color:/);
     assert.match(css, /\.bkt-match--bye \{ opacity:/);
-    assert.match(css, /\.bkt-match--posicao \{ border-color: #e30613; border-width: 2px; \}/);
+    assert.match(css, /\.bkt-match--posicao \{ border-color: var\(--bs-primary\); border-width: 2px; \}/);
     assert.match(css, /\.bkt-match:hover \.bkt-match__actions/);
     assert.doesNotMatch(css, /\.bkt-match\s*\{[^}]*transition/);
     assert.doesNotMatch(css, /\.bkt-match:hover\s*\{[^}]*transform|\.bkt-match--(?:concluido|bye):hover|\.bkt-team:hover\s*\{/);
@@ -395,8 +395,8 @@ test('searchable bracket group counts use the Bootstrap badge component', () => 
     const source = fs.readFileSync(path.join(root, 'resources', 'js', 'pages', 'competicoes', 'chaveamento.js'), 'utf8');
     const css = fs.readFileSync(path.join(root, 'resources', 'css', 'source', 'admin.css'), 'utf8');
     assert.match(source, /kvs__grupo-qtd badge rounded-pill text-bg-light text-body-secondary/);
-    assert.match(css, /\.kvs__grupo-qtd \{\s*margin-left: auto;\s*\}/);
-    assert.doesNotMatch(css, /\.kvs__grupo-qtd\s*\{[^}]*\b(?:background|color|border-radius|padding|font-size|font-weight)\s*:/);
+    assert.match(source, /kvs__grupo-qtd badge rounded-pill text-bg-light text-body-secondary ms-auto/);
+    assert.doesNotMatch(css, /\.kvs__grupo-qtd\s*\{/);
 });
 
 test('searchable bracket type labels use Bootstrap badge variants', () => {
@@ -663,7 +663,9 @@ test('agenda uses Bootstrap controls while keeping calendar domain geometry', ()
     assert.match(view, /input-group input-group-sm/);
     assert.match(view, /form-select form-select-sm/);
     assert.match(view, /row g-4 align-items-start/);
+    assert.match(view, /row row-cols-7 g-0 text-center/);
     assert.match(view, /card overflow-hidden/);
+    assert.match(js, /ag-cal-day[\s\S]*'col'[\s\S]*'d-flex'[\s\S]*'align-items-center'[\s\S]*'justify-content-center'/);
     assert.match(js, /card border-0 shadow-sm p-3 position-relative overflow-hidden/);
     assert.match(js, /badge rounded-pill text-bg-\$\{statusBadge\}/);
     assert.match(js, /ag-status-chip/);

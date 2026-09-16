@@ -148,17 +148,17 @@ window.SGIPage.mount("competicoes/chaveamento", function (pageConfig, pageScope)
 
         wrap.innerHTML = `
             <div class="kvs">
-                <button type="button" class="kvs__trigger" aria-haspopup="listbox" aria-expanded="false" aria-controls="${listboxId}">
+                <button type="button" class="kvs__trigger btn btn-outline-secondary w-100 d-flex align-items-center justify-content-between gap-2 text-start" aria-haspopup="listbox" aria-expanded="false" aria-controls="${listboxId}">
                     <span class="kvs__trigger-label">${esc(opts.placeholder)}</span>
-                    <i class="bi bi-chevron-down kvs__chevron" aria-hidden="true"></i>
+                    <i class="bi bi-chevron-down kvs__chevron text-body-secondary" aria-hidden="true"></i>
                 </button>
-                <div class="kvs__panel">
-                    <div class="kvs__search-box">
-                        <i class="bi bi-search kvs__search-icone" aria-hidden="true"></i>
-                        <input id="${searchId}" type="text" class="kvs__search" placeholder="Buscar modalidade..." aria-label="Buscar modalidade" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="${listboxId}" autocomplete="off" spellcheck="false">
+                <div class="kvs__panel bg-body border rounded-3 overflow-hidden">
+                    <div class="kvs__search-box position-relative p-3 border-bottom">
+                        <i class="bi bi-search kvs__search-icone position-absolute start-0 top-50 translate-middle-y ms-3 text-body-secondary pe-none" aria-hidden="true"></i>
+                        <input id="${searchId}" type="text" class="kvs__search form-control ps-5" placeholder="Buscar modalidade..." aria-label="Buscar modalidade" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="${listboxId}" autocomplete="off" spellcheck="false">
                     </div>
-                    <div id="${listboxId}" class="kvs__groups" role="listbox" aria-label="${esc(opts.listboxLabel || opts.ariaLabel)}"></div>
-                    <div class="kvs__vazio" role="status" hidden></div>
+                    <div id="${listboxId}" class="kvs__groups overflow-auto px-2 pt-1 pb-2" role="listbox" aria-label="${esc(opts.listboxLabel || opts.ariaLabel)}"></div>
+                    <div class="kvs__vazio p-3 text-center text-body-secondary small" role="status" hidden></div>
                 </div>
             </div>`;
 
@@ -218,7 +218,7 @@ window.SGIPage.mount("competicoes/chaveamento", function (pageConfig, pageScope)
                 const showTudo = !t || kvs_normalizarBusca('Todas modalidades').includes(t);
                 if (showTudo) {
                     const ativa = select.value === '';
-                    html += `<div role="option" tabindex="-1" id="${idPrefix}-option-todas" aria-selected="${ativa}" class="kvs__opcao${ativa ? ' kvs__opcao--ativa' : ''}" data-value="">
+                    html += `<div role="option" tabindex="-1" id="${idPrefix}-option-todas" aria-selected="${ativa}" class="kvs__opcao dropdown-item d-flex align-items-center justify-content-between gap-2 py-2 px-3${ativa ? ' kvs__opcao--ativa' : ''}" data-value="">
                         <span class="kvs__opcao-nome">Todas modalidades</span>
                         <span class="kvs__opcao-tipo badge rounded-pill bg-light text-body-secondary opacity-50" >Mostrar tudo</span>
                     </div>`;
@@ -228,14 +228,14 @@ window.SGIPage.mount("competicoes/chaveamento", function (pageConfig, pageScope)
             kvs_grupos.forEach(g => {
                 const opcoes = g.opcoes.filter(o => !t || kvs_normalizarBusca(o.nome).includes(t) || kvs_normalizarBusca(g.nome).includes(t));
                 if (!opcoes.length) return;
-                html += `<div class="kvs__grupo" role="group" aria-label="${esc(g.nome)}">
-                    <div class="kvs__grupo-titulo" aria-hidden="true"><i class="bi bi-trophy-fill"></i>${esc(g.nome)}<span class="kvs__grupo-qtd badge rounded-pill text-bg-light text-body-secondary">${opcoes.length}</span></div>`;
+                html += `<div class="kvs__grupo mt-2" role="group" aria-label="${esc(g.nome)}">
+                    <div class="kvs__grupo-titulo dropdown-header d-flex align-items-center gap-2 px-2 py-1 text-uppercase fw-bold" aria-hidden="true"><i class="bi bi-trophy-fill text-danger"></i>${esc(g.nome)}<span class="kvs__grupo-qtd badge rounded-pill text-bg-light text-body-secondary ms-auto">${opcoes.length}</span></div>`;
                 opcoes.forEach(o => {
                     const ativa = String(select.value) === o.valor;
                     const tipoCls = o.tipo === 'Individual'
                         ? 'badge rounded-pill bg-primary-subtle text-primary-emphasis'
                         : 'badge rounded-pill bg-danger-subtle text-danger-emphasis';
-                    html += `<div role="option" tabindex="-1" id="${idPrefix}-option-${esc(o.valor)}" aria-selected="${ativa}" class="kvs__opcao${ativa ? ' kvs__opcao--ativa' : ''}" data-value="${esc(o.valor)}">
+                    html += `<div role="option" tabindex="-1" id="${idPrefix}-option-${esc(o.valor)}" aria-selected="${ativa}" class="kvs__opcao dropdown-item d-flex align-items-center justify-content-between gap-2 py-2 px-3${ativa ? ' kvs__opcao--ativa' : ''}" data-value="${esc(o.valor)}">
                         <span class="kvs__opcao-nome">${esc(o.nome)}</span>
                         <span class="kvs__opcao-tipo ${tipoCls}">${esc(o.tipo)}</span>
                     </div>`;

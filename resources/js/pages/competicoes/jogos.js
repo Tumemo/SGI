@@ -75,7 +75,7 @@ window.SGIPage.mount("competicoes/jogos", function (pageConfig, pageScope) {
                 const idJogo = encodeURIComponent(String(j.id_jogo ?? ''));
                 const urlPlacar = `${String(pageConfig.placarUrl || `${window.SGI_BASE_PATH || ''}/jogos/placar`).replace(/\/$/, '')}?id_jogo=${idJogo}`;
                 return `
-                    <div class="col-12 col-md-6 col-lg-4">
+                    <div class="col">
                         <a href="${escapar(urlPlacar)}" class="text-decoration-none text-body" data-jogo-link>
                             <div class="card border-0 shadow-sm p-3 h-100">
                                 <div class="d-flex justify-content-between align-items-start mb-2">

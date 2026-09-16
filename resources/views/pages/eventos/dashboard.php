@@ -17,8 +17,8 @@ $isMesario = $nivelUsuario === 2;
      dinamicamente pelas telas baixadas pelo mesario-offline.js.
      Header/Nav/Footer (componentes) permanecem fixos na página. -->
 <div id="conteudo-principal" data-sgi-shell="1">
-    <main class="main-desktop-layout main-dashboard-layout">
-        <div class="container-fluid px-0">
+    <main class="main-desktop-layout main-dashboard-layout sgi-u-min-width-0">
+        <div class="container-fluid px-0 sgi-u-min-width-0">
             <h1 class="h3 fw-bold text-body mb-4 d-none d-md-block">Dashboard</h1>
             <?php if (in_array($nivelUsuario, [0, 1], true)): ?>
                 <a href="<?= \App\Shared\Http\Url::to($rotaInicio) ?>" class="btn btn-outline-danger btn-sm mb-3 d-inline-flex align-items-center gap-1">
@@ -32,7 +32,7 @@ $isMesario = $nivelUsuario === 2;
         </div>
         <?php endif; ?>
 
-        <div class="row g-4 mt-2">
+        <div class="row row-cols-1 row-cols-sm-2 row-cols-lg-3 g-3 g-xl-4 mt-2">
             <?php if ($isMesario): ?>
 
             <div class="col-12 col-md-6 col-lg-4">

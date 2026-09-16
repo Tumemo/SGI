@@ -19,7 +19,7 @@ $paginaAtiva = 'perfil';
 
 
 <!-- ===================== MOBILE ===================== -->
-<main class="d-md-none sgi-perfil-mobile p-3 pt-5 pb-5">
+<main class="d-md-none sgi-perfil-mobile sgi-u-min-width-0 p-3 pt-5 pb-5">
     <a href="<?= htmlspecialchars($urlVoltar) ?>" id="perfilBackMob" class="btn btn-primary d-inline-flex align-items-center gap-2 fw-bold mb-3 px-3 py-2 border-0 text-decoration-none" >
         <i class="bi bi-arrow-left-circle fs-5"></i> <span id="perfilNomeInterMobile">Interclasse</span>
     </a>

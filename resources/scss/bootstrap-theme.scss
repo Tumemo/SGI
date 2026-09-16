@@ -2,5 +2,6 @@
 @use 'bootstrap/scss/bootstrap' with (
   $primary: theme.$primary,
   $font-family-sans-serif: theme.$font-family-sans-serif,
-  $body-bg: theme.$body-bg
+  $body-bg: theme.$body-bg,
+  $grid-row-columns: 7
 );

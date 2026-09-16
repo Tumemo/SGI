@@ -266,6 +266,10 @@ window.SGIPage.mount("eventos/configurar-agenda", function (pageConfig, pageScop
         const isSelecionado = filtroData === dataStr;
         const classes = [
             'ag-cal-day',
+            'col',
+            'd-flex',
+            'align-items-center',
+            'justify-content-center',
             isHoje ? 'ag-cal-day--today' : '',
             quantidade > 0 ? 'ag-cal-day--has-game' : '',
             isSelecionado ? 'ag-cal-day--selected' : ''

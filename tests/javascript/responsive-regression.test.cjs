@@ -16,6 +16,7 @@ const agendaView = fs.readFileSync(path.join(root, 'resources', 'views', 'pages'
 const bracketView = fs.readFileSync(path.join(root, 'resources', 'views', 'pages', 'competicoes', 'chaveamento.php'), 'utf8');
 const ocorrenciasView = fs.readFileSync(path.join(root, 'resources', 'views', 'pages', 'disciplina', 'ocorrencias.php'), 'utf8');
 const jogosView = fs.readFileSync(path.join(root, 'resources', 'views', 'pages', 'competicoes', 'jogos.php'), 'utf8');
+const dashboardView = fs.readFileSync(path.join(root, 'resources', 'views', 'pages', 'eventos', 'dashboard.php'), 'utf8');
 const perfilView = fs.readFileSync(path.join(root, 'resources', 'views', 'pages', 'acesso', 'perfil.php'), 'utf8');
 const adminNav = fs.readFileSync(path.join(root, 'resources', 'views', 'components', 'admin-nav.php'), 'utf8');
 const alunoNav = fs.readFileSync(path.join(root, 'resources', 'views', 'components', 'aluno-nav.php'), 'utf8');
@@ -107,30 +108,17 @@ test('agenda, chaveamento e ocorrências preservam semântica, overflow e alvos 
         /@media\s*\(max-width:\s*1199\.98px\),\s*\(hover:\s*none\),\s*\(pointer:\s*coarse\)\s*\{[^}]*\.bkt-match__actions\s*\{\s*opacity:\s*1;/
     );
     assert.match(adminCss, /\.sgi-ocorrencias-mobile #listaOcorrenciasMobile \.card \.btn[\s\S]*min-height:\s*48px/);
-    assert.match(adminCss, /#modalHistoricoOcorrencias \.modal-body[\s\S]*overflow-y:\s*auto/);
-    assert.match(adminCss, /#modalNovaOcorrencia \.btn-close,[\s\S]*min-width:\s*48px/);
-    const dashboardColumnsAtTabletWidth = adminCss.match(
-        /@media\s*\(min-width:\s*576px\)\s*and\s*\(max-width:\s*1199\.98px\)\s*\{([\s\S]*?)^\}/m
-    );
+    assert.match(agendaView + bracketView + ocorrenciasView, /modal-fullscreen-xl-down/);
+    assert.match(adminCss, /\.modal-fullscreen-xl-down \.modal-footer \.btn[\s\S]*min-height:\s*48px/);
+    assert.match(adminCss, /\.modal-fullscreen-xl-down \.btn-close[\s\S]*min-width:\s*48px/);
     const compactAdminRules = adminCss.match(
         /@media\s*\(max-width:\s*1199\.98px\)\s*\{([\s\S]*?)^\}/m
     );
-    assert.ok(dashboardColumnsAtTabletWidth, 'o dashboard deve reservar as duas colunas para 576px–1199.98px');
-    assert.match(
-        dashboardColumnsAtTabletWidth[1],
-        /\.main-dashboard-layout \.row > \.col-12\.col-md-6\s*\{[^}]*flex:\s*0 0 50%;[^}]*max-width:\s*50%;/
-    );
+    assert.match(dashboardView, /row row-cols-1 row-cols-sm-2 row-cols-lg-3 g-3 g-xl-4 mt-2/);
+    assert.match(jogosView, /row row-cols-1 row-cols-sm-2 row-cols-lg-3 g-3/);
+    assert.doesNotMatch(adminCss, /\.main-dashboard-layout \.row > \.col-12\.col-md-6\s*\{/);
+    assert.doesNotMatch(adminCss, /#listaJogos > \.col-12\s*\{/);
     assert.ok(compactAdminRules, 'o shell compacto continua limitado a menos de 1200px');
-    assert.doesNotMatch(
-        compactAdminRules[1],
-        /\.main-dashboard-layout \.row > \.col-12\.col-md-6\s*\{[^}]*flex:\s*0 0 50%;/,
-        'o dashboard deve voltar a uma coluna abaixo de 576px'
-    );
-    assert.match(
-        compactAdminRules[1],
-        /\.sgi-jogos-lista #listaJogos > \.col-12\s*\{[^}]*flex:\s*0 0 50%;[^}]*max-width:\s*50%;/,
-        'a grade separada da lista de jogos mantém suas duas colunas'
-    );
     assert.match(adminCss, /\.sgi-perfil-mobile #btnCameraMob[\s\S]*min-width:\s*48px/);
     assert.match(adminCss, /\.sgi-placar \.mc-individual-ranking-row > \.col-md-4[\s\S]*max-width:\s*33\.333333%/);
     assert.match(adminCss, /\.sgi-placar \.mc-individual-ranking-row \.form-select[\s\S]*min-height:\s*48px/);

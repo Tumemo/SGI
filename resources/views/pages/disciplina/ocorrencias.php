@@ -8,7 +8,7 @@ $nivelUsuario = (int)($_SESSION['nivel'] ?? -1);
 $isAdmin = $nivelUsuario === 0;
 ?>
 
-<main class="d-md-none sgi-ocorrencias-mobile pt-5 pb-5">
+<main class="d-md-none sgi-ocorrencias-mobile sgi-u-min-width-0 pt-5 pb-5">
     <div class="px-3 mt-3">
         <a href="<?= \App\Shared\Http\Url::to('painel') ?>" id="btnVoltarOcrMob" class="btn btn-primary d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none" >
             <i class="bi bi-arrow-left-circle fs-5" aria-hidden="true"></i> <span id="nomeInterclasseOcrMob">Interclasse</span>
@@ -21,7 +21,7 @@ $isAdmin = $nivelUsuario === 0;
     </div>
 
     <div class="px-3">
-        <div class="row row-cols-1 g-3" id="listaOcorrenciasMobile">
+        <div class="row row-cols-1 g-3 sgi-u-min-width-0" id="listaOcorrenciasMobile">
             <div class="col text-center text-body-secondary py-5"><div class="spinner-border spinner-border-sm me-2" role="status"></div>Carregando...</div>
         </div>
     </div>
@@ -52,7 +52,7 @@ $isAdmin = $nivelUsuario === 0;
 
 <!-- Modal Nova Ocorrência -->
 <div class="modal fade" id="modalNovaOcorrencia" tabindex="-1" aria-labelledby="modalNovaOcorrenciaLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-fullscreen-xl-down">
         <div class="modal-content border-0 shadow">
             <div class="modal-header border-0">
                 <h2 class="modal-title fs-5 fw-bold" id="modalNovaOcorrenciaLabel"><i class="bi bi-exclamation-triangle text-warning me-2" aria-hidden="true"></i>Nova ocorrência — <span id="modalTurmaNome"></span></h2>
@@ -81,7 +81,7 @@ $isAdmin = $nivelUsuario === 0;
 
 <!-- Modal Histórico -->
 <div class="modal fade" id="modalHistoricoOcorrencias" tabindex="-1" aria-labelledby="modalHistoricoOcorrenciasLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable modal-fullscreen-xl-down">
         <div class="modal-content border-0 shadow">
             <div class="modal-header border-0">
                 <h2 class="modal-title fs-5 fw-bold" id="modalHistoricoOcorrenciasLabel"><i class="bi bi-clock-history me-2" aria-hidden="true"></i>Histórico de ocorrências — <span id="modalHistoricoTurmaNome"></span></h2>

@@ -58,11 +58,11 @@
     padding: 24px 0 40px;
     align-items: flex-start;
     scrollbar-width: thin;
-    scrollbar-color: #d1d5db transparent;
+    scrollbar-color: var(--bs-border-color) transparent;
 }
 .bracket-tree::-webkit-scrollbar { height: 8px; }
 .bracket-tree::-webkit-scrollbar-track { background: transparent; }
-.bracket-tree::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 4px; }
+.bracket-tree::-webkit-scrollbar-thumb { background: var(--bs-border-color); border-radius: 4px; }
 
 .bracket-round-col {
     display: flex;
@@ -87,14 +87,14 @@
 .bkt-match {
     position: relative;
 }
-.bkt-match--concluido { border-color: #10b981; border-width: 2px; }
+.bkt-match--concluido { border-color: var(--bs-success); border-width: 2px; }
 .bkt-match--bye { opacity: 0.55; border-style: dashed; }
-.bkt-match--posicao { border-color: #e30613; border-width: 2px; }
+.bkt-match--posicao { border-color: var(--bs-primary); border-width: 2px; }
 
 .bkt-team {
     min-width: 0;
 }
-.bkt-team + .bkt-team { border-top: 1px solid #f3f4f6; }
+.bkt-team + .bkt-team { border-top: 1px solid var(--bs-border-color-translucent); }
 .bkt-team__name {
     overflow: hidden;
     text-overflow: ellipsis;
@@ -153,37 +153,17 @@
 /* ── Custom Select (KVS) ── */
 .kvs { position: relative; flex: 1; min-width: 220px; }
 .kvs-wrap { flex: 1; min-width: 0; }
-.kvs__trigger {
-    width: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 10px;
-    padding: 12px 16px;
-    background: #fff;
-    border: 1px solid #e5e7eb;
-    border-radius: 12px;
-    font-size: 0.9rem;
-    color: #6b7280;
-    cursor: pointer;
-    text-align: left;
-}
-.kvs__trigger:hover { border-color: #f0c1c4; }
-.kvs--aberto .kvs__trigger { border-color: #e30613; box-shadow: 0 0 0 3px rgba(227,6,19,0.1); }
-.kvs__trigger-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.kvs--aberto .kvs__trigger { border-color: var(--bs-primary); box-shadow: 0 0 0 3px rgba(227,6,19,0.1); }
+.kvs__trigger-label { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .kvs__trigger-label--preenchido { color: #111827; font-weight: 600; }
-.kvs__chevron { color: #6b7280; flex-shrink: 0; }
-.kvs--aberto .kvs__chevron { transform: rotate(180deg); color: #e30613; }
+.kvs__chevron { flex-shrink: 0; }
+.kvs--aberto .kvs__chevron { transform: rotate(180deg); color: var(--bs-primary) !important; }
 .kvs__panel {
     position: absolute;
     top: calc(100% + 6px);
     left: 0;
     right: 0;
     z-index: 1050;
-    background: #fff;
-    border: 1px solid #eef0f5;
-    border-radius: 14px;
-    overflow: hidden;
     max-height: 380px;
     display: flex;
     flex-direction: column;
@@ -191,65 +171,22 @@
     visibility: hidden;
 }
 .kvs--aberto .kvs__panel { opacity: 1; visibility: visible; }
-.kvs__search-box { position: relative; padding: 12px; border-bottom: 1px solid #f1f5f9; }
-.kvs__search-icone { position: absolute; left: 24px; top: 50%; transform: translateY(-50%); color: #9ca3af; font-size: .85rem; pointer-events: none; }
-.kvs__search {
-    width: 100%;
-    padding: 10px 12px 10px 36px;
-    border: 1px solid #e5e7eb;
-    border-radius: 10px;
-    font-size: .85rem;
-    outline: none;
-    background: #f8f9fc;
-}
-.kvs__search:focus { border-color: #e30613; background: #fff; box-shadow: 0 0 0 3px rgba(227,6,19,0.08); }
 .kvs__trigger:focus-visible,
 .kvs__search:focus-visible,
 .kvs__opcao:focus-visible { outline: 3px solid #0d6efd; outline-offset: 2px; }
-.kvs__groups { overflow-y: auto; padding: 6px 8px 10px; }
-.kvs__grupo { margin-top: 8px; }
-.kvs__grupo:first-child { margin-top: 2px; }
-.kvs__grupo-titulo {
-    display: flex;
-    align-items: center;
-    gap: 7px;
-    padding: 7px 10px 6px;
-    font-size: .72rem;
-    font-weight: 800;
-    text-transform: uppercase;
-    letter-spacing: .05em;
-    color: #6b7280;
-}
-.kvs__grupo-titulo i { color: #e30613; font-size: .8rem; }
-.kvs__grupo-qtd {
-    margin-left: auto;
-}
+.kvs__grupo-titulo { letter-spacing: .05em; }
 .kvs__opcao {
-    width: 100%;
     min-height: 44px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 10px;
-    padding: 9px 12px;
-    border: none;
-    background: transparent;
-    border-radius: 9px;
-    font-size: .86rem;
-    color: #1f2937;
-    cursor: pointer;
-    text-align: left;
 }
-.kvs__opcao:hover { background: #fef2f2; }
-.kvs__opcao--ativa { background: #fef2f2; color: #e30613; font-weight: 700; }
-.kvs__opcao[aria-selected="true"] { background: #fef2f2; color: #e30613; font-weight: 700; }
+.kvs__opcao:hover { background: var(--bs-danger-bg-subtle); }
+.kvs__opcao--ativa { background: var(--bs-danger-bg-subtle); color: var(--bs-danger-text-emphasis); font-weight: 700; }
+.kvs__opcao[aria-selected="true"] { background: var(--bs-danger-bg-subtle); color: var(--bs-danger-text-emphasis); font-weight: 700; }
 .kvs__opcao--focada { box-shadow: inset 0 0 0 2px #0d6efd; }
 .kvs__opcao-nome { min-width: 0; }
 .kvs__opcao-tipo {
     flex-shrink: 0;
     letter-spacing: .02em;
 }
-.kvs__vazio { padding: 22px 10px; text-align: center; color: #6b7280; font-size: .85rem; }
 
 /* ==========================================================================
    NAVEGAÇÃO — AVATAR E NAVEGAÇÃO MÓVEL (componentes/nav.php)
@@ -281,19 +218,18 @@
    ========================================================================== */
 
 /* ── Calendário: apenas a grade específica do domínio permanece própria. ── */
-.ag-cal-grid { display: flex; flex-wrap: wrap; text-align: center; }
-.ag-cal-day { width: 14.28%; height: 38px; display: flex; align-items: center; justify-content: center; font-size: .85rem; font-weight: 500; color: #374151; cursor: pointer; border-radius: 10px; position: relative; }
+.ag-cal-day { height: 38px; font-size: .85rem; font-weight: 500; color: #374151; cursor: pointer; border-radius: 10px; position: relative; }
 .ag-cal-day:not(.ag-cal-day--empty) { border: 0; padding: 0; background: transparent; font: inherit; color: inherit; cursor: pointer; }
 .ag-cal-day:not(.ag-cal-day--empty):focus-visible { outline: 3px solid #0d6efd; outline-offset: 2px; z-index: 2; }
-.ag-cal-day:hover { background: #F3F4F6; }
+.ag-cal-day:hover { background: var(--bs-tertiary-bg); }
 .ag-cal-day--empty { cursor: default; }
 .ag-cal-day--empty:hover { background: transparent; }
-.ag-cal-day--today { color: #E30613; font-weight: 700; }
-.ag-cal-day--today::after { content: ""; position: absolute; bottom: 4px; left: 50%; transform: translateX(-50%); width: 4px; height: 4px; border-radius: 50%; background: #E30613; }
-.ag-cal-day--selected { background: #E30613 !important; color: #fff !important; font-weight: 700; }
+.ag-cal-day--today { color: var(--bs-primary); font-weight: 700; }
+.ag-cal-day--today::after { content: ""; position: absolute; bottom: 4px; left: 50%; transform: translateX(-50%); width: 4px; height: 4px; border-radius: 50%; background: var(--bs-primary); }
+.ag-cal-day--selected { background: var(--bs-primary) !important; color: #fff !important; font-weight: 700; }
 .ag-cal-day--selected::after { background: #fff !important; }
-.ag-cal-day--has-game { font-weight: 700; color: #B91C1C; }
-.ag-cal-day--has-game::before { content: ""; position: absolute; bottom: 3px; left: 50%; transform: translateX(-50%); width: 5px; height: 5px; border-radius: 50%; background: #E30613; }
+.ag-cal-day--has-game { font-weight: 700; color: var(--bs-danger-text-emphasis); }
+.ag-cal-day--has-game::before { content: ""; position: absolute; bottom: 3px; left: 50%; transform: translateX(-50%); width: 5px; height: 5px; border-radius: 50%; background: var(--bs-primary); }
 .ag-cal-day--selected.ag-cal-day--has-game { color: #fff; }
 .ag-cal-day--selected.ag-cal-day--has-game::before { background: #fff; }
 
@@ -383,21 +319,8 @@
 
     /* Dashboard do Mesário: duas colunas mesmo em 640px CSS em paisagem,
        mantendo cada atalho como uma área de toque ampla. */
-    #conteudo-principal [class~="main-dashboard-layout"] {
-        min-width: 0;
-    }
-
-    .main-dashboard-layout > .container-fluid {
-        min-width: 0;
-    }
-
     .main-dashboard-layout > .container-fluid > .btn {
         min-height: 48px;
-    }
-
-    .main-dashboard-layout .row {
-        --bs-gutter-x: .75rem;
-        --bs-gutter-y: .75rem;
     }
 
     .main-dashboard-layout .row > [class*="col-"] .card {
@@ -418,22 +341,7 @@
 
     /* Lista de jogos: a largura do cartão acompanha o mesmo par de colunas
        do Dashboard, sem exigir uma terceira grade para tablets. */
-    .sgi-jogos-lista {
-        min-width: 0;
-    }
-
-    .sgi-jogos-lista #listaJogos {
-        --bs-gutter-x: .75rem;
-        --bs-gutter-y: .75rem;
-    }
-
-    .sgi-jogos-lista #listaJogos > .col-12 {
-        flex: 0 0 50%;
-        max-width: 50%;
-        min-width: 0;
-    }
-
-    .sgi-jogos-lista #listaJogos > .col-12 > a {
+    .sgi-jogos-lista #listaJogos > .col > a {
         display: block;
         height: 100%;
         min-width: 0;
@@ -453,7 +361,6 @@
     /* Perfil: o conteúdo continua em uma coluna e os comandos de foto e
        formulários permanecem alcançáveis com toque e teclado. */
     .sgi-perfil-mobile {
-        min-width: 0;
         padding: .75rem !important;
     }
 
@@ -482,7 +389,6 @@
     /* Agenda: a variante móvel usa cartões e controles empilhados; não carrega
        o espaçamento reservado pela barra inferior legada. */
     .sgi-agenda-mobile {
-        min-width: 0;
         padding: .75rem !important;
     }
 
@@ -524,12 +430,10 @@
     /* Chaveamento: empilha as fases na largura CSS compacta. A árvore desktop
        continua horizontal a partir de 1200px. */
     .sgi-chaveamento-mobile {
-        min-width: 0;
         padding: .75rem !important;
     }
 
     #bracketAreaMob {
-        min-width: 0;
         padding: .75rem !important;
         text-align: left !important;
     }
@@ -575,10 +479,6 @@
 
     /* O histórico conserva a tabela semântica e concentra a rolagem horizontal
        no próprio contêiner, sem alargar a página. */
-    #secaoJogosMob {
-        min-width: 0;
-    }
-
     #secaoJogosMob .form-control,
     #secaoJogosMob .form-select,
     #bracketAreaMob .btn {
@@ -606,13 +506,8 @@
     /* Ocorrências: cartões de turma preservam nomes longos e deixam as duas
        ações sempre acessíveis por toque. */
     .sgi-ocorrencias-mobile {
-        min-width: 0;
         padding-top: .75rem !important;
         padding-bottom: .75rem !important;
-    }
-
-    .sgi-ocorrencias-mobile #listaOcorrenciasMobile {
-        min-width: 0;
     }
 
     .sgi-ocorrencias-mobile #listaOcorrenciasMobile .card {
@@ -627,43 +522,11 @@
         padding: .5rem;
     }
 
-    #modalNovaOcorrencia .modal-dialog,
-    #modalHistoricoOcorrencias .modal-dialog,
-    #modalEditarJogo .modal-dialog,
-    #modalEditarJogoAgenda .modal-dialog,
-    #modalDatasAutomaticas .modal-dialog {
-        max-width: none;
-        margin: .5rem;
-    }
-
-    #modalNovaOcorrencia .modal-content,
-    #modalHistoricoOcorrencias .modal-content,
-    #modalEditarJogo .modal-content,
-    #modalEditarJogoAgenda .modal-content,
-    #modalDatasAutomaticas .modal-content {
-        max-height: calc(100dvh - 1rem);
-    }
-
-    #modalNovaOcorrencia .modal-body,
-    #modalHistoricoOcorrencias .modal-body,
-    #modalEditarJogo .modal-body,
-    #modalEditarJogoAgenda .modal-body,
-    #modalDatasAutomaticas .modal-body {
-        overflow-y: auto;
-    }
-
-    #modalNovaOcorrencia .modal-footer .btn,
-    #modalEditarJogo .modal-footer .btn,
-    #modalEditarJogoAgenda .modal-footer .btn,
-    #modalDatasAutomaticas .modal-footer .btn {
+    .modal-fullscreen-xl-down .modal-footer .btn {
         min-height: 48px;
     }
 
-    #modalNovaOcorrencia .btn-close,
-    #modalHistoricoOcorrencias .btn-close,
-    #modalEditarJogo .btn-close,
-    #modalEditarJogoAgenda .btn-close,
-    #modalDatasAutomaticas .btn-close {
+    .modal-fullscreen-xl-down .btn-close {
         min-width: 48px;
         min-height: 48px;
     }
@@ -869,15 +732,8 @@
     }
 }
 
-/* O dashboard mantém duas colunas em tablets e celulares em paisagem, mas
-   volta à largura completa em retrato estreito. O breakpoint de shell segue 1200px. */
-@media (min-width: 576px) and (max-width: 1199.98px) {
-    .main-dashboard-layout .row > .col-12.col-md-6 {
-        flex: 0 0 50%;
-        max-width: 50%;
-    }
-}
-
+/* Dashboard e lista de jogos usam row-cols-* do Bootstrap para a grade
+   responsiva; as regras abaixo tratam apenas controles estreitos. */
 @media (max-width: 575.98px) {
     .sgi-config-modalities-toolbar {
         min-width: 0;
@@ -894,19 +750,6 @@
         min-width: 0;
         max-width: 100%;
         white-space: normal;
-    }
-
-    #statsMobile .card {
-        flex-direction: column !important;
-        align-items: center !important;
-        justify-content: center;
-        gap: .5rem !important;
-        text-align: center;
-        min-width: 0;
-    }
-
-    #statsMobile .card > span {
-        flex: 0 0 auto;
     }
 
     #statsMobile .card > div {

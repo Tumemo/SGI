@@ -11,7 +11,7 @@ $isNivel2 = $nivelUsuario === 2;
 $podeGerar = !$isNivel2 && !$isNivel3;
 ?>
 
-<main class="d-md-none sgi-chaveamento-mobile p-4 bg-body-tertiary min-vh-100" >
+<main class="d-md-none sgi-chaveamento-mobile sgi-u-min-width-0 p-4 bg-body-tertiary min-vh-100" >
     <a href="<?= \App\Shared\Http\Url::to('painel') ?>" id="btnVoltarChaveamentoMob" class="btn btn-primary d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none" >
         <i class="bi bi-arrow-left-circle fs-5"></i> <span id="nomeInterclasseChaveamentoMob">Interclasse</span>
     </a>
@@ -77,13 +77,13 @@ $podeGerar = !$isNivel2 && !$isNivel3;
         <div id="msgChaveamentoMob" class="alert d-none" ></div>
     </div>
 
-    <div id="bracketAreaMob" class="card border-0 shadow-sm rounded-4 text-center p-5">
+    <div id="bracketAreaMob" class="card border-0 shadow-sm rounded-4 text-center sgi-u-min-width-0 p-5">
         <div class="display-5 text-body-tertiary mb-3"><i class="bi bi-diagram-3"></i></div>
         <div class="h5 fw-bold text-body mb-2">Nenhum chaveamento disponível</div>
         <div class="small text-body-secondary">Selecione uma modalidade acima para <?php echo $podeGerar ? 'gerar ou ' : ''; ?>visualizar um chaveamento.</div>
     </div>
 
-    <div id="secaoJogosMob" class="mt-4">
+    <div id="secaoJogosMob" class="mt-4 sgi-u-min-width-0">
         <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
             <div class="p-4 pb-0">
                 <div class="h5 fw-bold text-body mb-1">Jogos Realizados</div>
@@ -266,7 +266,7 @@ $podeGerar = !$isNivel2 && !$isNivel3;
 </main>
 
 <div class="modal fade" id="modalEditarJogo" tabindex="-1" aria-labelledby="tituloModalEditarJogo" aria-hidden="true">
-    <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+    <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable modal-fullscreen-xl-down">
         <div class="modal-content">
             <div class="modal-header border-0 px-4 pt-4">
                 <h5 class="modal-title fw-bold text-body d-flex align-items-center gap-2" id="tituloModalEditarJogo"><i class="bi bi-pencil-square text-danger" aria-hidden="true"></i> Editar Jogo</h5>

@@ -10,10 +10,10 @@ $paginaAtiva = 'dashboard';
 
 
 
-<main class="container py-4 main-desktop-layout sgi-jogos-lista">
+<main class="container py-4 main-desktop-layout sgi-jogos-lista sgi-u-min-width-0">
     <h1 class="h3 fw-bold text-body mb-4 d-none d-md-block">Jogos</h1>
 
-    <div class="row g-3" id="listaJogos">
+    <div class="row row-cols-1 row-cols-sm-2 row-cols-lg-3 g-3" id="listaJogos">
         <div class="col-12 text-center text-muted py-5">
             <div class="spinner-border spinner-border-sm me-2" role="status">
                 <span class="visually-hidden">Carregando...</span>

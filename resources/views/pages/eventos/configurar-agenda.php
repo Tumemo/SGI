@@ -9,7 +9,7 @@ $nivelUsuarioAgenda = (int)($_SESSION['nivel'] ?? -1);
 ?>
 
 <!-- ═══ MOBILE ═══ -->
-<main class="d-md-none ag-mobile sgi-agenda-mobile p-3">
+<main class="d-md-none ag-mobile sgi-agenda-mobile sgi-u-min-width-0 p-3">
     <h1 class="h4 fw-bold text-body mb-3">Agenda de Jogos</h1>
     <div class="card overflow-hidden">
         <div class="bg-dark text-white d-flex align-items-center justify-content-between p-3">
@@ -40,7 +40,7 @@ $nivelUsuarioAgenda = (int)($_SESSION['nivel'] ?? -1);
             <div class="d-flex text-center mb-1" role="group" aria-label="Dias da semana">
                 <span class="ag-cal-weekday flex-fill small fw-bold text-body-secondary text-uppercase py-1"><span aria-hidden="true">D</span><span class="visually-hidden">Domingo</span></span><span class="ag-cal-weekday flex-fill small fw-bold text-body-secondary text-uppercase py-1"><span aria-hidden="true">S</span><span class="visually-hidden">Segunda-feira</span></span><span class="ag-cal-weekday flex-fill small fw-bold text-body-secondary text-uppercase py-1"><span aria-hidden="true">T</span><span class="visually-hidden">Terça-feira</span></span><span class="ag-cal-weekday flex-fill small fw-bold text-body-secondary text-uppercase py-1"><span aria-hidden="true">Q</span><span class="visually-hidden">Quarta-feira</span></span><span class="ag-cal-weekday flex-fill small fw-bold text-body-secondary text-uppercase py-1"><span aria-hidden="true">Q</span><span class="visually-hidden">Quinta-feira</span></span><span class="ag-cal-weekday flex-fill small fw-bold text-body-secondary text-uppercase py-1"><span aria-hidden="true">S</span><span class="visually-hidden">Sexta-feira</span></span><span class="ag-cal-weekday flex-fill small fw-bold text-body-secondary text-uppercase py-1"><span aria-hidden="true">S</span><span class="visually-hidden">Sábado</span></span>
             </div>
-            <div id="calendario-grade-mobile" class="ag-cal-grid d-flex flex-wrap text-center"></div>
+            <div id="calendario-grade-mobile" class="ag-cal-grid row row-cols-7 g-0 text-center"></div>
         </div>
     </div>
 
@@ -149,7 +149,7 @@ $nivelUsuarioAgenda = (int)($_SESSION['nivel'] ?? -1);
                         <div class="d-flex text-center mb-1" role="group" aria-label="Dias da semana">
                             <span class="ag-cal-weekday flex-fill small fw-bold text-body-secondary text-uppercase py-1"><span aria-hidden="true">D</span><span class="visually-hidden">Domingo</span></span><span class="ag-cal-weekday flex-fill small fw-bold text-body-secondary text-uppercase py-1"><span aria-hidden="true">S</span><span class="visually-hidden">Segunda-feira</span></span><span class="ag-cal-weekday flex-fill small fw-bold text-body-secondary text-uppercase py-1"><span aria-hidden="true">T</span><span class="visually-hidden">Terça-feira</span></span><span class="ag-cal-weekday flex-fill small fw-bold text-body-secondary text-uppercase py-1"><span aria-hidden="true">Q</span><span class="visually-hidden">Quarta-feira</span></span><span class="ag-cal-weekday flex-fill small fw-bold text-body-secondary text-uppercase py-1"><span aria-hidden="true">Q</span><span class="visually-hidden">Quinta-feira</span></span><span class="ag-cal-weekday flex-fill small fw-bold text-body-secondary text-uppercase py-1"><span aria-hidden="true">S</span><span class="visually-hidden">Sexta-feira</span></span><span class="ag-cal-weekday flex-fill small fw-bold text-body-secondary text-uppercase py-1"><span aria-hidden="true">S</span><span class="visually-hidden">Sábado</span></span>
                         </div>
-                        <div id="calendario-grade" class="ag-cal-grid d-flex flex-wrap text-center"></div>
+                        <div id="calendario-grade" class="ag-cal-grid row row-cols-7 g-0 text-center"></div>
                     </div>
                 </div>
             </div>
@@ -159,7 +159,7 @@ $nivelUsuarioAgenda = (int)($_SESSION['nivel'] ?? -1);
 
 <!-- ═══ MODAL EDITAR JOGO INDIVIDUAL ═══ -->
 <div class="modal fade" id="modalEditarJogoAgenda" tabindex="-1" aria-labelledby="modalEditarJogoAgendaTitulo" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-fullscreen-xl-down">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="modalEditarJogoAgendaTitulo">Ajustar data, horário e local</h5>
@@ -196,7 +196,7 @@ $nivelUsuarioAgenda = (int)($_SESSION['nivel'] ?? -1);
 
 <!-- ═══ MODAL DATAS AUTOMÁTICAS (LOTE) ═══ -->
 <div class="modal fade" id="modalDatasAutomaticas" tabindex="-1" aria-labelledby="modalDatasAutomaticasTitulo" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-fullscreen-xl-down">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="modalDatasAutomaticasTitulo"><i class="bi bi-calendar2-plus text-danger me-2" aria-hidden="true"></i>Agendamento automático</h5>
