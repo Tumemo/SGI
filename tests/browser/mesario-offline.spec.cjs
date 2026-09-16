@@ -241,6 +241,10 @@ test.describe('Mesário — fluxo visual completo offline', () => {
         await expect(page.locator('#mc-sync-status')).toBeHidden();
         await expect(page.locator('#modalArtilheiro')).toBeHidden({ timeout: 10_000 });
         await expect(page.locator('.score-number').first()).toHaveText('01');
+        // Regressão do destaque offline: o atleta deve aparecer logo após o
+        // ponto, sem depender da reconexão com o servidor.
+        await expect(page.locator('#artilheiro-cards')).toContainText(fixture.nomeAtleta, { timeout: 10_000 });
+        await expect(page.locator('#artilheiro-cards')).toContainText('1 gol', { timeout: 10_000 });
         const mutacoesDoPonto = await page.evaluate(async (id) => {
             const fila = await window.SGIOffline.getPendingList();
             return fila.filter((item) => {

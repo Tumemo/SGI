@@ -110,6 +110,13 @@
                     _sgi_chaveamento_modality: info.q.get('id_modalidade') || null,
                 });
             }
+            if (file === 'artilheiros') {
+                r = Object.assign({}, r, {
+                    _sgi_artilharia_id_jogo: info.q.get('id_jogo') || null,
+                    _sgi_artilharia_id_interclasse: info.q.get('id_interclasse') || null,
+                    _sgi_artilharia_id_modalidade: info.q.get('id_modalidade') || null,
+                });
+            }
             return put(store, identity, r);
         }));
     }
@@ -302,11 +309,129 @@
         base = String(base).replace(/\/?$/, '/');
         return base + 'chaveamentos?tipo_modalidade=individual&acao=' + encodeURIComponent(action) + '&id_modalidade=' + encodeURIComponent(idModalidade);
     }
+    function localArtilharia(url) {
+        var info = urlInfo(url);
+        var idJogo = info.q.get('id_jogo');
+        var idInter = info.q.get('id_interclasse');
+        var idMod = info.q.get('id_modalidade');
+
+        return Promise.all([all('pontos'), all('atletas'), all('jogos'), all('turmas')]).then(function (dados) {
+            var pontos = dados[0] || [];
+            var atletas = dados[1] || [];
+            var jogos = dados[2] || [];
+            var turmas = dados[3] || [];
+            var jogosPorId = {};
+            jogos.forEach(function (jogo) {
+                if (jogo && jogo.id_jogo != null) jogosPorId[String(jogo.id_jogo)] = jogo;
+            });
+            var turmasPorId = {};
+            turmas.forEach(function (turma) {
+                if (turma && turma.id_turma != null) turmasPorId[String(turma.id_turma)] = turma;
+            });
+
+            function jogoDoPonto(ponto) {
+                var pontoJogo = ponto && (ponto.jogos_id_jogo != null ? ponto.jogos_id_jogo : ponto.id_jogo);
+                return jogosPorId[String(pontoJogo)] || null;
+            }
+
+            function pontoPertenceConsulta(ponto) {
+                var pontoJogo = ponto && (ponto.jogos_id_jogo != null ? ponto.jogos_id_jogo : ponto.id_jogo);
+                if (idJogo && String(pontoJogo) !== String(idJogo)) return false;
+                var jogo = jogoDoPonto(ponto) || {};
+                var modalidade = ponto.modalidades_id_modalidade || ponto.id_modalidade || jogo.modalidades_id_modalidade || jogo.id_modalidade;
+                if (idMod && String(modalidade || '') !== String(idMod)) return false;
+                var interclasse = ponto.interclasses_id_interclasse || ponto.id_interclasse || jogo.interclasses_id_interclasse || jogo.id_interclasse;
+                if (idInter && String(interclasse || '') !== String(idInter)) return false;
+                return true;
+            }
+
+            var pontosConsulta = pontos.filter(pontoPertenceConsulta);
+            var agrupados = {};
+
+            function atletaDoPonto(ponto) {
+                var idUsuario = ponto.usuarios_id_usuario || ponto.id_usuario;
+                var candidatos = atletas.filter(function (atleta) {
+                    return atleta && String(atleta.id_usuario || '') === String(idUsuario || '');
+                });
+                var idEquipe = ponto.equipes_id_equipe || ponto.id_equipe;
+                return candidatos.filter(function (atleta) {
+                    return idEquipe && String(atleta.equipes_id_equipe || '') === String(idEquipe);
+                })[0] || candidatos[0] || {};
+            }
+
+            pontosConsulta.forEach(function (ponto) {
+                var idUsuario = Number(ponto.usuarios_id_usuario || ponto.id_usuario || 0);
+                if (!idUsuario) return;
+                var jogo = jogoDoPonto(ponto) || {};
+                var atleta = atletaDoPonto(ponto);
+                var idModalidade = ponto.modalidades_id_modalidade || ponto.id_modalidade || jogo.modalidades_id_modalidade || jogo.id_modalidade || '';
+                var chave = String(idUsuario) + '|' + String(idModalidade);
+                var idTurma = ponto.id_turma || ponto.turmas_id_turma || atleta.id_turma || atleta.turmas_id_turma;
+                var turma = turmasPorId[String(idTurma)] || {};
+                var grupo = agrupados[chave];
+                if (!grupo) {
+                    grupo = agrupados[chave] = {
+                        id_usuario: idUsuario,
+                        nome_usuario: ponto.nome_usuario || atleta.nome_usuario || 'Desconhecido',
+                        foto_usuario: ponto.foto_usuario || atleta.foto_usuario || '',
+                        total_gols: 0,
+                        total_acoes: 0,
+                        total_anulados: 0,
+                        nome_modalidade: ponto.nome_modalidade || jogo.nome_modalidade || '',
+                        nome_turma: ponto.nome_turma || atleta.nome_turma || turma.nome_turma || '',
+                        nome_fantasia_turma: ponto.nome_fantasia_turma || atleta.nome_fantasia_turma || turma.nome_fantasia_turma || turma.nome_turma || '',
+                    };
+                }
+                if ((!grupo.nome_usuario || grupo.nome_usuario === 'Desconhecido') && (ponto.nome_usuario || atleta.nome_usuario)) {
+                    grupo.nome_usuario = ponto.nome_usuario || atleta.nome_usuario;
+                }
+                grupo.total_acoes++;
+                var ativo = String(ponto.status_artilheiro || 'ativo') === 'ativo'
+                    && Number(ponto.conta_no_placar == null ? 1 : ponto.conta_no_placar) === 1;
+                if (ativo) {
+                    var gols = Number(ponto.num_gol == null ? 1 : ponto.num_gol);
+                    grupo.total_gols += Number.isFinite(gols) && gols > 0 ? gols : 0;
+                } else {
+                    grupo.total_anulados++;
+                }
+            });
+
+            var resultado = Object.keys(agrupados).map(function (chave) { return agrupados[chave]; });
+            if (!resultado.length) {
+                // Mantém a artilharia já capturada para instalações antigas ou
+                // quando a resposta de pontos ainda não foi armazenada. Novas
+                // mutações sempre entram pela projeção acima.
+                resultado = atletas.filter(function (atleta) {
+                    if (!atleta || atleta.total_gols == null || atleta.total_acoes == null) return false;
+                    var cacheJogo = atleta._sgi_artilharia_id_jogo;
+                    var cacheInter = atleta._sgi_artilharia_id_interclasse;
+                    var cacheMod = atleta._sgi_artilharia_id_modalidade;
+                    return (!idJogo || !cacheJogo || String(cacheJogo) === String(idJogo))
+                        && (!idInter || !cacheInter || String(cacheInter) === String(idInter))
+                        && (!idMod || !cacheMod || String(cacheMod) === String(idMod));
+                }).map(function (atleta) {
+                    var copia = Object.assign({}, atleta);
+                    delete copia._sgi_artilharia_id_jogo;
+                    delete copia._sgi_artilharia_id_interclasse;
+                    delete copia._sgi_artilharia_id_modalidade;
+                    return copia;
+                });
+            }
+            resultado.sort(function (a, b) {
+                return Number(b.total_gols || 0) - Number(a.total_gols || 0)
+                    || Number(b.total_acoes || 0) - Number(a.total_acoes || 0)
+                    || String(a.nome_usuario || '').localeCompare(String(b.nome_usuario || ''));
+            });
+            return new Response(JSON.stringify(resultado), { status: 200, headers: { 'Content-Type': 'application/json' } });
+        });
+    }
     function localGet(url) {
         var info = urlInfo(url), file = info.file, store = { 'jogos': 'jogos', 'partidas': 'partidas', 'turmas': 'turmas', 'modalidades': 'modalidades', 'categorias': 'categorias', 'locais': 'locais', 'equipes': 'equipes', 'artilheiros': 'atletas', 'pontos': 'pontos', 'ocorrencias': 'ocorrencias', 'ocorrencias_turmas': 'ocorrencias_turmas', 'chaveamentos': 'chaveamentos' }[file];
         // Endpoints com "acao" possuem formatos especiais; o cache por URL
         // da camada base preserva exatamente a resposta original nesses casos.
         if (!store) return Promise.resolve(null);
+        if (file === 'artilheiros' && info.q.get('acao')) return Promise.resolve(null);
+        if (file === 'artilheiros') return localArtilharia(url);
         if (file === 'chaveamentos' && ['participantes', 'ranking'].indexOf(info.q.get('acao')) !== -1) {
             var action = info.q.get('acao');
             var modality = String(info.q.get('id_modalidade') || '');
@@ -388,7 +513,9 @@
             // snapshot antigo da API e fazia o placar voltar temporariamente.
             if (arquivo !== 'partidas' && arquivo !== 'resultados' && arquivo !== 'pontos') return false;
         } else if (info.file === 'artilheiros') {
-            if (arquivo !== 'artilheiros') return false;
+            // Um ponto pendente altera imediatamente o destaque local do
+            // placar, mesmo antes de existir uma linha de artilheiro no banco.
+            if (arquivo !== 'artilheiros' && arquivo !== 'pontos') return false;
         } else if (info.file === 'pontos') {
             if (arquivo !== 'pontos') return false;
         } else if (info.file === 'ocorrencias') {

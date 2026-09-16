@@ -23,6 +23,10 @@ test('rotas v1 preservam cadastros e projetam o encerramento com placar offline'
 
 test('ponto offline incrementa a partida e a anulação preserva o histórico do atleta', async () => {
     const layer = await carregarDataLayer();
+    await layer.capture('https://sgi.test/api/v1/pontos?acao=atletas&id_jogo=7&id_equipe=1', JSON.stringify({
+        success: true,
+        atletas: [{ id_usuario: 42, nome_usuario: 'Atleta offline', equipes_id_equipe: 1, id_turma: 3 }],
+    }));
     await layer.upsert('partidas', 101, {
         id_partida: 101,
         jogos_id_jogo: 7,
@@ -47,6 +51,14 @@ test('ponto offline incrementa a partida e a anulação preserva o histórico do
     assert.equal(ponto.usuarios_id_usuario, 42);
     assert.equal(partida.resultado_partida, 1);
 
+    let artilharia = await (await layer.localGet('https://sgi.test/api/v1/artilheiros?id_jogo=7')).json();
+    assert.equal(artilharia.length, 1);
+    assert.equal(artilharia[0].id_usuario, 42);
+    assert.equal(artilharia[0].nome_usuario, 'Atleta offline');
+    assert.equal(artilharia[0].total_gols, 1);
+    assert.equal(artilharia[0].total_acoes, 1);
+    assert.equal(artilharia[0].total_anulados, 0);
+
     await layer.onQueued({
         id: 202,
         method: 'PUT',
@@ -58,6 +70,12 @@ test('ponto offline incrementa a partida e a anulação preserva o histórico do
     assert.equal(ponto.status_artilheiro, 'anulado');
     assert.equal(ponto.conta_no_placar, 0);
     assert.equal(partida.resultado_partida, 0);
+
+    artilharia = await (await layer.localGet('https://sgi.test/api/v1/artilheiros?id_jogo=7')).json();
+    assert.equal(artilharia.length, 1);
+    assert.equal(artilharia[0].total_gols, 0);
+    assert.equal(artilharia[0].total_acoes, 1);
+    assert.equal(artilharia[0].total_anulados, 1);
 });
 
 test('cache offline mantém o mesmo atleta disponível em equipes diferentes', async () => {
