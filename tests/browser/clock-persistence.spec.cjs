@@ -116,6 +116,58 @@ async function lerTempoTela(page) {
 }
 
 test.describe('Mesário — persistência do cronômetro', () => {
+    test('o cronômetro não anuncia cada segundo e comunica mudanças discretas', async ({ page, request }) => {
+        test.setTimeout(180_000);
+        const fixture = await criarJogoFixture(request);
+        await page.goto('login', { waitUntil: 'domcontentloaded' });
+        await page.locator('#form_desktop .ipt-matricula').fill('mesario');
+        await page.locator('#form_desktop .ipt-senha').fill('123');
+        await page.locator('#form_desktop button[type="submit"]').click();
+        await page.waitForURL(/\/painel\?id=\d+/, { waitUntil: 'domcontentloaded' });
+        await page.goto(`jogos/placar?id_jogo=${fixture.idJogo}`, { waitUntil: 'domcontentloaded' });
+        await expect(page.locator('#placar-conteudo')).toBeVisible();
+
+        await expect(page.locator('#timer-placar')).not.toHaveAttribute('aria-live', /.+/);
+        await expect(page.locator('#placar-status-announcer')).toHaveAttribute('role', 'status');
+        await expect(page.locator('#placar-status-announcer')).toHaveAttribute('aria-live', 'polite');
+        await page.clock.install({ time: new Date(Date.now()) });
+
+        await page.getByRole('button', { name: /Iniciar jogo/i }).click();
+        await expect(page.locator('#placar-status-announcer')).toContainText('Partida iniciada');
+        await page.locator('#btn-pausar').click();
+        await expect(page.locator('#placar-status-announcer')).toContainText('Cronômetro pausado');
+        await page.locator('#btn-pausar').click();
+        await expect(page.locator('#placar-status-announcer')).toContainText('Cronômetro retomado');
+    });
+
+    test('tempo esgotado tem texto real e mantém a pontuação bloqueada', async ({ page, request }) => {
+        test.setTimeout(180_000);
+        const fixture = await criarJogoFixture(request);
+        await page.goto('login', { waitUntil: 'domcontentloaded' });
+        await page.locator('#form_desktop .ipt-matricula').fill('mesario');
+        await page.locator('#form_desktop .ipt-senha').fill('123');
+        await page.locator('#form_desktop button[type="submit"]').click();
+        await page.waitForURL(/\/painel\?id=\d+/, { waitUntil: 'domcontentloaded' });
+        await page.goto(`jogos/placar?id_jogo=${fixture.idJogo}`, { waitUntil: 'domcontentloaded' });
+        await expect(page.locator('#placar-conteudo')).toBeVisible();
+        await page.clock.install({ time: new Date(Date.now()) });
+
+        await page.locator('#select-duracao').selectOption('5');
+        await page.getByRole('button', { name: /Iniciar jogo/i }).click();
+        await expect(page.locator('#mc-status-badge')).toContainText('Em andamento');
+        await page.clock.fastForward(5 * 60_000);
+
+        await expect(page.locator('#placar-grid')).toHaveClass(/score-blocked/);
+        await expect(page.locator('#mc-score-blocked-message')).toContainText('Tempo esgotado');
+        await expect(page.locator('#placar-status-announcer')).toContainText('Pontuação bloqueada');
+        for (const button of await page.locator('.btn-score-plus').all()) {
+            await expect(button).toBeDisabled();
+        }
+        for (const button of await page.locator('.btn-score-minus').all()) {
+            await expect(button).toBeDisabled();
+        }
+    });
+
     test('preserva o saldo entre pausa, navegação, retomada e envio atrasado', async ({ page, context, request }) => {
         test.setTimeout(180_000);
         const fixture = await criarJogoFixture(request);

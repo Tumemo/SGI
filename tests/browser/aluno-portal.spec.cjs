@@ -165,6 +165,11 @@ test.describe.serial('Portal do Aluno — Jornada Interativa e Regras de Negóci
         await expect(btnAceitar).toBeVisible({ timeout: 15_000 });
         await btnAceitar.click();
         await page.waitForURL(/\/aluno\/inicio/, { timeout: 15_000 });
+        await page.evaluate(() => bootstrap.Modal.getOrCreateInstance(document.getElementById('modalTermo')).show());
+        await expect(page.getByRole('dialog', {
+            name: 'Termo de Responsabilidade e Regulamento',
+        })).toBeVisible();
+        await page.evaluate(() => bootstrap.Modal.getInstance(document.getElementById('modalTermo')).hide());
     });
 
     test('inscrição em modalidades, escolha de equipe e validação de regras', async ({ page, baseURL }) => {
@@ -183,10 +188,14 @@ test.describe.serial('Portal do Aluno — Jornada Interativa e Regras de Negóci
         await expect(cards.first()).toBeVisible({ timeout: 15_000 });
 
         // Clica no primeiro card disponível para abrir o modal de equipes
+        const modalEquipes = page.locator('#modalEquipes');
+        const modalEquipesShown = modalEquipes.evaluate((element) => new Promise((resolve) => {
+            element.addEventListener('shown.bs.modal', resolve, { once: true });
+        }));
         await cards.first().click();
 
-        const modalEquipes = page.locator('#modalEquipes');
         await expect(modalEquipes).toBeVisible({ timeout: 10_000 });
+        await modalEquipesShown;
 
         const linhaEquipe = modalEquipes.locator('.equipe-pick-row').first();
         await expect(linhaEquipe).toBeVisible({ timeout: 10_000 });
@@ -343,6 +352,19 @@ test.describe.serial('Portal do Aluno — Jornada Interativa e Regras de Negóci
         await page.goto('aluno/perfil', { waitUntil: 'domcontentloaded' });
         await expect(page.locator('#perfilNomeDesk, #perfilNomeInfo').first()).toBeVisible({ timeout: 15_000 });
 
+        const btnEditarPerfil = page.locator('button[data-bs-target="#modalEditarPerfil"]:visible').first();
+        const modalPerfil = page.getByRole('dialog', { name: 'Editar Perfil' });
+        const modalPerfilMostrado = modalPerfil.evaluate((element) => new Promise((resolve) => {
+            element.addEventListener('shown.bs.modal', resolve, { once: true });
+        }));
+        await btnEditarPerfil.click();
+        await modalPerfilMostrado;
+        await expect(modalPerfil).toBeVisible();
+        await expect(modalPerfil.getByLabel('Nome')).toBeVisible();
+        await page.keyboard.press('Escape');
+        await expect(modalPerfil).toBeHidden();
+        await expect(btnEditarPerfil).toBeFocused();
+
         // Abrir modal de alteração de senha
         const btnAlterarSenha = page.locator('button[data-bs-target="#modalAlterarSenha"]:visible');
         await expect(btnAlterarSenha).toBeVisible({ timeout: 10_000 });
@@ -350,6 +372,7 @@ test.describe.serial('Portal do Aluno — Jornada Interativa e Regras de Negóci
 
         const modalSenha = page.locator('#modalAlterarSenha');
         await expect(modalSenha).toBeVisible({ timeout: 10_000 });
+        await expect(page.getByRole('dialog', { name: 'Alterar Senha' })).toBeVisible();
 
         // 1. Testar senha atual incorreta
         await page.locator('#editarSenhaAtual').fill('senha_errada_xyz');
@@ -380,8 +403,9 @@ test.describe.serial('Portal do Aluno — Jornada Interativa e Regras de Negóci
         await expect(linkLogout).toBeVisible({ timeout: 10_000 });
         await linkLogout.click();
         await expect(page.getByRole('dialog')).toContainText(/Sair do SGI/i);
+        const redirectToLogin = page.waitForURL(/login/, { timeout: 15_000 });
         await page.getByRole('dialog').getByRole('button', { name: 'Sair' }).click();
-        await page.waitForURL(/login/, { timeout: 15_000 });
+        await redirectToLogin;
 
         // Tentativa com senha antiga deve falhar
         await page.locator('#form_desktop .ipt-matricula').fill(fixture.matricula);

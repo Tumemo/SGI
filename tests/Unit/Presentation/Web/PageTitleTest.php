@@ -8,12 +8,30 @@ use PHPUnit\Framework\TestCase;
 
 final class PageTitleTest extends TestCase
 {
-    public function testCanonicalTitleComponentContainsOnlySgi(): void
+    public function testTitleComponentRendersPageSpecificTitleSafely(): void
     {
-        $component = file_get_contents($this->path('resources/views/components/page-title.php'));
+        $requestUriAnterior = $_SERVER['REQUEST_URI'] ?? null;
+        $_SERVER['REQUEST_URI'] = '/SGI/dashboard';
+        $titulo = 'Agenda "A" & <B>';
 
-        self::assertIsString($component);
-        self::assertSame('<title>SGI</title>', trim($component));
+        ob_start();
+        try {
+            include $this->path('resources/views/components/page-title.php');
+            $render = trim((string) ob_get_contents());
+        } finally {
+            ob_end_clean();
+            if ($requestUriAnterior === null) {
+                unset($_SERVER['REQUEST_URI']);
+            } else {
+                $_SERVER['REQUEST_URI'] = $requestUriAnterior;
+            }
+        }
+
+        self::assertSame(
+            '<meta name="sgi-page-title" content="Agenda &quot;A&quot; &amp; &lt;B&gt;">' . "\n" .
+            '<title>Agenda &quot;A&quot; &amp; &lt;B&gt; | SGI</title>',
+            $render,
+        );
     }
 
     public function testAllHtmlHeadsIncludeTheCanonicalTitleComponent(): void
@@ -53,10 +71,11 @@ final class PageTitleTest extends TestCase
         self::assertIsString($adminHeader);
         self::assertIsString($turmaAlunos);
         self::assertIsString($offline);
-        self::assertStringContainsString("document.title = 'SGI';", $adminHeader);
+        self::assertStringContainsString('const tituloPagina = String(metaTituloPagina', $adminHeader);
+        self::assertStringContainsString("tituloPagina + ' | SGI'", $adminHeader);
         self::assertStringNotContainsString('SGI - Alunos da Turma', $turmaAlunos);
         self::assertStringNotContainsString('document.title = TELA_TITULO', $offline);
-        self::assertStringContainsString("document.title = 'SGI';", $offline);
+        self::assertStringContainsString('document.title = tituloDocumento(rec.titulo, TELA_TITULO[tela]);', $offline);
     }
 
     private function path(string $relative): string

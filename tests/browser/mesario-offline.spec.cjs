@@ -158,28 +158,41 @@ test.describe('Mesário — fluxo visual completo offline', () => {
 
         await page.goto('login', { waitUntil: 'domcontentloaded' });
         await expect(page.locator('#form_desktop')).toBeVisible();
-        await expect(page.locator('#form_desktop h2')).toHaveText('Acesso ao sistema');
+        await expect(page.locator('#form_desktop').getByRole('heading', { name: 'Acesso ao sistema' }))
+            .toBeVisible();
+        await expect(page).toHaveTitle('Entrar | SGI');
         await capturarTela(page, testInfo, '01-login');
 
         await page.locator('#form_desktop .ipt-matricula').fill('mesario');
         await page.locator('#form_desktop .ipt-senha').fill('123');
         await page.locator('#form_desktop button[type="submit"]').click();
         await page.waitForURL(/\/painel\?id=\d+/, { waitUntil: 'domcontentloaded' });
+        await expect(page).toHaveTitle(/Dashboard.*\| SGI/);
         await expect(page.locator('body')).not.toContainText('Download parcial');
 
         // O preload é sequencial por desenho: aguardamos o indicador verde que
         // confirma que as telas e os dados do confronto estão no IndexedDB.
         await expect(page.locator('#sgi-offline-ok')).toBeVisible({ timeout: 120_000 });
         await expect(page.locator('#sgi-offline-ok')).toContainText('Pronto para uso offline');
+        await expect(page.locator('#sgi-offline-ok')).toContainText(/nesta aba preparada/i);
         await capturarTela(page, testInfo, '02-pronto-offline');
 
         await context.setOffline(true);
         await expect.poll(() => page.evaluate(() => navigator.onLine)).toBe(false);
-        await expect(page.locator('#sgi-offline-banner')).toContainText('OFFLINE');
+        await expect(page.locator('#sgi-offline-banner')).toContainText('SEM CONEXÃO');
 
         // A navegação abaixo é SPA e deve sair do cache de tela, sem request.
         await page.locator('#linkAgenda:visible').first().click();
         await expect(page.locator('#lista-eventos')).toBeVisible();
+        await expect(page).toHaveTitle(/Agenda.*\| SGI/);
+        await expect.poll(() => page.evaluate(() => {
+            const active = document.activeElement;
+            return active && /^(H1|H2)$/.test(active.tagName) ? active.textContent.trim() : '';
+        })).toContain('Agenda');
+        await expect.poll(() => page.evaluate(() => {
+            const active = document.activeElement;
+            return !!active && /^(H1|H2)$/.test(active.tagName) && !!active.closest('#conteudo-principal');
+        })).toBe(true);
         await expect(page.locator('#lista-eventos .ag-event-card').filter({ hasText: 'E2E Visual Offline' }).first()).toBeVisible();
         await capturarTela(page, testInfo, '03-agenda-offline');
 
@@ -193,7 +206,24 @@ test.describe('Mesário — fluxo visual completo offline', () => {
         await fixtureCard.locator('a[href*="jogos/placar"]').click();
         await expect(page.locator('#placar-conteudo')).toBeVisible();
         await expect(page.locator('#placar-grid')).toBeVisible();
+        await expect(page).toHaveTitle(/Placar.*\| SGI/);
+        await expect.poll(() => page.evaluate(() => {
+            const active = document.activeElement;
+            return !!active && /^(H1|H2)$/.test(active.tagName) && !!active.closest('#conteudo-principal');
+        })).toBe(true);
         await expect(page.locator('#mc-status-badge')).toContainText('Em andamento');
+        await expect(page.locator('#mc-sync-status')).toBeHidden();
+
+        // Reativar a mesma tela na casca SPA não pode acumular listeners:
+        // depois das três reentradas, uma ação do operador deve enfileirar só
+        // uma mutação para o mesmo resultado.
+        for (let entrada = 0; entrada < 3; entrada += 1) {
+            await page.locator('#btnVoltarPlacar').click();
+            await expect(page.locator('#lista-eventos')).toBeVisible();
+            await fixtureCard.locator('a[href*="jogos/placar"]').click();
+            await expect(page.locator('#placar-conteudo')).toBeVisible();
+            await expect(page.locator('#mc-status-badge')).toContainText('Em andamento');
+        }
 
         // Registra um ponto somente depois de escolher o atleta. A tentativa
         // vazia não pode alterar o placar.
@@ -206,9 +236,22 @@ test.describe('Mesário — fluxo visual completo offline', () => {
         await expect.poll(() => page.locator('#selectAlunoArtilheiro option').count()).toBeGreaterThan(1);
         await selecionarAtletaE2EOffline(page, fixture.nomeAtleta);
         await page.locator('#btnSalvarArtilheiro').click();
-        await expect(page.locator('#msgArtilheiro')).toContainText('Ponto registrado', { timeout: 10_000 });
+        await expect(page.locator('#msgArtilheiro')).toContainText(/Ponto (registrado|salvo)/i, { timeout: 10_000 });
+        await expect(page.locator('#placar-status-announcer')).toContainText(/ponto salvo neste dispositivo.*aguardando/i);
+        await expect(page.locator('#mc-sync-status')).toBeHidden();
         await expect(page.locator('#modalArtilheiro')).toBeHidden({ timeout: 10_000 });
         await expect(page.locator('.score-number').first()).toHaveText('01');
+        const mutacoesDoPonto = await page.evaluate(async (id) => {
+            const fila = await window.SGIOffline.getPendingList();
+            return fila.filter((item) => {
+                if (!String(item.url || '').includes('/api/v1/pontos')) return false;
+                try {
+                    const corpo = JSON.parse(item.body || '{}');
+                    return String(corpo.jogos_id_jogo) === String(id);
+                } catch (_) { return false; }
+            }).length;
+        }, fixture.idJogo);
+        expect(mutacoesDoPonto).toBe(1);
 
         // Uma segunda jogada é criada e anulada ainda sem rede. A fila deve
         // sincronizar primeiro o POST e depois o PUT com o ID real resolvido.
@@ -217,7 +260,8 @@ test.describe('Mesário — fluxo visual completo offline', () => {
         await expect.poll(() => page.locator('#selectAlunoArtilheiro option').count()).toBeGreaterThan(1);
         await selecionarAtletaE2EOffline(page, fixture.nomeAtleta);
         await page.locator('#btnSalvarArtilheiro').click();
-        await expect(page.locator('#msgArtilheiro')).toContainText('Ponto registrado', { timeout: 10_000 });
+        await expect(page.locator('#msgArtilheiro')).toContainText(/Ponto (registrado|salvo)/i, { timeout: 10_000 });
+        await expect(page.locator('#placar-status-announcer')).toContainText(/ponto salvo neste dispositivo.*aguardando/i);
         await expect(page.locator('#modalArtilheiro')).toBeHidden({ timeout: 10_000 });
         await expect(page.locator('.score-number').first()).toHaveText('02');
         await page.locator('.btn-score-minus').first().click();
@@ -237,6 +281,7 @@ test.describe('Mesário — fluxo visual completo offline', () => {
         await page.locator('#descricaoOcorrencia').fill('Registro visual offline');
         await page.locator('#btnSalvarOcorrencia').click();
         await expect(page.locator('#msgOcorrencia')).toContainText('Ocorrência registrada', { timeout: 10_000 });
+        await expect(page.locator('#placar-status-announcer')).toContainText(/ocorr.ncia registrada, salva neste dispositivo.*aguardando/i);
         await expect(page.locator('#modalOcorrencia')).toBeHidden({ timeout: 10_000 });
 
         // Finaliza 1x0 localmente: a UI muda imediatamente e a mesma mutação
@@ -246,10 +291,12 @@ test.describe('Mesário — fluxo visual completo offline', () => {
         await expect(confirmacao).toBeVisible();
         await confirmacao.getByRole('button', { name: 'Encerrar jogo' }).click();
         await expect(page.locator('#mc-status-badge')).toContainText('Encerrado');
+        await expect(page.locator('#mc-sync-status')).toContainText(/resultado salvo neste dispositivo.*aguardando envio/i);
+        await expect(page.locator('#placar-status-announcer')).toContainText(/resultado salvo neste dispositivo.*aguardando/i);
         const feedback = page.getByRole('dialog');
         await expect(feedback).toContainText(/Jogo encerrado offline/i, { timeout: 10_000 });
         await feedback.getByRole('button', { name: 'Entendi' }).click();
-        await expect(page.locator('#sgi-offline-banner')).toContainText('alteracao', { timeout: 10_000 });
+        await expect(page.locator('#sgi-offline-banner')).toContainText(/alterações pendentes/i, { timeout: 10_000 });
         await expect.poll(() => page.evaluate(() => window.SGIOffline.getState().pending), { timeout: 20_000 }).toBeGreaterThanOrEqual(4);
         await expect.poll(() => page.evaluate(async (id) => {
             const jogos = await window.SGIDataLayer.read('jogos');
@@ -277,6 +324,7 @@ test.describe('Mesário — fluxo visual completo offline', () => {
         // botão de iniciar novamente.
         await page.locator('#btnVoltarPlacar').click();
         await expect(page.locator('#lista-eventos')).toBeVisible();
+        await expect(page).toHaveTitle(/Agenda.*\| SGI/);
         const fixtureConcluido = page.locator('#lista-eventos .ag-event-card').filter({ hasText: fixture.nomeJogo }).first();
         await expect(fixtureConcluido).toBeVisible();
         await expect(fixtureConcluido.locator('.ag-status-chip')).toContainText('Concluído');

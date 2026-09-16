@@ -433,7 +433,7 @@ test.describe.serial('Mesário — torneio completo online e offline', () => {
 
         await context.setOffline(true);
         await expect.poll(() => page.evaluate(() => navigator.onLine)).toBe(false);
-        await expect(page.locator('#sgi-offline-banner')).toContainText('OFFLINE');
+        await expect(page.locator('#sgi-offline-banner')).toContainText('SEM CONEXÃO');
 
         const quartas = ['MM:8:0:N', 'MM:8:1:N', 'MM:8:2:N', 'MM:8:3:N'];
         for (let i = 0; i < quartas.length; i += 1) {

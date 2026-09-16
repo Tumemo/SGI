@@ -52,7 +52,7 @@ test('o aviso offline mede sua altura para não cobrir o cabeçalho', () => {
     assert.match(offlineCore, /--sgi-offline-banner-height/);
     assert.match(offlineCore, /getBoundingClientRect\(\)\.height/);
     assert.match(offlineCore, /new ResizeObserver\(atualizarAlturaBanner\)/);
-    assert.match(adminCss, /\.sgi-offline-banner\s*\{[\s\S]*z-index:\s*1040/);
+    assert.match(sharedScss, /\.sgi-offline-banner\s*\{[\s\S]*z-index:\s*1040/);
 });
 
 test('a casca SPA não duplica o menu compacto ao remontar uma tela', () => {
@@ -72,21 +72,65 @@ test('as telas operacionais mantêm raízes compactas e desktop separadas', () =
     assert.match(perfilView, /main-desktop-layout sgi-perfil-desktop/);
 });
 
-test('agenda, chaveamento e ocorrências têm contrato de toque na composição Xiaomi', () => {
+test('agenda, chaveamento e ocorrências preservam semântica, overflow e alvos de toque', () => {
     assert.match(adminCss, /section\.sgi-u-h-120px[\s\S]*height:\s*72px\s*!important/);
     assert.match(adminCss, /section\.sgi-u-h-120px > a\.sgi-u-top-20px-left-20px-z-10[\s\S]*width:\s*48px/);
     assert.match(adminCss, /\.sgi-agenda-mobile \.form-control,[\s\S]*min-height:\s*48px/);
     assert.match(adminCss, /#bracketAreaMob \.bracket-tree[\s\S]*flex-direction:\s*column/);
     assert.match(adminCss, /\.sgi-chaveamento-mobile[\s\S]*padding:\s*\.75rem\s*!important/);
     assert.match(adminCss, /#bracketAreaMob \.bkt-connector[\s\S]*display:\s*none/);
-    assert.match(adminCss, /#secaoJogosMob \.table thead[\s\S]*display:\s*none/);
+    assert.match(
+        adminCss,
+        /#secaoJogos \.table-responsive,[\s\S]*?#secaoJogosMob \.table-responsive\s*\{[^}]*overflow-x:\s*auto;[^}]*overscroll-behavior-inline:\s*contain/,
+        'a tabela extensa conserva rolagem horizontal contida no próprio histórico'
+    );
+    assert.match(
+        adminCss,
+        /#secaoJogos \.table,[\s\S]*?#secaoJogosMob \.table\s*\{[^}]*min-width:\s*980px;[^}]*table-layout:\s*auto/,
+        'a largura da tabela não é truncada para eliminar o overflow real'
+    );
+    assert.match(adminCss, /#secaoJogosMob \.table thead th\s*\{[^}]*white-space:\s*nowrap/);
+    assert.doesNotMatch(adminCss, /#secaoJogosMob \.table thead\s*\{[^}]*display:\s*none/);
+    assert.match(bracketView, /<th id="jogos-mob-th-partida" scope="col">Partida<\/th>/);
+    assert.match(bracketView, /<th id="jogos-mob-th-acoes" scope="col" class="text-end">Ações<\/th>/);
+    assert.match(bracketJs, /<td headers="\$\{prefixoCabecalho\}partida"/);
     assert.match(adminCss, /#secaoJogosMob \.form-control,[\s\S]*#bracketAreaMob \.btn[\s\S]*min-height:\s*48px/);
-    assert.match(adminCss, /#secaoJogosMob \.table td:nth-child\(8\) \.btn[\s\S]*min-width:\s*48px/);
+    assert.match(adminCss, /#secaoJogosMob \.table td:last-child \.btn\s*\{[^}]*min-width:\s*48px;[^}]*min-height:\s*48px/);
+    assert.match(
+        bracketJs,
+        /function acoesBracketSempreVisiveis\(\)[\s\S]*return composicaoCompactaAtiva\(\) \|\| !ponteiroComHover/,
+        'ações do chaveamento permanecem visíveis na composição compacta ou sem mouse preciso'
+    );
+    assert.match(bracketJs, /const actionVisibility = acoesBracketSempreVisiveis\(\) \? ' opacity-100' : ''/);
+    assert.match(
+        adminCss,
+        /@media\s*\(max-width:\s*1199\.98px\),\s*\(hover:\s*none\),\s*\(pointer:\s*coarse\)\s*\{[^}]*\.bkt-match__actions\s*\{\s*opacity:\s*1;/
+    );
     assert.match(adminCss, /\.sgi-ocorrencias-mobile #listaOcorrenciasMobile \.card \.btn[\s\S]*min-height:\s*48px/);
     assert.match(adminCss, /#modalHistoricoOcorrencias \.modal-body[\s\S]*overflow-y:\s*auto/);
     assert.match(adminCss, /#modalNovaOcorrencia \.btn-close,[\s\S]*min-width:\s*48px/);
-    assert.match(adminCss, /\.main-dashboard-layout \.row > \.col-12\.col-md-6[\s\S]*flex:\s*0 0 50%/);
-    assert.match(adminCss, /\.sgi-jogos-lista #listaJogos > \.col-12[\s\S]*max-width:\s*50%/);
+    const dashboardColumnsAtTabletWidth = adminCss.match(
+        /@media\s*\(min-width:\s*576px\)\s*and\s*\(max-width:\s*1199\.98px\)\s*\{([\s\S]*?)^\}/m
+    );
+    const compactAdminRules = adminCss.match(
+        /@media\s*\(max-width:\s*1199\.98px\)\s*\{([\s\S]*?)^\}/m
+    );
+    assert.ok(dashboardColumnsAtTabletWidth, 'o dashboard deve reservar as duas colunas para 576px–1199.98px');
+    assert.match(
+        dashboardColumnsAtTabletWidth[1],
+        /\.main-dashboard-layout \.row > \.col-12\.col-md-6\s*\{[^}]*flex:\s*0 0 50%;[^}]*max-width:\s*50%;/
+    );
+    assert.ok(compactAdminRules, 'o shell compacto continua limitado a menos de 1200px');
+    assert.doesNotMatch(
+        compactAdminRules[1],
+        /\.main-dashboard-layout \.row > \.col-12\.col-md-6\s*\{[^}]*flex:\s*0 0 50%;/,
+        'o dashboard deve voltar a uma coluna abaixo de 576px'
+    );
+    assert.match(
+        compactAdminRules[1],
+        /\.sgi-jogos-lista #listaJogos > \.col-12\s*\{[^}]*flex:\s*0 0 50%;[^}]*max-width:\s*50%;/,
+        'a grade separada da lista de jogos mantém suas duas colunas'
+    );
     assert.match(adminCss, /\.sgi-perfil-mobile #btnCameraMob[\s\S]*min-width:\s*48px/);
     assert.match(adminCss, /\.sgi-placar \.mc-individual-ranking-row > \.col-md-4[\s\S]*max-width:\s*33\.333333%/);
     assert.match(adminCss, /\.sgi-placar \.mc-individual-ranking-row \.form-select[\s\S]*min-height:\s*48px/);

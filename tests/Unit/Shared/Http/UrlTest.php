@@ -21,5 +21,9 @@ final class UrlTest extends TestCase
         Url::configure('/SGI/');
         self::assertSame('/SGI/api/v1/jogos', Url::to('/api/v1/jogos'));
         self::assertSame('/SGI/assets/js/pages/placar.js', Url::to('assets/js/pages/placar.js'));
+        self::assertSame(
+            '/SGI/uploads/fotosUsuarios/foto%20perfil.png',
+            Url::to('uploads/fotosUsuarios/foto%20perfil.png'),
+        );
     }
 }

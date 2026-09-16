@@ -238,6 +238,7 @@ test.describe('Responsividade homologada — celular Xiaomi horizontal e desktop
 
         const dashboard = page.locator('#conteudo-principal .main-dashboard-layout');
         await expect(dashboard).toBeVisible();
+        await expect(dashboard.locator('#linkAgenda i.bi-calendar3')).toHaveAttribute('aria-hidden', 'true');
         const dashboardCards = dashboard.locator('.row > [class*="col-"] .card');
         expect(await dashboardCards.count()).toBeGreaterThanOrEqual(2);
         for (const width of await dashboardCards.evaluateAll((cards) => cards.map((card) => card.getBoundingClientRect().width))) {

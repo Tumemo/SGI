@@ -73,7 +73,8 @@ test('compiled Bootstrap theme exposes the SGI primary token without a BOM', () 
     assert.equal(compiled.charCodeAt(0), 47); // the generated source comment starts with '/'
     assert.match(compiled, /--bs-primary:\s*#e30613/);
     assert.match(compiled, /--bs-body-font-family:\s*var\(--bs-font-sans-serif\)/);
-    assert.match(compiled, /@import[\"']https:\/\/fonts\.googleapis\.com\/css2\?family=Inter/);
+    assert.doesNotMatch(compiled, /fonts\.googleapis\.com/);
+    assert.match(compiled, /--bs-font-sans-serif:\s*system-ui/);
 });
 
 test('all public CSS bundles are emitted without a leading BOM', () => {
@@ -107,14 +108,10 @@ test('shared utility classes all have a template or JavaScript consumer', () => 
 test('shared custom utilities are restricted to documented domain exceptions', () => {
     const utilityCss = fs.readFileSync(path.join(root, 'resources', 'css', 'source', 'utilities.css'), 'utf8');
     const allowed = new Set([
-        'sgi-u-w-max-content-maxw-96vw-top-85',
-        'sgi-u-bottom-40px-right-5-z-1050',
         'sgi-u-cursor-pointer',
         'sgi-u-w-0',
         'sgi-u-h-60px-w-60px-bottom-100px',
-        'sgi-u-bottom-92px-right-16px-z-20',
         'sgi-u-max-height-60vh-overflow-y-auto',
-        'sgi-u-w-max-content-top-85-left-50',
         'sgi-u-h-120px',
         'sgi-u-top-20px-left-20px-z-10',
         'sgi-u-min-width-0',
@@ -290,6 +287,16 @@ test('profile layouts use Bootstrap grids, badges and input groups', () => {
     assert.doesNotMatch(css, /\.perfil-(?:grid|field|info-grid|info-item|card-title|badge-nivel|password-input|btn-editar|input|avatar-inner|btn-camera)\b|\.perfil-page\b|\.perfil-wrapper\b|linear-gradient\(135deg, #E30613/);
 });
 
+test('login banners use local backgrounds for the visible composition only', () => {
+    const view = fs.readFileSync(path.join(root, 'resources', 'views', 'pages', 'acesso', 'login.php'), 'utf8');
+    const css = fs.readFileSync(path.join(root, 'resources', 'css', 'source', 'login.css'), 'utf8');
+    assert.match(view, /class="login-mobile-banner" role="img" aria-label="Imagem dos desenvolvedores"/);
+    assert.match(view, /class="login-desktop-media[^>]*role="img" aria-label="Imagem dos desenvolvedores"/);
+    assert.doesNotMatch(view, /login-(?:mobile|desktop)-banner-(?:image|border)/);
+    assert.match(css, /background-image:\s*url\('\.\.\/images\/banner-login\.png'\)/);
+    assert.match(css, /background-image:\s*url\('\.\.\/images\/banner-login-desktop\.png'\)/);
+});
+
 test('category selection and bracket filtering use Bootstrap utility states', () => {
     const categoryJs = [
         path.join(root, 'resources', 'js', 'pages', 'eventos', 'categorias.js'),
@@ -297,7 +304,10 @@ test('category selection and bracket filtering use Bootstrap utility states', ()
     ].map((file) => fs.readFileSync(file, 'utf8')).join('\n');
     const bracketJs = fs.readFileSync(path.join(root, 'resources', 'js', 'pages', 'competicoes', 'chaveamento.js'), 'utf8');
     const css = fs.readFileSync(path.join(root, 'resources', 'css', 'source', 'admin.css'), 'utf8');
-    assert.match(categoryJs, /classList\.add\('border-primary', 'border-2', 'shadow'\)/);
+    assert.match(categoryJs, /data-category-select/);
+    assert.match(categoryJs, /setAttribute\('aria-pressed', String\(selecionada\)\)/);
+    assert.match(categoryJs, /classList\.toggle\('border-primary', selecionada\)/);
+    assert.match(categoryJs, /classList\.toggle\('border-2', selecionada\)/);
     assert.match(bracketJs, /classList\.add\('d-none'\)/);
     assert.doesNotMatch(categoryJs + bracketJs, /categoria-item--selected|tr-filtro-oculto/);
     assert.doesNotMatch(css, /\.categoria-item--selected|\.status\s*\{|\.tr-filtro-oculto|#filtro(?:Categoria|Modalidade)Jogos/);
@@ -346,8 +356,10 @@ test('navigation active state keeps semantic hooks without custom motion effects
 test('navigation shell dimensions are defined by the shared Bootstrap bundle', () => {
     const admin = fs.readFileSync(path.join(root, 'resources', 'css', 'source', 'admin.css'), 'utf8');
     const shared = fs.readFileSync(path.join(root, 'resources', 'scss', 'shared.scss'), 'utf8');
-    assert.match(shared, /\.mobile-nav\s*\{[^}]*height:\s*var\(--sgi-mobile-nav-height\)/);
-    assert.doesNotMatch(admin, /\.mobile-nav\s*\{[^}]*height:\s*var\(--sgi-mobile-nav-height\)/);
+    assert.doesNotMatch(shared, /\.mobile-nav|--sgi-mobile-nav-height/);
+    assert.doesNotMatch(admin, /\.mobile-nav|--sgi-mobile-nav-height/);
+    assert.match(shared, /\.sgi-app-shell \.d-none\.d-md-block/);
+    assert.doesNotMatch(shared, /@media \(max-width: 1199\.98px\)[\s\S]*?\n\s*\.d-none\.d-md-block/);
 });
 
 test('bracket cards preserve domain states without decorative hover motion', () => {
@@ -416,7 +428,7 @@ test('student home hero uses Bootstrap background and radius utilities', () => {
 test('shared shell keeps layout tokens without decorative page motion', () => {
     const shared = fs.readFileSync(path.join(root, 'resources', 'scss', 'shared.scss'), 'utf8');
     assert.match(shared, /--sgi-sidebar-width:/);
-    assert.match(shared, /--sgi-mobile-nav-height:/);
+    assert.doesNotMatch(shared, /--sgi-mobile-nav-height/);
     assert.match(shared, /--aluno-primary:\s+var\(--bs-primary\)/);
     assert.doesNotMatch(shared, /@keyframes\s+sgi-page-fade-in|animation:\s*sgi-page-fade-in/);
     assert.doesNotMatch(shared, /--sgi-(?:red(?:-dark|-active)?|shadow-(?:card|elevated)|motion-duration)\s*:/);
@@ -440,6 +452,7 @@ test('searchable bracket control inherits the shared Bootstrap typography', () =
 test('offline banner uses Bootstrap utilities while keeping runtime hooks', () => {
     const offline = fs.readFileSync(path.join(root, 'resources', 'js', 'offline', 'offline-core.js'), 'utf8');
     const css = [
+        path.join(root, 'resources', 'scss', 'shared.scss'),
         path.join(root, 'resources', 'css', 'source', 'admin.css'),
         path.join(root, 'resources', 'css', 'source', 'aluno-shared.css'),
     ].map((file) => fs.readFileSync(file, 'utf8')).join('\n');
@@ -447,7 +460,13 @@ test('offline banner uses Bootstrap utilities while keeping runtime hooks', () =
     assert.match(offline, /container-fluid d-flex align-items-center justify-content-center gap-2 py-2 px-3 flex-wrap text-center/);
     assert.match(offline, /btn btn-sm btn-outline-light rounded-pill fw-semibold d-none sgi-hidden/);
     assert.match(offline, /classList\.add\('d-none', 'sgi-hidden'\)/);
-    assert.match(offline, /bg-warning.*text-dark/);
+    assert.match(offline, /classList\.toggle\('bg-warning', tomEscuro\)/);
+    assert.match(offline, /classList\.toggle\('text-dark', tomEscuro\)/);
+    assert.match(offline, /classList\.toggle\('btn-outline-dark', tomEscuro\)/);
+    assert.match(offline, /sgi-offline-banner-details-toggle[\s\S]*aria-controls="sgi-offline-banner-details"/);
+    assert.match(css, /@media\s*\(max-width:\s*1199\.98px\)[\s\S]*sgi-offline-banner-details-toggle\s*\{\s*display:\s*inline-flex/);
+    assert.match(css, /sgi-offline-banner:not\(\.sgi-offline-banner--details-open\) \.sgi-offline-banner-details/);
+    assert.match(css, /\.sgi-offline-banner\s*\{[^}]*z-index:\s*1040/);
     assert.doesNotMatch(css, /\.sgi-hidden\s*\{|\.sgi-offline-banner-inner|\.sgi-offline-banner--syncing|\.sgi-offline-banner-(?:tag|btn|export|import)\s*[,{]/);
 });
 
