@@ -234,9 +234,14 @@ $nivelUsuarioAgenda = (int)($_SESSION['nivel'] ?? -1);
                     <input type="number" class="form-control" id="seq-duracao" min="1" step="1" value="60">
                     <div class="form-text">O intervalo entre jogos será fixado em 10 minutos.</div>
                 </div>
+                <div class="form-check mb-3">
+                    <input class="form-check-input" type="checkbox" id="seq-reprogramar">
+                    <label class="form-check-label" for="seq-reprogramar">Permitir reprogramar jogos já agendados</label>
+                    <div class="form-text">Use esta opção somente para recalcular jogos que ainda não começaram.</div>
+                </div>
                 <div class="mb-3">
                     <h6 class="form-label">Prévia</h6>
-                    <div id="seq-previa" class="small border rounded p-2 bg-light">Preencha os dados e clique em “Calcular prévia”.</div>
+                    <div id="seq-previa" class="small border rounded p-2 bg-light" role="status" aria-live="polite" aria-atomic="true">Preencha os dados e clique em “Calcular prévia”.</div>
                 </div>
                 <div id="seq-proximo-dia" class="border rounded p-2 mb-2 d-none">
                     <div class="fw-semibold mb-2">Ainda há jogos. Informe a próxima sessão:</div>

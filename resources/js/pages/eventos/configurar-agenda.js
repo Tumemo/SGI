@@ -682,7 +682,16 @@ window.SGIPage.mount("eventos/configurar-agenda", function (pageConfig, pageScop
 
         if (autoSel) {
             autoSel.innerHTML = '';
-            modalidadesLista.forEach((m) => {
+            const modalidadesSequenciais = modalidadesLista.filter((m) => resolverTipoCompeticao(m) === 'mata_mata');
+            if (modalidadesSequenciais.length === 0) {
+                const vazio = document.createElement('option');
+                vazio.value = '';
+                vazio.textContent = 'Nenhuma modalidade Mata-Mata disponível';
+                vazio.disabled = true;
+                vazio.selected = true;
+                autoSel.appendChild(vazio);
+            }
+            modalidadesSequenciais.forEach((m) => {
                 const t = `${m.nome_modalidade || ''} (${m.nome_categoria || ''})`;
                 const opt = document.createElement('option');
                 opt.value = String(m.id_modalidade);
@@ -700,7 +709,9 @@ window.SGIPage.mount("eventos/configurar-agenda", function (pageConfig, pageScop
         
         let todosLocais = data && Array.isArray(data.data) ? data.data : Array.isArray(data) ? data : [];
         
-        locaisLista = todosLocais.filter((loc) => String(loc.disponivel_local) === '1');
+        locaisLista = todosLocais.filter((loc) =>
+            String(loc.disponivel_local) === '1' && String(loc.status_local) === '1'
+        );
 
         const sel = document.getElementById('edit-jogo-local');
         const autoLoc = document.getElementById('auto-local');
@@ -949,12 +960,35 @@ window.SGIPage.mount("eventos/configurar-agenda", function (pageConfig, pageScop
                 id_interclasse: Number(interclasseAtual && interclasseAtual.id_interclasse),
                 id_modalidade: Number(document.getElementById('auto-modalidade').value),
                 todos_jogos: true,
+                reprogramar: Boolean(document.getElementById('seq-reprogramar').checked),
                 dias: valorDiasSequenciais(),
                 opcoes: {
                     duracao_min: Number(document.getElementById('seq-duracao').value),
                     intervalo_troca_min: 10
                 }
             };
+        }
+
+        async function lerRespostaJson(response) {
+            const text = await response.text();
+            if (!text) return {};
+            try {
+                const parsed = JSON.parse(text);
+                return parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : {};
+            } catch (_) {
+                return {};
+            }
+        }
+
+        function invalidarPreviaSequencial() {
+            if (!agendaSequencialAtual) return;
+            agendaSequencialAtual = null;
+            if (btnSeqConfirmar) btnSeqConfirmar.disabled = true;
+            const area = document.getElementById('seq-previa');
+            if (area) {
+                area.classList.remove('text-danger');
+                area.textContent = 'Os dados foram alterados. Clique em “Calcular prévia” novamente.';
+            }
         }
 
         function atualizarProximoDia(bloco) {
@@ -995,8 +1029,13 @@ window.SGIPage.mount("eventos/configurar-agenda", function (pageConfig, pageScop
             if (inicio) inicio.value = '08:00';
             const local = document.getElementById('seq-local');
             if (local && local.options.length > 0) local.value = local.options[0].value;
+            const reprogramar = document.getElementById('seq-reprogramar');
+            if (reprogramar) reprogramar.checked = false;
             const area = document.getElementById('seq-previa');
-            if (area) area.textContent = 'Preencha os dados e clique em “Calcular prévia”.';
+            if (area) {
+                area.classList.remove('text-danger');
+                area.textContent = 'Preencha os dados e clique em “Calcular prévia”.';
+            }
             const painel = document.getElementById('seq-proximo-dia');
             if (painel) painel.classList.add('d-none');
             const confirmar = document.getElementById('seq-salvar-btn');
@@ -1016,21 +1055,41 @@ window.SGIPage.mount("eventos/configurar-agenda", function (pageConfig, pageScop
 
         const btnSeqSimular = document.getElementById('seq-simular-btn');
         const btnSeqConfirmar = document.getElementById('seq-salvar-btn');
+        ['auto-modalidade', 'seq-data', 'seq-inicio', 'seq-fim', 'seq-local', 'seq-duracao', 'seq-reprogramar',
+            'seq-proxima-data', 'seq-proxima-inicio', 'seq-proxima-fim'].forEach((id) => {
+            const field = document.getElementById(id);
+            if (!field) return;
+            pageScope.listen(field, 'input', invalidarPreviaSequencial);
+            pageScope.listen(field, 'change', invalidarPreviaSequencial);
+        });
         if (btnSeqSimular) pageScope.listen(btnSeqSimular, 'click', async () => {
+            if (btnSeqSimular.disabled) return;
+            btnSeqSimular.disabled = true;
+            btnSeqSimular.setAttribute('aria-busy', 'true');
             try {
                 const payload = payloadSequencial('simular_sequencial');
                 if (!payload.id_modalidade) throw new Error('Selecione uma modalidade.');
-                if (!payload.dias[0].data || !payload.dias[0].inicio || !payload.dias[0].local) throw new Error('Informe a data, o horário e o local do primeiro jogo.');
+                if (!payload.dias[0].data || !payload.dias[0].inicio || !payload.dias[0].fim || !payload.dias[0].local) throw new Error('Informe a data, o horário e o local do primeiro jogo.');
+                if (!Number.isInteger(payload.opcoes.duracao_min) || payload.opcoes.duracao_min <= 0) throw new Error('Informe uma duração válida para os jogos.');
                 const response = await fetch(`${API}agenda-blocos`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
-                const json = await response.json();
-                if (!response.ok || json.success === false) throw new Error(json.message || 'Não foi possível calcular a prévia.');
+                const json = await lerRespostaJson(response);
+                if (!response.ok || json.success === false) throw new Error(json.message || `Não foi possível calcular a prévia (HTTP ${response.status}).`);
                 agendaSequencialAtual = { ...payload, revisao: json.revisao };
+                const area = document.getElementById('seq-previa');
+                if (area) area.classList.remove('text-danger');
                 renderPreviaSequencial(json);
                 if (btnSeqConfirmar) btnSeqConfirmar.disabled = (json.pendencias || []).length > 0;
             } catch (error) {
                 const area = document.getElementById('seq-previa');
-                if (area) area.textContent = error.message || 'Erro na prévia.';
+                agendaSequencialAtual = null;
+                if (area) {
+                    area.classList.add('text-danger');
+                    area.textContent = error.message || 'Erro na prévia.';
+                }
                 if (btnSeqConfirmar) btnSeqConfirmar.disabled = true;
+            } finally {
+                btnSeqSimular.disabled = false;
+                btnSeqSimular.removeAttribute('aria-busy');
             }
         });
 
@@ -1054,8 +1113,8 @@ window.SGIPage.mount("eventos/configurar-agenda", function (pageConfig, pageScop
             try {
                 const payload = { ...agendaSequencialAtual, acao: 'confirmar_sequencial', idempotencia: `agenda-sequencial-${Date.now()}-${Math.random().toString(16).slice(2)}` };
                 const response = await fetch(`${API}agenda-blocos`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
-                const json = await response.json();
-                if (!response.ok || json.success === false) throw new Error(json.message || 'Não foi possível confirmar a agenda.');
+                const json = await lerRespostaJson(response);
+                if (!response.ok || json.success === false) throw new Error(json.message || `Não foi possível confirmar a agenda (HTTP ${response.status}).`);
                 bootstrap.Modal.getInstance(document.getElementById('modalDatasAutomaticas')).hide();
                 agendaSequencialAtual = null;
                 await carregarJogosDoInterclasse();

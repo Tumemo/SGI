@@ -17,7 +17,7 @@ final class MysqliLocalRepository implements LocalRepository
 
     public function list(array $filters): array
     {
-        $sql = 'SELECT id_local, nome_local, disponivel_local, carga_local FROM locais WHERE 1=1';
+        $sql = 'SELECT id_local, nome_local, disponivel_local, status_local, carga_local FROM locais WHERE 1=1';
         $types = '';
         $params = [];
 

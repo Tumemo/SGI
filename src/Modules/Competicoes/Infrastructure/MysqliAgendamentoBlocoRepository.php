@@ -7,6 +7,7 @@ namespace App\Modules\Competicoes\Infrastructure;
 use App\Modules\Competicoes\Application\AgendamentoBlocoScheduler;
 use App\Modules\Competicoes\Application\AgendamentoSequencialScheduler;
 use App\Modules\Competicoes\Application\AgendaRevisaoException;
+use App\Modules\Competicoes\Domain\TipoCompeticaoRules;
 use InvalidArgumentException;
 use mysqli;
 use RuntimeException;
@@ -53,7 +54,7 @@ final class MysqliAgendamentoBlocoRepository
         if ($modality <= 0) {
             throw new InvalidArgumentException('Informe a modalidade para o agendamento sequencial.');
         }
-        $this->assertModalityBelongsToEdition($modality, $edition);
+        $this->assertSequentialModality($modality, $edition);
         $this->validateWindows($payload, $edition, true);
         $selected = $this->selectedSequentialMatches($payload, $edition, $modality);
         if ($selected === []) {
@@ -548,6 +549,24 @@ final class MysqliAgendamentoBlocoRepository
     {
         if ($this->one('SELECT id_modalidade FROM modalidades WHERE id_modalidade = ? AND interclasses_id_interclasse = ? LIMIT 1', 'ii', [$modality, $edition]) === null) {
             throw new InvalidArgumentException('A modalidade selecionada não pertence à edição informada.');
+        }
+    }
+
+    private function assertSequentialModality(int $modality, int $edition): void
+    {
+        $row = $this->one(
+            'SELECT m.id_modalidade, tm.nome_tipo_modalidade
+             FROM modalidades m
+             LEFT JOIN tipos_modalidades tm ON tm.id_tipo_modalidade = m.tipos_modalidades_id_tipo_modalidade
+             WHERE m.id_modalidade = ? AND m.interclasses_id_interclasse = ? LIMIT 1',
+            'ii',
+            [$modality, $edition],
+        );
+        if ($row === null) {
+            throw new InvalidArgumentException('A modalidade selecionada não pertence à edição informada.');
+        }
+        if (TipoCompeticaoRules::resolve($row) !== TipoCompeticaoRules::MATA_MATA) {
+            throw new InvalidArgumentException('O agendamento automático está disponível somente para modalidades Mata-Mata.');
         }
     }
 
