@@ -2,8 +2,6 @@
 param(
     [ValidateSet('quality', 'integration', 'browser', 'visual', 'all')]
     [string] $Suite = 'quality',
-    [ValidateSet('local', 'docker')]
-    [string] $DatabaseBackend = 'local',
     [ValidateSet('mariadb', 'mysql')]
     [string] $Database = 'mariadb',
     [ValidateRange(1, 10)]
@@ -22,17 +20,17 @@ New-Item -ItemType Directory -Force -Path (Split-Path -Parent $outputPath) | Out
 
 for ($run = 1; $run -le $Runs; $run++) {
     $started = Get-Date
-    $arguments = @('-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', $localRunner, '-Suite', $Suite, '-DatabaseBackend', $DatabaseBackend, '-Database', $Database)
+    $arguments = @('-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', $localRunner, '-Suite', $Suite, '-Database', $Database)
     if ($PhpPath) { $arguments += @('-PhpPath', $PhpPath) }
 
-    Write-Host "`nBenchmark $run/$Runs ($Suite, $DatabaseBackend)"
+    Write-Host "`nBenchmark $run/$Runs ($Suite, Docker/$Database)"
     & powershell @arguments 2>&1
     $status = $LASTEXITCODE
     $finished = Get-Date
     $results.Add([ordered]@{
         run = $run
         suite = $Suite
-        database_backend = $DatabaseBackend
+        database_backend = 'docker'
         database = $Database
         started_at = $started.ToUniversalTime().ToString('o')
         finished_at = $finished.ToUniversalTime().ToString('o')
@@ -45,7 +43,7 @@ $payload = [ordered]@{
     generated_at = (Get-Date).ToUniversalTime().ToString('o')
     repository = $root
     suite = $Suite
-    database_backend = $DatabaseBackend
+    database_backend = 'docker'
     runs = $results
     successful_runs = @($results | Where-Object { $_.exit_code -eq 0 }).Count
 }

@@ -31,7 +31,7 @@
         "lint": "@php tools/lint.php",
         "cs:check": "php-cs-fixer fix --dry-run --diff --allow-risky=yes",
         "analyse": "phpstan analyse --configuration=phpstan.neon",
-        "test:integration": "@php tests/run_all.php",
+        "test:integration": "@php tools/run-database-tests.php",
         "assets": "npm run build",
         "test:javascript": "npm test",
         "test:browser": "npm --prefix tests/browser test",

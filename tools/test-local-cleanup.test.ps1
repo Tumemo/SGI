@@ -12,7 +12,7 @@ try {
 }
 $actions = @(
     [pscustomobject]@{
-        Name = 'SQL client DROP DATABASE failure'
+        Name = 'container removal failure'
         Run = {
             $script:cleanupOrder.Add('database')
             throw [System.InvalidOperationException]::new('synthetic cleanup failure')
@@ -39,8 +39,8 @@ if ($runnerExitCode -ne 1) {
 if ($originalFailureMessage -ne 'synthetic quality failure') {
     throw 'A falha original da suíte foi substituída durante o cleanup.'
 }
-if (-not ($warningText -match 'SQL client DROP DATABASE failure')) {
-    throw 'A falha sintética de cleanup não foi reportada.'
+if (-not ($warningText -match 'container removal failure')) {
+    throw 'A falha sintética de remoção do container não foi reportada.'
 }
 
 Write-Output 'Cleanup isolado: falha reportada, etapas seguintes executadas e código original preservado.'

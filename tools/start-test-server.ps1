@@ -7,6 +7,10 @@ param(
 
 $ErrorActionPreference = 'Stop'
 
+if ($env:SGI_TEST_DB_RUNTIME -ne 'container') {
+    throw 'O servidor de teste não pode ser usado com banco local. Inicie um ambiente por tools/test-docker.ps1/.sh ou tools/test-local.ps1.'
+}
+
 if ($Database -notmatch '^(?i)(?:[a-z0-9_]*_)?(?:test|testing)(?:_[a-z0-9_]+)*$') {
     throw "O banco de teste precisa começar com 'test' ou 'testing'."
 }

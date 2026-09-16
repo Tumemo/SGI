@@ -18,6 +18,7 @@ test('executores de teste usam URLs na raiz e fixam a base vazia', () => {
     assert.equal(lineValue(compose, 'SGI_TEST_BASE_URL'), 'http://sgi-web:8099');
     assert.equal(lineValue(compose, 'SGI_BASE_URL'), 'http://sgi-web:8099/');
     assert.equal(lineValue(compose, 'SGI_BASE_PATH'), '""');
+    assert.equal(lineValue(compose, 'SGI_TEST_DB_RUNTIME'), 'container');
 
     const localRunner = fs.readFileSync(path.join(root, 'tools/test-local.ps1'), 'utf8');
     const startServer = localRunner.match(/function Start-TestServer \{([\s\S]*?)\n\}/)?.[1];
@@ -26,7 +27,25 @@ test('executores de teste usam URLs na raiz e fixam a base vazia', () => {
     assert.match(startServer, /SGI_BASE_URL\s*=\s*"\$\(\$script:baseUrl\)\/"/);
     assert.match(startServer, /SGI_TEST_BASE_URL\s*=\s*\$script:baseUrl/);
     assert.match(startServer, /SGI_BASE_PATH\s*=\s*''/);
+    assert.match(startServer, /SGI_TEST_DB_RUNTIME\s*=\s*'container'/);
     assert.match(startServer, /\$script:baseUrl\s*=\s*"http:\/\/127\.0\.0\.1:/);
+});
+
+test('o executor local só aceita banco Docker descartável', () => {
+    const localRunner = fs.readFileSync(path.join(root, 'tools/test-local.ps1'), 'utf8');
+    assert.match(localRunner, /SGI_TEST_DB_RUNTIME\s*=\s*'container'/);
+    assert.doesNotMatch(localRunner, /DatabaseBackend|DatabaseHost|DatabaseUser|DatabasePassword|Remove-LocalTestDatabase/);
+});
+
+test('a integração pelo Composer delega ao executor Docker', () => {
+    const composer = JSON.parse(fs.readFileSync(path.join(root, 'composer.json'), 'utf8'));
+    assert.equal(composer.scripts['test:integration'], '@php tools/run-database-tests.php');
+
+    const runner = fs.readFileSync(path.join(root, 'tools/run-database-tests.php'), 'utf8');
+    assert.match(runner, /test-docker\.ps1/);
+    assert.match(runner, /test-docker\.sh/);
+    assert.match(runner, /SkipQuality/);
+    assert.match(runner, /skip-quality/);
 });
 
 test('Compose publica o servidor de teste apenas no loopback por padrão', () => {

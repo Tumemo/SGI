@@ -1,4 +1,4 @@
-name: sgi-test
+name: ${COMPOSE_PROJECT_NAME:-sgi-test}
 
 x-test-environment: &test-environment
   SGI_APP_ENV: test
@@ -9,6 +9,9 @@ x-test-environment: &test-environment
   SGI_DB_USER: root
   SGI_DB_PASSWORD: ${SGI_DB_PASSWORD:-sgi-test-only}
   SGI_TEST_DB_NAME: ${SGI_TEST_DB_NAME:-sgi_test}
+  SGI_TEST_DB_RUNTIME: container
+  SGI_TEST_RUN_ID: ${SGI_TEST_RUN_ID:-compose}
+  SGI_E2E_RESET: "0"
   SGI_TEST_BASE_URL: http://sgi-web:8099
   SGI_BASE_URL: http://sgi-web:8099/
   SGI_BASE_PATH: ""
@@ -31,7 +34,9 @@ x-php-test-service: &php-test-service
   working_dir: /app
   environment: *test-environment
   volumes:
-    - ./test-results:/app/test-results
+    - type: bind
+      source: ${SGI_TEST_RESULTS_DIR:-./test-results}
+      target: /app/test-results
     - test_sessions:/app/test-results/sessions
 
 x-browser-test-service: &browser-test-service
@@ -43,14 +48,24 @@ x-browser-test-service: &browser-test-service
   environment:
     <<: *test-environment
     SGI_INDIVIDUAL_BROWSER: "1"
+    SGI_BROWSER_REQUIRES_DATABASE: "1"
   volumes:
-    - ./test-results:/app/test-results
-    - ./tests/browser/test-results:/app/tests/browser/test-results
-    - ./tests/browser/playwright-report:/app/tests/browser/playwright-report
+    - type: bind
+      source: ${SGI_TEST_RESULTS_DIR:-./test-results}
+      target: /app/test-results
+    - type: bind
+      source: ${SGI_TEST_BROWSER_RESULTS_DIR:-./tests/browser/test-results}
+      target: /app/tests/browser/test-results
+    - type: bind
+      source: ${SGI_TEST_BROWSER_REPORT_DIR:-./tests/browser/playwright-report}
+      target: /app/tests/browser/playwright-report
 
 services:
   db:
     image: ${SGI_DB_IMAGE:-mariadb:10.11}
+    labels:
+      com.sgi.test.disposable: "true"
+      com.sgi.test.run-id: ${SGI_TEST_RUN_ID:-compose}
     environment:
       MYSQL_ROOT_PASSWORD: ${SGI_DB_PASSWORD:-sgi-test-only}
       MYSQL_DATABASE: ${SGI_TEST_DB_NAME:-sgi_test}

@@ -2,16 +2,11 @@
 param(
     [ValidateSet('quality', 'integration', 'browser', 'visual', 'all')]
     [string] $Suite = 'all',
-    [ValidateSet('local', 'docker')]
-    [string] $DatabaseBackend = 'local',
     [ValidateSet('mariadb', 'mysql')]
     [string] $Database = 'mariadb',
     [string] $PhpPath = '',
     [int] $Port = 0,
     [int] $DatabasePort = 0,
-    [string] $DatabaseHost = '',
-    [string] $DatabaseUser = '',
-    [string] $DatabasePassword = '',
     [switch] $IncludeVisual,
     [switch] $Keep
 )
@@ -146,7 +141,7 @@ function Wait-Health {
         try {
             $response = Invoke-WebRequest -UseBasicParsing -Uri "$Url/api/v1/health" -TimeoutSec 3
             $json = $response.Content | ConvertFrom-Json
-            if ($json.status -eq 'ok' -and $json.test_environment.database -eq $ExpectedDatabase) {
+            if ($json.status -eq 'ok' -and $json.test_environment.database -eq $ExpectedDatabase -and $json.test_environment.database_runtime -eq 'container') {
                 return
             }
             throw 'O health endpoint não confirmou o ambiente de teste esperado.'
@@ -236,7 +231,7 @@ function Start-DockerDatabase {
     if ($script:dbPassword -eq '') { $script:dbPassword = 'sgi-test-only' }
     $script:databasePort = if ($DatabasePort -gt 0) { $DatabasePort } else { Get-FreePort }
     $containerName = "sgi-test-db-$($runId.Replace('_', '-'))"
-    $args = @('run', '--detach', '--name', $containerName, '--tmpfs', '/var/lib/mysql', '-e', "MYSQL_ROOT_PASSWORD=$script:dbPassword", '-e', "MYSQL_DATABASE=$databaseName", '-e', "MARIADB_ROOT_PASSWORD=$script:dbPassword", '-e', "MARIADB_DATABASE=$databaseName", '-p', "127.0.0.1:$($script:databasePort):3306", $image)
+    $args = @('run', '--detach', '--rm', '--name', $containerName, '--label', 'com.sgi.test.disposable=true', '--label', "com.sgi.test.run-id=$runId", '--tmpfs', '/var/lib/mysql', '-e', "MYSQL_ROOT_PASSWORD=$script:dbPassword", '-e', "MYSQL_DATABASE=$databaseName", '-e', "MARIADB_ROOT_PASSWORD=$script:dbPassword", '-e', "MARIADB_DATABASE=$databaseName", '-p', "127.0.0.1:$($script:databasePort):3306", $image)
     $script:dockerContainer = (& $docker @args).Trim()
     if ($LASTEXITCODE -ne 0 -or -not $script:dockerContainer) { throw 'Não foi possível iniciar o banco de testes no Docker.' }
     Wait-TcpPort -TargetHost '127.0.0.1' -PortNumber $script:databasePort
@@ -264,6 +259,9 @@ function Start-TestServer {
         SGI_TEST_DB_NAME = $databaseName
         SGI_DB_USER = $script:dbUser
         SGI_DB_PASSWORD = $script:dbPassword
+        SGI_TEST_DB_RUNTIME = 'container'
+        SGI_BROWSER_REQUIRES_DATABASE = '1'
+        SGI_E2E_RESET = '0'
         SGI_TEST_BASE_URL = $script:baseUrl
         SGI_BASE_URL = "$($script:baseUrl)/"
         SGI_UPLOAD_DIR = $uploads
@@ -316,28 +314,14 @@ function Invoke-Visual {
     Invoke-Checked -FilePath $script:npm -Arguments $arguments -Description 'Contrato visual'
 }
 
-function Remove-LocalTestDatabase {
-    if ($DatabaseBackend -ne 'local' -or $Keep -or -not $script:mysqlClient) { return }
-    $query = "DROP DATABASE IF EXISTS ``$databaseName``"
-    & $script:mysqlClient "--host=$script:dbHost" "--port=$script:databasePort" "--user=$script:dbUser" "--password=$script:dbPassword" '-e' $query 2>$null
-    if ($LASTEXITCODE -ne 0) {
-        throw "Não foi possível remover a base temporária '$databaseName'."
-    }
-}
-
 try {
     Check-Prerequisites
     if ($requiresDatabase) {
         Acquire-TestLock
-        $script:dbUser = if ($DatabaseUser) { $DatabaseUser } elseif ($env:SGI_TEST_DB_USER) { $env:SGI_TEST_DB_USER } else { 'root' }
-        $script:dbPassword = if ($DatabasePassword) { $DatabasePassword } elseif ($null -ne $env:SGI_TEST_DB_PASSWORD) { $env:SGI_TEST_DB_PASSWORD } else { '' }
-        if ($DatabaseBackend -eq 'docker') {
-            Start-DockerDatabase
-            $script:dbHost = '127.0.0.1'
-        } else {
-            $script:dbHost = if ($DatabaseHost) { $DatabaseHost } elseif ($env:SGI_TEST_DB_HOST) { $env:SGI_TEST_DB_HOST } else { '127.0.0.1' }
-            $script:databasePort = if ($DatabasePort -gt 0) { $DatabasePort } elseif ($env:SGI_TEST_DB_PORT) { [int] $env:SGI_TEST_DB_PORT } else { 3306 }
-        }
+        $script:dbUser = 'root'
+        $script:dbPassword = 'sgi-test-only'
+        Start-DockerDatabase
+        $script:dbHost = '127.0.0.1'
     }
 
     if ($Suite -eq 'quality') {
@@ -363,21 +347,17 @@ try {
     }
     if ($requiresDatabase) {
         $cleanupActions += [pscustomobject]@{
-            Name = 'banco local temporário'
-            Run = { Remove-LocalTestDatabase }
-        }
-    }
-    if ($script:dockerContainer -and -not $Keep) {
-        $cleanupActions += [pscustomobject]@{
             Name = 'container temporário'
             Run = {
-            $docker = Get-CommandPath @('docker.exe', 'docker')
+                if (-not $script:dockerContainer -or $Keep) { return }
+                $docker = Get-CommandPath @('docker.exe', 'docker')
                 if (-not $docker) { throw 'Cliente Docker não encontrado.' }
                 & $docker rm -f $script:dockerContainer | Out-Null
                 if ($LASTEXITCODE -ne 0) { throw 'Docker recusou a remoção do container temporário.' }
             }
         }
-    } elseif ($script:dockerContainer -and $Keep) {
+    }
+    if ($script:dockerContainer -and $Keep) {
         Write-Host "Banco Docker mantido: $script:dockerContainer"
     }
     if ($lockStream) {
