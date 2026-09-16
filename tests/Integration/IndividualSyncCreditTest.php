@@ -19,7 +19,7 @@ final class IndividualSyncCreditTest
         $connection = TestDatabase::connect($database);
         self::assertIndividualSyncIsIdempotent($connection, $editionId);
         self::assertMataMataSyncRestoresCredit($connection, $editionId, $mataModalityId);
-        self::assertThirdPlaceSyncRestoresCredit($connection, $editionId, $mataModalityId);
+        self::assertAutomaticThirdPlaceSyncRestoresCredit($connection, $editionId, $mataModalityId);
         $connection->close();
     }
 
@@ -143,11 +143,11 @@ final class IndividualSyncCreditTest
         }
     }
 
-    private static function assertThirdPlaceSyncRestoresCredit(\mysqli $connection, int $editionId, int $modalityId): void
+    private static function assertAutomaticThirdPlaceSyncRestoresCredit(\mysqli $connection, int $editionId, int $modalityId): void
     {
         $gameStatement = $connection->prepare(
             "SELECT id_jogo, nome_jogo FROM jogos
-             WHERE modalidades_id_modalidade = ? AND nome_jogo LIKE 'POS:3:%'
+             WHERE modalidades_id_modalidade = ? AND nome_jogo = 'MM:2:0:N'
                AND status_jogo IN ('Concluido', 'Finalizado')
              ORDER BY id_jogo DESC LIMIT 1",
         );
@@ -156,7 +156,7 @@ final class IndividualSyncCreditTest
         $game = $gameStatement->get_result()->fetch_assoc();
         $gameStatement->close();
         if ($game === null) {
-            throw new \RuntimeException('O lote não encontrou disputa de terceiro lugar concluída.');
+            throw new \RuntimeException('O lote não encontrou final concluída.');
         }
         $gameId = (int) $game['id_jogo'];
         $partsStatement = $connection->prepare('SELECT equipes_id_equipe, resultado_partida FROM partidas WHERE jogos_id_jogo = ? ORDER BY id_partida');
@@ -173,7 +173,7 @@ final class IndividualSyncCreditTest
         $credit = $creditStatement->get_result()->fetch_assoc();
         $creditStatement->close();
         if (count($parts) !== 2 || $credit === null) {
-            throw new \RuntimeException('A disputa de terceiro lugar não possui duas equipes e crédito ativo.');
+            throw new \RuntimeException('A final não possui duas equipes e crédito automático de terceiro lugar.');
         }
 
         $classId = (int) $credit['id_turma'];
@@ -192,7 +192,7 @@ final class IndividualSyncCreditTest
             $disable->close();
 
             $payload = [[
-                'nome_jogo' => (string) $game['nome_jogo'],
+                'nome_jogo' => 'MM:2:0:N',
                 'status_jogo' => 'Concluido',
                 'partidas' => array_map(static fn (array $part): array => [
                     'id_equipe' => (int) $part['equipes_id_equipe'],
@@ -203,7 +203,7 @@ final class IndividualSyncCreditTest
             $restored = self::classPoints($connection, [$classId]);
             $active = (int) $connection->query('SELECT COUNT(*) FROM pontuacoes_podio WHERE id_pontuacao = ' . $creditId . ' AND ativo = 1')->fetch_column();
             Assertions::assert(
-                'Lote coletivo reconcilia crédito da disputa de terceiro lugar sem reaplicar pontos',
+                'Lote coletivo reconcilia crédito automático de terceiro lugar sem reaplicar pontos',
                 $restored === $before && $active === 1,
                 json_encode(['antes' => $before, 'depois' => $restored, 'crédito_ativo' => $active], JSON_UNESCAPED_UNICODE),
             );

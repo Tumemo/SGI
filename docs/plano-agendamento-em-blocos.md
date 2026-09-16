@@ -26,7 +26,7 @@ Este documento substitui o plano anterior `plano-ajuste-chaveamento-agenda.md`. 
 | `MysqliChaveamentoRepository.php` gera partidas com data atual, 08:00 e local padrão. | Remover os padrões de todos os produtores, incluindo avanço e disputas de posição. |
 | Fases futuras são materializadas durante o avanço, e a árvore consulta participantes existentes. | Não basta agendar somente IDs de jogos atuais; criar reservas por posição na chave. |
 | Byes são gravados como `Concluido`. | Preservar o avanço automático; não convertê-los em jogos pendentes. |
-| A disputa de terceiro lugar é materializada após a final no fluxo atual. | Reservar seu horário depois da final e preservar o gatilho atual nesta entrega. |
+| O terceiro lugar de um mata-mata é derivável a partir das semifinais e do campeão da final. | Não materializar nem reservar uma partida física: atribuir automaticamente a equipe que perdeu para o campeão nas semifinais. Preservar apenas a compatibilidade de leitura para registros legados concluídos. |
 | Reconstrução da chave pode excluir jogos de posição. | Preservar a reserva por identidade da chave e reconciliar vínculos sem reutilizar agenda de outra chave. |
 | A agenda em lote usa atualizações individuais. | Substituir por prévia e confirmação transacional; não admitir sucesso parcial silencioso. |
 | POST valida conflito de local, mas PUT não aplica a mesma regra. | Centralizar as validações para todas as entradas. |
@@ -46,7 +46,7 @@ O botão **Agendar em blocos** substitui a experiência atual de “Datas Autom�
 - Seleção padrão: somente confrontos ainda não programados, incluindo posições futuras da chave.
 - Opção explícita de reprogramar uma seleção de jogos ainda não iniciados, mostrando a agenda atual.
 - Prioridade entre modalidades e confrontos da mesma fase; nunca permitir uma prioridade que viole dependências.
-- Incluir disputa de terceiro lugar somente quando a modalidade já utilizar essa regra.
+- Não incluir disputa física de terceiro lugar: a classificação é atribuída automaticamente após a final, quando houver duas semifinais válidas e for possível identificar o campeão.
 - Mostrar quantos confrontos reais precisam de horário, excluindo byes e posições que não produzirão uma partida.
 
 ### Etapa 2 — Informar dias e espaços
@@ -230,7 +230,7 @@ Salvar agenda nunca envia placar nem conclui jogo. Revisar o formulário do chav
 9. Se a organização tiver reprogramado enquanto o mesário estava offline, preservar mutações e resultados executados na revisão carregada, registrar divergência e manter a agenda atual do servidor. Não descartar fila por estar desatualizada. Verificar autorização, edição e identidade antes de aceitar os eventos; divergências de chave/participantes exigem conciliação, sem aplicação ao jogo errado.
 10. Informar que um dispositivo desconectado não recebe alterações novas. A organização deve atualizar a preparação dos dispositivos antes de operar a programação revisada; não prometer revogação instantânea sem rede.
 
-O teste de torneio completo offline deve incluir finais previamente reservadas e progressão sem necessidade de agendamento pelo mesário. Reservas de terceiro lugar seguem o gatilho atual após a final, tanto no servidor quanto no motor offline; não antecipar o gatilho apenas para preencher a agenda.
+O teste de torneio completo offline deve incluir finais previamente reservadas e progressão sem necessidade de agendamento pelo mesário. Após a final, servidor e motor offline devem encerrar o chaveamento sem criar ou reservar uma disputa física de terceiro lugar; a classificação automática deve usar a equipe derrotada pelo campeão nas semifinais.
 
 ## 8. Telas administrativas e do aluno
 
@@ -286,7 +286,7 @@ Resolver caminhos completos das classes antes de editar. Preservar alterações 
 
 - [ ] Chave nova exibe data/local/horários “A definir”; bye mantém estado concluído.
 - [ ] Final é reservada antes dos classificados e sua materialização mantém a reserva.
-- [ ] Disputa de terceiro lugar segue o gatilho atual e recebe a reserva correta.
+- [ ] Final concluída atribui automaticamente o terceiro lugar à equipe derrotada pelo campeão nas semifinais, sem criar jogo ou reserva `POS:3`.
 - [ ] Refazer a chave não reutiliza reserva de outra versão; correção de resultado preserva agenda quando a identidade é mantida.
 - [ ] Mesário só recebe programação completa e não altera agenda nem por URL/API direta, `null`, horário isolado ou ID negativo.
 - [ ] Jogo com reserva e classificados indefinidos não inicia; jogo completo e pronto inicia conforme regras existentes.

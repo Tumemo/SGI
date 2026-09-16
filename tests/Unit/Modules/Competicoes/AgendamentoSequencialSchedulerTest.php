@@ -18,7 +18,6 @@ final class AgendamentoSequencialSchedulerTest extends TestCase
                 ['chave_tag' => 'MM:4:0:N'],
                 ['chave_tag' => 'MM:4:1:N'],
                 ['chave_tag' => 'MM:2:0:N'],
-                ['chave_tag' => 'POS:3:0:N'],
             ],
             [
                 ['data' => '2026-09-21', 'inicio' => '08:00', 'fim' => '11:30', 'local' => 1],
@@ -29,11 +28,11 @@ final class AgendamentoSequencialSchedulerTest extends TestCase
         );
 
         self::assertSame(10, $result['intervalo_troca_min']);
-        self::assertSame(4, $result['resumo']['encaixados']);
+        self::assertSame(3, $result['resumo']['encaixados']);
         self::assertSame(0, $result['resumo']['pendentes']);
         self::assertSame('08:00:00', $result['proposta'][0]['inicio_jogo']);
         self::assertSame('09:10:00', $result['proposta'][1]['inicio_jogo']);
-        self::assertSame('2026-09-24', $result['proposta'][3]['data_jogo']);
+        self::assertSame('2026-09-21', $result['proposta'][2]['data_jogo']);
         self::assertSame('11:30', $result['limite_termino_padrao']);
     }
 
@@ -44,7 +43,6 @@ final class AgendamentoSequencialSchedulerTest extends TestCase
                 ['chave_tag' => 'MM:4:0:N'],
                 ['chave_tag' => 'MM:4:1:N'],
                 ['chave_tag' => 'MM:2:0:N'],
-                ['chave_tag' => 'POS:3:0:N'],
             ],
             [['data' => '2026-09-21', 'inicio' => '08:00', 'fim' => '11:30', 'local' => 1]],
             [],
@@ -52,7 +50,7 @@ final class AgendamentoSequencialSchedulerTest extends TestCase
         );
 
         self::assertSame(2, $result['resumo']['encaixados']);
-        self::assertCount(2, $result['pendencias']);
+        self::assertCount(1, $result['pendencias']);
         self::assertSame('2026-09-24', $result['proximo_dia_sugerido']);
         self::assertSame('08:00:00', $result['proximo_inicio_sugerido']);
         self::assertSame('11:30', $result['proximo_termino_sugerido']);

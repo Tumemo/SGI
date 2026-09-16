@@ -88,7 +88,8 @@ final class MysqliAgendamentoBlocoRepository
                   AND ar.data_reserva IS NOT NULL
                   AND ar.inicio_reserva IS NOT NULL
                   AND ar.termino_reserva IS NOT NULL
-                  AND ar.id_local IS NOT NULL";
+                  AND ar.id_local IS NOT NULL
+                  AND ar.chave_tag <> 'POS:3:0:N'";
         $types = 'i';
         $params = [$edition];
         if ($modality !== null) {
@@ -226,9 +227,6 @@ final class MysqliAgendamentoBlocoRepository
                 $tags[] = \App\Modules\Competicoes\Domain\ChaveamentoRules::tag($width, $slot, 'N');
             }
         }
-        if ($maxWidth >= 4) {
-            $tags[] = 'POS:3:0:N';
-        }
         $scopePayload = $payload;
         $scopePayload['todos_jogos'] = true;
         $scopePayload['chave_tags'] = array_map(static fn (string $tag): array => [
@@ -356,6 +354,9 @@ final class MysqliAgendamentoBlocoRepository
     /** @param array<string,mixed> $match @return array<string,mixed> */
     private function withDependencies(array $match, array $payload): array
     {
+        if ((string) ($match['chave_tag'] ?? '') === 'POS:3:0:N') {
+            throw new InvalidArgumentException('O terceiro lugar é atribuído automaticamente e não possui partida para agendar.');
+        }
         $dependencies = array_values(array_filter(
             $this->dependencies((string) $match['chave_tag']),
             fn (string $dependency): bool => $this->dependencyIsInScope((int) $match['id_modalidade'], $dependency, $payload),
@@ -460,7 +461,7 @@ final class MysqliAgendamentoBlocoRepository
         $fixed = [];
         $rows = $this->connection->query("SELECT j.id_jogo, j.nome_jogo, j.modalidades_id_modalidade, j.data_jogo, j.inicio_jogo, j.termino_jogo, j.locais_id_local
             FROM jogos j INNER JOIN modalidades m ON m.id_modalidade = j.modalidades_id_modalidade
-            WHERE m.interclasses_id_interclasse = " . $edition . " AND j.data_jogo IS NOT NULL AND j.inicio_jogo IS NOT NULL AND j.termino_jogo IS NOT NULL AND j.locais_id_local IS NOT NULL AND j.status_jogo IN ('Agendado','Iniciado','Pausado')")->fetch_all(MYSQLI_ASSOC);
+            WHERE m.interclasses_id_interclasse = " . $edition . " AND j.data_jogo IS NOT NULL AND j.inicio_jogo IS NOT NULL AND j.termino_jogo IS NOT NULL AND j.locais_id_local IS NOT NULL AND j.status_jogo IN ('Agendado','Iniciado','Pausado') AND j.nome_jogo <> 'POS:3:0:N'")->fetch_all(MYSQLI_ASSOC);
         foreach ($rows as $row) {
             $key = (string) $row['modalidades_id_modalidade'] . ':' . (string) $row['nome_jogo'];
             if (!isset($selected[$key])) {
@@ -468,7 +469,7 @@ final class MysqliAgendamentoBlocoRepository
                 $fixed[] = $row;
             }
         }
-        $rows = $this->connection->query('SELECT ar.* FROM agenda_reservas ar WHERE ar.id_interclasse = ' . $edition . ' AND ar.data_reserva IS NOT NULL AND ar.inicio_reserva IS NOT NULL AND ar.termino_reserva IS NOT NULL AND ar.id_local IS NOT NULL')->fetch_all(MYSQLI_ASSOC);
+        $rows = $this->connection->query("SELECT ar.* FROM agenda_reservas ar WHERE ar.id_interclasse = {$edition} AND ar.chave_tag <> 'POS:3:0:N' AND ar.data_reserva IS NOT NULL AND ar.inicio_reserva IS NOT NULL AND ar.termino_reserva IS NOT NULL AND ar.id_local IS NOT NULL")->fetch_all(MYSQLI_ASSOC);
         foreach ($rows as $row) {
             $key = (string) $row['id_modalidade'] . ':' . (string) $row['chave_tag'];
             if (!isset($selected[$key])) {

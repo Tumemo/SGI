@@ -21,10 +21,12 @@ final class PontuacaoService
             return;
         }
         $meta = ChaveamentoRules::parse($game['nome_jogo']);
-        if ($meta === null || ($meta['largura'] !== 2 && (int) ($meta['posicao'] ?? 0) !== 3)) {
+        $isFinal = $meta !== null && $meta['largura'] === 2 && !isset($meta['posicao']);
+        $isLegacyThirdPlace = $meta !== null && (int) ($meta['posicao'] ?? 0) === 3;
+        if (!$isFinal && !$isLegacyThirdPlace) {
             return;
         }
-        $positions = (int) ($meta['posicao'] ?? 0) === 3 ? [3] : [1, 2];
+        $positions = $isFinal ? [1, 2, 3] : [3];
         $old = $this->repository->carregarBloqueados($game['interclasse_id'], $game['modalidade_id']);
         $oldRelevant = array_values(array_filter(
             $old,
@@ -40,13 +42,33 @@ final class PontuacaoService
             return $scoreOrder !== 0 ? $scoreOrder : (int) $a['equipes_id_equipe'] <=> (int) $b['equipes_id_equipe'];
         });
         $new = [];
+        $thirdPlaceTeamId = $isFinal ? $this->repository->carregarTerceiroLugarDaFinal($gameId) : null;
         foreach ($positions as $index => $position) {
-            $teamId = (int) ($parts[$index]['equipes_id_equipe'] ?? 0);
+            if ($isFinal && $position === 3) {
+                $teamId = $thirdPlaceTeamId ?? 0;
+                if ($teamId <= 0) {
+                    $existing = $oldByPosition[$position] ?? null;
+                    if ($existing === null) {
+                        continue;
+                    }
+                    $new[] = array_replace($existing, [
+                        'posicao' => 3,
+                        'id_jogo' => $gameId,
+                        'ativo' => 0,
+                    ]);
+                    continue;
+                }
+            } else {
+                $teamId = (int) ($parts[$index]['equipes_id_equipe'] ?? 0);
+            }
             $classId = $this->repository->turmaDaEquipe($teamId, $game['modalidade_id']);
             if ($teamId <= 0 || $classId === null) {
                 throw new RuntimeException('Não foi possível identificar o beneficiário do pódio.');
             }
-            if ($correction && !isset($oldByPosition[$position])) {
+            // A correção precisa de uma origem anterior para as posições
+            // definidas pelo placar. O terceiro lugar derivado pode ser
+            // criado durante a transição de partidas POS:3 legadas.
+            if ($correction && $position !== 3 && !isset($oldByPosition[$position])) {
                 throw new RuntimeException('Pódio sem origem atual não pode ser retificado.');
             }
             $existing = $oldByPosition[$position] ?? null;

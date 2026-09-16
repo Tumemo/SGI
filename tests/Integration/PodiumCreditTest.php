@@ -74,7 +74,7 @@ final class PodiumCreditTest
         Assertions::assert('Pódio mata-mata mantém uma origem única por posição e valor zero seria válido', count(array_unique(array_column($credits, 'posicao'))) === count($credits) && count($credits) >= 2 && count(array_filter($credits, static fn (array $credit): bool => $credit['origem_registro'] === 'novo')) === count($credits));
         self::runFinalConfigPreservationScenario($connection, $editionId, $modalityId, $points);
         self::runSemifinalInvalidationScenario($connection, $editionId, $modalityId);
-        self::runThirdPlaceScenario($connection, $editionId, $modalityId, $points[3]);
+        self::runAutomaticThirdPlaceScenario($connection, $editionId, $modalityId, $points[3]);
         self::runUnconciledCorrectionScenario($connection, $editionId, $modalityId);
         self::runIndividualScenario($connection, $editionId);
         $connection->close();
@@ -263,10 +263,27 @@ final class PodiumCreditTest
             throw new \RuntimeException('A nova final não possui exatamente dois participantes.');
         }
         $newClasses = array_map(fn (int $teamId): int => self::teamClass($connection, $teamId), $finalTeams);
-        $expectedFinal = self::classPoints($connection, array_merge($classes, $newClasses));
+        $thirdTeam = null;
+        $semis = $connection->query(
+            "SELECT id_jogo FROM jogos
+             WHERE modalidades_id_modalidade = {$modalityId} AND nome_jogo LIKE 'MM:4:%'
+               AND status_jogo IN ('Concluido', 'Finalizado') ORDER BY id_jogo",
+        )->fetch_all(\MYSQLI_ASSOC);
+        foreach ($semis as $semi) {
+            $semiTeams = self::scoredTeams($connection, (int) $semi['id_jogo']);
+            if (($semiTeams[0]['team'] ?? null) === $finalTeams[0]) {
+                $thirdTeam = $semiTeams[1]['team'] ?? null;
+                break;
+            }
+        }
+        $thirdClass = $thirdTeam === null ? null : self::teamClass($connection, $thirdTeam);
+        $expectedFinal = self::classPoints($connection, array_merge($classes, $newClasses, $thirdClass === null ? [] : [$thirdClass]));
         foreach ($newClasses as $index => $classId) {
             $position = $index + 1;
             $expectedFinal[$classId] = ($expectedFinal[$classId] ?? 0) + self::podiumValues($connection, $editionId)[$position];
+        }
+        if ($thirdClass !== null) {
+            $expectedFinal[$thirdClass] = ($expectedFinal[$thirdClass] ?? 0) + self::podiumValues($connection, $editionId)[3];
         }
         $gateway->launch(
             $finalId,
@@ -282,7 +299,7 @@ final class PodiumCreditTest
             ),
             self::operatorId($connection),
         );
-        Assertions::assert('Nova final concede o pódio sem duplicar créditos', self::classPoints($connection, array_merge($classes, $newClasses)) === $expectedFinal);
+        Assertions::assert('Nova final concede o pódio sem duplicar créditos', self::classPoints($connection, array_merge($classes, $newClasses, $thirdClass === null ? [] : [$thirdClass])) === $expectedFinal);
     }
 
     /** @param array{1:int,2:int,3:int} $originalPoints */
@@ -354,66 +371,62 @@ final class PodiumCreditTest
         Assertions::assert('Mesmo resultado repetido produz delta zero', self::classPoints($connection, $classes) === $beforeRepeat);
     }
 
-    private static function runThirdPlaceScenario(\mysqli $connection, int $editionId, int $modalityId, int $points): void
+    private static function runAutomaticThirdPlaceScenario(\mysqli $connection, int $editionId, int $modalityId, int $points): void
     {
-        $third = $connection->query(
+        $final = $connection->query(
             "SELECT id_jogo FROM jogos
-             WHERE modalidades_id_modalidade = {$modalityId} AND nome_jogo LIKE 'POS:3:%'
-               AND status_jogo = 'Agendado' ORDER BY id_jogo DESC LIMIT 1",
+             WHERE modalidades_id_modalidade = {$modalityId} AND nome_jogo = 'MM:2:0:N'
+               AND status_jogo IN ('Concluido', 'Finalizado') ORDER BY id_jogo DESC LIMIT 1",
         )->fetch_assoc();
-        if ($third === null) {
-            throw new \RuntimeException('A disputa de terceiro lugar não foi recriada.');
+        if ($final === null) {
+            throw new \RuntimeException('O cenário automático não encontrou a final concluída.');
         }
-        $thirdId = (int) $third['id_jogo'];
-        $parts = $connection->prepare('SELECT equipes_id_equipe FROM partidas WHERE jogos_id_jogo = ? ORDER BY id_partida');
-        $parts->bind_param('i', $thirdId);
-        $parts->execute();
-        $teams = array_map(static fn (array $row): int => (int) $row['equipes_id_equipe'], $parts->get_result()->fetch_all(\MYSQLI_ASSOC));
-        $parts->close();
-        if (count($teams) !== 2) {
-            throw new \RuntimeException('A disputa de terceiro lugar não possui dois participantes.');
+        $finalId = (int) $final['id_jogo'];
+        $finalParts = self::scoredTeams($connection, $finalId);
+        $champion = $finalParts[0]['team'];
+        $thirdTeam = null;
+        $semis = $connection->query(
+            "SELECT id_jogo FROM jogos
+             WHERE modalidades_id_modalidade = {$modalityId} AND nome_jogo LIKE 'MM:4:%'
+               AND status_jogo IN ('Concluido', 'Finalizado') ORDER BY id_jogo",
+        )->fetch_all(\MYSQLI_ASSOC);
+        foreach ($semis as $semi) {
+            $teams = self::scoredTeams($connection, (int) $semi['id_jogo']);
+            if (($teams[0]['team'] ?? null) === $champion) {
+                $thirdTeam = $teams[1]['team'] ?? null;
+                break;
+            }
         }
-        $gateway = new \App\Modules\Competicoes\Infrastructure\MysqliPartidaGateway($connection);
-        $before = self::classPoints($connection, array_map(fn (int $team): int => self::teamClass($connection, $team), $teams));
-        $gateway->launch(
-            $thirdId,
-            'POS:3:0:N',
-            $modalityId,
-            [
-                ['id_equipe' => $teams[0], 'gols' => 1],
-                ['id_equipe' => $teams[1], 'gols' => 0],
-            ],
-            array_merge(
-                self::pointAdjustments($connection, $thirdId, $teams[0], 1),
-                self::pointAdjustments($connection, $thirdId, $teams[1], 0),
-            ),
-            self::operatorId($connection),
+        $source = $connection->query(
+            'SELECT id_jogo, id_equipe, pontos, ativo FROM pontuacoes_podio WHERE id_interclasse = '
+            . $editionId . ' AND id_modalidade = ' . $modalityId . ' AND posicao = 3',
+        )->fetch_assoc();
+        $posGames = (int) $connection->query(
+            "SELECT COUNT(*) FROM jogos WHERE modalidades_id_modalidade = {$modalityId} AND nome_jogo = 'POS:3:0:N'",
+        )->fetch_column();
+        Assertions::assert(
+            'Terceiro lugar é atribuído automaticamente sem partida física',
+            $thirdTeam !== null && $source !== null
+            && (int) $source['id_jogo'] === $finalId
+            && (int) $source['id_equipe'] === $thirdTeam
+            && (int) $source['pontos'] === $points
+            && (int) $source['ativo'] === 1
+            && $posGames === 0,
         );
-        $classFirst = self::teamClass($connection, $teams[0]);
-        $classSecond = self::teamClass($connection, $teams[1]);
-        $afterFirst = self::classPoints($connection, [$classFirst, $classSecond]);
-        $expectedFirst = $before;
-        $expectedFirst[$classFirst] = ($expectedFirst[$classFirst] ?? 0) + $points;
-        Assertions::assert('Terceiro lugar concede somente o crédito da posição 3', $afterFirst === $expectedFirst);
-        $gateway->launch(
-            $thirdId,
-            'POS:3:0:N',
-            $modalityId,
-            [
-                ['id_equipe' => $teams[0], 'gols' => 0],
-                ['id_equipe' => $teams[1], 'gols' => 1],
-            ],
-            array_merge(
-                self::pointAdjustments($connection, $thirdId, $teams[0], 0),
-                self::pointAdjustments($connection, $thirdId, $teams[1], 1),
-            ),
-            self::operatorId($connection),
-        );
-        $expectedSecond = $afterFirst;
-        $expectedSecond[$classFirst] -= $points;
-        $expectedSecond[$classSecond] += $points;
-        $source = $connection->query('SELECT id_equipe, pontos, ativo FROM pontuacoes_podio WHERE id_interclasse = ' . $editionId . ' AND id_modalidade = ' . $modalityId . ' AND posicao = 3')->fetch_assoc();
-        Assertions::assert('Retificação do terceiro lugar move somente a posição 3', self::classPoints($connection, [$classFirst, $classSecond]) === $expectedSecond && $source !== null && (int) $source['id_equipe'] === $teams[1] && (int) $source['pontos'] === $points && (int) $source['ativo'] === 1);
+    }
+
+    /** @return list<array{team:int,score:int}> */
+    private static function scoredTeams(\mysqli $connection, int $gameId): array
+    {
+        $statement = $connection->prepare('SELECT equipes_id_equipe, resultado_partida FROM partidas WHERE jogos_id_jogo = ? ORDER BY resultado_partida DESC, equipes_id_equipe ASC');
+        $statement->bind_param('i', $gameId);
+        $statement->execute();
+        $rows = $statement->get_result()->fetch_all(\MYSQLI_ASSOC);
+        $statement->close();
+        return array_map(static fn (array $row): array => [
+            'team' => (int) $row['equipes_id_equipe'],
+            'score' => (int) $row['resultado_partida'],
+        ], $rows);
     }
 
     private static function runUnconciledCorrectionScenario(\mysqli $connection, int $editionId, int $modalityId): void

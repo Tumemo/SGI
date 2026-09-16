@@ -76,6 +76,79 @@ final class MysqliPodioRepository implements PodioRepository
         ], $rows);
     }
 
+    public function carregarTerceiroLugarDaFinal(int $gameId): ?int
+    {
+        $statement = $this->connection->prepare(
+            'SELECT j.nome_jogo, j.status_jogo, j.modalidades_id_modalidade
+             FROM jogos j WHERE j.id_jogo = ? LIMIT 1',
+        );
+        if ($statement === false) {
+            throw new RuntimeException('Não foi possível consultar a origem do terceiro lugar.');
+        }
+        $statement->bind_param('i', $gameId);
+        if (!$statement->execute()) {
+            $statement->close();
+            throw new RuntimeException('Não foi possível consultar a origem do terceiro lugar.');
+        }
+        $final = $statement->get_result()->fetch_assoc() ?: null;
+        $statement->close();
+        if ($final === null) {
+            return null;
+        }
+
+        $meta = ChaveamentoRules::parse((string) $final['nome_jogo']);
+        if ($meta === null || $meta['largura'] !== 2 || isset($meta['posicao'])
+            || !ChaveamentoRules::jogoEstaEncerrado((string) $final['status_jogo'])) {
+            return null;
+        }
+        $champion = ChaveamentoRules::vencedorDePartidas($this->carregarPartidasJogo($gameId));
+        if ($champion === null) {
+            return null;
+        }
+
+        $statement = $this->connection->prepare(
+            "SELECT j.id_jogo, j.nome_jogo, j.status_jogo,
+                    p.equipes_id_equipe, p.resultado_partida
+             FROM jogos j
+             INNER JOIN partidas p ON p.jogos_id_jogo = j.id_jogo
+             WHERE j.modalidades_id_modalidade = ? AND j.nome_jogo LIKE 'MM:4:%'
+               AND j.status_jogo IN ('Concluido', 'Finalizado')
+             ORDER BY j.id_jogo ASC, p.id_partida ASC",
+        );
+        if ($statement === false) {
+            throw new RuntimeException('Não foi possível consultar as semifinais.');
+        }
+        $modalityId = (int) $final['modalidades_id_modalidade'];
+        $statement->bind_param('i', $modalityId);
+        if (!$statement->execute()) {
+            $statement->close();
+            throw new RuntimeException('Não foi possível consultar as semifinais.');
+        }
+        $rows = $statement->get_result()->fetch_all(MYSQLI_ASSOC);
+        $statement->close();
+
+        $semifinais = [];
+        foreach ($rows as $row) {
+            $semifinalMeta = ChaveamentoRules::parse((string) $row['nome_jogo']);
+            if ($semifinalMeta === null || $semifinalMeta['largura'] !== 4 || isset($semifinalMeta['posicao'])) {
+                continue;
+            }
+            $idSemifinal = (int) $row['id_jogo'];
+            if (!isset($semifinais[$idSemifinal])) {
+                $semifinais[$idSemifinal] = [
+                    'kind' => $semifinalMeta['kind'],
+                    'partidas' => [],
+                ];
+            }
+            $semifinais[$idSemifinal]['partidas'][] = [
+                'equipes_id_equipe' => (int) $row['equipes_id_equipe'],
+                'resultado_partida' => (int) $row['resultado_partida'],
+            ];
+        }
+
+        return ChaveamentoRules::terceiroLugarDoCampeao($champion, array_values($semifinais));
+    }
+
     public function carregarBloqueados(int $interclasseId, int $modalidadeId): array
     {
         $statement = $this->connection->prepare(
@@ -208,6 +281,7 @@ final class MysqliPodioRepository implements PodioRepository
                    SELECT 1 FROM pontuacoes_podio p
                    WHERE p.id_interclasse = m.interclasses_id_interclasse
                      AND p.id_modalidade = j.modalidades_id_modalidade
+                     AND p.ativo = 1
                      AND p.posicao IN (1, 2)
                )
              UNION ALL
@@ -219,9 +293,40 @@ final class MysqliPodioRepository implements PodioRepository
                    SELECT 1 FROM pontuacoes_podio p
                    WHERE p.id_interclasse = m.interclasses_id_interclasse
                      AND p.id_modalidade = j.modalidades_id_modalidade
+                     AND p.ativo = 1
                      AND p.posicao = 3
                )",
         )->fetch_all(MYSQLI_ASSOC);
+        $finals = $this->connection->query(
+            "SELECT j.id_jogo, j.modalidades_id_modalidade, m.interclasses_id_interclasse
+             FROM jogos j INNER JOIN modalidades m ON m.id_modalidade = j.modalidades_id_modalidade
+             WHERE j.nome_jogo LIKE 'MM:2:%' AND j.status_jogo IN ('Concluido', 'Finalizado')",
+        )->fetch_all(MYSQLI_ASSOC);
+        $thirdExists = $this->connection->prepare(
+            'SELECT 1 FROM pontuacoes_podio
+             WHERE id_interclasse = ? AND id_modalidade = ? AND posicao = 3 AND ativo = 1 LIMIT 1',
+        );
+        if ($thirdExists === false) {
+            throw new RuntimeException('Não foi possível diagnosticar créditos de pódio.');
+        }
+        foreach ($finals as $final) {
+            if ($this->carregarTerceiroLugarDaFinal((int) $final['id_jogo']) === null) {
+                continue;
+            }
+            $editionId = (int) $final['interclasses_id_interclasse'];
+            $modalityId = (int) $final['modalidades_id_modalidade'];
+            $thirdExists->bind_param('ii', $editionId, $modalityId);
+            $thirdExists->execute();
+            if ($thirdExists->get_result()->num_rows === 0) {
+                $missing[] = [
+                    'id_jogo' => (int) $final['id_jogo'],
+                    'modalidades_id_modalidade' => $modalityId,
+                    'interclasses_id_interclasse' => $editionId,
+                    'posicoes' => '3',
+                ];
+            }
+        }
+        $thirdExists->close();
         $orphan = $this->connection->query(
             'SELECT p.id_pontuacao, p.id_interclasse, p.id_modalidade, p.posicao, p.id_turma,
                     p.id_equipe, p.id_usuario, p.id_jogo
@@ -290,6 +395,9 @@ final class MysqliPodioRepository implements PodioRepository
         }
         $position = (int) ($credit['posicao'] ?? 0);
         return ($position === 3 && (int) ($meta['posicao'] ?? 0) === 3)
+            || ($position === 3 && $meta['largura'] === 2
+                && !isset($meta['posicao'])
+                && (int) ($credit['id_equipe'] ?? 0) === ($this->carregarTerceiroLugarDaFinal($gameId) ?? 0))
             || in_array($position, [1, 2], true) && (int) $meta['largura'] === 2 && !isset($meta['posicao']);
     }
 

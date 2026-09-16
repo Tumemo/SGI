@@ -95,7 +95,7 @@ async function criarChaveFixture(request) {
         idInterclasse,
         idModalidade: Number(modalidade.id_modalidade),
         jogos: listaJogos.filter((item) => String(item.nome_jogo).startsWith('MM:8:')),
-        chaveTags: ['MM:4:0:N', 'MM:4:1:N', 'MM:2:0:N', 'POS:3:0:N'],
+        chaveTags: ['MM:4:0:N', 'MM:4:1:N', 'MM:2:0:N'],
         label: 'E2E-bracket-offline',
     });
 
@@ -241,8 +241,9 @@ test.describe('Torneio Offline e Inspeção da Árvore de Chaveamento', () => {
 
         expect(resultadoArvore.sucesso).toBe(true);
         expect(resultadoArvore.fonte).toBe('local');
-        // 4 QF + 2 SF + 1 Final + 1 Disputa 3º lugar = 8 jogos
-        expect(resultadoArvore.totalJogos).toBe(8);
+        // 4 QF + 2 SF + 1 Final; o 3º lugar é derivado sem jogo físico.
+        expect(resultadoArvore.totalJogos).toBe(7);
+        expect(resultadoArvore.jogos.some((jogo) => jogo.nome_jogo === 'POS:3:0:N')).toBe(false);
 
         // 8. Navega para a tela de chaveamento via SPA
         await page.evaluate((idInter) => {
@@ -285,11 +286,11 @@ test.describe('Torneio Offline e Inspeção da Árvore de Chaveamento', () => {
         await expect(campeaoLoc.locator('.bracket-champion-card__label')).toHaveText(/campeão/i);
         await expect(campeaoLoc.locator('.bracket-champion-card__name')).not.toBeEmpty();
 
-        // Valida que todos os 8 cards de partidas (.bkt-match) estão renderizados na árvore
+        // Valida que todos os 7 cards de partidas (.bkt-match) estão renderizados na árvore
         const matchCards = page.locator('#bracketArea .bkt-match');
-        await expect(matchCards).toHaveCount(8);
+        await expect(matchCards).toHaveCount(7);
 
-        for (let i = 0; i < 8; i++) {
+        for (let i = 0; i < 7; i++) {
             const card = matchCards.nth(i);
             await expect(card.locator('.bkt-team')).toHaveCount(2);
             await expect(card.locator('.bkt-match__status')).toHaveText(/FINALIZADO|AGENDADO/i);

@@ -116,4 +116,45 @@ final class ChaveamentoRules
         });
         return (int) $partidas[1]['equipes_id_equipe'];
     }
+
+    /**
+     * Deriva o terceiro colocado sem criar uma partida adicional: é o
+     * perdedor da semifinal vencida pelo campeão.
+     *
+     * Semifinais por bye não produzem perdedor e, portanto, não geram uma
+     * classificação automática de terceiro lugar.
+     *
+     * @param list<array{kind:string,partidas:list<array{equipes_id_equipe:int,resultado_partida:int}>}> $semifinais
+     */
+    public static function terceiroLugarDoCampeao(?int $campeao, array $semifinais): ?int
+    {
+        if ($campeao === null || $campeao <= 0) {
+            return null;
+        }
+
+        $terceiro = null;
+        foreach ($semifinais as $semifinal) {
+            if ($semifinal['kind'] === 'B') {
+                continue;
+            }
+            $partidas = $semifinal['partidas'];
+            if (count($partidas) < 2) {
+                continue;
+            }
+            $vencedor = self::vencedorDePartidas($partidas);
+            if ($vencedor !== $campeao) {
+                continue;
+            }
+            $perdedor = self::perdedorDePartidas($partidas);
+            if ($perdedor === null || $perdedor === $campeao) {
+                continue;
+            }
+            if ($terceiro !== null && $terceiro !== $perdedor) {
+                return null;
+            }
+            $terceiro = $perdedor;
+        }
+
+        return $terceiro;
+    }
 }

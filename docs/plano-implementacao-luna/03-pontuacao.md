@@ -155,7 +155,7 @@ confirmar resultado, avanço, créditos e resposta idempotente juntos
 
 1. Remover a condição que só soma pontos se o jogo ainda não estava concluído. Substituí-la pelo serviço que compara origens antigas e novas.
 2. Não simplesmente chamar `applyPodiumPoints()` também na correção: isso somaria prêmios duplicados.
-3. Final normal concede 1º/2º; disputa de terceiro concede 3º; semifinais/oitavas não geram esses créditos. Usar `ChaveamentoRules`, não procurar substrings aproximadas.
+3. Final normal concede 1º/2º e, quando a chave possui duas semifinais válidas, o serviço concede automaticamente o 3º à equipe derrotada pelo campeão; não criar disputa física. Semifinais/oitavas não geram créditos diretamente. Usar `ChaveamentoRules`, não procurar substrings aproximadas.
 4. Repetir a mesma classificação produz delta zero, mesmo com outra requisição idempotente válida.
 5. Trocar campeão de A para B com valores10/7 produz delta A−3/B+3. Valores totais finais `[7,10]`.
 6. Ao corrigir fase anterior e invalidar final/terceiro lugar, retirar créditos que deixaram de ter origem válida. Guardar o estado anterior antes de DELETE/rebuild; não tentar recuperá-lo depois da exclusão.

@@ -273,7 +273,7 @@ final class ResultadoServiceTest extends TestCase
         ]);
 
         self::assertSame(['resolve', 'lock', 'load', 'persist', 'load', 'rebuild'], $repository->calls);
-        self::assertSame(['context', 'credits', 'parts', 'team', 'team', 'replace', 'delta'], $podium->calls);
+        self::assertSame(['context', 'credits', 'parts', 'third', 'team', 'team', 'replace', 'delta'], $podium->calls);
         self::assertSame([1 => -3, 2 => 3], $podium->lastDeltas);
     }
 
@@ -428,6 +428,12 @@ final class PodioRepositoryFake implements PodioRepository
             ['equipes_id_equipe' => 101, 'resultado_partida' => 3],
             ['equipes_id_equipe' => 102, 'resultado_partida' => 1],
         ];
+    }
+
+    public function carregarTerceiroLugarDaFinal(int $gameId): ?int
+    {
+        $this->calls[] = 'third';
+        return null;
     }
 
     public function carregarBloqueados(int $interclasseId, int $modalidadeId): array

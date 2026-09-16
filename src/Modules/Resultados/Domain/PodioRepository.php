@@ -12,6 +12,9 @@ interface PodioRepository
     /** @return list<array{equipes_id_equipe:int,resultado_partida:int}> */
     public function carregarPartidasJogo(int $gameId): array;
 
+    /** Retorna o time derrotado pelo campeão em uma semifinal, quando aplicável. */
+    public function carregarTerceiroLugarDaFinal(int $gameId): ?int;
+
     /** @return list<array<string, mixed>> */
     public function carregarBloqueados(int $interclasseId, int $modalidadeId): array;
 

@@ -697,7 +697,7 @@ Regras consolidadas:
 - `POST /api/v1/agenda-blocos` com `acao: confirmar_sequencial` confirma a mesma proposta após validar a revisão.
 - O payload sequencial usa `id_modalidade`, `dias` e `opcoes.duracao_min`; cada item de `dias` contém `data`, `inicio`, `fim` e `local`.
 - O intervalo operacional é normalizado para 10 minutos no assistente e validado também no servidor.
-- A seleção automática descobre as posições existentes da modalidade, inclui posições futuras da chave e a disputa de terceiro lugar quando aplicável, sem criar jogos fictícios.
+- A seleção automática descobre as posições existentes da modalidade e inclui posições futuras da chave; o terceiro lugar do mata-mata é derivado após a final e não gera jogo nem reserva física.
 - Posições futuras são persistidas em `agenda_reservas` com `id_jogo` nulo. Quando o chaveamento cria o jogo real, `aplicarReservaAgenda()` copia data, início, término e local e vincula a reserva ao novo jogo.
 - A seleção respeita as dependências entre fases: uma posição só pode ser programada depois que seus confrontos filhos tiverem horário ou estiverem resolvidos por bye.
 - O fluxo antigo `simular`/`confirmar` continua disponível para preservar compatibilidade com agendamentos em bloco já existentes.

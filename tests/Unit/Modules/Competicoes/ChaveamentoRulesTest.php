@@ -27,4 +27,43 @@ final class ChaveamentoRulesTest extends TestCase
             self::assertSame(ChaveamentoRules::slotPai($slot), ChaveamentoRules::slotPai($sibling));
         }
     }
+
+    public function testDerivesThirdPlaceFromTheChampionsSemifinalLoser(): void
+    {
+        self::assertSame(12, ChaveamentoRules::terceiroLugarDoCampeao(10, [
+            [
+                'kind' => 'N',
+                'partidas' => [
+                    ['equipes_id_equipe' => 10, 'resultado_partida' => 3],
+                    ['equipes_id_equipe' => 12, 'resultado_partida' => 1],
+                ],
+            ],
+            [
+                'kind' => 'N',
+                'partidas' => [
+                    ['equipes_id_equipe' => 20, 'resultado_partida' => 2],
+                    ['equipes_id_equipe' => 22, 'resultado_partida' => 0],
+                ],
+            ],
+        ]));
+    }
+
+    public function testByeSemifinalDoesNotCreateThirdPlace(): void
+    {
+        self::assertNull(ChaveamentoRules::terceiroLugarDoCampeao(10, [
+            [
+                'kind' => 'B',
+                'partidas' => [
+                    ['equipes_id_equipe' => 10, 'resultado_partida' => 1],
+                ],
+            ],
+            [
+                'kind' => 'N',
+                'partidas' => [
+                    ['equipes_id_equipe' => 20, 'resultado_partida' => 2],
+                    ['equipes_id_equipe' => 22, 'resultado_partida' => 0],
+                ],
+            ],
+        ]));
+    }
 }

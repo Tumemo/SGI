@@ -4,6 +4,8 @@ declare (strict_types=1);
 
 namespace App\Modules\Competicoes\Infrastructure;
 
+use App\Modules\Competicoes\Domain\ChaveamentoRules;
+
 final class MysqliChaveamentoRepository
 {
     public static function resolverIdLocal(\mysqli $conn): int
@@ -356,7 +358,7 @@ final class MysqliChaveamentoRepository
         // A grande final é terminal. Seu vencedor é usado diretamente para
         // classificação/pontuação; não criar uma partida solo adicional.
         if ($largura === 2) {
-            \App\Modules\Competicoes\Infrastructure\MysqliChaveamentoRepository::verificarGerarDisputasPosicao($conn, $idModalidade, 2);
+            self::removerDisputasPosicaoPendentes($conn, $idModalidade);
             return;
         }
         $lPai = \App\Modules\Competicoes\Domain\ChaveamentoRules::proximaLargura($largura);
@@ -587,6 +589,65 @@ final class MysqliChaveamentoRepository
     }
 
     /**
+     * Remove somente POS:3 que ainda não começou. Registros concluídos são
+     * mantidos como histórico de uma regra antiga; os pendentes são resíduos
+     * do gerador anterior e não podem continuar aparecendo na agenda.
+     */
+    public static function removerDisputasPosicaoPendentes(\mysqli $conn, int $idModalidade): void
+    {
+        $statement = $conn->prepare(
+            "SELECT id_jogo FROM jogos
+             WHERE modalidades_id_modalidade = ? AND nome_jogo = 'POS:3:0:N'
+               AND status_jogo = 'Agendado' FOR UPDATE",
+        );
+        $statement->bind_param('i', $idModalidade);
+        $statement->execute();
+        $games = $statement->get_result()->fetch_all(\MYSQLI_ASSOC);
+        $statement->close();
+
+        foreach ($games as $game) {
+            $gameId = (int) $game['id_jogo'];
+            $credit = $conn->prepare('SELECT 1 FROM pontuacoes_podio WHERE id_jogo = ? LIMIT 1 FOR UPDATE');
+            $credit->bind_param('i', $gameId);
+            $credit->execute();
+            $hasCredit = $credit->get_result()->num_rows > 0;
+            $credit->close();
+            if ($hasCredit) {
+                continue;
+            }
+
+            self::desvincularHistoricoDasPartidas($conn, $gameId);
+            $reservation = $conn->prepare(
+                "DELETE FROM agenda_reservas
+                 WHERE id_modalidade = ? AND chave_tag = 'POS:3:0:N' AND id_jogo = ?",
+            );
+            $reservation->bind_param('ii', $idModalidade, $gameId);
+            $reservation->execute();
+            $reservation->close();
+
+            $parts = $conn->prepare('DELETE FROM partidas WHERE jogos_id_jogo = ?');
+            $parts->bind_param('i', $gameId);
+            $parts->execute();
+            $parts->close();
+
+            $delete = $conn->prepare('DELETE FROM jogos WHERE id_jogo = ? AND status_jogo = \'Agendado\'');
+            $delete->bind_param('i', $gameId);
+            $delete->execute();
+            $delete->close();
+        }
+
+        // Uma reserva futura pode existir sem a linha de jogo materializada.
+        // Ela também deixou de representar uma operação válida.
+        $orphanReservation = $conn->prepare(
+            "DELETE FROM agenda_reservas
+             WHERE id_modalidade = ? AND chave_tag = 'POS:3:0:N' AND id_jogo IS NULL",
+        );
+        $orphanReservation->bind_param('i', $idModalidade);
+        $orphanReservation->execute();
+        $orphanReservation->close();
+    }
+
+    /**
      * Uma reserva pode existir antes da materialização do jogo futuro. Quando
      * o avanço cria a linha real, a programação é projetada para ela uma vez.
      */
@@ -622,7 +683,7 @@ final class MysqliChaveamentoRepository
      */
     public static function torneioConcluido(\mysqli $conn, int $idModalidade): bool
     {
-        $st = $conn->prepare("SELECT COUNT(*) AS c FROM jogos\r\n         WHERE modalidades_id_modalidade = ?\r\n           AND status_jogo NOT IN ('Concluido', 'Finalizado')");
+        $st = $conn->prepare("SELECT COUNT(*) AS c FROM jogos\r\n         WHERE modalidades_id_modalidade = ?\r\n           AND status_jogo NOT IN ('Concluido', 'Finalizado')\r\n           AND NOT (nome_jogo LIKE 'POS:3:%' AND status_jogo = 'Agendado')");
         $st->bind_param('i', $idModalidade);
         $st->execute();
         $pendentes = (int) ($st->get_result()->fetch_assoc()['c'] ?? 0);
@@ -678,7 +739,7 @@ final class MysqliChaveamentoRepository
                 $posPerdedor = $meta['posicao'] + 1;
                 $classificacao[$posVencedor] = $vencedor;
                 $classificacao[$posPerdedor] = $perdedor;
-            } elseif ($fase === 1) {
+            } elseif ($fase === 2) {
                 $classificacao[1] = $vencedor;
                 $classificacao[2] = $perdedor;
                 $nomeFase = 'Final';
@@ -691,6 +752,53 @@ final class MysqliChaveamentoRepository
             $extraMin = $tempoExtra > 0 ? (int) \ceil($tempoExtra / 60) : \null;
             $totalMin = ($duracaoMin ?? 0) + ($extraMin ?? 0);
             $confrontos[] = ['fase' => $nomeFase, 'vencedor_nome' => ($vencedor['nome_equipe'] ?: $vencedor['nome_fantasia']) ?: $vencedor['nome_turma'], 'vencedor_gols' => $vencedor['gols'], 'perdedor_nome' => ($perdedor['nome_equipe'] ?: $perdedor['nome_fantasia']) ?: $perdedor['nome_turma'], 'perdedor_gols' => $perdedor['gols'], 'duracao_min' => $duracaoMin, 'tempo_extra_min' => $extraMin, 'total_min' => $totalMin > 0 ? $totalMin : \null];
+        }
+
+        $final = null;
+        $semifinais = [];
+        foreach ($porJogo as $jogo) {
+            $meta = $jogo['meta'];
+            if ($meta === null || !ChaveamentoRules::jogoEstaEncerrado((string) $jogo['status_jogo'])) {
+                continue;
+            }
+            if ($meta['largura'] === 2 && !isset($meta['posicao']) && count($jogo['partidas']) >= 2) {
+                $final = $jogo;
+            } elseif ($meta['largura'] === 4 && !isset($meta['posicao'])) {
+                $semifinais[] = [
+                    'kind' => $meta['kind'],
+                    'partidas' => array_map(static fn (array $partida): array => [
+                        'equipes_id_equipe' => (int) $partida['id_equipe'],
+                        'resultado_partida' => (int) $partida['gols'],
+                    ], $jogo['partidas']),
+                ];
+            }
+        }
+        if ($final !== null) {
+            $finalParts = array_map(static fn (array $partida): array => [
+                'equipes_id_equipe' => (int) $partida['id_equipe'],
+                'resultado_partida' => (int) $partida['gols'],
+            ], $final['partidas']);
+            $thirdTeamId = ChaveamentoRules::terceiroLugarDoCampeao(
+                ChaveamentoRules::vencedorDePartidas($finalParts),
+                $semifinais,
+            );
+            if ($thirdTeamId !== null) {
+                foreach ($semifinais as $semifinal) {
+                    foreach ($semifinal['partidas'] as $partida) {
+                        if ((int) $partida['equipes_id_equipe'] === $thirdTeamId) {
+                            foreach ($porJogo as $jogo) {
+                                foreach ($jogo['partidas'] as $candidate) {
+                                    if ((int) $candidate['id_equipe'] === $thirdTeamId) {
+                                        $classificacao[3] = $candidate;
+                                        break 2;
+                                    }
+                                }
+                            }
+                            break 2;
+                        }
+                    }
+                }
+            }
         }
         if (!isset($classificacao[1]) && !isset($classificacao[2])) {
             \usort($confrontos, static function ($a, $b) {

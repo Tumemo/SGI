@@ -147,7 +147,7 @@ async function criarChaveFixture(request) {
         idInterclasse,
         idModalidade: Number(modalidade.id_modalidade),
         jogos: listaJogos.filter((item) => String(item.nome_jogo).startsWith('MM:8:')),
-        chaveTags: ['MM:4:0:N', 'MM:4:1:N', 'MM:2:0:N', 'POS:3:0:N'],
+        chaveTags: ['MM:4:0:N', 'MM:4:1:N', 'MM:2:0:N'],
         label: 'E2E-torneio-offline',
     });
     listaJogos = await jsonOrThrow(

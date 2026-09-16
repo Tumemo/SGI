@@ -8,8 +8,8 @@
         do IndexedDB; se não houver resposta, lê o cache explicitamente.
      3) Aplica os resultados gravados localmente (fila de mutações pendentes
         do banco JS temporário) e processa o avanço da árvore NO FRONTEND:
-        promove vencedores, cria as partidas das fases seguintes e a disputa
-        de 3º lugar até definir o campeão.
+        promove vencedores e cria as partidas das fases seguintes até definir
+        o campeão; o terceiro lugar é derivado, sem partida adicional.
      4) Quando a conexão volta, os dados locais são sincronizados com o PHP
         (a fila original é reenviada e o servidor refaz o avanço nativamente).
 
@@ -310,9 +310,9 @@
     /* ------------------------ Motor de avanço local (JS) ------------------------
        Espelho de sgi_chaveamento_processar_avanco(): para cada jogo MM
        concluído, garante o vencedor no jogo-pai da fase seguinte (criando-o
-       se necessário), autoconclui pais com bye implícito e gera a disputa
-       de 3º lugar quando as semifinais terminam. A final (MM:2) é o último
-       jogo operacional: seu vencedor é o campeão e não existe partida solo. */
+       se necessário) e autoconclui pais com bye implícito. A final (MM:2) é
+       o último jogo operacional: seu vencedor é o campeão e o terceiro lugar
+       é derivado do perdedor da semifinal do campeão, sem partida solo. */
 
     function criarMotorAvanco(jogos, dirEquipes, contadorInicial, reservasAgenda, locaisStore) {
         var mapaTag = {};
@@ -421,34 +421,6 @@
             return true;
         }
 
-        /* Ambas as semifinais (MM:4:%) concluídas → garante POS:3:0:N com os
-           perdedores. (Corresponde à intenção de sgi_mm_gerar_disputa_3_lugar,
-           que busca os perdedores da fase semifinal.) */
-        function verificarDisputaTerceiro() {
-            var semis = [];
-            var todasOk = false;
-            Object.keys(mapaTag).forEach(function (tag) {
-                if (/^MM:4:\d+:[NB]$/.test(tag)) {
-                    var sf = mapaTag[tag];
-                    semis.push(sf);
-                    if (!jogoEncerrado(sf.status_jogo)) todasOk = false;
-                }
-            });
-            todasOk = semis.length > 0 && semis.every(function (sf) { return jogoEncerrado(sf.status_jogo); });
-            if (!todasOk) return;
-
-            var pos = mapaTag['POS:3:0:N'];
-            if (!pos) {
-                pos = garantirJogoPorTag('POS:3:0:N');
-            }
-            semis.forEach(function (sf) {
-                var meta = mmParse(sf.nome_jogo);
-                if (!meta || meta.kind === 'B') return;
-                var perdedor = perdedorDeEquipes(sf.equipes);
-                if (perdedor !== null) garantirEquipe(pos, perdedor);
-            });
-        }
-
         function processarJogo(jogo, fila) {
             var meta = mmParse(jogo.nome_jogo);
             if (!meta || meta.largura <= 1 || !jogoEncerrado(jogo.status_jogo)) return;
@@ -464,7 +436,6 @@
             // própria final; criar uma partida solo não gera ação do
             // usuário e fazia a agenda oscilar entre offline/online.
             if (meta.largura === 2) {
-                verificarDisputaTerceiro();
                 return;
             }
 
@@ -836,12 +807,11 @@
          4) Roda o motor de avanço (criarMotorAvanco) que percorre os jogos
             concluídos RECURSIVAMENTE: insere o vencedor na chave-pai
             (MM:largura/2:floor(slot/2):N), cria o pai se não existir,
-            autoconclui chaves com bye implícito, gera a disputa de 3º lugar
-            quando as semifinais terminam. A grande final (MM:2) é terminal:
+            autoconclui chaves com bye implícito. A grande final (MM:2) é terminal:
             o campeão é derivado dela e não há um jogo solo adicional.
          5) PERSISTE no banco JS cada partida derivada que ainda não existia
             (id temporário negativo estável + partidas "mm_local_…", status
-            'Agendado') para que a nova confrontação possa ser jogada offline.
+            'Agendado') para que a próxima fase possa ser jogada offline.
          6) Devolve à tela o resultado: adversário já definido (partida
             formada/liberada) ou aguardando (TBD). */
 

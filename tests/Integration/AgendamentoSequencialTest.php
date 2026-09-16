@@ -56,8 +56,12 @@ final class AgendamentoSequencialTest
             json_encode($preview['json'] ?? $preview, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
         );
         Assertions::assert(
-            'Prévia sequencial agenda as posições futuras da chave',
-            ($preview['json']['resumo']['encaixados'] ?? 0) >= 4,
+            'Prévia sequencial agenda as posições futuras da chave sem disputa física de terceiro lugar',
+            ($preview['json']['resumo']['encaixados'] ?? 0) === 3
+                && !array_filter(
+                    (array) ($preview['json']['proposta'] ?? []),
+                    static fn (array $reservation): bool => ($reservation['chave_tag'] ?? '') === 'POS:3:0:N',
+                ),
             json_encode($preview['json'] ?? $preview, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
         );
 
