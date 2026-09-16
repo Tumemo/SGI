@@ -1,4 +1,5 @@
 <?php
+$habilitarOfflineAluno = false;
 include SGI_ROOT . '/resources/views/components/aluno-head.php';
 $titulo = 'Termos';
 $mostrarVoltar = true;

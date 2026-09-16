@@ -14,6 +14,7 @@ if ((int) ($_SESSION['nivel'] ?? -1) !== 3) {
 // do portal não deve reaparecer pelo cache HTTP após logout.
 $chaveCacheOffline = \App\Modules\Acesso\Presentation\Http\OfflineSession::obterChaveCacheOffline();
 $csrfToken = CsrfGuard::token();
+$habilitarOfflineAluno = $habilitarOfflineAluno ?? true;
 if (!headers_sent()) {
     header('Cache-Control: private, no-store, max-age=0');
     header('Vary: Cookie');
@@ -45,8 +46,10 @@ echo json_encode(\App\Shared\Http\Url::to('api/v1/'), JSON_HEX_TAG | JSON_HEX_AM
 ?>; window.SGI_ASSET_BASE = <?php
 echo json_encode(\App\Shared\Http\Url::to('assets'), JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT);
 ?>;</script>
+    <?php if ($habilitarOfflineAluno): ?>
     <script src="<?= \App\Shared\Http\Assets::url('js/offline/offline-core.js') ?>"></script>
     <script src="<?= \App\Shared\Http\Assets::url('js/offline/offline-form.js') ?>"></script>
+    <?php endif; ?>
     <script src="<?= \App\Shared\Http\Assets::url('js/shared/http-client.js') ?>"></script>
     <script src="<?= \App\Shared\Http\Assets::url('js/shared/bootstrap-feedback.js') ?>"></script>
     <script src="<?= \App\Shared\Http\Assets::url('js/shared/html-utils.js') ?>"></script>

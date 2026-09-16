@@ -394,6 +394,37 @@ test('sessão expirada encaminha para login sem perder a fila', async ({ page })
     await page.waitForURL('**/login');
 });
 
+test('403 de gate do primeiro acesso não é tratado como sessão expirada', async ({ page }) => {
+    await page.route('**/api/v1/session', route => route.fulfill({
+        status: 403,
+        json: {
+            success: false,
+            message: 'Aceite os termos de responsabilidade para continuar.',
+            redirect: '/aluno/termos',
+        },
+    }));
+
+    const resultado = await page.evaluate(async () => {
+        const ok = await SGIOffline.checkAccess(true);
+        const banner = document.querySelector('#sgi-offline-banner');
+        const state = SGIOffline.getState();
+
+        return {
+            ok,
+            session: state.session,
+            server: state.server,
+            bannerVisible: Boolean(banner && !banner.classList.contains('d-none') && !banner.classList.contains('sgi-hidden')),
+            bannerText: banner ? banner.textContent : '',
+        };
+    });
+
+    expect(resultado.ok).toBe(false);
+    expect(resultado.session).toBe('bloqueada');
+    expect(resultado.server).toBe('acessivel');
+    expect(resultado.bannerVisible).toBe(false);
+    expect(resultado.bannerText).not.toContain('SESSÃO EXPIRADA');
+});
+
 for (const body of ['<html>Servidor em manutenção</html>', '', '{"success":', '{}', '{"status":"erro","mensagem":"Dados inválidos"}']) {
     test(`resposta sem confirmação JSON conserva a mutação: ${JSON.stringify(body)}`, async ({ page }) => {
         await page.route('**/api/v1/resultados', route => route.fulfill({ status: 200, body }));

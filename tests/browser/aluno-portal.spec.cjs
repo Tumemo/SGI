@@ -67,6 +67,7 @@ test.describe.serial('Portal do Aluno — Jornada Interativa e Regras de Negóci
         await page.locator('#form_desktop button[type="submit"]').click();
 
         await page.waitForURL(/\/aluno\/trocar-senha/, { timeout: 15_000 });
+        await expect(page.locator('#sgi-offline-banner')).toHaveCount(0);
         await expect(page.locator('#formPrimeiroAcesso')).toBeVisible();
 
         // A senha inicial só libera a tela de troca: nem uma URL direta deve
@@ -111,6 +112,7 @@ test.describe.serial('Portal do Aluno — Jornada Interativa e Regras de Negóci
         await expect(page.locator('#btnSalvarSenhaPrimeiroAcesso')).toBeEnabled();
         await page.locator('#btnSalvarSenhaPrimeiroAcesso').click();
         await page.waitForURL(/\/aluno\/termos/, { timeout: 15_000 });
+        await expect(page.locator('#sgi-offline-banner')).toHaveCount(0);
         await expect(page.locator('main')).toBeVisible();
 
         // Validar presença do Termo de Responsabilidade e suas cláusulas fundamentais
@@ -161,6 +163,7 @@ test.describe.serial('Portal do Aluno — Jornada Interativa e Regras de Negóci
         expect(inscricaoSemAceite).toBe(403);
 
         await page.goto('aluno/termos', { waitUntil: 'domcontentloaded' });
+        await expect(page.locator('#sgi-offline-banner')).toHaveCount(0);
         const btnAceitar = page.locator('#btnAceitarTermos');
         await expect(btnAceitar).toBeVisible({ timeout: 15_000 });
         await btnAceitar.click();

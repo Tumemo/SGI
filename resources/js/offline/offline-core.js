@@ -319,6 +319,17 @@
         return healthPromise;
     }
 
+    function isStudentAccessGate(json) {
+        if (!json || typeof json.redirect !== 'string') return false;
+
+        try {
+            var path = new URL(json.redirect, window.location.href).pathname;
+            return /\/aluno\/(?:termos|trocar-senha)\/?$/.test(path);
+        } catch (e) {
+            return /\/aluno\/(?:termos|trocar-senha)(?:[/?#]|$)/.test(json.redirect);
+        }
+    }
+
     function verificarSessao(force) {
         if (navigator.onLine === false || servidorIndisponivel()) return Promise.resolve(false);
         var agora = Date.now();
@@ -336,6 +347,17 @@
                 try { json = text ? JSON.parse(text) : null; } catch (e) {}
                 var usuario = json && json.usuario;
                 var idAtual = window.SGI_SESSION_ID ? String(window.SGI_SESSION_ID) : '';
+
+                if (res.status === 403 && json && json.success === false && isStudentAccessGate(json)) {
+                    state.session = 'bloqueada';
+                    state.sessionCheckedAt = Date.now();
+                    state.server = 'acessivel';
+                    state.serverError = String(json.message || 'Acesso bloqueado até concluir o primeiro acesso.');
+                    state.softOffline = false;
+                    notify();
+                    return false;
+                }
+
                 if (!res.ok || !json || json.success !== true || !usuario ||
                     (idAtual && String(usuario.id || '') !== idAtual)) {
                     throw new Error('A sessão do operador expirou ou mudou.');
@@ -1164,6 +1186,10 @@
     function syncQueue(force) {
         var vazio = { synced: 0, failed: 0, needsReview: 0, pending: state.pending, busy: false };
         if (!state.online || syncing) return Promise.resolve(vazio);
+        if (state.session === 'bloqueada') {
+            vazio.blocked = true;
+            return Promise.resolve(vazio);
+        }
         if (servidorIndisponivel()) {
             return verificarAcesso(false).then(function (ok) {
                 if (ok) return syncQueue(force);
