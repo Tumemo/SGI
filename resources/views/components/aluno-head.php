@@ -83,4 +83,5 @@ echo json_encode(\App\Shared\Http\Url::to('assets'), JSON_HEX_TAG | JSON_HEX_AMP
 })();
 </script>
 </head>
-<body class="bg-light d-flex flex-column min-vh-100">
+<body class="bg-light d-flex flex-column min-vh-100 sgi-app-shell">
+<a class="sgi-skip-link" href="#sgi-main-content">Ir para o conteúdo</a>

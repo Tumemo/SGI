@@ -5,20 +5,6 @@
  * usar Bootstrap diretamente. O que permanece aqui é geometria de widgets
  * SGI, valores calculados pelos renderizadores e offsets da navegação fixa.
  */
-.sgi-u-w-max-content-maxw-96vw-top-85 {
-    width: max-content;
-    max-width: 96vw;
-    top: 85%;
-    left: 50%;
-    z-index: 10;
-}
-
-.sgi-u-bottom-40px-right-5-z-1050 {
-    bottom: 40px;
-    right: 5%;
-    z-index: 1050;
-}
-
 .sgi-u-cursor-pointer {
     cursor: pointer;
 }
@@ -32,23 +18,9 @@
     cursor: pointer;
 }
 
-.sgi-u-bottom-92px-right-16px-z-20 {
-bottom: 92px;
-    right: 16px;
-    z-index: 20;
-}
-
 .sgi-u-max-height-60vh-overflow-y-auto {
     max-height: 60vh;
     overflow-y: auto;
-}
-
-.sgi-u-w-max-content-top-85-left-50 {
-    width: max-content;
-    top: 85%;
-    left: 50%;
-    z-index: 10;
-    cursor: pointer;
 }
 
 .sgi-u-h-120px {

@@ -15,6 +15,7 @@ $ptcCards = [
         'sub'     => 'Medalha de Ouro',
         'badge'   => 'Ouro',
         'label'   => 'Pontos',
+        'inputLabel' => 'Pontos do 1º lugar',
         'valor'   => 10,
         'desc'    => 'Pontos atribuídos à 1ª colocação de cada modalidade.'
     ],
@@ -26,6 +27,7 @@ $ptcCards = [
         'sub'     => 'Medalha de Prata',
         'badge'   => 'Prata',
         'label'   => 'Pontos',
+        'inputLabel' => 'Pontos do 2º lugar',
         'valor'   => 7,
         'desc'    => 'Pontos atribuídos à 2ª colocação de cada modalidade.'
     ],
@@ -37,6 +39,7 @@ $ptcCards = [
         'sub'     => 'Medalha de Bronze',
         'badge'   => 'Bronze',
         'label'   => 'Pontos',
+        'inputLabel' => 'Pontos do 3º lugar',
         'valor'   => 5,
         'desc'    => 'Pontos atribuídos à 3ª colocação de cada modalidade.'
     ],
@@ -48,6 +51,7 @@ $ptcCards = [
         'sub'     => 'Arrecadação da turma',
         'badge'   => 'Especial',
         'label'   => 'Multiplicador',
+        'inputLabel' => 'Multiplicador por kg',
         'valor'   => 2,
         'desc'    => 'Fator aplicado sobre os kg arrecadados pela turma.'
     ],
@@ -79,13 +83,18 @@ $ptcTheme = [
                 <button type="button" class="btn btn-outline-secondary d-inline-flex align-items-center gap-2" id="btnRestaurarPadrao" onclick="restaurarPadrao()" disabled>
                     <i class="bi bi-arrow-counterclockwise"></i> Restaurar Padrão
                 </button>
-                <button type="button" class="btn btn-primary d-inline-flex align-items-center gap-2" id="btnSalvarPontuacao" onclick="salvarPontuacao()" disabled>
+                <button type="button" class="btn btn-primary d-inline-flex align-items-center gap-2" id="btnSalvarPontuacao" disabled>
                     <i class="bi bi-check-lg"></i> Salvar
                 </button>
                 <a href="#" id="btnContinuarPontuacao" class="btn btn-dark d-inline-flex align-items-center gap-2 d-none">
                     Continuar <i class="bi bi-arrow-right-circle"></i>
                 </a>
             </div>
+        </div>
+
+        <div class="d-flex flex-wrap align-items-center gap-2 mb-4" aria-label="Edição selecionada">
+            <span id="ptcEditionYear" class="badge text-bg-light border text-body-secondary">Ano carregando</span>
+            <span id="ptcEditionStatus" class="badge text-bg-secondary">Carregando status</span>
         </div>
 
         <div class="row g-4">
@@ -106,6 +115,7 @@ $ptcTheme = [
                     <div class="text-center my-4">
                         <span class="small text-uppercase fw-bold text-body-secondary"><?= $c['label'] ?></span>
                         <div class="ptc-stepper d-flex align-items-center justify-content-center gap-2 mt-2">
+                            <label class="visually-hidden" for="pontos-<?= $c['key'] ?>"><?= $c['inputLabel'] ?></label>
                             <button type="button" class="ptc-step-btn ptc-step-btn--minus btn btn-outline-secondary btn-lg rounded-circle p-0" aria-label="Diminuir <?= $c['titulo'] ?>" disabled>
                                 <i class="bi bi-dash-lg"></i>
                             </button>
@@ -125,11 +135,30 @@ $ptcTheme = [
 
         <div class="alert alert-info d-flex align-items-center gap-2 mt-4 mb-0">
             <i class="bi bi-info-circle"></i>
-            <span>Os valores são aplicados ao Interclasse ativo. Altere com os botões <strong>+</strong> e <strong>&minus;</strong> ou digite diretamente no campo central.</span>
+            <span>Altere a pontuação de <strong id="ptcEditionName">esta edição</strong> com os botões <strong>+</strong> e <strong>&minus;</strong> ou digite diretamente no campo central.</span>
         </div>
 
     </div>
 </main>
+
+<div class="modal fade" id="modalPontuacaoDirty" tabindex="-1" aria-labelledby="modalPontuacaoDirtyTitulo" aria-describedby="modalPontuacaoDirtyDescricao" aria-hidden="true" data-bs-backdrop="static">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title fs-5" id="modalPontuacaoDirtyTitulo">Alterações não salvas</h2>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+            </div>
+            <div class="modal-body" id="modalPontuacaoDirtyDescricao">
+                A pontuação desta edição mudou. Salve antes de sair, descarte as alterações ou continue editando.
+            </div>
+            <div class="modal-footer d-flex flex-wrap gap-2">
+                <button type="button" class="btn btn-outline-secondary me-auto" id="btnCancelarPontuacaoNavegacao" data-bs-dismiss="modal">Cancelar navegação</button>
+                <button type="button" class="btn btn-outline-danger" id="btnDescartarPontuacaoNavegacao">Descartar e continuar</button>
+                <button type="button" class="btn btn-primary" id="btnSalvarEContinuarPontuacao">Salvar e continuar</button>
+            </div>
+        </div>
+    </div>
+</div>
 
 <script type="application/json" data-sgi-config="eventos/configurar-pontuacao"><?= json_encode([], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_THROW_ON_ERROR) ?></script>
 <script data-sgi-page src="<?= \App\Shared\Http\Assets::url('js/pages/eventos/configurar-pontuacao.js') ?>"></script>

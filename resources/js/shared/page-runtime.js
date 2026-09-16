@@ -3,6 +3,87 @@
     if (global.SGIPage) return;
     var activeScope = null;
     var constructionScope = null;
+
+    function visible(element) {
+        if (!element) return false;
+        var style = global.getComputedStyle ? global.getComputedStyle(element) : null;
+        if (style && (style.display === 'none' || style.visibility === 'hidden')) return false;
+        return typeof element.getClientRects !== 'function' || element.getClientRects().length > 0;
+    }
+
+    function releaseContentTarget(element) {
+        if (!element) return;
+        if (element.dataset.sgiSkipTargetIdAssigned === '1' && element.id === 'sgi-main-content') {
+            element.removeAttribute('id');
+        }
+        if (element.dataset.sgiSkipTargetTabindexAssigned === '1' && element.getAttribute('tabindex') === '-1') {
+            element.removeAttribute('tabindex');
+        }
+        delete element.dataset.sgiSkipTarget;
+        delete element.dataset.sgiSkipTargetIdAssigned;
+        delete element.dataset.sgiSkipTargetTabindexAssigned;
+    }
+
+    function updateContentTarget(root) {
+        root = root || document;
+        var mains = [];
+        if (root.matches && root.matches('main')) mains.push(root);
+        if (root.querySelectorAll) mains = mains.concat(Array.prototype.slice.call(root.querySelectorAll('main')));
+        var target = mains.find(visible) || null;
+        if (!target) return null;
+
+        var previous = document.querySelector('[data-sgi-skip-target="1"]');
+        if (previous && previous !== target) releaseContentTarget(previous);
+
+        if (!target.id) {
+            target.id = 'sgi-main-content';
+            target.dataset.sgiSkipTargetIdAssigned = '1';
+        }
+        if (!target.hasAttribute('tabindex')) {
+            target.setAttribute('tabindex', '-1');
+            target.dataset.sgiSkipTargetTabindexAssigned = '1';
+        }
+        target.dataset.sgiSkipTarget = '1';
+
+        var link = document.querySelector('.sgi-skip-link');
+        if (link) link.setAttribute('href', '#' + target.id);
+        return target;
+    }
+
+    function focusPageHeading(root) {
+        root = root || document;
+        var heading = null;
+        ['h1', 'h2', '[role="heading"][aria-level="1"], [role="heading"][aria-level="2"]', '[data-sgi-page-heading]'].some(function (selector) {
+            var headings = [];
+            if (root.matches && root.matches(selector)) headings.push(root);
+            if (root.querySelectorAll) headings = headings.concat(Array.prototype.slice.call(root.querySelectorAll(selector)));
+            heading = headings.find(visible) || null;
+            return heading !== null;
+        });
+        heading = heading || updateContentTarget(root) || null;
+        if (!heading || typeof heading.focus !== 'function') return null;
+        if (!heading.hasAttribute('tabindex')) heading.setAttribute('tabindex', '-1');
+        try {
+            heading.focus({ preventScroll: true });
+        } catch (_) {
+            heading.focus();
+        }
+        return heading;
+    }
+
+    function scheduleContentTargetUpdate() {
+        if (document.readyState === 'loading' && document.addEventListener) {
+            document.addEventListener('DOMContentLoaded', function () { updateContentTarget(document); }, { once: true });
+        } else {
+            updateContentTarget(document);
+        }
+        if (global.addEventListener) {
+            global.addEventListener('resize', function () { updateContentTarget(document); }, { passive: true });
+        }
+    }
+
+    scheduleContentTargetUpdate();
+
     function createScope() {
         var listeners = new WeakMap();
         var globalListeners = [];
@@ -113,6 +194,8 @@
     }
     global.SGIPage = {
         ready: ready, mount: mount, prepareModal: prepareModal,
+        updateContentTarget: updateContentTarget,
+        focusPageHeading: focusPageHeading,
         deactivate: function () { if (activeScope) activeScope.deactivate(); activeScope = null; }
     };
 })(window);

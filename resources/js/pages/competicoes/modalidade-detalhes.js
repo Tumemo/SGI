@@ -187,8 +187,19 @@ window.SGIPage.mount("competicoes/modalidade-detalhes", function (pageConfig, pa
         }
     }
 
-    async function abrirModalEdicao() {
+    let modalEdicaoTrigger = null;
+    const modalEdicaoElement = document.getElementById('modalEditarModalidade');
+    pageScope.listen(modalEdicaoElement, 'hidden.bs.modal', () => {
+        if (modalEdicaoTrigger?.isConnected && !modalEdicaoTrigger.disabled && modalEdicaoTrigger.getClientRects().length) {
+            modalEdicaoTrigger.focus();
+        }
+        modalEdicaoTrigger = null;
+    });
+
+    async function abrirModalEdicao(trigger = null) {
         if (!modalidadeAtual) return;
+
+        modalEdicaoTrigger = trigger instanceof HTMLElement ? trigger : document.activeElement;
 
         document.getElementById('editNomeModalidade').value = modalidadeAtual.nome_modalidade;
         document.getElementById('editGeneroModalidade').value = modalidadeAtual.genero_modalidade || '';
@@ -201,7 +212,7 @@ window.SGIPage.mount("competicoes/modalidade-detalhes", function (pageConfig, pa
             carregarCategoriasEdicao(modalidadeAtual.categorias_id_categoria)
         ]);
 
-        const modal = new bootstrap.Modal(document.getElementById('modalEditarModalidade'));
+        const modal = new bootstrap.Modal(modalEdicaoElement);
         modal.show();
     }
 
@@ -294,7 +305,7 @@ window.SGIPage.mount("competicoes/modalidade-detalhes", function (pageConfig, pa
         pageScope.listen(resumo, 'click', (event) => {
             const action = event.target.closest('[data-sgi-action]');
             if (!action) return;
-            if (action.dataset.sgiAction === 'edit-modalidade') abrirModalEdicao();
+            if (action.dataset.sgiAction === 'edit-modalidade') abrirModalEdicao(action);
             if (action.dataset.sgiAction === 'delete-modalidade') excluirModalidade();
         });
         carregarDetalhesModalidade();

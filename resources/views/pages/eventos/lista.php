@@ -1,5 +1,6 @@
 <?php
-$titulo = '';
+$titulo = 'Edições';
+$tagTituloCompacto = 'h1';
 $mostrarVoltar = false;
 $nivelUsuario = (int)($_SESSION['nivel'] ?? -1);
 include SGI_ROOT . '/resources/views/components/admin-head.php';
@@ -16,7 +17,7 @@ $isMesario = $nivelUsuario === 2;
 <main class="d-md-none <?= $isMesario ? '' : 'home-main--with-footer' ?>">
     <?php if ($isAdmin): ?>
     <button class="mx-4 btn btn-primary d-flex gap-2 mt-3 align-items-center" data-bs-toggle="modal" data-bs-target="#exampleModal">
-        <i class="bi bi-plus-circle"></i>Criar Nova Edição
+        <i class="bi bi-plus-circle" aria-hidden="true"></i>Criar Nova Edição
     </button>
     <?php endif; ?>
     <?php if ($isColaborador): ?>
@@ -32,9 +33,11 @@ $isMesario = $nivelUsuario === 2;
 <main class="d-none d-md-flex main-desktop-layout">
     <section class="mt-4">
 
+        <h1 class="fw-bold mb-4">Edições</h1>
+
         <?php if ($isAdmin): ?>
         <button class="btn btn-outline-danger d-flex gap-2 mt-2 mb-4 align-items-center" data-bs-toggle="modal" data-bs-target="#exampleModal">
-            <i class="bi bi-plus-circle"></i>Criar Nova Edição
+            <i class="bi bi-plus-circle" aria-hidden="true"></i>Criar Nova Edição
         </button>
         <?php endif; ?>
 
@@ -58,13 +61,14 @@ $isMesario = $nivelUsuario === 2;
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header border border-0">
-                <h1 class="modal-title fs-5 text-danger" id="exampleModalLabel">Criar nova Edição</h1>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <h2 class="modal-title fs-5 text-danger" id="exampleModalLabel">Criar nova Edição</h2>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
             </div>
             <div class="modal-body">
                 <h2 class="fs-6">Insira o nome da sua nova edição:</h2>
                 <form id="formulario">
                     <div>
+                        <label for="nomeNovaEdicao" class="form-label">Nome da edição</label>
                         <input type="text" class="form-control" placeholder="Ex: interclasse 2026" id="nomeNovaEdicao" required>
                     </div>
                     <div class="mt-4">

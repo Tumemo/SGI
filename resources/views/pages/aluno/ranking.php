@@ -17,16 +17,17 @@ $titulo = 'Ranking de Turmas';
 $mostrarVoltar = true;
 $urlVoltar = \App\Shared\Http\Url::to('aluno/inicio');
 include SGI_ROOT . '/resources/views/components/aluno-head.php';
-$paginaAtiva = 'home';
+$paginaAtiva = 'ranking';
 ?>
 
 <!-- ======================== MOBILE ======================== -->
-<main class="d-md-none py-3 px-3 mb-5" >
+<main class="sgi-ranking-page d-md-none py-3 px-3 mb-5" >
     <div id="msgMob"></div>
 
     <header class="d-flex align-items-center justify-content-between gap-3 mb-2">
         <div>
-            <h1 class="d-none" id="nomeInterclasse"></h1>
+            <h1 class="h5 fw-bold mb-0">Ranking de Turmas</h1>
+            <p class="small text-body-secondary mb-0" id="nomeInterclasseMob"></p>
         </div>
         <div class="d-flex align-items-center gap-2">
             <?php if ($eAdmin): ?>
@@ -47,8 +48,12 @@ $paginaAtiva = 'home';
 </main>
 
 <!-- ======================== DESKTOP ======================== -->
-<main class="d-none d-md-block main-desktop-layout">
+<main class="sgi-ranking-page d-none d-md-block main-desktop-layout">
     <div class="container-fluid px-4 py-4">
+        <div class="mb-3">
+            <h1 class="h2 fw-bold mb-1">Ranking de Turmas</h1>
+            <p class="small text-body-secondary mb-0" id="nomeInterclasseDesk"></p>
+        </div>
         <div class="d-flex align-items-center justify-content-between mb-3 gap-3 flex-wrap">
             <div id="filtrosDesk" class="d-flex overflow-auto gap-2"></div>
 
@@ -72,7 +77,7 @@ $paginaAtiva = 'home';
 </main>
 
 <!-- Modal: histórico de pontuações da turma -->
-<div class="modal fade" id="modalHistoricoTurma" tabindex="-1" aria-hidden="true">
+<div class="modal fade" id="modalHistoricoTurma" tabindex="-1" aria-labelledby="htrTitulo" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
         <div class="modal-content border-0 shadow rounded-4" >
             <div class="modal-header border-0 pb-0 px-4 pt-3">

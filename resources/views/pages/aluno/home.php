@@ -9,7 +9,7 @@ include SGI_ROOT . '/resources/views/components/aluno-nav.php';
   <div class="row">
     <div class=" w-100 d-flex flex-column gap-4">
 
-      <div class="aluno-hero bg-primary rounded-4 mb-4 text-white">
+      <div class="aluno-hero bg-primary rounded-4 mb-4 text-white sgi-aluno-home-hero">
         <h1>Olá, <?= htmlspecialchars($_SESSION['nome'] ?? 'Aluno', ENT_QUOTES) ?>!   </h1>
         <p>Confira as competições disponíveis e participe!</p>
 
@@ -40,12 +40,12 @@ include SGI_ROOT . '/resources/views/components/aluno-nav.php';
   </div>
 </main>
 
-<div class="modal fade" id="modalTermo" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-hidden="true">
+<div class="modal fade" id="modalTermo" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="tituloModalTermo" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
         <div class="modal-content border-0 shadow">
             <div class="modal-header bg-primary text-white border-0">
-                <h5 class="modal-title fw-bold">
-                    <i class="bi bi-file-earmark-text me-2"></i>Termo de Responsabilidade e Regulamento
+                <h5 class="modal-title fw-bold" id="tituloModalTermo">
+                    <i class="bi bi-file-earmark-text me-2" aria-hidden="true"></i>Termo de Responsabilidade e Regulamento
                 </h5>
             </div>
             <div class="modal-body p-4">

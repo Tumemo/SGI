@@ -31,7 +31,8 @@ final class Kernel
             return;
         }
 
-        $protectedRoute = str_starts_with($path, '/api/v1/') || isset($this->webRoutes[$path]);
+        $privatePhotoAsset = str_starts_with($path, '/uploads/fotosUsuarios/');
+        $protectedRoute = str_starts_with($path, '/api/v1/') || isset($this->webRoutes[$path]) || $privatePhotoAsset;
         $deprecatedRegistrationValidation = $this->isDeprecatedRegistrationValidation($request, $path);
         if ($protectedRoute && !$this->isPublicPath($path) && !$deprecatedRegistrationValidation && !str_ends_with($path, '/api/v1/logout')) {
             try {

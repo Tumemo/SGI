@@ -1,11 +1,25 @@
 <?php
 (session_status() === PHP_SESSION_NONE) && \App\Shared\Http\SessionManager::start();
-$paginaAtiva = $paginaAtiva ?? 'home';
+$paginaAtiva = $paginaAtiva ?? '';
 $nivelUsuario = (int)($_SESSION['nivel'] ?? -1);
+$paginaAtiva = $nivelUsuario === 2 ? match ($paginaAtiva) {
+    'agenda' => 'agenda_mesario',
+    'chaveamento' => 'chaveamentos_mesario',
+    default => $paginaAtiva,
+} : $paginaAtiva;
+$idInterclasseNav = filter_var($_GET['id'] ?? ($nivelUsuario === 2 ? ($_SESSION['id_interclasse'] ?? null) : null), FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]);
+$idInterclasseNav = $idInterclasseNav === false ? null : (int) $idInterclasseNav;
+$preservarEdicaoNoLink = static function (string $url, string $key) use ($idInterclasseNav): string {
+    if ($idInterclasseNav === null || $key === 'perfil') {
+        return $url;
+    }
+    return $url . (str_contains($url, '?') ? '&' : '?') . http_build_query(['id' => $idInterclasseNav]);
+};
 $fotoUsuario = $_SESSION['foto_usuario'] ?? null;
 if ($fotoUsuario) {
-    $fotoPath = dirname(__DIR__, 4) . DIRECTORY_SEPARATOR . 'uploads' . DIRECTORY_SEPARATOR . 'fotosUsuarios' . DIRECTORY_SEPARATOR . $fotoUsuario;
-    if (!file_exists($fotoPath)) $fotoUsuario = null;
+    $fotoUsuario = basename((string) $fotoUsuario);
+    $fotoPath = \App\Shared\Storage\StoragePaths::fotosUsuarios() . DIRECTORY_SEPARATOR . $fotoUsuario;
+    if ($fotoUsuario === '' || !is_file($fotoPath)) $fotoUsuario = null;
 }
 $nomeUsuario = $_SESSION['nome'] ?? 'Usuário';
 $inicialNome = strtoupper(substr($nomeUsuario, 0, 1));
@@ -26,12 +40,13 @@ $todosItens = [
 $navItens = [];
 foreach ($todosItens as $key => $item) {
     if (in_array($nivelUsuario, $item['niveis'])) {
+        $item['url'] = $preservarEdicaoNoLink($item['url'], $key);
         $navItens[$key] = $item;
     }
 }
-
-$classeLink = fn($key) => $key === $paginaAtiva ? 'text-white fw-bold' : 'text-white-50';
-$iconeNav = fn($icon, $key) => $key === $paginaAtiva ? $icon . '-fill' : $icon;
+if (!isset($navItens[$paginaAtiva])) {
+    $paginaAtiva = '';
+}
 ?>
 
 <!-- Menu compacto: o Bootstrap controla foco, backdrop e fechamento do offcanvas. -->
@@ -53,11 +68,11 @@ $iconeNav = fn($icon, $key) => $key === $paginaAtiva ? $icon . '-fill' : $icon;
                 <li class="nav-item">
                     <a href="<?= htmlspecialchars($item['url'], ENT_QUOTES, 'UTF-8') ?>" class="sgi-mobile-menu-link d-flex align-items-center gap-3 rounded-3 px-3 py-2 <?= $key === $paginaAtiva ? 'bg-primary text-white' : 'text-body' ?>" <?= $key === $paginaAtiva ? 'aria-current="page"' : '' ?>>
                         <?php if ($key === 'perfil' && !empty($fotoUsuario)): ?>
-                            <img src="<?= htmlspecialchars(\App\Shared\Http\Url::to('uploads/fotosUsuarios/' . rawurlencode($fotoUsuario))) ?>" class="nav-avatar-img-mobile object-fit-cover rounded-circle border border-2 border-white" alt="Perfil">
+                            <img src="<?= htmlspecialchars(\App\Shared\Http\Url::to('uploads/fotosUsuarios/' . rawurlencode($fotoUsuario)), ENT_QUOTES, 'UTF-8') ?>" class="nav-avatar-img-mobile object-fit-cover rounded-circle border border-2 border-white" alt="" aria-hidden="true">
                         <?php elseif ($key === 'perfil'): ?>
                             <span class="nav-avatar-fallback-mobile d-inline-flex align-items-center justify-content-center rounded-circle bg-white text-danger fw-semibold border border-2 border-white small"><?= htmlspecialchars($inicialNome, ENT_QUOTES, 'UTF-8') ?></span>
                         <?php else: ?>
-                            <i class="bi <?= $iconeNav($item['icon'], $key) ?> fs-5" aria-hidden="true"></i>
+                            <i class="bi <?= htmlspecialchars($item['icon'], ENT_QUOTES, 'UTF-8') ?> fs-5" aria-hidden="true"></i>
                         <?php endif; ?>
                         <span><?= htmlspecialchars($item['label'], ENT_QUOTES, 'UTF-8') ?></span>
                     </a>
@@ -75,24 +90,26 @@ $iconeNav = fn($icon, $key) => $key === $paginaAtiva ? $icon . '-fill' : $icon;
 </div>
 
 <!-- navbar desktop -->
-<nav class="d-none d-md-flex flex-column position-fixed start-0 shadow-lg bg-primary sidebar-nav">
-    <ul class="nav flex-column align-items-center h-100 py-4 gap-4 fs-3 sidebar-nav-list">
+<nav class="d-none d-md-flex flex-column position-fixed start-0 shadow-lg bg-primary sidebar-nav" aria-label="Navegação principal">
+    <ul class="nav flex-column align-items-center h-100 py-4 gap-2 fs-3 sidebar-nav-list">
         <?php foreach ($navItens as $key => $item): ?>
-        <li>
-            <a href="<?= htmlspecialchars($item['url'], ENT_QUOTES, 'UTF-8') ?>" class="text-white d-flex align-items-center justify-content-center position-relative <?= $key === $paginaAtiva ? 'active-nav-icon' : '' ?>" title="<?= htmlspecialchars($item['label'], ENT_QUOTES, 'UTF-8') ?>">
+        <li class="nav-item">
+            <a href="<?= htmlspecialchars($item['url'], ENT_QUOTES, 'UTF-8') ?>" class="sgi-sidebar-link text-white <?= $key === $paginaAtiva ? 'active-nav-icon' : '' ?>" aria-label="<?= htmlspecialchars($item['label'], ENT_QUOTES, 'UTF-8') ?>" <?= $key === $paginaAtiva ? 'aria-current="page"' : '' ?> title="<?= htmlspecialchars($item['label'], ENT_QUOTES, 'UTF-8') ?>">
                 <?php if ($key === 'perfil' && !empty($fotoUsuario)): ?>
-                    <img src="<?= htmlspecialchars(\App\Shared\Http\Url::to('uploads/fotosUsuarios/' . rawurlencode($fotoUsuario))) ?>" class="nav-avatar-img object-fit-cover rounded-circle border border-2 border-white" alt="Perfil">
+                    <img src="<?= htmlspecialchars(\App\Shared\Http\Url::to('uploads/fotosUsuarios/' . rawurlencode($fotoUsuario)), ENT_QUOTES, 'UTF-8') ?>" class="nav-avatar-img object-fit-cover rounded-circle border border-2 border-white" alt="" aria-hidden="true">
                 <?php elseif ($key === 'perfil'): ?>
-                    <span class="nav-avatar-fallback d-inline-flex align-items-center justify-content-center rounded-circle bg-white text-danger fw-semibold border border-2 border-white small"><?= htmlspecialchars($inicialNome, ENT_QUOTES, 'UTF-8') ?></span>
+                    <span class="nav-avatar-fallback d-inline-flex align-items-center justify-content-center rounded-circle bg-white text-danger fw-semibold border border-2 border-white small" aria-hidden="true"><?= htmlspecialchars($inicialNome, ENT_QUOTES, 'UTF-8') ?></span>
                 <?php else: ?>
-                    <i class="bi <?= $iconeNav($item['icon'], $key) ?>"></i>
+                    <i class="bi <?= htmlspecialchars($item['icon'], ENT_QUOTES, 'UTF-8') ?>" aria-hidden="true"></i>
                 <?php endif; ?>
+                <span class="sgi-sidebar-label"><?= htmlspecialchars($item['label'], ENT_QUOTES, 'UTF-8') ?></span>
             </a>
         </li>
         <?php endforeach; ?>
-        <li class="">
-            <a href="<?= \App\Shared\Http\Url::to('api/v1/logout') ?>" class="text-white" data-sgi-logout>
-                <i class="bi bi-box-arrow-right"></i>
+        <li class="nav-item">
+            <a href="<?= \App\Shared\Http\Url::to('api/v1/logout') ?>" class="sgi-sidebar-link text-white" data-sgi-logout aria-label="Sair" title="Sair">
+                <i class="bi bi-box-arrow-right" aria-hidden="true"></i>
+                <span class="sgi-sidebar-label">Sair</span>
             </a>
         </li>
     </ul>

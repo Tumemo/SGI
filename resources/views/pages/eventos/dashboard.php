@@ -1,8 +1,10 @@
 <?php
 $titulo = 'Dashboard';
-$mostrarVoltar = true;
-$urlVoltar = \App\Shared\Http\Url::to('aluno/inicio');
+$tagTituloCompacto = 'h1';
 $nivelUsuario = (int)($_SESSION['nivel'] ?? -1);
+$mostrarVoltar = in_array($nivelUsuario, [0, 1], true);
+$rotaInicio = $nivelUsuario === 2 ? 'painel' : ($nivelUsuario === 3 ? 'aluno/inicio' : 'edicoes');
+$urlVoltar = \App\Shared\Http\Url::to('edicoes');
 include SGI_ROOT . '/resources/views/components/admin-head.php';
 include SGI_ROOT . '/resources/views/components/admin-header.php';
 $paginaAtiva = 'dashboard';
@@ -17,9 +19,12 @@ $isMesario = $nivelUsuario === 2;
 <div id="conteudo-principal" data-sgi-shell="1">
     <main class="main-desktop-layout main-dashboard-layout">
         <div class="container-fluid px-0">
-            <a href="<?= \App\Shared\Http\Url::to('aluno/inicio') ?>" class="btn btn-outline-danger btn-sm mb-3 d-inline-flex align-items-center gap-1">
-                <i class="bi bi-house"></i> Voltar ao início
-            </a>
+            <h1 class="h3 fw-bold text-body mb-4 d-none d-md-block">Dashboard</h1>
+            <?php if (in_array($nivelUsuario, [0, 1], true)): ?>
+                <a href="<?= \App\Shared\Http\Url::to($rotaInicio) ?>" class="btn btn-outline-danger btn-sm mb-3 d-inline-flex align-items-center gap-1">
+                    <i class="bi bi-house" aria-hidden="true"></i> Voltar às edições
+                </a>
+            <?php endif; ?>
 
         <?php if ($isAdmin): ?>
         <div id="avisoFinalizacaoInterclasse" class="d-none alert alert-warning mb-4">
@@ -33,7 +38,7 @@ $isMesario = $nivelUsuario === 2;
             <div class="col-12 col-md-6 col-lg-4">
                 <a href="<?= \App\Shared\Http\Url::to('edicoes/agenda') ?>" id="linkAgenda" class="card h-100 p-4 text-decoration-none shadow-sm">
 <div class="d-flex align-items-center gap-3 mb-3">
-                        <div class="bg-danger-subtle text-danger rounded-circle p-3 d-inline-flex align-items-center justify-content-center flex-shrink-0 fs-4"><i class="bi bi-calendar3"></i></div>
+                        <div class="bg-danger-subtle text-danger rounded-circle p-3 d-inline-flex align-items-center justify-content-center flex-shrink-0 fs-4"><i class="bi bi-calendar3" aria-hidden="true"></i></div>
                         <h5 class="h5 mb-0 fw-semibold text-body">AGENDA</h5>
                     </div>
                     <p class="card-text text-body-secondary mb-0">Visualize o cronograma dos jogos, acesse o placar e acompanhe os resultados das partidas.</p>
@@ -42,7 +47,7 @@ $isMesario = $nivelUsuario === 2;
             <div class="col-12 col-md-6 col-lg-4">
                 <a href="<?= \App\Shared\Http\Url::to('chaveamento') ?>" id="linkChaveamentos" class="card h-100 p-4 text-decoration-none shadow-sm">
 <div class="d-flex align-items-center gap-3 mb-3">
-                        <div class="bg-danger-subtle text-danger rounded-circle p-3 d-inline-flex align-items-center justify-content-center flex-shrink-0 fs-4"><i class="bi bi-diagram-3"></i></div>
+                        <div class="bg-danger-subtle text-danger rounded-circle p-3 d-inline-flex align-items-center justify-content-center flex-shrink-0 fs-4"><i class="bi bi-diagram-3" aria-hidden="true"></i></div>
                         <h5 class="h5 mb-0 fw-semibold text-body">CHAVEAMENTOS</h5>
                     </div>
                     <p class="card-text text-body-secondary mb-0">Visualize os chaveamentos e acesse os confrontos das modalidades.</p>
@@ -52,7 +57,7 @@ $isMesario = $nivelUsuario === 2;
             <div class="col-12 col-md-6 col-lg-4">
                 <a href="<?= \App\Shared\Http\Url::to('ocorrencias') ?>" id="linkOcorrencias" class="card h-100 p-4 text-decoration-none shadow-sm">
 <div class="d-flex align-items-center gap-3 mb-3">
-                        <div class="bg-danger-subtle text-danger rounded-circle p-3 d-inline-flex align-items-center justify-content-center flex-shrink-0 fs-4"><i class="bi bi-exclamation-triangle"></i></div>
+                        <div class="bg-danger-subtle text-danger rounded-circle p-3 d-inline-flex align-items-center justify-content-center flex-shrink-0 fs-4"><i class="bi bi-exclamation-triangle" aria-hidden="true"></i></div>
                         <h5 class="h5 mb-0 fw-semibold text-body">OCORRÊNCIAS</h5>
                     </div>
                     <p class="card-text text-body-secondary mb-0">Registre ocorrências e aplique descontos de pontos nas turmas.</p>

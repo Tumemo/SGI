@@ -1,5 +1,6 @@
 <?php
 $titulo = 'Categorias';
+$tagTituloCompacto = 'h1';
 $mostrarVoltar = true;
 $urlVoltar = \App\Shared\Http\Url::to('painel');
 include SGI_ROOT . '/resources/views/components/admin-head.php';
@@ -14,8 +15,8 @@ $isMesario = $nivelUsuario === 2;
 
 <!-- main mobile -->
 <main class="position-relative d-md-none mb-5" >
-    <a href="<?= \App\Shared\Http\Url::to('painel') ?>" id="btnVoltarCatMobile" class="btn btn-primary d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none" >
-        <i class="bi bi-arrow-left-circle fs-5"></i> <span id="nomeInterclasseCatMob">Interclasse</span>
+    <a href="<?= \App\Shared\Http\Url::to('painel') ?>" id="btnVoltarCatMobile" class="btn btn-primary d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none sgi-event-back-link" >
+        <i class="bi bi-arrow-left-circle fs-5" aria-hidden="true"></i> <span id="nomeInterclasseCatMob">Interclasse</span>
     </a>
 
     <div id="listaCategoriasMobile" class="d-flex flex-column align-items-center w-100">
@@ -23,8 +24,9 @@ $isMesario = $nivelUsuario === 2;
     </div>
 
     <?php if ($isAdmin): ?>
-    <section class="d-flex gap-3 mt-3 position-fixed translate-middle flex-wrap justify-content-center sgi-u-w-max-content-maxw-96vw-top-85" >
-        <button type="button" id="btnEditarCategoriaMobile" class="btn btn-outline-primary d-none" onclick="abrirModalEditarCategoria()">Editar</button>
+    <section id="acoesCategoriaMobile" class="d-grid gap-2 mt-4 mb-5 sgi-categoria-actions" >
+        <button type="button" id="btnAdicionarTurmaMobile" class="btn btn-outline-primary d-none" data-bs-toggle="modal" data-bs-target="#criarTurma">Adicionar turma</button>
+        <button type="button" id="btnEditarCategoriaMobile" class="btn btn-outline-primary d-none" onclick="abrirModalEditarCategoria(event)">Editar</button>
         <button type="button" id="btnExcluirCategoriaMobile" class="btn btn-danger d-none" onclick="excluirCategoria()">Excluir</button>
         <button data-bs-toggle="modal" data-bs-target="#modalCriarCategoria" class="btn btn-outline-danger">Adicionar Categoria</button>
         <a href="#" id="btnContinuarMobile" class="btn btn-primary">Continuar</a>
@@ -39,9 +41,10 @@ $isMesario = $nivelUsuario === 2;
 <!-- main desktop -->
 <main class="d-none d-md-block main-desktop-layout">
     <div class="container-fluid px-0 position-relative">
+        <h1 class="h2 fw-bold text-body mb-4">Categorias</h1>
         <div class="mb-5">
             <a href="<?= \App\Shared\Http\Url::to('painel') ?>" id="btnVoltarCatDesk" class="btn btn-primary d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none" >
-                <i class="bi bi-arrow-left-circle fs-5"></i> <span id="nomeInterclasseCategoria">Interclasse</span>
+                <i class="bi bi-arrow-left-circle fs-5" aria-hidden="true"></i> <span id="nomeInterclasseCategoria">Interclasse</span>
             </a>
         </div>
 
@@ -50,15 +53,16 @@ $isMesario = $nivelUsuario === 2;
         </div>
 
         <?php if ($isAdmin): ?>
-        <div class="position-fixed d-flex flex-row gap-3 sgi-u-bottom-40px-right-5-z-1050" >
-            <button type="button" id="btnEditarCategoriaDesktop" class="btn btn-outline-primary fw-semibold rounded-3 px-4 py-2 d-flex align-items-center justify-content-center gap-2 shadow-lg d-none" onclick="abrirModalEditarCategoria()">
-                <i class="bi bi-pencil-square"></i> Editar
+        <div id="acoesCategoriaDesktop" class="d-flex flex-wrap justify-content-end gap-3 mt-4 mb-5 sgi-categoria-actions" >
+            <button type="button" id="btnAdicionarTurmaDesktop" class="btn btn-outline-primary d-none" data-bs-toggle="modal" data-bs-target="#criarTurma">Adicionar turma</button>
+            <button type="button" id="btnEditarCategoriaDesktop" class="btn btn-outline-primary fw-semibold rounded-3 px-4 py-2 d-flex align-items-center justify-content-center gap-2 shadow-lg d-none" onclick="abrirModalEditarCategoria(event)">
+                <i class="bi bi-pencil-square" aria-hidden="true"></i> Editar
             </button>
             <button type="button" id="btnExcluirCategoriaDesktop" class="btn btn-danger fw-semibold rounded-3 px-4 py-2 d-flex align-items-center justify-content-center gap-2 shadow-lg d-none" onclick="excluirCategoria()">
-                <i class="bi bi-trash"></i> Excluir
+                <i class="bi bi-trash" aria-hidden="true"></i> Excluir
             </button>
             <button type="button" class="btn bg-white fw-semibold rounded-3 px-4 py-2 d-flex align-items-center justify-content-center gap-2 shadow-lg btn-outline-primary"  data-bs-toggle="modal" data-bs-target="#modalCriarCategoria">
-                <i class="bi bi-plus-circle"></i> Adicionar
+                <i class="bi bi-plus-circle" aria-hidden="true"></i> Adicionar
             </button>
             <a href="#" id="btnContinuarDesktop" class="btn fw-semibold rounded-3 px-5 py-2 text-white text-decoration-none shadow-lg d-flex align-items-center justify-content-center btn-primary" >
                 Continuar
@@ -66,7 +70,7 @@ $isMesario = $nivelUsuario === 2;
         </div>
         <?php elseif ($isColaborador): ?>
         <button type="button" class="btn bg-white fw-semibold rounded-3 px-4 py-2 d-flex align-items-center justify-content-center gap-2 shadow-lg mt-4 btn-outline-primary"  data-bs-toggle="modal" data-bs-target="#modalCriarCategoria">
-            <i class="bi bi-plus-circle"></i> Adicionar categoria
+            <i class="bi bi-plus-circle" aria-hidden="true"></i> Adicionar categoria
         </button>
         <?php endif; ?>
     </div>
@@ -78,8 +82,8 @@ $isMesario = $nivelUsuario === 2;
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header border border-0">
-                <h1 class="modal-title fs-5 text-danger" id="criarTurmaLabel">Criar nova Turma</h1>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <h2 class="modal-title fs-5 text-danger" id="criarTurmaLabel">Criar nova Turma</h2>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
             </div>
             <div class="modal-body">
                 <form id="formNovaTurmaCategoria">
@@ -100,15 +104,23 @@ $isMesario = $nivelUsuario === 2;
                             <option value="Noite">Noite</option>
                         </select>
                     </div>
-                    <div class="mb-3 d-flex align-items-center gap-2 flex-column">
-                        <input type="file" id="arquivoUpload" class="d-none" accept=".pdf" onchange="mostrarNomeArquivo()">
-                        <p class="text-center small" >Adicione aqui o pdf dos alunos da turma criada</p>
-                        <label for="arquivoUpload" class="btn btn-light border rounded-circle p-3 sgi-u-cursor-pointer" >
-                            <i class="bi bi-upload fs-4"></i>
-                        </label>
-                        <span id="nomeArquivo" class="text-muted mt-2"></span>
+                    <div class="mb-3">
+                        <label for="arquivoUpload" class="form-label fw-semibold">Selecionar PDF dos alunos</label>
+                        <input type="file" id="arquivoUpload" class="form-control" accept=".pdf,application/pdf" aria-describedby="descricaoArquivoUpload">
+                        <p id="descricaoArquivoUpload" class="text-body-secondary small mt-2 mb-0">Formato aceito: PDF. O arquivo deve conter texto selecionável. O limite depende da configuração do servidor.</p>
+                        <span id="nomeArquivo" class="d-none small text-success mt-2" role="status" aria-live="polite" aria-atomic="true"></span>
                     </div>
-                    <div id="msgNovaTurmaCategoria" class="text-center mb-2"></div>
+                    <div id="progressoPdfCategoria" class="d-none mt-3" aria-live="polite">
+                        <div class="progress" role="progressbar" aria-label="Progresso da importação do PDF" aria-valuemin="0" aria-valuemax="100">
+                            <div class="progress-bar progress-bar-striped progress-bar-animated" id="barraPdfCategoria"></div>
+                        </div>
+                        <span id="textoProgressoPdfCategoria" class="small text-body-secondary mt-1 d-block">Processando</span>
+                    </div>
+                    <div id="fallbackPdfCategoria" class="d-none mt-2 text-center">
+                        <p class="small text-muted mb-2">O PDF pode ser uma imagem. Converta-o para PDF com texto selecionável:</p>
+                        <a href="https://www.ilovepdf.com/pt/ocr-pdf" target="_blank" rel="noopener" class="btn btn-outline-danger btn-sm rounded-3">Converter PDF (iLovePDF)</a>
+                    </div>
+                    <div id="msgNovaTurmaCategoria" class="text-center mb-2" role="status" aria-live="polite" aria-atomic="true"></div>
                     <div class="d-flex justify-content-center gap-4 mt-4">
                         <button type="button" class="btn btn-outline-danger" data-bs-dismiss="modal">Cancelar</button>
                         <button type="submit" class="btn btn-primary" id="btnCriarTurmaCategoria">Criar e enviar</button>
@@ -126,11 +138,11 @@ $isMesario = $nivelUsuario === 2;
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header border border-0">
-                <h1 class="modal-title fs-5 text-danger" id="modalNovaCategoriaLabel">Criar nova Categoria</h1>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <h2 class="modal-title fs-5 text-danger" id="modalNovaCategoriaLabel">Criar nova Categoria</h2>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
             </div>
             <div class="modal-body">
-                <h2 class="fs-6 mb-3">Insira o nome da sua nova categoria:</h2>
+                <label for="inputNomeCategoriaNova" class="form-label">Nome da categoria</label>
                 <form id="formNovaCategoria">
                     <div>
                         <input type="text" class="form-control" placeholder="Ex: Ensino Médio" id="inputNomeCategoriaNova" required>
@@ -148,16 +160,16 @@ $isMesario = $nivelUsuario === 2;
 
 <?php if ($isAdmin): ?>
 <!-- modal de editar categoria (admin only) -->
-<div class="modal fade" id="modalEditarCategoria" tabindex="-1" aria-hidden="true">
+<div class="modal fade" id="modalEditarCategoria" tabindex="-1" aria-labelledby="tituloEditarCategoria" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header border-0">
-                <h5 class="modal-title text-danger fw-bold">Editar Categoria</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                <h5 class="modal-title text-danger fw-bold" id="tituloEditarCategoria">Editar Categoria</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
             </div>
             <div class="modal-body">
                 <form id="formEditarCategoria">
-                    <h2 class="fs-6 mb-3">Altere o nome da categoria:</h2>
+                    <label for="editNomeCategoria" class="form-label">Nome da categoria</label>
                     <input type="text" class="form-control" id="editNomeCategoria" required>
                     <div id="msgEditarCategoria" class="mt-2"></div>
                     <div class="d-flex justify-content-center gap-3 pt-4">

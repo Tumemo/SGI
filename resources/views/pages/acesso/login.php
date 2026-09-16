@@ -26,46 +26,54 @@ if ((int) ($_SESSION['nivel'] ?? -1) >= 0) {
 <body>
     <!-- VERSÃO MOBILE CENTRALIZADA -->
     <main class="d-md-none min-vh-100 d-flex flex-column align-items-center text-center login-mobile-layout">
-        <div class="login-mobile-banner">
-            <img src="<?= \App\Shared\Http\Assets::url('images/borda-banner-login.png') ?>" alt="" aria-hidden="true" class="login-mobile-banner-border">
-            <img src="<?= \App\Shared\Http\Assets::url('images/banner-login.png') ?>" alt="Imagem dos desenvolvedores" class="login-mobile-banner-image">
+        <div class="login-mobile-banner" role="img" aria-label="Imagem dos desenvolvedores">
         </div>
         <form id="form_mobile" class="w-100 login-mobile-form">
-            <label for="matricula_mobile" class="visually-hidden">Matrícula (RA/NIF)</label>
-            <input id="matricula_mobile" name="matricula" type="text" class="form-control ipt-matricula" placeholder="Matrícula (RA/NIF)" autocomplete="username" required>
-            <label for="senha_mobile" class="visually-hidden">Senha</label>
-            <input id="senha_mobile" name="senha" type="password" class="form-control ipt-senha" placeholder="Senha" autocomplete="current-password" required>
-            <span class="login-mobile-forgot">Esqueci minha senha</span>
+            <h1 class="login-mobile-title">Acesso ao sistema</h1>
+            <div class="login-mobile-field">
+                <label for="matricula_mobile" class="form-label login-field-label">Matrícula (RA/NIF)</label>
+                <input id="matricula_mobile" name="matricula" type="text" class="form-control ipt-matricula" placeholder="Digite sua matrícula" autocomplete="username" required>
+            </div>
+            <div class="login-mobile-field">
+                <label for="senha_mobile" class="form-label login-field-label">Senha</label>
+                <input id="senha_mobile" name="senha" type="password" class="form-control ipt-senha" placeholder="Digite sua senha" autocomplete="current-password" required>
+            </div>
+            <button type="button" class="login-recovery-button login-mobile-recovery" aria-expanded="false" aria-controls="login_recovery_mobile">Como recuperar o acesso?</button>
+            <div id="login_recovery_mobile" class="login-recovery-help text-start" hidden>
+                Procure a organização responsável pelo Interclasses para solicitar a redefinição do acesso.
+            </div>
             <button type="submit" class="btn btn-primary w-100 login-mobile-button">Entrar</button>
             <div id="msg_erro_mobile" class="text-danger mt-2" aria-live="polite"></div>
+            <div class="login-mobile-brand">
+                <img src="<?= \App\Shared\Http\Assets::url('images/logo-sgi-sesi.png') ?>" alt="Logo do SESI">
+            </div>
         </form>
-        <div class="login-mobile-brand" aria-label="Logo SESI">
-            <img src="<?= \App\Shared\Http\Assets::url('images/logo-sgi-sesi.png') ?>" alt="Logo do SESI">
-        </div>
     </main>
     <!-- VERSÃO DESKTOP CENTRALIZADA -->
-    <main class="d-none d-md-flex vh-100">
-        <picture class="w-75 vh-100 position-relative d-block shadow-lg">
-            <img src="<?= \App\Shared\Http\Assets::url('images/banner-login-desktop.png') ?>" alt="" aria-hidden="true" class="position-absolute top-0 start-0 w-100 h-100 object-fit-cover login-desktop-banner-image" >
-            <img src="<?= \App\Shared\Http\Assets::url('images/borda-banner-login-desktop.png') ?>" alt="" aria-hidden="true" class="position-absolute top-0 start-0 w-100 h-100 object-fit-cover login-desktop-banner-border" >
-        </picture>
-        <section class="w-50 h-100 d-flex flex-column justify-content-center align-items-center p-4">
+    <main class="d-none d-md-flex vh-100 login-desktop-layout">
+        <div class="login-desktop-media position-relative d-block shadow-lg" role="img" aria-label="Imagem dos desenvolvedores">
+        </div>
+        <section class="login-desktop-panel h-100 d-flex flex-column justify-content-center align-items-center p-4">
             <picture class="mb-4">
                 <img src="<?= \App\Shared\Http\Assets::url('images/logo-sgi-sesi.png') ?>" alt="Logo do sesi" class="img-fluid login-desktop-logo" >
             </picture>
             <form id="form_desktop" class="text-center d-flex flex-column align-items-center bg-light p-4 w-100 login-desktop-form">
-                <h2 class="text-danger mb-4">Acesso ao sistema</h2>
-                <div class="position-relative mb-3 w-100">
-                    <i class="bi bi-person-circle position-absolute top-50 start-0 translate-middle-y ms-3 text-dark"></i>
-                    <label for="matricula_desktop" class="visually-hidden">Matrícula (RA/NIF)</label>
-                    <input id="matricula_desktop" name="matricula" type="text" class="form-control ps-5 py-2 ipt-matricula login-field" placeholder="Matrícula (RA/NIF)" autocomplete="username" required>
+                <h1 class="text-danger login-desktop-title">Acesso ao sistema</h1>
+                <div class="position-relative mb-3 w-100 login-desktop-field">
+                    <label for="matricula_desktop" class="form-label login-field-label">Matrícula (RA/NIF)</label>
+                    <i class="bi bi-person-circle position-absolute top-50 start-0 translate-middle-y ms-3 text-dark" aria-hidden="true"></i>
+                    <input id="matricula_desktop" name="matricula" type="text" class="form-control ps-5 py-2 ipt-matricula login-field" placeholder="Digite sua matrícula" autocomplete="username" required>
                 </div>
-                <div class="position-relative mb-3 w-100">
-                    <i class="bi bi-lock position-absolute top-50 start-0 translate-middle-y ms-3 text-dark"></i>
-                    <label for="senha_desktop" class="visually-hidden">Senha</label>
-                    <input id="senha_desktop" name="senha" type="password" class="form-control ps-5 py-2 ipt-senha login-field" placeholder="Senha" autocomplete="current-password" required>
+                <div class="position-relative mb-3 w-100 login-desktop-field">
+                    <label for="senha_desktop" class="form-label login-field-label">Senha</label>
+                    <i class="bi bi-lock position-absolute top-50 start-0 translate-middle-y ms-3 text-dark" aria-hidden="true"></i>
+                    <input id="senha_desktop" name="senha" type="password" class="form-control ps-5 py-2 ipt-senha login-field" placeholder="Digite sua senha" autocomplete="current-password" required>
                 </div>
-                <button type="submit" class="btn btn-primary w-100 mt-2">Entrar</button>
+                <button type="button" class="login-recovery-button login-desktop-recovery" aria-expanded="false" aria-controls="login_recovery_desktop">Como recuperar o acesso?</button>
+                <div id="login_recovery_desktop" class="login-recovery-help text-start w-100" hidden>
+                    Procure a organização responsável pelo Interclasses para solicitar a redefinição do acesso.
+                </div>
+                <button type="submit" class="btn btn-primary w-100 mt-2 login-desktop-button">Entrar</button>
                 <div id="msg_erro_desktop" class="text-danger mt-2" aria-live="polite"></div>
             </form>
         </section>

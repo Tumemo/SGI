@@ -17,6 +17,21 @@ window.SGIPage.mount("aluno/trocar-senha", function (pageConfig, pageScope) {
         message.textContent = text;
     }
 
+    function togglePassword(button) {
+        const input = document.getElementById(button.dataset.target);
+        if (!input) return;
+
+        const show = input.type === 'password';
+        input.type = show ? 'text' : 'password';
+        const icon = button.querySelector('i');
+        if (icon) {
+            icon.classList.toggle('bi-eye', show);
+            icon.classList.toggle('bi-eye-slash', !show);
+        }
+        button.setAttribute('aria-label', show ? 'Ocultar senha' : 'Mostrar senha');
+        button.setAttribute('aria-pressed', String(show));
+    }
+
     async function submitFirstPassword(event) {
         event.preventDefault();
         if (!form || !passwordInput || !confirmationInput || !submitButton) return;
@@ -88,7 +103,12 @@ window.SGIPage.mount("aluno/trocar-senha", function (pageConfig, pageScope) {
 
     window.SGIPage.ready(function () {
         if (form) pageScope.listen(form, 'submit', submitFirstPassword);
+        document.querySelectorAll('.password-visibility-toggle').forEach(function (button) {
+            pageScope.listen(button, 'click', function () {
+                togglePassword(button);
+            });
+        });
     });
 
-    return { submitFirstPassword };
+    return { submitFirstPassword, togglePassword };
 });

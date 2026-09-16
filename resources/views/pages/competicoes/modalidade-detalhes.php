@@ -15,7 +15,7 @@ $isAdmin = $nivelUsuario === 0;
             <i class="bi bi-arrow-left-circle fs-5"></i> <span id="nomeInterModalidadeDet">Interclasse</span>
         </a>
         <div class="mb-4">
-            <div class="small text-body-secondary text-uppercase fw-bold">Detalhes da modalidade</div>
+            <h1 class="h2 text-body-secondary fw-bold">Detalhes da modalidade</h1>
             <h2 class="fs-2 fw-bold text-body mb-2" id="nomeModalidadeHeadDesktop">Modalidade</h2>
             <p class="small text-body-secondary mb-0"><i class="bi bi-info-circle text-primary me-1"></i> Informações da modalidade</p>
         </div>
@@ -47,17 +47,17 @@ $isAdmin = $nivelUsuario === 0;
     </div>
 </main>
 
-<div class="modal fade" id="modalEditarModalidade" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
+<div class="modal fade" id="modalEditarModalidade" tabindex="-1" aria-labelledby="tituloEditarModalidade" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
         <div class="modal-content">
             <div class="modal-header border-0">
-                <h5 class="modal-title text-danger fw-bold">Editar Modalidade</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                <h5 class="modal-title text-danger fw-bold" id="tituloEditarModalidade">Editar Modalidade</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
             </div>
             <div class="modal-body">
                 <form id="formEditarModalidade">
                     <div class="mb-3">
-                        <label class="form-label fw-medium">Nome da Modalidade:</label>
+                        <label for="editNomeModalidade" class="form-label fw-medium">Nome da modalidade</label>
                         <input type="text" class="form-control" id="editNomeModalidade" required>
                     </div>
                     <div class="mb-3">
@@ -70,21 +70,21 @@ $isAdmin = $nivelUsuario === 0;
                         </select>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label fw-medium">Máx. de Inscritos:</label>
+                        <label for="editMaxInscritos" class="form-label fw-medium">Máximo de inscritos</label>
                         <input type="number" class="form-control" id="editMaxInscritos" min="0">
                     </div>
                     <div class="mb-3">
-                        <label class="form-label fw-medium">Máx. de Equipes por Turma:</label>
+                        <label for="editMaxEquipes" class="form-label fw-medium">Máximo de equipes por turma</label>
                         <input type="number" class="form-control" id="editMaxEquipes" min="1">
                     </div>
                     <div class="mb-3">
-                        <label class="form-label fw-medium">Tipo de Modalidade:</label>
+                        <label for="editTipoModalidade" class="form-label fw-medium">Tipo de modalidade</label>
                         <select class="form-select" id="editTipoModalidade" required>
                             <option value="" disabled selected>Carregando...</option>
                         </select>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label fw-medium">Categoria:</label>
+                        <label for="editCategoriaModalidade" class="form-label fw-medium">Categoria</label>
                         <select class="form-select" id="editCategoriaModalidade" required>
                             <option value="" disabled selected>Carregando...</option>
                         </select>

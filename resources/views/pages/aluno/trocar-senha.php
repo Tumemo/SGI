@@ -14,30 +14,40 @@ include SGI_ROOT . '/resources/views/components/aluno-head.php';
                 <form id="formPrimeiroAcesso" novalidate>
                     <div class="mb-3">
                         <label class="form-label" for="novaSenhaPrimeiroAcesso">Nova senha</label>
-                        <input
-                            class="form-control"
-                            id="novaSenhaPrimeiroAcesso"
-                            name="nova_senha"
-                            type="password"
-                            minlength="6"
-                            autocomplete="new-password"
-                            required
-                            aria-describedby="ajudaSenhaPrimeiroAcesso"
-                        >
+                        <div class="input-group">
+                            <input
+                                class="form-control"
+                                id="novaSenhaPrimeiroAcesso"
+                                name="nova_senha"
+                                type="password"
+                                minlength="6"
+                                autocomplete="new-password"
+                                required
+                                aria-describedby="ajudaSenhaPrimeiroAcesso"
+                            >
+                            <button type="button" class="password-visibility-toggle btn btn-outline-secondary" data-target="novaSenhaPrimeiroAcesso" aria-controls="novaSenhaPrimeiroAcesso" aria-label="Mostrar senha" aria-pressed="false">
+                                <i class="bi bi-eye-slash" aria-hidden="true"></i>
+                            </button>
+                        </div>
                         <div id="ajudaSenhaPrimeiroAcesso" class="form-text">Use pelo menos 6 caracteres.</div>
                     </div>
 
                     <div class="mb-3">
                         <label class="form-label" for="confirmarSenhaPrimeiroAcesso">Confirme a nova senha</label>
-                        <input
-                            class="form-control"
-                            id="confirmarSenhaPrimeiroAcesso"
-                            name="confirmar_senha"
-                            type="password"
-                            minlength="6"
-                            autocomplete="new-password"
-                            required
-                        >
+                        <div class="input-group">
+                            <input
+                                class="form-control"
+                                id="confirmarSenhaPrimeiroAcesso"
+                                name="confirmar_senha"
+                                type="password"
+                                minlength="6"
+                                autocomplete="new-password"
+                                required
+                            >
+                            <button type="button" class="password-visibility-toggle btn btn-outline-secondary" data-target="confirmarSenhaPrimeiroAcesso" aria-controls="confirmarSenhaPrimeiroAcesso" aria-label="Mostrar senha" aria-pressed="false">
+                                <i class="bi bi-eye-slash" aria-hidden="true"></i>
+                            </button>
+                        </div>
                     </div>
 
                     <p id="msgPrimeiroAcesso" class="small mb-3" role="status" aria-live="polite" aria-atomic="true"></p>

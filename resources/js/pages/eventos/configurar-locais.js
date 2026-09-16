@@ -4,6 +4,9 @@ window.SGIPage.mount("eventos/configurar-locais", function (pageConfig, pageScop
     const API = (window.SGI_API_BASE || '/api/v1/').replace(/\/?$/, '/');
     const params = new URLSearchParams(window.location.search);
     let idInterclasse = params.get('id');
+    let locaisAtuais = [];
+    let locaisCarregados = false;
+    let carregamentoLocaisEmAndamento = false;
 
     // Função para buscar o ID do Interclasse Ativo caso não exista parâmetro na URL
     async function obterInterclasseAtivo() {
@@ -12,7 +15,11 @@ window.SGIPage.mount("eventos/configurar-locais", function (pageConfig, pageScop
         try {
             // Consulta a edição ativa pela API versionada.
             const res = await fetch(`${API}edicoes?status_interclasse=1`);
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
             const data = await res.json();
+            if (!Array.isArray(data) && (!data || typeof data !== 'object')) {
+                throw new Error('Resposta inválida ao consultar a edição ativa.');
+            }
 
             const ativo = Array.isArray(data) ? data[0] : data;
             if (ativo && ativo.id_interclasse) {
@@ -144,6 +151,51 @@ window.SGIPage.mount("eventos/configurar-locais", function (pageConfig, pageScop
             </div>`;
     }
 
+    function mensagemEstadoLocais(texto, comRetry = false) {
+        const area = document.createElement('div');
+        area.className = `col-12 sgi-locais-feedback${comRetry ? ' sgi-locais-error' : ''}`;
+        const mensagem = document.createElement('p');
+        mensagem.className = comRetry ? 'text-danger mb-2' : 'text-muted text-center mb-0';
+        mensagem.setAttribute('role', comRetry ? 'alert' : 'status');
+        mensagem.setAttribute('aria-live', comRetry ? 'assertive' : 'polite');
+        mensagem.textContent = texto;
+        area.append(mensagem);
+
+        if (comRetry) {
+            const botao = document.createElement('button');
+            botao.type = 'button';
+            botao.className = 'btn btn-link btn-sm px-0';
+            botao.dataset.sgiAction = 'retry-locais';
+            botao.textContent = 'Tentar novamente';
+            area.append(botao);
+        }
+        return area;
+    }
+
+    function renderizarLocais(lista) {
+        const desk = document.getElementById('listaLocaisDesktop');
+        if (!desk) return;
+        desk.replaceChildren();
+        if (lista.length === 0) {
+            const estadoVazio = mensagemEstadoLocais('Nenhum local cadastrado. Toque em “Novo local”.');
+            estadoVazio.querySelector('[role="status"]')?.setAttribute('tabindex', '-1');
+            estadoVazio.querySelector('[role="status"]').dataset.sgiLocaisVazio = 'true';
+            desk.append(estadoVazio);
+            return;
+        }
+        desk.innerHTML = lista.map(cardLocal).join('');
+    }
+
+    function mostrarErroLocais(desk) {
+        desk.querySelectorAll('.sgi-locais-error').forEach((area) => area.remove());
+        const feedback = mensagemEstadoLocais('Não foi possível carregar os locais.', true);
+        if (!locaisCarregados) {
+            desk.replaceChildren(feedback);
+            return;
+        }
+        desk.prepend(feedback);
+    }
+
     window.excluirLocal = async function(idLocal, nomeLocal) {
         if (!await SGI.confirm({ titulo: 'Excluir local?', mensagem: `O local "${nomeLocal}" será excluído. Esta ação não pode ser desfeita.`, textoConfirmar: 'Excluir local', destrutivo: true })) {
             return;
@@ -164,27 +216,72 @@ window.SGIPage.mount("eventos/configurar-locais", function (pageConfig, pageScop
 
     async function carregarLocais() {
         const desk = document.getElementById('listaLocaisDesktop');
+        if (!desk || carregamentoLocaisEmAndamento) return false;
 
-        if (!idInterclasse) await obterInterclasseAtivo();
+        const focoNaTentativa = desk.contains(document.activeElement)
+            && document.activeElement.matches('[data-sgi-action="retry-locais"]');
+        carregamentoLocaisEmAndamento = true;
+        desk.querySelectorAll('[data-sgi-action="retry-locais"]').forEach((botao) => {
+            botao.disabled = true;
+            botao.textContent = 'Carregando...';
+        });
 
         try {
+            if (!idInterclasse) await obterInterclasseAtivo();
+            if (!idInterclasse) throw new Error('Edição não identificada.');
             // Envia o id_interclasse na Query String para filtrar só os do interclasse atual
             const q = idInterclasse ? `?id_interclasse=${encodeURIComponent(idInterclasse)}` : '';
             const res = await fetch(`${API}locais${q}`);
             const data = await res.json();
-            const lista = (data && Array.isArray(data.data)) ? data.data : [];
-
-            if (lista.length === 0) {
-                const msg = '<p class="text-muted text-center w-100 mb-0">Nenhum local cadastrado. Toque em &quot;Novo local&quot;.</p>';
-                desk.innerHTML = `<div class="col-12">${msg}</div>`;
-                return;
+            if (!res.ok
+                || !data
+                || typeof data !== 'object'
+                || Array.isArray(data)
+                || data.success !== true
+                || !Array.isArray(data.data)) {
+                throw new Error(`Resposta inválida ao carregar locais (HTTP ${res.status}).`);
             }
-            desk.innerHTML = lista.map(cardLocal).join('');
+
+            if (!data.data.every((local) => local
+                && typeof local === 'object'
+                && !Array.isArray(local)
+                && Number.isSafeInteger(Number(local.id_local))
+                && Number(local.id_local) > 0
+                && typeof local.nome_local === 'string')) {
+                throw new Error('A lista de locais contém registros inválidos.');
+            }
+
+            locaisAtuais = data.data;
+            locaisCarregados = true;
+            renderizarLocais(locaisAtuais);
+            if (focoNaTentativa) {
+                const focoDestino = desk.querySelector('[data-bs-target="#modalEditarLocal"]')
+                    || desk.querySelector('[data-sgi-locais-vazio="true"]');
+                focoDestino?.focus();
+            }
+            return true;
         } catch (e) {
             console.error(e);
-            desk.innerHTML = '<p class="text-danger">Erro ao carregar locais.</p>';
+            mostrarErroLocais(desk);
+            if (focoNaTentativa) desk.querySelector('[data-sgi-action="retry-locais"]')?.focus();
+            return false;
+        } finally {
+            carregamentoLocaisEmAndamento = false;
         }
     }
+
+    pageScope.listen(document.getElementById('listaLocaisDesktop'), 'click', (event) => {
+        const alvo = event.target;
+        const button = alvo && typeof alvo.closest === 'function'
+            ? alvo.closest('[data-sgi-action]')
+            : null;
+        if (!button) return;
+        if (button.dataset.sgiAction === 'delete-local') {
+            window.excluirLocal(button.dataset.idLocal, button.dataset.nomeLocal);
+        } else if (button.dataset.sgiAction === 'retry-locais') {
+            void carregarLocais();
+        }
+    });
 
     window.SGIPage.ready( async () => {
         if (!idInterclasse) {
@@ -210,12 +307,6 @@ window.SGIPage.mount("eventos/configurar-locais", function (pageConfig, pageScop
 
         await carregarLocais();
         await carregarRegulamento();
-
-        pageScope.listen(document.getElementById('listaLocaisDesktop'), 'click', (event) => {
-            const button = event.target.closest('[data-sgi-action="delete-local"]');
-            if (!button) return;
-            window.excluirLocal(button.dataset.idLocal, button.dataset.nomeLocal);
-        });
 
         // Envio do FORMULÁRIO REGULAMENTO
         // Envio do FORMULÁRIO REGULAMENTO (Popup de Sucesso)

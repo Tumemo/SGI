@@ -1158,8 +1158,13 @@
             });
         }
         syncing = true;
+        notify();
 
-        function done(v) { syncing = false; return v; }
+        function done(v) {
+            syncing = false;
+            notify();
+            return v;
+        }
 
         var summary = { synced: 0, failed: 0, needsReview: 0, pending: 0, busy: false };
         var reserva = false;
@@ -1211,7 +1216,6 @@
             .then(function () {
                 summary.pending = state.pending;
                 if (state.retryablePending > 0) scheduleSyncRetry();
-                notify();
                 if (renovacao) clearInterval(renovacao);
                 if (reservaPerdida) {
                     summary.failed += 1;
@@ -1227,6 +1231,7 @@
                 });
             }).catch(function (err) {
                 syncing = false;
+                notify();
                 if (renovacao) clearInterval(renovacao);
                 if (reserva) liberarReservaSync();
                 if (window.console) console.warn('sgi: não foi possível atualizar o estado da fila:', err);
@@ -1550,12 +1555,19 @@
         b.className = 'sgi-offline-banner bg-danger text-white d-none sgi-hidden';
         b.innerHTML =
             '<div class="container-fluid d-flex align-items-center justify-content-center gap-2 py-2 px-3 flex-wrap text-center">' +
-            '<span class="sgi-offline-banner-tag badge rounded-pill text-bg-light small fw-bold">OFFLINE</span>' +
+            '<span class="sgi-offline-banner-status d-inline-flex align-items-center gap-2" role="status" aria-live="polite" aria-atomic="true">' +
+            '<span class="sgi-offline-banner-tag badge rounded-pill text-bg-light small fw-bold">SEM CONEXÃO</span>' +
             '<span class="sgi-offline-banner-text small"></span>' +
+            '</span>' +
+            '<div class="sgi-offline-banner-actions d-flex align-items-center justify-content-center gap-2 flex-wrap">' +
             '<button type="button" class="sgi-offline-banner-btn btn btn-sm btn-outline-light rounded-pill fw-semibold d-none sgi-hidden">Sincronizar agora</button>' +
-            '<button type="button" class="sgi-offline-banner-export btn btn-sm btn-outline-light rounded-pill fw-semibold d-none sgi-hidden">Exportar pendências</button>' +
-            '<button type="button" class="sgi-offline-banner-import btn btn-sm btn-outline-light rounded-pill fw-semibold">Importar pendências</button>' +
+            '<button type="button" class="sgi-offline-banner-details-toggle btn btn-sm btn-outline-light rounded-pill fw-semibold" aria-controls="sgi-offline-banner-details" aria-expanded="false">Ver pendências</button>' +
+            '<div id="sgi-offline-banner-details" class="sgi-offline-banner-details d-flex align-items-center justify-content-center gap-2 flex-wrap">' +
+            '<button id="sgi-offline-banner-export" type="button" class="sgi-offline-banner-export btn btn-sm btn-outline-light rounded-pill fw-semibold d-none sgi-hidden">Exportar pendências</button>' +
+            '<button id="sgi-offline-banner-import" type="button" class="sgi-offline-banner-import btn btn-sm btn-outline-light rounded-pill fw-semibold">Importar pendências</button>' +
             '<input type="file" class="sgi-offline-banner-file d-none sgi-hidden" accept="application/json,.json">' +
+            '</div>' +
+            '</div>' +
             '</div>';
         document.body.appendChild(b);
 
@@ -1570,8 +1582,16 @@
         }
 
         var btn = b.querySelector('.sgi-offline-banner-btn');
+        var detailsToggle = b.querySelector('.sgi-offline-banner-details-toggle');
+        if (detailsToggle) {
+            detailsToggle.addEventListener('click', function () {
+                var expanded = b.classList.toggle('sgi-offline-banner--details-open');
+                detailsToggle.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+            });
+        }
         if (btn) {
             btn.addEventListener('click', function () {
+                if (btn.disabled) return;
                 btn.disabled = true;
                 window.SGIOffline.syncNow().then(function () {
                     btn.disabled = false;
@@ -1642,8 +1662,19 @@
         var text = b.querySelector('.sgi-offline-banner-text');
         var btn = b.querySelector('.sgi-offline-banner-btn');
         var exportBtn = b.querySelector('.sgi-offline-banner-export');
+        var detailsToggle = b.querySelector('.sgi-offline-banner-details-toggle');
 
-        if (state.online && !servidorIndisponivel() && state.pending === 0) {
+        var sessaoExpirada = state.session === 'expirada' || state.server === 'sessao';
+        var servidorOffline = state.server === 'indisponivel' || state.softOffline;
+        var revisao = state.needsReview > 0;
+        var offline = !state.online;
+        var enviando = syncing;
+        var visivel = offline || sessaoExpirada || servidorOffline || state.pending > 0;
+        function definirTexto(elemento, valor) {
+            if (elemento && elemento.textContent !== valor) elemento.textContent = valor;
+        }
+
+        if (!visivel) {
             b.classList.add('d-none', 'sgi-hidden');
             document.body.classList.remove('sgi-offline-active');
             return;
@@ -1652,44 +1683,72 @@
         b.classList.remove('d-none', 'sgi-hidden');
         document.body.classList.add('sgi-offline-active');
 
-        if (state.online && !servidorIndisponivel()) {
-            b.classList.remove('bg-danger', 'text-white');
-            b.classList.add('bg-warning', 'text-dark');
-            if (state.needsReview > 0) {
-                if (tag) tag.textContent = 'REVISAR';
-                if (text) text.textContent = state.lastSyncError ||
-                    'Há alteração(ões) que precisam ser confirmadas antes de reenviar.';
+        var tomEscuro = !offline && !sessaoExpirada && !servidorOffline;
+        b.classList.toggle('bg-warning', tomEscuro);
+        b.classList.toggle('text-dark', tomEscuro);
+        b.classList.toggle('bg-danger', !tomEscuro);
+        b.classList.toggle('text-white', !tomEscuro);
+
+        if (detailsToggle) {
+            var detalhesAbertos = b.classList.contains('sgi-offline-banner--details-open');
+            definirTexto(detailsToggle, detalhesAbertos
+                ? 'Ocultar pendências'
+                : (state.pending > 0 ? 'Ver pendências' : 'Mais ações offline'));
+            detailsToggle.setAttribute('aria-expanded', detalhesAbertos ? 'true' : 'false');
+            detailsToggle.classList.toggle('btn-outline-dark', tomEscuro);
+            detailsToggle.classList.toggle('btn-outline-light', !tomEscuro);
+        }
+
+        if (tag && text) {
+            if (sessaoExpirada) {
+                definirTexto(tag, 'SESSÃO EXPIRADA');
+                definirTexto(text, 'A sessão do operador expirou. As pendências permanecem salvas neste dispositivo.');
+            } else if (offline) {
+                definirTexto(tag, revisao ? 'SEM CONEXÃO · REVISÃO' : 'SEM CONEXÃO');
+                definirTexto(text, revisao
+                    ? 'Sem conexão com a rede local. Há alteração que exige revisão antes de reenviar; exporte as pendências, que permanecem salvas neste dispositivo.'
+                    : 'Sem conexão com a rede local. ' + (state.pending > 0
+                        ? state.pending + (state.pending === 1 ? ' alteração pendente.' : ' alterações pendentes.')
+                        : 'Os dados preparados nesta aba continuam disponíveis.'));
+            } else if (servidorOffline) {
+                definirTexto(tag, revisao ? 'SERVIDOR INDISPONÍVEL · REVISÃO' : 'SERVIDOR INDISPONÍVEL');
+                definirTexto(text, revisao
+                    ? 'O servidor local está indisponível. Há alteração que exige revisão antes de reenviar; exporte as pendências, que permanecem neste dispositivo.'
+                    : 'O servidor local está indisponível. As pendências permanecem salvas neste dispositivo.');
+            } else if (enviando) {
+                definirTexto(tag, 'SINCRONIZANDO');
+                definirTexto(text, 'Enviando alterações ao servidor.');
+            } else if (revisao) {
+                definirTexto(tag, 'REVISÃO NECESSÁRIA');
+                definirTexto(text, (state.lastSyncError || 'Há alteração que precisa de revisão.') + ' Exporte ou revise antes de tentar novamente.');
             } else {
-                if (tag) tag.textContent = 'SINCRONIZANDO';
-                if (text) text.textContent = state.pending === 1
-                    ? '1 alteração aguardando envio.'
-                    : state.pending + ' alterações aguardando envio.';
+                definirTexto(tag, 'PENDÊNCIAS');
+                definirTexto(text, state.pending === 1
+                    ? '1 alteração pendente, aguardando envio.'
+                    : state.pending + ' alterações pendentes, aguardando envio.');
             }
-            if (btn) btn.classList.remove('d-none', 'sgi-hidden');
-            if (exportBtn) {
-                exportBtn.classList.toggle('d-none', state.pending === 0);
-                exportBtn.classList.toggle('sgi-hidden', state.pending === 0);
-            }
-        } else {
-            b.classList.add('bg-danger', 'text-white');
-            b.classList.remove('bg-warning', 'text-dark');
-            if (tag) tag.textContent = 'OFFLINE';
-            if (text) {
-                text.textContent = (state.server === 'sessao' && state.serverError
-                    ? 'Sessão do operador indisponível — ' + state.serverError + ' '
-                    : state.server === 'indisponivel' && state.serverError
-                        ? 'Servidor local indisponível — ' + state.serverError + ' '
-                    : 'Modo offline — os dados podem estar desatualizados. ') +
-                    (state.pending > 0 ? ' ' + state.pending + ' alteracao(oes) aguardando envio.' : '');
-            }
-            if (btn) {
-                btn.classList.toggle('d-none', state.pending === 0);
-                btn.classList.toggle('sgi-hidden', state.pending === 0);
-            }
-            if (exportBtn) {
-                exportBtn.classList.toggle('d-none', state.pending === 0);
-                exportBtn.classList.toggle('sgi-hidden', state.pending === 0);
-            }
+        }
+
+        if (btn) {
+            btn.classList.toggle('btn-outline-dark', tomEscuro);
+            btn.classList.toggle('btn-outline-light', !tomEscuro);
+            definirTexto(btn, enviando ? 'Enviando…' : (revisao ? 'Tentar novamente' : 'Sincronizar agora'));
+            btn.disabled = enviando || sessaoExpirada;
+            var syncDisponivel = state.pending > 0;
+            btn.classList.toggle('d-none', !syncDisponivel);
+            btn.classList.toggle('sgi-hidden', !syncDisponivel);
+        }
+        if (exportBtn) {
+            var exportDisponivel = state.pending > 0;
+            exportBtn.classList.toggle('btn-outline-dark', tomEscuro);
+            exportBtn.classList.toggle('btn-outline-light', !tomEscuro);
+            exportBtn.classList.toggle('d-none', !exportDisponivel);
+            exportBtn.classList.toggle('sgi-hidden', !exportDisponivel);
+        }
+        var importBtn = b.querySelector('.sgi-offline-banner-import');
+        if (importBtn) {
+            importBtn.classList.toggle('btn-outline-dark', tomEscuro);
+            importBtn.classList.toggle('btn-outline-light', !tomEscuro);
         }
     }
 

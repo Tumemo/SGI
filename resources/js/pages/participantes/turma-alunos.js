@@ -1,6 +1,8 @@
 window.SGIPage.mount("participantes/turma-alunos", function (pageConfig, pageScope) {
 
-    const API = '/api/v1/';
+    const APP_BASE = String(window.SGI_BASE_PATH || '').replace(/\/+$/, '');
+    const API = String(window.SGI_API_BASE || `${APP_BASE}/api/v1/`).replace(/\/?$/, '/');
+    const caminhoApp = (path, parametros) => `${APP_BASE}/${String(path).replace(/^\/+/, '')}${parametros ? `?${parametros.toString()}` : ''}`;
     const params = new URLSearchParams(window.location.search);
     const idInterclasse = Number(params.get('id') || 0);
     const idCategoria = Number(params.get('id_categoria') || 0);
@@ -13,11 +15,29 @@ window.SGIPage.mount("participantes/turma-alunos", function (pageConfig, pageSco
     let alunosTodos = [];
     let alunosMap = {};
     let paginaAtual = 1;
+    let carregandoAlunos = false;
+    let alunosCarregados = false;
+    let erroAlunos = '';
+    let gatilhoModalDetalhesAluno = null;
+    const modalDetalhesAluno = document.getElementById('modalVerAluno');
+
+    pageScope.listen(modalDetalhesAluno, 'hidden.bs.modal', () => {
+        if (gatilhoModalDetalhesAluno?.isConnected
+            && !gatilhoModalDetalhesAluno.disabled
+            && gatilhoModalDetalhesAluno.getClientRects().length) {
+            gatilhoModalDetalhesAluno.focus();
+        }
+        gatilhoModalDetalhesAluno = null;
+    });
 
     function esc(s) {
         const d = document.createElement('div');
         d.textContent = s == null ? '' : String(s);
         return d.innerHTML;
+    }
+
+    function escAttr(s) {
+        return esc(s).replace(/"/g, '&quot;').replace(/'/g, '&#39;');
     }
 
     function normalizar(s) {
@@ -47,7 +67,7 @@ window.SGIPage.mount("participantes/turma-alunos", function (pageConfig, pageSco
         const q = new URLSearchParams();
         if (idInterclasse) q.set('id', idInterclasse);
         if (idCategoria) q.set('id_categoria', idCategoria);
-        const href = `${idCategoria ? '/turmas' : '/edicoes/turmas'}?${q.toString()}`;
+        const href = caminhoApp(idCategoria ? 'turmas' : 'edicoes/turmas', q);
         ['btnVoltarTurmaAlunosMob', 'btnVoltarTurmaAlunosDesk'].forEach(id => {
             const el = document.getElementById(id);
             if (el) el.href = href;
@@ -67,10 +87,16 @@ window.SGIPage.mount("participantes/turma-alunos", function (pageConfig, pageSco
     }
 
     async function carregarAlunos() {
+        if (carregandoAlunos) return;
+        carregandoAlunos = true;
+        erroAlunos = '';
+        renderizarAlunos();
         await carregarNomeInterclasseTurmaAlunos();
         setVoltar();
         if (!idTurma || isNaN(idTurma) || !idInterclasse || isNaN(idInterclasse)) {
-            document.getElementById('listaAlunosTurmaMob').innerHTML = '<p class="text-muted">Parâmetros inválidos.</p>';
+            erroAlunos = 'Não foi possível abrir a lista desta turma. Confira os dados da página e tente novamente.';
+            carregandoAlunos = false;
+            renderizarAlunos();
             return;
         }
         let nomeTurma = '';
@@ -87,19 +113,34 @@ window.SGIPage.mount("participantes/turma-alunos", function (pageConfig, pageSco
 
         try {
             const r = await fetch(`${API}usuarios?acao=listar_competidores&id_turma=${encodeURIComponent(idTurma)}&id_interclasse=${encodeURIComponent(idInterclasse)}`);
-            const textData = await r.text();
+            if (!r.ok) throw new Error('Não foi possível carregar os alunos desta turma.');
             let data;
-            try { data = JSON.parse(textData || '{}'); } catch (_) { data = {}; }
-            alunosTodos = data.competidores || data.usuarios || (Array.isArray(data) ? data : []);
+            try {
+                data = await r.json();
+            } catch (_) {
+                throw new Error('Não foi possível carregar os alunos desta turma.');
+            }
+            if (data && typeof data === 'object' && data.success === false) {
+                throw new Error('Não foi possível carregar os alunos desta turma.');
+            }
+            const lista = Array.isArray(data) ? data
+                : (Array.isArray(data?.competidores) ? data.competidores
+                    : (Array.isArray(data?.usuarios) ? data.usuarios : null));
+            if (!lista || !lista.every(aluno =>
+                aluno && typeof aluno === 'object' && !Array.isArray(aluno) && aluno.id_usuario != null
+            )) throw new Error('Não foi possível carregar os alunos desta turma.');
+
+            alunosTodos = lista;
             alunosMap = {};
             alunosTodos.forEach(a => { alunosMap[a.id_usuario] = a; });
+            alunosCarregados = true;
             paginaAtual = 1;
-            renderizarAlunos();
         } catch (e) {
             console.error(e);
-            document.getElementById('listaAlunosTurmaMob').innerHTML = '<p class="text-danger">Erro ao carregar.</p>';
-            document.getElementById('tbodyAlunosTurmaDesk').innerHTML =
-                `<tr><td colspan="4" class="text-danger text-center py-4">Erro ao carregar alunos.</td></tr>`;
+            erroAlunos = e.message || 'Não foi possível carregar os alunos desta turma.';
+        } finally {
+            carregandoAlunos = false;
+            renderizarAlunos();
         }
     }
 
@@ -110,8 +151,9 @@ window.SGIPage.mount("participantes/turma-alunos", function (pageConfig, pageSco
 
     function renderizarAlunos() {
         const termo = normalizar(
-            (document.getElementById('buscaAlunoDesk')?.value || '') + ' ' +
-            (document.getElementById('buscaAlunoMob')?.value || '')
+            document.getElementById('buscaAlunoDesk')?.value
+            || document.getElementById('buscaAlunoMob')?.value
+            || ''
         );
         const filtrados = termo
             ? alunosTodos.filter(a => normalizar((a.nome_usuario || '') + ' ' + (a.matricula_usuario || '')).includes(termo))
@@ -127,12 +169,35 @@ window.SGIPage.mount("participantes/turma-alunos", function (pageConfig, pageSco
         const mob = document.getElementById('listaAlunosTurmaMob');
         const desk = document.getElementById('tbodyAlunosTurmaDesk');
 
+        const erroMob = `<div class="alert alert-danger d-flex flex-column flex-sm-row align-items-sm-center justify-content-between gap-3 mb-3" role="alert">
+            <span>${esc(erroAlunos || 'Não foi possível carregar os alunos desta turma.')}</span>
+            <button type="button" class="btn btn-outline-danger align-self-start align-self-sm-center" data-sgi-action="retry-roster">Tentar novamente</button>
+        </div>`;
+        const erroDesk = `<tr><td colspan="4"><div class="alert alert-danger d-flex flex-column flex-sm-row align-items-sm-center justify-content-between gap-3 mb-0" role="alert">
+            <span>${esc(erroAlunos || 'Não foi possível carregar os alunos desta turma.')}</span>
+            <button type="button" class="btn btn-outline-danger align-self-start align-self-sm-center" data-sgi-action="retry-roster">Tentar novamente</button>
+        </div></td></tr>`;
+        const atualizandoMob = carregandoAlunos ? '<div class="small text-body-secondary" role="status">Atualizando a lista…</div>' : '';
+        const atualizandoDesk = carregandoAlunos ? '<tr><td colspan="4" class="small text-body-secondary" role="status">Atualizando a lista…</td></tr>' : '';
+
+        if (!alunosCarregados && carregandoAlunos) {
+            const carregando = '<div class="text-center py-5 text-body-secondary" role="status"><span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>Carregando alunos…</div>';
+            mob.innerHTML = carregando;
+            desk.innerHTML = `<tr><td colspan="4">${carregando}</td></tr>`;
+            return;
+        }
+        if (!alunosCarregados && erroAlunos) {
+            mob.innerHTML = erroMob;
+            desk.innerHTML = erroDesk;
+            return;
+        }
+
         if (!total) {
             const vazio = termo
-                ? '<i class="bi bi-search"></i><p><strong>Nenhum resultado para sua busca.</strong></p><p class="small text-muted">Tente buscar por nome ou RM.</p>'
+                ? '<i class="bi bi-search"></i><p><strong>Nenhum resultado para sua busca.</strong></p><p class="small text-muted">Limpe a busca para ver todos os alunos.</p><button type="button" class="btn btn-outline-primary btn-sm" data-sgi-action="clear-roster-search">Limpar busca</button>'
                 : '<i class="bi bi-people"></i><p><strong>Nenhum aluno cadastrado nesta turma.</strong></p><p class="small text-muted">Clique em "Adicionar Aluno" ou importe um PDF para começar.</p>';
-            mob.innerHTML = `<div class="text-center py-5 text-body-secondary">${vazio}</div>`;
-            desk.innerHTML = `<tr><td colspan="4"><div class="text-center py-5 text-body-secondary">${vazio}</div></td></tr>`;
+            mob.innerHTML = `${erroAlunos ? erroMob : ''}${atualizandoMob}<div class="text-center py-5 text-body-secondary">${vazio}</div>`;
+            desk.innerHTML = `${erroAlunos ? erroDesk : ''}${atualizandoDesk}<tr><td colspan="4"><div class="text-center py-5 text-body-secondary">${vazio}</div></td></tr>`;
         } else {
             const acoesMob = (u) => `
                 <div class="d-flex gap-1">
@@ -140,11 +205,11 @@ window.SGIPage.mount("participantes/turma-alunos", function (pageConfig, pageSco
                         <i class="bi bi-eye"></i>
                     </button>
                     ${podeGerenciar ? `
-                    <button type="button" class="btn btn-sm btn-light border text-secondary px-2 py-1" data-bs-toggle="tooltip" title="Editar" aria-label="Editar aluno" data-sgi-action="edit-student" data-id-usuario="${esc(u.id_usuario)}">
+                    <button type="button" class="btn btn-sm btn-light border text-secondary px-2 py-1" data-bs-toggle="tooltip" title="Editar" aria-label="Editar aluno ${escAttr(u.nome_usuario)}" data-sgi-action="edit-student" data-id-usuario="${esc(u.id_usuario)}">
                         <i class="bi bi-pencil"></i>
                     </button>` : ''}
                     ${podeExcluir ? `
-                    <button type="button" class="btn btn-sm btn-light border text-danger px-2 py-1" data-bs-toggle="tooltip" title="Excluir" aria-label="Excluir aluno" data-sgi-action="delete-student" data-id-usuario="${esc(u.id_usuario)}">
+                    <button type="button" class="btn btn-sm btn-light border text-danger px-2 py-1" data-bs-toggle="tooltip" title="Excluir" aria-label="Excluir aluno ${escAttr(u.nome_usuario)}" data-sgi-action="delete-student" data-id-usuario="${esc(u.id_usuario)}">
                         <i class="bi bi-trash"></i>
                     </button>` : ''}
                     ${podeResetarSenha ? `
@@ -153,7 +218,7 @@ window.SGIPage.mount("participantes/turma-alunos", function (pageConfig, pageSco
                     </button>` : ''}
                 </div>`;
 
-            mob.innerHTML = pagina.map((u) => `
+            mob.innerHTML = `${erroAlunos ? erroMob : ''}${atualizandoMob}` + pagina.map((u) => `
                 <div class="card border shadow-sm p-3 d-flex flex-row align-items-center gap-3${Number(u.inscrito || 0) === 0 ? ' border-danger bg-danger-subtle' : ''}">
                     <div class="rounded-circle bg-danger-subtle text-danger-emphasis fw-semibold fs-5 d-flex align-items-center justify-content-center flex-shrink-0 p-2">${esc((u.nome_usuario || 'A').charAt(0)).toUpperCase()}</div>
                     <div class="flex-grow-1 overflow-hidden">
@@ -169,11 +234,11 @@ window.SGIPage.mount("participantes/turma-alunos", function (pageConfig, pageSco
                         <i class="bi bi-eye"></i>
                     </button>
                     ${podeGerenciar ? `
-                    <button type="button" class="btn btn-sm btn-light border text-secondary px-2 py-1" data-bs-toggle="tooltip" title="Editar" aria-label="Editar aluno" data-sgi-action="edit-student" data-id-usuario="${esc(u.id_usuario)}">
+                    <button type="button" class="btn btn-sm btn-light border text-secondary px-2 py-1" data-bs-toggle="tooltip" title="Editar" aria-label="Editar aluno ${escAttr(u.nome_usuario)}" data-sgi-action="edit-student" data-id-usuario="${esc(u.id_usuario)}">
                         <i class="bi bi-pencil"></i>
                     </button>` : ''}
                     ${podeExcluir ? `
-                    <button type="button" class="btn btn-sm btn-light border text-danger px-2 py-1" data-bs-toggle="tooltip" title="Excluir" aria-label="Excluir aluno" data-sgi-action="delete-student" data-id-usuario="${esc(u.id_usuario)}">
+                    <button type="button" class="btn btn-sm btn-light border text-danger px-2 py-1" data-bs-toggle="tooltip" title="Excluir" aria-label="Excluir aluno ${escAttr(u.nome_usuario)}" data-sgi-action="delete-student" data-id-usuario="${esc(u.id_usuario)}">
                         <i class="bi bi-trash"></i>
                     </button>` : ''}
                     ${podeResetarSenha ? `
@@ -182,7 +247,7 @@ window.SGIPage.mount("participantes/turma-alunos", function (pageConfig, pageSco
                     </button>` : ''}
                 </div>`;
 
-            desk.innerHTML = pagina.map((u) => `
+            desk.innerHTML = `${erroAlunos ? erroDesk : ''}${atualizandoDesk}` + pagina.map((u) => `
                 <tr class="${Number(u.inscrito || 0) === 0 ? 'table-danger' : ''}">
                     <td class="fw-semibold text-body">
                         <span class="rounded-circle bg-danger-subtle text-danger-emphasis fw-semibold d-inline-flex align-items-center justify-content-center p-1 me-2">${esc((u.nome_usuario || 'A').charAt(0)).toUpperCase()}</span>${esc(u.nome_usuario)}${Number(u.inscrito || 0) === 0 ? '<span class="badge rounded-pill text-bg-danger ms-2">Sem inscrição</span>' : ''}
@@ -276,7 +341,8 @@ window.SGIPage.mount("participantes/turma-alunos", function (pageConfig, pageSco
         const g = document.getElementById('verGenero');
         g.innerHTML = `<i class="bi ${aluno.genero_usuario === 'FEM' ? 'bi-gender-female' : 'bi-gender-male'}"></i> ${esc(generoLabel(aluno.genero_usuario))}`;
         document.getElementById('verDataNasc').textContent = formatarData(aluno.data_nasc_usuario);
-        new bootstrap.Modal(document.getElementById('modalVerAluno')).show();
+        gatilhoModalDetalhesAluno = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+        bootstrap.Modal.getOrCreateInstance(modalDetalhesAluno).show();
     }
 
     function abrirModalAluno(aluno) {
@@ -416,17 +482,56 @@ window.SGIPage.mount("participantes/turma-alunos", function (pageConfig, pageSco
         const bar = document.getElementById(barId);
         const txt = document.getElementById(textoId);
         if (!cont || !bar || !txt) return null;
-        bar.style.width = '0%';
+        const progressbar = bar.parentElement;
+        const setIndeterminado = (texto) => {
+            progressbar.removeAttribute('aria-valuenow');
+            progressbar.removeAttribute('aria-valuetext');
+            bar.style.width = '100%';
+            bar.classList.add('progress-bar-striped', 'progress-bar-animated');
+            txt.textContent = texto;
+        };
         return {
-            start() { cont.classList.remove('d-none'); bar.style.width = '8%'; txt.textContent = 'Enviando arquivo…'; },
-            progress(p) { bar.style.width = p + '%'; txt.textContent = `Enviando… ${p}%`; },
-            done() { bar.style.width = '100%'; txt.textContent = 'Processando alunos…'; },
-            reset() { bar.style.width = '0%'; txt.textContent = 'Enviando…'; }
+            start() {
+                cont.classList.remove('d-none');
+                progressbar.setAttribute('aria-valuemin', '0');
+                progressbar.setAttribute('aria-valuemax', '100');
+                setIndeterminado('Processando');
+            },
+            progress(p) {
+                const percentual = Math.max(0, Math.min(100, Math.round(p)));
+                bar.classList.remove('progress-bar-striped', 'progress-bar-animated');
+                progressbar.setAttribute('aria-valuemin', '0');
+                progressbar.setAttribute('aria-valuemax', '100');
+                progressbar.setAttribute('aria-valuenow', String(percentual));
+                progressbar.setAttribute('aria-valuetext', `Enviando arquivo: ${percentual}%`);
+                bar.style.width = `${percentual}%`;
+                txt.textContent = `Enviando… ${percentual}%`;
+            },
+            done() {
+                setIndeterminado('Processando');
+            },
+            complete() {
+                progressbar.setAttribute('aria-valuemin', '0');
+                progressbar.setAttribute('aria-valuemax', '100');
+                progressbar.setAttribute('aria-valuenow', '100');
+                progressbar.setAttribute('aria-valuetext', 'Importação concluída');
+                bar.classList.remove('progress-bar-striped', 'progress-bar-animated');
+                bar.style.width = '100%';
+                txt.textContent = 'Importação concluída.';
+            },
+            reset() {
+                progressbar.removeAttribute('aria-valuenow');
+                progressbar.removeAttribute('aria-valuetext');
+                bar.classList.remove('progress-bar-striped', 'progress-bar-animated');
+                bar.style.width = '0%';
+                txt.textContent = 'A importação não foi confirmada.';
+            }
         };
     }
 
     function enviarPdf(form, msgEl, btn, fallbackEl, cfg) {
-        msgEl.innerHTML = '';
+        msgEl.textContent = '';
+        msgEl.setAttribute('role', 'status');
         if (fallbackEl) fallbackEl.classList.add('d-none');
 
         const fd = new FormData(form);
@@ -439,36 +544,65 @@ window.SGIPage.mount("participantes/turma-alunos", function (pageConfig, pageSco
         fd.append('id_turma', idTurma || '');
 
         const xhr = new XMLHttpRequest();
-        xhr.open('POST', '/api/v1/importacoes/turma-pdf');
+        xhr.open('POST', `${API}importacoes/turma-pdf`);
         xhr.withCredentials = true;
 
         pageScope.listen(xhr.upload, 'progress', (e) => {
             if (e.lengthComputable && cfg) cfg.progress(Math.round((e.loaded / e.total) * 100));
         });
 
+        xhr.upload.onload = () => {
+            if (cfg) cfg.done();
+        };
+
         xhr.onload = () => {
-            setBtnLoading(btn, false);
-            let js = {};
-            try { js = JSON.parse(xhr.responseText); } catch (_) { js = {}; }
-            if (xhr.status >= 200 && xhr.status < 300 && js.success !== false) {
-                if (cfg) cfg.done();
-                msgEl.innerHTML = `<span class="text-success">${esc(js.message || 'Importação concluída.')}. Atualizando…</span>`;
-                setTimeout(() => window.location.reload(), 1200);
+            let js = null;
+            try { js = JSON.parse(xhr.responseText); } catch (_) { js = null; }
+            const objetoValido = js && typeof js === 'object' && !Array.isArray(js);
+            const sucessoConfirmado = xhr.status >= 200 && xhr.status < 300 && objetoValido && js.success === true;
+
+            if (sucessoConfirmado) {
+                if (cfg) cfg.complete();
+                msgEl.setAttribute('role', 'status');
+                msgEl.classList.remove('text-danger');
+                msgEl.classList.add('text-success');
+                msgEl.textContent = js.message || 'Importação concluída.';
+                setBtnLoading(btn, false);
+                if (fileInput) {
+                    fileInput.value = '';
+                    fileInput.dispatchEvent(new Event('change', { bubbles: true }));
+                }
+                if (btn) {
+                    btn.disabled = false;
+                    btn.removeAttribute('aria-disabled');
+                }
+                carregarAlunos();
             } else {
                 if (cfg) cfg.reset();
-                msgEl.innerHTML = `<span class="text-danger">${esc(js.message || 'Falha no upload: ' + xhr.responseText)}</span>`;
-                if (fallbackEl && js.fallback_converter) fallbackEl.classList.remove('d-none');
+                const mensagem = objetoValido && typeof js.message === 'string' && js.message.trim()
+                    ? js.message
+                    : 'Resposta inválida do servidor. A importação não foi confirmada; tente novamente.';
+                msgEl.setAttribute('role', 'alert');
+                msgEl.classList.remove('text-success');
+                msgEl.classList.add('text-danger');
+                msgEl.textContent = mensagem;
+                if (fallbackEl && objetoValido && js.fallback_converter === true) fallbackEl.classList.remove('d-none');
+                setBtnLoading(btn, false);
             }
         };
 
         xhr.onerror = () => {
-            setBtnLoading(btn, false);
             if (cfg) cfg.reset();
-            msgEl.innerHTML = '<span class="text-danger">Falha de conexão.</span>';
+            msgEl.setAttribute('role', 'alert');
+            msgEl.classList.remove('text-success');
+            msgEl.classList.add('text-danger');
+            msgEl.textContent = 'Falha de conexão. A importação não foi confirmada; tente novamente.';
+            setBtnLoading(btn, false);
         };
 
         setBtnLoading(btn, true);
         if (cfg) cfg.start();
+        if (btn) btn.removeAttribute('aria-disabled');
         xhr.send(fd);
     }
 
@@ -479,11 +613,9 @@ window.SGIPage.mount("participantes/turma-alunos", function (pageConfig, pageSco
         const nome = document.getElementById(nomeId);
         if (!dropzone || !input || !nome) return;
 
-        pageScope.listen(dropzone, 'click', () => input.click());
-
         pageScope.listen(input, 'change', () => {
             if (input.files && input.files[0]) {
-                nome.textContent = input.files[0].name;
+                nome.textContent = `Arquivo selecionado: ${input.files[0].name}`;
                 nome.classList.remove('d-none');
                 dropzone.classList.add('border-success', 'bg-success-subtle');
             } else {
@@ -531,11 +663,42 @@ window.SGIPage.mount("participantes/turma-alunos", function (pageConfig, pageSco
         };
         const handler = (event) => {
             const button = event.target.closest('[data-sgi-action]');
+            if (button?.dataset.sgiAction === 'clear-roster-search') {
+                document.getElementById('buscaAlunoDesk').value = '';
+                document.getElementById('buscaAlunoMob').value = '';
+                paginaAtual = 1;
+                aplicarFiltro();
+                const busca = [document.getElementById('buscaAlunoDesk'), document.getElementById('buscaAlunoMob')]
+                    .find(el => el && el.getClientRects().length);
+                busca?.focus({ preventScroll: true });
+                return;
+            }
+            if (button?.dataset.sgiAction === 'retry-roster') {
+                event.preventDefault();
+                tentarNovamenteAlunos();
+                return;
+            }
             const action = button && acoes[button.dataset.sgiAction];
             if (action) action(button.dataset.idUsuario);
         };
         pageScope.listen(document.getElementById('listaAlunosTurmaMob'), 'click', handler);
         pageScope.listen(document.getElementById('tbodyAlunosTurmaDesk'), 'click', handler);
+    }
+
+    async function tentarNovamenteAlunos() {
+        if (carregandoAlunos) return;
+        await carregarAlunos();
+        const retry = [
+            document.querySelector('#tbodyAlunosTurmaDesk [data-sgi-action="retry-roster"]'),
+            document.querySelector('#listaAlunosTurmaMob [data-sgi-action="retry-roster"]'),
+        ].find(el => el && el.getClientRects().length);
+        if (retry) {
+            retry.focus({ preventScroll: true });
+            return;
+        }
+        const busca = [document.getElementById('buscaAlunoDesk'), document.getElementById('buscaAlunoMob')]
+            .find(el => el && el.getClientRects().length);
+        busca?.focus({ preventScroll: true });
     }
 
     window.SGIPage.ready( () => {

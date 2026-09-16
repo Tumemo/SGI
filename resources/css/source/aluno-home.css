@@ -1,20 +1,3 @@
-@media print {
-    header, nav, footer, #filtrosMob, #filtrosDesk, .btn-imprimir, .d-print-none {
-        display: none !important;
-    }
-    body, main {
-        background: #fff !important;
-        margin: 0 !important;
-        padding: 0 !important;
-    }
-    #listaMob .card, #listaDesk .card {
-        border: 1px solid #ccc !important;
-        box-shadow: none !important;
-        break-inside: avoid;
-        margin-bottom: 15px !important;
-    }
-}
-
 /* Bootstrap supplies the avatar treatment; only the domain-specific size remains. */
 .perfil-avatar-ring {
     width: 150px;

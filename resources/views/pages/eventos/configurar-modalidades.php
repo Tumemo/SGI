@@ -9,11 +9,11 @@ $paginaAtiva = 'dashboard';
 
 <main class="main-desktop-layout">
 
-    <div class="d-flex align-items-center justify-content-between gap-3 flex-wrap mb-4">
-            <a href="<?= \App\Shared\Http\Url::to('painel') ?>" id="btnVoltarModalidades" class="btn btn-primary d-inline-flex align-items-center gap-2 fw-bold px-3 py-2 border-0 text-decoration-none" >
+    <div class="d-flex align-items-center justify-content-between gap-3 flex-wrap mb-4 sgi-config-modalities-toolbar">
+            <a href="<?= \App\Shared\Http\Url::to('painel') ?>" id="btnVoltarModalidades" class="btn btn-primary d-inline-flex align-items-center gap-2 fw-bold px-3 py-2 border-0 text-decoration-none sgi-event-back-link" >
                 <i class="bi bi-arrow-left-circle fs-5"></i> <span id="nomeInterclasseModalidades">Interclasse</span>
             </a>
-        <div class="d-flex align-items-center gap-3 flex-shrink-0 flex-wrap">
+        <div class="d-flex align-items-center gap-2 flex-wrap sgi-config-modalities-actions">
             <button type="button" class="btn btn-outline-secondary d-inline-flex align-items-center gap-2 fw-bold px-3 py-2" data-bs-toggle="modal" data-bs-target="#modalDestaques">
                 <span>⭐</span> Alunos Destaques
             </button>
@@ -45,7 +45,7 @@ $paginaAtiva = 'dashboard';
         <div class="modal-content">
             <div class="modal-header border border-0">
                 <h1 class="modal-title fs-5 text-danger" id="exampleModalLabel">Criar nova Modalidade</h1>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
             </div>
             <div class="modal-body">
                 <form id="formNovaModalidade">
@@ -54,7 +54,7 @@ $paginaAtiva = 'dashboard';
                         <input type="text" class="form-control" id="inputNomeModalidade" placeholder="Ex: Futsal" required>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label fw-medium">Gênero:</label>
+                        <label class="form-label fw-medium" for="inputGeneroModalidade">Gênero:</label>
                         <select class="form-select" id="inputGeneroModalidade" required>
                             <option value="" disabled selected>Selecione...</option>
                             <option value="MASC">Masculino (M)</option>
@@ -63,21 +63,21 @@ $paginaAtiva = 'dashboard';
                         </select>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label fw-medium">Máx. de Inscritos (Opcional):</label>
+                        <label class="form-label fw-medium" for="inputMaxInscritos">Máx. de Inscritos (Opcional):</label>
                         <input type="number" class="form-control" placeholder="Ex: 12" id="inputMaxInscritos" min="0">
                     </div>
                     <div class="mb-3">
-                        <label class="form-label fw-medium">Máx. de Equipes por Turma (Opcional):</label>
+                        <label class="form-label fw-medium" for="inputMaxEquipes">Máx. de Equipes por Turma (Opcional):</label>
                         <input type="number" class="form-control" placeholder="Ex: 3" id="inputMaxEquipes" min="1">
                     </div>
                     <div class="mb-3">
-                        <label class="form-label fw-medium">Tipo de Modalidade:</label>
+                        <label class="form-label fw-medium" for="inputTipoModalidade">Tipo de Modalidade:</label>
                         <select class="form-select" id="inputTipoModalidade" required>
                             <option value="" disabled selected>Carregando tipos...</option>
                         </select>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label fw-medium">Categoria:</label>
+                        <label class="form-label fw-medium" for="inputCategoriaModalidade">Categoria:</label>
                         <select class="form-select" id="inputCategoriaModalidade" required>
                             <option value="" disabled selected>Carregando categorias...</option>
                         </select>
@@ -98,7 +98,7 @@ $paginaAtiva = 'dashboard';
     <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
         <div class="modal-content rounded-4" >
             <div class="modal-header border-0">
-                <h5 class="modal-title text-danger fw-bold" id="modalDestaquesLabel"><i class="bi bi-star-fill me-2 text-warning" ></i>Alunos Destaques</h5>
+                <h5 class="modal-title text-danger fw-bold" id="modalDestaquesLabel"><i class="bi bi-star-fill me-2 text-warning" aria-hidden="true"></i>Alunos Destaques</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
             </div>
             <div class="modal-body" id="corpoDestaques">

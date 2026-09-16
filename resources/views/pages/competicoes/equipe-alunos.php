@@ -7,15 +7,19 @@ $paginaAtiva = 'dashboard';
 <main class="d-md-none mb-5" >
     <div class="container mt-3">
         <a href="#" class="btn btn-primary d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none" id="btnVoltarEquipesMobile" >
-            <i class="bi bi-arrow-left-circle fs-5"></i> <span id="nomeInterclasseEquipeAlunosMob">Interclasse</span>
+            <i class="bi bi-arrow-left-circle fs-5" aria-hidden="true"></i> <span id="nomeInterclasseEquipeAlunosMob">Interclasse</span>
         </a>
+        <h1 class="h4 fw-bold mb-3">Adicionar alunos à equipe</h1>
         <label for="buscaAlunosMobile" class="visually-hidden">Buscar aluno por nome ou matrícula</label>
         <input id="buscaAlunosMobile" class="form-control mb-2" type="search" placeholder="Buscar aluno por nome ou matrícula" autocomplete="off">
         <p class="small text-body-secondary mb-3">Marque novos alunos para adicioná-los. Alunos já vinculados permanecem na equipe; desmarcar não remove ninguém.</p>
         <div id="listaAlunosMobile" class="row row-cols-1 row-cols-sm-2 g-3">
             <p class="text-muted text-center">(Carregando alunos...)</p>
         </div>
-        <button id="btnSalvarAlunosMobile" class="btn btn-primary w-100 mt-3"><i class="bi bi-check-lg"></i></button>
+        <p id="feedbackSelecaoEquipeMobile" class="small text-body-secondary mt-3 mb-1" role="status" aria-live="polite" aria-atomic="true">Nenhum aluno novo selecionado.</p>
+        <button id="btnSalvarAlunosMobile" class="btn btn-primary w-100" type="button" aria-label="Salvar alunos selecionados na equipe — Adicionar 0 alunos" disabled>
+            <i class="bi bi-person-plus me-1" aria-hidden="true"></i><span data-selection-count>Adicionar 0 alunos</span>
+        </button>
     </div>
 </main>
 
@@ -23,19 +27,22 @@ $paginaAtiva = 'dashboard';
     <div class="container-fluid py-4 px-4 text-body">
         <div class="d-flex align-items-center gap-3 mb-4 pb-3 border-bottom border-2">
             <a href="#" id="btnVoltarEquipesDesktop" class="btn btn-primary d-inline-flex align-items-center gap-2 fw-bold px-3 py-2 border-0 text-decoration-none" >
-                <i class="bi bi-arrow-left-circle fs-5"></i> <span id="nomeInterclasseEquipeAlunosDesk">Interclasse</span>
+                <i class="bi bi-arrow-left-circle fs-5" aria-hidden="true"></i> <span id="nomeInterclasseEquipeAlunosDesk">Interclasse</span>
             </a>
             <h1 class="h4 mb-0 fw-bold">Adicionar alunos à equipe</h1>
-            <div class="ms-auto d-flex gap-2">
-                <button id="btnSalvarAlunosDesktop" class="btn btn-primary"><i class="bi bi-check-lg"></i></button>
-            </div>
         </div>
 
         <label for="buscaAlunosDesktop" class="visually-hidden">Buscar aluno por nome ou matrícula</label>
         <input id="buscaAlunosDesktop" class="form-control mb-2" type="search" placeholder="Buscar aluno por nome ou matrícula" autocomplete="off">
         <p class="small text-body-secondary mb-3">Marque novos alunos para adicioná-los. Alunos já vinculados permanecem na equipe; desmarcar não remove ninguém.</p>
+        <p id="feedbackSelecaoEquipeDesktop" class="small text-body-secondary mb-2" role="status" aria-live="polite" aria-atomic="true">Nenhum aluno novo selecionado.</p>
         <div id="listaAlunosDesktop" class="row row-cols-1 row-cols-lg-2 g-3">
             <div class="text-center py-4 text-body-secondary">Carregando alunos...</div>
+        </div>
+        <div class="d-flex justify-content-end mt-3">
+            <button id="btnSalvarAlunosDesktop" class="btn btn-primary" type="button" aria-label="Salvar alunos selecionados na equipe — Adicionar 0 alunos" disabled>
+                <i class="bi bi-person-plus me-1" aria-hidden="true"></i><span data-selection-count>Adicionar 0 alunos</span>
+            </button>
         </div>
     </div>
 </main>

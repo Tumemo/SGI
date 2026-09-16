@@ -99,4 +99,5 @@ if ($nivelUsuario === 2) {
 })();
 </script>
 </head>
-<body class="bg-light">
+<body class="bg-light sgi-app-shell">
+<a class="sgi-skip-link" href="#sgi-main-content">Ir para o conteúdo</a>

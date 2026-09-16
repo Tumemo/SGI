@@ -2,6 +2,8 @@ window.SGIPage.mount("participantes/turmas", function (pageConfig, pageScope) {
 
     let turmasData = [];
     let editTurmaId = null;
+    let carregandoTurmas = false;
+    let erroCarregamentoTurmas = false;
     const NIVEL_USUARIO = pageConfig.value2;
 
     const urlParams = new URLSearchParams(window.location.search);
@@ -25,6 +27,10 @@ window.SGIPage.mount("participantes/turmas", function (pageConfig, pageScope) {
         const d = document.createElement('div');
         d.textContent = s == null ? '' : String(s);
         return d.innerHTML;
+    }
+
+    function escAttr(s) {
+        return esc(s).replace(/"/g, '&quot;').replace(/'/g, '&#39;');
     }
 
     function mostrarNomeArquivo() {
@@ -55,11 +61,23 @@ window.SGIPage.mount("participantes/turmas", function (pageConfig, pageScope) {
     function renderizarEmptyState(mensagem, botao) {
         const html = `
             <div class="col-12">
-                <div class="text-center py-5 text-body-secondary">
+                <div class="text-center py-5 text-body-secondary" role="status" tabindex="-1">
                     <i class="bi bi-people fs-1 d-block mb-3 text-body-tertiary"></i>
                     <h3 class="h5 fw-semibold text-body">${mensagem || 'Nenhuma turma encontrada'}</h3>
                     <p class="mb-3">${botao || 'Nenhuma turma cadastrada neste interclasse ainda.'}</p>
                 ${NIVEL_USUARIO === 0 ? '<button class="btn btn-primary px-4" data-bs-toggle="modal" data-bs-target="#exampleModal"><i class="bi bi-plus-lg me-1"></i>Criar Turma</button>' : ''}
+                </div>
+            </div>`;
+        document.getElementById('listaTurmasMobile').innerHTML = html;
+        document.getElementById('listaTurmasDesktop').innerHTML = html;
+    }
+
+    function renderizarErroTurmas() {
+        const html = `
+            <div class="col-12">
+                <div class="alert alert-danger d-flex flex-column flex-sm-row align-items-sm-center justify-content-between gap-3 mb-0" role="alert" aria-live="assertive">
+                    <span><i class="bi bi-exclamation-triangle me-2" aria-hidden="true"></i>Não foi possível carregar as turmas. Tente novamente.</span>
+                    <button type="button" class="btn btn-outline-danger align-self-start align-self-sm-center" data-sgi-action="retry-turmas">Tentar novamente</button>
                 </div>
             </div>`;
         document.getElementById('listaTurmasMobile').innerHTML = html;
@@ -73,10 +91,10 @@ window.SGIPage.mount("participantes/turmas", function (pageConfig, pageScope) {
 
         const adminBtns = NIVEL_USUARIO === 0 ? `
             <div class="d-flex gap-1">
-                <button class="btn btn-outline-secondary btn-sm" title="Editar" onclick='editarTurma(${turma.id_turma})'>
+                <button class="btn btn-outline-secondary btn-sm" title="Editar" aria-label="Editar turma ${escAttr(turma.nome_turma)}" onclick='editarTurma(${turma.id_turma})'>
                     <i class="bi bi-pencil"></i>
                 </button>
-                <button class="btn btn-outline-danger btn-sm" title="Excluir" onclick="abrirModalExcluir(${Number(turma.id_turma) || 0})">
+                <button class="btn btn-outline-danger btn-sm" title="Excluir" aria-label="Excluir turma ${escAttr(turma.nome_turma)}" onclick="abrirModalExcluir(${Number(turma.id_turma) || 0})">
                     <i class="bi bi-trash"></i>
                 </button>
             </div>` : '';
@@ -141,6 +159,7 @@ window.SGIPage.mount("participantes/turmas", function (pageConfig, pageScope) {
 
     /* ── FILTER ── */
     function filtrarTurmas() {
+        if (carregandoTurmas || erroCarregamentoTurmas) return;
         const termo = (document.getElementById('buscaTurmaDesk').value || document.getElementById('buscaTurmaMob').value || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
         const interclasse = window._interclasseCache;
 
@@ -168,15 +187,38 @@ window.SGIPage.mount("participantes/turmas", function (pageConfig, pageScope) {
         const mob = document.getElementById('buscaTurmaMob');
         pageScope.listen(desk, 'input', () => { mob.value = desk.value; filtrarTurmas(); });
         pageScope.listen(mob, 'input', () => { desk.value = mob.value; filtrarTurmas(); });
+
+        const tentarNovamente = async (event) => {
+            const botao = event.target.closest('[data-sgi-action="retry-turmas"]');
+            if (!botao) return;
+            event.preventDefault();
+            if (carregandoTurmas) return;
+
+            const lista = botao.closest('#listaTurmasMobile')
+                || botao.closest('#listaTurmasDesktop');
+            await carregarTurmasAtivas();
+
+            const destino = lista?.querySelector('[data-sgi-action="retry-turmas"]')
+                || lista?.querySelector('a[href]')
+                || lista?.querySelector('[role="status"]');
+            destino?.focus({ preventScroll: true });
+        };
+        pageScope.listen(document.getElementById('listaTurmasMobile'), 'click', tentarNovamente);
+        pageScope.listen(document.getElementById('listaTurmasDesktop'), 'click', tentarNovamente);
     });
 
     /* ── MAIN LOAD ── */
     async function carregarTurmasAtivas() {
+        if (carregandoTurmas) return;
+        carregandoTurmas = true;
+        const listas = [document.getElementById('listaTurmasMobile'), document.getElementById('listaTurmasDesktop')];
+        listas.forEach((lista) => lista?.setAttribute('aria-busy', 'true'));
         renderizarSkeleton();
 
         try {
             const interclasse = await resolverInterclasse();
             if (!interclasse) {
+                erroCarregamentoTurmas = false;
                 renderizarEmptyState('Nenhum interclasse ativo.', 'Selecione um interclasse para ver as turmas.');
                 return;
             }
@@ -194,19 +236,39 @@ window.SGIPage.mount("participantes/turmas", function (pageConfig, pageScope) {
             window.SGIInterclasse.updatePageTitle(interclasse.nome_interclasse);
 
             const turmasRes = await fetch(`/api/v1/turmas?id_interclasse=${interclasse.id_interclasse}`);
-            const listaFinal = await turmasRes.json();
+            if (!turmasRes.ok) {
+                throw new Error(`HTTP ${turmasRes.status}`);
+            }
 
-            turmasData = Array.isArray(listaFinal) ? listaFinal : [];
+            let listaFinal;
+            try {
+                listaFinal = await turmasRes.json();
+            } catch (_) {
+                throw new Error('Resposta inválida ao carregar as turmas.');
+            }
+            if (!Array.isArray(listaFinal) || !listaFinal.every((turma) =>
+                turma && typeof turma === 'object' && !Array.isArray(turma) && turma.id_turma != null
+            )) {
+                throw new Error('Resposta inválida ao carregar as turmas.');
+            }
+
+            turmasData = listaFinal;
+            erroCarregamentoTurmas = false;
+            carregandoTurmas = false;
 
             if (!turmasData.length) {
-                renderizarEmptyState();
+                filtrarTurmas();
                 return;
             }
 
-            renderizarTurmas(turmasData, interclasse);
+            filtrarTurmas();
         } catch (error) {
             console.error(error);
-            renderizarEmptyState('Erro ao carregar turmas.', 'Não foi possível conectar ao servidor.');
+            erroCarregamentoTurmas = true;
+            renderizarErroTurmas();
+        } finally {
+            carregandoTurmas = false;
+            listas.forEach((lista) => lista?.setAttribute('aria-busy', 'false'));
         }
     }
 

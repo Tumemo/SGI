@@ -8,7 +8,7 @@ include SGI_ROOT . '/resources/views/components/aluno-head.php';
 
 
 
-<main class="modalidade-layout py-4 px-3 px-lg-4">
+<main class="main-desktop-layout modalidade-layout py-4 px-3 px-lg-4">
 
     <header class="mb-4">
         <div class="d-flex align-items-center gap-3">
@@ -40,6 +40,9 @@ include SGI_ROOT . '/resources/views/components/aluno-head.php';
                 <p class="small text-body-secondary mb-0">Selecione até 3 modalidades para participar.</p>
             </div>
         </div>
+        <p class="small text-body-secondary mb-3" id="inscricaoElegibilidade">
+            A lista mostra somente modalidades compatíveis com a categoria e o gênero informados no seu cadastro. Confira as vagas restantes antes de escolher.
+        </p>
         <div class="row row-cols-1 row-cols-sm-2 row-cols-lg-3 g-3" id="modalidadesGrid">
             <div class="col-12 text-center py-5">
                 <div class="spinner-border spinner-border-sm me-2" role="status"></div>
@@ -74,7 +77,7 @@ include SGI_ROOT . '/resources/views/components/aluno-head.php';
             </div>
         </div>
 
-        <p class="small text-secondary text-center mb-0 mt-2" id="msgFeedback"></p>
+        <p class="small text-secondary text-center mb-0 mt-2" id="msgFeedback" role="status" aria-live="polite" aria-atomic="true"></p>
 
         <p id="contador" class="visually-hidden"></p>
     </div>

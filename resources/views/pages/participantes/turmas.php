@@ -1,5 +1,6 @@
 <?php
 $titulo = 'Turmas';
+$tagTituloCompacto = 'h1';
 $mostrarVoltar = true;
 $urlVoltar = \App\Shared\Http\Url::to('painel');
 include SGI_ROOT . '/resources/views/components/admin-head.php';
@@ -15,10 +16,11 @@ $paginaAtiva = 'categorias';
     <div class="p-3">
         <div class="d-flex align-items-center gap-2 mb-3">
             <a href="<?= \App\Shared\Http\Url::to('painel') ?>" id="btnVoltarCatMob" class="btn btn-primary d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none" >
-                <i class="bi bi-arrow-left-circle fs-5"></i> <span id="nomeInterclasseCatMob">Interclasse</span>
+                <i class="bi bi-arrow-left-circle fs-5" aria-hidden="true"></i> <span id="nomeInterclasseCatMob">Interclasse</span>
             </a>
             <div class="input-group flex-grow-1">
-                <span class="input-group-text"><i class="bi bi-search"></i></span>
+                <span class="input-group-text"><i class="bi bi-search" aria-hidden="true"></i></span>
+                <label for="buscaTurmaMob" class="visually-hidden">Buscar turma</label>
                 <input type="text" class="form-control" id="buscaTurmaMob" placeholder="Buscar turma..." oninput="filtrarTurmas()">
             </div>
         </div>
@@ -26,28 +28,30 @@ $paginaAtiva = 'categorias';
     </div>
 
     <?php if ($nivelUsuario === 0): ?>
-    <button class="btn btn-primary rounded-circle p-3 fs-2 d-flex align-items-center justify-content-center position-fixed shadow sgi-u-h-60px-w-60px-bottom-100px" data-bs-toggle="modal" data-bs-target="#exampleModal">
-        <i class="bi bi-plus-lg text-white"></i>
+    <button class="btn btn-primary rounded-circle p-3 fs-2 d-flex align-items-center justify-content-center position-fixed shadow sgi-u-h-60px-w-60px-bottom-100px" data-bs-toggle="modal" data-bs-target="#exampleModal" aria-label="Criar turma">
+        <i class="bi bi-plus-lg text-white" aria-hidden="true"></i>
     </button>
     <?php endif; ?>
 </main>
 
 <!-- Desktop -->
 <main class="d-none d-md-flex flex-column main-desktop-layout">
+    <h1 class="h3 fw-bold text-body mb-3">Turmas</h1>
     <div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-3">
         <div class="d-flex align-items-center gap-3">
             <a href="<?= \App\Shared\Http\Url::to('painel') ?>" id="btnVoltarCatDesk" class="btn btn-primary d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none" >
-                <i class="bi bi-arrow-left-circle fs-5"></i> <span id="nomeInterclasseCategoria">Interclasse</span>
+                <i class="bi bi-arrow-left-circle fs-5" aria-hidden="true"></i> <span id="nomeInterclasseCategoria">Interclasse</span>
             </a>
         </div>
         <div class="d-flex align-items-center gap-3 flex-shrink-0">
             <div class="input-group w-auto">
-                <span class="input-group-text"><i class="bi bi-search"></i></span>
+                <span class="input-group-text"><i class="bi bi-search" aria-hidden="true"></i></span>
+                <label for="buscaTurmaDesk" class="visually-hidden">Buscar turma</label>
                 <input type="text" class="form-control" id="buscaTurmaDesk" placeholder="Buscar turma..." oninput="filtrarTurmas()">
             </div>
             <?php if ($nivelUsuario === 0): ?>
             <button class="btn btn-primary d-inline-flex align-items-center gap-2 fw-bold px-3 py-2 border-0 rounded-3"  data-bs-toggle="modal" data-bs-target="#exampleModal">
-                <i class="bi bi-plus-lg"></i> Nova Turma
+                <i class="bi bi-plus-lg" aria-hidden="true"></i> Nova Turma
             </button>
             <?php endif; ?>
         </div>
@@ -60,8 +64,8 @@ $paginaAtiva = 'categorias';
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header border border-0">
-                <h1 class="modal-title fs-5 text-danger" id="exampleModalLabel">Criar nova Turma</h1>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <h2 class="modal-title fs-5 text-danger" id="exampleModalLabel">Criar nova Turma</h2>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar janela Criar nova turma"></button>
             </div>
             <div class="modal-body">
                 <form id="formNovaTurma">
@@ -92,8 +96,8 @@ $paginaAtiva = 'categorias';
                         <input type="file" id="arquivoUpload" class="d-none" accept=".pdf" onchange="mostrarNomeArquivo()">
                         <p class="small">Adicione aqui o pdf dos alunos da turma criada</p>
 
-                        <label for="arquivoUpload" class="">
-                            <i class="bi bi-upload"></i>
+                        <label for="arquivoUpload" class="btn btn-outline-primary">
+                            <i class="bi bi-upload" aria-hidden="true"></i> Selecionar PDF dos alunos
                         </label>
 
                         <span id="nomeArquivo" class="text-muted"></span>
@@ -109,25 +113,25 @@ $paginaAtiva = 'categorias';
     </div>
 </div>
 
-<div class="modal fade" id="modalEditarTurma" tabindex="-1" aria-hidden="true">
+<div class="modal fade" id="modalEditarTurma" tabindex="-1" aria-labelledby="modalEditarTurmaTitulo" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header border-0">
-                <h5 class="modal-title text-danger fw-bold">Editar Turma</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                <h5 class="modal-title text-danger fw-bold" id="modalEditarTurmaTitulo">Editar turma</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar janela Editar turma"></button>
             </div>
             <div class="modal-body">
                 <form id="formEditarTurma">
                     <div class="mb-3">
-                        <label class="form-label">Nome da turma:</label>
+                        <label for="editNomeTurma" class="form-label">Nome da turma:</label>
                         <input type="text" class="form-control" id="editNomeTurma" required>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Nome fantasia:</label>
+                        <label for="editNomeFantasia" class="form-label">Nome fantasia:</label>
                         <input type="text" class="form-control" id="editNomeFantasia" placeholder="Ex: Lobos">
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Turno:</label>
+                        <label for="editTurnoTurma" class="form-label">Turno:</label>
                         <select class="form-select" id="editTurnoTurma">
                             <option value="">Selecione...</option>
                             <option value="Manhã">Manhã</option>
@@ -136,7 +140,7 @@ $paginaAtiva = 'categorias';
                         </select>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Categoria:</label>
+                        <label for="editCategoriaTurma" class="form-label">Categoria:</label>
                         <select class="form-select" id="editCategoriaTurma" required>
                             <option value="">Carregando...</option>
                         </select>
@@ -153,14 +157,14 @@ $paginaAtiva = 'categorias';
 </div>
 
 <!-- Modal de Exclusão -->
-<div class="modal fade" id="modalExcluirTurma" tabindex="-1" aria-hidden="true">
+<div class="modal fade" id="modalExcluirTurma" tabindex="-1" aria-labelledby="modalExcluirTurmaTitulo" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-sm">
         <div class="modal-content rounded-4" >
             <div class="modal-body text-center py-4">
                 <div class="rounded-circle bg-danger-subtle text-danger d-inline-flex align-items-center justify-content-center p-3 fs-3 mb-2">
-                    <i class="bi bi-exclamation-triangle"></i>
+                    <i class="bi bi-exclamation-triangle" aria-hidden="true"></i>
                 </div>
-                <h5 class="fw-bold mb-1">Excluir Turma</h5>
+                <h5 class="fw-bold mb-1" id="modalExcluirTurmaTitulo">Excluir turma</h5>
                 <p class="text-muted small mb-3">
                     Tem certeza que deseja excluir <strong class="text-danger" id="excluirTurmaNome"></strong>?
                     <br>Esta ação não pode ser desfeita.

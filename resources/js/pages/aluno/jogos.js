@@ -8,6 +8,9 @@ window.SGIPage.mount("aluno/jogos", function (pageConfig, pageScope) {
     let filtroCategoria = pageConfig.value2;
     let anoInterclasse = new Date().getFullYear();
     let idInterclasse = null;
+    let invocadorDetalhesJogo = null;
+    let carregandoJogos = false;
+    let jogosCarregados = false;
 
     // Função de segurança para escapar HTML
     function esc(s) { const d = document.createElement('div'); d.textContent = s == null ? '' : String(s); return d.innerHTML; }
@@ -109,15 +112,29 @@ window.SGIPage.mount("aluno/jogos", function (pageConfig, pageScope) {
 
     async function inicializarJogos() {
         const container = document.getElementById('listaJogos');
+        if (!container || carregandoJogos) return;
+        carregandoJogos = true;
+        if (!jogosCarregados) {
+            container.innerHTML = '<div class="col-12 text-center text-body-secondary py-5" role="status"><span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>Carregando jogos…</div>';
+        }
 
         try {
             // 1. Descobrir o Interclasse Ativo
             const resInter = await fetch('/api/v1/edicoes?regulamento=true');
+            if (!resInter.ok) throw new Error('Não foi possível carregar as edições.');
             const dataInter = await resInter.json();
-            const listaInter = Array.isArray(dataInter) ? dataInter : [dataInter];
+            if (!Array.isArray(dataInter) || !dataInter.every(edicao =>
+                edicao && typeof edicao === 'object' && !Array.isArray(edicao)
+                && edicao.id_interclasse != null && edicao.status_interclasse != null
+            )) {
+                throw new Error('Não foi possível carregar as edições.');
+            }
+            const listaInter = dataInter;
             const ativo = listaInter.find(i => String(i.status_interclasse) === '1');
 
             if (!ativo) {
+                todosOsJogos = [];
+                jogosCarregados = true;
                 container.innerHTML = '<div class="col-12 text-center text-body-secondary py-5"><i class="bi bi-calendar-x display-5 d-block mb-2"></i>Nenhuma competição ativa no momento.</div>';
                 return;
             }
@@ -131,9 +148,14 @@ window.SGIPage.mount("aluno/jogos", function (pageConfig, pageScope) {
             // 2. Buscar as partidas da API (agora com data, horário, local e modalidade)
             const resJogos = await fetch(`/api/v1/partidas?id_interclasse=${idInterclasse}`);
 
-            if (!resJogos.ok) throw new Error('Erro ao buscar partidas');
+            if (!resJogos.ok) throw new Error('Não foi possível carregar os jogos.');
 
             const rawData = await resJogos.json();
+            if (!Array.isArray(rawData) || !rawData.every(row =>
+                row && typeof row === 'object' && !Array.isArray(row) && row.id_jogo != null
+            )) {
+                throw new Error('Não foi possível carregar os jogos.');
+            }
 
             // 3. AGRUPAR OS DADOS: A API retorna uma linha por time, então agrupamos pelo "id_jogo"
             const jogosAgrupados = {};
@@ -164,6 +186,7 @@ window.SGIPage.mount("aluno/jogos", function (pageConfig, pageScope) {
             });
 
             todosOsJogos = Object.values(jogosAgrupados);
+            jogosCarregados = true;
 
             if (todosOsJogos.length === 0) {
                 container.innerHTML = '<div class="col-12 text-center text-body-secondary py-5"><i class="bi bi-inbox display-5 d-block mb-2"></i>Nenhum jogo agendado ainda.</div>';
@@ -178,11 +201,21 @@ window.SGIPage.mount("aluno/jogos", function (pageConfig, pageScope) {
 
         } catch (error) {
             console.error("Erro ao carregar jogos:", error);
-            container.innerHTML = `
-                <div class="col-12 text-center text-danger py-5">
-                    <i class="bi bi-exclamation-triangle display-5 d-block mb-2"></i>
-                    Erro ao carregar a tabela de jogos. Tente novamente mais tarde.
-                </div>`;
+            const erro = document.createElement('div');
+            erro.className = 'col-12';
+            erro.dataset.sgiState = 'games-error';
+            erro.innerHTML = `<div class="alert alert-danger d-flex flex-column flex-sm-row align-items-sm-center justify-content-between gap-3" role="alert">
+                <span><i class="bi bi-exclamation-triangle me-2" aria-hidden="true"></i>Não foi possível carregar os jogos. Tente novamente.</span>
+                <button type="button" class="btn btn-outline-danger align-self-start align-self-sm-center" data-sgi-action="retry-games">Tentar novamente</button>
+            </div>`;
+            if (jogosCarregados) {
+                container.querySelector('[data-sgi-state="games-error"]')?.remove();
+                container.prepend(erro);
+            } else {
+                container.replaceChildren(erro);
+            }
+        } finally {
+            carregandoJogos = false;
         }
     }
 
@@ -201,6 +234,12 @@ window.SGIPage.mount("aluno/jogos", function (pageConfig, pageScope) {
 
         select.innerHTML = '<option value="all">Todas</option>' +
             modalidades.map(m => `<option value="${esc(m.id)}">${esc(m.nome)}</option>`).join('');
+        if (Array.from(select.options).some(option => String(option.value) === String(filtroModalidade))) {
+            select.value = String(filtroModalidade);
+        } else {
+            filtroModalidade = 'all';
+            select.value = 'all';
+        }
     }
 
     function preencherFiltroCategorias() {
@@ -271,8 +310,7 @@ window.SGIPage.mount("aluno/jogos", function (pageConfig, pageScope) {
 
             return `
                 <div class="col">
-                <article class="card h-100 border-0 shadow-sm p-3 p-lg-4" data-jogo-id="${esc(jogo.id_jogo)}"
-                     onclick="abrirDetalhesJogo(this)" role="button" tabindex="0">
+                <article class="card h-100 border-0 shadow-sm p-3 p-lg-4" data-jogo-id="${esc(jogo.id_jogo)}">
                     <div class="d-flex justify-content-between align-items-start gap-3">
                         <div class="d-flex flex-wrap gap-3 small text-body-secondary">${metaInfo}</div>
                         <span class="badge rounded-pill ${status.classe}">${dot}${esc(status.texto)}</span>
@@ -302,6 +340,13 @@ window.SGIPage.mount("aluno/jogos", function (pageConfig, pageScope) {
                             <span class="fw-semibold text-truncate w-100">${esc(eqB.nome)}</span>
                         </div>
                     </div>
+
+                    <div class="d-flex justify-content-end mt-3">
+                        <button type="button" class="btn btn-outline-primary d-inline-flex align-items-center sgi-jogos-detalhes-action"
+                            data-sgi-action="view-game" data-jogo-id="${esc(jogo.id_jogo)}">
+                            <i class="bi bi-eye me-1" aria-hidden="true"></i>Ver detalhes do jogo
+                        </button>
+                    </div>
                 </article>
                 </div>
             `;
@@ -324,7 +369,8 @@ window.SGIPage.mount("aluno/jogos", function (pageConfig, pageScope) {
                 Carregando detalhes...
             </div>`;
 
-        const modal = new bootstrap.Modal(document.getElementById('modalModalidade'));
+        if (btn.dataset.sgiAction !== 'retry-game-details') invocadorDetalhesJogo = btn;
+        const modal = bootstrap.Modal.getOrCreateInstance(document.getElementById('modalModalidade'));
         modal.show();
 
         if (!jogo) {
@@ -342,22 +388,39 @@ window.SGIPage.mount("aluno/jogos", function (pageConfig, pageScope) {
                 fetch(`/api/v1/artilheiros?id_jogo=${idJogo}&ano=${anoInterclasse}`)
             ]);
 
-            const partidas = await resPartidas.json();
-            const destaques = await resDestaques.json();
+            if (!resPartidas.ok) throw new Error('Não foi possível carregar os detalhes da partida.');
 
-            corpo.innerHTML = montarHTMLResumoJogo(jogo, partidas, destaques);
-            inicializarAcordeoes();
+            const partidas = await resPartidas.json();
+            let destaques = [];
+            let destaquesBloqueados = false;
+            if (resDestaques.status === 403) {
+                const restricao = await resDestaques.json();
+                destaquesBloqueados = restricao?.success === false
+                    && typeof restricao.message === 'string'
+                    && /artilharia.*liberada após a premiação/i.test(restricao.message);
+                if (!destaquesBloqueados) throw new Error('Não foi possível carregar os detalhes da partida.');
+            } else {
+                if (!resDestaques.ok) throw new Error('Não foi possível carregar os detalhes da partida.');
+                destaques = await resDestaques.json();
+            }
+            if (!Array.isArray(partidas) || !partidas.every(row => row && typeof row === 'object' && !Array.isArray(row))
+                || !Array.isArray(destaques) || !destaques.every(row => row && typeof row === 'object' && !Array.isArray(row))) {
+                throw new Error('Não foi possível carregar os detalhes da partida.');
+            }
+
+            corpo.innerHTML = montarHTMLResumoJogo(jogo, partidas, destaques, destaquesBloqueados);
         } catch (e) {
             console.error('Erro ao carregar resumo da partida:', e);
             corpo.innerHTML = `
-                <div class="text-center text-body-secondary py-4">
+                <div class="text-center text-body-secondary py-4" role="alert">
                     <i class="bi bi-exclamation-triangle display-6 d-block mb-2 text-danger"></i>
-                    Erro ao carregar o resumo da partida. Tente novamente.
+                    Não foi possível carregar o resumo da partida.
+                    <button type="button" class="btn btn-outline-primary d-block mx-auto mt-3" data-sgi-action="retry-game-details" data-jogo-id="${esc(idJogo)}">Tentar novamente</button>
                 </div>`;
         }
     }
 
-    function montarHTMLResumoJogo(jogo, partidas, destaques) {
+    function montarHTMLResumoJogo(jogo, partidas, destaques, destaquesBloqueados = false) {
         const status = badgeStatus(jogo.status_jogo);
         const isFinalizado = String(jogo.status_jogo).toLowerCase() === 'concluido';
 
@@ -401,7 +464,9 @@ window.SGIPage.mount("aluno/jogos", function (pageConfig, pageScope) {
 
         const artilheiros = Array.isArray(destaques) ? destaques : [];
         const artilheiroTop = artilheiros[0];
-        if (artilheiroTop) {
+        if (destaquesBloqueados) {
+            html += '<div class="text-center text-body-secondary py-3"><i class="bi bi-lock d-block mb-1" aria-hidden="true"></i>Artilharia liberada após a premiação.</div>';
+        } else if (artilheiroTop) {
             const temFotoReal = artilheiroTop.foto_usuario && !/^default\.(jpg|jpeg|png|gif|webp)$/i.test(artilheiroTop.foto_usuario);
             const foto = temFotoReal ? `${APP_BASE}/uploads/fotosUsuarios/${encodeURIComponent(artilheiroTop.foto_usuario)}` : '';
             html += `
@@ -514,36 +579,46 @@ window.SGIPage.mount("aluno/jogos", function (pageConfig, pageScope) {
         return fases;
     }
 
-    // Carrega os membros quando um acordeão é aberto
-    function inicializarAcordeoes() {
-        document.querySelectorAll('#accordionEquipes .accordion-item').forEach(item => {
-            pageScope.listen(item.querySelector('.accordion-collapse'), 'show.bs.collapse', () => {
-                const corpo = item.querySelector('.accordion-body');
-                if (!corpo.dataset.carregado) {
-                    carregarMembrosEquipe(item, corpo);
-                }
-            });
-        });
-    }
-
     async function carregarMembrosEquipe(item, corpo) {
-        if (corpo.dataset.carregado) return;
-        corpo.dataset.carregado = '1';
+        if (corpo.dataset.carregado || corpo.dataset.carregando) return;
+        const retentativa = corpo.dataset.falhaCarregamento === '1';
+        let mensagemErro = 'Não foi possível carregar integrantes.';
+        corpo.dataset.carregando = '1';
+        corpo.innerHTML = `<div class="text-body-secondary small py-2" role="status">
+            <span class="spinner-border spinner-border-sm me-1" aria-hidden="true"></span>Carregando integrantes…
+        </div>`;
 
         const target = item.querySelector('.accordion-button').getAttribute('data-bs-target');
         const idEquipe = target.replace('#equipe-', '');
 
         try {
+            if (retentativa) {
+                const offline = window.SGIOffline;
+                const servidorDisponivel = offline && typeof offline.checkServer === 'function'
+                    ? await offline.checkServer(true)
+                    : false;
+                if (!servidorDisponivel) {
+                    mensagemErro = 'Servidor indisponível. Verifique a conexão e tente novamente.';
+                    throw new Error(mensagemErro);
+                }
+            }
+
             const res = await fetch(`/api/v1/equipes?id_equipe=${idEquipe}`);
             const membros = await res.json();
-            const lista = Array.isArray(membros) ? membros : [];
+            if (!res.ok || !Array.isArray(membros) || !membros.every(membro =>
+                membro && typeof membro === 'object' && !Array.isArray(membro) && membro.id_usuario != null
+            )) {
+                throw new Error('Não foi possível carregar integrantes.');
+            }
+            corpo.dataset.carregado = '1';
+            delete corpo.dataset.falhaCarregamento;
 
-            if (lista.length === 0) {
+            if (membros.length === 0) {
                 corpo.innerHTML = '<div class="text-body-secondary small py-1">Nenhum integrante vinculado a esta equipe.</div>';
                 return;
             }
 
-            corpo.innerHTML = lista.map(m => `
+            corpo.innerHTML = membros.map(m => `
                 <div class="d-flex align-items-center gap-2 py-2">
                     <i class="bi bi-person-circle fs-5 text-body-secondary"></i>
                     <span>${esc(m.nome_usuario)}</span>
@@ -551,9 +626,71 @@ window.SGIPage.mount("aluno/jogos", function (pageConfig, pageScope) {
             `).join('');
         } catch (e) {
             console.error('Erro ao carregar integrantes:', e);
-            corpo.innerHTML = '<div class="text-danger small py-2">Erro ao carregar integrantes.</div>';
+            delete corpo.dataset.carregado;
+            corpo.dataset.falhaCarregamento = '1';
+            corpo.innerHTML = `<div class="text-danger small py-2" role="alert">
+                <p class="mb-2">${esc(mensagemErro)}</p>
+                <button type="button" class="btn btn-sm btn-outline-danger" data-sgi-action="retry-team-members">Tentar novamente</button>
+            </div>`;
+        } finally {
+            delete corpo.dataset.carregando;
         }
     }
+
+    // A ação é um botão nativo, então Enter e Espaço disparam click. A lista é
+    // renderizada novamente ao filtrar; a delegação mantém um único listener.
+    const listaJogos = document.getElementById('listaJogos');
+    pageScope.listen(listaJogos, 'click', (event) => {
+        const retry = event.target.closest('[data-sgi-action="retry-games"]');
+        if (retry) {
+            inicializarJogos().then(() => {
+                const proximoRetry = listaJogos.querySelector('[data-sgi-action="retry-games"]');
+                const alvoFoco = proximoRetry || document.getElementById('filtroModalidade');
+                alvoFoco?.focus({ preventScroll: true });
+            });
+            return;
+        }
+        const botao = event.target.closest('[data-sgi-action="view-game"]');
+        if (!botao || !listaJogos.contains(botao)) return;
+        abrirDetalhesJogo(botao);
+    });
+
+    const modalDetalhes = document.getElementById('modalModalidade');
+    pageScope.listen(modalDetalhes, 'show.bs.collapse', (event) => {
+        const painel = event.target;
+        if (!(painel instanceof HTMLElement) || !painel.matches('#accordionEquipes .accordion-collapse')) return;
+        const item = painel.closest('.accordion-item');
+        const corpo = item?.querySelector('.accordion-body');
+        if (item && corpo && !corpo.dataset.carregado && !corpo.dataset.carregando) {
+            carregarMembrosEquipe(item, corpo);
+        }
+    });
+    pageScope.listen(modalDetalhes, 'click', async (event) => {
+        const acao = event.target.closest('[data-sgi-action]');
+        if (acao?.dataset.sgiAction === 'retry-team-members') {
+            const item = acao.closest('.accordion-item');
+            const corpo = item?.querySelector('.accordion-body');
+            if (item && corpo) {
+                await carregarMembrosEquipe(item, corpo);
+                const novoRetry = corpo.querySelector('[data-sgi-action="retry-team-members"]');
+                const alvoFoco = novoRetry || item.querySelector('.accordion-button');
+                alvoFoco?.focus({ preventScroll: true });
+            }
+        } else if (acao?.dataset.sgiAction === 'retry-game-details') {
+            abrirDetalhesJogo(acao);
+        }
+    });
+
+    pageScope.listen(document.getElementById('modalModalidade'), 'hidden.bs.modal', () => {
+        const botao = invocadorDetalhesJogo;
+        invocadorDetalhesJogo = null;
+        if (!botao || !botao.isConnected) return;
+        try {
+            botao.focus({ preventScroll: true });
+        } catch (_) {
+            botao.focus();
+        }
+    });
 
     // Filtro de status
     document.querySelectorAll('.filtro-btn').forEach(btn => {
@@ -583,5 +720,5 @@ window.SGIPage.mount("aluno/jogos", function (pageConfig, pageScope) {
 
     window.SGIPage.ready( inicializarJogos);
 
-return {esc, iconeModalidade, abreviarTurma, formatarData, formatarHora, traduzirNomeJogo, badgeStatus, inicializarJogos, preencherFiltroModalidades, preencherFiltroCategorias, renderizarJogos, abrirDetalhesJogo, montarHTMLResumoJogo, agruparFases, inicializarAcordeoes, carregarMembrosEquipe};
+    return {esc, iconeModalidade, abreviarTurma, formatarData, formatarHora, traduzirNomeJogo, badgeStatus, inicializarJogos, preencherFiltroModalidades, preencherFiltroCategorias, renderizarJogos, abrirDetalhesJogo, montarHTMLResumoJogo, agruparFases, carregarMembrosEquipe};
 });

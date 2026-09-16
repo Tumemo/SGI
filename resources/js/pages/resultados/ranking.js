@@ -6,6 +6,27 @@ window.SGIPage.mount("resultados/ranking", function (pageConfig, pageScope) {
 
     let dadosAPI = [];
     let categoriasUnicas = [];
+    let categoriaSelecionada = null;
+    let carregandoRanking = false;
+
+    async function lerRespostaJson(response, descricao) {
+        const contentType = response.headers.get('content-type') || '';
+        if (!/application\/json|\+json/i.test(contentType)) {
+            throw new Error(`${descricao}: resposta não é JSON.`);
+        }
+
+        try {
+            return await response.json();
+        } catch (_) {
+            throw new Error(`${descricao}: resposta JSON inválida.`);
+        }
+    }
+
+    function limparMensagens() {
+        [document.getElementById('msgMob'), document.getElementById('msgDesk')]
+            .filter(Boolean)
+            .forEach((elemento) => { elemento.innerHTML = ''; });
+    }
 
     async function init() {
         if (!IS_ADMIN) {
@@ -42,18 +63,32 @@ window.SGIPage.mount("resultados/ranking", function (pageConfig, pageScope) {
     }
 
     async function carregarDados() {
+        if (carregandoRanking) return;
+        carregandoRanking = true;
+
         if (!IS_ADMIN) {
             bloquearAcessoRanking();
+            carregandoRanking = false;
             return;
         }
 
         const loading = '<div class="text-center py-5 text-body-secondary"><div class="spinner-border text-danger" role="status"><span class="visually-hidden">Carregando ranking...</span></div></div>';
-        document.getElementById('listaMob').innerHTML = loading;
-        document.getElementById('listaDesk').innerHTML = loading;
+        if (dadosAPI.length === 0) {
+            document.getElementById('listaMob').innerHTML = loading;
+            document.getElementById('listaDesk').innerHTML = loading;
+        }
+        limparMensagens();
 
         try {
             const response = await fetch(`/api/v1/ranking?id_interclasse=${idInterclasse}`);
-            const data = await response.json();
+            const data = await lerRespostaJson(response, 'Consulta do ranking');
+
+            if (!response.ok) {
+                throw new Error(`Consulta do ranking: HTTP ${response.status}`);
+            }
+            if (data && data.success === false) {
+                throw new Error('Consulta do ranking recusada.');
+            }
 
             // Trata o bloqueio retornado de forma limpa pela API
             if (data && data.bloqueado) {
@@ -61,28 +96,82 @@ window.SGIPage.mount("resultados/ranking", function (pageConfig, pageScope) {
                 return;
             }
 
-            if (!data || !Array.isArray(data) || data.length === 0) {
+            if (!Array.isArray(data)) {
+                throw new Error('Consulta do ranking: formato inválido.');
+            }
+
+            if (data.length === 0) {
+                dadosAPI = [];
+                categoriasUnicas = [];
+                categoriaSelecionada = null;
+                renderizarFiltros();
+                document.getElementById('listaMob').innerHTML = '';
+                document.getElementById('listaDesk').innerHTML = '';
+                document.getElementById('totalTurmas').innerText = '0 Turmas';
+                const totalDesktop = document.getElementById('totalTurmasDesk');
+                if (totalDesktop) totalDesktop.innerText = '0 Turmas';
                 exibirMensagem("Nenhum dado encontrado para este interclasse.", "warning");
                 return;
             }
 
             dadosAPI = data;
+            ['nomeInterclasseMob', 'nomeInterclasseDesk'].forEach((id) => {
+                const elemento = document.getElementById(id);
+                if (elemento) elemento.textContent = data[0].nome_interclasse || '';
+            });
 
-            const catRes = await fetch(`/api/v1/categorias?id_interclasse=${idInterclasse}`);
-            const catData = await catRes.json();
-            categoriasUnicas = Array.isArray(catData) ? catData.map(c => c.nome_categoria) : [];
+            try {
+                const catRes = await fetch(`/api/v1/categorias?id_interclasse=${idInterclasse}`);
+                const catData = await lerRespostaJson(catRes, 'Consulta de categorias');
+                if (!catRes.ok) {
+                    throw new Error(`Consulta de categorias: HTTP ${catRes.status}`);
+                }
+                if (!Array.isArray(catData)) {
+                    throw new Error('Consulta de categorias: formato inválido.');
+                }
+                categoriasUnicas = [...new Set(catData.map(c => c.nome_categoria).filter(Boolean))];
+            } catch (error) {
+                console.error('Erro ao carregar categorias do ranking:', error);
+                categoriasUnicas = [...new Set(data.map(t => t.nome_categoria).filter(Boolean))];
+                renderizarFiltros();
+                if (categoriasUnicas.length > 0) {
+                    filtrarCategoria(categoriasUnicas.includes(categoriaSelecionada) ? categoriaSelecionada : categoriasUnicas[0]);
+                } else {
+                    categoriaSelecionada = null;
+                    document.getElementById('totalTurmas').innerText = `${data.length} Turmas`;
+                    const totalDesktop = document.getElementById('totalTurmasDesk');
+                    if (totalDesktop) totalDesktop.innerText = `${data.length} Turmas`;
+                    renderizarRanking(data);
+                }
+                exibirMensagem('Os dados principais estão disponíveis, mas as categorias não puderam ser carregadas.', 'warning', true);
+                return;
+            }
 
-            document.querySelectorAll('#nomeInterclasse').forEach(el => el.innerText = data[0].nome_interclasse);
             document.getElementById('totalTurmas').innerText = `${data.length} Turmas`;
             const ttd = document.getElementById('totalTurmasDesk');
             if (ttd) ttd.innerText = `${data.length} Turmas`;
 
             renderizarFiltros();
-            filtrarCategoria(categoriasUnicas[0]);
+            const categoriaInicial = categoriasUnicas.includes(categoriaSelecionada)
+                ? categoriaSelecionada
+                : categoriasUnicas[0];
+            if (categoriaInicial) {
+                filtrarCategoria(categoriaInicial);
+            } else {
+                categoriaSelecionada = null;
+                renderizarRanking(data);
+            }
+            limparMensagens();
 
         } catch (error) {
             console.error("Erro:", error);
-            exibirMensagem("Erro ao conectar com o servidor.", "danger");
+            if (dadosAPI.length === 0) {
+                document.getElementById('listaMob').innerHTML = '';
+                document.getElementById('listaDesk').innerHTML = '';
+            }
+            exibirMensagem("Não foi possível carregar o ranking. Tente novamente.", "danger", true);
+        } finally {
+            carregandoRanking = false;
         }
     }
 
@@ -108,13 +197,16 @@ window.SGIPage.mount("resultados/ranking", function (pageConfig, pageScope) {
     }
 
     function filtrarCategoria(categoria) {
+        categoriaSelecionada = categoria || null;
         document.querySelectorAll('.btn-categoria').forEach(b => {
             const selected = b.textContent.trim() === categoria;
             b.classList.toggle('active', selected);
             b.setAttribute('aria-pressed', selected ? 'true' : 'false');
         });
 
-        const turmasFiltradas = dadosAPI.filter(t => t.nome_categoria === categoria);
+        const turmasFiltradas = categoria
+            ? dadosAPI.filter(t => t.nome_categoria === categoria)
+            : dadosAPI;
         document.getElementById('totalTurmas').innerText = `${turmasFiltradas.length} Turmas`;
         const ttd = document.getElementById('totalTurmasDesk');
         if (ttd) ttd.innerText = `${turmasFiltradas.length} Turmas`;
@@ -204,8 +296,11 @@ window.SGIPage.mount("resultados/ranking", function (pageConfig, pageScope) {
         cDesk.innerHTML = htmlRanking;
     }
 
-    function exibirMensagem(texto, tipo) {
-        const alerta = `<div class="alert alert-${tipo} text-center">${texto}</div>`;
+    function exibirMensagem(texto, tipo, permitirNovaTentativa = false) {
+        const botao = permitirNovaTentativa
+            ? '<button type="button" class="btn btn-outline-danger btn-sm mt-2" data-sgi-action="retry-ranking">Tentar novamente</button>'
+            : '';
+        const alerta = `<div class="alert alert-${tipo} text-center" role="${tipo === 'danger' ? 'alert' : 'status'}" aria-live="${tipo === 'danger' ? 'assertive' : 'polite'}">${texto}${botao}</div>`;
         document.getElementById('msgMob').innerHTML = alerta;
         document.getElementById('msgDesk').innerHTML = alerta;
     }
@@ -214,6 +309,15 @@ window.SGIPage.mount("resultados/ranking", function (pageConfig, pageScope) {
 
     function esc(s) { const d = document.createElement('div'); d.textContent = s == null ? '' : String(s); return d.innerHTML; }
     function jsEsc(s) { return String(s == null ? '' : s).replace(/'/g, "\\'").replace(/"/g, '&quot;'); }
+
+    let historicoTrigger = null;
+    const modalHistoricoElement = document.getElementById('modalHistoricoTurma');
+    pageScope.listen(modalHistoricoElement, 'hidden.bs.modal', () => {
+        if (historicoTrigger?.isConnected && !historicoTrigger.disabled && historicoTrigger.getClientRects().length) {
+            historicoTrigger.focus();
+        }
+        historicoTrigger = null;
+    });
 
     function vincularEventos() {
         const filtros = [document.getElementById('filtrosMob'), document.getElementById('filtrosDesk')];
@@ -224,8 +328,16 @@ window.SGIPage.mount("resultados/ranking", function (pageConfig, pageScope) {
         }));
         listas.forEach((container) => pageScope.listen(container, 'click', (event) => {
             const button = event.target.closest('[data-sgi-action="history-ranking"]');
-            if (button) abrirHistorico(button.dataset.idTurma, button.dataset.nomeTurma);
+            if (button) {
+                historicoTrigger = button;
+                abrirHistorico(button.dataset.idTurma, button.dataset.nomeTurma);
+            }
         }));
+        [document.getElementById('msgMob'), document.getElementById('msgDesk')].forEach((container) => {
+            pageScope.listen(container, 'click', (event) => {
+                if (event.target.closest('[data-sgi-action="retry-ranking"]')) carregarDados();
+            });
+        });
     }
 
     function fmtData(s) {

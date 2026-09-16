@@ -1,8 +1,22 @@
 <?php
 $mostrarVoltar = $mostrarVoltar ?? true;
-$urlVoltar = $urlVoltar ?? \App\Shared\Http\Url::to('aluno/inicio');
 $titulo = $titulo ?? '';
+$tagTituloCompacto = ($tagTituloCompacto ?? 'h2') === 'h1' ? 'h1' : 'h2';
 $nivelUsuario = (int)($_SESSION['nivel'] ?? -1);
+$rotaInicialUsuario = match ($nivelUsuario) {
+    0, 1 => 'edicoes',
+    2 => 'painel',
+    default => 'login',
+};
+$urlVoltar = $urlVoltar ?? \App\Shared\Http\Url::to($rotaInicialUsuario);
+$idInterclasseHeader = filter_var($_GET['id'] ?? ($nivelUsuario === 2 ? ($_SESSION['id_interclasse'] ?? null) : null), FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]);
+if ($idInterclasseHeader !== false && $idInterclasseHeader !== null) {
+    $parametrosUrlVoltar = [];
+    parse_str((string) parse_url($urlVoltar, PHP_URL_QUERY), $parametrosUrlVoltar);
+    if (!isset($parametrosUrlVoltar['id'])) {
+        $urlVoltar .= (str_contains($urlVoltar, '?') ? '&' : '?') . http_build_query(['id' => (int) $idInterclasseHeader]);
+    }
+}
 $compacteCabecalho = (bool)($compacteCabecalho ?? false);
 ?>
 <section class="d-md-none position-relative sgi-u-h-120px<?= $compacteCabecalho ? ' sgi-compact-header' : '' ?>" >
@@ -11,7 +25,7 @@ $compacteCabecalho = (bool)($compacteCabecalho ?? false);
     <?php endif; ?>
     <img src="<?= \App\Shared\Http\Assets::url('images/banner-global.png') ?>" alt="Banner" class="w-100 h-100 object-fit-cover" >
     <?php if (!empty($titulo)): ?>
-    <h2 class="position-absolute top-50 start-50 translate-middle text-white m-0 fw-bold"><?= htmlspecialchars($titulo) ?></h2>
+    <<?= $tagTituloCompacto ?> class="position-absolute top-50 start-50 translate-middle text-white m-0 fw-bold sgi-mobile-header-title"><?= htmlspecialchars($titulo) ?></<?= $tagTituloCompacto ?>>
     <?php endif; ?>
 </section>
 <script>
@@ -20,6 +34,8 @@ window.SGIInterclasse = (() => {
     const apiBase = (window.SGI_API_BASE || (basePath + '/api/v1/')).replace(/\/?$/, '/');
     const to = (path) => basePath + '/' + String(path).replace(/^\//, '');
     const nivel = <?= $nivelUsuario ?>;
+    const metaTituloPagina = document.querySelector('meta[name="sgi-page-title"]');
+    const tituloPagina = String(metaTituloPagina && metaTituloPagina.content || 'SGI').trim();
 
     const endpoints = {
         home: to('aluno/inicio'),
@@ -85,8 +101,15 @@ window.SGIInterclasse = (() => {
         return base + separador + 'id=' + idInterclasse;
     };
 
-    const updatePageTitle = () => {
-        document.title = 'SGI';
+    const updatePageTitle = (nomeInterclasse) => {
+        const nomeEdicao = String(nomeInterclasse || '').trim();
+        if (tituloPagina === 'SGI') {
+            document.title = nomeEdicao ? nomeEdicao + ' | SGI' : 'SGI';
+            return;
+        }
+        document.title = nomeEdicao && nomeEdicao !== tituloPagina
+            ? tituloPagina + ' — ' + nomeEdicao + ' | SGI'
+            : tituloPagina + ' | SGI';
     };
 
     const resolveId = async () => {

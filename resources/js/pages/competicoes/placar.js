@@ -71,6 +71,34 @@ window.SGIPage.mount("competicoes/placar", function (pageConfig, pageScope) {
     var __sgiPlacarCiclo = 0;
     var relogioOffsetMs = 0;
     var Cronometro = window.SGICronometro;
+    var __sgiStatusAnnounceTimer = null;
+    var __sgiSyncStatusGeneration = 0;
+
+    function anunciarStatusPlacar(mensagem) {
+        var announcer = document.getElementById('placar-status-announcer');
+        if (!announcer) return;
+        if (__sgiStatusAnnounceTimer) clearTimeout(__sgiStatusAnnounceTimer);
+        __sgiStatusAnnounceTimer = null;
+        var texto = String(mensagem || '');
+        if (announcer.textContent !== texto) {
+            announcer.textContent = texto;
+            return;
+        }
+        announcer.textContent = '';
+        __sgiStatusAnnounceTimer = setTimeout(function () {
+            __sgiStatusAnnounceTimer = null;
+            if (announcer.isConnected) announcer.textContent = texto;
+        }, 25);
+    }
+
+    function definirStatusSincronizacao(mensagem) {
+        var status = document.getElementById('mc-sync-status');
+        if (!status) return;
+        var proximo = String(mensagem || '');
+        if (status.textContent === proximo) return;
+        status.textContent = proximo;
+        status.hidden = !proximo;
+    }
 
     function resolverTipoCompeticao(jogo) {
         if (!jogo) return null;
@@ -95,6 +123,11 @@ window.SGIPage.mount("competicoes/placar", function (pageConfig, pageScope) {
         if (window.__SGI_PLACAR_SYNC_UNSUB__) {
             try { window.__SGI_PLACAR_SYNC_UNSUB__(); } catch (_) {}
             window.__SGI_PLACAR_SYNC_UNSUB__ = null;
+        }
+        __sgiSyncStatusGeneration++;
+        if (__sgiStatusAnnounceTimer) {
+            clearTimeout(__sgiStatusAnnounceTimer);
+            __sgiStatusAnnounceTimer = null;
         }
         if (__sgiPlacarClickHandler) {
             document.removeEventListener('click', __sgiPlacarClickHandler);
@@ -174,6 +207,10 @@ window.SGIPage.mount("competicoes/placar", function (pageConfig, pageScope) {
         var d = document.createElement('div');
         d.textContent = s == null ? '' : String(s);
         return d.innerHTML;
+    }
+
+    function escAttr(s) {
+        return esc(s).replace(/"/g, '&quot;').replace(/'/g, '&#39;');
     }
 
     async function fetchJson(url, opts) {
@@ -298,20 +335,38 @@ window.SGIPage.mount("competicoes/placar", function (pageConfig, pageScope) {
     }
 
     function bloquearPontuacao() {
+        if (tempoEsgotado) return;
         tempoEsgotado = true;
         pararTimer();
         atualizarDisplayTimer();
         tocarAlertaSonoro();
+        atualizarBloqueioPontuacao(true);
+        anunciarStatusPlacar('Tempo esgotado. Pontuação bloqueada.');
         document.querySelectorAll('.btn-score-plus, .btn-score-minus').forEach(function(b) {
             b.disabled = true;
         });
-        var grid = document.getElementById('placar-grid');
-        if (grid) grid.classList.add('score-blocked');
 
         // Mostrar botões de tempo extra se o jogo não estiver encerrado
         var st = estadoJogo.status_jogo;
         if (st === 'Iniciado' || st === 'Pausado') {
             mostrarBotoesTempoExtra();
+        }
+    }
+
+    function atualizarBloqueioPontuacao(bloqueado) {
+        var grid = document.getElementById('placar-grid');
+        if (!grid) return;
+        grid.classList.toggle('score-blocked', !!bloqueado);
+        var aviso = grid.querySelector('#mc-score-blocked-message');
+        if (bloqueado && !aviso) {
+            aviso = document.createElement('div');
+            aviso.id = 'mc-score-blocked-message';
+            aviso.className = 'mc-score-blocked-message';
+            aviso.setAttribute('aria-hidden', 'true');
+            aviso.textContent = 'Tempo esgotado';
+            grid.appendChild(aviso);
+        } else if (!bloqueado && aviso) {
+            aviso.remove();
         }
     }
 
@@ -339,6 +394,11 @@ window.SGIPage.mount("competicoes/placar", function (pageConfig, pageScope) {
         input.max = '30';
         input.placeholder = 'min';
         input.className = 'form-control form-control-sm text-center w-auto';
+        var inputLabel = document.createElement('label');
+        inputLabel.className = 'visually-hidden';
+        inputLabel.htmlFor = input.id;
+        inputLabel.textContent = 'Tempo extra, em minutos';
+        inputGroup.appendChild(inputLabel);
         pageScope.listen(input, 'keydown', function(e) {
             if (e.key === 'Enter') { btn.click(); }
         });
@@ -354,20 +414,29 @@ window.SGIPage.mount("competicoes/placar", function (pageConfig, pageScope) {
         btn.className = 'mc-action-btn mc-action-btn--start btn btn-primary btn-sm d-inline-flex align-items-center gap-2';
         btn.innerHTML = '<i class="bi bi-plus-circle me-1"></i>Adicionar';
         pageScope.listen(btn, 'click', function() {
-            var val = parseInt(input.value, 10);
-            if (!val || val < 1) {
+            var val = input.valueAsNumber;
+            if (!Number.isInteger(val) || val < 1 || val > 30) {
                 input.classList.add('is-invalid');
                 input.setAttribute('aria-invalid', 'true');
+                input.setAttribute('aria-describedby', overtimeError.id);
+                overtimeError.classList.remove('d-none');
                 input.focus();
                 return;
             }
             input.classList.remove('is-invalid');
             input.removeAttribute('aria-invalid');
+            input.removeAttribute('aria-describedby');
+            overtimeError.classList.add('d-none');
             adicionarTempoExtra(val * 60);
         });
         inputGroup.appendChild(btn);
 
         container.appendChild(inputGroup);
+        var overtimeError = document.createElement('small');
+        overtimeError.id = 'mc-overtime-error';
+        overtimeError.className = 'text-danger small d-none';
+        overtimeError.textContent = 'Informe um tempo extra de 1 a 30 minutos.';
+        container.appendChild(overtimeError);
         acoes.appendChild(container);
         input.focus();
     }
@@ -395,8 +464,7 @@ window.SGIPage.mount("competicoes/placar", function (pageConfig, pageScope) {
             tempoEsgotado = false;
 
             // Remover bloqueio visual
-            var grid = document.getElementById('placar-grid');
-            if (grid) grid.classList.remove('score-blocked');
+            atualizarBloqueioPontuacao(false);
             document.querySelectorAll('.btn-score-plus, .btn-score-minus').forEach(function(b) {
                 b.disabled = false;
             });
@@ -426,17 +494,13 @@ window.SGIPage.mount("competicoes/placar", function (pageConfig, pageScope) {
         if (estadoJogo.status_jogo === 'Iniciado') tempoRestante = saldoCronometroAgora();
 
         if (tempoRestante <= 0) {
-            tempoEsgotado = true;
-            atualizarDisplayTimer();
-            // Se jogo em andamento, mostrar botões de tempo extra
             var st = estadoJogo.status_jogo;
             if (st === 'Iniciado' || st === 'Pausado') {
-                document.querySelectorAll('.btn-score-plus, .btn-score-minus').forEach(function(b) {
-                    b.disabled = true;
-                });
-                var grid = document.getElementById('placar-grid');
-                if (grid) grid.classList.add('score-blocked');
-                mostrarBotoesTempoExtra();
+                tempoEsgotado = false;
+                bloquearPontuacao();
+            } else {
+                tempoEsgotado = true;
+                atualizarDisplayTimer();
             }
             return;
         }
@@ -479,6 +543,9 @@ window.SGIPage.mount("competicoes/placar", function (pageConfig, pageScope) {
             await persistirJogoLocal();
             renderTudo();
             iniciarTimerDisplay();
+            anunciarStatusPlacar(target === 'Pausado'
+                ? (response && response.offline ? 'Cronômetro pausado neste dispositivo, aguardando envio ao servidor.' : 'Cronômetro pausado.')
+                : (response && response.offline ? 'Cronômetro retomado neste dispositivo, aguardando envio ao servidor.' : 'Cronômetro retomado.'));
         } catch (e) {
             SGI.alert('Erro ao ' + (target === 'Pausado' ? 'pausar' : 'retomar') + ': ' + (e.message || 'Erro de conexão'));
         }
@@ -608,6 +675,9 @@ window.SGIPage.mount("competicoes/placar", function (pageConfig, pageScope) {
         aplicarEstadoCronometro(next, ajustarOffsetResposta(response));
         await persistirJogoLocal();
         renderTudo();
+        anunciarStatusPlacar(response && response.offline
+            ? 'Partida iniciada neste dispositivo, aguardando envio ao servidor.'
+            : 'Partida iniciada.');
         iniciarTimerDisplay();
     }
 
@@ -662,6 +732,7 @@ window.SGIPage.mount("competicoes/placar", function (pageConfig, pageScope) {
             estadoJogo.status_jogo = 'Concluido';
             pararTimer();
             await carregarDados();
+            anunciarStatusPlacar('Resultado confirmado pelo servidor.');
         } catch (e) {
             SGI.alert(e.message || 'Erro ao finalizar.');
         }
@@ -692,6 +763,15 @@ window.SGIPage.mount("competicoes/placar", function (pageConfig, pageScope) {
         estadoJogo.status_jogo = 'Concluido';
         pararTimer();
         renderTudo();
+        anunciarStatusPlacar('Resultado salvo neste dispositivo, aguardando envio ao servidor.');
+        if (window.SGIOffline && typeof window.SGIOffline.getPendingList === 'function') {
+            var ciclo = __sgiPlacarCiclo;
+            window.SGIOffline.getPendingList().then(function (items) {
+                if (placarContinuaAtivo(ciclo)) {
+                    atualizarStatusResultadoPendente(window.SGIOffline.getState(), filaDaPartida(items));
+                }
+            }).catch(function () {});
+        }
     }
 
     async function finalizarLocalmente(resultados) {
@@ -996,6 +1076,7 @@ window.SGIPage.mount("competicoes/placar", function (pageConfig, pageScope) {
                 String(Math.floor(duracaoJogo / 60)).padStart(2, '0') + ':' +
                 String(duracaoJogo % 60).padStart(2, '0') + '</div>';
             html += '<div class="d-flex align-items-center justify-content-center gap-3 mt-3">';
+            html += '<label class="visually-hidden" for="select-duracao">Duração do jogo</label>';
             html += '<select id="select-duracao" class="mc-duration-select form-select form-select-sm w-auto"' + (emAndamento ? ' disabled' : '') + '>' + selOpts + '</select>';
             if (emAndamento) {
                 html += '<button type="button" class="mc-pause-btn btn btn-outline-secondary btn-sm" id="btn-pausar">' + (pausado ? 'Retomar' : 'Pausar') + '</button>';
@@ -1010,20 +1091,22 @@ window.SGIPage.mount("competicoes/placar", function (pageConfig, pageScope) {
 
         partidasLista.forEach(function(p, idx) {
             var gols = Math.max(0, parseInt(p.resultado_partida, 10) || 0);
+            var nomeEquipeAtual = nomeEquipe(p);
+            var nomeEquipeSeguro = escAttr(nomeEquipeAtual);
             var possuiPontoAtivo = pontosLista.some(function (ponto) {
                 return String(ponto.equipes_id_equipe) === String(p.equipes_id_equipe)
                     && String(ponto.status_artilheiro || 'ativo') === 'ativo'
                     && Number(ponto.conta_no_placar == null ? 1 : ponto.conta_no_placar) === 1;
             });
             var btnMinus = readonly || !possuiPontoAtivo
-                ? '<button type="button" class="btn btn-outline-secondary btn-score btn-score-minus rounded-4 d-inline-flex align-items-center justify-content-center lh-1 flex-shrink-0" disabled><i class="bi bi-dash-lg"></i></button>'
-                : '<button type="button" class="btn btn-outline-secondary btn-score btn-score-minus rounded-4 d-inline-flex align-items-center justify-content-center lh-1 flex-shrink-0" data-idx="' + idx + '"><i class="bi bi-dash-lg"></i></button>';
+                ? '<button type="button" class="btn btn-outline-secondary btn-score btn-score-minus rounded-4 d-inline-flex align-items-center justify-content-center lh-1 flex-shrink-0" aria-label="Anular último ponto de ' + nomeEquipeSeguro + '" disabled><i class="bi bi-dash-lg" aria-hidden="true"></i></button>'
+                : '<button type="button" class="btn btn-outline-secondary btn-score btn-score-minus rounded-4 d-inline-flex align-items-center justify-content-center lh-1 flex-shrink-0" aria-label="Anular último ponto de ' + nomeEquipeSeguro + '" data-idx="' + idx + '"><i class="bi bi-dash-lg" aria-hidden="true"></i></button>';
             var btnPlus = readonly
-                ? '<button type="button" class="btn btn-primary btn-score btn-score-plus rounded-4 d-inline-flex align-items-center justify-content-center lh-1 flex-shrink-0" disabled><i class="bi bi-plus-lg"></i></button>'
-                : '<button type="button" class="btn btn-primary btn-score btn-score-plus rounded-4 d-inline-flex align-items-center justify-content-center lh-1 flex-shrink-0" data-idx="' + idx + '"><i class="bi bi-plus-lg"></i></button>';
+                ? '<button type="button" class="btn btn-primary btn-score btn-score-plus rounded-4 d-inline-flex align-items-center justify-content-center lh-1 flex-shrink-0" aria-label="Registrar ponto para ' + nomeEquipeSeguro + '" disabled><i class="bi bi-plus-lg" aria-hidden="true"></i></button>'
+                : '<button type="button" class="btn btn-primary btn-score btn-score-plus rounded-4 d-inline-flex align-items-center justify-content-center lh-1 flex-shrink-0" aria-label="Registrar ponto para ' + nomeEquipeSeguro + '" data-idx="' + idx + '"><i class="bi bi-plus-lg" aria-hidden="true"></i></button>';
 
             html += '<div class="col-12 col-md-5 text-center" data-partida-idx="' + idx + '">';
-            html += '<h3 class="mc-team-name h5 fw-bold text-body mb-3 text-truncate">' + esc(nomeEquipe(p)) + '</h3>';
+            html += '<h3 class="mc-team-name h5 fw-bold text-body mb-3 text-truncate">' + esc(nomeEquipeAtual) + '</h3>';
             html += '<div class="mc-score-row d-flex align-items-center justify-content-center gap-3">';
             html += btnMinus;
             html += '<span class="mc-score score-number fw-bolder text-body lh-1 text-center" data-gols="' + idx + '">' + String(gols).padStart(2, '0') + '</span>';
@@ -1591,8 +1674,8 @@ window.SGIPage.mount("competicoes/placar", function (pageConfig, pageScope) {
                 var acoesHtml = '';
                 if (!jogoEncerrado()) {
                     acoesHtml = '<div class="tl-event-actions d-flex gap-1 mt-2">' +
-                        '<button type="button" class="btn btn-sm btn-light border text-primary px-2 py-1" data-sgi-action="edit-occurrence" data-id-ocorrencia="' + esc(o.id_ocorrencia) + '" title="Editar" aria-label="Editar ocorrência"><i class="bi bi-pencil-square"></i></button>' +
-                        '<button type="button" class="btn btn-sm btn-light border text-danger px-2 py-1" data-sgi-action="delete-occurrence" data-id-ocorrencia="' + esc(o.id_ocorrencia) + '" title="Excluir" aria-label="Excluir ocorrência"><i class="bi bi-trash3"></i></button>' +
+                        '<button type="button" class="btn btn-sm btn-light border text-primary px-2 py-1" data-sgi-action="edit-occurrence" data-id-ocorrencia="' + esc(o.id_ocorrencia) + '" title="Editar" aria-label="Editar ocorrência"><i class="bi bi-pencil-square" aria-hidden="true"></i></button>' +
+                        '<button type="button" class="btn btn-sm btn-light border text-danger px-2 py-1" data-sgi-action="delete-occurrence" data-id-ocorrencia="' + esc(o.id_ocorrencia) + '" title="Excluir" aria-label="Excluir ocorrência"><i class="bi bi-trash3" aria-hidden="true"></i></button>' +
                         '</div>';
                 }
 
@@ -1681,7 +1764,7 @@ window.SGIPage.mount("competicoes/placar", function (pageConfig, pageScope) {
             document.querySelectorAll('.ocorrencia-tipo-option').forEach(function(el) {
                 if (el.getAttribute('data-tipo') === o.titulo_ocorrencia) {
                     el.classList.add('active');
-                    var radio = el.querySelector('input[type="radio"]');
+                    var radio = el.htmlFor ? document.getElementById(el.htmlFor) : el.querySelector('input[type="radio"]');
                     if (radio) radio.checked = true;
                 }
             });
@@ -1742,12 +1825,12 @@ window.SGIPage.mount("competicoes/placar", function (pageConfig, pageScope) {
 
         var editando = _editandoOcorrenciaId;
 
-        var tipoEl = document.querySelector('.ocorrencia-tipo-option.active');
+        var tipoEl = document.querySelector('input[name="tipo_ocorrencia"]:checked');
         if (!tipoEl) {
             msg.innerHTML = '<span class="text-danger">Selecione o tipo de ocorrência.</span>';
             return;
         }
-        var tipo = tipoEl.getAttribute('data-tipo');
+        var tipo = tipoEl.value;
 
         var idTurma = document.getElementById('filtroTurmaOcorrencia').value;
         if (!idTurma) {
@@ -1797,7 +1880,11 @@ window.SGIPage.mount("competicoes/placar", function (pageConfig, pageScope) {
             });
             var result = await resp.json();
             if (result.success) {
-                msg.innerHTML = '<span class="text-success">Ocorrência ' + (isUpdate ? 'atualizada' : 'registrada') + '!</span>';
+                var ocorrenciaPendente = result.offline === true;
+                var textoOcorrencia = 'Ocorrência ' + (isUpdate ? 'atualizada' : 'registrada') +
+                    (ocorrenciaPendente ? ', salva neste dispositivo e aguardando envio ao servidor.' : ', confirmada pelo servidor.');
+                msg.innerHTML = '<span class="text-success">' + esc(textoOcorrencia) + '</span>';
+                anunciarStatusPlacar(textoOcorrencia);
                 if (!isUpdate && result.evento === 'segundo_amarelo') {
                     var selAluno = document.getElementById('selectAlunoOcorrencia');
                     var nomeAluno = selAluno.options[selAluno.selectedIndex] ? selAluno.options[selAluno.selectedIndex].text : '';
@@ -1821,6 +1908,7 @@ window.SGIPage.mount("competicoes/placar", function (pageConfig, pageScope) {
             }
         } catch (err) {
             msg.innerHTML = '<span class="text-danger">Erro de conexão.</span>';
+            anunciarStatusPlacar('Não foi possível salvar a ocorrência. A alteração continua disponível para revisão.');
             btn.disabled = false;
             btn.innerHTML = isUpdate ? '<i class="bi bi-check-lg me-1"></i>Atualizar' : '<i class="bi bi-check-lg me-1"></i>Registrar';
         }
@@ -1834,24 +1922,90 @@ window.SGIPage.mount("competicoes/placar", function (pageConfig, pageScope) {
         carregarArtilheiros(ciclo);
     }
 
-    // Quando uma mutação offline é confirmada pelo servidor, atualiza as
-    // listas que exibem dados agregados (artilharia e timeline). Sem essa
-    // atualização a fila ficava vazia, mas a tela permanecia com o registro
-    // temporário "Desconhecido / 0 gol" até um reload manual.
+    function filaDaPartida(items) {
+        return (items || []).filter(function (item) {
+            var url;
+            try { url = new URL(item.url, window.location.href); }
+            catch (_) { return false; }
+            var path = url.pathname.replace(/\/+$/, '').toLowerCase();
+            if (!/\/api\/v1\/(resultados|pontos|ocorrencias)$/.test(path)) return false;
+            var payload;
+            try { payload = JSON.parse(item.body || '{}'); }
+            catch (_) { return false; }
+            var id = path.endsWith('/pontos') ? payload.jogos_id_jogo : payload.id_jogo;
+            return id != null && String(id) === String(idJogo);
+        });
+    }
+
+    function atualizarStatusResultadoPendente(snapshot, fila) {
+        fila = Array.isArray(fila) ? fila : [];
+        var resultado = fila.filter(function (item) {
+            var url;
+            try { url = new URL(item.url, window.location.href); }
+            catch (_) { return false; }
+            return /\/api\/v1\/resultados\/?$/i.test(url.pathname);
+        })[0];
+        if (!resultado) {
+            definirStatusSincronizacao('');
+            return;
+        }
+        if (resultado.needsReview) {
+            definirStatusSincronizacao('Resultado aguarda revisão antes do envio.');
+        } else if (snapshot && snapshot.session === 'expirada') {
+            definirStatusSincronizacao('Resultado salvo neste dispositivo; a sessão expirou antes do envio.');
+        } else {
+            definirStatusSincronizacao('Resultado salvo neste dispositivo; aguardando envio ao servidor.');
+        }
+    }
+
+    function atualizarStatusPlacarDaFila() {
+        if (!window.SGIOffline || typeof window.SGIOffline.getPendingList !== 'function') return;
+        var ciclo = __sgiPlacarCiclo;
+        window.SGIOffline.getPendingList().then(function (items) {
+            if (placarContinuaAtivo(ciclo)) {
+                atualizarStatusResultadoPendente(window.SGIOffline.getState(), filaDaPartida(items));
+            }
+        }).catch(function () {});
+    }
+
+    // A fila de transporte é a mutation_queue do offline-core. O estado do
+    // jogo continua no badge acima e só um POST resultados deste jogo aparece
+    // como resultado pendente; mutações de outras partidas não o contaminam.
     function acompanharSincronizacaoPlacar() {
-        if (!window.SGIOffline || typeof window.SGIOffline.onStateChange !== 'function') return;
+        if (!window.SGIOffline || typeof window.SGIOffline.onStateChange !== 'function' ||
+            typeof window.SGIOffline.getPendingList !== 'function') return;
         if (window.__SGI_PLACAR_SYNC_UNSUB__) {
             try { window.__SGI_PLACAR_SYNC_UNSUB__(); } catch (_) {}
         }
-        var pendentesAntes = Number(window.SGIOffline.getState && window.SGIOffline.getState().pending) || 0;
-        window.__SGI_PLACAR_SYNC_UNSUB__ = window.SGIOffline.onStateChange(function (snapshot) {
-            var pendentesAgora = Number(snapshot && snapshot.pending) || 0;
-            if (snapshot && snapshot.online && pendentesAntes > 0 && pendentesAgora === 0) {
-                carregarArtilheiros();
-                carregarOcorrencias();
-            }
-            pendentesAntes = pendentesAgora;
-        });
+        var ciclo = __sgiPlacarCiclo;
+        var mutacoesAnteriores = null;
+        var resultadosAnteriores = null;
+        function atualizar(snapshot) {
+            var consulta = ++__sgiSyncStatusGeneration;
+            window.SGIOffline.getPendingList().then(function (items) {
+                if (consulta !== __sgiSyncStatusGeneration || !placarContinuaAtivo(ciclo)) return;
+                var fila = filaDaPartida(items);
+                var ids = fila.map(function (item) { return String(item.id); }).sort();
+                atualizarStatusResultadoPendente(snapshot || window.SGIOffline.getState(), fila);
+                var resultadoIds = fila.filter(function (item) {
+                    var url;
+                    try { url = new URL(item.url, window.location.href); }
+                    catch (_) { return false; }
+                    return /\/api\/v1\/resultados\/?$/i.test(url.pathname);
+                }).map(function (item) { return String(item.id); }).sort();
+                if (resultadosAnteriores && resultadosAnteriores.length > 0 && resultadoIds.length === 0 && snapshot && snapshot.online) {
+                    anunciarStatusPlacar('Resultado confirmado pelo servidor.');
+                }
+                resultadosAnteriores = resultadoIds;
+                if (mutacoesAnteriores && mutacoesAnteriores.length > 0 && ids.length === 0 && snapshot && snapshot.online) {
+                    carregarArtilheiros();
+                    carregarOcorrencias();
+                }
+                mutacoesAnteriores = ids;
+            }).catch(function () {});
+        }
+        window.__SGI_PLACAR_SYNC_UNSUB__ = window.SGIOffline.onStateChange(atualizar);
+        atualizar(window.SGIOffline.getState());
     }
 
     async function carregarArtilheiros(ciclo) {
@@ -2019,6 +2173,7 @@ window.SGIPage.mount("competicoes/placar", function (pageConfig, pageScope) {
                 result = await resp.json();
             }
             if (result.success) {
+                var pontoPendente = result.offline === true || Number(idJogo) < 0;
                 pontoLocal = Object.assign({}, pontoLocal, result.ponto || {}, {
                     id_ponto: result.id_ponto || (result.mutation_id ? 'temp_' + result.mutation_id : pontoLocal.id_ponto),
                     _pendente: result.offline === true
@@ -2033,7 +2188,12 @@ window.SGIPage.mount("competicoes/placar", function (pageConfig, pageScope) {
                         window.SGIDataLayer.upsert('partidas', partida.id_partida, partida)
                     ]);
                 }
-                msg.innerHTML = '<span class="text-success">Ponto registrado com o atleta responsável!</span>';
+                var textoPonto = pontoPendente
+                    ? 'Ponto salvo neste dispositivo, aguardando envio ao servidor.'
+                    : 'Ponto registrado e confirmado pelo servidor com o atleta responsável.';
+                msg.innerHTML = '<span class="text-success">' + esc(textoPonto) + '</span>';
+                anunciarStatusPlacar(textoPonto);
+                if (pontoPendente) atualizarStatusPlacarDaFila();
                 renderTudo();
                 carregarArtilheiros();
                 setTimeout(function() {
@@ -2044,11 +2204,13 @@ window.SGIPage.mount("competicoes/placar", function (pageConfig, pageScope) {
                 }, 600);
             } else {
                 msg.innerHTML = '<span class="text-danger">' + esc(result.message || 'Erro ao registrar.') + '</span>';
+                anunciarStatusPlacar('O ponto não foi confirmado pelo servidor. ' + (result.message || 'Revise os dados e tente novamente.'));
                 btn.disabled = false;
                 btn.innerHTML = '<i class="bi bi-check-lg me-1"></i>Registrar ponto';
             }
         } catch (err) {
             msg.innerHTML = '<span class="text-danger">Erro de conexão.</span>';
+            anunciarStatusPlacar('Não foi possível registrar o ponto. O placar não foi confirmado.');
             btn.disabled = false;
                 btn.innerHTML = '<i class="bi bi-check-lg me-1"></i>Registrar ponto';
         }
@@ -2133,11 +2295,24 @@ window.SGIPage.mount("competicoes/placar", function (pageConfig, pageScope) {
             if (!modal || modal.dataset.sgiFocoSeguro === '1') return;
             modal.dataset.sgiFocoSeguro = '1';
             window.SGIPage.prepareModal(modal);
+            var acionadorModal = null;
+            pageScope.listen(modal, 'show.bs.modal', function() {
+                acionadorModal = document.activeElement;
+            });
             pageScope.listen(modal, 'hide.bs.modal', function() {
                 var foco = document.activeElement;
                 if (foco && modal.contains(foco) && typeof foco.blur === 'function') {
                     foco.blur();
                 }
+            });
+            pageScope.listen(modal, 'hidden.bs.modal', function() {
+                var foco = acionadorModal;
+                acionadorModal = null;
+                if (foco && foco.isConnected && typeof foco.focus === 'function') foco.focus();
+            });
+            pageScope.onDeactivate(function() {
+                delete modal.dataset.sgiFocoSeguro;
+                acionadorModal = null;
             });
         });
     }
@@ -2165,12 +2340,19 @@ window.SGIPage.mount("competicoes/placar", function (pageConfig, pageScope) {
                         el.classList.remove('active');
                     });
                     opt.classList.add('active');
-                    var radio = opt.querySelector('input[type="radio"]');
+                    var radio = opt.htmlFor ? document.getElementById(opt.htmlFor) : opt.querySelector('input[type="radio"]');
                     if (radio) radio.checked = true;
                 }
             };
             pageScope.listen(document, 'click', __sgiPlacarClickHandler);
         }
+        pageScope.listen(document, 'change', function(e) {
+            var radio = e.target;
+            if (!radio || !radio.matches('input[name="tipo_ocorrencia"]')) return;
+            document.querySelectorAll('.ocorrencia-tipo-option').forEach(function(label) {
+                label.classList.toggle('active', label.htmlFor === radio.id);
+            });
+        });
         window.__SGI_TELA_CLEANUP__ = __sgiPlacarCleanup;
         var ciclo = ++__sgiPlacarCiclo;
         carregarDados(ciclo);

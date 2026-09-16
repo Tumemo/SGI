@@ -6,46 +6,58 @@ window.SGIPage.mount("eventos/categorias", function (pageConfig, pageScope) {
 
     const urlParams = new URLSearchParams(window.location.search);
     let idInterclasse = urlParams.get('id');
+    const APP_BASE = String(window.SGI_BASE_PATH || '').replace(/\/+$/, '');
+    const API_BASE = String(window.SGI_API_BASE || `${APP_BASE}/api/v1/`).replace(/\/?$/, '/');
+    const caminhoApp = (path, parametros) => `${APP_BASE}/${String(path).replace(/^\/+/, '')}${parametros ? `?${parametros.toString()}` : ''}`;
     const isAdmin = pageConfig.value1;
     const isColaborador = pageConfig.value2;
     const isMesario = pageConfig.value0;
     let categoriaSelecionada = null;
     let categoriasData = [];
     let editCategoriaId = null;
+    let turmaCriadaPendente = null;
+    let criacaoTurmaEmAndamento = false;
 
-    function selecionarCategoria(idCategoria, el) {
-        if (categoriaSelecionada === Number(idCategoria)) {
-            categoriaSelecionada = null;
-            el.classList.remove('border-primary', 'border-2', 'shadow');
-        } else {
-            categoriaSelecionada = Number(idCategoria);
-            document.querySelectorAll('.categoria-item').forEach((item) => {
-                item.classList.remove('border-primary', 'border-2', 'shadow');
-            });
-            el.classList.add('border-primary', 'border-2', 'shadow');
-        }
+    function atualizarEstadoSelecaoCategoria() {
+        document.querySelectorAll('[data-category-select]').forEach((controle) => {
+            const selecionada = Number(controle.dataset.id) === Number(categoriaSelecionada);
+            controle.setAttribute('aria-pressed', String(selecionada));
+            const card = controle.closest('.categoria-item') || controle;
+            card.classList.toggle('border-primary', selecionada);
+            card.classList.toggle('border-2', selecionada);
+            card.classList.toggle('shadow', selecionada);
+        });
+    }
+
+    function selecionarCategoria(idCategoria) {
+        if (turmaCriadaPendente && Number(idCategoria) !== turmaCriadaPendente.categoriaId) return;
+        categoriaSelecionada = categoriaSelecionada === Number(idCategoria) ? null : Number(idCategoria);
+        atualizarEstadoSelecaoCategoria();
         atualizarAcoesCategoria();
     }
 
     function atualizarAcoesCategoria() {
         if (!isAdmin) return;
 
-        ['btnEditarCategoriaMobile', 'btnEditarCategoriaDesktop',
+        ['btnAdicionarTurmaMobile', 'btnAdicionarTurmaDesktop', 'btnEditarCategoriaMobile', 'btnEditarCategoriaDesktop',
          'btnExcluirCategoriaMobile', 'btnExcluirCategoriaDesktop'].forEach(id => {
             const el = document.getElementById(id);
             if (el) el.classList.toggle('d-none', !categoriaSelecionada);
         });
 
-        const rota = '/edicoes/modalidades';
-        const sufixoCategoria = categoriaSelecionada ? `&id_categoria=${categoriaSelecionada}` : '';
+        const parametros = new URLSearchParams();
+        if (idInterclasse) parametros.set('id', idInterclasse);
+        if (categoriaSelecionada) parametros.set('id_categoria', String(categoriaSelecionada));
+        parametros.set('modo', 'create');
+        const continuarHref = caminhoApp('edicoes/modalidades', parametros);
         ['btnContinuarMobile', 'btnContinuarDesktop'].forEach(id => {
             const el = document.getElementById(id);
-            if (el) el.href = `${rota}?id=${idInterclasse}${sufixoCategoria}&modo=create`;
+            if (el) el.href = continuarHref;
         });
 
         ['btnVoltarCatMobile', 'btnVoltarCatDesk'].forEach(id => {
             const el = document.getElementById(id);
-            if (el) el.href = `/painel?id=${idInterclasse}`;
+            if (el) el.href = caminhoApp('painel', new URLSearchParams({ id: String(idInterclasse) }));
         });
     }
 
@@ -53,7 +65,7 @@ window.SGIPage.mount("eventos/categorias", function (pageConfig, pageScope) {
     if (!idInterclasse) {
         window.SGIInterclasse.getActiveInterclasse().then(ativo => {
             if (ativo) {
-                window.location.href = `/edicoes/categorias?id=${ativo.id_interclasse}`;
+                window.location.href = caminhoApp('edicoes/categorias', new URLSearchParams({ id: String(ativo.id_interclasse) }));
                 return;
             }
             document.getElementById('listaCategoriasMobile').innerHTML = '<p class="text-muted mt-4 text-center w-100">Nenhum interclasse ativo.</p>';
@@ -72,7 +84,7 @@ window.SGIPage.mount("eventos/categorias", function (pageConfig, pageScope) {
 
         ['btnVoltarCatMobile', 'btnVoltarCatDesk'].forEach(id => {
             const el = document.getElementById(id);
-            if (el) el.href = `/painel?id=${idInterclasse}`;
+            if (el) el.href = caminhoApp('painel', new URLSearchParams({ id: String(idInterclasse) }));
         });
 
         if (isAdmin) atualizarAcoesCategoria();
@@ -84,12 +96,12 @@ window.SGIPage.mount("eventos/categorias", function (pageConfig, pageScope) {
 
         try {
             const respostas = await Promise.allSettled([
-                fetch(`/api/v1/categorias?id_interclasse=${idInterclasse}`).then(r => r.json()),
-                fetch(`/api/v1/turmas?id_interclasse=${idInterclasse}`).then(r => r.json()),
-                fetch(`/api/v1/equipes`).then(r => r.json()),
-                fetch(`/api/v1/modalidades?id_interclasse=${idInterclasse}`).then(r => r.json()),
-                fetch(`/api/v1/jogos?id_interclasse=${idInterclasse}`).then(r => r.json()),
-                fetch(`/api/v1/partidas`).then(r => r.json()),
+                fetch(`${API_BASE}categorias?id_interclasse=${encodeURIComponent(idInterclasse)}`).then(r => r.json()),
+                fetch(`${API_BASE}turmas?id_interclasse=${encodeURIComponent(idInterclasse)}`).then(r => r.json()),
+                fetch(`${API_BASE}equipes`).then(r => r.json()),
+                fetch(`${API_BASE}modalidades?id_interclasse=${encodeURIComponent(idInterclasse)}`).then(r => r.json()),
+                fetch(`${API_BASE}jogos?id_interclasse=${encodeURIComponent(idInterclasse)}`).then(r => r.json()),
+                fetch(`${API_BASE}partidas`).then(r => r.json()),
             ]);
 
             const extrair = (res, padrao) => (res.status === 'fulfilled' && Array.isArray(res.value)) ? res.value : padrao;
@@ -136,7 +148,7 @@ window.SGIPage.mount("eventos/categorias", function (pageConfig, pageScope) {
                 return;
             }
 
-            const linkTarget = isAdmin ? '/edicoes/turmas' : '/turmas';
+            const linkTarget = isAdmin ? 'edicoes/turmas' : 'turmas';
 
             categorias.forEach((categoria) => {
                 const cId = Number(categoria.id_categoria);
@@ -145,18 +157,18 @@ window.SGIPage.mount("eventos/categorias", function (pageConfig, pageScope) {
 
                 if (isAdmin) {
                     divMobile.innerHTML += `
-                        <button type="button" class="categoria-item bg-white d-flex m-auto justify-content-between align-items-center shadow-sm py-3 px-4 mb-3 border border-1 rounded-3 w-100"  data-id="${cId}">
-                            <i class="bi bi-trophy fs-3"></i>
-                            <h2 class="m-0 fs-5 text-truncate px-3 w-100 text-start">${esc(categoria.nome_categoria)}</h2>
-                            <picture><img src="${(window.SGI_ASSET_BASE || '/assets') + '/images/arrow-right.svg'}" alt="Seta para direita"></picture>
+                        <button type="button" class="categoria-item bg-white d-flex m-auto justify-content-between align-items-center shadow-sm py-3 px-4 mb-3 border border-1 rounded-3 w-100" data-category-select data-id="${cId}" aria-pressed="false" aria-label="Selecionar categoria: ${esc(categoria.nome_categoria)}">
+                            <i class="bi bi-trophy fs-3" aria-hidden="true"></i>
+                            <span class="m-0 fs-5 text-truncate px-3 w-100 text-start">${esc(categoria.nome_categoria)}</span>
+                            <picture><img src="${(window.SGI_ASSET_BASE || '/assets') + '/images/arrow-right.svg'}" alt=""></picture>
                         </button>
                     `;
                 } else {
                     divMobile.innerHTML += `
-                        <a href="/turmas?id=${idInterclasse}&id_categoria=${cId}" class="categoria-item text-decoration-none text-dark bg-white d-flex m-auto justify-content-between align-items-center shadow-sm py-3 px-4 mb-3 border border-1 rounded-3 w-100" >
-                            <i class="bi bi-trophy fs-3"></i>
+                        <a href="${caminhoApp('turmas', new URLSearchParams({ id: String(idInterclasse), id_categoria: String(cId) }))}" class="categoria-item text-decoration-none text-dark bg-white d-flex m-auto justify-content-between align-items-center shadow-sm py-3 px-4 mb-3 border border-1 rounded-3 w-100" >
+                            <i class="bi bi-trophy fs-3" aria-hidden="true"></i>
                             <h2 class="m-0 fs-5 text-truncate px-3 w-100 text-start">${esc(categoria.nome_categoria)}</h2>
-                            <picture><img src="${(window.SGI_ASSET_BASE || '/assets') + '/images/arrow-right.svg'}" alt="Seta para direita"></picture>
+                            <picture><img src="${(window.SGI_ASSET_BASE || '/assets') + '/images/arrow-right.svg'}" alt=""></picture>
                         </a>
                     `;
                 }
@@ -167,7 +179,7 @@ window.SGIPage.mount("eventos/categorias", function (pageConfig, pageScope) {
                     <div class="col-12 col-md-6 col-lg-5 col-xl-4">
                         <div class="categoria-item card border-0 shadow-sm h-100 p-4 rounded-3"  data-id="${cId}">
                             <div class="card-body p-0 d-flex flex-column">
-                                <h4 class="fw-bold text-dark mb-4 pb-2 text-truncate" title="${esc(categoria.nome_categoria)}">${esc(categoria.nome_categoria)}</h4>
+                                <h3 class="fw-bold text-dark mb-4 pb-2 text-truncate" title="${esc(categoria.nome_categoria)}">${esc(categoria.nome_categoria)}</h3>
                                 <div class="d-flex gap-3 mb-4">
                                     <div class="rounded-3 p-2 px-3 flex-fill border border-light-subtle shadow-sm bg-light-subtle" >
                                         <div class="text-dark fw-medium mb-1 small" >EQUIPES</div>
@@ -178,8 +190,9 @@ window.SGIPage.mount("eventos/categorias", function (pageConfig, pageScope) {
                                         <div class="fs-5 text-dark">${pt}</div>
                                     </div>
                                 </div>
-                                <a class="btn btn-primary w-100 fw-semibold text-uppercase mt-auto border-0 "  href="${linkTarget}?id=${idInterclasse}&id_categoria=${cId}">
-                                    ${btnLabel} <i class="bi bi-arrow-right"></i>
+                                ${isAdmin ? `<button type="button" class="btn btn-outline-primary w-100 fw-semibold mt-auto mb-2" data-category-select data-id="${cId}" aria-pressed="false" aria-label="Selecionar categoria: ${esc(categoria.nome_categoria)}">Selecionar categoria</button>` : ''}
+                                <a class="btn btn-primary w-100 fw-semibold text-uppercase border-0 " href="${caminhoApp(linkTarget, new URLSearchParams({ id: String(idInterclasse), id_categoria: String(cId) }))}">
+                                    ${btnLabel} · ${esc(categoria.nome_categoria)} <i class="bi bi-arrow-right" aria-hidden="true"></i>
                                 </a>
                             </div>
                         </div>
@@ -188,14 +201,17 @@ window.SGIPage.mount("eventos/categorias", function (pageConfig, pageScope) {
             });
 
             if (isAdmin) {
-                document.querySelectorAll('.categoria-item').forEach((btn) => {
-                    pageScope.listen(btn, 'click', (ev) => {
-                        if (ev.target.closest('a[href]')) return;
-                        ev.preventDefault();
-                        selecionarCategoria(btn.dataset.id, btn);
+                document.querySelectorAll('[data-category-select]').forEach((controle) => {
+                    pageScope.listen(controle, 'click', () => selecionarCategoria(controle.dataset.id));
+                });
+                document.querySelectorAll('#listaCategoriasDesktop .categoria-item[data-id]').forEach((card) => {
+                    pageScope.listen(card, 'click', (ev) => {
+                        if (ev.target.closest('a[href], button')) return;
+                        selecionarCategoria(card.dataset.id);
                     });
                 });
                 categoriaSelecionada = null;
+                atualizarEstadoSelecaoCategoria();
                 atualizarAcoesCategoria();
             }
         } catch (error) {
@@ -207,16 +223,27 @@ window.SGIPage.mount("eventos/categorias", function (pageConfig, pageScope) {
 
     // -- Admin: editar categoria --
     if (isAdmin) {
-        window.abrirModalEditarCategoria = function() {
-            if (!categoriaSelecionada) return;
-            const cat = categoriasData.find(c => c.id_categoria == categoriaSelecionada);
-            if (!cat) return;
+    let modalEditarCategoriaTrigger = null;
+    const modalEditarCategoriaElement = document.getElementById('modalEditarCategoria');
+    pageScope.listen(modalEditarCategoriaElement, 'hidden.bs.modal', () => {
+        if (modalEditarCategoriaTrigger?.isConnected && !modalEditarCategoriaTrigger.disabled && modalEditarCategoriaTrigger.getClientRects().length) {
+            modalEditarCategoriaTrigger.focus();
+        }
+        modalEditarCategoriaTrigger = null;
+    });
+
+    window.abrirModalEditarCategoria = function(event) {
+        if (!categoriaSelecionada) return;
+        const cat = categoriasData.find(c => c.id_categoria == categoriaSelecionada);
+        if (!cat) return;
+
+        modalEditarCategoriaTrigger = event?.currentTarget instanceof HTMLElement ? event.currentTarget : document.activeElement;
 
             editCategoriaId = cat.id_categoria;
             document.getElementById('editNomeCategoria').value = cat.nome_categoria || '';
             document.getElementById('msgEditarCategoria').innerHTML = '';
 
-            const modal = new bootstrap.Modal(document.getElementById('modalEditarCategoria'));
+        const modal = new bootstrap.Modal(modalEditarCategoriaElement);
             modal.show();
         };
 
@@ -235,7 +262,7 @@ window.SGIPage.mount("eventos/categorias", function (pageConfig, pageScope) {
                 btn.disabled = true;
                 btn.innerHTML = 'Salvando...';
 
-                const resp = await fetch('/api/v1/categorias', {
+                const resp = await fetch(`${API_BASE}categorias`, {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ id_categoria: editCategoriaId, nome_categoria: nome })
@@ -268,7 +295,7 @@ window.SGIPage.mount("eventos/categorias", function (pageConfig, pageScope) {
 
             try {
                 desabilitar(true);
-                const resp = await fetch('/api/v1/categorias', {
+                const resp = await fetch(`${API_BASE}categorias`, {
                     method: 'DELETE',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ id_categoria: categoriaSelecionada })
@@ -283,117 +310,174 @@ window.SGIPage.mount("eventos/categorias", function (pageConfig, pageScope) {
             }
         };
 
-        // -- Admin: upload pdf --
-        window.enviarPdf = async function(form, msgEl, btn, idManual) {
-            msgEl.innerHTML = '';
-            if (!form) throw new Error('Formulário de upload não encontrado.');
+        // -- Admin: upload e criação com retomada segura --
+        const formNovaTurma = document.getElementById('formNovaTurmaCategoria');
+        const campoArquivoTurma = document.getElementById('arquivoUpload');
+        const nomeArquivoTurma = document.getElementById('nomeArquivo');
+        const progressoTurma = document.getElementById('progressoPdfCategoria');
+        const barraProgressoTurma = document.getElementById('barraPdfCategoria');
+        const textoProgressoTurma = document.getElementById('textoProgressoPdfCategoria');
+        const fallbackPdfTurma = document.getElementById('fallbackPdfCategoria');
 
+        function mostrarMensagemTurma(elemento, mensagem, tipo = 'error') {
+            elemento.textContent = mensagem;
+            elemento.setAttribute('role', tipo === 'error' ? 'alert' : 'status');
+            elemento.classList.toggle('text-danger', tipo === 'error');
+            elemento.classList.toggle('text-success', tipo === 'success');
+        }
+
+        function atualizarProgressoTurma(estado) {
+            if (!progressoTurma || !barraProgressoTurma || !textoProgressoTurma) return;
+            const progressbar = barraProgressoTurma.parentElement;
+            progressoTurma.classList.remove('d-none');
+            if (estado === 'iniciando') {
+                progressbar.removeAttribute('aria-valuenow');
+                progressbar.removeAttribute('aria-valuetext');
+                barraProgressoTurma.style.width = '100%';
+                barraProgressoTurma.classList.add('progress-bar-striped', 'progress-bar-animated');
+                textoProgressoTurma.textContent = 'Processando';
+            } else if (estado === 'concluido') {
+                progressbar.setAttribute('aria-valuemin', '0');
+                progressbar.setAttribute('aria-valuemax', '100');
+                progressbar.setAttribute('aria-valuenow', '100');
+                progressbar.setAttribute('aria-valuetext', 'Importação concluída');
+                barraProgressoTurma.style.width = '100%';
+                barraProgressoTurma.classList.remove('progress-bar-animated');
+                textoProgressoTurma.textContent = 'Importação concluída.';
+            } else {
+                progressbar.removeAttribute('aria-valuenow');
+                progressbar.removeAttribute('aria-valuetext');
+                barraProgressoTurma.style.width = '0%';
+                barraProgressoTurma.classList.remove('progress-bar-animated');
+                textoProgressoTurma.textContent = 'A importação não foi confirmada. Você pode tentar novamente.';
+            }
+        }
+
+        async function enviarPdf(form, idManual, categoriaManual) {
+            if (!form || !campoArquivoTurma?.files?.[0]) {
+                throw new Error('Selecione um PDF antes de enviar.');
+            }
             const fd = new FormData(form);
-            const fileInput = form.querySelector('input[type="file"]');
-            if (fileInput && fileInput.files && fileInput.files[0]) {
-                fd.append('pdf_arquivo', fileInput.files[0]);
-            }
+            fd.append('pdf_arquivo', campoArquivoTurma.files[0]);
             fd.append('id_interclasse', String(idInterclasse));
-            fd.append('id_categoria', String(categoriaSelecionada));
-            if (idManual !== null) {
-                fd.append('id_turma', String(idManual));
-            }
+            fd.append('id_categoria', String(categoriaManual));
+            fd.append('id_turma', String(idManual));
 
-            const response = await fetch('/api/v1/importacoes/turma-pdf', { method: 'POST', body: fd, credentials: 'include' });
-            const text = await response.text();
-            let json = {};
-            try {
-                json = JSON.parse(text);
-            } catch (err) {
-                throw new Error('Resposta inválida do servidor: ' + text.slice(0, 200));
+            const response = await fetch(`${API_BASE}importacoes/turma-pdf`, { method: 'POST', body: fd, credentials: 'include' });
+            const json = await response.json().catch(() => null);
+            const objetoValido = json && typeof json === 'object' && !Array.isArray(json);
+            if (!response.ok || !objetoValido || json.success !== true) {
+                const mensagem = objetoValido && typeof json.message === 'string' && json.message.trim()
+                    ? json.message
+                    : (objetoValido ? `A importação não foi confirmada (HTTP ${response.status}).` : 'Resposta inválida do servidor. A importação não foi confirmada; tente novamente.');
+                const erro = new Error(mensagem);
+                erro.fallbackConverter = objetoValido && json.fallback_converter === true;
+                throw erro;
             }
-            if (!response.ok || json.success === false) {
-                throw new Error(json.message || 'Falha ao enviar o PDF.');
-            }
-            return idManual !== null ? Object.assign(json, { id_turma: idManual }) : json;
-        };
+            return { ...json, id_turma: idManual };
+        }
 
-        // -- Admin: criar turma --
-        pageScope.listen(document.getElementById('formNovaTurmaCategoria'), 'submit', (e) => {
-            e.preventDefault();
-            if (!categoriaSelecionada) {
-                SGI.alert("Selecione uma categoria antes de criar a turma.");
-                return;
-            }
+        function atualizarNomeArquivoTurma() {
+            const arquivo = campoArquivoTurma?.files?.[0];
+            nomeArquivoTurma.textContent = arquivo ? `Arquivo selecionado: ${arquivo.name}` : '';
+            nomeArquivoTurma.classList.toggle('d-none', !arquivo);
+        }
+
+        pageScope.listen(campoArquivoTurma, 'change', atualizarNomeArquivoTurma);
+        pageScope.listen(formNovaTurma, 'submit', async (event) => {
+            event.preventDefault();
+            if (criacaoTurmaEmAndamento) return;
 
             const btn = document.getElementById('btnCriarTurmaCategoria');
             const msg = document.getElementById('msgNovaTurmaCategoria');
+            const arquivo = campoArquivoTurma.files?.[0];
             const nomeTurma = document.getElementById('inputNomeTurma').value.trim();
             const nomeFantasia = document.getElementById('inputNomeFantasiaTurma').value.trim();
             const turno = document.getElementById('inputTurnoTurma').value;
-            const pdf = document.getElementById('arquivoUpload').files?.[0];
 
+            if (!turmaCriadaPendente && !categoriaSelecionada) {
+                mostrarMensagemTurma(msg, 'Selecione uma categoria antes de criar a turma.');
+                return;
+            }
+            if (turmaCriadaPendente && !arquivo) {
+                mostrarMensagemTurma(msg, 'A turma já foi criada. Selecione o PDF para tentar concluir a importação.');
+                return;
+            }
+
+            criacaoTurmaEmAndamento = true;
             btn.disabled = true;
-            btn.innerText = "Criando...";
-            msg.innerHTML = '';
+            btn.setAttribute('aria-busy', 'true');
+            msg.textContent = '';
+            msg.setAttribute('role', 'status');
+            fallbackPdfTurma.classList.add('d-none');
+            const categoriaId = turmaCriadaPendente?.categoriaId ?? Number(categoriaSelecionada);
+            let turmaId = turmaCriadaPendente?.id ?? null;
 
-            const payloadTurma = {
-                interclasses_id_interclasse: Number(idInterclasse),
-                categorias_id_categoria: Number(categoriaSelecionada),
-                nome_turma: nomeTurma,
-                nome_fantasia_turma: nomeFantasia,
-                turno_turma: turno,
-                status_turma: "1"
-            };
+            try {
+                if (!turmaCriadaPendente) {
+                    btn.textContent = 'Criando turma…';
+                    const payloadTurma = {
+                        interclasses_id_interclasse: Number(idInterclasse),
+                        categorias_id_categoria: categoriaId,
+                        nome_turma: nomeTurma,
+                        nome_fantasia_turma: nomeFantasia,
+                        turno_turma: turno,
+                        status_turma: '1',
+                    };
+                    const respostaTurma = await fetch(`${API_BASE}turmas`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payloadTurma),
+                    });
+                    const turmaCriada = await respostaTurma.json().catch(() => null);
+                    if (!respostaTurma.ok || !turmaCriada || turmaCriada.success !== true) {
+                        throw new Error(turmaCriada?.message || `A turma não foi criada (HTTP ${respostaTurma.status}).`);
+                    }
+                    turmaId = Number(turmaCriada.id_turma);
+                    if (!Number.isInteger(turmaId) || turmaId <= 0) {
+                        throw new Error('A resposta não confirmou o identificador da turma.');
+                    }
+                    if (arquivo) turmaCriadaPendente = { id: turmaId, categoriaId, nome: nomeTurma };
+                    else concluirCriacaoTurma(turmaCriada, turmaId, categoriaId, msg);
+                }
 
-            fetch('/api/v1/turmas', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payloadTurma)
-            })
-            .then((resTurma) => {
-                return resTurma.json().then((turmaCriada) => {
-                    if (!resTurma.ok || !turmaCriada.success) {
-                        throw new Error(turmaCriada.message || 'Falha ao criar turma.');
-                    }
-                    if (pdf) {
-                        return enviarPdf(document.getElementById('formNovaTurmaCategoria'), msg, btn, turmaCriada.id_turma);
-                    }
-                    return turmaCriada;
-                });
-            })
-            .then((result) => {
-                msg.innerHTML = '<p class="text-success fw-bold mb-0">Turma criada com sucesso!</p>';
-                document.getElementById('inputNomeTurma').value = '';
-                document.getElementById('inputNomeFantasiaTurma').value = '';
-                document.getElementById('inputTurnoTurma').value = '';
-                document.getElementById('arquivoUpload').value = '';
-                document.getElementById('nomeArquivo').innerText = '';
-
-                const turmaId = (result && result.id_turma) ? result.id_turma : null;
-                setTimeout(() => {
-                    bootstrap.Modal.getOrCreateInstance(document.getElementById('criarTurma')).hide();
-                    msg.innerHTML = '';
-                    if (turmaId) {
-                        window.location.href = `/turmas/alunos?id=${encodeURIComponent(idInterclasse)}&id_categoria=${encodeURIComponent(categoriaSelecionada)}&id_turma=${encodeURIComponent(turmaId)}`;
-                    } else {
-                        carregarCategorias();
-                    }
-                }, 900);
-            })
-            .catch((error) => {
-                msg.innerHTML = `<p class="text-danger fw-bold mb-0">${esc(error.message || 'Erro ao criar turma.')}</p>`;
-            })
-            .finally(() => {
+                if (turmaCriadaPendente) {
+                    btn.textContent = 'Enviando PDF…';
+                    atualizarProgressoTurma('iniciando');
+                    const resultado = await enviarPdf(formNovaTurma, turmaCriadaPendente.id, turmaCriadaPendente.categoriaId);
+                    turmaCriadaPendente = null;
+                    atualizarProgressoTurma('concluido');
+                    concluirCriacaoTurma(resultado, turmaId, categoriaId, msg);
+                }
+            } catch (error) {
+                if (turmaCriadaPendente) {
+                    atualizarProgressoTurma('erro');
+                    btn.textContent = 'Tentar importar PDF novamente';
+                }
+                mostrarMensagemTurma(msg, error.message || 'Não foi possível concluir a operação. Tente novamente.');
+                if (error.fallbackConverter) fallbackPdfTurma.classList.remove('d-none');
+            } finally {
+                criacaoTurmaEmAndamento = false;
                 btn.disabled = false;
-                btn.innerText = "Criar e enviar";
-            });
+                btn.removeAttribute('aria-busy');
+                if (!turmaCriadaPendente) btn.textContent = 'Criar e enviar';
+            }
         });
 
-        window.mostrarNomeArquivo = function() {
-            const inputUpload = document.getElementById('arquivoUpload');
-            const displayNome = document.getElementById('nomeArquivo');
-            if (inputUpload.files && inputUpload.files.length > 0) {
-                displayNome.innerText = inputUpload.files[0].name;
-            } else {
-                displayNome.innerText = "";
-            }
-        };
+        function concluirCriacaoTurma(resultado, turmaId, categoriaId, msg) {
+            const avisos = Array.isArray(resultado.avisos) && resultado.avisos.length
+                ? ` Avisos: ${resultado.avisos.map((aviso) => String(aviso)).join(' ')}`
+                : '';
+            mostrarMensagemTurma(msg, `${resultado.message || 'Turma criada com sucesso.'}${avisos}`, 'success');
+            setTimeout(() => {
+                bootstrap.Modal.getOrCreateInstance(document.getElementById('criarTurma')).hide();
+                const parametros = new URLSearchParams({ id: String(idInterclasse), id_categoria: String(categoriaId), id_turma: String(turmaId) });
+                window.location.href = caminhoApp('turmas/alunos', parametros);
+            }, 900);
+        }
+
+        window.enviarPdf = enviarPdf;
+        window.mostrarNomeArquivo = atualizarNomeArquivoTurma;
     }
 
     // -- Criar nova categoria (admin & colaborador) --
@@ -423,7 +507,7 @@ window.SGIPage.mount("eventos/categorias", function (pageConfig, pageScope) {
             btnSalvar.innerHTML = "Salvando...";
 
             try {
-                const response = await fetch('/api/v1/categorias', {
+                const response = await fetch(`${API_BASE}categorias`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(dados)

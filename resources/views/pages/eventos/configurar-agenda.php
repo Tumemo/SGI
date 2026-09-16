@@ -10,32 +10,35 @@ $nivelUsuarioAgenda = (int)($_SESSION['nivel'] ?? -1);
 
 <!-- ═══ MOBILE ═══ -->
 <main class="d-md-none ag-mobile sgi-agenda-mobile p-3">
+    <h1 class="h4 fw-bold text-body mb-3">Agenda de Jogos</h1>
     <div class="card overflow-hidden">
         <div class="bg-dark text-white d-flex align-items-center justify-content-between p-3">
-            <button type="button" id="btn-prev-mobile" class="btn btn-sm btn-link link-light p-1" aria-label="Mês anterior"><i class="bi bi-chevron-left"></i></button>
+            <button type="button" id="btn-prev-mobile" class="btn btn-sm btn-link link-light p-1" aria-label="Mês anterior"><i class="bi bi-chevron-left" aria-hidden="true"></i></button>
             <div class="d-flex gap-2 align-items-center">
+                <label class="visually-hidden" for="select-mes">Mês da agenda</label>
                 <select id="select-mes" class="form-select form-select-sm border-0 bg-transparent text-white text-center w-auto small fw-bold" >
-                    <option value="0">Jan</option>
-                    <option value="1">Fev</option>
-                    <option value="2">Mar</option>
-                    <option value="3">Abr</option>
-                    <option value="4">Mai</option>
-                    <option value="5">Jun</option>
-                    <option value="6">Jul</option>
-                    <option value="7">Ago</option>
-                    <option value="8">Set</option>
-                    <option value="9">Out</option>
-                    <option value="10">Nov</option>
-                    <option value="11">Dez</option>
+                    <option value="0">Janeiro</option>
+                    <option value="1">Fevereiro</option>
+                    <option value="2">Março</option>
+                    <option value="3">Abril</option>
+                    <option value="4">Maio</option>
+                    <option value="5">Junho</option>
+                    <option value="6">Julho</option>
+                    <option value="7">Agosto</option>
+                    <option value="8">Setembro</option>
+                    <option value="9">Outubro</option>
+                    <option value="10">Novembro</option>
+                    <option value="11">Dezembro</option>
                 </select>
+                <label class="visually-hidden" for="select-ano">Ano da agenda</label>
                 <select id="select-ano" class="form-select form-select-sm border-0 bg-transparent text-white text-center w-auto small fw-bold" >
                 </select>
             </div>
-            <button type="button" id="btn-next-mobile" class="btn btn-sm btn-link link-light p-1" aria-label="Próximo mês"><i class="bi bi-chevron-right"></i></button>
+            <button type="button" id="btn-next-mobile" class="btn btn-sm btn-link link-light p-1" aria-label="Próximo mês"><i class="bi bi-chevron-right" aria-hidden="true"></i></button>
         </div>
         <div class="p-3">
-            <div class="d-flex text-center mb-1">
-                <span class="flex-fill small fw-bold text-body-secondary text-uppercase py-1">D</span><span class="flex-fill small fw-bold text-body-secondary text-uppercase py-1">S</span><span class="flex-fill small fw-bold text-body-secondary text-uppercase py-1">T</span><span class="flex-fill small fw-bold text-body-secondary text-uppercase py-1">Q</span><span class="flex-fill small fw-bold text-body-secondary text-uppercase py-1">Q</span><span class="flex-fill small fw-bold text-body-secondary text-uppercase py-1">S</span><span class="flex-fill small fw-bold text-body-secondary text-uppercase py-1">S</span>
+            <div class="d-flex text-center mb-1" role="group" aria-label="Dias da semana">
+                <span class="ag-cal-weekday flex-fill small fw-bold text-body-secondary text-uppercase py-1"><span aria-hidden="true">D</span><span class="visually-hidden">Domingo</span></span><span class="ag-cal-weekday flex-fill small fw-bold text-body-secondary text-uppercase py-1"><span aria-hidden="true">S</span><span class="visually-hidden">Segunda-feira</span></span><span class="ag-cal-weekday flex-fill small fw-bold text-body-secondary text-uppercase py-1"><span aria-hidden="true">T</span><span class="visually-hidden">Terça-feira</span></span><span class="ag-cal-weekday flex-fill small fw-bold text-body-secondary text-uppercase py-1"><span aria-hidden="true">Q</span><span class="visually-hidden">Quarta-feira</span></span><span class="ag-cal-weekday flex-fill small fw-bold text-body-secondary text-uppercase py-1"><span aria-hidden="true">Q</span><span class="visually-hidden">Quinta-feira</span></span><span class="ag-cal-weekday flex-fill small fw-bold text-body-secondary text-uppercase py-1"><span aria-hidden="true">S</span><span class="visually-hidden">Sexta-feira</span></span><span class="ag-cal-weekday flex-fill small fw-bold text-body-secondary text-uppercase py-1"><span aria-hidden="true">S</span><span class="visually-hidden">Sábado</span></span>
             </div>
             <div id="calendario-grade-mobile" class="ag-cal-grid d-flex flex-wrap text-center"></div>
         </div>
@@ -44,9 +47,12 @@ $nivelUsuarioAgenda = (int)($_SESSION['nivel'] ?? -1);
     <div class="d-flex flex-wrap align-items-center justify-content-center gap-2 mb-4">
         <div class="input-group input-group-sm w-100" >
             <span class="input-group-text"><i class="bi bi-search" aria-hidden="true"></i></span>
+            <label class="visually-hidden" for="agenda-busca-mobile">Buscar time ou modalidade</label>
             <input type="text" class="form-control" id="agenda-busca-mobile" placeholder="Buscar time ou modalidade...">
         </div>
+        <label class="visually-hidden" for="agenda-select-mod-mobile">Filtrar por modalidade</label>
         <select id="agenda-select-mod-mobile" class="form-select form-select-sm w-100" ></select>
+        <label class="visually-hidden" for="agenda-select-status-mobile">Filtrar por status</label>
         <select id="agenda-select-status-mobile" class="form-select form-select-sm w-100" >
             <option value="">Todos os status</option>
             <option value="Concluido">Concluídos</option>
@@ -70,9 +76,10 @@ $nivelUsuarioAgenda = (int)($_SESSION['nivel'] ?? -1);
             <i class="bi bi-calendar3 me-1"></i>Mostrar Todos os Jogos
         </button>
     </div>
+    <p id="agenda-result-status-mobile" class="visually-hidden" role="status" aria-live="polite" aria-atomic="true"></p>
     <div class="d-flex justify-content-center mt-4">
-        <a href="https://calendar.google.com" target="_blank" rel="noopener noreferrer" class="btn btn-outline-danger btn-sm">
-            <i class="bi bi-box-arrow-up-right me-1"></i>Abrir no Google Calendar
+        <a href="https://calendar.google.com" target="_blank" rel="noopener noreferrer" class="btn btn-outline-danger btn-sm" aria-label="Visitar Google Calendar (abre em uma nova guia)">
+            <i class="bi bi-box-arrow-up-right me-1" aria-hidden="true"></i>Visitar Google Calendar<span class="visually-hidden"> (abre em uma nova guia)</span>
         </a>
     </div>
 </main>
@@ -86,7 +93,7 @@ $nivelUsuarioAgenda = (int)($_SESSION['nivel'] ?? -1);
                 <i class="bi bi-arrow-left-circle fs-5"></i> <span id="nomeInterclasseAgenda">Interclasse</span>
             </a>
             <div class="flex-grow-1">
-                <h2 class="h4 fw-bold text-body mb-0 d-flex align-items-center gap-2"><i class="bi bi-calendar3 text-danger"></i> Agenda de Jogos</h2>
+                <h1 class="h4 fw-bold text-body mb-0 d-flex align-items-center gap-2"><i class="bi bi-calendar3 text-danger"></i> Agenda de Jogos</h1>
                 <p class="small text-body-secondary mt-1 mb-0">Calendário de confrontos e partidas do Interclasse</p>
             </div>
             <span class="badge rounded-pill text-bg-danger d-inline-flex align-items-center gap-2 ms-auto d-none" id="agenda-count-badge" >
@@ -97,9 +104,12 @@ $nivelUsuarioAgenda = (int)($_SESSION['nivel'] ?? -1);
         <div class="d-flex gap-2 align-items-center flex-wrap mb-4">
             <div class="input-group input-group-sm flex-grow-1">
                 <span class="input-group-text"><i class="bi bi-search" aria-hidden="true"></i></span>
+                <label class="visually-hidden" for="agenda-busca">Buscar time ou modalidade</label>
                 <input type="text" class="form-control" id="agenda-busca" placeholder="Buscar time ou modalidade...">
             </div>
+            <label class="visually-hidden" for="agenda-select-mod">Filtrar por modalidade</label>
             <select id="agenda-select-mod" class="form-select form-select-sm w-auto"></select>
+            <label class="visually-hidden" for="agenda-select-status">Filtrar por status</label>
             <select id="agenda-select-status" class="form-select form-select-sm w-auto">
                 <option value="">Todos os status</option>
                 <option value="Concluido">Concluídos</option>
@@ -120,6 +130,7 @@ $nivelUsuarioAgenda = (int)($_SESSION['nivel'] ?? -1);
                     <div id="lista-pendentes" class="vstack gap-3"></div>
                 </div>
                 <div id="lista-eventos" class="vstack gap-3"></div>
+                <p id="agenda-result-status" class="visually-hidden" role="status" aria-live="polite" aria-atomic="true"></p>
                 <div class="d-flex justify-content-center mt-3 d-none" id="container-mostrar-todos" >
                     <button type="button" class="btn btn-outline-secondary" id="btn-mostrar-todos">
                         <i class="bi bi-calendar3 me-1"></i>Mostrar Todos os Jogos
@@ -135,8 +146,8 @@ $nivelUsuarioAgenda = (int)($_SESSION['nivel'] ?? -1);
                         <button type="button" id="btn-next" class="btn btn-sm btn-link link-light p-1" aria-label="Próximo mês"><i class="bi bi-chevron-right"></i></button>
                     </div>
                     <div class="p-3">
-                        <div class="d-flex text-center mb-1">
-                            <span class="flex-fill small fw-bold text-body-secondary text-uppercase py-1">D</span><span class="flex-fill small fw-bold text-body-secondary text-uppercase py-1">S</span><span class="flex-fill small fw-bold text-body-secondary text-uppercase py-1">T</span><span class="flex-fill small fw-bold text-body-secondary text-uppercase py-1">Q</span><span class="flex-fill small fw-bold text-body-secondary text-uppercase py-1">Q</span><span class="flex-fill small fw-bold text-body-secondary text-uppercase py-1">S</span><span class="flex-fill small fw-bold text-body-secondary text-uppercase py-1">S</span>
+                        <div class="d-flex text-center mb-1" role="group" aria-label="Dias da semana">
+                            <span class="ag-cal-weekday flex-fill small fw-bold text-body-secondary text-uppercase py-1"><span aria-hidden="true">D</span><span class="visually-hidden">Domingo</span></span><span class="ag-cal-weekday flex-fill small fw-bold text-body-secondary text-uppercase py-1"><span aria-hidden="true">S</span><span class="visually-hidden">Segunda-feira</span></span><span class="ag-cal-weekday flex-fill small fw-bold text-body-secondary text-uppercase py-1"><span aria-hidden="true">T</span><span class="visually-hidden">Terça-feira</span></span><span class="ag-cal-weekday flex-fill small fw-bold text-body-secondary text-uppercase py-1"><span aria-hidden="true">Q</span><span class="visually-hidden">Quarta-feira</span></span><span class="ag-cal-weekday flex-fill small fw-bold text-body-secondary text-uppercase py-1"><span aria-hidden="true">Q</span><span class="visually-hidden">Quinta-feira</span></span><span class="ag-cal-weekday flex-fill small fw-bold text-body-secondary text-uppercase py-1"><span aria-hidden="true">S</span><span class="visually-hidden">Sexta-feira</span></span><span class="ag-cal-weekday flex-fill small fw-bold text-body-secondary text-uppercase py-1"><span aria-hidden="true">S</span><span class="visually-hidden">Sábado</span></span>
                         </div>
                         <div id="calendario-grade" class="ag-cal-grid d-flex flex-wrap text-center"></div>
                     </div>
@@ -147,31 +158,31 @@ $nivelUsuarioAgenda = (int)($_SESSION['nivel'] ?? -1);
 </main>
 
 <!-- ═══ MODAL EDITAR JOGO INDIVIDUAL ═══ -->
-<div class="modal fade" id="modalEditarJogoAgenda" tabindex="-1" aria-hidden="true">
+<div class="modal fade" id="modalEditarJogoAgenda" tabindex="-1" aria-labelledby="modalEditarJogoAgendaTitulo" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title">Ajustar data, horário e local</h5>
+                <h5 class="modal-title" id="modalEditarJogoAgendaTitulo">Ajustar data, horário e local</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
             </div>
             <div class="modal-body">
                 <p class="small text-muted mb-3" id="edit-jogo-titulo"></p>
                 <div class="mb-3">
-                    <label class="form-label">Data do jogo</label>
+                    <label class="form-label" for="edit-jogo-data">Data do jogo</label>
                     <input type="date" class="form-control" id="edit-jogo-data">
                 </div>
                 <div class="row g-2 mb-3">
                     <div class="col-6">
-                        <label class="form-label">Início</label>
+                        <label class="form-label" for="edit-jogo-inicio">Início</label>
                         <input type="time" class="form-control" id="edit-jogo-inicio">
                     </div>
                     <div class="col-6">
-                        <label class="form-label">Término</label>
+                        <label class="form-label" for="edit-jogo-fim">Término</label>
                         <input type="time" class="form-control" id="edit-jogo-fim">
                     </div>
                 </div>
                 <div class="mb-3">
-                    <label class="form-label">Local</label>
+                    <label class="form-label" for="edit-jogo-local">Local</label>
                     <select class="form-select" id="edit-jogo-local"></select>
                 </div>
             </div>
@@ -184,62 +195,62 @@ $nivelUsuarioAgenda = (int)($_SESSION['nivel'] ?? -1);
 </div>
 
 <!-- ═══ MODAL DATAS AUTOMÁTICAS (LOTE) ═══ -->
-<div class="modal fade" id="modalDatasAutomaticas" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
+<div class="modal fade" id="modalDatasAutomaticas" tabindex="-1" aria-labelledby="modalDatasAutomaticasTitulo" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title"><i class="bi bi-calendar2-plus text-danger me-2"></i>Agendamento automático</h5>
+                <h5 class="modal-title" id="modalDatasAutomaticasTitulo"><i class="bi bi-calendar2-plus text-danger me-2" aria-hidden="true"></i>Agendamento automático</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
             </div>
             <div class="modal-body">
                 <p class="small text-muted mb-3">Defina o primeiro jogo. O sistema agenda a chave na ordem correta, usando terça-feira e depois quinta-feira, sem ultrapassar 11h30. Se ainda houver jogos, o próximo dia será solicitado automaticamente.</p>
                 <div class="mb-3">
-                    <label class="form-label">Modalidade</label>
+                    <label class="form-label" for="auto-modalidade">Modalidade</label>
                     <select class="form-select" id="auto-modalidade"></select>
                 </div>
                 <div class="row g-2 mb-3">
                     <div class="col-6">
-                        <label class="form-label">Primeiro dia (terça-feira)</label>
+                        <label class="form-label" for="seq-data">Primeiro dia (terça-feira)</label>
                         <input type="date" class="form-control" id="seq-data">
                     </div>
                     <div class="col-6">
-                        <label class="form-label">Horário do primeiro jogo</label>
+                        <label class="form-label" for="seq-inicio">Horário do primeiro jogo</label>
                         <input type="time" class="form-control" id="seq-inicio" value="08:00">
                     </div>
                 </div>
                 <div class="row g-2 mb-3">
                     <div class="col-6">
-                        <label class="form-label">Limite para terminar os jogos</label>
+                        <label class="form-label" for="seq-fim">Limite para terminar os jogos</label>
                         <input type="time" class="form-control" id="seq-fim" value="11:30">
                         <div class="form-text">Valor inicial: 11h30. Nenhum jogo ultrapassará este horário.</div>
                     </div>
                     <div class="col-6">
-                        <label class="form-label">Local</label>
+                        <label class="form-label" for="seq-local">Local</label>
                         <select class="form-select" id="seq-local"></select>
                     </div>
                 </div>
                 <div class="mb-3">
-                    <label class="form-label">Duração média de cada jogo (minutos)</label>
+                    <label class="form-label" for="seq-duracao">Duração média de cada jogo (minutos)</label>
                     <input type="number" class="form-control" id="seq-duracao" min="1" step="1" value="60">
                     <div class="form-text">O intervalo entre jogos será fixado em 10 minutos.</div>
                 </div>
                 <div class="mb-3">
-                    <label class="form-label">Prévia</label>
+                    <h6 class="form-label">Prévia</h6>
                     <div id="seq-previa" class="small border rounded p-2 bg-light">Preencha os dados e clique em “Calcular prévia”.</div>
                 </div>
                 <div id="seq-proximo-dia" class="border rounded p-2 mb-2 d-none">
                     <div class="fw-semibold mb-2">Ainda há jogos. Informe a próxima sessão:</div>
                     <div class="row g-2">
                         <div class="col-4">
-                            <label class="form-label">Próximo dia</label>
+                            <label class="form-label" for="seq-proxima-data">Próximo dia</label>
                             <input type="date" class="form-control" id="seq-proxima-data">
                         </div>
                         <div class="col-4">
-                            <label class="form-label">Horário inicial</label>
+                            <label class="form-label" for="seq-proxima-inicio">Horário inicial</label>
                             <input type="time" class="form-control" id="seq-proxima-inicio" value="08:00">
                         </div>
                         <div class="col-4">
-                            <label class="form-label">Limite</label>
+                            <label class="form-label" for="seq-proxima-fim">Limite</label>
                             <input type="time" class="form-control" id="seq-proxima-fim" value="11:30">
                         </div>
                     </div>

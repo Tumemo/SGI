@@ -1,12 +1,80 @@
 :root {
   --sgi-sidebar-width: 5rem;
-  --sgi-mobile-nav-height: 4rem;
   --sgi-compact-breakpoint: 1200px;
   --sgi-offline-banner-height: 0px;
 
   --aluno-primary: var(--bs-primary);
   --aluno-radius-lg: 16px;
   --aluno-radius-xl: 24px;
+}
+
+.sgi-offline-banner {
+  position: fixed;
+  inset: 0 0 auto;
+  z-index: 1040;
+}
+
+body.sgi-offline-active {
+  padding-top: var(--sgi-offline-banner-height, 42px);
+}
+
+.sgi-offline-banner .container-fluid {
+  justify-content: center;
+  flex-wrap: wrap;
+  overflow: visible;
+}
+
+.sgi-offline-banner-status {
+  flex: 1 1 auto;
+  min-width: 0;
+  flex-wrap: wrap;
+}
+
+.sgi-offline-banner-text {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.sgi-offline-banner .btn {
+  flex: 0 0 auto;
+  min-height: 40px;
+}
+
+.sgi-offline-banner-actions,
+.sgi-offline-banner-details {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: .5rem;
+}
+
+.sgi-offline-banner-details-toggle {
+  display: none;
+}
+
+@media (max-width: 1199.98px) {
+  .sgi-offline-banner .container-fluid {
+    justify-content: flex-start;
+    text-align: left;
+  }
+
+  .sgi-offline-banner-status {
+    flex: 1 0 100%;
+    justify-content: flex-start;
+  }
+
+  .sgi-offline-banner-actions {
+    flex: 1 0 100%;
+    justify-content: flex-start;
+  }
+
+  .sgi-offline-banner-details-toggle {
+    display: inline-flex;
+  }
+
+  .sgi-offline-banner:not(.sgi-offline-banner--details-open) .sgi-offline-banner-details {
+    display: none !important;
+  }
 }
 
 body {
@@ -60,17 +128,109 @@ body {
 
 /* Bootstrap already provides reset, colors and component states. These are
    only shared hooks for the two navigation shells and the existing runtime. */
-.mobile-nav {
-  height: var(--sgi-mobile-nav-height);
-  min-height: var(--sgi-mobile-nav-height);
-  z-index: 1040;
-  padding-bottom: env(safe-area-inset-bottom);
-}
-
 .sidebar-nav {
   width: var(--sgi-sidebar-width);
   inset-block: 0;
   z-index: 1030;
+}
+
+.sidebar-nav-list {
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  scrollbar-width: thin;
+}
+
+.sgi-skip-link {
+  position: fixed;
+  z-index: 1080;
+  inset-block-start: max(.5rem, env(safe-area-inset-top, 0px));
+  inset-inline-start: max(.5rem, env(safe-area-inset-left, 0px));
+  transform: translateY(calc(-100% - .75rem));
+  border: 2px solid #fff;
+  border-radius: .5rem;
+  padding: .75rem 1rem;
+  background: var(--bs-primary);
+  color: #fff;
+  font-weight: 700;
+  text-decoration: none;
+  box-shadow: 0 .25rem .75rem rgba(0, 0, 0, .2);
+}
+
+.sgi-skip-link:focus-visible {
+  transform: translateY(0);
+  color: #fff;
+  outline: 3px solid var(--bs-warning);
+  outline-offset: 2px;
+}
+
+#sgi-main-content:focus {
+  outline: 3px solid var(--bs-primary);
+  outline-offset: 4px;
+}
+
+.sidebar-nav .nav-item {
+  width: 100%;
+  padding-inline: .5rem;
+}
+
+.sgi-sidebar-link {
+  display: flex;
+  width: 100%;
+  min-height: 3.5rem;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: .2rem;
+  padding: .4rem .15rem;
+  border-radius: .75rem;
+  color: #fff;
+  line-height: 1.1;
+  text-align: center;
+  text-decoration: none;
+}
+
+.sgi-sidebar-link > .bi {
+  font-size: 1.35rem;
+  line-height: 1;
+}
+
+.sgi-sidebar-label {
+  max-width: 100%;
+  font-size: .625rem;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.sgi-sidebar-link:hover,
+.sgi-sidebar-link:focus-visible {
+  background-color: rgba(255, 255, 255, .16);
+  color: #fff !important;
+}
+
+.sgi-sidebar-link[aria-current="page"] {
+  background-color: #fff;
+  color: var(--bs-primary) !important;
+  box-shadow: inset 0 0 0 2px rgba(255, 255, 255, .8);
+}
+
+.sgi-sidebar-link:focus-visible {
+  outline: 3px solid var(--bs-warning);
+  outline-offset: 2px;
+}
+
+.nav-avatar-img,
+.nav-avatar-fallback {
+  width: 2rem;
+  height: 2rem;
+  flex: 0 0 2rem;
+}
+
+.nav-avatar-img-mobile,
+.nav-avatar-fallback-mobile {
+  width: 1.625rem;
+  height: 1.625rem;
+  flex: 0 0 1.625rem;
 }
 
 .main-desktop-layout,
@@ -89,6 +249,11 @@ body {
   main.jogos-layout,
   main.perfil-desktop,
   main.container.py-4:not(.main-desktop-layout) {
+    margin-left: var(--sgi-sidebar-width);
+    width: calc(100% - var(--sgi-sidebar-width));
+  }
+
+  main.modalidade-layout {
     margin-left: var(--sgi-sidebar-width);
     width: calc(100% - var(--sgi-sidebar-width));
   }
@@ -118,41 +283,42 @@ body {
 /* Keep this block last in the shared bundle so it wins over the legacy
    d-md-* and 768px shell rules above. */
 @media (max-width: 1199.98px) {
-  .d-none.d-md-block,
-  .d-none.d-md-flex,
-  .d-none.d-md-grid {
+  html {
+    scroll-padding-top: calc(var(--sgi-offline-banner-height, 0px) + 4rem);
+  }
+
+  .sgi-app-shell .d-none.d-md-block,
+  .sgi-app-shell .d-none.d-md-flex,
+  .sgi-app-shell .d-none.d-md-grid {
     display: none !important;
   }
 
-  .d-md-none:not(.d-none):not(.d-flex):not(.sgi-mobile-menu-trigger) {
+  .sgi-app-shell .d-md-none:not(.d-none):not(.d-flex):not(.sgi-mobile-menu-trigger) {
     display: block !important;
   }
 
-  .d-md-none.d-flex {
+  .sgi-app-shell .d-md-none.d-flex {
     display: flex !important;
   }
 
-  .main-desktop-layout,
-  .sgi-main,
-  main.aluno-page,
-  main.jogos-layout,
-  main.perfil-desktop,
-  main.container.py-4:not(.main-desktop-layout) {
+  .sgi-app-shell .main-desktop-layout,
+  .sgi-app-shell .sgi-main,
+  .sgi-app-shell main.aluno-page,
+  .sgi-app-shell main.jogos-layout,
+  .sgi-app-shell main.perfil-desktop,
+  .sgi-app-shell main.container.py-4:not(.main-desktop-layout),
+  .sgi-app-shell main.modalidade-layout {
     margin-left: 0;
     width: 100%;
   }
 
-  .main-desktop-layout,
-  .sgi-main {
+  .sgi-app-shell .main-desktop-layout,
+  .sgi-app-shell .sgi-main {
     padding: .75rem;
     padding-bottom: .75rem;
   }
 
-  body.sgi-offline-active {
-    padding-top: var(--sgi-offline-banner-height);
-  }
-
-  .sgi-mobile-menu-trigger {
+  .sgi-app-shell .sgi-mobile-menu-trigger {
     position: fixed;
     top: calc(var(--sgi-offline-banner-height, 0px) + max(.5rem, env(safe-area-inset-top, 0px)));
     right: max(.75rem, env(safe-area-inset-right, 0px));
@@ -164,20 +330,66 @@ body {
     border-radius: .75rem;
   }
 
-  .sgi-mobile-menu {
+  .sgi-app-shell .sgi-mobile-header-title {
+    width: calc(100% - 8rem);
+    overflow-wrap: anywhere;
+    line-height: 1.15;
+    text-align: center;
+  }
+
+  .sgi-app-shell .sgi-mobile-menu {
     --bs-offcanvas-width: min(88vw, 360px);
     z-index: 1045;
   }
 
-  .sgi-mobile-menu-link {
+  .sgi-app-shell .sgi-mobile-menu-link {
     min-height: 48px;
     font-size: 1rem;
     text-decoration: none;
   }
 
-  .sgi-mobile-menu-link:focus-visible,
-  .sgi-mobile-menu-trigger:focus-visible {
+  .sgi-app-shell .sgi-mobile-menu-link:focus-visible,
+  .sgi-app-shell .sgi-mobile-menu-trigger:focus-visible {
     outline: 3px solid var(--bs-warning);
     outline-offset: 2px;
+  }
+}
+
+@media print {
+  body:has(.sgi-ranking-page) {
+    background: #fff !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  body:has(.sgi-ranking-page) .sgi-u-h-120px,
+  body:has(.sgi-ranking-page) .sgi-mobile-menu,
+  body:has(.sgi-ranking-page) .sgi-mobile-menu-trigger,
+  body:has(.sgi-ranking-page) .sidebar-nav,
+  body:has(.sgi-ranking-page) footer,
+  body:has(.sgi-ranking-page) .btn-imprimir,
+  body:has(.sgi-ranking-page) .d-print-none,
+  body:has(.sgi-ranking-page) #filtrosMob,
+  body:has(.sgi-ranking-page) #filtrosDesk,
+  body:has(.sgi-ranking-page) .modal {
+    display: none !important;
+  }
+
+  .sgi-ranking-page.d-md-none {
+    display: none !important;
+  }
+
+  .sgi-ranking-page.d-none.d-md-block {
+    display: block !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  .sgi-ranking-page .card {
+    border: 1px solid #ccc !important;
+    box-shadow: none !important;
+    break-inside: avoid;
+    margin-bottom: 15px !important;
   }
 }

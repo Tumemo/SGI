@@ -1,11 +1,47 @@
 window.SGIPage.mount("acesso/colaboradores", function (pageConfig, pageScope) {
 
     const usuarioEhAdmin = pageConfig.value2;
+    const API_BASE = String(window.SGI_API_BASE || `${window.SGI_BASE_PATH || ''}/api/v1/`).replace(/\/?$/, '/');
+    const BASE_PATH = String(window.SGI_BASE_PATH || '').replace(/\/$/, '');
     const paramsColab = new URLSearchParams(window.location.search);
     const idInterclasseColab = paramsColab.get('id');
     let colaboradoresData = [];
     let filtroNivelAtual = 'todos';
     let buscaAtual = '';
+    let colaboradoresCarregados = false;
+    let erroColaboradores = false;
+    let carregandoColaboradores = false;
+
+    function definirVisibilidadeSenha(inputId, visivel) {
+        const input = document.getElementById(inputId);
+        const toggle = document.querySelector(`[data-password-target="${inputId}"]`);
+        if (!input || !toggle) return;
+
+        const texto = visivel ? 'Ocultar senha' : 'Mostrar senha';
+        input.type = visivel ? 'text' : 'password';
+        toggle.setAttribute('aria-label', texto);
+        toggle.setAttribute('aria-pressed', visivel ? 'true' : 'false');
+        toggle.title = texto;
+        const label = toggle.querySelector('[data-password-label]');
+        if (label) label.textContent = texto;
+        const icon = toggle.querySelector('i');
+        if (icon) {
+            icon.classList.toggle('bi-eye', !visivel);
+            icon.classList.toggle('bi-eye-slash', visivel);
+        }
+    }
+
+    document.querySelectorAll('[data-password-toggle]').forEach((toggle) => {
+        pageScope.listen(toggle, 'click', () => {
+            const targetId = toggle.getAttribute('data-password-target');
+            const input = targetId ? document.getElementById(targetId) : null;
+            if (input) definirVisibilidadeSenha(targetId, input.type === 'password');
+        });
+    });
+
+    pageScope.listen(document.getElementById('modalAdicionarColaborador'), 'show.bs.modal', () => {
+        definirVisibilidadeSenha('novaSenhaColaborador', false);
+    });
 
     (async () => {
         const ic = idInterclasseColab
@@ -18,7 +54,7 @@ window.SGIPage.mount("acesso/colaboradores", function (pageConfig, pageScope) {
             });
             ['btnVoltarColabMobile', 'btnVoltarColabDesk'].forEach(id => {
                 const el = document.getElementById(id);
-                if (el) el.href = `/painel?id=${ic.id_interclasse}`;
+                if (el) el.href = `${BASE_PATH}/painel?id=${encodeURIComponent(ic.id_interclasse)}`;
             });
         }
     })();
@@ -64,8 +100,8 @@ window.SGIPage.mount("acesso/colaboradores", function (pageConfig, pageScope) {
                         </div>
                     </div>
                     <div class="d-flex gap-1 flex-shrink-0">
-                        <button type="button" class="btn btn-outline-secondary btn-sm" data-editar="${item.id_usuario}" title="Editar"><i class="bi bi-pencil"></i></button>
-                        ${nivel !== '0' ? `<button type="button" class="btn btn-outline-danger btn-sm" data-remover="${item.id_usuario}" title="Excluir"><i class="bi bi-trash"></i></button>` : ''}
+                        <button type="button" class="btn btn-outline-secondary btn-sm" data-editar="${item.id_usuario}" title="Editar" aria-label="Editar colaborador ${escAttr(item.nome_usuario)}"><i class="bi bi-pencil"></i></button>
+                        ${nivel !== '0' ? `<button type="button" class="btn btn-outline-danger btn-sm" data-remover="${item.id_usuario}" title="Excluir" aria-label="Excluir colaborador ${escAttr(item.nome_usuario)}"><i class="bi bi-trash"></i></button>` : ''}
                     </div>
                 </article>
             </div>`;
@@ -75,6 +111,10 @@ window.SGIPage.mount("acesso/colaboradores", function (pageConfig, pageScope) {
         var d = document.createElement('div');
         d.textContent = s == null ? '' : String(s);
         return d.innerHTML;
+    }
+
+    function escAttr(s) {
+        return esc(s).replace(/"/g, '&quot;').replace(/'/g, '&#39;');
     }
 
     function renderizarEstatisticas(lista) {
@@ -105,9 +145,10 @@ window.SGIPage.mount("acesso/colaboradores", function (pageConfig, pageScope) {
         ['filtrosMob', 'filtrosDesk'].forEach(id => {
             const el = document.getElementById(id);
             if (!el) return;
-            el.innerHTML = '<button class="btn btn-sm btn-primary" data-filtro="todos">Todos</button>';
+            el.innerHTML = `<button class="btn btn-sm ${filtroNivelAtual === 'todos' ? 'btn-primary' : 'btn-outline-primary'}" data-filtro="todos" aria-pressed="${filtroNivelAtual === 'todos'}">Todos</button>`;
             niveis.forEach(n => {
-                el.innerHTML += `<button class="btn btn-sm btn-outline-primary" data-filtro="${n}">${nomes[n] || 'Nível ' + n}</button>`;
+                const selecionado = filtroNivelAtual === n;
+                el.innerHTML += `<button class="btn btn-sm ${selecionado ? 'btn-primary' : 'btn-outline-primary'}" data-filtro="${n}" aria-pressed="${selecionado}">${nomes[n] || 'Nível ' + n}</button>`;
             });
             el.querySelectorAll('[data-filtro]').forEach(chip => {
                 pageScope.listen(chip, 'click', () => {
@@ -115,6 +156,7 @@ window.SGIPage.mount("acesso/colaboradores", function (pageConfig, pageScope) {
                     el.querySelectorAll('[data-filtro]').forEach(c => {
                         c.classList.toggle('btn-primary', c === chip);
                         c.classList.toggle('btn-outline-primary', c !== chip);
+                        c.setAttribute('aria-pressed', c === chip ? 'true' : 'false');
                     });
                     aplicarFiltros();
                 });
@@ -136,39 +178,105 @@ window.SGIPage.mount("acesso/colaboradores", function (pageConfig, pageScope) {
             );
         }
 
-        const html = lista.length
-            ? lista.map(cardColaborador).join('')
-            : '<div class="col-12 text-center text-body-secondary py-5"><i class="bi bi-people fs-1 d-block mb-3 text-body-tertiary"></i><p class="mb-3">Nenhum colaborador encontrado.</p><button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalAdicionarColaborador"><i class="bi bi-plus-lg me-1"></i>Adicionar colaborador</button></div>';
-
         const desk = document.getElementById('listaColaboradoresDesktop');
         const mob = document.getElementById('listaColaboradoresMobile');
+        if (erroColaboradores && !colaboradoresCarregados) {
+            const markup = '<div class="col-12 text-center py-5" role="alert"><i class="bi bi-exclamation-triangle text-danger fs-1 d-block mb-3" aria-hidden="true"></i><p class="text-danger mb-3">Não foi possível carregar os colaboradores.</p><button type="button" class="btn btn-outline-primary" data-retry-colaboradores>Tentar novamente</button></div>';
+            if (desk) desk.innerHTML = markup;
+            if (mob) mob.innerHTML = markup;
+            vincularEventosLista();
+            return;
+        }
+
+        const avisoErro = erroColaboradores
+            ? '<div class="col-12" role="alert"><div class="alert alert-warning d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-2 mb-3"><span>Não foi possível atualizar os colaboradores. Os dados carregados permanecem visíveis.</span><button type="button" class="btn btn-sm btn-outline-primary flex-shrink-0" data-retry-colaboradores>Tentar novamente</button></div></div>'
+            : '';
+        let conteudo;
+        if (lista.length > 0) {
+            conteudo = lista.map(cardColaborador).join('');
+        } else if (colaboradoresData.length > 0 || buscaAtual || filtroNivelAtual !== 'todos') {
+            conteudo = `<div class="col-12 text-center text-body-secondary py-5" role="status" tabindex="-1"><i class="bi bi-search fs-1 d-block mb-3 text-body-tertiary" aria-hidden="true"></i><p class="mb-3">Nenhum colaborador corresponde à busca ou aos filtros.</p><button type="button" class="btn btn-outline-primary" data-clear-colaboradores>Limpar busca e filtros</button></div>`;
+        } else {
+            conteudo = `<div class="col-12 text-center text-body-secondary py-5" role="status" tabindex="-1"><i class="bi bi-people fs-1 d-block mb-3 text-body-tertiary" aria-hidden="true"></i><p class="mb-3">Ainda não há colaboradores cadastrados.</p>${usuarioEhAdmin ? '<button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalAdicionarColaborador"><i class="bi bi-plus-lg me-1" aria-hidden="true"></i>Adicionar colaborador</button>' : ''}</div>`;
+        }
+        const html = avisoErro + conteudo;
+
         if (desk) desk.innerHTML = html;
         if (mob) mob.innerHTML = html;
         vincularEventosLista();
     }
 
     async function carregarColaboradores() {
+        if (carregandoColaboradores) return;
         const desk = document.getElementById('listaColaboradoresDesktop');
         const mob = document.getElementById('listaColaboradoresMobile');
-        const loading = '<div class="col-12 text-center text-body-secondary py-5"><div class="spinner-border text-primary me-2" role="status"></div>Carregando colaboradores...</div>';
-        if (desk) desk.innerHTML = loading;
-        if (mob) mob.innerHTML = loading;
+        const carregavaAntes = colaboradoresCarregados;
+        const conteinerComFoco = [desk, mob].find((lista) => lista?.contains(document.activeElement));
+        carregandoColaboradores = true;
+        if (!carregavaAntes) {
+            const loading = '<div class="col-12 text-center text-body-secondary py-5" role="status"><div class="spinner-border text-primary me-2" aria-hidden="true"></div>Carregando colaboradores...</div>';
+            if (desk) desk.innerHTML = loading;
+            if (mob) mob.innerHTML = loading;
+        }
+        [desk, mob].forEach((lista) => lista?.setAttribute('aria-busy', 'true'));
 
         try {
-            const response = await fetch('/api/v1/usuarios?acao=listar_colaboradores');
+            const response = await fetch(`${API_BASE}usuarios?acao=listar_colaboradores`);
             const resultado = await response.json();
-            if (resultado.status !== 'sucesso') throw new Error(resultado.mensagem || 'Falha ao listar colaboradores.');
-            const lista = resultado.colaboradores || [];
+            if (!response.ok || !resultado || resultado.status !== 'sucesso' || !Array.isArray(resultado.colaboradores)) {
+                throw new Error('Resposta inválida ao carregar os colaboradores.');
+            }
+            const lista = resultado.colaboradores;
             colaboradoresData = lista;
+            colaboradoresCarregados = true;
+            erroColaboradores = false;
             renderizarEstatisticas(lista);
             montarFiltros(lista);
             aplicarFiltros();
+            if (conteinerComFoco) {
+                const destino = conteinerComFoco.querySelector('[data-editar], [data-bs-toggle="modal"], [data-clear-colaboradores], [role="status"]');
+                destino?.focus({ preventScroll: true });
+            }
         } catch (error) {
-            const msg = `<div class="col-12 text-center py-5"><i class="bi bi-exclamation-triangle text-danger fs-1 d-block mb-3"></i><p class="text-danger mb-0">${esc(error.message)}</p></div>`;
-            if (desk) desk.innerHTML = msg;
-            if (mob) mob.innerHTML = msg;
+            console.error(error);
+            erroColaboradores = true;
+            if (carregavaAntes) {
+                aplicarFiltros();
+            } else {
+                const msg = '<div class="col-12 text-center py-5" role="alert"><i class="bi bi-exclamation-triangle text-danger fs-1 d-block mb-3" aria-hidden="true"></i><p class="text-danger mb-3">Não foi possível carregar os colaboradores.</p><button type="button" class="btn btn-outline-primary" data-retry-colaboradores>Tentar novamente</button></div>';
+                if (desk) desk.innerHTML = msg;
+                if (mob) mob.innerHTML = msg;
+            }
+            if (conteinerComFoco) conteinerComFoco.querySelector('[data-retry-colaboradores]')?.focus({ preventScroll: true });
+        } finally {
+            carregandoColaboradores = false;
+            [desk, mob].forEach((lista) => lista?.setAttribute('aria-busy', 'false'));
         }
     }
+
+    function tratarAcoesLista(event) {
+        const retry = event.target.closest('[data-retry-colaboradores]');
+        if (retry) {
+            event.preventDefault();
+            carregarColaboradores();
+            return;
+        }
+        const limpar = event.target.closest('[data-clear-colaboradores]');
+        if (!limpar) return;
+        event.preventDefault();
+        filtroNivelAtual = 'todos';
+        buscaAtual = '';
+        ['buscaColabDesk', 'buscaColabMob'].forEach((id) => {
+            const input = document.getElementById(id);
+            if (input) input.value = '';
+        });
+        montarFiltros(colaboradoresData);
+        aplicarFiltros();
+        document.getElementById(window.matchMedia('(min-width: 768px)').matches ? 'buscaColabDesk' : 'buscaColabMob')?.focus();
+    }
+
+    pageScope.listen(document.getElementById('listaColaboradoresDesktop'), 'click', tratarAcoesLista);
+    pageScope.listen(document.getElementById('listaColaboradoresMobile'), 'click', tratarAcoesLista);
 
     function vincularEventosLista() {
         document.querySelectorAll('[data-remover]').forEach((btn) => {
@@ -179,7 +287,7 @@ window.SGIPage.mount("acesso/colaboradores", function (pageConfig, pageScope) {
                 body.append('acao', 'excluir_colaborador');
                 body.append('id_usuario', id);
 
-                const resp = await fetch('/api/v1/usuarios', {
+                const resp = await fetch(`${API_BASE}usuarios`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
                     body: body.toString()
@@ -203,6 +311,7 @@ window.SGIPage.mount("acesso/colaboradores", function (pageConfig, pageScope) {
                 document.getElementById('editNomeColaborador').value = colab.nome_usuario || '';
                 document.getElementById('editNifColaborador').value = colab.matricula_usuario || '';
                 document.getElementById('editSenhaColaborador').value = '';
+                definirVisibilidadeSenha('editSenhaColaborador', false);
                 document.getElementById('editGeneroColaborador').value = colab.genero_usuario || 'MASC';
                 document.getElementById('msgEditarColaborador').innerHTML = '';
 
@@ -258,7 +367,7 @@ window.SGIPage.mount("acesso/colaboradores", function (pageConfig, pageScope) {
             body.append('sigla_usuario', 'SS');
             body.append('genero_usuario', genero);
 
-            const response = await fetch('/api/v1/usuarios', {
+            const response = await fetch(`${API_BASE}usuarios`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
                 body: body.toString()
@@ -269,6 +378,7 @@ window.SGIPage.mount("acesso/colaboradores", function (pageConfig, pageScope) {
             await carregarColaboradores();
             msg.innerHTML = '<p class="text-success fw-bold mb-0">Colaborador cadastrado com sucesso.</p>';
             document.getElementById('formNovoColaborador').reset();
+            definirVisibilidadeSenha('novaSenhaColaborador', false);
             setTimeout(() => bootstrap.Modal.getInstance(document.getElementById('modalAdicionarColaborador')).hide(), 700);
         } catch (error) {
             msg.innerHTML = `<p class="text-danger fw-bold mb-0">${esc(error.message)}</p>`;
@@ -306,7 +416,7 @@ window.SGIPage.mount("acesso/colaboradores", function (pageConfig, pageScope) {
             body.append('genero_usuario', genero);
             if (senha) body.append('senha_usuario', senha);
 
-            const response = await fetch('/api/v1/usuarios', {
+            const response = await fetch(`${API_BASE}usuarios`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
                 body: body.toString()

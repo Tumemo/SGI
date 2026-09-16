@@ -2,7 +2,6 @@
 
 body {
     background-color: var(--bs-body-bg);
-    padding-bottom: var(--sgi-mobile-nav-height); /* compensação da navegação fixa */
 }
 
 @media (min-width: 768px) {
@@ -19,22 +18,6 @@ body {
 .header-banner-img {
     object-fit: cover;
     height: 180px;
-}
-
-#acoesInscricao { bottom: var(--sgi-mobile-nav-height); }
-
-@media (min-width: 768px) {
-    #acoesInscricao { bottom: 0; }
-}
-
-@media (max-width: 1199.98px) {
-    body {
-        padding-bottom: 0;
-    }
-
-    #acoesInscricao {
-        bottom: 0;
-    }
 }
 
 @media (max-width: 1199.98px) {

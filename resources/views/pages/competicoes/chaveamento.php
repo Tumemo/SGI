@@ -16,7 +16,7 @@ $podeGerar = !$isNivel2 && !$isNivel3;
         <i class="bi bi-arrow-left-circle fs-5"></i> <span id="nomeInterclasseChaveamentoMob">Interclasse</span>
     </a>
     <div class="mb-3">
-        <h4 class="h3 fw-bold text-body mb-0" >Chaveamento</h4>
+        <h1 class="h3 fw-bold text-body mb-0">Chaveamento</h1>
     </div>
 
     <div class="row row-cols-2 g-3 mb-4" >
@@ -94,23 +94,23 @@ $podeGerar = !$isNivel2 && !$isNivel3;
                  <select class="form-select form-select-sm d-none w-100" id="filtroModalidadeJogosMob" >
                     <option value="">Todas modalidades</option>
                 </select>
-                 <select class="form-select form-select-sm w-100" id="filtroCategoriaJogosMob" >
+                 <select class="form-select form-select-sm w-100" id="filtroCategoriaJogosMob" aria-label="Filtrar jogos por categoria">
                     <option value="">Todas categorias</option>
                 </select>
-                 <input type="text" class="form-control form-control-sm w-100" placeholder="Buscar partida..." id="inputBuscaJogoMob" >
+                 <input type="text" class="form-control form-control-sm w-100" placeholder="Buscar partida..." id="inputBuscaJogoMob" aria-label="Buscar partida">
             </div>
             <div class="table-responsive">
-                <table class="table table-hover align-middle">
+                <table class="table table-hover align-middle" aria-label="Histórico de jogos">
                     <thead>
                         <tr>
-                            <th>Partida</th>
-                            <th>Modalidade</th>
-                            <th>Data</th>
-                            <th>Tempo</th>
-                            <th>Acréscimos</th>
-                            <th>Artilheiro/Destaque</th>
-                            <th>Status</th>
-                            <th class="text-end">Ações</th>
+                            <th id="jogos-mob-th-partida" scope="col">Partida</th>
+                            <th id="jogos-mob-th-modalidade" scope="col">Modalidade</th>
+                            <th id="jogos-mob-th-data" scope="col">Data</th>
+                            <th id="jogos-mob-th-tempo" scope="col">Tempo</th>
+                            <th id="jogos-mob-th-acrescimos" scope="col">Acréscimos</th>
+                            <th id="jogos-mob-th-destaque" scope="col">Artilheiro/Destaque</th>
+                            <th id="jogos-mob-th-status" scope="col">Status</th>
+                            <th id="jogos-mob-th-acoes" scope="col" class="text-end">Ações</th>
                         </tr>
                     </thead>
                     <tbody id="tbodyJogosMob">
@@ -133,6 +133,7 @@ $podeGerar = !$isNivel2 && !$isNivel3;
                 <a href="<?= \App\Shared\Http\Url::to('painel') ?>" id="btnVoltar" class="btn btn-primary d-inline-flex align-items-center gap-2 fw-bold px-3 py-2 border-0 text-decoration-none" >
                     <i class="bi bi-arrow-left-circle fs-5"></i> <span id="nomeInterclasseChaveamento">Interclasse</span>
                 </a>
+                <h1 class="h2 fw-bold text-body mb-0">Chaveamento</h1>
             </div>
             <div class="d-flex gap-2 align-items-center flex-wrap">
                 <?php if ($podeGerar): ?>
@@ -226,27 +227,27 @@ $podeGerar = !$isNivel2 && !$isNivel3;
                     <div class="small text-body-secondary">Histórico de partidas concluídas.</div>
                 </div>
                 <div class="d-flex gap-2 p-4 align-items-center flex-wrap">
-                    <input type="text" class="form-control form-control-sm flex-grow-1" placeholder="Buscar partida..." id="inputBuscaJogo">
+                    <input type="text" class="form-control form-control-sm flex-grow-1" placeholder="Buscar partida..." id="inputBuscaJogo" aria-label="Buscar partida">
                     <div id="kvs-wrap-filtroModalidadeJogos" class="kvs-wrap"></div>
                     <select class="form-select form-select-sm d-none" id="filtroModalidadeJogos">
                         <option value="">Todas modalidades</option>
                     </select>
-                    <select class="form-select form-select-sm" id="filtroCategoriaJogos">
+                    <select class="form-select form-select-sm" id="filtroCategoriaJogos" aria-label="Filtrar jogos por categoria">
                         <option value="">Todas categorias</option>
                     </select>
                 </div>
                 <div class="table-responsive">
-                    <table class="table table-hover align-middle">
+                    <table class="table table-hover align-middle" aria-label="Histórico de jogos">
                         <thead>
                             <tr>
-                                <th>Partida</th>
-                                <th>Modalidade</th>
-                                <th>Data</th>
-                                <th>Tempo</th>
-                                <th>Acréscimos</th>
-                                <th>Artilheiro/Destaque</th>
-                                <th>Status</th>
-                                <th class="text-end">Ações</th>
+                                <th id="jogos-th-partida" scope="col">Partida</th>
+                                <th id="jogos-th-modalidade" scope="col">Modalidade</th>
+                                <th id="jogos-th-data" scope="col">Data</th>
+                                <th id="jogos-th-tempo" scope="col">Tempo</th>
+                                <th id="jogos-th-acrescimos" scope="col">Acréscimos</th>
+                                <th id="jogos-th-destaque" scope="col">Artilheiro/Destaque</th>
+                                <th id="jogos-th-status" scope="col">Status</th>
+                                <th id="jogos-th-acoes" scope="col" class="text-end">Ações</th>
                             </tr>
                         </thead>
                         <tbody id="tbodyJogos">
@@ -264,11 +265,11 @@ $podeGerar = !$isNivel2 && !$isNivel3;
     </div>
 </main>
 
-<div class="modal fade" id="modalEditarJogo" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-xl modal-dialog-centered">
+<div class="modal fade" id="modalEditarJogo" tabindex="-1" aria-labelledby="tituloModalEditarJogo" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
         <div class="modal-content">
             <div class="modal-header border-0 px-4 pt-4">
-                <h5 class="modal-title fw-bold text-body d-flex align-items-center gap-2"><i class="bi bi-pencil-square text-danger"></i> Editar Jogo</h5>
+                <h5 class="modal-title fw-bold text-body d-flex align-items-center gap-2" id="tituloModalEditarJogo"><i class="bi bi-pencil-square text-danger" aria-hidden="true"></i> Editar Jogo</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
             </div>
             <form id="formEditarJogo" onsubmit="return salvarEdicaoJogo(event)">
@@ -286,37 +287,37 @@ $podeGerar = !$isNivel2 && !$isNivel3;
                     <div class="row g-4">
                         <div class="col-md-6">
                             <div id="editTeamsSection" class="d-none">
-                                <label class="form-label">Equipes e Placar</label>
+                                <h6 class="form-label">Equipes e placar</h6>
                                 <div id="editTeamsList"></div>
-                                <div id="editWinnerSection" class="mt-3 grid gap-2 d-none" >
-                                    <label class="form-label">Vencedor</label>
-                                    <div id="editWinnerOptions"></div>
-                                </div>
+                                <fieldset id="editWinnerSection" class="mt-3 d-none">
+                                    <legend class="form-label mb-2">Vencedor</legend>
+                                    <div id="editWinnerOptions" class="d-grid gap-2"></div>
+                                </fieldset>
                             </div>
                         </div>
                         <div class="col-md-6">
                             <div class="mb-3">
-                                <label class="form-label">Data</label>
+                                <label for="editDataJogo" class="form-label">Data</label>
                                 <input type="date" class="form-control" id="editDataJogo" required>
                             </div>
                             <div class="row g-3 mb-3">
                                 <div class="col-6">
-                                    <label class="form-label">Início</label>
+                                    <label for="editInicioJogo" class="form-label">Início</label>
                                     <input type="time" class="form-control" id="editInicioJogo">
                                 </div>
                                 <div class="col-6">
-                                    <label class="form-label">Término</label>
+                                    <label for="editTerminoJogo" class="form-label">Término</label>
                                     <input type="time" class="form-control" id="editTerminoJogo">
                                 </div>
                             </div>
                             <div class="mb-3">
-                                <label class="form-label">Local</label>
+                                <label for="editLocalJogo" class="form-label">Local</label>
                                 <select class="form-select" id="editLocalJogo">
                                     <option value="">Selecione um local</option>
                                 </select>
                             </div>
                             <div class="mb-3">
-                                <label class="form-label">Status</label>
+                                <label for="editStatusJogo" class="form-label">Status</label>
                                 <select class="form-select" id="editStatusJogo">
                                     <option value="Aguardando">Aguardando</option>
                                     <option value="Agendado">Agendado</option>

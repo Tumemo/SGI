@@ -33,13 +33,64 @@ window.SGIPage.mount("competicoes/chaveamento", function (pageConfig, pageScope)
     /* ── Select customizado (KVS): busca + grupos por categoria ── */
     let kvs_grupos = [];
     let kvs_instanciaAtiva = null;
+    let kvs_posicaoScrollAoAbrir = null;
 
-    pageScope.listen(document, 'click', () => {
-        if (kvs_instanciaAtiva) {
-            kvs_instanciaAtiva.classList.remove('kvs--aberto');
+    function kvs_triggerVisivel(trigger) {
+        if (!trigger || !trigger.getClientRects().length) return false;
+        const estilo = window.getComputedStyle(trigger);
+        return estilo.display !== 'none' && estilo.visibility !== 'hidden';
+    }
+
+    function kvs_triggerParaFoco(root) {
+        const trigger = root.querySelector('.kvs__trigger');
+        if (kvs_triggerVisivel(trigger)) return trigger;
+        const wrapPar = root.dataset.peerWrapId ? document.getElementById(root.dataset.peerWrapId) : null;
+        const triggerPar = wrapPar?.querySelector('.kvs__trigger');
+        return kvs_triggerVisivel(triggerPar) ? triggerPar : trigger;
+    }
+
+    function kvs_fechar(root, devolverFoco = false) {
+        if (!root) return;
+        root.classList.remove('kvs--aberto');
+        const trigger = root.querySelector('.kvs__trigger');
+        const search = root.querySelector('.kvs__search');
+        const panel = root.querySelector('.kvs__panel');
+        if (trigger) trigger.setAttribute('aria-expanded', 'false');
+        if (search) {
+            search.setAttribute('aria-expanded', 'false');
+            search.removeAttribute('aria-activedescendant');
+        }
+        if (panel) {
+            panel.style.position = '';
+            panel.style.left = '';
+            panel.style.width = '';
+            panel.style.maxHeight = '';
+            panel.style.top = '';
+            panel.style.bottom = '';
+        }
+        if (kvs_instanciaAtiva === root) {
             kvs_instanciaAtiva = null;
+            kvs_posicaoScrollAoAbrir = null;
+        }
+        if (devolverFoco) {
+            const alvoFoco = kvs_triggerParaFoco(root);
+            if (alvoFoco) {
+                try { alvoFoco.focus({ preventScroll: true }); } catch (_) { alvoFoco.focus(); }
+            }
+        }
+    }
+
+    pageScope.listen(document, 'click', (event) => {
+        // Clicks inside a KVS belong to that control. Explicit containment also
+        // protects opening from other document listeners on the same click.
+        if (kvs_instanciaAtiva && !kvs_instanciaAtiva.contains(event.target)) {
+            kvs_fechar(kvs_instanciaAtiva);
         }
     });
+
+    function kvs_normalizarBusca(texto) {
+        return String(texto || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLocaleLowerCase('pt-BR').trim();
+    }
 
     function kvs_montarGrupos() {
         const grupos = {};
@@ -55,83 +106,150 @@ window.SGIPage.mount("competicoes/chaveamento", function (pageConfig, pageScope)
         kvs_grupos = Object.keys(grupos).map(chave => ({ nome: chave, opcoes: grupos[chave] }));
     }
 
-    function kvs_sincronizar(select, label, placeholder) {
+    function kvs_sincronizar(select, label, placeholder, trigger, ariaLabel) {
         let opt = null;
+        let grupoSelecionado = null;
         kvs_grupos.forEach(g => g.opcoes.forEach(o => {
-            if (o.valor === String(select.value)) opt = o;
+            if (o.valor === String(select.value)) {
+                opt = o;
+                grupoSelecionado = g;
+            }
         }));
-        label.textContent = opt ? opt.nome : placeholder;
+        const nomeDuplicadoEmOutroGrupo = opt && kvs_grupos.some(g => g !== grupoSelecionado
+            && g.opcoes.some(o => kvs_normalizarBusca(o.nome) === kvs_normalizarBusca(opt.nome)));
+        const textoSelecionado = opt
+            ? `${opt.nome}${nomeDuplicadoEmOutroGrupo ? ` — ${grupoSelecionado.nome}` : ''}`
+            : placeholder;
+        label.textContent = textoSelecionado;
         label.classList.toggle('kvs__trigger-label--preenchido', !!opt);
+        trigger.setAttribute('aria-label', `${ariaLabel}: ${textoSelecionado}`);
+    }
+
+    function kvs_atualizarControle(wrapId, selectId, placeholder, ariaLabel) {
+        const wrap = document.getElementById(wrapId);
+        const select = document.getElementById(selectId);
+        if (!wrap || !select) return;
+        const trigger = wrap.querySelector('.kvs__trigger');
+        const label = wrap.querySelector('.kvs__trigger-label');
+        if (!trigger || !label) return;
+        kvs_sincronizar(select, label, placeholder, trigger, ariaLabel);
+        wrap.querySelectorAll('[role="option"]').forEach((option) => {
+            option.setAttribute('aria-selected', String(option.dataset.value === select.value));
+        });
     }
 
     function kvs_montar(opts) {
         const wrap = document.getElementById(opts.wrapId);
         const select = document.getElementById(opts.selectId);
         if (!wrap || !select) return;
+        const idPrefix = `kvs-${opts.wrapId.replace(/[^a-zA-Z0-9_-]/g, '-')}`;
+        const searchId = `${idPrefix}-search`;
+        const listboxId = `${idPrefix}-listbox`;
 
         wrap.innerHTML = `
             <div class="kvs">
-                <button type="button" class="kvs__trigger">
+                <button type="button" class="kvs__trigger" aria-haspopup="listbox" aria-expanded="false" aria-controls="${listboxId}">
                     <span class="kvs__trigger-label">${esc(opts.placeholder)}</span>
-                    <i class="bi bi-chevron-down kvs__chevron"></i>
+                    <i class="bi bi-chevron-down kvs__chevron" aria-hidden="true"></i>
                 </button>
                 <div class="kvs__panel">
                     <div class="kvs__search-box">
-                        <i class="bi bi-search kvs__search-icone"></i>
-                        <input type="text" class="kvs__search" placeholder="Buscar modalidade..." autocomplete="off" spellcheck="false">
+                        <i class="bi bi-search kvs__search-icone" aria-hidden="true"></i>
+                        <input id="${searchId}" type="text" class="kvs__search" placeholder="Buscar modalidade..." aria-label="Buscar modalidade" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="${listboxId}" autocomplete="off" spellcheck="false">
                     </div>
-                    <div class="kvs__groups"></div>
+                    <div id="${listboxId}" class="kvs__groups" role="listbox" aria-label="${esc(opts.listboxLabel || opts.ariaLabel)}"></div>
+                    <div class="kvs__vazio" role="status" hidden></div>
                 </div>
             </div>`;
 
         const root = wrap.querySelector('.kvs');
+        root.dataset.peerWrapId = opts.peerWrapId || '';
         const trigger = root.querySelector('.kvs__trigger');
         const label = root.querySelector('.kvs__trigger-label');
         const search = root.querySelector('.kvs__search');
         const groupsEl = root.querySelector('.kvs__groups');
+        let indiceOpcaoAtiva = -1;
+
+        function opcoesVisiveis() {
+            return Array.from(groupsEl.querySelectorAll('[role="option"]'));
+        }
+
+        function definirOpcaoAtiva(indice) {
+            const opcoes = opcoesVisiveis();
+            if (!opcoes.length) {
+                indiceOpcaoAtiva = -1;
+                search.removeAttribute('aria-activedescendant');
+                return;
+            }
+            indiceOpcaoAtiva = (indice + opcoes.length) % opcoes.length;
+            opcoes.forEach((opcao, i) => opcao.classList.toggle('kvs__opcao--ativa', i === indiceOpcaoAtiva));
+            search.setAttribute('aria-activedescendant', opcoes[indiceOpcaoAtiva].id);
+            if (root.classList.contains('kvs--aberto')) {
+                const areaOpcoes = groupsEl.getBoundingClientRect();
+                const areaOpcao = opcoes[indiceOpcaoAtiva].getBoundingClientRect();
+                if (areaOpcao.bottom > areaOpcoes.bottom) {
+                    groupsEl.scrollTop += areaOpcao.bottom - areaOpcoes.bottom;
+                } else if (areaOpcao.top < areaOpcoes.top) {
+                    groupsEl.scrollTop -= areaOpcoes.top - areaOpcao.top;
+                }
+            }
+        }
+
+        function selecionarOpcao(opcao) {
+            if (!opcao) return;
+            select.value = opcao.dataset.value;
+            if (opts.peerSelectId) {
+                const selectPar = document.getElementById(opts.peerSelectId);
+                if (selectPar) selectPar.value = select.value;
+            }
+            kvs_atualizarControle(opts.wrapId, opts.selectId, opts.placeholder, opts.ariaLabel);
+            if (opts.peerWrapId && opts.peerSelectId) {
+                kvs_atualizarControle(opts.peerWrapId, opts.peerSelectId, opts.placeholder, opts.ariaLabel);
+            }
+            kvs_fechar(root, true);
+            select.dispatchEvent(new Event('change', { bubbles: true }));
+        }
 
         function renderizar(termo) {
-            const t = (termo || '').toLowerCase().trim();
+            const t = kvs_normalizarBusca(termo);
             let html = '';
 
             if (opts.incluirTodas) {
-                const showTudo = !t || 'todas modalidades'.includes(t);
+                const showTudo = !t || kvs_normalizarBusca('Todas modalidades').includes(t);
                 if (showTudo) {
-                    const ativa = select.value === '' ? ' kvs__opcao--ativa' : '';
-                    html += `<button type="button" class="kvs__opcao${ativa}" data-value="">
+                    const ativa = select.value === '';
+                    html += `<div role="option" tabindex="-1" id="${idPrefix}-option-todas" aria-selected="${ativa}" class="kvs__opcao${ativa ? ' kvs__opcao--ativa' : ''}" data-value="">
                         <span class="kvs__opcao-nome">Todas modalidades</span>
                         <span class="kvs__opcao-tipo badge rounded-pill bg-light text-body-secondary opacity-50" >Mostrar tudo</span>
-                    </button>`;
+                    </div>`;
                 }
             }
 
             kvs_grupos.forEach(g => {
-                const opcoes = g.opcoes.filter(o => !t || o.nome.toLowerCase().includes(t) || g.nome.toLowerCase().includes(t));
+                const opcoes = g.opcoes.filter(o => !t || kvs_normalizarBusca(o.nome).includes(t) || kvs_normalizarBusca(g.nome).includes(t));
                 if (!opcoes.length) return;
-                html += `<div class="kvs__grupo">
-                    <div class="kvs__grupo-titulo"><i class="bi bi-trophy-fill"></i>${esc(g.nome)}<span class="kvs__grupo-qtd badge rounded-pill text-bg-light text-body-secondary">${opcoes.length}</span></div>`;
+                html += `<div class="kvs__grupo" role="group" aria-label="${esc(g.nome)}">
+                    <div class="kvs__grupo-titulo" aria-hidden="true"><i class="bi bi-trophy-fill"></i>${esc(g.nome)}<span class="kvs__grupo-qtd badge rounded-pill text-bg-light text-body-secondary">${opcoes.length}</span></div>`;
                 opcoes.forEach(o => {
-                    const ativa = String(select.value) === o.valor ? ' kvs__opcao--ativa' : '';
+                    const ativa = String(select.value) === o.valor;
                     const tipoCls = o.tipo === 'Individual'
                         ? 'badge rounded-pill bg-primary-subtle text-primary-emphasis'
                         : 'badge rounded-pill bg-danger-subtle text-danger-emphasis';
-                    html += `<button type="button" class="kvs__opcao${ativa}" data-value="${o.valor}">
+                    html += `<div role="option" tabindex="-1" id="${idPrefix}-option-${esc(o.valor)}" aria-selected="${ativa}" class="kvs__opcao${ativa ? ' kvs__opcao--ativa' : ''}" data-value="${esc(o.valor)}">
                         <span class="kvs__opcao-nome">${esc(o.nome)}</span>
-                        <span class="kvs__opcao-tipo ${tipoCls}">${o.tipo}</span>
-                    </button>`;
+                        <span class="kvs__opcao-tipo ${tipoCls}">${esc(o.tipo)}</span>
+                    </div>`;
                 });
                 html += '</div>';
             });
 
-            groupsEl.innerHTML = html || '<div class="kvs__vazio">Nenhuma modalidade encontrada.</div>';
-            groupsEl.querySelectorAll('.kvs__opcao').forEach(btn => {
-                pageScope.listen(btn, 'click', () => {
-                    select.value = btn.dataset.value;
-                    kvs_sincronizar(select, label, opts.placeholder);
-                    fechar();
-                    select.dispatchEvent(new Event('change'));
-                });
-            });
+            groupsEl.innerHTML = html;
+            const mensagemVazia = root.querySelector('.kvs__vazio');
+            mensagemVazia.textContent = html ? '' : 'Nenhuma modalidade encontrada.';
+            mensagemVazia.hidden = !!html;
+            const opcoes = opcoesVisiveis();
+            const selecionada = opcoes.findIndex((opcao) => opcao.dataset.value === select.value);
+            definirOpcaoAtiva(selecionada >= 0 ? selecionada : 0);
         }
 
         function posicionarPainel() {
@@ -157,30 +275,20 @@ window.SGIPage.mount("competicoes/chaveamento", function (pageConfig, pageScope)
         function abrir() {
             search.value = '';
             renderizar('');
+            if (kvs_instanciaAtiva && kvs_instanciaAtiva !== root) kvs_fechar(kvs_instanciaAtiva);
             root.classList.add('kvs--aberto');
-            if (kvs_instanciaAtiva && kvs_instanciaAtiva !== root) {
-                kvs_instanciaAtiva.classList.remove('kvs--aberto');
-            }
+            trigger.setAttribute('aria-expanded', 'true');
+            search.setAttribute('aria-expanded', 'true');
+            definirOpcaoAtiva(indiceOpcaoAtiva);
             kvs_instanciaAtiva = root;
+            kvs_posicaoScrollAoAbrir = { x: window.scrollX, y: window.scrollY };
             posicionarPainel();
             try { search.focus({ preventScroll: true }); } catch (e) { search.focus(); }
         }
 
-        function fechar() {
-            root.classList.remove('kvs--aberto');
-            if (kvs_instanciaAtiva === root) kvs_instanciaAtiva = null;
-            const panel = root.querySelector('.kvs__panel');
-            panel.style.position = '';
-            panel.style.left = '';
-            panel.style.width = '';
-            panel.style.maxHeight = '';
-            panel.style.top = '';
-            panel.style.bottom = '';
-        }
-
         pageScope.listen(trigger, 'click', (e) => {
             e.stopPropagation();
-            if (root.classList.contains('kvs--aberto')) fechar();
+            if (root.classList.contains('kvs--aberto')) kvs_fechar(root);
             else abrir();
         });
 
@@ -188,11 +296,46 @@ window.SGIPage.mount("competicoes/chaveamento", function (pageConfig, pageScope)
 
         pageScope.listen(search, 'input', () => renderizar(search.value));
         pageScope.listen(search, 'keydown', (e) => {
-            if (e.key === 'Escape') { fechar(); trigger.focus(); }
+            if (e.key === 'Escape') {
+                e.preventDefault();
+                kvs_fechar(root, true);
+            } else if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                definirOpcaoAtiva(indiceOpcaoAtiva + 1);
+            } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                definirOpcaoAtiva(indiceOpcaoAtiva - 1);
+            } else if (e.key === 'Home') {
+                e.preventDefault();
+                definirOpcaoAtiva(0);
+            } else if (e.key === 'End') {
+                e.preventDefault();
+                definirOpcaoAtiva(opcoesVisiveis().length - 1);
+            } else if (e.key === 'Enter') {
+                e.preventDefault();
+                selecionarOpcao(opcoesVisiveis()[indiceOpcaoAtiva]);
+            } else if (e.key === 'Tab') {
+                // Leave sequential focus navigation to the browser. Closing first
+                // removes the popup from that sequence in either Tab direction.
+                kvs_fechar(root);
+            }
             e.stopPropagation();
         });
 
-        kvs_sincronizar(select, label, opts.placeholder);
+        pageScope.listen(groupsEl, 'click', (e) => {
+            const option = e.target.closest('[role="option"]');
+            if (option) selecionarOpcao(option);
+        });
+
+        pageScope.listen(trigger, 'keydown', (e) => {
+            if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+                e.preventDefault();
+                abrir();
+                definirOpcaoAtiva(e.key === 'ArrowDown' ? 0 : opcoesVisiveis().length - 1);
+            }
+        });
+
+        kvs_sincronizar(select, label, opts.placeholder, trigger, opts.ariaLabel);
     }
 
     function kvs_focus(idSelect) {
@@ -204,7 +347,13 @@ window.SGIPage.mount("competicoes/chaveamento", function (pageConfig, pageScope)
     }
 
     pageScope.listen(window, 'scroll', () => {
-        if (kvs_instanciaAtiva) { kvs_instanciaAtiva.classList.remove('kvs--aberto'); kvs_instanciaAtiva = null; }
+        if (!kvs_instanciaAtiva) return;
+        if (kvs_posicaoScrollAoAbrir
+            && window.scrollX === kvs_posicaoScrollAoAbrir.x
+            && window.scrollY === kvs_posicaoScrollAoAbrir.y) return;
+        const painel = kvs_instanciaAtiva.querySelector('.kvs__panel');
+        const focoNoPopup = painel?.contains(document.activeElement) || false;
+        kvs_fechar(kvs_instanciaAtiva, focoNoPopup);
     }, { passive: true });
     function composicaoCompactaAtiva() {
         return typeof window.matchMedia === 'function'
@@ -246,7 +395,16 @@ window.SGIPage.mount("competicoes/chaveamento", function (pageConfig, pageScope)
     });
 
     pageScope.listen(window, 'resize', () => {
-        if (kvs_instanciaAtiva) { kvs_instanciaAtiva.classList.remove('kvs--aberto'); kvs_instanciaAtiva = null; }
+        if (kvs_instanciaAtiva) kvs_fechar(kvs_instanciaAtiva, true);
+        else {
+            const raizComFoco = document.activeElement?.closest?.('.kvs');
+            if (raizComFoco && !kvs_triggerVisivel(raizComFoco.querySelector('.kvs__trigger'))) {
+                const alvoFoco = kvs_triggerParaFoco(raizComFoco);
+                if (alvoFoco) {
+                    try { alvoFoco.focus({ preventScroll: true }); } catch (_) { alvoFoco.focus(); }
+                }
+            }
+        }
         agendarRedesenhoConectores();
     });
 
@@ -370,10 +528,30 @@ window.SGIPage.mount("competicoes/chaveamento", function (pageConfig, pageScope)
             });
 
             kvs_montarGrupos();
-            kvs_montar({ wrapId: 'kvs-wrap-selectModalidade', selectId: 'selectModalidade', placeholder: 'Selecione uma modalidade', incluirTodas: false });
-            kvs_montar({ wrapId: 'kvs-wrap-selectModalidadeMob', selectId: 'selectModalidadeMob', placeholder: 'Selecione uma modalidade', incluirTodas: false });
-            kvs_montar({ wrapId: 'kvs-wrap-filtroModalidadeJogos', selectId: 'filtroModalidadeJogos', placeholder: 'Todas modalidades', incluirTodas: true });
-            kvs_montar({ wrapId: 'kvs-wrap-filtroModalidadeJogosMob', selectId: 'filtroModalidadeJogosMob', placeholder: 'Todas modalidades', incluirTodas: true });
+            kvs_montar({
+                wrapId: 'kvs-wrap-selectModalidade', selectId: 'selectModalidade',
+                peerWrapId: 'kvs-wrap-selectModalidadeMob', peerSelectId: 'selectModalidadeMob',
+                placeholder: 'Selecione uma modalidade', ariaLabel: 'Selecionar modalidade do chaveamento',
+                listboxLabel: 'Modalidades disponíveis', incluirTodas: false
+            });
+            kvs_montar({
+                wrapId: 'kvs-wrap-selectModalidadeMob', selectId: 'selectModalidadeMob',
+                peerWrapId: 'kvs-wrap-selectModalidade', peerSelectId: 'selectModalidade',
+                placeholder: 'Selecione uma modalidade', ariaLabel: 'Selecionar modalidade do chaveamento',
+                listboxLabel: 'Modalidades disponíveis', incluirTodas: false
+            });
+            kvs_montar({
+                wrapId: 'kvs-wrap-filtroModalidadeJogos', selectId: 'filtroModalidadeJogos',
+                peerWrapId: 'kvs-wrap-filtroModalidadeJogosMob', peerSelectId: 'filtroModalidadeJogosMob',
+                placeholder: 'Todas modalidades', ariaLabel: 'Filtrar jogos por modalidade',
+                listboxLabel: 'Modalidades para filtrar jogos', incluirTodas: true
+            });
+            kvs_montar({
+                wrapId: 'kvs-wrap-filtroModalidadeJogosMob', selectId: 'filtroModalidadeJogosMob',
+                peerWrapId: 'kvs-wrap-filtroModalidadeJogos', peerSelectId: 'filtroModalidadeJogos',
+                placeholder: 'Todas modalidades', ariaLabel: 'Filtrar jogos por modalidade',
+                listboxLabel: 'Modalidades para filtrar jogos', incluirTodas: true
+            });
 
             atualizarStats(jogosCache);
         } catch (e) {
@@ -394,6 +572,7 @@ window.SGIPage.mount("competicoes/chaveamento", function (pageConfig, pageScope)
                 select.innerHTML += `<option value="${c.id_categoria}">${c.nome_categoria}</option>`;
                 if (selectMob) selectMob.innerHTML += `<option value="${c.id_categoria}">${c.nome_categoria}</option>`;
             });
+            if (selectMob) selectMob.value = select.value;
         } catch (e) {
             console.error("Erro ao carregar categorias:", e);
         }
@@ -446,6 +625,15 @@ window.SGIPage.mount("competicoes/chaveamento", function (pageConfig, pageScope)
 
     let _editIdJogo = null;
     let _editJogoData = null;
+    let elementoRetornoFocoEdicao = null;
+    const modalEdicaoJogo = document.getElementById('modalEditarJogo');
+    if (modalEdicaoJogo) {
+        pageScope.listen(modalEdicaoJogo, 'hidden.bs.modal', () => {
+            const origem = elementoRetornoFocoEdicao;
+            elementoRetornoFocoEdicao = null;
+            if (origem?.isConnected && !origem.disabled && origem.getClientRects().length > 0) origem.focus();
+        });
+    }
 
     function _popularModalEdicao(jogo) {
         _editIdJogo = jogo.id_jogo;
@@ -471,11 +659,13 @@ window.SGIPage.mount("competicoes/chaveamento", function (pageConfig, pageScope)
             let teamsHtml = '';
             eqs.forEach((eq, idx) => {
                 const nome = eq.nome_equipe || eq.nome_fantasia || eq.nome_turma || `Equipe #${eq.id_equipe}`;
+                const idCampoPlacar = `editScore_${esc(eq.id_equipe)}`;
                 teamsHtml += `
                     <div class="team-row bg-body-tertiary border rounded-3 p-3 d-flex align-items-center gap-3 mb-2">
-                        <div class="team-row__name flex-grow-1 fw-semibold text-body">${nome}</div>
+                        <div class="team-row__name flex-grow-1 fw-semibold text-body">${esc(nome)}</div>
                         <div class="team-row__score flex-shrink-0" style="width: 72px;">
-                            <input type="number" min="0" class="form-control text-center fw-bold edit-score-input" data-equipe-id="${eq.id_equipe}" value="${eq.gols ?? 0}">
+                            <label class="visually-hidden" for="${idCampoPlacar}">Placar de ${esc(nome)}</label>
+                            <input type="number" id="${idCampoPlacar}" min="0" class="form-control text-center fw-bold edit-score-input" data-equipe-id="${esc(eq.id_equipe)}" value="${esc(eq.gols ?? 0)}">
                         </div>
                     </div>`;
             });
@@ -490,7 +680,7 @@ window.SGIPage.mount("competicoes/chaveamento", function (pageConfig, pageScope)
                     winnerHtml += `
                         <div class="winner-radio form-check d-flex align-items-center gap-2">
                             <input class="form-check-input mt-0" type="radio" name="editWinner" id="winner_${eq.id_equipe}" value="${eq.id_equipe}" ${checked}>
-                            <label class="form-check-label small fw-semibold" for="winner_${eq.id_equipe}">${nome}</label>
+                            <label class="form-check-label small fw-semibold" for="winner_${esc(eq.id_equipe)}">${esc(nome)}</label>
                         </div>`;
                 });
                 winnerOptions.innerHTML = winnerHtml;
@@ -516,6 +706,7 @@ window.SGIPage.mount("competicoes/chaveamento", function (pageConfig, pageScope)
         }
 
         _popularModalEdicao(jogo);
+        elementoRetornoFocoEdicao = btn;
 
         var modalEl = document.getElementById('modalEditarJogo');
         var selectLocal = document.getElementById('editLocalJogo');
@@ -700,7 +891,7 @@ window.SGIPage.mount("competicoes/chaveamento", function (pageConfig, pageScope)
         return '+' + s + 's';
     }
 
-    function renderizarLinhaJogo(j, labelsLarguras) {
+    function renderizarLinhaJogo(j, labelsLarguras, compacto = false) {
         let dataJogo = '---';
         if (j.data_jogo) {
             try {
@@ -743,15 +934,16 @@ window.SGIPage.mount("competicoes/chaveamento", function (pageConfig, pageScope)
             cancelado: 'secondary'
         };
         const statusVariant = statusVariants[statusLower] || 'secondary';
+        const prefixoCabecalho = compacto ? 'jogos-mob-th-' : 'jogos-th-';
         return `<tr>
-            <td class="td-partida fw-semibold text-body">${nomePartida}</td>
-            <td class="td-modalidade text-body-secondary fw-medium">${j.nome_modalidade || '---'}</td>
-            <td class="td-data text-body-secondary text-nowrap">${dataJogo}</td>
-            <td>${tempoDecorrido}</td>
-            <td>${acrescimos}</td>
-            <td>${destaque}</td>
-            <td><span class="badge rounded-pill text-bg-${statusVariant}">${statusLabel}</span></td>
-            <td>
+            <td headers="${prefixoCabecalho}partida" class="td-partida fw-semibold text-body">${nomePartida}</td>
+            <td headers="${prefixoCabecalho}modalidade" class="td-modalidade text-body-secondary fw-medium">${j.nome_modalidade || '---'}</td>
+            <td headers="${prefixoCabecalho}data" class="td-data text-body-secondary text-nowrap">${dataJogo}</td>
+            <td headers="${prefixoCabecalho}tempo">${tempoDecorrido}</td>
+            <td headers="${prefixoCabecalho}acrescimos">${acrescimos}</td>
+            <td headers="${prefixoCabecalho}destaque">${destaque}</td>
+            <td headers="${prefixoCabecalho}status"><span class="badge rounded-pill text-bg-${statusVariant}">${statusLabel}</span></td>
+            <td headers="${prefixoCabecalho}acoes">
                 <div class="d-flex gap-2 justify-content-end">
                     <a href="/jogos/placar?id_jogo=${j.id_jogo}" class="btn btn-sm btn-outline-success d-inline-flex align-items-center justify-content-center" title="Acessar Jogo" aria-label="Acessar Jogo">
                         <i class="bi bi-play-fill"></i>
@@ -770,8 +962,9 @@ window.SGIPage.mount("competicoes/chaveamento", function (pageConfig, pageScope)
         const tbody = document.getElementById('tbodyJogos');
         const tbodyMob = document.getElementById('tbodyJogosMob');
         try {
-            const idModalidade = document.getElementById('filtroModalidadeJogos').value;
-            const idCategoria = document.getElementById('filtroCategoriaJogos').value;
+            const sufixoAtivo = composicaoCompactaAtiva() ? 'Mob' : '';
+            const idModalidade = document.getElementById('filtroModalidadeJogos' + sufixoAtivo).value;
+            const idCategoria = document.getElementById('filtroCategoriaJogos' + sufixoAtivo).value;
 
             let statsUrl = `/api/v1/jogos?id_interclasse=${idInterclasse}`;
             const statsResp = await fetch(statsUrl);
@@ -827,9 +1020,8 @@ window.SGIPage.mount("competicoes/chaveamento", function (pageConfig, pageScope)
                 labelsLarguras[l] = fasesLabel[l] || ('Fase ' + l);
             });
 
-            const html = jogos.map(j => renderizarLinhaJogo(j, labelsLarguras)).join('');
-            tbody.innerHTML = html;
-            if (tbodyMob) tbodyMob.innerHTML = html;
+            tbody.innerHTML = jogos.map(j => renderizarLinhaJogo(j, labelsLarguras)).join('');
+            if (tbodyMob) tbodyMob.innerHTML = jogos.map(j => renderizarLinhaJogo(j, labelsLarguras, true)).join('');
         } catch (e) {
             console.error("Erro ao carregar jogos:", e);
             const msg = '<tr><td colspan="8" class="text-center text-danger py-4">Erro ao carregar jogos.</td></tr>';
@@ -883,6 +1075,12 @@ window.SGIPage.mount("competicoes/chaveamento", function (pageConfig, pageScope)
         </div>`;
     }
 
+    function acoesBracketSempreVisiveis() {
+        const ponteiroComHover = typeof window.matchMedia === 'function'
+            && window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+        return composicaoCompactaAtiva() || !ponteiroComHover;
+    }
+
     function _renderBracketMatch(jogo) {
         const eqs = jogo.equipes || [];
         const isBye = jogo.eh_bye;
@@ -911,9 +1109,10 @@ window.SGIPage.mount("competicoes/chaveamento", function (pageConfig, pageScope)
                 if (isWinner) teamCls += ' bkt-team--winner bg-success-subtle';
                 if (isLoser) teamCls += ' bkt-team--loser opacity-50';
                 const nameCls = 'bkt-team__name flex-grow-1 text-truncate small fw-medium text-body' + (isWinner ? ' fw-bold text-success-emphasis' : '');
-                const trophy = isWinner ? '<span class="bkt-team__trophy text-warning small ms-1"><i class="bi bi-trophy-fill"></i></span>' : '';
+                const trophy = isWinner ? '<span class="bkt-team__trophy text-warning small ms-1" aria-hidden="true"><i class="bi bi-trophy-fill"></i></span>' : '';
+                const winnerLabel = isWinner ? '<span class="bkt-team__winner-label badge rounded-pill text-bg-success small ms-1">Vencedor</span>' : '';
                 const scoreCls = 'bkt-team__score badge rounded-pill text-bg-light fs-6 fw-bold' + (isWinner ? ' bg-success-subtle text-success-emphasis' : '');
-                teamsHtml += `<div class="${teamCls}"><span class="${nameCls}">${nome}</span>${trophy}<span class="${scoreCls}">${eq.gols ?? 0}</span></div>`;
+                teamsHtml += `<div class="${teamCls}"><span class="${nameCls}">${nome}</span>${winnerLabel}${trophy}<span class="${scoreCls}">${eq.gols ?? 0}</span></div>`;
             });
         }
 
@@ -949,8 +1148,9 @@ window.SGIPage.mount("competicoes/chaveamento", function (pageConfig, pageScope)
         metaParts.push(`<i class="bi bi-geo-alt"></i><span>${localJogo || 'A definir'}</span>`);
 
         let actionsHtml = '';
+        const actionVisibility = acoesBracketSempreVisiveis() ? ' opacity-100' : '';
         if (!isBye && !isConcluido && jogo.id_jogo) {
-            actionsHtml += '<div class="bkt-match__actions d-flex gap-1 px-2 pb-2 justify-content-end">';
+            actionsHtml += `<div class="bkt-match__actions d-flex gap-1 px-2 pb-2 justify-content-end${actionVisibility}">`;
             if (jogo.status_jogo === 'Agendado' && jogo.data_jogo && jogo.inicio_jogo && jogo.termino_jogo && jogo.locais_id_local) {
                 actionsHtml += `<a href="/jogos/placar?id_jogo=${jogo.id_jogo}" class="btn btn-sm btn-outline-success d-inline-flex align-items-center gap-1" title="Iniciar Jogo"><i class="bi bi-play-fill"></i>Iniciar</a>`;
             }
@@ -958,7 +1158,7 @@ window.SGIPage.mount("competicoes/chaveamento", function (pageConfig, pageScope)
             actionsHtml += '</div>';
         }
         if (isConcluido && jogo.id_jogo) {
-            actionsHtml += '<div class="bkt-match__actions d-flex gap-1 px-2 pb-2 justify-content-end">';
+            actionsHtml += `<div class="bkt-match__actions d-flex gap-1 px-2 pb-2 justify-content-end${actionVisibility}">`;
             actionsHtml += `<a href="/jogos/placar?id_jogo=${jogo.id_jogo}" class="btn btn-sm btn-outline-primary d-inline-flex align-items-center gap-1" title="Ver resultado"><i class="bi bi-eye"></i>Ver resultado</a>`;
             actionsHtml += `<button class="btn btn-sm btn-outline-secondary d-inline-flex align-items-center gap-1" title="Editar Jogo" data-jogo='${JSON.stringify(jogo).replace(/'/g, "&#39;")}' onclick="editarJogoBracket(this)"><i class="bi bi-pencil"></i>Editar</button>`;
             actionsHtml += '</div>';
@@ -1138,6 +1338,7 @@ window.SGIPage.mount("competicoes/chaveamento", function (pageConfig, pageScope)
         }
         const jogo = _jogoIndividualCache;
         _popularModalEdicao(jogo);
+        elementoRetornoFocoEdicao = e?.currentTarget || document.activeElement;
 
         var modalEl = document.getElementById('modalEditarJogo');
         var selectLocal = document.getElementById('editLocalJogo');
@@ -1393,6 +1594,10 @@ window.SGIPage.mount("competicoes/chaveamento", function (pageConfig, pageScope)
 
     const selectDesk = document.getElementById('selectModalidade');
     if (selectDesk) pageScope.listen(selectDesk, 'change', function() {
+        const selectPar = document.getElementById('selectModalidadeMob');
+        if (selectPar && selectPar.value !== this.value) selectPar.value = this.value;
+        kvs_atualizarControle('kvs-wrap-selectModalidade', 'selectModalidade', 'Selecione uma modalidade', 'Selecionar modalidade do chaveamento');
+        kvs_atualizarControle('kvs-wrap-selectModalidadeMob', 'selectModalidadeMob', 'Selecione uma modalidade', 'Selecionar modalidade do chaveamento');
         document.getElementById('msgChaveamento').innerHTML = '';
         document.getElementById('faseTimeline').classList.add('d-none');
         pararPolling();
@@ -1401,17 +1606,32 @@ window.SGIPage.mount("competicoes/chaveamento", function (pageConfig, pageScope)
 
     const selectMob = document.getElementById('selectModalidadeMob');
     if (selectMob) pageScope.listen(selectMob, 'change', function() {
+        const selectPar = document.getElementById('selectModalidade');
+        if (selectPar && selectPar.value !== this.value) selectPar.value = this.value;
+        kvs_atualizarControle('kvs-wrap-selectModalidade', 'selectModalidade', 'Selecione uma modalidade', 'Selecionar modalidade do chaveamento');
+        kvs_atualizarControle('kvs-wrap-selectModalidadeMob', 'selectModalidadeMob', 'Selecione uma modalidade', 'Selecionar modalidade do chaveamento');
         const msgMob = document.getElementById('msgChaveamentoMob');
         if (msgMob) msgMob.classList.add('d-none');
         pararPolling();
         carregarArvore(this.value);
     });
 
-    pageScope.listen(document.getElementById('filtroModalidadeJogos'), 'change', carregarJogos);
-    pageScope.listen(document.getElementById('filtroCategoriaJogos'), 'change', carregarJogos);
+    function registrarFiltroPareado(idFonte, idPar, modalidade = false) {
+        pageScope.listen(document.getElementById(idFonte), 'change', function() {
+            const controlePar = document.getElementById(idPar);
+            if (controlePar && controlePar.value !== this.value) controlePar.value = this.value;
+            if (modalidade) {
+                kvs_atualizarControle('kvs-wrap-filtroModalidadeJogos', 'filtroModalidadeJogos', 'Todas modalidades', 'Filtrar jogos por modalidade');
+                kvs_atualizarControle('kvs-wrap-filtroModalidadeJogosMob', 'filtroModalidadeJogosMob', 'Todas modalidades', 'Filtrar jogos por modalidade');
+            }
+            carregarJogos();
+        });
+    }
 
-    pageScope.listen(document.getElementById('filtroModalidadeJogosMob'), 'change', carregarJogos);
-    pageScope.listen(document.getElementById('filtroCategoriaJogosMob'), 'change', carregarJogos);
+    registrarFiltroPareado('filtroModalidadeJogos', 'filtroModalidadeJogosMob', true);
+    registrarFiltroPareado('filtroModalidadeJogosMob', 'filtroModalidadeJogos', true);
+    registrarFiltroPareado('filtroCategoriaJogos', 'filtroCategoriaJogosMob');
+    registrarFiltroPareado('filtroCategoriaJogosMob', 'filtroCategoriaJogos');
 
     const btnGerarDesk = document.getElementById('btnGerarChaveamento');
     if (btnGerarDesk) pageScope.listen(btnGerarDesk, 'click', async function() {

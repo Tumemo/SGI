@@ -34,14 +34,12 @@
 /* ==========================================================================
    SGI OFFLINE — Banner de status (modo offline / sincronização)
    ========================================================================== */
-.sgi-offline-banner {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  z-index: 1080;
+@media (max-width: 1199.98px) {
+  .sgi-aluno-home-hero {
+    padding-top: 4rem;
+  }
 }
 
-body.sgi-offline-active {
-  padding-top: 42px;
+.sgi-jogos-detalhes-action {
+  min-height: 48px;
 }

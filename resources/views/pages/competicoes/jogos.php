@@ -1,5 +1,6 @@
 <?php
 $titulo = 'Jogos';
+$tagTituloCompacto = 'h1';
 $mostrarVoltar = true;
 $urlVoltar = \App\Shared\Http\Url::to('painel');
 include SGI_ROOT . '/resources/views/components/admin-head.php';
@@ -10,6 +11,7 @@ $paginaAtiva = 'dashboard';
 
 
 <main class="container py-4 main-desktop-layout sgi-jogos-lista">
+    <h1 class="h3 fw-bold text-body mb-4 d-none d-md-block">Jogos</h1>
 
     <div class="row g-3" id="listaJogos">
         <div class="col-12 text-center text-muted py-5">
@@ -21,7 +23,7 @@ $paginaAtiva = 'dashboard';
     </div>
 </main>
 
-<script type="application/json" data-sgi-config="competicoes/jogos"><?= json_encode([], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_THROW_ON_ERROR) ?></script>
+<script type="application/json" data-sgi-config="competicoes/jogos"><?= json_encode(['placarUrl' => \App\Shared\Http\Url::to('jogos/placar')], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_THROW_ON_ERROR) ?></script>
 <script data-sgi-page src="<?= \App\Shared\Http\Assets::url('js/pages/competicoes/jogos.js') ?>"></script>
 
 <?php

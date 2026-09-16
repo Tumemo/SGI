@@ -1,5 +1,6 @@
 <?php
 $titulo = 'Modalidades';
+$tagTituloCompacto = 'h1';
 $mostrarVoltar = true;
 $urlVoltar = \App\Shared\Http\Url::to('painel');
 $nivelUsuario = (int)($_SESSION['nivel'] ?? -1);
@@ -13,14 +14,15 @@ $paginaAtiva = 'modalidades';
         <p class="text-muted small">(Carregando modalidades...)</p>
     </section>
 
-    <div class="position-fixed sgi-u-bottom-92px-right-16px-z-20" >
-        <button class="btn btn-primary rounded-circle d-flex align-items-center justify-content-center shadow p-3"  data-bs-toggle="modal" data-bs-target="#modalCriarModalidade">
-            <i class="bi bi-plus-lg text-white fs-4"></i>
+    <section id="acoesModalidadesMobile" class="d-flex justify-content-end mt-4 mb-5">
+        <button type="button" class="btn btn-primary rounded-circle d-flex align-items-center justify-content-center shadow p-3" data-bs-toggle="modal" data-bs-target="#modalCriarModalidade" aria-label="Adicionar modalidade">
+            <i class="bi bi-plus-lg text-white fs-4" aria-hidden="true"></i>
         </button>
-    </div>
+    </section>
 </main>
 
 <main class="d-none d-md-block main-desktop-layout">
+    <h1 class="h3 fw-bold text-body mb-4">Modalidades</h1>
     <div class="rounded-3">
         <div class="mb-5">
             <a href="<?= \App\Shared\Http\Url::to('painel') ?>" id="btnVoltarModalidades" class="btn btn-primary d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none" >
@@ -33,11 +35,11 @@ $paginaAtiva = 'modalidades';
         </div>
     </div>
 
-    <div class="position-fixed d-flex flex-row align-items-center gap-4 py-3 px-5 bottom-0 end-0 z-3 bg-transparent" >
+    <div id="acoesModalidadesDesktop" class="d-flex flex-wrap justify-content-end align-items-center gap-3 py-3 mt-4" >
         <span class="text-muted small fw-medium">Não tem a modalidade que você quer?</span>
 
-        <button type="button" class="btn bg-white fw-bold px-4 py-2 d-flex align-items-center justify-content-center gap-2 shadow-sm btn-outline-primary"  data-bs-toggle="modal" data-bs-target="#modalCriarModalidade">
-            <i class="bi bi-plus-circle"></i> Adicionar
+            <button type="button" class="btn bg-white fw-bold px-4 py-2 d-flex align-items-center justify-content-center gap-2 shadow-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#modalCriarModalidade">
+            <i class="bi bi-plus-circle" aria-hidden="true"></i> Adicionar
         </button>
     </div>
 </main>
@@ -46,8 +48,8 @@ $paginaAtiva = 'modalidades';
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header border-0">
-                <h1 class="modal-title fs-5 text-danger" id="modalCriarModalidadeLabel">Criar nova Modalidade</h1>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <h2 class="modal-title fs-5 text-danger" id="modalCriarModalidadeLabel">Criar nova Modalidade</h2>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
             </div>
             <div class="modal-body">
                 <form id="formNovaModalidade">
@@ -56,7 +58,7 @@ $paginaAtiva = 'modalidades';
                         <input type="text" class="form-control" id="inputNomeModalidade" placeholder="Ex: Futsal" required>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label fw-medium">Gênero:</label>
+                        <label class="form-label fw-medium" for="inputGeneroModalidade">Gênero:</label>
                         <select class="form-select" id="inputGeneroModalidade" required>
                             <option value="" disabled selected>Selecione...</option>
                             <option value="MASC">Masculino (M)</option>
@@ -66,18 +68,18 @@ $paginaAtiva = 'modalidades';
                     </div>
                     <?php if ($nivelUsuario === 0): ?>
                     <div class="mb-3">
-                        <label class="form-label fw-medium">Máx. de Inscritos (Opcional):</label>
+                        <label class="form-label fw-medium" for="inputMaxInscritos">Máx. de Inscritos (Opcional):</label>
                         <input type="number" class="form-control" placeholder="Ex: 12" id="inputMaxInscritos" min="0">
                     </div>
                     <?php endif; ?>
                     <div class="mb-3">
-                        <label class="form-label fw-medium">Tipo de Modalidade:</label>
+                        <label class="form-label fw-medium" for="inputTipoModalidade">Tipo de Modalidade:</label>
                         <select class="form-select" id="inputTipoModalidade" required>
                             <option value="" disabled selected>Carregando tipos...</option>
                         </select>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label fw-medium">Categoria:</label>
+                        <label class="form-label fw-medium" for="inputCategoriaModalidade">Categoria:</label>
                         <select class="form-select" id="inputCategoriaModalidade" required>
                             <option value="" disabled selected>Carregando categorias...</option>
                         </select>

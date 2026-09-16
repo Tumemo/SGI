@@ -1,6 +1,37 @@
 window.SGIPage.mount("aluno/modalidade", function (pageConfig, pageScope) {
 
-    const APP_BASE = window.SGI_BASE_PATH || '';
+    const APP_BASE = String(window.SGI_BASE_PATH || '').replace(/\/+$/, '');
+    const API_BASE = String(window.SGI_API_BASE || `${APP_BASE}/api/v1/`).replace(/\/?$/, '/');
+
+    function apiUrl(endpoint, query = {}) {
+        const url = new URL(String(endpoint).replace(/^\/+/, ''), new URL(API_BASE, window.location.href));
+        Object.entries(query).forEach(([key, value]) => {
+            if (value !== undefined && value !== null && value !== '') url.searchParams.set(key, String(value));
+        });
+        return url.toString();
+    }
+
+    async function lerJson(response, descricao) {
+        if (!response.ok) {
+            throw new Error(`${descricao}: HTTP ${response.status}`);
+        }
+
+        const contentType = response.headers.get('content-type') || '';
+        if (!/application\/json|\+json/i.test(contentType)) {
+            throw new Error(`${descricao}: resposta não é JSON.`);
+        }
+
+        let dados;
+        try {
+            dados = await response.json();
+        } catch (_) {
+            throw new Error(`${descricao}: resposta JSON inválida.`);
+        }
+        if (dados && dados.success === false) {
+            throw new Error(`${descricao}: consulta recusada.`);
+        }
+        return dados;
+    }
 
     const urlParams = new URLSearchParams(window.location.search);
     
@@ -13,6 +44,8 @@ window.SGIPage.mount("aluno/modalidade", function (pageConfig, pageScope) {
     const modalidadesInscritas = pageConfig.value5;
     const estaInscrito = modalidadesInscritas.length > 0;
     let modalidadesData = [];
+    let carregandoDados = false;
+    let inscricoesRenderizadas = false;
 
     function esc(s) { const d = document.createElement('div'); d.textContent = s == null ? '' : String(s); return d.innerHTML; }
 
@@ -33,11 +66,24 @@ window.SGIPage.mount("aluno/modalidade", function (pageConfig, pageScope) {
     }
 
     async function carregarDados() {
+        if (carregandoDados) return;
+        carregandoDados = true;
+
         try {
+            if (estaInscrito && !inscricoesRenderizadas) {
+                renderizarInscricoes();
+                inscricoesRenderizadas = true;
+            }
+
             if (!idInterclasse) {
-                const listaInter = await (await fetch('/api/v1/edicoes?regulamento=true')).json();
-                const ativos = (Array.isArray(listaInter) ? listaInter : []).filter(i => String(i.status_interclasse) === '1');
+                const respostaEdicoes = await fetch(apiUrl('edicoes', { regulamento: 'true' }));
+                const listaInter = await lerJson(respostaEdicoes, 'Consulta de edições');
+                if (!Array.isArray(listaInter)) {
+                    throw new Error('Consulta de edições: formato inválido.');
+                }
+                const ativos = listaInter.filter(i => String(i.status_interclasse) === '1');
                 if (ativos.length === 0) {
+                    mostrarSemEdicaoAtiva();
                     return;
                 }
                 idInterclasse = String(ativos[0].id_interclasse);
@@ -46,32 +92,78 @@ window.SGIPage.mount("aluno/modalidade", function (pageConfig, pageScope) {
                 window.history.replaceState({}, '', url);
             }
 
-            const resInter = await fetch('/api/v1/edicoes?regulamento=true');
-            const listaInter = await resInter.json();
-            const dadosInter = (Array.isArray(listaInter) ? listaInter : []).find(i => String(i.id_interclasse) === String(idInterclasse));
+            const resInter = await fetch(apiUrl('edicoes', { regulamento: 'true' }));
+            const listaInter = await lerJson(resInter, 'Consulta de edições');
+            if (!Array.isArray(listaInter)) {
+                throw new Error('Consulta de edições: formato inválido.');
+            }
+            const dadosInter = listaInter.find(i => String(i.id_interclasse) === String(idInterclasse));
             if (dadosInter) {
                 const msg = estaInscrito ? ' — Suas inscrições' : ' — Selecione até 3 modalidades';
             }
 
-            let urlMod = `/api/v1/modalidades?id_interclasse=${idInterclasse}`;
-            if (idTurmaUsuario > 0) urlMod += `&id_turma=${idTurmaUsuario}`;
-            const res = await fetch(urlMod);
-            const lista = await res.json();
-            modalidadesData = Array.isArray(lista) ? lista.filter(m => String(m.status_modalidade) === '1') : [];
+            const res = await fetch(apiUrl('modalidades', {
+                id_interclasse: idInterclasse,
+                id_turma: idTurmaUsuario > 0 ? idTurmaUsuario : undefined,
+            }));
+            const lista = await lerJson(res, 'Consulta de modalidades');
+            if (!Array.isArray(lista)) {
+                throw new Error('Consulta de modalidades: formato inválido.');
+            }
+            modalidadesData = lista.filter(m => String(m.status_modalidade) === '1');
 
-            if (estaInscrito) {
-                renderizarInscricoes();
-            } else {
+            if (!estaInscrito) {
                 document.getElementById('inscricoesAtuais').innerHTML = '';
                 const secao = document.getElementById('secaoInscricoes');
                 if (secao) secao.classList.add('d-none');
             }
-            renderizarSelecao();
+            renderizarSelecao(capturarSelecaoAtual());
 
         } catch (e) {
             console.error(e);
-            document.getElementById('modalidadesGrid').innerHTML = '<div class="col-12 text-center text-danger py-5">Erro ao carregar modalidades.</div>';
+            mostrarErroCarregamento();
+        } finally {
+            carregandoDados = false;
         }
+    }
+
+    function mensagemErroCarregamento() {
+        return `
+            <div class="col-12 js-erro-modalidades" role="alert" aria-live="assertive">
+                <div class="alert alert-danger mb-0">
+                    <p class="mb-2">Não foi possível carregar as modalidades. Suas inscrições confirmadas e escolhas atuais foram preservadas.</p>
+                    <button type="button" class="btn btn-outline-danger btn-sm" data-sgi-action="retry-modalidades">
+                        Tentar novamente
+                    </button>
+                </div>
+            </div>`;
+    }
+
+    function mostrarErroCarregamento() {
+        const grid = document.getElementById('modalidadesGrid');
+        grid.querySelectorAll('.js-erro-modalidades').forEach((elemento) => elemento.remove());
+        if (grid.querySelector('.modalidade-card')) {
+            grid.insertAdjacentHTML('afterbegin', mensagemErroCarregamento());
+        } else {
+            grid.innerHTML = mensagemErroCarregamento();
+        }
+    }
+
+    function mostrarSemEdicaoAtiva() {
+        const grid = document.getElementById('modalidadesGrid');
+        grid.innerHTML = '<div class="col-12 text-center text-body-secondary py-5" role="status">Não há uma edição ativa para inscrições no momento.</div>';
+        document.getElementById('acoesInscricao').classList.add('d-none');
+    }
+
+    function capturarSelecaoAtual() {
+        const selecao = new Map();
+        document.querySelectorAll('.modalidade-card.selected').forEach((card) => {
+            selecao.set(String(card.dataset.id), {
+                equipe: card.dataset.equipe || '',
+                equipeNome: card.dataset.equipeNome || '',
+            });
+        });
+        return selecao;
     }
 
     function atualizarContador() {
@@ -128,21 +220,51 @@ window.SGIPage.mount("aluno/modalidade", function (pageConfig, pageScope) {
         const maxEquipes = mod.max_equipes ? parseInt(mod.max_equipes) || 0 : 0;
         const capacidade = (maxInscrito > 0 && maxEquipes > 0) ? maxInscrito * maxEquipes : 0;
         if (capacidade <= 0) {
-            return { cls: '', icon: '', label: '' };
+            return {
+                state: '',
+                badge: '',
+                icon: '',
+                label: '',
+                detail: 'Não há limite de vagas por turma configurado para esta modalidade.',
+            };
         }
         const inscritos = parseInt(mod.qtd_inscritos_turma) || 0;
         const restantes = capacidade - inscritos;
         if (restantes <= 0) {
-            return { state: 'lotado', badge: 'text-bg-danger', icon: 'bi-x-circle-fill', label: 'Lotado' };
+            return {
+                state: 'lotado',
+                badge: 'text-bg-danger',
+                icon: 'bi-x-circle-fill',
+                label: 'Lotado',
+                detail: `Capacidade da turma: ${capacidade} vagas. Não há vagas restantes.`,
+            };
         }
         if (restantes <= 2) {
-            return { state: 'limited', badge: 'text-bg-warning', icon: 'bi-exclamation-triangle-fill', label: 'Poucas vagas' };
+            return {
+                state: 'limited',
+                badge: 'text-bg-warning',
+                icon: 'bi-exclamation-triangle-fill',
+                label: `Poucas vagas: ${restantes} ${restantes === 1 ? 'vaga restante' : 'vagas restantes'}`,
+                detail: `Capacidade da turma: ${capacidade} vagas; ${restantes} ${restantes === 1 ? 'vaga restante' : 'vagas restantes'}.`,
+            };
         }
-        return { state: '', badge: '', icon: '', label: '' };
+        return {
+            state: '',
+            badge: 'text-bg-success',
+            icon: 'bi-check-circle-fill',
+            label: `${restantes} vagas restantes`,
+            detail: `Capacidade da turma: ${capacidade} vagas; ${restantes} vagas restantes.`,
+        };
+    }
+
+    function rotuloGeneroModalidade(genero) {
+        const labels = { MASC: 'Masculino', FEM: 'Feminino', MISTO: 'Misto', MISTA: 'Misto' };
+        return labels[String(genero || '').toUpperCase()] || 'Gênero não informado';
     }
 
     function atualizarEstadoCard(card, selecionado) {
         card.classList.toggle('selected', selecionado);
+        card.setAttribute('aria-pressed', selecionado ? 'true' : 'false');
         card.classList.toggle('border-primary', selecionado);
         card.classList.toggle('bg-primary-subtle', selecionado);
         card.classList.toggle('shadow', selecionado);
@@ -152,7 +274,7 @@ window.SGIPage.mount("aluno/modalidade", function (pageConfig, pageScope) {
         if (check) check.classList.toggle('d-none', !selecionado);
     }
 
-    function renderizarSelecao() {
+    function renderizarSelecao(selecaoPreservada = new Map()) {
         const grid = document.getElementById('modalidadesGrid');
         const acoes = document.getElementById('acoesInscricao');
         grid.innerHTML = '';
@@ -188,19 +310,32 @@ window.SGIPage.mount("aluno/modalidade", function (pageConfig, pageScope) {
             col.className = 'col';
             const vagas = statusVagas(mod);
             const lotado = vagas.state === 'lotado';
+            const idVagas = `vagas-modalidade-${esc(mod.id_modalidade)}`;
             col.innerHTML = `
-                <div class="modalidade-card card border shadow-sm position-relative h-100 p-4 text-center d-flex flex-column align-items-center gap-2 sgi-u-cursor-pointer${lotado ? ' lotado opacity-50' : ''}" role="button" tabindex="0" data-sgi-action="open-equipe" data-id="${esc(mod.id_modalidade)}" data-nome="${esc(mod.nome_modalidade)}">
-                    <span class="card-check position-absolute top-0 end-0 translate-middle badge rounded-circle text-bg-primary d-none"><i class="bi bi-check-lg"></i></span>
-                    ${vagas.label ? `<span class="badge ${vagas.badge} position-absolute top-0 start-0 translate-middle-y ms-2"><i class="bi ${vagas.icon} me-1"></i>${vagas.label}</span>` : ''}
-                    <div class="card-icon-wrap bg-primary-subtle text-primary rounded-3 p-3 fs-3 d-inline-flex"><i class="bi ${iconeModalidade(mod.nome_modalidade)}"></i></div>
+                <div class="modalidade-card card border shadow-sm position-relative h-100 p-4 text-center d-flex flex-column align-items-center gap-2 sgi-u-cursor-pointer${lotado ? ' lotado opacity-50' : ''}" role="button" tabindex="0" aria-pressed="false" aria-disabled="${lotado ? 'true' : 'false'}" aria-describedby="${idVagas}" data-sgi-action="open-equipe" data-id="${esc(mod.id_modalidade)}" data-nome="${esc(mod.nome_modalidade)}">
+                    <span class="card-check position-absolute top-0 end-0 translate-middle badge rounded-circle text-bg-primary d-none"><i class="bi bi-check-lg" aria-hidden="true"></i><span class="visually-hidden">Selecionada</span></span>
+                    ${vagas.label ? `<span class="badge ${vagas.badge} position-absolute top-0 start-0 translate-middle-y ms-2"><i class="bi ${vagas.icon} me-1" aria-hidden="true"></i>${esc(vagas.label)}</span>` : ''}
+                    <div class="card-icon-wrap bg-primary-subtle text-primary rounded-3 p-3 fs-3 d-inline-flex"><i class="bi ${iconeModalidade(mod.nome_modalidade)}" aria-hidden="true"></i></div>
                     <div class="card-info d-flex flex-column align-items-center gap-1">
                         <span class="card-nome fw-semibold">${esc(mod.nome_modalidade)}</span>
                         <span class="card-categoria badge text-bg-light border text-body-secondary text-uppercase">${esc(mod.nome_categoria || 'Categoria')}</span>
+                        <span class="card-genero small text-body-secondary">${esc(rotuloGeneroModalidade(mod.genero_modalidade))}</span>
                         <span class="card-equipe badge bg-primary-subtle text-primary d-none"></span>
                     </div>
+                    <span class="small text-body-secondary" id="${idVagas}">${esc(vagas.detail)}${lotado ? ' Modalidade indisponível para inscrição.' : ''}</span>
                 </div>
             `;
             grid.appendChild(col);
+
+            const escolha = selecaoPreservada.get(String(mod.id_modalidade));
+            const card = col.querySelector('.modalidade-card');
+            if (escolha && !lotado && escolha.equipe) {
+                atualizarEstadoCard(card, true);
+                card.dataset.equipe = escolha.equipe;
+                card.dataset.equipeNome = escolha.equipeNome;
+                const chip = card.querySelector('.card-equipe');
+                if (chip) chip.textContent = `Equipe: ${escolha.equipeNome}`;
+            }
         });
     }
 
@@ -279,9 +414,11 @@ window.SGIPage.mount("aluno/modalidade", function (pageConfig, pageScope) {
         modal.show();
 
         try {
-            const res = await fetch(`/api/v1/jogos?id_modalidade=${idModalidade}&id_interclasse=${idInterclasse}`);
-            const jogos = await res.json();
-            const lista = Array.isArray(jogos) ? jogos : [];
+            const res = await fetch(apiUrl('jogos', { id_modalidade: idModalidade, id_interclasse: idInterclasse }));
+            const lista = await lerJson(res, 'Consulta de jogos');
+            if (!Array.isArray(lista)) {
+                throw new Error('Consulta de jogos: formato inválido.');
+            }
 
             if (lista.length === 0) {
                 corpo.innerHTML = '<div class="text-center text-muted py-4"><i class="bi bi-calendar-x fs-1 d-block mb-2"></i>Nenhum jogo agendado para esta modalidade ainda.</div>';
@@ -326,9 +463,11 @@ window.SGIPage.mount("aluno/modalidade", function (pageConfig, pageScope) {
     async function carregarMembros(idEquipe) {
         const container = document.getElementById('membros-' + idEquipe);
         try {
-            const res = await fetch(`/api/v1/equipes?id_equipe=${idEquipe}`);
-            const data = await res.json();
-            const membros = Array.isArray(data) ? data : [];
+            const res = await fetch(apiUrl('equipes', { id_equipe: idEquipe }));
+            const membros = await lerJson(res, 'Consulta da equipe');
+            if (!Array.isArray(membros)) {
+                throw new Error('Consulta da equipe: formato inválido.');
+            }
 
             container.innerHTML = '<div class="fw-semibold small text-body-secondary mb-1"><i class="bi bi-people-fill me-1"></i>Sua equipe:</div>';
 
@@ -357,7 +496,7 @@ window.SGIPage.mount("aluno/modalidade", function (pageConfig, pageScope) {
                 span.textContent = String(m.nome_usuario || '') + (ehVoce ? ' (Você)' : '');
                 div.appendChild(span);
                 container.appendChild(div);
-                fetch('/api/v1/foto?user_id=' + m.id_usuario)
+                fetch(apiUrl('foto', { user_id: m.id_usuario }))
                     .then(r => r.json())
                     .then(d => { if (d.foto_usuario) img.src = APP_BASE + '/uploads/fotosUsuarios/' + encodeURIComponent(d.foto_usuario); })
                     .catch(function() {});
@@ -405,9 +544,11 @@ window.SGIPage.mount("aluno/modalidade", function (pageConfig, pageScope) {
         if (chip) chip.textContent = 'Carregando...';
 
         try {
-            const res = await fetch(`/api/v1/equipes?id_modalidade=${idModalidade}&id_turma=${idTurmaUsuario}`);
-            const dados = await res.json();
-            const equipes = Array.isArray(dados) ? dados : [];
+            const res = await fetch(apiUrl('equipes', { id_modalidade: idModalidade, id_turma: idTurmaUsuario }));
+            const equipes = await lerJson(res, 'Consulta de equipes');
+            if (!Array.isArray(equipes)) {
+                throw new Error('Consulta de equipes: formato inválido.');
+            }
 
             if (chip) chip.textContent = '';
 
@@ -515,7 +656,7 @@ window.SGIPage.mount("aluno/modalidade", function (pageConfig, pageScope) {
         }
 
         try {
-            const res = await fetch('/api/v1/inscricoes', {
+            const res = await fetch(apiUrl('inscricoes'), {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -550,6 +691,10 @@ window.SGIPage.mount("aluno/modalidade", function (pageConfig, pageScope) {
         const ativar = (event) => {
             if (event.type === 'keydown' && event.key !== 'Enter' && event.key !== ' ') return;
             if (event.type === 'keydown') event.preventDefault();
+            if (event.target.closest('[data-sgi-action="retry-modalidades"]')) {
+                carregarDados();
+                return;
+            }
             const card = event.target.closest('[data-sgi-action="open-equipe"]');
             if (card) abrirEquipesModalidade(card);
         };
@@ -577,5 +722,5 @@ window.SGIPage.mount("aluno/modalidade", function (pageConfig, pageScope) {
     });
     window.SGIPage.ready( inicializarProgresso);
 
-return {esc, iconeModalidade, carregarDados, atualizarContador, atualizarProgresso, inicializarProgresso, statusVagas, renderizarSelecao, renderizarInscricoes, formatarData, verDetalhesModalidade, carregarMembros, abrirEquipesModalidade, selecionarEquipe, removerEquipeSelecionada, salvarEscolhas};
+return {esc, iconeModalidade, apiUrl, carregarDados, atualizarContador, atualizarProgresso, inicializarProgresso, statusVagas, renderizarSelecao, renderizarInscricoes, formatarData, verDetalhesModalidade, carregarMembros, abrirEquipesModalidade, selecionarEquipe, removerEquipeSelecionada, salvarEscolhas};
 });

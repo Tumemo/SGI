@@ -11,7 +11,7 @@ $isAdmin = $nivelUsuario === 0;
 <main class="d-md-none pt-5 pb-5">
     <div class="px-3 mt-3">
         <a href="<?= \App\Shared\Http\Url::to('painel') ?>" id="btnVoltarArrecadacaoMob" class="btn btn-primary d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none" >
-            <i class="bi bi-arrow-left-circle fs-5"></i> <span id="nomeInterclasseArrecadacaoMob">Interclasse</span>
+            <i class="bi bi-arrow-left-circle fs-5" aria-hidden="true"></i> <span id="nomeInterclasseArrecadacaoMob">Interclasse</span>
         </a>
 
         <div class="mb-4">
@@ -31,7 +31,7 @@ $isAdmin = $nivelUsuario === 0;
     <div class="container-fluid px-4">
         <div class="mb-4">
             <a href="<?= \App\Shared\Http\Url::to('painel') ?>" id="btnVoltarArrecadacao" class="btn btn-primary d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none" >
-                <i class="bi bi-arrow-left-circle fs-5"></i> <span id="nomeInterclasseArrecadacao">Interclasse</span>
+            <i class="bi bi-arrow-left-circle fs-5" aria-hidden="true"></i> <span id="nomeInterclasseArrecadacao">Interclasse</span>
             </a>
         </div>
 
@@ -50,25 +50,23 @@ $isAdmin = $nivelUsuario === 0;
     </div>
 </main>
 
-<?php include SGI_ROOT . '/resources/views/components/admin-nav.php'; require_once SGI_ROOT . '/resources/views/components/footer.php'; ?>
-
 <div class="modal fade" id="modalHistoricoArrecadacao" tabindex="-1" aria-labelledby="modalHistoricoArrecadacaoLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-scrollable">
         <div class="modal-content border-0 shadow">
             <div class="modal-header border-0">
                 <h5 class="modal-title fw-bold" id="modalHistoricoArrecadacaoLabel">
-                    <i class="bi bi-clock-history me-2"></i>Histórico de Arrecadações - <span id="modalHistoricoTurmaNome"></span>
+                    <i class="bi bi-clock-history me-2" aria-hidden="true"></i>Histórico de arrecadações — <span id="modalHistoricoTurmaNome"></span>
                 </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar histórico de arrecadações"></button>
             </div>
             <div class="modal-body pt-0">
                 <?php if ($isAdmin): ?>
                 <div class="d-flex gap-2 mb-3">
                     <button type="button" id="btnFiltroAdicionados" class="btn btn-sm btn-primary rounded-3 px-3 py-1 fw-semibold active" aria-pressed="true" data-filtro-historico="adicionados">
-                        <i class="bi bi-plus-circle me-1"></i>Adicionados
+                        <i class="bi bi-plus-circle me-1" aria-hidden="true"></i>Adicionados
                     </button>
                     <button type="button" id="btnFiltroExcluidos" class="btn btn-sm btn-outline-secondary rounded-3 px-3 py-1 fw-semibold" aria-pressed="false" data-filtro-historico="excluidos">
-                        <i class="bi bi-trash me-1"></i>Excluídos
+                        <i class="bi bi-trash me-1" aria-hidden="true"></i>Excluídos
                     </button>
                 </div>
                 <?php endif; ?>
@@ -80,5 +78,9 @@ $isAdmin = $nivelUsuario === 0;
     </div>
 </div>
 
+<?php include SGI_ROOT . '/resources/views/components/admin-nav.php'; ?>
+
 <script type="application/json" data-sgi-config="eventos/configurar-arrecadacao"><?= json_encode(['value0' => ($isAdmin), 'value2' => (bool) $isAdmin], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_THROW_ON_ERROR) ?></script>
 <script data-sgi-page src="<?= \App\Shared\Http\Assets::url('js/pages/eventos/configurar-arrecadacao.js') ?>"></script>
+
+<?php require_once SGI_ROOT . '/resources/views/components/footer.php'; ?>

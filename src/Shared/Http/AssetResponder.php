@@ -25,6 +25,7 @@ final class AssetResponder
     {
         $path = ltrim($request->path(), '/');
         $file = null;
+        $cacheControl = 'public, max-age=3600';
         if (str_starts_with($path, 'assets/')) {
             $file = $this->files->resolve($path, $this->root . '/public');
         }
@@ -35,6 +36,9 @@ final class AssetResponder
             ] as $prefix => $directory) {
                 if (str_starts_with($path, $prefix . '/')) {
                     $file = $this->files->resolve(substr($path, strlen($prefix) + 1), $directory);
+                    if ($prefix === 'uploads/fotosUsuarios') {
+                        $cacheControl = 'private, no-store';
+                    }
                     break;
                 }
             }
@@ -50,7 +54,7 @@ final class AssetResponder
         }
         header('Content-Type: ' . self::CONTENT_TYPES[$extension]);
         header('X-Content-Type-Options: nosniff');
-        header('Cache-Control: public, max-age=3600');
+        header('Cache-Control: ' . $cacheControl);
         if ($request->method() !== 'HEAD') {
             readfile($file);
         }

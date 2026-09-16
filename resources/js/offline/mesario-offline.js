@@ -55,6 +55,12 @@
         dashboard: 'Dashboard'
     };
 
+    function tituloDocumento(titulo, fallback) {
+        var nome = String(titulo || '').trim().replace(/\s*\|\s*SGI$/i, '').trim();
+        if (!nome || nome === 'SGI') nome = String(fallback || 'SGI').trim();
+        return nome && nome !== 'SGI' ? nome + ' | SGI' : 'SGI';
+    }
+
     var state = {
         nivel: -1,
         temCasca: false,
@@ -460,7 +466,7 @@
             rec.url = url;
             rec.tela = tela;
             if (params && params.id != null) rec.interclasseId = String(params.id);
-            rec.titulo = TELA_TITULO[tela] || 'SGI';
+            rec.titulo = tituloDocumento(rec.titulo, TELA_TITULO[tela]);
             rec.savedAt = Date.now();
             var key = chaveTela(tela, params);
             // Store source together with its HTML/config so reopening offline
@@ -604,7 +610,11 @@
             raiz.setAttribute('data-sgi-screen', 'dashboard');
             raiz.innerHTML = state.dashHtml;
             state.montadas['dashboard'] = { root: raiz, inits: [], css: '' };
-            state.registros['dashboard'] = { tela: 'dashboard', url: construirUrl('dashboard', params) };
+            state.registros['dashboard'] = {
+                tela: 'dashboard',
+                url: construirUrl('dashboard', params),
+                titulo: tituloDocumento(document.title, TELA_TITULO.dashboard)
+            };
             ativarMontagem('dashboard', 'dashboard', params);
             return;
         }
@@ -632,7 +642,11 @@
         desmontarTelaAtual(raiz);
         conteudo.replaceChildren(raiz);
 
-        state.registros[key] = { tela: tela, url: rec.url || construirUrl(tela, params) };
+        state.registros[key] = {
+            tela: tela,
+            url: rec.url || construirUrl(tela, params),
+            titulo: tituloDocumento(rec.titulo, TELA_TITULO[tela])
+        };
 
         // Os scripts das telas usam window.location.search na declaração
         // inicial (especialmente o chaveamento, que lê ?id=). A URL precisa
@@ -674,9 +688,13 @@
             url = rec.url || construirUrl(tela, {});
         }
         if (!historicoJaAtualizado) pushEstado(tela, key, url);
-        document.title = 'SGI';
+        document.title = tituloDocumento(rec.titulo, TELA_TITULO[tela]);
 
         if (m.inits) m.inits.forEach(function (fn) { runSafe(fn); });
+        if (window.SGIPage) {
+            window.SGIPage.updateContentTarget(document);
+            window.SGIPage.focusPageHeading(m.root);
+        }
     }
 
     /* ==================== Interceptacao de links e popstate ==================== */
@@ -1103,6 +1121,7 @@
 
     var PROGRESSO_ID = 'sgi-progresso';
     var BADGE_ID = 'sgi-offline-ok';
+    var removerObservadorEstadoOffline = null;
 
     var CSS_UI = '' +
         '#' + PROGRESSO_ID + '{position:fixed;top:58px;left:50%;transform:translateX(-50%);z-index:3000;' +
@@ -1138,8 +1157,11 @@
         if (!document.getElementById(BADGE_ID)) {
             var b = document.createElement('div');
             b.id = BADGE_ID;
-            b.title = 'Clique para baixar novamente';
-            b.innerHTML = '<i class="bi bi-check2-circle"></i> Pronto para uso offline! 🟢';
+            b.title = 'Os dados foram preparados nesta aba; atualizar a página ou abrir outra aba sem conexão não é compatível.';
+            b.setAttribute('role', 'status');
+            b.setAttribute('aria-live', 'polite');
+            b.setAttribute('aria-atomic', 'true');
+            b.innerHTML = '<i class="bi bi-check2-circle" aria-hidden="true"></i> Pronto para uso offline nesta aba preparada';
             b.addEventListener('click', function () {
                 if (state.preloading) return;
                 preload();
@@ -1174,7 +1196,18 @@
         // ainda marca a sessão como pronta. Nesse intervalo, não exibir o
         // selo verde evita induzir o mesário a desligar a rede antes de todas
         // as telas e partidas terminarem de ser baixadas.
-        if (b) { b.style.display = state.preloading ? 'none' : 'inline-flex'; }
+        var banner = document.getElementById('sgi-offline-banner');
+        var bannerVisivel = banner && !banner.classList.contains('d-none') && !banner.classList.contains('sgi-hidden');
+        if (b) { b.style.display = state.preloading || bannerVisivel ? 'none' : 'inline-flex'; }
+    }
+
+    function observarEstadoBanner() {
+        if (removerObservadorEstadoOffline || !window.SGIOffline ||
+            typeof window.SGIOffline.onStateChange !== 'function') return;
+        removerObservadorEstadoOffline = window.SGIOffline.onStateChange(function () {
+            mostrarBadge();
+        });
+        mostrarBadge();
     }
 
     function ocultarBadge() {
@@ -1205,6 +1238,7 @@
         }
 
         criarUi();
+        observarEstadoBanner();
         registrarInterceptacao();
 
         if (!state.temCasca) return;

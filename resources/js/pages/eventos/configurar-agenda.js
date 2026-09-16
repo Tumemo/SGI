@@ -22,6 +22,14 @@ window.SGIPage.mount("eventos/configurar-agenda", function (pageConfig, pageScop
     let filtroData = null;
     let filtroStatus = '';
     let buscaAtual = '';
+    let anuncioResultadoTimer = null;
+
+    pageScope.onDeactivate(() => {
+        if (anuncioResultadoTimer !== null) {
+            window.clearTimeout(anuncioResultadoTimer);
+            anuncioResultadoTimer = null;
+        }
+    });
 
     function resolverTipoCompeticao(jogo) {
         if (!jogo) return null;
@@ -231,16 +239,44 @@ window.SGIPage.mount("eventos/configurar-agenda", function (pageConfig, pageScop
             });
     }
 
-    function temJogoNoDia(ano, mesZeroBased, dia) {
-        const m = String(mesZeroBased + 1).padStart(2, '0');
-        const d = String(dia).padStart(2, '0');
-        const key = `${ano}-${m}-${d}`;
+    function quantidadeJogosNoDia(dataStr) {
         const modF = modalidadeSelecionadaId();
-        return jogosCache.some((j) => {
-            if (j.data_jogo !== key) return false;
-            if (modF && String(j.modalidades_id_modalidade) !== String(modF)) return false;
-            return true;
+        return jogosCache.filter((j) => j.data_jogo === dataStr &&
+            (!modF || String(j.modalidades_id_modalidade) === String(modF))).length;
+    }
+
+    function formatarDataLonga(dataStr) {
+        return new Date(`${dataStr}T12:00:00`).toLocaleDateString('pt-BR', {
+            weekday: 'long',
+            day: 'numeric',
+            month: 'long',
+            year: 'numeric'
         });
+    }
+
+    function formatarQuantidadeJogos(quantidade) {
+        return `${quantidade} ${quantidade === 1 ? 'jogo' : 'jogos'}`;
+    }
+
+    function montarDiaCalendario(ano, mesZeroBased, dia, hojeReal) {
+        const data = new Date(ano, mesZeroBased, dia, 12);
+        const dataStr = ymd(data);
+        const isHoje = dataStr === ymd(hojeReal);
+        const quantidade = quantidadeJogosNoDia(dataStr);
+        const isSelecionado = filtroData === dataStr;
+        const classes = [
+            'ag-cal-day',
+            isHoje ? 'ag-cal-day--today' : '',
+            quantidade > 0 ? 'ag-cal-day--has-game' : '',
+            isSelecionado ? 'ag-cal-day--selected' : ''
+        ].filter(Boolean).join(' ');
+        const partesRotulo = [formatarDataLonga(dataStr)];
+        if (isHoje) partesRotulo.push('Hoje');
+        partesRotulo.push(formatarQuantidadeJogos(quantidade));
+
+        return `<button type="button" class="${classes}" data-date="${dataStr}"
+            aria-label="${escapeHtml(partesRotulo.join(', '))}"
+            aria-pressed="${isSelecionado ? 'true' : 'false'}"${isHoje ? ' aria-current="date"' : ''}>${dia}</button>`;
     }
 
     function montarCardJogo(j) {
@@ -489,11 +525,70 @@ window.SGIPage.mount("eventos/configurar-agenda", function (pageConfig, pageScop
         });
     }
 
-    function atualizarTelas() {
+    function anunciarResultadoAgenda() {
+        let mensagem;
+        if (!interclasseAtual) {
+            mensagem = 'Nenhum interclasse selecionado ou ativo.';
+        } else {
+            const jogos = jogosDoMesVisivel();
+            const contexto = filtroData
+                ? formatarDataLonga(filtroData)
+                : new Date(dataNavegacao.getFullYear(), dataNavegacao.getMonth(), 1)
+                    .toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
+            const filtros = [];
+            const modalidadeId = modalidadeSelecionadaId();
+            const modalidade = modalidadesLista.find((item) => String(item.id_modalidade) === String(modalidadeId));
+            if (modalidade) {
+                const nomeModalidade = [modalidade.nome_modalidade, modalidade.nome_categoria].filter(Boolean).join(' – ');
+                if (nomeModalidade) filtros.push(`Modalidade: ${nomeModalidade}`);
+            }
+            if (filtroStatus) {
+                const nomesStatus = { andamento: 'Em andamento', Concluido: 'Concluídos', Agendado: 'Agendados' };
+                filtros.push(`Status: ${nomesStatus[filtroStatus] || filtroStatus}`);
+            }
+            if (buscaAtual) filtros.push(`Busca: ${buscaAtual}`);
+            const complementoFiltros = filtros.length > 0 ? ` Filtros: ${filtros.join('; ')}.` : '';
+            mensagem = (jogos.length === 0
+                ? `Nenhum jogo em ${contexto}.`
+                : `${formatarQuantidadeJogos(jogos.length)} em ${contexto}.`) + complementoFiltros;
+        }
+
+        ['agenda-result-status', 'agenda-result-status-mobile'].forEach((id) => {
+            const status = document.getElementById(id);
+            if (status && status.isConnected && status.textContent !== mensagem) {
+                status.textContent = mensagem;
+            }
+        });
+    }
+
+    function focarDiaCalendario(dataStr, gradeId) {
+        const grade = document.getElementById(gradeId);
+        if (!grade || !grade.isConnected) return;
+        const alvo = grade.querySelector(`button[data-date="${dataStr}"]`);
+        if (alvo) alvo.focus({ preventScroll: true });
+    }
+
+    function atualizarTelas({ adiarAnuncio = false } = {}) {
+        const ativo = document.activeElement;
+        const diaFocado = ativo && ativo.matches('button[data-date]') ? ativo.dataset.date : null;
+        const gradeFocada = diaFocado ? ativo.closest('.ag-cal-grid')?.id : null;
         gerarCalendarioVisual();
         gerarCalendarioMobile();
         atualizarSelects();
         renderListaEventos();
+        if (anuncioResultadoTimer !== null) {
+            window.clearTimeout(anuncioResultadoTimer);
+            anuncioResultadoTimer = null;
+        }
+        if (adiarAnuncio) {
+            anuncioResultadoTimer = window.setTimeout(() => {
+                anuncioResultadoTimer = null;
+                anunciarResultadoAgenda();
+            }, 300);
+        } else {
+            anunciarResultadoAgenda();
+        }
+        if (diaFocado && gradeFocada) focarDiaCalendario(diaFocado, gradeFocada);
     }
 
     function inicializarAnos() {
@@ -529,15 +624,7 @@ window.SGIPage.mount("eventos/configurar-agenda", function (pageConfig, pageScop
             grade.innerHTML += `<div class="ag-cal-day ag-cal-day--empty"></div>`;
         }
         for (let dia = 1; dia <= diasNoMes; dia++) {
-            const isHoje = dia === hojeReal.getDate() && mesNavegacao === hojeReal.getMonth() && anoNavegacao === hojeReal.getFullYear();
-            const temEvt = temJogoNoDia(anoNavegacao, mesNavegacao, dia);
-            const dataStr = `${anoNavegacao}-${String(mesNavegacao + 1).padStart(2, '0')}-${String(dia).padStart(2, '0')}`;
-            const isSelecionado = filtroData === dataStr;
-            let classes = 'ag-cal-day';
-            if (isHoje) classes += ' ag-cal-day--today';
-            if (temEvt) classes += ' ag-cal-day--has-game';
-            if (isSelecionado) classes += ' ag-cal-day--selected';
-            grade.innerHTML += `<div class="${classes}" data-date="${dataStr}">${dia}</div>`;
+            grade.innerHTML += montarDiaCalendario(anoNavegacao, mesNavegacao, dia, hojeReal);
         }
     }
 
@@ -554,15 +641,7 @@ window.SGIPage.mount("eventos/configurar-agenda", function (pageConfig, pageScop
             grade.innerHTML += `<div class="ag-cal-day ag-cal-day--empty"></div>`;
         }
         for (let dia = 1; dia <= diasNoMes; dia++) {
-            const isHoje = dia === hojeReal.getDate() && mesNavegacao === hojeReal.getMonth() && anoNavegacao === hojeReal.getFullYear();
-            const temEvt = temJogoNoDia(anoNavegacao, mesNavegacao, dia);
-            const dataStr = `${anoNavegacao}-${String(mesNavegacao + 1).padStart(2, '0')}-${String(dia).padStart(2, '0')}`;
-            const isSelecionado = filtroData === dataStr;
-            let classes = 'ag-cal-day';
-            if (isHoje) classes += ' ag-cal-day--today';
-            if (temEvt) classes += ' ag-cal-day--has-game';
-            if (isSelecionado) classes += ' ag-cal-day--selected';
-            grade.innerHTML += `<div class="${classes}" data-date="${dataStr}">${dia}</div>`;
+            grade.innerHTML += montarDiaCalendario(anoNavegacao, mesNavegacao, dia, hojeReal);
         }
     }
 
@@ -737,10 +816,15 @@ window.SGIPage.mount("eventos/configurar-agenda", function (pageConfig, pageScop
             if (target) aplicarFiltroData(target.dataset.date);
         });
 
-        const limparFiltro = () => {
+        const limparFiltro = (event) => {
             if (filtroData) {
+                const dataParaFocar = filtroData;
+                const gradeId = event.currentTarget.id === 'btn-mostrar-todos-mobile'
+                    ? 'calendario-grade-mobile'
+                    : 'calendario-grade';
                 filtroData = null;
                 atualizarTelas();
+                focarDiaCalendario(dataParaFocar, gradeId);
             }
         };
         const el7 = document.getElementById('btn-mostrar-todos');
@@ -780,13 +864,13 @@ window.SGIPage.mount("eventos/configurar-agenda", function (pageConfig, pageScop
         if (elBusca) pageScope.listen(elBusca, 'input', (e) => {
             setBusca(e.target.value.trim());
             filtroData = null;
-            atualizarTelas();
+            atualizarTelas({ adiarAnuncio: true });
         });
         const elBuscaMob = document.getElementById('agenda-busca-mobile');
         if (elBuscaMob) pageScope.listen(elBuscaMob, 'input', (e) => {
             setBusca(e.target.value.trim());
             filtroData = null;
-            atualizarTelas();
+            atualizarTelas({ adiarAnuncio: true });
         });
 
         /* ── SALVAR EDIÇÃO INDIVIDUAL ── */

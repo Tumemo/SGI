@@ -6,6 +6,10 @@ window.SGIPage.mount("disciplina/ocorrencias", function (pageConfig, pageScope) 
         return d.innerHTML;
     }
 
+    function escAttr(s) {
+        return esc(s).replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+    }
+
     const params = new URLSearchParams(window.location.search);
     let idInterclasse = params.get('id');
     let todasTurmas = [];
@@ -58,18 +62,20 @@ window.SGIPage.mount("disciplina/ocorrencias", function (pageConfig, pageScope) 
 
     function carregarLista() {
         function renderCard(turma) {
+            const nomeTurma = turma.nome_fantasia_turma || turma.nome_turma;
+            const nomeTurmaSeguro = escAttr(nomeTurma);
             return `
                 <div class="col"><article class="card h-100 border-0 shadow-sm p-3 d-flex flex-row align-items-center gap-3">
-                    <div class="bg-danger-subtle text-danger rounded-circle p-2 fs-5 d-flex align-items-center justify-content-center flex-shrink-0"><i class="bi bi-people-fill"></i></div>
+                    <div class="bg-danger-subtle text-danger rounded-circle p-2 fs-5 d-flex align-items-center justify-content-center flex-shrink-0"><i class="bi bi-people-fill" aria-hidden="true"></i></div>
                     <div class="flex-grow-1 sgi-u-min-width-0">
-                        <p class="mb-1 fw-semibold text-truncate">${esc(turma.nome_fantasia_turma || turma.nome_turma)}</p>
+                        <h2 class="h6 mb-1 fw-semibold text-truncate">${esc(nomeTurma)}</h2>
                         <span class="badge text-bg-light">${esc(turma.nome_categoria || 'Geral')}</span>
                     </div>
-                    <button type="button" class="btn btn-outline-secondary btn-sm" data-sgi-action="history-ocorrencia" data-id-turma="${turma.id_turma}" data-nome-turma="${esc(turma.nome_fantasia_turma || turma.nome_turma)}" title="Ver histórico">
-                        <i class="bi bi-clock-history"></i>
+                    <button type="button" class="btn btn-outline-secondary btn-sm" data-sgi-action="history-ocorrencia" data-id-turma="${turma.id_turma}" data-nome-turma="${nomeTurmaSeguro}" title="Ver histórico" aria-label="Ver histórico de ocorrências de ${nomeTurmaSeguro}">
+                        <i class="bi bi-clock-history" aria-hidden="true"></i>
                     </button>
-                    <button type="button" class="btn btn-outline-danger btn-sm" data-sgi-action="add-ocorrencia" data-id-turma="${turma.id_turma}" data-nome-turma="${esc(turma.nome_fantasia_turma || turma.nome_turma)}" title="Adicionar ocorrência">
-                        <i class="bi bi-plus-lg"></i>
+                    <button type="button" class="btn btn-outline-danger btn-sm" data-sgi-action="add-ocorrencia" data-id-turma="${turma.id_turma}" data-nome-turma="${nomeTurmaSeguro}" title="Adicionar ocorrência" aria-label="Adicionar ocorrência para ${nomeTurmaSeguro}">
+                        <i class="bi bi-plus-lg" aria-hidden="true"></i>
                     </button>
                 </article></div>`;
         }
@@ -91,22 +97,28 @@ window.SGIPage.mount("disciplina/ocorrencias", function (pageConfig, pageScope) 
 
     function vincularEventosLista() {
         document.querySelectorAll('[data-sgi-action="history-ocorrencia"]').forEach((button) => {
-            pageScope.listen(button, 'click', () => abrirHistoricoTurma(button.dataset.idTurma, button.dataset.nomeTurma));
+            pageScope.listen(button, 'click', () => abrirHistoricoTurma(button.dataset.idTurma, button.dataset.nomeTurma, button));
         });
         document.querySelectorAll('[data-sgi-action="add-ocorrencia"]').forEach((button) => {
-            pageScope.listen(button, 'click', () => abrirModalOcorrencia(button.dataset.idTurma, button.dataset.nomeTurma));
+            pageScope.listen(button, 'click', () => abrirModalOcorrencia(button.dataset.idTurma, button.dataset.nomeTurma, button));
         });
     }
 
-    function abrirModalOcorrencia(idTurma, nomeTurma) {
+    function mostrarModalComRetornoDeFoco(modalElement, acionador) {
+        modalElement.addEventListener('hidden.bs.modal', () => {
+            if (acionador && acionador.isConnected) acionador.focus();
+        }, { once: true });
+        bootstrap.Modal.getOrCreateInstance(modalElement).show();
+    }
+
+    function abrirModalOcorrencia(idTurma, nomeTurma, acionador) {
         modalTurmaId = idTurma;
         document.getElementById('modalTurmaNome').innerText = nomeTurma;
         document.getElementById('ocrTituloModal').value = '';
         document.getElementById('ocrPontosModal').value = '';
         document.getElementById('msgOcrModal').innerHTML = '';
 
-        const modal = new bootstrap.Modal(document.getElementById('modalNovaOcorrencia'));
-        modal.show();
+        mostrarModalComRetornoDeFoco(document.getElementById('modalNovaOcorrencia'), acionador);
     }
 
     async function salvarOcorrenciaModal() {
@@ -165,11 +177,10 @@ window.SGIPage.mount("disciplina/ocorrencias", function (pageConfig, pageScope) 
         }
     }
 
-    function abrirHistoricoTurma(idTurma, nomeTurma) {
+    function abrirHistoricoTurma(idTurma, nomeTurma, acionador) {
         historicoTurmaId = idTurma;
         document.getElementById('modalHistoricoTurmaNome').innerText = nomeTurma;
-        const modal = new bootstrap.Modal(document.getElementById('modalHistoricoOcorrencias'));
-        modal.show();
+        mostrarModalComRetornoDeFoco(document.getElementById('modalHistoricoOcorrencias'), acionador);
         carregarHistorico(idTurma);
     }
 
@@ -197,7 +208,7 @@ window.SGIPage.mount("disciplina/ocorrencias", function (pageConfig, pageScope) 
                 html += '<td class="small text-muted">' + esc(r.descricao_ocorrencia || '-') + '</td>';
                 html += '<td class="text-center"><span class="badge text-bg-danger">-' + r.pontos_descontados + ' pts</span></td>';
                 html += '<td class="text-center">';
-                html += '<button type="button" class="btn btn-outline-danger btn-sm" title="Remover" data-sgi-action="remove-ocorrencia" data-id-ocorrencia="' + esc(r.id_ocorrencia_turma) + '"><i class="bi bi-trash"></i></button>';
+                html += '<button type="button" class="btn btn-outline-danger btn-sm" title="Remover" aria-label="Remover ocorrência ' + escAttr(r.titulo_ocorrencia || '') + '" data-sgi-action="remove-ocorrencia" data-id-ocorrencia="' + esc(r.id_ocorrencia_turma) + '"><i class="bi bi-trash" aria-hidden="true"></i></button>';
                 html += '</td></tr>';
             });
 

@@ -22,11 +22,19 @@ window.SGIPage.mount("aluno/perfil", function (pageConfig, pageScope) {
         if (skel) skel.classList.add('d-none');
     }
 
+    function mostrarFallbackFoto(suf) {
+        const img = document.getElementById('fotoImg' + suf);
+        const icon = document.getElementById('fotoIcon' + suf);
+        if (img) img.classList.add('d-none');
+        if (icon) icon.classList.remove('d-none');
+        esconderSkeleton(suf);
+    }
+
     function preencherPerfil() {
         document.getElementById('perfilNomeMob').textContent = DADOS_PERFIL.nome;
-        document.getElementById('perfilEmailMob').textContent = DADOS_PERFIL.matricula;
+        document.getElementById('perfilMatriculaMob').textContent = DADOS_PERFIL.matricula;
         document.getElementById('perfilNomeDesk').textContent = DADOS_PERFIL.nome;
-        document.getElementById('perfilEmailDesk').textContent = DADOS_PERFIL.matricula;
+        document.getElementById('perfilMatriculaDesk').textContent = DADOS_PERFIL.matricula;
         const nomeInfo = document.getElementById('perfilNomeInfo');
         if (nomeInfo) nomeInfo.textContent = DADOS_PERFIL.nome;
         const editarNome = document.getElementById('editarNome');
@@ -45,9 +53,7 @@ window.SGIPage.mount("aluno/perfil", function (pageConfig, pageScope) {
                     esconderSkeleton(suf);
                 };
                 img.onerror = () => {
-                    img.classList.add('d-none');
-                    icon.classList.remove('d-none');
-                    esconderSkeleton(suf);
+                    mostrarFallbackFoto(suf);
                 };
                 img.src = url;
             }
@@ -73,8 +79,13 @@ window.SGIPage.mount("aluno/perfil", function (pageConfig, pageScope) {
         if (!input) return;
         const mostrar = input.type === 'password';
         input.type = mostrar ? 'text' : 'password';
-        btn.innerHTML = '<i class="bi bi-' + (mostrar ? 'eye' : 'eye-slash') + '"></i>';
-        btn.setAttribute('aria-label', mostrar ? 'Esconder senha' : 'Mostrar senha');
+        const icon = btn.querySelector('i');
+        if (icon) {
+            icon.classList.toggle('bi-eye', mostrar);
+            icon.classList.toggle('bi-eye-slash', !mostrar);
+        }
+        btn.setAttribute('aria-label', mostrar ? 'Ocultar senha' : 'Mostrar senha');
+        btn.setAttribute('aria-pressed', String(mostrar));
     }
 
     function toggleSenha(suf) {
@@ -119,10 +130,10 @@ window.SGIPage.mount("aluno/perfil", function (pageConfig, pageScope) {
                     mostrarFoto(APP_BASE + '/uploads/fotosUsuarios/' + encodeURIComponent(data.foto_usuario));
                     atualizarBotoesFoto();
                 } else {
-                    ['Mob', 'Desk'].forEach(esconderSkeleton);
+                    ['Mob', 'Desk'].forEach(mostrarFallbackFoto);
                 }
             } catch (e) {
-                ['Mob', 'Desk'].forEach(esconderSkeleton);
+                ['Mob', 'Desk'].forEach(mostrarFallbackFoto);
             }
         })();
 
@@ -145,12 +156,12 @@ window.SGIPage.mount("aluno/perfil", function (pageConfig, pageScope) {
                 btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Salvando...';
                 try {
                     const resp = await fetch(API_FOTO, { method: 'POST', body: fd });
-                    const data = await resp.json();
-                    if (data.success && data.arquivo) {
+                    const data = await resp.json().catch(() => null);
+                    if (resp.ok && data?.success === true && data.arquivo) {
                         mostrarToast('Foto atualizada com sucesso!', 'success');
                         setTimeout(() => window.location.reload(), 1200);
                     } else {
-                        mostrarToast(data.mensagem || 'Erro ao enviar foto.', 'error');
+                        mostrarToast(data?.mensagem || 'Resposta inválida ao enviar foto.', 'error');
                     }
                 } catch (e) {
                     mostrarToast('Erro de conexão.', 'error');
@@ -165,11 +176,13 @@ window.SGIPage.mount("aluno/perfil", function (pageConfig, pageScope) {
             pageScope.listen(btn, 'click', async () => {
                 if (!await SGI.confirm({ titulo: 'Remover foto de perfil?', mensagem: 'A foto atual será removida do seu perfil.', textoConfirmar: 'Remover foto', destrutivo: true })) return;
                 try {
-                    const fd = new FormData();
-                    fd.append('acao', 'remover_foto');
-                    const resp = await fetch(window.location.href, { method: 'POST', body: fd });
+                    const resp = await fetch(API_FOTO, { method: 'DELETE' });
                     const data = await resp.json();
-                    if (data.success) {
+                    if (resp.ok && data.success === true && (data.offline === true || data.queued === true)) {
+                        mostrarToast('Remoção pendente: a foto será removida quando a conexão voltar.', 'info');
+                        return;
+                    }
+                    if (resp.ok && data.success === true) {
                         mostrarToast('Foto removida.', 'success');
                         setTimeout(() => window.location.reload(), 1200);
                     } else {

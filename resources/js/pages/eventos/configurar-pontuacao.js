@@ -1,11 +1,24 @@
 window.SGIPage.mount("eventos/configurar-pontuacao", function (pageConfig, pageScope) {
-
+    const APP_BASE = String(window.SGI_BASE_PATH || '').replace(/\/+$/, '');
+    const API_BASE = String(window.SGI_API_BASE || `${APP_BASE}/api/v1/`).replace(/\/?$/, '/');
     const urlParams = new URLSearchParams(window.location.search);
     let idInterclasse = urlParams.get('id');
-    const modo = urlParams.get('modo') || 'view';
-
+    const modo = urlParams.get('modo') === 'create' ? 'create' : 'view';
     const PADRAO = { 'pontos-1': 10, 'pontos-2': 7, 'pontos-3': 5, 'pontos-arr': 2 };
     let VALORES_INICIAIS = {};
+    let salvamentoEmAndamento = false;
+    let destinoPendente = null;
+
+    const modalDirty = document.getElementById('modalPontuacaoDirty');
+
+    function appUrl(path, parametros = {}) {
+        const query = new URLSearchParams();
+        Object.entries(parametros).forEach(([chave, valor]) => {
+            if (valor !== null && valor !== undefined && String(valor) !== '') query.set(chave, String(valor));
+        });
+        const base = `${APP_BASE}/${String(path).replace(/^\/+/, '')}`;
+        return query.size ? `${base}?${query.toString()}` : base;
+    }
 
     function habilitarControles(habilitado) {
         document.querySelectorAll('.ptc-step-input, .ptc-step-btn, #btnRestaurarPadrao, #btnSalvarPontuacao')
@@ -15,14 +28,18 @@ window.SGIPage.mount("eventos/configurar-pontuacao", function (pageConfig, pageS
     function getPontos(id) {
         const el = document.getElementById(id);
         const v = parseInt(el ? el.value : '', 10);
-        return isNaN(v) ? 0 : v;
+        return Number.isNaN(v) ? 0 : v;
     }
 
-    function setPontos(id, v) {
+    function setPontos(id, value) {
         const el = document.getElementById(id);
         if (!el) return;
-        const n = parseInt(v, 10);
-        el.value = isNaN(n) ? PADRAO[id] : n;
+        const numero = parseInt(value, 10);
+        el.value = Number.isNaN(numero) ? PADRAO[id] : numero;
+    }
+
+    function temMudancas() {
+        return Object.keys(VALORES_INICIAIS).some((id) => getPontos(id) !== VALORES_INICIAIS[id]);
     }
 
     window.alterarPontos = function (id, delta) {
@@ -35,26 +52,24 @@ window.SGIPage.mount("eventos/configurar-pontuacao", function (pageConfig, pageS
     window.validarPontos = function (id) {
         const el = document.getElementById(id);
         if (!el) return;
-        let v = parseInt(el.value, 10);
-        if (isNaN(v) || v < 0) v = 0;
-        el.value = v;
+        let value = parseInt(el.value, 10);
+        if (Number.isNaN(value) || value < 0) value = 0;
+        el.value = value;
         marcarMudancas();
     };
 
     window.restaurarPadrao = async function () {
-        if (!await SGI.confirm({ titulo: 'Restaurar valores padrão?', mensagem: '1º: 10, 2º: 7, 3º: 5, multiplicador: 2.', textoConfirmar: 'Restaurar' })) return;
-        Object.entries(PADRAO).forEach(([id, v]) => {
+        if (!await window.SGI.confirm({ titulo: 'Restaurar valores padrão?', mensagem: '1º: 10, 2º: 7, 3º: 5, multiplicador: 2.', textoConfirmar: 'Restaurar' })) return;
+        Object.entries(PADRAO).forEach(([id, value]) => {
             const el = document.getElementById(id);
-            if (el) el.value = v;
+            if (el) el.value = value;
         });
         marcarMudancas();
     };
 
     function marcarMudancas() {
         const pill = document.getElementById('ptcUnsaved');
-        if (!pill) return;
-        const mudou = Object.keys(VALORES_INICIAIS).some(id => getPontos(id) !== VALORES_INICIAIS[id]);
-        pill.classList.toggle('d-none', !mudou);
+        if (pill) pill.classList.toggle('d-none', !temMudancas());
     }
 
     async function resolverInterclasse() {
@@ -64,106 +79,185 @@ window.SGIPage.mount("eventos/configurar-pontuacao", function (pageConfig, pageS
             idInterclasse = ativo?.id_interclasse || null;
         }
         if (!idInterclasse) {
-            await SGI.alert({ titulo: 'Interclasse não encontrado', mensagem: 'Nenhum interclasse ativo foi encontrado.', tipo: 'warning' });
-            window.location.href = "/edicoes";
+            await window.SGI.alert({ titulo: 'Edição não encontrada', mensagem: 'Nenhuma edição foi selecionada ou está ativa.', tipo: 'warning' });
+            window.location.href = appUrl('edicoes');
             return null;
         }
         const dados = await window.SGIInterclasse.getInterclasseById(idInterclasse);
-        const nome = dados?.nome_interclasse || 'Interclasse';
-        document.getElementById('nomeInterclassePontuacao').innerText = nome;
-        window.SGIInterclasse.updatePageTitle(dados?.nome_interclasse);
+        if (!dados) {
+            await window.SGI.alert({ titulo: 'Edição não encontrada', mensagem: 'A edição selecionada não está disponível.', tipo: 'warning' });
+            window.location.href = appUrl('edicoes');
+            return null;
+        }
 
+        document.getElementById('nomeInterclassePontuacao').textContent = dados.nome_interclasse || 'Interclasse';
+        document.getElementById('ptcEditionName').textContent = dados.nome_interclasse || 'esta edição';
+        document.getElementById('ptcEditionYear').textContent = `Ano ${window.SGIInterclasse.toYear(dados.ano_interclasse) || 'não informado'}`;
+        const status = document.getElementById('ptcEditionStatus');
+        const ativa = String(dados.status_interclasse) === '1';
+        status.textContent = ativa ? 'Ativa' : 'Inativa';
+        status.className = ativa ? 'badge text-bg-success' : 'badge text-bg-secondary';
+        window.SGIInterclasse.updatePageTitle(dados.nome_interclasse);
+
+        const paramsEdicao = { id: idInterclasse, modo };
         const btnBack = document.getElementById('btnVoltarPontuacao');
         if (btnBack) {
-            btnBack.href = modo === 'view'
-                ? `/painel?id=${idInterclasse}`
-                : `/edicoes/modalidades?id=${idInterclasse}&modo=create`;
+            const caminhoRetorno = modo === 'view' ? 'painel' : 'edicoes/modalidades';
+            btnBack.href = appUrl(caminhoRetorno, paramsEdicao);
         }
 
-        if (dados) {
-            setPontos('pontos-1', dados.ponto_1_lugar);
-            setPontos('pontos-2', dados.ponto_2_lugar);
-            setPontos('pontos-3', dados.ponto_3_lugar);
-            setPontos('pontos-arr', dados.valor_item_arrecadacao);
-        }
-
+        setPontos('pontos-1', dados.ponto_1_lugar);
+        setPontos('pontos-2', dados.ponto_2_lugar);
+        setPontos('pontos-3', dados.ponto_3_lugar);
+        setPontos('pontos-arr', dados.valor_item_arrecadacao);
         VALORES_INICIAIS = {
             'pontos-1': getPontos('pontos-1'),
             'pontos-2': getPontos('pontos-2'),
             'pontos-3': getPontos('pontos-3'),
-            'pontos-arr': getPontos('pontos-arr')
+            'pontos-arr': getPontos('pontos-arr'),
         };
         marcarMudancas();
         habilitarControles(true);
         return idInterclasse;
     }
 
-    window.salvarPontuacao = async function () {
+    async function salvarPontuacao() {
         const btn = document.getElementById('btnSalvarPontuacao');
-        const pontos1 = getPontos('pontos-1');
-        const pontos2 = getPontos('pontos-2');
-        const pontos3 = getPontos('pontos-3');
-        const pontosArr = getPontos('pontos-arr');
+        if (salvamentoEmAndamento || !btn || !idInterclasse) return false;
+        salvamentoEmAndamento = true;
+        const pontos = {
+            'pontos-1': getPontos('pontos-1'),
+            'pontos-2': getPontos('pontos-2'),
+            'pontos-3': getPontos('pontos-3'),
+            'pontos-arr': getPontos('pontos-arr'),
+        };
 
         try {
             btn.disabled = true;
-            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Salvando…';
+            btn.setAttribute('aria-busy', 'true');
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1" aria-hidden="true"></span> Salvando…';
+            habilitarControles(false);
 
             const formData = new FormData();
-            formData.append('ponto_1_lugar', pontos1);
-            formData.append('ponto_2_lugar', pontos2);
-            formData.append('ponto_3_lugar', pontos3);
-            formData.append('valor_item_arrecadacao', pontosArr);
-
-            const resp = await fetch(`/api/v1/edicoes?id=${idInterclasse}`, {
+            formData.append('ponto_1_lugar', pontos['pontos-1']);
+            formData.append('ponto_2_lugar', pontos['pontos-2']);
+            formData.append('ponto_3_lugar', pontos['pontos-3']);
+            formData.append('valor_item_arrecadacao', pontos['pontos-arr']);
+            const response = await fetch(`${API_BASE}edicoes?id=${encodeURIComponent(idInterclasse)}`, {
                 method: 'POST',
-                body: formData
+                body: formData,
             });
-            const data = await resp.json();
+            const data = await response.json().catch(() => null);
+            if (!response.ok || !data || typeof data !== 'object' || Array.isArray(data) || data.success !== true) {
+                const mensagem = data && typeof data.message === 'string' && data.message.trim()
+                    ? data.message
+                    : `A resposta do servidor não confirmou o salvamento (HTTP ${response.status}).`;
+                throw new Error(mensagem);
+            }
 
-            if (data.success === false) throw new Error(data.message || 'Erro ao salvar.');
-
-            VALORES_INICIAIS = { 'pontos-1': pontos1, 'pontos-2': pontos2, 'pontos-3': pontos3, 'pontos-arr': pontosArr };
+            VALORES_INICIAIS = pontos;
             marcarMudancas();
-
-            btn.classList.remove('btn-primary');
-            btn.classList.add('btn-success');
-            btn.innerHTML = '<i class="bi bi-check-lg me-1"></i> Salvo!';
-            setTimeout(() => {
-                btn.classList.remove('btn-success');
-                btn.classList.add('btn-primary');
-                btn.disabled = false;
-                btn.innerHTML = '<i class="bi bi-check-lg me-1"></i> Salvar';
-            }, 2000);
-        } catch (err) {
-            SGI.alert(err.message);
+            if (window.SGI?.showToast) window.SGI.showToast('Pontuação salva.', 'success');
+            return true;
+        } catch (error) {
+            await window.SGI.alert({
+                titulo: 'Não foi possível salvar a pontuação',
+                mensagem: error?.message || 'Os valores preenchidos foram mantidos. Tente novamente.',
+                tipo: 'error',
+            });
+            return false;
+        } finally {
+            salvamentoEmAndamento = false;
+            habilitarControles(true);
             btn.disabled = false;
-            btn.innerHTML = '<i class="bi bi-check-lg me-1"></i> Salvar';
+            btn.removeAttribute('aria-busy');
+            btn.innerHTML = '<i class="bi bi-check-lg me-1" aria-hidden="true"></i> Salvar';
         }
-    };
+    }
 
-    window.SGIPage.ready( () => {
-        document.querySelectorAll('.ptc-stepper').forEach(stepper => {
+    window.salvarPontuacao = salvarPontuacao;
+
+    function aguardarFechamentoModal() {
+        if (!modalDirty) return Promise.resolve();
+        return new Promise((resolve) => modalDirty.addEventListener('hidden.bs.modal', resolve, { once: true }));
+    }
+
+    async function fecharModalENavegar(destino) {
+        const destinoFinal = destino || destinoPendente;
+        if (!destinoFinal) return;
+        const fechado = aguardarFechamentoModal();
+        window.bootstrap.Modal.getOrCreateInstance(modalDirty).hide();
+        await fechado;
+        window.location.href = destinoFinal;
+    }
+
+    async function descartarENavegar() {
+        const destino = destinoPendente;
+        destinoPendente = null;
+        await fecharModalENavegar(destino);
+    }
+
+    async function salvarENavegar() {
+        const button = document.getElementById('btnSalvarEContinuarPontuacao');
+        const destino = destinoPendente;
+        if (!destino || !button) return;
+        button.disabled = true;
+        const salvo = await salvarPontuacao();
+        button.disabled = false;
+        if (salvo) {
+            destinoPendente = null;
+            await fecharModalENavegar(destino);
+        }
+    }
+
+    function solicitarNavegacao(anchor, event) {
+        if (!temMudancas()) return;
+        event.preventDefault();
+        destinoPendente = anchor.href;
+        window.bootstrap.Modal.getOrCreateInstance(modalDirty).show();
+    }
+
+    window.SGIPage.ready(() => {
+        document.querySelectorAll('.ptc-stepper').forEach((stepper) => {
             const input = stepper.querySelector('.ptc-step-input');
             const menos = stepper.querySelector('.ptc-step-btn--minus');
             const mais = stepper.querySelector('.ptc-step-btn--plus');
-            if (menos) pageScope.listen(menos, 'click', () => alterarPontos(input.id, -1));
-            if (mais) pageScope.listen(mais, 'click', () => alterarPontos(input.id, 1));
+            if (menos) pageScope.listen(menos, 'click', () => window.alterarPontos(input.id, -1));
+            if (mais) pageScope.listen(mais, 'click', () => window.alterarPontos(input.id, 1));
             pageScope.listen(input, 'input', marcarMudancas);
-            pageScope.listen(input, 'change', () => validarPontos(input.id));
+            pageScope.listen(input, 'change', () => window.validarPontos(input.id));
         });
+
+        const btnSalvar = document.getElementById('btnSalvarPontuacao');
+        if (btnSalvar) pageScope.listen(btnSalvar, 'click', (event) => {
+            event.preventDefault();
+            void salvarPontuacao();
+        });
+
+        ['btnVoltarPontuacao', 'btnContinuarPontuacao'].forEach((id) => {
+            const anchor = document.getElementById(id);
+            if (anchor) pageScope.listen(anchor, 'click', (event) => solicitarNavegacao(anchor, event));
+        });
+
+        const cancelar = document.getElementById('btnCancelarPontuacaoNavegacao');
+        const descartar = document.getElementById('btnDescartarPontuacaoNavegacao');
+        const salvarESair = document.getElementById('btnSalvarEContinuarPontuacao');
+        if (descartar) pageScope.listen(descartar, 'click', () => { void descartarENavegar(); });
+        if (salvarESair) pageScope.listen(salvarESair, 'click', () => { void salvarENavegar(); });
+        if (cancelar) pageScope.listen(cancelar, 'click', () => { destinoPendente = null; });
+        if (modalDirty) pageScope.listen(modalDirty, 'hidden.bs.modal', () => { destinoPendente = null; });
     });
 
-    window.SGIPage.ready( async () => {
+    window.SGIPage.ready(async () => {
         const idOk = await resolverInterclasse();
         if (!idOk) return;
 
         const btnContinuar = document.getElementById('btnContinuarPontuacao');
         if (btnContinuar) {
-            btnContinuar.href = `/edicoes/resumo?id=${idInterclasse}&modo=create`;
-            if (modo === 'create') btnContinuar.classList.remove('d-none');
+            btnContinuar.href = appUrl('edicoes/resumo', { id: idInterclasse, modo });
+            btnContinuar.classList.toggle('d-none', modo !== 'create');
         }
     });
 
-return {getPontos, setPontos, marcarMudancas, resolverInterclasse};
+    return { getPontos, setPontos, marcarMudancas, temMudancas, resolverInterclasse, salvarPontuacao };
 });

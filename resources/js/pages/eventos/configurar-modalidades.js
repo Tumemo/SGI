@@ -1,6 +1,16 @@
 window.SGIPage.mount("eventos/configurar-modalidades", function (pageConfig, pageScope) {
 
-    const APP_BASE = window.SGI_BASE_PATH || '';
+    const APP_BASE = String(window.SGI_BASE_PATH || '').replace(/\/+$/, '');
+    const API_BASE = String(window.SGI_API_BASE || `${APP_BASE}/api/v1/`).replace(/\/?$/, '/');
+
+    function appUrl(path, parametros = {}) {
+        const query = new URLSearchParams();
+        Object.entries(parametros).forEach(([chave, valor]) => {
+            if (valor !== null && valor !== undefined && String(valor) !== '') query.set(chave, String(valor));
+        });
+        const base = `${APP_BASE}/${String(path).replace(/^\/+/, '')}`;
+        return query.size ? `${base}?${query.toString()}` : base;
+    }
 
     const urlParams = new URLSearchParams(window.location.search);
     let idInterclasse = urlParams.get('id');
@@ -24,7 +34,7 @@ window.SGIPage.mount("eventos/configurar-modalidades", function (pageConfig, pag
         if (!idInterclasse) {
             const msg = '<p class="text-muted mt-4 text-center w-100">Nenhum interclasse ativo.</p>';
             document.getElementById('listaModalidadesDesktop').innerHTML = msg;
-            window.location.href = "/edicoes";
+            window.location.href = appUrl('edicoes');
             return null;
         }
         const dados = await window.SGIInterclasse.getInterclasseById(idInterclasse);
@@ -42,7 +52,11 @@ window.SGIPage.mount("eventos/configurar-modalidades", function (pageConfig, pag
         const botaoDesktop = document.getElementById('btnContinuarDesktop');
 
         if (botaoDesktop) {
-            botaoDesktop.href = `/edicoes/pontuacao?id=${idInterclasse}&modo=create${modalidadeSelecionada ? `&id_modalidade=${modalidadeSelecionada}` : ''}`;
+            botaoDesktop.href = appUrl('edicoes/pontuacao', {
+                id: idInterclasse,
+                modo: modo === 'view' ? 'view' : 'create',
+                id_modalidade: modalidadeSelecionada,
+            });
             const disabled = !modalidadeSelecionada;
             botaoDesktop.classList.toggle('disabled', disabled);
             botaoDesktop.setAttribute('aria-disabled', disabled ? 'true' : 'false');
@@ -50,39 +64,51 @@ window.SGIPage.mount("eventos/configurar-modalidades", function (pageConfig, pag
         }
 
         const destinoVoltar = modo === 'view'
-            ? `/painel?id=${idInterclasse}`
-            : `/edicoes/categorias?id=${idInterclasse}&modo=create`;
+            ? appUrl('painel', { id: idInterclasse })
+            : appUrl('edicoes/categorias', { id: idInterclasse, modo: 'create' });
         const btnVoltar = document.getElementById('btnVoltarModalidades');
         if (btnVoltar) btnVoltar.href = destinoVoltar;
     }
 
     /* ── RENDER CARD ── */
     function renderizarCard(modalidade) {
-        const destino = `/modalidades/detalhes?id=${modalidade.id_modalidade}`;
+        const destino = appUrl('modalidades/detalhes', { id: modalidade.id_modalidade });
+        const nome = String(modalidade.nome_modalidade || 'Modalidade');
         const genero = modalidade.genero_modalidade || '';
         const generoLabel = genero === 'MASC' ? 'Masculino' : genero === 'FEM' ? 'Feminino' : genero === 'MISTO' ? 'Misto' : genero;
         const qtdEquipes = Number(modalidade.qtd_equipes) || 0;
         const tipo = modalidade.nome_tipo_modalidade || '';
+        const classeCard = 'card h-100 border shadow-sm text-body text-decoration-none p-3 d-flex flex-column modalidade-card-simples';
+        const wrapperTag = modo === 'create' ? 'span' : 'div';
+        const innerTag = modo === 'create' ? 'span' : 'div';
+        const iconWrapperTag = wrapperTag;
+        const innerClasses = modo === 'create'
+            ? 'flex-grow-1 overflow-hidden d-flex flex-column'
+            : 'flex-grow-1 overflow-hidden';
+        const titulo = modo === 'create'
+            ? `<span class="h5 fw-bold text-body mb-0 text-truncate d-block">${esc(nome)}</span>`
+            : `<h5 class="fw-bold text-body mb-0 text-truncate">${esc(nome)}</h5>`;
+        const conteudo = `
+            <${wrapperTag} class="d-flex align-items-start gap-3 mb-3">
+                <${iconWrapperTag} class="rounded-3 bg-primary-subtle text-primary p-2 fs-4 d-inline-flex flex-shrink-0"><i class="bi bi-trophy" aria-hidden="true"></i></${iconWrapperTag}>
+                <${innerTag} class="${innerClasses}">
+                    ${titulo}
+                    <small class="text-body-secondary text-truncate d-block mt-1">${esc(tipo)}${tipo && genero ? ' · ' : ''}${esc(generoLabel)}</small>
+                </${innerTag}>
+            </${wrapperTag}>
+            <${wrapperTag} class="d-flex flex-wrap align-items-center gap-2 mb-3">
+                <span class="badge rounded-pill bg-primary-subtle text-primary-emphasis border border-primary-subtle"><i class="bi bi-people" aria-hidden="true"></i> ${qtdEquipes} equipe${qtdEquipes !== 1 ? 's' : ''}</span>
+                ${modalidade.max_inscrito_modalidade ? `<span class="badge rounded-pill text-bg-light border text-body-secondary"><i class="bi bi-person-lines-fill" aria-hidden="true"></i> Máx. ${esc(modalidade.max_inscrito_modalidade)}</span>` : ''}
+            </${wrapperTag}>
+            ${modo === 'create'
+                ? '<span class="btn btn-sm btn-outline-primary align-self-end mt-auto d-inline-flex align-items-center gap-2" data-card-action-label>Selecionar modalidade</span>'
+                : '<span class="btn btn-sm btn-outline-primary align-self-end mt-auto d-inline-flex align-items-center gap-2">Ver detalhes <i class="bi bi-arrow-right" aria-hidden="true"></i></span>'}`;
 
-        return `
-            <div class="col">
-                <a href="${destino}" class="card h-100 border shadow-sm text-body text-decoration-none p-3 d-flex flex-column modalidade-card-simples" data-id="${modalidade.id_modalidade}" aria-label="Ver detalhes de ${esc(modalidade.nome_modalidade)}">
-                    <div class="d-flex align-items-start gap-3 mb-3">
-                        <div class="rounded-3 bg-primary-subtle text-primary p-2 fs-4 d-inline-flex flex-shrink-0"><i class="bi bi-trophy"></i></div>
-                        <div class="flex-grow-1 overflow-hidden">
-                            <h5 class="fw-bold text-body mb-0 text-truncate">${esc(modalidade.nome_modalidade)}</h5>
-                            <small class="text-body-secondary text-truncate d-block mt-1">${esc(tipo)}${tipo && genero ? ' · ' : ''}${esc(generoLabel)}</small>
-                        </div>
-                    </div>
-                    <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
-                        <span class="badge rounded-pill bg-primary-subtle text-primary-emphasis border border-primary-subtle"><i class="bi bi-people"></i> ${qtdEquipes} equipe${qtdEquipes !== 1 ? 's' : ''}</span>
-                        ${modalidade.max_inscrito_modalidade ? `<span class="badge rounded-pill text-bg-light border text-body-secondary"><i class="bi bi-person-lines-fill"></i> Máx. ${esc(modalidade.max_inscrito_modalidade)}</span>` : ''}
-                    </div>
-                    <span class="btn btn-sm btn-outline-primary align-self-end mt-auto d-inline-flex align-items-center gap-2">
-                        Ver detalhes <i class="bi bi-arrow-right"></i>
-                    </span>
-                </a>
-            </div>`;
+        const card = modo === 'create'
+            ? `<button type="button" class="${classeCard} bg-white text-start w-100" data-id="${esc(modalidade.id_modalidade)}" data-nome="${esc(nome)}" aria-label="Selecionar modalidade: ${esc(nome)}" aria-pressed="false">${conteudo}</button>`
+            : `<a href="${destino}" class="${classeCard}" data-id="${esc(modalidade.id_modalidade)}" aria-label="Ver detalhes de ${esc(nome)}">${conteudo}</a>`;
+
+        return `<div class="col">${card}</div>`;
     }
 
     /* ── RENDER POR CATEGORIA ── */
@@ -123,11 +149,10 @@ window.SGIPage.mount("eventos/configurar-modalidades", function (pageConfig, pag
     /* ── EVENTOS DOS CARDS ── */
     function ligarEventosCards() {
         document.querySelectorAll('.modalidade-card-simples').forEach((card) => {
+            if (modo !== 'create' || card.tagName !== 'BUTTON') return;
             pageScope.listen(card, 'click', (e) => {
-                if (modo === 'create') {
-                    e.preventDefault();
-                    selecionarModalidade(Number(card.dataset.id));
-                }
+                e.preventDefault();
+                selecionarModalidade(Number(card.dataset.id));
             });
         });
     }
@@ -135,11 +160,16 @@ window.SGIPage.mount("eventos/configurar-modalidades", function (pageConfig, pag
     function selecionarModalidade(id) {
         modalidadeSelecionada = Number(id);
         document.querySelectorAll('.modalidade-card-simples').forEach((card) => {
-            card.classList.toggle('is-selected', Number(card.dataset.id) === modalidadeSelecionada);
             const selecionado = Number(card.dataset.id) === modalidadeSelecionada;
+            card.classList.toggle('is-selected', selecionado);
             card.classList.toggle('border-primary', selecionado);
             card.classList.toggle('border-3', selecionado);
             card.classList.toggle('bg-primary-subtle', selecionado);
+            if (card.tagName === 'BUTTON') {
+                card.setAttribute('aria-pressed', String(selecionado));
+                const acao = card.querySelector('[data-card-action-label]');
+                if (acao) acao.textContent = selecionado ? 'Modalidade selecionada' : 'Selecionar modalidade';
+            }
         });
         atualizarBotaoContinuar();
     }
@@ -148,7 +178,7 @@ window.SGIPage.mount("eventos/configurar-modalidades", function (pageConfig, pag
     async function carregarModalidades() {
         try {
             const filtroCategoria = idCategoria ? `&id_categoria=${idCategoria}` : '';
-            const response = await axios.get(`/api/v1/modalidades?x=1${filtroCategoria}`);
+            const response = await axios.get(`${API_BASE}modalidades?x=1${filtroCategoria}`);
             let modalidades = response.data.data || response.data;
             if (!Array.isArray(modalidades)) modalidades = [];
             modalidades = modalidades.filter((item) => String(item.interclasses_id_interclasse) === String(idInterclasse));
@@ -166,7 +196,7 @@ window.SGIPage.mount("eventos/configurar-modalidades", function (pageConfig, pag
         if (!selectTipo) return;
 
         try {
-            const response = await axios.get('/api/v1/tipos-modalidade');
+            const response = await axios.get(`${API_BASE}tipos-modalidade`);
             const tipos = response.data;
             const placeholder = new Option('Selecione um tipo...', '');
             placeholder.disabled = true;
@@ -187,7 +217,7 @@ window.SGIPage.mount("eventos/configurar-modalidades", function (pageConfig, pag
         if (!selectCat) return;
 
         try {
-            const response = await axios.get(`/api/v1/categorias?id_interclasse=${idInterclasse}`);
+            const response = await axios.get(`${API_BASE}categorias?id_interclasse=${encodeURIComponent(idInterclasse)}`);
             const categorias = response.data;
             const placeholder = new Option('Selecione uma categoria...', '');
             placeholder.disabled = true;
@@ -223,7 +253,7 @@ window.SGIPage.mount("eventos/configurar-modalidades", function (pageConfig, pag
         try {
             btnSalvar.disabled = true;
             btnSalvar.innerHTML = "Salvando...";
-            const res = await axios.post('/api/v1/modalidades', dados);
+            const res = await axios.post(`${API_BASE}modalidades`, dados);
 
             if (res.data.success) {
                 caixaMensagem.innerHTML = `<p class="text-success text-center fw-bold">Criada com sucesso!</p>`;
@@ -274,7 +304,7 @@ window.SGIPage.mount("eventos/configurar-modalidades", function (pageConfig, pag
         </div>`;
 
         try {
-            const res = await axios.get(`/api/v1/artilheiros?acao=destaques_modalidades&id_interclasse=${idInterclasse}`);
+            const res = await axios.get(`${API_BASE}artilheiros?acao=destaques_modalidades&id_interclasse=${encodeURIComponent(idInterclasse)}`);
             const raw = res.data && res.data.data !== undefined ? res.data.data : res.data;
             const lista = Array.isArray(raw) ? raw : [];
 
