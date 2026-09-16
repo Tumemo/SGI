@@ -149,14 +149,16 @@ composer test       PHPUnit unitário (inclui teste de layout modular)
 composer lint       validação de sintaxe PHP
 composer analyse    análise estática PHPStan
 composer cs:check   estilo PHP CS Fixer
-php tests/run_all.php
-npm --prefix tests/browser test
+composer test:integration
+tools/test-docker.ps1/.sh
 ```
 
-As duas últimas suítes precisam de um servidor de teste e banco `sgi_test`.
-Elas cobrem autenticação, ciclo de edição, importação de PDF, modalidades,
+`composer test:integration` e os testes de navegador precisam de Docker; os
+wrappers criam um banco e um servidor descartáveis antes de executar as suítes.
+Eles cobrem autenticação, ciclo de edição, importação de PDF, modalidades,
 agendamento, placar, ranking, portal do aluno, fronteira pública, operação
-offline e chaveamento completo.
+offline e chaveamento completo. `tests/run_all.php` é um runner interno e
+recusa execução sem o runtime de banco em container.
 
 O CI executa qualidade apenas em PHP 8.4. Integração, navegador e comparação visual usam PHP 8.4 e MariaDB 10.11; o contrato visual usa as referências Linux. MySQL 8.4 e PHP 8.2 podem ser selecionados nos executores locais, mas não fazem parte da validação do CI.
 

@@ -135,13 +135,27 @@ npm ci --prefix tests/browser
 npx --prefix tests/browser playwright install chromium
 ```
 
-No Windows, use o executor que prepara banco exclusivo, servidor, sessões e uploads de teste:
+No Windows, use o executor que cria o banco em container descartável e prepara
+servidor, sessões e uploads de teste:
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File tools/test-local.ps1 -Suite all -DatabaseBackend local
+powershell -ExecutionPolicy Bypass -File tools/test-docker.ps1 -Database mariadb
 ```
 
-Configure `SGI_TEST_DB_HOST`, `SGI_TEST_DB_PORT`, `SGI_TEST_DB_USER` e `SGI_TEST_DB_PASSWORD` **no terminal**, ou passe os parâmetros equivalentes. O script não importa as credenciais do `.env` de trabalho. O usuário SQL precisa criar/remover bases de teste e o ensaio de recuperação precisa de `mysql`/`mysqldump`. Use `-PhpPath` ou `SGI_PHP_PATH` para selecionar o PHP.
+Os perfis `integration`, `browser`, `visual` e `all` que acessam o banco devem
+ser executados somente por `tools/test-docker.ps1`/`.sh` ou por
+`tools/test-local.ps1`, que também cria um container Docker descartável. Não
+configure `SGI_TEST_DB_HOST`, `SGI_TEST_DB_PORT`, `SGI_TEST_DB_USER` ou
+`SGI_TEST_DB_PASSWORD` para apontar a testes; essas variáveis não fazem parte do
+contrato atual. Não execute `php tests/run_all.php`, Playwright, seeds ou
+`tools/start-test-server.ps1` contra um MySQL/MariaDB local. O runner recusa a
+execução sem `SGI_TEST_DB_RUNTIME=container` antes de qualquer reset.
+
+`quality`, testes unitários, lint, análise estática e testes JavaScript que não
+abrem conexão SQL continuam podendo ser executados sem Docker. O container de
+teste é criado uma vez por execução da suíte, compartilhado pelos cenários
+encadeados e removido ao final. `-Keep`/`--keep` é apenas uma exceção explícita
+para investigação e deixa o ambiente sob responsabilidade de quem o utilizou.
 
 Para executar somente qualidade, sem banco/servidor:
 
@@ -149,7 +163,11 @@ Para executar somente qualidade, sem banco/servidor:
 powershell -ExecutionPolicy Bypass -File tools/test-local.ps1 -Suite quality
 ```
 
-O perfil `all` inclui `composer verify`, build, `npm run check`, `npm test`, `php tests/run_all.php` e testes de navegador. `composer verify` reúne PHPUnit, lint PHP, PHPStan e verificação de estilo. O contrato visual é adicional: use `-IncludeVisual` quando alterar aparência/layout. O executor também oferece os perfis `integration`, `browser` e `visual`.
+O perfil `all` inclui `composer verify`, build, `npm run check`, `npm test`,
+`tests/run_all.php` dentro do ambiente Docker e testes de navegador. `composer
+verify` reúne PHPUnit, lint PHP, PHPStan e verificação de estilo. O contrato
+visual é adicional: use `-IncludeVisual` quando alterar aparência/layout. O
+executor também oferece os perfis `integration`, `browser` e `visual`.
 
 Alternativa descartável com Docker/Compose em execução:
 
@@ -157,13 +175,16 @@ Alternativa descartável com Docker/Compose em execução:
 powershell -File tools/test-docker.ps1 -Database mariadb
 ```
 
-No Linux/macOS: `sh tools/test-docker.sh --database mariadb`. Para MySQL, use `-Database mysql`/`--database mysql`. Para visual, acrescente `-IncludeVisual`/`--include-visual`. O backend `docker` do executor local disponibiliza apenas o banco em container; o executor `test-docker` disponibiliza também as ferramentas de execução.
+No Linux/macOS: `sh tools/test-docker.sh --database mariadb`. Para MySQL, use
+`-Database mysql`/`--database mysql`. Para visual, acrescente
+`-IncludeVisual`/`--include-visual`. Todo perfil que envolve banco usa somente
+o container descartável; não há backend SQL local suportado.
 
 ### Isolamento obrigatório
 
 - Nunca rode resets ou seeds em uma base de trabalho/produção. Não desative `TestDatabaseSafety` nem a conferência da base pela saúde HTTP.
-- Não execute `php tests/run_all.php`, `php tests/seed_interclasse_demo.php` ou `npm --prefix tests/browser test` isoladamente sem o preparo descrito em [testes](docs/testing.md). O seed de demonstração não é uma etapa obrigatória após a suíte.
-- Não execute duas suítes que alteram banco simultaneamente no mesmo checkout. Preserve o lock do executor e os nomes exclusivos das bases auxiliares.
+- Não execute `php tests/run_all.php`, `php tests/seed_interclasse_demo.php` ou `npm --prefix tests/browser test` isoladamente sem um container criado pelo executor descrito em [testes](docs/testing.md). O seed de demonstração não é uma etapa obrigatória após a suíte.
+- Não configure testes para usar banco local. Preservar o lock, o projeto Compose e os nomes exclusivos das bases auxiliares evita colisões entre execuções.
 - Não use a base de desenvolvimento em `8080` para os testes HTTP. O executor inicia seu próprio servidor e usa dados sintéticos.
 
 ### Escolher cobertura e registrar evidências
@@ -239,36 +260,27 @@ Use o perfil `all` da seção 7. Esse executor prepara recursos isolados e encer
 
 ### Deixar uma base de demonstração isolada acessível
 
-Quando o pedido exigir dados prontos para testar manualmente, use o fluxo manual de [testes](docs/testing.md), com banco descartável e servidor próprios. Confirme que o nome escolhido não corresponde a uma base de trabalho ou a outra sessão em uso.
-
-Configure **nos dois terminais**, ajustando as credenciais ao banco local:
-
-```powershell
-$env:SGI_DB_HOST = '127.0.0.1'
-$env:SGI_DB_PORT = '3306'
-$env:SGI_DB_USER = 'root'
-$env:SGI_DB_PASSWORD = ''
-$env:SGI_TEST_DB_NAME = 'sgi_test_manual'
-$env:SGI_TEST_BASE_URL = 'http://127.0.0.1:8099'
-$env:SGI_APP_URL = 'http://127.0.0.1:8099/'
-$env:SGI_BASE_PATH = ''
-```
-
-No terminal do servidor, execute e mantenha o processo ativo:
+Quando o pedido exigir dados prontos para testar manualmente, use um projeto
+Compose próprio e descartável. Não configure credenciais ou hosts de banco no
+`.env` de trabalho e não use `tools/start-test-server.ps1` para apontar a uma
+instância SQL local. Um exemplo mínimo, executado na raiz, é:
 
 ```powershell
-powershell -File tools/start-test-server.ps1 -Database sgi_test_manual -Port 8099
+$env:COMPOSE_PROJECT_NAME = 'sgi-demo-test'
+$env:SGI_TEST_DB_NAME = 'sgi_test_demo'
+$env:SGI_TEST_DB_RUNTIME = 'container'
+docker compose -f compose.test.yml up -d --wait db app
+docker compose -f compose.test.yml run --rm --no-deps integration
+docker compose -f compose.test.yml run --rm --no-deps integration php tests/seed_interclasse_demo.php
 ```
 
-O script usa o PHP do XAMPP por padrão; passe `-PhpPath` com o caminho correto quando necessário. Antes de iniciar, prepare as dependências e execute `npm run build`. No segundo terminal, prepare e valide a base isolada:
-
-```powershell
-php tests/run_all.php
-```
-
-Esse comando recria a base de teste e carrega os fixtures; não o execute sobre uma sessão cujos dados manuais precisam ser preservados. Verifique o resultado da suíte e o acesso HTTP antes de entregar [http://127.0.0.1:8099/](http://127.0.0.1:8099/). As contas dos fixtures estão no README. Não acrescente o seed de demonstração automaticamente após a suíte; use-o apenas se o cenário solicitado exigir esse preparo adicional, sempre na mesma base isolada.
-
-Mantenha o servidor disponível enquanto o usuário testa, registre como encerrá-lo e não remova a base ao entregar a URL. Para limpar depois, confirme a identidade dos recursos criados nesta execução e preserve tudo o que não pertence a ela. A exploração manual não substitui o ciclo de regressão automatizado da seção 8.
+O projeto publica o servidor em [http://127.0.0.1:8099/](http://127.0.0.1:8099/)
+e mantém os dados somente enquanto o projeto estiver ativo. As contas dos
+fixtures estão no README. Não acrescente o seed automaticamente após a suíte;
+use-o somente quando o cenário manual exigir dados de demonstração. Ao terminar,
+confirme a identidade do projeto e execute `docker compose -f compose.test.yml
+down --volumes --remove-orphans`. A exploração manual não substitui o ciclo de
+regressão automatizado da seção 8.
 
 ## 10. Commits e organização do stage
 

@@ -172,7 +172,7 @@ Use dados fictícios nas atividades de desenvolvimento. Para cenários automatiz
 
 **Explorar a aplicação em `8080` e executar a suíte automatizada são fluxos diferentes.** Os testes de integração recriam dados e precisam de banco e servidor isolados. Os executores abaixo preparam esse ambiente; não aponte testes para uma base que deseja preservar.
 
-### Windows com ferramentas locais
+### Testes com banco em container descartável
 
 Depois da instalação acima, prepare também o navegador de testes:
 
@@ -181,17 +181,28 @@ npm ci --prefix tests/browser
 npx --prefix tests/browser playwright install chromium
 ```
 
-Para executar a suíte completa, incluindo qualidade PHP, build, verificações JavaScript, integração HTTP/banco e navegador:
+Para executar a suíte completa, incluindo qualidade PHP, build, verificações
+JavaScript, integração HTTP/banco e navegador, use o Docker Compose. O serviço
+SQL é criado exclusivamente para a execução, usa armazenamento temporário e é
+removido ao final:
 
 ```powershell
-$env:SGI_TEST_DB_HOST = '127.0.0.1'
-$env:SGI_TEST_DB_PORT = '3306'
-$env:SGI_TEST_DB_USER = 'root'
-$env:SGI_TEST_DB_PASSWORD = ''
-powershell -ExecutionPolicy Bypass -File tools/test-local.ps1 -Suite all -DatabaseBackend local
+powershell -File tools/test-docker.ps1 -Database mariadb
 ```
 
-Ajuste as credenciais do banco de testes. O usuário precisa poder criar e remover as bases temporárias. Os clientes `mysql` e `mysqldump` também são necessários para o ensaio de recuperação; o executor procura os executáveis do XAMPP no Windows. Ele cria um nome exclusivo para a base de teste e inicia seu próprio servidor HTTP. As credenciais acima devem ser definidas **no terminal**, pois o script PowerShell não importa o `.env` de desenvolvimento.
+Para validar MySQL 8.4, use `-Database mysql`. Para incluir o contrato visual,
+acrescente `-IncludeVisual`. Não configure `SGI_TEST_DB_HOST`,
+`SGI_TEST_DB_PORT`, `SGI_TEST_DB_USER` ou `SGI_TEST_DB_PASSWORD` para os testes;
+o executor fornece a configuração do container e não reutiliza o `.env` da
+aplicação.
+
+Quando PHP, Node e Chromium já estiverem instalados no host, `test-local.ps1`
+continua disponível como atalho, mas os perfis que acessam o banco também
+criam um container Docker e nunca usam um servidor SQL local:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File tools/test-local.ps1 -Suite all
+```
 
 Para uma verificação de qualidade sem banco nem servidor:
 
@@ -201,23 +212,32 @@ powershell -ExecutionPolicy Bypass -File tools/test-local.ps1 -Suite quality
 
 Esse perfil executa `composer verify`, `npm run build`, `npm run check` e `npm test`. Ele não substitui integração e navegador. Antes e depois de refatorações, execute a suíte completa. Acrescente `-IncludeVisual` para as comparações de imagem.
 
-### Alternativa: ambiente descartável com Docker
+### Execução sem banco
 
-Com Docker e Docker Compose disponíveis e o Docker em execução, não é necessário instalar PHP, Node ou banco no computador para este fluxo de testes:
+Para executar somente qualidade PHP/JavaScript, sem banco nem servidor:
 
 ```powershell
-powershell -File tools/test-docker.ps1 -Database mariadb
+powershell -ExecutionPolicy Bypass -File tools/test-local.ps1 -Suite quality
 ```
 
-No Linux/macOS:
+Esse perfil executa `composer verify`, `npm run build`, `npm run check` e `npm
+test`. Ele não substitui a integração e o navegador, que exigem Docker.
+
+No Linux/macOS, o fluxo completo equivalente é:
 
 ```bash
 sh tools/test-docker.sh --database mariadb
 ```
 
-Use `-Database mysql` (ou `--database mysql`) para MySQL 8.4. `-IncludeVisual`/`--include-visual` inclui o contrato visual. Sem `-Keep`/`--keep`, os containers são removidos ao final. Quando a porta HTTP do Compose for publicada no host, o padrão é o loopback `127.0.0.1`; use `SGI_TEST_BIND_ADDRESS=0.0.0.0` somente quando a homologação precisar de acesso explícito pela rede local. Esse fluxo valida o projeto; não é o servidor de desenvolvimento do passo 5.
+Use `-Database mysql` (ou `--database mysql`) para MySQL 8.4.
+`-IncludeVisual`/`--include-visual` inclui o contrato visual. Sem
+`-Keep`/`--keep`, os containers são removidos ao final. Quando a porta HTTP do
+Compose for publicada no host, o padrão é o loopback `127.0.0.1`; use
+`SGI_TEST_BIND_ADDRESS=0.0.0.0` somente quando a homologação precisar de acesso
+explícito pela rede local. Esse fluxo valida o projeto; não é o servidor de
+desenvolvimento do passo 5.
 
-Os relatórios ficam em `test-results/` e, conforme o executor, em `tests/browser/test-results/` e `tests/browser/playwright-report/`. Consulte [o guia de testes](docs/testing.md) para perfis, execução manual de `php tests/run_all.php`, configuração do Playwright e diagnóstico.
+Os relatórios ficam em `test-results/` e, conforme o executor, em `tests/browser/test-results/` e `tests/browser/playwright-report/`. Consulte [o guia de testes](docs/testing.md) para perfis, execução Docker do runner HTTP, configuração do Playwright e diagnóstico.
 
 ### Contas exclusivas dos fixtures de teste
 
@@ -284,13 +304,13 @@ Leia [AGENTS.md](AGENTS.md) para as convenções, [arquitetura](docs/architectur
 | PowerShell bloqueia `npm.ps1` | Use `npm.cmd` no lugar de `npm` e `npx.cmd` no lugar de `npx`. |
 | Composer informa extensão PHP ausente | Veja `php --ini` e `php -m`, habilite a extensão no PHP usado pelo terminal e repita `composer install`. |
 | `vendor/autoload.php` não encontrado | Execute `composer install` na raiz do projeto. |
-| Conexão recusada ou `Access denied` no banco | Serviço MySQL/MariaDB iniciado, host/porta, credenciais do `.env` e eventuais variáveis do terminal. |
-| Banco desconhecido ou tabela inexistente | Crie a base configurada e execute `php bin/sgi.php schema:install`. |
+| Conexão recusada ou `Access denied` no banco de teste | Docker Engine em execução e `tools/test-docker.ps1`/`.sh`; não aponte o teste para o `.env` local. |
+| Banco desconhecido ou tabela inexistente nos testes | Execute o wrapper Docker completo; ele cria a base, instala o schema e carrega os fixtures antes da suíte. |
 | Login `admin` / `123` não funciona | Essas credenciais são dos testes. Na base local, use o administrador criado por `admin:create`. |
 | Página sem estilos ou scripts | Execute `npm ci --ignore-scripts` e `npm run build`; confirme que o servidor aponta para `public/`. |
 | `npm run dev` não recarrega o navegador | Confirme `SGI_APP_ENV=development`, que `npm run dev` continua aberto e que a porta `35729` está livre. |
-| Endereço errado ou erro 404 | Use o comando completo do servidor e o endereço `http://127.0.0.1:8080/`, com `SGI_BASE_PATH` vazio. |
-| Porta 8080 ocupada | Escolha outra porta no comando `php -S`, no `SGI_APP_URL` e no endereço do navegador. |
+| Endereço errado ou erro 404 | Execute `npm run dev`, use o endereço `http://127.0.0.1:8080/` e mantenha `SGI_BASE_PATH` vazio para a instalação na raiz. |
+| Porta 8080 ocupada | Defina `SGI_DEV_PORT`, atualize `SGI_APP_URL` e use o mesmo endereço no navegador. |
 | Erro ao gravar sessão ou upload | Confira permissão de escrita nos diretórios `storage/` configurados no `.env`. |
 | Teste de navegador não encontra Chromium | Execute `npx --prefix tests/browser playwright install chromium`. |
 

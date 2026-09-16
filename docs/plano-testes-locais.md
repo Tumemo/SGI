@@ -2,6 +2,12 @@
 
 Data: 10/09/2026. Status: primeira etapa implementada; benchmark e validação completa ainda pendentes.
 
+> **Documento substituído.** Este plano histórico ainda descreve a opção de SQL
+> local. A política vigente exige containers Docker descartáveis para qualquer
+> teste que acesse MySQL/MariaDB; consulte
+> [plano-testes-banco-em-containers.md](plano-testes-banco-em-containers.md),
+> [docs/testing.md](testing.md) e `AGENTS.md`.
+
 ## Recomendação
 
 Adotar um comando único para execução nativa de PHP, Node e Playwright, com banco exclusivo de testes. Usar uma instância MySQL/MariaDB local já disponível quando estiver configurada; oferecer somente o banco em Docker quando não houver instância local. Manter o Docker completo como alternativa sem instalação de ferramentas e como referência do CI.
