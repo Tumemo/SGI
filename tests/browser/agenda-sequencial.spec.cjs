@@ -167,7 +167,7 @@ test.describe('Agendamento automático sequencial', () => {
             acao: 'simular_sequencial',
             dias: [
                 { data: datas.arbitraria, inicio: '08:00', fim: '11:30', local: 77 },
-                { data: datas.adicional, inicio: '08:00', fim: '11:30', local: 77 },
+                { data: datas.adicional, inicio: '08:00:00', fim: '11:30', local: 77 },
             ],
         });
     });

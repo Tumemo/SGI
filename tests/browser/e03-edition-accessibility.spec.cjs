@@ -86,7 +86,7 @@ test.describe('E03 — nomes acessíveis em pontuação, agenda e modalidades', 
         await dialogoAutomatico.locator('#seq-proximo-dia').evaluate((elemento) => elemento.classList.remove('d-none'));
         for (const [id, nome] of [
             ['auto-modalidade', 'Modalidade'],
-            ['seq-data', 'Primeiro dia (terça-feira)'],
+            ['seq-data', 'Primeiro dia'],
             ['seq-inicio', 'Horário do primeiro jogo'],
             ['seq-fim', 'Limite para terminar os jogos'],
             ['seq-local', 'Local'],
