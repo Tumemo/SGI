@@ -152,4 +152,35 @@ test.describe('E04 — login responsivo e recuperação de acesso', () => {
         await expect(form).not.toHaveAttribute('aria-busy');
         await expect(matricula).toHaveValue('aluno_123A');
     });
+
+    test('retoma o placar do mesmo mesário após reautenticação', async ({ page }) => {
+        const baseURL = process.env.SGI_BASE_URL || 'http://localhost/SGI/';
+        await page.route('**/api/v1/login', route => route.fulfill({
+            json: { status: 'sucesso', redirect: '/painel' },
+        }));
+        await page.route('**/api/v1/session', route => route.fulfill({
+            json: { success: true, usuario: { id: 7, nivel: 2 } },
+        }));
+        await page.route('**/jogos/placar', route => route.fulfill({
+            contentType: 'text/html',
+            body: '<!doctype html><html><body>placar</body></html>',
+        }));
+
+        await page.setViewportSize({ width: 1440, height: 900 });
+        await page.goto(new URL('login', baseURL).href, { waitUntil: 'domcontentloaded' });
+        await page.evaluate(() => window.sessionStorage.setItem('sgi-offline-reauth-v1', JSON.stringify({
+            userId: '7',
+            path: '/jogos/placar',
+            createdAt: Date.now(),
+        })));
+
+        const form = page.locator('#form_desktop');
+        await form.getByLabel('Matrícula (RA/NIF)').fill('mesario');
+        await form.getByLabel('Senha').fill('senha de teste');
+        await form.locator('button[type="submit"]').click();
+
+        await expect(page).toHaveURL(/\/jogos\/placar$/);
+        await expect.poll(() => page.evaluate(() => window.sessionStorage.getItem('sgi-offline-reauth-v1')))
+            .toBeNull();
+    });
 });

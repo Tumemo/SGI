@@ -1,6 +1,50 @@
 window.SGIPage.mount("acesso/login", function (pageConfig, pageScope) {
 
         const API_BASE = (window.SGI_API_BASE || '/api/v1/').replace(/\/?$/, '/');
+        const REAUTH_STORAGE_KEY = 'sgi-offline-reauth-v1';
+
+        function lerRetornoReautenticacao() {
+            try {
+                const raw = window.sessionStorage.getItem(REAUTH_STORAGE_KEY);
+                if (!raw) return null;
+                const retorno = JSON.parse(raw);
+                if (!retorno || typeof retorno !== 'object' ||
+                    typeof retorno.path !== 'string' || retorno.path.charAt(0) !== '/' ||
+                    retorno.path.indexOf('//') === 0 || !retorno.userId) {
+                    window.sessionStorage.removeItem(REAUTH_STORAGE_KEY);
+                    return null;
+                }
+                return retorno;
+            } catch (_) {
+                return null;
+            }
+        }
+
+        async function destinoDepoisDoLogin(redirect) {
+            const retorno = lerRetornoReautenticacao();
+            if (!retorno) return redirect;
+
+            try {
+                const response = await fetch(API_BASE + 'session', {
+                    method: 'GET',
+                    cache: 'no-store',
+                    credentials: 'same-origin',
+                    headers: {'Accept': 'application/json'}
+                });
+                const data = await response.json();
+                const usuario = data && data.usuario;
+                if (response.ok && data.success === true && usuario &&
+                    String(usuario.id) === String(retorno.userId) && Number(usuario.nivel) === 2) {
+                    window.sessionStorage.removeItem(REAUTH_STORAGE_KEY);
+                    return retorno.path;
+                }
+                window.sessionStorage.removeItem(REAUTH_STORAGE_KEY);
+            } catch (_) {
+                // A autenticação foi concluída; o destino padrão continua sendo
+                // seguro mesmo se a confirmação adicional não responder.
+            }
+            return redirect;
+        }
 
         async function realizarLogin(e) {
             e.preventDefault();
@@ -43,7 +87,7 @@ window.SGIPage.mount("acesso/login", function (pageConfig, pageScope) {
                 const data = await response.json();
 
                 if (response.ok && data.status === 'sucesso') {
-                    window.location.href = data.redirect;
+                    window.location.href = await destinoDepoisDoLogin(data.redirect);
                 } else {
                     msgErro.textContent = data.mensagem || "Erro ao realizar o login.";
                 }

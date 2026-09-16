@@ -362,6 +362,38 @@ test('troca de sessão antes de syncNow mantém fila sem enviar POST', async ({ 
     expect(resultado.fila[0].needsReview).toBe(false);
 });
 
+test('sessão expirada encaminha para login sem perder a fila', async ({ page }) => {
+    await page.route('**/api/v1/session', route => route.fulfill({
+        status: 401,
+        json: { success: false, message: 'Sessão expirada' },
+    }));
+
+    const resultado = await page.evaluate(async () => {
+        await SGIOffline.queueMutation('PUT', '/api/v1/partidas', JSON.stringify({
+            id_partida: 83,
+            resultado_partida: 2,
+        }), { 'Content-Type': 'application/json' });
+        await SGIOffline.checkAccess(true);
+        const botao = document.querySelector('.sgi-offline-banner-btn');
+        const antes = {
+            texto: botao && botao.textContent,
+            disabled: botao && botao.disabled,
+            fila: await SGIOffline.getPendingList(),
+        };
+        botao.click();
+        return {
+            antes,
+            retorno: JSON.parse(window.sessionStorage.getItem('sgi-offline-reauth-v1')),
+        };
+    });
+
+    expect(resultado.antes.texto).toBe('Atualizar acesso');
+    expect(resultado.antes.disabled).toBe(false);
+    expect(resultado.antes.fila).toHaveLength(1);
+    expect(resultado.retorno).toMatchObject({ userId: '7', path: '/' });
+    await page.waitForURL('**/login');
+});
+
 for (const body of ['<html>Servidor em manutenção</html>', '', '{"success":', '{}', '{"status":"erro","mensagem":"Dados inválidos"}']) {
     test(`resposta sem confirmação JSON conserva a mutação: ${JSON.stringify(body)}`, async ({ page }) => {
         await page.route('**/api/v1/resultados', route => route.fulfill({ status: 200, body }));

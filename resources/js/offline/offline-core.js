@@ -32,6 +32,7 @@
     var COORD_DB_VERSION = 1;
     var COORD_STORE = 'leases';
     var COORD_LEASE_MS = 30000;
+    var REAUTH_STORAGE_KEY = 'sgi-offline-reauth-v1';
 
     // Cache GET separado por usuário autenticado: a chave opaca é derivada no
     // servidor e não expõe o PHPSESSID nem reutiliza o ID fixo diretamente.
@@ -95,6 +96,19 @@
             textoNormalizado.indexOf('id="form_desktop"') > -1 ||
             textoNormalizado.indexOf('class="ipt-matricula"') > -1 ||
             textoNormalizado.indexOf('sgi - login') > -1;
+    }
+
+    function prepararRetornoAutenticacao() {
+        var caminho = window.location.pathname + window.location.search + window.location.hash;
+        if (!caminho || caminho.charAt(0) !== '/' || caminho.indexOf('//') === 0) caminho = '/painel';
+        try {
+            window.sessionStorage.setItem(REAUTH_STORAGE_KEY, JSON.stringify({
+                userId: window.SGI_SESSION_ID ? String(window.SGI_SESSION_ID) : '',
+                path: caminho,
+                createdAt: Date.now()
+            }));
+        } catch (e) {}
+        return aplicacaoUrl('/login');
     }
 
     var dbPromise = null;
@@ -1592,6 +1606,11 @@
         if (btn) {
             btn.addEventListener('click', function () {
                 if (btn.disabled) return;
+                var sessaoExpirada = state.session === 'expirada' || state.server === 'sessao';
+                if (sessaoExpirada) {
+                    window.location.assign(prepararRetornoAutenticacao());
+                    return;
+                }
                 btn.disabled = true;
                 window.SGIOffline.syncNow().then(function () {
                     btn.disabled = false;
@@ -1702,7 +1721,7 @@
         if (tag && text) {
             if (sessaoExpirada) {
                 definirTexto(tag, 'SESSÃO EXPIRADA');
-                definirTexto(text, 'A sessão do operador expirou. As pendências permanecem salvas neste dispositivo.');
+                definirTexto(text, 'A sessão do operador expirou. As pendências permanecem salvas neste dispositivo. Entre novamente com o mesmo usuário para retomar o envio.');
             } else if (offline) {
                 definirTexto(tag, revisao ? 'SEM CONEXÃO · REVISÃO' : 'SEM CONEXÃO');
                 definirTexto(text, revisao
@@ -1732,8 +1751,10 @@
         if (btn) {
             btn.classList.toggle('btn-outline-dark', tomEscuro);
             btn.classList.toggle('btn-outline-light', !tomEscuro);
-            definirTexto(btn, enviando ? 'Enviando…' : (revisao ? 'Tentar novamente' : 'Sincronizar agora'));
-            btn.disabled = enviando || sessaoExpirada;
+            definirTexto(btn, enviando
+                ? 'Enviando…'
+                : (sessaoExpirada ? 'Atualizar acesso' : (revisao ? 'Tentar novamente' : 'Sincronizar agora')));
+            btn.disabled = enviando;
             var syncDisponivel = state.pending > 0;
             btn.classList.toggle('d-none', !syncDisponivel);
             btn.classList.toggle('sgi-hidden', !syncDisponivel);
