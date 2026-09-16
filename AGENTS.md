@@ -117,6 +117,13 @@ Siga `resources/js/shared/page-runtime.js` e os utilitários compartilhados. Ini
 
 Antes e depois de refatorações, execute a suíte completa em ambiente isolado. Para mudanças funcionais, adicione a cobertura adequada e execute as verificações de qualidade e as suítes afetadas; antes da entrega de uma implementação, valide também integração e navegador. Alterações exclusivamente documentais exigem conferir caminhos, links e comandos com o código, além de `git diff --check`; não exigem recriar o banco ou executar toda a aplicação.
 
+### Proporcionalidade para estilo, commits e publicação
+
+- Alterações exclusivamente de estilo, sem mudança de comportamento ou contrato, não precisam ser seguidas imediatamente de um commit. Elas podem ser agrupadas em um commit coerente ou permanecer em revisão até que a alteração esteja pronta para integração.
+- Para uma alteração de estilo pequena e de baixo risco, a bateria completa de testes pode ser adiada; faça, porém, as verificações proporcionais ao escopo, como inspeção do diff, `git diff --check`, build e validações de frontend/visual quando forem relevantes.
+- Se a alteração de estilo for ampla, transversal, atingir estilos compartilhados, templates, responsividade, acessibilidade, ciclo de vida, JavaScript ou assets, ou apresentar risco de afetar comportamento, execute imediatamente as suítes afetadas e a suíte completa quando o risco justificar. Não use a classificação “estilo” para adiar testes de uma mudança funcional disfarçada.
+- Antes de qualquer `push` para o GitHub, execute a bateria completa exigida pelo projeto em ambiente isolado e aguarde a aprovação de todos os testes aplicáveis. Para alterações visuais, inclua também `-IncludeVisual`/`--include-visual`; não faça push com falhas, resultados incompletos ou validações não executadas, nem mascare falhas preexistentes como aprovação. O CI do GitHub continua sendo obrigatório e deve permanecer verde.
+
 ### Preparação e execução recomendada
 
 O [README](README.md) explica a instalação das ferramentas. Na raiz do projeto:
@@ -265,6 +272,6 @@ Mantenha o servidor disponível enquanto o usuário testa, registre como encerr�
 
 ## 10. Commits e organização do stage
 
-- Faça sempre commits atômicos e semânticos: cada commit deve representar uma única alteração coerente e completa, com mensagem clara e orientada à ação, usando o prefixo apropriado (`feat:`, `fix:`, `docs:`, `refactor:`, `test:`, `chore:` ou equivalente adotado pelo repositório).
+- Quando uma alteração estiver pronta para integração, faça commits atômicos e semânticos: cada commit deve representar uma única alteração coerente e completa, com mensagem clara e orientada à ação, usando o prefixo apropriado (`feat:`, `fix:`, `docs:`, `refactor:`, `test:`, `chore:` ou equivalente adotado pelo repositório). Não é obrigatório criar um commit imediatamente após cada alteração exclusivamente de estilo; agrupe apenas mudanças estilísticas relacionadas e não misture escopos diferentes.
 - Nunca acumule alterações distintas no stage. Antes de cada commit, revise `git status`, `git diff` e `git diff --cached`, adicione somente os arquivos ou trechos pertencentes ao escopo do commit e separe mudanças não relacionadas em commits independentes.
 - Preserve alterações existentes do usuário: não as inclua no stage nem as misture ao commit atual. Ao concluir uma implementação, deixe o histórico pronto para revisão, sem arquivos ou mudanças não relacionadas staged.
