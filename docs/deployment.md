@@ -1,4 +1,4 @@
-# Instalação, atualização e recuperação
+# Instalação e recuperação
 
 ## Artefato da aplicação
 
@@ -8,20 +8,21 @@ Instale as dependências com `composer install --no-dev --optimize-autoloader` e
 
 Para uploads, o PHP precisa de um `upload_tmp_dir` existente e gravável pelo usuário do servidor. Mantenha `display_errors=0` e `log_errors=1` fora do desenvolvimento; avisos emitidos durante o upload podem ser adicionados ao corpo da resposta e invalidar o JSON da API. O `docker-test-entrypoint` cria o `upload_tmp_dir` informado no comando do PHP e os diretórios definidos por `SGI_SESSION_DIR`, `SGI_UPLOAD_DIR`, `SGI_REGULAMENTOS_DIR`, `SGI_FOTOS_DIR` e `SGI_IMPORT_DIR` antes de iniciar o processo. O diretório persistente de regulamentos continua sendo configurado por `SGI_REGULAMENTOS_DIR`.
 
-## Banco novo
+## Banco
 
-Crie um banco vazio e configure `SGI_DB_*`. Execute `php bin/sgi.php migrate`. Para a primeira conta, informe `SGI_ADMIN_LOGIN`, `SGI_ADMIN_NAME` e `SGI_ADMIN_PASSWORD` somente no ambiente do comando `php bin/sgi.php admin:create`. A senha precisa ter pelo menos 12 caracteres e é persistida com `password_hash`. A rotina não substitui administradores existentes.
+Crie um banco vazio e configure `SGI_DB_*`. Execute `php bin/sgi.php schema:install`. O comando aplica `database/schema-inicial.sql`; `php bin/sgi.php migrate` também instala o baseline quando necessário e aplica migrations futuras. Uma base parcial ou sem o marcador do baseline, com tabelas inesperadas, é recusada para evitar instalação sobre dados não previstos; bases já marcadas continuam aceitando tabelas criadas por migrations futuras.
+
+Para a primeira conta, informe `SGI_ADMIN_LOGIN`, `SGI_ADMIN_NAME` e `SGI_ADMIN_PASSWORD` somente no ambiente do comando `php bin/sgi.php admin:create`. A senha precisa ter pelo menos 12 caracteres e é persistida com `password_hash`. A rotina não substitui administradores existentes.
 
 Os dados de demonstração em `database/seeders/test.sql` pertencem aos testes. Não os carregue em produção.
 
-## Atualização de uma base existente
+## Alterações futuras do schema
 
-1. Faça backup consistente do banco, dos uploads, das importações e da configuração. Teste a restauração em outra base.
-2. Prepare o novo pacote e execute as suítes em um ambiente separado. Configure os mesmos diretórios persistentes de upload da instalação atual.
-3. Em uma janela sem operações de mesário em andamento, execute `php bin/sgi.php migrate`. O comando aplica as migrações pendentes e recusa bases sem histórico, que devem ser recriadas a partir do schema atual.
-4. Publique o pacote, faça login com os perfis utilizados e confira agenda, ranking e armazenamento. Os mesários devem concluir a preparação offline antes de perder a conexão.
-
-As migrações são numeradas, têm checksum e usam trava no banco para impedir execuções simultâneas. Uma migração aplicada não deve ser editada; crie outra. DDL do MySQL/MariaDB pode fazer commit implícito: o marcador `dirty` sinaliza aplicação incompleta e interrompe novas tentativas automáticas.
+O baseline cobre as instalações novas deste pacote. Depois da entrada em
+produção, atualize `database/schema-inicial.sql` para instalações novas e crie
+uma migration numerada em `database/migrations/` para bases já instaladas.
+Execute `php bin/sgi.php migrate` em uma janela controlada, após backup e
+validação em ambiente separado.
 
 ## Operação offline atual
 
@@ -31,14 +32,19 @@ O identificador de mutação acompanha os reenvios. As confirmações registram 
 
 ## Recuperação
 
-Se a atualização falhar, interrompa novas escritas e guarde os logs. Volte ao pacote anterior somente se ele for compatível com o esquema já aplicado. A migração `002` adiciona uma coluna opcional; não a remova durante um retorno de versão.
+Se a instalação falhar, interrompa novas escritas e guarde os logs. Como o
+instalador não faz rollback destrutivo de DDL, descarte a base incompleta e
+recrie uma base vazia somente depois de confirmar o motivo da falha.
 
-Se houver DDL parcialmente aplicado ou incompatibilidade, restaure o backup verificado em uma base separada, valide-o e redirecione a aplicação. Não apague o marcador de falha para forçar repetição de uma migração sem analisar seus efeitos. Não existe comando automático de rollback destrutivo.
+Para uma base em uso, faça backup consistente do banco, dos uploads, das
+importações e da configuração. Teste a restauração em uma base separada antes
+de redirecionar a aplicação.
 
 Preserve as filas IndexedDB durante a recuperação. Não limpe dados do navegador de um mesário com alterações ainda não confirmadas.
 
-### Ensaio sintético reproduzível
-
-Antes de uma atualização real, `php tests/run_all.php` executa a Suite 16 de recuperação em bancos descartáveis. O teste gera `test-results/t28-recovery-*.sql` e um manifesto JSON com hash do dump, referência do código, origem pré-upgrade e versão das migrações; compara matrículas, hashes, histórico, triggers e a fronteira pré-upgrade após restaurar em outra base. Esses arquivos são evidência do ensaio, não backup de produção.
-
-O dump restaurado representa a base anterior às migrações 002–004. A aplicação atualizada não deve ser revertida apontando para esse dump sem interromper escritas e sem confirmar a compatibilidade do pacote anterior com o esquema já aplicado. O procedimento conserva as filas/cache offline e exige validação operacional antes de redirecionar tráfego. O CI valida MariaDB 10.11 com PHP 8.4 e o contrato visual com referências Linux; MySQL 8.4 não faz parte da matriz atual.
+Os testes de integração recriam somente bases descartáveis e verificam o
+baseline e o suporte a migrations futuras por meio de
+`tests/Integration/MigrationsTest.php`,
+`tests/Integration/MigrationSupportTest.php` e
+`tests/Integration/RecoveryRehearsalTest.php`. Eles não alteram uma base de
+trabalho nem removem filas IndexedDB.

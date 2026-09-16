@@ -1,95 +1,66 @@
-# Plano do schema inicial consolidado
+# Schema inicial atual do SGI
 
 ## Objetivo
 
-Criar um baseline SQL único para uma instalação vazia do SGI, incorporando o
-estado estrutural produzido pelas migrations `001` a `010`. A base atual não é
-produção, portanto o baseline pode nascer já com a estrutura final sem exigir
-um caminho de upgrade de dados.
+`database/schema-inicial.sql` é a fonte única do estado estrutural esperado
+para instalações novas. Ele contém a consolidação das migrations 001–010 e
+também as alterações mais recentes das migrations 011 e 012:
 
-O artefato executável é `database/schema-inicial.sql`. As migrations existentes
-permanecem intactas para preservar o histórico, os checksums e a capacidade de
-atualizar bases que ainda usam o `MigrationRunner`.
+- vínculo estruturado de vermelhos automáticos em
+  `ocorrencias_vermelhos_automaticos`;
+- coluna `usuarios.senha_troca_pendente`, com default `0` para novas contas.
 
-## Inventário e decisões de consolidação
+As migrations históricas foram removidas do diretório porque não existem
+bases legadas neste pacote. O suporte a migrations foi mantido para alterações
+que forem necessárias depois da entrada em produção. O comando
+`php bin/sgi.php schema:install` instala o baseline; `php bin/sgi.php migrate`
+instala o baseline quando necessário e aplica migrations futuras.
 
-| Migration | Conteúdo absorvido no baseline |
-| --- | --- |
-| `001_initial_schema.sql` | Tabelas, chaves, índices, auto incrementos, foreign keys e triggers originais. |
-| `002_mutation_fingerprint.sql` | Coluna `sincronizacoes_idempotentes.request_hash`. |
-| `003_fix_arrecadacao_revaluation.sql` | Versão corrigida de `tr_atualiza_pontos_arrecadacao`, que troca somente o crédito antigo pelo novo e preserva os demais pontos. |
-| `004_podio_credit_sources.sql` | Tabela `pontuacoes_podio`, seus índices, unicidade e foreign keys. |
-| `005_agendamento_blocos.sql` | Campos de agenda opcionais em `jogos` e as tabelas `agenda_blocos`, `agenda_reservas` e `agenda_reservas_historico`. |
-| `006_unique_category_name_per_edition.sql` | Chave única `uk_categorias_edicao_nome`. |
-| `007_publicacao_ranking.sql` | `ranking_publicado_em`, `ranking_publicado_por` e remoção do trigger `tr_sincroniza_status_usuarios`. |
-| `008_auth_version.sql` | `usuarios.auth_version`. |
-| `009_occurrence_penalty_invariant.sql` | Checks `chk_ocorrencias_turmas_pontos_nonnegative` e `chk_ocorrencias_penalidade_nonnegative`. |
-| `010_vinculo_obrigatorio_pontos.sql` | Vínculo obrigatório de ponto em jogos e os campos, índices e foreign keys de artilharia. |
+## Estado incluído
 
-As instruções de normalização de dados das migrations `007`, `009` e `010` não
-foram copiadas como operações de carga: em uma base vazia não há dados legados
-para publicar, normalizar ou reclassificar. O default final de
-`jogos.exige_vinculo_ponto` permanece `1`, que é a política para jogos novos.
+O baseline cria 23 tabelas de aplicação:
 
-## Estrutura final esperada
+- edições, categorias, turmas e locais;
+- modalidades, equipes, usuários, vínculos e termos;
+- jogos, partidas, artilheiros, pontuações e créditos de pódio;
+- arrecadação e ocorrências, incluindo vínculos de vermelhos automáticos;
+- agenda de blocos, reservas e histórico;
+- idempotência de sincronização.
 
-O baseline contém 22 tabelas de aplicação:
+Também cria os índices, chaves estrangeiras, restrições `CHECK` e o trigger
+atual de arrecadação exigidos pelo código atual. O trigger legado de
+sincronização de status dos alunos não faz parte do baseline.
 
-- núcleo de edições: `interclasses`, `categorias`, `turmas`, `locais`;
-- modalidades e participantes: `tipos_modalidades`, `modalidades`, `equipes`,
-  `usuarios`, `equipes_has_usuarios`, `usuarios_has_interclasses`;
-- competição e pontuação: `jogos`, `partidas`, `artilheiros`, `pontuacoes`,
-  `pontuacoes_podio`;
-- resultados e disciplina: `historico_arrecadacoes`, `ocorrencias`,
-  `ocorrencias_turmas`;
-- agenda: `agenda_blocos`, `agenda_reservas`, `agenda_reservas_historico`;
-- sincronização: `sincronizacoes_idempotentes`.
+O `UPDATE` histórico que marcava alunos existentes como pendentes não é
+necessário em uma base vazia. Alunos criados por cadastro, importação ou reset
+recebem o estado pendente pela própria operação de aplicação.
 
-O único trigger ativo é `tr_atualiza_pontos_arrecadacao`. O trigger
-`tr_sincroniza_status_usuarios` não deve ser recriado, porque foi removido na
-migration `007`.
+## Instalação
 
-## Plano de execução
+1. Crie um banco vazio com `utf8mb4`.
+2. Configure `SGI_DB_*`.
+3. Execute `php bin/sgi.php schema:install` ou `php bin/sgi.php migrate`.
+4. Execute `php bin/sgi.php admin:create` para criar o primeiro administrador.
 
-1. Criar uma base vazia com `utf8mb4` e `utf8mb4_general_ci`.
-2. Selecionar essa base e executar `database/schema-inicial.sql` uma única vez.
-3. Confirmar em `information_schema` a existência das 22 tabelas, dos índices
-   únicos, das foreign keys, dos dois checks de penalidade e do trigger de
-   arrecadação.
-4. Executar `database/seeders/test.sql` somente em uma base de testes, nunca
-   como parte do baseline de produção.
-5. Rodar a suíte de integração contra a base criada e confirmar os fluxos de
-   autenticação, agenda, ranking, arrecadação, disciplina, artilharia,
-   chaveamento e sincronização offline.
-6. Para a instalação nova que adotar o baseline como caminho oficial, decidir
-   explicitamente como o `MigrationRunner` registrará esse estado: a tabela
-   técnica `sgi_migrations` não faz parte do schema de domínio e não é criada
-   por este arquivo. Não se deve executar o runner sobre uma base criada pelo
-   baseline sem primeiro registrar um baseline compatível ou ajustar o fluxo de
-   instalação.
+O `SchemaInstaller` aceita uma base vazia e executa todos os statements,
+incluindo o trigger. Se a base já contiver exatamente as 23 tabelas do
+baseline, uma nova execução é um no-op; depois que o marcador foi registrado,
+tabelas acrescentadas por migrations futuras também são aceitas. Bases parciais
+ou sem o marcador e com tabelas inesperadas são recusadas para evitar mistura
+de esquemas.
 
-## Validação de paridade
+Após a instalação, o instalador registra o baseline em `sgi_migrations`. Isso
+permite que o `MigrationRunner` reconheça a base atual e aplique, com checksum,
+trava e marcador de conclusão, qualquer migration futura colocada em
+`database/migrations/`.
 
-A validação deve comparar uma base criada pelo conjunto das migrations com uma
-base criada pelo `schema-inicial.sql`, desconsiderando apenas:
+## Validação
 
-- dados de teste e dados legados;
-- a tabela técnica `sgi_migrations` e seus registros;
-- diferenças de ordem textual que não alterem a definição SQL.
+`tests/Integration/MigrationsTest.php` verifica a repetição da instalação,
+a tabela de vínculos automáticos, a coluna de primeiro acesso, índices,
+foreign keys, checks, trigger e fingerprint de sincronização. A preparação da
+suíte usa apenas uma base de teste descartável e os fixtures de
+`database/seeders/test.sql`.
 
-Devem ser iguais, no mínimo, nomes e tipos de colunas, nulabilidade, defaults,
-chaves primárias, índices, foreign keys, checks e triggers. Também devem ser
-executados os testes de repetição do runner na base de migrations, pois o
-baseline não substitui o mecanismo de upgrade de bases existentes nesta etapa.
-
-## Critérios de aceite
-
-- Uma base vazia aceita o SQL sem `ALTER TABLE` posterior.
-- Não existe trigger legado de sincronização de status.
-- Categorias não aceitam nomes duplicados dentro da mesma edição.
-- Penalidades persistidas não aceitam valores negativos.
-- Jogos novos exigem vínculo de ponto por default.
-- Artilharia suporta partida, equipe, autoria, anulação e chave idempotente.
-- Agenda, ranking de pódio, publicação do ranking, autenticação versionada e
-  idempotência de sincronização estão disponíveis desde a primeira criação.
-- As migrations `001` a `010` continuam sem alteração.
+`MigrationSupportTest` confirma que uma migration futura pode ser aplicada e
+reaplicada sem duplicidade sobre uma base criada pelo baseline.

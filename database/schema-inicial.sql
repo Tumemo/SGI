@@ -1,12 +1,11 @@
 -- SGI — schema inicial consolidado
 --
--- Este arquivo representa o estado estrutural final das migrations 001 a 010.
+-- Este arquivo representa o estado estrutural atual da aplicação.
 -- Execute-o somente depois de selecionar uma base vazia, por exemplo:
 --   USE nome_da_base;
 --
--- As migrations continuam preservadas para histórico e para upgrade de bases
--- que já usam o MigrationRunner. Este arquivo é o baseline para instalações
--- novas e não executa correções de dados legados.
+-- A instalação atual começa somente em uma base vazia; não há caminho de
+-- atualização de bases legadas neste pacote.
 
 SET SQL_MODE = 'NO_AUTO_VALUE_ON_ZERO';
 SET time_zone = '+00:00';
@@ -98,6 +97,7 @@ CREATE TABLE `usuarios` (
   `matricula_usuario` varchar(45) NOT NULL,
   `nome_usuario` varchar(45) NOT NULL,
   `senha_usuario` varchar(200) NOT NULL,
+  `senha_troca_pendente` tinyint(1) NOT NULL DEFAULT 0,
   `nivel_usuario` enum('0','1','2','3') NOT NULL DEFAULT '0',
   `genero_usuario` enum('FEM','MASC') NOT NULL,
   `data_nasc_usuario` date NOT NULL,
@@ -246,6 +246,22 @@ CREATE TABLE `ocorrencias_turmas` (
   CONSTRAINT `fk_ot_usuarios` FOREIGN KEY (`usuarios_id_usuario`) REFERENCES `usuarios` (`id_usuario`),
   CONSTRAINT `chk_ocorrencias_turmas_pontos_nonnegative` CHECK (`pontos_descontados` >= 0)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+CREATE TABLE `ocorrencias_vermelhos_automaticos` (
+  `ocorrencia_vermelha_id` int(11) NOT NULL,
+  `usuarios_id_usuario` int(11) NOT NULL,
+  `jogos_id_jogo` int(11) NOT NULL,
+  `ocorrencia_amarela_origem_id` int(11) NOT NULL,
+  PRIMARY KEY (`ocorrencia_vermelha_id`),
+  UNIQUE KEY `uk_vermelho_automatico_usuario_jogo` (`usuarios_id_usuario`,`jogos_id_jogo`),
+  KEY `idx_vermelho_automatico_amarelo` (`ocorrencia_amarela_origem_id`),
+  CONSTRAINT `fk_vermelho_automatico_ocorrencia`
+    FOREIGN KEY (`ocorrencia_vermelha_id`) REFERENCES `ocorrencias` (`id_ocorrencia`)
+    ON DELETE CASCADE,
+  CONSTRAINT `fk_vermelho_automatico_amarelo`
+    FOREIGN KEY (`ocorrencia_amarela_origem_id`) REFERENCES `ocorrencias` (`id_ocorrencia`)
+    ON DELETE RESTRICT
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci;
 
 CREATE TABLE `pontuacoes` (
   `id_pontuacao` int(11) NOT NULL AUTO_INCREMENT,

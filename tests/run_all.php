@@ -43,6 +43,7 @@ require_once __DIR__ . '/Integration/TurmaScopeConsistencyTest.php';
 require_once __DIR__ . '/Integration/PublicBoundaryTest.php';
 require_once __DIR__ . '/Integration/RefactorContractsTest.php';
 require_once __DIR__ . '/Integration/MigrationsTest.php';
+require_once __DIR__ . '/Integration/MigrationSupportTest.php';
 require_once __DIR__ . '/Integration/RecoveryRehearsalTest.php';
 require_once __DIR__ . '/Integration/ConsistencyGuardsTest.php';
 require_once __DIR__ . '/Integration/InitialAdminTest.php';
@@ -182,6 +183,7 @@ try {
     PublicBoundaryTest::run();
     \SGITests\Integration\RefactorContractsTest::run();
     \SGITests\Integration\MigrationsTest::run();
+    \SGITests\Integration\MigrationSupportTest::run();
     \SGITests\Integration\RecoveryRehearsalTest::run();
     \SGITests\Integration\ConsistencyGuardsTest::run();
     \SGITests\Integration\InitialAdminTest::run();

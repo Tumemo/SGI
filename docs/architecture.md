@@ -30,10 +30,11 @@ resources/css/                 estilos da aplicação
 resources/images/              imagens e ícones
 public/assets/                 saída reproduzível de npm run build
 storage/                       arquivos de execução, fora do Git
-bin/sgi.php                    migrações e configuração inicial por CLI
-database/migrations/           esquema versionado e histórico de execução
+bin/sgi.php                    instalação do schema e configuração inicial por CLI
+database/schema-inicial.sql    estado completo do schema para bases novas
+database/migrations/           migrations futuras e histórico de execução
 tests/Unit/                    regras, contratos unitários e arquitetura
-tests/Integration/             HTTP, persistência, migrações e concorrência
+tests/Integration/             HTTP, persistência, schema e concorrência
 tests/javascript/              ciclo de vida de telas e modais
 tests/browser/                 navegação, comparação visual e operação offline
 ```
@@ -135,11 +136,11 @@ O agendamento manual, a edição de horário/local e a confirmação de blocos c
 
 A importação por PDF usa `ImportacaoTurmaController`, `ImportacaoTurmaService`, um contrato de leitura e um repositório de persistência em `/api/v1/importacoes/turma-pdf`. A turma e a edição são validadas antes de salvar arquivos; o conteúdo precisa ter cabeçalho PDF e o arquivo deve ter no máximo 10 MB, limite necessário para impedir que o parser derrube o processo PHP ao descompactar documentos grandes. Um bloqueio de arquivo serializa importações da mesma turma para preservar o par PDF/CSV durante a extração. A deduplicação de matrículas por edição permanece no importador existente.
 
-`MigrationRunner` registra checksum, estado de conclusão e trava de execução. Instalações novas começam com banco vazio e aplicam todas as migrações; uma base sem histórico é recusada para evitar mistura de esquemas.
+`SchemaInstaller` executa `database/schema-inicial.sql` em uma base vazia e usa uma trava por banco. Antes do primeiro marcador, recusa bases parciais ou com tabelas inesperadas; depois que o baseline foi registrado, a operação permanece idempotente mesmo com tabelas adicionadas por migrations futuras. Ele registra o baseline em `sgi_migrations`; `MigrationRunner` permanece disponível para aplicar migrations futuras com checksum, estado de conclusão e trava de execução.
 
 `MysqliMutationStore` serializa uma mesma chave, rejeita sua reutilização com outro conteúdo/operador e confirma resposta e dados na mesma transação. Transações aninhadas usam savepoints. Os testes provocam falha antes da confirmação e reenvios concorrentes. A fila mantém o identificador e atualiza o token CSRF da sessão ao reenviar.
 
-O ensaio de recuperação de `tests/Integration/RecoveryRehearsalTest.php` usa somente bases sintéticas: preserva schema, dados, hashes e triggers através do upgrade e restauração, registra hash/versão no manifesto e deixa explícita a fronteira pré-upgrade. Ele não altera banco de trabalho nem remove filas do navegador.
+`tests/Integration/MigrationsTest.php` confere a instalação repetida e os contratos estruturais do baseline, incluindo as proteções de disciplina, artilharia, sincronização e primeiro acesso do aluno. `MigrationSupportTest` confirma a aplicação e repetição de uma migration futura sobre o baseline, e `RecoveryRehearsalTest` verifica uma instalação isolada repetível. A preparação dos testes usa bases descartáveis e não altera banco de trabalho nem remove filas do navegador.
 
 ## Rede de segurança
 

@@ -87,19 +87,19 @@ SGI_DB_USER=root
 SGI_DB_PASSWORD=
 ```
 
-O exemplo de `root` sem senha só funciona se o seu banco local estiver configurado assim. Informe seu usuário e senha reais quando necessário. O usuário precisa poder criar e alterar tabelas para executar as migrações. Mantenha as demais opções de diretórios do arquivo de exemplo.
+O exemplo de `root` sem senha só funciona se o seu banco local estiver configurado assim. Informe seu usuário e senha reais quando necessário. O usuário precisa poder criar e alterar tabelas para instalar o schema inicial. Mantenha as demais opções de diretórios do arquivo de exemplo.
 
 Não envie `.env` para o Git. Variáveis `SGI_*` definidas no terminal têm prioridade sobre o arquivo; ao trocar de ambiente, confira se não ficaram valores de outra execução.
 
-Crie as tabelas pelas migrações versionadas:
+Crie as tabelas pelo schema inicial atual:
 
 ```powershell
-php bin/sgi.php migrate
+php bin/sgi.php schema:install
 ```
 
-O comando deve terminar com **Banco atualizado.** Não é necessário importar um dump SQL. Para atualizar uma instalação com dados existentes, consulte [implantação e recuperação](docs/deployment.md).
+O comando deve terminar com **Schema inicial instalado.** Não é necessário importar outro dump SQL. O comando `php bin/sgi.php migrate` também continua disponível: instala o baseline quando necessário e aplica as migrations futuras existentes em `database/migrations/`.
 
-Ao aplicar a migração `012_student_first_login_password.sql`, os alunos existentes ficam obrigados a trocar a senha. Em um banco local de desenvolvimento, para definir a senha inicial compartilhada `sesi-senai` para esses alunos e revogar sessões anteriores, execute depois da migração:
+O schema inicial já contém o estado da troca obrigatória de senha. Em um banco local de desenvolvimento com alunos importados anteriormente, para definir a senha inicial compartilhada `sesi-senai` e revogar sessões anteriores, execute:
 
 ```powershell
 php bin/sgi.php students:senha-inicial --confirm-database=sgi
@@ -109,7 +109,7 @@ Troque `sgi` pelo valor exato de `SGI_DB_NAME`. O comando exige `SGI_APP_ENV=dev
 
 ### 4. Criar o primeiro administrador
 
-As migrações não criam usuários de demonstração. No PowerShell, escolha seu login, nome e uma senha de pelo menos 12 caracteres:
+O schema não cria usuários de demonstração. No PowerShell, escolha seu login, nome e uma senha de pelo menos 12 caracteres:
 
 ```powershell
 $env:SGI_ADMIN_LOGIN = Read-Host 'Login do administrador'
@@ -253,8 +253,9 @@ SGI/
 ├── resources/js/           # Scripts das páginas e subsistema offline
 ├── resources/css/          # Fontes dos estilos
 ├── resources/images/       # Imagens e ícones
-├── bin/sgi.php             # Comandos de migração e administrador inicial
-├── database/migrations/    # Evolução versionada do banco
+├── bin/sgi.php             # Instalação do schema e administrador inicial
+├── database/schema-inicial.sql # Estado atual para bases novas
+├── database/migrations/    # Migrations futuras após a entrada em produção
 ├── database/seeders/       # Fixtures exclusivos de testes
 ├── storage/                # Sessões, uploads e arquivos de execução
 ├── tests/                  # Testes PHP, HTTP, JavaScript e navegador
@@ -269,7 +270,7 @@ Ao alterar o projeto:
 - Durante o desenvolvimento, execute **`npm run dev`**: ele inicia o servidor PHP, recompila os assets alterados e recarrega o navegador. O comando **`npm run build`** continua sendo usado para um build isolado, CI e preparação de implantação.
 - Edite JavaScript, CSS, SCSS e imagens em `resources/`; não altere `public/assets/` manualmente, pois esse diretório é gerado pelo build.
 - Crie APIs em `/api/v1` e templates em `resources/views/`. Use `SGI_ROOT` para includes e os utilitários `Assets`/`Url` para links.
-- Para evoluir o banco, adicione uma migração em `database/migrations/`; não reescreva migrações já aplicadas. Execute `php bin/sgi.php migrate` e valide atualização e repetição nos testes.
+- Para alterar o banco depois da entrada em produção, atualize `database/schema-inicial.sql` para novas instalações e crie uma migration numerada em `database/migrations/` para bases já instaladas. Valide instalação, aplicação e repetição.
 - Preserve os identificadores das mutações e o schema offline enquanto houver operações pendentes no cliente.
 - Execute as verificações e revise `git diff` antes de entregar alterações. Não versione senhas, uploads ou dados pessoais.
 
@@ -284,7 +285,7 @@ Leia [AGENTS.md](AGENTS.md) para as convenções, [arquitetura](docs/architectur
 | Composer informa extensão PHP ausente | Veja `php --ini` e `php -m`, habilite a extensão no PHP usado pelo terminal e repita `composer install`. |
 | `vendor/autoload.php` não encontrado | Execute `composer install` na raiz do projeto. |
 | Conexão recusada ou `Access denied` no banco | Serviço MySQL/MariaDB iniciado, host/porta, credenciais do `.env` e eventuais variáveis do terminal. |
-| Banco desconhecido ou tabela inexistente | Crie a base configurada e execute `php bin/sgi.php migrate`. |
+| Banco desconhecido ou tabela inexistente | Crie a base configurada e execute `php bin/sgi.php schema:install`. |
 | Login `admin` / `123` não funciona | Essas credenciais são dos testes. Na base local, use o administrador criado por `admin:create`. |
 | Página sem estilos ou scripts | Execute `npm ci --ignore-scripts` e `npm run build`; confirme que o servidor aponta para `public/`. |
 | `npm run dev` não recarrega o navegador | Confirme `SGI_APP_ENV=development`, que `npm run dev` continua aberto e que a porta `35729` está livre. |

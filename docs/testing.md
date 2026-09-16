@@ -136,7 +136,7 @@ O parâmetro `-PhpPath` permite selecionar outro PHP. MySQLi precisa estar habil
 php tests/run_all.php
 ```
 
-O runner reconstrói **apenas** a base de testes, executa migrações e carrega os fixtures. Antes do reset, confere o nome da base com a resposta de saúde do servidor em modo `test`. Os cenários HTTP usam os mesmos tokens CSRF do navegador; não há exceção de segurança para testes.
+O runner reconstrói **apenas** a base de testes, instala `database/schema-inicial.sql` e carrega os fixtures. Antes do reset, confere o nome da base com a resposta de saúde do servidor em modo `test`. Os cenários HTTP usam os mesmos tokens CSRF do navegador; não há exceção de segurança para testes.
 
 Não execute duas suítes que alteram o banco simultaneamente. Os cenários de integração montam uma edição compartilhada em sequência. Regressões concorrentes usam processos e conexões independentes: cobrem replay da mesma mutação, anulação contra conclusão do jogo e disputa de local/horário entre criação manual, edição e confirmação de bloco. As barreiras de teste sincronizam os participantes da corrida sem atrasos arbitrários.
 
@@ -174,10 +174,14 @@ Imagens, traces e relatório ficam em `tests/browser/test-results/` e `tests/bro
 
 ## Matriz e recuperação
 
-O CI executa qualidade apenas em PHP 8.4. Integração HTTP/banco/recuperação,
+O CI executa qualidade apenas em PHP 8.4. Integração HTTP/banco,
 navegador e contrato visual usam PHP 8.4 e MariaDB 10.11; o visual usa as
 referências Linux. A configuração está em `.github/workflows/ci.yml`. A matriz
 do CI usa uma única versão de PHP e MariaDB; MySQL e PHP 8.2 continuam disponíveis
 para execuções locais pelo executor Docker.
 
-`php tests/run_all.php` também executa o ensaio sintético de recuperação. Ele cria bases temporárias com nomes próprios, gera um `mysqldump` contendo schema/dados/triggers, grava hash e versão em `test-results/t28-recovery-*.json`, atualiza uma cópia com as migrações e restaura o dump em outra base. As bases são removidas ao final; os dumps e manifestos permanecem como evidência ignorada pelo Git. O ensaio não aponta para base de trabalho e não limpa filas IndexedDB.
+`php tests/run_all.php` executa `MigrationsTest`, que confirma a instalação
+repetida e os elementos estruturais esperados no baseline atual, além de
+`MigrationSupportTest` e `RecoveryRehearsalTest` para verificar migrations
+futuras e a reinstalação do baseline. As bases de teste são descartáveis e os
+ensaios não apontam para uma base de trabalho nem limpam filas IndexedDB.

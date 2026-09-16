@@ -24,6 +24,7 @@ final class MigrationRunner
             $tables = array_column($this->connection->query('SHOW TABLES')->fetch_all(), 0);
             $existing = array_diff($tables, ['sgi_migrations']) !== [];
             $this->connection->query('CREATE TABLE IF NOT EXISTS sgi_migrations (version VARCHAR(100) PRIMARY KEY, checksum CHAR(64) NOT NULL, dirty TINYINT NOT NULL DEFAULT 1, applied_at TIMESTAMP NULL) ENGINE=InnoDB');
+            $hasBaseline = $this->hasBaseline();
             $applied = [];
             $files = glob($this->directory . '/*.sql') ?: [];
             sort($files);
@@ -41,7 +42,7 @@ final class MigrationRunner
                     }
                     continue;
                 }
-                if ($index === 0 && $existing) {
+                if ($index === 0 && $existing && !$hasBaseline) {
                     throw new RuntimeException('Base existente sem histórico de migrações. Instale o schema atual ou restaure um backup válido.');
                 }
                 $statement = $this->connection->prepare('INSERT INTO sgi_migrations (version, checksum) VALUES (?, ?)');
@@ -65,4 +66,14 @@ final class MigrationRunner
         }
     }
 
+    private function hasBaseline(): bool
+    {
+        $statement = $this->connection->prepare('SELECT COUNT(*) FROM sgi_migrations WHERE version = ? AND dirty = 0');
+        $version = SchemaInstaller::BASELINE_VERSION;
+        $statement->bind_param('s', $version);
+        $statement->execute();
+        $count = (int) $statement->get_result()->fetch_column();
+        $statement->close();
+        return $count === 1;
+    }
 }

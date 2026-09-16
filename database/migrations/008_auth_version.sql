@@ -1,2 +1,0 @@
-ALTER TABLE usuarios
-    ADD COLUMN auth_version INT UNSIGNED NOT NULL DEFAULT 1;

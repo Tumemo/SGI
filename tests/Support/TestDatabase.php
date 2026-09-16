@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace SGITests\Support;
 
-use App\Shared\Database\MigrationRunner;
+use App\Shared\Database\SchemaInstaller;
 use App\Shared\Database\SqlScript;
 use mysqli;
 use RuntimeException;
@@ -24,7 +24,7 @@ final class TestDatabase
         $connection->query('CREATE DATABASE `' . $databaseName . '` CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci');
         $connection->select_db($databaseName);
         $root = dirname(__DIR__, 2);
-        (new MigrationRunner($connection, $root . '/database/migrations'))->migrate();
+        (new SchemaInstaller($connection, $root . '/database/schema-inicial.sql'))->install();
         foreach (SqlScript::statements((string) file_get_contents($root . '/database/seeders/test.sql')) as $sql) {
             $connection->query($sql);
         }

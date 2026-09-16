@@ -11,12 +11,28 @@ if (PHP_SAPI !== 'cli') {
 
 try {
     $command = $argv[1] ?? 'help';
-    if ($command === 'migrate') {
-        $runner = new \App\Shared\Database\MigrationRunner(\App\Shared\Database\ConnectionFactory::get(), SGI_ROOT . '/database/migrations');
+    if ($command === 'schema:install') {
         if (in_array('--baseline', $argv, true)) {
-            throw new RuntimeException('A opção --baseline não faz parte da instalação atual.');
+            throw new RuntimeException('A opção --baseline não faz parte da instalação pelo schema atual.');
         }
-        foreach ($runner->migrate() as $version) {
+        $installed = (new \App\Shared\Database\SchemaInstaller(
+            \App\Shared\Database\ConnectionFactory::get(),
+            SGI_ROOT . '/database/schema-inicial.sql',
+        ))->install();
+        echo $installed ? "Schema inicial instalado.\n" : "Schema inicial já estava instalado.\n";
+    } elseif ($command === 'migrate') {
+        if (in_array('--baseline', $argv, true)) {
+            throw new RuntimeException('A opção --baseline não faz parte da instalação pelo schema atual.');
+        }
+        $connection = \App\Shared\Database\ConnectionFactory::get();
+        $installed = (new \App\Shared\Database\SchemaInstaller(
+            $connection,
+            SGI_ROOT . '/database/schema-inicial.sql',
+        ))->install();
+        if ($installed) {
+            echo "Schema inicial instalado.\n";
+        }
+        foreach ((new \App\Shared\Database\MigrationRunner($connection, SGI_ROOT . '/database/migrations'))->migrate() as $version) {
             echo 'Aplicada: ' . $version . PHP_EOL;
         }
         echo "Banco atualizado.\n";
@@ -49,7 +65,8 @@ try {
         $diagnostico = (new \App\Modules\Resultados\Infrastructure\MysqliPodioRepository(\App\Shared\Database\ConnectionFactory::get()))->diagnosticar();
         echo json_encode($diagnostico, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR) . PHP_EOL;
     } else {
-        echo "Uso: php bin/sgi.php migrate\n";
+        echo "Uso: php bin/sgi.php schema:install\n";
+        echo "     php bin/sgi.php migrate (schema inicial + migrations pendentes)\n";
         echo "     php bin/sgi.php admin:create (SGI_ADMIN_LOGIN, SGI_ADMIN_NAME, SGI_ADMIN_PASSWORD)\n";
         echo "     php bin/sgi.php students:senha-inicial --confirm-database=<SGI_DB_NAME> (somente desenvolvimento)\n";
         echo "     php bin/sgi.php pontuacao:diagnosticar\n";
