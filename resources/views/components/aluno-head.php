@@ -55,6 +55,9 @@ echo json_encode(\App\Shared\Http\Url::to('assets'), JSON_HEX_TAG | JSON_HEX_AMP
     <script src="<?= \App\Shared\Http\Assets::url('js/shared/html-utils.js') ?>"></script>
 
 <script src="<?= \App\Shared\Http\Assets::url('js/shared/page-runtime.js') ?>"></script>
+<?php if (\App\Shared\Config\Env::get('SGI_APP_ENV', '') === 'development'): ?>
+    <script src="<?= \App\Shared\Http\Assets::url('js/dev/live-reload.js') ?>"></script>
+<?php endif; ?>
 <script>
 (function () {
     document.addEventListener('click', async function (event) {

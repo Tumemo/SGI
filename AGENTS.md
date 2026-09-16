@@ -105,7 +105,7 @@ Não há Service Worker. Login e preparação exigem conexão; refresh, nova aba
 
 ## 6. Frontend, URLs e ciclo de vida
 
-Edite as fontes em `resources/` e execute `npm run build`. Não edite a saída `public/assets/` nem dependa de CDN para os recursos necessários offline. Preserve os lockfiles e o build reproduzível; atualize dependências deliberadamente, sem executar atualizações gerais como parte de uma correção não relacionada.
+Edite as fontes em `resources/` e, durante o desenvolvimento local, use `npm run dev` para iniciar o servidor PHP, observar as fontes, recompilar os assets alterados e recarregar o navegador. Use `npm run build` para um build isolado, CI e preparação de implantação. Não edite a saída `public/assets/` nem dependa de CDN para os recursos necessários offline. Preserve os lockfiles e o build reproduzível; atualize dependências deliberadamente, sem executar atualizações gerais como parte de uma correção não relacionada.
 
 Para qualquer mudança de estilização, planeje primeiro um design system coeso e alinhado aos padrões já existentes, contemplando tokens reutilizáveis de cores, tipografia, espaçamento, raios, sombras, estados, breakpoints, componentes e acessibilidade. Reutilize ou estenda os estilos compartilhados em `resources/css/`; não crie novos arquivos CSS, não aplique CSS inline em HTML/PHP/JavaScript e não espalhe estilos pontuais em templates. Centralize tokens e padrões, prefira componentes e classes reutilizáveis e valide responsividade, contraste, foco/teclado e o impacto nas páginas existentes. Se a base compartilhada não oferecer suporte suficiente, organize-a antes de estilizar uma tela isolada.
 
@@ -207,13 +207,14 @@ Pedidos como “suba o projeto”, “rode localmente” ou “deixe disponível
 1. Confira a pasta do projeto, PHP/extensões, Composer, Node, dependências, `.env`, banco e portas disponíveis. Preserve a configuração existente e os dados do usuário. Se já houver um servidor deste projeto, confira se atende à solicitação antes de iniciar outro.
 2. Em instalação nova, siga o README: `composer install`, `npm ci --ignore-scripts`, `npm run build`, configuração de uma base local vazia e `php bin/sgi.php migrate`. Em instalação existente, verifique a necessidade e o impacto de migrações; não resete a base nem execute fixtures sobre dados de trabalho. Não reinstale dependências sem necessidade, mas regenere os assets se as fontes mudaram.
 3. Confira `SGI_APP_URL=http://127.0.0.1:8080/` e `SGI_BASE_PATH` vazio para o exemplo na raiz. Se usar outra porta ou subdiretório, mantenha configuração e URL coerentes. Não sobrescreva `.env` com `.env.example` quando já existir.
-4. Inicie o servidor na raiz do projeto:
+4. Inicie o ambiente de desenvolvimento na raiz do projeto:
 
    ```powershell
-   php -S 127.0.0.1:8080 -t public public/index.php
+   npm run dev
    ```
 
-5. Para deixá-lo disponível depois da resposta, mantenha um processo de servidor persistente. Se usar `Start-Process` no Windows, use `-WindowStyle Hidden`, diretório de trabalho explícito e redirecione stdout/stderr para arquivos distintos em `test-results/`. Registre o PID e os caminhos dos logs. Não encerre outros processos para liberar uma porta; escolha outra porta livre.
+   O comando executa o build inicial, inicia o PHP em `127.0.0.1:8080` e mantém o live reload local. Ele observa `resources/`, `src/` e `config/`; não é necessário executar builds manuais durante a edição. O processo PHP pode ser informado por `SGI_DEV_PHP_PATH` e a porta por `SGI_DEV_PORT`.
+5. Para deixá-lo disponível depois da resposta, mantenha o terminal do `npm run dev` aberto. Se usar `Start-Process` no Windows, use `-WindowStyle Hidden`, diretório de trabalho explícito e redirecione stdout/stderr para arquivos distintos em `test-results/`. Registre o PID e os caminhos dos logs. Não encerre outros processos para liberar uma porta; escolha outra porta livre.
 6. Verifique por HTTP que a página de login responde e que CSS/JavaScript são servidos. Quando houver credenciais de teste disponíveis e o pedido incluir validação funcional, confira também login e a tela relevante; uma página de login carregada não comprova acesso ao banco ou funcionamento completo.
 7. Entregue a URL clicável, o que foi verificado, como acessar com a conta local e como encerrar o processo criado. Não afirme que `admin`/`123` funciona na base normal. Se faltar o primeiro administrador, use o procedimento `admin:create` do README, sem redefinir contas existentes nem expor senhas nos logs.
 

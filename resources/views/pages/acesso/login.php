@@ -22,6 +22,9 @@ if ((int) ($_SESSION['nivel'] ?? -1) >= 0) {
     <script type="text/javascript">window.SGI_BASE_PATH = <?= json_encode(\App\Shared\Http\Url::basePath(), JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>; window.SGI_API_BASE = <?= json_encode(\App\Shared\Http\Url::to('api/v1/'), JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;</script>
     <script src="<?= \App\Shared\Http\Assets::url('js/shared/html-utils.js') ?>"></script>
     <script src="<?= \App\Shared\Http\Assets::url('js/shared/page-runtime.js') ?>"></script>
+    <?php if (\App\Shared\Config\Env::get('SGI_APP_ENV', '') === 'development'): ?>
+        <script src="<?= \App\Shared\Http\Assets::url('js/dev/live-reload.js') ?>"></script>
+    <?php endif; ?>
 </head>
 <body>
     <!-- VERSÃO MOBILE CENTRALIZADA -->

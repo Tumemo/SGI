@@ -4,6 +4,7 @@
   "scripts": {
     "build": "node tools/build-assets.cjs",
     "build:css": "node tools/build-assets.cjs --css-only",
+    "dev": "node tools/dev.cjs",
     "test": "node --test tests/javascript/*.test.cjs",
     "check": "node tools/check-javascript.cjs"
   },

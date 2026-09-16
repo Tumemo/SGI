@@ -25,7 +25,7 @@ Instale ou disponibilize:
 
 - **PHP 8.2 ou superior**, com `mysqli`, `mbstring` e `fileinfo`. Para as ferramentas e os testes, habilite também DOM/XML, XMLWriter e cURL. O CI executa os testes em PHP 8.4.
 - **Composer 2**, para as dependências PHP.
-- **Node.js 22 e npm**, para gerar os arquivos usados pelo navegador.
+- **Node.js 22 e npm**, para gerar os arquivos usados pelo navegador e executar o watcher de desenvolvimento.
 - **MySQL ou MariaDB** em execução. O CI testa com MariaDB 10.11; MySQL continua disponível como opção nos executores locais.
 - **Git**, se for obter o projeto por clone. Também é possível extrair o pacote recebido.
 
@@ -125,17 +125,36 @@ No Linux/macOS, uma alternativa é adicionar temporariamente `SGI_ADMIN_LOGIN`, 
 
 O resultado esperado é **Administrador inicial criado: ...**. O comando recusa criar outro administrador se já existir um; ele não redefine senhas. Guarde as credenciais escolhidas para entrar no sistema.
 
-### 5. Iniciar o servidor e acessar
+### 5. Iniciar o desenvolvimento com live reload
 
-Na raiz do projeto:
+Na raiz do projeto, execute:
 
 ```powershell
-php -S 127.0.0.1:8080 -t public public/index.php
+npm run dev
 ```
 
-Mantenha esse terminal aberto e acesse [http://127.0.0.1:8080/](http://127.0.0.1:8080/). Entre com o administrador criado no passo anterior. Use outro terminal para comandos adicionais; para encerrar o servidor, pressione **Ctrl+C**.
+Esse comando faz o build inicial dos assets, inicia o servidor PHP em [http://127.0.0.1:8080/](http://127.0.0.1:8080/) e observa `resources/`, `src/` e `config/`. Alterações em CSS, SCSS, JavaScript ou imagens recompilam os assets automaticamente; alterações em PHP recarregam o navegador automaticamente. O recurso é ativado somente quando `SGI_APP_ENV=development` está configurado.
 
-O diretório público do servidor deve ser sempre **`public/`**. Não abra os arquivos PHP diretamente no navegador. O servidor embutido é destinado ao desenvolvimento local; publicação com Apache ou outro servidor está descrita em [implantação](docs/deployment.md).
+Mantenha esse terminal aberto e entre com o administrador criado no passo anterior. Para encerrar o watcher e o servidor PHP, pressione **Ctrl+C**.
+
+Se o PHP não estiver no `PATH`, informe o executável nesta sessão do PowerShell:
+
+```powershell
+$env:SGI_DEV_PHP_PATH = 'C:\xampp\php\php.exe'
+npm run dev
+```
+
+Para usar outra porta, defina `SGI_DEV_PORT` e mantenha `SGI_APP_URL` coerente:
+
+```powershell
+$env:SGI_DEV_PORT = '8081'
+$env:SGI_APP_URL = 'http://127.0.0.1:8081/'
+npm run dev
+```
+
+O servidor embutido é destinado ao desenvolvimento local; não é necessário iniciar o Apache nem colocar o projeto em `htdocs`. Para apenas gerar os assets sem iniciar o ambiente, use `npm run build`.
+
+O diretório público do servidor deve ser sempre **`public/`**. Não abra os arquivos PHP diretamente no navegador. Publicação com Apache ou outro servidor está descrita em [implantação e recuperação](docs/deployment.md).
 
 ### 6. Preparar dados para explorar o sistema
 
@@ -247,7 +266,8 @@ Uma requisição entra por `public/index.php`, carrega `bootstrap/app.php` e seg
 
 Ao alterar o projeto:
 
-- Edite JavaScript, CSS e imagens em `resources/` e execute **`npm run build`** para atualizar `public/assets/`. Não há servidor Node necessário durante a navegação nem build automático nesse comando.
+- Durante o desenvolvimento, execute **`npm run dev`**: ele inicia o servidor PHP, recompila os assets alterados e recarrega o navegador. O comando **`npm run build`** continua sendo usado para um build isolado, CI e preparação de implantação.
+- Edite JavaScript, CSS, SCSS e imagens em `resources/`; não altere `public/assets/` manualmente, pois esse diretório é gerado pelo build.
 - Crie APIs em `/api/v1` e templates em `resources/views/`. Use `SGI_ROOT` para includes e os utilitários `Assets`/`Url` para links.
 - Para evoluir o banco, adicione uma migração em `database/migrations/`; não reescreva migrações já aplicadas. Execute `php bin/sgi.php migrate` e valide atualização e repetição nos testes.
 - Preserve os identificadores das mutações e o schema offline enquanto houver operações pendentes no cliente.
@@ -267,6 +287,7 @@ Leia [AGENTS.md](AGENTS.md) para as convenções, [arquitetura](docs/architectur
 | Banco desconhecido ou tabela inexistente | Crie a base configurada e execute `php bin/sgi.php migrate`. |
 | Login `admin` / `123` não funciona | Essas credenciais são dos testes. Na base local, use o administrador criado por `admin:create`. |
 | Página sem estilos ou scripts | Execute `npm ci --ignore-scripts` e `npm run build`; confirme que o servidor aponta para `public/`. |
+| `npm run dev` não recarrega o navegador | Confirme `SGI_APP_ENV=development`, que `npm run dev` continua aberto e que a porta `35729` está livre. |
 | Endereço errado ou erro 404 | Use o comando completo do servidor e o endereço `http://127.0.0.1:8080/`, com `SGI_BASE_PATH` vazio. |
 | Porta 8080 ocupada | Escolha outra porta no comando `php -S`, no `SGI_APP_URL` e no endereço do navegador. |
 | Erro ao gravar sessão ou upload | Confira permissão de escrita nos diretórios `storage/` configurados no `.env`. |
