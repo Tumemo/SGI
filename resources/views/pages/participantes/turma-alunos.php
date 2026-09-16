@@ -57,7 +57,7 @@ $podeResetarSenha = in_array($nivelUsuario, [0], true);
                         <p class="small text-body-secondary mb-3 mt-2">Selecione um arquivo PDF ou arraste-o para esta área.</p>
                         <label for="pdfInputMob" class="form-label fw-semibold d-block text-start">Selecionar PDF com a lista de alunos para esta turma</label>
                         <input type="file" class="form-control text-start" name="pdf" id="pdfInputMob" accept="application/pdf" aria-describedby="descricaoPdfMob pdfNomeMob" required>
-                        <span class="small text-body-secondary mt-2 d-block" id="descricaoPdfMob">Formato aceito: PDF. O arquivo deve conter texto selecionável.</span>
+                        <span class="small text-body-secondary mt-2 d-block" id="descricaoPdfMob">Formato aceito: PDF de até 10 MB. O arquivo deve conter texto selecionável.</span>
                         <span class="d-none small fw-semibold text-success mt-2" id="pdfNomeMob" role="status" aria-live="polite" aria-atomic="true"></span>
                     </div>
                     <div class="d-none mt-3" id="progressMob">
@@ -143,7 +143,7 @@ $podeResetarSenha = in_array($nivelUsuario, [0], true);
                             <p class="small text-body-secondary mb-3 mt-2">Selecione um arquivo PDF ou arraste-o para esta área.</p>
                             <label for="pdfInputDesk" class="form-label fw-semibold d-block text-start">Selecionar PDF com a lista de alunos para esta turma</label>
                             <input type="file" class="form-control text-start" name="pdf" id="pdfInputDesk" accept="application/pdf" aria-describedby="descricaoPdfDesk pdfNomeDesk" required>
-                            <span class="small text-body-secondary mt-2 d-block" id="descricaoPdfDesk">Formato aceito: PDF. O arquivo deve conter texto selecionável.</span>
+                            <span class="small text-body-secondary mt-2 d-block" id="descricaoPdfDesk">Formato aceito: PDF de até 10 MB. O arquivo deve conter texto selecionável.</span>
                             <span class="d-none small fw-semibold text-success mt-2" id="pdfNomeDesk" role="status" aria-live="polite" aria-atomic="true"></span>
                         </div>
                         <div class="d-none mt-3" id="progressDesk">

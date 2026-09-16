@@ -6,8 +6,23 @@ namespace App\Modules\Participantes\Infrastructure;
 
 final class PdfAlunoImporter
 {
+    /**
+     * O parser mantém partes descompactadas do documento em memória. Um
+     * limite próprio evita que um PDF grande derrube o processo PHP antes de
+     * o controlador conseguir devolver o envelope JSON da API.
+     */
+    public const MAX_PDF_BYTES = 10 * 1024 * 1024;
+
     public static function extrairLinhasDoPdf(string $caminhoPdf): array
     {
+        $tamanho = @filesize($caminhoPdf);
+        if ($tamanho === false) {
+            throw new \RuntimeException('Não foi possível ler o PDF enviado.');
+        }
+        if ($tamanho > self::MAX_PDF_BYTES) {
+            throw new \InvalidArgumentException('O PDF excede o limite de 10 MB. Reduza o arquivo e tente novamente.');
+        }
+
         $parser = new \Smalot\PdfParser\Parser();
         $pdf = $parser->parseFile($caminhoPdf);
         $texto = $pdf->getText();

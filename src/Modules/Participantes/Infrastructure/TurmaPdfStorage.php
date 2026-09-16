@@ -29,6 +29,13 @@ final class TurmaPdfStorage
         if (!is_uploaded_file($temporary) || file_get_contents($temporary, false, null, 0, 5) !== '%PDF-') {
             throw new InvalidArgumentException('O arquivo enviado não é um PDF válido.');
         }
+        $size = @filesize($temporary);
+        if ($size === false) {
+            throw new InvalidArgumentException('Não foi possível ler o PDF enviado.');
+        }
+        if ($size > PdfAlunoImporter::MAX_PDF_BYTES) {
+            throw new InvalidArgumentException('O PDF excede o limite de 10 MB. Reduza o arquivo e tente novamente.');
+        }
         if (!is_dir($this->directory) && !@mkdir($this->directory, 0770, true) && !is_dir($this->directory)) {
             throw new RuntimeException('Falha ao criar pasta de destino.');
         }

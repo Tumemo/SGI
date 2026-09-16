@@ -21,6 +21,8 @@ final class ImportacaoTurmaController
         if (($denied = AccessGuard::requireWrite()) !== null) {
             return $denied;
         }
+        $outputBufferLevel = ob_get_level();
+        ob_start();
         try {
             $file = $request->file('pdf_arquivo', $request->file('pdf'));
             if (!is_array($file)) {
@@ -36,6 +38,10 @@ final class ImportacaoTurmaController
         } catch (\Throwable $exception) {
             error_log('Falha ao importar PDF da turma: ' . $exception->getMessage());
             return Response::json(['success' => false, 'message' => 'Não foi possível importar os alunos.'], 500);
+        } finally {
+            while (ob_get_level() > $outputBufferLevel) {
+                ob_end_clean();
+            }
         }
     }
 }
