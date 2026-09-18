@@ -9,6 +9,7 @@ $nivelUsuario = (int)($_SESSION['nivel'] ?? -1);
 $isNivel3 = $nivelUsuario === 3;
 $isNivel2 = $nivelUsuario === 2;
 $podeGerar = !$isNivel2 && !$isNivel3;
+$podeEditar = !$isNivel2 && !$isNivel3;
 ?>
 
 <main class="d-md-none sgi-chaveamento-mobile sgi-u-min-width-0 p-4 bg-body-tertiary min-vh-100" >
@@ -340,7 +341,7 @@ $podeGerar = !$isNivel2 && !$isNivel3;
     </div>
 </div>
 
-<script type="application/json" data-sgi-config="competicoes/chaveamento"><?= json_encode(['value0' => ($podeGerar), 'value3' => ($nivelUsuario)], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_THROW_ON_ERROR) ?></script>
+<script type="application/json" data-sgi-config="competicoes/chaveamento"><?= json_encode(['value0' => ($podeGerar), 'value3' => ($nivelUsuario), 'podeEditar' => ($podeEditar)], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_THROW_ON_ERROR) ?></script>
 <script data-sgi-page src="<?= \App\Shared\Http\Assets::url('js/pages/competicoes/chaveamento.js') ?>"></script>
 
 <?php

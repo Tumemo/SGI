@@ -34,6 +34,8 @@ jobs:
         run: docker compose -f compose.test.yml config --quiet
       - name: Construir aplicação e navegador
         run: docker compose -f compose.test.yml build app browser
+      - name: Preparar diretórios de saída
+        run: mkdir -p test-results tests/browser/test-results tests/browser/playwright-report
       - name: Subir banco e servidor HTTP
         run: docker compose -f compose.test.yml up -d --wait db app
       - name: Executar integração HTTP, banco e recuperação
@@ -43,6 +45,7 @@ jobs:
       - name: Registrar logs Docker em caso de falha
         if: failure()
         run: |
+          sudo chown -R $USER:$USER test-results tests/browser/test-results tests/browser/playwright-report 2>/dev/null || true
           mkdir -p test-results
           docker compose -f compose.test.yml logs --no-color app db > test-results/docker-compose.log
       - uses: actions/upload-artifact@v4
@@ -70,6 +73,8 @@ jobs:
         run: docker compose -f compose.test.yml config --quiet
       - name: Construir aplicação e executor visual
         run: docker compose -f compose.test.yml build app browser
+      - name: Preparar diretórios de saída
+        run: mkdir -p test-results tests/browser/test-results tests/browser/playwright-report
       - name: Subir banco e servidor HTTP
         run: docker compose -f compose.test.yml up -d --wait db app
       - name: Comparar imagens aprovadas no Linux
@@ -77,6 +82,7 @@ jobs:
       - name: Registrar logs Docker em caso de falha
         if: failure()
         run: |
+          sudo chown -R $USER:$USER test-results tests/browser/test-results tests/browser/playwright-report 2>/dev/null || true
           mkdir -p test-results
           docker compose -f compose.test.yml logs --no-color app db > test-results/docker-compose-visual.log
       - uses: actions/upload-artifact@v4

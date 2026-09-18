@@ -334,3 +334,91 @@ test('confirmação offline de A não confirma a retificação B da mesma prova'
     assert.equal(dados.queued, true);
     assert.deepEqual(dados.ranking.map((row) => row.id_usuario), [12, 13, 11]);
 });
+
+test('capture com acao=listar_atletas armazena em atletas e não polui ocorrencias', async () => {
+    const layer = await carregarDataLayer();
+    const ocorrenciasAntes = await layer.read('ocorrencias');
+    await layer.capture('https://sgi.test/api/v1/ocorrencias?acao=listar_atletas&id_jogo=7&id_turma=3', JSON.stringify({
+        success: true,
+        atletas: [
+            { id_usuario: 51, nome_usuario: 'Aluno Um', id_turma: 3 },
+            { id_usuario: 52, nome_usuario: 'Aluno Dois', id_turma: 3 },
+        ],
+    }));
+    const ocorrenciasDepois = await layer.read('ocorrencias');
+    assert.equal(ocorrenciasDepois.length, ocorrenciasAntes.length, 'store ocorrencias não deve receber atletas');
+
+    const atletas = await layer.read('atletas');
+    const cadastrados = atletas.filter((a) => Number(a.id_turma) === 3);
+    assert.deepEqual(cadastrados.map((a) => a.id_usuario).sort(), [51, 52]);
+});
+
+test('localGet para acao=listar_atletas preserva atletas com ocorrencias pendentes e filtra vermelhos e suspensões', async () => {
+    const layer = await carregarDataLayer();
+    await layer.capture('https://sgi.test/api/v1/ocorrencias?acao=listar_atletas&id_jogo=7&id_turma=3', JSON.stringify({
+        success: true,
+        atletas: [
+            { id_usuario: 51, nome_usuario: 'Aluno Amarelo', id_turma: 3 },
+            { id_usuario: 52, nome_usuario: 'Aluno Vermelho', id_turma: 3 },
+            { id_usuario: 53, nome_usuario: 'Aluno Limpo', id_turma: 3 },
+            { id_usuario: 54, nome_usuario: 'Aluno Suspenso', id_turma: 3 },
+        ],
+    }));
+
+    // Registra primeira ocorrência (Amarelo para Aluno 51)
+    await layer.onQueued({
+        id: 301,
+        method: 'POST',
+        url: 'https://sgi.test/api/v1/ocorrencias',
+        body: JSON.stringify({
+            id_jogo: 7,
+            id_turma: 3,
+            usuarios_id_usuario: 51,
+            titulo_ocorrencia: 'Amarelo',
+            descricao_ocorrencia: 'Cartão amarelo no jogo',
+        }),
+    });
+
+    // Registra segunda ocorrência (Vermelho para Aluno 52 no jogo 7)
+    await layer.onQueued({
+        id: 302,
+        method: 'POST',
+        url: 'https://sgi.test/api/v1/ocorrencias',
+        body: JSON.stringify({
+            id_jogo: 7,
+            id_turma: 3,
+            usuarios_id_usuario: 52,
+            titulo_ocorrencia: 'Vermelho',
+            descricao_ocorrencia: '[JOGO:7] Expulsão direta',
+        }),
+    });
+
+    // Registra suspensão para Aluno 54
+    await layer.onQueued({
+        id: 303,
+        method: 'POST',
+        url: 'https://sgi.test/api/v1/ocorrencias',
+        body: JSON.stringify({
+            id_jogo: 7,
+            id_turma: 3,
+            usuarios_id_usuario: 54,
+            titulo_ocorrencia: 'Suspensao',
+            descricao_ocorrencia: 'Suspenso pela comissão',
+        }),
+    });
+
+    // Consulta de listar_atletas para a 2ª/3ª/4ª ocorrência
+    const resp = await layer.localGet('https://sgi.test/api/v1/ocorrencias?acao=listar_atletas&id_jogo=7&id_turma=3');
+    assert.ok(resp, 'resposta deve existir');
+    const data = await resp.json();
+    assert.equal(data.success, true);
+    assert.ok(Array.isArray(data.atletas), 'atletas deve ser um array');
+
+    // Aluno Amarelo (51) e Aluno Limpo (53) devem permanecer disponíveis
+    // Aluno Vermelho (52) e Aluno Suspenso (54) devem ser filtrados
+    const idsDisponiveis = data.atletas.map((a) => a.id_usuario);
+    assert.ok(idsDisponiveis.includes(51), 'aluno com cartão amarelo deve continuar disponível para múltiplas ocorrências');
+    assert.ok(idsDisponiveis.includes(53), 'aluno sem ocorrência deve continuar disponível');
+    assert.ok(!idsDisponiveis.includes(52), 'aluno com cartão vermelho no mesmo jogo deve ser excluído');
+    assert.ok(!idsDisponiveis.includes(54), 'aluno suspenso deve ser excluído');
+});

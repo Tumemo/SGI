@@ -694,6 +694,7 @@
                                     id_partida: p.id_partida != null ? p.id_partida : null,
                                     id_equipe: Number(p.equipes_id_equipe),
                                     gols: Number(p.resultado_partida) || 0,
+                                    id_turma: p.id_turma != null ? Number(p.id_turma) : null,
                                     nome_turma: p.nome_turma || '',
                                     nome_fantasia: p.nome_fantasia_turma || p.nome_fantasia || '',
                                     nome_equipe: p.nome_equipe || ''
@@ -714,6 +715,7 @@
                                     id_partida: p.id_partida != null ? p.id_partida : null,
                                     id_equipe: Number(p.equipes_id_equipe),
                                     gols: Number(p.resultado_partida) || 0,
+                                    id_turma: p.id_turma != null ? Number(p.id_turma) : null,
                                     nome_turma: p.nome_turma || '',
                                     nome_fantasia: p.nome_fantasia_turma || p.nome_fantasia || '',
                                     nome_equipe: p.nome_equipe || ''
@@ -734,6 +736,7 @@
                                     id_partida: p.id_partida != null ? p.id_partida : null,
                                     id_equipe: Number(p.equipes_id_equipe),
                                     gols: Number(p.resultado_partida) || 0,
+                                    id_turma: p.id_turma != null ? Number(p.id_turma) : null,
                                     nome_turma: p.nome_turma || '',
                                     nome_fantasia: p.nome_fantasia_turma || '',
                                     nome_equipe: p.nome_equipe || ''

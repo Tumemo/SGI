@@ -393,6 +393,21 @@ final class MesarioResourceScopeTest
             $schedule->bind_param('i', $gameA);
             $schedule->execute();
             $schedule->close();
+            $blockedScheduleEdit = $mesario->putJson('api/v1/jogos', [
+                'id_jogo' => $gameA,
+                'data_jogo' => '2026-09-25',
+                'inicio_jogo' => '14:00',
+                'termino_jogo' => '15:00',
+                'locais_id_local' => 1,
+            ]);
+            Assertions::assert(
+                'Mesário é proibido de alterar dados cadastrais de agendamento do jogo',
+                $blockedScheduleEdit['code'] === 403
+                && ($blockedScheduleEdit['json']['success'] ?? true) === false
+                && str_contains((string) ($blockedScheduleEdit['json']['message'] ?? ''), 'Mesários'),
+                json_encode($blockedScheduleEdit, JSON_UNESCAPED_UNICODE),
+            );
+
             $started = $mesario->putJson('api/v1/jogos', [
                 'id_jogo' => $gameA,
                 'status_jogo' => 'Iniciado',

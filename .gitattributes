@@ -1,0 +1,19 @@
+# Normalização de quebras de linha
+* text=auto eol=lf
+*.sh text eol=lf
+
+# Scripts executáveis Windows
+*.bat text eol=crlf
+*.cmd text eol=crlf
+*.ps1 text eol=crlf
+
+# Binários
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.pdf binary
+*.woff binary
+*.woff2 binary
+*.ttf binary
