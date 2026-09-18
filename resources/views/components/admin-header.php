@@ -20,12 +20,8 @@ if ($idInterclasseHeader !== false && $idInterclasseHeader !== null) {
 $compacteCabecalho = (bool)($compacteCabecalho ?? false);
 ?>
 <section class="d-md-none position-relative sgi-u-h-120px<?= $compacteCabecalho ? ' sgi-compact-header' : '' ?>" >
-    <?php if ($mostrarVoltar): ?>
-    <a href="<?= htmlspecialchars($urlVoltar) ?>" class="bi bi-arrow-left position-absolute text-white fs-3 text-decoration-none sgi-u-top-20px-left-20px-z-10" ></a>
-    <?php endif; ?>
-    <img src="<?= \App\Shared\Http\Assets::url('images/banner-global.png') ?>" alt="Banner" class="w-100 h-100 object-fit-cover" >
     <?php if (!empty($titulo)): ?>
-    <<?= $tagTituloCompacto ?> class="position-absolute top-50 start-50 translate-middle text-white m-0 fw-bold sgi-mobile-header-title"><?= htmlspecialchars($titulo) ?></<?= $tagTituloCompacto ?>>
+    <<?= $tagTituloCompacto ?> class="position-absolute top-50 start-50 translate-middle text-black m-0 fw-bold sgi-mobile-header-title"><?= htmlspecialchars($titulo) ?></<?= $tagTituloCompacto ?>>
     <?php endif; ?>
 </section>
 <script>
