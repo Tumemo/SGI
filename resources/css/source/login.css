@@ -155,13 +155,24 @@ body > main {
   min-height: 100%;
   overflow: hidden;
   background-image:
-    url("../images/banner-login-desktop.png"),
+    url("../images/banner-login-desktop.png"),  
     url("../images/borda-banner-login-desktop.png");
   background-position: center, center;
   background-repeat: no-repeat;
   background-size: cover, cover;
+  position: relative; 
 }
 
+.login-desktop-media::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(236, 36, 50, 0.75); 
+  pointer-events: none;
+}
 .login-desktop-panel {
   flex: 1 1 42%;
   min-width: 0;
