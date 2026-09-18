@@ -424,7 +424,7 @@ test.describe('E06 — filtros, leitura e ações do chaveamento', () => {
         await expect(vencedor).toContainText(/vencedor(a)?|campe[aã]o|equipe vencedora/i, { timeout: 5_000 });
     });
 
-    test('mostra ações do chaveamento em tablet sem depender de hover', async ({ page }) => {
+    test('mostra ações do chaveamento em tablet sem depender de hover e oculta editar para mesário', async ({ page }) => {
         const tela = await abrirChaveamento(page, 1024);
         await selecionarModalidadeDoChaveamento(page, 'Vôlei adaptado');
         await page.mouse.move(0, 0);
@@ -433,7 +433,34 @@ test.describe('E06 — filtros, leitura e ações do chaveamento', () => {
         await expect(partida).toBeVisible({ timeout: 8_000 });
         const acoes = partida.locator('.bkt-match__actions');
         await expect(acoes).toBeVisible({ timeout: 5_000 });
-        await expect(acoes.locator('button').filter({ hasText: 'Editar' })).toBeVisible({ timeout: 5_000 });
+        await expect(acoes.locator('a, button').filter({ hasText: 'Ver resultado' })).toBeVisible({ timeout: 5_000 });
+        await expect(acoes.locator('button').filter({ hasText: 'Editar' })).toHaveCount(0);
         await expect(acoes).toHaveCSS('opacity', '1', { timeout: 5_000 });
+    });
+
+    test('mesário visualiza apenas o botão Iniciar em jogo agendado e não vê botão de editar', async ({ page }) => {
+        await page.route((url) => url.pathname.endsWith('/api/v1/chaveamentos'), async (route) => {
+            const jogoAgendado = jogoFixture({
+                id: 509,
+                idModalidade: 11,
+                idCategoria: 21,
+                modalidade: 'Vôlei adaptado',
+                categoria: 'Sub-15',
+                equipeA: 'Tubarões do Vôlei',
+                equipeB: 'Falcões do Vôlei',
+                status: 'Agendado',
+                golsA: 0,
+                golsB: 0,
+            });
+            await fulfillJson(route, { success: true, jogos: [jogoAgendado] });
+        });
+        const tela = await abrirChaveamento(page, 1024);
+        await selecionarModalidadeDoChaveamento(page, 'Vôlei adaptado');
+
+        const partida = page.locator(`${tela.bracket} .bkt-match`);
+        await expect(partida).toBeVisible({ timeout: 8_000 });
+        const acoes = partida.locator('.bkt-match__actions');
+        await expect(acoes.locator('a').filter({ hasText: 'Iniciar' })).toBeVisible({ timeout: 5_000 });
+        await expect(acoes.locator('button').filter({ hasText: 'Editar' })).toHaveCount(0);
     });
 });

@@ -5,6 +5,11 @@ window.SGIPage.mount("competicoes/chaveamento", function (pageConfig, pageScope)
     let modalidadesCache = [];
     let jogosCache = [];
     const NIVEL_USUARIO = pageConfig.value3;
+    function podeEditarJogo() {
+        if (typeof pageConfig.podeEditar === 'boolean') return pageConfig.podeEditar;
+        const nivel = Number(NIVEL_USUARIO);
+        return nivel === 0 || nivel === 1;
+    }
 
     function resolverTipoCompeticao(mod) {
         if (!mod) return null;
@@ -697,6 +702,7 @@ window.SGIPage.mount("competicoes/chaveamento", function (pageConfig, pageScope)
     }
 
     function editarJogo(btn) {
+        if (!podeEditarJogo()) return;
         let jogo;
         try {
             jogo = JSON.parse(btn.dataset.jogo);
@@ -736,6 +742,7 @@ window.SGIPage.mount("competicoes/chaveamento", function (pageConfig, pageScope)
     }
 
     function editarJogoBracket(btn) {
+        if (!podeEditarJogo()) return;
         /* Partidas geradas localmente (offline) recebem id negativo temporário:
            ainda não existem no servidor, então não podem ser editadas aqui.
            Elas serão materializadas pelo PHP durante a sincronização. */
@@ -750,7 +757,8 @@ window.SGIPage.mount("competicoes/chaveamento", function (pageConfig, pageScope)
     }
 
     async function salvarEdicaoJogo(e) {
-        e.preventDefault();
+        if (e && e.preventDefault) e.preventDefault();
+        if (!podeEditarJogo()) return false;
         var btn = document.getElementById('btnSalvarJogo');
         var msgEl = document.getElementById('msgEditarJogo');
         msgEl.innerHTML = '';
@@ -891,7 +899,7 @@ window.SGIPage.mount("competicoes/chaveamento", function (pageConfig, pageScope)
         return '+' + s + 's';
     }
 
-    function renderizarLinhaJogo(j, labelsLarguras, compacto = false) {
+    function renderizarLinhaJogo(j, labelsLarguras = {}, compacto = false) {
         let dataJogo = '---';
         if (j.data_jogo) {
             try {
@@ -948,11 +956,12 @@ window.SGIPage.mount("competicoes/chaveamento", function (pageConfig, pageScope)
                     <a href="/jogos/placar?id_jogo=${j.id_jogo}" class="btn btn-sm btn-outline-success d-inline-flex align-items-center justify-content-center" title="Acessar Jogo" aria-label="Acessar Jogo">
                         <i class="bi bi-play-fill"></i>
                     </a>
+                    ${podeEditarJogo() ? `
                     <button class="btn btn-sm btn-outline-secondary d-inline-flex align-items-center justify-content-center" title="Editar Jogo" aria-label="Editar Jogo"
                         data-jogo='${JSON.stringify(j).replace(/'/g, "&#39;")}'
                         onclick="editarJogo(this)">
                         <i class="bi bi-pencil"></i>
-                    </button>
+                    </button>` : ''}
                 </div>
             </td>
         </tr>`;
@@ -1149,19 +1158,25 @@ window.SGIPage.mount("competicoes/chaveamento", function (pageConfig, pageScope)
 
         let actionsHtml = '';
         const actionVisibility = acoesBracketSempreVisiveis() ? ' opacity-100' : '';
+        const podeEditar = podeEditarJogo();
         if (!isBye && !isConcluido && jogo.id_jogo) {
-            actionsHtml += `<div class="bkt-match__actions d-flex gap-1 px-2 pb-2 justify-content-end${actionVisibility}">`;
+            let botoes = '';
             if (jogo.status_jogo === 'Agendado' && jogo.data_jogo && jogo.inicio_jogo && jogo.termino_jogo && jogo.locais_id_local) {
-                actionsHtml += `<a href="/jogos/placar?id_jogo=${jogo.id_jogo}" class="btn btn-sm btn-outline-success d-inline-flex align-items-center gap-1" title="Iniciar Jogo"><i class="bi bi-play-fill"></i>Iniciar</a>`;
+                botoes += `<a href="/jogos/placar?id_jogo=${jogo.id_jogo}" class="btn btn-sm btn-outline-success d-inline-flex align-items-center gap-1" title="Iniciar Jogo"><i class="bi bi-play-fill"></i>Iniciar</a>`;
             }
-            actionsHtml += `<button class="btn btn-sm btn-outline-secondary d-inline-flex align-items-center gap-1" title="Editar Jogo" onclick="editarJogoBracket(this)" data-jogo='${jogoData}'><i class="bi bi-pencil"></i>Editar</button>`;
-            actionsHtml += '</div>';
+            if (podeEditar) {
+                botoes += `<button class="btn btn-sm btn-outline-secondary d-inline-flex align-items-center gap-1" title="Editar Jogo" onclick="editarJogoBracket(this)" data-jogo='${jogoData}'><i class="bi bi-pencil"></i>Editar</button>`;
+            }
+            if (botoes) {
+                actionsHtml += `<div class="bkt-match__actions d-flex gap-1 px-2 pb-2 justify-content-end${actionVisibility}">${botoes}</div>`;
+            }
         }
         if (isConcluido && jogo.id_jogo) {
-            actionsHtml += `<div class="bkt-match__actions d-flex gap-1 px-2 pb-2 justify-content-end${actionVisibility}">`;
-            actionsHtml += `<a href="/jogos/placar?id_jogo=${jogo.id_jogo}" class="btn btn-sm btn-outline-primary d-inline-flex align-items-center gap-1" title="Ver resultado"><i class="bi bi-eye"></i>Ver resultado</a>`;
-            actionsHtml += `<button class="btn btn-sm btn-outline-secondary d-inline-flex align-items-center gap-1" title="Editar Jogo" data-jogo='${JSON.stringify(jogo).replace(/'/g, "&#39;")}' onclick="editarJogoBracket(this)"><i class="bi bi-pencil"></i>Editar</button>`;
-            actionsHtml += '</div>';
+            let botoes = `<a href="/jogos/placar?id_jogo=${jogo.id_jogo}" class="btn btn-sm btn-outline-primary d-inline-flex align-items-center gap-1" title="Ver resultado"><i class="bi bi-eye"></i>Ver resultado</a>`;
+            if (podeEditar) {
+                botoes += `<button class="btn btn-sm btn-outline-secondary d-inline-flex align-items-center gap-1" title="Editar Jogo" data-jogo='${JSON.stringify(jogo).replace(/'/g, "&#39;")}' onclick="editarJogoBracket(this)"><i class="bi bi-pencil"></i>Editar</button>`;
+            }
+            actionsHtml += `<div class="bkt-match__actions d-flex gap-1 px-2 pb-2 justify-content-end${actionVisibility}">${botoes}</div>`;
         }
 
         return `<div class="${cls}" data-jogo-id="${jogo.id_jogo || ''}">
@@ -1331,7 +1346,8 @@ window.SGIPage.mount("competicoes/chaveamento", function (pageConfig, pageScope)
     let _jogoIndividualCache = null;
 
     async function editarJogoIndividual(e) {
-        if (e) e.preventDefault();
+        if (e && e.preventDefault) e.preventDefault();
+        if (!podeEditarJogo()) return;
         if (!_jogoIndividualCache) {
             SGI.alert('Nenhum jogo registrado para esta modalidade.');
             return;
@@ -1344,14 +1360,14 @@ window.SGIPage.mount("competicoes/chaveamento", function (pageConfig, pageScope)
         var selectLocal = document.getElementById('editLocalJogo');
         selectLocal.innerHTML = '<option value="">Carregando...</option>';
 
-        fetch('/api/v1/locais?id_interclasse=' + idInterclasse)
+        fetch('/api/v1/locais?id_interclasse=' + idInterclasse + '&disponivel=1')
             .then(function(r) {
                 return r.json();
             })
             .then(function(data) {
                 if (_editIdJogo !== jogo.id_jogo) return;
                 const locais = data.success && Array.isArray(data.data) ? data.data : [];
-                selectLocal.innerHTML = '<option value="">Selecione um local</option>';
+                selectLocal.innerHTML = '<option value="">A definir</option>';
                 locais.forEach(function(l) {
                     var sel = Number(l.id_local) === Number(jogo.locais_id_local) ? 'selected' : '';
                     selectLocal.innerHTML += '<option value="' + l.id_local + '" ' + sel + '>' + l.nome_local + '</option>';
@@ -1453,7 +1469,7 @@ window.SGIPage.mount("competicoes/chaveamento", function (pageConfig, pageScope)
                     <div class="card border-0 shadow-sm rounded-4 mb-4">
                         <div class="p-4 border-bottom d-flex justify-content-between align-items-center" >
                             <div class="h5 fw-bold text-body mb-0"><i class="bi bi-award-fill text-danger me-2"></i>Ranking Atual</div>
-                            ${jogoIndividual ? `
+                            ${(jogoIndividual && podeEditarJogo()) ? `
                             <div class="dropdown">
                                 <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="dropdown" aria-expanded="false" title="Mais opções">
                                     <i class="bi bi-three-dots-vertical"></i>
@@ -1753,5 +1769,5 @@ window.SGIPage.mount("competicoes/chaveamento", function (pageConfig, pageScope)
     window.SGIPage.ready(function () { if (_currentModalidade) iniciarPolling(); });
     pageScope.listen(window, 'beforeunload', pararPolling);
 
-return {esc, resolverTipoCompeticao, kvs_montarGrupos, kvs_sincronizar, kvs_montar, kvs_focus, resolverInterclasse, atualizarStats, atualizarTimeline, carregarModalidades, carregarCategorias, formatarNomePartida, _popularModalEdicao, editarJogo, editarJogoBracket, salvarEdicaoJogo, formatarDuracaoJogo, formatarAcrescimosJogo, renderizarLinhaJogo, carregarJogos, formatFase, computarLabelsFases, formatFaseFromNome, _badgeFonteLocal, _renderBracketMatch, _detectarCampeao, _renderModernBracket, _drawConnectors, editarJogoIndividual, carregarArvore, iniciarPolling, pararPolling, gerarChaveamento, iniciarChaveamento};
+return {esc, podeEditarJogo, resolverTipoCompeticao, kvs_montarGrupos, kvs_sincronizar, kvs_montar, kvs_focus, resolverInterclasse, atualizarStats, atualizarTimeline, carregarModalidades, carregarCategorias, formatarNomePartida, _popularModalEdicao, editarJogo, editarJogoBracket, salvarEdicaoJogo, formatarDuracaoJogo, formatarAcrescimosJogo, renderizarLinhaJogo, carregarJogos, formatFase, computarLabelsFases, formatFaseFromNome, _badgeFonteLocal, _renderBracketMatch, _detectarCampeao, _renderModernBracket, _drawConnectors, editarJogoIndividual, carregarArvore, iniciarPolling, pararPolling, gerarChaveamento, iniciarChaveamento};
 });
