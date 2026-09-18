@@ -610,7 +610,8 @@ test.describe('Frontend — regressão visual por perfil', () => {
                 }));
                 medidas.administrador.push({ tela, largura, ...registro });
                 if (largura === 1024 && tela === 'modalidades') {
-                    const linkVoltar = page.locator('section.sgi-u-h-120px > a.sgi-u-top-20px-left-20px-z-10');
+                    const linkVoltar = page.locator('section.sgi-u-h-120px > a.sgi-u-top-20px-left-20px-z-10, #btnVoltarModalidades').first();
+                    await expect(linkVoltar).toBeAttached();
                     const destino = new URL(await linkVoltar.getAttribute('href'), page.url());
                     expect(destino.pathname).toMatch(/\/painel$/);
                     expect(destino.searchParams.get('id')).toBe(String(ctx.idInterclasse));

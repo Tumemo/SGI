@@ -47,11 +47,16 @@ window.SGIPage.mount("competicoes/chaveamento", function (pageConfig, pageScope)
     }
 
     function kvs_triggerParaFoco(root) {
+        if (!root) return null;
         const trigger = root.querySelector('.kvs__trigger');
-        if (kvs_triggerVisivel(trigger)) return trigger;
         const wrapPar = root.dataset.peerWrapId ? document.getElementById(root.dataset.peerWrapId) : null;
         const triggerPar = wrapPar?.querySelector('.kvs__trigger');
-        return kvs_triggerVisivel(triggerPar) ? triggerPar : trigger;
+        const compacto = composicaoCompactaAtiva();
+        const rootEhMobile = Boolean(root.closest('.d-md-none, .sgi-chaveamento-mobile'));
+        if (!compacto && rootEhMobile && triggerPar) return triggerPar;
+        if (compacto && !rootEhMobile && triggerPar) return triggerPar;
+        if (kvs_triggerVisivel(trigger)) return trigger;
+        return (triggerPar && kvs_triggerVisivel(triggerPar)) ? triggerPar : (triggerPar || trigger);
     }
 
     function kvs_fechar(root, devolverFoco = false) {
@@ -81,7 +86,59 @@ window.SGIPage.mount("competicoes/chaveamento", function (pageConfig, pageScope)
             const alvoFoco = kvs_triggerParaFoco(root);
             if (alvoFoco) {
                 try { alvoFoco.focus({ preventScroll: true }); } catch (_) { alvoFoco.focus(); }
+                if (typeof window.requestAnimationFrame === 'function') {
+                    window.requestAnimationFrame(() => {
+                        if (document.activeElement !== alvoFoco) {
+                            try { alvoFoco.focus({ preventScroll: true }); } catch (_) { alvoFoco.focus(); }
+                        }
+                    });
+                }
             }
+        }
+    }
+
+    let kvs_ultimoFocoWrap = null;
+
+    pageScope.listen(document, 'focusin', (event) => {
+        const wrap = event.target?.closest?.('.kvs');
+        if (wrap) {
+            kvs_ultimoFocoWrap = wrap;
+        } else if (event.target && event.target !== document.body) {
+            kvs_ultimoFocoWrap = null;
+        }
+    });
+
+    function kvs_sincronizarFocoEntreComposicoes() {
+        if (kvs_instanciaAtiva) {
+            const wrapAtivo = kvs_instanciaAtiva;
+            kvs_fechar(kvs_instanciaAtiva, false);
+            kvs_ultimoFocoWrap = wrapAtivo;
+        }
+        const wrap = kvs_ultimoFocoWrap || document.activeElement?.closest?.('.kvs');
+        if (!wrap) return;
+        const alvo = kvs_triggerParaFoco(wrap);
+        if (alvo && kvs_triggerVisivel(alvo) && document.activeElement !== alvo) {
+            try { alvo.focus({ preventScroll: true }); } catch (_) { alvo.focus(); }
+            kvs_ultimoFocoWrap = alvo.closest('.kvs');
+            if (typeof window.requestAnimationFrame === 'function') {
+                window.requestAnimationFrame(() => {
+                    if (document.activeElement !== alvo) {
+                        try { alvo.focus({ preventScroll: true }); } catch (_) { alvo.focus(); }
+                        kvs_ultimoFocoWrap = alvo.closest('.kvs');
+                    }
+                });
+            }
+        }
+    }
+
+    pageScope.listen(window, 'resize', kvs_sincronizarFocoEntreComposicoes);
+    if (typeof window.matchMedia === 'function') {
+        const mq1200 = window.matchMedia('(min-width: 1200px)');
+        if (typeof mq1200.addEventListener === 'function') {
+            pageScope.listen(mq1200, 'change', kvs_sincronizarFocoEntreComposicoes);
+        } else if (typeof mq1200.addListener === 'function') {
+            mq1200.addListener(kvs_sincronizarFocoEntreComposicoes);
+            pageScope.defer(() => mq1200.removeListener(kvs_sincronizarFocoEntreComposicoes));
         }
     }
 
@@ -407,6 +464,13 @@ window.SGIPage.mount("competicoes/chaveamento", function (pageConfig, pageScope)
                 const alvoFoco = kvs_triggerParaFoco(raizComFoco);
                 if (alvoFoco) {
                     try { alvoFoco.focus({ preventScroll: true }); } catch (_) { alvoFoco.focus(); }
+                    if (typeof window.requestAnimationFrame === 'function') {
+                        window.requestAnimationFrame(() => {
+                            if (document.activeElement !== alvoFoco) {
+                                try { alvoFoco.focus({ preventScroll: true }); } catch (_) { alvoFoco.focus(); }
+                            }
+                        });
+                    }
                 }
             }
         }
