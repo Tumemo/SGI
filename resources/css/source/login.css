@@ -2,254 +2,268 @@
    e controles; este arquivo define a composição da marca e do formulário. */
 
 body {
-    min-height: 100%;
-    background-color: var(--bs-body-bg);
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
+  min-height: 100%;
+  background-color: var(--bs-body-bg);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 body > main {
-    background-color: var(--bs-body-bg);
+  background-color: var(--bs-body-bg);
 }
 
 #msg_erro_mobile,
 #msg_erro_desktop {
-    margin-top: 10px;
-    font-size: 0.9rem;
-    font-weight: 400;
+  margin-top: 10px;
+  font-size: 0.9rem;
+  font-weight: 400;
 }
 
 .login-mobile-layout {
-    min-height: 100svh;
-    justify-content: flex-start;
-    gap: 0;
-    padding: 0.5rem 0.75rem 1rem;
+  min-height: 100svh;
+  justify-content: flex-start;
+  gap: 0;
+  padding: 0.5rem 0.75rem 1rem;
 }
 
 .login-mobile-banner {
-    position: relative;
-    flex: 0 0 auto;
-    width: min(100%, 35svh);
-    max-height: 40svh;
-    aspect-ratio: 412 / 463;
-    overflow: hidden;
-    background-image: url('../images/banner-login.png'), url('../images/borda-banner-login.png');
-    background-position: center, center;
-    background-repeat: no-repeat;
-    background-size: contain, contain;
+  position: relative;
+  flex: 0 0 auto;
+  width: min(100%, 35svh);
+  max-height: 40svh;
+  aspect-ratio: 412 / 463;
+  overflow: hidden;
+  background-image:
+    url("../images/banner-login.png"), url("../images/borda-banner-login.png");
+  background-position: center, center;
+  background-repeat: no-repeat;
+  background-size: contain, contain;
 }
 
 .login-mobile-form {
-    flex: 0 0 auto;
-    width: 100%;
-    max-width: 360px;
-    margin: 0.5rem auto 0;
+  flex: 0 0 auto;
+  width: 100%;
+  max-width: 360px;
+  margin: 0.5rem auto 0;
 }
 
 .login-mobile-title,
 .login-desktop-title {
-    color: var(--bs-danger);
-    font-size: 1.5rem;
-    font-weight: 600;
-    line-height: 1.2;
+  color: var(--bs-danger);
+  font-size: 1.5rem;
+  font-weight: 600;
+  line-height: 1.2;
 }
 
 .login-mobile-title {
-    margin: 0 0 0.75rem;
+  margin: 0 0 0.75rem;
 }
 
 .login-field-label {
-    display: block;
-    margin-bottom: 0.25rem;
-    font-size: 0.875rem;
-    font-weight: 500;
-    line-height: 1.25;
-    text-align: left;
+  display: block;
+  margin-bottom: 0.25rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  line-height: 1.25;
+  text-align: left;
 }
 
 .login-mobile-field {
-    width: 100%;
-    margin-bottom: 0.625rem;
+  width: 100%;
+  margin-bottom: 0.625rem;
 }
 
 .login-mobile-form .form-control {
-    width: 100%;
-    height: 48px;
-    min-height: 48px;
-    padding: 0.5rem 0.75rem;
-    font-size: 1rem;
-    text-align: left;
+  width: 100%;
+  height: 48px;
+  min-height: 48px;
+  padding: 0.5rem 0.75rem;
+  font-size: 1rem;
+  text-align: left;
 }
 
 .login-recovery-button {
-    display: block;
-    min-height: 44px;
-    padding: 0.5rem 0.25rem;
-    border: 0;
-    background: transparent;
-    color: var(--bs-body-color);
-    font-size: 0.875rem;
-    line-height: 1.25;
-    text-decoration: underline;
-    text-underline-offset: 0.15em;
-    cursor: pointer;
+  display: block;
+  min-height: 44px;
+  padding: 0.5rem 0.25rem;
+  border: 0;
+  background: transparent;
+  color: var(--bs-body-color);
+  font-size: 0.875rem;
+  line-height: 1.25;
+  text-decoration: underline;
+  text-underline-offset: 0.15em;
+  cursor: pointer;
 }
 
 .login-mobile-recovery {
-    margin: 0.125rem auto 0.25rem;
+  margin: 0.125rem auto 0.25rem;
 }
 
 .login-recovery-button:focus-visible {
-    border-radius: 0.25rem;
-    outline: 0.2rem solid var(--bs-primary);
-    outline-offset: 0.1rem;
+  border-radius: 0.25rem;
+  outline: 0.2rem solid var(--bs-primary);
+  outline-offset: 0.1rem;
 }
 
 .login-recovery-help {
-    margin: 0 0 0.5rem;
-    padding: 0.625rem 0.75rem;
-    border-left: 3px solid var(--bs-danger);
-    border-radius: 0.25rem;
-    background: var(--bs-tertiary-bg, #f8f9fa);
-    color: var(--bs-body-color);
-    font-size: 0.875rem;
-    line-height: 1.4;
+  margin: 0 0 0.5rem;
+  padding: 0.625rem 0.75rem;
+  border-left: 3px solid var(--bs-danger);
+  border-radius: 0.25rem;
+  background: var(--bs-tertiary-bg, #f8f9fa);
+  color: var(--bs-body-color);
+  font-size: 0.875rem;
+  line-height: 1.4;
 }
 
 .login-mobile-button,
 .login-desktop-button {
-    min-height: 48px;
-    padding: 0.5rem 1rem;
-    font-size: 1rem;
+  min-height: 48px;
+  padding: 0.5rem 1rem;
+  font-size: 1rem;
 }
 
 .login-mobile-button {
-    height: 48px;
-    margin-top: 0.25rem;
+  height: 48px;
+  margin-top: 0.25rem;
 }
 
 .login-mobile-brand {
-    width: 92px;
-    height: 32px;
-    margin: 0.75rem auto 0;
-    overflow: hidden;
+  width: 92px;
+  height: 32px;
+  margin: 0.75rem auto 0;
+  overflow: hidden;
 }
 
 .login-mobile-brand img {
-    display: block;
-    width: auto;
-    max-width: none;
-    height: 32px;
+  display: block;
+  width: auto;
+  max-width: none;
+  height: 32px;
 }
 
 .login-desktop-layout {
-    width: 100%;
-    min-height: 100svh;
-    height: 100svh;
+  width: 100%;
+  min-height: 100svh;
+  height: 100svh;
 }
 
 .login-desktop-media {
-    flex: 0 0 58%;
-    min-width: 0;
-    min-height: 100%;
-    overflow: hidden;
-    background-image: url('../images/banner-login-desktop.png'), url('../images/borda-banner-login-desktop.png');
-    background-position: center, center;
-    background-repeat: no-repeat;
-    background-size: cover, cover;
+  flex: 0 0 58%;
+  min-width: 0;
+  min-height: 100%;
+  overflow: hidden;
+  background-image:
+    url("../images/banner-login-desktop.png"),
+    url("../images/borda-banner-login-desktop.png");
+  background-position: center, center;
+  background-repeat: no-repeat;
+  background-size: cover, cover;
 }
 
 .login-desktop-panel {
-    flex: 1 1 42%;
-    min-width: 0;
+  flex: 1 1 42%;
+  min-width: 0;
 }
 
-.login-desktop-logo { max-width: min(280px, 100%); }
-.login-desktop-form { max-width: 420px; border-radius: 15px; }
-.login-desktop-title { margin: 0 0 1.25rem; }
+.login-desktop-logo {
+  max-width: 220px;
+  height: auto;
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+}
+.login-desktop-form {
+  max-width: 420px;
+  border-radius: 15px;
+}
+.login-desktop-title {
+  margin: 0 0 1.25rem;
+}
 
 .login-desktop-field .login-field-label {
-    width: 100%;
+  width: 100%;
 }
 
 .login-desktop-field .bi {
-    top: auto !important;
-    bottom: 0.9rem;
-    transform: none !important;
+  top: auto !important;
+  bottom: 0.9rem;
+  transform: none !important;
 }
 
 .login-field {
-    min-height: 48px;
-    border-radius: 10px;
-    font-size: 1rem;
+  min-height: 48px;
+  border-radius: 10px;
+  font-size: 1rem;
 }
 
 .login-desktop-recovery {
-    align-self: flex-start;
-    margin: -0.5rem 0 0.25rem;
+  align-self: flex-start;
+  margin: -0.5rem 0 0.25rem;
 }
 
 /* A entrada pública não carrega shared.css. Repita somente a troca de shell
    neste contexto para que 768–1199px continuem usando o layout compacto. */
 @media (min-width: 768px) and (max-width: 1199.98px) {
-    body > main.login-mobile-layout {
-        display: flex !important;
-    }
+  body > main.login-mobile-layout {
+    display: flex !important;
+  }
 
-    body > main.login-desktop-layout {
-        display: none !important;
-    }
+  body > main.login-desktop-layout {
+    display: none !important;
+  }
 }
 
 /* Em paisagem, banner e formulário dividem a altura disponível sem reduzir
    controles ou depender de zoom. O breakpoint funcional segue em 1200px. */
 @media (orientation: landscape) and (max-width: 1199.98px) {
-    .login-mobile-layout {
-        position: relative;
-        flex-direction: row !important;
-        align-items: center;
-        justify-content: center;
-        gap: clamp(0.75rem, 3vw, 2rem);
-        padding: 0.75rem;
-    }
+  .login-mobile-layout {
+    position: relative;
+    flex-direction: row !important;
+    align-items: center;
+    justify-content: center;
+    gap: clamp(0.75rem, 3vw, 2rem);
+    padding: 0.75rem;
+  }
 
-    .login-mobile-banner {
-        flex: 0 1 46vw;
-        width: 46vw;
-        height: calc(100svh - 1.5rem);
-        max-height: calc(100svh - 1.5rem);
-        aspect-ratio: auto;
-    }
+  .login-mobile-banner {
+    flex: 0 1 46vw;
+    width: 46vw;
+    height: calc(100svh - 1.5rem);
+    max-height: calc(100svh - 1.5rem);
+    aspect-ratio: auto;
+  }
 
-    .login-mobile-banner {
-        background-size: cover, cover;
-    }
+  .login-mobile-banner {
+    background-size: cover, cover;
+  }
 
-    .login-mobile-form {
-        flex: 0 1 42vw;
-        width: 42vw !important;
-        max-width: 360px;
-        margin: 0;
-    }
+  .login-mobile-form {
+    flex: 0 1 42vw;
+    width: 42vw !important;
+    max-width: 360px;
+    margin: 0;
+  }
 
-    .login-mobile-title {
-        margin-bottom: 0.5rem;
-        font-size: 1.25rem;
-    }
+  .login-mobile-title {
+    margin-bottom: 0.5rem;
+    font-size: 1.25rem;
+  }
 
-    .login-mobile-field {
-        margin-bottom: 0.375rem;
-    }
+  .login-mobile-field {
+    margin-bottom: 0.375rem;
+  }
 
-    .login-mobile-recovery {
-        margin: 0 0 0.125rem;
-    }
+  .login-mobile-recovery {
+    margin: 0 0 0.125rem;
+  }
 
-    .login-mobile-button {
-        margin-top: 0.125rem;
-    }
+  .login-mobile-button {
+    margin-top: 0.125rem;
+  }
 
-    .login-mobile-brand {
-        margin-top: 0.375rem;
-    }
+  .login-mobile-brand {
+    margin-top: 0.375rem;
+  }
 }
