@@ -982,6 +982,8 @@ window.SGIPage.mount("competicoes/placar", function (pageConfig, pageScope) {
             document.getElementById('placar-conteudo').classList.remove('d-none');
             renderTudo();
             if (!ehIndividual) iniciarArtilheiro(ciclo);
+            iniciarOcorrencias(ciclo);
+            acompanharSincronizacaoPlacar();
             return true;
         } catch (e) {
             return false;
@@ -1596,8 +1598,12 @@ window.SGIPage.mount("competicoes/placar", function (pageConfig, pageScope) {
         if (!select || !select.isConnected) return;
         select.innerHTML = '<option value="">Selecione a turma</option>';
         var vistas = {};
-        partidasLista.forEach(function(p) {
-            var idTurma = parseInt(p.id_turma, 10);
+        (partidasLista || []).forEach(function(p) {
+            var idTurma = parseInt(p.id_turma || p.turmas_id_turma, 10);
+            if (!idTurma && p.equipes_id_equipe && equipesCache[p.equipes_id_equipe]) {
+                var eq = equipesCache[p.equipes_id_equipe];
+                idTurma = parseInt(eq.id_turma || eq.turmas_id_turma, 10);
+            }
             if (!idTurma) return;
             var nome = esc(nomeEquipe(p));
             if (!vistas[idTurma]) {
@@ -1727,6 +1733,7 @@ window.SGIPage.mount("competicoes/placar", function (pageConfig, pageScope) {
         document.querySelectorAll('.ocorrencia-tipo-option').forEach(function(el) {
             el.classList.remove('active');
         });
+        carregarTurmasOcorrencia();
         var selAluno = document.getElementById('selectAlunoOcorrencia');
         selAluno.disabled = true;
         selAluno.innerHTML = '<option value="">Selecione uma turma primeiro</option>';
