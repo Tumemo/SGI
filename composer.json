@@ -30,7 +30,7 @@
         "test:unit": "phpunit --configuration phpunit.xml --testsuite unit",
         "lint": "@php tools/lint.php",
         "cs:check": "php-cs-fixer fix --dry-run --diff --allow-risky=yes",
-        "analyse": "phpstan analyse --configuration=phpstan.neon",
+        "analyse": "phpstan analyse --configuration=phpstan.neon --memory-limit=512M",
         "test:integration": "@php tools/run-database-tests.php",
         "assets": "npm run build",
         "test:javascript": "npm test",

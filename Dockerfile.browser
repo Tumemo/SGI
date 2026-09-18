@@ -15,7 +15,8 @@ COPY . .
 RUN npm run build
 
 COPY tools/docker-test-entrypoint.sh /usr/local/bin/docker-test-entrypoint
-RUN chmod +x /usr/local/bin/docker-test-entrypoint \
+RUN sed -i 's/\r$//' /usr/local/bin/docker-test-entrypoint \
+    && chmod +x /usr/local/bin/docker-test-entrypoint \
     && mkdir -p \
         /app/test-results \
         /app/tests/browser/test-results \
