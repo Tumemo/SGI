@@ -216,6 +216,16 @@ test('team actions use native Bootstrap button variants', () => {
     assert.doesNotMatch(adminCss, /\.btn-filter-cat\s*\{/);
 });
 
+test('clicking a classroom row opens the teams for that classroom', () => {
+    const script = fs.readFileSync(
+        path.join(root, 'resources', 'js', 'pages', 'eventos', 'configurar-equipes.js'),
+        'utf8'
+    );
+    assert.match(script, /data-turma-card data-mod=/);
+    assert.match(script, /e\.target\.closest\('\[data-turma-card\]'\)/);
+    assert.match(script, /abrirEquipes\(turmaCard\.closest\('\.aluno-card'\), turmaCard\.dataset\.mod, turmaCard\.dataset\.turma\)/);
+});
+
 test('team and roster views use Bootstrap layout and component utilities', () => {
     const adminCss = fs.readFileSync(path.join(root, 'resources', 'css', 'source', 'admin.css'), 'utf8');
     const sharedCss = fs.readFileSync(path.join(root, 'resources', 'css', 'source', 'aluno-shared.css'), 'utf8');

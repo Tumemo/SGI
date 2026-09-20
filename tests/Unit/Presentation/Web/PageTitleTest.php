@@ -17,7 +17,7 @@ final class PageTitleTest extends TestCase
         ob_start();
         try {
             include $this->path('resources/views/components/page-title.php');
-            $render = trim((string) ob_get_contents());
+            $render = str_replace("\r\n", "\n", trim((string) ob_get_contents()));
         } finally {
             ob_end_clean();
             if ($requestUriAnterior === null) {

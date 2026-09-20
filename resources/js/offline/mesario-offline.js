@@ -1132,8 +1132,10 @@
         '#' + PROGRESSO_ID + ' .sp-bar>div{height:100%;width:0%;background:linear-gradient(90deg,#16a34a,#22c55e);' +
         'border-radius:999px;transition:width .25s;}' +
         '#' + BADGE_ID + '{position:fixed;top:58px;right:14px;z-index:3000;background:#ecfdf5;color:#065f46;' +
-        'border:1px solid #a7f3d0;border-radius:999px;padding:8px 14px;font-size:.78rem;font-weight:600;' +
-        'box-shadow:0 6px 18px rgba(6,95,70,.18);cursor:pointer;display:none;align-items:center;gap:6px;}' +
+        'border:1px solid #a7f3d0;border-radius:50%;width:38px;height:38px;padding:0;' +
+        'box-shadow:0 4px 12px rgba(6,95,70,.18);cursor:pointer;display:none;align-items:center;justify-content:center;' +
+        'font-size:1.2rem;transition:transform .15s ease,box-shadow .15s ease;}' +
+        '#' + BADGE_ID + ':hover{transform:scale(1.06);box-shadow:0 6px 16px rgba(6,95,70,.25);}' +
         '#sgi-aviso{position:fixed;left:50%;bottom:90px;transform:translateX(-50%);z-index:3100;background:#111827;' +
         'color:#fff;border-radius:999px;padding:10px 16px;font-size:.82rem;box-shadow:0 8px 24px rgba(0,0,0,.3);' +
         'opacity:0;transition:opacity .25s;pointer-events:none;white-space:nowrap;max-width:92vw;overflow:hidden;' +
@@ -1157,11 +1159,13 @@
         if (!document.getElementById(BADGE_ID)) {
             var b = document.createElement('div');
             b.id = BADGE_ID;
-            b.title = 'Os dados foram preparados nesta aba; atualizar a página ou abrir outra aba sem conexão não é compatível.';
+            b.title = 'Pronto para uso offline nesta aba preparada (clique para sincronizar)';
             b.setAttribute('role', 'status');
+            b.setAttribute('aria-label', 'Pronto para uso offline nesta aba preparada');
             b.setAttribute('aria-live', 'polite');
             b.setAttribute('aria-atomic', 'true');
-            b.innerHTML = '<i class="bi bi-check2-circle" aria-hidden="true"></i> Pronto para uso offline nesta aba preparada';
+            b.innerHTML = '<i class="bi bi-cloud-check-fill" aria-hidden="true"></i>' +
+                '<span class="visually-hidden">Pronto para uso offline nesta aba preparada</span>';
             b.addEventListener('click', function () {
                 if (state.preloading) return;
                 preload();

@@ -12,6 +12,7 @@
     // Namespace opaco por usuário; não usar o ID persistente diretamente.
     var session = String(window.SGI_CACHE_KEY || 'anon');
     var dbPromise;
+    var baseFetch = typeof window !== 'undefined' && typeof window.fetch === 'function' ? window.fetch.bind(window) : null;
 
     function open() {
         if (dbPromise) return dbPromise;
@@ -91,18 +92,27 @@
         // o nome da quadra/local no placar.
         var action = info.q && info.q.get('acao');
         var rows = Array.isArray(data) ? data : (data && (data.dados || data.data || data.ranking || data.participantes || data.atletas || data.pontos));
-        var store = file === 'pontos' && action === 'atletas'
+        var isAtletasOcorrencias = file === 'ocorrencias' && action === 'listar_atletas';
+        var isAtletasPontos = file === 'pontos' && action === 'atletas';
+        var store = (isAtletasPontos || isAtletasOcorrencias)
             ? 'atletas'
             : ({ 'jogos': 'jogos', 'partidas': 'partidas', 'turmas': 'turmas', 'modalidades': 'modalidades', 'categorias': 'categorias', 'locais': 'locais', 'equipes': 'equipes', 'artilheiros': 'atletas', 'pontos': 'pontos', 'ocorrencias': 'ocorrencias', 'ocorrencias_turmas': 'ocorrencias_turmas', 'chaveamentos': 'chaveamentos' }[file]);
         if (!store) return Promise.resolve();
         if (!Array.isArray(rows)) rows = [data];
         return Promise.all(rows.filter(function (r) { return r && typeof r === 'object'; }).map(function (r, i) {
-            var identity = file === 'pontos' && action === 'atletas'
+            var identity;
+            if (isAtletasPontos) {
                 // O mesmo aluno pode estar em equipes diferentes da mesma
                 // modalidade/turma. O elenco offline precisa preservar cada
                 // vínculo para não deixar uma equipe sobrescrever a outra.
-                ? ((r.equipes_id_equipe || info.q.get('id_equipe') || 'equipe') + '|' + (r.id_usuario || url + '#' + i))
-                : idFor(file, r, url + '#' + i);
+                identity = ((r.equipes_id_equipe || info.q.get('id_equipe') || 'equipe') + '|' + (r.id_usuario || url + '#' + i));
+            } else if (isAtletasOcorrencias) {
+                var turmaId = r.id_turma || r.turmas_id_turma || info.q.get('id_turma') || 'turma';
+                r = Object.assign({}, r, { id_turma: Number(turmaId) || turmaId });
+                identity = turmaId + '|' + (r.id_usuario || url + '#' + i);
+            } else {
+                identity = idFor(file, r, url + '#' + i);
+            }
             if (file === 'chaveamentos' && action) {
                 r = Object.assign({}, r, {
                     _sgi_chaveamento_url: url,
@@ -466,6 +476,48 @@
             });
         }
         if (file === 'chaveamentos' && info.q.get('acao')) return Promise.resolve(null);
+        if (file === 'ocorrencias' && info.q.get('acao') === 'listar_atletas') {
+            var idTurmaAlvo = info.q.get('id_turma');
+            var idJogoAtual = Number(info.q.get('id_jogo') || 0);
+            return Promise.all([
+                all('atletas'),
+                all('ocorrencias'),
+                typeof baseFetch === 'function' ? baseFetch(url).then(function (r) { return r && r.ok ? r.json() : null; }).catch(function () { return null; }) : Promise.resolve(null)
+            ]).then(function (res) {
+                var atletasStore = res[0] || [];
+                var ocorrencias = res[1] || [];
+                var baseJson = res[2];
+                var listaBase = (baseJson && Array.isArray(baseJson.atletas))
+                    ? baseJson.atletas
+                    : atletasStore.filter(function (a) { return String(a.id_turma || a.turmas_id_turma || '') === String(idTurmaAlvo); });
+
+                var suspensosOuVermelhos = {};
+                ocorrencias.forEach(function (o) {
+                    if (!o || o.status_ocorrencia === '0') return;
+                    var idUsuario = Number(o.usuarios_id_usuario || o.id_usuario);
+                    if (!idUsuario) return;
+                    var tit = String(o.titulo_ocorrencia || '').toLowerCase();
+                    if (tit.indexOf('suspens') > -1) {
+                        suspensosOuVermelhos[idUsuario] = true;
+                    } else if (tit === 'vermelho') {
+                        var jId = Number(o.jogos_id_jogo || o.id_jogo || 0);
+                        var desc = String(o.descricao_ocorrencia || '');
+                        var naPartida = (jId && jId === idJogoAtual) || (idJogoAtual && desc.indexOf('[JOGO:' + idJogoAtual + ']') > -1);
+                        if (naPartida) suspensosOuVermelhos[idUsuario] = true;
+                    }
+                });
+
+                var atletasValidos = listaBase.filter(function (a) {
+                    return !suspensosOuVermelhos[Number(a.id_usuario)];
+                });
+
+                return new Response(JSON.stringify({ success: true, atletas: atletasValidos }), {
+                    status: 200,
+                    headers: { 'Content-Type': 'application/json' }
+                });
+            });
+        }
+        if (file === 'ocorrencias' && info.q.get('acao')) return Promise.resolve(null);
         return all(file === 'pontos' && info.q.get('acao') === 'atletas' ? 'atletas' : store).then(function (rows) {
             if (file === 'pontos' && info.q.get('acao') === 'atletas') {
                 var teamId = info.q.get('id_equipe');
@@ -520,6 +572,10 @@
             if (arquivo !== 'pontos') return false;
         } else if (info.file === 'ocorrencias') {
             if (arquivo !== 'ocorrencias') return false;
+            if (info.q && info.q.get('acao') === 'listar_atletas') {
+                var tit = String(dados.titulo_ocorrencia || '').toLowerCase();
+                return tit === 'vermelho' || tit.indexOf('suspens') > -1;
+            }
         } else if (info.file === 'ocorrencias_turmas') {
             if (arquivo !== 'ocorrencias_turmas') return false;
         } else if (info.file === 'chaveamentos') {
@@ -596,7 +652,9 @@
 
     // A UI existente continua usando fetch; esta ponte faz as leituras offline
     // virem das tabelas locais e espelha cada GET online nelas.
-    var baseFetch = window.fetch && window.fetch.bind(window);
+    if (!baseFetch && typeof window !== 'undefined' && typeof window.fetch === 'function') {
+        baseFetch = window.fetch.bind(window);
+    }
     if (baseFetch) window.fetch = function (input, init) {
         var url = typeof input === 'string' ? input : input.url;
         var method = String((init && init.method) || (input && input.method) || 'GET').toUpperCase();

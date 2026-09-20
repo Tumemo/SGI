@@ -10,7 +10,7 @@ $paginaAtiva = 'dashboard';
 <main class="main-desktop-layout">
 
     <div class="d-flex align-items-center justify-content-between gap-3 flex-wrap mb-4 sgi-config-modalities-toolbar">
-            <a href="<?= \App\Shared\Http\Url::to('painel') ?>" id="btnVoltarModalidades" class="btn btn-primary d-inline-flex align-items-center gap-2 fw-bold px-3 py-2 border-0 text-decoration-none sgi-event-back-link" >
+            <a href="<?= htmlspecialchars($urlVoltar) ?>" id="btnVoltarModalidades" class="btn btn-primary d-inline-flex align-items-center gap-2 fw-bold px-3 py-2 border-0 text-decoration-none sgi-event-back-link" >
                 <i class="bi bi-arrow-left-circle fs-5"></i> <span id="nomeInterclasseModalidades">Interclasse</span>
             </a>
         <div class="d-flex align-items-center gap-2 flex-wrap sgi-config-modalities-actions">

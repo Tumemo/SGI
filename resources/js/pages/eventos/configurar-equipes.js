@@ -88,7 +88,7 @@ window.SGIPage.mount("eventos/configurar-equipes", function (pageConfig, pageSco
                 const eqsTurma = equipesPorTurma[idTurma] || [];
                 const qtd = eqsTurma.length;
                 const temExcedida = eqsTurma.some(eq => infoEquipe(eq).excedeu);
-                return `<div class="d-flex align-items-center justify-content-between gap-3 p-3 mb-2 border rounded-3 bg-body">
+                return `<div class="turma-equipe-item d-flex align-items-center justify-content-between gap-3 p-3 mb-2 border rounded-3 bg-body" data-turma-card data-mod="${m.id_modalidade}" data-turma="${idTurma}">
                         <div>
                             <div class="fw-semibold">${esc(t.nome_turma)}</div>
                             <div class="small text-secondary d-inline-flex align-items-center gap-1 fw-semibold"><i class="bi bi-people-fill"></i>${qtd} equipe${qtd === 1 ? '' : 's'}${temExcedida ? '<i class="fas fa-exclamation-triangle text-danger small" title="Esta turma possui equipe com alunos acima do limite"></i>' : ''}</div>
@@ -202,6 +202,11 @@ window.SGIPage.mount("eventos/configurar-equipes", function (pageConfig, pageSco
         const btnEquipes = e.target.closest('.ver-equipes-btn');
         if (btnEquipes) {
             abrirEquipes(btnEquipes.closest('.aluno-card'), btnEquipes.dataset.mod, btnEquipes.dataset.turma);
+            return;
+        }
+        const turmaCard = e.target.closest('[data-turma-card]');
+        if (turmaCard) {
+            abrirEquipes(turmaCard.closest('.aluno-card'), turmaCard.dataset.mod, turmaCard.dataset.turma);
             return;
         }
         const btnVoltar = e.target.closest('.voltar-btn');
