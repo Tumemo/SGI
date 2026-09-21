@@ -1,6 +1,7 @@
 <?php
 $titulo = 'Placar';
 $mostrarVoltar = true;
+$mostrarVoltarHeader = false;
 $compacteCabecalho = true;
 $urlVoltar = \App\Shared\Http\Url::to('painel');
 
@@ -12,19 +13,20 @@ $paginaAtiva = 'dashboard';
 <main class="main-desktop-layout sgi-placar">
     <div class="container-xxl py-4 px-3 px-md-4">
 
-        <div class="sgi-placar-header d-flex align-items-start justify-content-between gap-3 mb-4 flex-wrap">
-            <div class="d-flex flex-column gap-1 flex-grow-1">
-                <a href="<?= \App\Shared\Http\Url::to('edicoes/agenda') ?>" id="btnVoltarPlacar" class="btn btn-primary d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none" >
-                    <i class="bi bi-arrow-left-circle fs-5" aria-hidden="true"></i> <span>Voltar</span>
-                </a>
-                <h1 id="placar-titulo-jogo" class="h3 fw-bold lh-sm mb-0">Placar</h1>
-                <span id="placar-meta" class="small text-body-secondary"></span>
-            </div>
-            <div class="d-flex flex-column align-items-end gap-1 text-end flex-shrink-0">
+        <?php
+        $headerClasse = 'sgi-placar-header';
+        $headerClasseTitulo = 'd-md-block';
+        $headerUrlVoltar = \App\Shared\Http\Url::to('edicoes/agenda');
+        $headerIdVoltar = 'btnVoltarPlacar';
+        $headerCorpoHtml = '<h1 id="placar-titulo-jogo" class="h3 fw-bold lh-sm mb-0">Placar</h1>
+        <span id="placar-meta" class="small text-body-secondary"></span>';
+        $headerAcoesHtml = '<div class="d-flex flex-column align-items-end gap-1 text-end">
                 <div id="mc-status-badge"></div>
                 <span id="mc-sync-status" class="small fw-semibold text-warning-emphasis" role="status" aria-live="polite" aria-atomic="true" hidden></span>
-            </div>
-        </div>
+            </div>';
+        include SGI_ROOT . '/resources/views/components/page-header.php';
+        unset($headerMostrarVoltar, $headerCorpoHtml, $headerAcoesHtml, $headerClasse, $headerClasseTitulo, $headerUrlVoltar, $headerIdVoltar, $headerClassBotao, $headerHiddenBotao);
+        ?>
 
         <div id="placar-erro" class="alert alert-danger d-none mb-3" role="alert"></div>
         <div id="placar-status-announcer" class="visually-hidden" role="status" aria-live="polite" aria-atomic="true"></div>

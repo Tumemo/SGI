@@ -10,7 +10,6 @@ $nivelUsuarioAgenda = (int)($_SESSION['nivel'] ?? -1);
 
 <!-- ═══ MOBILE ═══ -->
 <main class="d-md-none ag-mobile sgi-agenda-mobile sgi-u-min-width-0 p-3">
-    <h1 class="h4 fw-bold text-body mb-3">Agenda de Jogos</h1>
     <div class="card overflow-hidden">
         <div class="bg-primary text-white d-flex align-items-center justify-content-between p-3">
             <button type="button" id="btn-prev-mobile" class="btn btn-sm btn-link link-light p-1" aria-label="Mês anterior"><i class="bi bi-chevron-left" aria-hidden="true"></i></button>
@@ -88,18 +87,16 @@ $nivelUsuarioAgenda = (int)($_SESSION['nivel'] ?? -1);
 <main class="d-none d-md-block main-desktop-layout sgi-agenda-desktop pb-5">
     <div>
 
-        <div class="d-flex align-items-center gap-3 flex-wrap mb-4">
-            <a href="<?= \App\Shared\Http\Url::to('painel') ?>" id="btnVoltarAgendaDesk" class="btn btn-primary d-inline-flex align-items-center gap-2 fw-bold px-3 py-2 text-decoration-none">
-                <i class="bi bi-arrow-left-circle fs-5"></i> <span id="nomeInterclasseAgenda">Interclasse</span>
-            </a>
-            <div class="flex-grow-1">
-                <h1 class="h4 fw-bold text-body mb-0 d-flex align-items-center gap-2"><i class="bi bi-calendar3 text-danger"></i> Agenda de Jogos</h1>
-                <p class="small text-body-secondary mt-1 mb-0">Calendário de confrontos e partidas do Interclasse</p>
-            </div>
-            <span class="badge rounded-pill text-bg-danger d-inline-flex align-items-center gap-2 ms-auto d-none" id="agenda-count-badge" >
-                <i class="bi bi-fire"></i> <span id="agenda-count-text">0 jogos</span>
-            </span>
-        </div>
+        <?php
+        $headerIdVoltar = 'btnVoltarAgendaDesk';
+        $headerCorpoHtml = '<h1 class="h4 fw-bold text-body mb-0 d-flex align-items-center gap-2"><i class="bi bi-calendar3 text-danger"></i> Agenda de Jogos</h1>
+        <p class="small text-body-secondary mt-1 mb-0">Calendário de confrontos e partidas do Interclasse</p>';
+        $headerAcoesHtml = '<span class="badge rounded-pill text-bg-danger d-inline-flex align-items-center gap-2 d-none" id="agenda-count-badge">
+            <i class="bi bi-fire"></i> <span id="agenda-count-text">0 jogos</span>
+        </span>';
+        include SGI_ROOT . '/resources/views/components/page-header.php';
+        unset($headerIdVoltar, $headerCorpoHtml, $headerAcoesHtml);
+        ?>
 
         <div class="d-flex gap-2 align-items-center flex-wrap mb-4">
             <div class="input-group input-group-sm flex-grow-1">
@@ -262,10 +259,10 @@ $nivelUsuarioAgenda = (int)($_SESSION['nivel'] ?? -1);
                     <button type="button" class="btn btn-outline-danger btn-sm mt-2" id="seq-adicionar-dia"><i class="bi bi-calendar-plus me-1"></i>Adicionar dia e recalcular</button>
                 </div>
             </div>
-            <div class="modal-footer">
+            <div class="modal-footer sgi-modal-footer-fit">
                 <button type="button" class="btn btn-outline-secondary rounded-3 fw-semibold small" data-bs-dismiss="modal" >Cancelar</button>
-                <button type="button" class="btn btn-outline-danger rounded-3 fw-semibold small" id="seq-simular-btn"><i class="bi bi-eye me-1"></i>Calcular prévia</button>
-                <button type="button" class="btn btn-primary rounded-3 fw-semibold small" id="seq-salvar-btn" disabled><i class="bi bi-check-lg me-1"></i>Confirmar agenda</button>
+                <button type="button" class="btn btn-outline-danger rounded-3 fw-semibold small" id="seq-simular-btn"><i class="bi bi-eye me-1"></i><span class="d-none d-sm-inline">Calcular prévia</span><span class="d-sm-none">Prévia</span></button>
+                <button type="button" class="btn btn-primary rounded-3 fw-semibold small" id="seq-salvar-btn" disabled><i class="bi bi-check-lg me-1"></i><span class="d-none d-sm-inline">Confirmar agenda</span><span class="d-sm-none">Confirmar</span></button>
             </div>
         </div>
     </div>

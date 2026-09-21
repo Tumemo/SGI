@@ -61,25 +61,29 @@ window.SGIPage.mount("eventos/configurar-arrecadacao", function (pageConfig, pag
         const nomeAttr = escAttr(nomeTurma);
         const inputId = `arrecadacao-${Number(turma.id_turma)}-${variante}`;
         return `
-            <div class="col"><article class="card h-100 border-0 shadow-sm p-3 d-flex flex-row align-items-center gap-3">
-                <div class="bg-danger-subtle text-danger rounded-circle p-2 fs-5 d-flex align-items-center justify-content-center flex-shrink-0"><i class="bi bi-people-fill" aria-hidden="true"></i></div>
-                <div class="flex-grow-1 sgi-u-min-width-0">
-                    <h2 class="h6 mb-1 fw-semibold text-truncate">${nome}</h2>
-                    <span class="badge text-bg-light">${esc(turma.nome_categoria || 'Geral')}</span>
+            <div class="col"><article class="card h-100 border-0 shadow-sm sgi-turma-card p-3">
+                <div class="sgi-turma-card-header">
+                    <div class="bg-danger-subtle text-danger rounded-circle p-2 fs-5 d-flex align-items-center justify-content-center flex-shrink-0"><i class="bi bi-people-fill" aria-hidden="true"></i></div>
+                    <div class="sgi-turma-card-title">
+                        <h2 class="h6 mb-1 fw-semibold">${nome}</h2>
+                        <span class="badge text-bg-light">${esc(turma.nome_categoria || 'Geral')}</span>
+                    </div>
                 </div>
-                <div class="input-group input-group-sm w-auto">
-                    <label class="visually-hidden" for="${inputId}">Quantidade arrecadada em quilogramas para ${nome}</label>
-                    <input type="number" id="${inputId}" step="0.1" min="0" class="form-control text-center fw-semibold arrec-input"
-                        data-id-turma="${turma.id_turma}"
-                        value="${getQuantidadePendente(turma)}" placeholder="0">
-                    <span class="input-group-text">Kg</span>
+                <div class="sgi-turma-card-actions">
+                    <div class="input-group input-group-sm w-auto">
+                        <label class="visually-hidden" for="${inputId}">Quantidade arrecadada em quilogramas para ${nome}</label>
+                        <input type="number" id="${inputId}" step="0.1" min="0" class="form-control text-center fw-semibold arrec-input"
+                            data-id-turma="${turma.id_turma}"
+                            value="${getQuantidadePendente(turma)}" placeholder="0">
+                        <span class="input-group-text">Kg</span>
+                    </div>
+                    <button type="button" class="btn btn-outline-secondary btn-sm" data-sgi-action="history-arrecadacao" data-id-turma="${turma.id_turma}" data-nome-turma="${nomeAttr}" title="Ver histórico" aria-label="Ver histórico de arrecadações de ${nomeAttr}">
+                        <i class="bi bi-clock-history" aria-hidden="true"></i>
+                    </button>
+                    <button type="button" class="btn btn-outline-success btn-sm" data-sgi-action="save-arrecadacao" data-id-turma="${turma.id_turma}" title="Salvar" aria-label="Salvar arrecadação de ${nomeAttr}">
+                        <i class="bi bi-check-lg" aria-hidden="true"></i>
+                    </button>
                 </div>
-                <button type="button" class="btn btn-outline-secondary btn-sm" data-sgi-action="history-arrecadacao" data-id-turma="${turma.id_turma}" data-nome-turma="${nomeAttr}" title="Ver histórico" aria-label="Ver histórico de arrecadações de ${nomeAttr}">
-                    <i class="bi bi-clock-history" aria-hidden="true"></i>
-                </button>
-                <button type="button" class="btn btn-outline-success btn-sm" data-sgi-action="save-arrecadacao" data-id-turma="${turma.id_turma}" title="Salvar" aria-label="Salvar arrecadação de ${nomeAttr}">
-                    <i class="bi bi-check-lg" aria-hidden="true"></i>
-                </button>
             </article></div>
         `;
     }
@@ -193,7 +197,8 @@ window.SGIPage.mount("eventos/configurar-arrecadacao", function (pageConfig, pag
 
             idInterclasseResolvida = ativo.id_interclasse;
 
-            document.getElementById('nomeInterclasseArrecadacao').innerText = ativo.nome_interclasse;
+            const nomeDesk = document.getElementById('nomeInterclasseArrecadacao');
+            if (nomeDesk) nomeDesk.innerText = ativo.nome_interclasse;
             const nomeMob = document.getElementById('nomeInterclasseArrecadacaoMob');
             if (nomeMob) nomeMob.innerText = ativo.nome_interclasse;
             const vDesk = document.getElementById('btnVoltarArrecadacao');

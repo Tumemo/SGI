@@ -519,10 +519,11 @@ test.describe('Frontend — regressão visual por perfil', () => {
                     sidebarRight: navRect.right,
                     mainLeft: mainRect.left,
                     mainWidth: mainRect.width,
-                    visibleLabels: [...nav.querySelectorAll('.sgi-sidebar-label')].every((label) => {
+                    hiddenLabels: [...nav.querySelectorAll('.sgi-sidebar-label')].every((label) => {
                         const style = getComputedStyle(label);
-                        return style.display !== 'none' && style.visibility !== 'hidden' && label.getBoundingClientRect().width > 0;
+                        return style.display === 'none' || style.visibility === 'hidden' || label.getBoundingClientRect().width === 0;
                     }),
+                    visibleIconCount: nav.querySelectorAll('.sgi-sidebar-link > .bi, .sgi-sidebar-link > .nav-avatar-img, .sgi-sidebar-link > .nav-avatar-fallback').length,
                     minimumLinkContrast: Math.min(...[...nav.querySelectorAll('a[href]')].map((link) => {
                         const linkStyle = getComputedStyle(link);
                         const colorChannels = (value) => (value.match(/[\d.]+/g) || []).slice(0, 3).map(Number);
@@ -544,7 +545,8 @@ test.describe('Frontend — regressão visual por perfil', () => {
             medidas.aluno.push({ tela, largura: 1440, ...registro });
             expect(registro.sidebarBackground).not.toBe('rgba(0, 0, 0, 0)');
             expect(registro.mainLeft).toBeGreaterThanOrEqual(registro.sidebarRight - 1);
-            expect(registro.visibleLabels).toBe(true);
+            expect(registro.hiddenLabels).toBe(true);
+            expect(registro.visibleIconCount).toBeGreaterThan(0);
             expect(registro.minimumLinkContrast).toBeGreaterThanOrEqual(4.5);
             await testInfo.attach(`e01-aluno-${tela}-1440.png`, {
                 body: await page.screenshot({ fullPage: true }),
@@ -610,7 +612,8 @@ test.describe('Frontend — regressão visual por perfil', () => {
                 }));
                 medidas.administrador.push({ tela, largura, ...registro });
                 if (largura === 1024 && tela === 'modalidades') {
-                    const linkVoltar = page.locator('section.sgi-u-h-120px > a.sgi-u-top-20px-left-20px-z-10');
+                    const linkVoltar = page.locator('section.sgi-u-h-120px > a.sgi-u-top-20px-left-20px-z-10, #btnVoltarModalidades').first();
+                    await expect(linkVoltar).toBeAttached();
                     const destino = new URL(await linkVoltar.getAttribute('href'), page.url());
                     expect(destino.pathname).toMatch(/\/painel$/);
                     expect(destino.searchParams.get('id')).toBe(String(ctx.idInterclasse));

@@ -11,14 +11,15 @@ $isAdmin = $nivelUsuario === 0;
 
 <main class="main-desktop-layout">
     <div class="container-fluid px-0">
-        <a href="#" id="btnVoltarDashboardDesktop" class="btn btn-primary d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none" >
-            <i class="bi bi-arrow-left-circle fs-5"></i> <span id="nomeInterModalidadeDet">Interclasse</span>
-        </a>
-        <div class="mb-4">
-            <h1 class="h2 text-body-secondary fw-bold">Detalhes da modalidade</h1>
-            <h2 class="fs-2 fw-bold text-body mb-2" id="nomeModalidadeHeadDesktop">Modalidade</h2>
-            <p class="small text-body-secondary mb-0"><i class="bi bi-info-circle text-primary me-1"></i> Informações da modalidade</p>
-        </div>
+        <?php
+        $headerIdVoltar = 'btnVoltarDashboardDesktop';
+        $headerClassBotao = 'd-none d-md-inline-flex';
+        $headerCorpoHtml = '<h1 class="h2 text-body-secondary fw-bold">Detalhes da modalidade</h1>
+        <h2 class="fs-2 fw-bold text-body mb-2" id="nomeModalidadeHeadDesktop">Modalidade</h2>
+        <p class="small text-body-secondary mb-0"><i class="bi bi-info-circle text-primary me-1"></i> Informações da modalidade</p>';
+        include SGI_ROOT . '/resources/views/components/page-header.php';
+        unset($headerMostrarVoltar, $headerCorpoHtml, $headerAcoesHtml, $headerClasse, $headerUrlVoltar, $headerIdVoltar, $headerClassBotao, $headerHiddenBotao);
+        ?>
         <div id="resumoModalidadeDesktop" class="card border-0 border-top border-4 border-primary shadow-sm rounded-4 p-4 p-lg-5 mb-4">
             <p class="text-body-secondary m-0">(Carregando modalidade...)</p>
         </div>

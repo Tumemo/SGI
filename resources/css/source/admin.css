@@ -47,6 +47,495 @@
 .aluno-voltar-btn { display: none; }
 .aluno-card.equipes-aberta .aluno-voltar-btn { display: inline-flex; }
 
+/* ===========================================================================
+   PAINÉIS ADMINISTRATIVOS — DASHBOARD, PONTUAÇÃO, ARRECADAÇÃO E OCORRÊNCIAS
+   ========================================================================== */
+
+/* Modais só fazem parte do fluxo visual quando o Bootstrap os abre. Sem esta
+   proteção, folhas de estilo carregadas parcialmente podem deixar o conteúdo
+   de edição visível abaixo da página (como ocorria na agenda e chaveamento). */
+.modal:not(.show) {
+    display: none;
+}
+
+/* Cartões de turma (arrecadação e ocorrências): em telas estreitas o conteúdo
+   empilha verticalmente para o nome não ser truncado nem estourar a coluna;
+   a partir de 768px retorna à linha horizontal com ações à direita. */
+.sgi-turma-card {
+    display: flex;
+    flex-direction: column;
+    gap: .625rem;
+    min-width: 0;
+}
+
+.sgi-turma-card-header {
+    display: flex;
+    align-items: center;
+    gap: .75rem;
+    min-width: 0;
+}
+
+.sgi-turma-card-title {
+    flex: 1 1 auto;
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
+
+.sgi-turma-card-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: .375rem;
+    min-width: 0;
+}
+
+.sgi-turma-card-actions > .btn {
+    flex-shrink: 0;
+}
+
+@media (min-width: 768px) {
+    .sgi-turma-card {
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+    }
+
+    .sgi-turma-card-header {
+        flex: 1 1 auto;
+    }
+}
+
+@media (min-width: 768px) {
+    /* Dashboard */
+    body:has(#conteudo-principal) [class~="main-dashboard-layout"] {
+        background: #fafafa;
+        padding: 3.125rem clamp(3.125rem, 4vw, 5rem) !important;
+    }
+
+    .main-dashboard-layout > .container-fluid > h1 {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        white-space: nowrap;
+        border: 0;
+    }
+
+    .main-dashboard-layout > .container-fluid > .btn {
+        min-height: 2.5rem;
+        margin-bottom: 2.75rem !important;
+        padding: .45rem .7rem;
+        border-radius: .375rem;
+        color: var(--bs-primary);
+        font-size: 1rem;
+    }
+
+    .main-dashboard-layout > .container-fluid > .row {
+        --bs-gutter-x: 1.875rem;
+        --bs-gutter-y: 1.875rem;
+        margin-top: 0 !important;
+    }
+
+    .main-dashboard-layout > .container-fluid > .row > [class*="col-"] > .card {
+        min-height: 13.5rem;
+        padding: 2.35rem 1.75rem 1.5rem !important;
+        overflow: hidden;
+        border: 0;
+        border-radius: 1.75rem;
+        background: #fff;
+        box-shadow: 0 .75rem 1.75rem rgba(15, 23, 42, .08) !important;
+        position: relative;
+    }
+
+    .main-dashboard-layout > .container-fluid > .row > [class*="col-"] > .card::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 6.875rem;
+        height: 6.875rem;
+        background: var(--bs-primary);
+        clip-path: polygon(0 0, 100% 0, 0 100%);
+    }
+
+    .main-dashboard-layout > .container-fluid > .row > [class*="col-"] > .card > .d-flex {
+        min-height: 3.5rem;
+        margin-bottom: 1rem !important;
+        padding-left: 5.125rem;
+        position: relative;
+    }
+
+    .main-dashboard-layout > .container-fluid > .row > [class*="col-"] > .card > .d-flex > div:first-child {
+        position: absolute;
+        top: -1.25rem;
+        left: -.5rem;
+        width: 4.5rem;
+        height: 4.5rem;
+        padding: 0 !important;
+        border-radius: 50% !important;
+        background: #fff !important;
+        color: #071b3a !important;
+        box-shadow: 0 .625rem 1rem rgba(15, 23, 42, .16);
+        font-size: 1.75rem !important;
+    }
+
+    .main-dashboard-layout > .container-fluid > .row > [class*="col-"] > .card h5 {
+        font-size: 1.2rem;
+        font-weight: 500 !important;
+        line-height: 1.2;
+    }
+
+    .main-dashboard-layout > .container-fluid > .row > [class*="col-"] > .card .bi-chevron-right {
+        display: none;
+    }
+
+    .main-dashboard-layout > .container-fluid > .row > [class*="col-"] > .card p {
+        color: #4f5f73 !important;
+        font-size: .95rem;
+        line-height: 1.55;
+    }
+
+    .main-dashboard-layout > .container-fluid > .row > [class*="col-"] > .card:hover {
+        box-shadow: 0 1rem 2rem rgba(15, 23, 42, .12) !important;
+    }
+
+    /* Pontuação — o botão de voltar passou a usar o padrão neutro do
+       .sgi-back-button em scss/shared.scss; mantém-se apenas o ajuste dos
+       botões de ação (restaurar/salvar) e dos campos de ano/status. */
+
+    body:has(#btnVoltarPontuacao) #btnRestaurarPadrao,
+    body:has(#btnVoltarPontuacao) #btnSalvarPontuacao {
+        min-height: 3.375rem;
+        padding-inline: 1.25rem;
+        border-radius: .875rem;
+        font-weight: 700;
+    }
+
+    body:has(#btnVoltarPontuacao) #btnSalvarPontuacao {
+        min-width: 8.5rem;
+        box-shadow: 0 .5rem 1rem rgba(227, 6, 19, .16);
+    }
+
+    body:has(#btnVoltarPontuacao) #ptcEditionYear,
+    body:has(#btnVoltarPontuacao) #ptcEditionStatus {
+        display: none;
+    }
+
+    body:has(#btnVoltarPontuacao) .main-desktop-layout > .container-fluid > .row {
+        --bs-gutter-x: 1.875rem;
+        --bs-gutter-y: 1.5rem;
+    }
+
+    body:has(#btnVoltarPontuacao) .main-desktop-layout > .container-fluid > .row .card {
+        min-height: 16.75rem;
+        padding: 1rem 1.25rem !important;
+        border-radius: 1.25rem;
+        box-shadow: 0 .25rem .5rem rgba(15, 23, 42, .08) !important;
+    }
+
+    body:has(#btnVoltarPontuacao) .main-desktop-layout > .container-fluid > .row .card .rounded-3 {
+        width: 3rem;
+        height: 3rem;
+        align-items: center;
+        justify-content: center;
+        border-radius: 1rem !important;
+    }
+
+    body:has(#btnVoltarPontuacao) .main-desktop-layout > .container-fluid > .row .card .badge {
+        padding: .5rem .75rem;
+        border-radius: 999px;
+        letter-spacing: .06em;
+        font-size: .7rem;
+    }
+
+    body:has(#btnVoltarPontuacao) .ptc-step-btn {
+        width: 3.125rem;
+        height: 3.125rem;
+        border: 0;
+        border-radius: 1rem !important;
+    }
+
+    body:has(#btnVoltarPontuacao) .ptc-step-input {
+        width: 6.25rem;
+        height: 3.5rem;
+        border-radius: .875rem;
+        font-size: 1.35rem;
+    }
+
+    body:has(#btnVoltarPontuacao) [class*="col-"]:has(#pontos-1) .card { background: #fff9e7; border-color: #f59e0b !important; }
+    body:has(#btnVoltarPontuacao) [class*="col-"]:has(#pontos-2) .card { background: #f3f6fa; border-color: #64748b !important; }
+    body:has(#btnVoltarPontuacao) [class*="col-"]:has(#pontos-3) .card { background: #fff5ea; border-color: #d97706 !important; }
+    body:has(#btnVoltarPontuacao) [class*="col-"]:has(#pontos-arr) .card { background: #fff1f2; border-color: #fb4a55 !important; }
+    body:has(#btnVoltarPontuacao) [class*="col-"]:has(#pontos-1) .ptc-step-btn { background: #fff1bf; color: #b45309; }
+    body:has(#btnVoltarPontuacao) [class*="col-"]:has(#pontos-2) .ptc-step-btn { background: #eef2f7; color: #475569; }
+    body:has(#btnVoltarPontuacao) [class*="col-"]:has(#pontos-3) .ptc-step-btn { background: #ffead8; color: #c26109; }
+    body:has(#btnVoltarPontuacao) [class*="col-"]:has(#pontos-arr) .ptc-step-btn { background: #ffe8eb; color: #e11d48; }
+
+    body:has(#btnVoltarPontuacao) .main-desktop-layout > .container-fluid > .alert {
+        min-height: 4.25rem;
+        border: 1px solid #e2e8f0;
+        border-radius: 1rem;
+        background: #fff;
+        color: #4f5f73;
+    }
+
+    /* Arrecadação e ocorrências */
+    body:has(#listaArrecadacaoDesktop) .main-desktop-layout,
+    .sgi-ocorrencias-desktop {
+        min-height: 100%;
+        padding: 3.125rem clamp(3.125rem, 4vw, 5rem) 3rem !important;
+        background: #fafafa;
+    }
+
+    body:has(#listaArrecadacaoDesktop) .main-desktop-layout > .container-fluid,
+    .sgi-ocorrencias-desktop > .container-fluid {
+        padding: 0 !important;
+    }
+
+    body:has(#listaArrecadacaoDesktop) .main-desktop-layout > .container-fluid > .mb-4:first-child,
+    .sgi-ocorrencias-desktop > .container-fluid > .mb-4:first-child {
+        margin-bottom: 3.75rem !important;
+    }
+
+    body:has(#listaArrecadacaoDesktop) .main-desktop-layout h1,
+    .sgi-ocorrencias-desktop h1 {
+        font-size: 2rem;
+        font-weight: 500 !important;
+    }
+
+    body:has(#listaArrecadacaoDesktop) .main-desktop-layout h1 + p,
+    .sgi-ocorrencias-desktop h1 + p {
+        color: #64748b !important;
+        font-size: 1rem;
+    }
+
+    :is(#listaArrecadacaoDesktop, #listaOcorrenciasDesktop) {
+        --bs-gutter-x: 1.25rem;
+        --bs-gutter-y: 1.25rem;
+    }
+
+    :is(#listaArrecadacaoDesktop, #listaOcorrenciasDesktop) > .col > .card {
+        min-height: 6.75rem;
+        padding: 1rem 1.625rem !important;
+        border: 1px solid #edf0f3 !important;
+        border-radius: 1.25rem;
+        background: #fff;
+        box-shadow: none !important;
+    }
+
+    :is(#listaArrecadacaoDesktop, #listaOcorrenciasDesktop) > .col > .card .sgi-turma-card-header > div:first-child {
+        flex-shrink: 0;
+        width: 3rem;
+        height: 3rem;
+        padding: 0 !important;
+        border-radius: .875rem !important;
+    }
+
+    :is(#listaArrecadacaoDesktop, #listaOcorrenciasDesktop) > .col > .card h2 {
+        color: #071b3a;
+        font-size: 1.125rem;
+        font-weight: 700 !important;
+    }
+
+    :is(#listaArrecadacaoDesktop, #listaOcorrenciasDesktop) > .col > .card .badge {
+        padding: .4rem .625rem;
+        background: #f3f4f6 !important;
+        color: #64748b !important;
+        font-size: .75rem;
+        font-weight: 600;
+    }
+
+    #listaArrecadacaoDesktop .arrec-input {
+        width: 4.75rem;
+        height: 3.125rem;
+        border-color: #e2e8f0;
+        border-radius: .875rem 0 0 .875rem;
+        font-size: 1.125rem;
+    }
+
+    #listaArrecadacaoDesktop .input-group-text {
+        height: 3.125rem;
+        border-color: #e2e8f0;
+        border-radius: 0 .875rem .875rem 0;
+        background: #fff;
+        color: #94a3b8;
+        font-size: .75rem;
+        font-weight: 700;
+        text-transform: uppercase;
+    }
+
+    :is(#listaArrecadacaoDesktop, #listaOcorrenciasDesktop) > .col > .card .sgi-turma-card-actions > .btn {
+        width: 3rem;
+        height: 3rem;
+        padding: 0;
+        border-radius: 50%;
+    }
+
+    #listaArrecadacaoDesktop [data-sgi-action="save-arrecadacao"] {
+        border-style: dashed;
+        border-width: 2px;
+    }
+
+    #listaOcorrenciasDesktop [data-sgi-action="add-ocorrencia"] {
+        border-style: dashed;
+        border-width: 2px;
+    }
+}
+
+/* Página de equipes: composição de painel para modalidades e suas turmas. */
+@media (min-width: 768px) {
+    body:has(#listaEquipesDesktop) .main-desktop-layout {
+        background: #fbfcfd;
+    }
+
+    body:has(#listaEquipesDesktop) .main-desktop-layout > .container-fluid {
+        padding: 1.5rem clamp(1.5rem, 4vw, 5rem) 3rem !important;
+    }
+
+    body:has(#listaEquipesDesktop) .main-desktop-layout h1 {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        white-space: nowrap;
+        border: 0;
+    }
+
+    body:has(#listaEquipesDesktop) #btnCriarEquipeDesk {
+        width: 3.75rem;
+        min-width: 3.75rem;
+        height: 2.875rem;
+        margin-left: auto;
+        border: 1px solid var(--bs-primary);
+        border-radius: 1rem;
+        background: transparent;
+        color: var(--bs-primary);
+        box-shadow: none;
+    }
+
+    body:has(#listaEquipesDesktop) #btnCriarEquipeDesk:hover {
+        background: var(--bs-primary);
+        color: #fff;
+    }
+
+    body:has(#listaEquipesDesktop) #filtroCategoria {
+        gap: .625rem !important;
+        margin-bottom: 1.875rem !important;
+    }
+
+    body:has(#listaEquipesDesktop) #filtroCategoria [class~="btn-filter-cat"] {
+        min-height: 3.25rem;
+        padding: .625rem 1.625rem;
+        border-color: #e3e8ee;
+        border-radius: 999px;
+        background: #fff;
+        color: #617084;
+        font-size: 1rem;
+        font-weight: 600;
+    }
+
+    body:has(#listaEquipesDesktop) #filtroCategoria [class~="btn-filter-cat"]:hover,
+    body:has(#listaEquipesDesktop) #filtroCategoria [class~="btn-filter-cat"].active {
+        border-color: var(--bs-primary);
+        background: var(--bs-primary);
+        color: #fff;
+    }
+
+    body:has(#listaEquipesDesktop) #listaEquipesDesktop > .row {
+        --bs-gutter-x: 1.5rem;
+        --bs-gutter-y: 2.75rem;
+    }
+
+    /* O utilitário w-100 no item gerado não pode reduzir a grade a uma coluna. */
+    body:has(#listaEquipesDesktop) #listaEquipesDesktop > .row > [class~="col"] {
+        flex: 0 0 auto;
+        width: 33.333333% !important;
+    }
+
+    body:has(#listaEquipesDesktop) .aluno-card {
+        border: 1px solid #e7ebf0 !important;
+        border-radius: 1.125rem !important;
+        background: #fff;
+        box-shadow: 0 .1875rem .375rem rgba(15, 23, 42, .06) !important;
+    }
+
+    body:has(#listaEquipesDesktop) .aluno-card .card-header {
+        min-height: 4.375rem;
+        padding: 1.125rem 1.5rem !important;
+        border-bottom: 1px solid #e4e9ef !important;
+        background: #fff !important;
+        color: #071b3a;
+        font-size: 1.125rem;
+        font-weight: 600;
+    }
+
+    body:has(#listaEquipesDesktop) .aluno-card .card-body {
+        padding: 1.25rem 1.5rem !important;
+    }
+
+    body:has(#listaEquipesDesktop) .aluno-card .turmas-view > .d-flex,
+    body:has(#listaEquipesDesktop) .aluno-card .aluno-equipes-content > .d-flex {
+        min-height: 5.625rem;
+        margin-bottom: .75rem !important;
+        padding: 1rem !important;
+        border-color: #e1e7ed !important;
+        border-radius: .875rem !important;
+        box-shadow: none;
+    }
+
+    body:has(#listaEquipesDesktop) .turma-equipe-item {
+        cursor: pointer;
+    }
+
+    body:has(#listaEquipesDesktop) .turma-equipe-item:hover {
+        border-color: var(--bs-primary) !important;
+        background: var(--bs-tertiary-bg) !important;
+    }
+
+    body:has(#listaEquipesDesktop) .aluno-card .turmas-view > .d-flex:last-child,
+    body:has(#listaEquipesDesktop) .aluno-card .aluno-equipes-content > .d-flex:last-child {
+        margin-bottom: 0 !important;
+    }
+
+    body:has(#listaEquipesDesktop) .aluno-card .turmas-view .fw-semibold,
+    body:has(#listaEquipesDesktop) .aluno-equipe-nome {
+        color: #071b3a;
+        font-size: 1.125rem;
+        font-weight: 500 !important;
+    }
+
+    body:has(#listaEquipesDesktop) .aluno-card .text-secondary {
+        color: #66768a !important;
+    }
+
+    body:has(#listaEquipesDesktop) .ver-equipes-btn,
+    body:has(#listaEquipesDesktop) .aluno-equipes-content .btn-outline-primary {
+        min-width: 4rem;
+        min-height: 2.25rem;
+        border-color: var(--bs-primary);
+        border-radius: .875rem;
+        color: var(--bs-primary);
+    }
+
+    body:has(#listaEquipesDesktop) .ver-equipes-btn:hover,
+    body:has(#listaEquipesDesktop) .aluno-equipes-content .btn-outline-primary:hover {
+        background: var(--bs-primary);
+        color: #fff;
+    }
+
+    body:has(#listaEquipesDesktop) .aluno-card :is(.btn, a):focus-visible {
+        outline: .1875rem solid #0d6efd;
+        outline-offset: .1875rem;
+    }
+}
+
 /* ==========================================================================
    CHAVEAMENTO — ÁRVORE DO TORNEIO (chaveamento_arvore.php)
    ========================================================================== */
@@ -188,6 +677,19 @@
     letter-spacing: .02em;
 }
 
+/* Dispositivos com ponteiro por toque (celulares e tablets): o painel custom
+   foca um input de busca que aciona o teclado virtual e redimensiona a
+   viewport, deslocando o layout. Nesses casos o chaveamento usa o <select>
+   nativo, que abre o seletor do próprio sistema sem deslocar a página. */
+@media (pointer: coarse), (hover: none) {
+    .kvs-wrap { display: none; }
+    .kvs-wrap + select { display: block !important; }
+    #kvs-wrap-filtroModalidadeJogos + select {
+        flex: 0 1 280px;
+        width: 280px;
+    }
+}
+
 /* ==========================================================================
    NAVEGAÇÃO — AVATAR E NAVEGAÇÃO MÓVEL (componentes/nav.php)
    ========================================================================== */
@@ -199,13 +701,8 @@
 .sidebar-nav::-webkit-scrollbar {
     display: none;
 }
-.sidebar-nav .sidebar-nav-list {
-    justify-content: flex-start;
-}
 .sidebar-nav .sidebar-nav-list li {
-    margin: auto 0;
-    flex-shrink: 1;
-    min-height: 0;
+    flex-shrink: 0;
 }
 @media (max-height: 700px) {
     .sidebar-nav .sidebar-nav-list {
@@ -252,6 +749,12 @@
 /* ==========================================================================
    RANKING DETALHADO — HISTÓRICO DE TURMA (ranking.php)
    ========================================================================== */
+
+@media (min-width: 768px) {
+    body:has(.sgi-ranking-page) .main-desktop-layout > .container-fluid {
+        padding: 3.125rem clamp(3.125rem, 4vw, 5rem) 3rem !important;
+    }
+}
 
 /* ==========================================================================
    CENTRO DE PARTIDA — MESÁRIO (jogos.php)
@@ -310,7 +813,7 @@
     }
 
     section.sgi-u-h-120px > a.sgi-u-top-20px-left-20px-z-10 {
-        width: 48px;
+        min-width: 48px;
         height: 48px;
         display: inline-flex;
         align-items: center;
@@ -531,6 +1034,43 @@
         min-height: 48px;
     }
 
+    /* Rodapé do modal de agendamento automático: as três ações cabem em uma
+       única linha sem envolver nem estourar a tela. */
+    .sgi-modal-footer-fit {
+        flex-wrap: nowrap;
+        gap: .375rem;
+    }
+
+    .sgi-modal-footer-fit > .btn {
+        min-width: 0;
+    }
+
+    /* Arrecadação: cartões de turma no mobile seguem o mesmo alinhamento das
+       ocorrências, com o campo de quilogramas compacto. */
+    .sgi-arrecadacao-mobile {
+        padding-top: .75rem !important;
+        padding-bottom: .75rem !important;
+    }
+
+    .sgi-arrecadacao-mobile #listaArrecadacaoMobile > .col > .card {
+        min-width: 0;
+        padding: .75rem !important;
+    }
+
+    .sgi-arrecadacao-mobile .input-group {
+        flex-wrap: nowrap;
+    }
+
+    .sgi-arrecadacao-mobile .arrec-input {
+        flex: 0 0 auto;
+        width: 5.5rem;
+        padding-block: .375rem;
+    }
+
+    .sgi-arrecadacao-mobile .input-group-text {
+        padding-inline: .5rem;
+    }
+
     .sgi-compact-header {
         display: none !important;
     }
@@ -548,28 +1088,6 @@
 
     .sgi-placar .sgi-placar-header {
         align-items: center;
-        margin-bottom: .5rem !important;
-        gap: .5rem !important;
-        padding-right: 3.25rem;
-    }
-
-    .sgi-placar .sgi-placar-header #btnVoltarPlacar {
-        margin-bottom: 0 !important;
-        min-width: 48px;
-        min-height: 48px;
-        padding: .5rem !important;
-    }
-
-    .sgi-placar .sgi-placar-header #btnVoltarPlacar span {
-        position: absolute !important;
-        width: 1px !important;
-        height: 1px !important;
-        padding: 0 !important;
-        margin: -1px !important;
-        overflow: hidden !important;
-        clip: rect(0, 0, 0, 0) !important;
-        white-space: nowrap !important;
-        border: 0 !important;
     }
 
     .sgi-placar .sgi-placar-header h1 {
@@ -738,19 +1256,52 @@
 @media (max-width: 575.98px) {
     .sgi-config-modalities-toolbar {
         min-width: 0;
+        width: 100%;
+        max-width: 100%;
         align-items: stretch !important;
+    }
+
+    .sgi-config-modalities-toolbar .sgi-page-header,
+    .sgi-config-modalities-toolbar .sgi-page-header__actions {
+        width: 100%;
+        max-width: 100%;
+        min-width: 0;
+        margin-left: 0;
     }
 
     .sgi-config-modalities-actions {
         flex: 1 1 100%;
         width: 100%;
         min-width: 0;
+        flex-wrap: nowrap;
     }
 
     .sgi-config-modalities-actions > * {
         min-width: 0;
         max-width: 100%;
         white-space: normal;
+    }
+
+    .sgi-config-modalities-actions > .btn {
+        flex: 1 1 0;
+        justify-content: center;
+        padding-inline: .5rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .sgi-modal-footer-fit > .btn {
+        flex: 1 1 0;
+        justify-content: center;
+        padding-inline: .375rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .sgi-arrecadacao-mobile .arrec-input {
+        width: 4.25rem;
     }
 
     #statsMobile .card > div {
@@ -788,6 +1339,41 @@
     min-height: 48px;
     justify-content: center;
     white-space: normal;
+}
+
+/* Categorias — ações no celular em grade de duas colunas para não empilhar
+   uma lista pesada; o botão Continuar ocupa a linha inteira por ser o CTA que
+   leva ao próximo passo. Botões ocultos (d-none) saem do fluxo da grade. */
+#acoesCategoriaMobile {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: .5rem;
+}
+
+#acoesCategoriaMobile > * {
+    min-width: 0;
+}
+
+#acoesCategoriaMobile > :only-child,
+#acoesCategoriaMobile #btnContinuarMobile {
+    grid-column: 1 / -1;
+}
+
+/* Categorias — desktop: mesmo tratamento espaciado das demais telas de
+   administração, com a barra de ações descolada do rodapé. */
+@media (min-width: 768px) {
+    .sgi-categorias-desktop {
+        background: #fafafa;
+        padding: 3.125rem clamp(3.125rem, 4vw, 5rem) 4rem !important;
+    }
+
+    .sgi-categorias-desktop > .container-fluid {
+        padding: 0 !important;
+    }
+
+    .sgi-categorias-desktop #acoesCategoriaDesktop {
+        margin-top: 2.5rem !important;
+        margin-bottom: 0 !important;
+    }
 }
 
 @media (min-width: 1200px) {

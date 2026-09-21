@@ -12,23 +12,21 @@ $isColaborador = $nivelUsuario === 1;
 
 <main class="main-desktop-layout main-locais-layout my-4">
     <div class="container-fluid px-0 mw-100" >
-        <h1 class="d-none d-md-block mb-3">Locais e Regulamento do Interclasse</h1>
-        <div class="mb-4 d-flex flex-column flex-lg-row justify-content-between align-items-start align-items-lg-center gap-3">
-            <a href="<?= \App\Shared\Http\Url::to('painel') ?>" id="btnVoltarLocaisDesk" class="btn btn-primary d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none" >
-                <i class="bi bi-arrow-left-circle fs-5"></i> <span id="nomeInterclasseLocais">Interclasse</span>
-            </a>
-
-            <div class="d-flex gap-2">
-                <?php if ($isColaborador): ?>
-                    <button type="button" class="btn btn-outline-danger fw-semibold rounded-3 px-3 py-2 shadow-sm d-inline-flex align-items-center gap-2" data-bs-toggle="modal" data-bs-target="#modalTermosColaborador">
-                        <i class="bi bi-file-earmark-text"></i> Termos do Colaborador
-                    </button>
-                <?php endif; ?>
-                <button type="button" class="btn btn-primary fw-semibold rounded-3 px-4 py-2 shadow-sm d-inline-flex align-items-center gap-2 " data-bs-toggle="modal" data-bs-target="#modalNovoLocal" >
-                    <i class="bi bi-plus-lg"></i> Novo local
-                </button>
-            </div>
-        </div>
+        <?php
+        $headerIdVoltar = 'btnVoltarLocaisDesk';
+        $headerClassBotao = 'd-none d-md-inline-flex';
+        $headerCorpoHtml = '<h1 class="h2 fw-bold mb-0">Locais e Regulamento do Interclasse</h1>';
+        $headerAcoesHtml = '<div class="d-flex gap-2">
+            ' . ($isColaborador ? '<button type="button" class="btn btn-outline-danger fw-semibold rounded-3 px-3 py-2 shadow-sm d-inline-flex align-items-center gap-2" data-bs-toggle="modal" data-bs-target="#modalTermosColaborador">
+                <i class="bi bi-file-earmark-text"></i> Termos do Colaborador
+            </button>' : '') . '
+            <button type="button" class="btn btn-primary fw-semibold rounded-3 px-4 py-2 shadow-sm d-inline-flex align-items-center gap-2 " data-bs-toggle="modal" data-bs-target="#modalNovoLocal" >
+                <i class="bi bi-plus-lg"></i> Novo local
+            </button>
+        </div>';
+        include SGI_ROOT . '/resources/views/components/page-header.php';
+        unset($headerIdVoltar, $headerClassBotao, $headerCorpoHtml, $headerAcoesHtml);
+        ?>
 
         <!-- Seção do Regulamento em Destaque Desktop -->
         <div class="card border-0 shadow-sm rounded-4 mb-4">

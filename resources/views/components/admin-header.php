@@ -1,7 +1,7 @@
 <?php
 $mostrarVoltar = $mostrarVoltar ?? true;
 $titulo = $titulo ?? '';
-$tagTituloCompacto = ($tagTituloCompacto ?? 'h2') === 'h1' ? 'h1' : 'h2';
+$tagTituloCompacto = ($tagTituloCompacto ?? 'h1') === 'h1' ? 'h1' : 'h2';
 $nivelUsuario = (int)($_SESSION['nivel'] ?? -1);
 $rotaInicialUsuario = match ($nivelUsuario) {
     0, 1 => 'edicoes',
@@ -18,14 +18,24 @@ if ($idInterclasseHeader !== false && $idInterclasseHeader !== null) {
     }
 }
 $compacteCabecalho = (bool)($compacteCabecalho ?? false);
+$urlVoltarMobile = $urlVoltarMobile ?? $urlVoltar;
+$idVoltarMobile = (string) ($idVoltarMobile ?? 'sgiBtnVoltar');
 ?>
 <section class="d-md-none position-relative sgi-u-h-120px<?= $compacteCabecalho ? ' sgi-compact-header' : '' ?>" >
-    <?php if ($mostrarVoltar): ?>
-    <a href="<?= htmlspecialchars($urlVoltar) ?>" class="bi bi-arrow-left position-absolute text-white fs-3 text-decoration-none sgi-u-top-20px-left-20px-z-10" ></a>
-    <?php endif; ?>
-    <img src="<?= \App\Shared\Http\Assets::url('images/banner-global.png') ?>" alt="Banner" class="w-100 h-100 object-fit-cover" >
+    <?php
+    $mostrarVoltarHeader = $mostrarVoltarHeader ?? true;
+    if ($mostrarVoltarHeader) {
+        $sgiUrlVoltar = $urlVoltarMobile;
+        $sgiIdVoltar = $idVoltarMobile;
+        $sgiClassVoltar = 'sgi-u-top-20px-left-20px-z-10';
+        $urlVoltarRestauro = $urlVoltar ?? null;
+        include SGI_ROOT . '/resources/views/components/back-button.php';
+        $urlVoltar = $urlVoltarRestauro;
+        unset($sgiUrlVoltar, $sgiIdVoltar, $sgiClassVoltar, $urlVoltarRestauro);
+    }
+    ?>
     <?php if (!empty($titulo)): ?>
-    <<?= $tagTituloCompacto ?> class="position-absolute top-50 start-50 translate-middle text-white m-0 fw-bold sgi-mobile-header-title"><?= htmlspecialchars($titulo) ?></<?= $tagTituloCompacto ?>>
+    <<?= $tagTituloCompacto ?> class="sgi-mobile-header-title text-black fw-bold m-0 px-1"><?= htmlspecialchars($titulo) ?></<?= $tagTituloCompacto ?>>
     <?php endif; ?>
 </section>
 <script>

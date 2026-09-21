@@ -167,7 +167,7 @@ test.describe('Mesário — fluxo visual completo offline', () => {
         await page.locator('#form_desktop .ipt-senha').fill('123');
         await page.locator('#form_desktop button[type="submit"]').click();
         await page.waitForURL(/\/painel\?id=\d+/, { waitUntil: 'domcontentloaded' });
-        await expect(page).toHaveTitle(/Dashboard.*\| SGI/);
+        await expect(page).toHaveTitle(/Painel do Mesário.*\| SGI/);
         await expect(page.locator('body')).not.toContainText('Download parcial');
 
         // O preload é sequencial por desenho: aguardamos o indicador verde que

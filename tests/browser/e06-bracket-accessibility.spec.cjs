@@ -55,6 +55,7 @@ function jogoFixture({
 }) {
     const idEquipeA = id * 10 + 1;
     const idEquipeB = id * 10 + 2;
+    const isConcluido = status === 'Finalizado' || status === 'Concluido';
     return {
         id_jogo: id,
         id_interclasse: 1,
@@ -76,11 +77,11 @@ function jogoFixture({
         termino_jogo: '09:20:00',
         locais_id_local: 1,
         nome_local: 'Quadra E06',
-        equipe_vencedora_id: idEquipeA,
+        equipe_vencedora_id: isConcluido ? idEquipeA : null,
         equipes_nomes: `${equipeA} vs ${equipeB}`,
         equipes: [
-            { id_equipe: idEquipeA, nome_equipe: equipeA, gols: golsA },
-            { id_equipe: idEquipeB, nome_equipe: equipeB, gols: golsB },
+            { id_equipe: idEquipeA, nome_equipe: equipeA, gols: isConcluido ? golsA : 0 },
+            { id_equipe: idEquipeB, nome_equipe: equipeB, gols: isConcluido ? golsB : 0 },
         ],
     };
 }
@@ -126,7 +127,8 @@ async function entrarMesario(page) {
     await page.waitForURL(/painel\?id=\d+/, { waitUntil: 'domcontentloaded', timeout: 15_000 });
 }
 
-async function instalarDadosDeTela(page) {
+async function instalarDadosDeTela(page, jogosPersonalizados = null) {
+    const listaJogos = jogosPersonalizados || MOCK_GAMES;
     await page.route((url) => url.pathname.endsWith('/api/v1/modalidades'), async (route) => {
         const idEdicao = new URL(route.request().url()).searchParams.get('id_interclasse');
         await fulfillJson(route, MOCK_MODALITIES.map((item) => ({ ...item, interclasses_id_interclasse: Number(idEdicao) })));
@@ -141,7 +143,7 @@ async function instalarDadosDeTela(page) {
         const query = new URL(route.request().url()).searchParams;
         const idModalidade = query.get('id_modalidade');
         const idCategoria = query.get('id_categoria');
-        const jogos = MOCK_GAMES.filter((item) =>
+        const jogos = listaJogos.filter((item) =>
             (!idModalidade || Number(item.modalidades_id_modalidade) === Number(idModalidade))
             && (!idCategoria || Number(item.categorias_id_categoria) === Number(idCategoria))
         );
@@ -150,7 +152,7 @@ async function instalarDadosDeTela(page) {
 
     await page.route((url) => url.pathname.endsWith('/api/v1/chaveamentos'), async (route) => {
         const idModalidade = new URL(route.request().url()).searchParams.get('id_modalidade');
-        const jogos = MOCK_GAMES.filter((item) => Number(item.modalidades_id_modalidade) === Number(idModalidade));
+        const jogos = listaJogos.filter((item) => Number(item.modalidades_id_modalidade) === Number(idModalidade));
         await fulfillJson(route, { success: true, jogos });
     });
 
@@ -159,13 +161,13 @@ async function instalarDadosDeTela(page) {
     });
 }
 
-async function abrirChaveamento(page, width = 640, height = 768) {
+async function abrirChaveamento(page, width = 640, height = 768, jogosPersonalizados = null) {
     await page.setViewportSize({ width, height });
     await entrarMesario(page);
     const idInterclasse = new URL(page.url()).searchParams.get('id');
     expect(Number(idInterclasse)).toBeGreaterThan(0);
 
-    await instalarDadosDeTela(page);
+    await instalarDadosDeTela(page, jogosPersonalizados);
     await page.goto(`chaveamento?id=${idInterclasse}`, { waitUntil: 'domcontentloaded' });
     // The SGI shell keeps its compact composition below 1200px, including
     // tablet widths such as 1024px.
@@ -439,8 +441,8 @@ test.describe('E06 — filtros, leitura e ações do chaveamento', () => {
     });
 
     test('mesário visualiza apenas o botão Iniciar em jogo agendado e não vê botão de editar', async ({ page }) => {
-        await page.route((url) => url.pathname.endsWith('/api/v1/chaveamentos'), async (route) => {
-            const jogoAgendado = jogoFixture({
+        const jogosComAgendado = [
+            jogoFixture({
                 id: 509,
                 idModalidade: 11,
                 idCategoria: 21,
@@ -451,10 +453,10 @@ test.describe('E06 — filtros, leitura e ações do chaveamento', () => {
                 status: 'Agendado',
                 golsA: 0,
                 golsB: 0,
-            });
-            await fulfillJson(route, { success: true, jogos: [jogoAgendado] });
-        });
-        const tela = await abrirChaveamento(page, 1024);
+            }),
+            MOCK_GAMES[1],
+        ];
+        const tela = await abrirChaveamento(page, 1024, 768, jogosComAgendado);
         await selecionarModalidadeDoChaveamento(page, 'Vôlei adaptado');
 
         const partida = page.locator(`${tela.bracket} .bkt-match`);

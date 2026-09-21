@@ -25,8 +25,11 @@ window.SGIPage.mount("eventos/configurar-locais", function (pageConfig, pageScop
             if (ativo && ativo.id_interclasse) {
                 idInterclasse = ativo.id_interclasse;
 
-                const btnVoltarDesk = document.getElementById('btnVoltarLocaisDesk');
-                if (btnVoltarDesk) btnVoltarDesk.href = `/painel?id=${idInterclasse}`;
+                const voltarLinkDesktop = document.getElementById('btnVoltarLocaisDesk');
+                const voltarLinkMobile = document.getElementById('sgiBtnVoltar');
+                const hrefVoltar = `/painel?id=${idInterclasse}`;
+                if (voltarLinkDesktop) voltarLinkDesktop.href = hrefVoltar;
+                if (voltarLinkMobile) voltarLinkMobile.href = hrefVoltar;
                 if (ativo.nome_interclasse) {
                     ['nomeInterclasseLocais'].forEach(id => {
                         const el = document.getElementById(id);
@@ -43,9 +46,10 @@ window.SGIPage.mount("eventos/configurar-locais", function (pageConfig, pageScop
     }
 
     if (idInterclasse) {
-        ['btnVoltarLocaisDesk'].forEach(id => {
+        const hrefVoltarLocal = `/painel?id=${idInterclasse}`;
+        ['btnVoltarLocaisDesk', 'sgiBtnVoltar'].forEach(id => {
             const el = document.getElementById(id);
-            if (el) el.href = `/painel?id=${idInterclasse}`;
+            if (el) el.href = hrefVoltarLocal;
         });
     }
 
