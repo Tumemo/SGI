@@ -16,8 +16,7 @@ $podeResetarSenha = in_array($nivelUsuario, [0], true);
 <!-- main mobile -->
 <main class="d-md-none bg-body-tertiary min-vh-100 p-3 pt-5 pb-5" >
     <div class="mb-3 mt-3">
-        <h1 class="h3 fw-bold text-body mb-1">Alunos da Turma: <span id="nomeTurmaMob">…</span></h1>
-        <p class="small text-body-secondary mb-0"><i class="bi bi-people-fill text-primary me-1" aria-hidden="true"></i> Gerencie os alunos vinculados a esta turma</p>
+        <p class="small text-body-secondary mb-0"><i class="bi bi-people-fill text-primary me-1" aria-hidden="true"></i><span id="nomeTurmaMob">…</span></p>
     </div>
 
     <div class="d-flex flex-wrap align-items-center gap-3 mb-4">
@@ -95,15 +94,13 @@ $podeResetarSenha = in_array($nivelUsuario, [0], true);
 <main class="d-none d-md-block main-desktop-layout">
     <div class="container-fluid px-0">
 
-        <div class="d-flex align-items-center gap-3 flex-wrap mb-4">
-            <a href="#" id="btnVoltarTurmaAlunosDesk" class="btn btn-primary d-inline-flex align-items-center gap-2 fw-semibold text-decoration-none">
-                <i class="bi bi-arrow-left-circle fs-5" aria-hidden="true"></i> <span id="nomeInterclasseTurmaAlunosDesk">Interclasse</span>
-            </a>
-            <div class="flex-grow-1">
-                <h1 class="h3 fw-bold text-body mb-1">Alunos da Turma: <span id="nomeTurmaDesk">…</span></h1>
-                <p class="small text-body-secondary mb-0"><i class="bi bi-people-fill text-primary me-1" aria-hidden="true"></i> Gerencie os alunos vinculados a esta turma</p>
-            </div>
-        </div>
+        <?php
+        $headerIdVoltar = 'btnVoltarTurmaAlunosDesk';
+        $headerCorpoHtml = '<h1 class="h3 fw-bold text-body mb-1">Alunos da Turma: <span id="nomeTurmaDesk">…</span></h1>
+        <p class="small text-body-secondary mb-0"><i class="bi bi-people-fill text-primary me-1" aria-hidden="true"></i> Gerencie os alunos vinculados a esta turma</p>';
+        include SGI_ROOT . '/resources/views/components/page-header.php';
+        unset($headerMostrarVoltar, $headerCorpoHtml, $headerAcoesHtml, $headerClasse, $headerUrlVoltar, $headerIdVoltar, $headerClassBotao, $headerHiddenBotao);
+        ?>
 
         <div class="d-flex flex-wrap align-items-center gap-3 mb-4">
             <?php if ($podeGerenciar): ?>

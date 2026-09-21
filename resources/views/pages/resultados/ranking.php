@@ -27,10 +27,7 @@ $paginaAtiva = 'ranking';
     <div id="msgMob"></div>
 
     <header class="d-flex align-items-center justify-content-between gap-3 mb-2">
-        <div>
-            <h1 class="h5 fw-bold mb-0">Ranking de Turmas</h1>
-            <p class="small text-body-secondary mb-0" id="nomeInterclasseMob"></p>
-        </div>
+        <p class="small text-body-secondary mb-0" id="nomeInterclasseMob"></p>
         <div class="d-flex align-items-center gap-2">
             <?php if ($eAdmin): ?>
                 <button type="button" class="btn btn-sm btn-outline-dark btn-imprimir" onclick="window.print()">
@@ -52,16 +49,13 @@ $paginaAtiva = 'ranking';
 <!-- ======================== DESKTOP ======================== -->
 <main class="sgi-ranking-page d-none d-md-block main-desktop-layout">
     <div class="container-fluid px-4 py-4">
-        <div class="d-flex align-items-center gap-3 mb-3">
-            <a href="<?= \App\Shared\Http\Url::to('painel') ?>" id="btnVoltarRankingDesk" class="btn btn-primary d-inline-flex align-items-center gap-2 fw-bold px-3 py-2 text-decoration-none">
-                <i class="bi bi-arrow-left-circle fs-5" aria-hidden="true"></i>
-                <span id="nomeInterclasseRanking">Interclasse</span>
-            </a>
-            <div>
-                <h1 class="h2 fw-bold mb-1">Ranking de Turmas</h1>
-                <p class="small text-body-secondary mb-0" id="nomeInterclasseDesk"></p>
-            </div>
-        </div>
+        <?php
+        $headerIdVoltar = 'btnVoltarRankingDesk';
+        $headerCorpoHtml = '<h1 class="h2 fw-bold mb-1">Ranking de Turmas</h1>
+        <p class="small text-body-secondary mb-0" id="nomeInterclasseDesk"></p>';
+        include SGI_ROOT . '/resources/views/components/page-header.php';
+        unset($headerMostrarVoltar, $headerCorpoHtml, $headerAcoesHtml, $headerClasse, $headerUrlVoltar, $headerIdVoltar, $headerClassBotao, $headerHiddenBotao);
+        ?>
         <div class="d-flex align-items-center justify-content-between mb-3 gap-3 flex-wrap">
             <div id="filtrosDesk" class="d-flex overflow-auto gap-2"></div>
 

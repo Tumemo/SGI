@@ -30,14 +30,12 @@ $paginaAtiva = 'dashboard';
 <!-- main desktop -->
 <main class="d-none d-md-block main-desktop-layout sgi-categorias-desktop">
     <div class="container-fluid px-0 position-relative">
-        <h1 class="h2 fw-bold text-body mb-4">Categorias</h1>
-        <div class="mb-5">
-            <?php if ($modoPagina === 'view'): ?>
-            <a href="<?= \App\Shared\Http\Url::to('painel') ?>" id="btnVoltarCatDesk" class="btn btn-primary d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none" >
-                <i class="bi bi-arrow-left-circle fs-5" aria-hidden="true"></i> <span id="nomeInterclasseCategoria">Interclasse</span>
-            </a>
-            <?php endif; ?>
-        </div>
+        <?php
+        $headerIdVoltar = 'btnVoltarCatDesk';
+        $headerCorpoHtml = '<h1 class="h2 fw-bold text-body mb-0">Categorias</h1>';
+        include SGI_ROOT . '/resources/views/components/page-header.php';
+        unset($headerIdVoltar, $headerCorpoHtml);
+        ?>
 
         <div class="row g-4" id="listaCategoriasDesktop">
             <p class="text-muted">(Carregando categorias...)</p>

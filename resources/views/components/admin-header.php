@@ -35,7 +35,7 @@ $idVoltarMobile = (string) ($idVoltarMobile ?? 'sgiBtnVoltar');
     }
     ?>
     <?php if (!empty($titulo)): ?>
-    <<?= $tagTituloCompacto ?> class="position-absolute top-50 start-50 translate-middle text-black m-0 fw-bold sgi-mobile-header-title"><?= htmlspecialchars($titulo) ?></<?= $tagTituloCompacto ?>>
+    <<?= $tagTituloCompacto ?> class="sgi-mobile-header-title text-black fw-bold m-0 px-1"><?= htmlspecialchars($titulo) ?></<?= $tagTituloCompacto ?>>
     <?php endif; ?>
 </section>
 <script>

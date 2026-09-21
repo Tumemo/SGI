@@ -68,29 +68,28 @@ $ptcTheme = [
 <main class="main-desktop-layout">
     <div class="container-fluid px-0">
 
-        <div class="d-flex align-items-center gap-3 flex-wrap mb-5">
-            <a href="<?= \App\Shared\Http\Url::to('painel') ?>" id="btnVoltarPontuacao" class="btn btn-primary d-inline-flex align-items-center gap-2 fw-semibold text-decoration-none d-none d-md-inline-flex">
-                <i class="bi bi-arrow-left-circle fs-5"></i> <span id="nomeInterclassePontuacao">Interclasse</span>
+        <?php
+        $headerIdVoltar = 'btnVoltarPontuacao';
+        $headerClassBotao = 'd-none d-md-inline-flex';
+        $headerCorpoHtml = '<h1 class="h3 fw-bold text-body mb-1"><i class="bi bi-award text-primary me-1"></i> Edição de Pontuações</h1>
+        <p class="small text-body-secondary mb-0">Ajuste os pontos de cada colocação e os multiplicadores de evento</p>';
+        $headerAcoesHtml = '<div class="d-flex align-items-center gap-2 flex-wrap">
+            <span class="badge text-bg-warning d-none" id="ptcUnsaved">
+                <i class="bi bi-exclamation-circle-fill"></i> Alterações não salvas
+            </span>
+            <button type="button" class="btn btn-outline-secondary d-inline-flex align-items-center gap-2" id="btnRestaurarPadrao" onclick="restaurarPadrao()" disabled>
+                <i class="bi bi-arrow-counterclockwise"></i> Restaurar Padrão
+            </button>
+            <button type="button" class="btn btn-primary d-inline-flex align-items-center gap-2" id="btnSalvarPontuacao" disabled>
+                <i class="bi bi-check-lg"></i> Salvar
+            </button>
+            <a href="#" id="btnContinuarPontuacao" class="btn btn-dark d-inline-flex align-items-center gap-2 d-none">
+                Continuar <i class="bi bi-arrow-right-circle"></i>
             </a>
-            <div class="flex-grow-1">
-                <h1 class="h3 fw-bold text-body mb-1"><i class="bi bi-award text-primary me-1"></i> Edição de Pontuações</h1>
-                <p class="small text-body-secondary mb-0">Ajuste os pontos de cada colocação e os multiplicadores de evento</p>
-            </div>
-            <div class="d-flex align-items-center gap-2 flex-wrap">
-                <span class="badge text-bg-warning d-none" id="ptcUnsaved">
-                    <i class="bi bi-exclamation-circle-fill"></i> Alterações não salvas
-                </span>
-                <button type="button" class="btn btn-outline-secondary d-inline-flex align-items-center gap-2" id="btnRestaurarPadrao" onclick="restaurarPadrao()" disabled>
-                    <i class="bi bi-arrow-counterclockwise"></i> Restaurar Padrão
-                </button>
-                <button type="button" class="btn btn-primary d-inline-flex align-items-center gap-2" id="btnSalvarPontuacao" disabled>
-                    <i class="bi bi-check-lg"></i> Salvar
-                </button>
-                <a href="#" id="btnContinuarPontuacao" class="btn btn-dark d-inline-flex align-items-center gap-2 d-none">
-                    Continuar <i class="bi bi-arrow-right-circle"></i>
-                </a>
-            </div>
-        </div>
+        </div>';
+        include SGI_ROOT . '/resources/views/components/page-header.php';
+        unset($headerIdVoltar, $headerClassBotao, $headerCorpoHtml, $headerAcoesHtml);
+        ?>
 
         <div class="d-flex flex-wrap align-items-center gap-2 mb-4" aria-label="Edição selecionada">
             <span id="ptcEditionYear" class="badge text-bg-light border text-body-secondary">Ano carregando</span>

@@ -203,25 +203,9 @@
         box-shadow: 0 1rem 2rem rgba(15, 23, 42, .12) !important;
     }
 
-    /* Pontuação */
-    body:has(#btnVoltarPontuacao) .main-desktop-layout {
-        min-height: 100%;
-        padding: 5.75rem clamp(3.125rem, 4vw, 5rem) 3rem !important;
-        background: #fafafa;
-    }
-
-    body:has(#btnVoltarPontuacao) .main-desktop-layout > .container-fluid > .d-flex:first-child {
-        margin-bottom: 3.75rem !important;
-    }
-
-    body:has(#btnVoltarPontuacao) #btnVoltarPontuacao,
-    body:has(#listaArrecadacaoDesktop) #btnVoltarArrecadacao,
-    .sgi-ocorrencias-desktop #btnVoltarOcr {
-        min-height: 3.625rem;
-        padding: .75rem 1.25rem !important;
-        border-radius: .625rem;
-        box-shadow: 0 .5rem 1rem rgba(227, 6, 19, .14);
-    }
+    /* Pontuação — o botão de voltar passou a usar o padrão neutro do
+       .sgi-back-button em scss/shared.scss; mantém-se apenas o ajuste dos
+       botões de ação (restaurar/salvar) e dos campos de ano/status. */
 
     body:has(#btnVoltarPontuacao) #btnRestaurarPadrao,
     body:has(#btnVoltarPontuacao) #btnSalvarPontuacao {
@@ -422,21 +406,6 @@
         clip: rect(0, 0, 0, 0);
         white-space: nowrap;
         border: 0;
-    }
-
-    body:has(#listaEquipesDesktop) .main-desktop-layout > .container-fluid > .d-flex:first-child {
-        min-height: 4.75rem;
-        margin-bottom: 1.5rem !important;
-        padding-bottom: 1rem !important;
-        border-color: #e4e9ef !important;
-    }
-
-    body:has(#listaEquipesDesktop) #btnVoltarEquipesDesk {
-        min-height: 3.625rem;
-        padding: .75rem 1.25rem !important;
-        border-radius: .5rem;
-        font-size: 1.125rem;
-        box-shadow: none;
     }
 
     body:has(#listaEquipesDesktop) #btnCriarEquipeDesk {
@@ -785,13 +754,6 @@
     body:has(.sgi-ranking-page) .main-desktop-layout > .container-fluid {
         padding: 3.125rem clamp(3.125rem, 4vw, 5rem) 3rem !important;
     }
-
-    #btnVoltarRankingDesk {
-        min-height: 3.625rem;
-        padding: .75rem 1.25rem !important;
-        border-radius: .625rem;
-        box-shadow: 0 .5rem 1rem rgba(227, 6, 19, .14);
-    }
 }
 
 /* ==========================================================================
@@ -851,7 +813,7 @@
     }
 
     section.sgi-u-h-120px > a.sgi-u-top-20px-left-20px-z-10 {
-        width: 48px;
+        min-width: 48px;
         height: 48px;
         display: inline-flex;
         align-items: center;
@@ -1126,28 +1088,6 @@
 
     .sgi-placar .sgi-placar-header {
         align-items: center;
-        margin-bottom: .5rem !important;
-        gap: .5rem !important;
-        padding-right: 3.25rem;
-    }
-
-    .sgi-placar .sgi-placar-header #btnVoltarPlacar {
-        margin-bottom: 0 !important;
-        min-width: 48px;
-        min-height: 48px;
-        padding: .5rem !important;
-    }
-
-    .sgi-placar .sgi-placar-header #btnVoltarPlacar span {
-        position: absolute !important;
-        width: 1px !important;
-        height: 1px !important;
-        padding: 0 !important;
-        margin: -1px !important;
-        overflow: hidden !important;
-        clip: rect(0, 0, 0, 0) !important;
-        white-space: nowrap !important;
-        border: 0 !important;
     }
 
     .sgi-placar .sgi-placar-header h1 {

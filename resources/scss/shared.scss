@@ -250,48 +250,114 @@ body {
 }
 
 /* ==========================================================================
-   BOTÃO DE VOLTAR PADRÃO (Header/TopBar das duas cascas)
-   Ícone único de seta, alvo de toque de 40px+, sem rótulo de texto.
+   BOTÃO DE VOLTAR PADRÃO (Header/TopBar das duas cascas e telas desktop)
+   Seta + rótulo "Voltar" em pílula vermelha com texto branco.
    ========================================================================== */
 .sgi-back-button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 2.5rem;
-  min-width: 2.5rem;
-  height: 2.5rem;
+  gap: .5rem;
   min-height: 2.5rem;
-  padding: 0;
-  border: 0;
-  border-radius: 50%;
+  padding: .5rem 1rem;
+  border: 1px solid transparent;
+  border-radius: 999px;
   background: var(--bs-primary);
   color: #fff;
-  font-size: 1.25rem;
-  line-height: 1;
+  font-size: 1rem;
+  font-weight: 600;
+  line-height: 1.2;
   text-decoration: none;
-  box-shadow: 0 .25rem .75rem rgba(15, 23, 42, .18);
+  box-shadow: 0 2px 6px rgba(227, 6, 19, .28), 0 1px 2px rgba(227, 6, 19, .22);
+  transition: color .15s ease-in-out,
+    background-color .15s ease-in-out,
+    border-color .15s ease-in-out,
+    box-shadow .15s ease-in-out;
 }
 
-.sgi-back-button:hover,
-.sgi-back-button:focus-visible {
-  background-color: color-mix(in srgb, var(--bs-primary) 88%, #000);
+.sgi-back-button:hover {
+  background-color: color-mix(in srgb, var(--bs-primary) 82%, #000);
+  border-color: color-mix(in srgb, var(--bs-primary) 75%, #000);
   color: #fff;
   text-decoration: none;
 }
 
 .sgi-back-button:focus-visible {
-  outline: 3px solid var(--bs-warning);
+  outline: 3px solid color-mix(in srgb, var(--bs-primary) 30%, transparent);
   outline-offset: 2px;
 }
 
 .sgi-back-button > .bi {
   line-height: 1;
-  font-size: 1.375rem;
+  font-size: 1.1rem;
+}
+
+.sgi-back-button-label {
+  white-space: nowrap;
 }
 
 /* Um [hidden] no botão não pode ser vencido pelo display do componente. */
 .sgi-back-button[hidden] {
   display: none;
+}
+
+/* No mobile o botão de voltar é compacto e exibe apenas a seta: dimensões
+   fixas, sem padding, formato circular. O rótulo "Voltar" é ocultado pelo
+   utilitário d-none d-md-inline no próprio componente. A partir de md o
+   formato de pílula com seta + texto é restaurado. */
+@media (max-width: 767.98px) {
+  .sgi-back-button {
+    width: 38px;
+    height: 38px;
+    min-height: 38px;
+    padding: 0;
+    gap: 0;
+    border-radius: 50%;
+  }
+}
+
+/* ==========================================================================
+   CABEÇALHO UNIFICADO DAS TELAS SECUNDÁRIAS (DESKTOP)
+   Ordem fixa: [Voltar] [Título + Subtítulo] [Ações à direita]
+   ========================================================================== */
+.sgi-page-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 1.5rem;
+  row-gap: .75rem;
+}
+
+.sgi-page-header__back {
+  flex-shrink: 0;
+}
+
+.sgi-page-header__title {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.sgi-page-header__title :is(h1, h2, h3) {
+  margin-bottom: .25rem;
+}
+
+.sgi-page-header__title :is(h1, h2, h3):last-child {
+  margin-bottom: 0;
+}
+
+.sgi-page-header__title p {
+  margin-bottom: 0;
+  color: var(--bs-secondary-color, #6c757d);
+}
+
+.sgi-page-header__actions {
+  flex-shrink: 0;
+  margin-left: auto;
+}
+
+.sgi-page-header .sgi-back-button {
+  flex-shrink: 0;
 }
 
 /* No header mobile o botão flutua à esquerda, oposto ao botão do menu, e o
@@ -400,22 +466,37 @@ body {
     border-radius: .75rem;
   }
 
-  /* Barra móvel compacta: o botão de voltar, o título e o menu flutuante
-     compartilham a linha vertical central (36px em uma barra de 72px). */
-  .sgi-app-shell section.sgi-u-h-120px {
+  /* Barra móvel compacta: o botão de voltar entra em fluxo à esquerda e o
+     menu flutuante fica à direita; o título flutua centralizado no centro
+     da tela (padrão de navegação móvel), limitado para não encostar nos
+     controles e truncado com reticências quando longo. O cabeçalho compacto
+     (plaçar do mesário) é isento e permanece oculto conforme a regra
+     .sgi-compact-header. */
+  .sgi-app-shell section.sgi-u-h-120px:not(.sgi-compact-header) {
     height: 72px !important;
     min-height: 72px !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: .5rem;
+    padding-left: max(.75rem, env(safe-area-inset-left, 0px));
+    padding-right: max(4.25rem, calc(env(safe-area-inset-right, 0px) + 3.75rem));
   }
 
   .sgi-app-shell section.sgi-u-h-120px > a.sgi-u-top-20px-left-20px-z-10 {
-    top: 50% !important;
-    transform: translateY(-50%);
+    flex: 0 0 auto;
+    min-width: 3rem;
   }
 
   .sgi-app-shell .sgi-mobile-header-title {
-    width: calc(100% - 11.5rem);
-    overflow-wrap: anywhere;
-    line-height: 1.15;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    max-width: calc(100% - 10.5rem);
+    line-height: 1.2;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
     text-align: center;
   }
 
@@ -438,8 +519,9 @@ body {
 }
 
 /* Faixa superior do mesário no desktop: a casca SPA mantém o retorno ao
-   painel à esquerda e o nome do painel à direita. O menu compacto e o
-   banner offline continuam nos pontos globais existentes. */
+   painel à esquerda e o título à frente, na mesma linha (padrão das telas
+   secundárias). O menu compacto e o banner offline continuam nos pontos
+   globais existentes. */
 .sgi-app-shell .sgi-mesario-topbar {
   margin-left: var(--sgi-sidebar-width);
   width: calc(100% - var(--sgi-sidebar-width));

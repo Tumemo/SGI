@@ -8,6 +8,15 @@ include SGI_ROOT . '/resources/views/components/aluno-header.php';
 ?>
 
     <main class="container py-4">
+        <div class="mb-4">
+            <?php
+            $sgiUrlVoltar = $urlVoltar;
+            $sgiIdVoltar = 'btnVoltarTermosDesk';
+            $sgiClassVoltar = 'd-none d-md-inline-flex';
+            include SGI_ROOT . '/resources/views/components/back-button.php';
+            unset($sgiUrlVoltar, $sgiIdVoltar, $sgiClassVoltar);
+            ?>
+        </div>
         <h1 class="visually-hidden">Termos e Regulamento</h1>
 
         <!-- Termo de Responsabilidade -->

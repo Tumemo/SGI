@@ -12,7 +12,14 @@ include SGI_ROOT . '/resources/views/components/aluno-header.php';
 
 <main class="jogos-layout py-4 px-3 px-lg-4">
 
-    <header class="d-flex align-items-center gap-3 mb-4">
+    <header class="d-none d-md-flex align-items-center gap-3 mb-4">
+        <?php
+        $sgiUrlVoltar = $urlVoltar;
+        $sgiIdVoltar = 'btnVoltarJogosAlunoDesk';
+        $sgiClassVoltar = 'd-none d-md-inline-flex';
+        include SGI_ROOT . '/resources/views/components/back-button.php';
+        unset($sgiUrlVoltar, $sgiIdVoltar, $sgiClassVoltar);
+        ?>
         <span class="bg-primary text-white rounded-3 p-3 fs-3 d-inline-flex shadow"><i class="bi bi-calendar-event"></i></span>
         <div>
             <h1 class="h3 fw-bold mb-1">Cronograma de Jogos</h1>

@@ -16,7 +16,7 @@ $isMesario = $nivelUsuario === 2;
 ?>
 
 <?php if ($isMesario): ?>
-<div class="d-none d-md-flex align-items-center justify-content-between gap-3 sgi-mesario-topbar">
+<div class="d-none d-md-flex align-items-center gap-3 sgi-mesario-topbar">
     <a href="<?= \App\Shared\Http\Url::to('painel') ?>"
        id="sgiBtnVoltarMesarioDesk"
        class="sgi-back-button"
@@ -24,7 +24,6 @@ $isMesario = $nivelUsuario === 2;
        title="Voltar">
         <i class="bi bi-arrow-left" aria-hidden="true"></i>
     </a>
-    <span class="flex-grow-1"></span>
     <h2 class="h4 fw-bold text-body m-0"><?= htmlspecialchars($titulo, ENT_QUOTES, 'UTF-8') ?></h2>
 </div>
 <?php endif; ?>

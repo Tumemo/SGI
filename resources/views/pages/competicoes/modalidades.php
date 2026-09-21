@@ -22,13 +22,13 @@ $paginaAtiva = 'modalidades';
 </main>
 
 <main class="d-none d-md-block main-desktop-layout">
-    <h1 class="h3 fw-bold text-body mb-4">Modalidades</h1>
+    <?php
+    $headerIdVoltar = 'btnVoltarModalidades';
+    $headerCorpoHtml = '<h1 class="h3 fw-bold text-body mb-0">Modalidades</h1>';
+    include SGI_ROOT . '/resources/views/components/page-header.php';
+    unset($headerMostrarVoltar, $headerCorpoHtml, $headerAcoesHtml, $headerClasse, $headerUrlVoltar, $headerIdVoltar, $headerClassBotao, $headerHiddenBotao);
+    ?>
     <div class="rounded-3">
-        <div class="mb-5">
-            <a href="<?= \App\Shared\Http\Url::to('painel') ?>" id="btnVoltarModalidades" class="btn btn-primary d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none" >
-                <i class="bi bi-arrow-left-circle fs-5"></i> <span id="nomeInterclasseModalidades">Interclasse</span>
-            </a>
-        </div>
 
         <div class="row g-4" id="listaModalidadesDesktop">
             <p class="text-muted">(Carregando modalidades...)</p>

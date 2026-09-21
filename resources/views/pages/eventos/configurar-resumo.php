@@ -35,7 +35,6 @@ $renderEtapasResumoEdicao = static function (array $etapas): void {
 
 <main class="mt-4 d-flex justify-content-center flex-column position-relative d-md-none mb-5">
     <header class="mb-3">
-        <h2 class="h4 fw-bold text-body mb-1">Resumo da edição</h2>
         <p class="text-body-secondary mb-0">
             <strong id="nomeInterclasseResumoMob">Interclasse</strong>
             <span aria-hidden="true"> · </span><span id="anoInterclasseResumoMob">Ano carregando</span>
@@ -89,19 +88,18 @@ $renderEtapasResumoEdicao = static function (array $etapas): void {
 
 <main class="d-none d-md-block main-desktop-layout">
     <div class="container-fluid px-0 mw-100">
-        <div class="d-flex align-items-start flex-wrap gap-3 mb-3">
-            <a href="<?= \App\Shared\Http\Url::to('edicoes/pontuacao') ?>" id="btnVoltarResumoTopo" class="btn btn-outline-primary d-inline-flex align-items-center gap-2 fw-bold px-3 py-2 text-decoration-none sgi-event-back-link">
-                <i class="bi bi-arrow-left-circle fs-5" aria-hidden="true"></i> Voltar
-            </a>
-            <div>
-                <h1 class="h3 fw-bold text-body mb-1">Resumo da edição</h1>
-                <p class="text-body-secondary mb-0">
-                    <strong id="nomeInterclasseResumo">Interclasse</strong>
-                    <span aria-hidden="true"> · </span><span id="anoInterclasseResumo">Ano carregando</span>
-                    <span aria-hidden="true"> · </span><span id="statusInterclasseResumo" class="badge text-bg-secondary">Carregando status</span>
-                </p>
-            </div>
-        </div>
+        <?php
+        $headerIdVoltar = 'btnVoltarResumoTopo';
+        $headerUrlVoltar = \App\Shared\Http\Url::to('edicoes/pontuacao');
+        $headerCorpoHtml = '<h1 class="h3 fw-bold text-body mb-1">Resumo da edição</h1>
+        <p class="text-body-secondary mb-0">
+            <strong id="nomeInterclasseResumo">Interclasse</strong>
+            <span aria-hidden="true"> · </span><span id="anoInterclasseResumo">Ano carregando</span>
+            <span aria-hidden="true"> · </span><span id="statusInterclasseResumo" class="badge text-bg-secondary">Carregando status</span>
+        </p>';
+        include SGI_ROOT . '/resources/views/components/page-header.php';
+        unset($headerIdVoltar, $headerUrlVoltar, $headerCorpoHtml);
+        ?>
 
         <?php $renderEtapasResumoEdicao($etapasEdicao); ?>
 

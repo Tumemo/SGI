@@ -9,8 +9,6 @@ include SGI_ROOT . '/resources/views/components/admin-header.php';
 $paginaAtiva = 'categorias';
 ?>
 <main class="d-md-none">
-    <p class="text-secondary text-center my-3">Editar detalhes turmas</p>
-
     <div class="px-3 mb-3">
         <div class="mb-3">
             <label for="categoriaTurmasMobile" class="form-label fw-semibold">Categoria</label>
@@ -39,10 +37,12 @@ $paginaAtiva = 'categorias';
 
 <main class="d-none d-md-block main-desktop-layout" id="viewTurmasGestaoDesk">
     <div class="container-fluid px-0">
-        <a href="<?= \App\Shared\Http\Url::to('edicoes/categorias') ?>" id="btnVoltarTurmasDesk" class="btn btn-primary d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none" >
-            <i class="bi bi-arrow-left-circle fs-5" aria-hidden="true"></i> <span id="nomeInterclasseTurmasDesk">Interclasse</span>
-        </a>
-        <h1 class="h3 fw-bold text-body mb-4">Turmas</h1>
+        <?php
+        $headerIdVoltar = 'btnVoltarTurmasDesk';
+        $headerCorpoHtml = '<h1 class="h3 fw-bold text-body mb-0">Turmas</h1>';
+        include SGI_ROOT . '/resources/views/components/page-header.php';
+        unset($headerIdVoltar, $headerCorpoHtml);
+        ?>
         <div class="row g-4 mx-0">
             <div class="col-md-4 px-0 px-md-2">
                 <div class="bg-white rounded-4 shadow-sm overflow-hidden border-0">
