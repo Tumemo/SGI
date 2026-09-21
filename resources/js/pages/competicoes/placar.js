@@ -7,6 +7,7 @@ window.SGIPage.mount("competicoes/placar", function (pageConfig, pageScope) {
         window.__SGI_TELA_CLEANUP__ = null;
     }
 
+    var APP_BASE = String(window.SGI_BASE_PATH || '').replace(/\/+$/, '');
     var params = new URLSearchParams(window.location.search);
     var idJogo = params.get('id_jogo') ? parseInt(params.get('id_jogo'), 10) : null;
 
@@ -33,14 +34,14 @@ window.SGIPage.mount("competicoes/placar", function (pageConfig, pageScope) {
         const origem = params.get('origem');
         const refPagina = paginaOrigem();
         const refURL = (refPagina && document.referrer) ? document.referrer : null;
-        let href = '/edicoes/agenda';
+        let href = `${APP_BASE}/edicoes/agenda`;
 
         if (origem === 'ranking' || refPagina === 'ranking') {
-            href = refURL || '/ranking';
+            href = refURL || `${APP_BASE}/ranking`;
         } else if (origem === 'agenda' || refPagina === 'agenda') {
-            href = refURL || '/edicoes/agenda';
+            href = refURL || `${APP_BASE}/edicoes/agenda`;
         } else if (origem === 'agenda_edit' || refPagina === 'edicoes/agenda') {
-            href = refURL || './edicoes/agenda';
+            href = refURL || `${APP_BASE}/edicoes/agenda`;
         }
 
         const btn = document.getElementById('btnVoltarPlacar');

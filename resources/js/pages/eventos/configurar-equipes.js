@@ -1,6 +1,7 @@
 window.SGIPage.mount("eventos/configurar-equipes", function (pageConfig, pageScope) {
 
-    const API = '/api/v1/';
+    const APP_BASE = String(window.SGI_BASE_PATH || '').replace(/\/+$/, '');
+    const API = String(window.SGI_API_BASE || `${APP_BASE}/api/v1/`).replace(/\/?$/, '/');
     const params = new URLSearchParams(window.location.search);
     let idInterclasseEq = params.get('id');
     const idCategoriaUrl = params.get('id_categoria');
@@ -13,7 +14,7 @@ window.SGIPage.mount("eventos/configurar-equipes", function (pageConfig, pageSco
     if (idInterclasseEq) {
         ['btnVoltarEquipesMobile', 'btnVoltarEquipesDesk'].forEach(id => {
             const el = document.getElementById(id);
-            if (el) el.href = `/painel?id=${idInterclasseEq}`;
+            if (el) el.href = `${APP_BASE}/painel?id=${idInterclasseEq}`;
         });
     }
 
@@ -462,7 +463,7 @@ window.SGIPage.mount("eventos/configurar-equipes", function (pageConfig, pageSco
                 idInterclasseEq = resolved;
                 ['btnVoltarEquipesMobile', 'btnVoltarEquipesDesk'].forEach(id => {
                     const el = document.getElementById(id);
-                    if (el) el.href = `/painel?id=${idInterclasseEq}`;
+                    if (el) el.href = `${APP_BASE}/painel?id=${idInterclasseEq}`;
                 });
             }
         }

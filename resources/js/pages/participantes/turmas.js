@@ -1,5 +1,7 @@
 window.SGIPage.mount("participantes/turmas", function (pageConfig, pageScope) {
 
+    const APP_BASE = String(window.SGI_BASE_PATH || '').replace(/\/+$/, '');
+    const API_BASE = String(window.SGI_API_BASE || `${APP_BASE}/api/v1/`).replace(/\/?$/, '');
     let turmasData = [];
     let editTurmaId = null;
     let carregandoTurmas = false;
@@ -116,7 +118,7 @@ window.SGIPage.mount("participantes/turmas", function (pageConfig, pageScope) {
                     </div>
                     <div class="d-flex align-items-center justify-content-between gap-2 mt-auto pt-3 border-top">
                         ${adminBtns}
-                        <a href="/turmas/alunos?id=${interclasse.id_interclasse}&id_turma=${turma.id_turma}&id_categoria=${turma.categorias_id_categoria}" class="btn btn-primary btn-sm ms-auto d-inline-flex align-items-center gap-1">
+                        <a href="${APP_BASE}/turmas/alunos?id=${interclasse.id_interclasse}&id_turma=${turma.id_turma}&id_categoria=${turma.categorias_id_categoria}" class="btn btn-primary btn-sm ms-auto d-inline-flex align-items-center gap-1">
                             Ver detalhes <i class="bi bi-arrow-right"></i>
                         </a>
                     </div>
@@ -231,11 +233,11 @@ window.SGIPage.mount("participantes/turmas", function (pageConfig, pageScope) {
             });
             ['btnVoltarCatDesk', 'btnVoltarCatMob'].forEach(id => {
                 const el = document.getElementById(id);
-                if (el) el.href = `/painel?id=${interclasse.id_interclasse}`;
+                if (el) el.href = `${APP_BASE}/painel?id=${interclasse.id_interclasse}`;
             });
             window.SGIInterclasse.updatePageTitle(interclasse.nome_interclasse);
 
-            const turmasRes = await fetch(`/api/v1/turmas?id_interclasse=${interclasse.id_interclasse}`);
+                const turmasRes = await fetch(`${API_BASE}/turmas?id_interclasse=${interclasse.id_interclasse}`);
             if (!turmasRes.ok) {
                 throw new Error(`HTTP ${turmasRes.status}`);
             }
@@ -289,7 +291,7 @@ window.SGIPage.mount("participantes/turmas", function (pageConfig, pageScope) {
             const interclasse = await resolverInterclasse();
             if (!interclasse) return;
 
-            const res = await fetch(`/api/v1/categorias?id_interclasse=${interclasse.id_interclasse}`);
+                const res = await fetch(`${API_BASE}/categorias?id_interclasse=${interclasse.id_interclasse}`);
             const categorias = await res.json();
             const sel = document.getElementById('categoriaTurma');
             preencherSelectCategorias(sel, categorias);
@@ -325,7 +327,7 @@ window.SGIPage.mount("participantes/turmas", function (pageConfig, pageScope) {
                 return;
             }
 
-            const res = await fetch('/api/v1/turmas', {
+                const res = await fetch(`${API_BASE}/turmas`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(body)
@@ -342,7 +344,7 @@ window.SGIPage.mount("participantes/turmas", function (pageConfig, pageScope) {
                 formData.append('id_interclasse', String(interclasse.id_interclasse));
                 formData.append('id_categoria', String(body.categorias_id_categoria));
                 formData.append('id_turma', String(data.id_turma));
-                const up = await fetch('/api/v1/importacoes/turma-pdf', {
+                const up = await fetch(`${API_BASE}/importacoes/turma-pdf`, {
                     method: 'POST',
                     body: formData
                 });
@@ -370,7 +372,7 @@ window.SGIPage.mount("participantes/turmas", function (pageConfig, pageScope) {
         try {
             const interclasse = await resolverInterclasse();
             if (!interclasse) return;
-            const res = await fetch(`/api/v1/categorias?id_interclasse=${interclasse.id_interclasse}`);
+                const res = await fetch(`${API_BASE}/categorias?id_interclasse=${interclasse.id_interclasse}`);
             const cats = await res.json();
             const sel = document.getElementById('editCategoriaTurma');
             preencherSelectCategorias(sel, cats, selectedId);
@@ -429,7 +431,7 @@ window.SGIPage.mount("participantes/turmas", function (pageConfig, pageScope) {
             btn.disabled = true;
             btn.innerHTML = 'Salvando...';
 
-            const resp = await fetch('/api/v1/turmas', {
+                const resp = await fetch(`${API_BASE}/turmas`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(body)
@@ -471,7 +473,7 @@ window.SGIPage.mount("participantes/turmas", function (pageConfig, pageScope) {
         btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Excluindo...';
 
         try {
-            const res = await fetch(`/api/v1/turmas?id_turma=${excluirIdPendente}`, { method: 'DELETE' });
+                const res = await fetch(`${API_BASE}/turmas?id_turma=${excluirIdPendente}`, { method: 'DELETE' });
             const texto = await res.text();
             let data = null;
             try { data = JSON.parse(texto); } catch (_) {}

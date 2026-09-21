@@ -1,5 +1,7 @@
 window.SGIPage.mount("competicoes/modalidades", function (pageConfig, pageScope) {
 
+    const APP_BASE = String(window.SGI_BASE_PATH || '').replace(/\/+$/, '');
+    const API_BASE = String(window.SGI_API_BASE || `${APP_BASE}/api/v1/`).replace(/\/?$/, '');
     const nivelUsuario = pageConfig.value2;
     let idInterclasse = null;
 
@@ -12,7 +14,7 @@ window.SGIPage.mount("competicoes/modalidades", function (pageConfig, pageScope)
         const id = encodeURIComponent(String(modalidade.id_modalidade));
         const interclasse = encodeURIComponent(String(idInterclasse));
         return '<div class="d-flex gap-1 ms-2">'
-            + '<a class="btn btn-sm btn-outline-primary" href="/modalidades/detalhes?id=' + interclasse + '&id_modalidade=' + id + '" title="Editar" aria-label="Editar modalidade"><i class="bi bi-pencil"></i></a>'
+            + '<a class="btn btn-sm btn-outline-primary" href="' + APP_BASE + '/modalidades/detalhes?id=' + interclasse + '&id_modalidade=' + id + '" title="Editar" aria-label="Editar modalidade"><i class="bi bi-pencil"></i></a>'
             + '<button type="button" class="btn btn-sm btn-outline-danger" data-sgi-action="delete-modalidade" data-id-modalidade="' + esc(modalidade.id_modalidade) + '" title="Excluir" aria-label="Excluir modalidade"><i class="bi bi-trash"></i></button>'
             + '</div>';
     }
@@ -22,7 +24,7 @@ window.SGIPage.mount("competicoes/modalidades", function (pageConfig, pageScope)
         const divDesktop = document.getElementById('listaModalidadesDesktop');
 
         try {
-            const response = await axios.get('/api/v1/modalidades?x=1');
+            const response = await axios.get(`${API_BASE}/modalidades?x=1`);
             let modalidades = response.data.data || response.data;
             if (!Array.isArray(modalidades)) modalidades = [];
             modalidades = modalidades.filter((item) => String(item.interclasses_id_interclasse) === String(idInterclasse));
@@ -91,7 +93,7 @@ window.SGIPage.mount("competicoes/modalidades", function (pageConfig, pageScope)
         if (!selectTipo) return;
 
         try {
-            const response = await axios.get('/api/v1/tipos-modalidade');
+            const response = await axios.get(`${API_BASE}/tipos-modalidade`);
             const tipos = response.data;
 
             const placeholder = new Option('Selecione um tipo...', '');
@@ -114,7 +116,7 @@ window.SGIPage.mount("competicoes/modalidades", function (pageConfig, pageScope)
         if (!selectCat) return;
 
         try {
-            const response = await axios.get('/api/v1/categorias?id_interclasse=' + idInterclasse);
+            const response = await axios.get(`${API_BASE}/categorias?id_interclasse=${idInterclasse}`);
             const categorias = response.data;
 
             const placeholder = new Option('Selecione uma categoria...', '');
@@ -136,7 +138,7 @@ window.SGIPage.mount("competicoes/modalidades", function (pageConfig, pageScope)
         if (!await SGI.confirm({ titulo: 'Excluir modalidade?', mensagem: 'Esta ação não pode ser desfeita.', textoConfirmar: 'Excluir modalidade', destrutivo: true })) return;
 
         try {
-            const res = await axios.put('/api/v1/modalidades', {
+            const res = await axios.put(`${API_BASE}/modalidades`, {
                 id_modalidade: id,
                 status_modalidade: '0'
             });
@@ -172,7 +174,7 @@ window.SGIPage.mount("competicoes/modalidades", function (pageConfig, pageScope)
         try {
             btnSalvar.disabled = true;
             btnSalvar.innerHTML = 'Salvando...';
-            const res = await axios.post('/api/v1/modalidades', dados);
+            const res = await axios.post(`${API_BASE}/modalidades`, dados);
 
             if (res.data.success) {
                 caixaMensagem.innerHTML = '<p class="text-success text-center fw-bold">Criada com sucesso!</p>';
@@ -204,16 +206,17 @@ window.SGIPage.mount("competicoes/modalidades", function (pageConfig, pageScope)
         idInterclasse = await window.SGIInterclasse.resolveId();
         if (!idInterclasse) {
             await SGI.alert({ titulo: 'Interclasse não encontrado', mensagem: 'Nenhum interclasse ativo foi encontrado.', tipo: 'warning' });
-            window.location.href = '/edicoes';
+            window.location.href = `${APP_BASE}/edicoes`;
             return;
         }
         const ic = await window.SGIInterclasse.getInterclasseById(idInterclasse);
         const nomeEl = document.getElementById('nomeInterclasseModalidades');
         if (nomeEl) nomeEl.innerText = ic?.nome_interclasse || 'Interclasse';
         const btnEl = document.getElementById('btnVoltarModalidades');
-        if (btnEl) btnEl.href = `/painel?id=${idInterclasse}`;
+        const hrefVoltarModalidades = `${APP_BASE}/painel?id=${idInterclasse}`;
+        if (btnEl) btnEl.href = hrefVoltarModalidades;
         const btnElMobile = document.getElementById('sgiBtnVoltar');
-        if (btnElMobile) btnElMobile.href = `/painel?id=${idInterclasse}`;
+        if (btnElMobile) btnElMobile.href = hrefVoltarModalidades;
         await Promise.all([
             carregarModalidades(),
             carregarTiposModalidades(),

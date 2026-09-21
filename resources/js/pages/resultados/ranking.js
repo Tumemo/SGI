@@ -1,5 +1,7 @@
 window.SGIPage.mount("resultados/ranking", function (pageConfig, pageScope) {
 
+    const APP_BASE = String(window.SGI_BASE_PATH || '').replace(/\/+$/, '');
+    const API_BASE = String(window.SGI_API_BASE || `${APP_BASE}/api/v1/`).replace(/\/?$/, '');
     const IS_ADMIN = pageConfig.value2;
     const urlParams = new URLSearchParams(window.location.search);
     const idInterclasse = urlParams.get('id');
@@ -38,7 +40,7 @@ window.SGIPage.mount("resultados/ranking", function (pageConfig, pageScope) {
             try {
                 const ativo = await window.SGIInterclasse.getActiveInterclasse();
                 if (ativo) {
-                    window.location.href = `/ranking?id=${ativo.id_interclasse}`;
+                    window.location.href = `${APP_BASE}/ranking?id=${ativo.id_interclasse}`;
                     return;
                 }
             } catch (_) {}
@@ -80,7 +82,7 @@ window.SGIPage.mount("resultados/ranking", function (pageConfig, pageScope) {
         limparMensagens();
 
         try {
-            const response = await fetch(`/api/v1/ranking?id_interclasse=${idInterclasse}`);
+            const response = await fetch(`${API_BASE}/ranking?id_interclasse=${idInterclasse}`);
             const data = await lerRespostaJson(response, 'Consulta do ranking');
 
             if (!response.ok) {
@@ -121,7 +123,7 @@ window.SGIPage.mount("resultados/ranking", function (pageConfig, pageScope) {
             });
 
             try {
-                const catRes = await fetch(`/api/v1/categorias?id_interclasse=${idInterclasse}`);
+            const catRes = await fetch(`${API_BASE}/categorias?id_interclasse=${idInterclasse}`);
                 const catData = await lerRespostaJson(catRes, 'Consulta de categorias');
                 if (!catRes.ok) {
                     throw new Error(`Consulta de categorias: HTTP ${catRes.status}`);
@@ -510,7 +512,7 @@ window.SGIPage.mount("resultados/ranking", function (pageConfig, pageScope) {
         modal.show();
 
         try {
-            const response = await fetch(`/api/v1/historico-turma?id_turma=${idTurma}&id_interclasse=${idInterclasse}`);
+            const response = await fetch(`${API_BASE}/historico-turma?id_turma=${idTurma}&id_interclasse=${idInterclasse}`);
             const data = await response.json();
 
             if (!response.ok || !data.success) {

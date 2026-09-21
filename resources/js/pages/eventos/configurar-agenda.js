@@ -8,7 +8,8 @@ window.SGIPage.mount("eventos/configurar-agenda", function (pageConfig, pageScop
         try { window.__SGI_TELA_CLEANUP__(); } catch (_) {}
     }
     window.__SGI_TELA_CLEANUP__ = function () {};
-    const API = '/api/v1/';
+    const APP_BASE = String(window.SGI_BASE_PATH || '').replace(/\/+$/, '');
+    const API = String(window.SGI_API_BASE || `${APP_BASE}/api/v1/`).replace(/\/?$/, '/');
     const NIVEL_USUARIO = pageConfig.value2;
     let dataNavegacao = new Date();
     const params = new URLSearchParams(window.location.search);
@@ -291,7 +292,7 @@ window.SGIPage.mount("eventos/configurar-agenda", function (pageConfig, pageScop
         const hi = formatarHora(j.inicio_jogo);
         const hf = formatarHora(j.termino_jogo || j.terminno_jogo);
         const horario = hi && hf ? `${hi} – ${hf}` : hi || 'Horário a definir';
-        const placarHref = `/jogos/placar?id_jogo=${encodeURIComponent(j.id_jogo)}&origem=agenda_edit`;
+        const placarHref = `${APP_BASE}/jogos/placar?id_jogo=${encodeURIComponent(j.id_jogo)}&origem=agenda_edit`;
         const statusClass = (j.status_jogo || '').toLowerCase().replace('ã','a').replace('õ','o');
         const statusMap = { agendado: 'agendado', iniciado: 'andamento', pausado: 'pausado', concluido: 'concluido', finalizado: 'concluido' };
         const cardClass = statusMap[statusClass] || 'agendado';
@@ -770,10 +771,10 @@ window.SGIPage.mount("eventos/configurar-agenda", function (pageConfig, pageScop
                     nomeInterclasse.innerText = interclasseAtual.nome_interclasse;
                 }
                 if (btnVoltar && btnVoltar.isConnected) {
-                    btnVoltar.href = `/painel?id=${interclasseAtual.id_interclasse}`;
+                    btnVoltar.href = `${APP_BASE}/painel?id=${interclasseAtual.id_interclasse}`;
                 }
                 if (btnVoltarMobile && btnVoltarMobile.isConnected) {
-                    btnVoltarMobile.href = `/painel?id=${interclasseAtual.id_interclasse}`;
+                    btnVoltarMobile.href = `${APP_BASE}/painel?id=${interclasseAtual.id_interclasse}`;
                 }
             }
         } catch (e) {

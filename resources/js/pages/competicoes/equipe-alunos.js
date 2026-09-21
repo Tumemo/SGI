@@ -1,5 +1,7 @@
 window.SGIPage.mount("competicoes/equipe-alunos", function (pageConfig, pageScope) {
 
+    const APP_BASE = String(window.SGI_BASE_PATH || '').replace(/\/+$/, '');
+    const API_BASE = String(window.SGI_API_BASE || `${APP_BASE}/api/v1/`).replace(/\/?$/, '');
 let alunos = [];
 let alunosNaEquipe = [];
 let alunosSelecionados = new Set();
@@ -232,7 +234,7 @@ async function carregar() {
         const ts = Date.now();
 
         if (idModalidade) {
-            const resMod = await fetch(`/api/v1/modalidades?id_modalidade=${idModalidade}&_t=${ts}`);
+            const resMod = await fetch(`${API_BASE}/modalidades?id_modalidade=${idModalidade}&_t=${ts}`);
             const dadosMod = await lerJsonEstrito(resMod, 'Não foi possível carregar os dados da modalidade.');
             if (Array.isArray(dadosMod) && dadosMod.length > 0) {
                 generoDaModalidade = dadosMod[0].genero_modalidade || 'MISTO';
@@ -242,14 +244,14 @@ async function carregar() {
                 generoDaModalidade = 'MISTO';
             }
         } else if (idCategoria) {
-            const resMod = await fetch(`/api/v1/modalidades?id_categoria=${idCategoria}&_t=${ts}`);
+            const resMod = await fetch(`${API_BASE}/modalidades?id_categoria=${idCategoria}&_t=${ts}`);
             const dadosMod = await lerJsonEstrito(resMod, 'Não foi possível carregar os dados da modalidade.');
             if (Array.isArray(dadosMod) && dadosMod.length > 0) {
                 generoDaModalidade = dadosMod[0].genero_modalidade || 'MISTO';
             }
         }
 
-        const resEquipe = await fetch(`/api/v1/equipes?id_equipe=${_idEquipe}&_t=${ts}`);
+        const resEquipe = await fetch(`${API_BASE}/equipes?id_equipe=${_idEquipe}&_t=${ts}`);
         const rawEq = await lerJsonEstrito(resEquipe, 'Não foi possível carregar os integrantes da equipe.');
         if (!Array.isArray(rawEq) || !rawEq.every(aluno =>
             aluno && typeof aluno === 'object' && !Array.isArray(aluno) && aluno.id_usuario != null
@@ -261,7 +263,7 @@ async function carregar() {
         ]);
 
         const generoParam = (generoDaModalidade === 'MISTO' || generoDaModalidade === 'MISTA') ? '' : `&genero=${generoDaModalidade}`;
-        const res = await fetch(`/api/v1/usuarios?acao=listar_competidores&id_turma=${idTurma}${generoParam}&_t=${ts}`);
+        const res = await fetch(`${API_BASE}/usuarios?acao=listar_competidores&id_turma=${idTurma}${generoParam}&_t=${ts}`);
         const data = await lerJsonEstrito(res, 'Não foi possível carregar os alunos da turma.');
         alunos = extrairCompetidores(data);
         const idsDisponiveis = new Set(alunos.map(aluno => String(aluno.id_usuario)));
@@ -325,7 +327,7 @@ async function salvar() {
     atualizarAcoesSelecao();
 
     try {
-        const response = await fetch('/api/v1/equipes', {
+        const response = await fetch(`${API_BASE}/equipes`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({

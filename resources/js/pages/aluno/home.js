@@ -1,6 +1,7 @@
 window.SGIPage.mount("aluno/home", function (pageConfig, pageScope) {
 
-const APP_BASE = window.SGI_BASE_PATH || '';
+const APP_BASE = String(window.SGI_BASE_PATH || '').replace(/\/+$/, '');
+const API_BASE = String(window.SGI_API_BASE || `${APP_BASE}/api/v1/`).replace(/\/?$/, '/');
 
 function escapeHTML(string) {
     return window.SGIHtml
@@ -32,7 +33,7 @@ function renderCards(items) {
             const statusClass = isAtivo ? 'active' : 'inactive';
             const iconClass = isAtivo ? 'active' : 'inactive';
             const idInterclasse = encodeURIComponent(String(item.id_interclasse));
-            const href = isAtivo ? `/aluno/modalidades?id=${idInterclasse}` : `/aluno/ranking?id=${idInterclasse}`;
+            const href = isAtivo ? `${APP_BASE}/aluno/modalidades?id=${idInterclasse}` : `${APP_BASE}/aluno/ranking?id=${idInterclasse}`;
             const btnLabel = isAtivo ? 'Ver Detalhes <i class="bi bi-arrow-right"></i>' : 'Ver Ranking <i class="bi bi-bar-chart"></i>';
 
             return `
@@ -86,7 +87,7 @@ function filterAndRender() {
 
 async function carregarInterclassesAluno() {
     try {
-        const res = await fetch('/api/v1/edicoes?regulamento=true');
+        const res = await fetch(`${API_BASE}edicoes?regulamento=true`);
         if (!res.ok) throw new Error('Resposta do servidor não amigável.');
         const lista = await res.json();
 
@@ -117,7 +118,7 @@ async function carregarRegulamentoModal() {
     const btnAceitar = document.getElementById('btnAceitarTermo');
 
     try {
-        const res = await fetch('/api/v1/edicoes?status_interclasse=1&regulamento=true');
+        const res = await fetch(`${API_BASE}edicoes?status_interclasse=1&regulamento=true`);
         const data = await res.json();
         const ativo = Array.isArray(data) ? data[0] : data;
 
@@ -149,7 +150,7 @@ async function initModalTermo() {
     const avisoRecusa = document.getElementById('avisoRecusa');
 
     try {
-        const checagem = await fetch('/api/v1/termos', { method: 'GET' });
+        const checagem = await fetch(`${API_BASE}termos`, { method: 'GET' });
         if (checagem.status === 401) return;
         const resCheck = await checagem.json();
         if (resCheck.success && resCheck.termo_aceito === true) {
@@ -167,7 +168,7 @@ async function initModalTermo() {
         btnRecusar.disabled = true;
         btnAceitar.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status"></span>Salvando...';
         try {
-            const res = await fetch('/api/v1/termos', {
+                const res = await fetch(`${API_BASE}termos`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' }
             });

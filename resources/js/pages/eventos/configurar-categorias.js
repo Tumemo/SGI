@@ -99,8 +99,8 @@ window.SGIPage.mount("eventos/configurar-categorias", function (pageConfig, page
             }
             document.getElementById('listaCategoriasMobile').innerHTML = '<p class="text-muted mt-4 text-center w-100">Nenhum interclasse ativo.</p>';
             document.getElementById('listaCategoriasDesktop').innerHTML = '<p class="text-muted mt-4 text-center w-100">Nenhum interclasse ativo.</p>';
-            document.getElementById('btnContinuarMobile').href = '/painel';
-            document.getElementById('btnContinuarDesktop').href = '/painel';
+            document.getElementById('btnContinuarMobile').href = `${APP_BASE}/painel`;
+            document.getElementById('btnContinuarDesktop').href = `${APP_BASE}/painel`;
         });
     } else {
         window.SGIInterclasse.getInterclasseById(idInterclasse).then((dados) => {
