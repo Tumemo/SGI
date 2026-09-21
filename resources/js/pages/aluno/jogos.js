@@ -1,6 +1,7 @@
 window.SGIPage.mount("aluno/jogos", function (pageConfig, pageScope) {
 
-    const APP_BASE = window.SGI_BASE_PATH || '';
+    const APP_BASE = String(window.SGI_BASE_PATH || '').replace(/\/+$/, '');
+    const API_BASE = String(window.SGI_API_BASE || `${APP_BASE}/api/v1/`).replace(/\/?$/, '/');
 
     let todosOsJogos = [];
     let filtroStatus = 'all';
@@ -120,7 +121,7 @@ window.SGIPage.mount("aluno/jogos", function (pageConfig, pageScope) {
 
         try {
             // 1. Descobrir o Interclasse Ativo
-            const resInter = await fetch('/api/v1/edicoes?regulamento=true');
+            const resInter = await fetch(`${API_BASE}edicoes?regulamento=true`);
             if (!resInter.ok) throw new Error('Não foi possível carregar as edições.');
             const dataInter = await resInter.json();
             if (!Array.isArray(dataInter) || !dataInter.every(edicao =>
@@ -146,7 +147,7 @@ window.SGIPage.mount("aluno/jogos", function (pageConfig, pageScope) {
             }
 
             // 2. Buscar as partidas da API (agora com data, horário, local e modalidade)
-            const resJogos = await fetch(`/api/v1/partidas?id_interclasse=${idInterclasse}`);
+            const resJogos = await fetch(`${API_BASE}partidas?id_interclasse=${idInterclasse}`);
 
             if (!resJogos.ok) throw new Error('Não foi possível carregar os jogos.');
 
@@ -385,8 +386,8 @@ window.SGIPage.mount("aluno/jogos", function (pageConfig, pageScope) {
 
         try {
             const [resPartidas, resDestaques] = await Promise.all([
-                fetch(`/api/v1/partidas?id_jogo=${idJogo}`),
-                fetch(`/api/v1/artilheiros?id_jogo=${idJogo}&ano=${anoInterclasse}`)
+                fetch(`${API_BASE}partidas?id_jogo=${idJogo}`),
+                fetch(`${API_BASE}artilheiros?id_jogo=${idJogo}&ano=${anoInterclasse}`)
             ]);
 
             if (!resPartidas.ok) throw new Error('Não foi possível carregar os detalhes da partida.');
@@ -604,7 +605,7 @@ window.SGIPage.mount("aluno/jogos", function (pageConfig, pageScope) {
                 }
             }
 
-            const res = await fetch(`/api/v1/equipes?id_equipe=${idEquipe}`);
+            const res = await fetch(`${API_BASE}equipes?id_equipe=${idEquipe}`);
             const membros = await res.json();
             if (!res.ok || !Array.isArray(membros) || !membros.every(membro =>
                 membro && typeof membro === 'object' && !Array.isArray(membro) && membro.id_usuario != null

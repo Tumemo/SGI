@@ -1,7 +1,7 @@
 window.SGIPage.mount("eventos/configurar-locais", function (pageConfig, pageScope) {
 
-    const APP_BASE = window.SGI_BASE_PATH || '';
-    const API = (window.SGI_API_BASE || '/api/v1/').replace(/\/?$/, '/');
+    const APP_BASE = String(window.SGI_BASE_PATH || '').replace(/\/+$/, '');
+    const API = String(window.SGI_API_BASE || `${APP_BASE}/api/v1/`).replace(/\/?$/, '/');
     const params = new URLSearchParams(window.location.search);
     let idInterclasse = params.get('id');
     let locaisAtuais = [];
@@ -27,7 +27,7 @@ window.SGIPage.mount("eventos/configurar-locais", function (pageConfig, pageScop
 
                 const voltarLinkDesktop = document.getElementById('btnVoltarLocaisDesk');
                 const voltarLinkMobile = document.getElementById('sgiBtnVoltar');
-                const hrefVoltar = `/painel?id=${idInterclasse}`;
+                const hrefVoltar = `${APP_BASE}/painel?id=${idInterclasse}`;
                 if (voltarLinkDesktop) voltarLinkDesktop.href = hrefVoltar;
                 if (voltarLinkMobile) voltarLinkMobile.href = hrefVoltar;
                 if (ativo.nome_interclasse) {
@@ -46,7 +46,7 @@ window.SGIPage.mount("eventos/configurar-locais", function (pageConfig, pageScop
     }
 
     if (idInterclasse) {
-        const hrefVoltarLocal = `/painel?id=${idInterclasse}`;
+        const hrefVoltarLocal = `${APP_BASE}/painel?id=${idInterclasse}`;
         ['btnVoltarLocaisDesk', 'sgiBtnVoltar'].forEach(id => {
             const el = document.getElementById(id);
             if (el) el.href = hrefVoltarLocal;

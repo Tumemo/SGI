@@ -6,6 +6,7 @@ namespace App\Modules\Acesso\Presentation\Http;
 
 use App\Shared\Http\SessionManager;
 use App\Shared\Http\CsrfGuard;
+use App\Shared\Http\Url;
 use App\Modules\Acesso\Application\LoginService;
 
 final class LoginController
@@ -65,11 +66,11 @@ final class LoginController
         $_SESSION['senha_troca_pendente'] = $authenticated['exige_troca_senha'];
         $destino = match ($nivel) {
             3 => $_SESSION['senha_troca_pendente']
-                ? '/aluno/trocar-senha'
-                : ($_SESSION['termo_aceito'] ? '/aluno/inicio' : '/aluno/termos'),
-            0, 1 => '/edicoes',
-            2 => '/painel',
-            default => '/login',
+                ? Url::to('aluno/trocar-senha')
+                : ($_SESSION['termo_aceito'] ? Url::to('aluno/inicio') : Url::to('aluno/termos')),
+            0, 1 => Url::to('edicoes'),
+            2 => Url::to('painel'),
+            default => Url::to('login'),
         };
         return \App\Shared\Http\Response::json(['status' => 'sucesso', 'redirect' => $destino, 'csrf_token' => CsrfGuard::token()], $status, $headers);
     }

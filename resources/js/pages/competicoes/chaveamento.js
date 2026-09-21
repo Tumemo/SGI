@@ -1,5 +1,7 @@
 window.SGIPage.mount("competicoes/chaveamento", function (pageConfig, pageScope) {
 
+    const APP_BASE = String(window.SGI_BASE_PATH || '').replace(/\/+$/, '');
+    const API_BASE = String(window.SGI_API_BASE || `${APP_BASE}/api/v1/`).replace(/\/?$/, '');
     const urlParams = new URLSearchParams(window.location.search);
     let idInterclasse = urlParams.get('id');
     let modalidadesCache = [];
@@ -500,7 +502,7 @@ window.SGIPage.mount("competicoes/chaveamento", function (pageConfig, pageScope)
         }
         if (!idInterclasse) {
             await SGI.alert({ titulo: 'Interclasse não encontrado', mensagem: 'Nenhum interclasse ativo foi encontrado.', tipo: 'warning' });
-            window.location.href = "/painel";
+            window.location.href = `${APP_BASE}/painel`;
             return null;
         }
         const dados = await window.SGIInterclasse.getInterclasseById(idInterclasse);
@@ -510,7 +512,7 @@ window.SGIPage.mount("competicoes/chaveamento", function (pageConfig, pageScope)
         });
         ['btnVoltar', 'btnVoltarChaveamentoMob'].forEach(id => {
             const el = document.getElementById(id);
-            if (el) el.href = `/painel?id=${idInterclasse}`;
+            if (el) el.href = `${APP_BASE}/painel?id=${idInterclasse}`;
         });
         return idInterclasse;
     }
@@ -589,7 +591,7 @@ window.SGIPage.mount("competicoes/chaveamento", function (pageConfig, pageScope)
 
     async function carregarModalidades() {
         try {
-            const resp = await fetch(`/api/v1/modalidades?id_interclasse=${idInterclasse}`);
+            const resp = await fetch(`${API_BASE}/modalidades?id_interclasse=${idInterclasse}`);
             const data = await resp.json();
             modalidadesCache = Array.isArray(data) ? data : [];
             const select = document.getElementById('selectModalidade');
@@ -650,7 +652,7 @@ window.SGIPage.mount("competicoes/chaveamento", function (pageConfig, pageScope)
         const select = document.getElementById('filtroCategoriaJogos');
         const selectMob = document.getElementById('filtroCategoriaJogosMob');
         try {
-            const resp = await fetch(`/api/v1/categorias?id_interclasse=${idInterclasse}`);
+            const resp = await fetch(`${API_BASE}/categorias?id_interclasse=${idInterclasse}`);
             const data = await resp.json();
             const categorias = Array.isArray(data) ? data : [];
             select.innerHTML = '<option value="">Todas categorias</option>';
@@ -800,7 +802,7 @@ window.SGIPage.mount("competicoes/chaveamento", function (pageConfig, pageScope)
         var selectLocal = document.getElementById('editLocalJogo');
         selectLocal.innerHTML = '<option value="">Carregando...</option>';
 
-        fetch('/api/v1/locais?id_interclasse=' + idInterclasse + '&disponivel=1')
+        fetch(`${API_BASE}/locais?id_interclasse=${idInterclasse}&disponivel=1`)
             .then(function(r) {
                 return r.json();
             })
@@ -877,7 +879,7 @@ window.SGIPage.mount("competicoes/chaveamento", function (pageConfig, pageScope)
         btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status"></span> Salvando...';
 
         try {
-            var resp = await fetch('/api/v1/jogos', {
+                var resp = await fetch(`${API_BASE}/jogos`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json'
@@ -900,7 +902,7 @@ window.SGIPage.mount("competicoes/chaveamento", function (pageConfig, pageScope)
                         });
                     });
 
-                    const scoreResp = await fetch('/api/v1/resultados', {
+                    const scoreResp = await fetch(`${API_BASE}/resultados`, {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json'
@@ -1035,7 +1037,7 @@ window.SGIPage.mount("competicoes/chaveamento", function (pageConfig, pageScope)
             <td headers="${prefixoCabecalho}status"><span class="badge rounded-pill text-bg-${statusVariant}">${statusLabel}</span></td>
             <td headers="${prefixoCabecalho}acoes">
                 <div class="d-flex gap-2 justify-content-end">
-                    <a href="/jogos/placar?id_jogo=${j.id_jogo}" class="btn btn-sm btn-outline-success d-inline-flex align-items-center justify-content-center" title="Acessar Jogo" aria-label="Acessar Jogo">
+                    <a href="${APP_BASE}/jogos/placar?id_jogo=${j.id_jogo}" class="btn btn-sm btn-outline-success d-inline-flex align-items-center justify-content-center" title="Acessar Jogo" aria-label="Acessar Jogo">
                         <i class="bi bi-play-fill"></i>
                     </a>
                     ${podeEditarJogo() ? `
@@ -1057,7 +1059,7 @@ window.SGIPage.mount("competicoes/chaveamento", function (pageConfig, pageScope)
             const idModalidade = document.getElementById('filtroModalidadeJogos' + sufixoAtivo).value;
             const idCategoria = document.getElementById('filtroCategoriaJogos' + sufixoAtivo).value;
 
-            let statsUrl = `/api/v1/jogos?id_interclasse=${idInterclasse}`;
+            let statsUrl = `${API_BASE}/jogos?id_interclasse=${idInterclasse}`;
             const statsResp = await fetch(statsUrl);
             const statsData = await statsResp.json();
             let statsJogos = Array.isArray(statsData) ? statsData : [];
@@ -1068,7 +1070,7 @@ window.SGIPage.mount("competicoes/chaveamento", function (pageConfig, pageScope)
             });
             atualizarStats(statsJogos);
 
-            let url = `/api/v1/jogos?id_interclasse=${idInterclasse}`;
+            let url = `${API_BASE}/jogos?id_interclasse=${idInterclasse}`;
             if (idModalidade) url += `&id_modalidade=${idModalidade}`;
             if (idCategoria) url += `&id_categoria=${idCategoria}`;
 
@@ -1244,7 +1246,7 @@ window.SGIPage.mount("competicoes/chaveamento", function (pageConfig, pageScope)
         if (!isBye && !isConcluido && jogo.id_jogo) {
             let botoes = '';
             if (jogo.status_jogo === 'Agendado' && jogo.data_jogo && jogo.inicio_jogo && jogo.termino_jogo && jogo.locais_id_local) {
-                botoes += `<a href="/jogos/placar?id_jogo=${jogo.id_jogo}" class="btn btn-sm btn-outline-success d-inline-flex align-items-center gap-1" title="Iniciar Jogo"><i class="bi bi-play-fill"></i>Iniciar</a>`;
+                botoes += `<a href="${APP_BASE}/jogos/placar?id_jogo=${jogo.id_jogo}" class="btn btn-sm btn-outline-success d-inline-flex align-items-center gap-1" title="Iniciar Jogo"><i class="bi bi-play-fill"></i>Iniciar</a>`;
             }
             if (podeEditar) {
                 botoes += `<button class="btn btn-sm btn-outline-secondary d-inline-flex align-items-center gap-1" title="Editar Jogo" onclick="editarJogoBracket(this)" data-jogo='${jogoData}'><i class="bi bi-pencil"></i>Editar</button>`;
@@ -1254,7 +1256,7 @@ window.SGIPage.mount("competicoes/chaveamento", function (pageConfig, pageScope)
             }
         }
         if (isConcluido && jogo.id_jogo) {
-            let botoes = `<a href="/jogos/placar?id_jogo=${jogo.id_jogo}" class="btn btn-sm btn-outline-primary d-inline-flex align-items-center gap-1" title="Ver resultado"><i class="bi bi-eye"></i>Ver resultado</a>`;
+            let botoes = `<a href="${APP_BASE}/jogos/placar?id_jogo=${jogo.id_jogo}" class="btn btn-sm btn-outline-primary d-inline-flex align-items-center gap-1" title="Ver resultado"><i class="bi bi-eye"></i>Ver resultado</a>`;
             if (podeEditar) {
                 botoes += `<button class="btn btn-sm btn-outline-secondary d-inline-flex align-items-center gap-1" title="Editar Jogo" data-jogo='${JSON.stringify(jogo).replace(/'/g, "&#39;")}' onclick="editarJogoBracket(this)"><i class="bi bi-pencil"></i>Editar</button>`;
             }
@@ -1442,7 +1444,7 @@ window.SGIPage.mount("competicoes/chaveamento", function (pageConfig, pageScope)
         var selectLocal = document.getElementById('editLocalJogo');
         selectLocal.innerHTML = '<option value="">Carregando...</option>';
 
-        fetch('/api/v1/locais?id_interclasse=' + idInterclasse + '&disponivel=1')
+        fetch(`${API_BASE}/locais?id_interclasse=${idInterclasse}&disponivel=1`)
             .then(function(r) {
                 return r.json();
             })
@@ -1521,7 +1523,7 @@ window.SGIPage.mount("competicoes/chaveamento", function (pageConfig, pageScope)
             if (areaMob) areaMob.innerHTML = loadingHtml;
 
             try {
-                const resRank = await fetch(`/api/v1/chaveamentos?tipo_modalidade=individual&acao=ranking&id_modalidade=${idModalidade}`);
+                const resRank = await fetch(`${API_BASE}/chaveamentos?tipo_modalidade=individual&acao=ranking&id_modalidade=${idModalidade}`);
                 const dadosRank = await resRank.json();
                 const rankingAtual = (dadosRank.success && dadosRank.ranking) ? dadosRank.ranking : [];
                 const jogoIndividual = dadosRank.jogo || null;
@@ -1777,7 +1779,7 @@ window.SGIPage.mount("competicoes/chaveamento", function (pageConfig, pageScope)
         try {
             btn.disabled = true;
             btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Gerando...';
-            const resp = await fetch('/api/v1/chaveamentos', {
+                const resp = await fetch(`${API_BASE}/chaveamentos`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ id_modalidade: Number(idModalidade), tipo_modalidade: tipoModalidadeParam, acao: 'gerar' })
@@ -1791,7 +1793,7 @@ window.SGIPage.mount("competicoes/chaveamento", function (pageConfig, pageScope)
             const linkArvore = document.getElementById('linkVerArvore');
             if (linkArvore) linkArvore.classList.remove('d-none');
             const btnArvore = document.getElementById('btnVerArvore');
-            if (btnArvore) btnArvore.href = `/chaveamento?id=${idInterclasse}`;
+            if (btnArvore) btnArvore.href = `${APP_BASE}/chaveamento?id=${idInterclasse}`;
             carregarArvore(idModalidade);
             carregarJogos();
         } catch (err) {
