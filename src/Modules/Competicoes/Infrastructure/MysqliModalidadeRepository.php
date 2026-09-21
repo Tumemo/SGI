@@ -6,6 +6,7 @@ namespace App\Modules\Competicoes\Infrastructure;
 
 use App\Modules\Competicoes\Domain\ModalidadeRepository;
 use App\Modules\Competicoes\Domain\ModalidadeScopeRules;
+use App\Modules\Competicoes\Domain\CronogramaRules;
 use App\Shared\Database\Transaction;
 use InvalidArgumentException;
 use mysqli;
@@ -80,6 +81,25 @@ final class MysqliModalidadeRepository implements ModalidadeRepository
         }
         $rows = $statement->get_result()->fetch_all(MYSQLI_ASSOC);
         $statement->close();
+        if ($rows !== [] && $this->planningTableExists()) {
+            $ids = array_map(static fn (array $row): int => (int) $row['id_modalidade'], $rows);
+            $marks = implode(',', array_fill(0, count($ids), '?'));
+            $meta = $this->connection->prepare('SELECT id_modalidade, equipes_planejadas, min_inscritos_equipe, max_inscritos_equipe, formato_participacao, duracao_prevista_min, descanso_min FROM modalidade_planejamentos WHERE id_modalidade IN (' . $marks . ')');
+            if ($meta !== false) {
+                $meta->bind_param(str_repeat('i', count($ids)), ...$ids);
+                if ($meta->execute()) {
+                    $planning = [];
+                    foreach ($meta->get_result()->fetch_all(MYSQLI_ASSOC) as $config) {
+                        $planning[(int) $config['id_modalidade']] = $config;
+                    }
+                    foreach ($rows as &$row) {
+                        $row = array_merge($row, $planning[(int) $row['id_modalidade']] ?? []);
+                    }
+                    unset($row);
+                }
+                $meta->close();
+            }
+        }
         return array_map(static function (array $row): array {
             $row['tipo_competicao'] = \App\Modules\Competicoes\Domain\TipoCompeticaoRules::resolve($row);
             return $row;
@@ -121,6 +141,9 @@ final class MysqliModalidadeRepository implements ModalidadeRepository
             }
             $id = (int) $this->connection->insert_id;
             $statement->close();
+            if (array_key_exists('equipes_planejadas', $data)) {
+                $this->savePlanning($id, $data);
+            }
             Transaction::commit($this->connection);
             return $id;
         } catch (\Throwable $exception) {
@@ -152,6 +175,9 @@ final class MysqliModalidadeRepository implements ModalidadeRepository
             }
         }
         if ($fields === []) {
+            if (array_intersect(['equipes_planejadas', 'min_inscritos_equipe', 'max_inscritos_equipe', 'formato_participacao', 'duracao_prevista_min', 'descanso_min'], array_keys($data)) !== []) {
+                return $this->savePlanning($id, $data);
+            }
             throw new RuntimeException('Nenhum campo válido para atualizar.');
         }
         $values[] = $id;
@@ -176,7 +202,84 @@ final class MysqliModalidadeRepository implements ModalidadeRepository
             }
         }
         $statement->close();
+        if (array_intersect(['equipes_planejadas', 'min_inscritos_equipe', 'max_inscritos_equipe', 'formato_participacao', 'duracao_prevista_min', 'descanso_min'], array_keys($data)) !== []) {
+            $this->savePlanning($id, $data);
+        }
         return $found;
+    }
+
+    /** @param array<string,mixed> $data */
+    private function savePlanning(int $modalityId, array $data): bool
+    {
+        if (!$this->planningTableExists()) {
+            throw new RuntimeException('A migration do cronograma planejado ainda não foi aplicada.');
+        }
+        $existing = null;
+        $read = $this->connection->prepare('SELECT mp.equipes_planejadas, mp.min_inscritos_equipe, mp.max_inscritos_equipe, mp.formato_participacao, mp.duracao_prevista_min, mp.descanso_min, m.max_inscrito_modalidade FROM modalidades m LEFT JOIN modalidade_planejamentos mp ON mp.id_modalidade = m.id_modalidade WHERE m.id_modalidade = ? LIMIT 1');
+        if ($read !== false) {
+            $read->bind_param('i', $modalityId);
+            if ($read->execute()) {
+                $existing = $read->get_result()->fetch_assoc() ?: null;
+            }
+            $read->close();
+        }
+        if ($existing === null) {
+            throw new RuntimeException('Modalidade não encontrada.');
+        }
+        $config = CronogramaRules::modalidade([
+            'equipes_planejadas' => $data['equipes_planejadas'] ?? $existing['equipes_planejadas'],
+            'min_inscritos_equipe' => $data['min_inscritos_equipe'] ?? ($existing['min_inscritos_equipe'] ?? 1),
+            'max_inscritos_equipe' => $data['max_inscritos_equipe'] ?? ($existing['max_inscritos_equipe'] ?? ($existing['max_inscrito_modalidade'] ?? 1)),
+            'formato_participacao' => $data['formato_participacao'] ?? ($existing['formato_participacao'] ?? 'equipe'),
+            'duracao_prevista_min' => array_key_exists('duracao_prevista_min', $data) ? $data['duracao_prevista_min'] : ($existing['duracao_prevista_min'] ?? null),
+            'descanso_min' => $data['descanso_min'] ?? ($existing['descanso_min'] ?? 0),
+            'max_inscrito_modalidade' => $existing['max_inscrito_modalidade'] ?? 1,
+        ]);
+        $quantity = $config['quantidade'];
+        $min = $config['min'];
+        $max = $config['max'];
+        $format = $config['formato'];
+        $duration = $config['duracao'];
+        $rest = $config['descanso'];
+        $statement = $this->connection->prepare('INSERT INTO modalidade_planejamentos (id_modalidade, equipes_planejadas, min_inscritos_equipe, max_inscritos_equipe, formato_participacao, duracao_prevista_min, descanso_min) VALUES (?, ?, ?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE equipes_planejadas = VALUES(equipes_planejadas), min_inscritos_equipe = VALUES(min_inscritos_equipe), max_inscritos_equipe = VALUES(max_inscritos_equipe), formato_participacao = VALUES(formato_participacao), duracao_prevista_min = VALUES(duracao_prevista_min), descanso_min = VALUES(descanso_min)');
+        if ($statement === false) {
+            throw new RuntimeException('A migration do cronograma planejado ainda não foi aplicada.');
+        }
+        $statement->bind_param('iiiisii', $modalityId, $quantity, $min, $max, $format, $duration, $rest);
+        if (!$statement->execute()) {
+            $statement->close();
+            throw new RuntimeException('Não foi possível salvar o planejamento da modalidade.');
+        }
+        $statement->close();
+        $scope = $this->connection->prepare('SELECT interclasses_id_interclasse FROM modalidades WHERE id_modalidade = ? LIMIT 1');
+        if ($scope !== false) {
+            $scope->bind_param('i', $modalityId);
+            if ($scope->execute()) {
+                $edition = $scope->get_result()->fetch_assoc();
+                if ($edition !== null) {
+                    $editionId = (int) $edition['interclasses_id_interclasse'];
+                    $invalidate = $this->connection->prepare("UPDATE interclasse_planejamentos SET cronograma_status = 'revisao', inscricoes_status = 'fechadas', cronograma_versao = cronograma_versao + 1 WHERE id_interclasse = ? AND cronograma_status = 'publicado'");
+                    if ($invalidate !== false) {
+                        $invalidate->bind_param('i', $editionId);
+                        $invalidate->execute();
+                        $invalidate->close();
+                    }
+                }
+            }
+            $scope->close();
+        }
+        return true;
+    }
+
+    private function planningTableExists(): bool
+    {
+        $result = $this->connection->query("SELECT COUNT(*) AS total FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name = 'modalidade_planejamentos'");
+        if ($result === false) {
+            return false;
+        }
+        $row = $result->fetch_assoc();
+        $result->free();
+        return (int) ($row['total'] ?? 0) > 0;
     }
 
     /** @param array<string, mixed> $data */

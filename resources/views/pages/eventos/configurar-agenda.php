@@ -8,6 +8,36 @@ $paginaAtiva = 'agenda';
 $nivelUsuarioAgenda = (int)($_SESSION['nivel'] ?? -1);
 ?>
 
+<?php if ($nivelUsuarioAgenda <= 1): ?>
+<section id="painelCronogramaPlanejado" class="main-desktop-layout py-3" aria-labelledby="cronogramaPlanejadoTitulo">
+    <div class="card border-primary-subtle shadow-sm">
+        <div class="card-body">
+            <div class="d-flex flex-wrap align-items-start justify-content-between gap-3">
+                <div>
+                    <h2 id="cronogramaPlanejadoTitulo" class="h5 fw-bold mb-1">Cronograma antes das inscrições</h2>
+                    <p class="small text-body-secondary mb-0">Configure as equipes por turma nas modalidades, gere a grade e só depois abra as inscrições.</p>
+                </div>
+                <span id="cronogramaPlanejadoStatus" class="badge text-bg-secondary">Verificando...</span>
+            </div>
+            <div class="row g-2 mt-3 align-items-end">
+                <div class="col-6 col-md-2"><label class="form-label small" for="cronogramaDataInicio">Primeiro dia</label><input id="cronogramaDataInicio" type="date" class="form-control form-control-sm"></div>
+                <div class="col-6 col-md-2"><label class="form-label small" for="cronogramaDataFim">Último dia</label><input id="cronogramaDataFim" type="date" class="form-control form-control-sm"></div>
+                <div class="col-6 col-md-2"><label class="form-label small" for="cronogramaHoraInicio">Início</label><input id="cronogramaHoraInicio" type="time" class="form-control form-control-sm" value="08:00"></div>
+                <div class="col-6 col-md-2"><label class="form-label small" for="cronogramaHoraFim">Fim</label><input id="cronogramaHoraFim" type="time" class="form-control form-control-sm" value="18:00"></div>
+                <div class="col-6 col-md-2"><label class="form-label small" for="cronogramaDuracao">Duração (min)</label><input id="cronogramaDuracao" type="number" min="1" class="form-control form-control-sm" value="30"></div>
+                <div class="col-6 col-md-2 d-flex flex-wrap gap-2">
+                    <button id="cronogramaAtivar" type="button" class="btn btn-outline-primary btn-sm">Ativar planejamento</button>
+                    <button id="cronogramaPreparar" type="button" class="btn btn-outline-primary btn-sm">Preparar equipes</button>
+                    <button id="cronogramaGerar" type="button" class="btn btn-primary btn-sm">Gerar rascunho</button>
+                    <button id="cronogramaPublicar" type="button" class="btn btn-success btn-sm" disabled>Publicar e abrir inscrições</button>
+                </div>
+            </div>
+            <p id="cronogramaPlanejadoResumo" class="small mb-0 mt-3" role="status" aria-live="polite"></p>
+        </div>
+    </div>
+</section>
+<?php endif; ?>
+
 <!-- ═══ MOBILE ═══ -->
 <main class="d-md-none ag-mobile sgi-agenda-mobile sgi-u-min-width-0 p-3">
     <div class="card overflow-hidden">

@@ -319,6 +319,22 @@ final class MysqliEquipePadraoRepository
      */
     public static function redistribuirEquipe(\mysqli $conn, int $idModalidade, int $idTurma): array
     {
+        $planningTable = $conn->query("SELECT COUNT(*) AS total FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name = 'interclasse_planejamentos'");
+        if ($planningTable !== false) {
+            $planningExists = (int) ($planningTable->fetch_assoc()['total'] ?? 0) > 0;
+            $planningTable->free();
+            if ($planningExists) {
+                $planned = $conn->prepare('SELECT p.modo_planejamento FROM modalidades m INNER JOIN interclasse_planejamentos p ON p.id_interclasse = m.interclasses_id_interclasse WHERE m.id_modalidade = ? LIMIT 1');
+                if ($planned !== false) {
+                    $planned->bind_param('i', $idModalidade);
+                    if ($planned->execute() && (string) ($planned->get_result()->fetch_column() ?? 'legado') === 'planejado') {
+                        $planned->close();
+                        return ['success' => false, 'message' => 'Redistribuição automática não está disponível no modo de equipes planejadas.'];
+                    }
+                    $planned->close();
+                }
+            }
+        }
         $mod = \App\Modules\Competicoes\Infrastructure\MysqliEquipePadraoRepository::dadosModalidade($conn, $idModalidade);
         if ($mod === \null) {
             return ['success' => \false, 'message' => 'Modalidade não encontrada.'];

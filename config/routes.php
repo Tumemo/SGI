@@ -116,6 +116,11 @@ $router->add(['GET', 'PUT', 'OPTIONS'], '/api/v1/ranking', $withDatabase(
         new \App\Modules\Eventos\Infrastructure\MysqliEdicaoConsultaRepository($conn),
     ),
 ));
+$router->add(['GET', 'POST', 'PUT'], '/api/v1/cronograma', $withDatabase(
+    static fn (mysqli $conn): \App\Modules\Competicoes\Presentation\Http\CronogramaController => new \App\Modules\Competicoes\Presentation\Http\CronogramaController(
+        new \App\Modules\Competicoes\Application\CronogramaService(new \App\Modules\Competicoes\Infrastructure\MysqliCronogramaRepository($conn)),
+    ),
+));
 
 $router->add(['GET', 'POST', 'DELETE', 'OPTIONS'], '/api/v1/ocorrencias-turmas', $withDatabase(
     static fn (mysqli $conn) => new \App\Modules\Disciplina\Presentation\Http\OcorrenciaTurmaController(
@@ -135,7 +140,7 @@ $router->add(['GET', 'POST', 'PUT'], '/api/v1/ocorrencias', $withDatabase(
 ));
 
 $teamController = static fn (mysqli $conn) => new \App\Modules\Competicoes\Presentation\Http\EquipeController(
-    new \App\Modules\Competicoes\Application\EquipeService(new \App\Modules\Competicoes\Infrastructure\MysqliEquipeRepository($conn)),
+    new \App\Modules\Competicoes\Application\EquipeService(new \App\Modules\Competicoes\Infrastructure\MysqliEquipeRepository($conn, new \App\Modules\Competicoes\Infrastructure\MysqliCronogramaRepository($conn))),
     new \App\Modules\Competicoes\Infrastructure\MysqliEquipeGateway($conn),
 );
 $router->add(['GET', 'POST', 'PUT', 'DELETE'], '/api/v1/equipes', $withDatabase($teamController));
@@ -166,6 +171,7 @@ $router->post('/api/v1/inscricoes', $withDatabase(
             new \App\Modules\Participantes\Infrastructure\MysqliInscricaoRepository(
                 $conn,
                 new \App\Modules\Competicoes\Infrastructure\MysqliEquipePadraoRepositoryAdapter($conn),
+                new \App\Modules\Competicoes\Infrastructure\MysqliCronogramaRepository($conn),
             ),
         ),
     ),

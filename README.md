@@ -162,9 +162,11 @@ Uma instalação nova não contém o evento de demonstração da suíte de teste
 
 1. Crie uma edição do Interclasses e deixe a edição desejada ativa.
 2. Confira as categorias, turmas, modalidades e equipes geradas e ajuste os cadastros.
-3. Cadastre ou importe alunos e prepare as inscrições/equipes que participarão dos jogos.
-4. Cadastre um usuário mesário e configure os locais e jogos para experimentar o placar.
-5. Faça login com cada perfil para conferir suas telas e permissões.
+3. Nas edições novas, informe em cada modalidade a quantidade de equipes/entradas por turma e os limites do elenco; prepare as equipes vazias antes de cadastrar os alunos.
+4. Na Agenda, gere e publique o cronograma completo, resolva as pendências e só então abra as inscrições. O servidor recusa conflitos de horário entre modalidades, inclusive em fases condicionais.
+5. Cadastre ou importe alunos e acompanhe as inscrições nas equipes exatas da turma.
+6. Cadastre um usuário mesário e configure os locais e jogos para experimentar o placar.
+7. Faça login com cada perfil para conferir suas telas e permissões.
 
 Use dados fictícios nas atividades de desenvolvimento. Para cenários automatizados já preparados, siga a próxima seção; os fixtures de testes não devem ser carregados sobre sua base de trabalho.
 

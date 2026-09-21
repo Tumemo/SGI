@@ -120,6 +120,28 @@ modalidade aceita somente `1`/`"1"` (ativa) e `0`/`"0"` (inativa), conforme o
 ENUM existente no banco. Atualizações parciais aplicam as mesmas regras aos
 campos informados.
 
+## Cronograma planejado e inscrições
+
+A migration `001_cronograma_inscricoes.sql` mantém o estado do cronograma, as
+quantidades de equipes por modalidade, a ordem das equipes preparadas e o
+snapshot versionado de compromissos em tabelas auxiliares. O schema inicial
+legado não recebe colunas novas, preservando instalações existentes;
+`php bin/sgi.php migrate` deve ser executado antes de usar o fluxo planejado.
+
+Novas edições, quando a migration está aplicada, começam com inscrições
+fechadas e modo `planejado`. O administrador informa `equipes_planejadas`,
+limites do elenco e formato; a preparação cria entradas vazias por turma de
+forma idempotente. A rota `/api/v1/cronograma` permite consultar o estado,
+gerar uma prévia determinística, publicar uma revisão e abrir ou encerrar as
+inscrições. A publicação exige cobertura das modalidades e equipes, intervalos
+válidos e ausência de conflitos no mesmo recurso ou percurso da equipe.
+
+Durante a inscrição, o servidor compara compromissos confirmados e
+condicionais de todas as modalidades escolhidas. Sobreposição recusa o lote na
+transação; categorias diferentes não formam disputas, mas continuam
+compartilhando locais e seus conflitos físicos. Edições sem a migration e
+edições antigas permanecem no comportamento legado.
+
 ## Assets e ciclo de vida offline
 
 O build copia fontes e dependências fixadas no lockfile para `public/assets`, inclui licenças e gera um manifesto de checksums. URLs emitidas por `Assets` têm versão derivada do conteúdo.

@@ -48,6 +48,27 @@ final class MigrationSupportTest
                 'Migration futura é aplicada sobre o baseline atual e repetição não duplica',
                 $applied === [$version] && $repeated === [] && $schemaRepeated === false && $exists && $recorded,
             );
+
+            $root = dirname(__DIR__, 2);
+            $planningVersion = '001_cronograma_inscricoes.sql';
+            $planningRunner = new MigrationRunner($connection, $root . '/database/migrations');
+            $planningApplied = $planningRunner->migrate();
+            $planningRepeated = $planningRunner->migrate();
+            $planningTables = 0;
+            foreach (['interclasse_planejamentos', 'modalidade_planejamentos', 'equipe_planejamentos', 'cronograma_compromissos'] as $planningTable) {
+                $planningTables += (int) $connection->query("SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name = '" . $connection->real_escape_string($planningTable) . "'")->fetch_column();
+            }
+            Assertions::assert(
+                'Migration do cronograma cria as tabelas auxiliares e é idempotente',
+                in_array($planningVersion, $planningApplied, true) && $planningRepeated === [] && $planningTables === 4,
+            );
+            foreach (['cronograma_compromissos', 'equipe_planejamentos', 'modalidade_planejamentos', 'interclasse_planejamentos'] as $planningTable) {
+                $connection->query('DROP TABLE IF EXISTS `' . $planningTable . '`');
+            }
+            $statement = $connection->prepare('DELETE FROM sgi_migrations WHERE version = ?');
+            $statement->bind_param('s', $planningVersion);
+            $statement->execute();
+            $statement->close();
         } finally {
             $connection->query("DROP TABLE IF EXISTS `{$table}`");
             $statement = $connection->prepare('DELETE FROM sgi_migrations WHERE version = ?');

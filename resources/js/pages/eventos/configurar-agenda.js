@@ -793,6 +793,94 @@ window.SGIPage.mount("eventos/configurar-agenda", function (pageConfig, pageScop
         
         atualizarTelas();
 
+        /* ── CRONOGRAMA PLANEJADO ANTES DAS INSCRIÇÕES ── */
+        let cronogramaEstado = null;
+        let cronogramaRascunho = null;
+        const painelCronograma = document.getElementById('painelCronogramaPlanejado');
+        if (painelCronograma && interclasseAtual?.id_interclasse) {
+            const cronogramaId = Number(interclasseAtual.id_interclasse);
+            const statusCronograma = document.getElementById('cronogramaPlanejadoStatus');
+            const resumoCronograma = document.getElementById('cronogramaPlanejadoResumo');
+            const botaoPublicar = document.getElementById('cronogramaPublicar');
+            const hoje = hojeISO();
+            const campoInicio = document.getElementById('cronogramaDataInicio');
+            const campoFim = document.getElementById('cronogramaDataFim');
+            if (campoInicio && !campoInicio.value) campoInicio.value = hoje;
+            if (campoFim && !campoFim.value) campoFim.value = hoje;
+
+            const mostrarCronograma = (mensagem = '') => {
+                if (!cronogramaEstado) return;
+                const modo = cronogramaEstado.modo_planejamento || 'legado';
+                const agenda = cronogramaEstado.cronograma_status || 'rascunho';
+                const inscricoes = cronogramaEstado.inscricoes_status || 'fechadas';
+                if (statusCronograma) {
+                    statusCronograma.textContent = `${modo} · ${agenda} · inscrições ${inscricoes}`;
+                    statusCronograma.className = `badge ${inscricoes === 'abertas' ? 'text-bg-success' : agenda === 'publicado' ? 'text-bg-primary' : 'text-bg-secondary'}`;
+                }
+                if (resumoCronograma) {
+                    const modalidades = Array.isArray(cronogramaEstado.modalidades) ? cronogramaEstado.modalidades.length : 0;
+                    const compromissos = Array.isArray(cronogramaEstado.compromissos) ? cronogramaEstado.compromissos.length : 0;
+                    resumoCronograma.textContent = mensagem || `${modalidades} modalidade(s), ${compromissos} compromisso(s), revisão ${Number(cronogramaEstado.cronograma_versao || 0)}.`;
+                }
+            };
+            const enviarCronograma = async (body) => {
+                const response = await fetch(`${API}cronograma`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...body, id_interclasse: cronogramaId }) });
+                const json = await lerRespostaJson(response);
+                if (!response.ok || json.success === false) throw new Error(json.message || `Operação recusada (HTTP ${response.status}).`);
+                return json;
+            };
+            const atualizarCronograma = async () => {
+                const response = await fetch(`${API}cronograma?id_interclasse=${encodeURIComponent(cronogramaId)}`);
+                const json = await lerRespostaJson(response);
+                if (!response.ok || json.success === false) throw new Error(json.message || 'Não foi possível consultar o cronograma.');
+                cronogramaEstado = json;
+                mostrarCronograma();
+            };
+            const tratarErroCronograma = (error) => {
+                if (resumoCronograma) {
+                    resumoCronograma.classList.add('text-danger');
+                    resumoCronograma.textContent = error.message || 'Não foi possível processar o cronograma.';
+                }
+            };
+            const ativar = document.getElementById('cronogramaAtivar');
+            if (ativar) pageScope.listen(ativar, 'click', async () => {
+                try { await enviarCronograma({ acao: 'ativar_planejamento' }); await atualizarCronograma(); } catch (error) { tratarErroCronograma(error); }
+            });
+            const preparar = document.getElementById('cronogramaPreparar');
+            if (preparar) pageScope.listen(preparar, 'click', async () => {
+                try { const result = await enviarCronograma({ acao: 'preparar_equipes' }); await atualizarCronograma(); mostrarCronograma(`${Number(result.equipes_criadas || 0)} equipe(s) criada(s); ${Number(result.equipes_existentes || 0)} já existente(s).`); } catch (error) { tratarErroCronograma(error); }
+            });
+            const gerar = document.getElementById('cronogramaGerar');
+            if (gerar) pageScope.listen(gerar, 'click', async () => {
+                try {
+                    const result = await enviarCronograma({
+                        acao: 'gerar_rascunho',
+                        data_inicio: campoInicio?.value,
+                        data_fim: campoFim?.value,
+                        hora_inicio: document.getElementById('cronogramaHoraInicio')?.value,
+                        hora_fim: document.getElementById('cronogramaHoraFim')?.value,
+                        duracao_min: Number(document.getElementById('cronogramaDuracao')?.value || 30)
+                    });
+                    cronogramaRascunho = result;
+                    if (botaoPublicar) botaoPublicar.disabled = !result.success || !Array.isArray(result.compromissos) || result.compromissos.length === 0;
+                    const pendencias = Array.isArray(result.pendencias) ? result.pendencias.length : 0;
+                    if (resumoCronograma) { resumoCronograma.classList.toggle('text-danger', pendencias > 0); resumoCronograma.textContent = `${Number(result.compromissos?.length || 0)} compromisso(s) gerado(s)${pendencias ? `; ${pendencias} pendência(s) bloqueiam a publicação.` : '.'}`; }
+                } catch (error) { cronogramaRascunho = null; if (botaoPublicar) botaoPublicar.disabled = true; tratarErroCronograma(error); }
+            });
+            if (botaoPublicar) pageScope.listen(botaoPublicar, 'click', async () => {
+                if (!cronogramaRascunho || !cronogramaEstado) return;
+                botaoPublicar.disabled = true;
+                try {
+                    const publicada = await enviarCronograma({ acao: 'publicar', cronograma_versao: Number(cronogramaEstado.cronograma_versao || 0), compromissos: cronogramaRascunho.compromissos });
+                    await enviarCronograma({ acao: 'abrir_inscricoes', cronograma_versao: Number(publicada.cronograma_versao || 0) });
+                    cronogramaRascunho = null;
+                    await atualizarCronograma();
+                    mostrarCronograma('Cronograma publicado e inscrições abertas.');
+                } catch (error) { tratarErroCronograma(error); botaoPublicar.disabled = false; }
+            });
+            atualizarCronograma().catch(tratarErroCronograma);
+        }
+
         function navegarMes(delta) {
             dataNavegacao.setMonth(dataNavegacao.getMonth() + delta);
             filtroData = null;

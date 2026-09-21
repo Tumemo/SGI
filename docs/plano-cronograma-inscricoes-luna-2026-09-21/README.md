@@ -1,10 +1,10 @@
 # Cronograma anterior às inscrições — roteiro para Luna
 
-**Estado:** planejamento; implementação não iniciada. Elaborado em 21/09/2026 sobre o commit `c8e9c1be85a49bccfa0c6cca88db97d11f33ed2f`.
+**Estado:** implementação parcial disponível na branch `codex/cronograma-inscricoes-luna-2026-09-21`; T03 (árvore exata de chaveamento) e T08 (revisão/operação/offline) ainda exigem evolução antes de considerar o roteiro concluído. Elaborado em 21/09/2026 sobre o commit `c8e9c1be85a49bccfa0c6cca88db97d11f33ed2f`.
 
 ## Resultado esperado
 
-Cadastrar as modalidades com quantidade definida de equipes/entradas por turma, preparar essas equipes sem alunos, gerar e publicar toda a programação e só então abrir inscrições. O aluno escolhe uma equipe/vaga da própria turma e o servidor impede conflitos de agenda, inclusive em possíveis fases seguintes.
+Cadastrar as modalidades com quantidade definida de equipes/entradas por turma, preparar essas equipes sem alunos, gerar e publicar toda a programação e só então abrir inscrições. O aluno escolhe uma equipe/vaga da própria turma e o servidor impede conflitos de agenda, inclusive em compromissos condicionais representados pelo rascunho atual.
 
 **Decisões expressas do usuário:** cabo de guerra fora do evento; nenhuma disputa ou avanço entre categorias diferentes. Os recursos físicos continuam compartilhados entre categorias. Excluir cabo de guerra deste planejamento não autoriza apagar cadastros ou resultados históricos.
 
@@ -37,13 +37,13 @@ O código, as rotas e os executores atuais prevalecem sobre exemplos históricos
 | T00 | Baseline, mapa dos contratos e testes de caracterização |
 | T01 | Schema evolutivo e regras de configuração |
 | T02 | Preparação idempotente das equipes/vagas |
-| T03 | Chaveamento planejado e sessões individuais sem elenco |
-| T04 | Geração da agenda completa e análise de pendências |
+| T03 | Projeção inicial de compromissos por equipe; a árvore exata de nós/BYEs ainda é uma pendência conhecida |
+| T04 | Geração determinística de agenda e análise de pendências para os compromissos projetados |
 | T05 | Publicação, revisão e abertura/fechamento de inscrições |
 | T06 | Inscrição atômica na equipe exata e conflito individual |
 | T07 | Telas administrativas e portal do aluno |
-| T08 | Revisões, elencos, execução e compatibilidade offline |
-| T09 | Homologação integral, documentação operacional e entrega |
+| T08 | Proteções de elenco e compatibilidade com o legado; revisão operacional/offline ainda pendente |
+| T09 | Baterias oficiais executadas; aceite funcional final pendente de T03/T08 |
 
 ## Fora do escopo
 
