@@ -732,13 +732,8 @@
 .sidebar-nav::-webkit-scrollbar {
     display: none;
 }
-.sidebar-nav .sidebar-nav-list {
-    justify-content: flex-start;
-}
 .sidebar-nav .sidebar-nav-list li {
-    margin: auto 0;
-    flex-shrink: 1;
-    min-height: 0;
+    flex-shrink: 0;
 }
 @media (max-height: 700px) {
     .sidebar-nav .sidebar-nav-list {

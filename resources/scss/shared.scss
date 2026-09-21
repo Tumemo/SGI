@@ -136,6 +136,7 @@ body {
 
 .sidebar-nav-list {
   min-height: 0;
+  justify-content: space-between;
   overflow-x: hidden;
   overflow-y: auto;
   scrollbar-width: thin;
@@ -176,13 +177,15 @@ body {
 
 .sgi-sidebar-link {
   display: flex;
-  width: 100%;
-  min-height: 3.5rem;
+  width: 3rem;
+  height: 3rem;
+  flex: 0 0 3rem;
+  margin: 0 auto;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   gap: .2rem;
-  padding: .4rem .15rem;
+  padding: .375rem;
   border-radius: .75rem;
   color: #fff;
   line-height: 1.1;
@@ -204,6 +207,15 @@ body {
   text-overflow: ellipsis;
   text-align: center;
   display: block;
+}
+
+/* Desktop: a sidebar fixa exibe somente os ícones centralizados; o nome
+   acessível permanece nos links via aria-label/title. O gaveteiro móvel
+   (offcanvas) segue exibindo ícone e rótulo. */
+@media (min-width: 768px) {
+  .sgi-sidebar-label {
+    display: none;
+  }
 }
 
 .sgi-sidebar-link:hover,
@@ -275,6 +287,11 @@ body {
 .sgi-back-button > .bi {
   line-height: 1;
   font-size: 1.375rem;
+}
+
+/* Um [hidden] no botão não pode ser vencido pelo display do componente. */
+.sgi-back-button[hidden] {
+  display: none;
 }
 
 /* No header mobile o botão flutua à esquerda, oposto ao botão do menu, e o
@@ -418,6 +435,19 @@ body {
     outline: 3px solid var(--bs-warning);
     outline-offset: 2px;
   }
+}
+
+/* Faixa superior do mesário no desktop: a casca SPA mantém o retorno ao
+   painel à esquerda e o nome do painel à direita. O menu compacto e o
+   banner offline continuam nos pontos globais existentes. */
+.sgi-app-shell .sgi-mesario-topbar {
+  margin-left: var(--sgi-sidebar-width);
+  width: calc(100% - var(--sgi-sidebar-width));
+  padding: 2rem 2.5rem 0;
+}
+
+.sgi-app-shell .sgi-mesario-topbar .sgi-back-button {
+  flex-shrink: 0;
 }
 
 @media print {

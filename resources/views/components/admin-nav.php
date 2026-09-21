@@ -94,7 +94,7 @@ foreach ($todosItens as $key => $item) {
 
 <!-- navbar desktop -->
 <nav class="d-none d-md-flex flex-column position-fixed start-0 shadow-lg bg-primary sidebar-nav" aria-label="Navegação principal">
-    <ul class="nav flex-column align-items-center h-100 py-4 gap-2 fs-3 sidebar-nav-list">
+    <ul class="nav flex-column align-items-center h-100 py-4 gap-4 fs-3 sidebar-nav-list">
         <?php foreach ($navItens as $key => $item): ?>
         <li class="nav-item">
             <a href="<?= htmlspecialchars($item['url'], ENT_QUOTES, 'UTF-8') ?>" class="sgi-sidebar-link text-white <?= !empty($item['is_active']) ? 'active-nav-icon' : '' ?>" aria-label="<?= htmlspecialchars($item['label'] ?? '', ENT_QUOTES, 'UTF-8') ?>" <?= !empty($item['is_active']) ? 'aria-current="page"' : '' ?> title="<?= htmlspecialchars($item['label'] ?? '', ENT_QUOTES, 'UTF-8') ?>">
