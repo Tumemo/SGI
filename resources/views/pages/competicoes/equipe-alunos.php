@@ -1,4 +1,8 @@
 <?php
+$titulo = 'Adicionar alunos à equipe';
+$mostrarVoltar = true;
+$urlVoltar = \App\Shared\Http\Url::to('painel');
+$idVoltarMobile = 'btnVoltarEquipesMobile';
 include SGI_ROOT . '/resources/views/components/admin-head.php';
 include SGI_ROOT . '/resources/views/components/admin-header.php';
 $paginaAtiva = 'dashboard';
@@ -6,10 +10,6 @@ $paginaAtiva = 'dashboard';
 
 <main class="d-md-none mb-5" >
     <div class="container mt-3">
-        <a href="#" class="btn btn-primary d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none" id="btnVoltarEquipesMobile" >
-            <i class="bi bi-arrow-left-circle fs-5" aria-hidden="true"></i> <span id="nomeInterclasseEquipeAlunosMob">Interclasse</span>
-        </a>
-        <h1 class="h4 fw-bold mb-3">Adicionar alunos à equipe</h1>
         <label for="buscaAlunosMobile" class="visually-hidden">Buscar aluno por nome ou matrícula</label>
         <input id="buscaAlunosMobile" class="form-control mb-2" type="search" placeholder="Buscar aluno por nome ou matrícula" autocomplete="off">
         <p class="small text-body-secondary mb-3">Marque novos alunos para adicioná-los. Alunos já vinculados permanecem na equipe; desmarcar não remove ninguém.</p>
@@ -25,12 +25,12 @@ $paginaAtiva = 'dashboard';
 
 <main class="d-none d-md-block main-desktop-layout">
     <div class="container-fluid py-4 px-4 text-body">
-        <div class="d-flex align-items-center gap-3 mb-4 pb-3 border-bottom border-2">
-            <a href="#" id="btnVoltarEquipesDesktop" class="btn btn-primary d-inline-flex align-items-center gap-2 fw-bold px-3 py-2 border-0 text-decoration-none" >
-                <i class="bi bi-arrow-left-circle fs-5" aria-hidden="true"></i> <span id="nomeInterclasseEquipeAlunosDesk">Interclasse</span>
-            </a>
-            <h1 class="h4 mb-0 fw-bold">Adicionar alunos à equipe</h1>
-        </div>
+        <?php
+        $headerIdVoltar = 'btnVoltarEquipesDesktop';
+        $headerCorpoHtml = '<h1 class="h4 mb-0 fw-bold">Adicionar alunos à equipe</h1>';
+        include SGI_ROOT . '/resources/views/components/page-header.php';
+        unset($headerMostrarVoltar, $headerCorpoHtml, $headerAcoesHtml, $headerClasse, $headerUrlVoltar, $headerIdVoltar, $headerClassBotao, $headerHiddenBotao);
+        ?>
 
         <label for="buscaAlunosDesktop" class="visually-hidden">Buscar aluno por nome ou matrícula</label>
         <input id="buscaAlunosDesktop" class="form-control mb-2" type="search" placeholder="Buscar aluno por nome ou matrícula" autocomplete="off">

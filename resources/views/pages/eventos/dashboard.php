@@ -1,10 +1,12 @@
 <?php
-$titulo = 'Dashboard';
-$tagTituloCompacto = 'h1';
 $nivelUsuario = (int)($_SESSION['nivel'] ?? -1);
-$mostrarVoltar = in_array($nivelUsuario, [0, 1], true);
-$rotaInicio = $nivelUsuario === 2 ? 'painel' : ($nivelUsuario === 3 ? 'aluno/inicio' : 'edicoes');
-$urlVoltar = \App\Shared\Http\Url::to('edicoes');
+$titulo = $nivelUsuario === 2 ? 'Painel do Mesário' : 'Dashboard';
+$tagTituloCompacto = 'h1';
+$mostrarVoltar = $nivelUsuario === 2;
+$mostrarVoltarHeader = $nivelUsuario === 2;
+$urlVoltar = $nivelUsuario === 2 ? \App\Shared\Http\Url::to('painel') : \App\Shared\Http\Url::to('edicoes');
+$urlVoltarMobile = $nivelUsuario === 2 ? \App\Shared\Http\Url::to('painel') : \App\Shared\Http\Url::to('edicoes/agenda');
+$idVoltarMobile = $nivelUsuario === 2 ? 'sgiBtnVoltarMesario' : 'sgiBtnVoltar';
 include SGI_ROOT . '/resources/views/components/admin-head.php';
 include SGI_ROOT . '/resources/views/components/admin-header.php';
 $paginaAtiva = 'dashboard';
@@ -13,17 +15,27 @@ $isColaborador = $nivelUsuario === 1;
 $isMesario = $nivelUsuario === 2;
 ?>
 
+<?php if ($isMesario): ?>
+<div class="d-none d-md-flex align-items-center gap-3 sgi-mesario-topbar">
+    <a href="<?= \App\Shared\Http\Url::to('painel') ?>"
+       id="sgiBtnVoltarMesarioDesk"
+       class="sgi-back-button"
+       aria-label="Voltar"
+       title="Voltar">
+        <i class="bi bi-arrow-left" aria-hidden="true"></i>
+    </a>
+    <h2 class="h4 fw-bold text-body m-0"><?= htmlspecialchars($titulo, ENT_QUOTES, 'UTF-8') ?></h2>
+</div>
+<?php endif; ?>
+
 <!-- Casca fixa do SPA do mesário: o conteúdo desta div é trocado
      dinamicamente pelas telas baixadas pelo mesario-offline.js.
      Header/Nav/Footer (componentes) permanecem fixos na página. -->
 <div id="conteudo-principal" data-sgi-shell="1">
     <main class="main-desktop-layout main-dashboard-layout sgi-u-min-width-0">
         <div class="container-fluid px-0 sgi-u-min-width-0">
-            <h1 class="h3 fw-bold text-body mb-4 d-none d-md-block">Dashboard</h1>
-            <?php if (in_array($nivelUsuario, [0, 1], true)): ?>
-                <a href="<?= \App\Shared\Http\Url::to($rotaInicio) ?>" class="btn btn-outline-danger btn-sm mb-3 d-inline-flex align-items-center gap-1">
-                    <i class="bi bi-house" aria-hidden="true"></i> Voltar às edições
-                </a>
+            <?php if (!$isMesario): ?>
+            <h1 class="h3 fw-bold text-body mb-4 d-none d-md-block"><?= htmlspecialchars($titulo, ENT_QUOTES, 'UTF-8') ?></h1>
             <?php endif; ?>
 
         <?php if ($isAdmin): ?>

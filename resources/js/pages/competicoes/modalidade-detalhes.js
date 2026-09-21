@@ -27,7 +27,10 @@ window.SGIPage.mount("competicoes/modalidade-detalhes", function (pageConfig, pa
             idInterclasseAtual = modalidade.interclasses_id_interclasse || params.get('id') || null;
 
             if (idInterclasseAtual) {
-                document.getElementById('btnVoltarDashboardDesktop').href = `/painel?id=${idInterclasseAtual}`;
+                const hrefVoltarDetalhe = `/painel?id=${idInterclasseAtual}`;
+                document.getElementById('btnVoltarDashboardDesktop').href = hrefVoltarDetalhe;
+                const btnVoltarDetalheMob = document.getElementById('sgiBtnVoltar');
+                if (btnVoltarDetalheMob) btnVoltarDetalheMob.href = hrefVoltarDetalhe;
                 const ic = await window.SGIInterclasse.getInterclasseById(idInterclasseAtual);
                 if (ic?.nome_interclasse) {
                     const el = document.getElementById('nomeInterModalidadeDet');

@@ -2,11 +2,23 @@
 $habilitarOfflineAluno = false;
 include SGI_ROOT . '/resources/views/components/aluno-head.php';
 $titulo = 'Termos';
-$mostrarVoltar = true;
+$mostrarVoltar = !empty($_SESSION['termo_aceito']);
 $urlVoltar = \App\Shared\Http\Url::to('aluno/inicio');
+include SGI_ROOT . '/resources/views/components/aluno-header.php';
 ?>
 
     <main class="container py-4">
+        <?php if ($mostrarVoltar): ?>
+        <div class="mb-4">
+            <?php
+            $sgiUrlVoltar = $urlVoltar;
+            $sgiIdVoltar = 'btnVoltarTermosDesk';
+            $sgiClassVoltar = 'd-none d-md-inline-flex';
+            include SGI_ROOT . '/resources/views/components/back-button.php';
+            unset($sgiUrlVoltar, $sgiIdVoltar, $sgiClassVoltar);
+            ?>
+        </div>
+        <?php endif; ?>
         <h1 class="visually-hidden">Termos e Regulamento</h1>
 
         <!-- Termo de Responsabilidade -->

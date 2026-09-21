@@ -9,29 +9,28 @@ $paginaAtiva = 'dashboard';
 
 <main class="main-desktop-layout">
 
-    <div class="d-flex align-items-center justify-content-between gap-3 flex-wrap mb-4 sgi-config-modalities-toolbar">
-            <a href="<?= htmlspecialchars($urlVoltar) ?>" id="btnVoltarModalidades" class="btn btn-primary d-inline-flex align-items-center gap-2 fw-bold px-3 py-2 border-0 text-decoration-none sgi-event-back-link" >
-                <i class="bi bi-arrow-left-circle fs-5"></i> <span id="nomeInterclasseModalidades">Interclasse</span>
-            </a>
-        <div class="d-flex align-items-center gap-2 flex-wrap sgi-config-modalities-actions">
-            <button type="button" class="btn btn-outline-secondary d-inline-flex align-items-center gap-2 fw-bold px-3 py-2" data-bs-toggle="modal" data-bs-target="#modalDestaques">
-                <span>⭐</span> Alunos Destaques
-            </button>
-            <?php if ($nivelUsuario === 0): ?>
-            <button type="button" class="btn btn-primary d-inline-flex align-items-center gap-2 fw-bold px-3 py-2 border-0 rounded-3"  data-bs-toggle="modal" data-bs-target="#exampleModal">
-                <i class="bi bi-plus-lg"></i> Nova Modalidade
-            </button>
-            <?php endif; ?>
-            <a href="#" id="btnContinuarDesktop" class="btn btn-primary fw-bold px-4 py-2 d-inline-flex align-items-center gap-2 text-white text-decoration-none disabled d-none" aria-disabled="true">
-                Continuar
-            </a>
-        </div>
+    <div class="sgi-config-modalities-toolbar">
+    <?php
+    $headerIdVoltar = 'btnVoltarModalidades';
+    $headerClassBotao = 'd-none d-md-inline-flex';
+    $headerCorpoHtml = '<h1 class="h3 fw-bold text-body mb-1">Modalidades</h1>
+    <p class="text-body-secondary mb-0">Gerencie as modalidades do interclasse e navegue para os detalhes de cada uma.</p>';
+    $headerAcoesHtml = '<div class="d-flex align-items-center gap-2 flex-wrap sgi-config-modalities-actions">
+        <button type="button" class="btn btn-outline-secondary d-inline-flex align-items-center gap-2 fw-bold px-3 py-2" data-bs-toggle="modal" data-bs-target="#modalDestaques">
+            <span>⭐</span> <span class="d-none d-sm-inline">Alunos Destaques</span><span class="d-sm-none">Destaques</span>
+        </button>
+        ' . ($nivelUsuario === 0 ? '
+        <button type="button" class="btn btn-primary d-inline-flex align-items-center gap-2 fw-bold px-3 py-2 border-0 rounded-3" data-bs-toggle="modal" data-bs-target="#exampleModal">
+            <i class="bi bi-plus-lg"></i> <span class="d-none d-sm-inline">Nova Modalidade</span><span class="d-sm-none">Nova</span>
+        </button>' : '') . '
+        <a href="#" id="btnContinuarDesktop" class="btn btn-primary fw-bold px-4 py-2 d-inline-flex align-items-center gap-2 text-white text-decoration-none disabled d-none" aria-disabled="true">
+            Continuar
+        </a>
+    </div>';
+    include SGI_ROOT . '/resources/views/components/page-header.php';
+    unset($headerIdVoltar, $headerClassBotao, $headerCorpoHtml, $headerAcoesHtml);
+    ?>
     </div>
-
-    <header class="border-bottom pb-3 mb-4">
-        <h1 class="h3 fw-bold text-body mb-1">Modalidades</h1>
-        <p class="text-body-secondary mb-0">Gerencie as modalidades do interclasse e navegue para os detalhes de cada uma.</p>
-    </header>
 
     <div id="listaModalidadesDesktop">
         <p class="text-muted">(Carregando modalidades...)</p>

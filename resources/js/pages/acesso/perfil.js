@@ -94,8 +94,10 @@ window.SGIPage.mount("acesso/perfil", function (pageConfig, pageScope) {
         try {
             const ativo = await window.SGIInterclasse.getActiveInterclasse();
             const nome = ativo?.nome_interclasse || 'Interclasse';
-            document.getElementById('perfilNomeInterMobile').textContent = nome;
-            document.getElementById('perfilNomeInterDesk').textContent = nome;
+            const nomeInterMobileEl = document.getElementById('perfilNomeInterMobile');
+            if (nomeInterMobileEl) nomeInterMobileEl.textContent = nome;
+            const nomeInterDeskEl = document.getElementById('perfilNomeInterDesk');
+            if (nomeInterDeskEl) nomeInterDeskEl.textContent = nome;
         } catch (e) {}
 
         const params = new URLSearchParams(window.location.search);

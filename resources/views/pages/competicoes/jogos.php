@@ -11,7 +11,14 @@ $paginaAtiva = 'dashboard';
 
 
 <main class="container py-4 main-desktop-layout sgi-jogos-lista sgi-u-min-width-0">
-    <h1 class="h3 fw-bold text-body mb-4 d-none d-md-block">Jogos</h1>
+    <?php
+    $headerIdVoltar = 'btnVoltarJogosDesk';
+    $headerClasse = 'd-none d-md-flex';
+    $headerClassBotao = 'd-none d-md-inline-flex';
+    $headerCorpoHtml = '<h1 class="h3 fw-bold text-body m-0 d-none d-md-block">Jogos</h1>';
+    include SGI_ROOT . '/resources/views/components/page-header.php';
+    unset($headerMostrarVoltar, $headerCorpoHtml, $headerAcoesHtml, $headerClasse, $headerUrlVoltar, $headerIdVoltar, $headerClassBotao, $headerHiddenBotao);
+    ?>
 
     <div class="row row-cols-1 row-cols-sm-2 row-cols-lg-3 g-3" id="listaJogos">
         <div class="col-12 text-center text-muted py-5">

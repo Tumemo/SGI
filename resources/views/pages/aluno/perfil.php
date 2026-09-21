@@ -3,6 +3,7 @@ $titulo = 'Perfil';
 $mostrarVoltar = true;
 $mostrarSino = false;
 $urlVoltar = \App\Shared\Http\Url::to('aluno/inicio');
+$idVoltarMobile = 'perfilBackMob';
 
 $nivelUsuario = (int) ($usuarioPerfil['nivel_usuario'] ?? $_SESSION['nivel'] ?? 0);
 $labelNiveis = [
@@ -14,6 +15,7 @@ $labelNiveis = [
 $nivelInfo = $labelNiveis[$nivelUsuario] ?? ['label' => 'Desconhecido', 'icon' => 'bi-question-circle', 'color' => '#6c757d'];
 $nivelBadgeClass = [0 => 'text-bg-danger', 1 => 'text-bg-primary', 2 => 'text-bg-secondary', 3 => 'text-bg-success'][$nivelUsuario] ?? 'text-bg-secondary';
 include SGI_ROOT . '/resources/views/components/aluno-head.php';
+include SGI_ROOT . '/resources/views/components/aluno-header.php';
 
 $paginaAtiva = 'perfil';
 include SGI_ROOT . '/resources/views/components/aluno-nav.php';
@@ -22,10 +24,6 @@ include SGI_ROOT . '/resources/views/components/aluno-nav.php';
 
 <!-- ===================== MOBILE ===================== -->
 <main class="d-md-none p-3 pt-3 pb-5">
-    <a href="<?= htmlspecialchars($urlVoltar) ?>" id="perfilBackMob" class="btn btn-primary d-inline-flex align-items-center gap-2 fw-bold mb-3 px-3 py-2 border-0 text-decoration-none" >
-        <i class="bi bi-arrow-left-circle fs-5"></i> <span>Início</span>
-    </a>
-
     <h5 class="fw-bold mb-4">Configurações da Conta</h5>
 
     <div class="card border-0 shadow-sm rounded-4 mb-3">
@@ -81,15 +79,13 @@ include SGI_ROOT . '/resources/views/components/aluno-nav.php';
 <main class="d-none d-md-block main-desktop-layout p-4 p-lg-5">
     <div class="container-fluid px-0">
         <!-- Topbar -->
-        <div class="d-flex align-items-center gap-4 mb-4 flex-wrap">
-            <a href="<?= htmlspecialchars($urlVoltar) ?>" id="perfilBackDesk" class="perfil-btn-voltar btn btn-primary d-inline-flex align-items-center gap-2 fw-bold px-3 py-2 border-0 text-decoration-none" >
-                <i class="bi bi-arrow-left-circle fs-5"></i> <span>Início</span>
-            </a>
-            <div>
-                <h1 class="fs-4 fw-bold mb-0"><i class="bi bi-person-circle me-2 text-primary"></i>Meu Perfil</h1>
-                <p class="small text-body-secondary mb-0">Gerencie suas informações, segurança e acompanhe sua participação</p>
-            </div>
-        </div>
+        <?php
+        $headerIdVoltar = 'perfilBackDesk';
+        $headerCorpoHtml = '<h1 class="fs-4 fw-bold mb-0"><i class="bi bi-person-circle me-2 text-primary"></i>Meu Perfil</h1>
+        <p class="small text-body-secondary mb-0">Gerencie suas informações, segurança e acompanhe sua participação</p>';
+        include SGI_ROOT . '/resources/views/components/page-header.php';
+        unset($headerMostrarVoltar, $headerCorpoHtml, $headerAcoesHtml, $headerClasse, $headerUrlVoltar, $headerIdVoltar, $headerClassBotao, $headerHiddenBotao);
+        ?>
 
         <!-- Grid: 260px + 1fr -->
         <div class="row g-4 align-items-start">

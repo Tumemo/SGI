@@ -2,6 +2,7 @@
 $titulo = 'Colaboradores';
 $mostrarVoltar = true;
 $urlVoltar = \App\Shared\Http\Url::to('painel');
+$idVoltarMobile = 'btnVoltarColabMobile';
 include SGI_ROOT . '/resources/views/components/admin-head.php';
 include SGI_ROOT . '/resources/views/components/admin-header.php';
 $paginaAtiva = 'colaboradores';
@@ -14,20 +15,10 @@ $usuarioAtualId = (int) ($_SESSION['id'] ?? $_SESSION['id_usuario'] ?? 0);
 <!-- ═══ MOBILE ═══ -->
 <main class="d-md-none pt-5 pb-5">
     <div class="container-fluid px-3">
-        <a href="<?= \App\Shared\Http\Url::to('painel') ?>" id="btnVoltarColabMobile" class="btn btn-primary d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none" >
-            <i class="bi bi-arrow-left-circle fs-5" aria-hidden="true"></i> <span id="nomeInterclasseColabMobile">Interclasse</span>
-        </a>
-
         <div class="mb-4">
-            <div class="d-flex align-items-start justify-content-between gap-3 flex-wrap">
-                <div>
-                    <h1 class="h3 fw-bold mb-1">Colaboradores</h1>
-                    <p class="text-body-secondary mb-0">Gerencie todos os usuários responsáveis pelo interclasse.</p>
-                </div>
-                <button class="btn btn-primary d-inline-flex align-items-center gap-2" data-bs-toggle="modal" data-bs-target="#modalAdicionarColaborador">
-                    <i class="bi bi-plus-lg" aria-hidden="true"></i> Adicionar
-                </button>
-            </div>
+            <button class="btn btn-primary d-inline-flex align-items-center gap-2" data-bs-toggle="modal" data-bs-target="#modalAdicionarColaborador">
+                <i class="bi bi-plus-lg" aria-hidden="true"></i> Adicionar
+            </button>
         </div>
 
         <div class="row row-cols-2 g-3 mb-4" id="statsMobile">
@@ -57,21 +48,16 @@ $usuarioAtualId = (int) ($_SESSION['id'] ?? $_SESSION['id_usuario'] ?? 0);
 <!-- ═══ DESKTOP ═══ -->
 <main class="d-none d-md-block main-desktop-layout pb-5">
     <div class="container-fluid px-4">
-        <a href="<?= \App\Shared\Http\Url::to('painel') ?>" id="btnVoltarColabDesk" class="btn btn-primary d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none" >
-            <i class="bi bi-arrow-left-circle fs-5" aria-hidden="true"></i> <span id="nomeInterclasseColabDesk">Interclasse</span>
-        </a>
-
-        <div class="mb-4">
-            <div class="d-flex align-items-start justify-content-between gap-3 flex-wrap">
-                <div>
-                    <h1 class="h3 fw-bold mb-1">Colaboradores</h1>
-                    <p class="text-body-secondary mb-0">Gerencie todos os usuários responsáveis pelo interclasse.</p>
-                </div>
-                <button class="btn btn-primary d-inline-flex align-items-center gap-2" data-bs-toggle="modal" data-bs-target="#modalAdicionarColaborador">
-                    <i class="bi bi-plus-lg" aria-hidden="true"></i> Adicionar colaborador
-                </button>
-            </div>
-        </div>
+        <?php
+        $headerIdVoltar = 'btnVoltarColabDesk';
+        $headerCorpoHtml = '<h1 class="h3 fw-bold mb-1">Colaboradores</h1>
+        <p class="text-body-secondary mb-0">Gerencie todos os usuários responsáveis pelo interclasse.</p>';
+        $headerAcoesHtml = '<button class="btn btn-primary d-inline-flex align-items-center gap-2" data-bs-toggle="modal" data-bs-target="#modalAdicionarColaborador">
+                <i class="bi bi-plus-lg" aria-hidden="true"></i> Adicionar colaborador
+            </button>';
+        include SGI_ROOT . '/resources/views/components/page-header.php';
+        unset($headerMostrarVoltar, $headerCorpoHtml, $headerAcoesHtml, $headerClasse, $headerUrlVoltar, $headerIdVoltar, $headerClassBotao, $headerHiddenBotao);
+        ?>
 
         <div class="row row-cols-2 row-cols-lg-4 g-3 mb-4" id="statsDesktop">
             <div class="col"><div class="card border-0 shadow-sm h-100 p-3 d-flex flex-row align-items-center gap-3"><span class="rounded-3 bg-danger-subtle text-danger d-inline-flex align-items-center justify-content-center p-2 fs-5"><i class="bi bi-people-fill" aria-hidden="true"></i></span><div><div class="fs-4 fw-bold" id="statTotalDesk">-</div><div class="small text-body-secondary text-uppercase">Usuários</div></div></div></div>

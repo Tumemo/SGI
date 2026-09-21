@@ -67,7 +67,9 @@ window.SGIPage.mount("eventos/configurar-modalidades", function (pageConfig, pag
             ? appUrl('painel', { id: idInterclasse })
             : appUrl('edicoes/categorias', { id: idInterclasse, modo: 'create' });
         const btnVoltar = document.getElementById('btnVoltarModalidades');
+        const btnVoltarMobile = document.getElementById('sgiBtnVoltar');
         if (btnVoltar) btnVoltar.href = destinoVoltar;
+        if (btnVoltarMobile) btnVoltarMobile.href = destinoVoltar;
     }
 
     /* ── RENDER CARD ── */

@@ -1,4 +1,8 @@
 <?php
+$titulo = 'Elenco da equipe';
+$mostrarVoltar = true;
+$urlVoltar = \App\Shared\Http\Url::to('edicoes/equipes');
+$idVoltarMobile = 'btnVoltarElencoMob';
 include SGI_ROOT . '/resources/views/components/admin-head.php';
 include SGI_ROOT . '/resources/views/components/admin-header.php';
 $nivelUsuario = (int)($_SESSION['nivel'] ?? -1);
@@ -7,9 +11,6 @@ $paginaAtiva = 'dashboard';
 ?>
 
 <main class="d-md-none p-3 pb-5" >
-    <a href="<?= \App\Shared\Http\Url::to('edicoes/equipes') ?>" class="btn btn-primary d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none" id="btnVoltarElencoMob" >
-        <i class="bi bi-arrow-left-circle fs-5"></i> <span id="nomeInterclasseElencoMob">Interclasse</span>
-    </a>
     <div id="alertaLimiteMob" class="alert alert-danger d-none d-flex flex-wrap align-items-center gap-2 small"></div>
     <div id="listaElencoMob" class="d-flex flex-column gap-2"></div>
     <?php if ($isAdmin): ?>
@@ -21,19 +22,17 @@ $paginaAtiva = 'dashboard';
 
 <main class="d-none d-md-block main-desktop-layout">
     <div class="container-fluid py-4 px-4 text-body">
-        <div class="d-flex align-items-center gap-3 mb-4 pb-3 border-bottom border-2">
-            <a href="<?= \App\Shared\Http\Url::to('edicoes/equipes') ?>" id="btnVoltarElencoDesk" class="btn btn-primary d-inline-flex align-items-center gap-2 fw-bold px-3 py-2 border-0 text-decoration-none" >
-                <i class="bi bi-arrow-left-circle fs-5"></i> <span id="nomeInterclasseElencoDesk">Interclasse</span>
-            </a>
-            <h1 class="h4 mb-0 fw-bold">Elenco da equipe</h1>
-            <?php if ($isAdmin): ?>
-            <div class="ms-auto">
+        <?php
+        $headerIdVoltar = 'btnVoltarElencoDesk';
+        $headerCorpoHtml = '<h1 class="h4 mb-0 fw-bold">Elenco da equipe</h1>';
+        $headerAcoesHtml = $isAdmin ? '<div class="ms-auto">
                 <a class="btn btn-outline-primary" id="linkGerenciarDesk" href="#">
                     <i class="bi bi-person-plus"></i>
                 </a>
-            </div>
-            <?php endif; ?>
-        </div>
+            </div>' : '';
+        include SGI_ROOT . '/resources/views/components/page-header.php';
+        unset($headerMostrarVoltar, $headerCorpoHtml, $headerAcoesHtml, $headerClasse, $headerUrlVoltar, $headerIdVoltar, $headerClassBotao, $headerHiddenBotao);
+        ?>
 
         <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
             <div id="alertaLimiteDesk" class="alert alert-danger d-none d-flex flex-wrap align-items-center gap-2 small mx-3 mt-3 mb-0"></div>
