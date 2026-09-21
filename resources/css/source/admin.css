@@ -58,6 +58,54 @@
     display: none;
 }
 
+/* Cartões de turma (arrecadação e ocorrências): em telas estreitas o conteúdo
+   empilha verticalmente para o nome não ser truncado nem estourar a coluna;
+   a partir de 768px retorna à linha horizontal com ações à direita. */
+.sgi-turma-card {
+    display: flex;
+    flex-direction: column;
+    gap: .625rem;
+    min-width: 0;
+}
+
+.sgi-turma-card-header {
+    display: flex;
+    align-items: center;
+    gap: .75rem;
+    min-width: 0;
+}
+
+.sgi-turma-card-title {
+    flex: 1 1 auto;
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
+
+.sgi-turma-card-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: .375rem;
+    min-width: 0;
+}
+
+.sgi-turma-card-actions > .btn {
+    flex-shrink: 0;
+}
+
+@media (min-width: 768px) {
+    .sgi-turma-card {
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+    }
+
+    .sgi-turma-card-header {
+        flex: 1 1 auto;
+    }
+}
+
 @media (min-width: 768px) {
     /* Dashboard */
     body:has(#conteudo-principal) [class~="main-dashboard-layout"] {
@@ -295,7 +343,8 @@
         box-shadow: none !important;
     }
 
-    :is(#listaArrecadacaoDesktop, #listaOcorrenciasDesktop) > .col > .card > div:first-child {
+    :is(#listaArrecadacaoDesktop, #listaOcorrenciasDesktop) > .col > .card .sgi-turma-card-header > div:first-child {
+        flex-shrink: 0;
         width: 3rem;
         height: 3rem;
         padding: 0 !important;
@@ -335,7 +384,7 @@
         text-transform: uppercase;
     }
 
-    :is(#listaArrecadacaoDesktop, #listaOcorrenciasDesktop) > .col > .card > .btn {
+    :is(#listaArrecadacaoDesktop, #listaOcorrenciasDesktop) > .col > .card .sgi-turma-card-actions > .btn {
         width: 3rem;
         height: 3rem;
         padding: 0;
@@ -657,6 +706,19 @@
 .kvs__opcao-tipo {
     flex-shrink: 0;
     letter-spacing: .02em;
+}
+
+/* Dispositivos com ponteiro por toque (celulares e tablets): o painel custom
+   foca um input de busca que aciona o teclado virtual e redimensiona a
+   viewport, deslocando o layout. Nesses casos o chaveamento usa o <select>
+   nativo, que abre o seletor do próprio sistema sem deslocar a página. */
+@media (pointer: coarse), (hover: none) {
+    .kvs-wrap { display: none; }
+    .kvs-wrap + select { display: block !important; }
+    #kvs-wrap-filtroModalidadeJogos + select {
+        flex: 0 1 280px;
+        width: 280px;
+    }
 }
 
 /* ==========================================================================
@@ -1015,6 +1077,43 @@
         min-height: 48px;
     }
 
+    /* Rodapé do modal de agendamento automático: as três ações cabem em uma
+       única linha sem envolver nem estourar a tela. */
+    .sgi-modal-footer-fit {
+        flex-wrap: nowrap;
+        gap: .375rem;
+    }
+
+    .sgi-modal-footer-fit > .btn {
+        min-width: 0;
+    }
+
+    /* Arrecadação: cartões de turma no mobile seguem o mesmo alinhamento das
+       ocorrências, com o campo de quilogramas compacto. */
+    .sgi-arrecadacao-mobile {
+        padding-top: .75rem !important;
+        padding-bottom: .75rem !important;
+    }
+
+    .sgi-arrecadacao-mobile #listaArrecadacaoMobile > .col > .card {
+        min-width: 0;
+        padding: .75rem !important;
+    }
+
+    .sgi-arrecadacao-mobile .input-group {
+        flex-wrap: nowrap;
+    }
+
+    .sgi-arrecadacao-mobile .arrec-input {
+        flex: 0 0 auto;
+        width: 5.5rem;
+        padding-block: .375rem;
+    }
+
+    .sgi-arrecadacao-mobile .input-group-text {
+        padding-inline: .5rem;
+    }
+
     .sgi-compact-header {
         display: none !important;
     }
@@ -1229,12 +1328,35 @@
         flex: 1 1 100%;
         width: 100%;
         min-width: 0;
+        flex-wrap: nowrap;
     }
 
     .sgi-config-modalities-actions > * {
         min-width: 0;
         max-width: 100%;
         white-space: normal;
+    }
+
+    .sgi-config-modalities-actions > .btn {
+        flex: 1 1 0;
+        justify-content: center;
+        padding-inline: .5rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .sgi-modal-footer-fit > .btn {
+        flex: 1 1 0;
+        justify-content: center;
+        padding-inline: .375rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .sgi-arrecadacao-mobile .arrec-input {
+        width: 4.25rem;
     }
 
     #statsMobile .card > div {
@@ -1272,6 +1394,41 @@
     min-height: 48px;
     justify-content: center;
     white-space: normal;
+}
+
+/* Categorias — ações no celular em grade de duas colunas para não empilhar
+   uma lista pesada; o botão Continuar ocupa a linha inteira por ser o CTA que
+   leva ao próximo passo. Botões ocultos (d-none) saem do fluxo da grade. */
+#acoesCategoriaMobile {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: .5rem;
+}
+
+#acoesCategoriaMobile > * {
+    min-width: 0;
+}
+
+#acoesCategoriaMobile > :only-child,
+#acoesCategoriaMobile #btnContinuarMobile {
+    grid-column: 1 / -1;
+}
+
+/* Categorias — desktop: mesmo tratamento espaciado das demais telas de
+   administração, com a barra de ações descolada do rodapé. */
+@media (min-width: 768px) {
+    .sgi-categorias-desktop {
+        background: #fafafa;
+        padding: 3.125rem clamp(3.125rem, 4vw, 5rem) 4rem !important;
+    }
+
+    .sgi-categorias-desktop > .container-fluid {
+        padding: 0 !important;
+    }
+
+    .sgi-categorias-desktop #acoesCategoriaDesktop {
+        margin-top: 2.5rem !important;
+        margin-bottom: 0 !important;
+    }
 }
 
 @media (min-width: 1200px) {

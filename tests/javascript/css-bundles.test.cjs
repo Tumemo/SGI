@@ -459,6 +459,31 @@ test('searchable bracket control inherits the shared Bootstrap typography', () =
     assert.doesNotMatch(css, /\.kvs__(?:trigger|search|opcao)\s*\{[^}]*font-family\s*:/);
 });
 
+test('coarse-pointer devices fall back to the native bracket select', () => {
+    const source = fs.readFileSync(path.join(root, 'resources', 'js', 'pages', 'competicoes', 'chaveamento.js'), 'utf8');
+    const css = fs.readFileSync(path.join(root, 'resources', 'css', 'source', 'admin.css'), 'utf8');
+    assert.match(source, /function usarSeletorNativo\(\)/);
+    assert.match(source, /if \(!usarSeletorNativo\(\)\) \{\s*kvs_montar\(\{/);
+    assert.match(source, /selectMobEl\.value/);
+    assert.match(source, /select\.showPicker/);
+    assert.match(css, /@media \(pointer: coarse\), \(hover: none\) \{\s*\n\s*\.kvs-wrap \{ display: none; \}\s*\n\s*\.kvs-wrap\s*\+\s*select \{ display: block !important; \}/);
+});
+
+test('turma cards keep the stacked mobile layout and push actions to the end on desktop', () => {
+    const css = fs.readFileSync(path.join(root, 'resources', 'css', 'source', 'admin.css'), 'utf8');
+    assert.match(css, /\.sgi-turma-card \{\s*display: flex;\s*flex-direction: column;/);
+    assert.match(css, /@media \(min-width: 768px\) \{\s*\.sgi-turma-card \{\s*flex-direction: row;\s*align-items: center;\s*justify-content: space-between;\s*gap: 1rem;\s*\}\s*\.sgi-turma-card-header \{\s*flex: 1 1 auto;\s*\}\s*\}/);
+});
+
+test('categoria actions use a two-column grid on mobile and spacing above the desktop footer', () => {
+    const view = fs.readFileSync(path.join(root, 'resources', 'views', 'pages', 'eventos', 'configurar-categorias.php'), 'utf8');
+    const css = fs.readFileSync(path.join(root, 'resources', 'css', 'source', 'admin.css'), 'utf8');
+    assert.match(view, /<main class="d-none d-md-block main-desktop-layout sgi-categorias-desktop"/);
+    assert.match(css, /#acoesCategoriaMobile \{\s*grid-template-columns: repeat\(2, minmax\(0, 1fr\)\);/);
+    assert.match(css, /#acoesCategoriaMobile #btnContinuarMobile \{\s*grid-column: 1 \/ -1;\s*\}/);
+    assert.match(css, /\.sgi-categorias-desktop \{\s*background: #fafafa;\s*padding: 3\.125rem clamp\(3\.125rem, 4vw, 5rem\) 4rem !important;\s*\}/);
+});
+
 test('offline banner uses Bootstrap utilities while keeping runtime hooks', () => {
     const offline = fs.readFileSync(path.join(root, 'resources', 'js', 'offline', 'offline-core.js'), 'utf8');
     const css = [
@@ -520,7 +545,10 @@ test('arrecadacao and ocorrencias lists use Bootstrap grids and badges', () => {
         path.join(root, 'resources', 'views', 'pages', 'disciplina', 'ocorrencias.php'),
     ].map((file) => fs.readFileSync(file, 'utf8')).join('\n');
     const css = fs.readFileSync(path.join(root, 'resources', 'css', 'source', 'admin.css'), 'utf8');
-    assert.match(js, /article class="card h-100 border-0 shadow-sm p-3 d-flex flex-row/);
+    assert.match(js, /article class="card h-100 border-0 shadow-sm sgi-turma-card p-3/);
+    assert.match(js, /sgi-turma-card-header/);
+    assert.match(js, /sgi-turma-card-actions/);
+    assert.match(js, /badge text-bg-light/);
     assert.match(js, /badge text-bg-danger/);
     assert.match(views, /row row-cols-1 row-cols-lg-2 g-3/);
     assert.doesNotMatch(js + views, /ocr-(?:page|container|header|grid|modal|badge|btn-cancel)|sgi-u-col-1-1/);

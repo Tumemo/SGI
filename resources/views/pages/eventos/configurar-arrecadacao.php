@@ -10,7 +10,7 @@ $nivelUsuario = (int)($_SESSION['nivel'] ?? -1);
 $isAdmin = $nivelUsuario === 0;
 ?>
 
-<main class="d-md-none pt-5 pb-5">
+<main class="d-md-none pt-5 pb-5 sgi-arrecadacao-mobile sgi-u-min-width-0">
     <div class="px-3 mt-3">
         <div class="mb-4">
             <h1 class="h3 fw-bold mb-1">Arrecadações</h1>

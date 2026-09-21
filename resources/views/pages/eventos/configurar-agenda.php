@@ -262,10 +262,10 @@ $nivelUsuarioAgenda = (int)($_SESSION['nivel'] ?? -1);
                     <button type="button" class="btn btn-outline-danger btn-sm mt-2" id="seq-adicionar-dia"><i class="bi bi-calendar-plus me-1"></i>Adicionar dia e recalcular</button>
                 </div>
             </div>
-            <div class="modal-footer">
+            <div class="modal-footer sgi-modal-footer-fit">
                 <button type="button" class="btn btn-outline-secondary rounded-3 fw-semibold small" data-bs-dismiss="modal" >Cancelar</button>
-                <button type="button" class="btn btn-outline-danger rounded-3 fw-semibold small" id="seq-simular-btn"><i class="bi bi-eye me-1"></i>Calcular prévia</button>
-                <button type="button" class="btn btn-primary rounded-3 fw-semibold small" id="seq-salvar-btn" disabled><i class="bi bi-check-lg me-1"></i>Confirmar agenda</button>
+                <button type="button" class="btn btn-outline-danger rounded-3 fw-semibold small" id="seq-simular-btn"><i class="bi bi-eye me-1"></i><span class="d-none d-sm-inline">Calcular prévia</span><span class="d-sm-none">Prévia</span></button>
+                <button type="button" class="btn btn-primary rounded-3 fw-semibold small" id="seq-salvar-btn" disabled><i class="bi bi-check-lg me-1"></i><span class="d-none d-sm-inline">Confirmar agenda</span><span class="d-sm-none">Confirmar</span></button>
             </div>
         </div>
     </div>

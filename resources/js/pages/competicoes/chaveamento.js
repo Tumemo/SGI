@@ -404,8 +404,24 @@ window.SGIPage.mount("competicoes/chaveamento", function (pageConfig, pageScope)
         const wrap = document.getElementById('kvs-wrap-' + idSelect);
         if (wrap) {
             const trigger = wrap.querySelector('.kvs__trigger');
-            if (trigger) trigger.click();
+            if (trigger) {
+                trigger.click();
+                return;
+            }
         }
+        const select = document.getElementById(idSelect);
+        if (select) {
+            try { select.focus({ preventScroll: true }); } catch (_) { select.focus(); }
+            if (typeof select.showPicker === 'function') {
+                try { select.showPicker(); } catch (_) { /* o seletor nativo segue disponível */ }
+            }
+        }
+    }
+
+    function usarSeletorNativo() {
+        if (typeof window.matchMedia !== 'function') return false;
+        return window.matchMedia('(pointer: coarse)').matches
+            || window.matchMedia('(hover: none)').matches;
     }
 
     pageScope.listen(window, 'scroll', () => {
@@ -597,30 +613,32 @@ window.SGIPage.mount("competicoes/chaveamento", function (pageConfig, pageScope)
             });
 
             kvs_montarGrupos();
-            kvs_montar({
-                wrapId: 'kvs-wrap-selectModalidade', selectId: 'selectModalidade',
-                peerWrapId: 'kvs-wrap-selectModalidadeMob', peerSelectId: 'selectModalidadeMob',
-                placeholder: 'Selecione uma modalidade', ariaLabel: 'Selecionar modalidade do chaveamento',
-                listboxLabel: 'Modalidades disponíveis', incluirTodas: false
-            });
-            kvs_montar({
-                wrapId: 'kvs-wrap-selectModalidadeMob', selectId: 'selectModalidadeMob',
-                peerWrapId: 'kvs-wrap-selectModalidade', peerSelectId: 'selectModalidade',
-                placeholder: 'Selecione uma modalidade', ariaLabel: 'Selecionar modalidade do chaveamento',
-                listboxLabel: 'Modalidades disponíveis', incluirTodas: false
-            });
-            kvs_montar({
-                wrapId: 'kvs-wrap-filtroModalidadeJogos', selectId: 'filtroModalidadeJogos',
-                peerWrapId: 'kvs-wrap-filtroModalidadeJogosMob', peerSelectId: 'filtroModalidadeJogosMob',
-                placeholder: 'Todas modalidades', ariaLabel: 'Filtrar jogos por modalidade',
-                listboxLabel: 'Modalidades para filtrar jogos', incluirTodas: true
-            });
-            kvs_montar({
-                wrapId: 'kvs-wrap-filtroModalidadeJogosMob', selectId: 'filtroModalidadeJogosMob',
-                peerWrapId: 'kvs-wrap-filtroModalidadeJogos', peerSelectId: 'filtroModalidadeJogos',
-                placeholder: 'Todas modalidades', ariaLabel: 'Filtrar jogos por modalidade',
-                listboxLabel: 'Modalidades para filtrar jogos', incluirTodas: true
-            });
+            if (!usarSeletorNativo()) {
+                kvs_montar({
+                    wrapId: 'kvs-wrap-selectModalidade', selectId: 'selectModalidade',
+                    peerWrapId: 'kvs-wrap-selectModalidadeMob', peerSelectId: 'selectModalidadeMob',
+                    placeholder: 'Selecione uma modalidade', ariaLabel: 'Selecionar modalidade do chaveamento',
+                    listboxLabel: 'Modalidades disponíveis', incluirTodas: false
+                });
+                kvs_montar({
+                    wrapId: 'kvs-wrap-selectModalidadeMob', selectId: 'selectModalidadeMob',
+                    peerWrapId: 'kvs-wrap-selectModalidade', peerSelectId: 'selectModalidade',
+                    placeholder: 'Selecione uma modalidade', ariaLabel: 'Selecionar modalidade do chaveamento',
+                    listboxLabel: 'Modalidades disponíveis', incluirTodas: false
+                });
+                kvs_montar({
+                    wrapId: 'kvs-wrap-filtroModalidadeJogos', selectId: 'filtroModalidadeJogos',
+                    peerWrapId: 'kvs-wrap-filtroModalidadeJogosMob', peerSelectId: 'filtroModalidadeJogosMob',
+                    placeholder: 'Todas modalidades', ariaLabel: 'Filtrar jogos por modalidade',
+                    listboxLabel: 'Modalidades para filtrar jogos', incluirTodas: true
+                });
+                kvs_montar({
+                    wrapId: 'kvs-wrap-filtroModalidadeJogosMob', selectId: 'filtroModalidadeJogosMob',
+                    peerWrapId: 'kvs-wrap-filtroModalidadeJogos', peerSelectId: 'filtroModalidadeJogos',
+                    placeholder: 'Todas modalidades', ariaLabel: 'Filtrar jogos por modalidade',
+                    listboxLabel: 'Modalidades para filtrar jogos', incluirTodas: true
+                });
+            }
 
             atualizarStats(jogosCache);
         } catch (e) {
@@ -1734,10 +1752,11 @@ window.SGIPage.mount("competicoes/chaveamento", function (pageConfig, pageScope)
             return;
         }
 
-        const kvsMob = document.getElementById('kvs-wrap-selectModalidadeMob');
-        const idModalidade = (kvsMob && kvsMob.offsetParent !== null)
-            ? document.getElementById('selectModalidadeMob').value
-            : document.getElementById('selectModalidade').value;
+        const selectMobEl = document.getElementById('selectModalidadeMob');
+        const selectDeskEl = document.getElementById('selectModalidade');
+        const idModalidade = (selectMobEl && selectMobEl.offsetParent !== null)
+            ? selectMobEl.value
+            : (selectDeskEl ? selectDeskEl.value : '');
 
         if (!idModalidade) {
             msgEl.innerHTML = '<div class="alert alert-danger">Selecione uma modalidade primeiro.</div>';

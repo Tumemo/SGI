@@ -65,18 +65,22 @@ window.SGIPage.mount("disciplina/ocorrencias", function (pageConfig, pageScope) 
             const nomeTurma = turma.nome_fantasia_turma || turma.nome_turma;
             const nomeTurmaSeguro = escAttr(nomeTurma);
             return `
-                <div class="col"><article class="card h-100 border-0 shadow-sm p-3 d-flex flex-row align-items-center gap-3">
-                    <div class="bg-danger-subtle text-danger rounded-circle p-2 fs-5 d-flex align-items-center justify-content-center flex-shrink-0"><i class="bi bi-people-fill" aria-hidden="true"></i></div>
-                    <div class="flex-grow-1 sgi-u-min-width-0">
-                        <h2 class="h6 mb-1 fw-semibold text-truncate">${esc(nomeTurma)}</h2>
-                        <span class="badge text-bg-light">${esc(turma.nome_categoria || 'Geral')}</span>
+                <div class="col"><article class="card h-100 border-0 shadow-sm sgi-turma-card p-3">
+                    <div class="sgi-turma-card-header">
+                        <div class="bg-danger-subtle text-danger rounded-circle p-2 fs-5 d-flex align-items-center justify-content-center flex-shrink-0"><i class="bi bi-people-fill" aria-hidden="true"></i></div>
+                        <div class="sgi-turma-card-title">
+                            <h2 class="h6 mb-1 fw-semibold">${esc(nomeTurma)}</h2>
+                            <span class="badge text-bg-light">${esc(turma.nome_categoria || 'Geral')}</span>
+                        </div>
                     </div>
-                    <button type="button" class="btn btn-outline-secondary btn-sm" data-sgi-action="history-ocorrencia" data-id-turma="${turma.id_turma}" data-nome-turma="${nomeTurmaSeguro}" title="Ver histórico" aria-label="Ver histórico de ocorrências de ${nomeTurmaSeguro}">
-                        <i class="bi bi-clock-history" aria-hidden="true"></i>
-                    </button>
-                    <button type="button" class="btn btn-outline-danger btn-sm" data-sgi-action="add-ocorrencia" data-id-turma="${turma.id_turma}" data-nome-turma="${nomeTurmaSeguro}" title="Adicionar ocorrência" aria-label="Adicionar ocorrência para ${nomeTurmaSeguro}">
-                        <i class="bi bi-plus-lg" aria-hidden="true"></i>
-                    </button>
+                    <div class="sgi-turma-card-actions">
+                        <button type="button" class="btn btn-outline-secondary btn-sm" data-sgi-action="history-ocorrencia" data-id-turma="${turma.id_turma}" data-nome-turma="${nomeTurmaSeguro}" title="Ver histórico" aria-label="Ver histórico de ocorrências de ${nomeTurmaSeguro}">
+                            <i class="bi bi-clock-history" aria-hidden="true"></i>
+                        </button>
+                        <button type="button" class="btn btn-outline-danger btn-sm" data-sgi-action="add-ocorrencia" data-id-turma="${turma.id_turma}" data-nome-turma="${nomeTurmaSeguro}" title="Adicionar ocorrência" aria-label="Adicionar ocorrência para ${nomeTurmaSeguro}">
+                            <i class="bi bi-plus-lg" aria-hidden="true"></i>
+                        </button>
+                    </div>
                 </article></div>`;
         }
 

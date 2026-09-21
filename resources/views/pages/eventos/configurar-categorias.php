@@ -28,7 +28,7 @@ $paginaAtiva = 'dashboard';
 </main>
 
 <!-- main desktop -->
-<main class="d-none d-md-block main-desktop-layout">
+<main class="d-none d-md-block main-desktop-layout sgi-categorias-desktop">
     <div class="container-fluid px-0 position-relative">
         <h1 class="h2 fw-bold text-body mb-4">Categorias</h1>
         <div class="mb-5">
