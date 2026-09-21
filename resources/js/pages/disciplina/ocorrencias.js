@@ -1,5 +1,8 @@
 window.SGIPage.mount("disciplina/ocorrencias", function (pageConfig, pageScope) {
 
+    const APP_BASE = String(window.SGI_BASE_PATH || '').replace(/\/+$/, '');
+    const API_BASE = String(window.SGI_API_BASE || `${APP_BASE}/api/v1/`).replace(/\/?$/, '');
+
     function esc(s) {
         var d = document.createElement('div');
         d.textContent = s == null ? '' : String(s);
@@ -25,7 +28,7 @@ window.SGIPage.mount("disciplina/ocorrencias", function (pageConfig, pageScope) 
         }
         if (!idInterclasse) {
             await SGI.alert({ titulo: 'Interclasse não encontrado', mensagem: 'Nenhum interclasse ativo foi encontrado.', tipo: 'warning' });
-            window.location.href = '/painel';
+            window.location.href = `${APP_BASE}/painel`;
             return;
         }
         const dados = await window.SGIInterclasse.getInterclasseById(idInterclasse);
@@ -35,11 +38,9 @@ window.SGIPage.mount("disciplina/ocorrencias", function (pageConfig, pageScope) 
         });
         ['btnVoltarOcr', 'btnVoltarOcrMob'].forEach(id => {
             const el = document.getElementById(id);
-            if (el) el.href = `/painel?id=${idInterclasse}`;
+            if (el) el.href = `${APP_BASE}/painel?id=${idInterclasse}`;
         });
     }
-
-    const API_BASE = '/api/v1';
 
     async function carregarDados() {
         await resolverInterclasse();

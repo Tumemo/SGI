@@ -1,6 +1,6 @@
 window.SGIPage.mount("competicoes/elenco-equipe", function (pageConfig, pageScope) {
 
-const API = '/api/v1/';
+const API = String(window.SGI_API_BASE || `${window.SGI_BASE_PATH || ''}/api/v1/`).replace(/\/?$/, '/');
 const isAdmin = pageConfig.value1;
 const params = new URLSearchParams(window.location.search);
 const idInterclasse = params.get('id');
@@ -21,7 +21,7 @@ function montarVoltar() {
     const q = new URLSearchParams();
     if (idInterclasse) q.set('id', idInterclasse);
     if (idCategoria) q.set('id_categoria', idCategoria);
-    const hrefEq = `/edicoes/equipes?${q.toString()}`;
+    const hrefEq = `${String(window.SGI_BASE_PATH || '').replace(/\/+$/, '')}/edicoes/equipes?${q.toString()}`;
     ['btnVoltarElencoMob', 'btnVoltarElencoDesk'].forEach(id => {
         const el = document.getElementById(id);
         if (el) el.href = hrefEq;

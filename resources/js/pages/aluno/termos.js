@@ -1,6 +1,7 @@
 window.SGIPage.mount("aluno/termos", function (pageConfig, pageScope) {
 
-        const APP_BASE = window.SGI_BASE_PATH || '';
+        const APP_BASE = String(window.SGI_BASE_PATH || '').replace(/\/+$/, '');
+        const API_BASE = String(window.SGI_API_BASE || `${APP_BASE}/api/v1/`).replace(/\/?$/, '/');
 
         async function carregarRegulamento() {
             const statusEl = document.getElementById('statusRegulamento');
@@ -9,7 +10,7 @@ window.SGIPage.mount("aluno/termos", function (pageConfig, pageScope) {
 
             try {
                 // Busca a lista de interclasses com regulamento atrelado
-                const res = await fetch('/api/v1/edicoes?status_interclasse=1&regulamento=true');
+                const res = await fetch(`${API_BASE}edicoes?status_interclasse=1&regulamento=true`);
                 if (!res.ok) throw new Error('Erro na resposta da API');
 
                 const data = await res.json();
@@ -42,7 +43,7 @@ window.SGIPage.mount("aluno/termos", function (pageConfig, pageScope) {
             if (!button || !message) return;
 
             try {
-                const res = await fetch('/api/v1/termos');
+                const res = await fetch(`${API_BASE}termos`);
                 if (res.status === 401) {
                     window.location.href = APP_BASE + '/aluno/login';
                     return;
@@ -68,7 +69,7 @@ window.SGIPage.mount("aluno/termos", function (pageConfig, pageScope) {
             message.className = 'small mt-3 mb-0 text-secondary';
             message.textContent = 'Registrando aceite...';
             try {
-                const res = await fetch('/api/v1/termos', {
+                const res = await fetch(`${API_BASE}termos`, {
                     method: 'POST',
                     headers: { 'X-SGI-CSRF': window.SGI_CSRF_TOKEN || '' }
                 });

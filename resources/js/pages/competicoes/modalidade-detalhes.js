@@ -1,5 +1,7 @@
 window.SGIPage.mount("competicoes/modalidade-detalhes", function (pageConfig, pageScope) {
 
+    const APP_BASE = String(window.SGI_BASE_PATH || '').replace(/\/+$/, '');
+    const API_BASE = String(window.SGI_API_BASE || `${APP_BASE}/api/v1/`).replace(/\/?$/, '');
     const esc = (value) => window.SGIHtml
         ? window.SGIHtml.escape(value)
         : String(value == null ? '' : value).replace(/[&<>"']/g, (character) => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[character]));
@@ -15,8 +17,8 @@ window.SGIPage.mount("competicoes/modalidade-detalhes", function (pageConfig, pa
 
         try {
             const [resModalidade, resEquipes] = await Promise.all([
-                fetch(`/api/v1/modalidades?id_modalidade=${idModalidade}`),
-                fetch(`/api/v1/equipes?id_modalidade=${idModalidade}`)
+                fetch(`${API_BASE}/modalidades?id_modalidade=${idModalidade}`),
+                fetch(`${API_BASE}/equipes?id_modalidade=${idModalidade}`)
             ]);
             const modalidades = await resModalidade.json();
             const equipes = await resEquipes.json();
@@ -27,7 +29,7 @@ window.SGIPage.mount("competicoes/modalidade-detalhes", function (pageConfig, pa
             idInterclasseAtual = modalidade.interclasses_id_interclasse || params.get('id') || null;
 
             if (idInterclasseAtual) {
-                const hrefVoltarDetalhe = `/painel?id=${idInterclasseAtual}`;
+                const hrefVoltarDetalhe = `${APP_BASE}/painel?id=${idInterclasseAtual}`;
                 document.getElementById('btnVoltarDashboardDesktop').href = hrefVoltarDetalhe;
                 const btnVoltarDetalheMob = document.getElementById('sgiBtnVoltar');
                 if (btnVoltarDetalheMob) btnVoltarDetalheMob.href = hrefVoltarDetalhe;
@@ -150,7 +152,7 @@ window.SGIPage.mount("competicoes/modalidade-detalhes", function (pageConfig, pa
     async function carregarTiposEdicao(selectedId) {
         const select = document.getElementById('editTipoModalidade');
         try {
-            const resp = await fetch('/api/v1/tipos-modalidade');
+            const resp = await fetch(`${API_BASE}/tipos-modalidade`);
             const tipos = await resp.json();
             const placeholder = new Option('Selecione...', '');
             placeholder.disabled = true;
@@ -172,7 +174,7 @@ window.SGIPage.mount("competicoes/modalidade-detalhes", function (pageConfig, pa
         const idInterclasse = idInterclasseAtual || new URLSearchParams(window.location.search).get('id');
         const select = document.getElementById('editCategoriaModalidade');
         try {
-            const resp = await fetch(`/api/v1/categorias?id_interclasse=${idInterclasse}`);
+            const resp = await fetch(`${API_BASE}/categorias?id_interclasse=${idInterclasse}`);
             const cats = await resp.json();
             const placeholder = new Option('Selecione...', '');
             placeholder.disabled = true;
@@ -228,7 +230,7 @@ window.SGIPage.mount("competicoes/modalidade-detalhes", function (pageConfig, pa
         if (btn) { btn.disabled = true; btn.innerHTML = '<i class="bi bi-trash3"></i> Excluindo...'; }
 
         try {
-            const resp = await fetch('/api/v1/modalidades', {
+            const resp = await fetch(`${API_BASE}/modalidades`, {
                 method: 'DELETE',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ id_modalidade: modalidadeAtual.id_modalidade })
@@ -242,8 +244,8 @@ window.SGIPage.mount("competicoes/modalidade-detalhes", function (pageConfig, pa
 
             const idInterclasse = idInterclasseAtual;
             window.location.href = idInterclasse
-                ? `/edicoes/modalidades?id=${idInterclasse}&modo=view`
-                : '/edicoes/modalidades';
+                ? `${APP_BASE}/edicoes/modalidades?id=${idInterclasse}&modo=view`
+                : `${APP_BASE}/edicoes/modalidades`;
         } catch (e) {
             SGI.alert('Erro de conexão.');
         } finally {
@@ -281,7 +283,7 @@ window.SGIPage.mount("competicoes/modalidade-detalhes", function (pageConfig, pa
             btn.disabled = true;
             btn.innerHTML = 'Salvando...';
 
-            const resp = await fetch('/api/v1/modalidades', {
+            const resp = await fetch(`${API_BASE}/modalidades`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(dados)
