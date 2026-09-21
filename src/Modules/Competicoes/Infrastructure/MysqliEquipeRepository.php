@@ -279,8 +279,8 @@ final class MysqliEquipeRepository implements EquipeRepository
         if ($this->cronograma === null || !$this->planningAvailable()) {
             return;
         }
-        $edition = $this->one('SELECT modo_planejamento, cronograma_status, inscricoes_status, inscricoes_abertura, inscricoes_encerramento FROM interclasse_planejamentos WHERE id_interclasse = ? LIMIT 1', 'i', [$editionId]);
-        if ($edition === null || (string) ($edition['modo_planejamento'] ?? CronogramaRules::LEGADO) !== CronogramaRules::PLANEJADO) {
+        $edition = $this->one('SELECT cronograma_status, inscricoes_status, inscricoes_abertura, inscricoes_encerramento FROM interclasse_planejamentos WHERE id_interclasse = ? LIMIT 1', 'i', [$editionId]);
+        if ($edition === null) {
             return;
         }
         CronogramaRules::assertPlannedEdition($edition);

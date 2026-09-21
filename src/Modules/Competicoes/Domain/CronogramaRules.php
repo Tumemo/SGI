@@ -8,14 +8,13 @@ use InvalidArgumentException;
 
 final class CronogramaRules
 {
-    public const LEGADO = 'legado';
     public const PLANEJADO = 'planejado';
     public const RASCUNHO = 'rascunho';
     public const PUBLICADO = 'publicado';
     public const REVISAO = 'revisao';
 
     /** @return array{quantidade:int,min:int,max:int,formato:string,duracao:?int,descanso:int} */
-    public static function modalidade(array $data, bool $planejado = true): array
+    public static function modalidade(array $data): array
     {
         $quantity = self::positive($data['equipes_planejadas'] ?? null, 'A quantidade planejada de equipes');
         $min = self::positive($data['min_inscritos_equipe'] ?? 1, 'O mínimo de inscritos por equipe');
@@ -55,9 +54,6 @@ final class CronogramaRules
 
     public static function assertPlannedEdition(array $edition, ?\DateTimeImmutable $now = null): void
     {
-        if ((string) ($edition['modo_planejamento'] ?? self::LEGADO) !== self::PLANEJADO) {
-            throw new InvalidArgumentException('A edição não usa o cronograma anterior às inscrições.');
-        }
         if ((string) ($edition['cronograma_status'] ?? self::RASCUNHO) !== self::PUBLICADO) {
             throw new InvalidArgumentException('O cronograma ainda não foi publicado.');
         }

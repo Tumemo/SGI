@@ -50,7 +50,6 @@ final class CronogramaRulesTest extends TestCase
     public function testPlannedEditionMustBePublishedAndOpenWithinWindow(): void
     {
         CronogramaRules::assertPlannedEdition([
-            'modo_planejamento' => 'planejado',
             'cronograma_status' => 'publicado',
             'inscricoes_status' => 'abertas',
             'inscricoes_abertura' => '2026-09-21 08:00:00',
@@ -59,7 +58,6 @@ final class CronogramaRulesTest extends TestCase
 
         $this->expectException(InvalidArgumentException::class);
         CronogramaRules::assertPlannedEdition([
-            'modo_planejamento' => 'planejado',
             'cronograma_status' => 'rascunho',
             'inscricoes_status' => 'abertas',
         ]);

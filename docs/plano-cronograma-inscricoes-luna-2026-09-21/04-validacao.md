@@ -39,7 +39,7 @@ Estender os testes existentes antes de criar suítes paralelas:
 
 | ID | Cenário e resultado observável | Camadas |
 | --- | --- | --- |
-| V01 | Quantidade vazia/zero/negativa/fracionária/overflow recusada; mínimo > máximo recusado; legado ilimitado preservado. | Unitário + HTTP |
+| V01 | Quantidade vazia/zero/negativa/fracionária/overflow recusada; mínimo > máximo recusado; toda modalidade exige configuração finita. | Unitário + HTTP |
 | V02 | Três turmas × duas entradas gera seis; repetição e concorrência mantêm mesmos IDs; falha intermediária desfaz criação parcial. | Unitário + SQL |
 | V03 | Turma, modalidade, recurso, nó ou equipe de outra edição/categoria são recusados. | Unitário + HTTP/SQL |
 | V04 | Equipes vazias permitem planejamento, mas não início de jogo/WO/avanço/pontos. | Unitário + HTTP + navegador |
@@ -61,10 +61,10 @@ Estender os testes existentes antes de criar suítes paralelas:
 | V20 | Revisão conserva snapshot anterior e histórico; bloqueia conflitos; retirada não apaga resultado/inscrição; início impede regeneração destrutiva. | HTTP/SQL + navegador |
 | V21 | Aluno/mesário não preparam/publicam/abrem; colaborador não adquire privilégio de administrador; acesso direto não contorna controles. | HTTP |
 | V22 | Instalação vazia, instalação + migrate, upgrade com vínculos/resultados, repetição e falha/recuperação preservam dados e checksums. | MariaDB + MySQL |
-| V23 | Legado não converte automaticamente; adoção com ambiguidades ou operação iniciada é recusada sem alterar dados. | SQL + HTTP |
-| V24 | IDs e reserva de final permanecem coerentes após avanço online/offline; replay não duplica jogo, pontos ou confirmação. | SQL + JS + Playwright |
-| V25 | Fila pendente e cache antigo sobrevivem a atualização; operações novas online não são enfileiradas; erro de sync permanece revisável. | JS + Playwright |
-| V26 | Fluxo completo, teclado/mobile, raiz/subdiretório, reentrada, duplo clique, versão obsoleta e erros legíveis. | Navegador + visual |
+| V23 | IDs e reserva de final permanecem coerentes após avanço online/offline; replay não duplica jogo, pontos ou confirmação. | SQL + JS + Playwright |
+| V24 | Fila pendente e cache existente sobrevivem a atualização; operações novas online não são enfileiradas; erro de sync permanece revisável. | JS + Playwright |
+| V25 | Fluxo completo, teclado/mobile, raiz/subdiretório, reentrada, duplo clique, versão obsoleta e erros legíveis. | Navegador + visual |
+
 
 Testes concorrentes devem coordenar operações por barreiras/sinais confiáveis do harness; não depender de atrasos arbitrários. Asserir persistência final e respostas, não apenas presença de métodos/campos.
 

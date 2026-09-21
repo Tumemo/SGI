@@ -349,7 +349,7 @@ final class MysqliEdicaoRepository implements EdicaoRepository
         if ((int) ($row['total'] ?? 0) === 0) {
             return;
         }
-        $statement = $this->connection->prepare('INSERT INTO interclasse_planejamentos (id_interclasse, modo_planejamento, cronograma_status, inscricoes_status) VALUES (?, \'planejado\', \'rascunho\', \'fechadas\')');
+        $statement = $this->connection->prepare("INSERT INTO interclasse_planejamentos (id_interclasse, cronograma_status, inscricoes_status) VALUES (?, 'rascunho', 'fechadas')");
         if ($statement === false) {
             throw new RuntimeException('Não foi possível inicializar o planejamento da edição.');
         }

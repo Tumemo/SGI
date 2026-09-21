@@ -802,6 +802,7 @@ window.SGIPage.mount("eventos/configurar-agenda", function (pageConfig, pageScop
             const statusCronograma = document.getElementById('cronogramaPlanejadoStatus');
             const resumoCronograma = document.getElementById('cronogramaPlanejadoResumo');
             const botaoPublicar = document.getElementById('cronogramaPublicar');
+            const botaoRevisar = document.getElementById('cronogramaRevisar');
             const hoje = hojeISO();
             const campoInicio = document.getElementById('cronogramaDataInicio');
             const campoFim = document.getElementById('cronogramaDataFim');
@@ -810,11 +811,10 @@ window.SGIPage.mount("eventos/configurar-agenda", function (pageConfig, pageScop
 
             const mostrarCronograma = (mensagem = '') => {
                 if (!cronogramaEstado) return;
-                const modo = cronogramaEstado.modo_planejamento || 'legado';
                 const agenda = cronogramaEstado.cronograma_status || 'rascunho';
                 const inscricoes = cronogramaEstado.inscricoes_status || 'fechadas';
                 if (statusCronograma) {
-                    statusCronograma.textContent = `${modo} · ${agenda} · inscrições ${inscricoes}`;
+                    statusCronograma.textContent = `${agenda} · inscrições ${inscricoes}`;
                     statusCronograma.className = `badge ${inscricoes === 'abertas' ? 'text-bg-success' : agenda === 'publicado' ? 'text-bg-primary' : 'text-bg-secondary'}`;
                 }
                 if (resumoCronograma) {
@@ -842,10 +842,6 @@ window.SGIPage.mount("eventos/configurar-agenda", function (pageConfig, pageScop
                     resumoCronograma.textContent = error.message || 'Não foi possível processar o cronograma.';
                 }
             };
-            const ativar = document.getElementById('cronogramaAtivar');
-            if (ativar) pageScope.listen(ativar, 'click', async () => {
-                try { await enviarCronograma({ acao: 'ativar_planejamento' }); await atualizarCronograma(); } catch (error) { tratarErroCronograma(error); }
-            });
             const preparar = document.getElementById('cronogramaPreparar');
             if (preparar) pageScope.listen(preparar, 'click', async () => {
                 try { const result = await enviarCronograma({ acao: 'preparar_equipes' }); await atualizarCronograma(); mostrarCronograma(`${Number(result.equipes_criadas || 0)} equipe(s) criada(s); ${Number(result.equipes_existentes || 0)} já existente(s).`); } catch (error) { tratarErroCronograma(error); }
@@ -862,21 +858,30 @@ window.SGIPage.mount("eventos/configurar-agenda", function (pageConfig, pageScop
                         duracao_min: Number(document.getElementById('cronogramaDuracao')?.value || 30)
                     });
                     cronogramaRascunho = result;
-                    if (botaoPublicar) botaoPublicar.disabled = !result.success || !Array.isArray(result.compromissos) || result.compromissos.length === 0;
+                    if (botaoPublicar) botaoPublicar.disabled = !result.success || !Array.isArray(result.nos) || result.nos.length === 0;
                     const pendencias = Array.isArray(result.pendencias) ? result.pendencias.length : 0;
-                    if (resumoCronograma) { resumoCronograma.classList.toggle('text-danger', pendencias > 0); resumoCronograma.textContent = `${Number(result.compromissos?.length || 0)} compromisso(s) gerado(s)${pendencias ? `; ${pendencias} pendência(s) bloqueiam a publicação.` : '.'}`; }
+                    if (resumoCronograma) { resumoCronograma.classList.toggle('text-danger', pendencias > 0); resumoCronograma.textContent = `${Number(result.nos?.length || 0)} nó(s), ${Number(result.compromissos?.length || 0)} compromisso(s) gerado(s)${pendencias ? `; ${pendencias} pendência(s) bloqueiam a publicação.` : '.'}`; }
                 } catch (error) { cronogramaRascunho = null; if (botaoPublicar) botaoPublicar.disabled = true; tratarErroCronograma(error); }
             });
             if (botaoPublicar) pageScope.listen(botaoPublicar, 'click', async () => {
                 if (!cronogramaRascunho || !cronogramaEstado) return;
                 botaoPublicar.disabled = true;
                 try {
-                    const publicada = await enviarCronograma({ acao: 'publicar', cronograma_versao: Number(cronogramaEstado.cronograma_versao || 0), compromissos: cronogramaRascunho.compromissos });
+                    const publicada = await enviarCronograma({ acao: 'publicar', cronograma_versao: Number(cronogramaEstado.cronograma_versao || 0), compromissos: cronogramaRascunho.compromissos, nos: cronogramaRascunho.nos });
                     await enviarCronograma({ acao: 'abrir_inscricoes', cronograma_versao: Number(publicada.cronograma_versao || 0) });
                     cronogramaRascunho = null;
                     await atualizarCronograma();
                     mostrarCronograma('Cronograma publicado e inscrições abertas.');
                 } catch (error) { tratarErroCronograma(error); botaoPublicar.disabled = false; }
+            });
+            if (botaoRevisar) pageScope.listen(botaoRevisar, 'click', async () => {
+                if (!cronogramaEstado || cronogramaEstado.cronograma_status !== 'publicado') return;
+                botaoRevisar.disabled = true;
+                try {
+                    const revisada = await enviarCronograma({ acao: 'revisar', cronograma_versao: Number(cronogramaEstado.cronograma_versao || 0) });
+                    await atualizarCronograma();
+                    mostrarCronograma(`${Number(revisada.equipes_incompletas?.length || 0)} equipe(s) precisam de resolução antes da nova publicação.`);
+                } catch (error) { tratarErroCronograma(error); botaoRevisar.disabled = false; }
             });
             atualizarCronograma().catch(tratarErroCronograma);
         }

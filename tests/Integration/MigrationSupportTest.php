@@ -55,18 +55,19 @@ final class MigrationSupportTest
             $planningApplied = $planningRunner->migrate();
             $planningRepeated = $planningRunner->migrate();
             $planningTables = 0;
-            foreach (['interclasse_planejamentos', 'modalidade_planejamentos', 'equipe_planejamentos', 'cronograma_compromissos'] as $planningTable) {
+            foreach (['interclasse_planejamentos', 'modalidade_planejamentos', 'equipe_planejamentos', 'cronograma_compromissos', 'cronograma_nos', 'cronograma_no_equipes'] as $planningTable) {
                 $planningTables += (int) $connection->query("SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name = '" . $connection->real_escape_string($planningTable) . "'")->fetch_column();
             }
             Assertions::assert(
                 'Migration do cronograma cria as tabelas auxiliares e é idempotente',
-                in_array($planningVersion, $planningApplied, true) && $planningRepeated === [] && $planningTables === 4,
+                in_array($planningVersion, $planningApplied, true) && in_array('002_cronograma_nos.sql', $planningApplied, true) && $planningRepeated === [] && $planningTables === 6,
             );
-            foreach (['cronograma_compromissos', 'equipe_planejamentos', 'modalidade_planejamentos', 'interclasse_planejamentos'] as $planningTable) {
+            foreach (['cronograma_no_equipes', 'cronograma_nos', 'cronograma_compromissos', 'equipe_planejamentos', 'modalidade_planejamentos', 'interclasse_planejamentos'] as $planningTable) {
                 $connection->query('DROP TABLE IF EXISTS `' . $planningTable . '`');
             }
-            $statement = $connection->prepare('DELETE FROM sgi_migrations WHERE version = ?');
-            $statement->bind_param('s', $planningVersion);
+            $statement = $connection->prepare('DELETE FROM sgi_migrations WHERE version IN (?, ?)');
+            $planningNodesVersion = '002_cronograma_nos.sql';
+            $statement->bind_param('ss', $planningVersion, $planningNodesVersion);
             $statement->execute();
             $statement->close();
         } finally {

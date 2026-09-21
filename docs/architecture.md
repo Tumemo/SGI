@@ -124,23 +124,30 @@ campos informados.
 
 A migration `001_cronograma_inscricoes.sql` mantém o estado do cronograma, as
 quantidades de equipes por modalidade, a ordem das equipes preparadas e o
-snapshot versionado de compromissos em tabelas auxiliares. O schema inicial
-legado não recebe colunas novas, preservando instalações existentes;
-`php bin/sgi.php migrate` deve ser executado antes de usar o fluxo planejado.
+snapshot versionado de compromissos em tabelas auxiliares. A migration
+`002_cronograma_nos.sql` acrescenta a árvore determinística de nós, BYEs,
+dependências e o mapeamento de cada entrada para os nós alcançáveis. Execute
+`php bin/sgi.php migrate` antes de usar o fluxo planejado.
 
-Novas edições, quando a migration está aplicada, começam com inscrições
-fechadas e modo `planejado`. O administrador informa `equipes_planejadas`,
+As edições começam com inscrições fechadas e cronograma planejado. O administrador informa `equipes_planejadas`,
 limites do elenco e formato; a preparação cria entradas vazias por turma de
 forma idempotente. A rota `/api/v1/cronograma` permite consultar o estado,
-gerar uma prévia determinística, publicar uma revisão e abrir ou encerrar as
-inscrições. A publicação exige cobertura das modalidades e equipes, intervalos
-válidos e ausência de conflitos no mesmo recurso ou percurso da equipe.
+gerar uma prévia determinística, publicar uma revisão, revisar uma publicação,
+materializar um nó quando houver elenco e abrir ou encerrar as inscrições. A
+publicação exige cobertura das modalidades e equipes, intervalos válidos e
+ausência de conflitos no mesmo recurso ou percurso da equipe. A árvore publicada
+é a única origem dos jogos planejados e preserva a identidade dos nós.
 
 Durante a inscrição, o servidor compara compromissos confirmados e
 condicionais de todas as modalidades escolhidas. Sobreposição recusa o lote na
 transação; categorias diferentes não formam disputas, mas continuam
-compartilhando locais e seus conflitos físicos. Edições sem a migration e
-edições antigas permanecem no comportamento legado.
+compartilhando locais e seus conflitos físicos.
+
+Uma revisão fecha as inscrições, avança a versão e mantém o snapshot anterior
+para auditoria. O estado informa ao preparo do mesário que uma nova preparação
+é necessária; a fila IndexedDB existente não é limpa nem reescrita. A abertura
+fria offline continua fora do contrato: resultados já enfileirados permanecem
+intactos e a revisão só pode ser reconhecida após reconexão.
 
 ## Assets e ciclo de vida offline
 

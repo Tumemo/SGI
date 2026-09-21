@@ -23,10 +23,10 @@ Cada tarefa exige leitura dos contratos atuais, teste de regressão junto da mud
 2. Definir e registrar DDL conforme o modelo lógico do documento técnico, com índices/identidades únicas e FKs quando aplicáveis.
 3. Criar migration futura e atualizar baseline sem alterar migration aplicada. Verificar instalação nova + migrate, upgrade e repetição.
 4. Acrescentar configuração e contratos de consulta/escrita de modalidade. Atualização parcial valida o estado final, incluindo limites já existentes.
-5. Novas edições planejadas iniciam com inscrições fechadas. Marcar existentes como legadas sem reinterpretar capacidade ou criar equipes automaticamente.
+5. Toda edição inicia com inscrições fechadas e planejamento obrigatório. Não inferir capacidade nem criar equipes a partir de nomes existentes.
 6. Definir quais modalidades participam da publicação: seleção persistida, não apenas filtro temporário da tela. Inativar/retirar modalidade já publicada passa por revisão.
 
-**Aceite:** rejeitar zero/fração/overflow/limites contraditórios; uma categoria não pode selecionar turma de outra; atualizar instalação sintética não altera vínculos/resultados antigos. Fixtures antigas declaram modo intencionalmente, não apenas para contornar testes novos.
+**Aceite:** rejeitar zero/fração/overflow/limites contraditórios; toda modalidade exige configuração finita. Uma categoria não pode selecionar turma de outra; atualizar a instalação sintética não altera vínculos ou resultados existentes.
 
 ## T02 — Preparação das equipes e vagas
 
@@ -36,7 +36,7 @@ Cada tarefa exige leitura dos contratos atuais, teste de regressão junto da mud
 2. Gerar N entradas por turma selecionada com identidade estável e ordinal; não depender do nome ou da presença de alunos.
 3. Tratar repetição e concorrência: mesmas quantidades retornam mesmas entradas; reenvio não duplica.
 4. Aumento em rascunho cria apenas entradas faltantes e invalida proposta de agenda. Redução com vínculo/jogo recusa exclusão automática e relata impacto.
-5. Impedir que rotinas legadas de equipe padrão/redistribuição aumentem a quantidade ou desviem inscrições no modo planejado.
+5. Impedir que rotinas de equipe padrão/redistribuição aumentem a quantidade ou desviem inscrições após a preparação planejada.
 
 **Aceite:** três turmas × duas entradas = seis, mesmo após repetir/concorrer; nenhuma partida concluída, pontuação ou avanço surge por equipe vazia. Elencos e IDs existentes permanecem íntegros.
 
@@ -59,7 +59,7 @@ Cada tarefa exige leitura dos contratos atuais, teste de regressão junto da mud
 1. Estender simulação para todas as modalidades participantes; carregar janelas, recursos permitidos, durações e reservas fixas do servidor.
 2. Ordenar deterministicamente por dependências e restrições; empate por identidade estável. Simulação não escreve nem refaz sorteio.
 3. Respeitar recurso, categoria, percurso possível da mesma equipe, descanso, transição, pausas e término das janelas. Duas categorias compartilham ocupação do recurso.
-4. Conferir a política atual de margem de dez minutos citada na arquitetura e sua implementação; eliminar divergência entre simulação, edição manual e confirmação no fluxo planejado, preservando comportamento legado documentado.
+4. Conferir a política atual de margem de dez minutos citada na arquitetura e sua implementação; eliminar divergência entre simulação, edição manual e confirmação no fluxo planejado.
 5. Retornar pendências detalhadas; jamais encurtar duração automaticamente para encaixar.
 6. Confirmar rascunho com revisão esperada, locks e revalidação integral. Edição manual e sequencial usam as mesmas invariantes.
 
@@ -115,7 +115,7 @@ Cada tarefa exige leitura dos contratos atuais, teste de regressão junto da mud
 3. Proibir regeneração destrutiva após início; materializar sucessoras idempotentemente conforme resultados e reservas.
 4. Propagar versão/estado operacional para preparação do mesário sem limpar cache/fila. Dispositivo offline não pode provar que recebeu revisão posterior; registrar essa limitação e avisar na reconexão.
 5. Impedir fila offline de inscrição/publicação, mantendo resultados offline existentes. Reenvios antigos continuam íntegros e recusas ficam revisáveis.
-6. Testar início/avanço/resultado/individual no modo planejado e regressões no legado, preservando autoria, pontos obrigatórios e atomicidade.
+6. Testar início/avanço/resultado/individual no modo planejado, preservando autoria, pontos obrigatórios e atomicidade.
 
 **Aceite:** uma final planejada e depois materializada ocupa a reserva original; replay não duplica jogo/pontos; revisão não perde fila; equipe vazia não opera partida real. Não declarar revisão recebida por dispositivo desconectado.
 
@@ -125,7 +125,7 @@ Cada tarefa exige leitura dos contratos atuais, teste de regressão junto da mud
 
 1. Executar integralmente a matriz; validar MariaDB e MySQL para as alterações de schema/SQL. Usar visual e não pular qualidade/navegador.
 2. Executar cenário sintético completo: cadastrar categorias/turmas/modalidades, equipes vazias, agenda, publicação, inscrições compatíveis/incompatíveis, fechamento, jogo e avanço online/offline.
-3. Atualizar README, arquitetura, testes e implantação apenas com funcionalidades efetivamente implementadas; documentar adoção de edição antiga, revisão/suspensão, limites do offline e recuperação de falhas.
+3. Atualizar README, arquitetura, testes e implantação apenas com funcionalidades efetivamente implementadas; documentar revisão/suspensão, limites do offline e recuperação de falhas.
 4. Revisar diff, segredos, stage e ausência de arquivos gerados; commits atômicos por entrega coerente, preservando mudanças do usuário.
 5. Registrar ambiente, commit, comando, horário com fuso, resultado, logs e limitações. Não afirmar CI remoto aprovado com base em execução local.
 

@@ -26,10 +26,10 @@ $nivelUsuarioAgenda = (int)($_SESSION['nivel'] ?? -1);
                 <div class="col-6 col-md-2"><label class="form-label small" for="cronogramaHoraFim">Fim</label><input id="cronogramaHoraFim" type="time" class="form-control form-control-sm" value="18:00"></div>
                 <div class="col-6 col-md-2"><label class="form-label small" for="cronogramaDuracao">Duração (min)</label><input id="cronogramaDuracao" type="number" min="1" class="form-control form-control-sm" value="30"></div>
                 <div class="col-6 col-md-2 d-flex flex-wrap gap-2">
-                    <button id="cronogramaAtivar" type="button" class="btn btn-outline-primary btn-sm">Ativar planejamento</button>
                     <button id="cronogramaPreparar" type="button" class="btn btn-outline-primary btn-sm">Preparar equipes</button>
                     <button id="cronogramaGerar" type="button" class="btn btn-primary btn-sm">Gerar rascunho</button>
                     <button id="cronogramaPublicar" type="button" class="btn btn-success btn-sm" disabled>Publicar e abrir inscrições</button>
+                    <button id="cronogramaRevisar" type="button" class="btn btn-outline-warning btn-sm">Reabrir revisão</button>
                 </div>
             </div>
             <p id="cronogramaPlanejadoResumo" class="small mb-0 mt-3" role="status" aria-live="polite"></p>

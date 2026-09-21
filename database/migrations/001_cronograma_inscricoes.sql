@@ -3,7 +3,6 @@
 -- contém a estrutura atualizada para instalações novas.
 CREATE TABLE IF NOT EXISTS interclasse_planejamentos (
   id_interclasse INT NOT NULL PRIMARY KEY,
-  modo_planejamento ENUM('legado','planejado') NOT NULL DEFAULT 'planejado',
   cronograma_status ENUM('rascunho','publicado','revisao') NOT NULL DEFAULT 'rascunho',
   inscricoes_status ENUM('fechadas','abertas','encerradas') NOT NULL DEFAULT 'fechadas',
   cronograma_versao INT UNSIGNED NOT NULL DEFAULT 0,

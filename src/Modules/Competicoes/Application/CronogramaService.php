@@ -22,14 +22,6 @@ final class CronogramaService
         return $this->repository->state($editionId);
     }
 
-    public function ativar(int $editionId, int $userId): array
-    {
-        if ($editionId <= 0 || $userId <= 0) {
-            throw new InvalidArgumentException('Edição e usuário são obrigatórios.');
-        }
-        return $this->repository->enablePlanning($editionId, $userId);
-    }
-
     public function preparar(int $editionId, int $userId): array
     {
         if ($editionId <= 0 || $userId <= 0) {
@@ -50,7 +42,7 @@ final class CronogramaService
     /** @param array<string,mixed> $data @return array<string,mixed> */
     public function publicar(int $editionId, int $userId, array $data): array
     {
-        return $this->repository->publish($editionId, $userId, $this->revision($data), $this->commitments($data));
+        return $this->repository->publish($editionId, $userId, $this->revision($data), $this->commitments($data), $this->nodes($data));
     }
 
     /** @param array<string,mixed> $data @return array<string,mixed> */
@@ -70,6 +62,22 @@ final class CronogramaService
         return $this->repository->closeRegistrations($editionId, $userId, $this->revision($data));
     }
 
+    /** @param array<string,mixed> $data @return array<string,mixed> */
+    public function revisar(int $editionId, int $userId, array $data): array
+    {
+        return $this->repository->review($editionId, $userId, $this->revision($data));
+    }
+
+    /** @param array<string,mixed> $data @return array<string,mixed> */
+    public function materializar(int $editionId, int $userId, array $data): array
+    {
+        $tag = trim((string) ($data['chave_tag'] ?? $data['tag'] ?? ''));
+        if ($tag === '' || strlen($tag) > 80) {
+            throw new InvalidArgumentException('A identidade do nó é obrigatória.');
+        }
+        return $this->repository->materializeNode($editionId, $userId, $tag);
+    }
+
     private function revision(array $data): int
     {
         $revision = filter_var($data['cronograma_versao'] ?? $data['revisao'] ?? 0, FILTER_VALIDATE_INT);
@@ -85,6 +93,16 @@ final class CronogramaService
         $items = $data['compromissos'] ?? [];
         if (!is_array($items)) {
             throw new InvalidArgumentException('Os compromissos do cronograma são inválidos.');
+        }
+        return array_values(array_filter($items, 'is_array'));
+    }
+
+    /** @return list<array<string,mixed>> */
+    private function nodes(array $data): array
+    {
+        $items = $data['nos'] ?? $data['nodes'] ?? [];
+        if (!is_array($items)) {
+            throw new InvalidArgumentException('Os nós do cronograma são inválidos.');
         }
         return array_values(array_filter($items, 'is_array'));
     }

@@ -51,12 +51,13 @@ final class CronogramaController
             $userId = (int) ($_SESSION['id_usuario'] ?? $_SESSION['id'] ?? 0);
             $action = (string) ($data['acao'] ?? 'estado');
             $result = match ($action) {
-                'ativar_planejamento', 'ativar' => $this->service->ativar($edition, $userId),
                 'preparar_equipes', 'preparar' => $this->service->preparar($edition, $userId),
                 'gerar_rascunho', 'gerar' => $this->service->gerar($edition, $userId, $data),
                 'publicar' => $this->service->publicar($edition, $userId, $data),
                 'abrir_inscricoes', 'abrir' => $this->service->abrir($edition, $userId, $data),
                 'encerrar_inscricoes', 'encerrar' => $this->service->fechar($edition, $userId, $data),
+                'revisar' => $this->service->revisar($edition, $userId, $data),
+                'materializar', 'materializar_no' => $this->service->materializar($edition, $userId, $data),
                 default => throw new \InvalidArgumentException('Ação de cronograma inválida.'),
             };
             return Response::json($result);

@@ -173,7 +173,7 @@ final class MysqliInscricaoRepository implements InscricaoRepository
                 $maxStudents = (int) ($modality['max_inscrito_modalidade'] ?? 0);
                 $maxTeams = isset($modality['max_equipes']) ? (int) $modality['max_equipes'] : 0;
                 $capacity = $maxStudents > 0 && $maxTeams > 0 ? $maxStudents * $maxTeams : 0;
-                $plannedConfig = $planning !== null && (string) ($planning['modo_planejamento'] ?? '') === CronogramaRules::PLANEJADO
+                $plannedConfig = $planning !== null
                     ? $this->plannedModality($modalityId)
                     : null;
                 if ($plannedConfig !== null) {
@@ -299,8 +299,8 @@ final class MysqliInscricaoRepository implements InscricaoRepository
         if ($this->cronograma === null || !$this->planningAvailable()) {
             return;
         }
-        $edition = $this->one('SELECT modo_planejamento, cronograma_status, inscricoes_status FROM interclasse_planejamentos WHERE id_interclasse = ? LIMIT 1', 'i', [$editionId]);
-        if ($edition === null || (string) ($edition['modo_planejamento'] ?? 'legado') !== CronogramaRules::PLANEJADO) {
+        $edition = $this->one('SELECT cronograma_status, inscricoes_status FROM interclasse_planejamentos WHERE id_interclasse = ? LIMIT 1', 'i', [$editionId]);
+        if ($edition === null) {
             return;
         }
         try {
@@ -376,7 +376,7 @@ final class MysqliInscricaoRepository implements InscricaoRepository
         if (!$this->planningAvailable()) {
             return null;
         }
-        return $this->one('SELECT modo_planejamento, cronograma_status, inscricoes_status, inscricoes_abertura, inscricoes_encerramento FROM interclasse_planejamentos WHERE id_interclasse = ? LIMIT 1', 'i', [$editionId]);
+        return $this->one('SELECT cronograma_status, inscricoes_status, inscricoes_abertura, inscricoes_encerramento FROM interclasse_planejamentos WHERE id_interclasse = ? LIMIT 1', 'i', [$editionId]);
     }
 
     /** @return array<string,mixed>|null */
