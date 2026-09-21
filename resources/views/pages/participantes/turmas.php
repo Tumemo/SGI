@@ -3,6 +3,7 @@ $titulo = 'Turmas';
 $tagTituloCompacto = 'h1';
 $mostrarVoltar = true;
 $urlVoltar = \App\Shared\Http\Url::to('painel');
+$idVoltarMobile = 'btnVoltarCatMob';
 include SGI_ROOT . '/resources/views/components/admin-head.php';
 include SGI_ROOT . '/resources/views/components/admin-header.php';
 $paginaAtiva = 'categorias';
@@ -15,9 +16,6 @@ $paginaAtiva = 'categorias';
 <main class="position-relative d-md-none mb-5" >
     <div class="p-3">
         <div class="d-flex align-items-center gap-2 mb-3">
-            <a href="<?= \App\Shared\Http\Url::to('painel') ?>" id="btnVoltarCatMob" class="btn btn-primary d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none" >
-                <i class="bi bi-arrow-left-circle fs-5" aria-hidden="true"></i> <span id="nomeInterclasseCatMob">Interclasse</span>
-            </a>
             <div class="input-group flex-grow-1">
                 <span class="input-group-text"><i class="bi bi-search" aria-hidden="true"></i></span>
                 <label for="buscaTurmaMob" class="visually-hidden">Buscar turma</label>

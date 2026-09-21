@@ -11,7 +11,7 @@ $isAdmin = $nivelUsuario === 0;
 
 <main class="main-desktop-layout">
     <div class="container-fluid px-0">
-        <a href="#" id="btnVoltarDashboardDesktop" class="btn btn-primary d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none" >
+        <a href="#" id="btnVoltarDashboardDesktop" class="btn btn-primary d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none d-none d-md-inline-flex" >
             <i class="bi bi-arrow-left-circle fs-5"></i> <span id="nomeInterModalidadeDet">Interclasse</span>
         </a>
         <div class="mb-4">

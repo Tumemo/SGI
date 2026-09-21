@@ -18,8 +18,22 @@ if ($idInterclasseHeader !== false && $idInterclasseHeader !== null) {
     }
 }
 $compacteCabecalho = (bool)($compacteCabecalho ?? false);
+$urlVoltarMobile = $urlVoltarMobile ?? $urlVoltar;
+$idVoltarMobile = (string) ($idVoltarMobile ?? 'sgiBtnVoltar');
 ?>
 <section class="d-md-none position-relative sgi-u-h-120px<?= $compacteCabecalho ? ' sgi-compact-header' : '' ?>" >
+    <?php
+    $mostrarVoltarHeader = $mostrarVoltarHeader ?? true;
+    if ($mostrarVoltarHeader) {
+        $sgiUrlVoltar = $urlVoltarMobile;
+        $sgiIdVoltar = $idVoltarMobile;
+        $sgiClassVoltar = 'sgi-u-top-20px-left-20px-z-10';
+        $urlVoltarRestauro = $urlVoltar ?? null;
+        include SGI_ROOT . '/resources/views/components/back-button.php';
+        $urlVoltar = $urlVoltarRestauro;
+        unset($sgiUrlVoltar, $sgiIdVoltar, $sgiClassVoltar, $urlVoltarRestauro);
+    }
+    ?>
     <?php if (!empty($titulo)): ?>
     <<?= $tagTituloCompacto ?> class="position-absolute top-50 start-50 translate-middle text-black m-0 fw-bold sgi-mobile-header-title"><?= htmlspecialchars($titulo) ?></<?= $tagTituloCompacto ?>>
     <?php endif; ?>

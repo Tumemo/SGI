@@ -90,7 +90,8 @@ window.SGIPage.mount("eventos/configurar-pontuacao", function (pageConfig, pageS
             return null;
         }
 
-        document.getElementById('nomeInterclassePontuacao').textContent = dados.nome_interclasse || 'Interclasse';
+        const nomePontuacaoEl = document.getElementById('nomeInterclassePontuacao');
+        if (nomePontuacaoEl) nomePontuacaoEl.textContent = dados.nome_interclasse || 'Interclasse';
         document.getElementById('ptcEditionName').textContent = dados.nome_interclasse || 'esta edição';
         document.getElementById('ptcEditionYear').textContent = `Ano ${window.SGIInterclasse.toYear(dados.ano_interclasse) || 'não informado'}`;
         const status = document.getElementById('ptcEditionStatus');
@@ -101,9 +102,12 @@ window.SGIPage.mount("eventos/configurar-pontuacao", function (pageConfig, pageS
 
         const paramsEdicao = { id: idInterclasse, modo };
         const btnBack = document.getElementById('btnVoltarPontuacao');
-        if (btnBack) {
+        const btnBackMobile = document.getElementById('sgiBtnVoltar');
+        if (btnBack || btnBackMobile) {
             const caminhoRetorno = modo === 'view' ? 'painel' : 'edicoes/modalidades';
-            btnBack.href = appUrl(caminhoRetorno, paramsEdicao);
+            const href = appUrl(caminhoRetorno, paramsEdicao);
+            if (btnBack) btnBack.href = href;
+            if (btnBackMobile) btnBackMobile.href = href;
         }
 
         setPontos('pontos-1', dados.ponto_1_lugar);

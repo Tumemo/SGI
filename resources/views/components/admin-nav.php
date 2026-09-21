@@ -29,16 +29,16 @@ $inicialNome = strtoupper(substr($nomeUsuario, 0, 1));
 
 // Mapeamento com caminhos reais da rota ('path') para comparação exata
 $todosItens = [
-    'perfil'               => ['icon' => 'bi-person fs-3',               'path' => '/perfil',              'url' => \App\Shared\Http\Url::to('perfil'),              'niveis' => [0, 1, 2]],
-    'dashboard'            => ['icon' => 'bi-house-door fs-3',           'path' => '/painel',              'url' => \App\Shared\Http\Url::to('painel'),              'niveis' => [0, 1, 2]],
-    'ocorrencias'          => ['icon' => 'bi-exclamation-triangle fs-3', 'path' => '/ocorrencias',         'url' => \App\Shared\Http\Url::to('ocorrencias'),          'niveis' => [0, 1, 2]],
-    'chaveamento'          => ['icon' => 'bi-diagram-3 fs-3',            'path' => '/chaveamento',         'url' => \App\Shared\Http\Url::to('chaveamento'),         'niveis' => [0, 1]],
-    'ranking'              => ['icon' => 'bi-trophy fs-3',               'path' => '/ranking',             'url' => \App\Shared\Http\Url::to('ranking'),            'niveis' => [0, 1]],
-    'agenda'               => ['icon' => 'bi-calendar2-check fs-3',     'path' => '/edicoes/agenda',      'url' => \App\Shared\Http\Url::to('edicoes/agenda'),      'niveis' => [0, 1]],
-    'arrecadacoes'         => ['icon' => 'bi-basket fs-3',               'path' => '/edicoes/arrecadacao', 'url' => \App\Shared\Http\Url::to('edicoes/arrecadacao'), 'niveis' => [0, 1]],
-    'edicoes/equipes'      => ['icon' => 'bi-people fs-3',               'path' => '/edicoes/equipes',     'url' => \App\Shared\Http\Url::to('edicoes/equipes'),     'niveis' => [0]],
-    'chaveamentos_mesario' => ['icon' => 'bi-diagram-3 fs-3',            'path' => '/chaveamento',         'url' => \App\Shared\Http\Url::to('chaveamento'),         'niveis' => [2]],
-    'agenda_mesario'       => ['icon' => 'bi-calendar3 fs-3',            'path' => '/edicoes/agenda',      'url' => \App\Shared\Http\Url::to('edicoes/agenda'),      'niveis' => [2]],
+    'perfil'               => ['label' => 'Perfil',       'icon' => 'bi-person fs-3',               'path' => '/perfil',              'url' => \App\Shared\Http\Url::to('perfil'),              'niveis' => [0, 1, 2]],
+    'dashboard'            => ['label' => 'Dashboard',    'icon' => 'bi-house-door fs-3',           'path' => '/painel',              'url' => \App\Shared\Http\Url::to('painel'),              'niveis' => [0, 1, 2]],
+    'ocorrencias'          => ['label' => 'Ocorrências',  'icon' => 'bi-exclamation-triangle fs-3', 'path' => '/ocorrencias',         'url' => \App\Shared\Http\Url::to('ocorrencias'),          'niveis' => [0, 1, 2]],
+    'chaveamento'          => ['label' => 'Chaveamento',  'icon' => 'bi-diagram-3 fs-3',            'path' => '/chaveamento',         'url' => \App\Shared\Http\Url::to('chaveamento'),         'niveis' => [0, 1]],
+    'ranking'              => ['label' => 'Ranking',      'icon' => 'bi-trophy fs-3',               'path' => '/ranking',             'url' => \App\Shared\Http\Url::to('ranking'),            'niveis' => [0, 1]],
+    'agenda'               => ['label' => 'Agenda',       'icon' => 'bi-calendar2-check fs-3',      'path' => '/edicoes/agenda',      'url' => \App\Shared\Http\Url::to('edicoes/agenda'),      'niveis' => [0, 1]],
+    'arrecadacoes'         => ['label' => 'Arrecadações', 'icon' => 'bi-basket fs-3',               'path' => '/edicoes/arrecadacao', 'url' => \App\Shared\Http\Url::to('edicoes/arrecadacao'), 'niveis' => [0, 1]],
+    'edicoes/equipes'      => ['label' => 'Equipes',      'icon' => 'bi-people fs-3',               'path' => '/edicoes/equipes',     'url' => \App\Shared\Http\Url::to('edicoes/equipes'),     'niveis' => [0]],
+    'chaveamentos_mesario' => ['label' => 'Chaveamento',  'icon' => 'bi-diagram-3 fs-3',            'path' => '/chaveamento',         'url' => \App\Shared\Http\Url::to('chaveamento'),         'niveis' => [2]],
+    'agenda_mesario'       => ['label' => 'Agenda',       'icon' => 'bi-calendar3 fs-3',            'path' => '/edicoes/agenda',      'url' => \App\Shared\Http\Url::to('edicoes/agenda'),      'niveis' => [2]],
 ];
 
 $navItens = [];

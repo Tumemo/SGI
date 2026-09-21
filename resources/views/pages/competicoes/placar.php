@@ -1,6 +1,7 @@
 <?php
 $titulo = 'Placar';
 $mostrarVoltar = true;
+$mostrarVoltarHeader = false;
 $compacteCabecalho = true;
 $urlVoltar = \App\Shared\Http\Url::to('painel');
 

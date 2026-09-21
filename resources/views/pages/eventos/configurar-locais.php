@@ -1,5 +1,5 @@
 <?php
-$titulo = 'Locais e Regulamento do Interclasse';
+$titulo = 'Locais e Regulamento';
 $tagTituloCompacto = 'h1';
 $mostrarVoltar = true;
 $urlVoltar = \App\Shared\Http\Url::to('painel');
@@ -14,7 +14,7 @@ $isColaborador = $nivelUsuario === 1;
     <div class="container-fluid px-0 mw-100" >
         <h1 class="d-none d-md-block mb-3">Locais e Regulamento do Interclasse</h1>
         <div class="mb-4 d-flex flex-column flex-lg-row justify-content-between align-items-start align-items-lg-center gap-3">
-            <a href="<?= \App\Shared\Http\Url::to('painel') ?>" id="btnVoltarLocaisDesk" class="btn btn-primary d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none" >
+            <a href="<?= \App\Shared\Http\Url::to('painel') ?>" id="btnVoltarLocaisDesk" class="btn btn-primary d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none d-none d-md-inline-flex" >
                 <i class="bi bi-arrow-left-circle fs-5"></i> <span id="nomeInterclasseLocais">Interclasse</span>
             </a>
 

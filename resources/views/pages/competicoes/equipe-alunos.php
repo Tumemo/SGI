@@ -1,4 +1,8 @@
 <?php
+$titulo = 'Adicionar alunos à equipe';
+$mostrarVoltar = true;
+$urlVoltar = \App\Shared\Http\Url::to('painel');
+$idVoltarMobile = 'btnVoltarEquipesMobile';
 include SGI_ROOT . '/resources/views/components/admin-head.php';
 include SGI_ROOT . '/resources/views/components/admin-header.php';
 $paginaAtiva = 'dashboard';
@@ -6,9 +10,6 @@ $paginaAtiva = 'dashboard';
 
 <main class="d-md-none mb-5" >
     <div class="container mt-3">
-        <a href="#" class="btn btn-primary d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none" id="btnVoltarEquipesMobile" >
-            <i class="bi bi-arrow-left-circle fs-5" aria-hidden="true"></i> <span id="nomeInterclasseEquipeAlunosMob">Interclasse</span>
-        </a>
         <h1 class="h4 fw-bold mb-3">Adicionar alunos à equipe</h1>
         <label for="buscaAlunosMobile" class="visually-hidden">Buscar aluno por nome ou matrícula</label>
         <input id="buscaAlunosMobile" class="form-control mb-2" type="search" placeholder="Buscar aluno por nome ou matrícula" autocomplete="off">

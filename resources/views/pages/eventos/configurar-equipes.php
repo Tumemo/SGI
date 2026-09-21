@@ -1,4 +1,8 @@
 <?php
+$titulo = 'Equipes';
+$mostrarVoltar = true;
+$urlVoltar = \App\Shared\Http\Url::to('painel');
+$idVoltarMobile = 'btnVoltarEquipesMobile';
 include SGI_ROOT . '/resources/views/components/admin-head.php';
 include SGI_ROOT . '/resources/views/components/admin-header.php';
 $nivelUsuario = (int)($_SESSION['nivel'] ?? -1);
@@ -8,9 +12,6 @@ $paginaAtiva = 'dashboard';
 
 <main class="d-md-none p-3 pb-5" >
     <h1 class="h4 fw-bold mb-3">Equipes</h1>
-    <a href="<?= \App\Shared\Http\Url::to('painel') ?>" id="btnVoltarEquipesMobile" class="btn btn-primary d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none" >
-        <i class="bi bi-arrow-left-circle fs-5" aria-hidden="true"></i> <span id="nomeInterclasseEquipesMob">Interclasse</span>
-    </a>
     <p class="text-secondary text-center small mb-3">Equipes por modalidade e categoria desta edição.</p>
 
     <div id="filtroCategoriaMobile" class="d-flex flex-nowrap overflow-auto gap-2 pb-2 mb-3"></div>

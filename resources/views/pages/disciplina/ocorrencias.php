@@ -1,6 +1,8 @@
 <?php
+$titulo = 'Ocorrências';
 $mostrarVoltar = true;
 $urlVoltar = \App\Shared\Http\Url::to('painel');
+$idVoltarMobile = 'btnVoltarOcrMob';
 include SGI_ROOT . '/resources/views/components/admin-head.php';
 include SGI_ROOT . '/resources/views/components/admin-header.php';
 $paginaAtiva = 'ocorrencias';
@@ -10,10 +12,6 @@ $isAdmin = $nivelUsuario === 0;
 
 <main class="d-md-none sgi-ocorrencias-mobile sgi-u-min-width-0 pt-5 pb-5">
     <div class="px-3 mt-3">
-        <a href="<?= \App\Shared\Http\Url::to('painel') ?>" id="btnVoltarOcrMob" class="btn btn-primary d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none" >
-            <i class="bi bi-arrow-left-circle fs-5" aria-hidden="true"></i> <span id="nomeInterclasseOcrMob">Interclasse</span>
-        </a>
-
         <div class="mb-4">
             <h1 class="h3 fw-bold mb-1">Ocorrências</h1>
             <p class="text-body-secondary mb-0">Registre ocorrências e descontos de pontos por turma.</p>

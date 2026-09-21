@@ -1,10 +1,11 @@
 <?php
-$titulo = 'Dashboard';
-$tagTituloCompacto = 'h1';
 $nivelUsuario = (int)($_SESSION['nivel'] ?? -1);
-$mostrarVoltar = in_array($nivelUsuario, [0, 1], true);
-$rotaInicio = $nivelUsuario === 2 ? 'painel' : ($nivelUsuario === 3 ? 'aluno/inicio' : 'edicoes');
+$titulo = $nivelUsuario === 2 ? 'Painel do Mesário' : 'Dashboard';
+$tagTituloCompacto = 'h1';
+$mostrarVoltar = false;
+$mostrarVoltarHeader = $nivelUsuario === 2;
 $urlVoltar = \App\Shared\Http\Url::to('edicoes');
+$urlVoltarMobile = \App\Shared\Http\Url::to('edicoes/agenda');
 include SGI_ROOT . '/resources/views/components/admin-head.php';
 include SGI_ROOT . '/resources/views/components/admin-header.php';
 $paginaAtiva = 'dashboard';
@@ -19,12 +20,7 @@ $isMesario = $nivelUsuario === 2;
 <div id="conteudo-principal" data-sgi-shell="1">
     <main class="main-desktop-layout main-dashboard-layout sgi-u-min-width-0">
         <div class="container-fluid px-0 sgi-u-min-width-0">
-            <h1 class="h3 fw-bold text-body mb-4 d-none d-md-block">Dashboard</h1>
-            <?php if (in_array($nivelUsuario, [0, 1], true)): ?>
-                <a href="<?= \App\Shared\Http\Url::to($rotaInicio) ?>" class="btn btn-outline-danger btn-sm mb-3 d-inline-flex align-items-center gap-1">
-                    <i class="bi bi-house" aria-hidden="true"></i> Voltar às edições
-                </a>
-            <?php endif; ?>
+            <h1 class="h3 fw-bold text-body mb-4 d-none d-md-block"><?= htmlspecialchars($titulo, ENT_QUOTES, 'UTF-8') ?></h1>
 
         <?php if ($isAdmin): ?>
         <div id="avisoFinalizacaoInterclasse" class="d-none alert alert-warning mb-4">

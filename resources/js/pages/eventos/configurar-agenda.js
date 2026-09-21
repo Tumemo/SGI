@@ -765,11 +765,15 @@ window.SGIPage.mount("eventos/configurar-agenda", function (pageConfig, pageScop
             if (interclasseAtual) {
                 const nomeInterclasse = document.getElementById('nomeInterclasseAgenda');
                 const btnVoltar = document.getElementById('btnVoltarAgendaDesk');
+                const btnVoltarMobile = document.getElementById('sgiBtnVoltar');
                 if (nomeInterclasse && nomeInterclasse.isConnected) {
                     nomeInterclasse.innerText = interclasseAtual.nome_interclasse;
                 }
                 if (btnVoltar && btnVoltar.isConnected) {
                     btnVoltar.href = `/painel?id=${interclasseAtual.id_interclasse}`;
+                }
+                if (btnVoltarMobile && btnVoltarMobile.isConnected) {
+                    btnVoltarMobile.href = `/painel?id=${interclasseAtual.id_interclasse}`;
                 }
             }
         } catch (e) {

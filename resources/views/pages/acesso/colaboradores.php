@@ -2,6 +2,7 @@
 $titulo = 'Colaboradores';
 $mostrarVoltar = true;
 $urlVoltar = \App\Shared\Http\Url::to('painel');
+$idVoltarMobile = 'btnVoltarColabMobile';
 include SGI_ROOT . '/resources/views/components/admin-head.php';
 include SGI_ROOT . '/resources/views/components/admin-header.php';
 $paginaAtiva = 'colaboradores';
@@ -14,10 +15,6 @@ $usuarioAtualId = (int) ($_SESSION['id'] ?? $_SESSION['id_usuario'] ?? 0);
 <!-- ═══ MOBILE ═══ -->
 <main class="d-md-none pt-5 pb-5">
     <div class="container-fluid px-3">
-        <a href="<?= \App\Shared\Http\Url::to('painel') ?>" id="btnVoltarColabMobile" class="btn btn-primary d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none" >
-            <i class="bi bi-arrow-left-circle fs-5" aria-hidden="true"></i> <span id="nomeInterclasseColabMobile">Interclasse</span>
-        </a>
-
         <div class="mb-4">
             <div class="d-flex align-items-start justify-content-between gap-3 flex-wrap">
                 <div>

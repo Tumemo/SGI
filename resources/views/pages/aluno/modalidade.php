@@ -4,6 +4,7 @@ $mostrarVoltar = true;
 $mostrarSino = true;
 $urlVoltar = \App\Shared\Http\Url::to('aluno/inicio');
 include SGI_ROOT . '/resources/views/components/aluno-head.php';
+include SGI_ROOT . '/resources/views/components/aluno-header.php';
 ?>
 
 

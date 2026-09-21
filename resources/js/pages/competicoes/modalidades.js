@@ -212,6 +212,8 @@ window.SGIPage.mount("competicoes/modalidades", function (pageConfig, pageScope)
         if (nomeEl) nomeEl.innerText = ic?.nome_interclasse || 'Interclasse';
         const btnEl = document.getElementById('btnVoltarModalidades');
         if (btnEl) btnEl.href = `/painel?id=${idInterclasse}`;
+        const btnElMobile = document.getElementById('sgiBtnVoltar');
+        if (btnElMobile) btnElMobile.href = `/painel?id=${idInterclasse}`;
         await Promise.all([
             carregarModalidades(),
             carregarTiposModalidades(),

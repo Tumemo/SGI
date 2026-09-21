@@ -69,7 +69,7 @@ $ptcTheme = [
     <div class="container-fluid px-0">
 
         <div class="d-flex align-items-center gap-3 flex-wrap mb-5">
-            <a href="<?= \App\Shared\Http\Url::to('painel') ?>" id="btnVoltarPontuacao" class="btn btn-primary d-inline-flex align-items-center gap-2 fw-semibold text-decoration-none">
+            <a href="<?= \App\Shared\Http\Url::to('painel') ?>" id="btnVoltarPontuacao" class="btn btn-primary d-inline-flex align-items-center gap-2 fw-semibold text-decoration-none d-none d-md-inline-flex">
                 <i class="bi bi-arrow-left-circle fs-5"></i> <span id="nomeInterclassePontuacao">Interclasse</span>
             </a>
             <div class="flex-grow-1">

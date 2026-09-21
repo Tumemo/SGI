@@ -1,6 +1,8 @@
 <?php
+$titulo = 'Chaveamento';
 $mostrarVoltar = true;
 $urlVoltar = \App\Shared\Http\Url::to('painel');
+$idVoltarMobile = 'btnVoltarChaveamentoMob';
 
 include SGI_ROOT . '/resources/views/components/admin-head.php';
 include SGI_ROOT . '/resources/views/components/admin-header.php';
@@ -13,9 +15,6 @@ $podeEditar = !$isNivel2 && !$isNivel3;
 ?>
 
 <main class="d-md-none sgi-chaveamento-mobile sgi-u-min-width-0 p-4 bg-body-tertiary min-vh-100" >
-    <a href="<?= \App\Shared\Http\Url::to('painel') ?>" id="btnVoltarChaveamentoMob" class="btn btn-primary d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none" >
-        <i class="bi bi-arrow-left-circle fs-5"></i> <span id="nomeInterclasseChaveamentoMob">Interclasse</span>
-    </a>
     <div class="mb-3">
         <h1 class="h3 fw-bold text-body mb-0">Chaveamento</h1>
     </div>
@@ -132,7 +131,7 @@ $podeEditar = !$isNivel2 && !$isNivel3;
         <div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-3">
             <div class="d-flex align-items-center gap-3">
                 <a href="<?= \App\Shared\Http\Url::to('painel') ?>" id="btnVoltar" class="btn btn-primary d-inline-flex align-items-center gap-2 fw-bold px-3 py-2 border-0 text-decoration-none" >
-                    <i class="bi bi-arrow-left-circle fs-5"></i> <span id="nomeInterclasseChaveamento">Interclasse</span>
+                    <i class="bi bi-arrow-left-circle fs-5" aria-hidden="true"></i> <span id="nomeInterclasseChaveamento">Interclasse</span>
                 </a>
                 <h1 class="h2 fw-bold text-body mb-0">Chaveamento</h1>
             </div>

@@ -2,6 +2,7 @@
 $titulo = 'Alunos da turma';
 $mostrarVoltar = true;
 $urlVoltar = \App\Shared\Http\Url::to('painel');
+$idVoltarMobile = 'btnVoltarTurmaAlunosMob';
 include SGI_ROOT . '/resources/views/components/admin-head.php';
 include SGI_ROOT . '/resources/views/components/admin-header.php';
 $paginaAtiva = 'turmas';
@@ -14,10 +15,6 @@ $podeResetarSenha = in_array($nivelUsuario, [0], true);
 
 <!-- main mobile -->
 <main class="d-md-none bg-body-tertiary min-vh-100 p-3 pt-5 pb-5" >
-    <a href="#" class="btn btn-primary d-inline-flex align-items-center gap-2 fw-semibold text-decoration-none" id="btnVoltarTurmaAlunosMob">
-        <i class="bi bi-arrow-left-circle fs-5" aria-hidden="true"></i> <span id="nomeInterclasseTurmaAlunosMob">Interclasse</span>
-    </a>
-
     <div class="mb-3 mt-3">
         <h1 class="h3 fw-bold text-body mb-1">Alunos da Turma: <span id="nomeTurmaMob">…</span></h1>
         <p class="small text-body-secondary mb-0"><i class="bi bi-people-fill text-primary me-1" aria-hidden="true"></i> Gerencie os alunos vinculados a esta turma</p>

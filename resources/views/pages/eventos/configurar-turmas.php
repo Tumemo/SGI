@@ -3,14 +3,12 @@ $titulo = 'Turmas';
 $tagTituloCompacto = 'h1';
 $mostrarVoltar = true;
 $urlVoltar = \App\Shared\Http\Url::to('edicoes/categorias');
+$idVoltarMobile = 'btnVoltarTurmasMobile';
 include SGI_ROOT . '/resources/views/components/admin-head.php';
 include SGI_ROOT . '/resources/views/components/admin-header.php';
 $paginaAtiva = 'categorias';
 ?>
 <main class="d-md-none">
-    <a href="<?= \App\Shared\Http\Url::to('painel') ?>" id="btnVoltarTurmasMobile" class="btn btn-primary d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none" >
-        <i class="bi bi-arrow-left-circle fs-5" aria-hidden="true"></i> <span id="nomeInterclasseTurmasMob">Interclasse</span>
-    </a>
     <p class="text-secondary text-center my-3">Editar detalhes turmas</p>
 
     <div class="px-3 mb-3">

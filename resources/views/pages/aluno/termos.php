@@ -4,6 +4,7 @@ include SGI_ROOT . '/resources/views/components/aluno-head.php';
 $titulo = 'Termos';
 $mostrarVoltar = true;
 $urlVoltar = \App\Shared\Http\Url::to('aluno/inicio');
+include SGI_ROOT . '/resources/views/components/aluno-header.php';
 ?>
 
     <main class="container py-4">

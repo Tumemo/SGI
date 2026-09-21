@@ -193,7 +193,8 @@ window.SGIPage.mount("eventos/configurar-arrecadacao", function (pageConfig, pag
 
             idInterclasseResolvida = ativo.id_interclasse;
 
-            document.getElementById('nomeInterclasseArrecadacao').innerText = ativo.nome_interclasse;
+            const nomeDesk = document.getElementById('nomeInterclasseArrecadacao');
+            if (nomeDesk) nomeDesk.innerText = ativo.nome_interclasse;
             const nomeMob = document.getElementById('nomeInterclasseArrecadacaoMob');
             if (nomeMob) nomeMob.innerText = ativo.nome_interclasse;
             const vDesk = document.getElementById('btnVoltarArrecadacao');

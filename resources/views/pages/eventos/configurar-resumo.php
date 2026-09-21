@@ -3,6 +3,7 @@ $titulo = 'Resumo da Edição';
 $tagTituloCompacto = 'h1';
 $mostrarVoltar = true;
 $urlVoltar = \App\Shared\Http\Url::to('painel');
+$idVoltarMobile = 'btnVoltarMobile';
 include SGI_ROOT . '/resources/views/components/admin-head.php';
 include SGI_ROOT . '/resources/views/components/admin-header.php';
 $paginaAtiva = 'dashboard';
@@ -33,10 +34,6 @@ $renderEtapasResumoEdicao = static function (array $etapas): void {
 ?>
 
 <main class="mt-4 d-flex justify-content-center flex-column position-relative d-md-none mb-5">
-    <a href="<?= \App\Shared\Http\Url::to('edicoes/pontuacao') ?>" id="btnVoltarMobile" class="btn btn-primary d-inline-flex align-items-center gap-2 fw-bold align-self-start mb-3 px-3 py-2 border-0 text-decoration-none sgi-event-back-link">
-        <i class="bi bi-arrow-left-circle fs-5" aria-hidden="true"></i> Voltar
-    </a>
-
     <header class="mb-3">
         <h2 class="h4 fw-bold text-body mb-1">Resumo da edição</h2>
         <p class="text-body-secondary mb-0">
@@ -92,7 +89,10 @@ $renderEtapasResumoEdicao = static function (array $etapas): void {
 
 <main class="d-none d-md-block main-desktop-layout">
     <div class="container-fluid px-0 mw-100">
-        <div class="d-flex align-items-start justify-content-between flex-wrap gap-3 mb-3">
+        <div class="d-flex align-items-start flex-wrap gap-3 mb-3">
+            <a href="<?= \App\Shared\Http\Url::to('edicoes/pontuacao') ?>" id="btnVoltarResumoTopo" class="btn btn-outline-primary d-inline-flex align-items-center gap-2 fw-bold px-3 py-2 text-decoration-none sgi-event-back-link">
+                <i class="bi bi-arrow-left-circle fs-5" aria-hidden="true"></i> Voltar
+            </a>
             <div>
                 <h1 class="h3 fw-bold text-body mb-1">Resumo da edição</h1>
                 <p class="text-body-secondary mb-0">
@@ -101,9 +101,6 @@ $renderEtapasResumoEdicao = static function (array $etapas): void {
                     <span aria-hidden="true"> · </span><span id="statusInterclasseResumo" class="badge text-bg-secondary">Carregando status</span>
                 </p>
             </div>
-            <a href="<?= \App\Shared\Http\Url::to('edicoes/pontuacao') ?>" id="btnVoltarResumoTopo" class="btn btn-outline-primary d-inline-flex align-items-center gap-2 fw-bold px-3 py-2 text-decoration-none sgi-event-back-link">
-                <i class="bi bi-arrow-left-circle fs-5" aria-hidden="true"></i> Voltar
-            </a>
         </div>
 
         <?php $renderEtapasResumoEdicao($etapasEdicao); ?>

@@ -3,6 +3,7 @@ $titulo = 'Categorias';
 $tagTituloCompacto = 'h1';
 $mostrarVoltar = true;
 $urlVoltar = \App\Shared\Http\Url::to('painel');
+$idVoltarMobile = 'btnVoltarCatMobile';
 include SGI_ROOT . '/resources/views/components/admin-head.php';
 include SGI_ROOT . '/resources/views/components/admin-header.php';
 $paginaAtiva = 'categorias';
@@ -15,10 +16,6 @@ $isMesario = $nivelUsuario === 2;
 
 <!-- main mobile -->
 <main class="position-relative d-md-none mb-5" >
-    <a href="<?= \App\Shared\Http\Url::to('painel') ?>" id="btnVoltarCatMobile" class="btn btn-primary d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none sgi-event-back-link" >
-        <i class="bi bi-arrow-left-circle fs-5" aria-hidden="true"></i> <span id="nomeInterclasseCatMob">Interclasse</span>
-    </a>
-
     <div id="listaCategoriasMobile" class="d-flex flex-column align-items-center w-100">
         <p class="text-muted small mt-3">(Carregando categorias...)</p>
     </div>
