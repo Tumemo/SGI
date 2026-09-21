@@ -10,7 +10,7 @@ $finder = Finder::create()
 
 return (new Config())
     ->setRiskyAllowed(true)
-    ->setLineEnding("\r\n")
+    ->setLineEnding("\n")
     ->setRules([
         '@PSR12' => true,
         'declare_strict_types' => true,

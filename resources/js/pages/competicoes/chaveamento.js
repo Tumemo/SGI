@@ -47,11 +47,16 @@ window.SGIPage.mount("competicoes/chaveamento", function (pageConfig, pageScope)
     }
 
     function kvs_triggerParaFoco(root) {
+        if (!root) return null;
         const trigger = root.querySelector('.kvs__trigger');
-        if (kvs_triggerVisivel(trigger)) return trigger;
         const wrapPar = root.dataset.peerWrapId ? document.getElementById(root.dataset.peerWrapId) : null;
         const triggerPar = wrapPar?.querySelector('.kvs__trigger');
-        return kvs_triggerVisivel(triggerPar) ? triggerPar : trigger;
+        const compacto = composicaoCompactaAtiva();
+        const rootEhMobile = Boolean(root.closest('.d-md-none, .sgi-chaveamento-mobile'));
+        if (!compacto && rootEhMobile && triggerPar) return triggerPar;
+        if (compacto && !rootEhMobile && triggerPar) return triggerPar;
+        if (kvs_triggerVisivel(trigger)) return trigger;
+        return (triggerPar && kvs_triggerVisivel(triggerPar)) ? triggerPar : (triggerPar || trigger);
     }
 
     function kvs_fechar(root, devolverFoco = false) {
@@ -81,7 +86,59 @@ window.SGIPage.mount("competicoes/chaveamento", function (pageConfig, pageScope)
             const alvoFoco = kvs_triggerParaFoco(root);
             if (alvoFoco) {
                 try { alvoFoco.focus({ preventScroll: true }); } catch (_) { alvoFoco.focus(); }
+                if (typeof window.requestAnimationFrame === 'function') {
+                    window.requestAnimationFrame(() => {
+                        if (document.activeElement !== alvoFoco) {
+                            try { alvoFoco.focus({ preventScroll: true }); } catch (_) { alvoFoco.focus(); }
+                        }
+                    });
+                }
             }
+        }
+    }
+
+    let kvs_ultimoFocoWrap = null;
+
+    pageScope.listen(document, 'focusin', (event) => {
+        const wrap = event.target?.closest?.('.kvs');
+        if (wrap) {
+            kvs_ultimoFocoWrap = wrap;
+        } else if (event.target && event.target !== document.body) {
+            kvs_ultimoFocoWrap = null;
+        }
+    });
+
+    function kvs_sincronizarFocoEntreComposicoes() {
+        if (kvs_instanciaAtiva) {
+            const wrapAtivo = kvs_instanciaAtiva;
+            kvs_fechar(kvs_instanciaAtiva, false);
+            kvs_ultimoFocoWrap = wrapAtivo;
+        }
+        const wrap = kvs_ultimoFocoWrap || document.activeElement?.closest?.('.kvs');
+        if (!wrap) return;
+        const alvo = kvs_triggerParaFoco(wrap);
+        if (alvo && kvs_triggerVisivel(alvo) && document.activeElement !== alvo) {
+            try { alvo.focus({ preventScroll: true }); } catch (_) { alvo.focus(); }
+            kvs_ultimoFocoWrap = alvo.closest('.kvs');
+            if (typeof window.requestAnimationFrame === 'function') {
+                window.requestAnimationFrame(() => {
+                    if (document.activeElement !== alvo) {
+                        try { alvo.focus({ preventScroll: true }); } catch (_) { alvo.focus(); }
+                        kvs_ultimoFocoWrap = alvo.closest('.kvs');
+                    }
+                });
+            }
+        }
+    }
+
+    pageScope.listen(window, 'resize', kvs_sincronizarFocoEntreComposicoes);
+    if (typeof window.matchMedia === 'function') {
+        const mq1200 = window.matchMedia('(min-width: 1200px)');
+        if (typeof mq1200.addEventListener === 'function') {
+            pageScope.listen(mq1200, 'change', kvs_sincronizarFocoEntreComposicoes);
+        } else if (typeof mq1200.addListener === 'function') {
+            mq1200.addListener(kvs_sincronizarFocoEntreComposicoes);
+            pageScope.defer(() => mq1200.removeListener(kvs_sincronizarFocoEntreComposicoes));
         }
     }
 
@@ -347,8 +404,24 @@ window.SGIPage.mount("competicoes/chaveamento", function (pageConfig, pageScope)
         const wrap = document.getElementById('kvs-wrap-' + idSelect);
         if (wrap) {
             const trigger = wrap.querySelector('.kvs__trigger');
-            if (trigger) trigger.click();
+            if (trigger) {
+                trigger.click();
+                return;
+            }
         }
+        const select = document.getElementById(idSelect);
+        if (select) {
+            try { select.focus({ preventScroll: true }); } catch (_) { select.focus(); }
+            if (typeof select.showPicker === 'function') {
+                try { select.showPicker(); } catch (_) { /* o seletor nativo segue disponível */ }
+            }
+        }
+    }
+
+    function usarSeletorNativo() {
+        if (typeof window.matchMedia !== 'function') return false;
+        return window.matchMedia('(pointer: coarse)').matches
+            || window.matchMedia('(hover: none)').matches;
     }
 
     pageScope.listen(window, 'scroll', () => {
@@ -407,6 +480,13 @@ window.SGIPage.mount("competicoes/chaveamento", function (pageConfig, pageScope)
                 const alvoFoco = kvs_triggerParaFoco(raizComFoco);
                 if (alvoFoco) {
                     try { alvoFoco.focus({ preventScroll: true }); } catch (_) { alvoFoco.focus(); }
+                    if (typeof window.requestAnimationFrame === 'function') {
+                        window.requestAnimationFrame(() => {
+                            if (document.activeElement !== alvoFoco) {
+                                try { alvoFoco.focus({ preventScroll: true }); } catch (_) { alvoFoco.focus(); }
+                            }
+                        });
+                    }
                 }
             }
         }
@@ -533,30 +613,32 @@ window.SGIPage.mount("competicoes/chaveamento", function (pageConfig, pageScope)
             });
 
             kvs_montarGrupos();
-            kvs_montar({
-                wrapId: 'kvs-wrap-selectModalidade', selectId: 'selectModalidade',
-                peerWrapId: 'kvs-wrap-selectModalidadeMob', peerSelectId: 'selectModalidadeMob',
-                placeholder: 'Selecione uma modalidade', ariaLabel: 'Selecionar modalidade do chaveamento',
-                listboxLabel: 'Modalidades disponíveis', incluirTodas: false
-            });
-            kvs_montar({
-                wrapId: 'kvs-wrap-selectModalidadeMob', selectId: 'selectModalidadeMob',
-                peerWrapId: 'kvs-wrap-selectModalidade', peerSelectId: 'selectModalidade',
-                placeholder: 'Selecione uma modalidade', ariaLabel: 'Selecionar modalidade do chaveamento',
-                listboxLabel: 'Modalidades disponíveis', incluirTodas: false
-            });
-            kvs_montar({
-                wrapId: 'kvs-wrap-filtroModalidadeJogos', selectId: 'filtroModalidadeJogos',
-                peerWrapId: 'kvs-wrap-filtroModalidadeJogosMob', peerSelectId: 'filtroModalidadeJogosMob',
-                placeholder: 'Todas modalidades', ariaLabel: 'Filtrar jogos por modalidade',
-                listboxLabel: 'Modalidades para filtrar jogos', incluirTodas: true
-            });
-            kvs_montar({
-                wrapId: 'kvs-wrap-filtroModalidadeJogosMob', selectId: 'filtroModalidadeJogosMob',
-                peerWrapId: 'kvs-wrap-filtroModalidadeJogos', peerSelectId: 'filtroModalidadeJogos',
-                placeholder: 'Todas modalidades', ariaLabel: 'Filtrar jogos por modalidade',
-                listboxLabel: 'Modalidades para filtrar jogos', incluirTodas: true
-            });
+            if (!usarSeletorNativo()) {
+                kvs_montar({
+                    wrapId: 'kvs-wrap-selectModalidade', selectId: 'selectModalidade',
+                    peerWrapId: 'kvs-wrap-selectModalidadeMob', peerSelectId: 'selectModalidadeMob',
+                    placeholder: 'Selecione uma modalidade', ariaLabel: 'Selecionar modalidade do chaveamento',
+                    listboxLabel: 'Modalidades disponíveis', incluirTodas: false
+                });
+                kvs_montar({
+                    wrapId: 'kvs-wrap-selectModalidadeMob', selectId: 'selectModalidadeMob',
+                    peerWrapId: 'kvs-wrap-selectModalidade', peerSelectId: 'selectModalidade',
+                    placeholder: 'Selecione uma modalidade', ariaLabel: 'Selecionar modalidade do chaveamento',
+                    listboxLabel: 'Modalidades disponíveis', incluirTodas: false
+                });
+                kvs_montar({
+                    wrapId: 'kvs-wrap-filtroModalidadeJogos', selectId: 'filtroModalidadeJogos',
+                    peerWrapId: 'kvs-wrap-filtroModalidadeJogosMob', peerSelectId: 'filtroModalidadeJogosMob',
+                    placeholder: 'Todas modalidades', ariaLabel: 'Filtrar jogos por modalidade',
+                    listboxLabel: 'Modalidades para filtrar jogos', incluirTodas: true
+                });
+                kvs_montar({
+                    wrapId: 'kvs-wrap-filtroModalidadeJogosMob', selectId: 'filtroModalidadeJogosMob',
+                    peerWrapId: 'kvs-wrap-filtroModalidadeJogos', peerSelectId: 'filtroModalidadeJogos',
+                    placeholder: 'Todas modalidades', ariaLabel: 'Filtrar jogos por modalidade',
+                    listboxLabel: 'Modalidades para filtrar jogos', incluirTodas: true
+                });
+            }
 
             atualizarStats(jogosCache);
         } catch (e) {
@@ -1670,10 +1752,11 @@ window.SGIPage.mount("competicoes/chaveamento", function (pageConfig, pageScope)
             return;
         }
 
-        const kvsMob = document.getElementById('kvs-wrap-selectModalidadeMob');
-        const idModalidade = (kvsMob && kvsMob.offsetParent !== null)
-            ? document.getElementById('selectModalidadeMob').value
-            : document.getElementById('selectModalidade').value;
+        const selectMobEl = document.getElementById('selectModalidadeMob');
+        const selectDeskEl = document.getElementById('selectModalidade');
+        const idModalidade = (selectMobEl && selectMobEl.offsetParent !== null)
+            ? selectMobEl.value
+            : (selectDeskEl ? selectDeskEl.value : '');
 
         if (!idModalidade) {
             msgEl.innerHTML = '<div class="alert alert-danger">Selecione uma modalidade primeiro.</div>';

@@ -3,6 +3,7 @@ $titulo = 'Turmas';
 $tagTituloCompacto = 'h1';
 $mostrarVoltar = true;
 $urlVoltar = \App\Shared\Http\Url::to('painel');
+$idVoltarMobile = 'btnVoltarCatMob';
 include SGI_ROOT . '/resources/views/components/admin-head.php';
 include SGI_ROOT . '/resources/views/components/admin-header.php';
 $paginaAtiva = 'categorias';
@@ -15,9 +16,6 @@ $paginaAtiva = 'categorias';
 <main class="position-relative d-md-none mb-5" >
     <div class="p-3">
         <div class="d-flex align-items-center gap-2 mb-3">
-            <a href="<?= \App\Shared\Http\Url::to('painel') ?>" id="btnVoltarCatMob" class="btn btn-primary d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none" >
-                <i class="bi bi-arrow-left-circle fs-5" aria-hidden="true"></i> <span id="nomeInterclasseCatMob">Interclasse</span>
-            </a>
             <div class="input-group flex-grow-1">
                 <span class="input-group-text"><i class="bi bi-search" aria-hidden="true"></i></span>
                 <label for="buscaTurmaMob" class="visually-hidden">Buscar turma</label>
@@ -36,26 +34,22 @@ $paginaAtiva = 'categorias';
 
 <!-- Desktop -->
 <main class="d-none d-md-flex flex-column main-desktop-layout">
-    <h1 class="h3 fw-bold text-body mb-3">Turmas</h1>
-    <div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-3">
-        <div class="d-flex align-items-center gap-3">
-            <a href="<?= \App\Shared\Http\Url::to('painel') ?>" id="btnVoltarCatDesk" class="btn btn-primary d-inline-flex align-items-center gap-2 fw-bold mb-4 px-3 py-2 border-0 text-decoration-none" >
-                <i class="bi bi-arrow-left-circle fs-5" aria-hidden="true"></i> <span id="nomeInterclasseCategoria">Interclasse</span>
-            </a>
-        </div>
-        <div class="d-flex align-items-center gap-3 flex-shrink-0">
+    <?php
+    $headerIdVoltar = 'btnVoltarCatDesk';
+    $headerCorpoHtml = '<h1 class="h3 fw-bold text-body mb-0">Turmas</h1>';
+    $headerAcoesHtml = '<div class="d-flex align-items-center gap-3 flex-wrap">
             <div class="input-group w-auto">
                 <span class="input-group-text"><i class="bi bi-search" aria-hidden="true"></i></span>
                 <label for="buscaTurmaDesk" class="visually-hidden">Buscar turma</label>
                 <input type="text" class="form-control" id="buscaTurmaDesk" placeholder="Buscar turma..." oninput="filtrarTurmas()">
             </div>
-            <?php if ($nivelUsuario === 0): ?>
-            <button class="btn btn-primary d-inline-flex align-items-center gap-2 fw-bold px-3 py-2 border-0 rounded-3"  data-bs-toggle="modal" data-bs-target="#exampleModal">
+            ' . ($nivelUsuario === 0 ? '<button class="btn btn-primary d-inline-flex align-items-center gap-2 fw-bold px-3 py-2 border-0 rounded-3" data-bs-toggle="modal" data-bs-target="#exampleModal">
                 <i class="bi bi-plus-lg" aria-hidden="true"></i> Nova Turma
-            </button>
-            <?php endif; ?>
-        </div>
-    </div>
+            </button>' : '') . '
+        </div>';
+    include SGI_ROOT . '/resources/views/components/page-header.php';
+    unset($headerMostrarVoltar, $headerCorpoHtml, $headerAcoesHtml, $headerClasse, $headerUrlVoltar, $headerIdVoltar, $headerClassBotao, $headerHiddenBotao);
+    ?>
 
     <div id="listaTurmasDesktop"></div>
 </main>

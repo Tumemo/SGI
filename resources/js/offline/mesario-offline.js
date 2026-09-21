@@ -667,6 +667,24 @@
         ativarMontagem(key, tela, params, true);
     }
 
+    /* Botão "Voltar" da casca do mesário: fica oculto apenas na dashboard
+       (raiz da casca). Os destinos são links reais para o painel; a
+       intercepção da SPA converte a navegação em troca de tela sem
+       recarregar a página. */
+    function atualizarVoltarMesario(tela) {
+        var esconder = tela === 'dashboard';
+        ['sgiBtnVoltarMesario', 'sgiBtnVoltarMesarioDesk'].forEach(function (id) {
+            var el = document.getElementById(id);
+            if (!el) return;
+            el.hidden = esconder;
+            if (esconder) {
+                el.setAttribute('aria-hidden', 'true');
+            } else {
+                el.removeAttribute('aria-hidden');
+            }
+        });
+    }
+
     function ativarMontagem(key, tela, params, historicoJaAtualizado) {
         var m = state.montadas[key];
         var conteudo = document.getElementById('conteudo-principal');
@@ -695,6 +713,7 @@
             window.SGIPage.updateContentTarget(document);
             window.SGIPage.focusPageHeading(m.root);
         }
+        atualizarVoltarMesario(tela);
     }
 
     /* ==================== Interceptacao de links e popstate ==================== */
@@ -1244,6 +1263,7 @@
         criarUi();
         observarEstadoBanner();
         registrarInterceptacao();
+        atualizarVoltarMesario('dashboard');
 
         if (!state.temCasca) return;
 

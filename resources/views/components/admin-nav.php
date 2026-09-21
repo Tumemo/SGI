@@ -1,51 +1,54 @@
 <?php
 (session_status() === PHP_SESSION_NONE) && \App\Shared\Http\SessionManager::start();
-$paginaAtiva = $paginaAtiva ?? '';
+
 $nivelUsuario = (int)($_SESSION['nivel'] ?? -1);
-$paginaAtiva = $nivelUsuario === 2 ? match ($paginaAtiva) {
-    'agenda' => 'agenda_mesario',
-    'chaveamento' => 'chaveamentos_mesario',
-    default => $paginaAtiva,
-} : $paginaAtiva;
+
+// Detecta a rota atual diretamente do servidor (ignora Query String como ?id=1)
+$uriAtual = parse_url($_SERVER['REQUEST_URI'] ?? '', PHP_URL_PATH);
+$uriAtual = '/' . trim((string)$uriAtual, '/');
+
 $idInterclasseNav = filter_var($_GET['id'] ?? ($nivelUsuario === 2 ? ($_SESSION['id_interclasse'] ?? null) : null), FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]);
 $idInterclasseNav = $idInterclasseNav === false ? null : (int) $idInterclasseNav;
+
 $preservarEdicaoNoLink = static function (string $url, string $key) use ($idInterclasseNav): string {
     if ($idInterclasseNav === null || $key === 'perfil') {
         return $url;
     }
     return $url . (str_contains($url, '?') ? '&' : '?') . http_build_query(['id' => $idInterclasseNav]);
 };
+
 $fotoUsuario = $_SESSION['foto_usuario'] ?? null;
 if ($fotoUsuario) {
     $fotoUsuario = basename((string) $fotoUsuario);
     $fotoPath = \App\Shared\Storage\StoragePaths::fotosUsuarios() . DIRECTORY_SEPARATOR . $fotoUsuario;
     if ($fotoUsuario === '' || !is_file($fotoPath)) $fotoUsuario = null;
 }
+
 $nomeUsuario = $_SESSION['nome'] ?? 'Usuário';
 $inicialNome = strtoupper(substr($nomeUsuario, 0, 1));
 
+// Mapeamento com caminhos reais da rota ('path') para comparação exata
 $todosItens = [
-    'perfil'            => ['label' => 'Perfil',          'icon' => 'bi-person',             'url' => \App\Shared\Http\Url::to('perfil'),              'niveis' => [0, 1, 2]],
-    'dashboard'         => ['label' => 'Dashboard',       'icon' => 'bi-house-door',         'url' => \App\Shared\Http\Url::to('painel'),           'niveis' => [0, 1, 2]],
-    'ocorrencias'        => ['label' => 'Ocorrências',    'icon' => 'bi-exclamation-triangle',          'url' => \App\Shared\Http\Url::to('ocorrencias'),          'niveis' => [0, 1, 2]],
-    'chaveamento'       => ['label' => 'Chaveamento',     'icon' => 'bi-diagram-3',          'url' => \App\Shared\Http\Url::to('chaveamento'),  'niveis' => [0, 1]],
-    'ranking'           => ['label' => 'Ranking',         'icon' => 'bi-trophy',             'url' => \App\Shared\Http\Url::to('ranking'),             'niveis' => [0, 1]],
-    'agenda'            => ['label' => 'Agenda',          'icon' => 'bi-calendar2-check',          'url' => \App\Shared\Http\Url::to('edicoes/agenda'),       'niveis' => [0, 1]],
-    'arrecadacoes'      => ['label' => 'Arrecadações',    'icon' => 'bi-basket',             'url' => \App\Shared\Http\Url::to('edicoes/arrecadacao'),  'niveis' => [0, 1]],
-    'equipes'     => ['label' => 'Equipes',   'icon' => 'bi-people',             'url' => \App\Shared\Http\Url::to('edicoes/equipes'),       'niveis' => [0]],
-    'chaveamentos_mesario' => ['label' => 'Chaveamentos', 'icon' => 'bi-diagram-3',          'url' => \App\Shared\Http\Url::to('chaveamento'),           'niveis' => [2]],
-    'agenda_mesario'    => ['label' => 'Agenda',          'icon' => 'bi-calendar3',          'url' => \App\Shared\Http\Url::to('edicoes/agenda'),       'niveis' => [2]],
+    'perfil'               => ['label' => 'Perfil',       'icon' => 'bi-person fs-3',               'path' => '/perfil',              'url' => \App\Shared\Http\Url::to('perfil'),              'niveis' => [0, 1, 2]],
+    'dashboard'            => ['label' => 'Dashboard',    'icon' => 'bi-house-door fs-3',           'path' => '/painel',              'url' => \App\Shared\Http\Url::to('painel'),              'niveis' => [0, 1, 2]],
+    'ocorrencias'          => ['label' => 'Ocorrências',  'icon' => 'bi-exclamation-triangle fs-3', 'path' => '/ocorrencias',         'url' => \App\Shared\Http\Url::to('ocorrencias'),          'niveis' => [0, 1, 2]],
+    'chaveamento'          => ['label' => 'Chaveamento',  'icon' => 'bi-diagram-3 fs-3',            'path' => '/chaveamento',         'url' => \App\Shared\Http\Url::to('chaveamento'),         'niveis' => [0, 1]],
+    'ranking'              => ['label' => 'Ranking',      'icon' => 'bi-trophy fs-3',               'path' => '/ranking',             'url' => \App\Shared\Http\Url::to('ranking'),            'niveis' => [0, 1]],
+    'agenda'               => ['label' => 'Agenda',       'icon' => 'bi-calendar2-check fs-3',      'path' => '/edicoes/agenda',      'url' => \App\Shared\Http\Url::to('edicoes/agenda'),      'niveis' => [0, 1]],
+    'arrecadacoes'         => ['label' => 'Arrecadações', 'icon' => 'bi-basket fs-3',               'path' => '/edicoes/arrecadacao', 'url' => \App\Shared\Http\Url::to('edicoes/arrecadacao'), 'niveis' => [0, 1]],
+    'edicoes/equipes'      => ['label' => 'Equipes',      'icon' => 'bi-people fs-3',               'path' => '/edicoes/equipes',     'url' => \App\Shared\Http\Url::to('edicoes/equipes'),     'niveis' => [0]],
+    'chaveamentos_mesario' => ['label' => 'Chaveamento',  'icon' => 'bi-diagram-3 fs-3',            'path' => '/chaveamento',         'url' => \App\Shared\Http\Url::to('chaveamento'),         'niveis' => [2]],
+    'agenda_mesario'       => ['label' => 'Agenda',       'icon' => 'bi-calendar3 fs-3',            'path' => '/edicoes/agenda',      'url' => \App\Shared\Http\Url::to('edicoes/agenda'),      'niveis' => [2]],
 ];
 
 $navItens = [];
 foreach ($todosItens as $key => $item) {
-    if (in_array($nivelUsuario, $item['niveis'])) {
+    if (in_array($nivelUsuario, $item['niveis'], true)) {
         $item['url'] = $preservarEdicaoNoLink($item['url'], $key);
+        // Define dinamicamente se este item é o ativo com base no path
+        $item['is_active'] = ($uriAtual === $item['path']);
         $navItens[$key] = $item;
     }
-}
-if (!isset($navItens[$paginaAtiva])) {
-    $paginaAtiva = '';
 }
 ?>
 
@@ -66,7 +69,7 @@ if (!isset($navItens[$paginaAtiva])) {
             <ul class="nav flex-column gap-1">
                 <?php foreach ($navItens as $key => $item): ?>
                 <li class="nav-item">
-                    <a href="<?= htmlspecialchars($item['url'], ENT_QUOTES, 'UTF-8') ?>" class="sgi-mobile-menu-link d-flex align-items-center gap-3 rounded-3 px-3 py-2 <?= $key === $paginaAtiva ? 'bg-primary text-white' : 'text-body' ?>" <?= $key === $paginaAtiva ? 'aria-current="page"' : '' ?>>
+                    <a href="<?= htmlspecialchars($item['url'], ENT_QUOTES, 'UTF-8') ?>" class="sgi-mobile-menu-link d-flex align-items-center gap-3 rounded-3 px-3 py-2 <?= !empty($item['is_active']) ? 'bg-primary text-white' : 'text-body' ?>" <?= !empty($item['is_active']) ? 'aria-current="page"' : '' ?>>
                         <?php if ($key === 'perfil' && !empty($fotoUsuario)): ?>
                             <img src="<?= htmlspecialchars(\App\Shared\Http\Url::to('uploads/fotosUsuarios/' . rawurlencode($fotoUsuario)), ENT_QUOTES, 'UTF-8') ?>" class="nav-avatar-img-mobile object-fit-cover rounded-circle border border-2 border-white" alt="" aria-hidden="true">
                         <?php elseif ($key === 'perfil'): ?>
@@ -74,13 +77,13 @@ if (!isset($navItens[$paginaAtiva])) {
                         <?php else: ?>
                             <i class="bi <?= htmlspecialchars($item['icon'], ENT_QUOTES, 'UTF-8') ?> fs-5" aria-hidden="true"></i>
                         <?php endif; ?>
-                        <span><?= htmlspecialchars($item['label'], ENT_QUOTES, 'UTF-8') ?></span>
+                        <span><?= htmlspecialchars($item['label'] ?? '', ENT_QUOTES, 'UTF-8') ?></span>
                     </a>
                 </li>
                 <?php endforeach; ?>
                 <li class="nav-item mt-2 pt-2 border-top">
                     <a href="<?= \App\Shared\Http\Url::to('api/v1/logout') ?>" class="sgi-mobile-menu-link d-flex align-items-center gap-3 rounded-3 px-3 py-2 text-danger" data-sgi-logout>
-                        <i class="bi bi-box-arrow-right fs-5" aria-hidden="true"></i>
+                        <i class="bi bi-box-arrow-right fs-3" aria-hidden="true"></i>
                         <span>Sair</span>
                     </a>
                 </li>
@@ -91,10 +94,10 @@ if (!isset($navItens[$paginaAtiva])) {
 
 <!-- navbar desktop -->
 <nav class="d-none d-md-flex flex-column position-fixed start-0 shadow-lg bg-primary sidebar-nav" aria-label="Navegação principal">
-    <ul class="nav flex-column align-items-center h-100 py-4 gap-2 fs-3 sidebar-nav-list">
+    <ul class="nav flex-column align-items-center h-100 py-4 gap-4 fs-3 sidebar-nav-list">
         <?php foreach ($navItens as $key => $item): ?>
         <li class="nav-item">
-            <a href="<?= htmlspecialchars($item['url'], ENT_QUOTES, 'UTF-8') ?>" class="sgi-sidebar-link text-white <?= $key === $paginaAtiva ? 'active-nav-icon' : '' ?>" aria-label="<?= htmlspecialchars($item['label'], ENT_QUOTES, 'UTF-8') ?>" <?= $key === $paginaAtiva ? 'aria-current="page"' : '' ?> title="<?= htmlspecialchars($item['label'], ENT_QUOTES, 'UTF-8') ?>">
+            <a href="<?= htmlspecialchars($item['url'], ENT_QUOTES, 'UTF-8') ?>" class="sgi-sidebar-link text-white <?= !empty($item['is_active']) ? 'active-nav-icon' : '' ?>" aria-label="<?= htmlspecialchars($item['label'] ?? '', ENT_QUOTES, 'UTF-8') ?>" <?= !empty($item['is_active']) ? 'aria-current="page"' : '' ?> title="<?= htmlspecialchars($item['label'] ?? '', ENT_QUOTES, 'UTF-8') ?>">
                 <?php if ($key === 'perfil' && !empty($fotoUsuario)): ?>
                     <img src="<?= htmlspecialchars(\App\Shared\Http\Url::to('uploads/fotosUsuarios/' . rawurlencode($fotoUsuario)), ENT_QUOTES, 'UTF-8') ?>" class="nav-avatar-img object-fit-cover rounded-circle border border-2 border-white" alt="" aria-hidden="true">
                 <?php elseif ($key === 'perfil'): ?>
@@ -102,14 +105,14 @@ if (!isset($navItens[$paginaAtiva])) {
                 <?php else: ?>
                     <i class="bi <?= htmlspecialchars($item['icon'], ENT_QUOTES, 'UTF-8') ?>" aria-hidden="true"></i>
                 <?php endif; ?>
-                <span class="sgi-sidebar-label"><?= htmlspecialchars($item['label'], ENT_QUOTES, 'UTF-8') ?></span>
+                <span class="sgi-sidebar-label"><?= htmlspecialchars($item['label'] ?? '', ENT_QUOTES, 'UTF-8') ?></span>
             </a>
         </li>
         <?php endforeach; ?>
         <li class="nav-item">
             <a href="<?= \App\Shared\Http\Url::to('api/v1/logout') ?>" class="sgi-sidebar-link text-white" data-sgi-logout aria-label="Sair" title="Sair">
-                <i class="bi bi-box-arrow-right" aria-hidden="true"></i>
-                <span class="sgi-sidebar-label">Sair</span>
+                <i class="bi bi-box-arrow-right fs-3" aria-hidden="true"></i>
+                <span class="sgi-sidebar-label"></span>
             </a>
         </li>
     </ul>
