@@ -17,10 +17,10 @@ final class CronogramaBracketPlanner
      * @param list<int> $teamIds
      * @return list<array<string,mixed>>
      */
-    public static function plan(int $modalityId, int $classId, array $teamIds): array
+    public static function plan(int $modalityId, ?int $classId, array $teamIds): array
     {
-        if ($modalityId <= 0 || $classId <= 0) {
-            throw new InvalidArgumentException('Modalidade e turma são obrigatórias para montar o chaveamento.');
+        if ($modalityId <= 0 || ($classId !== null && $classId <= 0)) {
+            throw new InvalidArgumentException('A modalidade e, quando aplicável, a turma são obrigatórias para montar o chaveamento.');
         }
         $teamIds = array_values(array_unique(array_filter(array_map('intval', $teamIds), static fn (int $id): bool => $id > 0)));
         if ($teamIds === []) {
@@ -39,7 +39,7 @@ final class CronogramaBracketPlanner
                 $slots[$slot] = null;
                 continue;
             }
-            $slots[$slot] = self::node($classId, $width, $width, $slot, $candidateIds, null, null);
+            $slots[$slot] = self::node($modalityId, $classId, $width, $width, $slot, $candidateIds, null, null);
         }
         $levels[$width] = $slots;
 
@@ -58,6 +58,7 @@ final class CronogramaBracketPlanner
                     $right['equipe_ids'] ?? [],
                 )));
                 $parents[$slot] = self::node(
+                    $modalityId,
                     $classId,
                     self::nextPowerOfTwo(count($teamIds)),
                     $nextWidth,
@@ -83,13 +84,13 @@ final class CronogramaBracketPlanner
     }
 
     /** @return array<string,mixed> */
-    private static function node(int $classId, int $initialWidth, int $width, int $slot, array $teamIds, ?string $left, ?string $right): array
+    private static function node(int $modalityId, ?int $classId, int $initialWidth, int $width, int $slot, array $teamIds, ?string $left, ?string $right): array
     {
         $isBye = ($left === null && $right === null && count($teamIds) === 1)
             || (($left === null) xor ($right === null));
         $kind = $isBye ? 'B' : 'N';
         return [
-            'chave_tag' => sprintf('PL:%d:MM:%d:%d:%s', $classId, $width, $slot, $kind),
+            'chave_tag' => sprintf('PL:%d:%d:MM:%d:%d:%s', $modalityId, $classId ?? 0, $width, $slot, $kind),
             'tipo_no' => $isBye ? 'bye' : 'normal',
             'fase_largura' => $width,
             'slot' => $slot,

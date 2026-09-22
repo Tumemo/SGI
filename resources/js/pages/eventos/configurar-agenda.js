@@ -53,7 +53,7 @@ window.SGIPage.mount("eventos/configurar-agenda", function (pageConfig, pageScop
         if (jogoEhIndividual(jogo)) {
             return 'Competição Individual';
         }
-        const mm = (nomeJogo || '').match(/^MM:(\d+):(\d+):([NB])$/);
+        const mm = (nomeJogo || '').match(/^(?:PL:\d+:-?\d+:)?MM:(\d+):(\d+):([NB])$/);
         if (mm) {
             const largura = parseInt(mm[1], 10);
             const slot = parseInt(mm[2], 10);
@@ -193,6 +193,23 @@ window.SGIPage.mount("eventos/configurar-agenda", function (pageConfig, pageScop
         );
         const ids = [...new Set(modalidadesLista.map((m) => m.id_modalidade).filter(Boolean))];
         if (ids.length === 0) return;
+        // Durante a operação offline, a fila/projeção do mesário é a fonte
+        // atualizada: resultados podem ter criado semifinais/final locais
+        // depois do snapshot HTTP preparado. Usar somente o cache GET faria
+        // a agenda esquecer esses nós temporários até a reconexão.
+        if (navigator.onLine === false && window.SGIDataLayer && typeof window.SGIDataLayer.read === 'function') {
+            try {
+                const locais = await window.SGIDataLayer.read('jogos');
+                const idsPermitidos = new Set(ids.map((id) => String(id)));
+                const jogosLocais = (Array.isArray(locais) ? locais : [])
+                    .filter((j) => idsPermitidos.has(String(j.modalidades_id_modalidade || j.id_modalidade)))
+                    .map((j) => ({ ...j, modalidades_id_modalidade: Number(j.modalidades_id_modalidade || j.id_modalidade) }));
+                if (jogosLocais.length > 0) {
+                    jogosCache = await enriquecerNomesEquipesLocais(jogosLocais);
+                    return;
+                }
+            } catch (_) { /* segue para o snapshot/cache HTTP */ }
+        }
         const batches = await Promise.all(
             ids.map((id) =>
                 fetch(`${API}jogos?id_modalidade=${encodeURIComponent(id)}`).then(async (r) => {
@@ -802,6 +819,9 @@ window.SGIPage.mount("eventos/configurar-agenda", function (pageConfig, pageScop
             const statusCronograma = document.getElementById('cronogramaPlanejadoStatus');
             const resumoCronograma = document.getElementById('cronogramaPlanejadoResumo');
             const botaoPublicar = document.getElementById('cronogramaPublicar');
+            const botaoAbrir = document.getElementById('cronogramaAbrir');
+            const botaoFechar = document.getElementById('cronogramaFechar');
+            const botaoLiberar = document.getElementById('cronogramaLiberar');
             const botaoRevisar = document.getElementById('cronogramaRevisar');
             const hoje = hojeISO();
             const campoInicio = document.getElementById('cronogramaDataInicio');
@@ -868,11 +888,39 @@ window.SGIPage.mount("eventos/configurar-agenda", function (pageConfig, pageScop
                 botaoPublicar.disabled = true;
                 try {
                     const publicada = await enviarCronograma({ acao: 'publicar', cronograma_versao: Number(cronogramaEstado.cronograma_versao || 0), compromissos: cronogramaRascunho.compromissos, nos: cronogramaRascunho.nos });
-                    await enviarCronograma({ acao: 'abrir_inscricoes', cronograma_versao: Number(publicada.cronograma_versao || 0) });
                     cronogramaRascunho = null;
                     await atualizarCronograma();
-                    mostrarCronograma('Cronograma publicado e inscrições abertas.');
+                    mostrarCronograma('Cronograma publicado. Defina a janela e abra as inscrições quando estiver pronto.');
                 } catch (error) { tratarErroCronograma(error); botaoPublicar.disabled = false; }
+            });
+            if (botaoAbrir) pageScope.listen(botaoAbrir, 'click', async () => {
+                if (!cronogramaEstado) return;
+                botaoAbrir.disabled = true;
+                try {
+                    const inicio = document.getElementById('cronogramaInscricaoInicio')?.value;
+                    const fim = document.getElementById('cronogramaInscricaoFim')?.value;
+                    await enviarCronograma({ acao: 'abrir_inscricoes', cronograma_versao: Number(cronogramaEstado.cronograma_versao || 0), inscricoes_abertura: inicio, inscricoes_encerramento: fim });
+                    await atualizarCronograma();
+                    mostrarCronograma('Inscrições abertas na janela informada.');
+                } catch (error) { tratarErroCronograma(error); botaoAbrir.disabled = false; }
+            });
+            if (botaoFechar) pageScope.listen(botaoFechar, 'click', async () => {
+                if (!cronogramaEstado) return;
+                botaoFechar.disabled = true;
+                try {
+                    await enviarCronograma({ acao: 'encerrar_inscricoes', cronograma_versao: Number(cronogramaEstado.cronograma_versao || 0) });
+                    await atualizarCronograma();
+                    mostrarCronograma('Inscrições encerradas.');
+                } catch (error) { tratarErroCronograma(error); botaoFechar.disabled = false; }
+            });
+            if (botaoLiberar) pageScope.listen(botaoLiberar, 'click', async () => {
+                if (!cronogramaEstado) return;
+                botaoLiberar.disabled = true;
+                try {
+                    await enviarCronograma({ acao: 'liberar_operacao', cronograma_versao: Number(cronogramaEstado.cronograma_versao || 0) });
+                    await atualizarCronograma();
+                    mostrarCronograma('Operação liberada após validar os mínimos de elenco.');
+                } catch (error) { tratarErroCronograma(error); botaoLiberar.disabled = false; }
             });
             if (botaoRevisar) pageScope.listen(botaoRevisar, 'click', async () => {
                 if (!cronogramaEstado || cronogramaEstado.cronograma_status !== 'publicado') return;

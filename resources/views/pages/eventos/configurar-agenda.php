@@ -28,9 +28,16 @@ $nivelUsuarioAgenda = (int)($_SESSION['nivel'] ?? -1);
                 <div class="col-6 col-md-2 d-flex flex-wrap gap-2">
                     <button id="cronogramaPreparar" type="button" class="btn btn-outline-primary btn-sm">Preparar equipes</button>
                     <button id="cronogramaGerar" type="button" class="btn btn-primary btn-sm">Gerar rascunho</button>
-                    <button id="cronogramaPublicar" type="button" class="btn btn-success btn-sm" disabled>Publicar e abrir inscrições</button>
+                    <button id="cronogramaPublicar" type="button" class="btn btn-success btn-sm" disabled>Publicar cronograma</button>
+                    <button id="cronogramaAbrir" type="button" class="btn btn-outline-success btn-sm">Abrir inscrições</button>
+                    <button id="cronogramaFechar" type="button" class="btn btn-outline-secondary btn-sm">Encerrar inscrições</button>
+                    <button id="cronogramaLiberar" type="button" class="btn btn-outline-primary btn-sm">Liberar operação</button>
                     <button id="cronogramaRevisar" type="button" class="btn btn-outline-warning btn-sm">Reabrir revisão</button>
                 </div>
+            </div>
+            <div class="row g-2 mt-2">
+                <div class="col-6 col-md-3"><label class="form-label small" for="cronogramaInscricaoInicio">Abertura das inscrições</label><input id="cronogramaInscricaoInicio" type="datetime-local" class="form-control form-control-sm"></div>
+                <div class="col-6 col-md-3"><label class="form-label small" for="cronogramaInscricaoFim">Encerramento das inscrições</label><input id="cronogramaInscricaoFim" type="datetime-local" class="form-control form-control-sm"></div>
             </div>
             <p id="cronogramaPlanejadoResumo" class="small mb-0 mt-3" role="status" aria-live="polite"></p>
         </div>

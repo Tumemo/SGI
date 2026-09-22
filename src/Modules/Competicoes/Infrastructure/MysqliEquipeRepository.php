@@ -283,7 +283,13 @@ final class MysqliEquipeRepository implements EquipeRepository
         if ($edition === null) {
             return;
         }
-        CronogramaRules::assertPlannedEdition($edition);
+        // O elenco administrativo é preparado antes da publicação. A janela
+        // pública de inscrições só deve ser exigida pelo caso de uso de
+        // inscrição; no rascunho/revisão ainda não há compromissos publicados
+        // contra os quais comparar a equipe.
+        if ((string) ($edition['cronograma_status'] ?? CronogramaRules::RASCUNHO) !== CronogramaRules::PUBLICADO) {
+            return;
+        }
         $prepared = $this->one('SELECT id_equipe FROM equipe_planejamentos WHERE id_equipe = ? AND planejada = 1 LIMIT 1', 'i', [$teamId]);
         if ($prepared === null) {
             throw new \InvalidArgumentException('A equipe ainda não foi preparada no cronograma publicado.');
@@ -296,15 +302,7 @@ final class MysqliEquipeRepository implements EquipeRepository
                 if ((int) $candidate['id_modalidade'] === (int) $existing['id_modalidade']) {
                     continue;
                 }
-                if (CronogramaRules::overlap(
-                    (string) $candidate['data_compromisso'],
-                    (string) $candidate['inicio_compromisso'],
-                    (string) $candidate['termino_compromisso'],
-                    (string) $existing['data_compromisso'],
-                    (string) $existing['inicio_compromisso'],
-                    (string) $existing['termino_compromisso'],
-                    0,
-                )) {
+                if (CronogramaRules::schedulesConflict($candidate, $existing)) {
                     throw new \InvalidArgumentException(sprintf('Conflito de agenda entre as modalidades %s e %s.', $modalityId, (int) $existing['id_modalidade']));
                 }
             }

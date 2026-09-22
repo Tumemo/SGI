@@ -51,13 +51,14 @@ final class CronogramaController
             $userId = (int) ($_SESSION['id_usuario'] ?? $_SESSION['id'] ?? 0);
             $action = (string) ($data['acao'] ?? 'estado');
             $result = match ($action) {
-                'preparar_equipes', 'preparar' => $this->service->preparar($edition, $userId),
-                'gerar_rascunho', 'gerar' => $this->service->gerar($edition, $userId, $data),
+                'preparar_equipes' => $this->service->preparar($edition, $userId),
+                'gerar_rascunho' => $this->service->gerar($edition, $userId, $data),
                 'publicar' => $this->service->publicar($edition, $userId, $data),
-                'abrir_inscricoes', 'abrir' => $this->service->abrir($edition, $userId, $data),
-                'encerrar_inscricoes', 'encerrar' => $this->service->fechar($edition, $userId, $data),
+                'abrir_inscricoes' => $this->service->abrir($edition, $userId, $data),
+                'encerrar_inscricoes' => $this->service->fechar($edition, $userId, $data),
+                'liberar_operacao' => $this->service->liberar($edition, $userId, $data),
                 'revisar' => $this->service->revisar($edition, $userId, $data),
-                'materializar', 'materializar_no' => $this->service->materializar($edition, $userId, $data),
+                'materializar_no' => $this->service->materializar($edition, $userId, $data),
                 default => throw new \InvalidArgumentException('Ação de cronograma inválida.'),
             };
             return Response::json($result);

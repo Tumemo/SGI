@@ -42,6 +42,8 @@ window.SGIPage.mount("aluno/modalidade", function (pageConfig, pageScope) {
     const categoriaUsuario = pageConfig.value3;
     const idTurmaUsuario = pageConfig.value4;
     const modalidadesInscritas = pageConfig.value5;
+    const cronogramaVersao = pageConfig.value7;
+    const versaoPublicada = pageConfig.value8;
     const estaInscrito = modalidadesInscritas.length > 0;
     let modalidadesData = [];
     let carregandoDados = false;
@@ -661,7 +663,9 @@ window.SGIPage.mount("aluno/modalidade", function (pageConfig, pageScope) {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     id_interclasse: parseInt(idInterclasse),
-                    id_equipes: ids
+                    id_equipes: ids,
+                    cronograma_versao: cronogramaVersao === null || cronogramaVersao === undefined ? undefined : Number(cronogramaVersao),
+                    versao_publicada: versaoPublicada === null || versaoPublicada === undefined ? undefined : Number(versaoPublicada)
                 })
             });
             const result = await res.json();

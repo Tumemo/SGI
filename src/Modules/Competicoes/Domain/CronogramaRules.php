@@ -52,6 +52,20 @@ final class CronogramaRules
         return $aStart < $bEnd + $margin && $bStart < $aEnd + $margin;
     }
 
+    /** @param array<string,mixed> $first @param array<string,mixed> $second */
+    public static function schedulesConflict(array $first, array $second, int $margin = 0): bool
+    {
+        return self::overlap(
+            (string) ($first['data_compromisso'] ?? $first['data'] ?? ''),
+            (string) ($first['inicio_compromisso'] ?? $first['inicio'] ?? ''),
+            (string) ($first['termino_compromisso'] ?? $first['fim'] ?? ''),
+            (string) ($second['data_compromisso'] ?? $second['data'] ?? ''),
+            (string) ($second['inicio_compromisso'] ?? $second['inicio'] ?? ''),
+            (string) ($second['termino_compromisso'] ?? $second['fim'] ?? ''),
+            $margin,
+        );
+    }
+
     public static function assertPlannedEdition(array $edition, ?\DateTimeImmutable $now = null): void
     {
         if ((string) ($edition['cronograma_status'] ?? self::RASCUNHO) !== self::PUBLICADO) {
@@ -63,10 +77,13 @@ final class CronogramaRules
         $now ??= new \DateTimeImmutable('now');
         $open = self::dateTime($edition['inscricoes_abertura'] ?? null);
         $close = self::dateTime($edition['inscricoes_encerramento'] ?? null);
-        if ($open !== null && $now < $open) {
+        if ($open === null || $close === null || $open >= $close) {
+            throw new InvalidArgumentException('O período de inscrições precisa ter início e encerramento válidos.');
+        }
+        if ($now < $open) {
             throw new InvalidArgumentException('O período de inscrições ainda não começou.');
         }
-        if ($close !== null && $now >= $close) {
+        if ($now >= $close) {
             throw new InvalidArgumentException('O período de inscrições já terminou.');
         }
     }
@@ -112,6 +129,15 @@ final class CronogramaRules
         if ($value === null || trim((string) $value) === '') {
             return null;
         }
-        return new \DateTimeImmutable((string) $value);
+        $normalised = str_replace('T', ' ', trim((string) $value));
+        if (preg_match('/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}$/', $normalised) === 1) {
+            $normalised .= ':00';
+        }
+        $parsed = \DateTimeImmutable::createFromFormat('!Y-m-d H:i:s', $normalised);
+        $errors = \DateTimeImmutable::getLastErrors();
+        if ($parsed === false || ($errors !== false && ($errors['warning_count'] > 0 || $errors['error_count'] > 0))) {
+            throw new InvalidArgumentException('Data e hora do período de inscrições inválidas.');
+        }
+        return $parsed;
     }
 }

@@ -129,7 +129,7 @@ $paginaAtiva = 'inscricao';
 include SGI_ROOT . '/resources/views/components/aluno-nav.php';
 ?>
 
-<script type="application/json" data-sgi-config="aluno/modalidade"><?= json_encode(['value2' => ((string) ($genero_usuario)), 'value3' => ($categoria_usuario), 'value4' => ((int)($turma_usuario ?? 0)), 'value5' => ($modalidades_inscritas), 'value6' => ($id_usuario)], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_THROW_ON_ERROR) ?></script>
+<script type="application/json" data-sgi-config="aluno/modalidade"><?= json_encode(['value2' => ((string) ($genero_usuario)), 'value3' => ($categoria_usuario), 'value4' => ((int)($turma_usuario ?? 0)), 'value5' => ($modalidades_inscritas), 'value6' => ($id_usuario), 'value7' => ($cronograma_versao ?? null), 'value8' => ($versao_publicada ?? null)], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_THROW_ON_ERROR) ?></script>
 <script data-sgi-page src="<?= \App\Shared\Http\Assets::url('js/pages/aluno/modalidade.js') ?>"></script>
 <script src="<?= \App\Shared\Http\Assets::url('vendor/bootstrap/js/bootstrap.bundle.min.js') ?>" crossorigin="anonymous"></script>
 </body>

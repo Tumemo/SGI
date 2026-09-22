@@ -258,7 +258,7 @@ final class MysqliModalidadeRepository implements ModalidadeRepository
                 $edition = $scope->get_result()->fetch_assoc();
                 if ($edition !== null) {
                     $editionId = (int) $edition['interclasses_id_interclasse'];
-                    $invalidate = $this->connection->prepare("UPDATE interclasse_planejamentos SET cronograma_status = 'revisao', inscricoes_status = 'fechadas', cronograma_versao = cronograma_versao + 1 WHERE id_interclasse = ? AND cronograma_status = 'publicado'");
+                    $invalidate = $this->connection->prepare("UPDATE interclasse_planejamentos SET cronograma_status = 'revisao', inscricoes_status = 'fechadas', operacao_liberada = 0, cronograma_versao = cronograma_versao + 1 WHERE id_interclasse = ? AND cronograma_status = 'publicado'");
                     if ($invalidate !== false) {
                         $invalidate->bind_param('i', $editionId);
                         $invalidate->execute();

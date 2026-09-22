@@ -29,12 +29,24 @@ final class MysqliInscricaoRepository implements InscricaoRepository
     private readonly ?CronogramaRepository $cronograma;
     private ?bool $planningAvailable = null;
 
-    public function subscribe(int $userId, int $editionId, array $teamIds): array
+    public function subscribe(int $userId, int $editionId, array $teamIds, ?int $expectedRevision = null, ?int $expectedPublishedVersion = null): array
     {
         Transaction::begin($this->connection);
         try {
             $this->lockEdition($editionId);
             $planning = $this->planningState($editionId);
+            if ($planning !== null && $expectedRevision === null) {
+                throw new InscricaoRecusadaException('A revisão do cronograma é obrigatória para esta edição.');
+            }
+            if ($planning !== null && $expectedPublishedVersion === null) {
+                throw new InscricaoRecusadaException('A versão publicada do cronograma é obrigatória para esta edição.');
+            }
+            if ($planning !== null && (int) $planning['cronograma_versao'] !== $expectedRevision) {
+                throw new InscricaoRecusadaException('O cronograma foi alterado. Atualize a página e tente novamente.');
+            }
+            if ($planning !== null && (int) ($planning['versao_publicada'] ?? -1) !== $expectedPublishedVersion) {
+                throw new InscricaoRecusadaException('A publicação do cronograma foi alterada. Atualize a página e tente novamente.');
+            }
             $user = $this->one(
                 'SELECT turmas_id_turma, interclasses_id_interclasse, status_usuario, genero_usuario
                  FROM usuarios WHERE id_usuario = ? LIMIT 1 FOR UPDATE',
@@ -73,6 +85,9 @@ final class MysqliInscricaoRepository implements InscricaoRepository
             }
             if ($candidateTeams === []) {
                 throw new InscricaoRecusadaException('Nenhuma equipe válida informada.' . ($errors !== [] ? ' ' . implode(' ', array_unique($errors)) : ''));
+            }
+            if ($errors !== []) {
+                throw new InscricaoRecusadaException(implode(' ', array_unique($errors)));
             }
 
             $candidateModalityIds = array_values(array_unique(array_column($candidateTeams, 'id_modalidade')));
@@ -133,6 +148,9 @@ final class MysqliInscricaoRepository implements InscricaoRepository
             if ($validTeams === []) {
                 throw new InscricaoRecusadaException('Nenhuma equipe válida informada.' . ($errors !== [] ? ' ' . implode(' ', array_unique($errors)) : ''));
             }
+            if ($errors !== []) {
+                throw new InscricaoRecusadaException(implode(' ', array_unique($errors)));
+            }
 
             $modalities = array_values(array_unique(array_column($validTeams, 'id_modalidade')));
             sort($modalities, SORT_NUMERIC);
@@ -187,8 +205,7 @@ final class MysqliInscricaoRepository implements InscricaoRepository
                         [$teamId],
                     );
                     if ((int) ($occupied['total'] ?? 0) >= (int) $plannedConfig['max_inscritos_equipe']) {
-                        $errors[] = "A equipe {$teamId} está lotada.";
-                        continue;
+                        throw new InscricaoRecusadaException("A equipe {$teamId} está lotada.");
                     }
                 } elseif ($capacity > 0) {
                     $occupied = $this->one(
@@ -203,8 +220,7 @@ final class MysqliInscricaoRepository implements InscricaoRepository
                         [$modalityId, $classId],
                     );
                     if ((int) ($occupied['total'] ?? 0) >= $capacity) {
-                        $errors[] = "A modalidade {$modalityId} está lotada.";
-                        continue;
+                        throw new InscricaoRecusadaException("A modalidade {$modalityId} está lotada.");
                     }
                 }
 
@@ -212,8 +228,7 @@ final class MysqliInscricaoRepository implements InscricaoRepository
                     ? (int) ($candidateByModality[$modalityId] ?? 0)
                     : $this->equipesPadrao->findOrCreateDefault($modalityId, $classId);
                 if ($teamId <= 0) {
-                    $errors[] = "Erro ao localizar ou criar a equipe padrão para a modalidade {$modalityId}.";
-                    continue;
+                    throw new InscricaoRecusadaException("Erro ao localizar ou criar a equipe padrão para a modalidade {$modalityId}.");
                 }
                 $check = $this->one('SELECT 1 FROM equipes_has_usuarios WHERE equipes_id_equipe = ? AND usuarios_id_usuario = ? LIMIT 1', 'ii', [$teamId, $userId]);
                 if ($check !== null) {
@@ -241,10 +256,6 @@ final class MysqliInscricaoRepository implements InscricaoRepository
         if ($existing > 0) {
             $message .= " Você já estava inscrito em {$existing} equipe(s).";
         }
-        if ($errors !== []) {
-            $message .= ' ' . implode(' ', array_unique($errors));
-        }
-
         return [
             'success' => $success,
             'message' => $message,
@@ -299,7 +310,7 @@ final class MysqliInscricaoRepository implements InscricaoRepository
         if ($this->cronograma === null || !$this->planningAvailable()) {
             return;
         }
-        $edition = $this->one('SELECT cronograma_status, inscricoes_status FROM interclasse_planejamentos WHERE id_interclasse = ? LIMIT 1', 'i', [$editionId]);
+        $edition = $this->one('SELECT cronograma_status, inscricoes_status, cronograma_versao, inscricoes_abertura, inscricoes_encerramento FROM interclasse_planejamentos WHERE id_interclasse = ? LIMIT 1 FOR UPDATE', 'i', [$editionId]);
         if ($edition === null) {
             return;
         }
@@ -323,15 +334,7 @@ final class MysqliInscricaoRepository implements InscricaoRepository
                     || (int) ($candidate['id_equipe'] ?? 0) === (int) ($existing['id_equipe'] ?? 0)) {
                     continue;
                 }
-                if (CronogramaRules::overlap(
-                    (string) $candidate['data_compromisso'],
-                    (string) $candidate['inicio_compromisso'],
-                    (string) $candidate['termino_compromisso'],
-                    (string) $existing['data_compromisso'],
-                    (string) $existing['inicio_compromisso'],
-                    (string) $existing['termino_compromisso'],
-                    0,
-                )) {
+                if (CronogramaRules::schedulesConflict($candidate, $existing)) {
                     throw new InscricaoRecusadaException($this->conflictMessage($candidate, $existing));
                 }
             }
@@ -341,15 +344,7 @@ final class MysqliInscricaoRepository implements InscricaoRepository
                 if ((int) ($first['id_modalidade'] ?? 0) === (int) ($second['id_modalidade'] ?? 0)) {
                     continue;
                 }
-                if (CronogramaRules::overlap(
-                    (string) $first['data_compromisso'],
-                    (string) $first['inicio_compromisso'],
-                    (string) $first['termino_compromisso'],
-                    (string) $second['data_compromisso'],
-                    (string) $second['inicio_compromisso'],
-                    (string) $second['termino_compromisso'],
-                    0,
-                )) {
+                if (CronogramaRules::schedulesConflict($first, $second)) {
                     throw new InscricaoRecusadaException($this->conflictMessage($first, $second));
                 }
             }
@@ -376,7 +371,7 @@ final class MysqliInscricaoRepository implements InscricaoRepository
         if (!$this->planningAvailable()) {
             return null;
         }
-        return $this->one('SELECT cronograma_status, inscricoes_status, inscricoes_abertura, inscricoes_encerramento FROM interclasse_planejamentos WHERE id_interclasse = ? LIMIT 1', 'i', [$editionId]);
+        return $this->one('SELECT cronograma_status, inscricoes_status, cronograma_versao, versao_publicada, inscricoes_abertura, inscricoes_encerramento FROM interclasse_planejamentos WHERE id_interclasse = ? LIMIT 1 FOR UPDATE', 'i', [$editionId]);
     }
 
     /** @return array<string,mixed>|null */

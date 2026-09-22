@@ -22,11 +22,13 @@ interface CronogramaRepository
 
     public function closeRegistrations(int $editionId, int $userId, int $expectedRevision): array;
 
+    public function releaseOperation(int $editionId, int $userId, int $expectedRevision): array;
+
     /** @return array<string,mixed> */
     public function review(int $editionId, int $userId, int $expectedRevision): array;
 
     /** @return array<string,mixed> */
-    public function materializeNode(int $editionId, int $userId, string $tag): array;
+    public function materializeNode(int $editionId, int $userId, int $nodeId): array;
 
     /** @param list<int> $teamIds @return list<array<string,mixed>> */
     public function commitmentsForTeams(int $editionId, array $teamIds): array;

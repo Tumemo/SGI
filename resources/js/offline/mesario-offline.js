@@ -74,7 +74,8 @@
         retryTimer: null,
         retryAttempts: 0,
         retryPendente: false,
-        ultimaFalha: null
+        ultimaFalha: null,
+        cronogramaObsoleto: false
     };
 
     /* ============================ Util ============================ */
@@ -768,6 +769,10 @@
             b + 'turmas?id_interclasse=' + id,
             b + 'equipes',
             b + 'equipes?id_interclasse=' + id,
+            // A preparação offline precisa carregar a revisão publicada e o
+            // estado de liberação para detectar uma revisão do evento ao
+            // reconectar, sem descartar a fila de resultados.
+            b + 'cronograma?id_interclasse=' + id,
             b + 'agenda-blocos?id_interclasse=' + id,
             b + 'jogos?id_interclasse=' + id,
             b + 'jogos?x=1&id_interclasse=' + id
@@ -1080,6 +1085,7 @@
         ocultarProgresso();
         if (ok) {
             state.pronto = true;
+            state.cronogramaObsoleto = false;
             marcarPronto();
             mostrarBadge();
             aviso('Tudo pronto! Páginas e dados sincronizados. Você já pode usar offline. 🟢');
@@ -1221,7 +1227,7 @@
         // as telas e partidas terminarem de ser baixadas.
         var banner = document.getElementById('sgi-offline-banner');
         var bannerVisivel = banner && !banner.classList.contains('d-none') && !banner.classList.contains('sgi-hidden');
-        if (b) { b.style.display = state.preloading || bannerVisivel ? 'none' : 'inline-flex'; }
+        if (b) { b.style.display = state.preloading || bannerVisivel || state.cronogramaObsoleto ? 'none' : 'inline-flex'; }
     }
 
     function observarEstadoBanner() {
@@ -1261,6 +1267,11 @@
         }
 
         criarUi();
+        window.addEventListener('sgi:cronograma-revisado', function () {
+            state.cronogramaObsoleto = true;
+            ocultarBadge();
+            aviso('O cronograma foi revisado. Atualize a preparação antes de continuar; a fila de resultados foi preservada.');
+        });
         observarEstadoBanner();
         registrarInterceptacao();
         atualizarVoltarMesario('dashboard');
