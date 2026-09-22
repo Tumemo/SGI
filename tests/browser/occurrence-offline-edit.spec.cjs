@@ -1,5 +1,6 @@
 const { test, expect, request: requestFactory } = require('./fixtures.cjs');
 const { agendarBloco, trocarSenhaInicial } = require('./agenda-helper.cjs');
+const { garantirCronogramaPublicado } = require('./cronograma-fixture-helper.cjs');
 
 async function jsonOrThrow(response, label) {
     if (!response.ok()) throw new Error(`${label}: HTTP ${response.status()} ${await response.text()}`);
@@ -19,7 +20,9 @@ async function criarFixture(request) {
     );
     const edicao = edicoes.find((item) => String(item.status_interclasse) === '1');
     if (!edicao) throw new Error('Nenhuma edição ativa disponível.');
-    const idInterclasse = Number(edicao.id_interclasse);
+    let idInterclasse = Number(edicao.id_interclasse);
+    const cronograma = await garantirCronogramaPublicado(request, idInterclasse);
+    idInterclasse = Number(cronograma.id_interclasse || idInterclasse);
     const [equipes, modalidades] = await Promise.all([
         request.get(api(`api/v1/equipes?id_interclasse=${idInterclasse}`)).then((response) => jsonOrThrow(response, 'equipes')),
         request.get(api(`api/v1/modalidades?id_interclasse=${idInterclasse}`)).then((response) => jsonOrThrow(response, 'modalidades')),
@@ -88,7 +91,12 @@ async function criarFixture(request) {
         await trocarSenhaInicial(alunoApi, api('api/v1/senha'));
         await jsonOrThrow(await alunoApi.post(api('api/v1/termos'), { data: {} }), 'aceite dos termos do atleta fixture');
         await jsonOrThrow(await alunoApi.post(api('api/v1/inscricoes'), {
-            data: { id_interclasse: idInterclasse, id_equipes: [Number(equipesDaModalidade[0].id_equipe)] },
+            data: {
+                id_interclasse: idInterclasse,
+                id_equipes: [Number(equipesDaModalidade[0].id_equipe)],
+                cronograma_versao: Number(cronograma.cronograma_versao || 0),
+                versao_publicada: Number(cronograma.versao_publicada || cronograma.cronograma_versao || 0),
+            },
         }), 'inscrição do atleta fixture');
     } finally {
         await alunoApi.dispose();

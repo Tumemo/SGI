@@ -63,8 +63,24 @@ final class CronogramaPlanejadoTest
             $connection->query("INSERT INTO modalidade_planejamentos (id_modalidade, equipes_planejadas, min_inscritos_equipe, max_inscritos_equipe, formato_participacao, duracao_prevista_min, descanso_min) VALUES ({$secondModalityId}, 3, 1, 1, 'equipe', 20, 10) ON DUPLICATE KEY UPDATE equipes_planejadas = 3, min_inscritos_equipe = 1, max_inscritos_equipe = 1, formato_participacao = 'equipe'");
             $connection->query("INSERT INTO agenda_reservas (id_interclasse, id_modalidade, chave_versao, chave_tag, data_reserva, inicio_reserva, termino_reserva, id_local) VALUES ({$editionId}, {$modalityId}, 'manual-test', 'BLOQUEIO-CRONOGRAMA', '2030-10-01', '08:00:00', '08:20:00', {$localId})");
             $reservationId = (int) $connection->insert_id;
+            $legacyTeamId = (int) $connection->query("SELECT e.id_equipe FROM equipes e LEFT JOIN equipe_planejamentos ep ON ep.id_equipe = e.id_equipe WHERE e.modalidades_id_modalidade = {$modalityId} AND e.turmas_id_turma = {$firstClassId} AND e.status_equipe = '1' AND ep.id_equipe IS NULL ORDER BY e.id_equipe LIMIT 1")->fetch_column();
+            if ($legacyTeamId <= 0) {
+                $legacyName = $connection->real_escape_string('Equipe padrão sem planejamento');
+                $connection->query("INSERT INTO equipes (status_equipe, modalidades_id_modalidade, turmas_id_turma, nome_equipe) VALUES ('1', {$modalityId}, {$firstClassId}, '{$legacyName}')");
+                $legacyTeamId = (int) $connection->insert_id;
+            }
             $service = new CronogramaService(new MysqliCronogramaRepository($connection));
             $service->preparar($editionId, 1);
+            $legacyPrepared = (int) $connection->query("SELECT planejada FROM equipe_planejamentos WHERE id_equipe = {$legacyTeamId}")->fetch_column();
+            Assertions::assert('Preparação incorpora equipes padrão sem metadados', $legacyPrepared === 1);
+            $preparedTeamForRegression = (int) $connection->query("SELECT e.id_equipe FROM equipes e INNER JOIN equipe_planejamentos ep ON ep.id_equipe = e.id_equipe WHERE e.modalidades_id_modalidade = {$modalityId} AND e.turmas_id_turma = {$firstClassId} AND e.status_equipe = '1' ORDER BY ep.ordem_planejada, e.id_equipe LIMIT 1")->fetch_column();
+            if ($preparedTeamForRegression <= 0) {
+                throw new \RuntimeException('A fixture não criou equipe planejada para a regressão de reativação.');
+            }
+            $connection->query("UPDATE equipe_planejamentos SET planejada = 0 WHERE id_equipe = {$preparedTeamForRegression}");
+            $service->preparar($editionId, 1);
+            $reactivated = (int) $connection->query("SELECT planejada FROM equipe_planejamentos WHERE id_equipe = {$preparedTeamForRegression}")->fetch_column();
+            Assertions::assert('Preparação reativa equipes padrão existentes', $reactivated === 1);
             $draft = $service->gerar($editionId, 1, [
                 'data_inicio' => '2030-10-01',
                 'data_fim' => '2030-10-01',
@@ -80,15 +96,38 @@ final class CronogramaPlanejadoTest
             Assertions::assert('Geração planejada usa a árvore exata de três equipes', $draft['success'] === true && count($normalNodes) === 2 && count($byeNodes) === 1 && count($firstCommitments) === 2 && ($firstCommitments[0]['condicional'] ?? 1) === 0);
             Assertions::assert('Geração respeita reserva existente com margem de troca', ($firstCommitments[0]['inicio_compromisso'] ?? '') !== '08:00:00');
             Assertions::assert('A geração persiste a árvore planejada sem jogos reais', count($draft['nos'] ?? []) >= count($draft['compromissos'] ?? []) && count($draft['nos'] ?? []) > 0);
+            $incompleteRejected = false;
+            try {
+                $service->publicar($editionId, 1, ['cronograma_versao' => 0, 'compromissos' => [], 'nos' => $draft['nos']]);
+            } catch (\InvalidArgumentException $exception) {
+                $incompleteRejected = str_contains($exception->getMessage(), 'compromisso') || str_contains($exception->getMessage(), 'cronograma');
+            }
+            $publishedRowsAfterRejectedAttempt = (int) $connection->query("SELECT COUNT(*) FROM cronograma_nos WHERE id_interclasse = {$editionId}")->fetch_column();
+            Assertions::assert('Publicação incompleta recusa a proposta e não grava árvore parcial', $incompleteRejected && $publishedRowsAfterRejectedAttempt === 0);
             $published = $service->publicar($editionId, 1, ['cronograma_versao' => 0, 'compromissos' => $draft['compromissos'], 'nos' => $draft['nos']]);
-            $opened = $service->abrir($editionId, 1, ['cronograma_versao' => $published['cronograma_versao']]);
+            $opened = $service->abrir($editionId, 1, ['cronograma_versao' => $published['cronograma_versao'], 'inscricoes_abertura' => '2020-01-01 00:00:00', 'inscricoes_encerramento' => '2031-01-01 00:00:00']);
             Assertions::assert('Publicação ocorre antes da abertura das inscrições', $published['cronograma_status'] === 'publicado' && $opened['inscricoes_status'] === 'abertas');
             Assertions::assert('Estado publicado expõe a mesma revisão e compromisso', $service->estado($editionId)['cronograma_versao'] === $published['cronograma_versao']);
-            $materialization = $service->materializar($editionId, 1, ['chave_tag' => (string) ($normalNodes[0]['chave_tag'] ?? '')]);
-            Assertions::assert('Equipe vazia não materializa partida nem atleta fictício', $materialization['success'] === false && ($materialization['aguardando_elenco'] ?? false) === true && (int) $connection->query("SELECT COUNT(*) FROM jogos WHERE modalidades_id_modalidade = {$modalityId} AND nome_jogo = '" . $connection->real_escape_string((string) ($normalNodes[0]['chave_tag'] ?? '')) . "'")->fetch_column() === 0);
+            $service->fechar($editionId, 1, ['cronograma_versao' => $published['cronograma_versao']]);
+            $nodeId = (int) $connection->query("SELECT id_no FROM cronograma_nos WHERE id_interclasse = {$editionId} AND cronograma_versao = {$published['cronograma_versao']} AND tipo_no = 'normal' ORDER BY id_no LIMIT 1")->fetch_column();
+            $releaseRejected = false;
+            try {
+                $service->liberar($editionId, 1, ['cronograma_versao' => $published['cronograma_versao']]);
+            } catch (\InvalidArgumentException $exception) {
+                $releaseRejected = str_contains($exception->getMessage(), 'mínimos de elenco');
+            }
+            Assertions::assert('Liberação exige mínimos de elenco antes da operação', $releaseRejected);
+            $materializationRejected = false;
+            try {
+                $service->materializar($editionId, 1, ['id_no' => $nodeId]);
+            } catch (\InvalidArgumentException $exception) {
+                $materializationRejected = str_contains($exception->getMessage(), 'operação liberada');
+            }
+            Assertions::assert('Materialização bloqueia operação não liberada', $materializationRejected);
             $teamId = (int) $connection->query("SELECT e.id_equipe FROM equipes e INNER JOIN equipe_planejamentos ep ON ep.id_equipe = e.id_equipe WHERE e.modalidades_id_modalidade = {$modalityId} AND e.turmas_id_turma = {$firstClassId} AND e.status_equipe = '1' ORDER BY ep.ordem_planejada LIMIT 1")->fetch_column();
             $projected = (new MysqliCronogramaRepository($connection))->commitmentsForTeams($editionId, [$teamId]);
             Assertions::assert('Projeção da inscrição inclui as fases possíveis da equipe', count($projected) === 2 && count(array_filter($projected, static fn (array $item): bool => (int) ($item['condicional'] ?? 0) === 1)) === 1);
+            $service->abrir($editionId, 1, ['cronograma_versao' => $published['cronograma_versao'], 'inscricoes_abertura' => '2020-01-01 00:00:00', 'inscricoes_encerramento' => '2031-01-01 00:00:00']);
             $secondTeamId = (int) $connection->query("SELECT e.id_equipe FROM equipes e INNER JOIN equipe_planejamentos ep ON ep.id_equipe = e.id_equipe WHERE e.modalidades_id_modalidade = {$secondModalityId} AND e.turmas_id_turma = {$firstClassId} AND e.status_equipe = '1' ORDER BY ep.ordem_planejada LIMIT 1")->fetch_column();
             $studentId = $createdStudentId;
             if ($secondTeamId <= 0 || $studentId <= 0) {
@@ -147,9 +186,10 @@ final class CronogramaPlanejadoTest
                 $connection->query('DELETE FROM equipes_has_usuarios WHERE usuarios_id_usuario = ' . $createdStudentId);
                 $connection->query('DELETE FROM usuarios WHERE id_usuario = ' . $createdStudentId);
             }
-            $statement = $connection->prepare('DELETE FROM sgi_migrations WHERE version IN (?, ?)');
+            $statement = $connection->prepare('DELETE FROM sgi_migrations WHERE version IN (?, ?, ?)');
             $nodesVersion = '002_cronograma_nos.sql';
-            $statement->bind_param('ss', $version, $nodesVersion);
+            $contractVersion = '003_cronograma_final_contract.sql';
+            $statement->bind_param('sss', $version, $nodesVersion, $contractVersion);
             $statement->execute();
             $statement->close();
             $connection->close();

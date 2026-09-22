@@ -62,4 +62,17 @@ final class CronogramaRulesTest extends TestCase
             'inscricoes_status' => 'abertas',
         ]);
     }
+
+    public function testRegistrationWindowIsHalfOpen(): void
+    {
+        $edition = [
+            'cronograma_status' => 'publicado',
+            'inscricoes_status' => 'abertas',
+            'inscricoes_abertura' => '2026-09-21 08:00:00',
+            'inscricoes_encerramento' => '2026-09-21 18:00:00',
+        ];
+        CronogramaRules::assertPlannedEdition($edition, new \DateTimeImmutable('2026-09-21 08:00:00'));
+        $this->expectException(InvalidArgumentException::class);
+        CronogramaRules::assertPlannedEdition($edition, new \DateTimeImmutable('2026-09-21 18:00:00'));
+    }
 }

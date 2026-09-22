@@ -38,4 +38,17 @@ final class CronogramaBracketPlannerTest extends TestCase
         yield 'six teams' => [6, 5, 1];
         yield 'eight teams' => [8, 7, 0];
     }
+
+    public function testCrossClassBracketUsesModalidadeIdentityAndAllowsNullTurma(): void
+    {
+        $nodes = CronogramaBracketPlanner::plan(9, null, [11, 22, 33]);
+
+        self::assertNotEmpty($nodes);
+        self::assertTrue(array_reduce($nodes, static fn (bool $valid, array $node): bool => $valid && str_starts_with((string) $node['chave_tag'], 'PL:9:'), true));
+        self::assertSame([
+            'PL:9:0:MM:4:0:N',
+            'PL:9:0:MM:4:1:B',
+            'PL:9:0:MM:2:0:N',
+        ], array_column($nodes, 'chave_tag'));
+    }
 }

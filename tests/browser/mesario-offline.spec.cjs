@@ -1,5 +1,6 @@
 const { test, expect, request: playwrightRequest } = require('./fixtures.cjs');
 const { agendarBloco, trocarSenhaInicial } = require('./agenda-helper.cjs');
+const { garantirCronogramaPublicado } = require('./cronograma-fixture-helper.cjs');
 
 async function jsonOrThrow(response, label) {
     if (!response.ok()) {
@@ -33,7 +34,9 @@ async function criarPartidaFixture(request) {
     const interclasses = await jsonOrThrow(interclassesResponse, 'edições');
     const edicao = interclasses.find((item) => String(item.status_interclasse) === '1');
     if (!edicao) throw new Error('Nenhuma edição ativa disponível para o teste visual.');
-    const idInterclasse = Number(edicao.id_interclasse);
+    let idInterclasse = Number(edicao.id_interclasse);
+    const cronograma = await garantirCronogramaPublicado(request, idInterclasse);
+    idInterclasse = Number(cronograma.id_interclasse || idInterclasse);
 
     const [equipesResponse, modalidadesResponse] = await Promise.all([
         request.get(`api/v1/equipes?id_interclasse=${idInterclasse}`),
@@ -95,7 +98,9 @@ async function criarPartidaFixture(request) {
         const inscricao = await alunoApi.post('api/v1/inscricoes', {
             data: {
                 id_interclasse: idInterclasse,
-                id_equipes: [Number(equipe1.id_equipe)]
+                id_equipes: [Number(equipe1.id_equipe)],
+                cronograma_versao: Number(cronograma.cronograma_versao || 0),
+                versao_publicada: Number(cronograma.versao_publicada || cronograma.cronograma_versao || 0),
             }
         });
         const inscricaoPayload = await jsonOrThrow(inscricao, 'inscrição do atleta fixture');
