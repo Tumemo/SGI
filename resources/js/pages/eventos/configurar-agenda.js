@@ -53,7 +53,7 @@ window.SGIPage.mount("eventos/configurar-agenda", function (pageConfig, pageScop
         if (jogoEhIndividual(jogo)) {
             return 'Competição Individual';
         }
-        const mm = (nomeJogo || '').match(/^(?:PL:\d+:-?\d+:)?MM:(\d+):(\d+):([NB])$/);
+        const mm = (nomeJogo || '').match(/^(?:PL:\d+:(?:-?\d+:)?)?MM:(\d+):(\d+):([NB])$/);
         if (mm) {
             const largura = parseInt(mm[1], 10);
             const slot = parseInt(mm[2], 10);
@@ -761,8 +761,8 @@ window.SGIPage.mount("eventos/configurar-agenda", function (pageConfig, pageScop
     /* Helper para cálculo e ordenação dos jogos pelo chaveamento */
     function ordenarJogosChaveamento(jogos) {
         return jogos.sort((a, b) => {
-            const mmA = (a.nome_jogo || '').match(/^MM:(\d+):(\d+):([NB])$/);
-            const mmB = (b.nome_jogo || '').match(/^MM:(\d+):(\d+):([NB])$/);
+            const mmA = (a.nome_jogo || '').match(/^(?:PL:\d+:(?:-?\d+:)?)?MM:(\d+):(\d+):([NB])$/);
+            const mmB = (b.nome_jogo || '').match(/^(?:PL:\d+:(?:-?\d+:)?)?MM:(\d+):(\d+):([NB])$/);
 
             if (mmA && mmB) {
                 const largA = parseInt(mmA[1], 10);
@@ -917,9 +917,12 @@ window.SGIPage.mount("eventos/configurar-agenda", function (pageConfig, pageScop
                 if (!cronogramaEstado) return;
                 botaoLiberar.disabled = true;
                 try {
-                    await enviarCronograma({ acao: 'liberar_operacao', cronograma_versao: Number(cronogramaEstado.cronograma_versao || 0) });
+                    const liberacao = await enviarCronograma({ acao: 'liberar_operacao', cronograma_versao: Number(cronogramaEstado.cronograma_versao || 0) });
                     await atualizarCronograma();
-                    mostrarCronograma('Operação liberada após validar os mínimos de elenco.');
+                    const message = liberacao.idempotente
+                        ? 'A competição já estava liberada; os jogos mantêm a árvore e os horários publicados.'
+                        : `Competição liberada após validar os elencos. ${Number(liberacao.jogos_criados || 0)} confronto(s) inicial(is) pronto(s).`;
+                    mostrarCronograma(message);
                 } catch (error) { tratarErroCronograma(error); botaoLiberar.disabled = false; }
             });
             if (botaoRevisar) pageScope.listen(botaoRevisar, 'click', async () => {

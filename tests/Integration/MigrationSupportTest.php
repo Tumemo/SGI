@@ -60,15 +60,16 @@ final class MigrationSupportTest
             }
             Assertions::assert(
                 'Migration do cronograma cria as tabelas auxiliares e é idempotente',
-                in_array($planningVersion, $planningApplied, true) && in_array('002_cronograma_nos.sql', $planningApplied, true) && in_array('003_cronograma_final_contract.sql', $planningApplied, true) && $planningRepeated === [] && $planningTables === 6,
+                in_array($planningVersion, $planningApplied, true) && in_array('002_cronograma_nos.sql', $planningApplied, true) && in_array('003_cronograma_final_contract.sql', $planningApplied, true) && in_array('004_cronograma_no_jogo.sql', $planningApplied, true) && $planningRepeated === [] && $planningTables === 6,
             );
             foreach (['cronograma_no_equipes', 'cronograma_nos', 'cronograma_compromissos', 'equipe_planejamentos', 'modalidade_planejamentos', 'interclasse_planejamentos'] as $planningTable) {
                 $connection->query('DROP TABLE IF EXISTS `' . $planningTable . '`');
             }
             $planningNodesVersion = '002_cronograma_nos.sql';
             $planningContractVersion = '003_cronograma_final_contract.sql';
-            $statement = $connection->prepare('DELETE FROM sgi_migrations WHERE version IN (?, ?, ?)');
-            $statement->bind_param('sss', $planningVersion, $planningNodesVersion, $planningContractVersion);
+            $planningGameLinkVersion = '004_cronograma_no_jogo.sql';
+            $statement = $connection->prepare('DELETE FROM sgi_migrations WHERE version IN (?, ?, ?, ?)');
+            $statement->bind_param('ssss', $planningVersion, $planningNodesVersion, $planningContractVersion, $planningGameLinkVersion);
             $statement->execute();
             $statement->close();
             // A integração compartilha este banco com as suítes de navegador.

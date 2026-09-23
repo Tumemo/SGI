@@ -54,21 +54,6 @@ final class MysqliChaveamentoManagement implements ChaveamentoManagement
         return $this->atomic(fn (): array => $this->individual->registrar($id, $ranking, $gameId));
     }
 
-    public function createBracket(int $id): array
-    {
-        return $this->atomic(function () use ($id): array {
-            $teams = MysqliChaveamentoRepository::buscarEquipesValidadas($this->connection, $id);
-            if (count($teams) < 2) {
-                throw new \InvalidArgumentException('É necessário ao menos duas equipes ativas com competidores vinculados (elenco).');
-            }
-            $result = MysqliChaveamentoRepository::criarChaveamentoInicial($this->connection, $id, $teams);
-            foreach ($result['bye_jogos'] as $bye) {
-                MysqliChaveamentoRepository::chaveamentoProcessarAvanco($this->connection, (int) $bye);
-            }
-            return ['success' => true, 'message' => 'Chaveamento mata-mata gerado.', 'jogos_criados' => $result['jogos_criados'], 'bye_inicial' => count($result['bye_jogos'])];
-        });
-    }
-
     /** @param callable():array<string, mixed> $action
      * @return array<string, mixed>
      */

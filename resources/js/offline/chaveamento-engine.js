@@ -14,7 +14,8 @@
         (a fila original é reenviada e o servidor refaz o avanço nativamente).
 
    Espelha em JavaScript a lógica do motor de mata-mata do servidor:
-   tags "MM:{largura}:{slot}:{N|B}" e "POS:{posicao}:{slot}:{N|B}".
+   tags publicadas "PL:{modalidade}:{turma}:MM:{largura}:{slot}:{N|B}",
+   legadas "MM:{largura}:{slot}:{N|B}" e posições "POS:...".
    ========================================================================== */
 (function () {
     'use strict';
@@ -25,10 +26,29 @@
         return 'MM:' + larguraFase + ':' + slot + ':' + kind;
     }
 
+    function tagDaFase(jogo, larguraFase, slot, kind) {
+        var identidade = mmParse(jogo && jogo.nome_jogo);
+        if (identidade && identidade.planejado) {
+            var prefixo = identidade.formatoLegado
+                ? 'PL:' + identidade.modalidade + ':MM:'
+                : 'PL:' + identidade.modalidade + ':' + identidade.turma + ':MM:';
+            return prefixo + larguraFase + ':' + slot + ':' + kind;
+        }
+        return mmTag(larguraFase, slot, kind);
+    }
+
     function mmParse(nomeJogo) {
         if (!nomeJogo || typeof nomeJogo !== 'string') return null;
-        var m = nomeJogo.match(/^MM:(\d+):(\d+):([NB])$/);
-        if (m) return { largura: parseInt(m[1], 10), slot: parseInt(m[2], 10), kind: m[3] };
+        var m = nomeJogo.match(/^(?:PL:(\d+):(?:(-?\d+):)?)?MM:(\d+):(\d+):([NB])$/);
+        if (m) return {
+            largura: parseInt(m[3], 10),
+            slot: parseInt(m[4], 10),
+            kind: m[5],
+            planejado: m[1] !== undefined,
+            modalidade: m[1] !== undefined ? parseInt(m[1], 10) : null,
+            turma: m[2] !== undefined ? parseInt(m[2], 10) : null,
+            formatoLegado: m[1] !== undefined && m[2] === undefined
+        };
         var p = nomeJogo.match(/^POS:(\d+):(\d+):([NB])$/);
         if (p) return { largura: 0, slot: parseInt(p[2], 10), kind: p[3], posicao: parseInt(p[1], 10) };
         return null;
@@ -130,10 +150,36 @@
         if (edition <= 0 || Number(idModalidade) <= 0) return Promise.resolve([]);
         var url = apiBase() + 'agenda-blocos?id_interclasse=' + encodeURIComponent(edition) +
             '&id_modalidade=' + encodeURIComponent(idModalidade);
-        return fetch(url, { headers: { 'Accept': 'application/json' } }).then(function (resp) {
+        var reservasBlocos = fetch(url, { headers: { 'Accept': 'application/json' } }).then(function (resp) {
             if (!resp.ok) throw new Error('Falha ao consultar reservas da agenda.');
             return resp.json();
         }).then(agendaRows).catch(function () { return lerCacheLista(url); });
+        var reservasPublicadas = Promise.resolve(window.SGIDataLayer && typeof window.SGIDataLayer.read === 'function'
+            ? window.SGIDataLayer.read('cronograma').catch(function () { return []; })
+            : []).then(function (rows) {
+            var snapshot = Array.isArray(rows) ? rows[0] : rows;
+            if (!snapshot || snapshot.cronograma_status !== 'publicado' || !Array.isArray(snapshot.compromissos)) return [];
+            var version = Number(snapshot.versao_publicada || (snapshot.operacao && snapshot.operacao.versao_publicada) || 0);
+            if (version <= 0) return [];
+            return snapshot.compromissos.filter(function (item) {
+                return Number(item.id_modalidade) === Number(idModalidade);
+            }).map(function (item) {
+                return {
+                    id_reserva: item.id_compromisso,
+                    id_modalidade: item.id_modalidade,
+                    chave_tag: item.chave_tag,
+                    chave_versao: '1',
+                    data_reserva: item.data_compromisso,
+                    inicio_reserva: item.inicio_compromisso,
+                    termino_reserva: item.termino_compromisso,
+                    id_local: item.id_local,
+                    condicional: item.condicional
+                };
+            });
+        });
+        return Promise.all([reservasPublicadas, reservasBlocos]).then(function (sets) {
+            return (sets[0] || []).concat(sets[1] || []);
+        });
     }
 
     function reservaAgendaDoJogo(jogo, reservas, defaultModality) {
@@ -401,11 +447,11 @@
         }
 
         /* Filhos existentes do pai todos encerrados? (filho inexistente = vaga vazia) */
-        function filhosResolvidos(larguraPai, slotPaiArg) {
+        function filhosResolvidos(jogoPai, larguraPai, slotPaiArg) {
             var larguraFilho = larguraPai * 2;
             if (larguraFilho < 2) return true;
             for (var cs = 2 * slotPaiArg; cs <= 2 * slotPaiArg + 1; cs++) {
-                var filho = mapaTag[mmTag(larguraFilho, cs, 'N')] || mapaTag[mmTag(larguraFilho, cs, 'B')];
+                var filho = mapaTag[tagDaFase(jogoPai, larguraFilho, cs, 'N')] || mapaTag[tagDaFase(jogoPai, larguraFilho, cs, 'B')];
                 if (filho && !jogoEncerrado(filho.status_jogo)) return false;
             }
             return true;
@@ -416,7 +462,7 @@
             var meta = mmParse(pai.nome_jogo);
             if (!meta || jogoEncerrado(pai.status_jogo)) return false;
             if ((pai.equipes || []).length !== 1) return false;
-            if (!filhosResolvidos(meta.largura, meta.slot)) return false;
+            if (!filhosResolvidos(pai, meta.largura, meta.slot)) return false;
             pai.status_jogo = 'Concluido';
             return true;
         }
@@ -439,13 +485,13 @@
                 return;
             }
 
-            var tagIrmaoA = mmTag(meta.largura, slotIrmao(meta.slot), 'N');
-            var tagIrmaoB = mmTag(meta.largura, slotIrmao(meta.slot), 'B');
+            var tagIrmaoA = tagDaFase(jogo, meta.largura, slotIrmao(meta.slot), 'N');
+            var tagIrmaoB = tagDaFase(jogo, meta.largura, slotIrmao(meta.slot), 'B');
             var irmao = mapaTag[tagIrmaoA] || mapaTag[tagIrmaoB];
 
             if (irmao && !jogoEncerrado(irmao.status_jogo)) return;
 
-            var tagPai = mmTag(proximaLargura(meta.largura), slotPai(meta.slot), 'N');
+            var tagPai = tagDaFase(jogo, proximaLargura(meta.largura), slotPai(meta.slot), 'N');
             var pai = garantirJogoPorTag(tagPai, { largura: proximaLargura(meta.largura), slot: slotPai(meta.slot) });
             garantirEquipe(pai, w1, w1Obj);
 
@@ -527,7 +573,7 @@
 
             var proximoId = null;
             if (faseNivel !== null && faseNivel > 1 && slot !== null) {
-                var pai = mapaTag[mmTag(proximaLargura(faseNivel), slotPai(slot), 'N')];
+                var pai = mapaTag[tagDaFase(jogo, proximaLargura(faseNivel), slotPai(slot), 'N')];
                 proximoId = pai ? pai.id_jogo : null;
             }
 
@@ -968,7 +1014,7 @@
                 var ehFinal = metaAlvo.largura === 2;
                 var pai = null;
                 if (!ehFinal) {
-                    var tagPai = mmTag(proximaLargura(metaAlvo.largura), slotPai(metaAlvo.slot), 'N');
+                    var tagPai = tagDaFase(alvo, proximaLargura(metaAlvo.largura), slotPai(metaAlvo.slot), 'N');
                     pai = base.filter(function (b) { return b.nome_jogo === tagPai; })[0];
                     if (!pai) return { promoveu: false, motivo: 'pai_indisponivel' };
                 }

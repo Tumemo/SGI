@@ -9,7 +9,12 @@ module.exports = defineConfig({
     testDir: __dirname,
     globalSetup: require.resolve('./global-setup.cjs'),
     timeout: 180_000,
-    expect: { timeout: 20_000 },
+    expect: {
+        timeout: 20_000,
+        toHaveScreenshot: {
+            pathTemplate: '{testDir}/{testFileName}-snapshots/{arg}-{platform}{ext}',
+        },
+    },
     fullyParallel: false,
     workers: 1,
     retries: process.env.CI ? 1 : 0,

@@ -1,6 +1,10 @@
 const { test, expect, request: playwrightRequest } = require('./fixtures.cjs');
-const { agendarBloco, trocarSenhaInicial } = require('./agenda-helper.cjs');
-const { garantirCronogramaPublicado } = require('./cronograma-fixture-helper.cjs');
+const { trocarSenhaInicial } = require('./agenda-helper.cjs');
+const {
+    buscarJogoPlanejado,
+    garantirCronogramaPublicado,
+    garantirOperacaoLiberada,
+} = require('./cronograma-fixture-helper.cjs');
 
 async function jsonOrThrow(response, label) {
     if (!response.ok()) {
@@ -62,7 +66,6 @@ async function criarPartidaFixture(request) {
     const equipe1 = equipesDaModalidade[0];
     const equipe2 = equipesDaModalidade.find((item) => String(item.id_equipe) !== String(equipe1.id_equipe)) || equipesDaModalidade[1];
 
-    const nomeJogo = `E2E Visual Offline ${Date.now()}`;
     // Cria um atleta efêmero pela própria API administrativa e faz a inscrição
     // real no fluxo do portal. Assim o modal de artilharia tem dados locais
     // suficientes para ser exercitado visualmente.
@@ -111,38 +114,16 @@ async function criarPartidaFixture(request) {
         await alunoApi.dispose();
     }
 
-    // Esta rota de sincronização também cria as linhas de partidas, algo que a
-    // tela de agendamento deixa para o gerador de chaveamento.
-    const jogoResponse = await request.post('api/v1/sincronizacao/chaveamento', {
-        data: {
-            id_modalidade: Number(modalidade.id_modalidade),
-            tipo_modalidade: 'mata_mata',
-            jogos: [{
-                nome_jogo: nomeJogo,
-                status_jogo: 'Agendado',
-                partidas: [
-                    { id_equipe: Number(equipe1.id_equipe), resultado: 0 },
-                    { id_equipe: Number(equipe2.id_equipe), resultado: 0 }
-                ]
-            }]
-        }
-    });
-    await jsonOrThrow(jogoResponse, 'criação do jogo fixture');
-    const jogosResponse = await request.get(`api/v1/jogos?id_modalidade=${Number(modalidade.id_modalidade)}`);
-    const jogos = await jsonOrThrow(jogosResponse, 'consulta do jogo fixture');
-    const jogo = jogos.find((item) => String(item.nome_jogo) === nomeJogo);
-    const idJogo = Number(jogo && jogo.id_jogo);
-    if (!idJogo) throw new Error(`A API não retornou o ID do jogo: ${JSON.stringify(jogo)}`);
-    await agendarBloco(request, {
-        idInterclasse,
-        idModalidade: Number(modalidade.id_modalidade),
-        jogos: [{ id_jogo: idJogo }],
-        label: 'E2E-visual-offline',
-    });
-
+    await garantirOperacaoLiberada(request, idInterclasse);
+    const planejado = await buscarJogoPlanejado(
+        request,
+        Number(modalidade.id_modalidade),
+        Number(equipe1.id_equipe),
+    );
+    const idJogo = Number(planejado.jogo.id_jogo);
     return {
         idJogo,
-        nomeJogo,
+        nomeJogo: String(planejado.jogo.nome_jogo),
         nomeAtleta,
         idModalidade: Number(modalidade.id_modalidade),
         idInterclasse
@@ -198,10 +179,13 @@ test.describe('Mesário — fluxo visual completo offline', () => {
             const active = document.activeElement;
             return !!active && /^(H1|H2)$/.test(active.tagName) && !!active.closest('#conteudo-principal');
         })).toBe(true);
-        await expect(page.locator('#lista-eventos .ag-event-card').filter({ hasText: 'E2E Visual Offline' }).first()).toBeVisible();
+        const localizarFixtureCard = () => page.locator(
+            `#lista-eventos .ag-event-card:has([data-id-jogo="${fixture.idJogo}"]), #lista-eventos .ag-event-card:has(a[href*="id_jogo=${fixture.idJogo}"])`,
+        ).first();
+        await expect(localizarFixtureCard()).toBeVisible();
         await capturarTela(page, testInfo, '03-agenda-offline');
 
-        const fixtureCard = page.locator('#lista-eventos .ag-event-card').filter({ hasText: fixture.nomeJogo }).first();
+        const fixtureCard = localizarFixtureCard();
         await expect(fixtureCard).toBeVisible();
         await fixtureCard.locator('.iniciar-jogo-btn').click();
         await expect.poll(() => page.evaluate(() => window.SGIOffline.getState().pending)).toBeGreaterThan(0);
@@ -303,7 +287,7 @@ test.describe('Mesário — fluxo visual completo offline', () => {
         await expect(page.locator('#mc-sync-status')).toContainText(/resultado salvo neste dispositivo.*aguardando envio/i);
         await expect(page.locator('#placar-status-announcer')).toContainText(/resultado salvo neste dispositivo.*aguardando/i);
         const feedback = page.getByRole('dialog');
-        await expect(feedback).toContainText(/Jogo encerrado offline/i, { timeout: 10_000 });
+        await expect(feedback).toContainText(/Vencedor aguardando adversário/i, { timeout: 10_000 });
         await feedback.getByRole('button', { name: 'Entendi' }).click();
         await expect(page.locator('#sgi-offline-banner')).toContainText(/alterações pendentes/i, { timeout: 10_000 });
         await expect.poll(() => page.evaluate(() => window.SGIOffline.getState().pending), { timeout: 20_000 }).toBeGreaterThanOrEqual(4);
@@ -334,7 +318,7 @@ test.describe('Mesário — fluxo visual completo offline', () => {
         await page.locator('#btnVoltarPlacar').click();
         await expect(page.locator('#lista-eventos')).toBeVisible();
         await expect(page).toHaveTitle(/Agenda.*\| SGI/);
-        const fixtureConcluido = page.locator('#lista-eventos .ag-event-card').filter({ hasText: fixture.nomeJogo }).first();
+        const fixtureConcluido = localizarFixtureCard();
         await expect(fixtureConcluido).toBeVisible();
         await expect(fixtureConcluido.locator('.ag-status-chip')).toContainText('Concluído');
         await expect(fixtureConcluido.locator('.iniciar-jogo-btn')).toHaveCount(0);

@@ -31,7 +31,7 @@ $nivelUsuarioAgenda = (int)($_SESSION['nivel'] ?? -1);
                     <button id="cronogramaPublicar" type="button" class="btn btn-success btn-sm" disabled>Publicar cronograma</button>
                     <button id="cronogramaAbrir" type="button" class="btn btn-outline-success btn-sm">Abrir inscrições</button>
                     <button id="cronogramaFechar" type="button" class="btn btn-outline-secondary btn-sm">Encerrar inscrições</button>
-                    <button id="cronogramaLiberar" type="button" class="btn btn-outline-primary btn-sm">Liberar operação</button>
+                    <button id="cronogramaLiberar" type="button" class="btn btn-outline-primary btn-sm">Liberar competição</button>
                     <button id="cronogramaRevisar" type="button" class="btn btn-outline-warning btn-sm">Reabrir revisão</button>
                 </div>
             </div>

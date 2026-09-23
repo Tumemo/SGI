@@ -15,6 +15,8 @@ use RuntimeException;
 
 final class MysqliJogoGateway
 {
+    private ?bool $planningAvailable = null;
+
     public function __construct(private readonly mysqli $connection)
     {
     }
@@ -252,6 +254,20 @@ final class MysqliJogoGateway
             ];
             $candidate['data_jogo'] = JogoScheduleRules::normalizeDate($candidate['data_jogo']);
             JogoScheduleRules::assertWindow($candidate['inicio_jogo'], $candidate['termino_jogo']);
+            $publishedPlan = $this->planningAvailable()
+                ? $this->one("SELECT cn.id_no FROM cronograma_nos cn INNER JOIN interclasse_planejamentos ip ON ip.id_interclasse = cn.id_interclasse AND ip.versao_publicada = cn.cronograma_versao WHERE cn.id_jogo = ? AND ip.cronograma_status = 'publicado' AND ip.operacao_liberada = 1 LIMIT 1 FOR UPDATE", $id)
+                : null;
+            if ($publishedPlan !== null) {
+                $scheduleChanged = $candidate['nome_jogo'] !== (string) $lockedCurrent['nome_jogo']
+                    || $candidate['data_jogo'] !== JogoScheduleRules::normalizeDate($lockedCurrent['data_jogo'])
+                    || $candidate['inicio_jogo'] !== JogoScheduleRules::normalizeTime($lockedCurrent['inicio_jogo'])
+                    || $candidate['termino_jogo'] !== JogoScheduleRules::normalizeTime($lockedCurrent['termino_jogo'])
+                    || $candidate['locais_id_local'] !== ($lockedCurrent['locais_id_local'] === null ? null : (int) $lockedCurrent['locais_id_local'])
+                    || $candidate['modalidades_id_modalidade'] !== (int) $lockedCurrent['modalidades_id_modalidade'];
+                if ($scheduleChanged) {
+                    throw new \InvalidArgumentException('A programação do chaveamento publicado só pode seguir os horários da árvore vigente.');
+                }
+            }
             $oldEdition = $modalityEditions[$observedModality];
             $targetEdition = $modalityEditions[$requestedModality];
             if ($targetEdition !== $oldEdition) {
@@ -411,5 +427,19 @@ final class MysqliJogoGateway
         $row = $statement->get_result()->fetch_assoc() ?: null;
         $statement->close();
         return $row;
+    }
+
+    private function planningAvailable(): bool
+    {
+        if ($this->planningAvailable !== null) {
+            return $this->planningAvailable;
+        }
+        $result = $this->connection->query("SELECT 1 FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name = 'cronograma_nos' LIMIT 1");
+        if ($result === false) {
+            return $this->planningAvailable = false;
+        }
+        $exists = $result->num_rows > 0;
+        $result->free();
+        return $this->planningAvailable = $exists;
     }
 }

@@ -138,6 +138,29 @@ test('aluno não pode editar jogos no chaveamento', () => {
     assert.doesNotMatch(htmlAluno, /Editar/);
 });
 
+test('chaveamento consome a árvore PL publicada sem ação de geração separada', () => {
+    const source = fs.readFileSync('resources/js/pages/competicoes/chaveamento.js', 'utf8');
+    const chaveamento = carregarChaveamento({ value3: 0, podeEditar: true });
+    const nome = chaveamento.formatarNomePartida({
+        nome_jogo: 'PL:71:0:MM:2:0:N',
+        nome_tipo_modalidade: 'Mata-Mata',
+    });
+    assert.match(nome, /Final/);
+    assert.doesNotMatch(source, /btnGerarChaveamento|gerarChaveamento/);
+
+    const previsto = chaveamento._renderBracketMatch({
+        id_jogo: -3,
+        nome_jogo: 'PL:71:0:MM:2:0:N',
+        status_jogo: 'Previsto',
+        virtual_planejado: true,
+        fase_nivel: 2,
+        nome_fase: 'Final',
+        equipes: [],
+    });
+    assert.match(previsto, /Previsto/);
+    assert.doesNotMatch(previsto, /\/jogos\/placar\?id_jogo=-3|Editar Jogo/);
+});
+
 test('tabela de histórico de jogos oculta botão de edição para mesário e mantém para admin', () => {
     const mesario = carregarChaveamento({ value3: 2, podeEditar: false });
     const linhaMesario = mesario.renderizarLinhaJogo(JOGO_CONCLUIDO);

@@ -203,25 +203,22 @@ final class MysqliCronogramaRepository implements CronogramaRepository
             $classId = count($classes) === 1 ? $classes[0] : null;
             $format = strtolower((string) ($modality['nome_tipo_modalidade'] ?? '')) === 'individual' ? 'individual' : strtolower((string) ($modality['formato_participacao'] ?? ''));
             if ($format === 'individual') {
-                foreach ($teamRows as $team) {
-                    $teamId = (int) $team['id_equipe'];
-                    $node = [
-                        'id_modalidade' => $modalityId,
-                        'id_turma' => (int) $team['id_turma'],
-                        'chave_tag' => sprintf('PL:%d:%d:IND:%d', $modalityId, (int) $team['id_turma'], $teamId),
-                        'tipo_no' => 'individual',
-                        'fase_largura' => 1,
-                        'slot' => count($nodes),
-                        'origem_a_tag' => null,
-                        'origem_b_tag' => null,
-                        'id_equipe_a' => $teamId,
-                        'id_equipe_b' => null,
-                        'equipe_ids' => [$teamId],
-                        'condicional' => 0,
-                    ];
-                    $nodes[] = $node;
-                    $scheduledNodes[] = [$node, $duration, $gap];
-                }
+                $node = [
+                    'id_modalidade' => $modalityId,
+                    'id_turma' => $classId,
+                    'chave_tag' => sprintf('PL:%d:%d:IND:0', $modalityId, $classId ?? 0),
+                    'tipo_no' => 'individual',
+                    'fase_largura' => 1,
+                    'slot' => 0,
+                    'origem_a_tag' => null,
+                    'origem_b_tag' => null,
+                    'id_equipe_a' => $teamIds[0],
+                    'id_equipe_b' => null,
+                    'equipe_ids' => $teamIds,
+                    'condicional' => 0,
+                ];
+                $nodes[] = $node;
+                $scheduledNodes[] = [$node, $duration, $gap];
             } else {
                 foreach (CronogramaBracketPlanner::plan($modalityId, $classId, $teamIds) as $node) {
                     $node['id_modalidade'] = $modalityId;
@@ -348,12 +345,21 @@ final class MysqliCronogramaRepository implements CronogramaRepository
         try {
             $edition = $this->lockEdition($editionId);
             $this->assertRevision($edition, $expectedRevision);
+            if ((int) $edition['operacao_liberada'] === 1) {
+                Transaction::commit($this->connection);
+                return ['success' => true, 'cronograma_status' => CronogramaRules::PUBLICADO, 'inscricoes_status' => 'encerradas', 'cronograma_versao' => $expectedRevision, 'liberada' => true, 'idempotente' => true, 'jogos_criados' => 0];
+            }
             if ((string) $edition['cronograma_status'] !== CronogramaRules::PUBLICADO || (string) $edition['inscricoes_status'] !== 'encerradas') {
                 throw new InvalidArgumentException('Encerre as inscrições antes de liberar a operação.');
             }
             $incomplete = $this->all('SELECT e.id_equipe FROM equipes e INNER JOIN equipe_planejamentos ep ON ep.id_equipe = e.id_equipe INNER JOIN modalidades m ON m.id_modalidade = e.modalidades_id_modalidade LEFT JOIN equipes_has_usuarios ehu ON ehu.equipes_id_equipe = e.id_equipe WHERE m.interclasses_id_interclasse = ? AND m.status_modalidade = \'1\' AND e.status_equipe = \'1\' GROUP BY e.id_equipe, ep.min_inscritos HAVING COUNT(ehu.usuarios_id_usuario) < ep.min_inscritos FOR UPDATE', 'i', [$editionId]);
             if ($incomplete !== []) {
                 throw new InvalidArgumentException('Resolva os mínimos de elenco antes de liberar a operação.');
+            }
+            $version = $edition['versao_publicada'] === null ? (int) $edition['cronograma_versao'] : (int) $edition['versao_publicada'];
+            $nodes = $this->all('SELECT id_no, id_modalidade, tipo_no, chave_tag, origem_a_tag, origem_b_tag FROM cronograma_nos WHERE id_interclasse = ? AND cronograma_versao = ? ORDER BY fase_largura DESC, slot, id_no FOR UPDATE', 'ii', [$editionId, $version]);
+            if ($nodes === []) {
+                throw new InvalidArgumentException('Publique uma árvore de competição antes de liberar a operação.');
             }
             $statement = $this->prepare("UPDATE interclasse_planejamentos SET operacao_liberada = 1 WHERE id_interclasse = ? AND cronograma_versao = ? AND inscricoes_status = 'encerradas'");
             $statement->bind_param('ii', $editionId, $expectedRevision);
@@ -362,8 +368,37 @@ final class MysqliCronogramaRepository implements CronogramaRepository
                 throw new RuntimeException('O cronograma foi alterado durante a liberação da operação.');
             }
             $statement->close();
+
+            // O sinalizador só fica visível após o commit da transação. Enquanto
+            // isso, materialize os confrontos de abertura pela árvore publicada.
+            $gamesCreated = 0;
+            $individualModalities = [];
+            foreach ($nodes as $node) {
+                if (($node['origem_a_tag'] ?? null) !== null || ($node['origem_b_tag'] ?? null) !== null) {
+                    continue;
+                }
+                if ((string) $node['tipo_no'] === 'bye') {
+                    continue;
+                }
+                if ((string) $node['tipo_no'] === 'individual') {
+                    $modalityId = (int) $node['id_modalidade'];
+                    if (!isset($individualModalities[$modalityId])) {
+                        $gamesCreated += $this->materializeIndividualNode($editionId, $version, $node);
+                        $individualModalities[$modalityId] = true;
+                    }
+                    continue;
+                }
+                $materialized = $this->materializeNode($editionId, $userId, (int) $node['id_no']);
+                if (($materialized['materializado'] ?? false) !== true) {
+                    throw new InvalidArgumentException('Não foi possível preparar todos os confrontos iniciais da publicação.');
+                }
+                if (($materialized['idempotente'] ?? false) !== true) {
+                    $gamesCreated++;
+                }
+            }
+
             Transaction::commit($this->connection);
-            return ['success' => true, 'cronograma_status' => CronogramaRules::PUBLICADO, 'inscricoes_status' => 'encerradas', 'cronograma_versao' => $expectedRevision, 'liberada' => true];
+            return ['success' => true, 'cronograma_status' => CronogramaRules::PUBLICADO, 'inscricoes_status' => 'encerradas', 'cronograma_versao' => $expectedRevision, 'liberada' => true, 'jogos_criados' => $gamesCreated];
         } catch (\Throwable $exception) {
             Transaction::rollback($this->connection);
             throw $exception;
@@ -378,6 +413,9 @@ final class MysqliCronogramaRepository implements CronogramaRepository
             $this->assertRevision($edition, $expectedRevision);
             if ((string) $edition['cronograma_status'] !== CronogramaRules::PUBLICADO) {
                 throw new InvalidArgumentException('Somente um cronograma publicado pode entrar em revisão.');
+            }
+            if ((int) $edition['operacao_liberada'] === 1) {
+                throw new InvalidArgumentException('A operação já começou; a árvore não pode ser substituída sem alterar jogos ou resultados.');
             }
             $nextVersion = (int) $edition['cronograma_versao'] + 1;
             $statement = $this->prepare("UPDATE interclasse_planejamentos SET cronograma_status = 'revisao', inscricoes_status = 'fechadas', operacao_liberada = 0, cronograma_versao = ? WHERE id_interclasse = ? AND cronograma_versao = ?");
@@ -405,19 +443,33 @@ final class MysqliCronogramaRepository implements CronogramaRepository
                 throw new InvalidArgumentException('A materialização exige cronograma publicado, inscrições encerradas e operação liberada.');
             }
             $version = $edition['versao_publicada'] === null ? (int) $edition['cronograma_versao'] : (int) $edition['versao_publicada'];
-            $node = $this->one('SELECT id_no, id_modalidade, id_turma, tipo_no, chave_tag, origem_a_tag, origem_b_tag FROM cronograma_nos WHERE id_interclasse = ? AND cronograma_versao = ? AND id_no = ? LIMIT 1 FOR UPDATE', 'iii', [$editionId, $version, $nodeId]);
+            $node = $this->one('SELECT id_no, id_jogo, id_modalidade, id_turma, tipo_no, chave_tag, origem_a_tag, origem_b_tag FROM cronograma_nos WHERE id_interclasse = ? AND cronograma_versao = ? AND id_no = ? LIMIT 1 FOR UPDATE', 'iii', [$editionId, $version, $nodeId]);
             if ($node === null) {
                 throw new InvalidArgumentException('Nó do cronograma não encontrado na versão publicada.');
             }
             $tag = (string) $node['chave_tag'];
-            $existing = $this->one('SELECT id_jogo, status_jogo FROM jogos WHERE modalidades_id_modalidade = ? AND nome_jogo = ? LIMIT 1 FOR UPDATE', 'is', [(int) $node['id_modalidade'], $tag]);
-            if ($existing !== null) {
-                Transaction::commit($this->connection);
-                return ['success' => true, 'materializado' => true, 'id_jogo' => (int) $existing['id_jogo'], 'id_modalidade' => (int) $node['id_modalidade'], 'chave_tag' => $tag, 'idempotente' => true];
-            }
             if ((string) $node['tipo_no'] === 'bye') {
                 Transaction::commit($this->connection);
                 return ['success' => true, 'materializado' => false, 'bye' => true, 'chave_tag' => $tag, 'mensagem' => 'BYE estrutural não cria partida física.'];
+            }
+            $commitment = $this->one('SELECT data_compromisso, inicio_compromisso, termino_compromisso, id_local FROM cronograma_compromissos WHERE id_interclasse = ? AND id_modalidade = ? AND cronograma_versao = ? AND chave_tag = ? LIMIT 1 FOR UPDATE', 'iiis', [$editionId, (int) $node['id_modalidade'], $version, $tag]);
+            if ($commitment === null) {
+                throw new InvalidArgumentException('O nó não possui compromisso físico publicado.');
+            }
+            $existing = $this->all('SELECT id_jogo, status_jogo FROM jogos WHERE modalidades_id_modalidade = ? AND nome_jogo = ? ORDER BY id_jogo FOR UPDATE', 'is', [(int) $node['id_modalidade'], $tag]);
+            if (count($existing) > 1) {
+                throw new RuntimeException('Há jogos duplicados com a identidade deste nó publicado.');
+            }
+            if ($existing !== []) {
+                $gameId = (int) $existing[0]['id_jogo'];
+                if ((int) ($node['id_jogo'] ?? 0) > 0 && (int) $node['id_jogo'] !== $gameId) {
+                    throw new RuntimeException('O nó publicado já está vinculado a outro jogo.');
+                }
+                $this->assertGameParticipants($gameId, $this->plannedNodeParticipants($editionId, (int) $node['id_modalidade'], $version, $node));
+                $this->assertGameSchedule($gameId, $commitment);
+                $this->linkPlannedGame((int) $node['id_no'], $gameId);
+                Transaction::commit($this->connection);
+                return ['success' => true, 'materializado' => true, 'id_jogo' => $gameId, 'id_modalidade' => (int) $node['id_modalidade'], 'chave_tag' => $tag, 'idempotente' => true];
             }
             $participants = $this->plannedNodeParticipants($editionId, (int) $node['id_modalidade'], $version, $node);
             if ($participants === null) {
@@ -428,10 +480,6 @@ final class MysqliCronogramaRepository implements CronogramaRepository
             if (count($participants) < $required || !$this->teamsHaveRoster($participants)) {
                 Transaction::commit($this->connection);
                 return ['success' => false, 'materializado' => false, 'aguardando_elenco' => true, 'chave_tag' => $tag];
-            }
-            $commitment = $this->one('SELECT data_compromisso, inicio_compromisso, termino_compromisso, id_local FROM cronograma_compromissos WHERE id_interclasse = ? AND id_modalidade = ? AND cronograma_versao = ? AND chave_tag = ? LIMIT 1', 'iiis', [$editionId, (int) $node['id_modalidade'], $version, $tag]);
-            if ($commitment === null) {
-                throw new InvalidArgumentException('O nó não possui compromisso físico publicado.');
             }
             $statement = $this->prepare("INSERT INTO jogos (nome_jogo, data_jogo, inicio_jogo, termino_jogo, status_jogo, modalidades_id_modalidade, locais_id_local) VALUES (?, ?, ?, ?, 'Agendado', ?, ?)");
             $modality = (int) $node['id_modalidade'];
@@ -463,12 +511,188 @@ final class MysqliCronogramaRepository implements CronogramaRepository
                 }
             }
             $partida->close();
+            $this->linkPlannedGame((int) $node['id_no'], $gameId);
             Transaction::commit($this->connection);
             return ['success' => true, 'materializado' => true, 'id_jogo' => $gameId, 'id_modalidade' => $modality, 'chave_tag' => $tag, 'equipes' => $participants];
         } catch (\Throwable $exception) {
             Transaction::rollback($this->connection);
             throw $exception;
         }
+    }
+
+    /**
+     * Reconcile a temporary offline result with the exact node in the current
+     * published tree. A planned tag never falls through to candidate matching.
+     *
+     * @param list<int> $teamIds
+     */
+    public function materializePlannedGameForResult(int $editionId, int $modalityId, string $tag, array $teamIds): ?int
+    {
+        $identity = ChaveamentoRules::parse($tag);
+        if ($identity === null || empty($identity['planejado'])) {
+            return null;
+        }
+        if ((int) ($identity['modalidade'] ?? 0) !== $modalityId) {
+            throw new InvalidArgumentException('A tag planejada não corresponde à modalidade do resultado.');
+        }
+
+        Transaction::begin($this->connection);
+        try {
+            $edition = $this->lockEdition($editionId);
+            if ((string) $edition['cronograma_status'] !== CronogramaRules::PUBLICADO
+                || (string) $edition['inscricoes_status'] !== 'encerradas'
+                || (int) $edition['operacao_liberada'] !== 1) {
+                throw new InvalidArgumentException('Sincronize somente jogos da publicação encerrada e liberada.');
+            }
+            $version = $edition['versao_publicada'] === null ? (int) $edition['cronograma_versao'] : (int) $edition['versao_publicada'];
+            $nodes = $this->all('SELECT id_no FROM cronograma_nos WHERE id_interclasse = ? AND id_modalidade = ? AND cronograma_versao = ? AND chave_tag = ? FOR UPDATE', 'iiis', [$editionId, $modalityId, $version, $tag]);
+            if (count($nodes) !== 1) {
+                throw new InvalidArgumentException('O jogo temporário não pertence a um nó único da árvore publicada.');
+            }
+            $materialized = $this->materializeNode($editionId, 0, (int) $nodes[0]['id_no']);
+            if (($materialized['materializado'] ?? false) !== true) {
+                throw new InvalidArgumentException('A origem do jogo ainda não liberou este confronto na árvore publicada.');
+            }
+            $gameId = (int) $materialized['id_jogo'];
+            $this->assertGameParticipants($gameId, $teamIds);
+            Transaction::commit($this->connection);
+            return $gameId;
+        } catch (\Throwable $exception) {
+            Transaction::rollback($this->connection);
+            throw $exception;
+        }
+    }
+
+    /**
+     * Avança somente a árvore publicada quando um dos seus jogos termina.
+     * A linha de planejamento serializa resultados concorrentes da mesma edição.
+     */
+    public function advancePlannedFromGame(int $gameId): bool
+    {
+        $game = $this->one('SELECT j.nome_jogo, j.modalidades_id_modalidade, m.interclasses_id_interclasse FROM jogos j INNER JOIN modalidades m ON m.id_modalidade = j.modalidades_id_modalidade WHERE j.id_jogo = ? LIMIT 1', 'i', [$gameId]);
+        $identity = $game === null ? null : ChaveamentoRules::parse((string) $game['nome_jogo']);
+        if ($identity === null || empty($identity['planejado'])) {
+            return false;
+        }
+        if (($identity['modalidade'] ?? 0) !== (int) $game['modalidades_id_modalidade']) {
+            throw new InvalidArgumentException('O jogo planejado não pertence à modalidade identificada pela árvore.');
+        }
+
+        Transaction::begin($this->connection);
+        try {
+            $editionId = (int) $game['interclasses_id_interclasse'];
+            $edition = $this->lockEdition($editionId);
+            if ((string) $edition['cronograma_status'] !== CronogramaRules::PUBLICADO
+                || (string) $edition['inscricoes_status'] !== 'encerradas'
+                || (int) $edition['operacao_liberada'] !== 1) {
+                throw new InvalidArgumentException('O avanço exige a publicação encerrada e liberada.');
+            }
+            $version = $edition['versao_publicada'] === null ? (int) $edition['cronograma_versao'] : (int) $edition['versao_publicada'];
+            $source = $this->one('SELECT id_no, chave_tag FROM cronograma_nos WHERE id_interclasse = ? AND id_modalidade = ? AND cronograma_versao = ? AND id_jogo = ? AND chave_tag = ? LIMIT 1 FOR UPDATE', 'iiiis', [$editionId, (int) $game['modalidades_id_modalidade'], $version, $gameId, (string) $game['nome_jogo']]);
+            if ($source === null) {
+                throw new InvalidArgumentException('O jogo não pertence à árvore publicada.');
+            }
+
+            $nodes = $this->all("SELECT id_no, id_jogo, id_modalidade, tipo_no, chave_tag, origem_a_tag, origem_b_tag FROM cronograma_nos WHERE id_interclasse = ? AND id_modalidade = ? AND cronograma_versao = ? AND tipo_no = 'normal' AND (origem_a_tag IS NOT NULL OR origem_b_tag IS NOT NULL) ORDER BY fase_largura DESC, slot FOR UPDATE", 'iii', [$editionId, (int) $game['modalidades_id_modalidade'], $version]);
+            foreach ($nodes as $node) {
+                $participants = $this->plannedNodeParticipants($editionId, (int) $node['id_modalidade'], $version, $node);
+                if ($participants === null || count($participants) !== 2 || !$this->teamsHaveRoster($participants)) {
+                    continue;
+                }
+                if ((int) ($node['id_jogo'] ?? 0) > 0) {
+                    $current = $this->all('SELECT equipes_id_equipe FROM partidas WHERE jogos_id_jogo = ? ORDER BY id_partida', 'i', [(int) $node['id_jogo']]);
+                    $currentIds = array_map(static fn (array $row): int => (int) $row['equipes_id_equipe'], $current);
+                    sort($currentIds);
+                    $expectedIds = $participants;
+                    sort($expectedIds);
+                    if ($currentIds !== $expectedIds) {
+                        throw new InvalidArgumentException('O vencedor mudou após a criação da próxima partida. Reabra a competição para revisão controlada.');
+                    }
+                    continue;
+                }
+                $commitment = $this->one('SELECT data_compromisso, inicio_compromisso, termino_compromisso, id_local FROM cronograma_compromissos WHERE id_interclasse = ? AND id_modalidade = ? AND cronograma_versao = ? AND chave_tag = ? LIMIT 1 FOR UPDATE', 'iiis', [$editionId, (int) $node['id_modalidade'], $version, (string) $node['chave_tag']]);
+                if ($commitment === null) {
+                    throw new InvalidArgumentException('O confronto seguinte não possui horário publicado.');
+                }
+                $local = (int) $commitment['id_local'];
+                MysqliLocalScheduleGuard::lockLocals($this->connection, [$local]);
+                MysqliLocalScheduleGuard::assertLocalBelongsToEdition($this->connection, $local, $editionId);
+                $conflict = MysqliLocalScheduleGuard::conflictWithGames($this->connection, (string) $commitment['data_compromisso'], $local, (string) $commitment['inicio_compromisso'], (string) $commitment['termino_compromisso'], [], true);
+                if ($conflict !== null) {
+                    throw new InvalidArgumentException($conflict);
+                }
+                $insert = $this->prepare("INSERT INTO jogos (nome_jogo, data_jogo, inicio_jogo, termino_jogo, status_jogo, modalidades_id_modalidade, locais_id_local) VALUES (?, ?, ?, ?, 'Agendado', ?, ?)");
+                $tag = (string) $node['chave_tag'];
+                $date = (string) $commitment['data_compromisso'];
+                $start = (string) $commitment['inicio_compromisso'];
+                $end = (string) $commitment['termino_compromisso'];
+                $modalityId = (int) $node['id_modalidade'];
+                $insert->bind_param('ssssii', $tag, $date, $start, $end, $modalityId, $local);
+                if (!$insert->execute()) {
+                    $error = $insert->error;
+                    $insert->close();
+                    throw new RuntimeException($error !== '' ? $error : 'Não foi possível criar o próximo confronto planejado.');
+                }
+                $nextGameId = (int) $this->connection->insert_id;
+                $insert->close();
+                $match = $this->prepare("INSERT INTO partidas (jogos_id_jogo, equipes_id_equipe, resultado_partida, status_partida) VALUES (?, ?, 0, '1')");
+                foreach ($participants as $teamId) {
+                    $match->bind_param('ii', $nextGameId, $teamId);
+                    if (!$match->execute()) {
+                        $error = $match->error;
+                        $match->close();
+                        throw new RuntimeException($error !== '' ? $error : 'Não foi possível incluir o participante do próximo confronto.');
+                    }
+                }
+                $match->close();
+                $this->linkPlannedGame((int) $node['id_no'], $nextGameId);
+            }
+            Transaction::commit($this->connection);
+            return true;
+        } catch (\Throwable $exception) {
+            Transaction::rollback($this->connection);
+            throw $exception;
+        }
+    }
+
+    /** @param array<string,mixed> $node */
+    private function materializeIndividualNode(int $editionId, int $version, array $node): int
+    {
+        $modalityId = (int) $node['id_modalidade'];
+        $commitment = $this->one('SELECT data_compromisso, inicio_compromisso, termino_compromisso, id_local FROM cronograma_compromissos WHERE id_interclasse = ? AND id_modalidade = ? AND cronograma_versao = ? AND chave_tag = ? LIMIT 1 FOR UPDATE', 'iiis', [$editionId, $modalityId, $version, (string) $node['chave_tag']]);
+        if ($commitment === null) {
+            throw new InvalidArgumentException('A prova individual não possui sessão no calendário publicado.');
+        }
+        $tag = \App\Modules\Competicoes\Domain\IndividualRules::tag($modalityId);
+        $existing = $this->all('SELECT id_jogo FROM jogos WHERE modalidades_id_modalidade = ? AND nome_jogo = ? ORDER BY id_jogo FOR UPDATE', 'is', [$modalityId, $tag]);
+        if (count($existing) > 1) {
+            throw new RuntimeException('Há mais de um jogo para a prova individual; audite antes da liberação.');
+        }
+        if ($existing !== []) {
+            $this->linkPlannedGame((int) $node['id_no'], (int) $existing[0]['id_jogo']);
+            return 0;
+        }
+        $local = (int) $commitment['id_local'];
+        MysqliLocalScheduleGuard::lockLocals($this->connection, [$local]);
+        MysqliLocalScheduleGuard::assertLocalBelongsToEdition($this->connection, $local, $editionId);
+        $conflict = MysqliLocalScheduleGuard::conflictWithGames($this->connection, (string) $commitment['data_compromisso'], $local, (string) $commitment['inicio_compromisso'], (string) $commitment['termino_compromisso'], [], true);
+        if ($conflict !== null) {
+            throw new InvalidArgumentException($conflict);
+        }
+        $statement = $this->prepare("INSERT INTO jogos (nome_jogo, data_jogo, inicio_jogo, termino_jogo, status_jogo, modalidades_id_modalidade, locais_id_local) VALUES (?, ?, ?, ?, 'Agendado', ?, ?)");
+        $date = (string) $commitment['data_compromisso'];
+        $start = (string) $commitment['inicio_compromisso'];
+        $end = (string) $commitment['termino_compromisso'];
+        $statement->bind_param('ssssii', $tag, $date, $start, $end, $modalityId, $local);
+        if (!$statement->execute()) {
+            $error = $statement->error;
+            $statement->close();
+            throw new RuntimeException($error !== '' ? $error : 'Não foi possível preparar a prova individual planejada.');
+        }
+        $gameId = (int) $this->connection->insert_id;
+        $statement->close();
+        $this->linkPlannedGame((int) $node['id_no'], $gameId);
+        return 1;
     }
 
     /** @param array<string,mixed> $node @return list<int>|null */
@@ -489,8 +713,12 @@ final class MysqliCronogramaRepository implements CronogramaRepository
         }
         $participants = [];
         foreach ($origins as $origin) {
-            $game = $this->one('SELECT id_jogo, status_jogo FROM jogos WHERE modalidades_id_modalidade = ? AND nome_jogo = ? LIMIT 1', 'is', [$modalityId, $origin]);
-            if ($game !== null) {
+            $games = $this->all('SELECT j.id_jogo, j.status_jogo FROM cronograma_nos cn INNER JOIN jogos j ON j.id_jogo = cn.id_jogo WHERE cn.id_interclasse = ? AND cn.id_modalidade = ? AND cn.cronograma_versao = ? AND cn.chave_tag = ? ORDER BY j.id_jogo', 'iiis', [$editionId, $modalityId, $version, $origin]);
+            if (count($games) > 1) {
+                throw new RuntimeException('A origem do confronto corresponde a mais de um jogo.');
+            }
+            if ($games !== []) {
+                $game = $games[0];
                 $winners = $this->all("SELECT equipes_id_equipe AS id_equipe, resultado_partida FROM partidas WHERE jogos_id_jogo = ? AND status_partida = '1' ORDER BY resultado_partida DESC, id_partida ASC LIMIT 2", 'i', [(int) $game['id_jogo']]);
                 $winner = $winners[0] ?? null;
                 if (!in_array((string) $game['status_jogo'], ['Concluido', 'Finalizado'], true) || $winner === null) {
@@ -525,6 +753,50 @@ final class MysqliCronogramaRepository implements CronogramaRepository
             }
         }
         return true;
+    }
+
+    /** @param list<int>|null $expected */
+    private function assertGameParticipants(int $gameId, ?array $expected): void
+    {
+        if ($expected === null || $expected === []) {
+            throw new InvalidArgumentException('Não foi possível resolver os participantes do confronto publicado.');
+        }
+        $rows = $this->all('SELECT equipes_id_equipe FROM partidas WHERE jogos_id_jogo = ? ORDER BY equipes_id_equipe', 'i', [$gameId]);
+        $actual = array_map(static fn (array $row): int => (int) $row['equipes_id_equipe'], $rows);
+        $expected = array_values(array_unique(array_map('intval', $expected)));
+        sort($actual);
+        sort($expected);
+        if ($actual !== $expected) {
+            throw new InvalidArgumentException('As equipes do jogo não correspondem às origens publicadas do confronto.');
+        }
+    }
+
+    /** @param array<string,mixed> $commitment */
+    private function assertGameSchedule(int $gameId, array $commitment): void
+    {
+        $game = $this->one('SELECT data_jogo, inicio_jogo, termino_jogo, locais_id_local FROM jogos WHERE id_jogo = ? LIMIT 1 FOR UPDATE', 'i', [$gameId]);
+        if ($game === null
+            || (string) $game['data_jogo'] !== (string) $commitment['data_compromisso']
+            || (string) $game['inicio_jogo'] !== (string) $commitment['inicio_compromisso']
+            || (string) $game['termino_jogo'] !== (string) $commitment['termino_compromisso']
+            || (int) $game['locais_id_local'] !== (int) $commitment['id_local']) {
+            throw new InvalidArgumentException('O jogo existente não respeita o horário e o local do cronograma publicado.');
+        }
+    }
+
+    private function linkPlannedGame(int $nodeId, int $gameId): void
+    {
+        $statement = $this->prepare('UPDATE cronograma_nos SET id_jogo = ? WHERE id_no = ? AND (id_jogo IS NULL OR id_jogo = ?)');
+        $statement->bind_param('iii', $gameId, $nodeId, $gameId);
+        if (!$statement->execute() || $statement->affected_rows > 1) {
+            $statement->close();
+            throw new RuntimeException('Não foi possível vincular o jogo à árvore publicada.');
+        }
+        $statement->close();
+        $linked = $this->one('SELECT id_jogo FROM cronograma_nos WHERE id_no = ? LIMIT 1 FOR UPDATE', 'i', [$nodeId]);
+        if ($linked === null || (int) ($linked['id_jogo'] ?? 0) !== $gameId) {
+            throw new RuntimeException('O nó publicado já está vinculado a outro jogo.');
+        }
     }
 
     public function commitmentsForTeams(int $editionId, array $teamIds): array
@@ -602,7 +874,7 @@ final class MysqliCronogramaRepository implements CronogramaRepository
         }
 
         $marks = implode(',', array_fill(0, count($selectedIds), '?'));
-        $commitments = $this->all("SELECT DISTINCT cne.id_equipe, cc.id_compromisso, cc.id_modalidade, cc.chave_tag, DATE_FORMAT(cc.data_compromisso, '%Y-%m-%d') AS data_compromisso, TIME_FORMAT(cc.inicio_compromisso, '%H:%i:%s') AS inicio_compromisso, TIME_FORMAT(cc.termino_compromisso, '%H:%i:%s') AS termino_compromisso, cc.id_local, COALESCE(l.nome_local, 'A definir') AS nome_local, cc.condicional, cn.id_no, cn.tipo_no, cn.fase_largura, cn.slot, cn.origem_a_tag, cn.origem_b_tag, cn.id_equipe_a, cn.id_equipe_b, m.nome_modalidade FROM cronograma_compromissos cc INNER JOIN cronograma_nos cn ON cn.id_interclasse = cc.id_interclasse AND cn.id_modalidade = cc.id_modalidade AND cn.cronograma_versao = cc.cronograma_versao AND cn.chave_tag = cc.chave_tag INNER JOIN cronograma_no_equipes cne ON cne.id_no = cn.id_no AND cne.id_equipe IN ($marks) INNER JOIN modalidades m ON m.id_modalidade = cc.id_modalidade LEFT JOIN locais l ON l.id_local = cc.id_local WHERE cc.id_interclasse = ? AND cc.cronograma_versao = ? ORDER BY cc.data_compromisso, cc.inicio_compromisso, cc.id_modalidade, cn.fase_largura DESC, cn.slot", str_repeat('i', count($selectedIds)) . 'ii', array_merge($selectedIds, [$editionId, $version]));
+        $commitments = $this->all("SELECT DISTINCT cne.id_equipe, cc.id_compromisso, cc.id_modalidade, cc.chave_tag, DATE_FORMAT(cc.data_compromisso, '%Y-%m-%d') AS data_compromisso, TIME_FORMAT(cc.inicio_compromisso, '%H:%i:%s') AS inicio_compromisso, TIME_FORMAT(cc.termino_compromisso, '%H:%i:%s') AS termino_compromisso, cc.id_local, COALESCE(l.nome_local, 'A definir') AS nome_local, cc.condicional, cn.id_no, cn.tipo_no, cn.fase_largura, cn.slot, cn.origem_a_tag, cn.origem_b_tag, cn.id_equipe_a, cn.id_equipe_b, m.nome_modalidade FROM cronograma_compromissos cc INNER JOIN cronograma_nos cn ON cn.id_interclasse = cc.id_interclasse AND cn.id_modalidade = cc.id_modalidade AND cn.cronograma_versao = cc.cronograma_versao AND cn.chave_tag = cc.chave_tag INNER JOIN cronograma_no_equipes cne ON cne.id_no = cn.id_no AND cne.id_equipe IN ($marks) INNER JOIN modalidades m ON m.id_modalidade = cc.id_modalidade LEFT JOIN locais l ON l.id_local = cc.id_local WHERE cc.id_interclasse = ? AND cc.cronograma_versao = ? ORDER BY data_compromisso, inicio_compromisso, cc.id_modalidade, cn.fase_largura DESC, cn.slot", str_repeat('i', count($selectedIds)) . 'ii', array_merge($selectedIds, [$editionId, $version]));
 
         $nodeIds = array_values(array_unique(array_map(static fn (array $row): int => (int) $row['id_no'], $commitments)));
         $candidateMap = [];
