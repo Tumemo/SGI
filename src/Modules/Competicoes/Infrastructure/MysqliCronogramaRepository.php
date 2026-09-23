@@ -7,6 +7,7 @@ namespace App\Modules\Competicoes\Infrastructure;
 use App\Modules\Competicoes\Domain\CronogramaRepository;
 use App\Modules\Competicoes\Domain\CronogramaBracketPlanner;
 use App\Modules\Competicoes\Domain\CronogramaRules;
+use App\Modules\Competicoes\Domain\ChaveamentoRules;
 use App\Shared\Database\Transaction;
 use InvalidArgumentException;
 use mysqli;
@@ -538,6 +539,134 @@ final class MysqliCronogramaRepository implements CronogramaRepository
         $types = 'ii' . str_repeat('i', count($teamIds));
         $params = array_merge([$editionId, $version], $teamIds);
         return $this->all("SELECT DISTINCT cc.id_compromisso, cc.id_modalidade, COALESCE(cne.id_equipe, cc.id_equipe) AS id_equipe, cc.chave_tag, DATE_FORMAT(cc.data_compromisso, '%Y-%m-%d') AS data_compromisso, TIME_FORMAT(cc.inicio_compromisso, '%H:%i:%s') AS inicio_compromisso, TIME_FORMAT(cc.termino_compromisso, '%H:%i:%s') AS termino_compromisso, cc.id_local, cc.condicional FROM cronograma_compromissos cc LEFT JOIN cronograma_nos cn ON cn.id_interclasse = cc.id_interclasse AND cn.id_modalidade = cc.id_modalidade AND cn.cronograma_versao = cc.cronograma_versao AND cn.chave_tag = cc.chave_tag LEFT JOIN cronograma_no_equipes cne ON cne.id_no = cn.id_no AND cne.id_equipe IN ($marks) WHERE cc.id_interclasse = ? AND cc.cronograma_versao = ? AND (cc.id_equipe IN ($marks) OR cne.id_equipe IS NOT NULL)", str_repeat('i', count($teamIds)) . 'ii' . str_repeat('i', count($teamIds)), array_merge($teamIds, [$editionId, $version], $teamIds));
+    }
+
+    public function studentAgenda(int $editionId, int $userId, array $teamIds = []): array
+    {
+        $edition = $this->one('SELECT id_interclasse, cronograma_status, inscricoes_status, cronograma_versao, versao_publicada FROM interclasse_planejamentos WHERE id_interclasse = ? LIMIT 1', 'i', [$editionId]);
+        if ($edition === null) {
+            throw new InvalidArgumentException('Edição sem planejamento migrado ou não encontrada.');
+        }
+        if ((string) $edition['cronograma_status'] !== CronogramaRules::PUBLICADO || $edition['versao_publicada'] === null) {
+            return [
+                'success' => true,
+                'publicado' => false,
+                'cronograma_versao' => (int) $edition['cronograma_versao'],
+                'versao_publicada' => null,
+                'equipes' => [],
+                'compromissos' => [],
+                'avancos' => [],
+            ];
+        }
+
+        $student = $this->one('SELECT u.id_usuario, u.turmas_id_turma, u.interclasses_id_interclasse, u.genero_usuario, u.status_usuario, t.categorias_id_categoria FROM usuarios u LEFT JOIN turmas t ON t.id_turma = u.turmas_id_turma WHERE u.id_usuario = ? LIMIT 1', 'i', [$userId]);
+        if ($student === null || (string) $student['status_usuario'] !== '1' || (int) ($student['interclasses_id_interclasse'] ?? 0) !== $editionId) {
+            throw new InvalidArgumentException('O aluno não pertence à edição solicitada.');
+        }
+        $classId = (int) ($student['turmas_id_turma'] ?? 0);
+        $categoryId = (int) ($student['categorias_id_categoria'] ?? 0);
+        $gender = trim((string) ($student['genero_usuario'] ?? ''));
+        if ($classId <= 0 || $categoryId <= 0 || $gender === '') {
+            throw new InvalidArgumentException('O cadastro do aluno não possui turma, categoria ou gênero válidos.');
+        }
+
+        $requestedIds = array_values(array_unique(array_filter(array_map('intval', $teamIds), static fn (int $id): bool => $id > 0)));
+        $whereTeams = '';
+        $params = [$editionId, $classId, $categoryId, $gender];
+        $types = 'iii' . 's';
+        if ($requestedIds !== []) {
+            $marks = implode(',', array_fill(0, count($requestedIds), '?'));
+            $whereTeams = " AND e.id_equipe IN ($marks)";
+            $types .= str_repeat('i', count($requestedIds));
+            $params = array_merge($params, $requestedIds);
+        }
+        $teams = $this->all("SELECT e.id_equipe, e.nome_equipe, e.modalidades_id_modalidade AS id_modalidade, m.nome_modalidade, m.genero_modalidade, m.categorias_id_categoria, c.nome_categoria, e.turmas_id_turma AS id_turma, t.nome_turma FROM equipes e INNER JOIN equipe_planejamentos ep ON ep.id_equipe = e.id_equipe AND ep.planejada = 1 INNER JOIN modalidades m ON m.id_modalidade = e.modalidades_id_modalidade AND m.interclasses_id_interclasse = ? AND m.status_modalidade = '1' INNER JOIN categorias c ON c.id_categoria = m.categorias_id_categoria INNER JOIN turmas t ON t.id_turma = e.turmas_id_turma WHERE e.status_equipe = '1' AND e.turmas_id_turma = ? AND m.categorias_id_categoria = ? AND (m.genero_modalidade = 'MISTO' OR m.genero_modalidade = ?)" . $whereTeams . ' ORDER BY m.id_modalidade, e.id_equipe', $types, $params);
+        if ($requestedIds !== [] && count($teams) !== count($requestedIds)) {
+            throw new InvalidArgumentException('Uma ou mais equipes não estão disponíveis para este aluno.');
+        }
+
+        $version = (int) $edition['versao_publicada'];
+        $selectedIds = array_map(static fn (array $team): int => (int) $team['id_equipe'], $teams);
+        if ($selectedIds === []) {
+            return [
+                'success' => true,
+                'publicado' => true,
+                'cronograma_status' => (string) $edition['cronograma_status'],
+                'inscricoes_status' => (string) $edition['inscricoes_status'],
+                'cronograma_versao' => (int) $edition['cronograma_versao'],
+                'versao_publicada' => $version,
+                'equipes' => [],
+                'compromissos' => [],
+                'avancos' => [],
+            ];
+        }
+
+        $marks = implode(',', array_fill(0, count($selectedIds), '?'));
+        $commitments = $this->all("SELECT DISTINCT cne.id_equipe, cc.id_compromisso, cc.id_modalidade, cc.chave_tag, DATE_FORMAT(cc.data_compromisso, '%Y-%m-%d') AS data_compromisso, TIME_FORMAT(cc.inicio_compromisso, '%H:%i:%s') AS inicio_compromisso, TIME_FORMAT(cc.termino_compromisso, '%H:%i:%s') AS termino_compromisso, cc.id_local, COALESCE(l.nome_local, 'A definir') AS nome_local, cc.condicional, cn.id_no, cn.tipo_no, cn.fase_largura, cn.slot, cn.origem_a_tag, cn.origem_b_tag, cn.id_equipe_a, cn.id_equipe_b, m.nome_modalidade FROM cronograma_compromissos cc INNER JOIN cronograma_nos cn ON cn.id_interclasse = cc.id_interclasse AND cn.id_modalidade = cc.id_modalidade AND cn.cronograma_versao = cc.cronograma_versao AND cn.chave_tag = cc.chave_tag INNER JOIN cronograma_no_equipes cne ON cne.id_no = cn.id_no AND cne.id_equipe IN ($marks) INNER JOIN modalidades m ON m.id_modalidade = cc.id_modalidade LEFT JOIN locais l ON l.id_local = cc.id_local WHERE cc.id_interclasse = ? AND cc.cronograma_versao = ? ORDER BY cc.data_compromisso, cc.inicio_compromisso, cc.id_modalidade, cn.fase_largura DESC, cn.slot", str_repeat('i', count($selectedIds)) . 'ii', array_merge($selectedIds, [$editionId, $version]));
+
+        $nodeIds = array_values(array_unique(array_map(static fn (array $row): int => (int) $row['id_no'], $commitments)));
+        $candidateMap = [];
+        if ($nodeIds !== []) {
+            $nodeMarks = implode(',', array_fill(0, count($nodeIds), '?'));
+            $candidateRows = $this->all("SELECT cne.id_no, cne.id_equipe, e.nome_equipe FROM cronograma_no_equipes cne INNER JOIN equipes e ON e.id_equipe = cne.id_equipe WHERE cne.id_no IN ($nodeMarks) ORDER BY cne.id_no, cne.lado, cne.id_equipe", str_repeat('i', count($nodeIds)), $nodeIds);
+            foreach ($candidateRows as $candidate) {
+                $candidateMap[(int) $candidate['id_no']][] = [
+                    'id_equipe' => (int) $candidate['id_equipe'],
+                    'nome_equipe' => (string) $candidate['nome_equipe'],
+                ];
+            }
+        }
+
+        $agenda = [];
+        foreach ($commitments as $commitment) {
+            $teamId = (int) $commitment['id_equipe'];
+            $candidates = $candidateMap[(int) $commitment['id_no']] ?? [];
+            $opponents = array_values(array_filter($candidates, static fn (array $candidate): bool => $candidate['id_equipe'] !== $teamId));
+            $agenda[] = [
+                'id_compromisso' => (int) $commitment['id_compromisso'],
+                'id_equipe' => $teamId,
+                'id_modalidade' => (int) $commitment['id_modalidade'],
+                'nome_modalidade' => (string) $commitment['nome_modalidade'],
+                'chave_tag' => (string) $commitment['chave_tag'],
+                'tipo_no' => (string) $commitment['tipo_no'],
+                'fase_largura' => (int) $commitment['fase_largura'],
+                'fase' => ChaveamentoRules::nomeFasePt((int) $commitment['fase_largura']),
+                'slot' => (int) $commitment['slot'],
+                'data_compromisso' => (string) $commitment['data_compromisso'],
+                'inicio_compromisso' => (string) $commitment['inicio_compromisso'],
+                'termino_compromisso' => (string) $commitment['termino_compromisso'],
+                'id_local' => (int) $commitment['id_local'],
+                'nome_local' => (string) $commitment['nome_local'],
+                'condicional' => (bool) $commitment['condicional'],
+                'oponentes_candidatos' => $opponents,
+                'oponente' => count($opponents) === 1 ? (string) $opponents[0]['nome_equipe'] : 'A definir',
+            ];
+        }
+
+        $byeNodes = $this->all("SELECT DISTINCT cne.id_equipe, cn.id_no, cn.id_modalidade, cn.chave_tag, cn.fase_largura, cn.slot, m.nome_modalidade FROM cronograma_nos cn INNER JOIN cronograma_no_equipes cne ON cne.id_no = cn.id_no AND cne.id_equipe IN ($marks) INNER JOIN modalidades m ON m.id_modalidade = cn.id_modalidade WHERE cn.id_interclasse = ? AND cn.cronograma_versao = ? AND cn.tipo_no = 'bye' ORDER BY cn.fase_largura DESC, cn.slot", str_repeat('i', count($selectedIds)) . 'ii', array_merge($selectedIds, [$editionId, $version]));
+        $advances = array_map(static fn (array $bye): array => [
+            'id_equipe' => (int) $bye['id_equipe'],
+            'id_no' => (int) $bye['id_no'],
+            'id_modalidade' => (int) $bye['id_modalidade'],
+            'nome_modalidade' => (string) $bye['nome_modalidade'],
+            'chave_tag' => (string) $bye['chave_tag'],
+            'fase_largura' => (int) $bye['fase_largura'],
+            'fase' => ChaveamentoRules::nomeFasePt((int) $bye['fase_largura']),
+            'slot' => (int) $bye['slot'],
+            'mensagem' => 'Avanço automático para a próxima fase',
+        ], $byeNodes);
+
+        return [
+            'success' => true,
+            'publicado' => true,
+            'cronograma_status' => (string) $edition['cronograma_status'],
+            'inscricoes_status' => (string) $edition['inscricoes_status'],
+            'cronograma_versao' => (int) $edition['cronograma_versao'],
+            'versao_publicada' => $version,
+            'equipes' => $teams,
+            'compromissos' => $agenda,
+            'avancos' => $advances,
+        ];
     }
 
     /** @param list<array<string,mixed>> $nodes */

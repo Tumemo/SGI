@@ -291,11 +291,14 @@ test.describe.serial('Portal do Aluno — Jornada Interativa e Regras de Negóci
 
         const linhaEquipe = modalEquipes.locator('.equipe-pick-row').first();
         await expect(linhaEquipe).toBeVisible({ timeout: 10_000 });
+        await expect(linhaEquipe).toContainText('01/01/2030');
         await linhaEquipe.click();
         await expect(modalEquipes).toBeHidden({ timeout: 10_000 });
 
         // Confirmar que o card recebeu a classe de selecionado
         await expect(page.locator('.modalidade-card.selected')).toHaveCount(1);
+        await expect(page.locator('#agendaInscricaoPreview')).toBeVisible({ timeout: 10_000 });
+        await expect(page.locator('#agendaInscricaoPreview')).toContainText('01/01/2030');
 
         const inelegivel = await page.evaluate(async ({ idInterclasse, idTurma }) => {
             const config = JSON.parse(document.querySelector('[data-sgi-config="aluno/modalidade"]')?.textContent || '{}');

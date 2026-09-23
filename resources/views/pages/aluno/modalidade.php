@@ -40,6 +40,17 @@ include SGI_ROOT . '/resources/views/components/aluno-header.php';
         <div id="inscricoesAtuais"></div>
     </section>
 
+    <section class="mb-4 d-none" id="agendaInscricaoPreview" aria-live="polite">
+        <div class="d-flex align-items-center gap-3 mb-3">
+            <span class="bg-primary-subtle text-primary rounded-3 p-2 d-inline-flex fs-5"><i class="bi bi-calendar2-week-fill"></i></span>
+            <div>
+                <h2 class="h5 fw-bold mb-1">Agenda das modalidades selecionadas</h2>
+                <p class="small text-body-secondary mb-0">Confira os dias e horários previstos antes de salvar sua inscrição.</p>
+            </div>
+        </div>
+        <div id="agendaInscricaoPreviewCorpo"></div>
+    </section>
+
     <section class="mb-4" id="secaoDisponiveis">
         <div class="d-flex align-items-center gap-3 mb-3">
             <span class="bg-primary-subtle text-primary rounded-3 p-2 d-inline-flex fs-5"><i class="bi bi-grid-1x2-fill"></i></span>

@@ -125,8 +125,11 @@ final class CronogramaPlanejadoTest
             }
             Assertions::assert('Materialização bloqueia operação não liberada', $materializationRejected);
             $teamId = (int) $connection->query("SELECT e.id_equipe FROM equipes e INNER JOIN equipe_planejamentos ep ON ep.id_equipe = e.id_equipe WHERE e.modalidades_id_modalidade = {$modalityId} AND e.turmas_id_turma = {$firstClassId} AND e.status_equipe = '1' ORDER BY ep.ordem_planejada LIMIT 1")->fetch_column();
-            $projected = (new MysqliCronogramaRepository($connection))->commitmentsForTeams($editionId, [$teamId]);
+            $cronogramaRepository = new MysqliCronogramaRepository($connection);
+            $projected = $cronogramaRepository->commitmentsForTeams($editionId, [$teamId]);
             Assertions::assert('Projeção da inscrição inclui as fases possíveis da equipe', count($projected) === 2 && count(array_filter($projected, static fn (array $item): bool => (int) ($item['condicional'] ?? 0) === 1)) === 1);
+            $studentAgenda = $cronogramaRepository->studentAgenda($editionId, $createdStudentId, [$teamId]);
+            Assertions::assert('Aluno consulta a agenda publicada antes de possuir elenco', ($studentAgenda['publicado'] ?? false) === true && count($studentAgenda['compromissos'] ?? []) === 2 && count($studentAgenda['equipes'] ?? []) === 1);
             $service->abrir($editionId, 1, ['cronograma_versao' => $published['cronograma_versao'], 'inscricoes_abertura' => '2020-01-01 00:00:00', 'inscricoes_encerramento' => '2031-01-01 00:00:00']);
             $secondTeamId = (int) $connection->query("SELECT e.id_equipe FROM equipes e INNER JOIN equipe_planejamentos ep ON ep.id_equipe = e.id_equipe WHERE e.modalidades_id_modalidade = {$secondModalityId} AND e.turmas_id_turma = {$firstClassId} AND e.status_equipe = '1' ORDER BY ep.ordem_planejada LIMIT 1")->fetch_column();
             $studentId = $createdStudentId;

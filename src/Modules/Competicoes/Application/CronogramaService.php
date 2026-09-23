@@ -22,6 +22,21 @@ final class CronogramaService
         return $this->repository->state($editionId);
     }
 
+    /**
+     * Consulta a agenda publicada no escopo do aluno autenticado.
+     *
+     * @param list<int> $teamIds
+     * @return array<string,mixed>
+     */
+    public function agendaAluno(int $editionId, int $userId, array $teamIds = []): array
+    {
+        if ($editionId <= 0 || $userId <= 0) {
+            throw new InvalidArgumentException('Edição e usuário são obrigatórios.');
+        }
+
+        return $this->repository->studentAgenda($editionId, $userId, $teamIds);
+    }
+
     public function preparar(int $editionId, int $userId): array
     {
         if ($editionId <= 0 || $userId <= 0) {

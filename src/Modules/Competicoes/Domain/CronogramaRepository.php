@@ -32,4 +32,13 @@ interface CronogramaRepository
 
     /** @param list<int> $teamIds @return list<array<string,mixed>> */
     public function commitmentsForTeams(int $editionId, array $teamIds): array;
+
+    /**
+     * Retorna a agenda publicada que o aluno pode consultar antes da inscrição.
+     *
+     * @param list<int> $teamIds Equipes escolhidas para a prévia; vazio lista as
+     *                           equipes elegíveis da turma do aluno.
+     * @return array<string,mixed>
+     */
+    public function studentAgenda(int $editionId, int $userId, array $teamIds = []): array;
 }

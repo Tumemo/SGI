@@ -30,9 +30,15 @@ final class CronogramaController
                 return $denied;
             }
             try {
+                $action = (string) $request->query('acao', 'estado');
+                if ($action === 'agenda_aluno') {
+                    $userId = (int) ($_SESSION['id_usuario'] ?? $_SESSION['id'] ?? 0);
+                    return Response::json($this->service->agendaAluno($edition, $userId, $this->teamIds($request)));
+                }
                 return Response::json($this->service->estado($edition));
             } catch (\InvalidArgumentException $exception) {
-                return Response::json(['success' => false, 'message' => $exception->getMessage()], 404);
+                $status = (string) $request->query('acao', 'estado') === 'agenda_aluno' ? 422 : 404;
+                return Response::json(['success' => false, 'code' => 'CRONOGRAMA_INVALIDO', 'message' => $exception->getMessage()], $status);
             } catch (\Throwable $exception) {
                 error_log('Falha ao consultar cronograma: ' . $exception->getMessage());
                 return Response::json(['success' => false, 'message' => 'Não foi possível consultar o cronograma.'], 500);
@@ -77,5 +83,22 @@ final class CronogramaController
             return Response::json(['success' => false, 'message' => 'A edição solicitada não está disponível para esta sessão.'], 403);
         }
         return null;
+    }
+
+    /** @return list<int> */
+    private function teamIds(Request $request): array
+    {
+        $raw = $request->query('id_equipes', $request->query('id_equipe', []));
+        if (is_string($raw)) {
+            $raw = preg_split('/[,;\s]+/', $raw, -1, PREG_SPLIT_NO_EMPTY) ?: [];
+        } elseif (!is_array($raw)) {
+            $raw = [$raw];
+        }
+
+        $ids = array_values(array_unique(array_filter(array_map('intval', $raw), static fn (int $id): bool => $id > 0)));
+        if (count($ids) !== count($raw)) {
+            throw new \InvalidArgumentException('A lista de equipes da agenda é inválida.');
+        }
+        return $ids;
     }
 }

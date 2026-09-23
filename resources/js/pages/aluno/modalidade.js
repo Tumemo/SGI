@@ -48,6 +48,7 @@ window.SGIPage.mount("aluno/modalidade", function (pageConfig, pageScope) {
     let modalidadesData = [];
     let carregandoDados = false;
     let inscricoesRenderizadas = false;
+    const agendaCache = new Map();
 
     function esc(s) { const d = document.createElement('div'); d.textContent = s == null ? '' : String(s); return d.innerHTML; }
 
@@ -339,6 +340,7 @@ window.SGIPage.mount("aluno/modalidade", function (pageConfig, pageScope) {
                 if (chip) chip.textContent = `Equipe: ${escolha.equipeNome}`;
             }
         });
+        void atualizarAgendaSelecao();
     }
 
     function renderizarInscricoes() {
@@ -378,10 +380,14 @@ window.SGIPage.mount("aluno/modalidade", function (pageConfig, pageScope) {
                             Carregando equipe...
                         </div>
                     </div>
+                    <div class="agenda-equipe mt-3" id="agenda-inscricao-${mod.id_equipe}">
+                        <div class="small text-body-secondary"><span class="spinner-border spinner-border-sm me-1" role="status"></span>Carregando agenda...</div>
+                    </div>
                     <div class="text-center mt-2">
                         <button type="button" class="btn btn-outline-danger btn-sm d-inline-flex align-items-center gap-1"
                             data-modalidade-id="${mod.id_modalidade}"
                             data-modalidade-nome="${esc(mod.nome_modalidade)}"
+                            data-equipe-id="${mod.id_equipe}"
                             data-sgi-action="details-modalidade">
                             <i class="bi bi-calendar-event me-1"></i> Ver detalhes
                         </button>
@@ -395,6 +401,18 @@ window.SGIPage.mount("aluno/modalidade", function (pageConfig, pageScope) {
         container.appendChild(wrapper);
 
         equipesParaCarregar.forEach(idEquipe => carregarMembros(idEquipe));
+        carregarAgendaEquipes(equipesParaCarregar).then((agenda) => {
+            modalidadesInscritas.forEach((mod) => {
+                const agendaContainer = document.getElementById(`agenda-inscricao-${mod.id_equipe}`);
+                if (!agendaContainer) return;
+                agendaContainer.innerHTML = equipeAgendaHtml(agendaPorEquipe(agenda, mod.id_equipe), true);
+            });
+        }).catch(() => {
+            modalidadesInscritas.forEach((mod) => {
+                const agendaContainer = document.getElementById(`agenda-inscricao-${mod.id_equipe}`);
+                if (agendaContainer) agendaContainer.innerHTML = '<div class="small text-danger">Não foi possível carregar a agenda prevista.</div>';
+            });
+        });
     }
 
     function formatarData(dataStr) {
@@ -404,30 +422,134 @@ window.SGIPage.mount("aluno/modalidade", function (pageConfig, pageScope) {
         return d.toLocaleDateString('pt-BR');
     }
 
+    function formatarHorario(inicio, termino) {
+        const horaInicio = inicio ? String(inicio).substring(0, 5) : '--:--';
+        const horaTermino = termino ? String(termino).substring(0, 5) : '';
+        return horaTermino ? `${horaInicio} - ${horaTermino}` : horaInicio;
+    }
+
+    async function carregarAgendaEquipes(idsEquipes) {
+        const ids = Array.from(new Set((Array.isArray(idsEquipes) ? idsEquipes : [idsEquipes])
+            .map(Number)
+            .filter(id => id > 0)))
+            .sort((a, b) => a - b);
+        if (ids.length === 0) return { publicado: false, compromissos: [], avancos: [], equipes: [] };
+
+        const cacheKey = `${idInterclasse}:${ids.join(',')}`;
+        if (agendaCache.has(cacheKey)) return agendaCache.get(cacheKey);
+
+        const request = fetch(apiUrl('cronograma', {
+            acao: 'agenda_aluno',
+            id_interclasse: idInterclasse,
+            id_equipes: ids.join(','),
+        }))
+            .then(response => lerJson(response, 'Consulta da agenda'))
+            .then(data => ({
+                publicado: data.publicado === true,
+                compromissos: Array.isArray(data.compromissos) ? data.compromissos : [],
+                avancos: Array.isArray(data.avancos) ? data.avancos : [],
+                equipes: Array.isArray(data.equipes) ? data.equipes : [],
+                versaoPublicada: data.versao_publicada ?? null,
+            }));
+        agendaCache.set(cacheKey, request);
+        return request;
+    }
+
+    function agendaPorEquipe(agenda, idEquipe) {
+        const id = Number(idEquipe);
+        return {
+            publicado: agenda.publicado,
+            compromissos: agenda.compromissos.filter(item => Number(item.id_equipe) === id),
+            avancos: agenda.avancos.filter(item => Number(item.id_equipe) === id),
+        };
+    }
+
+    function agendaVaziaHtml(publicado) {
+        if (!publicado) {
+            return '<div class="small text-body-secondary"><i class="bi bi-calendar-x me-1"></i>A agenda ainda não foi publicada.</div>';
+        }
+        return '<div class="small text-body-secondary"><i class="bi bi-calendar-x me-1"></i>Nenhum horário previsto para esta equipe.</div>';
+    }
+
+    function compromissoAgendaHtml(item, compacto = false) {
+        const adversario = item.condicional ? 'A definir após a fase anterior' : (item.oponente || 'A definir');
+        return `
+            <div class="${compacto ? 'small ' : ''}py-2 border-bottom">
+                <div class="d-flex justify-content-between align-items-start gap-2">
+                    <span class="fw-semibold"><i class="bi bi-calendar-event me-1 text-primary"></i>${esc(formatarData(item.data_compromisso))} · ${esc(formatarHorario(item.inicio_compromisso, item.termino_compromisso))}</span>
+                    ${item.condicional ? '<span class="badge rounded-pill text-bg-warning">Se avançar</span>' : ''}
+                </div>
+                <div class="text-body-secondary mt-1">
+                    <i class="bi bi-diagram-3 me-1"></i>${esc(item.fase || 'Fase prevista')}
+                    <span class="mx-1">·</span><i class="bi bi-geo-alt me-1"></i>${esc(item.nome_local || 'A definir')}
+                </div>
+                <div class="text-body-secondary mt-1"><i class="bi bi-shield me-1"></i>Adversário: ${esc(adversario)}</div>
+            </div>`;
+    }
+
+    function equipeAgendaHtml(agenda, compacto = false) {
+        if (!agenda || (!agenda.compromissos.length && !agenda.avancos.length)) return agendaVaziaHtml(agenda?.publicado === true);
+        const compromissos = agenda.compromissos.map(item => compromissoAgendaHtml(item, compacto)).join('');
+        const avancos = agenda.avancos.map(item => `
+            <div class="${compacto ? 'small ' : ''}py-2 border-bottom text-body-secondary">
+                <i class="bi bi-fast-forward-circle me-1 text-success"></i><strong>${esc(item.fase || 'Próxima fase')}:</strong> ${esc(item.mensagem)}
+            </div>`).join('');
+        return `${compromissos}${avancos}`;
+    }
+
+    async function atualizarAgendaSelecao() {
+        const section = document.getElementById('agendaInscricaoPreview');
+        const corpo = document.getElementById('agendaInscricaoPreviewCorpo');
+        if (!section || !corpo) return;
+        const ids = Array.from(document.querySelectorAll('.modalidade-card.selected'))
+            .map(card => Number(card.dataset.equipe || 0))
+            .filter(id => id > 0);
+        if (ids.length === 0) {
+            section.classList.add('d-none');
+            corpo.innerHTML = '';
+            return;
+        }
+        section.classList.remove('d-none');
+        corpo.innerHTML = '<div class="text-body-secondary small"><span class="spinner-border spinner-border-sm me-1" role="status"></span>Consultando os horários previstos...</div>';
+        try {
+            const agenda = await carregarAgendaEquipes(ids);
+            const porEquipe = new Map();
+            agenda.equipes.forEach(equipe => porEquipe.set(Number(equipe.id_equipe), equipe));
+            corpo.innerHTML = ids.map(id => {
+                const equipe = porEquipe.get(id);
+                const equipeNome = equipe?.nome_equipe || `Equipe ${id}`;
+                return `<div class="card border-0 bg-body-tertiary mb-2"><div class="card-body p-3"><div class="fw-semibold mb-1"><i class="bi bi-people-fill me-1 text-primary"></i>${esc(equipeNome)}</div>${equipeAgendaHtml(agendaPorEquipe(agenda, id), false)}</div></div>`;
+            }).join('');
+        } catch (error) {
+            console.error('Erro ao carregar agenda da seleção:', error);
+            corpo.innerHTML = '<div class="alert alert-warning mb-0 small">A agenda não pôde ser consultada agora. Você ainda pode selecionar a equipe e tentar novamente antes de salvar.</div>';
+        }
+    }
+
     async function verDetalhesModalidade(btn) {
         const idModalidade = btn.dataset.modalidadeId;
         const nomeModalidade = btn.dataset.modalidadeNome;
+        const idEquipe = Number(btn.dataset.equipeId || 0);
         const corpo = document.getElementById('modalDetalhesCorpo');
 
         document.getElementById('modalDetalhesTitle').textContent = nomeModalidade || 'Detalhes';
-        corpo.innerHTML = '<div class="text-center text-muted py-4"><div class="spinner-border spinner-border-sm me-2" role="status"></div>Carregando jogos...</div>';
+        corpo.innerHTML = '<div class="text-center text-muted py-4"><div class="spinner-border spinner-border-sm me-2" role="status"></div>Carregando agenda...</div>';
 
         const modal = new bootstrap.Modal(document.getElementById('modalDetalhes'));
         modal.show();
 
         try {
-            const res = await fetch(apiUrl('jogos', { id_modalidade: idModalidade, id_interclasse: idInterclasse }));
-            const lista = await lerJson(res, 'Consulta de jogos');
+            const [agenda, jogosResponse] = await Promise.all([
+                carregarAgendaEquipes(idEquipe > 0 ? [idEquipe] : []),
+                fetch(apiUrl('jogos', { id_modalidade: idModalidade, id_interclasse: idInterclasse })),
+            ]);
+            const lista = await lerJson(jogosResponse, 'Consulta de jogos');
             if (!Array.isArray(lista)) {
                 throw new Error('Consulta de jogos: formato inválido.');
             }
 
-            if (lista.length === 0) {
-                corpo.innerHTML = '<div class="text-center text-muted py-4"><i class="bi bi-calendar-x fs-1 d-block mb-2"></i>Nenhum jogo agendado para esta modalidade ainda.</div>';
-                return;
-            }
-
-            corpo.innerHTML = lista.map(j => {
+            const agendaEquipe = agendaPorEquipe(agenda, idEquipe);
+            const jogosHtml = lista.map(j => {
                 const status = j.status_jogo || 'Agendado';
                 const ehFinalizado = String(status).toLowerCase() === 'concluido';
                 const badgeCls = ehFinalizado ? 'text-bg-success' : 'text-bg-warning';
@@ -455,10 +577,15 @@ window.SGIPage.mount("aluno/modalidade", function (pageConfig, pageScope) {
                     </div>
                 `;
             }).join('');
+            const planejadaHtml = `<div class="mb-3"><h6 class="fw-bold"><i class="bi bi-calendar2-week me-1 text-primary"></i>Agenda prevista</h6>${equipeAgendaHtml(agendaEquipe, false)}</div>`;
+            const jogosSecao = lista.length > 0
+                ? `<hr><h6 class="fw-bold"><i class="bi bi-check2-circle me-1 text-success"></i>Jogos já materializados</h6>${jogosHtml}`
+                : '<hr><div class="small text-body-secondary"><i class="bi bi-info-circle me-1"></i>Os horários acima são o cronograma previsto; os jogos operacionais ainda não foram materializados.</div>';
+            corpo.innerHTML = planejadaHtml + jogosSecao;
 
         } catch (e) {
-            console.error('Erro ao carregar jogos:', e);
-            corpo.innerHTML = '<div class="text-center text-danger py-4"><i class="bi bi-exclamation-triangle fs-1 d-block mb-2"></i>Erro ao carregar os jogos. Tente novamente.</div>';
+            console.error('Erro ao carregar agenda/jogos:', e);
+            corpo.innerHTML = '<div class="text-center text-danger py-4"><i class="bi bi-exclamation-triangle fs-1 d-block mb-2"></i>Erro ao carregar a agenda. Tente novamente.</div>';
         }
     }
 
@@ -528,6 +655,7 @@ window.SGIPage.mount("aluno/modalidade", function (pageConfig, pageScope) {
             const chip = card.querySelector('.card-equipe');
             if (chip) chip.textContent = '';
             atualizarContador();
+            void atualizarAgendaSelecao();
             return;
         }
 
@@ -562,18 +690,31 @@ window.SGIPage.mount("aluno/modalidade", function (pageConfig, pageScope) {
 
             document.getElementById('modalEquipesTitle').textContent = `Escolha a equipe`;
             document.getElementById('modalEquipesSubtitulo').textContent = nomeModalidade;
-            
+
+            let agenda = { publicado: false, compromissos: [], avancos: [], equipes: [] };
+            try {
+                agenda = await carregarAgendaEquipes(equipes.map(e => e.id_equipe));
+            } catch (error) {
+                console.error('Erro ao carregar prévia da agenda:', error);
+            }
+
             const corpo = document.getElementById('modalEquipesCorpo');
-            corpo.innerHTML = equipes.map(e => `
-                <div class="equipe-pick-row d-flex align-items-center gap-3 p-3 mb-2 border rounded-3 bg-body sgi-u-cursor-pointer" role="button" tabindex="0" data-sgi-action="select-equipe" data-modalidade-id="${esc(idModalidade)}" data-equipe="${esc(e.id_equipe)}" data-equipe-nome="${esc(e.nome_equipe)}">
-                    <div class="bg-primary-subtle text-primary rounded-circle p-2 d-inline-flex"><i class="bi bi-people-fill"></i></div>
-                    <div class="flex-grow-1">
-                        <div class="fw-semibold">${esc(e.nome_equipe)}</div>
-                        <div class="small text-body-secondary">Equipe da turma</div>
+            corpo.innerHTML = equipes.map(e => {
+                const equipeAgenda = agendaPorEquipe(agenda, e.id_equipe);
+                return `
+                    <div class="equipe-pick-row p-3 mb-2 border rounded-3 bg-body sgi-u-cursor-pointer" role="button" tabindex="0" data-sgi-action="select-equipe" data-modalidade-id="${esc(idModalidade)}" data-equipe="${esc(e.id_equipe)}" data-equipe-nome="${esc(e.nome_equipe)}">
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="bg-primary-subtle text-primary rounded-circle p-2 d-inline-flex"><i class="bi bi-people-fill"></i></div>
+                            <div class="flex-grow-1">
+                                <div class="fw-semibold">${esc(e.nome_equipe)}</div>
+                                <div class="small text-body-secondary">Equipe da turma</div>
+                            </div>
+                            <div class="d-none bg-primary text-white rounded-circle p-1"><i class="bi bi-check-lg"></i></div>
+                        </div>
+                        <div class="mt-2 ps-5">${equipeAgendaHtml(equipeAgenda, true)}</div>
                     </div>
-                    <div class="d-none bg-primary text-white rounded-circle p-1"><i class="bi bi-check-lg"></i></div>
-                </div>
-            `).join('');
+                `;
+            }).join('');
             
             const modal = new bootstrap.Modal(document.getElementById('modalEquipes'));
             modal.show();
@@ -600,6 +741,7 @@ window.SGIPage.mount("aluno/modalidade", function (pageConfig, pageScope) {
 
         bootstrap.Modal.getInstance(document.getElementById('modalEquipes'))?.hide();
         atualizarContador();
+        void atualizarAgendaSelecao();
     }
 
     function removerEquipeSelecionada(idModalidade) {
@@ -615,6 +757,7 @@ window.SGIPage.mount("aluno/modalidade", function (pageConfig, pageScope) {
 
         bootstrap.Modal.getInstance(document.getElementById('modalEquipes'))?.hide();
         atualizarContador();
+        void atualizarAgendaSelecao();
     }
 
     async function salvarEscolhas() {
@@ -726,5 +869,5 @@ window.SGIPage.mount("aluno/modalidade", function (pageConfig, pageScope) {
     });
     window.SGIPage.ready( inicializarProgresso);
 
-return {esc, iconeModalidade, apiUrl, carregarDados, atualizarContador, atualizarProgresso, inicializarProgresso, statusVagas, renderizarSelecao, renderizarInscricoes, formatarData, verDetalhesModalidade, carregarMembros, abrirEquipesModalidade, selecionarEquipe, removerEquipeSelecionada, salvarEscolhas};
+return {esc, iconeModalidade, apiUrl, carregarDados, atualizarContador, atualizarProgresso, inicializarProgresso, statusVagas, renderizarSelecao, renderizarInscricoes, formatarData, formatarHorario, carregarAgendaEquipes, atualizarAgendaSelecao, verDetalhesModalidade, carregarMembros, abrirEquipesModalidade, selecionarEquipe, removerEquipeSelecionada, salvarEscolhas};
 });
