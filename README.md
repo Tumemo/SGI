@@ -163,12 +163,14 @@ Uma instalação nova não contém o evento de demonstração da suíte de teste
 1. Crie uma edição do Interclasses e deixe a edição desejada ativa.
 2. Confira as categorias, turmas, modalidades e equipes geradas e ajuste os cadastros.
 3. Nas edições novas, informe em cada modalidade a quantidade de equipes/entradas por turma e os limites do elenco; prepare as equipes vazias antes de cadastrar os alunos.
-4. Na Agenda, gere e publique o cronograma completo, resolva as pendências e só então abra as inscrições. O servidor recusa conflitos de horário entre modalidades, inclusive em fases condicionais.
-5. Cadastre ou importe alunos e acompanhe as inscrições nas equipes exatas da turma.
-6. Cadastre um usuário mesário e configure os locais e jogos para experimentar o placar.
+4. Na Agenda, prepare as equipes vazias, gere a grade e publique o cronograma antes das inscrições. Os alunos podem consultar os confrontos previstos e escolher as modalidades com essa informação; o servidor recusa conflitos de horário entre modalidades, inclusive nas fases condicionais.
+5. Cadastre ou importe alunos e acompanhe as inscrições nas equipes exatas da turma. Ao final da janela, encerre as inscrições, resolva os elencos incompletos e use **Liberar competição**; essa ação cria os jogos iniciais com base na árvore e nos horários publicados.
+6. Cadastre um usuário mesário. Depois da liberação, ele poderá operar as partidas disponíveis pelo placar; resultados avançam os próximos confrontos mantendo a agenda publicada.
 7. Faça login com cada perfil para conferir suas telas e permissões.
 
 Use dados fictícios nas atividades de desenvolvimento. Para cenários automatizados já preparados, siga a próxima seção; os fixtures de testes não devem ser carregados sobre sua base de trabalho.
+
+A tela Chaveamento acompanha a árvore publicada e seus resultados. Ela não gera uma chave separada: prepare, publique, abra/encerre inscrições e libere a competição pelo fluxo da Agenda.
 
 ## Testes automatizados
 
