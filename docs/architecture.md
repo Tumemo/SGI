@@ -91,6 +91,14 @@ ficam fora dessa lista e só recebem serviços, contratos e adaptadores de HTTP.
   padrão) e aceita diretórios configuráveis por `SGI_*_DIR`.
 - O modo offline do mesário usa IDs temporários negativos e a fila IndexedDB. A casca atual precisa ser preparada antes da perda de conexão e não depende de Service Worker.
 
+`GET /api/v1/jogos` mantém a visão operacional usada pela agenda e pelo preparo
+offline; perfis de mesário recebem a edição ativa e o filtro operacional é
+imposto pelo servidor, mesmo que o cliente envie `operacional=0`. A consulta de
+histórico da tela de chaveamento usa `GET /api/v1/jogos?visao=chaveamento`:
+administrador e colaborador podem filtrar pela edição; mesário recebe somente a
+edição ativa. A visão histórica é de leitura, rejeita alunos e não altera as
+permissões das rotas de escrita.
+
 ## Regras para mudanças
 
 1. Uma alteração de caso de uso deve incluir testes unitários do serviço e um
@@ -144,10 +152,15 @@ transação; categorias diferentes não formam disputas, mas continuam
 compartilhando locais e seus conflitos físicos.
 
 Uma revisão fecha as inscrições, avança a versão e mantém o snapshot anterior
-para auditoria. O estado informa ao preparo do mesário que uma nova preparação
-é necessária; a fila IndexedDB existente não é limpa nem reescrita. A abertura
-fria offline continua fora do contrato: resultados já enfileirados permanecem
-intactos e a revisão só pode ser reconhecida após reconexão.
+para auditoria. Ao gerar a nova proposta, a publicação suspensa deixa de ocupar
+seus próprios horários; reservas independentes e jogos já materializados
+continuam bloqueando conflitos. O mesmo painel permite revisar e republicar
+mais de uma vez antes da liberação. Depois dela, o servidor recusa nova revisão
+e não permite reabrir inscrições. O estado informa ao preparo do mesário que
+uma nova preparação é necessária; a fila IndexedDB existente não é limpa nem
+reescrita. A abertura fria offline continua fora do contrato: resultados já
+enfileirados permanecem intactos e a revisão só pode ser reconhecida após
+reconexão.
 
 ## Assets e ciclo de vida offline
 

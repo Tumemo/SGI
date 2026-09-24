@@ -224,6 +224,9 @@ final class MysqliPartidaGateway implements ResultadoRepository
 
     public function reconstruirChaveamento(int $modalityId, int $largura): void
     {
+        if ((new MysqliCronogramaRepository($this->connection))->rebuildPlannedFromRound($modalityId, $largura)) {
+            return;
+        }
         MysqliChaveamentoRepository::chaveamentoRebuildFromRound($this->connection, $modalityId, $largura);
     }
 

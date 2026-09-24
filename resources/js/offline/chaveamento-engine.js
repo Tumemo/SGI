@@ -514,6 +514,9 @@
                     if (!jogoEncerrado(pai.status_jogo)) pai.equipes = [];
                     garantirEquipe(pai, w1, w1Obj);
                     garantirEquipe(pai, w2, w2Obj);
+                    if (pai.equipes.length >= 2 && !jogoEncerrado(pai.status_jogo)) {
+                        pai.status_jogo = 'Agendado';
+                    }
                 }
             }
 
@@ -716,6 +719,28 @@
                 var locaisStore = dados[2] || [];
                 aplicarReservasAgenda(jogosBase, reservasAgenda, locaisStore, idModalidade);
 
+                function partidasComNomesDoJogo(partidas, jogoReferencia) {
+                    var equipesRemotas = Array.isArray(jogoReferencia && jogoReferencia.equipes)
+                        ? jogoReferencia.equipes
+                        : [];
+                    return partidas.map(function (p) {
+                        var idEquipe = Number(p.equipes_id_equipe);
+                        var equipeRemota = equipesRemotas.filter(function (e) {
+                            return Number(e && e.id_equipe) === idEquipe;
+                        })[0] || {};
+                        return {
+                            id_partida: p.id_partida != null ? p.id_partida : null,
+                            id_equipe: idEquipe,
+                            gols: Number(p.resultado_partida) || 0,
+                            id_turma: p.id_turma != null ? Number(p.id_turma) : (equipeRemota.id_turma || null),
+                            nome_turma: p.nome_turma || equipeRemota.nome_turma || '',
+                            nome_fantasia: p.nome_fantasia_turma || p.nome_fantasia ||
+                                equipeRemota.nome_fantasia || equipeRemota.nome_fantasia_turma || '',
+                            nome_equipe: p.nome_equipe || equipeRemota.nome_equipe || ''
+                        };
+                    });
+                }
+
                 jogosLocais.forEach(function (local) {
                     if (!mmParse(local.nome_jogo)) return;
                     if (idModalidade && local.modalidades_id_modalidade != null &&
@@ -735,17 +760,7 @@
                             return String(p.jogos_id_jogo) === String(local.id_jogo);
                         });
                         if (partidasLocaisDoJogo.length) {
-                            cloneLocal.equipes = partidasLocaisDoJogo.map(function (p) {
-                                return {
-                                    id_partida: p.id_partida != null ? p.id_partida : null,
-                                    id_equipe: Number(p.equipes_id_equipe),
-                                    gols: Number(p.resultado_partida) || 0,
-                                    id_turma: p.id_turma != null ? Number(p.id_turma) : null,
-                                    nome_turma: p.nome_turma || '',
-                                    nome_fantasia: p.nome_fantasia_turma || p.nome_fantasia || '',
-                                    nome_equipe: p.nome_equipe || ''
-                                };
-                            });
+                            cloneLocal.equipes = partidasComNomesDoJogo(partidasLocaisDoJogo, existente);
                         }
                         jogosBase[jogosBase.indexOf(existente)] = cloneLocal;
                         return;
@@ -756,17 +771,7 @@
                             return String(p.jogos_id_jogo) === String(local.id_jogo);
                         });
                         if (psExistente.length) {
-                            existente.equipes = psExistente.map(function (p) {
-                                return {
-                                    id_partida: p.id_partida != null ? p.id_partida : null,
-                                    id_equipe: Number(p.equipes_id_equipe),
-                                    gols: Number(p.resultado_partida) || 0,
-                                    id_turma: p.id_turma != null ? Number(p.id_turma) : null,
-                                    nome_turma: p.nome_turma || '',
-                                    nome_fantasia: p.nome_fantasia_turma || p.nome_fantasia || '',
-                                    nome_equipe: p.nome_equipe || ''
-                                };
-                            });
+                            existente.equipes = partidasComNomesDoJogo(psExistente, existente);
                         }
                         return;
                     }

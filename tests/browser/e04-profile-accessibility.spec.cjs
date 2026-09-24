@@ -500,6 +500,7 @@ test.describe('E04 perfil administrativo', () => {
         test.setTimeout(180_000);
         await login(page, 'mesario', '123');
         await page.waitForURL(/\/painel\?id=\d+/, { timeout: 15_000 });
+        expect(await page.evaluate(() => window.SGI_SESSION_NIVEL)).toBe(2);
         await expect(page.locator('#sgi-offline-ok')).toBeVisible({ timeout: 120_000 });
         await expect(page.locator('#sgi-offline-ok')).toContainText('Pronto para uso offline');
 

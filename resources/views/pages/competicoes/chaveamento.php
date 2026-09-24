@@ -96,7 +96,7 @@ $podeEditar = !$isNivel2 && !$isNivel3;
                             <th id="jogos-mob-th-partida" scope="col">Partida</th>
                             <th id="jogos-mob-th-modalidade" scope="col">Modalidade</th>
                             <th id="jogos-mob-th-data" scope="col">Data</th>
-                            <th id="jogos-mob-th-tempo" scope="col">Tempo</th>
+                            <th id="jogos-mob-th-tempo" scope="col">Duração do jogo</th>
                             <th id="jogos-mob-th-acrescimos" scope="col">Acréscimos</th>
                             <th id="jogos-mob-th-destaque" scope="col">Artilheiro/Destaque</th>
                             <th id="jogos-mob-th-status" scope="col">Status</th>
@@ -217,7 +217,7 @@ $podeEditar = !$isNivel2 && !$isNivel3;
                                 <th id="jogos-th-partida" scope="col">Partida</th>
                                 <th id="jogos-th-modalidade" scope="col">Modalidade</th>
                                 <th id="jogos-th-data" scope="col">Data</th>
-                                <th id="jogos-th-tempo" scope="col">Tempo</th>
+                                <th id="jogos-th-tempo" scope="col">Duração do jogo</th>
                                 <th id="jogos-th-acrescimos" scope="col">Acréscimos</th>
                                 <th id="jogos-th-destaque" scope="col">Artilheiro/Destaque</th>
                                 <th id="jogos-th-status" scope="col">Status</th>
