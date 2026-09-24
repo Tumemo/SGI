@@ -178,7 +178,10 @@ async function jogarPartidaOfflinePelaAgenda(page, fixture, titulo) {
     await expect.poll(() => page.evaluate(() => window.SGIOffline.getState().pending)).toBeGreaterThan(0);
 
     const feedback = page.getByRole('dialog').getByRole('button', { name: 'Entendi' });
-    if (await feedback.isVisible()) await feedback.click();
+    await expect(feedback).toBeVisible({ timeout: 10_000 });
+    await expect(feedback).toBeEnabled();
+    await feedback.click();
+    await expect(page.getByRole('dialog')).toBeHidden({ timeout: 10_000 });
 }
 
 function slotsPublicados(state) {
