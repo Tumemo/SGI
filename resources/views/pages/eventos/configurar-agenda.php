@@ -26,13 +26,14 @@ $nivelUsuarioAgenda = (int)($_SESSION['nivel'] ?? -1);
                 <div class="col-6 col-md-2"><label class="form-label small" for="cronogramaHoraFim">Fim</label><input id="cronogramaHoraFim" type="time" class="form-control form-control-sm" value="18:00"></div>
                 <div class="col-6 col-md-2"><label class="form-label small" for="cronogramaDuracao">Duração (min)</label><input id="cronogramaDuracao" type="number" min="1" class="form-control form-control-sm" value="30"></div>
                 <div class="col-6 col-md-2 d-flex flex-wrap gap-2">
-                    <button id="cronogramaPreparar" type="button" class="btn btn-outline-primary btn-sm">Preparar equipes</button>
-                    <button id="cronogramaGerar" type="button" class="btn btn-primary btn-sm">Gerar rascunho</button>
+                    <button id="cronogramaPreparar" type="button" class="btn btn-outline-primary btn-sm" disabled>Preparar equipes</button>
+                    <button id="cronogramaGerar" type="button" class="btn btn-primary btn-sm" disabled>Gerar rascunho</button>
                     <button id="cronogramaPublicar" type="button" class="btn btn-success btn-sm" disabled>Publicar cronograma</button>
-                    <button id="cronogramaAbrir" type="button" class="btn btn-outline-success btn-sm">Abrir inscrições</button>
-                    <button id="cronogramaFechar" type="button" class="btn btn-outline-secondary btn-sm">Encerrar inscrições</button>
-                    <button id="cronogramaLiberar" type="button" class="btn btn-outline-primary btn-sm">Liberar competição</button>
-                    <button id="cronogramaRevisar" type="button" class="btn btn-outline-warning btn-sm">Reabrir revisão</button>
+                    <button id="cronogramaAbrir" type="button" class="btn btn-outline-success btn-sm" disabled>Abrir inscrições</button>
+                    <button id="cronogramaFechar" type="button" class="btn btn-outline-secondary btn-sm" disabled>Encerrar inscrições</button>
+                    <button id="cronogramaLiberar" type="button" class="btn btn-outline-primary btn-sm" disabled>Liberar competição</button>
+                    <button id="cronogramaRevisar" type="button" class="btn btn-outline-warning btn-sm" disabled>Reabrir revisão</button>
+                    <button id="cronogramaAtualizar" type="button" class="btn btn-outline-secondary btn-sm">Atualizar estado</button>
                 </div>
             </div>
             <div class="row g-2 mt-2">
@@ -95,11 +96,6 @@ $nivelUsuarioAgenda = (int)($_SESSION['nivel'] ?? -1);
             <option value="andamento">Em andamento</option>
             <option value="Agendado">Agendados</option>
         </select>
-        <?php if ($nivelUsuarioAgenda <= 1): ?>
-            <button type="button" class="btn btn-primary btn-sm w-100 d-inline-flex align-items-center justify-content-center gap-2 mt-1 btn-trigger-datas-auto">
-                <i class="bi bi-calendar2-plus"></i> Agendar automaticamente
-            </button>
-        <?php endif; ?>
     </div>
 
     <div class="mb-3">
@@ -150,11 +146,6 @@ $nivelUsuarioAgenda = (int)($_SESSION['nivel'] ?? -1);
                 <option value="andamento">Em andamento</option>
                 <option value="Agendado">Agendados</option>
             </select>
-            <?php if ($nivelUsuarioAgenda <= 1): ?>
-                <button type="button" class="btn btn-primary btn-sm d-inline-flex align-items-center gap-2 ms-auto btn-trigger-datas-auto">
-                    <i class="bi bi-calendar2-plus"></i> Agendar automaticamente
-                </button>
-            <?php endif; ?>
         </div>
 
         <div class="row g-4 align-items-start">
@@ -223,83 +214,6 @@ $nivelUsuarioAgenda = (int)($_SESSION['nivel'] ?? -1);
             <div class="modal-footer">
                 <button type="button" class="btn btn-outline-secondary rounded-3 fw-semibold small" data-bs-dismiss="modal" >Cancelar</button>
                 <button type="button" class="btn btn-primary rounded-3 fw-semibold small" id="edit-jogo-salvar" >Salvar</button>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- ═══ MODAL DATAS AUTOMÁTICAS (LOTE) ═══ -->
-<div class="modal fade" id="modalDatasAutomaticas" tabindex="-1" aria-labelledby="modalDatasAutomaticasTitulo" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-fullscreen-xl-down">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="modalDatasAutomaticasTitulo"><i class="bi bi-calendar2-plus text-danger me-2" aria-hidden="true"></i>Agendamento automático</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
-            </div>
-            <div class="modal-body">
-                <p class="small text-muted mb-3">Defina o primeiro jogo. Segunda-feira e quinta-feira são os dias padrão, mas você pode escolher qualquer dia da semana para as sessões, sem ultrapassar o limite informado. Se ainda houver jogos, adicione outra data e recalcule a prévia.</p>
-                <div class="mb-3">
-                    <label class="form-label" for="auto-modalidade">Modalidade</label>
-                    <select class="form-select" id="auto-modalidade"></select>
-                </div>
-                <div class="row g-2 mb-3">
-                    <div class="col-6">
-                        <label class="form-label" for="seq-data">Primeiro dia</label>
-                        <input type="date" class="form-control" id="seq-data">
-                    </div>
-                    <div class="col-6">
-                        <label class="form-label" for="seq-inicio">Horário do primeiro jogo</label>
-                        <input type="time" class="form-control" id="seq-inicio" value="08:00">
-                    </div>
-                </div>
-                <div class="row g-2 mb-3">
-                    <div class="col-6">
-                        <label class="form-label" for="seq-fim">Limite para terminar os jogos</label>
-                        <input type="time" class="form-control" id="seq-fim" value="11:30">
-                        <div class="form-text">Valor inicial: 11h30. Nenhum jogo ultrapassará este horário.</div>
-                    </div>
-                    <div class="col-6">
-                        <label class="form-label" for="seq-local">Local</label>
-                        <select class="form-select" id="seq-local"></select>
-                    </div>
-                </div>
-                <div class="mb-3">
-                    <label class="form-label" for="seq-duracao">Duração média de cada jogo (minutos)</label>
-                    <input type="number" class="form-control" id="seq-duracao" min="1" step="1" value="60">
-                    <div class="form-text">O intervalo entre jogos será fixado em 10 minutos.</div>
-                </div>
-                <div class="form-check mb-3">
-                    <input class="form-check-input" type="checkbox" id="seq-reprogramar">
-                    <label class="form-check-label" for="seq-reprogramar">Permitir reprogramar jogos já agendados</label>
-                    <div class="form-text">Use esta opção somente para recalcular jogos que ainda não começaram.</div>
-                </div>
-                <div class="mb-3">
-                    <h6 class="form-label">Prévia</h6>
-                    <div id="seq-previa" class="small border rounded p-2 bg-light" role="status" aria-live="polite" aria-atomic="true">Preencha os dados e clique em “Calcular prévia”.</div>
-                </div>
-                <div id="seq-proximo-dia" class="border rounded p-2 mb-2 d-none">
-                    <div class="fw-semibold mb-2">Ainda há jogos. Informe a próxima sessão:</div>
-                    <div class="row g-2">
-                        <div class="col-4">
-                            <label class="form-label" for="seq-proxima-data">Próximo dia</label>
-                            <input type="date" class="form-control" id="seq-proxima-data">
-                        </div>
-                        <div class="col-4">
-                            <label class="form-label" for="seq-proxima-inicio">Horário inicial</label>
-                            <input type="time" class="form-control" id="seq-proxima-inicio" value="08:00">
-                        </div>
-                        <div class="col-4">
-                            <label class="form-label" for="seq-proxima-fim">Limite</label>
-                            <input type="time" class="form-control" id="seq-proxima-fim" value="11:30">
-                        </div>
-                    </div>
-                    <button type="button" class="btn btn-outline-danger btn-sm mt-2" id="seq-adicionar-dia"><i class="bi bi-calendar-plus me-1"></i>Adicionar dia e recalcular</button>
-                </div>
-            </div>
-            <div class="modal-footer sgi-modal-footer-fit">
-                <button type="button" class="btn btn-outline-secondary rounded-3 fw-semibold small" data-bs-dismiss="modal" >Cancelar</button>
-                <button type="button" class="btn btn-outline-danger rounded-3 fw-semibold small" id="seq-simular-btn"><i class="bi bi-eye me-1"></i><span class="d-none d-sm-inline">Calcular prévia</span><span class="d-sm-none">Prévia</span></button>
-                <button type="button" class="btn btn-primary rounded-3 fw-semibold small" id="seq-salvar-btn" disabled><i class="bi bi-check-lg me-1"></i><span class="d-none d-sm-inline">Confirmar agenda</span><span class="d-sm-none">Confirmar</span></button>
             </div>
         </div>
     </div>

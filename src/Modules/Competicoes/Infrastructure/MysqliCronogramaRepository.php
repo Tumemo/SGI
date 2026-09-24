@@ -185,7 +185,10 @@ final class MysqliCronogramaRepository implements CronogramaRepository
         $scheduledNodes = [];
         $pendencias = [];
         $occupiedVersion = $edition['versao_publicada'] === null ? (int) $edition['cronograma_versao'] : (int) $edition['versao_publicada'];
-        $occupied = $this->occupiedSlots($editionId, $occupiedVersion);
+        $replacedVersion = (string) $edition['cronograma_status'] === CronogramaRules::REVISAO && $edition['versao_publicada'] !== null
+            ? (int) $edition['versao_publicada']
+            : null;
+        $occupied = $this->occupiedSlots($editionId, $occupiedVersion, $replacedVersion);
         foreach ($modalities as $modality) {
             $modalityId = (int) $modality['id_modalidade'];
             if ($modality['equipes_planejadas'] === null || (int) $modality['equipes_planejadas'] <= 0) {
@@ -303,9 +306,12 @@ final class MysqliCronogramaRepository implements CronogramaRepository
             if ((string) $edition['cronograma_status'] !== CronogramaRules::PUBLICADO) {
                 throw new InvalidArgumentException('Publique o cronograma antes de abrir as inscrições.');
             }
+            if ((int) $edition['operacao_liberada'] === 1) {
+                throw new InvalidArgumentException('As inscrições não podem ser reabertas depois que a operação foi liberada.');
+            }
             $statement = $this->prepare("UPDATE interclasse_planejamentos SET inscricoes_status = 'abertas', inscricoes_abertura = ?, inscricoes_encerramento = ? WHERE id_interclasse = ? AND cronograma_versao = ?");
             $statement->bind_param('ssii', $opening, $closing, $editionId, $expectedRevision);
-            if (!$statement->execute() || $statement->affected_rows !== 1) {
+            if (!$statement->execute()) {
                 $statement->close();
                 throw new RuntimeException('O cronograma foi alterado durante a abertura das inscrições.');
             }
@@ -326,7 +332,7 @@ final class MysqliCronogramaRepository implements CronogramaRepository
             $this->assertRevision($edition, $expectedRevision);
             $statement = $this->prepare("UPDATE interclasse_planejamentos SET inscricoes_status = 'encerradas' WHERE id_interclasse = ? AND cronograma_versao = ?");
             $statement->bind_param('ii', $editionId, $expectedRevision);
-            if (!$statement->execute() || $statement->affected_rows !== 1) {
+            if (!$statement->execute()) {
                 $statement->close();
                 throw new RuntimeException('Não foi possível encerrar as inscrições.');
             }
@@ -646,6 +652,107 @@ final class MysqliCronogramaRepository implements CronogramaRepository
                 }
                 $match->close();
                 $this->linkPlannedGame((int) $node['id_no'], $nextGameId);
+            }
+            Transaction::commit($this->connection);
+            return true;
+        } catch (\Throwable $exception) {
+            Transaction::rollback($this->connection);
+            throw $exception;
+        }
+    }
+
+    /**
+     * Rebuilds unstarted descendants after correcting a result in a published
+     * bracket. Descendants that already started are immutable: throwing here
+     * lets the surrounding result transaction roll back the source correction.
+     */
+    public function rebuildPlannedFromRound(int $modalityId, int $roundWidth): bool
+    {
+        $planningTables = (int) $this->connection->query(
+            "SELECT COUNT(*) FROM information_schema.tables
+             WHERE table_schema = DATABASE()
+               AND table_name IN ('interclasse_planejamentos', 'cronograma_nos')",
+        )->fetch_column();
+        if ($planningTables !== 2) {
+            return false;
+        }
+        $edition = $this->one(
+            'SELECT m.interclasses_id_interclasse AS edition_id, p.cronograma_versao, p.versao_publicada
+             FROM modalidades m
+             INNER JOIN interclasse_planejamentos p ON p.id_interclasse = m.interclasses_id_interclasse
+             WHERE m.id_modalidade = ? LIMIT 1',
+            'i',
+            [$modalityId],
+        );
+        if ($edition === null) {
+            return false;
+        }
+        $editionId = (int) $edition['edition_id'];
+        $version = $edition['versao_publicada'] === null
+            ? (int) $edition['cronograma_versao']
+            : (int) $edition['versao_publicada'];
+        $source = $this->one(
+            'SELECT id_no FROM cronograma_nos
+             WHERE id_interclasse = ? AND id_modalidade = ? AND cronograma_versao = ?
+               AND id_jogo IS NOT NULL AND fase_largura = ? LIMIT 1',
+            'iiii',
+            [$editionId, $modalityId, $version, $roundWidth],
+        );
+        if ($source === null) {
+            return false;
+        }
+
+        Transaction::begin($this->connection);
+        try {
+            $this->lockEdition($editionId);
+            $descendants = $this->all(
+                'SELECT cn.id_no, cn.chave_tag, cn.origem_a_tag, cn.origem_b_tag,
+                        cn.fase_largura, cn.id_jogo, j.status_jogo,
+                        (SELECT COUNT(*) FROM artilheiros a WHERE a.jogos_id_jogo = j.id_jogo) AS points,
+                        (SELECT COUNT(*) FROM partidas p WHERE p.jogos_id_jogo = j.id_jogo AND p.usuarios_id_usuario IS NOT NULL) AS assigned_players
+                 FROM cronograma_nos cn
+                 INNER JOIN jogos j ON j.id_jogo = cn.id_jogo
+                 WHERE cn.id_interclasse = ? AND cn.id_modalidade = ?
+                   AND cn.cronograma_versao = ? AND cn.tipo_no = \'normal\'
+                   AND cn.fase_largura < ?
+                 ORDER BY cn.fase_largura DESC, cn.slot
+                 FOR UPDATE',
+                'iiii',
+                [$editionId, $modalityId, $version, $roundWidth],
+            );
+            foreach ($descendants as $descendant) {
+                if ((string) $descendant['status_jogo'] !== 'Agendado'
+                    || (int) $descendant['points'] > 0
+                    || (int) $descendant['assigned_players'] > 0) {
+                    throw new InvalidArgumentException('O resultado não pode ser corrigido depois que um confronto seguinte entrou em operação.');
+                }
+            }
+
+            foreach ($descendants as $descendant) {
+                $participants = $this->plannedNodeParticipants($editionId, $modalityId, $version, $descendant);
+                if ($participants === null || count($participants) !== 2) {
+                    throw new InvalidArgumentException('Não foi possível reconstruir os participantes do confronto seguinte.');
+                }
+                $gameId = (int) $descendant['id_jogo'];
+                $delete = $this->prepare('DELETE FROM partidas WHERE jogos_id_jogo = ?');
+                $delete->bind_param('i', $gameId);
+                if (!$delete->execute()) {
+                    $error = $delete->error;
+                    $delete->close();
+                    throw new RuntimeException($error !== '' ? $error : 'Não foi possível limpar os participantes do confronto seguinte.');
+                }
+                $delete->close();
+
+                $insert = $this->prepare("INSERT INTO partidas (jogos_id_jogo, equipes_id_equipe, resultado_partida, status_partida) VALUES (?, ?, 0, '1')");
+                foreach ($participants as $teamId) {
+                    $insert->bind_param('ii', $gameId, $teamId);
+                    if (!$insert->execute()) {
+                        $error = $insert->error;
+                        $insert->close();
+                        throw new RuntimeException($error !== '' ? $error : 'Não foi possível atualizar os participantes do confronto seguinte.');
+                    }
+                }
+                $insert->close();
             }
             Transaction::commit($this->connection);
             return true;
@@ -1257,9 +1364,16 @@ final class MysqliCronogramaRepository implements CronogramaRepository
     }
 
     /** @return list<array{data:string,inicio:string,termino:string,local:int}> */
-    private function occupiedSlots(int $editionId, int $version): array
+    private function occupiedSlots(int $editionId, int $version, ?int $replacedVersion = null): array
     {
-        $rows = $this->all("SELECT DATE_FORMAT(data_reserva, '%Y-%m-%d') AS data, TIME_FORMAT(inicio_reserva, '%H:%i:%s') AS inicio, TIME_FORMAT(termino_reserva, '%H:%i:%s') AS termino, id_local AS local FROM agenda_reservas WHERE id_interclasse = ? AND data_reserva IS NOT NULL AND inicio_reserva IS NOT NULL AND termino_reserva IS NOT NULL AND id_local IS NOT NULL UNION ALL SELECT DATE_FORMAT(data_compromisso, '%Y-%m-%d') AS data, TIME_FORMAT(inicio_compromisso, '%H:%i:%s') AS inicio, TIME_FORMAT(termino_compromisso, '%H:%i:%s') AS termino, id_local AS local FROM cronograma_compromissos WHERE id_interclasse = ? AND cronograma_versao = ? UNION ALL SELECT DATE_FORMAT(j.data_jogo, '%Y-%m-%d') AS data, TIME_FORMAT(j.inicio_jogo, '%H:%i:%s') AS inicio, TIME_FORMAT(j.termino_jogo, '%H:%i:%s') AS termino, j.locais_id_local AS local FROM jogos j INNER JOIN modalidades m ON m.id_modalidade = j.modalidades_id_modalidade WHERE m.interclasses_id_interclasse = ? AND j.data_jogo IS NOT NULL AND j.inicio_jogo IS NOT NULL AND j.termino_jogo IS NOT NULL AND j.locais_id_local IS NOT NULL", 'iiii', [$editionId, $editionId, $version, $editionId]);
+        $plannedExclusion = $replacedVersion === null ? '' : ' AND cronograma_versao <> ?';
+        $types = 'iiii' . ($replacedVersion === null ? '' : 'i');
+        $params = [$editionId, $editionId, $version];
+        if ($replacedVersion !== null) {
+            $params[] = $replacedVersion;
+        }
+        $params[] = $editionId;
+        $rows = $this->all("SELECT DATE_FORMAT(data_reserva, '%Y-%m-%d') AS data, TIME_FORMAT(inicio_reserva, '%H:%i:%s') AS inicio, TIME_FORMAT(termino_reserva, '%H:%i:%s') AS termino, id_local AS local FROM agenda_reservas WHERE id_interclasse = ? AND data_reserva IS NOT NULL AND inicio_reserva IS NOT NULL AND termino_reserva IS NOT NULL AND id_local IS NOT NULL UNION ALL SELECT DATE_FORMAT(data_compromisso, '%Y-%m-%d') AS data, TIME_FORMAT(inicio_compromisso, '%H:%i:%s') AS inicio, TIME_FORMAT(termino_compromisso, '%H:%i:%s') AS termino, id_local AS local FROM cronograma_compromissos WHERE id_interclasse = ? AND cronograma_versao = ?{$plannedExclusion} UNION ALL SELECT DATE_FORMAT(j.data_jogo, '%Y-%m-%d') AS data, TIME_FORMAT(j.inicio_jogo, '%H:%i:%s') AS inicio, TIME_FORMAT(j.termino_jogo, '%H:%i:%s') AS termino, j.locais_id_local AS local FROM jogos j INNER JOIN modalidades m ON m.id_modalidade = j.modalidades_id_modalidade WHERE m.interclasses_id_interclasse = ? AND j.data_jogo IS NOT NULL AND j.inicio_jogo IS NOT NULL AND j.termino_jogo IS NOT NULL AND j.locais_id_local IS NOT NULL", $types, $params);
         return array_map(static fn (array $row): array => ['data' => (string) $row['data'], 'inicio' => (string) $row['inicio'], 'termino' => (string) $row['termino'], 'local' => (int) $row['local']], $rows);
     }
 

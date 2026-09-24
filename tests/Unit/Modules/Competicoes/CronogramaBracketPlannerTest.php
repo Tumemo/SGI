@@ -51,4 +51,24 @@ final class CronogramaBracketPlannerTest extends TestCase
             'PL:9:0:MM:2:0:N',
         ], array_column($nodes, 'chave_tag'));
     }
+
+    public function testSixTeamsKeepThePublishedIntermediateByeAndCanonicalOrigins(): void
+    {
+        $nodes = CronogramaBracketPlanner::plan(7, null, [6, 5, 4, 3, 2, 1]);
+        $opening = array_values(array_filter($nodes, static fn (array $node): bool => $node['fase_largura'] === 8));
+        $middle = array_values(array_filter($nodes, static fn (array $node): bool => $node['fase_largura'] === 4));
+        $final = array_values(array_filter($nodes, static fn (array $node): bool => $node['fase_largura'] === 2));
+        $bye = array_values(array_filter($middle, static fn (array $node): bool => $node['tipo_no'] === 'bye'));
+
+        self::assertCount(3, $opening);
+        self::assertSame(['N', 'N', 'N'], array_map(static fn (array $node): string => substr((string) $node['chave_tag'], -1), $opening));
+        self::assertCount(2, $middle);
+        self::assertCount(1, $bye);
+        self::assertCount(1, $final);
+        self::assertCount(2, $bye[0]['equipe_ids']);
+        self::assertSame('PL:7:0:MM:8:2:N', $bye[0]['origem_a_tag']);
+        self::assertNull($bye[0]['origem_b_tag']);
+        self::assertSame('PL:7:0:MM:4:0:N', $final[0]['origem_a_tag']);
+        self::assertSame('PL:7:0:MM:4:1:B', $final[0]['origem_b_tag']);
+    }
 }

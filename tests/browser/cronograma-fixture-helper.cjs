@@ -18,6 +18,11 @@ function dataAtualDoFixture() {
     return `${year}-${month}-${day}`;
 }
 
+function operacaoLiberada(state) {
+    const value = state?.operacao?.liberada ?? state?.operacao_liberada;
+    return value === true || Number(value || 0) > 0;
+}
+
 /**
  * The browser fixture uses the same published/reviewed contract as the UI.
  * Existing suites may leave the active edition in review, so the next fixture
@@ -133,7 +138,7 @@ async function garantirCronogramaPublicado(request, idInterclasse) {
         );
     }
 
-    if (!state.liberada && String(state.inscricoes_status) !== 'abertas') {
+    if (!operacaoLiberada(state) && String(state.inscricoes_status) !== 'abertas') {
         await jsonOrThrow(
             await request.post('api/v1/cronograma', {
                 data: {
@@ -163,7 +168,7 @@ async function garantirOperacaoLiberada(request, idInterclasse) {
     if (String(state.cronograma_status) !== 'publicado') {
         state = await garantirCronogramaPublicado(request, idInterclasse);
     }
-    if (state.liberada) return state;
+    if (operacaoLiberada(state)) return state;
 
     const modalidades = await jsonOrThrow(
         await request.get(`api/v1/modalidades?id_interclasse=${idInterclasse}`),
@@ -278,4 +283,5 @@ module.exports = {
     buscarPrimeiroJogoPlanejado,
     garantirCronogramaPublicado,
     garantirOperacaoLiberada,
+    operacaoLiberada,
 };
