@@ -1615,7 +1615,7 @@ window.SGIPage.mount("competicoes/placar", function (pageConfig, pageScope) {
     }
 
     async function carregarAlunosOcorrencia(ciclo) {
-        var cicloLocal = ciclo == null ? __sgiPlacarCiclo : ciclo;
+        var cicloLocal = typeof ciclo === 'number' ? ciclo : __sgiPlacarCiclo;
         var select = document.getElementById('selectAlunoOcorrencia');
         if (!select || !select.isConnected || !placarContinuaAtivo(cicloLocal)) return;
         var idTurma = document.getElementById('filtroTurmaOcorrencia').value;
@@ -2065,7 +2065,7 @@ window.SGIPage.mount("competicoes/placar", function (pageConfig, pageScope) {
     }
 
     async function carregarAlunosArtilheiro(ciclo) {
-        var cicloLocal = ciclo == null ? __sgiPlacarCiclo : ciclo;
+        var cicloLocal = typeof ciclo === 'number' ? ciclo : __sgiPlacarCiclo;
         var select = document.getElementById('selectAlunoArtilheiro');
         if (!select || !select.isConnected || !placarContinuaAtivo(cicloLocal)) return;
         var idEquipe = document.getElementById('selectEquipeArtilheiro').value;
@@ -2327,6 +2327,17 @@ window.SGIPage.mount("competicoes/placar", function (pageConfig, pageScope) {
 
     function ativarTelaPlacar() {
         prepararFechamentoAcessivelModais();
+
+        var btnNovaOcorrencia = document.getElementById('btnNovaOcorrencia');
+        var formOcorrencia = document.getElementById('formOcorrencia');
+        var filtroTurmaOcorrencia = document.getElementById('filtroTurmaOcorrencia');
+        var formArtilheiro = document.getElementById('formArtilheiro');
+        var selectEquipeArtilheiro = document.getElementById('selectEquipeArtilheiro');
+        if (btnNovaOcorrencia) pageScope.listen(btnNovaOcorrencia, 'click', function() { abrirModalOcorrencia(); });
+        if (formOcorrencia) pageScope.listen(formOcorrencia, 'submit', salvarOcorrencia);
+        if (filtroTurmaOcorrencia) pageScope.listen(filtroTurmaOcorrencia, 'change', function() { carregarAlunosOcorrencia(); });
+        if (formArtilheiro) pageScope.listen(formArtilheiro, 'submit', salvarPonto);
+        if (selectEquipeArtilheiro) pageScope.listen(selectEquipeArtilheiro, 'change', function() { carregarAlunosArtilheiro(); });
 
         // A tela pode voltar de uma montagem já existente. Nesse caso o
         // script não é reinjetado; reanexar o listener e registrar a limpeza

@@ -843,7 +843,9 @@ window.SGIPage.mount("aluno/modalidade", function (pageConfig, pageScope) {
         const inscricoes = document.getElementById('inscricoesAtuais');
         const equipes = document.getElementById('modalEquipesCorpo');
         const feedback = document.getElementById('msgFeedback');
+        const btnSalvar = document.getElementById('btnSalvar');
 
+        if (btnSalvar) pageScope.listen(btnSalvar, 'click', salvarEscolhas);
         if (feedback) pageScope.listen(feedback, 'click', (event) => {
             if (event.target.closest('[data-sgi-action="refresh-registration-agenda"]')) window.location.reload();
         });

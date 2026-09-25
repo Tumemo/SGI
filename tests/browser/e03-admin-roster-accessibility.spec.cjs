@@ -263,7 +263,7 @@ test.describe('E03 — formulários, modais e controles de equipe', () => {
         await expect(page.locator('#modalConfirmarExcluir')).toHaveAttribute('aria-labelledby', 'modalConfirmarExcluirTitulo');
         await expect(page.locator('#modalResetarSenha')).toHaveAttribute('aria-labelledby', 'modalResetarSenhaTitulo');
 
-        const abrirAluno = page.locator('main.d-none.d-md-block button[onclick="abrirModalAluno()"]:visible');
+        const abrirAluno = page.locator('main.d-none.d-md-block button[data-sgi-action="open-add-student"]:visible');
         const modalAluno = page.locator('#modalAluno');
         const alunoMostrado = modalAluno.evaluate((element) => new Promise((resolve) => {
             element.addEventListener('shown.bs.modal', resolve, { once: true });

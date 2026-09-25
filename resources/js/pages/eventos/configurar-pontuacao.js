@@ -252,6 +252,9 @@ window.SGIPage.mount("eventos/configurar-pontuacao", function (pageConfig, pageS
             pageScope.listen(input, 'change', () => window.validarPontos(input.id));
         });
 
+        const btnRestaurar = document.getElementById('btnRestaurarPadrao');
+        if (btnRestaurar) pageScope.listen(btnRestaurar, 'click', () => window.restaurarPadrao());
+
         const btnSalvar = document.getElementById('btnSalvarPontuacao');
         if (btnSalvar) pageScope.listen(btnSalvar, 'click', (event) => {
             event.preventDefault();

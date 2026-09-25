@@ -75,6 +75,7 @@ if ($nivelUsuario === 2) {
 <script src="<?= \App\Shared\Http\Assets::url('js/shared/bootstrap-feedback.js') ?>"></script>
 <script src="<?= \App\Shared\Http\Assets::url('js/shared/html-utils.js') ?>"></script>
 <script src="<?= \App\Shared\Http\Assets::url('js/shared/page-runtime.js') ?>"></script>
+<script src="<?= \App\Shared\Http\Assets::url('js/shared/interclasse-service.js') ?>"></script>
 <script src="<?= \App\Shared\Http\Assets::url('js/shared/logout.js') ?>"></script>
 <?php if (\App\Shared\Config\Env::get('SGI_APP_ENV', '') === 'development'): ?>
 <script src="<?= \App\Shared\Http\Assets::url('js/dev/live-reload.js') ?>"></script>

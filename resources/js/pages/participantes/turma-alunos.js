@@ -705,6 +705,9 @@ window.SGIPage.mount("participantes/turma-alunos", function (pageConfig, pageSco
         vincularAcoesAlunos();
         carregarAlunos();
 
+        document.querySelectorAll('[data-sgi-action="open-add-student"]').forEach((btn) => {
+            pageScope.listen(btn, 'click', () => abrirModalAluno());
+        });
         pageScope.listen(document.getElementById('formAluno'), 'submit', salvarAluno);
         pageScope.listen(document.getElementById('btnConfirmarExcluir'), 'click', executarExcluir);
         pageScope.listen(document.getElementById('btnConfirmarResetar'), 'click', executarResetar);

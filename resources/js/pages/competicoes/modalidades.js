@@ -24,8 +24,10 @@ window.SGIPage.mount("competicoes/modalidades", function (pageConfig, pageScope)
         const divDesktop = document.getElementById('listaModalidadesDesktop');
 
         try {
-            const response = await axios.get(`${API_BASE}/modalidades?x=1`);
-            let modalidades = response.data.data || response.data;
+            const res = await fetch(`${API_BASE}/modalidades?x=1`);
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            const raw = await res.json();
+            let modalidades = raw.data || raw;
             if (!Array.isArray(modalidades)) modalidades = [];
             modalidades = modalidades.filter((item) => String(item.interclasses_id_interclasse) === String(idInterclasse));
 
@@ -85,6 +87,12 @@ window.SGIPage.mount("competicoes/modalidades", function (pageConfig, pageScope)
             if (divDesktop) divDesktop.innerHTML = htmlDesktop;
         } catch (error) {
             console.error('Erro ao carregar lista:', error);
+            const msgErro = '<div class="alert alert-danger my-3" role="alert">Não foi possível carregar as modalidades.</div>';
+            if (divMobile) divMobile.innerHTML = msgErro;
+            if (divDesktop) divDesktop.innerHTML = msgErro;
+            if (window.SGI && typeof window.SGI.showToast === 'function') {
+                window.SGI.showToast('Não foi possível carregar as modalidades.', 'danger');
+            }
         }
     }
 
@@ -93,8 +101,9 @@ window.SGIPage.mount("competicoes/modalidades", function (pageConfig, pageScope)
         if (!selectTipo) return;
 
         try {
-            const response = await axios.get(`${API_BASE}/tipos-modalidade`);
-            const tipos = response.data;
+            const res = await fetch(`${API_BASE}/tipos-modalidade`);
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            const tipos = await res.json();
 
             const placeholder = new Option('Selecione um tipo...', '');
             placeholder.disabled = true;
@@ -116,8 +125,9 @@ window.SGIPage.mount("competicoes/modalidades", function (pageConfig, pageScope)
         if (!selectCat) return;
 
         try {
-            const response = await axios.get(`${API_BASE}/categorias?id_interclasse=${idInterclasse}`);
-            const categorias = response.data;
+            const res = await fetch(`${API_BASE}/categorias?id_interclasse=${idInterclasse}`);
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            const categorias = await res.json();
 
             const placeholder = new Option('Selecione uma categoria...', '');
             placeholder.disabled = true;
@@ -138,11 +148,16 @@ window.SGIPage.mount("competicoes/modalidades", function (pageConfig, pageScope)
         if (!await SGI.confirm({ titulo: 'Excluir modalidade?', mensagem: 'Esta ação não pode ser desfeita.', textoConfirmar: 'Excluir modalidade', destrutivo: true })) return;
 
         try {
-            const res = await axios.put(`${API_BASE}/modalidades`, {
-                id_modalidade: id,
-                status_modalidade: '0'
+            const res = await fetch(`${API_BASE}/modalidades`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    id_modalidade: id,
+                    status_modalidade: '0'
+                })
             });
-            if (res.data.success) {
+            const data = await res.json();
+            if (res.ok && data.success) {
                 carregarModalidades();
             } else {
                 SGI.alert('Erro ao excluir modalidade.');
@@ -174,9 +189,14 @@ window.SGIPage.mount("competicoes/modalidades", function (pageConfig, pageScope)
         try {
             btnSalvar.disabled = true;
             btnSalvar.innerHTML = 'Salvando...';
-            const res = await axios.post(`${API_BASE}/modalidades`, dados);
+            const res = await fetch(`${API_BASE}/modalidades`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(dados)
+            });
+            const data = await res.json();
 
-            if (res.data.success) {
+            if (res.ok && data.success) {
                 caixaMensagem.innerHTML = '<p class="text-success text-center fw-bold">Criada com sucesso!</p>';
                 document.getElementById('formNovaModalidade').reset();
                 carregarModalidades();
@@ -184,6 +204,8 @@ window.SGIPage.mount("competicoes/modalidades", function (pageConfig, pageScope)
                     bootstrap.Modal.getInstance(document.getElementById('modalCriarModalidade')).hide();
                     caixaMensagem.innerHTML = '';
                 }, 1000);
+            } else {
+                throw new Error(data?.message || 'Erro ao salvar.');
             }
         } catch (error) {
             caixaMensagem.innerHTML = '<p class="text-danger text-center fw-bold">Erro ao salvar.</p>';

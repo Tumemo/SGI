@@ -21,7 +21,7 @@ $podeResetarSenha = in_array($nivelUsuario, [0], true);
 
     <div class="d-flex flex-wrap align-items-center gap-3 mb-4">
         <?php if ($podeGerenciar): ?>
-        <button class="btn btn-outline-danger d-inline-flex align-items-center gap-2" onclick="abrirModalAluno()">
+        <button type="button" class="btn btn-outline-danger d-inline-flex align-items-center gap-2" data-sgi-action="open-add-student">
             <i class="bi bi-plus-lg" aria-hidden="true"></i> Adicionar estudante
         </button>
         <?php endif; ?>
@@ -104,7 +104,7 @@ $podeResetarSenha = in_array($nivelUsuario, [0], true);
 
         <div class="d-flex flex-wrap align-items-center gap-3 mb-4">
             <?php if ($podeGerenciar): ?>
-            <button class="btn btn-outline-danger d-inline-flex align-items-center gap-2" onclick="abrirModalAluno()">
+            <button type="button" class="btn btn-outline-danger d-inline-flex align-items-center gap-2" data-sgi-action="open-add-student">
             <i class="bi bi-plus-lg" aria-hidden="true"></i> Adicionar estudante
             </button>
             <?php endif; ?>

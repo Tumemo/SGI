@@ -14,8 +14,8 @@ $paginaAtiva = 'dashboard';
     <div id="alertaLimiteMob" class="alert alert-danger d-none d-flex flex-wrap align-items-center gap-2 small"></div>
     <div id="listaElencoMob" class="d-flex flex-column gap-2"></div>
     <?php if ($isAdmin): ?>
-    <a class="btn btn-outline-primary w-100 mt-4" id="linkGerenciarMob" href="#">
-        <i class="bi bi-person-plus"></i>
+    <a class="btn btn-outline-primary w-100 mt-4" id="linkGerenciarMob" href="#" aria-label="Gerenciar elenco">
+        <i class="bi bi-person-plus" aria-hidden="true"></i>
     </a>
     <?php endif; ?>
 </main>
@@ -26,8 +26,8 @@ $paginaAtiva = 'dashboard';
         $headerIdVoltar = 'btnVoltarElencoDesk';
         $headerCorpoHtml = '<h1 class="h4 mb-0 fw-bold">Elenco da equipe</h1>';
         $headerAcoesHtml = $isAdmin ? '<div class="ms-auto">
-                <a class="btn btn-outline-primary" id="linkGerenciarDesk" href="#">
-                    <i class="bi bi-person-plus"></i>
+                <a class="btn btn-outline-primary" id="linkGerenciarDesk" href="#" aria-label="Gerenciar elenco">
+                    <i class="bi bi-person-plus" aria-hidden="true"></i>
                 </a>
             </div>' : '';
         include SGI_ROOT . '/resources/views/components/page-header.php';
@@ -40,10 +40,10 @@ $paginaAtiva = 'dashboard';
                 <table class="table table-hover align-middle mb-0">
                     <thead>
                         <tr>
-                            <th>Nome</th>
-                            <th>RM / Matrícula</th>
+                            <th scope="col">Nome</th>
+                            <th scope="col">RM / Matrícula</th>
                             <?php if ($isAdmin): ?>
-                            <th class="text-end">Ações</th>
+                            <th scope="col" class="text-end">Ações</th>
                             <?php endif; ?>
                         </tr>
                     </thead>

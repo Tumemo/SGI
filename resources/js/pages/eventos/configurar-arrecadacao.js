@@ -203,9 +203,6 @@ window.SGIPage.mount("eventos/configurar-arrecadacao", function (pageConfig, pag
     pageScope.listen(window, 'beforeunload', () => {
         const pendentes = todasAsTurmas.some(t => getQuantidadePendente(t) > 0);
         if (pendentes) {
-            const xhr = new XMLHttpRequest();
-            xhr.open('POST', `${API_BASE}/arrecadacao`, false);
-            xhr.setRequestHeader('Content-Type', 'application/json');
             const payload = {
                 id_interclasse: idInterclasseResolvida || idInterclasseArrecadacao,
                 arrecadacoes: todasAsTurmas.map(t => ({
@@ -213,7 +210,19 @@ window.SGIPage.mount("eventos/configurar-arrecadacao", function (pageConfig, pag
                     quantidade: getQuantidadePendente(t)
                 })).filter((item) => item.quantidade > 0)
             };
-            xhr.send(JSON.stringify(payload));
+            const body = JSON.stringify(payload);
+            try {
+                fetch(`${API_BASE}/arrecadacao`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body,
+                    keepalive: true
+                }).catch(() => {});
+            } catch (_) {
+                if (typeof navigator !== 'undefined' && typeof navigator.sendBeacon === 'function') {
+                    navigator.sendBeacon(`${API_BASE}/arrecadacao`, new Blob([body], { type: 'application/json' }));
+                }
+            }
         }
     });
 

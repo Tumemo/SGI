@@ -1815,6 +1815,9 @@ window.SGIPage.mount("competicoes/chaveamento", function (pageConfig, pageScope)
     // formatadores; só inicializa a rede quando a tela está presente.
     if (document.getElementById('selectModalidade')) iniciarChaveamento();
 
+    const formEditarJogo = document.getElementById('formEditarJogo');
+    if (formEditarJogo) pageScope.listen(formEditarJogo, 'submit', salvarEdicaoJogo);
+
     pageScope.onDeactivate(pararPolling);
     window.SGIPage.ready(function () { if (_currentModalidade) iniciarPolling(); });
     pageScope.listen(window, 'beforeunload', pararPolling);

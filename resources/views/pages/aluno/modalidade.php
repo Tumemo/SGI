@@ -85,11 +85,11 @@ include SGI_ROOT . '/resources/views/components/aluno-header.php';
                         <span id="progressCount" class="fw-semibold">0 de 3</span>
                     </div>
                     <div class="progress" role="progressbar" aria-label="Modalidades selecionadas" aria-valuemin="0" aria-valuemax="3" aria-valuenow="0">
-                        <div id="progressBar" class="progress-bar" style="width: 0%"></div>
+                        <div id="progressBar" class="progress-bar"></div>
                     </div>
                 </div>
                 <div class="col-auto">
-                    <button type="button" class="btn btn-primary px-4 py-2" id="btnSalvar" onclick="salvarEscolhas()" disabled>
+                    <button type="button" class="btn btn-primary px-4 py-2" id="btnSalvar" disabled>
                         <i class="bi bi-check-lg"></i> Salvar
                     </button>
                 </div>
@@ -142,6 +142,4 @@ include SGI_ROOT . '/resources/views/components/aluno-nav.php';
 
 <script type="application/json" data-sgi-config="aluno/modalidade"><?= json_encode(['value2' => ((string) ($genero_usuario)), 'value3' => ($categoria_usuario), 'value4' => ((int)($turma_usuario ?? 0)), 'value5' => ($modalidades_inscritas), 'value6' => ($id_usuario), 'value7' => ($cronograma_versao ?? null), 'value8' => ($versao_publicada ?? null)], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_THROW_ON_ERROR) ?></script>
 <script data-sgi-page src="<?= \App\Shared\Http\Assets::url('js/pages/aluno/modalidade.js') ?>"></script>
-<script src="<?= \App\Shared\Http\Assets::url('vendor/bootstrap/js/bootstrap.bundle.min.js') ?>" crossorigin="anonymous"></script>
-</body>
-</html>
+<?php include SGI_ROOT . '/resources/views/components/footer.php'; ?>

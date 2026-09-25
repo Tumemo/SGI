@@ -246,7 +246,7 @@ $podeEditar = !$isNivel2 && !$isNivel3;
                 <h5 class="modal-title fw-bold text-body d-flex align-items-center gap-2" id="tituloModalEditarJogo"><i class="bi bi-pencil-square text-danger" aria-hidden="true"></i> Editar Jogo</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
             </div>
-            <form id="formEditarJogo" onsubmit="return salvarEdicaoJogo(event)">
+            <form id="formEditarJogo">
                 <div class="modal-body px-4">
                     <input type="hidden" id="editIdJogo">
                     <div class="bg-body-tertiary border rounded-3 p-3 mb-4" id="editResumoPartida">
