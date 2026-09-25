@@ -1,5 +1,6 @@
 window.SGIPage.mount("competicoes/elenco-equipe", function (pageConfig, pageScope) {
 
+const APP_BASE = String(window.SGI_BASE_PATH || "").replace(new RegExp("/+$"), "");
 const API = String(window.SGI_API_BASE || `${window.SGI_BASE_PATH || ''}/api/v1/`).replace(/\/?$/, '/');
 const isAdmin = pageConfig.value1;
 const params = new URLSearchParams(window.location.search);
@@ -49,7 +50,7 @@ function montarGerenciar() {
     if (idModalidade) q.set('id_modalidade', idModalidade);
     if (nomeTurma) q.set('nome_turma', nomeTurma);
     if (nomeModalidade) q.set('nome_modalidade', nomeModalidade);
-    const href = `/equipes/alunos?${q.toString()}`;
+    const href = `${APP_BASE}/equipes/alunos?${q.toString()}`;
     const a = document.getElementById('linkGerenciarMob');
     const b = document.getElementById('linkGerenciarDesk');
     if (a) a.href = href;

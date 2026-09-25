@@ -29,6 +29,26 @@ window.SGIPage.mount("competicoes/modalidade-detalhes", function (pageConfig, pa
             idInterclasseAtual = modalidade.interclasses_id_interclasse || params.get('id') || null;
 
             if (idInterclasseAtual) {
+                const normalizedParams = new URLSearchParams(window.location.search);
+                normalizedParams.set('id', String(idInterclasseAtual));
+                normalizedParams.set('id_modalidade', String(modalidade.id_modalidade || idModalidade));
+                const novaQuery = `?${normalizedParams.toString()}`;
+                if (window.location.search !== novaQuery) {
+                    window.history.replaceState(null, '', `${window.location.pathname}${novaQuery}`);
+                }
+
+                document.querySelectorAll('.sidebar-nav a[href], #sgiMobileMenu a[href]').forEach((link) => {
+                    if (link.hasAttribute('data-sgi-logout')) return;
+                    try {
+                        const url = new URL(link.getAttribute('href'), window.location.origin);
+                        if (url.pathname.endsWith('/perfil')) return;
+                        if (url.searchParams.has('id')) {
+                            url.searchParams.set('id', String(idInterclasseAtual));
+                            link.setAttribute('href', `${url.pathname}${url.search}`);
+                        }
+                    } catch (_) { }
+                });
+
                 const hrefVoltarDetalhe = `${APP_BASE}/painel?id=${idInterclasseAtual}`;
                 document.getElementById('btnVoltarDashboardDesktop').href = hrefVoltarDetalhe;
                 const btnVoltarDetalheMob = document.getElementById('sgiBtnVoltar');
