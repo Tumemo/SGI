@@ -71,6 +71,11 @@ final class CronogramaService
         if ($opening >= $closing) {
             throw new InvalidArgumentException('O encerramento deve ser posterior à abertura.');
         }
+        $timezone = new \DateTimeZone(date_default_timezone_get());
+        $closingDate = \DateTimeImmutable::createFromFormat('!Y-m-d H:i:s', $closing, $timezone);
+        if ($closingDate === false || $closingDate <= new \DateTimeImmutable('now', $timezone)) {
+            throw new InvalidArgumentException('O encerramento precisa estar no futuro para abrir as inscrições.');
+        }
         return $this->repository->openRegistrations($editionId, $userId, $this->revision($data), $opening, $closing);
     }
 

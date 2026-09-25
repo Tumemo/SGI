@@ -52,6 +52,16 @@ window.SGIPage.mount("aluno/modalidade", function (pageConfig, pageScope) {
 
     function esc(s) { const d = document.createElement('div'); d.textContent = s == null ? '' : String(s); return d.innerHTML; }
 
+    function mostrarFeedbackInscricao(message, feedback, error = false) {
+        if (!feedback) return;
+        feedback.className = `small ${error ? 'text-danger' : 'text-success'} text-center mb-0 mt-2`;
+        if (error && String(message || '').toLowerCase().includes('cronograma foi alterado')) {
+            feedback.innerHTML = `${esc(message)} <button type="button" class="btn btn-link btn-sm p-0 align-baseline" data-sgi-action="refresh-registration-agenda">Atualizar a agenda e conferir novamente</button>`;
+            return;
+        }
+        feedback.textContent = message;
+    }
+
     // Mapa de ícones por modalidade (visual)
     function iconeModalidade(nome) {
         const n = (nome || '').toLowerCase();
@@ -812,19 +822,17 @@ window.SGIPage.mount("aluno/modalidade", function (pageConfig, pageScope) {
                 })
             });
             const result = await res.json();
-            document.getElementById('msgFeedback').textContent = result.message;
             if (result.success) {
-                document.getElementById('msgFeedback').className = 'small text-success text-center mb-0 mt-2';
+                mostrarFeedbackInscricao(result.message, document.getElementById('msgFeedback'));
                 setTimeout(() => window.location.href = APP_BASE + '/aluno/inicio', 1500);
             } else {
-                document.getElementById('msgFeedback').className = 'small text-danger text-center mb-0 mt-2';
+                mostrarFeedbackInscricao(result.message, document.getElementById('msgFeedback'), true);
                 btn.disabled = false;
                 btn.innerHTML = '<i class="bi bi-check-lg"></i> Salvar';
             }
         } catch (e) {
             console.error(e);
-            document.getElementById('msgFeedback').textContent = 'Erro de conexão. Tente novamente.';
-            document.getElementById('msgFeedback').className = 'small text-danger text-center mb-0 mt-2';
+            mostrarFeedbackInscricao('Erro de conexão. Tente novamente.', document.getElementById('msgFeedback'), true);
             btn.disabled = false;
             btn.innerHTML = '<i class="bi bi-check-lg"></i> Salvar';
         }
@@ -834,6 +842,11 @@ window.SGIPage.mount("aluno/modalidade", function (pageConfig, pageScope) {
         const grid = document.getElementById('modalidadesGrid');
         const inscricoes = document.getElementById('inscricoesAtuais');
         const equipes = document.getElementById('modalEquipesCorpo');
+        const feedback = document.getElementById('msgFeedback');
+
+        if (feedback) pageScope.listen(feedback, 'click', (event) => {
+            if (event.target.closest('[data-sgi-action="refresh-registration-agenda"]')) window.location.reload();
+        });
 
         const ativar = (event) => {
             if (event.type === 'keydown' && event.key !== 'Enter' && event.key !== ' ') return;

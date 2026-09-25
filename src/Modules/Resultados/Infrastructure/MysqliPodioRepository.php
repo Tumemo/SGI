@@ -111,7 +111,7 @@ final class MysqliPodioRepository implements PodioRepository
                     p.equipes_id_equipe, p.resultado_partida
              FROM jogos j
              INNER JOIN partidas p ON p.jogos_id_jogo = j.id_jogo
-             WHERE j.modalidades_id_modalidade = ? AND j.nome_jogo LIKE 'MM:4:%'
+             WHERE j.modalidades_id_modalidade = ?
                AND j.status_jogo IN ('Concluido', 'Finalizado')
              ORDER BY j.id_jogo ASC, p.id_partida ASC",
         );

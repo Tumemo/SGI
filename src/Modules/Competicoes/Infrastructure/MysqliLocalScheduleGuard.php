@@ -159,10 +159,14 @@ final class MysqliLocalScheduleGuard
             return null;
         }
         $table->free();
-        $sql = "SELECT chave_tag FROM cronograma_compromissos
-                WHERE data_compromisso = ? AND id_local = ?
-                  AND ? < ADDTIME(termino_compromisso, '00:10:00')
-                  AND ADDTIME(?, '00:10:00') > inicio_compromisso
+        $sql = "SELECT cc.chave_tag FROM cronograma_compromissos cc
+                INNER JOIN interclasse_planejamentos ip
+                    ON ip.id_interclasse = cc.id_interclasse
+                   AND ip.versao_publicada = cc.cronograma_versao
+                   AND ip.cronograma_status = 'publicado'
+                WHERE cc.data_compromisso = ? AND cc.id_local = ?
+                  AND ? < ADDTIME(cc.termino_compromisso, '00:10:00')
+                  AND ADDTIME(?, '00:10:00') > cc.inicio_compromisso
                 LIMIT 1" . ($lockRows ? ' FOR UPDATE' : '');
         $statement = $connection->prepare($sql);
         if ($statement === false) {

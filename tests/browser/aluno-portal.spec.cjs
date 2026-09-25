@@ -96,6 +96,9 @@ async function prepararEdicaoPublicada(request) {
             inscricoes_encerramento: dataHoraUtc(24 * 60),
         },
     }), 'abertura das inscrições do portal');
+    await jsonOrThrow(await request.post(`api/v1/edicoes?id=${idInterclasse}`, {
+        data: { status_interclasse: '1' },
+    }), 'ativação da edição do portal');
     return { idInterclasse, idTurma: Number(turma.id_turma), anterior: Number(anterior?.id_interclasse || 0) };
 }
 
@@ -381,7 +384,9 @@ test.describe.serial('Portal do Aluno — Jornada Interativa e Regras de Negóci
         await page.waitForURL(/\/aluno\/inicio/, { timeout: 15_000 });
 
         await expect(page.locator('nav a[aria-label="Rankings publicados"], nav a[title="Rankings publicados"]')).toHaveCount(0);
-        await expect(page.locator('.aluno-card[data-status="active"] a.btn').first()).toContainText('Ver Detalhes');
+        const edicaoAtiva = page.locator('.aluno-card[data-status="active"]');
+        await expect(edicaoAtiva.locator('a.btn').first()).toHaveAttribute('href', new RegExp(`[?&]id=${fixture.idInterclasse}(?:&|$)`));
+        await expect(edicaoAtiva.locator('a.btn').first()).toContainText('Inscrever-se em modalidades');
 
         // 1. Tela de Jogos
         await page.goto(`aluno/jogos?id=${fixture.idInterclasse}`, { waitUntil: 'domcontentloaded' });

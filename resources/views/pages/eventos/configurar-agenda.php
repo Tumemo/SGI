@@ -15,7 +15,7 @@ $nivelUsuarioAgenda = (int)($_SESSION['nivel'] ?? -1);
             <div class="d-flex flex-wrap align-items-start justify-content-between gap-3">
                 <div>
                     <h2 id="cronogramaPlanejadoTitulo" class="h5 fw-bold mb-1">Cronograma antes das inscrições</h2>
-                    <p class="small text-body-secondary mb-0">Configure as equipes por turma nas modalidades, gere a grade e só depois abra as inscrições.</p>
+                    <p class="small text-body-secondary mb-0">Prepare as equipes, gere e confira a prévia, publique o cronograma e então abra ou encerre as inscrições. A liberação da competição materializa os jogos; depois dela, a edição não pode ser reconfigurada.</p>
                 </div>
                 <span id="cronogramaPlanejadoStatus" class="badge text-bg-secondary">Verificando...</span>
             </div>
@@ -40,6 +40,11 @@ $nivelUsuarioAgenda = (int)($_SESSION['nivel'] ?? -1);
                 <div class="col-6 col-md-3"><label class="form-label small" for="cronogramaInscricaoInicio">Abertura das inscrições</label><input id="cronogramaInscricaoInicio" type="datetime-local" class="form-control form-control-sm"></div>
                 <div class="col-6 col-md-3"><label class="form-label small" for="cronogramaInscricaoFim">Encerramento das inscrições</label><input id="cronogramaInscricaoFim" type="datetime-local" class="form-control form-control-sm"></div>
             </div>
+            <section id="cronogramaPrevia" class="mt-3 d-none" aria-labelledby="cronogramaPreviaTitulo" aria-live="polite">
+                <h3 id="cronogramaPreviaTitulo" class="h6 fw-semibold mb-1">Prévia da grade</h3>
+                <p id="cronogramaPreviaStatus" class="small text-body-secondary mb-2"></p>
+                <div id="cronogramaPreviaCorpo" class="table-responsive"></div>
+            </section>
             <p id="cronogramaPlanejadoResumo" class="small mb-0 mt-3" role="status" aria-live="polite"></p>
         </div>
     </div>

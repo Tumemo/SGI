@@ -75,7 +75,12 @@ $router->add(['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'], '/api/v1/turmas', $wit
     static fn (mysqli $conn) => new \App\Modules\Participantes\Presentation\Http\TurmaController(new \App\Modules\Participantes\Application\TurmaService(new \App\Modules\Participantes\Infrastructure\MysqliTurmaRepository($conn))),
 ));
 $router->add(['GET', 'POST', 'DELETE', 'OPTIONS'], '/api/v1/arrecadacao', $withDatabase(
-    static fn (mysqli $conn) => new \App\Modules\Resultados\Presentation\Http\ArrecadacaoController(new \App\Modules\Resultados\Application\ArrecadacaoService(new \App\Modules\Resultados\Infrastructure\MysqliArrecadacaoRepository($conn))),
+    static fn (mysqli $conn) => new \App\Modules\Resultados\Presentation\Http\ArrecadacaoController(
+        new \App\Modules\Resultados\Application\ArrecadacaoService(new \App\Modules\Resultados\Infrastructure\MysqliArrecadacaoRepository($conn)),
+        new \App\Modules\Sincronizacao\Presentation\Http\MutationAction(
+            new \App\Modules\Sincronizacao\Infrastructure\MysqliMutationStore($conn),
+        ),
+    ),
 ));
 $router->add(['GET', 'POST', 'PUT'], '/api/v1/tipos-modalidade', $withDatabase(
     static fn (mysqli $conn): TipoModalidadeController => new TipoModalidadeController(

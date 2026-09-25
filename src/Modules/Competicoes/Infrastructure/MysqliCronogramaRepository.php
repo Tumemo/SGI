@@ -29,13 +29,32 @@ final class MysqliCronogramaRepository implements CronogramaRepository
         $publishedVersion = $edition['versao_publicada'] === null
             ? (int) $edition['cronograma_versao']
             : (int) $edition['versao_publicada'];
-        $commitments = $this->all('SELECT id_compromisso, id_modalidade, id_equipe, chave_tag, DATE_FORMAT(data_compromisso, \'%Y-%m-%d\') AS data_compromisso, TIME_FORMAT(inicio_compromisso, \'%H:%i:%s\') AS inicio_compromisso, TIME_FORMAT(termino_compromisso, \'%H:%i:%s\') AS termino_compromisso, id_local, condicional, cronograma_versao FROM cronograma_compromissos WHERE id_interclasse = ? AND cronograma_versao = ? ORDER BY data_compromisso, inicio_compromisso, id_local, id_compromisso', 'ii', [$editionId, $publishedVersion]);
+        $commitments = $this->all('SELECT cc.id_compromisso, cc.id_modalidade, m.nome_modalidade, cc.id_equipe, cc.chave_tag, DATE_FORMAT(cc.data_compromisso, \'%Y-%m-%d\') AS data_compromisso, TIME_FORMAT(cc.inicio_compromisso, \'%H:%i:%s\') AS inicio_compromisso, TIME_FORMAT(cc.termino_compromisso, \'%H:%i:%s\') AS termino_compromisso, cc.id_local, COALESCE(l.nome_local, \'A definir\') AS nome_local, cc.condicional, cc.cronograma_versao FROM cronograma_compromissos cc INNER JOIN modalidades m ON m.id_modalidade = cc.id_modalidade LEFT JOIN locais l ON l.id_local = cc.id_local WHERE cc.id_interclasse = ? AND cc.cronograma_versao = ? ORDER BY cc.data_compromisso, cc.inicio_compromisso, cc.id_local, cc.id_compromisso', 'ii', [$editionId, $publishedVersion]);
         $nodes = $this->all('SELECT id_no, id_modalidade, id_turma, chave_tag, tipo_no, fase_largura, slot, origem_a_tag, origem_b_tag, id_equipe_a, id_equipe_b, cronograma_versao FROM cronograma_nos WHERE id_interclasse = ? AND cronograma_versao = ? ORDER BY id_modalidade, id_turma, fase_largura DESC, slot', 'ii', [$editionId, $publishedVersion]);
         $incomplete = $this->all('SELECT e.id_equipe, e.modalidades_id_modalidade AS id_modalidade, e.turmas_id_turma AS id_turma, ep.min_inscritos, COUNT(ehu.usuarios_id_usuario) AS inscritos FROM equipes e INNER JOIN equipe_planejamentos ep ON ep.id_equipe = e.id_equipe LEFT JOIN equipes_has_usuarios ehu ON ehu.equipes_id_equipe = e.id_equipe INNER JOIN modalidades m ON m.id_modalidade = e.modalidades_id_modalidade WHERE m.interclasses_id_interclasse = ? AND m.status_modalidade = \'1\' AND e.status_equipe = \'1\' GROUP BY e.id_equipe, e.modalidades_id_modalidade, e.turmas_id_turma, ep.min_inscritos HAVING COUNT(ehu.usuarios_id_usuario) < ep.min_inscritos ORDER BY e.modalidades_id_modalidade, e.turmas_id_turma, e.id_equipe', 'i', [$editionId]);
         $edition['modalidades'] = $modalities;
         $edition['compromissos'] = $commitments;
         $edition['nos'] = $nodes;
         $edition['equipes_incompletas'] = $incomplete;
+        $edition['inscricoes_status_efetivo'] = (string) $edition['inscricoes_status'];
+        if ((string) $edition['inscricoes_status'] === 'abertas') {
+            $now = new \DateTimeImmutable('now');
+            $opening = null;
+            $closing = null;
+            try {
+                $opening = $edition['inscricoes_abertura'] === null ? null : new \DateTimeImmutable((string) $edition['inscricoes_abertura']);
+                $closing = $edition['inscricoes_encerramento'] === null ? null : new \DateTimeImmutable((string) $edition['inscricoes_encerramento']);
+            } catch (\Throwable) {
+                $edition['inscricoes_status_efetivo'] = 'janela_invalida';
+            }
+            if ($opening === null || $closing === null || $opening >= $closing) {
+                $edition['inscricoes_status_efetivo'] = 'janela_invalida';
+            } elseif ($now < $opening) {
+                $edition['inscricoes_status_efetivo'] = 'programadas';
+            } elseif ($now >= $closing) {
+                $edition['inscricoes_status_efetivo'] = 'expiradas';
+            }
+        }
         $edition['operacao'] = [
             'versao_publicada' => $publishedVersion,
             'versao_em_edicao' => (int) $edition['cronograma_versao'],
@@ -177,10 +196,11 @@ final class MysqliCronogramaRepository implements CronogramaRepository
         if ($localIds === []) {
             throw new InvalidArgumentException('Informe ao menos um local ativo para gerar a agenda.');
         }
-        $modalities = $this->all('SELECT m.id_modalidade, m.nome_modalidade, m.categorias_id_categoria, tm.nome_tipo_modalidade, mp.equipes_planejadas, mp.formato_participacao, mp.duracao_prevista_min, mp.descanso_min FROM modalidades m LEFT JOIN modalidade_planejamentos mp ON mp.id_modalidade = m.id_modalidade INNER JOIN tipos_modalidades tm ON tm.id_tipo_modalidade = m.tipos_modalidades_id_tipo_modalidade WHERE m.interclasses_id_interclasse = ? AND m.status_modalidade = \'1\' ORDER BY m.id_modalidade', 'i', [$editionId]);
+        $modalities = $this->all('SELECT m.id_modalidade, m.nome_modalidade, m.categorias_id_categoria, tm.nome_tipo_modalidade, mp.equipes_planejadas, mp.min_inscritos_equipe, mp.max_inscritos_equipe, mp.formato_participacao, mp.duracao_prevista_min, mp.descanso_min FROM modalidades m LEFT JOIN modalidade_planejamentos mp ON mp.id_modalidade = m.id_modalidade INNER JOIN tipos_modalidades tm ON tm.id_tipo_modalidade = m.tipos_modalidades_id_tipo_modalidade WHERE m.interclasses_id_interclasse = ? AND m.status_modalidade = \'1\' ORDER BY m.id_modalidade', 'i', [$editionId]);
         if ($modalities === []) {
             throw new InvalidArgumentException('Cadastre e configure ao menos uma modalidade ativa antes de gerar a agenda.');
         }
+        $preparedTeams = $this->assertPreparedTeams($editionId, $modalities);
         $nodes = [];
         $scheduledNodes = [];
         $pendencias = [];
@@ -196,7 +216,7 @@ final class MysqliCronogramaRepository implements CronogramaRepository
             }
             $duration = (int) ($modality['duracao_prevista_min'] ?? 0) > 0 ? (int) $modality['duracao_prevista_min'] : $durationDefault;
             $gap = max($gapDefault, (int) ($modality['descanso_min'] ?? 0));
-            $teamRows = $this->all('SELECT e.id_equipe, e.turmas_id_turma AS id_turma, ep.ordem_planejada FROM equipes e INNER JOIN equipe_planejamentos ep ON ep.id_equipe = e.id_equipe INNER JOIN turmas t ON t.id_turma = e.turmas_id_turma WHERE e.modalidades_id_modalidade = ? AND t.categorias_id_categoria = ? AND t.interclasses_id_interclasse = ? AND e.status_equipe = \'1\' AND t.status_turma = \'1\' ORDER BY ep.ordem_planejada, e.id_equipe', 'iii', [$modalityId, (int) $modality['categorias_id_categoria'], $editionId]);
+            $teamRows = $preparedTeams[$modalityId] ?? [];
             $teamIds = array_map(static fn (array $team): int => (int) $team['id_equipe'], $teamRows);
             if ($teamIds === []) {
                 $pendencias[] = ['tipo' => 'equipes', 'id_modalidade' => $modalityId, 'mensagem' => 'A modalidade ainda não possui equipes planejadas para as turmas ativas da categoria.'];
@@ -266,7 +286,7 @@ final class MysqliCronogramaRepository implements CronogramaRepository
             if ((string) $edition['inscricoes_status'] !== 'fechadas' || !in_array((string) $edition['cronograma_status'], [CronogramaRules::RASCUNHO, CronogramaRules::REVISAO], true)) {
                 throw new InvalidArgumentException('Feche as inscrições e mantenha o cronograma em rascunho ou revisão antes de publicar.');
             }
-            $modalities = $this->all('SELECT m.id_modalidade, mp.equipes_planejadas FROM modalidades m LEFT JOIN modalidade_planejamentos mp ON mp.id_modalidade = m.id_modalidade WHERE m.interclasses_id_interclasse = ? AND m.status_modalidade = \'1\' FOR UPDATE', 'i', [$editionId]);
+            $modalities = $this->all('SELECT m.id_modalidade, m.nome_modalidade, m.categorias_id_categoria, mp.equipes_planejadas, mp.min_inscritos_equipe, mp.max_inscritos_equipe, mp.formato_participacao FROM modalidades m LEFT JOIN modalidade_planejamentos mp ON mp.id_modalidade = m.id_modalidade WHERE m.interclasses_id_interclasse = ? AND m.status_modalidade = \'1\'', 'i', [$editionId]);
             if ($modalities === []) {
                 throw new InvalidArgumentException('Cadastre ao menos uma modalidade ativa.');
             }
@@ -279,6 +299,9 @@ final class MysqliCronogramaRepository implements CronogramaRepository
                 throw new InvalidArgumentException('A publicação exige os nós do cronograma gerado.');
             }
             $this->validateCommitments($editionId, $modalities, $commitments, $nodes);
+            $localIds = array_values(array_unique(array_map(static fn (array $item): int => (int) ($item['id_local'] ?? 0), $commitments)));
+            MysqliLocalScheduleGuard::lockLocals($this->connection, $localIds);
+            $this->assertNoExternalCommitmentConflicts($editionId, $commitments);
             $version = (int) $edition['cronograma_versao'] + 1;
             $this->insertNodes($editionId, $version, $nodes);
             $this->insertCommitments($editionId, $version, $commitments);
@@ -330,6 +353,16 @@ final class MysqliCronogramaRepository implements CronogramaRepository
         try {
             $edition = $this->lockEdition($editionId);
             $this->assertRevision($edition, $expectedRevision);
+            if ((string) $edition['cronograma_status'] !== CronogramaRules::PUBLICADO || (int) $edition['operacao_liberada'] === 1) {
+                throw new InvalidArgumentException('Somente uma competição publicada e ainda não liberada pode encerrar as inscrições.');
+            }
+            if ((string) $edition['inscricoes_status'] === 'encerradas') {
+                Transaction::commit($this->connection);
+                return ['success' => true, 'cronograma_status' => CronogramaRules::PUBLICADO, 'inscricoes_status' => 'encerradas', 'cronograma_versao' => $expectedRevision, 'idempotente' => true];
+            }
+            if (!in_array((string) $edition['inscricoes_status'], ['abertas', 'fechadas'], true)) {
+                throw new InvalidArgumentException('O estado atual das inscrições não pode ser encerrado.');
+            }
             $statement = $this->prepare("UPDATE interclasse_planejamentos SET inscricoes_status = 'encerradas' WHERE id_interclasse = ? AND cronograma_versao = ?");
             $statement->bind_param('ii', $editionId, $expectedRevision);
             if (!$statement->execute()) {
@@ -358,7 +391,7 @@ final class MysqliCronogramaRepository implements CronogramaRepository
             if ((string) $edition['cronograma_status'] !== CronogramaRules::PUBLICADO || (string) $edition['inscricoes_status'] !== 'encerradas') {
                 throw new InvalidArgumentException('Encerre as inscrições antes de liberar a operação.');
             }
-            $incomplete = $this->all('SELECT e.id_equipe FROM equipes e INNER JOIN equipe_planejamentos ep ON ep.id_equipe = e.id_equipe INNER JOIN modalidades m ON m.id_modalidade = e.modalidades_id_modalidade LEFT JOIN equipes_has_usuarios ehu ON ehu.equipes_id_equipe = e.id_equipe WHERE m.interclasses_id_interclasse = ? AND m.status_modalidade = \'1\' AND e.status_equipe = \'1\' GROUP BY e.id_equipe, ep.min_inscritos HAVING COUNT(ehu.usuarios_id_usuario) < ep.min_inscritos FOR UPDATE', 'i', [$editionId]);
+            $incomplete = $this->all('SELECT e.id_equipe FROM equipes e INNER JOIN equipe_planejamentos ep ON ep.id_equipe = e.id_equipe INNER JOIN modalidades m ON m.id_modalidade = e.modalidades_id_modalidade INNER JOIN turmas t ON t.id_turma = e.turmas_id_turma AND t.interclasses_id_interclasse = m.interclasses_id_interclasse AND t.categorias_id_categoria = m.categorias_id_categoria AND t.status_turma = \'1\' LEFT JOIN equipes_has_usuarios ehu ON ehu.equipes_id_equipe = e.id_equipe WHERE m.interclasses_id_interclasse = ? AND m.status_modalidade = \'1\' AND e.status_equipe = \'1\' GROUP BY e.id_equipe, ep.min_inscritos HAVING COUNT(ehu.usuarios_id_usuario) < ep.min_inscritos FOR UPDATE', 'i', [$editionId]);
             if ($incomplete !== []) {
                 throw new InvalidArgumentException('Resolva os mínimos de elenco antes de liberar a operação.');
             }
@@ -366,6 +399,29 @@ final class MysqliCronogramaRepository implements CronogramaRepository
             $nodes = $this->all('SELECT id_no, id_modalidade, tipo_no, chave_tag, origem_a_tag, origem_b_tag FROM cronograma_nos WHERE id_interclasse = ? AND cronograma_versao = ? ORDER BY fase_largura DESC, slot, id_no FOR UPDATE', 'ii', [$editionId, $version]);
             if ($nodes === []) {
                 throw new InvalidArgumentException('Publique uma árvore de competição antes de liberar a operação.');
+            }
+            $activeModalities = $this->all('SELECT m.id_modalidade, m.nome_modalidade, m.categorias_id_categoria, mp.equipes_planejadas, mp.min_inscritos_equipe, mp.max_inscritos_equipe FROM modalidades m LEFT JOIN modalidade_planejamentos mp ON mp.id_modalidade = m.id_modalidade WHERE m.interclasses_id_interclasse = ? AND m.status_modalidade = \'1\' ORDER BY m.id_modalidade', 'i', [$editionId]);
+            $expectedTeams = $this->assertPreparedTeams($editionId, $activeModalities);
+            $treeTeams = $this->all('SELECT DISTINCT cn.id_modalidade, cne.id_equipe FROM cronograma_nos cn INNER JOIN cronograma_no_equipes cne ON cne.id_no = cn.id_no WHERE cn.id_interclasse = ? AND cn.cronograma_versao = ?', 'ii', [$editionId, $version]);
+            $publishedTeams = [];
+            foreach ($treeTeams as $treeTeam) {
+                $publishedTeams[(int) $treeTeam['id_modalidade']][] = (int) $treeTeam['id_equipe'];
+            }
+            $expectedModalityIds = array_map('intval', array_keys($expectedTeams));
+            $publishedModalityIds = array_map('intval', array_keys($publishedTeams));
+            sort($expectedModalityIds, SORT_NUMERIC);
+            sort($publishedModalityIds, SORT_NUMERIC);
+            if ($expectedModalityIds !== $publishedModalityIds) {
+                throw new InvalidArgumentException('As modalidades da publicação mudaram desde a geração. Reabra a revisão e publique a versão atualizada.');
+            }
+            foreach ($expectedTeams as $modalityId => $teamRows) {
+                $expectedIds = array_map(static fn (array $team): int => (int) $team['id_equipe'], $teamRows);
+                $treeIds = array_values(array_unique($publishedTeams[$modalityId] ?? []));
+                sort($expectedIds, SORT_NUMERIC);
+                sort($treeIds, SORT_NUMERIC);
+                if ($expectedIds !== $treeIds) {
+                    throw new InvalidArgumentException('As equipes da publicação mudaram desde a geração. Reabra a revisão, prepare as equipes e publique novamente.');
+                }
             }
             $statement = $this->prepare("UPDATE interclasse_planejamentos SET operacao_liberada = 1 WHERE id_interclasse = ? AND cronograma_versao = ? AND inscricoes_status = 'encerradas'");
             $statement->bind_param('ii', $editionId, $expectedRevision);
@@ -1150,9 +1206,10 @@ final class MysqliCronogramaRepository implements CronogramaRepository
         if ($items === [] && $nodes === []) {
             throw new InvalidArgumentException('O cronograma precisa ter nós antes da publicação.');
         }
+        $expectedTeamsByModality = $this->assertPreparedTeams($editionId, $modalities);
         $modalityIds = array_fill_keys(array_map(static fn (array $row): int => (int) $row['id_modalidade'], $modalities), true);
         $coveredModalities = [];
-        $coveredTeams = [];
+        $coveredTeamsByModality = [];
         $nodesByTag = [];
         $nodeCommitments = [];
         foreach ($nodes as $node) {
@@ -1170,7 +1227,7 @@ final class MysqliCronogramaRepository implements CronogramaRepository
             $nodesByTag[$modalityId . ':' . $tag] = $node + ['equipe_ids' => $candidateIds];
             $coveredModalities[$modalityId] = true;
             foreach ($candidateIds as $teamId) {
-                $coveredTeams[$teamId] = true;
+                $coveredTeamsByModality[$modalityId][$teamId] = true;
             }
         }
         foreach ($items as $item) {
@@ -1180,7 +1237,6 @@ final class MysqliCronogramaRepository implements CronogramaRepository
                 throw new InvalidArgumentException('Cada compromisso deve apontar para uma modalidade e equipe ativas.');
             }
             $coveredModalities[$modalityId] = true;
-            $coveredTeams[$teamId] = true;
             $tag = trim((string) ($item['chave_tag'] ?? ''));
             $matches = array_filter($nodesByTag, static fn (array $node): bool => (int) ($node['id_modalidade'] ?? 0) === $modalityId && (string) ($node['chave_tag'] ?? '') === $tag);
             if ($matches === []) {
@@ -1209,10 +1265,13 @@ final class MysqliCronogramaRepository implements CronogramaRepository
                 throw new InvalidArgumentException('Todas as modalidades ativas precisam estar cobertas pelo cronograma.');
             }
         }
-        $teams = $this->all('SELECT e.id_equipe, e.modalidades_id_modalidade FROM equipes e INNER JOIN equipe_planejamentos ep ON ep.id_equipe = e.id_equipe INNER JOIN modalidades m ON m.id_modalidade = e.modalidades_id_modalidade WHERE m.interclasses_id_interclasse = ? AND m.status_modalidade = \'1\' AND e.status_equipe = \'1\'', 'i', [$editionId]);
-        foreach ($teams as $team) {
-            if (!isset($coveredTeams[(int) $team['id_equipe']])) {
-                throw new InvalidArgumentException('Todas as equipes preparadas precisam de ao menos um compromisso.');
+        foreach ($expectedTeamsByModality as $modalityId => $expectedTeams) {
+            $expectedTeamIds = array_map(static fn (array $team): int => (int) $team['id_equipe'], $expectedTeams);
+            $coveredTeamIds = array_map('intval', array_keys($coveredTeamsByModality[$modalityId] ?? []));
+            sort($expectedTeamIds, SORT_NUMERIC);
+            sort($coveredTeamIds, SORT_NUMERIC);
+            if ($coveredTeamIds !== $expectedTeamIds) {
+                throw new InvalidArgumentException('O rascunho não cobre exatamente as equipes ativas preparadas. Prepare as equipes e gere um novo rascunho.');
             }
         }
         foreach ($items as $index => $first) {
@@ -1221,28 +1280,81 @@ final class MysqliCronogramaRepository implements CronogramaRepository
                 $secondNode = $this->nodeForCommitment($nodesByTag, $second);
                 $sameTeam = array_intersect($firstNode['equipe_ids'] ?? [(int) ($first['id_equipe'] ?? 0)], $secondNode['equipe_ids'] ?? [(int) ($second['id_equipe'] ?? 0)]) !== [];
                 $sameLocal = (int) ($first['id_local'] ?? 0) === (int) ($second['id_local'] ?? 0);
-                $sameStudent = $this->hasEnrolledStudentConflict(
+                $studentOverlap = CronogramaRules::schedulesConflict($first, $second);
+                if ($studentOverlap && $this->hasEnrolledStudentConflict(
                     $firstNode['equipe_ids'] ?? [(int) ($first['id_equipe'] ?? 0)],
                     $secondNode['equipe_ids'] ?? [(int) ($second['id_equipe'] ?? 0)],
-                );
-                if ($sameStudent) {
+                )) {
                     throw new InvalidArgumentException('O cronograma conflita inscrições existentes de um mesmo aluno.');
                 }
-                if (!$sameTeam && !$sameLocal) {
-                    continue;
-                }
                 $margin = $sameLocal ? 10 : 0;
-                if (CronogramaRules::overlap(
-                    (string) ($first['data_compromisso'] ?? $first['data'] ?? ''),
-                    (string) ($first['inicio_compromisso'] ?? $first['inicio'] ?? ''),
-                    (string) ($first['termino_compromisso'] ?? $first['fim'] ?? ''),
-                    (string) ($second['data_compromisso'] ?? $second['data'] ?? ''),
-                    (string) ($second['inicio_compromisso'] ?? $second['inicio'] ?? ''),
-                    (string) ($second['termino_compromisso'] ?? $second['fim'] ?? ''),
-                    $margin,
-                )) {
+                if (($sameTeam || $sameLocal) && CronogramaRules::schedulesConflict($first, $second, $margin)) {
                     throw new InvalidArgumentException('O cronograma possui conflito de equipe ou local entre compromissos.');
                 }
+            }
+        }
+    }
+
+    /** @param list<array<string,mixed>> $modalities @return array<int, list<array<string,mixed>>> */
+    private function assertPreparedTeams(int $editionId, array $modalities): array
+    {
+        $prepared = [];
+        foreach ($modalities as $modality) {
+            $modalityId = (int) ($modality['id_modalidade'] ?? 0);
+            $quantity = (int) ($modality['equipes_planejadas'] ?? 0);
+            $minimum = (int) ($modality['min_inscritos_equipe'] ?? 0);
+            $maximum = (int) ($modality['max_inscritos_equipe'] ?? 0);
+            if ($modalityId <= 0 || $quantity <= 0 || $minimum <= 0 || $maximum < $minimum) {
+                throw new InvalidArgumentException('Configure os limites e a quantidade de equipes de cada modalidade antes de gerar a agenda.');
+            }
+            $classes = $this->all('SELECT id_turma FROM turmas WHERE interclasses_id_interclasse = ? AND categorias_id_categoria = ? AND status_turma = \'1\' ORDER BY id_turma', 'ii', [$editionId, (int) ($modality['categorias_id_categoria'] ?? 0)]);
+            if ($classes === []) {
+                throw new InvalidArgumentException('A modalidade não possui turmas ativas na categoria selecionada. Revise a categoria antes de gerar a agenda.');
+            }
+            $teams = $this->all('SELECT e.id_equipe, e.turmas_id_turma AS id_turma, ep.ordem_planejada, ep.planejada, ep.min_inscritos, ep.max_inscritos FROM equipes e INNER JOIN turmas t ON t.id_turma = e.turmas_id_turma LEFT JOIN equipe_planejamentos ep ON ep.id_equipe = e.id_equipe WHERE e.modalidades_id_modalidade = ? AND t.categorias_id_categoria = ? AND t.interclasses_id_interclasse = ? AND e.status_equipe = \'1\' AND t.status_turma = \'1\' ORDER BY t.id_turma, ep.ordem_planejada, e.id_equipe', 'iii', [$modalityId, (int) $modality['categorias_id_categoria'], $editionId]);
+            $byClass = [];
+            foreach ($teams as $team) {
+                $byClass[(int) $team['id_turma']][] = $team;
+            }
+            foreach ($classes as $class) {
+                $classId = (int) $class['id_turma'];
+                $classTeams = $byClass[$classId] ?? [];
+                if (count($classTeams) !== $quantity) {
+                    throw new InvalidArgumentException('A quantidade de equipes preparadas não corresponde à configuração atual. Use Preparar equipes e gere um novo rascunho.');
+                }
+                foreach ($classTeams as $team) {
+                    if ((int) ($team['planejada'] ?? 0) !== 1
+                        || (int) ($team['min_inscritos'] ?? 0) !== $minimum
+                        || (int) ($team['max_inscritos'] ?? 0) !== $maximum) {
+                        throw new InvalidArgumentException('Os limites das equipes preparadas estão desatualizados. Use Preparar equipes e gere um novo rascunho.');
+                    }
+                }
+            }
+            $prepared[$modalityId] = $teams;
+        }
+        return $prepared;
+    }
+
+    /** @param list<array<string,mixed>> $items */
+    private function assertNoExternalCommitmentConflicts(int $editionId, array $items): void
+    {
+        foreach ($items as $item) {
+            $date = trim((string) ($item['data_compromisso'] ?? $item['data'] ?? ''));
+            $start = trim((string) ($item['inicio_compromisso'] ?? $item['inicio'] ?? ''));
+            $end = trim((string) ($item['termino_compromisso'] ?? $item['fim'] ?? ''));
+            $local = (int) ($item['id_local'] ?? 0);
+            if ($local <= 0 || !preg_match('/^\\d{4}-\\d{2}-\\d{2}$/', $date) || !preg_match('/^\\d{2}:\\d{2}(?::\\d{2})?$/', $start) || !preg_match('/^\\d{2}:\\d{2}(?::\\d{2})?$/', $end)) {
+                throw new InvalidArgumentException('Compromisso do cronograma inválido. Gere um novo rascunho.');
+            }
+            CronogramaRules::overlap($date, $start, $end, $date, $start, $end);
+            MysqliLocalScheduleGuard::assertLocalBelongsToEdition($this->connection, $local, $editionId);
+            $reservation = $this->one("SELECT id_reserva AS id, chave_tag AS nome FROM agenda_reservas WHERE id_interclasse = ? AND data_reserva = ? AND id_local = ? AND ? < ADDTIME(termino_reserva, '00:10:00') AND ADDTIME(?, '00:10:00') > inicio_reserva LIMIT 1 FOR UPDATE", 'isiss', [$editionId, $date, $local, $start, $end]);
+            if ($reservation !== null) {
+                throw new InvalidArgumentException('Uma reserva independente ocupa este local e horário. Atualize a agenda e gere um novo rascunho.');
+            }
+            $game = $this->one("SELECT j.id_jogo AS id, j.nome_jogo AS nome FROM jogos j INNER JOIN modalidades m ON m.id_modalidade = j.modalidades_id_modalidade WHERE m.interclasses_id_interclasse = ? AND DATE(j.data_jogo) = ? AND j.locais_id_local = ? AND ? < ADDTIME(j.termino_jogo, '00:10:00') AND ADDTIME(?, '00:10:00') > j.inicio_jogo LIMIT 1 FOR UPDATE", 'isiss', [$editionId, $date, $local, $start, $end]);
+            if ($game !== null) {
+                throw new InvalidArgumentException('Um jogo existente ocupa este local e horário. Atualize a agenda e gere um novo rascunho.');
             }
         }
     }
@@ -1339,6 +1451,7 @@ final class MysqliCronogramaRepository implements CronogramaRepository
             $start = $cursor->format('H:i:s');
             $endTime = $end->format('H:i:s');
             $localCount = count($localIds);
+            $nextAvailable = null;
             for ($offset = 0; $offset < $localCount; $offset++) {
                 $candidateIndex = $localIndex + $offset;
                 $local = $localIds[$candidateIndex % $localCount];
@@ -1349,7 +1462,11 @@ final class MysqliCronogramaRepository implements CronogramaRepository
                     }
                     if (CronogramaRules::overlap($date, $start, $endTime, $date, (string) ($reserved['inicio'] ?? ''), (string) ($reserved['termino'] ?? ''), 10)) {
                         $conflict = true;
-                        break;
+                        $reservedEnd = new \DateTimeImmutable($date . ' ' . (string) $reserved['termino']);
+                        $afterReservation = $reservedEnd->modify('+10 minutes');
+                        if ($nextAvailable === null || $afterReservation < $nextAvailable) {
+                            $nextAvailable = $afterReservation;
+                        }
                     }
                 }
                 if (!$conflict) {
@@ -1357,7 +1474,9 @@ final class MysqliCronogramaRepository implements CronogramaRepository
                     return [$next, $candidateIndex + 1, $date, $start, $endTime, $local];
                 }
             }
-            $cursor = $end->modify('+1 minute');
+            $cursor = $nextAvailable !== null && $nextAvailable > $cursor
+                ? $nextAvailable
+                : $cursor->modify('+1 minute');
             $localIndex = 0;
         }
         return null;

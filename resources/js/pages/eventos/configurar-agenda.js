@@ -800,6 +800,11 @@ window.SGIPage.mount("eventos/configurar-agenda", function (pageConfig, pageScop
             const botaoLiberar = document.getElementById('cronogramaLiberar');
             const botaoRevisar = document.getElementById('cronogramaRevisar');
             const botaoAtualizar = document.getElementById('cronogramaAtualizar');
+            const cronogramaPrevia = document.getElementById('cronogramaPrevia');
+            const cronogramaPreviaStatus = document.getElementById('cronogramaPreviaStatus');
+            const cronogramaPreviaCorpo = document.getElementById('cronogramaPreviaCorpo');
+            const campoInscricaoInicio = document.getElementById('cronogramaInscricaoInicio');
+            const campoInscricaoFim = document.getElementById('cronogramaInscricaoFim');
             const hoje = hojeISO();
             const campoInicio = document.getElementById('cronogramaDataInicio');
             const campoFim = document.getElementById('cronogramaDataFim');
@@ -820,6 +825,85 @@ window.SGIPage.mount("eventos/configurar-agenda", function (pageConfig, pageScop
                 document.getElementById('cronogramaDuracao'),
             ].filter(Boolean);
             const assinaturaGeracao = () => JSON.stringify(camposGeracao.map((campo) => campo.value));
+            const valorDataHoraLocal = (value) => String(value || '').replace(' ', 'T').slice(0, 16);
+            [campoInscricaoInicio, campoInscricaoFim].filter(Boolean).forEach((field) => {
+                pageScope.listen(field, 'input', () => { field.dataset.userEdited = 'true'; });
+            });
+            const renderizarPrevia = () => {
+                if (!cronogramaPrevia || !cronogramaPreviaStatus || !cronogramaPreviaCorpo || !cronogramaEstado) return;
+                const draftIsCurrent = cronogramaRascunho
+                    && cronogramaRascunho.cronograma_versao === Number(cronogramaEstado.cronograma_versao || 0)
+                    && ['rascunho', 'revisao'].includes(String(cronogramaEstado.cronograma_status));
+                const isPublished = cronogramaEstado.cronograma_status === 'publicado'
+                    && Number(cronogramaEstado.versao_publicada || 0) === Number(cronogramaEstado.cronograma_versao || 0);
+                const isSuspended = cronogramaEstado.cronograma_status === 'revisao';
+                if (!draftIsCurrent && !isPublished && !isSuspended) {
+                    cronogramaPrevia.classList.add('d-none');
+                    return;
+                }
+                cronogramaPrevia.classList.remove('d-none');
+                let commitments = [];
+                if (draftIsCurrent) {
+                    commitments = Array.isArray(cronogramaRascunho.compromissos) ? cronogramaRascunho.compromissos : [];
+                    cronogramaPreviaStatus.textContent = `Rascunho da revisão ${Number(cronogramaRascunho.cronograma_versao)}. Esta prévia ainda não foi publicada.`;
+                } else if (isPublished) {
+                    commitments = Array.isArray(cronogramaEstado.compromissos) ? cronogramaEstado.compromissos : [];
+                    cronogramaPreviaStatus.textContent = `Versão publicada ${Number(cronogramaEstado.versao_publicada)}.`;
+                } else {
+                    cronogramaPreviaStatus.textContent = 'A versão publicada está suspensa durante a revisão. Gere um rascunho novo para conferir os horários atualizados.';
+                }
+                cronogramaPreviaCorpo.replaceChildren();
+                if (commitments.length === 0) {
+                    const empty = document.createElement('p');
+                    empty.className = 'small text-body-secondary mb-0';
+                    empty.textContent = isSuspended && !draftIsCurrent ? 'A nova versão ainda não foi gerada.' : 'Esta versão não possui compromissos agendados.';
+                    cronogramaPreviaCorpo.append(empty);
+                    return;
+                }
+                const modalities = new Map((cronogramaEstado.modalidades || []).map((item) => [Number(item.id_modalidade), item.nome_modalidade]));
+                const locals = new Map((locaisLista || []).map((item) => [Number(item.id_local), item.nome_local]));
+                const labelDaEtapa = (tag) => {
+                    const parts = String(tag || '').split(':');
+                    if (parts[3] === 'IND') return 'Prova individual';
+                    if (parts[3] !== 'MM') return 'Partida prevista';
+                    const width = Number(parts[4] || 0);
+                    const slot = Number(parts[5] || 0) + 1;
+                    const names = { 2: 'Final', 4: 'Semifinal', 8: 'Quartas de final', 16: 'Oitavas de final' };
+                    return `${names[width] || `Fase ${width}`} · partida ${slot}`;
+                };
+                const table = document.createElement('table');
+                table.className = 'table table-sm table-striped align-middle mb-0';
+                const head = document.createElement('thead');
+                const headerRow = document.createElement('tr');
+                ['Modalidade e etapa', 'Data e horário', 'Local'].forEach((label) => {
+                    const cell = document.createElement('th');
+                    cell.scope = 'col';
+                    cell.textContent = label;
+                    headerRow.append(cell);
+                });
+                head.append(headerRow);
+                const body = document.createElement('tbody');
+                commitments.forEach((item) => {
+                    const row = document.createElement('tr');
+                    const modality = document.createElement('td');
+                    const modalityName = item.nome_modalidade || modalities.get(Number(item.id_modalidade)) || `Modalidade ${Number(item.id_modalidade || 0)}`;
+                    const conditional = Number(item.condicional || 0) === 1 ? ' · possível conforme resultados' : '';
+                    modality.textContent = `${modalityName} · ${labelDaEtapa(item.chave_tag)}${conditional}`;
+                    const when = document.createElement('td');
+                    const rawDate = String(item.data_compromisso || item.data || '');
+                    const [year, month, day] = rawDate.split('-');
+                    const date = year && month && day ? `${day}/${month}/${year}` : rawDate;
+                    const start = String(item.inicio_compromisso || item.inicio || '').slice(0, 5);
+                    const end = String(item.termino_compromisso || item.fim || '').slice(0, 5);
+                    when.textContent = `${date} · ${start}–${end}`;
+                    const local = document.createElement('td');
+                    local.textContent = item.nome_local || locals.get(Number(item.id_local)) || `Local ${Number(item.id_local || 0)}`;
+                    row.append(modality, when, local);
+                    body.append(row);
+                });
+                table.append(head, body);
+                cronogramaPreviaCorpo.append(table);
+            };
             const operacaoLiberada = () => {
                 const valor = cronogramaEstado?.operacao?.liberada ?? cronogramaEstado?.operacao_liberada;
                 return valor === true || Number(valor || 0) > 0;
@@ -829,6 +913,7 @@ window.SGIPage.mount("eventos/configurar-agenda", function (pageConfig, pageScop
                 cronogramaRascunho = null;
                 cronogramaGeracao++;
                 if (mensagem && resumoCronograma) resumoCronograma.textContent = mensagem;
+                renderizarPrevia();
                 atualizarAcoes();
             };
             const podeGerar = () => cronogramaEstadoConfiavel
@@ -841,6 +926,8 @@ window.SGIPage.mount("eventos/configurar-agenda", function (pageConfig, pageScop
                 const publicado = Boolean(cronogramaEstado && cronogramaEstado.cronograma_status === 'publicado');
                 const liberado = operacaoLiberada();
                 const inscricoesAbertas = cronogramaEstado?.inscricoes_status === 'abertas';
+                const inscricoesFechadas = cronogramaEstado?.inscricoes_status === 'fechadas';
+                const inscricoesEncerradas = cronogramaEstado?.inscricoes_status === 'encerradas';
                 const rascunhoAtual = cronogramaRascunho
                     && cronogramaRascunho.cronograma_versao === Number(cronogramaEstado?.cronograma_versao || 0)
                     && cronogramaRascunho.assinatura === assinaturaGeracao()
@@ -851,8 +938,8 @@ window.SGIPage.mount("eventos/configurar-agenda", function (pageConfig, pageScop
                 if (gerar) gerar.disabled = indisponivel || !podeGerar();
                 if (botaoPublicar) botaoPublicar.disabled = indisponivel || !podeGerar() || !rascunhoAtual;
                 if (botaoAbrir) botaoAbrir.disabled = indisponivel || !publicado || liberado || inscricoesAbertas;
-                if (botaoFechar) botaoFechar.disabled = indisponivel || !publicado || liberado || !inscricoesAbertas;
-                if (botaoLiberar) botaoLiberar.disabled = indisponivel || !publicado || liberado || inscricoesAbertas;
+                if (botaoFechar) botaoFechar.disabled = indisponivel || !publicado || liberado || (!inscricoesAbertas && !inscricoesFechadas);
+                if (botaoLiberar) botaoLiberar.disabled = indisponivel || !publicado || liberado || !inscricoesEncerradas;
                 if (botaoRevisar) botaoRevisar.disabled = indisponivel || !publicado || liberado;
                 if (botaoAtualizar) botaoAtualizar.disabled = cronogramaEmProgresso;
             };
@@ -872,9 +959,19 @@ window.SGIPage.mount("eventos/configurar-agenda", function (pageConfig, pageScop
                 if (!cronogramaEstado) { atualizarAcoes(); return; }
                 const agenda = cronogramaEstado.cronograma_status || 'rascunho';
                 const inscricoes = cronogramaEstado.inscricoes_status || 'fechadas';
+                let inscricoesExibidas = inscricoes;
+                if (inscricoes === 'abertas' && cronogramaEstado.inscricoes_status_efetivo === 'programadas') inscricoesExibidas = 'abertas · início programado';
+                if (inscricoes === 'abertas' && cronogramaEstado.inscricoes_status_efetivo === 'expiradas') inscricoesExibidas = 'abertas · prazo expirado';
+                if (inscricoes === 'abertas' && cronogramaEstado.inscricoes_status_efetivo === 'janela_invalida') inscricoesExibidas = 'abertas · período inválido';
+                if (campoInscricaoInicio && campoInscricaoInicio.dataset.userEdited !== 'true') {
+                    campoInscricaoInicio.value = valorDataHoraLocal(cronogramaEstado.inscricoes_abertura);
+                }
+                if (campoInscricaoFim && campoInscricaoFim.dataset.userEdited !== 'true') {
+                    campoInscricaoFim.value = valorDataHoraLocal(cronogramaEstado.inscricoes_encerramento);
+                }
                 if (statusCronograma) {
-                    statusCronograma.textContent = `${agenda} · inscrições ${inscricoes}`;
-                    statusCronograma.className = `badge ${inscricoes === 'abertas' ? 'text-bg-success' : agenda === 'publicado' ? 'text-bg-primary' : 'text-bg-secondary'}`;
+                    statusCronograma.textContent = `${agenda} · inscrições ${inscricoesExibidas}`;
+                    statusCronograma.className = `badge ${inscricoes === 'abertas' && inscricoesExibidas === inscricoes ? 'text-bg-success' : agenda === 'publicado' ? 'text-bg-primary' : 'text-bg-secondary'}`;
                 }
                 if (resumoCronograma) {
                     resumoCronograma.classList.remove('text-danger');
@@ -882,6 +979,7 @@ window.SGIPage.mount("eventos/configurar-agenda", function (pageConfig, pageScop
                     const compromissos = Array.isArray(cronogramaEstado.compromissos) ? cronogramaEstado.compromissos.length : 0;
                     resumoCronograma.textContent = mensagem || `${modalidades} modalidade(s), ${compromissos} compromisso(s), revisão ${Number(cronogramaEstado.cronograma_versao || 0)}.`;
                 }
+                renderizarPrevia();
                 atualizarAcoes();
             };
             const enviarCronograma = async (body) => {
@@ -995,6 +1093,7 @@ window.SGIPage.mount("eventos/configurar-agenda", function (pageConfig, pageScop
                         cronograma_versao: Number(result.cronograma_versao ?? cronogramaEstado.cronograma_versao ?? 0),
                         assinatura,
                     };
+                    renderizarPrevia();
                     const pendencias = Array.isArray(result.pendencias) ? result.pendencias.length : 0;
                     if (resumoCronograma) {
                         const detalhes = cronogramaRascunho.pendencias.map((item) => item.mensagem || item.motivo).filter(Boolean).join(' ');
@@ -1004,6 +1103,7 @@ window.SGIPage.mount("eventos/configurar-agenda", function (pageConfig, pageScop
                 } catch (error) {
                     if (pageScope.active && painelCronograma.isConnected) {
                         cronogramaRascunho = null;
+                        renderizarPrevia();
                         tratarErroCronograma(error);
                     }
                 } finally {
@@ -1028,7 +1128,10 @@ window.SGIPage.mount("eventos/configurar-agenda", function (pageConfig, pageScop
                     const inicio = document.getElementById('cronogramaInscricaoInicio')?.value;
                     const fim = document.getElementById('cronogramaInscricaoFim')?.value;
                     return enviarCronograma({ acao: 'abrir_inscricoes', cronograma_versao: Number(cronogramaEstado.cronograma_versao || 0), inscricoes_abertura: inicio, inscricoes_encerramento: fim });
-                }, 'Inscrições abertas na janela informada.');
+                }, 'Inscrições abertas na janela informada.', () => {
+                    if (campoInscricaoInicio) campoInscricaoInicio.dataset.userEdited = 'false';
+                    if (campoInscricaoFim) campoInscricaoFim.dataset.userEdited = 'false';
+                });
             });
             if (botaoFechar) pageScope.listen(botaoFechar, 'click', async () => {
                 if (!cronogramaEstado) return;

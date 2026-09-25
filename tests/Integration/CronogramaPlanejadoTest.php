@@ -8,6 +8,8 @@ use App\Modules\Competicoes\Application\CronogramaService;
 use App\Modules\Competicoes\Infrastructure\MysqliCronogramaRepository;
 use App\Modules\Competicoes\Infrastructure\MysqliEquipeRepository;
 use App\Modules\Competicoes\Infrastructure\MysqliChaveamentoRepository;
+use App\Modules\Competicoes\Infrastructure\MysqliLocalScheduleGuard;
+use App\Modules\Competicoes\Infrastructure\MysqliModalidadeRepository;
 use App\Shared\Database\MigrationRunner;
 use App\Shared\Database\Transaction;
 use App\Modules\Competicoes\Infrastructure\MysqliPartidaGateway;
@@ -31,6 +33,7 @@ final class CronogramaPlanejadoTest
         $originalStatuses = [];
         $originalClassStatuses = [];
         $reservationId = 0;
+        $lateReservationId = 0;
         $createdModalityId = 0;
         $createdIndividualModalityId = 0;
         $createdStudentId = 0;
@@ -107,7 +110,7 @@ final class CronogramaPlanejadoTest
             Assertions::assertJsonSuccess('Administrador autentica para consultar o cronograma preparado', $cronogramaHttpAdmin->login('admin', '123'));
             Assertions::assertStatus('Administrador autorizado consulta o cronograma preparado pela API',
                 $cronogramaHttpAdmin->get('api/v1/cronograma?id_interclasse=' . $editionId), 200);
-            $connection->query("INSERT INTO agenda_reservas (id_interclasse, id_modalidade, chave_versao, chave_tag, data_reserva, inicio_reserva, termino_reserva, id_local) VALUES ({$editionId}, {$modalityId}, 'manual-test', 'BLOQUEIO-CRONOGRAMA', '2030-10-01', '08:00:00', '08:20:00', {$localId})");
+            $connection->query("INSERT INTO agenda_reservas (id_interclasse, id_modalidade, chave_versao, chave_tag, data_reserva, inicio_reserva, termino_reserva, id_local) VALUES ({$editionId}, {$modalityId}, 'manual-test', 'BLOQUEIO-CRONOGRAMA', '2030-10-01', '08:15:00', '08:25:00', {$localId})");
             $reservationId = (int) $connection->insert_id;
             $legacyTeamId = (int) $connection->query("SELECT e.id_equipe FROM equipes e LEFT JOIN equipe_planejamentos ep ON ep.id_equipe = e.id_equipe WHERE e.modalidades_id_modalidade = {$modalityId} AND e.turmas_id_turma = {$firstClassId} AND e.status_equipe = '1' AND ep.id_equipe IS NULL ORDER BY e.id_equipe LIMIT 1")->fetch_column();
             if ($legacyTeamId <= 0) {
@@ -130,6 +133,19 @@ final class CronogramaPlanejadoTest
             $connection->query("DELETE ehu FROM equipes_has_usuarios ehu INNER JOIN equipes e ON e.id_equipe = ehu.equipes_id_equipe INNER JOIN equipe_planejamentos ep ON ep.id_equipe = e.id_equipe WHERE e.modalidades_id_modalidade IN ({$modalityId}, {$secondModalityId}, {$createdIndividualModalityId})");
             $membershipsBeforePlanning = (int) $connection->query("SELECT COUNT(*) FROM equipes_has_usuarios ehu INNER JOIN equipes e ON e.id_equipe = ehu.equipes_id_equipe WHERE e.modalidades_id_modalidade IN ({$modalityId}, {$secondModalityId}, {$createdIndividualModalityId})")->fetch_column();
             Assertions::assert('Planejamento começa sem alunos vinculados às equipes', $membershipsBeforePlanning === 0);
+            $connection->query("UPDATE modalidade_planejamentos SET equipes_planejadas = 4 WHERE id_modalidade = {$modalityId}");
+            $staleTeamsRejected = false;
+            try {
+                $service->gerar($editionId, 1, [
+                    'data_inicio' => '2030-10-01', 'data_fim' => '2030-10-01',
+                    'hora_inicio' => '08:00', 'hora_fim' => '18:00', 'duracao_min' => 20,
+                    'id_locais' => [$localId],
+                ]);
+            } catch (\InvalidArgumentException $exception) {
+                $staleTeamsRejected = str_contains($exception->getMessage(), 'Preparar equipes');
+            }
+            $connection->query("UPDATE modalidade_planejamentos SET equipes_planejadas = 3 WHERE id_modalidade = {$modalityId}");
+            Assertions::assert('Geração bloqueia configuração divergente das equipes preparadas', $staleTeamsRejected);
             $draft = $service->gerar($editionId, 1, [
                 'data_inicio' => '2030-10-01',
                 'data_fim' => '2030-10-01',
@@ -143,7 +159,7 @@ final class CronogramaPlanejadoTest
             $byeNodes = array_values(array_filter($firstNodes, static fn (array $node): bool => ($node['tipo_no'] ?? '') === 'bye'));
             $firstCommitments = array_values(array_filter($draft['compromissos'] ?? [], static fn (array $item): bool => (int) ($item['id_modalidade'] ?? 0) === $modalityId));
             Assertions::assert('Geração planejada usa a árvore exata de três equipes', $draft['success'] === true && count($normalNodes) === 2 && count($byeNodes) === 1 && count($firstCommitments) === 2 && ($firstCommitments[0]['condicional'] ?? 1) === 0);
-            Assertions::assert('Geração respeita reserva existente com margem de troca', ($firstCommitments[0]['inicio_compromisso'] ?? '') !== '08:00:00');
+            Assertions::assert('Busca o primeiro horário livre após reserva e margem de troca', ($firstCommitments[0]['inicio_compromisso'] ?? '') === '08:35:00');
             Assertions::assert('A geração persiste a árvore planejada sem jogos reais', count($draft['nos'] ?? []) >= count($draft['compromissos'] ?? []) && count($draft['nos'] ?? []) > 0);
             $incompleteRejected = false;
             try {
@@ -154,11 +170,24 @@ final class CronogramaPlanejadoTest
             $publishedRowsAfterRejectedAttempt = (int) $connection->query("SELECT COUNT(*) FROM cronograma_nos WHERE id_interclasse = {$editionId}")->fetch_column();
             Assertions::assert('Publicação incompleta recusa a proposta e não grava árvore parcial', $incompleteRejected && $publishedRowsAfterRejectedAttempt === 0);
             $published = $service->publicar($editionId, 1, ['cronograma_versao' => 0, 'compromissos' => $draft['compromissos'], 'nos' => $draft['nos']]);
+            $timezone = new \DateTimeZone(date_default_timezone_get());
+            $expiredClosing = (new \DateTimeImmutable('now', $timezone))->modify('-1 minute')->format('Y-m-d H:i:s');
+            $expiredOpening = (new \DateTimeImmutable($expiredClosing, $timezone))->modify('-1 hour')->format('Y-m-d H:i:s');
+            $expiredWindowRejected = false;
+            try {
+                $service->abrir($editionId, 1, ['cronograma_versao' => $published['cronograma_versao'], 'inscricoes_abertura' => $expiredOpening, 'inscricoes_encerramento' => $expiredClosing]);
+            } catch (\InvalidArgumentException $exception) {
+                $expiredWindowRejected = str_contains($exception->getMessage(), 'no futuro');
+            }
+            Assertions::assert('Abertura recusa janela já encerrada', $expiredWindowRejected && $service->estado($editionId)['inscricoes_status'] === 'fechadas');
             $opened = $service->abrir($editionId, 1, ['cronograma_versao' => $published['cronograma_versao'], 'inscricoes_abertura' => '2020-01-01 00:00:00', 'inscricoes_encerramento' => '2031-01-01 00:00:00']);
             Assertions::assert('Publicação ocorre antes da abertura das inscrições', $published['cronograma_status'] === 'publicado' && $opened['inscricoes_status'] === 'abertas');
             $openedAgain = $service->abrir($editionId, 1, ['cronograma_versao' => $published['cronograma_versao'], 'inscricoes_abertura' => '2020-01-01 00:00:00', 'inscricoes_encerramento' => '2031-01-01 00:00:00']);
             Assertions::assert('Repetir a mesma abertura de inscrições é idempotente', $openedAgain['inscricoes_status'] === 'abertas');
-            Assertions::assert('Estado publicado expõe a mesma revisão e compromisso', $service->estado($editionId)['cronograma_versao'] === $published['cronograma_versao']);
+            $publishedState = $service->estado($editionId);
+            Assertions::assert('Estado publicado expõe a mesma revisão e compromisso', $publishedState['cronograma_versao'] === $published['cronograma_versao']);
+            $adminPreviewCommitment = $publishedState['compromissos'][0] ?? [];
+            Assertions::assert('Prévia administrativa inclui modalidade e local legíveis', trim((string) ($adminPreviewCommitment['nome_modalidade'] ?? '')) !== '' && trim((string) ($adminPreviewCommitment['nome_local'] ?? '')) !== '');
             $service->fechar($editionId, 1, ['cronograma_versao' => $published['cronograma_versao']]);
             $closedAgain = $service->fechar($editionId, 1, ['cronograma_versao' => $published['cronograma_versao']]);
             Assertions::assert('Repetir o encerramento das inscrições é idempotente', $closedAgain['inscricoes_status'] === 'encerradas');
@@ -211,6 +240,7 @@ final class CronogramaPlanejadoTest
             if ($secondTeamId <= 0 || $studentId <= 0) {
                 throw new \RuntimeException('A fixture não possui equipe e estudante compatíveis para o conflito planejado.');
             }
+            $secondOriginalCommitments = $connection->query("SELECT id_compromisso, data_compromisso, inicio_compromisso, termino_compromisso, id_local FROM cronograma_compromissos WHERE id_interclasse = {$editionId} AND id_modalidade = {$secondModalityId} AND cronograma_versao = {$published['cronograma_versao']} ORDER BY data_compromisso, inicio_compromisso, id_compromisso")->fetch_all(MYSQLI_ASSOC);
             $firstSlot = $firstCommitments[0] ?? [];
             $overlapDate = $connection->real_escape_string((string) ($firstSlot['data_compromisso'] ?? '2030-10-01'));
             $overlapStart = $connection->real_escape_string((string) ($firstSlot['inicio_compromisso'] ?? '08:30:00'));
@@ -226,6 +256,17 @@ final class CronogramaPlanejadoTest
                 $conflictRejected = str_contains($exception->getMessage(), 'Conflito de agenda');
             }
             Assertions::assert('Inscrição planejada recusa conflito entre modalidades da mesma turma', $conflictRejected);
+            $restoreCommitment = $connection->prepare('UPDATE cronograma_compromissos SET data_compromisso = ?, inicio_compromisso = ?, termino_compromisso = ?, id_local = ? WHERE id_compromisso = ?');
+            foreach ($secondOriginalCommitments as $commitment) {
+                $date = (string) $commitment['data_compromisso'];
+                $start = (string) $commitment['inicio_compromisso'];
+                $end = (string) $commitment['termino_compromisso'];
+                $venue = (int) $commitment['id_local'];
+                $commitmentId = (int) $commitment['id_compromisso'];
+                $restoreCommitment->bind_param('sssii', $date, $start, $end, $venue, $commitmentId);
+                $restoreCommitment->execute();
+            }
+            $restoreCommitment->close();
 
             $createFixtureStudent = static function () use ($connection, $firstClassId, $editionId, $primaryGender, &$createdStudentIds): int {
                 $registration = 'CRONOGRAMA-' . bin2hex(random_bytes(4));
@@ -242,11 +283,18 @@ final class CronogramaPlanejadoTest
             $allPlannedTeams = $connection->query("SELECT e.id_equipe, e.modalidades_id_modalidade FROM equipes e INNER JOIN equipe_planejamentos ep ON ep.id_equipe = e.id_equipe WHERE e.modalidades_id_modalidade IN ({$modalityId}, {$secondModalityId}, {$createdIndividualModalityId}) AND e.status_equipe = '1' ORDER BY e.modalidades_id_modalidade, ep.ordem_planejada, e.id_equipe")->fetch_all(MYSQLI_ASSOC);
             foreach ($allPlannedTeams as $plannedTeam) {
                 $plannedTeamId = (int) $plannedTeam['id_equipe'];
-                if ($plannedTeamId === $teamId) {
+                if ($plannedTeamId === $teamId || $plannedTeamId === $secondTeamId) {
                     continue;
                 }
                 $equipes->addUsers($plannedTeamId, [$createFixtureStudent()]);
             }
+            $sharedStudentAllowed = true;
+            try {
+                $equipes->addUsers($secondTeamId, [$studentId]);
+            } catch (\InvalidArgumentException) {
+                $sharedStudentAllowed = false;
+            }
+            Assertions::assert('Aluno pode permanecer em duas modalidades com horários separados', $sharedStudentAllowed);
             $reviewed = $service->revisar($editionId, 1, ['cronograma_versao' => $published['cronograma_versao']]);
             $oldSnapshot = (int) $connection->query("SELECT COUNT(*) FROM cronograma_compromissos WHERE id_interclasse = {$editionId} AND cronograma_versao = {$published['cronograma_versao']}")->fetch_column();
             Assertions::assert('Revisão fecha o cronograma', $reviewed['cronograma_status'] === 'revisao');
@@ -311,11 +359,66 @@ final class CronogramaPlanejadoTest
                 'duracao_min' => 20,
                 'id_locais' => [$localId],
             ]);
+            $lateSlot = $finalDraft['compromissos'][0] ?? [];
+            $lateDate = $connection->real_escape_string((string) ($lateSlot['data_compromisso'] ?? ''));
+            $lateStart = $connection->real_escape_string((string) ($lateSlot['inicio_compromisso'] ?? ''));
+            $lateEnd = $connection->real_escape_string((string) ($lateSlot['termino_compromisso'] ?? ''));
+            $lateLocalId = (int) ($lateSlot['id_local'] ?? 0);
+            $connection->query("INSERT INTO agenda_reservas (id_interclasse, id_modalidade, chave_versao, chave_tag, data_reserva, inicio_reserva, termino_reserva, id_local) VALUES ({$editionId}, {$modalityId}, 'late-test', 'BLOQUEIO-DEPOIS-DA-GERACAO', '{$lateDate}', '{$lateStart}', '{$lateEnd}', {$lateLocalId})");
+            $lateReservationId = (int) $connection->insert_id;
+            $lateConflictRejected = false;
+            try {
+                $service->publicar($editionId, 1, [
+                    'cronograma_versao' => $reviewed['cronograma_versao'],
+                    'compromissos' => $finalDraft['compromissos'],
+                    'nos' => $finalDraft['nos'],
+                ]);
+            } catch (\InvalidArgumentException $exception) {
+                $lateConflictRejected = str_contains($exception->getMessage(), 'reserva independente');
+            }
+            $stateAfterLateConflict = $service->estado($editionId);
+            Assertions::assert('Publicação revalida e recusa reserva criada depois da geração sem gravar a árvore',
+                $lateConflictRejected
+                && (int) $stateAfterLateConflict['cronograma_versao'] === (int) $reviewed['cronograma_versao']
+                && (int) $stateAfterLateConflict['versao_publicada'] === (int) $published['cronograma_versao']);
+            $connection->query('DELETE FROM agenda_reservas WHERE id_reserva = ' . $lateReservationId);
+            $lateReservationId = 0;
             $finalPublished = $service->publicar($editionId, 1, [
                 'cronograma_versao' => $reviewed['cronograma_versao'],
                 'compromissos' => $finalDraft['compromissos'],
                 'nos' => $finalDraft['nos'],
             ]);
+            Assertions::assert('Republicação com o mesmo aluno em modalidades sem conflito é aceita', $finalPublished['cronograma_status'] === 'publicado' && (int) $finalPublished['cronograma_versao'] === (int) $reviewed['cronograma_versao'] + 1);
+            $oldCommitmentId = (int) $connection->query("SELECT id_compromisso FROM cronograma_compromissos WHERE id_interclasse = {$editionId} AND cronograma_versao = {$published['cronograma_versao']} ORDER BY id_compromisso LIMIT 1")->fetch_column();
+            $connection->query("UPDATE cronograma_compromissos SET data_compromisso = '2032-10-01', inicio_compromisso = '08:00:00', termino_compromisso = '08:20:00', id_local = {$localId} WHERE id_compromisso = {$oldCommitmentId}");
+            $historicPlanConflict = MysqliLocalScheduleGuard::conflict($connection, '2032-10-01', $localId, '08:00:00', '08:20:00');
+            $activeSlot = $finalDraft['compromissos'][0] ?? [];
+            $activePlanConflict = MysqliLocalScheduleGuard::conflict(
+                $connection,
+                (string) ($activeSlot['data_compromisso'] ?? ''),
+                (int) ($activeSlot['id_local'] ?? 0),
+                (string) ($activeSlot['inicio_compromisso'] ?? ''),
+                (string) ($activeSlot['termino_compromisso'] ?? ''),
+            );
+            Assertions::assert('Guarda ignora snapshot antigo e continua bloqueando a publicação atual', $historicPlanConflict === null && str_contains((string) $activePlanConflict, 'compromisso publicado'));
+            $service->fechar($editionId, 1, ['cronograma_versao' => $finalPublished['cronograma_versao']]);
+            $teamChangedAfterPublish = $secondTeamId;
+            $equipes->update($teamChangedAfterPublish, ['status_equipe' => '0']);
+            $releaseOfStaleTreeRejected = false;
+            $staleTreeReleaseMessage = '';
+            $staleTreeReleaseResult = null;
+            try {
+                $staleTreeReleaseResult = $service->liberar($editionId, 1, ['cronograma_versao' => $finalPublished['cronograma_versao']]);
+            } catch (\InvalidArgumentException $exception) {
+                $staleTreeReleaseMessage = $exception->getMessage();
+                $releaseOfStaleTreeRejected = str_contains($exception->getMessage(), 'equipe') || str_contains($exception->getMessage(), 'equipes');
+            }
+            $equipes->update($teamChangedAfterPublish, ['status_equipe' => '1']);
+            Assertions::assert(
+                'Liberação recusa árvore cuja configuração de equipes mudou após publicar',
+                $releaseOfStaleTreeRejected,
+                json_encode(['message' => $staleTreeReleaseMessage, 'result' => $staleTreeReleaseResult], JSON_UNESCAPED_UNICODE),
+            );
             $preview = MysqliChaveamentoRepository::montarJsonArvore($connection, $modalityId);
             $plannedPreview = array_values(array_filter($preview['jogos'] ?? [], static fn (array $game): bool => (bool) ($game['virtual_planejado'] ?? false)));
             Assertions::assert('Árvore publicada aparece como prevista antes da liberação', count($plannedPreview) === 3 && count(array_filter($plannedPreview, static fn (array $game): bool => ($game['status_jogo'] ?? '') === 'Previsto')) >= 2);
@@ -324,7 +427,6 @@ final class CronogramaPlanejadoTest
             $sixTeamOpeningGames = array_values(array_filter($sixTeamNodes, static fn (array $game): bool => (int) ($game['fase_nivel'] ?? 0) === 8 && !($game['eh_bye'] ?? false)));
             $sixTeamByes = array_values(array_filter($sixTeamNodes, static fn (array $game): bool => (int) ($game['fase_nivel'] ?? 0) === 4 && (bool) ($game['eh_bye'] ?? false)));
             Assertions::assert('Modalidade com seis equipes prevê três jogos iniciais, uma semifinal e BYE intermediário', count($sixTeamNodes) === 6 && count($sixTeamOpeningGames) === 3 && count($sixTeamByes) === 1, 'nós=' . count($sixTeamNodes) . ', abertura=' . count($sixTeamOpeningGames) . ', byes=' . count($sixTeamByes) . ', árvore=' . json_encode($sixTeamPreview['jogos'] ?? []));
-            $service->fechar($editionId, 1, ['cronograma_versao' => $finalPublished['cronograma_versao']]);
             $releaseNodes = $connection->query("SELECT cn.id_no, cn.id_modalidade, cn.chave_tag, cc.data_compromisso, cc.inicio_compromisso, cc.termino_compromisso, cc.id_local FROM cronograma_nos cn INNER JOIN cronograma_compromissos cc ON cc.id_interclasse = cn.id_interclasse AND cc.id_modalidade = cn.id_modalidade AND cc.cronograma_versao = cn.cronograma_versao AND cc.chave_tag = cn.chave_tag WHERE cn.id_interclasse = {$editionId} AND cn.cronograma_versao = {$finalPublished['cronograma_versao']} AND cn.origem_a_tag IS NULL AND cn.origem_b_tag IS NULL AND cn.tipo_no <> 'bye' ORDER BY cn.fase_largura DESC, cn.slot, cn.id_no")->fetch_all(MYSQLI_ASSOC);
             if (count($releaseNodes) < 2) {
                 throw new \RuntimeException('A fixture precisa de dois confrontos iniciais para testar rollback da liberação.');
@@ -354,6 +456,26 @@ final class CronogramaPlanejadoTest
             $releaseBlockerGameId = 0;
             $released = $service->liberar($editionId, 1, ['cronograma_versao' => $finalPublished['cronograma_versao']]);
             Assertions::assert('Liberação materializa confrontos coletivos e prova individual publicados', $released['liberada'] === true && (int) $released['jogos_criados'] === 5, 'jogos_criados=' . (int) ($released['jogos_criados'] ?? -1));
+            $modalityRepository = new MysqliModalidadeRepository($connection);
+            $currentPlanning = $connection->query("SELECT equipes_planejadas, min_inscritos_equipe, max_inscritos_equipe, formato_participacao, duracao_prevista_min, descanso_min FROM modalidade_planejamentos WHERE id_modalidade = {$modalityId}")->fetch_assoc();
+            $samePlanningSaved = $modalityRepository->update($modalityId, $currentPlanning);
+            $samePlanningState = $service->estado($editionId);
+            Assertions::assert('Reenviar configuração idêntica após liberação não invalida a operação', $samePlanningSaved && (int) $samePlanningState['operacao_liberada'] === 1 && (int) $samePlanningState['cronograma_versao'] === (int) $finalPublished['cronograma_versao']);
+            $changedPlanningRejected = false;
+            try {
+                $modalityRepository->update($modalityId, array_merge($currentPlanning, ['equipes_planejadas' => 99]));
+            } catch (\InvalidArgumentException) {
+                $changedPlanningRejected = true;
+            }
+            $changedPlanningState = $service->estado($editionId);
+            Assertions::assert('Alteração estrutural após liberação é recusada sem retirar a flag', $changedPlanningRejected && (int) $changedPlanningState['operacao_liberada'] === 1 && (int) $changedPlanningState['cronograma_versao'] === (int) $finalPublished['cronograma_versao']);
+            $deactivationRejected = false;
+            try {
+                $modalityRepository->deactivate($secondModalityId);
+            } catch (\InvalidArgumentException) {
+                $deactivationRejected = true;
+            }
+            Assertions::assert('Desativar modalidade após liberação é recusado', $deactivationRejected && (string) $connection->query("SELECT status_modalidade FROM modalidades WHERE id_modalidade = {$secondModalityId}")->fetch_column() === '1');
             $initialGameCount = (int) $connection->query("SELECT COUNT(*) FROM cronograma_nos WHERE id_interclasse = {$editionId} AND cronograma_versao = {$finalPublished['cronograma_versao']} AND id_jogo IS NOT NULL")->fetch_column();
             Assertions::assert('Liberação associa cada confronto físico ao nó publicado', $initialGameCount === 5, 'vínculos=' . $initialGameCount);
             $individualNode = $connection->query("SELECT id_no, chave_tag, id_jogo FROM cronograma_nos WHERE id_interclasse = {$editionId} AND id_modalidade = {$createdIndividualModalityId} AND cronograma_versao = {$finalPublished['cronograma_versao']} AND tipo_no = 'individual' LIMIT 1")->fetch_assoc();
@@ -564,6 +686,9 @@ final class CronogramaPlanejadoTest
             $finalGame = $connection->query('SELECT data_jogo, inicio_jogo, locais_id_local FROM jogos WHERE id_jogo = ' . (int) $finalNode)->fetch_assoc();
             Assertions::assert('Final usa data, início e local do compromisso publicado', $finalGame !== null && $finalSlot !== null && $finalGame['data_jogo'] === $finalSlot['data_compromisso'] && $finalGame['inicio_jogo'] === $finalSlot['inicio_compromisso'] && (int) $finalGame['locais_id_local'] === (int) $finalSlot['id_local']);
         } finally {
+            if ($lateReservationId > 0) {
+                $connection->query('DELETE FROM agenda_reservas WHERE id_reserva = ' . $lateReservationId);
+            }
             if ($releaseBlockerGameId > 0) {
                 $connection->query('DELETE FROM jogos WHERE id_jogo = ' . $releaseBlockerGameId);
             }
