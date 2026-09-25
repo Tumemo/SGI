@@ -459,12 +459,13 @@ test('searchable bracket control inherits the shared Bootstrap typography', () =
     assert.doesNotMatch(css, /\.kvs__(?:trigger|search|opcao)\s*\{[^}]*font-family\s*:/);
 });
 
-test('coarse-pointer devices fall back to the native bracket select', () => {
+test('native modality select still loads the published tree on touch devices', () => {
     const source = fs.readFileSync(path.join(root, 'resources', 'js', 'pages', 'competicoes', 'chaveamento.js'), 'utf8');
     const css = fs.readFileSync(path.join(root, 'resources', 'css', 'source', 'admin.css'), 'utf8');
     assert.match(source, /function usarSeletorNativo\(\)/);
     assert.match(source, /if \(!usarSeletorNativo\(\)\) \{\s*kvs_montar\(\{/);
-    assert.match(source, /selectMobEl\.value/);
+    assert.match(source, /if \(selectMob\) pageScope\.listen\(selectMob, 'change'/);
+    assert.match(source, /carregarArvore\(this\.value\)/);
     assert.match(source, /select\.showPicker/);
     assert.match(css, /@media \(pointer: coarse\), \(hover: none\) \{\s*\n\s*\.kvs-wrap \{ display: none; \}\s*\n\s*\.kvs-wrap\s*\+\s*select \{ display: block !important; \}/);
 });
