@@ -137,7 +137,7 @@ window.SGIPage.mount("eventos/configurar-equipes", function (pageConfig, pageSco
                 nome_turma: eq.nome_turma || '',
                 nome_modalidade: modNome || ''
             });
-            const hrefElenco = `/equipes/elenco?${qElenco.toString()}`;
+            const hrefElenco = `${APP_BASE}/equipes/elenco?${qElenco.toString()}`;
             return `<div class="d-flex align-items-center justify-content-between gap-3 p-3 mb-2 border rounded-3 bg-body ${info.excedeu ? 'border-danger-subtle bg-danger-subtle text-danger-emphasis' : ''}">
                     <div>
                         <div class="aluno-equipe-nome">${esc(eq.nome_equipe || eq.nome_turma)}</div>

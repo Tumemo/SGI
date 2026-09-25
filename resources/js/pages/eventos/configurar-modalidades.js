@@ -74,7 +74,7 @@ window.SGIPage.mount("eventos/configurar-modalidades", function (pageConfig, pag
 
     /* ── RENDER CARD ── */
     function renderizarCard(modalidade) {
-        const destino = appUrl('modalidades/detalhes', { id: modalidade.id_modalidade });
+        const destino = appUrl('modalidades/detalhes', { id: idInterclasse, id_modalidade: modalidade.id_modalidade });
         const nome = String(modalidade.nome_modalidade || 'Modalidade');
         const genero = modalidade.genero_modalidade || '';
         const generoLabel = genero === 'MASC' ? 'Masculino' : genero === 'FEM' ? 'Feminino' : genero === 'MISTO' ? 'Misto' : genero;

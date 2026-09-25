@@ -225,7 +225,7 @@ async function carregar() {
     if (idModalidade) qVoltar.set('id_modalidade', idModalidade);
     if (nomeTurma) qVoltar.set('nome_turma', nomeTurma);
     if (nomeModalidade) qVoltar.set('nome_modalidade', nomeModalidade);
-    const voltar = `/equipes/elenco?${qVoltar.toString()}`;
+    const voltar = `${APP_BASE}/equipes/elenco?${qVoltar.toString()}`;
     document.getElementById('btnVoltarEquipesDesktop').href = voltar;
     const vm = document.getElementById('btnVoltarEquipesMobile');
     if (vm) vm.href = voltar;
