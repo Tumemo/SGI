@@ -1,6 +1,6 @@
 # Status de execução
 
-**Estado em 24/09/2026:** implementação concluída; gate final aprovado. Revisão `1ac473ce782c8268e9e817b785ca6b20e95b3211`, checkout com alterações anteriores preservadas (`working_tree_dirty=true`). Este trabalho seguiu a decisão do usuário de implantação nova sem dados e sem compatibilidade com formatos/versões antigas.
+**Estado em 24/09/2026:** implementação registrada no commit `55e3c11`; revalidação completa aprovada no `HEAD` `b31afce8d02b8042cee0f5b578b78f29ea8cf5d7`, run `20260924_161932_295cf6`. O checkout segue dirty com alterações locais preservadas (`working_tree_dirty=true`). A execução original ocorreu em `1ac473ce` com a implementação ainda no working tree; os detalhes daquela execução permanecem abaixo. Este trabalho seguiu a decisão do usuário de implantação nova sem dados e sem compatibilidade com formatos/versões antigas.
 
 ## Decisões e diagnóstico (S00)
 
@@ -13,6 +13,19 @@
 | D05 | Verificado; sem mudança de regra | A fixture automatizada de seis equipes percorre três confrontos iniciais, avanço por bye sem partida e mais semifinal/final: cinco partidas reais, sem duplicar ou pontuar o nó virtual. O bye observado não demonstrou violação do contrato atual. |
 
 Limite de S00: o relatório original não guardou payloads nem captura de Network/console. O diagnóstico exato das antigas respostas foi completado pela leitura de rotas/consumidores e por regressões HTTP e navegador que simulam as condições de erro. Não houve alteração de SQL/schema; portanto não foi necessária migração nem execução da matriz MySQL.
+
+## Reprodução controlada do comportamento anterior (24/09/2026)
+
+Antes de validar as regressões atuais, extraí por `git show` os arquivos do pai do commit de correção `55e3c11` (`1ac473ce`) e executei uma fixture JavaScript em memória, sem substituir arquivos do checkout. Resultados observados:
+
+| Defeito | Reprodução e resultado | Causa registrada |
+| --- | --- | --- |
+| Indicador de campeões | Final concluída `PL:96:0:MM:2:0:N` com vencedor estruturado exibiu `0`. | O contador pré-fix só reconhecia nome começando por `MM:2:`; a árvore e o resumo usavam critérios diferentes. |
+| Duração | `data_inicio_real=2026-09-24 08:00:00`, `termino_jogo=08:05:00` e duração configurada de 300 s produziram `NaNmin`. | A concatenação do datetime SQL com `T` cria data inválida; o cálculo não verifica `Number.isFinite`, e o término é agendado. |
+| Histórico do mesário | Rastreamento do controlador anterior confirmou `operacional=1`; o gateway limita essa lista aos estados `Agendado`, `Iniciado` e `Pausado`. | Jogos `Concluido`/`Finalizado` ficam fora da consulta operacional. Nesta reprodução não rodei a API pré-fix contra um banco; a regressão HTTP atual cobre a rota corrigida em container. |
+| Logout | Executei o handler inline anterior com resposta HTTP 403 controlada; o destino mudou para `/login`. | O `.finally()` navegava sem validar o resultado do POST. O código anterior não tinha handler comum para erro nem permitia retry confiável. |
+
+Os arquivos pré-fix foram usados apenas para reprodução. As regressões já presentes no commit `55e3c11` são verificadas abaixo no checkout atual. Baseline atual anterior à atualização deste STATUS: `npm test` passou com 137/137; `composer test:unit` passou com 390 testes e 2694 assertions, com uma depreciação PHPUnit reportada. A reprodução está no console desta execução; ela não simula a tentativa manual original nem fornece status de rede daquela homologação.
 
 ## Etapas
 
@@ -57,6 +70,15 @@ Limite de S00: o relatório original não guardou payloads nem captura de Networ
 Uma execução anterior do mesmo perfil (`20260924_115240_1079c6`) encontrou uma corrida na asserção recém-adicionada do logout: `waitForRequest` resolve antes do handler de rota atualizar o contador. Corrigido para `expect.poll`; o teste e a suíte passaram limpos no run final. Na mesma primeira rodada, o teste preexistente de PDF teve timeout transitório e passou no retry; no run final não houve falha nem retry. Os artefatos daquela investigação permanecem sob `test-results/docker-20260924_115240_1079c6/`.
 
 `git diff --check` terminou com exit code 0. O Git exibiu somente avisos sobre conversão de finais de linha em arquivos já alterados. O checkout permanece dirty com outras mudanças preexistentes; nenhuma foi descartada, stageada, commitada ou enviada.
+
+## Revalidação do checkout atual
+
+- Ambiente: runner oficial `tools/test-docker.ps1`, Compose descartável, MariaDB 10.11, PHP 8.4. Início `2026-09-24 13:19:32` e fim `13:32:28` America/Sao_Paulo; duração 775,799 s. A primeira tentativa parou antes dos testes porque o sandbox bloqueou o Docker Engine; a execução aprovada usou `DOCKER_CONFIG` vazio em diretório temporário e limpou seu container/base ao final.
+- Comando: `powershell -ExecutionPolicy Bypass -File tools/test-docker.ps1 -Database mariadb -IncludeVisual`.
+- Resultado do manifesto: `passed`, exit code 0. Qualidade/build/lint/análise estática passaram; integração **1060/1060**; navegador **172/172**; visual **2/2** (desktop e mobile). Os relatórios registram zero skips, falhas inesperadas ou flakes. A qualidade PHPUnit reportou uma depreciação não bloqueante (390 testes, 2694 assertions); `npm test` passou com 137/137.
+- Run ID `20260924_161932_295cf6`: [manifesto](../../test-results/docker-20260924_161932_295cf6/run-manifest.json), [log Compose](../../test-results/docker-20260924_161932_295cf6/docker-compose.log), [tempos de integração](../../test-results/docker-20260924_161932_295cf6/integration-timings.json), [relatório Playwright](../../test-results/docker-20260924_161932_295cf6/browser-playwright.json) e [relatório visual](../../test-results/docker-20260924_161932_295cf6/visual-playwright.json).
+- Capturas da jornada, abertas e inspecionadas: [admin — chaveamento e histórico](../../tests/browser/test-results/docker-20260924_161932_295cf6/browser/database/cronograma-jornada-e2e-Flu-e043e-final-offline-sincronizadas-database/chaveamento-admin-historico.png) e [mesário — chaveamento e histórico](../../tests/browser/test-results/docker-20260924_161932_295cf6/browser/database/cronograma-jornada-e2e-Flu-e043e-final-offline-sincronizadas-database/chaveamento-mesario-historico.png). Ambas mostram 1 modalidade, 5 jogos, 1 campeão, 0 pendentes, cinco linhas concluídas, duração finita ou `—`, e nenhum `NaN`.
+- `git diff --check` terminou com exit code 0; houve apenas avisos de conversão de finais de linha nos arquivos locais já modificados. Nenhuma alteração local preexistente foi descartada, stageada ou commitada.
 
 ## Navegador integrado para exploração
 
