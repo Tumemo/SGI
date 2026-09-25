@@ -1303,7 +1303,7 @@ window.SGIPage.mount("competicoes/placar", function (pageConfig, pageScope) {
             : (indParticipantes.length === 0
                 ? '<div class="small text-muted mb-2">Não há participantes vinculados a esta modalidade.</div>'
                 : (indParticipantes.length < 3
-                    ? '<div class="small text-warning mb-2">São necessários pelo menos três atletas inscritos para homologar o pódio.</div>'
+                    ? '<div class="small text-warning mb-2">São necessários pelo menos três estudantes inscritos para homologar o pódio.</div>'
                     : (!individualOperavel
                         ? '<div class="small text-warning mb-2">Inicie o jogo pela agenda antes de registrar o ranking.</div>'
                         : '')));
@@ -1631,14 +1631,14 @@ window.SGIPage.mount("competicoes/placar", function (pageConfig, pageScope) {
             var data = await fetchJson(API + 'ocorrencias?acao=listar_atletas&id_jogo=' + idJogo + '&id_turma=' + idTurma);
             if (!placarContinuaAtivo(cicloLocal) || !select.isConnected || document.getElementById('selectAlunoOcorrencia') !== select) return;
             var alunos = data.success && Array.isArray(data.atletas) ? data.atletas : [];
-            select.innerHTML = '<option value="">Selecione o(a) aluno(a)</option>';
+            select.innerHTML = '<option value="">Selecione o estudante</option>';
             alunos.forEach(function(a) {
                 select.innerHTML += '<option value="' + a.id_usuario + '">' + esc(a.nome_usuario) + '</option>';
             });
             select.disabled = false;
         } catch (e) {
             if (placarContinuaAtivo(cicloLocal) && select && select.isConnected) {
-                select.innerHTML = '<option value="">Erro ao carregar alunos</option>';
+                select.innerHTML = '<option value="">Erro ao carregar estudantes</option>';
                 select.disabled = false;
             }
         }
@@ -1848,7 +1848,7 @@ window.SGIPage.mount("competicoes/placar", function (pageConfig, pageScope) {
 
         var idAluno = document.getElementById('selectAlunoOcorrencia').value;
         if (!idAluno) {
-            msg.innerHTML = '<span class="text-danger">Selecione o(a) aluno(a).</span>';
+            msg.innerHTML = '<span class="text-danger">Selecione o estudante.</span>';
             return;
         }
         var descricao = document.getElementById('descricaoOcorrencia').value.trim();
@@ -2092,16 +2092,16 @@ window.SGIPage.mount("competicoes/placar", function (pageConfig, pageScope) {
             }
             if (!placarContinuaAtivo(cicloLocal) || !select.isConnected || document.getElementById('selectAlunoArtilheiro') !== select) return;
             var alunos = data.success && Array.isArray(data.atletas) ? data.atletas : [];
-            select.innerHTML = '<option value="">Selecione o(a) jogador(a)</option>';
+            select.innerHTML = '<option value="">Selecione o estudante</option>';
             alunos.forEach(function(a) {
                 select.innerHTML += '<option value="' + a.id_usuario + '">' + esc(a.nome_usuario) + '</option>';
             });
             if (!alunos.length) {
-                select.innerHTML = '<option value="">Nenhum jogador disponível</option>';
+                select.innerHTML = '<option value="">Nenhum estudante disponível</option>';
             }
         } catch (e) {
             if (placarContinuaAtivo(cicloLocal) && select && select.isConnected) {
-                select.innerHTML = '<option value="">Erro ao carregar jogadores</option>';
+                select.innerHTML = '<option value="">Erro ao carregar estudantes</option>';
             }
         }
     }
@@ -2137,7 +2137,7 @@ window.SGIPage.mount("competicoes/placar", function (pageConfig, pageScope) {
 
         var idAluno = document.getElementById('selectAlunoArtilheiro').value;
         if (!idAluno) {
-            msg.innerHTML = '<span class="text-danger">Selecione o aluno responsável pela jogada para confirmar o ponto.</span>';
+            msg.innerHTML = '<span class="text-danger">Selecione o estudante responsável pela jogada para confirmar o ponto.</span>';
             return;
         }
 
@@ -2198,7 +2198,7 @@ window.SGIPage.mount("competicoes/placar", function (pageConfig, pageScope) {
                 }
                 var textoPonto = pontoPendente
                     ? 'Ponto salvo neste dispositivo, aguardando envio ao servidor.'
-                    : 'Ponto registrado e confirmado pelo servidor com o atleta responsável.';
+                    : 'Ponto registrado e confirmado pelo servidor com o estudante responsável.';
                 msg.innerHTML = '<span class="text-success">' + esc(textoPonto) + '</span>';
                 anunciarStatusPlacar(textoPonto);
                 if (pontoPendente) atualizarStatusPlacarDaFila();
@@ -2235,7 +2235,7 @@ window.SGIPage.mount("competicoes/placar", function (pageConfig, pageScope) {
         });
         var ponto = pontos[pontos.length - 1];
         if (!ponto) {
-            SGI.alert('Não há ponto vinculado a um atleta para anular.');
+            SGI.alert('Não há ponto vinculado a um estudante para anular.');
             return;
         }
         try {
@@ -2276,7 +2276,7 @@ window.SGIPage.mount("competicoes/placar", function (pageConfig, pageScope) {
     function mostrarAlertaSegundoAmarelo(nomeAluno) {
         var container = document.getElementById('alerta-segundo-amarelo');
         if (!container) return;
-        var nome = nomeAluno || 'Jogador(a)';
+        var nome = nomeAluno || 'Estudante';
         container.innerHTML =
             '<div class="alert d-flex align-items-center gap-3 py-3 px-4 mb-0 rounded-3 shadow-sm border-start border-4 border-danger bg-danger-subtle text-danger-emphasis" role="alert" >' +
                 '<span class="p-2 rounded-circle bg-danger text-white d-inline-flex align-items-center justify-content-center flex-shrink-0 fw-bold">V</span>' +
