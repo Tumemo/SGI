@@ -741,3 +741,24 @@ test('shared data tables use native Bootstrap table classes', () => {
     assert.doesNotMatch(sources, /sgi-table/);
     assert.doesNotMatch(sources, /table\.sgi-table/);
 });
+
+test('agenda cronograma workflow uses visual stepper and contextual step cards', () => {
+    const view = fs.readFileSync(path.join(root, 'resources', 'views', 'pages', 'eventos', 'configurar-agenda.php'), 'utf8');
+    const js = fs.readFileSync(path.join(root, 'resources', 'js', 'pages', 'eventos', 'configurar-agenda.js'), 'utf8');
+    const css = fs.readFileSync(path.join(root, 'resources', 'css', 'source', 'admin.css'), 'utf8');
+
+    assert.match(view, /id="cronogramaStepper" class="sgi-stepper list-unstyled mb-0"/);
+    assert.equal((view.match(/data-sgi-step-indicator="[1-6]"/g) || []).length, 6);
+    assert.equal((view.match(/data-sgi-step-card="[1-6]"/g) || []).length, 6);
+    assert.match(view, /data-sgi-step-card="2"[\s\S]*id="cronogramaDataInicio"[\s\S]*id="cronogramaDuracao"[\s\S]*id="cronogramaGerar"/);
+    assert.match(view, /data-sgi-step-card="4"[\s\S]*id="cronogramaInscricaoInicio"[\s\S]*id="cronogramaInscricaoFim"[\s\S]*id="cronogramaAbrir"/);
+    assert.match(js, /calcularProgressoCronograma/);
+    assert.match(js, /atualizarStepperCronograma/);
+    assert.match(js, /sgi-stepper__item--completed/);
+    assert.match(js, /sgi-stepper__item--active/);
+    assert.match(js, /sgi-step-card--active/);
+    assert.match(js, /setAttribute\('aria-current', 'step'\)/);
+    assert.match(css, /\.sgi-stepper\b/);
+    assert.match(css, /\.sgi-stepper__item--active\b/);
+    assert.match(css, /\.sgi-step-card--active\b/);
+});

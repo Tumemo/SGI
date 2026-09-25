@@ -128,21 +128,32 @@ test('o mesmo painel permite vários ciclos de abrir, revisar, gerar e republica
     await page.goto(`edicoes/agenda?id=${idInterclasse}`, { waitUntil: 'domcontentloaded' });
     await expect(page.locator('#painelCronogramaPlanejado')).toBeVisible({ timeout: 20_000 });
 
+    await expect(page.locator('[data-sgi-step-indicator="5"]')).toHaveAttribute('aria-current', 'step');
+    await expect(page.locator('[data-sgi-step-card="5"]')).toHaveClass(/sgi-step-card--active/);
+
     for (let cycle = 0; cycle < 3; cycle++) {
         if (cycle > 0) {
+            await expect(page.locator('[data-sgi-step-indicator="4"]')).toHaveAttribute('aria-current', 'step');
             await expect(page.locator('#cronogramaAbrir')).toBeEnabled();
             await page.locator('#cronogramaAbrir').click();
+            await expect(page.locator('[data-sgi-step-indicator="5"]')).toHaveAttribute('aria-current', 'step');
             await expect(page.locator('#cronogramaFechar')).toBeEnabled();
             await page.locator('#cronogramaFechar').click();
+            await expect(page.locator('[data-sgi-step-indicator="6"]')).toHaveAttribute('aria-current', 'step');
         }
         await expect(page.locator('#cronogramaRevisar')).toBeEnabled();
         await page.locator('#cronogramaRevisar').click();
         await expect(page.locator('#cronogramaPlanejadoStatus')).toContainText('revisao');
+        await expect(page.locator('[data-sgi-step-indicator="2"]')).toHaveAttribute('aria-current', 'step');
+        await expect(page.locator('[data-sgi-step-meta="2"]')).toHaveText('Em revisão');
         await expect(page.locator('#cronogramaGerar')).toBeEnabled();
         await page.locator('#cronogramaGerar').click();
+        await expect(page.locator('[data-sgi-step-indicator="3"]')).toHaveAttribute('aria-current', 'step');
+        await expect(page.locator('[data-sgi-step-card="3"]')).toHaveClass(/sgi-step-card--active/);
         await expect(page.locator('#cronogramaPublicar')).toBeEnabled();
         await page.locator('#cronogramaPublicar').click();
         await expect(page.locator('#cronogramaPlanejadoStatus')).toContainText('publicado');
+        await expect(page.locator('[data-sgi-step-indicator="4"]')).toHaveAttribute('aria-current', 'step');
     }
 
     expect(posts.map((item) => item.acao)).toEqual([

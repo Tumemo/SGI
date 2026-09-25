@@ -789,11 +789,14 @@ window.SGIPage.mount("eventos/configurar-agenda", function (pageConfig, pageScop
         let cronogramaEmProgresso = false;
         let cronogramaGeracao = 0;
         let cronogramaMontagem = 0;
+        let equipesPreparadasSessao = false;
         const painelCronograma = document.getElementById('painelCronogramaPlanejado');
         if (painelCronograma && interclasseAtual?.id_interclasse) {
             const cronogramaId = Number(interclasseAtual.id_interclasse);
             const statusCronograma = document.getElementById('cronogramaPlanejadoStatus');
             const resumoCronograma = document.getElementById('cronogramaPlanejadoResumo');
+            const preparar = document.getElementById('cronogramaPreparar');
+            const gerar = document.getElementById('cronogramaGerar');
             const botaoPublicar = document.getElementById('cronogramaPublicar');
             const botaoAbrir = document.getElementById('cronogramaAbrir');
             const botaoFechar = document.getElementById('cronogramaFechar');
@@ -921,6 +924,85 @@ window.SGIPage.mount("eventos/configurar-agenda", function (pageConfig, pageScop
                 && ['rascunho', 'revisao'].includes(String(cronogramaEstado.cronograma_status))
                 && String(cronogramaEstado.inscricoes_status || 'fechadas') !== 'abertas'
                 && !operacaoLiberada();
+            const calcularProgressoCronograma = (rascunhoAtual) => {
+                const publicado = Boolean(cronogramaEstado && cronogramaEstado.cronograma_status === 'publicado');
+                const emRevisao = Boolean(cronogramaEstado && cronogramaEstado.cronograma_status === 'revisao');
+                const liberado = operacaoLiberada();
+                const inscricoesAbertas = cronogramaEstado?.inscricoes_status === 'abertas';
+                const inscricoesEncerradas = cronogramaEstado?.inscricoes_status === 'encerradas';
+                const versaoAtual = Number(cronogramaEstado?.cronograma_versao || 0);
+
+                if (!cronogramaEstado || !cronogramaEstadoConfiavel) {
+                    return { etapaAtiva: 1, concluidas: [], emRevisao: false, liberado: false };
+                }
+                if (liberado) {
+                    return { etapaAtiva: 6, concluidas: [1, 2, 3, 4, 5, 6], emRevisao: false, liberado: true };
+                }
+                if (publicado) {
+                    if (inscricoesEncerradas) {
+                        return { etapaAtiva: 6, concluidas: [1, 2, 3, 4, 5], emRevisao: false, liberado: false };
+                    }
+                    if (inscricoesAbertas) {
+                        return { etapaAtiva: 5, concluidas: [1, 2, 3, 4], emRevisao: false, liberado: false };
+                    }
+                    return { etapaAtiva: 4, concluidas: [1, 2, 3], emRevisao: false, liberado: false };
+                }
+                if (rascunhoAtual) {
+                    return { etapaAtiva: 3, concluidas: [1, 2], emRevisao, liberado: false };
+                }
+                if (equipesPreparadasSessao || emRevisao || versaoAtual > 0 || Boolean(cronogramaRascunho)) {
+                    return { etapaAtiva: 2, concluidas: [1], emRevisao, liberado: false };
+                }
+                return { etapaAtiva: 1, concluidas: [], emRevisao, liberado: false };
+            };
+            const atualizarStepperCronograma = (rascunhoAtual) => {
+                const { etapaAtiva, concluidas, emRevisao, liberado } = calcularProgressoCronograma(rascunhoAtual);
+                for (let step = 1; step <= 6; step++) {
+                    const isCompleted = concluidas.includes(step);
+                    const isActive = !isCompleted && etapaAtiva === step;
+                    const isUpcoming = !isCompleted && !isActive;
+                    const textoEstado = isCompleted
+                        ? 'Concluída'
+                        : (isActive ? (emRevisao ? 'Em revisão' : 'Etapa atual') : 'Aguardando');
+
+                    const indicator = painelCronograma.querySelector(`[data-sgi-step-indicator="${step}"]`);
+                    if (indicator) {
+                        indicator.classList.toggle('sgi-stepper__item--completed', isCompleted);
+                        indicator.classList.toggle('sgi-stepper__item--active', isActive);
+                        indicator.classList.toggle('sgi-stepper__item--upcoming', isUpcoming);
+                        if (isActive || (liberado && step === 6)) {
+                            indicator.setAttribute('aria-current', 'step');
+                        } else {
+                            indicator.removeAttribute('aria-current');
+                        }
+                    }
+                    const meta = painelCronograma.querySelector(`[data-sgi-step-meta="${step}"]`);
+                    if (meta) {
+                        meta.textContent = textoEstado;
+                    }
+                    const card = painelCronograma.querySelector(`[data-sgi-step-card="${step}"]`);
+                    if (card) {
+                        card.classList.toggle('sgi-step-card--completed', isCompleted);
+                        card.classList.toggle('sgi-step-card--active', isActive);
+                        card.classList.toggle('sgi-step-card--upcoming', isUpcoming);
+                    }
+                    const badge = painelCronograma.querySelector(`[data-sgi-card-badge="${step}"]`);
+                    if (badge) {
+                        badge.textContent = textoEstado;
+                        badge.className = 'badge rounded-pill ' + (
+                            isCompleted
+                                ? 'bg-success-subtle text-success-emphasis'
+                                : (isActive ? 'text-bg-primary' : 'text-bg-light border text-body-secondary')
+                        );
+                    }
+                }
+                if (preparar) preparar.className = `btn ${etapaAtiva === 1 && !concluidas.includes(1) ? 'btn-primary' : 'btn-outline-primary'} btn-sm w-100`;
+                if (gerar) gerar.className = `btn ${etapaAtiva === 2 && !concluidas.includes(2) ? 'btn-primary' : 'btn-outline-primary'} btn-sm`;
+                if (botaoPublicar) botaoPublicar.className = `btn ${etapaAtiva === 3 && !concluidas.includes(3) ? 'btn-success' : 'btn-outline-success'} btn-sm w-100`;
+                if (botaoAbrir) botaoAbrir.className = `btn ${etapaAtiva === 4 && !concluidas.includes(4) ? 'btn-success' : 'btn-outline-success'} btn-sm`;
+                if (botaoFechar) botaoFechar.className = `btn ${etapaAtiva === 5 && !concluidas.includes(5) ? 'btn-primary' : 'btn-outline-secondary'} btn-sm w-100`;
+                if (botaoLiberar) botaoLiberar.className = `btn ${etapaAtiva === 6 && !concluidas.includes(6) ? 'btn-primary' : 'btn-outline-primary'} btn-sm w-100`;
+            };
             const atualizarAcoes = () => {
                 const indisponivel = cronogramaEmProgresso || !cronogramaEstadoConfiavel || !cronogramaEstado;
                 const publicado = Boolean(cronogramaEstado && cronogramaEstado.cronograma_status === 'publicado');
@@ -942,6 +1024,7 @@ window.SGIPage.mount("eventos/configurar-agenda", function (pageConfig, pageScop
                 if (botaoLiberar) botaoLiberar.disabled = indisponivel || !publicado || liberado || !inscricoesEncerradas;
                 if (botaoRevisar) botaoRevisar.disabled = indisponivel || !publicado || liberado;
                 if (botaoAtualizar) botaoAtualizar.disabled = cronogramaEmProgresso;
+                atualizarStepperCronograma(Boolean(rascunhoAtual));
             };
             const lerRespostaCronograma = async (response) => {
                 const text = await response.text();
@@ -1058,17 +1141,17 @@ window.SGIPage.mount("eventos/configurar-agenda", function (pageConfig, pageScop
                     }
                 }
             };
-            const preparar = document.getElementById('cronogramaPreparar');
             if (preparar) pageScope.listen(preparar, 'click', async () => {
                 invalidarRascunho('As equipes foram atualizadas. Gere um rascunho novo antes de publicar.');
                 await executarMutacaoCronograma(
                     () => enviarCronograma({ acao: 'preparar_equipes' }),
                     (result) => `${Number(result.equipes_criadas || 0)} equipe(s) criada(s); ${Number(result.equipes_existentes || 0)} já existente(s).`,
+                    () => { equipesPreparadasSessao = true; },
                 );
             });
-            const gerar = document.getElementById('cronogramaGerar');
             if (gerar) pageScope.listen(gerar, 'click', async () => {
                 if (cronogramaEmProgresso || !cronogramaEstadoConfiavel || !podeGerar()) return;
+                equipesPreparadasSessao = true;
                 const geracao = ++cronogramaGeracao;
                 const assinatura = assinaturaGeracao();
                 cronogramaEmProgresso = true;

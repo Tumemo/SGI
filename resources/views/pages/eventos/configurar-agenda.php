@@ -12,40 +12,180 @@ $nivelUsuarioAgenda = (int)($_SESSION['nivel'] ?? -1);
 <section id="painelCronogramaPlanejado" class="main-desktop-layout py-3" aria-labelledby="cronogramaPlanejadoTitulo">
     <div class="card border-primary-subtle shadow-sm">
         <div class="card-body">
-            <div class="d-flex flex-wrap align-items-start justify-content-between gap-3">
+            <div class="d-flex flex-wrap align-items-start justify-content-between gap-3 pb-3 border-bottom">
                 <div>
                     <h2 id="cronogramaPlanejadoTitulo" class="h5 fw-bold mb-1">Cronograma antes das inscrições</h2>
                     <p class="small text-body-secondary mb-0">Prepare as equipes, gere e confira a prévia, publique o cronograma e então abra ou encerre as inscrições. A liberação da competição materializa os jogos; depois dela, a edição não pode ser reconfigurada.</p>
                 </div>
-                <span id="cronogramaPlanejadoStatus" class="badge text-bg-secondary">Verificando...</span>
-            </div>
-            <div class="row g-2 mt-3 align-items-end">
-                <div class="col-6 col-md-2"><label class="form-label small" for="cronogramaDataInicio">Primeiro dia</label><input id="cronogramaDataInicio" type="date" class="form-control form-control-sm"></div>
-                <div class="col-6 col-md-2"><label class="form-label small" for="cronogramaDataFim">Último dia</label><input id="cronogramaDataFim" type="date" class="form-control form-control-sm"></div>
-                <div class="col-6 col-md-2"><label class="form-label small" for="cronogramaHoraInicio">Início</label><input id="cronogramaHoraInicio" type="time" class="form-control form-control-sm" value="08:00"></div>
-                <div class="col-6 col-md-2"><label class="form-label small" for="cronogramaHoraFim">Fim</label><input id="cronogramaHoraFim" type="time" class="form-control form-control-sm" value="18:00"></div>
-                <div class="col-6 col-md-2"><label class="form-label small" for="cronogramaDuracao">Duração (min)</label><input id="cronogramaDuracao" type="number" min="1" class="form-control form-control-sm" value="30"></div>
-                <div class="col-6 col-md-2 d-flex flex-wrap gap-2">
-                    <button id="cronogramaPreparar" type="button" class="btn btn-outline-primary btn-sm" disabled>Preparar equipes</button>
-                    <button id="cronogramaGerar" type="button" class="btn btn-primary btn-sm" disabled>Gerar rascunho</button>
-                    <button id="cronogramaPublicar" type="button" class="btn btn-success btn-sm" disabled>Publicar cronograma</button>
-                    <button id="cronogramaAbrir" type="button" class="btn btn-outline-success btn-sm" disabled>Abrir inscrições</button>
-                    <button id="cronogramaFechar" type="button" class="btn btn-outline-secondary btn-sm" disabled>Encerrar inscrições</button>
-                    <button id="cronogramaLiberar" type="button" class="btn btn-outline-primary btn-sm" disabled>Liberar competição</button>
+                <div class="d-flex flex-wrap align-items-center gap-2">
+                    <span id="cronogramaPlanejadoStatus" class="badge rounded-pill text-bg-secondary">Verificando...</span>
                     <button id="cronogramaRevisar" type="button" class="btn btn-outline-warning btn-sm" disabled>Reabrir revisão</button>
                     <button id="cronogramaAtualizar" type="button" class="btn btn-outline-secondary btn-sm">Atualizar estado</button>
                 </div>
             </div>
-            <div class="row g-2 mt-2">
-                <div class="col-6 col-md-3"><label class="form-label small" for="cronogramaInscricaoInicio">Abertura das inscrições</label><input id="cronogramaInscricaoInicio" type="datetime-local" class="form-control form-control-sm"></div>
-                <div class="col-6 col-md-3"><label class="form-label small" for="cronogramaInscricaoFim">Encerramento das inscrições</label><input id="cronogramaInscricaoFim" type="datetime-local" class="form-control form-control-sm"></div>
+
+            <nav class="mt-3" aria-label="Etapas do cronograma planejado">
+                <ol id="cronogramaStepper" class="sgi-stepper list-unstyled mb-0">
+                    <li class="sgi-stepper__item sgi-stepper__item--active" data-sgi-step-indicator="1" aria-current="step">
+                        <span class="sgi-stepper__circle" aria-hidden="true">
+                            <span class="sgi-stepper__num">1</span>
+                            <i class="bi bi-check-lg sgi-stepper__check"></i>
+                        </span>
+                        <span class="sgi-stepper__body">
+                            <span class="sgi-stepper__label">Preparar equipes</span>
+                            <span class="sgi-stepper__meta" data-sgi-step-meta="1">Etapa atual</span>
+                        </span>
+                    </li>
+                    <li class="sgi-stepper__item sgi-stepper__item--upcoming" data-sgi-step-indicator="2">
+                        <span class="sgi-stepper__circle" aria-hidden="true">
+                            <span class="sgi-stepper__num">2</span>
+                            <i class="bi bi-check-lg sgi-stepper__check"></i>
+                        </span>
+                        <span class="sgi-stepper__body">
+                            <span class="sgi-stepper__label">Gerar rascunho</span>
+                            <span class="sgi-stepper__meta" data-sgi-step-meta="2">Aguardando</span>
+                        </span>
+                    </li>
+                    <li class="sgi-stepper__item sgi-stepper__item--upcoming" data-sgi-step-indicator="3">
+                        <span class="sgi-stepper__circle" aria-hidden="true">
+                            <span class="sgi-stepper__num">3</span>
+                            <i class="bi bi-check-lg sgi-stepper__check"></i>
+                        </span>
+                        <span class="sgi-stepper__body">
+                            <span class="sgi-stepper__label">Publicar cronograma</span>
+                            <span class="sgi-stepper__meta" data-sgi-step-meta="3">Aguardando</span>
+                        </span>
+                    </li>
+                    <li class="sgi-stepper__item sgi-stepper__item--upcoming" data-sgi-step-indicator="4">
+                        <span class="sgi-stepper__circle" aria-hidden="true">
+                            <span class="sgi-stepper__num">4</span>
+                            <i class="bi bi-check-lg sgi-stepper__check"></i>
+                        </span>
+                        <span class="sgi-stepper__body">
+                            <span class="sgi-stepper__label">Abrir inscrições</span>
+                            <span class="sgi-stepper__meta" data-sgi-step-meta="4">Aguardando</span>
+                        </span>
+                    </li>
+                    <li class="sgi-stepper__item sgi-stepper__item--upcoming" data-sgi-step-indicator="5">
+                        <span class="sgi-stepper__circle" aria-hidden="true">
+                            <span class="sgi-stepper__num">5</span>
+                            <i class="bi bi-check-lg sgi-stepper__check"></i>
+                        </span>
+                        <span class="sgi-stepper__body">
+                            <span class="sgi-stepper__label">Encerrar inscrições</span>
+                            <span class="sgi-stepper__meta" data-sgi-step-meta="5">Aguardando</span>
+                        </span>
+                    </li>
+                    <li class="sgi-stepper__item sgi-stepper__item--upcoming" data-sgi-step-indicator="6">
+                        <span class="sgi-stepper__circle" aria-hidden="true">
+                            <span class="sgi-stepper__num">6</span>
+                            <i class="bi bi-check-lg sgi-stepper__check"></i>
+                        </span>
+                        <span class="sgi-stepper__body">
+                            <span class="sgi-stepper__label">Liberar competição</span>
+                            <span class="sgi-stepper__meta" data-sgi-step-meta="6">Aguardando</span>
+                        </span>
+                    </li>
+                </ol>
+            </nav>
+
+            <div id="cronogramaEtapasGrid" class="row g-3 mt-1">
+                <div class="col-12 col-lg-3">
+                    <div class="card h-100 rounded-3 p-3 d-flex flex-column sgi-step-card sgi-step-card--active" data-sgi-step-card="1">
+                        <div class="d-flex align-items-center justify-content-between gap-2 mb-2">
+                            <span class="fw-bold small text-body">1. Preparar equipes</span>
+                            <span class="badge rounded-pill text-bg-primary" data-sgi-card-badge="1">Etapa atual</span>
+                        </div>
+                        <p class="small text-body-secondary mb-3">Cria ou atualiza as equipes planejadas por turma e modalidade ativa.</p>
+                        <div class="mt-auto">
+                            <button id="cronogramaPreparar" type="button" class="btn btn-primary btn-sm w-100" disabled>Preparar equipes</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-12 col-lg-6">
+                    <div class="card h-100 rounded-3 p-3 d-flex flex-column sgi-step-card sgi-step-card--upcoming" data-sgi-step-card="2">
+                        <div class="d-flex align-items-center justify-content-between gap-2 mb-2">
+                            <span class="fw-bold small text-body">2. Gerar rascunho</span>
+                            <span class="badge rounded-pill text-bg-light border text-body-secondary" data-sgi-card-badge="2">Aguardando</span>
+                        </div>
+                        <p class="small text-body-secondary mb-2">Defina o período, janela diária e duração das partidas para simular a grade.</p>
+                        <div class="row g-2 mb-3 align-items-end">
+                            <div class="col-6 col-sm-3"><label class="form-label small mb-1" for="cronogramaDataInicio">Primeiro dia</label><input id="cronogramaDataInicio" type="date" class="form-control form-control-sm"></div>
+                            <div class="col-6 col-sm-3"><label class="form-label small mb-1" for="cronogramaDataFim">Último dia</label><input id="cronogramaDataFim" type="date" class="form-control form-control-sm"></div>
+                            <div class="col-4 col-sm-2"><label class="form-label small mb-1" for="cronogramaHoraInicio">Início</label><input id="cronogramaHoraInicio" type="time" class="form-control form-control-sm" value="08:00"></div>
+                            <div class="col-4 col-sm-2"><label class="form-label small mb-1" for="cronogramaHoraFim">Fim</label><input id="cronogramaHoraFim" type="time" class="form-control form-control-sm" value="18:00"></div>
+                            <div class="col-4 col-sm-2"><label class="form-label small mb-1 text-nowrap" for="cronogramaDuracao">Duração (min)</label><input id="cronogramaDuracao" type="number" min="1" class="form-control form-control-sm" value="30"></div>
+                        </div>
+                        <div class="mt-auto d-flex justify-content-end">
+                            <button id="cronogramaGerar" type="button" class="btn btn-outline-primary btn-sm" disabled>Gerar rascunho</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-12 col-lg-3">
+                    <div class="card h-100 rounded-3 p-3 d-flex flex-column sgi-step-card sgi-step-card--upcoming" data-sgi-step-card="3">
+                        <div class="d-flex align-items-center justify-content-between gap-2 mb-2">
+                            <span class="fw-bold small text-body">3. Publicar cronograma</span>
+                            <span class="badge rounded-pill text-bg-light border text-body-secondary" data-sgi-card-badge="3">Aguardando</span>
+                        </div>
+                        <p class="small text-body-secondary mb-3">Confirma a prévia sem pendências e disponibiliza os horários planejados.</p>
+                        <div class="mt-auto">
+                            <button id="cronogramaPublicar" type="button" class="btn btn-outline-success btn-sm w-100" disabled>Publicar cronograma</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-12 col-lg-6">
+                    <div class="card h-100 rounded-3 p-3 d-flex flex-column sgi-step-card sgi-step-card--upcoming" data-sgi-step-card="4">
+                        <div class="d-flex align-items-center justify-content-between gap-2 mb-2">
+                            <span class="fw-bold small text-body">4. Abrir inscrições</span>
+                            <span class="badge rounded-pill text-bg-light border text-body-secondary" data-sgi-card-badge="4">Aguardando</span>
+                        </div>
+                        <p class="small text-body-secondary mb-2">Configure a janela de abertura e encerramento para os alunos se inscreverem.</p>
+                        <div class="row g-2 mb-3 align-items-end">
+                            <div class="col-12 col-sm-6"><label class="form-label small mb-1" for="cronogramaInscricaoInicio">Abertura das inscrições</label><input id="cronogramaInscricaoInicio" type="datetime-local" class="form-control form-control-sm"></div>
+                            <div class="col-12 col-sm-6"><label class="form-label small mb-1" for="cronogramaInscricaoFim">Encerramento das inscrições</label><input id="cronogramaInscricaoFim" type="datetime-local" class="form-control form-control-sm"></div>
+                        </div>
+                        <div class="mt-auto d-flex justify-content-end">
+                            <button id="cronogramaAbrir" type="button" class="btn btn-outline-success btn-sm" disabled>Abrir inscrições</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-12 col-lg-3">
+                    <div class="card h-100 rounded-3 p-3 d-flex flex-column sgi-step-card sgi-step-card--upcoming" data-sgi-step-card="5">
+                        <div class="d-flex align-items-center justify-content-between gap-2 mb-2">
+                            <span class="fw-bold small text-body">5. Encerrar inscrições</span>
+                            <span class="badge rounded-pill text-bg-light border text-body-secondary" data-sgi-card-badge="5">Aguardando</span>
+                        </div>
+                        <p class="small text-body-secondary mb-3">Bloqueia novas alterações nas equipes para consolidar os elencos.</p>
+                        <div class="mt-auto">
+                            <button id="cronogramaFechar" type="button" class="btn btn-outline-secondary btn-sm w-100" disabled>Encerrar inscrições</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-12 col-lg-3">
+                    <div class="card h-100 rounded-3 p-3 d-flex flex-column sgi-step-card sgi-step-card--upcoming" data-sgi-step-card="6">
+                        <div class="d-flex align-items-center justify-content-between gap-2 mb-2">
+                            <span class="fw-bold small text-body">6. Liberar competição</span>
+                            <span class="badge rounded-pill text-bg-light border text-body-secondary" data-sgi-card-badge="6">Aguardando</span>
+                        </div>
+                        <p class="small text-body-secondary mb-3">Materializa os jogos na agenda; após liberar, não pode ser reconfigurada.</p>
+                        <div class="mt-auto">
+                            <button id="cronogramaLiberar" type="button" class="btn btn-outline-primary btn-sm w-100" disabled>Liberar competição</button>
+                        </div>
+                    </div>
+                </div>
             </div>
-            <section id="cronogramaPrevia" class="mt-3 d-none" aria-labelledby="cronogramaPreviaTitulo" aria-live="polite">
+
+            <p id="cronogramaPlanejadoResumo" class="small mb-0 mt-3 p-2 rounded bg-body-tertiary border" role="status" aria-live="polite"></p>
+            <section id="cronogramaPrevia" class="mt-3 p-3 rounded border bg-body-tertiary d-none" aria-labelledby="cronogramaPreviaTitulo" aria-live="polite">
                 <h3 id="cronogramaPreviaTitulo" class="h6 fw-semibold mb-1">Prévia da grade</h3>
                 <p id="cronogramaPreviaStatus" class="small text-body-secondary mb-2"></p>
                 <div id="cronogramaPreviaCorpo" class="table-responsive"></div>
             </section>
-            <p id="cronogramaPlanejadoResumo" class="small mb-0 mt-3" role="status" aria-live="polite"></p>
         </div>
     </div>
 </section>
