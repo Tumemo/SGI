@@ -10,6 +10,7 @@ $paginaAtiva = 'dashboard';
 
 <main class="d-md-none mb-5" >
     <div class="container mt-3">
+        <p id="nomeModalidadeEquipeAlunosMob" class="small fw-semibold text-body-secondary mb-2 d-none"></p>
         <label for="buscaAlunosMobile" class="visually-hidden">Buscar estudante por nome ou matrícula</label>
         <input id="buscaAlunosMobile" class="form-control mb-2" type="search" placeholder="Buscar estudante por nome ou matrícula" autocomplete="off">
         <p class="small text-body-secondary mb-3">Marque novos estudantes para adicioná-los. Estudantes já vinculados permanecem na equipe; desmarcar não remove ninguém.</p>
@@ -27,7 +28,8 @@ $paginaAtiva = 'dashboard';
     <div class="container-fluid py-4 px-4 text-body">
         <?php
         $headerIdVoltar = 'btnVoltarEquipesDesktop';
-        $headerCorpoHtml = '<h1 class="h4 mb-0 fw-bold">Adicionar estudantes à equipe</h1>';
+        $headerCorpoHtml = '<div><h1 class="h4 mb-0 fw-bold">Adicionar estudantes à equipe</h1><p id="nomeModalidadeEquipeAlunos" class="small fw-semibold text-body-secondary mb-0 mt-1 d-none"></p></div>';
+        $headerAcoesHtml = '<button id="btnSalvarAlunosDesktop" class="btn btn-primary" type="button" aria-label="Salvar estudantes selecionados na equipe — Adicionar 0 estudantes" disabled><i class="bi bi-person-plus me-1" aria-hidden="true"></i><span data-selection-count>Adicionar 0 estudantes</span></button>';
         include SGI_ROOT . '/resources/views/components/page-header.php';
         unset($headerMostrarVoltar, $headerCorpoHtml, $headerAcoesHtml, $headerClasse, $headerUrlVoltar, $headerIdVoltar, $headerClassBotao, $headerHiddenBotao);
         ?>
@@ -38,11 +40,6 @@ $paginaAtiva = 'dashboard';
                 <p id="feedbackSelecaoEquipeDesktop" class="small text-body-secondary mb-2" role="status" aria-live="polite" aria-atomic="true">Nenhum estudante novo selecionado.</p>
         <div id="listaAlunosDesktop" class="row row-cols-1 row-cols-lg-2 g-3">
             <div class="text-center py-4 text-body-secondary">Carregando estudantes...</div>
-        </div>
-        <div class="d-flex justify-content-end mt-3">
-            <button id="btnSalvarAlunosDesktop" class="btn btn-primary" type="button" aria-label="Salvar estudantes selecionados na equipe — Adicionar 0 estudantes" disabled>
-                <i class="bi bi-person-plus me-1" aria-hidden="true"></i><span data-selection-count>Adicionar 0 estudantes</span>
-            </button>
         </div>
     </div>
 </main>

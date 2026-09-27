@@ -11,6 +11,12 @@ const idCategoria = params.get('id_categoria');
 const idModalidade = params.get('id_modalidade');
 const nomeTurma = params.get('nome_turma') || '';
 const nomeModalidade = params.get('nome_modalidade') || '';
+[['nomeModalidadeElencoMob', nomeModalidade], ['nomeModalidadeElencoDesk', nomeModalidade]].forEach(([id, nome]) => {
+    const el = document.getElementById(id);
+    if (!el || !nome) return;
+    el.textContent = `Modalidade: ${nome}`;
+    el.classList.remove('d-none');
+});
 
 function esc(s) {
     const d = document.createElement('div');

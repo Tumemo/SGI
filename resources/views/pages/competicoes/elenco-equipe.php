@@ -11,6 +11,7 @@ $paginaAtiva = 'dashboard';
 ?>
 
 <main class="d-md-none p-3 pb-5" >
+    <p id="nomeModalidadeElencoMob" class="small fw-semibold text-body-secondary mb-2 d-none"></p>
     <div id="alertaLimiteMob" class="alert alert-danger d-none d-flex flex-wrap align-items-center gap-2 small"></div>
     <div id="listaElencoMob" class="d-flex flex-column gap-2"></div>
     <?php if ($isAdmin): ?>
@@ -24,7 +25,7 @@ $paginaAtiva = 'dashboard';
     <div class="container-fluid py-4 px-4 text-body">
         <?php
         $headerIdVoltar = 'btnVoltarElencoDesk';
-        $headerCorpoHtml = '<h1 class="h4 mb-0 fw-bold">Elenco da equipe</h1>';
+        $headerCorpoHtml = '<div><h1 class="h4 mb-0 fw-bold">Elenco da equipe</h1><p id="nomeModalidadeElencoDesk" class="small fw-semibold text-body-secondary mb-0 mt-1 d-none"></p></div>';
         $headerAcoesHtml = $isAdmin ? '<div class="ms-auto">
                 <a class="btn btn-outline-primary" id="linkGerenciarDesk" href="#" aria-label="Gerenciar elenco">
                     <i class="bi bi-person-plus" aria-hidden="true"></i>
