@@ -65,14 +65,11 @@ final class MysqliChaveamentoRepository
         if ($n < 2) {
             throw new \RuntimeException('Equipes insuficientes (mínimo 2 com elenco validado).');
         }
-        \shuffle($equipes);
         $w = \App\Modules\Competicoes\Domain\ChaveamentoRules::proximoPow2($n);
-        $slots = \array_fill(0, $w, \null);
-        $idxSlots = \range(0, $w - 1);
-        \shuffle($idxSlots);
-        for ($i = 0; $i < $n; $i++) {
-            $slots[$idxSlots[$i]] = $equipes[$i]['id_equipe'];
-        }
+        $slots = \App\Modules\Competicoes\Domain\ChaveamentoRules::distribuirEquipesNaChaveInicial(\array_map(
+            static fn (array $team): int => (int) $team['id_equipe'],
+            $equipes
+        ));
         $jogosCriados = 0;
         $byeJogos = [];
         $meio = (int) ($w / 2);
@@ -206,6 +203,9 @@ final class MysqliChaveamentoRepository
         }
         $meta = \App\Modules\Competicoes\Domain\ChaveamentoRules::parse($row['nome_jogo']);
         if ($meta === \null) {
+            return;
+        }
+        if ($meta['largura'] === 2) {
             return;
         }
         if (\App\Modules\Competicoes\Infrastructure\MysqliChaveamentoRepository::contarPartidas($conn, $idJogoPai) !== 1) {
@@ -364,7 +364,74 @@ final class MysqliChaveamentoRepository
         $lPai = \App\Modules\Competicoes\Domain\ChaveamentoRules::proximaLargura($largura);
         $slotPai = \App\Modules\Competicoes\Domain\ChaveamentoRules::slotPai($slot);
         $tagPai = \App\Modules\Competicoes\Domain\ChaveamentoRules::tag($lPai, $slotPai, 'N');
+
+        // Alguns chaveamentos antigos deixam o bye no último slot da rodada.
+        // Como esse slot não possui irmão, o bye fica aguardando o primeiro
+        // vencedor dos confrontos da mesma fase para formar a próxima partida.
+        if ($kind === 'N') {
+            $byePendente = self::buscarByePendenteSemIrmao($conn, $idModalidade, $largura);
+            if ($byePendente !== null) {
+                $metaBye = \App\Modules\Competicoes\Domain\ChaveamentoRules::parse((string) $byePendente['nome_jogo']);
+                $vencedorBye = self::vencedorDoJogo($conn, (int) $byePendente['id_jogo'], (string) $byePendente['status_jogo'], 'B');
+                if ($metaBye !== null && $vencedorBye !== null) {
+                    $tagPaiBye = \App\Modules\Competicoes\Domain\ChaveamentoRules::tag(
+                        \App\Modules\Competicoes\Domain\ChaveamentoRules::proximaLargura($largura),
+                        \App\Modules\Competicoes\Domain\ChaveamentoRules::slotPai($metaBye['slot']),
+                        'N',
+                    );
+                    $paiBye = self::buscarJogoPorTag($conn, $idModalidade, $tagPaiBye);
+                    if ($paiBye === null) {
+                        $stIns = $conn->prepare("INSERT INTO jogos (nome_jogo, data_jogo, inicio_jogo, termino_jogo, status_jogo, modalidades_id_modalidade, locais_id_local)\r\n                         VALUES (?, NULL, NULL, NULL, 'Agendado', ?, NULL)");
+                        $stIns->bind_param('si', $tagPaiBye, $idModalidade);
+                        $stIns->execute();
+                        $idPaiBye = (int) $conn->insert_id;
+                        $stIns->close();
+                        self::aplicarReservaAgenda($conn, $idModalidade, $tagPaiBye, $idPaiBye);
+                    } else {
+                        $idPaiBye = (int) $paiBye['id_jogo'];
+                        if (self::contarPartidas($conn, $idPaiBye) < 2) {
+                            self::limparAvancosSolitariosPosteriores($conn, $idModalidade, $lPai);
+                            $stReabrir = $conn->prepare("UPDATE jogos SET status_jogo = 'Agendado' WHERE id_jogo = ?");
+                            $stReabrir->bind_param('i', $idPaiBye);
+                            $stReabrir->execute();
+                            $stReabrir->close();
+                        }
+                    }
+                    self::garantirPartidaEquipe($conn, $idPaiBye, $vencedorBye);
+                    self::garantirPartidaEquipe($conn, $idPaiBye, $w1);
+                    return;
+                }
+            }
+            if (self::equipeJaAvancouPorByePendente($conn, $idModalidade, $lPai, $tagPai, $w1)) {
+                // Esta vencedora já está no confronto contra o bye do último
+                // slot. Reprocessamentos não podem recolocá-la na outra chave.
+                return;
+            }
+        }
+        $irmaoJaAvancouPorBye = false;
+        if ($ji !== null && \App\Modules\Competicoes\Domain\ChaveamentoRules::jogoEstaEncerrado((string) $ji['status_jogo'])) {
+            $kindIrmaoExistente = (\App\Modules\Competicoes\Domain\ChaveamentoRules::parse($ji['nome_jogo']) ?? ['kind' => 'N'])['kind'];
+            $vencedorIrmao = self::vencedorDoJogo($conn, (int) $ji['id_jogo'], (string) $ji['status_jogo'], $kindIrmaoExistente);
+            if ($vencedorIrmao !== null && self::equipeJaAvancouPorByePendente($conn, $idModalidade, $lPai, $tagPai, $vencedorIrmao)) {
+                // O primeiro vencedor já foi pareado com o bye do último
+                // slot. O vencedor atual é o bye desta próxima fase.
+                $ji = null;
+                $irmaoJaAvancouPorBye = true;
+            }
+        }
         if ($ji === \null) {
+            // O bye sem irmão deve esperar o primeiro vencedor da fase, nunca
+            // avançar sozinho ou virar campeão automaticamente.
+            if ($kind === 'B') {
+                return;
+            }
+            // Irmão ausente só é vaga vazia quando não há equipes aguardando
+            // avanço em fases inferiores daquele ramo. Isso evita expor uma
+            // final com apenas um participante enquanto o outro ramo ainda
+            // está disputando suas partidas.
+            if (self::ramoTemEquipesEmFasesInferiores($conn, $idModalidade, $largura, $irmao)) {
+                return;
+            }
             $existente = \App\Modules\Competicoes\Infrastructure\MysqliChaveamentoRepository::buscarJogoPorTag($conn, $idModalidade, $tagPai);
             if ($existente === \null) {
                 $stIns = $conn->prepare("INSERT INTO jogos (nome_jogo, data_jogo, inicio_jogo, termino_jogo, status_jogo, modalidades_id_modalidade, locais_id_local)\r\n                 VALUES (?, NULL, NULL, NULL, 'Agendado', ?, NULL)");
@@ -376,6 +443,20 @@ final class MysqliChaveamentoRepository
                 \App\Modules\Competicoes\Infrastructure\MysqliChaveamentoRepository::garantirPartidaEquipe($conn, $idPai, $w1);
             } else {
                 $idPai = (int) $existente['id_jogo'];
+                if ($irmaoJaAvancouPorBye && self::contarPartidas($conn, $idPai) > 1) {
+                    // Remove o confronto incorreto que reutilizou a primeira
+                    // vencedora e os jogos posteriores derivados dele.
+                    self::limparAvancosPosteriores($conn, $idModalidade, $lPai);
+                    self::desvincularHistoricoDasPartidas($conn, $idPai, [$w1]);
+                    $stLimpar = $conn->prepare('DELETE FROM partidas WHERE jogos_id_jogo = ? AND equipes_id_equipe <> ?');
+                    $stLimpar->bind_param('ii', $idPai, $w1);
+                    $stLimpar->execute();
+                    $stLimpar->close();
+                    $stReabrir = $conn->prepare("UPDATE jogos SET status_jogo = 'Agendado' WHERE id_jogo = ?");
+                    $stReabrir->bind_param('i', $idPai);
+                    $stReabrir->execute();
+                    $stReabrir->close();
+                }
                 \App\Modules\Competicoes\Infrastructure\MysqliChaveamentoRepository::garantirPartidaEquipe($conn, $idPai, $w1);
             }
             \App\Modules\Competicoes\Infrastructure\MysqliChaveamentoRepository::tentarAutoconcluirPaiUmClube($conn, $idModalidade, $idPai);
@@ -410,6 +491,151 @@ final class MysqliChaveamentoRepository
         \App\Modules\Competicoes\Infrastructure\MysqliChaveamentoRepository::garantirPartidaEquipe($conn, $idPai, $w1);
         \App\Modules\Competicoes\Infrastructure\MysqliChaveamentoRepository::garantirPartidaEquipe($conn, $idPai, $w2);
     }
+
+    /** @return array{id_jogo:int,nome_jogo:string,status_jogo:string}|null */
+    private static function buscarByePendenteSemIrmao(\mysqli $conn, int $idModalidade, int $largura): ?array
+    {
+        $st = $conn->prepare("SELECT id_jogo, nome_jogo, status_jogo
+            FROM jogos WHERE modalidades_id_modalidade = ? AND nome_jogo LIKE ? AND status_jogo IN ('Concluido', 'Finalizado')
+            ORDER BY id_jogo ASC");
+        $like = 'MM:' . $largura . ':%:B';
+        $st->bind_param('is', $idModalidade, $like);
+        $st->execute();
+        $byes = $st->get_result()->fetch_all(\MYSQLI_ASSOC);
+        $st->close();
+
+        foreach ($byes as $bye) {
+            $meta = \App\Modules\Competicoes\Domain\ChaveamentoRules::parse((string) $bye['nome_jogo']);
+            if ($meta === null) {
+                continue;
+            }
+            $irmao = \App\Modules\Competicoes\Domain\ChaveamentoRules::slotIrmao($meta['slot']);
+            if (self::buscarJogoPorTag($conn, $idModalidade, \App\Modules\Competicoes\Domain\ChaveamentoRules::tag($largura, $irmao, 'N')) !== null
+                || self::buscarJogoPorTag($conn, $idModalidade, \App\Modules\Competicoes\Domain\ChaveamentoRules::tag($largura, $irmao, 'B')) !== null) {
+                continue;
+            }
+            $tagPai = \App\Modules\Competicoes\Domain\ChaveamentoRules::tag(
+                \App\Modules\Competicoes\Domain\ChaveamentoRules::proximaLargura($largura),
+                \App\Modules\Competicoes\Domain\ChaveamentoRules::slotPai($meta['slot']),
+                'N',
+            );
+            $pai = self::buscarJogoPorTag($conn, $idModalidade, $tagPai);
+            if ($pai === null || self::contarPartidas($conn, (int) $pai['id_jogo']) < 2) {
+                return ['id_jogo' => (int) $bye['id_jogo'], 'nome_jogo' => (string) $bye['nome_jogo'], 'status_jogo' => (string) $bye['status_jogo']];
+            }
+        }
+        return null;
+    }
+
+    private static function limparAvancosSolitariosPosteriores(\mysqli $conn, int $idModalidade, int $larguraOrigem): void
+    {
+        $st = $conn->prepare("SELECT j.id_jogo
+            FROM jogos j
+            LEFT JOIN partidas p ON p.jogos_id_jogo = j.id_jogo
+            WHERE j.modalidades_id_modalidade = ? AND j.nome_jogo LIKE 'MM:%'
+            GROUP BY j.id_jogo, j.nome_jogo
+            HAVING CAST(SUBSTRING_INDEX(SUBSTRING_INDEX(j.nome_jogo, ':', 2), ':', -1) AS UNSIGNED) < ?
+               AND COUNT(p.id_partida) = 1");
+        $st->bind_param('ii', $idModalidade, $larguraOrigem);
+        $st->execute();
+        $games = $st->get_result()->fetch_all(\MYSQLI_ASSOC);
+        $st->close();
+        foreach ($games as $game) {
+            $gameId = (int) $game['id_jogo'];
+            self::desvincularHistoricoDasPartidas($conn, $gameId);
+            $stDelete = $conn->prepare('DELETE FROM partidas WHERE jogos_id_jogo = ?');
+            $stDelete->bind_param('i', $gameId);
+            $stDelete->execute();
+            $stDelete->close();
+            $stReset = $conn->prepare("UPDATE jogos SET status_jogo = 'Agendado' WHERE id_jogo = ?");
+            $stReset->bind_param('i', $gameId);
+            $stReset->execute();
+            $stReset->close();
+        }
+    }
+
+    private static function limparAvancosPosteriores(\mysqli $conn, int $idModalidade, int $larguraOrigem): void
+    {
+        $st = $conn->prepare("SELECT id_jogo, nome_jogo FROM jogos WHERE modalidades_id_modalidade = ? AND nome_jogo LIKE 'MM:%'");
+        $st->bind_param('i', $idModalidade);
+        $st->execute();
+        $games = $st->get_result()->fetch_all(\MYSQLI_ASSOC);
+        $st->close();
+        foreach ($games as $game) {
+            $meta = \App\Modules\Competicoes\Domain\ChaveamentoRules::parse((string) $game['nome_jogo']);
+            if ($meta === null || $meta['largura'] >= $larguraOrigem) {
+                continue;
+            }
+            $gameId = (int) $game['id_jogo'];
+            self::desvincularHistoricoDasPartidas($conn, $gameId);
+            $stDelete = $conn->prepare('DELETE FROM partidas WHERE jogos_id_jogo = ?');
+            $stDelete->bind_param('i', $gameId);
+            $stDelete->execute();
+            $stDelete->close();
+            $stReset = $conn->prepare("UPDATE jogos SET status_jogo = 'Agendado' WHERE id_jogo = ?");
+            $stReset->bind_param('i', $gameId);
+            $stReset->execute();
+            $stReset->close();
+        }
+    }
+
+    public static function reconciliarAvancosPendentes(\mysqli $conn, int $idModalidade): void
+    {
+        $st = $conn->prepare("SELECT id_jogo FROM jogos
+            WHERE modalidades_id_modalidade = ? AND nome_jogo LIKE 'MM:%'
+              AND status_jogo IN ('Concluido', 'Finalizado')
+            ORDER BY CAST(SUBSTRING_INDEX(SUBSTRING_INDEX(nome_jogo, ':', 2), ':', -1) AS UNSIGNED) DESC, id_jogo ASC");
+        $st->bind_param('i', $idModalidade);
+        $st->execute();
+        $games = $st->get_result()->fetch_all(\MYSQLI_ASSOC);
+        $st->close();
+        foreach ($games as $game) {
+            self::chaveamentoProcessarAvanco($conn, (int) $game['id_jogo']);
+        }
+    }
+
+    private static function equipeJaAvancouPorByePendente(\mysqli $conn, int $idModalidade, int $larguraPai, string $tagPaiEsperada, int $idEquipe): bool
+    {
+        $st = $conn->prepare("SELECT 1
+            FROM jogos j
+            INNER JOIN partidas p ON p.jogos_id_jogo = j.id_jogo
+            WHERE j.modalidades_id_modalidade = ?
+              AND j.nome_jogo LIKE ?
+              AND j.nome_jogo <> ?
+              AND p.equipes_id_equipe = ?
+            LIMIT 1");
+        $like = 'MM:' . $larguraPai . ':%:N';
+        $st->bind_param('issi', $idModalidade, $like, $tagPaiEsperada, $idEquipe);
+        $st->execute();
+        $found = $st->get_result()->num_rows > 0;
+        $st->close();
+        return $found;
+    }
+
+    private static function ramoTemEquipesEmFasesInferiores(\mysqli $conn, int $idModalidade, int $largura, int $slot): bool
+    {
+        $st = $conn->prepare("SELECT j.nome_jogo, COUNT(p.id_partida) AS equipes_no_jogo
+            FROM jogos j
+            LEFT JOIN partidas p ON p.jogos_id_jogo = j.id_jogo
+            WHERE j.modalidades_id_modalidade = ? AND j.nome_jogo LIKE 'MM:%'
+            GROUP BY j.id_jogo, j.nome_jogo");
+        $st->bind_param('i', $idModalidade);
+        $st->execute();
+        $rows = $st->get_result()->fetch_all(\MYSQLI_ASSOC);
+        $st->close();
+
+        foreach ($rows as $row) {
+            $meta = \App\Modules\Competicoes\Domain\ChaveamentoRules::parse((string) $row['nome_jogo']);
+            if ((int) $row['equipes_no_jogo'] === 0) {
+                continue;
+            }
+            if ($meta !== null && \App\Modules\Competicoes\Domain\ChaveamentoRules::slotPertenceAoRamo($largura, $slot, $meta['largura'], $meta['slot'])) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     /**
      * Monta árvore JSON com hierarquia para o front.
      *
@@ -458,7 +684,7 @@ final class MysqliChaveamentoRepository
             $faseNivel = $m['largura'] ?? \null;
             $slot = $m['slot'] ?? \null;
             $kind = $m['kind'] ?? 'N';
-            $ehBye = $kind === 'B';
+            $ehBye = $kind === 'B' || (\count($bloco['partidas']) === 1 && \App\Modules\Competicoes\Domain\ChaveamentoRules::jogoEstaEncerrado((string) $bloco['status_jogo']));
             $proximoId = \null;
             $ehDisputaPosicao = isset($m['posicao']);
             if ($faseNivel !== \null && $faseNivel > 1 && $slot !== \null) {

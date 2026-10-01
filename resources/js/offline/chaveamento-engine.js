@@ -411,10 +411,43 @@
             return true;
         }
 
+        function ramoTemEquipesAbaixo(largura, slot) {
+            return jogos.some(function (candidato) {
+                var meta = mmParse(candidato.nome_jogo);
+                if (!meta || meta.largura <= largura || meta.largura % largura !== 0 ||
+                    Math.floor(meta.slot / (meta.largura / largura)) !== slot) return false;
+                return (candidato.equipes || []).length > 0;
+            });
+        }
+
+        function byePendenteSemIrmao(largura) {
+            return jogos.find(function (candidato) {
+                var metaBye = mmParse(candidato.nome_jogo);
+                if (!metaBye || metaBye.largura !== largura || metaBye.kind !== 'B' ||
+                    !jogoEncerrado(candidato.status_jogo)) return false;
+                var irmao = mapaTag[mmTag(largura, slotIrmao(metaBye.slot), 'N')] ||
+                    mapaTag[mmTag(largura, slotIrmao(metaBye.slot), 'B')];
+                if (irmao) return false;
+                var pai = mapaTag[mmTag(proximaLargura(largura), slotPai(metaBye.slot), 'N')];
+                return !pai || (pai.equipes || []).length < 2;
+            });
+        }
+
+        function equipeJaAvancouPorByePendente(larguraPai, tagPaiEsperada, equipeId) {
+            return jogos.some(function (candidato) {
+                var meta = mmParse(candidato.nome_jogo);
+                return meta && meta.largura === larguraPai && meta.kind === 'N' &&
+                    candidato.nome_jogo !== tagPaiEsperada && (candidato.equipes || []).some(function (equipe) {
+                        return Number(equipe.id_equipe) === Number(equipeId);
+                    });
+            });
+        }
+
         /* Pai com um único competidor e ambos os lados resolvidos → conclui (bye implícito). */
         function tentarAutoConcluir(pai) {
             var meta = mmParse(pai.nome_jogo);
             if (!meta || jogoEncerrado(pai.status_jogo)) return false;
+            if (meta.largura === 2) return false;
             if ((pai.equipes || []).length !== 1) return false;
             if (!filhosResolvidos(meta.largura, meta.slot)) return false;
             pai.status_jogo = 'Concluido';
@@ -443,10 +476,65 @@
             var tagIrmaoB = mmTag(meta.largura, slotIrmao(meta.slot), 'B');
             var irmao = mapaTag[tagIrmaoA] || mapaTag[tagIrmaoB];
 
+            // Bye criado no último slot não possui irmão. Ele aguarda o
+            // primeiro vencedor desta fase e forma com ele a próxima partida.
+            if (meta.kind === 'N') {
+                var byePendente = byePendenteSemIrmao(meta.largura);
+                if (byePendente) {
+                    var metaBye = mmParse(byePendente.nome_jogo);
+                    var equipeBye = byePendente.equipes && byePendente.equipes[0];
+                    var vencedorBye = equipeBye ? Number(equipeBye.id_equipe) : null;
+                    if (metaBye && vencedorBye !== null) {
+                        var tagPaiBye = mmTag(proximaLargura(meta.largura), slotPai(metaBye.slot), 'N');
+                        var paiBye = garantirJogoPorTag(tagPaiBye, { largura: proximaLargura(meta.largura), slot: slotPai(metaBye.slot) });
+                        if ((paiBye.equipes || []).length < 2 && jogoEncerrado(paiBye.status_jogo)) paiBye.status_jogo = 'Agendado';
+                        garantirEquipe(paiBye, vencedorBye, equipeBye);
+                        garantirEquipe(paiBye, w1, w1Obj);
+                        return;
+                    }
+                }
+                var tagPaiAtual = mmTag(proximaLargura(meta.largura), slotPai(meta.slot), 'N');
+                if (equipeJaAvancouPorByePendente(proximaLargura(meta.largura), tagPaiAtual, w1)) {
+                    // Reexecuções do motor não podem reutilizar a vencedora
+                    // que já está aguardando no confronto do bye inicial.
+                    return;
+                }
+            }
+
+            var irmaoJaAvancouPorBye = false;
+            if (irmao && jogoEncerrado(irmao.status_jogo)) {
+                var metaIrmaoExistente = mmParse(irmao.nome_jogo) || { kind: 'N' };
+                var vencedorIrmaoExistente = (metaIrmaoExistente.kind === 'B')
+                    ? ((irmao.equipes && irmao.equipes[0]) ? Number(irmao.equipes[0].id_equipe) : null)
+                    : vencedorDeEquipes(irmao.equipes);
+                var tagPaiEsperada = mmTag(proximaLargura(meta.largura), slotPai(meta.slot), 'N');
+                if (vencedorIrmaoExistente !== null && equipeJaAvancouPorByePendente(proximaLargura(meta.largura), tagPaiEsperada, vencedorIrmaoExistente)) {
+                    irmao = null;
+                    irmaoJaAvancouPorBye = true;
+                }
+            }
+
             if (irmao && !jogoEncerrado(irmao.status_jogo)) return;
+            // Um slot sem jogo só é vazio se não houver participantes ainda
+            // avançando em rodadas inferiores. Aguarde esse ramo para não
+            // criar uma final prematura com apenas uma equipe.
+            if (!irmao && (meta.kind === 'B' || ramoTemEquipesAbaixo(meta.largura, slotIrmao(meta.slot)))) return;
 
             var tagPai = mmTag(proximaLargura(meta.largura), slotPai(meta.slot), 'N');
             var pai = garantirJogoPorTag(tagPai, { largura: proximaLargura(meta.largura), slot: slotPai(meta.slot) });
+            if (irmaoJaAvancouPorBye && (pai.equipes || []).length > 1) {
+                jogos.forEach(function (posterior) {
+                    var metaPosterior = mmParse(posterior.nome_jogo);
+                    if (metaPosterior && metaPosterior.largura < proximaLargura(meta.largura)) {
+                        posterior.equipes = [];
+                        posterior.status_jogo = 'Agendado';
+                    }
+                });
+                pai.equipes = (pai.equipes || []).filter(function (equipe) {
+                    return Number(equipe.id_equipe) === Number(w1);
+                });
+                pai.status_jogo = 'Agendado';
+            }
             garantirEquipe(pai, w1, w1Obj);
 
             if (!irmao) {
@@ -522,7 +610,8 @@
             var meta = mmParse(jogo.nome_jogo);
             var faseNivel = meta ? meta.largura : null;
             var slot = meta ? meta.slot : null;
-            var ehBye = !!meta && meta.kind === 'B';
+            var ehBye = !!meta && (meta.kind === 'B' ||
+                ((jogo.equipes || []).length === 1 && jogoEncerrado(jogo.status_jogo)));
             var ehDisputaPosicao = !!meta && meta.posicao !== undefined;
 
             var proximoId = null;
