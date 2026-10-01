@@ -30,15 +30,16 @@ final class CronogramaBracketPlanner
         $width = self::nextPowerOfTwo(count($teamIds));
         $levels = [];
         $slots = [];
+        $counts = self::slotCounts(count($teamIds), $width);
+        $offset = 0;
         for ($slot = 0; $slot < intdiv($width, 2); $slot++) {
-            $candidateIds = array_values(array_filter([
-                $teamIds[$slot * 2] ?? null,
-                $teamIds[$slot * 2 + 1] ?? null,
-            ], static fn (?int $id): bool => $id !== null));
-            if ($candidateIds === []) {
+            $count = $counts[$slot] ?? 0;
+            if ($count === 0) {
                 $slots[$slot] = null;
                 continue;
             }
+            $candidateIds = array_slice($teamIds, $offset, $count);
+            $offset += $count;
             $slots[$slot] = self::node($modalityId, $classId, $width, $width, $slot, $candidateIds, null, null);
         }
         $levels[$width] = $slots;
@@ -101,6 +102,50 @@ final class CronogramaBracketPlanner
             'origem_a_tag' => $left,
             'origem_b_tag' => $right,
         ];
+    }
+
+    /** @return list<int> */
+    private static function slotCounts(int $teamCount, int $width): array
+    {
+        $numSlots = intdiv($width, 2);
+        if ($numSlots <= 1) {
+            return [$teamCount];
+        }
+        if ($width === 4) {
+            return $teamCount === 3 ? [2, 1] : [2, 2];
+        }
+        if ($width === 8) {
+            return match ($teamCount) {
+                5 => [2, 1, 2, 0],
+                6 => [2, 2, 2, 0],
+                7 => [2, 2, 2, 1],
+                default => [2, 2, 2, 2],
+            };
+        }
+        $numPairs = intdiv($numSlots, 2);
+        $base = intdiv($teamCount, $numPairs);
+        $rem = $teamCount % $numPairs;
+        $slots = [];
+        for ($i = 0; $i < $numPairs; $i++) {
+            $sum = $base + ($i < $rem ? 1 : 0);
+            if ($sum >= 4) {
+                $slots[] = 2;
+                $slots[] = 2;
+            } elseif ($sum === 3) {
+                $slots[] = 2;
+                $slots[] = 1;
+            } elseif ($sum === 2) {
+                $slots[] = 2;
+                $slots[] = 0;
+            } elseif ($sum === 1) {
+                $slots[] = 1;
+                $slots[] = 0;
+            } else {
+                $slots[] = 0;
+                $slots[] = 0;
+            }
+        }
+        return $slots;
     }
 
     private static function nextPowerOfTwo(int $number): int

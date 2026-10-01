@@ -35,6 +35,7 @@ final class CronogramaBracketPlannerTest extends TestCase
     {
         yield 'three teams' => [3, 2, 1];
         yield 'four teams' => [4, 3, 0];
+        yield 'five teams' => [5, 4, 2];
         yield 'six teams' => [6, 5, 1];
         yield 'eight teams' => [8, 7, 0];
     }
@@ -50,6 +51,39 @@ final class CronogramaBracketPlannerTest extends TestCase
             'PL:9:0:MM:4:1:B',
             'PL:9:0:MM:2:0:N',
         ], array_column($nodes, 'chave_tag'));
+    }
+
+    public function testFiveTeamsDoesNotAllowCompetitorToReachFinalOnlyWithByes(): void
+    {
+        $nodes = CronogramaBracketPlanner::plan(10, null, [1, 2, 3, 4, 5]);
+        $opening = array_values(array_filter($nodes, static fn (array $node): bool => $node['fase_largura'] === 8));
+        $middle = array_values(array_filter($nodes, static fn (array $node): bool => $node['fase_largura'] === 4));
+        $final = array_values(array_filter($nodes, static fn (array $node): bool => $node['fase_largura'] === 2));
+
+        self::assertCount(3, $opening);
+        self::assertSame(['PL:10:0:MM:8:0:N', 'PL:10:0:MM:8:1:B', 'PL:10:0:MM:8:2:N'], array_column($opening, 'chave_tag'));
+        self::assertCount(2, $middle);
+        self::assertSame(['PL:10:0:MM:4:0:N', 'PL:10:0:MM:4:1:B'], array_column($middle, 'chave_tag'));
+        self::assertCount(1, $final);
+        self::assertSame('PL:10:0:MM:2:0:N', $final[0]['chave_tag']);
+
+        // A equipe com bye nas quartas (equipe 3) enfrenta o vencedor do confronto 1 na semifinal normal
+        $semiNormal = $middle[0];
+        self::assertSame('normal', $semiNormal['tipo_no']);
+        self::assertSame('PL:10:0:MM:8:0:N', $semiNormal['origem_a_tag']);
+        self::assertSame('PL:10:0:MM:8:1:B', $semiNormal['origem_b_tag']);
+        self::assertSame([1, 2, 3], $semiNormal['equipe_ids']);
+
+        // O bye da semifinal é intermediário para o vencedor do confronto 8:2 (equipes 4 e 5)
+        $semiBye = $middle[1];
+        self::assertSame('bye', $semiBye['tipo_no']);
+        self::assertSame('PL:10:0:MM:8:2:N', $semiBye['origem_a_tag']);
+        self::assertNull($semiBye['origem_b_tag']);
+        self::assertSame([4, 5], $semiBye['equipe_ids']);
+
+        // A final recebe o vencedor da semifinal real e o vencedor da quarta de final
+        self::assertSame('PL:10:0:MM:4:0:N', $final[0]['origem_a_tag']);
+        self::assertSame('PL:10:0:MM:4:1:B', $final[0]['origem_b_tag']);
     }
 
     public function testSixTeamsKeepThePublishedIntermediateByeAndCanonicalOrigins(): void
