@@ -69,6 +69,23 @@
         return Number(ordenadas[1].id_equipe);
     }
 
+    /* O placar e os IDs locais podem avançar a árvore, mas o snapshot online
+       continua sendo a fonte dos nomes exibidos. */
+    function projetarEquipeLocal(partida, referencia) {
+        partida = partida || {};
+        referencia = referencia || {};
+        return {
+            id_partida: partida.id_partida != null ? partida.id_partida : null,
+            id_equipe: Number(partida.equipes_id_equipe),
+            gols: Number(partida.resultado_partida) || 0,
+            id_turma: partida.id_turma != null ? Number(partida.id_turma) : (referencia.id_turma || null),
+            nome_turma: referencia.nome_turma || partida.nome_turma || '',
+            nome_fantasia: referencia.nome_fantasia || referencia.nome_fantasia_turma ||
+                partida.nome_fantasia_turma || partida.nome_fantasia || '',
+            nome_equipe: referencia.nome_equipe || partida.nome_equipe || ''
+        };
+    }
+
     /* ------------------------------ Estado interno ------------------------------ */
 
     // Último resultado entregue pela camada híbrida (para gatilhos de sync).
@@ -523,6 +540,12 @@
 
             var tagPai = mmTag(proximaLargura(meta.largura), slotPai(meta.slot), 'N');
             var pai = garantirJogoPorTag(tagPai, { largura: proximaLargura(meta.largura), slot: slotPai(meta.slot) }, jogo);
+            // Esta é uma projeção exclusivamente local: depois que os dois
+            // vencedores chegam ao confronto, o mesário pode iniciá-lo sem
+            // depender de uma reserva de agenda que só poderia ser validada
+            // pelo servidor. A sobreposição é removida ao sincronizar.
+            pai._offline_liberado = true;
+            pai.exige_horario_agendado = false;
             if (irmaoJaAvancouPorBye && (pai.equipes || []).length > 1) {
                 jogos.forEach(function (posterior) {
                     var metaPosterior = mmParse(posterior.nome_jogo);
@@ -780,15 +803,10 @@
                         });
                         if (partidasLocaisDoJogo.length) {
                             cloneLocal.equipes = partidasLocaisDoJogo.map(function (p) {
-                                return {
-                                    id_partida: p.id_partida != null ? p.id_partida : null,
-                                    id_equipe: Number(p.equipes_id_equipe),
-                                    gols: Number(p.resultado_partida) || 0,
-                                    id_turma: p.id_turma != null ? Number(p.id_turma) : null,
-                                    nome_turma: p.nome_turma || '',
-                                    nome_fantasia: p.nome_fantasia_turma || p.nome_fantasia || '',
-                                    nome_equipe: p.nome_equipe || ''
-                                };
+                                var referencia = (existente.equipes || []).filter(function (e) {
+                                    return Number(e.id_equipe) === Number(p.equipes_id_equipe);
+                                })[0];
+                                return projetarEquipeLocal(p, referencia);
                             });
                         }
                         jogosBase[jogosBase.indexOf(existente)] = cloneLocal;
@@ -796,20 +814,19 @@
                     }
                     if (existente) {
                         existente.status_jogo = local.status_jogo || existente.status_jogo;
+                        if (local._offline_liberado === true) {
+                            existente._offline_liberado = true;
+                            existente.exige_horario_agendado = false;
+                        }
                         var psExistente = partidasLocais.filter(function (p) {
                             return String(p.jogos_id_jogo) === String(local.id_jogo);
                         });
                         if (psExistente.length) {
                             existente.equipes = psExistente.map(function (p) {
-                                return {
-                                    id_partida: p.id_partida != null ? p.id_partida : null,
-                                    id_equipe: Number(p.equipes_id_equipe),
-                                    gols: Number(p.resultado_partida) || 0,
-                                    id_turma: p.id_turma != null ? Number(p.id_turma) : null,
-                                    nome_turma: p.nome_turma || '',
-                                    nome_fantasia: p.nome_fantasia_turma || p.nome_fantasia || '',
-                                    nome_equipe: p.nome_equipe || ''
-                                };
+                                var referencia = (existente.equipes || []).filter(function (e) {
+                                    return Number(e.id_equipe) === Number(p.equipes_id_equipe);
+                                })[0];
+                                return projetarEquipeLocal(p, referencia);
                             });
                         }
                         return;
@@ -821,17 +838,7 @@
                             return String(p.jogos_id_jogo) === String(local.id_jogo);
                         });
                         if (ps.length) {
-                            clone.equipes = ps.map(function (p) {
-                                return {
-                                    id_partida: p.id_partida != null ? p.id_partida : null,
-                                    id_equipe: Number(p.equipes_id_equipe),
-                                    gols: Number(p.resultado_partida) || 0,
-                                    id_turma: p.id_turma != null ? Number(p.id_turma) : null,
-                                    nome_turma: p.nome_turma || '',
-                                    nome_fantasia: p.nome_fantasia_turma || '',
-                                    nome_equipe: p.nome_equipe || ''
-                                };
-                            });
+                            clone.equipes = ps.map(function (p) { return projetarEquipeLocal(p); });
                         }
                         jogosBase.push(clone);
                     }
@@ -1014,16 +1021,10 @@
                     if (!ps.length) return;
                     b.equipes = ps.map(function (p) {
                         var idEq = Number(p.equipes_id_equipe);
-                        var info = dirEquipes[idEq] || {};
-                        return {
-                            id_partida: p.id_partida != null ? p.id_partida : null,
-                            id_equipe: idEq,
-                            gols: Number(p.resultado_partida) || 0,
-                            id_turma: p.id_turma || info.id_turma || null,
-                            nome_turma: p.nome_turma || info.nome_turma || '',
-                            nome_fantasia: p.nome_fantasia_turma || p.nome_fantasia || info.nome_fantasia || p.nome_equipe || info.nome_equipe || '',
-                            nome_equipe: p.nome_equipe || info.nome_equipe || ''
-                        };
+                        var referencia = (b.equipes || []).filter(function (e) {
+                            return Number(e.id_equipe) === idEq;
+                        })[0] || dirEquipes[idEq] || {};
+                        return projetarEquipeLocal(p, referencia);
                     });
                 });
 
@@ -1070,11 +1071,13 @@
                         return Number(j.id_jogo) === Number(b.id_jogo);
                     })[0];
 
-                    if (Number(b.id_jogo) < 0) {
+                    if (Number(b.id_jogo) < 0 || b._offline_liberado === true) {
                         // Partida derivada offline: SEMPRE garante o jogo e TODAS as suas equipes em 'partidas'
                         var rowJogo = JSON.parse(JSON.stringify(b));
                         rowJogo._local = true;
                         rowJogo._pendente = true;
+                        rowJogo._offline_liberado = true;
+                        rowJogo.exige_horario_agendado = false;
                         // A agenda renderiza o confronto pelo resumo textual,
                         // enquanto o placar usa as linhas de `partidas`.
                         // Persistir ambos mantém as duas telas coerentes.
