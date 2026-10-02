@@ -368,14 +368,14 @@
             return true;
         }
 
-        function garantirJogoPorTag(tag, metaRef) {
+        function garantirJogoPorTag(tag, metaRef, jogoOrigem) {
             if (mapaTag[tag]) return mapaTag[tag];
             contadorLocal -= 1;
             var pai = {
                 id_jogo: contadorLocal,                 // id temporário negativo (só existe localmente)
                 nome_jogo: tag,
                 status_jogo: 'Agendado',
-                data_jogo: null,
+                data_jogo: jogoOrigem && jogoOrigem.data_jogo ? jogoOrigem.data_jogo : null,
                 inicio_jogo: null,
                 termino_jogo: null,
                 modalidades_id_modalidade: defaultModId,
@@ -383,8 +383,9 @@
                 interclasses_id_interclasse: defaultInterclasseId,
                 nome_modalidade: defaultModNome,
                 tipos_modalidades_id_tipo_modalidade: defaultModTipo,
-                locais_id_local: null,
-                nome_local: null,
+                locais_id_local: jogoOrigem && jogoOrigem.locais_id_local ? jogoOrigem.locais_id_local : null,
+                nome_local: jogoOrigem && jogoOrigem.nome_local ? jogoOrigem.nome_local : null,
+                exige_horario_agendado: false,
                 duracao_jogo: defaultDuracao,
                 tempo_restante_jogo: defaultDuracao,
                 tempo_extra_jogo: 0,
@@ -486,7 +487,7 @@
                     var vencedorBye = equipeBye ? Number(equipeBye.id_equipe) : null;
                     if (metaBye && vencedorBye !== null) {
                         var tagPaiBye = mmTag(proximaLargura(meta.largura), slotPai(metaBye.slot), 'N');
-                        var paiBye = garantirJogoPorTag(tagPaiBye, { largura: proximaLargura(meta.largura), slot: slotPai(metaBye.slot) });
+                        var paiBye = garantirJogoPorTag(tagPaiBye, { largura: proximaLargura(meta.largura), slot: slotPai(metaBye.slot) }, jogo);
                         if ((paiBye.equipes || []).length < 2 && jogoEncerrado(paiBye.status_jogo)) paiBye.status_jogo = 'Agendado';
                         garantirEquipe(paiBye, vencedorBye, equipeBye);
                         garantirEquipe(paiBye, w1, w1Obj);
@@ -521,7 +522,7 @@
             if (!irmao && (meta.kind === 'B' || ramoTemEquipesAbaixo(meta.largura, slotIrmao(meta.slot)))) return;
 
             var tagPai = mmTag(proximaLargura(meta.largura), slotPai(meta.slot), 'N');
-            var pai = garantirJogoPorTag(tagPai, { largura: proximaLargura(meta.largura), slot: slotPai(meta.slot) });
+            var pai = garantirJogoPorTag(tagPai, { largura: proximaLargura(meta.largura), slot: slotPai(meta.slot) }, jogo);
             if (irmaoJaAvancouPorBye && (pai.equipes || []).length > 1) {
                 jogos.forEach(function (posterior) {
                     var metaPosterior = mmParse(posterior.nome_jogo);

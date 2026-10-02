@@ -130,6 +130,16 @@ test('administrador e colaborador continuam vendo opção de editar jogo no card
     assert.match(htmlColab, /Editar/);
 });
 
+test('fase posterior herdada permite iniciar sem horário', () => {
+    const mesario = carregarChaveamento({ value3: 2, podeEditar: false });
+    const jogo = { ...JOGO_AGENDADO, id_jogo: 104, inicio_jogo: null, termino_jogo: null, exige_horario_agendado: false };
+
+    const html = mesario._renderBracketMatch(jogo);
+
+    assert.match(html, /href="\/jogos\/placar\?id_jogo=104"/);
+    assert.match(html, /Iniciar/);
+});
+
 test('aluno não pode editar jogos no chaveamento', () => {
     const aluno = carregarChaveamento({ value3: 3, podeEditar: false });
     assert.equal(aluno.podeEditarJogo(), false);

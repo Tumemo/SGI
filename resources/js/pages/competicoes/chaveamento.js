@@ -1245,7 +1245,8 @@ window.SGIPage.mount("competicoes/chaveamento", function (pageConfig, pageScope)
         const podeEditar = podeEditarJogo();
         if (!isBye && !isConcluido && jogo.id_jogo) {
             let botoes = '';
-            if (jogo.status_jogo === 'Agendado' && jogo.data_jogo && jogo.inicio_jogo && jogo.termino_jogo && jogo.locais_id_local) {
+            const horarioObrigatorio = jogo.exige_horario_agendado !== false;
+            if (jogo.status_jogo === 'Agendado' && jogo.data_jogo && jogo.locais_id_local && (!horarioObrigatorio || (jogo.inicio_jogo && jogo.termino_jogo))) {
                 botoes += `<a href="${APP_BASE}/jogos/placar?id_jogo=${jogo.id_jogo}" class="btn btn-sm btn-outline-success d-inline-flex align-items-center gap-1" title="Iniciar Jogo"><i class="bi bi-play-fill"></i>Iniciar</a>`;
             }
             if (podeEditar) {
