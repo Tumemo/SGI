@@ -13,7 +13,7 @@ window.SGIPage.mount("competicoes/modalidades", function (pageConfig, pageScope)
         if (nivelUsuario !== 0) return '';
         const id = encodeURIComponent(String(modalidade.id_modalidade));
         const interclasse = encodeURIComponent(String(idInterclasse));
-        return '<div class="d-flex gap-1 ms-2">'
+        return '<div class="d-flex gap-1 ms-2 flex-shrink-0">'
             + '<a class="btn btn-sm btn-outline-primary" href="' + APP_BASE + '/modalidades/detalhes?id=' + interclasse + '&id_modalidade=' + id + '" title="Editar" aria-label="Editar modalidade"><i class="bi bi-pencil"></i></a>'
             + '<button type="button" class="btn btn-sm btn-outline-danger" data-sgi-action="delete-modalidade" data-id-modalidade="' + esc(modalidade.id_modalidade) + '" title="Excluir" aria-label="Excluir modalidade"><i class="bi bi-trash"></i></button>'
             + '</div>';
@@ -53,11 +53,11 @@ window.SGIPage.mount("competicoes/modalidades", function (pageConfig, pageScope)
             Object.keys(modalidadesPorCategoria).forEach((categoria) => {
                 const mods = modalidadesPorCategoria[categoria];
 
-                htmlMobile += '<h5 class="mt-4 mb-3 text-muted px-3">' + esc(categoria) + '</h5>';
+                htmlMobile += '<h5 class="mt-4 mb-3 text-muted px-3 w-100">' + esc(categoria) + '</h5>';
                 htmlMobile += mods.map((modalidade) =>
-                    '<div class="bg-white d-flex align-items-center shadow py-3 px-4 mb-3 border border-1 rounded-3 w-100 mw-100" >'
-                        + '<i class="bi bi-trophy fs-4" aria-hidden="true"></i>'
-                        + '<div class="text-start px-3 w-100">'
+                    '<div class="bg-white d-flex align-items-center shadow-sm py-3 px-3 mb-3 border border-1 rounded-3 w-100">'
+                        + '<i class="bi bi-trophy fs-4 flex-shrink-0" aria-hidden="true"></i>'
+                        + '<div class="text-start px-2 flex-grow-1 sgi-u-min-width-0">'
                             + '<h2 class="m-0 fs-5 text-truncate">' + esc(modalidade.nome_modalidade) + '</h2>'
                         + '</div>'
                         + botoesAdmin(modalidade)

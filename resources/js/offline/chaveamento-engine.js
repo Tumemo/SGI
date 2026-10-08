@@ -536,7 +536,7 @@
             // Um slot sem jogo só é vazio se não houver participantes ainda
             // avançando em rodadas inferiores. Aguarde esse ramo para não
             // criar uma final prematura com apenas uma equipe.
-            if (!irmao && (meta.kind === 'B' || ramoTemEquipesAbaixo(meta.largura, slotIrmao(meta.slot)))) return;
+            if (!irmao && ramoTemEquipesAbaixo(meta.largura, slotIrmao(meta.slot))) return;
 
             var tagPai = mmTag(proximaLargura(meta.largura), slotPai(meta.slot), 'N');
             var pai = garantirJogoPorTag(tagPai, { largura: proximaLargura(meta.largura), slot: slotPai(meta.slot) }, jogo);
