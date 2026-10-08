@@ -956,9 +956,14 @@ window.SGIPage.mount("competicoes/placar", function (pageConfig, pageScope) {
             pontosLista = await DL.read('pontos').catch(function() { return []; });
             pontosLista = (pontosLista || []).filter(function(p) { return String(p.jogos_id_jogo) === String(idJogo); });
 
-            if ((!partidasLista || partidasLista.length === 0) && Array.isArray(row.equipes) && row.equipes.length > 0) {
-                partidasLista = row.equipes.map(function(eq, idx) {
-                    return {
+            if (Array.isArray(row.equipes) && row.equipes.length > 0) {
+                var partidasPorEquipe = {};
+                partidasLista.forEach(function(partida) {
+                    partidasPorEquipe[String(partida.equipes_id_equipe)] = true;
+                });
+                row.equipes.forEach(function(eq, idx) {
+                    if (partidasPorEquipe[String(eq.id_equipe)]) return;
+                    partidasLista.push({
                         id_partida: eq.id_partida || ('mm_local_' + row.id_jogo + '_' + (eq.id_equipe || idx)),
                         jogos_id_jogo: row.id_jogo,
                         equipes_id_equipe: eq.id_equipe,
@@ -967,7 +972,7 @@ window.SGIPage.mount("competicoes/placar", function (pageConfig, pageScope) {
                         nome_turma: eq.nome_turma || '',
                         nome_fantasia_turma: eq.nome_fantasia || eq.nome_fantasia_turma || eq.nome_equipe || '',
                         nome_equipe: eq.nome_equipe || ''
-                    };
+                    });
                 });
             }
 
@@ -1630,7 +1635,9 @@ window.SGIPage.mount("competicoes/placar", function (pageConfig, pageScope) {
         try {
             var data = await fetchJson(API + 'ocorrencias?acao=listar_atletas&id_jogo=' + idJogo + '&id_turma=' + idTurma);
             if (!placarContinuaAtivo(cicloLocal) || !select.isConnected || document.getElementById('selectAlunoOcorrencia') !== select) return;
-            var alunos = data.success && Array.isArray(data.atletas) ? data.atletas : [];
+            var alunos = (data.success && Array.isArray(data.atletas) ? data.atletas : []).filter(function(a) {
+                return String(a.id_turma || a.turmas_id_turma || '') === String(idTurma);
+            });
             select.innerHTML = '<option value="">Selecione o estudante</option>';
             alunos.forEach(function(a) {
                 select.innerHTML += '<option value="' + a.id_usuario + '">' + esc(a.nome_usuario) + '</option>';
@@ -2078,15 +2085,38 @@ window.SGIPage.mount("competicoes/placar", function (pageConfig, pageScope) {
             var p = partidasLista.find(function(p) { return p.equipes_id_equipe == idEquipe; });
             if (!p) throw new Error('Equipe não encontrada');
             var data;
-            if (Number(idJogo) < 0 && window.SGIDataLayer && typeof window.SGIDataLayer.read === 'function') {
-                var locais = await window.SGIDataLayer.read('atletas');
-                data = {
-                    success: true,
-                    atletas: (locais || []).filter(function (a) {
+            if (Number(idJogo) < 0) {
+                var turmaEquipe = p.id_turma || p.turmas_id_turma || '';
+                var atletasDaEquipe = [];
+                if (window.SGIDataLayer && typeof window.SGIDataLayer.read === 'function') {
+                    var locais = await window.SGIDataLayer.read('atletas');
+                    atletasDaEquipe = (locais || []).filter(function (a) {
                         return String(a.equipes_id_equipe || '') === String(idEquipe)
                             && Number(a.id_usuario || 0) > 0;
-                    })
-                };
+                    });
+                    if (!atletasDaEquipe.length) {
+                        atletasDaEquipe = (locais || []).filter(function (a) {
+                            return !a.equipes_id_equipe
+                                && String(a.id_turma || a.turmas_id_turma || '') === String(turmaEquipe)
+                                && Number(a.id_usuario || 0) > 0;
+                        });
+                    }
+                }
+
+                // As partidas temporárias da fase seguinte podem ser criadas
+                // antes de o elenco ser projetado na store `atletas`. A API de
+                // ocorrências já possui cache offline por turma; usá-la como
+                // fallback mantém o mesmo elenco disponível para pontuação.
+                if (!atletasDaEquipe.length && turmaEquipe) {
+                    var atletasPorTurma = await fetchJson(API + 'ocorrencias?acao=listar_atletas&id_jogo=' + idJogo + '&id_turma=' + turmaEquipe);
+                    atletasDaEquipe = atletasPorTurma.success && Array.isArray(atletasPorTurma.atletas)
+                        ? atletasPorTurma.atletas.filter(function (a) {
+                            var turmaAtleta = a.id_turma || a.turmas_id_turma;
+                            return !turmaAtleta || String(turmaAtleta) === String(turmaEquipe);
+                        })
+                        : [];
+                }
+                data = { success: true, atletas: atletasDaEquipe };
             } else {
                 data = await fetchJson(API + 'pontos?acao=atletas&id_jogo=' + idJogo + '&id_equipe=' + idEquipe);
             }
