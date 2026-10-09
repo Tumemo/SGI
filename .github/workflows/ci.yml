@@ -17,16 +17,8 @@ jobs:
       - uses: actions/checkout@v4
       - name: Validar configuração Docker
         run: docker compose -f compose.test.yml config --quiet
-      - uses: docker/setup-buildx-action@v3
-      - name: Construir executor PHP/Node (cache BuildKit compartilhado)
-        uses: docker/bake-action@v6
-        with:
-          source: .
-          files: compose.test.yml
-          targets: app
-          load: true
-          set: |
-            app.cache-from=type=gha,scope=sgi-test-app-php84
+      - name: Construir executor PHP/Node
+        run: docker compose -f compose.test.yml build app
       - name: Executar qualidade PHP e JavaScript
         run: docker compose -f compose.test.yml run --rm --no-deps quality
       - name: Limpar executor
@@ -44,20 +36,8 @@ jobs:
       - uses: actions/checkout@v4
       - name: Validar configuração Docker
         run: docker compose -f compose.test.yml config --quiet
-      - uses: docker/setup-buildx-action@v3
-      # Jobs rodam em paralelo: somente integração exporta os scopes compartilhados.
-      - name: Construir aplicação e navegador e atualizar cache BuildKit
-        uses: docker/bake-action@v6
-        with:
-          source: .
-          files: compose.test.yml
-          targets: app,browser
-          load: true
-          set: |
-            app.cache-from=type=gha,scope=sgi-test-app-php84
-            app.cache-to=type=gha,scope=sgi-test-app-php84,mode=max,ignore-error=true
-            browser.cache-from=type=gha,scope=sgi-test-browser-1.62.1
-            browser.cache-to=type=gha,scope=sgi-test-browser-1.62.1,mode=max,ignore-error=true
+      - name: Construir aplicação e navegador
+        run: docker compose -f compose.test.yml build app browser
       - name: Preparar diretórios de saída
         run: mkdir -p test-results tests/browser/test-results tests/browser/playwright-report
       - name: Subir banco e servidor HTTP
@@ -99,17 +79,8 @@ jobs:
       - uses: actions/checkout@v4
       - name: Validar configuração Docker
         run: docker compose -f compose.test.yml config --quiet
-      - uses: docker/setup-buildx-action@v3
-      - name: Construir aplicação e executor visual (cache BuildKit)
-        uses: docker/bake-action@v6
-        with:
-          source: .
-          files: compose.test.yml
-          targets: app,browser
-          load: true
-          set: |
-            app.cache-from=type=gha,scope=sgi-test-app-php84
-            browser.cache-from=type=gha,scope=sgi-test-browser-1.62.1
+      - name: Construir aplicação e executor visual
+        run: docker compose -f compose.test.yml build app browser
       - name: Preparar diretórios de saída
         run: mkdir -p test-results tests/browser/test-results tests/browser/playwright-report
       - name: Subir banco e servidor HTTP
