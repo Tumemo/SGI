@@ -10,6 +10,7 @@ $paginaAtiva = 'dashboard';
 
 <main class="d-md-none mb-5" >
     <div class="container mt-3">
+        <p id="nomeModalidadeEquipeAlunosMob" class="small fw-semibold text-body-secondary mb-2 d-none"></p>
         <label for="buscaAlunosMobile" class="visually-hidden">Buscar estudante por nome ou matrícula</label>
         <input id="buscaAlunosMobile" class="form-control mb-2" type="search" placeholder="Buscar estudante por nome ou matrícula" autocomplete="off">
         <p class="small text-body-secondary mb-3">Marque novos estudantes para adicioná-los. Estudantes já vinculados permanecem na equipe; desmarcar não remove ninguém.</p>
@@ -37,8 +38,9 @@ $paginaAtiva = 'dashboard';
         $headerIdVoltar = 'btnVoltarEquipesDesktop';
         $headerClasse = 'd-flex align-items-start gap-3 mb-4';
         $headerClasseTitulo = 'd-block flex-grow-1';
-        $headerCorpoHtml = '<h1 class="h4 mb-1 fw-bold">Adicionar estudantes à equipe</h1>'
-            . ($subtituloEquipe !== '' ? '<p class="mb-0 small text-body-secondary">' . $subtituloEquipe . '</p>' : '');
+        $headerCorpoHtml = '<div><h1 class="h4 mb-1 fw-bold">Adicionar estudantes à equipe</h1>'
+            . ($subtituloEquipe !== '' ? '<p class="mb-0 small text-body-secondary">' . $subtituloEquipe . '</p>' : '')
+            . '<p id="nomeModalidadeEquipeAlunos" class="small fw-semibold text-body-secondary mb-0 mt-1 d-none"></p></div>';
         $headerAcoesHtml = '<div class="ms-auto"><button id="btnSalvarAlunosDesktop" class="btn btn-primary" type="button" aria-label="Salvar estudantes selecionados na equipe — Adicionar 0 estudantes" disabled>'
             . '<i class="bi bi-person-plus me-1" aria-hidden="true"></i><span data-selection-count>Adicionar 0 estudantes</span>'
             . '</button></div>';

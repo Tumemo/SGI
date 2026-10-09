@@ -90,6 +90,4 @@ include SGI_ROOT . '/resources/views/components/aluno-nav.php';
 
 <script type="application/json" data-sgi-config="aluno/home"><?= json_encode([], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_THROW_ON_ERROR) ?></script>
 <script data-sgi-page src="<?= \App\Shared\Http\Assets::url('js/pages/aluno/home.js') ?>"></script>
-<script src="<?= \App\Shared\Http\Assets::url('vendor/bootstrap/js/bootstrap.bundle.min.js') ?>" crossorigin="anonymous"></script>
-</body>
-</html>
+<?php include SGI_ROOT . '/resources/views/components/footer.php'; ?>

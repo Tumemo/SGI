@@ -34,13 +34,14 @@ $paginaAtiva = 'ranking';
                 </button>
             <?php endif; ?>
             <?php if ($eAdmin): ?>
-                <button type="button" class="btn btn-sm btn-outline-dark btn-imprimir" onclick="window.print()">
+                <button type="button" class="btn btn-sm btn-outline-dark btn-imprimir">
                     <i class="bi bi-printer"></i> Imprimir
                 </button>
             <?php endif; ?>
 
             <div class="badge text-bg-light border text-body-secondary p-2 fw-semibold">
-                <span>&#x1F465;</span>
+                <span aria-hidden="true">&#x1F465;</span>
+                <span class="visually-hidden">Total de turmas: </span>
                 <span id="totalTurmas">0 Turmas</span>
             </div>
         </div>
@@ -70,13 +71,14 @@ $paginaAtiva = 'ranking';
                     </button>
                 <?php endif; ?>
                 <?php if ($eAdmin): ?>
-                    <button type="button" class="btn btn-outline-dark fw-bold btn-imprimir" onclick="window.print()">
+                    <button type="button" class="btn btn-outline-dark fw-bold btn-imprimir">
                         <i class="bi bi-printer"></i> Imprimir Ranking
                     </button>
                 <?php endif; ?>
 
                 <div class="badge text-bg-light border text-body-secondary p-2 fw-semibold flex-shrink-0">
-                    <span>&#x1F465;</span>
+                    <span aria-hidden="true">&#x1F465;</span>
+                    <span class="visually-hidden">Total de turmas: </span>
                     <span id="totalTurmasDesk">0 Turmas</span>
                 </div>
             </div>
@@ -106,7 +108,4 @@ $paginaAtiva = 'ranking';
 
 <script type="application/json" data-sgi-config="aluno/ranking"><?= json_encode(['value2' => (bool) $eAdmin], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_THROW_ON_ERROR) ?></script>
 <script data-sgi-page src="<?= \App\Shared\Http\Assets::url('js/pages/aluno/ranking.js') ?>"></script>
-
-<script src="<?= \App\Shared\Http\Assets::url('vendor/bootstrap/js/bootstrap.bundle.min.js') ?>" crossorigin="anonymous"></script>
-</body>
-</html>
+<?php include SGI_ROOT . '/resources/views/components/footer.php'; ?>

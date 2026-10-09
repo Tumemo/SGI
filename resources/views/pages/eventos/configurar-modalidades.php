@@ -69,6 +69,24 @@ $paginaAtiva = 'dashboard';
                         <label class="form-label fw-medium" for="inputMaxEquipes">Máx. de Equipes por Turma (Opcional):</label>
                         <input type="number" class="form-control" placeholder="Ex: 3" id="inputMaxEquipes" min="1">
                     </div>
+                    <fieldset class="border rounded-3 p-3 mb-3">
+                        <legend class="float-none w-auto px-2 fs-6 fw-semibold">Planejamento antecipado (opcional)</legend>
+                        <div class="mb-3">
+                            <label class="form-label fw-medium" for="inputEquipesPlanejadas">Equipes/entradas por turma</label>
+                            <input type="number" class="form-control" placeholder="Ex: 1" id="inputEquipesPlanejadas" min="1" aria-describedby="ajudaEquipesPlanejadas">
+                            <div id="ajudaEquipesPlanejadas" class="form-text">Obrigatório quando a edição usar cronograma antes das inscrições.</div>
+                        </div>
+                        <div class="row g-2">
+                            <div class="col-6">
+                                <label class="form-label fw-medium" for="inputMinInscritosEquipe">Mínimo por equipe</label>
+                                <input type="number" class="form-control" id="inputMinInscritosEquipe" min="1">
+                            </div>
+                            <div class="col-6">
+                                <label class="form-label fw-medium" for="inputMaxInscritosEquipe">Máximo por equipe</label>
+                                <input type="number" class="form-control" id="inputMaxInscritosEquipe" min="1">
+                            </div>
+                        </div>
+                    </fieldset>
                     <div class="mb-3">
                         <label class="form-label fw-medium" for="inputTipoModalidade">Tipo de Modalidade:</label>
                         <select class="form-select" id="inputTipoModalidade" required>

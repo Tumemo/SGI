@@ -18,6 +18,27 @@ final class ChaveamentoRulesTest extends TestCase
         self::assertSame(2, $metadata['slot']);
     }
 
+    public function testPublishedScheduleTagCarriesTheSameBracketPosition(): void
+    {
+        self::assertSame([
+            'largura' => 4,
+            'slot' => 1,
+            'kind' => 'N',
+            'planejado' => true,
+            'modalidade' => 27,
+            'turma' => 0,
+        ], ChaveamentoRules::parse('PL:27:0:MM:4:1:N'));
+        self::assertSame([
+            'largura' => 8,
+            'slot' => 1,
+            'kind' => 'N',
+            'planejado' => true,
+            'modalidade' => 27,
+            'formato_legado' => true,
+        ], ChaveamentoRules::parse('PL:27:MM:8:1:N'));
+        self::assertNull(ChaveamentoRules::parse('PL:27:0:IND:0'));
+    }
+
     public function testSiblingAndParentSlotsStayConsistent(): void
     {
         foreach (range(0, 15) as $slot) {

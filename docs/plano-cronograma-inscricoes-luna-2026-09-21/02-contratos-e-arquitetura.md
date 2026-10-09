@@ -6,7 +6,7 @@ Caminhos relativos à raiz do repositório; localizar símbolos, não depender d
 
 | Código existente | Contrato observado / mudança necessária |
 | --- | --- |
-| `src/Modules/Competicoes/Application/ModalidadeService.php` | Normaliza `max_equipes` e `max_inscrito_modalidade`; acrescentar configuração planejada sem quebrar ilimitado legado. |
+| `src/Modules/Competicoes/Application/ModalidadeService.php` | Normaliza a quantidade planejada de equipes, limites do elenco e formato da modalidade. |
 | `resources/views/pages/eventos/configurar-modalidades.php` e `resources/js/pages/eventos/configurar-modalidades.js` | Cadastro já possui máximo de equipes por turma; distinguir quantidade exata. |
 | `src/Modules/Competicoes/Application/EquipeService.php` e `Domain/EquipeRosterRules.php` no mesmo módulo | Incluir validação de agenda nas mutações de elenco. |
 | `src/Modules/Competicoes/Infrastructure/MysqliEquipePadraoRepository.php` | Equipe padrão e redistribuição; não usar como destino implícito do novo fluxo. |
@@ -34,13 +34,13 @@ Nomes abaixo são propostas de classes novas, não arquivos já presentes. Verif
 
 Extrair apenas as responsabilidades necessárias dos repositórios atuais. Não ampliar acoplamentos existentes nem abrir refatoração geral de módulos.
 
-## 3. Persistência e compatibilidade
+## 3. Persistência e invariantes
 
 Definir o DDL final em T01 e registrar no STATUS. Modelo lógico obrigatório:
 
 | Informação | Estratégia proposta |
 | --- | --- |
-| Modo da edição | Marcador persistido: edições novas planejadas; existentes legadas até adoção explícita. Cliente não pode escolher modo via inscrição. |
+| Estado da edição | Toda edição usa cronograma planejado; o cliente não escolhe o fluxo pela inscrição. |
 | Configuração da modalidade | Quantidade planejada, formato de participação, mínimo de elenco, duração, descanso e turmas/locais habilitados. Reusar máximo existente. |
 | Entrada planejada | Preferir equipe existente como identidade inclusive para dupla/individual; ordinal estável por modalidade/turma, único quando preenchido. Não usar nome como chave. |
 | Preparação da entrada | Marcador separado de status ativo e de aptidão do elenco. Entrada individual só se torna atleta após vínculo real. |
@@ -55,7 +55,7 @@ A vinculação de um nó futuro a jogo real precisa ser idempotente e usar ediç
 
 Adicionar migration futura numerada conforme a convenção atual e atualizar o schema inicial conforme README/deployment. As duas vias devem convergir e uma instalação nova seguida de `migrate` não pode falhar com coluna/tabela duplicada. Não editar migration aplicada, apagar marcador de falha ou copiar números históricos. Testar também upgrade a partir do baseline anterior.
 
-Não atribuir ordinais nem planejar equipes antigas apenas pelo nome. Adoção de edição existente exige relatório de correspondência de equipes/inscrições, ausência de operação iniciada e resolução de conflitos; se não for segura, recusar conversão e preservar o fluxo legado. Nunca migrar dados de trabalho para demonstrar a funcionalidade.
+As equipes planejadas recebem ordinais persistentes e não são inferidas apenas pelo nome. A configuração precisa existir antes da publicação; nunca migrar dados de trabalho para demonstrar a funcionalidade.
 
 ## 4. HTTP proposto
 
@@ -71,7 +71,7 @@ Rotas atuais conferidas: `/api/v1/modalidades`, `/api/v1/equipes`, `/api/v1/equi
 | Inscrever | Manter POST `/api/v1/inscricoes`; acrescentar `versao_cronograma` obrigatória para edição planejada. `id_equipes` identifica destinos exatos. |
 | Transferir | Caso de uso administrativo específico, ou evolução explícita do contrato atual, com origem/destino, aluno, revisão e atomicidade. |
 
-Para o novo fluxo: 422 para configuração inválida; 409 para versão obsoleta, lotação concorrente, agenda incompatível ou estado de inscrição fechado; autorização/CSRF seguem contratos centrais. Resposta de domínio usa `success`, `message`, `code` e detalhes seguros, por exemplo `CONFLITO_AGENDA`, `CRONOGRAMA_DESATUALIZADO`, `INSCRICOES_FECHADAS` e `EQUIPE_LOTADA`. Preservar comportamento legado e atualizar testes/clientes quando houver mudança deliberada.
+Para o fluxo: 422 para configuração inválida; 409 para versão obsoleta, lotação concorrente, agenda incompatível ou estado de inscrição fechado; autorização/CSRF seguem contratos centrais. Resposta de domínio usa `success`, `message`, `code` e detalhes seguros, por exemplo `CONFLITO_AGENDA`, `CRONOGRAMA_DESATUALIZADO`, `INSCRICOES_FECHADAS` e `EQUIPE_LOTADA`.
 
 Sucesso de inscrição pode preservar `insercoes`, `ja_existentes`, `erros`, acrescentando versão e IDs confirmados. Duplicata exata não ocupa nova vaga; outra equipe da mesma modalidade exige transferência. Conflito faz rollback do conjunto. Erro nunca retorna `success=true`.
 
@@ -93,4 +93,4 @@ Estender fontes existentes de modalidades, configuração de equipes, agenda, el
 
 Usar `page-runtime.js`, `Assets` e `Url`; validar raiz e subdiretório, reentrada e ausência de listeners duplicados. Exibir horários condicionais como tais. O erro de versão mantém as escolhas visíveis e solicita atualização explícita, sem confirmar outra opção automaticamente.
 
-Planejamento, publicação e inscrições são operações online. Revisar a interceptação global para que as novas operações não entrem inadvertidamente na fila offline. Não desabilitar transporte de resultados do mesário. Manter IDs, tags, chaves de mutação e confirmação atômica. Compatibilidade de cache antigo deve falhar de forma recuperável, sem descartar IndexedDB ou alterar payload já enfileirado.
+Planejamento, publicação e inscrições são operações online. Revisar a interceptação global para que as novas operações não entrem inadvertidamente na fila offline. Não desabilitar transporte de resultados do mesário. Manter IDs, tags, chaves de mutação e confirmação atômica. Atualizações de cache devem falhar de forma recuperável, sem descartar IndexedDB ou alterar payload já enfileirado.

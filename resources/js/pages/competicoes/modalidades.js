@@ -25,8 +25,10 @@ window.SGIPage.mount("competicoes/modalidades", function (pageConfig, pageScope)
         const divDesktop = document.getElementById('listaModalidadesDesktop');
 
         try {
-            const response = await axios.get(`${API_BASE}/modalidades?x=1`);
-            let modalidades = response.data.data || response.data;
+            const res = await fetch(`${API_BASE}/modalidades?x=1`);
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            const raw = await res.json();
+            let modalidades = raw.data || raw;
             if (!Array.isArray(modalidades)) modalidades = [];
             modalidades = modalidades.filter((item) => String(item.interclasses_id_interclasse) === String(idInterclasse));
 
@@ -86,6 +88,12 @@ window.SGIPage.mount("competicoes/modalidades", function (pageConfig, pageScope)
             if (divDesktop) divDesktop.innerHTML = htmlDesktop;
         } catch (error) {
             console.error('Erro ao carregar lista:', error);
+            const msgErro = '<div class="alert alert-danger my-3" role="alert">Não foi possível carregar as modalidades.</div>';
+            if (divMobile) divMobile.innerHTML = msgErro;
+            if (divDesktop) divDesktop.innerHTML = msgErro;
+            if (window.SGI && typeof window.SGI.showToast === 'function') {
+                window.SGI.showToast('Não foi possível carregar as modalidades.', 'danger');
+            }
         }
     }
 
@@ -94,8 +102,9 @@ window.SGIPage.mount("competicoes/modalidades", function (pageConfig, pageScope)
         if (!selectTipo) return;
 
         try {
-            const response = await axios.get(`${API_BASE}/tipos-modalidade`);
-            const tipos = response.data;
+            const res = await fetch(`${API_BASE}/tipos-modalidade`);
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            const tipos = await res.json();
 
             const placeholder = new Option('Selecione um tipo...', '');
             placeholder.disabled = true;
@@ -117,8 +126,9 @@ window.SGIPage.mount("competicoes/modalidades", function (pageConfig, pageScope)
         if (!selectCat) return;
 
         try {
-            const response = await axios.get(`${API_BASE}/categorias?id_interclasse=${idInterclasse}`);
-            const categorias = response.data;
+            const res = await fetch(`${API_BASE}/categorias?id_interclasse=${idInterclasse}`);
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            const categorias = await res.json();
 
             const placeholder = new Option('Selecione uma categoria...', '');
             placeholder.disabled = true;
@@ -139,11 +149,16 @@ window.SGIPage.mount("competicoes/modalidades", function (pageConfig, pageScope)
         if (!await SGI.confirm({ titulo: 'Excluir modalidade?', mensagem: 'Esta ação não pode ser desfeita.', textoConfirmar: 'Excluir modalidade', destrutivo: true })) return;
 
         try {
-            const res = await axios.put(`${API_BASE}/modalidades`, {
-                id_modalidade: id,
-                status_modalidade: '0'
+            const res = await fetch(`${API_BASE}/modalidades`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    id_modalidade: id,
+                    status_modalidade: '0'
+                })
             });
-            if (res.data.success) {
+            const data = await res.json();
+            if (res.ok && data.success) {
                 carregarModalidades();
             } else {
                 SGI.alert('Erro ao excluir modalidade.');
@@ -175,9 +190,14 @@ window.SGIPage.mount("competicoes/modalidades", function (pageConfig, pageScope)
         try {
             btnSalvar.disabled = true;
             btnSalvar.innerHTML = 'Salvando...';
-            const res = await axios.post(`${API_BASE}/modalidades`, dados);
+            const res = await fetch(`${API_BASE}/modalidades`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(dados)
+            });
+            const data = await res.json();
 
-            if (res.data.success) {
+            if (res.ok && data.success) {
                 caixaMensagem.innerHTML = '<p class="text-success text-center fw-bold">Criada com sucesso!</p>';
                 document.getElementById('formNovaModalidade').reset();
                 carregarModalidades();
@@ -185,6 +205,8 @@ window.SGIPage.mount("competicoes/modalidades", function (pageConfig, pageScope)
                     bootstrap.Modal.getInstance(document.getElementById('modalCriarModalidade')).hide();
                     caixaMensagem.innerHTML = '';
                 }, 1000);
+            } else {
+                throw new Error(data?.message || 'Erro ao salvar.');
             }
         } catch (error) {
             caixaMensagem.innerHTML = '<p class="text-danger text-center fw-bold">Erro ao salvar.</p>';
@@ -221,12 +243,12 @@ window.SGIPage.mount("competicoes/modalidades", function (pageConfig, pageScope)
 
         try {
             const [resEquipes, resPodio] = await Promise.all([
-                axios.get(API_BASE + '/equipes?id_modalidade=' + encodeURIComponent(idModalidade)),
-                axios.get(API_BASE + '/podios?id_interclasse=' + encodeURIComponent(idInterclasse) + '&id_modalidade=' + encodeURIComponent(idModalidade))
+                fetch(API_BASE + '/equipes?id_modalidade=' + encodeURIComponent(idModalidade)).then(r => r.json()),
+                fetch(API_BASE + '/podios?id_interclasse=' + encodeURIComponent(idInterclasse) + '&id_modalidade=' + encodeURIComponent(idModalidade)).then(r => r.json())
             ]);
 
-            const equipes = Array.isArray(resEquipes.data.data) ? resEquipes.data.data : (Array.isArray(resEquipes.data) ? resEquipes.data : []);
-            const podio = (resPodio.data && resPodio.data.podio) || [];
+            const equipes = Array.isArray(resEquipes.data) ? resEquipes.data : (Array.isArray(resEquipes) ? resEquipes : []);
+            const podio = (resPodio && resPodio.podio) || [];
 
             selects.forEach(function (select, idx) {
                 if (!select) return;
@@ -279,24 +301,29 @@ window.SGIPage.mount("competicoes/modalidades", function (pageConfig, pageScope)
 
             try {
                 if (btnSalvar) { btnSalvar.disabled = true; btnSalvar.textContent = 'Salvando...'; }
-                const res = await axios.post(API_BASE + '/podios', {
-                    id_interclasse: parseInt(idInterclasse, 10),
-                    id_modalidade: parseInt(modalidadePodioAtual, 10),
-                    podio: podioData
+                const response = await fetch(API_BASE + '/podios', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        id_interclasse: parseInt(idInterclasse, 10),
+                        id_modalidade: parseInt(modalidadePodioAtual, 10),
+                        podio: podioData
+                    })
                 });
+                const res = await response.json();
 
-                if (res.data && res.data.success) {
-                    SGI.alert(res.data.message || 'Pódio salvo com sucesso!');
+                if (response.ok && res && res.success) {
+                    SGI.alert(res.message || 'Pódio salvo com sucesso!');
                     const modalEl = document.getElementById('modalGerenciarPodio');
                     if (modalEl) {
                         const inst = bootstrap.Modal.getInstance(modalEl);
                         if (inst) inst.hide();
                     }
                 } else {
-                    throw new Error((res.data && res.data.message) || 'Falha ao salvar pódio.');
+                    throw new Error((res && res.message) || 'Falha ao salvar pódio.');
                 }
             } catch (err) {
-                const msg = (err.response && err.response.data && err.response.data.message) || err.message || 'Erro ao salvar pódio.';
+                const msg = err.message || 'Erro ao salvar pódio.';
                 SGI.alert(msg);
             } finally {
                 if (btnSalvar) { btnSalvar.disabled = false; btnSalvar.textContent = 'Salvar Pódio'; }

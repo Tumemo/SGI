@@ -51,7 +51,6 @@ test('salvamento mantém estudantes selecionados fora do filtro atual', () => {
 
     assert.deepEqual(Array.from(ids), [11, 33]);
 });
-
 test('a nomenclatura de estudante fica na interface sem alterar o rótulo administrativo de usuários', () => {
     const adminView = fs.readFileSync('resources/views/pages/acesso/colaboradores.php', 'utf8');
     const teamView = fs.readFileSync('resources/views/pages/competicoes/equipe-alunos.php', 'utf8');

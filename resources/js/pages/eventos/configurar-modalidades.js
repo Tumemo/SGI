@@ -242,6 +242,9 @@ window.SGIPage.mount("eventos/configurar-modalidades", function (pageConfig, pag
         const btnSalvar = document.getElementById('btnSalvarModalidade');
         const caixaMensagem = document.getElementById('caixaMensagemModalidade');
 
+        const planejadas = document.getElementById('inputEquipesPlanejadas').value;
+        const minEquipe = document.getElementById('inputMinInscritosEquipe').value;
+        const maxEquipe = document.getElementById('inputMaxInscritosEquipe').value;
         const dados = {
             interclasses_id_interclasse: parseInt(idInterclasse),
             nome_modalidade: document.getElementById('inputNomeModalidade').value.trim(),
@@ -249,7 +252,10 @@ window.SGIPage.mount("eventos/configurar-modalidades", function (pageConfig, pag
             max_inscrito_modalidade: parseInt(document.getElementById('inputMaxInscritos').value) || 0,
             max_equipes: (() => { const v = document.getElementById('inputMaxEquipes').value; return v === '' ? null : parseInt(v); })(),
             tipos_modalidades_id_tipo_modalidade: document.getElementById('inputTipoModalidade').value,
-            categorias_id_categoria: document.getElementById('inputCategoriaModalidade').value
+            categorias_id_categoria: document.getElementById('inputCategoriaModalidade').value,
+            ...(planejadas !== '' ? { equipes_planejadas: parseInt(planejadas, 10) } : {}),
+            ...(minEquipe !== '' ? { min_inscritos_equipe: parseInt(minEquipe, 10) } : {}),
+            ...(maxEquipe !== '' ? { max_inscritos_equipe: parseInt(maxEquipe, 10) } : {})
         };
 
         try {

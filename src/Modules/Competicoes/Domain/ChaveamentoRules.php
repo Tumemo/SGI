@@ -8,7 +8,8 @@ final class ChaveamentoRules
 {
     /**
      * Chaveamento mata-mata: metadados compactos em nome_jogo (VARCHAR 45).
-     * Formato: MM:{largura_fase}:{slot}:{N|B}
+     * Formatos: MM:{largura_fase}:{slot}:{N|B}, PL:{modalidade}:MM:... (legado)
+     * e PL:{modalidade}:{turma}:MM:{largura_fase}:{slot}:{N|B}.
      * - largura_fase: 8,4,2 (oitavas→8 … final→2). O campeão é o vencedor da
      *   final e não é modelado como uma partida solo adicional.
      * - slot: 0-based dentro da fase
@@ -18,7 +19,7 @@ final class ChaveamentoRules
     {
         return 'MM:' . $larguraFase . ':' . $slot . ':' . $kind;
     }
-    /** @return array{largura:int, slot:int, kind:string, posicao?:int}|null */
+    /** @return array{largura:int, slot:int, kind:string, posicao?:int, planejado?:bool, modalidade?:int, turma?:int, formato_legado?:bool}|null */
     public static function parse(?string $nomeJogo): ?array
     {
         if (!\is_string($nomeJogo)) {
@@ -26,6 +27,19 @@ final class ChaveamentoRules
         }
         if (\preg_match('/^MM:(\d+):(\d+):([NB])$/', $nomeJogo, $m)) {
             return ['largura' => (int) $m[1], 'slot' => (int) $m[2], 'kind' => $m[3]];
+        }
+        if (\preg_match('/^PL:(\d+):MM:(\d+):(\d+):([NB])$/', $nomeJogo, $m)) {
+            return ['largura' => (int) $m[2], 'slot' => (int) $m[3], 'kind' => $m[4], 'planejado' => true, 'modalidade' => (int) $m[1], 'formato_legado' => true];
+        }
+        if (\preg_match('/^PL:(\d+):(-?\d+):MM:(\d+):(\d+):([NB])$/', $nomeJogo, $m)) {
+            return [
+                'largura' => (int) $m[3],
+                'slot' => (int) $m[4],
+                'kind' => $m[5],
+                'planejado' => true,
+                'modalidade' => (int) $m[1],
+                'turma' => (int) $m[2],
+            ];
         }
         if (\preg_match('/^POS:(\d+):(\d+):([NB])$/', $nomeJogo, $m)) {
             return ['largura' => 0, 'slot' => (int) $m[2], 'kind' => $m[3], 'posicao' => (int) $m[1]];

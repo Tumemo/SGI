@@ -1,10 +1,10 @@
 # Cronograma anterior às inscrições — roteiro para Luna
 
-**Estado:** planejamento; implementação não iniciada. Elaborado em 21/09/2026 sobre o commit `c8e9c1be85a49bccfa0c6cca88db97d11f33ed2f`.
+**Estado:** implementação concluída na branch `codex/cronograma-inscricoes-luna-2026-09-21`; aceite registrado em [STATUS.md](STATUS.md). Elaborado em 21/09/2026 sobre o commit `c8e9c1be85a49bccfa0c6cca88db97d11f33ed2f`.
 
 ## Resultado esperado
 
-Cadastrar as modalidades com quantidade definida de equipes/entradas por turma, preparar essas equipes sem alunos, gerar e publicar toda a programação e só então abrir inscrições. O aluno escolhe uma equipe/vaga da própria turma e o servidor impede conflitos de agenda, inclusive em possíveis fases seguintes.
+Cadastrar as modalidades com quantidade definida de equipes/entradas por turma, preparar essas equipes sem alunos, gerar e publicar toda a programação e só então abrir inscrições. O aluno escolhe uma equipe/vaga da própria turma e o servidor impede conflitos de agenda, inclusive em compromissos condicionais representados pelo rascunho atual.
 
 **Decisões expressas do usuário:** cabo de guerra fora do evento; nenhuma disputa ou avanço entre categorias diferentes. Os recursos físicos continuam compartilhados entre categorias. Excluir cabo de guerra deste planejamento não autoriza apagar cadastros ou resultados históricos.
 
@@ -17,7 +17,7 @@ Este pacote segue a organização dos roteiros anteriores em `docs`: ponto de en
 3. Execute as tarefas de [implementação](03-etapas-de-implementacao.md) em ordem, com a [matriz de validação](04-validacao.md).
 4. Atualize [STATUS.md](STATUS.md) após cada tarefa. Retome da primeira incompleta, sem refazer o que permanece validado no mesmo código.
 
-O código, as rotas e os executores atuais prevalecem sobre exemplos históricos. Em particular, o checkout usa `database/schema-inicial.sql` e a pasta de migrations contém apenas `.gitkeep`; não copie números de migrations nem permissões para reset de outros planos.
+O código, as rotas e os executores atuais prevalecem sobre exemplos históricos. O checkout usa `database/schema-inicial.sql` e migrations numeradas; não copie números de migrations nem permissões para reset de outros planos.
 
 ## Escopo e decisões de implementação
 
@@ -25,7 +25,7 @@ O código, as rotas e os executores atuais prevalecem sobre exemplos históricos
 - Reaproveitar equipes, vínculos, agenda, reservas e chaveamento existentes. Não criar um segundo motor de resultados.
 - Quantidade planejada, limite de equipes e capacidade de elenco têm semânticas distintas.
 - A inscrição é na equipe/entrada da modalidade, válida para todo o percurso da competição; não é uma inscrição independente em cada jogo.
-- Novas edições usam o fluxo planejado. Edições existentes não são convertidas nem têm elencos redistribuídos automaticamente.
+- O fluxo planejado é o contrato único das edições deste desenvolvimento, desde o cadastro das modalidades até a abertura das inscrições.
 - Publicação exige todas as modalidades participantes prontas, horários completos e ausência de pendências bloqueantes.
 - Alertas de conflito impedem confirmação; a validação também alcança inclusão e transferência administrativa.
 - Decisões específicas do evento que ainda faltam são configuração, não constantes no código. A falta de datas reais não impede desenvolver e testar com fixtures sintéticas.
@@ -37,13 +37,13 @@ O código, as rotas e os executores atuais prevalecem sobre exemplos históricos
 | T00 | Baseline, mapa dos contratos e testes de caracterização |
 | T01 | Schema evolutivo e regras de configuração |
 | T02 | Preparação idempotente das equipes/vagas |
-| T03 | Chaveamento planejado e sessões individuais sem elenco |
-| T04 | Geração da agenda completa e análise de pendências |
+| T03 | Árvore persistida de nós/BYEs e projeção inicial de compromissos por equipe |
+| T04 | Geração determinística de agenda e análise de pendências para os compromissos projetados |
 | T05 | Publicação, revisão e abertura/fechamento de inscrições |
 | T06 | Inscrição atômica na equipe exata e conflito individual |
 | T07 | Telas administrativas e portal do aluno |
-| T08 | Revisões, elencos, execução e compatibilidade offline |
-| T09 | Homologação integral, documentação operacional e entrega |
+| T08 | Proteções de elenco, revisão operacional, materialização idempotente e preservação da fila offline |
+| T09 | Baterias oficiais MariaDB/MySQL, navegador e visual executadas; aceite registrado |
 
 ## Fora do escopo
 

@@ -216,6 +216,12 @@ async function carregar() {
     const idModalidade = params.get('id_modalidade');
     const nomeTurma = params.get('nome_turma') || '';
     const nomeModalidade = params.get('nome_modalidade') || '';
+    [['nomeModalidadeEquipeAlunos', nomeModalidade], ['nomeModalidadeEquipeAlunosMob', nomeModalidade]].forEach(([id, nome]) => {
+        const el = document.getElementById(id);
+        if (!el || !nome) return;
+        el.textContent = `Modalidade: ${nome}`;
+        el.classList.remove('d-none');
+    });
 
     const qVoltar = new URLSearchParams();
     if (idInterclasse) qVoltar.set('id', idInterclasse);
