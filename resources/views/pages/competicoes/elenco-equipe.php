@@ -24,15 +24,27 @@ $paginaAtiva = 'dashboard';
 <main class="d-none d-md-block main-desktop-layout">
     <div class="container-fluid py-4 px-4 text-body">
         <?php
+        $contextoEquipe = array_filter([
+            trim((string) ($_GET['nome_modalidade'] ?? '')),
+            trim((string) ($_GET['nome_turma'] ?? '')),
+        ], static fn (string $valor): bool => $valor !== '');
+        $subtituloEquipe = implode(' <span aria-hidden="true">•</span> ', array_map(
+            static fn (string $valor): string => htmlspecialchars($valor, ENT_QUOTES, 'UTF-8'),
+            $contextoEquipe,
+        ));
         $headerIdVoltar = 'btnVoltarElencoDesk';
-        $headerCorpoHtml = '<div><h1 class="h4 mb-0 fw-bold">Elenco da equipe</h1><p id="nomeModalidadeElencoDesk" class="small fw-semibold text-body-secondary mb-0 mt-1 d-none"></p></div>';
+        $headerClasse = 'd-flex align-items-start gap-3 mb-4';
+        $headerClasseTitulo = 'd-block flex-grow-1';
+        $headerCorpoHtml = '<div><h1 class="h4 mb-1 fw-bold">Elenco da equipe</h1>'
+            . ($subtituloEquipe !== '' ? '<p class="mb-0 small text-body-secondary">' . $subtituloEquipe . '</p>' : '')
+            . '<p id="nomeModalidadeElencoDesk" class="small fw-semibold text-body-secondary mb-0 mt-1 d-none"></p></div>';
         $headerAcoesHtml = $isAdmin ? '<div class="ms-auto">
                 <a class="btn btn-outline-primary" id="linkGerenciarDesk" href="#" aria-label="Gerenciar elenco">
                     <i class="bi bi-person-plus" aria-hidden="true"></i>
                 </a>
             </div>' : '';
         include SGI_ROOT . '/resources/views/components/page-header.php';
-        unset($headerMostrarVoltar, $headerCorpoHtml, $headerAcoesHtml, $headerClasse, $headerUrlVoltar, $headerIdVoltar, $headerClassBotao, $headerHiddenBotao);
+        unset($headerMostrarVoltar, $headerCorpoHtml, $headerAcoesHtml, $headerClasse, $headerClasseTitulo, $headerUrlVoltar, $headerIdVoltar, $headerClassBotao, $headerHiddenBotao, $contextoEquipe, $subtituloEquipe);
         ?>
 
         <div class="card border-0 shadow-sm rounded-4 overflow-hidden">

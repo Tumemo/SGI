@@ -27,11 +27,25 @@ $paginaAtiva = 'dashboard';
 <main class="d-none d-md-block main-desktop-layout">
     <div class="container-fluid py-4 px-4 text-body">
         <?php
+        $contextoEquipe = array_filter([
+            trim((string) ($_GET['nome_modalidade'] ?? '')),
+            trim((string) ($_GET['nome_turma'] ?? '')),
+        ], static fn (string $valor): bool => $valor !== '');
+        $subtituloEquipe = implode(' <span aria-hidden="true">•</span> ', array_map(
+            static fn (string $valor): string => htmlspecialchars($valor, ENT_QUOTES, 'UTF-8'),
+            $contextoEquipe,
+        ));
         $headerIdVoltar = 'btnVoltarEquipesDesktop';
-        $headerCorpoHtml = '<div><h1 class="h4 mb-0 fw-bold">Adicionar estudantes à equipe</h1><p id="nomeModalidadeEquipeAlunos" class="small fw-semibold text-body-secondary mb-0 mt-1 d-none"></p></div>';
-        $headerAcoesHtml = '<button id="btnSalvarAlunosDesktop" class="btn btn-primary" type="button" aria-label="Salvar estudantes selecionados na equipe — Adicionar 0 estudantes" disabled><i class="bi bi-person-plus me-1" aria-hidden="true"></i><span data-selection-count>Adicionar 0 estudantes</span></button>';
+        $headerClasse = 'd-flex align-items-start gap-3 mb-4';
+        $headerClasseTitulo = 'd-block flex-grow-1';
+        $headerCorpoHtml = '<div><h1 class="h4 mb-1 fw-bold">Adicionar estudantes à equipe</h1>'
+            . ($subtituloEquipe !== '' ? '<p class="mb-0 small text-body-secondary">' . $subtituloEquipe . '</p>' : '')
+            . '<p id="nomeModalidadeEquipeAlunos" class="small fw-semibold text-body-secondary mb-0 mt-1 d-none"></p></div>';
+        $headerAcoesHtml = '<div class="ms-auto"><button id="btnSalvarAlunosDesktop" class="btn btn-primary" type="button" aria-label="Salvar estudantes selecionados na equipe — Adicionar 0 estudantes" disabled>'
+            . '<i class="bi bi-person-plus me-1" aria-hidden="true"></i><span data-selection-count>Adicionar 0 estudantes</span>'
+            . '</button></div>';
         include SGI_ROOT . '/resources/views/components/page-header.php';
-        unset($headerMostrarVoltar, $headerCorpoHtml, $headerAcoesHtml, $headerClasse, $headerUrlVoltar, $headerIdVoltar, $headerClassBotao, $headerHiddenBotao);
+        unset($headerMostrarVoltar, $headerCorpoHtml, $headerAcoesHtml, $headerClasse, $headerClasseTitulo, $headerUrlVoltar, $headerIdVoltar, $headerClassBotao, $headerHiddenBotao, $contextoEquipe, $subtituloEquipe);
         ?>
 
                 <label for="buscaAlunosDesktop" class="visually-hidden">Buscar estudante por nome ou matrícula</label>

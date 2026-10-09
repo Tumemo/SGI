@@ -318,11 +318,16 @@ async function tentarNovamente(event) {
     }
 }
 
-async function salvar() {
-    const checks = Array.from(document.querySelectorAll('.aluno-check:checked'));
-    const membros = new Set(alunosNaEquipe.map(aluno => String(aluno.id_usuario)));
-    const ids = [...new Set(checks.map(item => Number(item.value)).filter(Boolean))]
+function idsSelecionadosParaSalvar(selecionados, membrosDaEquipe) {
+    const membros = new Set(membrosDaEquipe.map(aluno => String(aluno.id_usuario)));
+    return [...selecionados]
+        .map(Number)
+        .filter(Boolean)
         .filter(id => !membros.has(String(id)));
+}
+
+async function salvar() {
+    const ids = idsSelecionadosParaSalvar(alunosSelecionados, alunosNaEquipe);
 
     if (!ids.length) {
         mostrarToast('erro', 'Selecione pelo menos um novo estudante para adicionar.');
@@ -365,5 +370,5 @@ pageScope.listen(document.getElementById('buscaAlunosMobile'), 'input', sincroni
 
 pageScope.listen(window, 'pageshow', carregar);
 
-return {mostrarToast, cardAluno, renderizar, atualizarAcoesSelecao, filtrar, carregar, salvar};
+return {mostrarToast, cardAluno, renderizar, atualizarAcoesSelecao, filtrar, carregar, salvar, idsSelecionadosParaSalvar};
 });

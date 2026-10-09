@@ -110,7 +110,7 @@ $router->add(['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'], '/api/v1/modalidades',
         new ModalidadeService(new MysqliModalidadeRepository($conn)),
     ),
 ));
-$router->add(['GET', 'PUT', 'OPTIONS'], '/api/v1/ranking', $withDatabase(
+$router->add(['GET', 'POST', 'PUT', 'OPTIONS'], '/api/v1/ranking', $withDatabase(
     static fn (mysqli $conn): RankingController => new RankingController(
         new RankingService(
             new MysqliRankingRepository($conn),
@@ -124,6 +124,13 @@ $router->add(['GET', 'PUT', 'OPTIONS'], '/api/v1/ranking', $withDatabase(
 $router->add(['GET', 'POST', 'PUT'], '/api/v1/cronograma', $withDatabase(
     static fn (mysqli $conn): \App\Modules\Competicoes\Presentation\Http\CronogramaController => new \App\Modules\Competicoes\Presentation\Http\CronogramaController(
         new \App\Modules\Competicoes\Application\CronogramaService(new \App\Modules\Competicoes\Infrastructure\MysqliCronogramaRepository($conn)),
+    ),
+));
+$router->add(['GET', 'POST', 'OPTIONS'], '/api/v1/podios', $withDatabase(
+    static fn (mysqli $conn): \App\Modules\Resultados\Presentation\Http\PodioController => new \App\Modules\Resultados\Presentation\Http\PodioController(
+        new \App\Modules\Resultados\Application\PontuacaoService(
+            new \App\Modules\Resultados\Infrastructure\MysqliPodioRepository($conn),
+        ),
     ),
 ));
 
