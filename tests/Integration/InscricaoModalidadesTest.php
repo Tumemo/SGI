@@ -34,6 +34,12 @@ class InscricaoModalidadesTest
         ]);
         Assertions::assertStatus('Aluno de teste vinculado à edição', $novoAluno, 200);
         $idAluno = (int) ($novoAluno['json']['id_usuario'] ?? $novoAluno['json']['id'] ?? 0);
+        $antesDaInscricao = $admin->get("api/v1/usuarios?acao=listar_competidores&id_turma=$idTurmaAluno&id_interclasse=$idEdicao");
+        $alunoSemModalidade = current(array_filter(
+            $antesDaInscricao['json']['competidores'] ?? [],
+            static fn (array $competidor): bool => (int) ($competidor['id_usuario'] ?? 0) === $idAluno,
+        ));
+        Assertions::assert('Aluno ainda sem inscrição recebe lista de modalidades vazia', ($alunoSemModalidade['modalidades'] ?? null) === []);
         $senha = (string) ($novoAluno['json']['senha_temporaria'] ?? '');
         $aluno = new TestClient();
         $loginAluno = $aluno->login($matricula, $senha);
@@ -72,16 +78,36 @@ class InscricaoModalidadesTest
         ]);
         Assertions::assertStatus("Inscrição válida retorna sucesso", $resInscricao, 200);
         Assertions::assert("Inscrição válida confirma sucesso no corpo", ($resInscricao['json']['success'] ?? false) === true);
+        $esperadas = array_values(array_unique(array_map(
+            static fn (array $equipe): int => (int) ($equipe['modalidades_id_modalidade'] ?? 0),
+            [$eqsTurma[0], $eqsTurma[1]],
+        )));
+        sort($esperadas);
+        $alunosInscritos = $admin->get("api/v1/usuarios?acao=listar_competidores&id_turma=$idTurmaAluno&id_interclasse=$idEdicao");
+        $alunoInscrito = current(array_filter(
+            $alunosInscritos['json']['competidores'] ?? [],
+            static fn (array $competidor): bool => (int) ($competidor['id_usuario'] ?? 0) === $idAluno,
+        ));
+        $recebidas = array_map('intval', array_column($alunoInscrito['modalidades'] ?? [], 'id_modalidade'));
+        sort($recebidas);
+        Assertions::assert('Listagem da turma mostra as modalidades inscritas sem duplicar aluno',
+            count(array_filter($alunosInscritos['json']['competidores'] ?? [],
+                static fn (array $competidor): bool => (int) ($competidor['id_usuario'] ?? 0) === $idAluno)) === 1
+            && $recebidas === $esperadas
+            && count(array_filter($alunoInscrito['modalidades'] ?? [],
+                static fn (array $modalidade): bool => trim((string) ($modalidade['nome_modalidade'] ?? '')) !== '')) === count($esperadas));
         foreach ([$idEq1, $idEq2] as $idEquipe) {
             $membros = $admin->get('api/v1/equipes?id_equipe=' . $idEquipe);
             $encontrado = false;
             foreach (($membros['json'] ?? []) as $membro) {
                 if ((int) ($membro['id_usuario'] ?? 0) === $idAluno) {
-                    $encontrado = true;
+                    $modalidadesMembro = array_map('intval', array_column($membro['modalidades'] ?? [], 'id_modalidade'));
+                    sort($modalidadesMembro);
+                    $encontrado = $modalidadesMembro === $esperadas;
                     break;
                 }
             }
-            Assertions::assert("Inscrição persistida na equipe {$idEquipe}", $encontrado);
+            Assertions::assert("Elenco da equipe {$idEquipe} mostra todas as modalidades do aluno", $encontrado);
         }
 
         // 10.3 Bloqueio de inscrição por usuário anônimo

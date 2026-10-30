@@ -28,10 +28,17 @@ function cardAluno(aluno) {
     const nomeControle = estaNaEquipe
         ? `${nomeAluno}${matriculaAluno ? `, matrícula ${matriculaAluno}` : ''}, já vinculado à equipe`
         : `Adicionar ${nomeAluno}${matriculaAluno ? `, matrícula ${matriculaAluno}` : ''} à equipe`;
+    const nomesModalidades = Array.isArray(aluno.modalidades)
+        ? aluno.modalidades.map(modalidade => modalidade?.nome_modalidade).filter(Boolean)
+        : [];
+    const modalidades = nomesModalidades.length
+        ? `<div class="small fw-normal text-body-secondary" data-sgi-modalidades>Modalidades: ${nomesModalidades.map(window.SGIHtml.escape).join(' · ')}</div>`
+        : '';
     return `
         <label class="col d-flex align-items-center justify-content-between gap-3 border rounded-3 p-3 bg-body ${semInscricao ? 'border-2 border-primary bg-primary-subtle' : ''}">
             <div class="sgi-u-min-width-0">
                 <strong>${window.SGIHtml.escape(nomeAluno)}</strong>${badge}${badgeEquipe}
+                ${modalidades}
                 <div class="text-muted small">${window.SGIHtml.escape(matriculaAluno)} (${window.SGIHtml.escape(aluno.genero_usuario || 'Não informado')})</div>
             </div>
             <input class="form-check-input aluno-check" type="checkbox" value="${window.SGIHtml.escape(idAluno)}" ${selecionado ? 'checked' : ''} ${estaNaEquipe ? 'disabled' : ''} aria-label="${window.SGIHtml.escape(nomeControle)}">

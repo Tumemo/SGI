@@ -24,6 +24,15 @@ function esc(s) {
     return d.innerHTML;
 }
 
+function modalidadesAluno(aluno) {
+    const nomes = Array.isArray(aluno.modalidades)
+        ? aluno.modalidades.map(modalidade => modalidade?.nome_modalidade).filter(Boolean)
+        : [];
+    return nomes.length
+        ? `<div class="small fw-normal text-body-secondary" data-sgi-modalidades>Modalidades: ${nomes.map(esc).join(' · ')}</div>`
+        : '';
+}
+
 function montarVoltar() {
     const q = new URLSearchParams();
     if (idInterclasse) q.set('id', idInterclasse);
@@ -155,6 +164,7 @@ async function carregar() {
             <div class="d-flex align-items-center justify-content-between gap-3 border rounded-3 p-3 bg-body mb-2">
                 <div>
                     <div class="fw-medium">${esc(u.nome_usuario)}</div>
+                    ${modalidadesAluno(u)}
                     <div class="text-muted small">${esc(u.matricula_usuario)}</div>
                 </div>
                 ${isAdmin ? `
@@ -167,7 +177,7 @@ async function carregar() {
 
         tbody.innerHTML = arr.map(u => `
             <tr>
-                <td>${esc(u.nome_usuario)}</td>
+                <td>${esc(u.nome_usuario)}${modalidadesAluno(u)}</td>
                 <td>${esc(u.matricula_usuario)}</td>
                 ${isAdmin ? `
                     <td class="text-end">

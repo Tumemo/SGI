@@ -43,6 +43,24 @@ test('a tela de adicionar atletas renderiza nome e matrícula sem globals de out
     assert.doesNotMatch(card, /<img src=x/);
 });
 
+test('o cartão mostra modalidades abaixo do nome e escapa nomes vindos da API', () => {
+    const page = loadPageActions();
+    const card = page.cardAluno({
+        id_usuario: 42,
+        nome_usuario: 'Ana',
+        matricula_usuario: 'RM42',
+        genero_usuario: 'FEM',
+        inscrito: 1,
+        modalidades: [
+            { id_modalidade: 1, nome_modalidade: 'Futsal' },
+            { id_modalidade: 2, nome_modalidade: '<img src=x onerror=alert(1)>' },
+        ],
+    });
+
+    assert.match(card, /Ana<\/strong>[\s\S]*?Modalidades: Futsal · &lt;img src=x onerror=alert\(1\)&gt;/);
+    assert.doesNotMatch(card, /<img src=x/);
+});
+
 test('salvamento mantém estudantes selecionados fora do filtro atual', () => {
     const page = loadPageActions();
     const ids = page.idsSelecionadosParaSalvar(new Set(['11', '22', '33']), [

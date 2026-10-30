@@ -50,6 +50,15 @@ window.SGIPage.mount("participantes/turma-alunos", function (pageConfig, pageSco
         return 'Não informado';
     }
 
+    function modalidadesAluno(aluno) {
+        const nomes = Array.isArray(aluno.modalidades)
+            ? aluno.modalidades.map(modalidade => modalidade?.nome_modalidade).filter(Boolean)
+            : [];
+        return nomes.length
+            ? `<div class="small fw-normal text-body-secondary" data-sgi-modalidades>Modalidades: ${nomes.map(esc).join(' · ')}</div>`
+            : '';
+    }
+
     function formatarData(s) {
         if (!s) return '—';
         const partes = String(s).split('-');
@@ -223,6 +232,7 @@ window.SGIPage.mount("participantes/turma-alunos", function (pageConfig, pageSco
                     <div class="rounded-circle bg-danger-subtle text-danger-emphasis fw-semibold fs-5 d-flex align-items-center justify-content-center flex-shrink-0 p-2">${esc((u.nome_usuario || 'A').charAt(0)).toUpperCase()}</div>
                     <div class="flex-grow-1 overflow-hidden">
                         <div class="fw-semibold text-body text-truncate">${esc(u.nome_usuario)}${Number(u.inscrito || 0) === 0 ? '<span class="badge rounded-pill text-bg-danger ms-2">Sem inscrição</span>' : ''}</div>
+                        ${modalidadesAluno(u)}
                         <div class="small text-body-secondary">${esc(u.matricula_usuario || '—')} · ${esc(generoLabel(u.genero_usuario))}</div>
                     </div>
                     ${acoesMob(u)}
@@ -251,6 +261,7 @@ window.SGIPage.mount("participantes/turma-alunos", function (pageConfig, pageSco
                 <tr class="${Number(u.inscrito || 0) === 0 ? 'table-danger' : ''}">
                     <td class="fw-semibold text-body">
                         <span class="rounded-circle bg-danger-subtle text-danger-emphasis fw-semibold d-inline-flex align-items-center justify-content-center p-1 me-2">${esc((u.nome_usuario || 'A').charAt(0)).toUpperCase()}</span>${esc(u.nome_usuario)}${Number(u.inscrito || 0) === 0 ? '<span class="badge rounded-pill text-bg-danger ms-2">Sem inscrição</span>' : ''}
+                        ${modalidadesAluno(u)}
                     </td>
                     <td>${esc(u.matricula_usuario)}</td>
                     <td>

@@ -316,6 +316,52 @@ test.describe('E09 — recuperação de listas e estados vazios', () => {
         await expect(tabela).toContainText('Nenhum estudante cadastrado nesta turma.');
     });
 
+    test('as três listas exibem modalidades abaixo do nome em desktop e celular', async ({ page }) => {
+        await entrarComoAdmin(page);
+        const estudante = {
+            id_usuario: 9904,
+            nome_usuario: 'Carla E09',
+            matricula_usuario: 'E09-9904',
+            genero_usuario: 'FEM',
+            inscrito: 1,
+            modalidades: [
+                { id_modalidade: 905, nome_modalidade: 'Futsal E09' },
+                { id_modalidade: 906, nome_modalidade: 'Vôlei E09' },
+            ],
+        };
+        await page.route('**/api/v1/**', async (route) => {
+            const url = new URL(route.request().url());
+            if (url.pathname.endsWith('/edicoes')) {
+                await respostaJson(route, [edicaoAdmin]);
+            } else if (url.pathname.endsWith('/turmas')) {
+                await respostaJson(route, [turmaAdmin]);
+            } else if (url.pathname.endsWith('/modalidades')) {
+                await respostaJson(route, [{ id_modalidade: 905, genero_modalidade: 'MISTO' }]);
+            } else if (url.pathname.endsWith('/usuarios')) {
+                await respostaJson(route, { competidores: [estudante] });
+            } else if (url.pathname.endsWith('/equipes')) {
+                await respostaJson(route, [estudante]);
+            } else {
+                await respostaJson(route, { success: true });
+            }
+        });
+
+        const paginas = [
+            ['turmas/alunos?id=901&id_turma=902&id_categoria=903', '#tbodyAlunosTurmaDesk', '#listaAlunosTurmaMob'],
+            ['equipes/elenco?id=901&id_turma=902&id_equipe=904&id_categoria=903&id_modalidade=905', '#tbodyElencoDesk', '#listaElencoMob'],
+            ['equipes/alunos?id=901&id_turma=902&id_equipe=904&id_categoria=903&id_modalidade=905', '#listaAlunosDesktop', '#listaAlunosMobile'],
+        ];
+        for (const [url, desktop, mobile] of paginas) {
+            await page.goto(url, { waitUntil: 'domcontentloaded' });
+            for (const viewport of [{ width: 1280, height: 800 }, { width: 390, height: 844 }]) {
+                await page.setViewportSize(viewport);
+                const lista = page.locator(viewport.width < 768 ? mobile : desktop);
+                await expect(lista).toContainText('Carla E09');
+                await expect(lista.locator('[data-sgi-modalidades]')).toHaveText('Modalidades: Futsal E09 · Vôlei E09');
+            }
+        }
+    });
+
     test('equipe-alunos não apresenta falha HTTP ao consultar competidores como equipe vazia', async ({ page }) => {
         await entrarComoAdmin(page);
         await page.route('**/api/v1/**', async (route) => {

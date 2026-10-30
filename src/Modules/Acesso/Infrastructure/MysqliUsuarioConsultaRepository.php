@@ -23,6 +23,8 @@ final class MysqliUsuarioConsultaRepository implements UsuarioConsultaRepository
         $sensitiveColumns = $includeSensitive ? ', u.data_nasc_usuario' : '';
         $sql = "SELECT u.id_usuario, u.nome_usuario, u.matricula_usuario,
                        u.genero_usuario, u.nivel_usuario{$sensitiveColumns},
+                       m.id_modalidade AS inscricao_modalidade_id,
+                       m.nome_modalidade AS inscricao_modalidade_nome,
                        CASE WHEN EXISTS (
                            SELECT 1 FROM equipes_has_usuarios eu
                            INNER JOIN equipes eq ON eq.id_equipe = eu.equipes_id_equipe
@@ -30,6 +32,11 @@ final class MysqliUsuarioConsultaRepository implements UsuarioConsultaRepository
                              AND eq.turmas_id_turma = u.turmas_id_turma
                        ) THEN 1 ELSE 0 END AS inscrito
                 FROM usuarios u
+                LEFT JOIN equipes_has_usuarios vinculo ON vinculo.usuarios_id_usuario = u.id_usuario
+                LEFT JOIN equipes equipe_inscrita ON equipe_inscrita.id_equipe = vinculo.equipes_id_equipe
+                    AND equipe_inscrita.turmas_id_turma = u.turmas_id_turma AND equipe_inscrita.status_equipe = '1'
+                LEFT JOIN modalidades m ON m.id_modalidade = equipe_inscrita.modalidades_id_modalidade
+                    AND m.interclasses_id_interclasse = u.interclasses_id_interclasse
                 WHERE u.turmas_id_turma = ? AND u.interclasses_id_interclasse = ?
                   AND u.nivel_usuario = '3' AND u.status_usuario = '1'";
         $gender = strtoupper(trim($gender));
@@ -37,7 +44,7 @@ final class MysqliUsuarioConsultaRepository implements UsuarioConsultaRepository
         if ($hasGender) {
             $sql .= ' AND u.genero_usuario = ?';
         }
-        $sql .= ' ORDER BY u.nome_usuario ASC';
+        $sql .= ' ORDER BY u.nome_usuario ASC, u.id_usuario ASC, m.nome_modalidade ASC, m.id_modalidade ASC';
         $statement = $this->prepare($sql);
         if ($hasGender) {
             $statement->bind_param('iis', $classId, $editionId, $gender);
@@ -48,7 +55,29 @@ final class MysqliUsuarioConsultaRepository implements UsuarioConsultaRepository
         $rows = $statement->get_result()->fetch_all(MYSQLI_ASSOC);
         $statement->close();
 
-        return ['status' => 'sucesso', 'competidores' => $rows];
+        $competitors = [];
+        foreach ($rows as $row) {
+            $userId = (int) $row['id_usuario'];
+            $modalityId = (int) ($row['inscricao_modalidade_id'] ?? 0);
+            $modalityName = (string) ($row['inscricao_modalidade_nome'] ?? '');
+            if (!isset($competitors[$userId])) {
+                unset($row['inscricao_modalidade_id'], $row['inscricao_modalidade_nome']);
+                $row['modalidades'] = [];
+                $competitors[$userId] = $row;
+            }
+            if ($modalityId > 0) {
+                $competitors[$userId]['modalidades'][$modalityId] = [
+                    'id_modalidade' => $modalityId,
+                    'nome_modalidade' => $modalityName,
+                ];
+            }
+        }
+        foreach ($competitors as &$competitor) {
+            $competitor['modalidades'] = array_values($competitor['modalidades']);
+        }
+        unset($competitor);
+
+        return ['status' => 'sucesso', 'competidores' => array_values($competitors)];
     }
 
     public function collaborators(int $editionId): array
