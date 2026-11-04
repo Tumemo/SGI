@@ -41,9 +41,21 @@ final class PontuacaoService
             $scoreOrder = (int) $b['resultado_partida'] <=> (int) $a['resultado_partida'];
             return $scoreOrder !== 0 ? $scoreOrder : (int) $a['equipes_id_equipe'] <=> (int) $b['equipes_id_equipe'];
         });
+        $woWinner = (int) ($game['vencedor_wo_equipe_id'] ?? 0);
+        if ($woWinner > 0) {
+            usort($parts, static fn (array $a, array $b): int =>
+                ((int) $b['equipes_id_equipe'] === $woWinner ? 1 : 0)
+                <=> ((int) $a['equipes_id_equipe'] === $woWinner ? 1 : 0));
+        }
         $new = [];
         $thirdPlaceTeamId = $isFinal ? $this->repository->carregarTerceiroLugarDaFinal($gameId) : null;
         foreach ($positions as $index => $position) {
+            if ($isFinal && $position === 2 && $woWinner > 0) {
+                if (isset($oldByPosition[2])) {
+                    $new[] = array_replace($oldByPosition[2], ['ativo' => 0, 'id_jogo' => $gameId]);
+                }
+                continue;
+            }
             if ($isFinal && $position === 3) {
                 $teamId = $thirdPlaceTeamId ?? 0;
                 if ($teamId <= 0) {
@@ -111,6 +123,9 @@ final class PontuacaoService
                 continue;
             }
             $teamId = isset($item['id_equipe']) && (int) $item['id_equipe'] > 0 ? (int) $item['id_equipe'] : null;
+            if ($teamId !== null && $this->repository->equipeDesclassificadaPorWo($teamId, $modalityId)) {
+                throw new \InvalidArgumentException('Equipe desclassificada por W.O. não pode ocupar o pódio.');
+            }
             $classId = isset($item['id_turma']) && (int) $item['id_turma'] > 0 ? (int) $item['id_turma'] : null;
 
             if ($classId === null && $teamId !== null) {

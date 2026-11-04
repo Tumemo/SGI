@@ -281,7 +281,8 @@
                     jogo.modalidades_id_modalidade = data.id_modalidade;
                 }
                 if (!jogo.nome_jogo && data.nome_jogo) jogo.nome_jogo = data.nome_jogo;
-                if (total > 0 && !empate) jogo.status_jogo = 'Concluido';
+                if ((total > 0 && !empate) || data.vencedor_wo_id) jogo.status_jogo = 'Concluido';
+                if (data.vencedor_wo_id) jogo.vencedor_wo_equipe_id = Number(data.vencedor_wo_id);
                 jogo._pendente = true;
                 return put('jogos', data.id_jogo, jogo);
             })

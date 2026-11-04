@@ -52,6 +52,7 @@ require_once __DIR__ . '/Integration/StudentPasswordInitializerTest.php';
 require_once __DIR__ . '/Integration/FullInterclasseSimulationTest.php';
 require_once __DIR__ . '/Integration/AtomicMutationTest.php';
 require_once __DIR__ . '/Integration/MataMataEdgeCasesTest.php';
+require_once __DIR__ . '/Integration/VitoriaWoTest.php';
 require_once __DIR__ . '/E2E/FullOfflineTournamentTest.php';
 
 use SGITests\Support\Assertions;
@@ -220,6 +221,7 @@ try {
     $runScenario('HistoryRankingReconciliationTest', static fn () => HistoryRankingReconciliationTest::run($idEdicao, $idTurma));
     $runScenario('ConcurrentInvariantsTest', static fn () => ConcurrentInvariantsTest::run($idEdicao, $idTurma));
     $runScenario('ConcurrentPontoFinalizationTest', static fn () => ConcurrentPontoFinalizationTest::run($idEdicao, $idTurma));
+    $runScenario('VitoriaWoTest', static fn () => \SGITests\Integration\VitoriaWoTest::run($idEdicao, $idTurma));
 
     // 14. Fronteira pública e proteção de arquivos internos
     $runScenario('PublicBoundaryTest', static fn () => PublicBoundaryTest::run());

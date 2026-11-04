@@ -16,11 +16,11 @@ final class MysqliPodioRepository implements PodioRepository
     {
     }
 
-    /** @return array{nome_jogo:string,modalidade_id:int,interclasse_id:int,pontos:array{1:int,2:int,3:int}}|null */
+    /** @return array{nome_jogo:string,modalidade_id:int,interclasse_id:int,vencedor_wo_equipe_id:?int,pontos:array{1:int,2:int,3:int}}|null */
     public function carregarContextoJogo(int $gameId): ?array
     {
         $statement = $this->connection->prepare(
-            'SELECT j.nome_jogo, j.modalidades_id_modalidade AS modalidade_id,
+            'SELECT j.nome_jogo, j.vencedor_wo_equipe_id, j.modalidades_id_modalidade AS modalidade_id,
                     m.interclasses_id_interclasse AS interclasse_id,
                     i.ponto_1_lugar, i.ponto_2_lugar, i.ponto_3_lugar
              FROM jogos j
@@ -43,6 +43,7 @@ final class MysqliPodioRepository implements PodioRepository
         }
         return [
             'nome_jogo' => (string) $row['nome_jogo'],
+            'vencedor_wo_equipe_id' => $row['vencedor_wo_equipe_id'] === null ? null : (int) $row['vencedor_wo_equipe_id'],
             'modalidade_id' => (int) $row['modalidade_id'],
             'interclasse_id' => (int) $row['interclasse_id'],
             'pontos' => [
@@ -79,7 +80,7 @@ final class MysqliPodioRepository implements PodioRepository
     public function carregarTerceiroLugarDaFinal(int $gameId): ?int
     {
         $statement = $this->connection->prepare(
-            'SELECT j.nome_jogo, j.status_jogo, j.modalidades_id_modalidade
+            'SELECT j.nome_jogo, j.status_jogo, j.vencedor_wo_equipe_id, j.modalidades_id_modalidade
              FROM jogos j WHERE j.id_jogo = ? LIMIT 1',
         );
         if ($statement === false) {
@@ -101,13 +102,15 @@ final class MysqliPodioRepository implements PodioRepository
             || !ChaveamentoRules::jogoEstaEncerrado((string) $final['status_jogo'])) {
             return null;
         }
-        $champion = ChaveamentoRules::vencedorDePartidas($this->carregarPartidasJogo($gameId));
+        $champion = $final['vencedor_wo_equipe_id'] === null
+            ? ChaveamentoRules::vencedorDePartidas($this->carregarPartidasJogo($gameId))
+            : (int) $final['vencedor_wo_equipe_id'];
         if ($champion === null) {
             return null;
         }
 
         $statement = $this->connection->prepare(
-            "SELECT j.id_jogo, j.nome_jogo, j.status_jogo,
+            "SELECT j.id_jogo, j.nome_jogo, j.status_jogo, j.vencedor_wo_equipe_id,
                     p.equipes_id_equipe, p.resultado_partida
              FROM jogos j
              INNER JOIN partidas p ON p.jogos_id_jogo = j.id_jogo
@@ -137,6 +140,7 @@ final class MysqliPodioRepository implements PodioRepository
             if (!isset($semifinais[$idSemifinal])) {
                 $semifinais[$idSemifinal] = [
                     'kind' => $semifinalMeta['kind'],
+                    'vencedor_wo_equipe_id' => $row['vencedor_wo_equipe_id'] === null ? null : (int) $row['vencedor_wo_equipe_id'],
                     'partidas' => [],
                 ];
             }
@@ -268,6 +272,20 @@ final class MysqliPodioRepository implements PodioRepository
         $value = $statement->get_result()->fetch_column();
         $statement->close();
         return $value === null ? null : (int) $value;
+    }
+
+    public function equipeDesclassificadaPorWo(int $equipeId, int $modalidadeId): bool
+    {
+        $statement = $this->connection->prepare(
+            'SELECT 1 FROM partidas p INNER JOIN jogos j ON j.id_jogo = p.jogos_id_jogo
+             WHERE p.equipes_id_equipe = ? AND j.modalidades_id_modalidade = ?
+               AND j.vencedor_wo_equipe_id IS NOT NULL AND j.vencedor_wo_equipe_id <> ? LIMIT 1',
+        );
+        $statement->bind_param('iii', $equipeId, $modalidadeId, $equipeId);
+        $statement->execute();
+        $disqualified = $statement->get_result()->num_rows > 0;
+        $statement->close();
+        return $disqualified;
     }
 
     public function diagnosticar(): array

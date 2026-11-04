@@ -23,6 +23,14 @@ final class MysqliChaveamentoRepository
         if (!\App\Modules\Competicoes\Domain\ChaveamentoRules::jogoEstaEncerrado($statusJogo)) {
             return \null;
         }
+        $wo = $conn->prepare('SELECT vencedor_wo_equipe_id FROM jogos WHERE id_jogo = ?');
+        $wo->bind_param('i', $idJogo);
+        $wo->execute();
+        $winnerWo = $wo->get_result()->fetch_column();
+        $wo->close();
+        if ($winnerWo !== null && $winnerWo !== false) {
+            return (int) $winnerWo;
+        }
         $ps = \App\Modules\Competicoes\Infrastructure\MysqliChaveamentoRepository::carregarPartidasJogo($conn, $idJogo);
         if ($kind === 'B') {
             return $ps[0]['equipes_id_equipe'] ?? \null;
@@ -373,7 +381,7 @@ final class MysqliChaveamentoRepository
      */
     public static function montarJsonArvore(\mysqli $conn, int $idModalidade): array
     {
-        $sql = 'SELECT j.id_jogo, j.nome_jogo, j.status_jogo, j.data_jogo, j.inicio_jogo,
+        $sql = 'SELECT j.id_jogo, j.nome_jogo, j.status_jogo, j.vencedor_wo_equipe_id, j.data_jogo, j.inicio_jogo,
                    j.termino_jogo, j.locais_id_local, l.nome_local,
                    j.modalidades_id_modalidade, m.interclasses_id_interclasse,
                    p.id_partida, p.equipes_id_equipe, p.resultado_partida,
@@ -397,7 +405,7 @@ final class MysqliChaveamentoRepository
             $idJ = (int) $row['id_jogo'];
             if (!isset($porJogo[$idJ])) {
                 $meta = \App\Modules\Competicoes\Domain\ChaveamentoRules::parse($row['nome_jogo']);
-                $porJogo[$idJ] = ['id_jogo' => $idJ, 'nome_jogo' => $row['nome_jogo'], 'status_jogo' => $row['status_jogo'], 'data_jogo' => $row['data_jogo'], 'inicio_jogo' => $row['inicio_jogo'], 'termino_jogo' => $row['termino_jogo'], 'locais_id_local' => $row['locais_id_local'] === null ? null : (int) $row['locais_id_local'], 'nome_local' => $row['nome_local'], 'modalidades_id_modalidade' => (int) $row['modalidades_id_modalidade'], 'id_interclasse' => (int) $row['interclasses_id_interclasse'], 'meta' => $meta, 'partidas' => []];
+                $porJogo[$idJ] = ['id_jogo' => $idJ, 'nome_jogo' => $row['nome_jogo'], 'status_jogo' => $row['status_jogo'], 'vencedor_wo_equipe_id' => $row['vencedor_wo_equipe_id'] === null ? null : (int) $row['vencedor_wo_equipe_id'], 'data_jogo' => $row['data_jogo'], 'inicio_jogo' => $row['inicio_jogo'], 'termino_jogo' => $row['termino_jogo'], 'locais_id_local' => $row['locais_id_local'] === null ? null : (int) $row['locais_id_local'], 'nome_local' => $row['nome_local'], 'modalidades_id_modalidade' => (int) $row['modalidades_id_modalidade'], 'id_interclasse' => (int) $row['interclasses_id_interclasse'], 'meta' => $meta, 'partidas' => []];
             }
             if ($row['id_partida'] !== null) {
                 $porJogo[$idJ]['partidas'][] = ['id_partida' => (int) $row['id_partida'], 'equipes_id_equipe' => (int) $row['equipes_id_equipe'], 'resultado_partida' => (int) $row['resultado_partida'], 'nome_turma' => $row['nome_turma'], 'nome_fantasia_turma' => $row['nome_fantasia_turma'], 'nome_equipe' => $row['nome_equipe']];
@@ -539,6 +547,7 @@ final class MysqliChaveamentoRepository
                 'eh_bye' => $ehBye,
                 'eh_disputa_posicao' => $ehDisputaPosicao,
                 'status_jogo' => $bloco['status_jogo'],
+                'vencedor_wo_equipe_id' => $bloco['vencedor_wo_equipe_id'] ?? null,
                 'data_jogo' => $bloco['data_jogo'],
                 'inicio_jogo' => $bloco['inicio_jogo'],
                 'termino_jogo' => $bloco['termino_jogo'],
@@ -581,6 +590,14 @@ final class MysqliChaveamentoRepository
     {
         if (!\App\Modules\Competicoes\Domain\ChaveamentoRules::jogoEstaEncerrado($statusJogo)) {
             return \null;
+        }
+        $wo = $conn->prepare('SELECT vencedor_wo_equipe_id FROM jogos WHERE id_jogo = ?');
+        $wo->bind_param('i', $idJogo);
+        $wo->execute();
+        $winnerWo = $wo->get_result()->fetch_column();
+        $wo->close();
+        if ($winnerWo !== null && $winnerWo !== false) {
+            return null;
         }
         $ps = \App\Modules\Competicoes\Infrastructure\MysqliChaveamentoRepository::carregarPartidasJogo($conn, $idJogo);
         if ($kind === 'B' || \count($ps) < 2) {
@@ -778,7 +795,7 @@ final class MysqliChaveamentoRepository
     public static function montarHistorico(\mysqli $conn, int $idModalidade): array
     {
         $concluido = \App\Modules\Competicoes\Infrastructure\MysqliChaveamentoRepository::torneioConcluido($conn, $idModalidade);
-        $stJ = $conn->prepare('SELECT j.id_jogo, j.nome_jogo, j.status_jogo, j.data_jogo,
+        $stJ = $conn->prepare('SELECT j.id_jogo, j.nome_jogo, j.status_jogo, j.vencedor_wo_equipe_id, j.data_jogo,
                 j.duracao_jogo, j.tempo_extra_jogo, j.inicio_jogo, j.termino_jogo,
                 p.id_partida, p.equipes_id_equipe, p.resultado_partida,
                 t.nome_turma, t.nome_fantasia_turma,
@@ -798,7 +815,7 @@ final class MysqliChaveamentoRepository
             $idJ = (int) $row['id_jogo'];
             if (!isset($porJogo[$idJ])) {
                 $meta = \App\Modules\Competicoes\Domain\ChaveamentoRules::parse($row['nome_jogo']);
-                $porJogo[$idJ] = ['id_jogo' => $idJ, 'nome_jogo' => $row['nome_jogo'], 'meta' => $meta, 'status_jogo' => $row['status_jogo'], 'data_jogo' => $row['data_jogo'], 'duracao_jogo' => $row['duracao_jogo'], 'tempo_extra_jogo' => $row['tempo_extra_jogo'], 'inicio_jogo' => $row['inicio_jogo'], 'termino_jogo' => $row['termino_jogo'], 'partidas' => []];
+                $porJogo[$idJ] = ['id_jogo' => $idJ, 'nome_jogo' => $row['nome_jogo'], 'meta' => $meta, 'status_jogo' => $row['status_jogo'], 'vencedor_wo_equipe_id' => $row['vencedor_wo_equipe_id'] === null ? null : (int) $row['vencedor_wo_equipe_id'], 'data_jogo' => $row['data_jogo'], 'duracao_jogo' => $row['duracao_jogo'], 'tempo_extra_jogo' => $row['tempo_extra_jogo'], 'inicio_jogo' => $row['inicio_jogo'], 'termino_jogo' => $row['termino_jogo'], 'partidas' => []];
             }
             $porJogo[$idJ]['partidas'][] = ['id_equipe' => (int) $row['equipes_id_equipe'], 'gols' => (int) $row['resultado_partida'], 'nome_turma' => $row['nome_turma'], 'nome_fantasia' => $row['nome_fantasia_turma'], 'nome_equipe' => $row['nome_equipe']];
         }
@@ -811,6 +828,10 @@ final class MysqliChaveamentoRepository
                 continue;
             }
             \usort($ps, static fn ($a, $b) => $b['gols'] <=> $a['gols']);
+            if ($jogo['vencedor_wo_equipe_id'] !== null) {
+                $woWinner = (int) $jogo['vencedor_wo_equipe_id'];
+                \usort($ps, static fn ($a, $b) => ((int) $b['id_equipe'] === $woWinner ? 1 : 0) <=> ((int) $a['id_equipe'] === $woWinner ? 1 : 0));
+            }
             $vencedor = $ps[0];
             $perdedor = $ps[1];
             $fase = $meta['largura'];
@@ -820,10 +841,10 @@ final class MysqliChaveamentoRepository
                 $posVencedor = $meta['posicao'];
                 $posPerdedor = $meta['posicao'] + 1;
                 $classificacao[$posVencedor] = $vencedor;
-                $classificacao[$posPerdedor] = $perdedor;
+                $classificacao[$posPerdedor] = $jogo['vencedor_wo_equipe_id'] === null ? $perdedor : null;
             } elseif ($fase === 2) {
                 $classificacao[1] = $vencedor;
-                $classificacao[2] = $perdedor;
+                $classificacao[2] = $jogo['vencedor_wo_equipe_id'] === null ? $perdedor : null;
                 $nomeFase = 'Final';
             } else {
                 $nomeFase = \App\Modules\Competicoes\Domain\ChaveamentoRules::nomeFasePt($fase);
@@ -833,7 +854,7 @@ final class MysqliChaveamentoRepository
             $duracaoMin = $duracao > 0 ? (int) \ceil($duracao / 60) : \null;
             $extraMin = $tempoExtra > 0 ? (int) \ceil($tempoExtra / 60) : \null;
             $totalMin = ($duracaoMin ?? 0) + ($extraMin ?? 0);
-            $confrontos[] = ['fase' => $nomeFase, 'vencedor_nome' => ($vencedor['nome_equipe'] ?: $vencedor['nome_fantasia']) ?: $vencedor['nome_turma'], 'vencedor_gols' => $vencedor['gols'], 'perdedor_nome' => ($perdedor['nome_equipe'] ?: $perdedor['nome_fantasia']) ?: $perdedor['nome_turma'], 'perdedor_gols' => $perdedor['gols'], 'duracao_min' => $duracaoMin, 'tempo_extra_min' => $extraMin, 'total_min' => $totalMin > 0 ? $totalMin : \null];
+            $confrontos[] = ['fase' => $nomeFase, 'vencedor_nome' => ($vencedor['nome_equipe'] ?: $vencedor['nome_fantasia']) ?: $vencedor['nome_turma'], 'vencedor_gols' => $vencedor['gols'], 'perdedor_nome' => ($perdedor['nome_equipe'] ?: $perdedor['nome_fantasia']) ?: $perdedor['nome_turma'], 'perdedor_gols' => $perdedor['gols'], 'vitoria_wo' => $jogo['vencedor_wo_equipe_id'] !== null, 'duracao_min' => $duracaoMin, 'tempo_extra_min' => $extraMin, 'total_min' => $totalMin > 0 ? $totalMin : \null];
         }
 
         $final = null;
@@ -848,6 +869,7 @@ final class MysqliChaveamentoRepository
             } elseif ($meta['largura'] === 4 && !isset($meta['posicao'])) {
                 $semifinais[] = [
                     'kind' => $meta['kind'],
+                    'vencedor_wo_equipe_id' => $jogo['vencedor_wo_equipe_id'],
                     'partidas' => array_map(static fn (array $partida): array => [
                         'equipes_id_equipe' => (int) $partida['id_equipe'],
                         'resultado_partida' => (int) $partida['gols'],
@@ -861,7 +883,7 @@ final class MysqliChaveamentoRepository
                 'resultado_partida' => (int) $partida['gols'],
             ], $final['partidas']);
             $thirdTeamId = ChaveamentoRules::terceiroLugarDoCampeao(
-                ChaveamentoRules::vencedorDePartidas($finalParts),
+                $final['vencedor_wo_equipe_id'] ?? ChaveamentoRules::vencedorDePartidas($finalParts),
                 $semifinais,
             );
             if ($thirdTeamId !== null) {

@@ -78,6 +78,9 @@ final class ResultadoService
             if ($tipoCompeticao === TipoCompeticaoRules::INDIVIDUAL) {
                 throw new InvalidArgumentException('Modalidades individuais devem ser concluídas pelo lançamento do pódio.');
             }
+            if (!empty($state['vencedor_wo_equipe_id'])) {
+                throw new InvalidArgumentException('Uma vitória por W.O. não pode ser alterada pelo lançamento de placar.');
+            }
             $closed = ChaveamentoRules::jogoEstaEncerrado($state['status_jogo']);
             if ($closed) {
                 (new PlacarService())->validarAlteracao($scores);
@@ -118,6 +121,76 @@ final class ResultadoService
             }
 
             return ['success' => true, 'message' => 'Resultado lançado!', 'id_jogo' => $resolvedGameId];
+        });
+    }
+
+    /** @param array<mixed> $participants @return array<string, mixed> */
+    public function lancarWo(int $gameId, ?string $tag, int $modalityId, array $participants, mixed $winnerId): array
+    {
+        $winnerId = self::normalizarIdEquipe($winnerId);
+        if (count($participants) < 1 || count($participants) > 2) {
+            throw new InvalidArgumentException('O W.O. exige uma ou duas equipes participantes.');
+        }
+        $results = [];
+        foreach ($participants as $participant) {
+            if (!is_array($participant)) {
+                throw new InvalidArgumentException('Cada participante do W.O. deve representar uma equipe.');
+            }
+            $teamId = self::normalizarIdEquipe($participant['id_equipe'] ?? null);
+            if (!array_key_exists('gols', $participant)
+                || PlacarService::normalizarPontuacao($participant['gols']) !== 0) {
+                throw new InvalidArgumentException('O W.O. não pode registrar gols.');
+            }
+            if (in_array($teamId, array_column($results, 'id_equipe'), true)) {
+                throw new InvalidArgumentException('As equipes devem ser distintas.');
+            }
+            $results[] = ['id_equipe' => $teamId, 'gols' => 0];
+        }
+        if (!in_array($winnerId, array_column($results, 'id_equipe'), true)) {
+            throw new InvalidArgumentException('A equipe vencedora deve participar do jogo.');
+        }
+
+        return $this->transactions->run(function () use ($gameId, $tag, $modalityId, $results, $winnerId): array {
+            $resolvedGameId = $this->repository->resolveAndValidate($gameId, $tag, $modalityId, $results);
+            if ($resolvedGameId <= 0) {
+                throw new \RuntimeException('Não foi possível identificar o jogo no servidor.');
+            }
+            $state = $this->repository->lockGame($resolvedGameId);
+            if (TipoCompeticaoRules::resolve($state) !== TipoCompeticaoRules::MATA_MATA) {
+                throw new InvalidArgumentException('O W.O. exige uma modalidade coletiva.');
+            }
+            if (ChaveamentoRules::jogoEstaEncerrado($state['status_jogo'])) {
+                throw new InvalidArgumentException('O jogo já foi encerrado.');
+            }
+            $current = $this->repository->carregarPartidas($resolvedGameId);
+            $currentIds = array_column($current, 'equipes_id_equipe');
+            $submittedIds = array_column($results, 'id_equipe');
+            if ($current !== [] && (count($current) !== count($results)
+                || array_diff($currentIds, $submittedIds) !== []
+                || array_diff($submittedIds, $currentIds) !== [])) {
+                throw new InvalidArgumentException('O W.O. deve incluir exatamente as equipes do jogo.');
+            }
+            foreach ($current as $partida) {
+                if ((int) $partida['resultado_partida'] !== 0) {
+                    throw new InvalidArgumentException('Anule o placar antes de registrar o W.O.');
+                }
+            }
+            if ($this->pontos !== null) {
+                foreach ($this->pontos->listarPontos($resolvedGameId) as $point) {
+                    if (($point['status_artilheiro'] ?? null) === 'ativo') {
+                        throw new InvalidArgumentException('Anule os pontos individuais antes de registrar o W.O.');
+                    }
+                }
+                $this->pontos->garantirPartidas($resolvedGameId, $results);
+            } else {
+                $this->repository->persistirPlacar($resolvedGameId, $results);
+            }
+            $this->repository->registrarWo($resolvedGameId, $winnerId);
+            $this->repository->concluirJogo($resolvedGameId);
+            $this->repository->avancarChaveamento($resolvedGameId);
+            $this->pontuacao->reconciliarJogo($resolvedGameId);
+
+            return ['success' => true, 'message' => 'Vitória por W.O. registrada!', 'id_jogo' => $resolvedGameId];
         });
     }
 

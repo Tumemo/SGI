@@ -37,6 +37,9 @@ final class MigrationsTest
         Assertions::assert('Ocorrências de turma não aceitam pontos negativos', self::hasCheckConstraint($connection, 'ocorrencias_turmas', 'chk_ocorrencias_turmas_pontos_nonnegative'));
         Assertions::assert('Ocorrências individuais não aceitam penalidade negativa', self::hasCheckConstraint($connection, 'ocorrencias', 'chk_ocorrencias_penalidade_nonnegative'));
         Assertions::assert('Jogos novos exigem vínculo de atleta no placar', self::hasColumn($connection, 'jogos', 'exige_vinculo_ponto'));
+        Assertions::assert('Vitória por W.O. registra vencedora sem placar individual',
+            self::hasColumn($connection, 'jogos', 'vencedor_wo_equipe_id')
+            && self::hasForeignKey($connection, 'jogos', 'fk_jogos_vencedor_wo'));
         Assertions::assert('Pontos preservam partida, status e chave idempotente',
             self::hasColumn($connection, 'artilheiros', 'partidas_id_partida')
             && self::hasColumn($connection, 'artilheiros', 'equipes_id_equipe')

@@ -49,7 +49,7 @@ final class MysqliJogoGateway
                 AND jogos.status_jogo IN ('Agendado', 'Iniciado', 'Pausado')"
             : '';
         $sql = "SELECT jogos.id_jogo, jogos.nome_jogo, jogos.data_jogo,
-                       jogos.inicio_jogo, jogos.termino_jogo, jogos.status_jogo,
+                       jogos.inicio_jogo, jogos.termino_jogo, jogos.status_jogo, jogos.vencedor_wo_equipe_id,
                        jogos.tempo_restante_jogo, jogos.duracao_jogo,
                        jogos.tempo_extra_jogo, jogos.data_inicio_real,
                        UNIX_TIMESTAMP(jogos.data_inicio_real) AS data_inicio_epoch,

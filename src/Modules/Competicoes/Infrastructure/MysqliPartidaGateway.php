@@ -28,7 +28,7 @@ final class MysqliPartidaGateway implements ResultadoRepository
     {
         $filter = SqlFilters::aplicarFiltrosPartidas($filters);
         $sql = "SELECT p.id_partida, p.equipes_id_equipe, p.resultado_partida,
-                       j.id_jogo, j.nome_jogo, j.status_jogo, j.data_jogo,
+                       j.id_jogo, j.nome_jogo, j.status_jogo, j.vencedor_wo_equipe_id, j.data_jogo,
                        j.inicio_jogo, j.termino_jogo,
                        j.modalidades_id_modalidade, t.id_turma, t.nome_turma,
                        t.nome_fantasia_turma, m.nome_modalidade,
@@ -155,11 +155,11 @@ final class MysqliPartidaGateway implements ResultadoRepository
         return $this->resolveGame($gameId, $gameTag, $modalityId, $results);
     }
 
-    /** @return array{status_jogo:string,nome_jogo:string,modalidade_id:int,interclasse_id:int,tipos_modalidades_id_tipo_modalidade:int} */
+    /** @return array{status_jogo:string,nome_jogo:string,modalidade_id:int,interclasse_id:int,vencedor_wo_equipe_id:?int,tipos_modalidades_id_tipo_modalidade:int,nome_tipo_modalidade:string,tipo_competicao:?string} */
     public function lockGame(int $gameId): array
     {
         $row = $this->one(
-            'SELECT j.status_jogo, j.nome_jogo, j.modalidades_id_modalidade AS modalidade_id,
+            'SELECT j.status_jogo, j.nome_jogo, j.vencedor_wo_equipe_id, j.modalidades_id_modalidade AS modalidade_id,
                     m.interclasses_id_interclasse AS interclasse_id,
                     m.tipos_modalidades_id_tipo_modalidade, tm.nome_tipo_modalidade
              FROM jogos j
@@ -175,6 +175,7 @@ final class MysqliPartidaGateway implements ResultadoRepository
         return [
             'status_jogo' => (string) $row['status_jogo'],
             'nome_jogo' => (string) $row['nome_jogo'],
+            'vencedor_wo_equipe_id' => $row['vencedor_wo_equipe_id'] === null ? null : (int) $row['vencedor_wo_equipe_id'],
             'modalidade_id' => (int) $row['modalidade_id'],
             'interclasse_id' => (int) $row['interclasse_id'],
             'tipos_modalidades_id_tipo_modalidade' => (int) $row['tipos_modalidades_id_tipo_modalidade'],
@@ -204,6 +205,18 @@ final class MysqliPartidaGateway implements ResultadoRepository
             }
             $statement->close();
         }
+    }
+
+    public function registrarWo(int $gameId, int $winnerId): void
+    {
+        $statement = $this->prepare('UPDATE jogos SET vencedor_wo_equipe_id = ? WHERE id_jogo = ?');
+        $statement->bind_param('ii', $winnerId, $gameId);
+        $statement->execute();
+        $statement->close();
+        $statement = $this->prepare('UPDATE partidas SET resultado_partida = 0 WHERE jogos_id_jogo = ?');
+        $statement->bind_param('i', $gameId);
+        $statement->execute();
+        $statement->close();
     }
 
     public function concluirJogo(int $gameId): void

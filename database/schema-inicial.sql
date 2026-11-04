@@ -137,6 +137,7 @@ CREATE TABLE `jogos` (
   `termino_jogo` time DEFAULT NULL,
   `status_jogo` enum('Agendado','Iniciado','Pausado','Concluido') NOT NULL,
   `exige_vinculo_ponto` tinyint(1) NOT NULL DEFAULT 1,
+  `vencedor_wo_equipe_id` int(11) DEFAULT NULL,
   `tempo_restante_jogo` int(11) DEFAULT NULL COMMENT 'Segundos restantes salvos no ultimo snapshot (pausa/save)',
   `duracao_jogo` int(11) DEFAULT NULL COMMENT 'Duracao total programada em segundos',
   `tempo_extra_jogo` int(11) NOT NULL DEFAULT 0 COMMENT 'Total de segundos extras (acrescimos/prorrogacao)',
@@ -145,9 +146,11 @@ CREATE TABLE `jogos` (
   `locais_id_local` int(11) DEFAULT NULL,
   PRIMARY KEY (`id_jogo`),
   KEY `fk_jogos_modalidades1_idx` (`modalidades_id_modalidade`),
+  KEY `idx_jogos_vencedor_wo` (`vencedor_wo_equipe_id`),
   KEY `fk_jogos_locais1_idx` (`locais_id_local`),
   CONSTRAINT `fk_jogos_locais1` FOREIGN KEY (`locais_id_local`) REFERENCES `locais` (`id_local`),
-  CONSTRAINT `fk_jogos_modalidades1` FOREIGN KEY (`modalidades_id_modalidade`) REFERENCES `modalidades` (`id_modalidade`)
+  CONSTRAINT `fk_jogos_modalidades1` FOREIGN KEY (`modalidades_id_modalidade`) REFERENCES `modalidades` (`id_modalidade`),
+  CONSTRAINT `fk_jogos_vencedor_wo` FOREIGN KEY (`vencedor_wo_equipe_id`) REFERENCES `equipes` (`id_equipe`) ON DELETE RESTRICT
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci;
 
 CREATE TABLE `partidas` (

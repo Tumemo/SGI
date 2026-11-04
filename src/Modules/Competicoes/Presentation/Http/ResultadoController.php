@@ -41,6 +41,10 @@ final class ResultadoController
         if (array_key_exists('pontos', $data) && $data['pontos'] !== null && !is_array($data['pontos'])) {
             return Response::json(['success' => false, 'message' => 'Os pontos offline devem ser enviados em uma lista.'], 422);
         }
+        $isWo = array_key_exists('vencedor_wo_id', $data);
+        if ($isWo && !empty($data['pontos'])) {
+            return Response::json(['success' => false, 'message' => 'W.O. não aceita pontos individuais.'], 422);
+        }
         try {
             $context = $this->service->inspecionar(
                 (int) $data['id_jogo'],
@@ -63,14 +67,22 @@ final class ResultadoController
         }
         return $this->mutations->run($request, 'lancar_resultado', function () use ($data): Response {
             try {
-                $result = $this->service->lancar(
-                    (int) $data['id_jogo'],
-                    isset($data['nome_jogo']) ? (string) $data['nome_jogo'] : null,
-                    (int) ($data['id_modalidade'] ?? 0),
-                    $data['resultados'],
-                    $data['pontos'] ?? [],
-                    (int) ($_SESSION['id_usuario'] ?? $_SESSION['id'] ?? 0),
-                );
+                $result = array_key_exists('vencedor_wo_id', $data)
+                    ? $this->service->lancarWo(
+                        (int) $data['id_jogo'],
+                        isset($data['nome_jogo']) ? (string) $data['nome_jogo'] : null,
+                        (int) ($data['id_modalidade'] ?? 0),
+                        $data['resultados'],
+                        $data['vencedor_wo_id'],
+                    )
+                    : $this->service->lancar(
+                        (int) $data['id_jogo'],
+                        isset($data['nome_jogo']) ? (string) $data['nome_jogo'] : null,
+                        (int) ($data['id_modalidade'] ?? 0),
+                        $data['resultados'],
+                        $data['pontos'] ?? [],
+                        (int) ($_SESSION['id_usuario'] ?? $_SESSION['id'] ?? 0),
+                    );
                 return Response::json($result);
             } catch (JogoResolucaoAmbiguaException $exception) {
                 return Response::json(['success' => false, 'message' => $exception->getMessage()], 409);

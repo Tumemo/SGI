@@ -157,6 +157,11 @@ final class PodioRepositoryStub implements PodioRepository
         };
     }
 
+    public function equipeDesclassificadaPorWo(int $equipeId, int $modalidadeId): bool
+    {
+        return false;
+    }
+
     public function diagnosticar(): array
     {
         return [];

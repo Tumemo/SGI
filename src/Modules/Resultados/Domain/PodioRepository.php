@@ -6,7 +6,7 @@ namespace App\Modules\Resultados\Domain;
 
 interface PodioRepository
 {
-    /** @return array{nome_jogo:string,modalidade_id:int,interclasse_id:int,pontos:array{1:int,2:int,3:int}}|null */
+    /** @return array{nome_jogo:string,modalidade_id:int,interclasse_id:int,vencedor_wo_equipe_id?:?int,pontos:array{1:int,2:int,3:int}}|null */
     public function carregarContextoJogo(int $gameId): ?array;
 
     /** @return list<array{equipes_id_equipe:int,resultado_partida:int}> */
@@ -25,6 +25,8 @@ interface PodioRepository
     public function aplicarDeltas(array $deltas): void;
 
     public function turmaDaEquipe(int $equipeId, int $modalidadeId): ?int;
+
+    public function equipeDesclassificadaPorWo(int $equipeId, int $modalidadeId): bool;
 
     /** @return array<string, mixed> */
     public function diagnosticar(): array;

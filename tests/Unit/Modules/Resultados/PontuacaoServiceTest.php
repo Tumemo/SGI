@@ -10,6 +10,16 @@ use PHPUnit\Framework\TestCase;
 
 final class PontuacaoServiceTest extends TestCase
 {
+    public function testFinalPorWoDeixaSegundoLugarVazio(): void
+    {
+        $repository = new PontuacaoPodioRepositoryFake();
+        $repository->woWinner = 102;
+        (new PontuacaoService($repository))->reconciliarJogo(12);
+
+        self::assertSame([1], array_column($repository->replaced, 'posicao'));
+        self::assertSame(102, $repository->replaced[0]['id_equipe']);
+        self::assertSame([2 => 10], $repository->deltas);
+    }
     public function testFinalConcedeAutomaticamenteOterceiroLugarDerivadoDaSemifinal(): void
     {
         $repository = new PontuacaoPodioRepositoryFake();
@@ -68,11 +78,24 @@ final class PontuacaoServiceTest extends TestCase
         self::assertSame('manual', $repository->replaced[0]['origem_registro']);
         self::assertSame([1 => 10, 2 => 7, 3 => 5], $repository->deltas);
     }
+
+    public function testPodioManualRecusaEquipeDesclassificadaPorWo(): void
+    {
+        $repository = new PontuacaoPodioRepositoryFake();
+        $repository->disqualifiedTeamId = 102;
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('desclassificada por W.O.');
+        (new PontuacaoService($repository))->salvarPodioManual(1, 7, [
+            ['posicao' => 2, 'id_equipe' => 102],
+        ]);
+    }
 }
 
 final class PontuacaoPodioRepositoryFake implements PodioRepository
 {
     public ?int $thirdTeamId = null;
+    public ?int $woWinner = null;
+    public ?int $disqualifiedTeamId = null;
     public array $replaced = [];
     public array $deltas = [];
 
@@ -80,6 +103,7 @@ final class PontuacaoPodioRepositoryFake implements PodioRepository
     {
         return [
             'nome_jogo' => 'MM:2:0:N',
+            'vencedor_wo_equipe_id' => $this->woWinner,
             'modalidade_id' => 7,
             'interclasse_id' => 1,
             'pontos' => [1 => 10, 2 => 7, 3 => 5],
@@ -117,6 +141,11 @@ final class PontuacaoPodioRepositoryFake implements PodioRepository
     public function turmaDaEquipe(int $equipeId, int $modalidadeId): ?int
     {
         return $equipeId - 100;
+    }
+
+    public function equipeDesclassificadaPorWo(int $equipeId, int $modalidadeId): bool
+    {
+        return $equipeId === $this->disqualifiedTeamId;
     }
 
     public function diagnosticar(): array

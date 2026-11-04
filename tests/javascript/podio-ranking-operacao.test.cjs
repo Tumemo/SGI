@@ -33,8 +33,11 @@ test('o script de ranking realiza a chamada de reconciliação para a API', () =
     assert.match(script, /\/ranking/);
 });
 
-test('o script de placar disponibiliza a ação de avanço por W.O. para jogo com equipe única', () => {
+test('o placar seleciona a vencedora por W.O. sem atribuir gol fictício', () => {
     const script = fs.readFileSync('resources/js/pages/competicoes/placar.js', 'utf8');
-    assert.match(script, /finalizarAvancoUnico/);
-    assert.match(script, /Avançar por W\.O\./);
+    const view = fs.readFileSync('resources/views/pages/competicoes/placar.php', 'utf8');
+    assert.match(view, /id="modalVitoriaWo"/);
+    assert.match(script, /vencedor_wo_id: winnerId/);
+    assert.match(script, /gols: 0/);
+    assert.match(script, /Finalizar por W\.O\./);
 });

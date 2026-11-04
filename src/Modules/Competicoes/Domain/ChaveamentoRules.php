@@ -272,6 +272,10 @@ final class ChaveamentoRules
             if ($semifinal['kind'] === 'B') {
                 continue;
             }
+            // A equipe derrotada por W.O. fica desclassificada do pódio.
+            if (($semifinal['vencedor_wo_equipe_id'] ?? null) === $campeao) {
+                continue;
+            }
             $partidas = $semifinal['partidas'];
             if (count($partidas) < 2) {
                 continue;

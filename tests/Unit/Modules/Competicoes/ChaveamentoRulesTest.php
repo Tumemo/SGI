@@ -160,4 +160,18 @@ final class ChaveamentoRulesTest extends TestCase
             ],
         ]));
     }
+
+    public function testDerrotaPorWoNaSemifinalNaoCriaTerceiroLugar(): void
+    {
+        self::assertNull(ChaveamentoRules::terceiroLugarDoCampeao(10, [
+            [
+                'kind' => 'N',
+                'vencedor_wo_equipe_id' => 10,
+                'partidas' => [
+                    ['equipes_id_equipe' => 10, 'resultado_partida' => 0],
+                    ['equipes_id_equipe' => 12, 'resultado_partida' => 0],
+                ],
+            ],
+        ]));
+    }
 }

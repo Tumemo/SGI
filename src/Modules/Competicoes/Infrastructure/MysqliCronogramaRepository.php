@@ -876,15 +876,22 @@ final class MysqliCronogramaRepository implements CronogramaRepository
         }
         $participants = [];
         foreach ($origins as $origin) {
-            $games = $this->all('SELECT j.id_jogo, j.status_jogo FROM cronograma_nos cn INNER JOIN jogos j ON j.id_jogo = cn.id_jogo WHERE cn.id_interclasse = ? AND cn.id_modalidade = ? AND cn.cronograma_versao = ? AND cn.chave_tag = ? ORDER BY j.id_jogo', 'iiis', [$editionId, $modalityId, $version, $origin]);
+            $games = $this->all('SELECT j.id_jogo, j.status_jogo, j.vencedor_wo_equipe_id FROM cronograma_nos cn INNER JOIN jogos j ON j.id_jogo = cn.id_jogo WHERE cn.id_interclasse = ? AND cn.id_modalidade = ? AND cn.cronograma_versao = ? AND cn.chave_tag = ? ORDER BY j.id_jogo', 'iiis', [$editionId, $modalityId, $version, $origin]);
             if (count($games) > 1) {
                 throw new RuntimeException('A origem do confronto corresponde a mais de um jogo.');
             }
             if ($games !== []) {
                 $game = $games[0];
+                if (!in_array((string) $game['status_jogo'], ['Concluido', 'Finalizado'], true)) {
+                    return null;
+                }
+                if ($game['vencedor_wo_equipe_id'] !== null) {
+                    $participants[] = (int) $game['vencedor_wo_equipe_id'];
+                    continue;
+                }
                 $winners = $this->all("SELECT equipes_id_equipe AS id_equipe, resultado_partida FROM partidas WHERE jogos_id_jogo = ? AND status_partida = '1' ORDER BY resultado_partida DESC, id_partida ASC LIMIT 2", 'i', [(int) $game['id_jogo']]);
                 $winner = $winners[0] ?? null;
-                if (!in_array((string) $game['status_jogo'], ['Concluido', 'Finalizado'], true) || $winner === null) {
+                if ($winner === null) {
                     return null;
                 }
                 if (isset($winners[1]) && (int) $winners[1]['resultado_partida'] === (int) $winner['resultado_partida']) {

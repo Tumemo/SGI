@@ -78,6 +78,29 @@ $paginaAtiva = 'dashboard';
     <i class="bi bi-plus-lg fs-5" aria-hidden="true"></i>
 </button>
 
+<div class="modal fade" id="modalVitoriaWo" tabindex="-1" aria-labelledby="modalVitoriaWoLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title fs-5" id="modalVitoriaWoLabel">Finalizar por W.O.</h2>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+            </div>
+            <form id="formVitoriaWo">
+                <div class="modal-body">
+                    <label class="form-label" for="vencedorWo">Equipe vencedora por W.O.</label>
+                    <select class="form-select" id="vencedorWo" required></select>
+                    <p class="small text-body-secondary mt-3 mb-0">O jogo será encerrado sem gols ou pontos individuais. A equipe perdedora ficará fora do pódio.</p>
+                    <div id="mensagemVitoriaWo" class="small text-danger mt-2" role="alert"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Confirmar W.O.</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
 <!-- Modal Ocorrência -->
 <div class="modal fade" id="modalOcorrencia" tabindex="-1" aria-labelledby="modalOcorrenciaLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">

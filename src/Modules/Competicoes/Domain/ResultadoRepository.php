@@ -12,7 +12,7 @@ interface ResultadoRepository
     /** @param list<array<string, mixed>> $results */
     public function resolveAndValidate(int $gameId, ?string $tag, int $modalityId, array $results): int;
 
-    /** @return array{status_jogo:string,nome_jogo:string,modalidade_id:int,interclasse_id:int,tipos_modalidades_id_tipo_modalidade?:int} */
+    /** @return array{status_jogo:string,nome_jogo:string,modalidade_id:int,interclasse_id:int,vencedor_wo_equipe_id?:?int,tipos_modalidades_id_tipo_modalidade?:int} */
     public function lockGame(int $gameId): array;
 
     /** @return list<array{equipes_id_equipe:int,resultado_partida:int}> */
@@ -20,6 +20,8 @@ interface ResultadoRepository
 
     /** @param list<array<string, mixed>> $results */
     public function persistirPlacar(int $gameId, array $results): void;
+
+    public function registrarWo(int $gameId, int $winnerId): void;
 
     public function concluirJogo(int $gameId): void;
 

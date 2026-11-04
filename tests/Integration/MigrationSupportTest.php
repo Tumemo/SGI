@@ -54,7 +54,8 @@ final class MigrationSupportTest
             $planningNodesVersion = '002_cronograma_nos.sql';
             $planningContractVersion = '003_cronograma_final_contract.sql';
             $planningGameLinkVersion = '004_cronograma_no_jogo.sql';
-            $planningVersions = [$planningVersion, $planningNodesVersion, $planningContractVersion, $planningGameLinkVersion];
+            $woVersion = '005_vitoria_wo.sql';
+            $planningVersions = [$planningVersion, $planningNodesVersion, $planningContractVersion, $planningGameLinkVersion, $woVersion];
             $planningTableNames = ['interclasse_planejamentos', 'modalidade_planejamentos', 'equipe_planejamentos', 'cronograma_compromissos', 'cronograma_nos', 'cronograma_no_equipes'];
             $dropPlanningSchema = static function () use ($connection): void {
                 foreach (['cronograma_no_equipes', 'cronograma_nos', 'cronograma_compromissos', 'equipe_planejamentos', 'modalidade_planejamentos', 'interclasse_planejamentos'] as $planningTable) {
@@ -62,12 +63,15 @@ final class MigrationSupportTest
                 }
             };
             $deletePlanningMarkers = static function () use ($connection, $planningVersions): void {
-                $statement = $connection->prepare('DELETE FROM sgi_migrations WHERE version IN (?, ?, ?, ?)');
-                [$planningVersionOne, $planningVersionTwo, $planningVersionThree, $planningVersionFour] = $planningVersions;
-                $statement->bind_param('ssss', $planningVersionOne, $planningVersionTwo, $planningVersionThree, $planningVersionFour);
+                $statement = $connection->prepare('DELETE FROM sgi_migrations WHERE version IN (?, ?, ?, ?, ?)');
+                [$planningVersionOne, $planningVersionTwo, $planningVersionThree, $planningVersionFour, $woVersion] = $planningVersions;
+                $statement->bind_param('sssss', $planningVersionOne, $planningVersionTwo, $planningVersionThree, $planningVersionFour, $woVersion);
                 $statement->execute();
                 $statement->close();
             };
+            // Simula uma instalação anterior com jogos existentes, sem o campo de W.O.
+            $gamesBeforeWo = (int) $connection->query('SELECT COUNT(*) FROM jogos')->fetch_column();
+            $connection->query('ALTER TABLE jogos DROP FOREIGN KEY fk_jogos_vencedor_wo, DROP INDEX idx_jogos_vencedor_wo, DROP COLUMN vencedor_wo_equipe_id');
             $planningRunner = new MigrationRunner($connection, $root . '/database/migrations');
             $planningApplied = $planningRunner->migrate();
             $planningRepeated = $planningRunner->migrate();
@@ -76,9 +80,12 @@ final class MigrationSupportTest
                 $planningTables += (int) $connection->query("SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name = '" . $connection->real_escape_string($planningTable) . "'")->fetch_column();
             }
             Assertions::assert(
-                'Migration do cronograma cria as tabelas auxiliares e é idempotente',
+                'Migrações do cronograma e W.O. são idempotentes',
                 $planningApplied === $planningVersions && $planningRepeated === [] && $planningTables === 6,
             );
+            $woColumn = (int) $connection->query("SELECT COUNT(*) FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = 'jogos' AND column_name = 'vencedor_wo_equipe_id'")->fetch_column();
+            $gamesAfterWo = (int) $connection->query('SELECT COUNT(*) FROM jogos')->fetch_column();
+            Assertions::assert('Migration W.O. atualiza base com jogos sem perder dados', $woColumn === 1 && $gamesAfterWo === $gamesBeforeWo);
             $dropPlanningSchema();
             $deletePlanningMarkers();
 
@@ -135,7 +142,7 @@ final class MigrationSupportTest
                 $ambiguousLink = $connection->query('SELECT id_jogo FROM cronograma_nos WHERE id_no = ' . $backfillNodeIds[1])->fetch_column();
                 Assertions::assert(
                     'Migration 004 vincula correspondência única e deixa tags legadas ambíguas sem vínculo',
-                    $backfillApplied === [$planningGameLinkVersion]
+                    $backfillApplied === [$planningGameLinkVersion, $woVersion]
                         && (int) $uniqueLink === $backfillGameIds[0]
                         && $ambiguousLink === null,
                     json_encode(['migration' => $backfillApplied, 'unique_link' => $uniqueLink, 'ambiguous_link' => $ambiguousLink], JSON_UNESCAPED_UNICODE),

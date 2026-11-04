@@ -1236,9 +1236,10 @@ window.SGIPage.mount("competicoes/chaveamento", function (pageConfig, pageScope)
                 if (isLoser) teamCls += ' bkt-team--loser opacity-50';
                 const nameCls = 'bkt-team__name flex-grow-1 text-truncate small fw-medium text-body' + (isWinner ? ' fw-bold text-success-emphasis' : '');
                 const trophy = isWinner ? '<span class="bkt-team__trophy text-warning small ms-1" aria-hidden="true"><i class="bi bi-trophy-fill"></i></span>' : '';
-                const winnerLabel = isWinner ? '<span class="bkt-team__winner-label badge rounded-pill text-bg-success small ms-1">Vencedor</span>' : '';
+                const winnerLabel = isWinner ? '<span class="bkt-team__winner-label badge rounded-pill text-bg-success small ms-1">' + (jogo.vencedor_wo_equipe_id ? 'Vencedor por W.O.' : 'Vencedor') + '</span>' : '';
+                const loserLabel = isLoser && jogo.vencedor_wo_equipe_id ? '<span class="badge rounded-pill text-bg-secondary small ms-1">Desclassificada</span>' : '';
                 const scoreCls = 'bkt-team__score badge rounded-pill text-bg-light fs-6 fw-bold' + (isWinner ? ' bg-success-subtle text-success-emphasis' : '');
-                teamsHtml += `<div class="${teamCls}"><span class="${nameCls}">${nome}</span>${winnerLabel}${trophy}<span class="${scoreCls}">${eq.gols ?? 0}</span></div>`;
+                teamsHtml += `<div class="${teamCls}"><span class="${nameCls}">${nome}</span>${winnerLabel}${loserLabel}${trophy}<span class="${scoreCls}">${jogo.vencedor_wo_equipe_id ? '—' : (eq.gols ?? 0)}</span></div>`;
             });
         }
 
@@ -1249,7 +1250,7 @@ window.SGIPage.mount("competicoes/chaveamento", function (pageConfig, pageScope)
             statusCls += ' text-bg-secondary';
         } else if (isConcluido) {
             statusCls += ' text-bg-success';
-            statusLabel = 'Finalizado';
+            statusLabel = jogo.vencedor_wo_equipe_id ? 'Finalizado por W.O.' : 'Finalizado';
         } else if (isIniciado) {
             statusCls += ' text-bg-primary';
             statusLabel = 'Em andamento';

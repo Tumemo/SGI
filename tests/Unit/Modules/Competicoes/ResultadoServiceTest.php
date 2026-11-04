@@ -16,6 +16,61 @@ use PHPUnit\Framework\TestCase;
 
 final class ResultadoServiceTest extends TestCase
 {
+    public function testWoAvancaSemPontuarAtletasNemCriarPlacar(): void
+    {
+        $repository = new ResultadoRepositoryFake();
+        $repository->partidas = [
+            ['equipes_id_equipe' => 101, 'resultado_partida' => 0],
+            ['equipes_id_equipe' => 102, 'resultado_partida' => 0],
+        ];
+        $points = $this->createMock(PontoRepository::class);
+        $points->method('listarPontos')->willReturn([]);
+        $points->expects(self::never())->method('persistirPontosOffline');
+        $points->expects(self::never())->method('validarPlacarVinculado');
+        $service = new ResultadoService($repository, new TransactionRunnerFake(), new PontuacaoService(new PodioRepositoryFake()), $points);
+
+        $result = $service->lancarWo(12, null, 7, [['id_equipe' => 101, 'gols' => 0], ['id_equipe' => 102, 'gols' => 0]], 102);
+
+        self::assertSame('Vitória por W.O. registrada!', $result['message']);
+        self::assertContains('register_wo', $repository->calls);
+        self::assertContains('advance', $repository->calls);
+        self::assertSame(102, $repository->woWinner);
+        self::assertSame([0, 0], array_column($repository->partidas, 'resultado_partida'));
+    }
+
+    public function testWoRecusaPontoAtivoEEquipeEstranha(): void
+    {
+        $repository = new ResultadoRepositoryFake();
+        $repository->partidas = [
+            ['equipes_id_equipe' => 101, 'resultado_partida' => 0],
+            ['equipes_id_equipe' => 102, 'resultado_partida' => 0],
+        ];
+        $points = $this->createMock(PontoRepository::class);
+        $points->method('listarPontos')->willReturn([['status_artilheiro' => 'ativo']]);
+        $service = new ResultadoService($repository, new TransactionRunnerFake(), new PontuacaoService(new PodioRepositoryFake()), $points);
+        try {
+            $service->lancarWo(12, null, 7, [['id_equipe' => 101, 'gols' => 0], ['id_equipe' => 102, 'gols' => 0]], 101);
+            self::fail('Ponto ativo deveria impedir o W.O.');
+        } catch (InvalidArgumentException $exception) {
+            self::assertStringContainsString('Anule os pontos', $exception->getMessage());
+        }
+        self::assertNotContains('register_wo', $repository->calls);
+        $this->expectException(InvalidArgumentException::class);
+        $service->lancarWo(12, null, 7, [['id_equipe' => 101, 'gols' => 0], ['id_equipe' => 102, 'gols' => 0]], 999);
+    }
+
+    public function testWoRecusaGolFicticioAntesDaTransacao(): void
+    {
+        $runner = new TransactionRunnerFake();
+        $service = new ResultadoService(new ResultadoRepositoryFake(), $runner, new PontuacaoService(new PodioRepositoryFake()));
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('não pode registrar gols');
+        try {
+            $service->lancarWo(12, null, 7, [['id_equipe' => 101, 'gols' => 1], ['id_equipe' => 102, 'gols' => 0]], 101);
+        } finally {
+            self::assertSame(0, $runner->calls);
+        }
+    }
     public function testLancaResultadoDentroDoRunnerEDelegaAoRepositorio(): void
     {
         $repository = new ResultadoRepositoryFake();
@@ -334,6 +389,7 @@ final class ResultadoRepositoryFake implements ResultadoRepository
     ];
     public ?\Throwable $advanceFailure = null;
     public int $modalityType = 1;
+    public ?int $woWinner = null;
 
     public function inspectResult(int $gameId, ?string $tag, int $modalityId): array
     {
@@ -358,6 +414,7 @@ final class ResultadoRepositoryFake implements ResultadoRepository
         $this->calls[] = 'lock';
         return [
             'status_jogo' => $this->status,
+            'vencedor_wo_equipe_id' => $this->woWinner,
             'nome_jogo' => 'MM:2:0:N',
             'modalidade_id' => 7,
             'interclasse_id' => 1,
@@ -387,6 +444,12 @@ final class ResultadoRepositoryFake implements ResultadoRepository
     public function concluirJogo(int $gameId): void
     {
         $this->calls[] = 'conclude';
+    }
+
+    public function registrarWo(int $gameId, int $winnerId): void
+    {
+        $this->calls[] = 'register_wo';
+        $this->woWinner = $winnerId;
     }
 
     public function avancarChaveamento(int $gameId): void
@@ -457,6 +520,11 @@ final class PodioRepositoryFake implements PodioRepository
     {
         $this->calls[] = 'team';
         return $equipeId === 101 ? 1 : 2;
+    }
+
+    public function equipeDesclassificadaPorWo(int $equipeId, int $modalidadeId): bool
+    {
+        return false;
     }
 
     public function diagnosticar(): array

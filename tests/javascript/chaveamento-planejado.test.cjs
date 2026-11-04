@@ -10,6 +10,39 @@ test('fixture do cronograma lê o campo canônico de operação liberada', () =>
     assert.equal(operacaoLiberada({ operacao_liberada: '0', operacao: { liberada: false } }), false);
 });
 
+test('fila offline promove vencedora por W.O. com placar zerado', async () => {
+    const source = fs.readFileSync('resources/js/offline/chaveamento-engine.js', 'utf8');
+    const modalityId = 71;
+    const games = [
+        { id_jogo: 81, nome_jogo: 'MM:4:0:N', status_jogo: 'Agendado', modalidades_id_modalidade: modalityId,
+            equipes: [{ id_equipe: 11, nome_equipe: 'A', gols: 0 }, { id_equipe: 12, nome_equipe: 'B', gols: 0 }] },
+        { id_jogo: 82, nome_jogo: 'MM:4:1:N', status_jogo: 'Concluido', modalidades_id_modalidade: modalityId,
+            equipes: [{ id_equipe: 13, nome_equipe: 'C', gols: 2 }, { id_equipe: 14, nome_equipe: 'D', gols: 0 }] },
+    ];
+    const window = {
+        location: { href: 'http://sgi.test/' },
+        SGIDataLayer: { read: async () => [] },
+        SGIOffline: { getPendingList: async () => [{
+            url: '/api/v1/resultados', method: 'POST', createdAt: 1,
+            body: JSON.stringify({ id_jogo: 81, vencedor_wo_id: 12,
+                resultados: [{ id_equipe: 11, gols: 0 }, { id_equipe: 12, gols: 0 }] }),
+        }] },
+        addEventListener: () => {},
+    };
+    vm.runInNewContext(source, { window, document: { getElementsByTagName: () => [] },
+        navigator: { onLine: false }, URL, indexedDB: null, console,
+        fetch: async (url) => url.includes('chaveamentos')
+            ? { json: async () => ({ success: true, jogos: games }) }
+            : { ok: true, json: async () => [] },
+    });
+    const result = await window.SGIChaveamento.carregarArvore(modalityId);
+    const semifinal = result.jogos.find((game) => game.id_jogo === 81);
+    const final = result.jogos.find((game) => game.nome_jogo === 'MM:2:0:N');
+    assert.equal(semifinal.equipe_vencedora_id, 12);
+    assert.deepEqual(Array.from(semifinal.equipes, (team) => team.gols), [0, 0]);
+    assert.deepEqual(Array.from(final.equipes, (team) => team.id_equipe).sort(), [12, 13]);
+});
+
 test('motor offline preserva tags PL e usa o compromisso publicado ao formar a próxima fase', async () => {
     const source = fs.readFileSync('resources/js/offline/chaveamento-engine.js', 'utf8');
     const modalityId = 71;

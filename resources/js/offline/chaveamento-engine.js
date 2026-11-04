@@ -68,7 +68,8 @@
     function nomeFasePosicao(posicao) { return NOMES_POSICAO[posicao] || ('Disputa de ' + posicao + 'º lugar'); }
 
     /* Vencedor por maior gols; empate → menor id_equipe (idêntico ao PHP). */
-    function vencedorDeEquipes(equipes) {
+    function vencedorDeEquipes(equipes, jogo) {
+        if (jogo && Number(jogo.vencedor_wo_equipe_id) > 0) return Number(jogo.vencedor_wo_equipe_id);
         if (!equipes || equipes.length === 0) return null;
         if (equipes.length === 1) return Number(equipes[0].id_equipe);
         var ordenadas = equipes.slice().sort(function (a, b) {
@@ -284,7 +285,8 @@
 
     /* Aplica as operações pendentes sobre o array de jogos (em memória).
        Retorna true se algo foi alterado. Validações espelham resultados:
-       sem placar 0x0 e sem empate ao concluir um jogo. */
+       sem placar 0x0 e sem empate ao concluir um jogo comum; W.O. usa
+       vencedor_wo_id explícito sem criar pontos. */
     function aplicarPendencias(jogos, ops, mapaPorId) {
         var alterou = false;
         (ops || []).forEach(function (op) {
@@ -292,6 +294,10 @@
                 var jogo = mapaPorId[op.dados.id_jogo];
                 if (!jogo) return;
                 var resultados = op.dados.resultados || [];
+                if (op.dados.vencedor_wo_id) {
+                    jogo.vencedor_wo_equipe_id = Number(op.dados.vencedor_wo_id);
+                    alterou = true;
+                }
                 resultados.forEach(function (r) {
                     var eq = (jogo.equipes || []).filter(function (e) {
                         return Number(e.id_equipe) === Number(r.id_equipe);
@@ -306,7 +312,7 @@
                     var total = (jogo.equipes || []).reduce(function (s, e) { return s + (Number(e.gols) || 0); }, 0);
                     var empate = (jogo.equipes || []).length >= 2 &&
                         (Number(jogo.equipes[0].gols) || 0) === (Number(jogo.equipes[1].gols) || 0);
-                    if (total > 0 && !empate) {
+                    if ((total > 0 && !empate) || jogo.vencedor_wo_equipe_id) {
                         jogo.status_jogo = 'Concluido';
                         alterou = true;
                     }
@@ -524,7 +530,7 @@
 
             var w1 = (meta.kind === 'B')
                 ? ((jogo.equipes && jogo.equipes[0]) ? Number(jogo.equipes[0].id_equipe) : null)
-                : vencedorDeEquipes(jogo.equipes);
+                : vencedorDeEquipes(jogo.equipes, jogo);
             if (w1 === null) return;
 
             var w1Obj = (jogo.equipes || []).find(function(e) { return Number(e.id_equipe) === Number(w1); });
@@ -570,7 +576,7 @@
                 var metaIrmaoExistente = mmParse(irmao.nome_jogo) || { kind: 'N' };
                 var vencedorIrmaoExistente = (metaIrmaoExistente.kind === 'B')
                     ? ((irmao.equipes && irmao.equipes[0]) ? Number(irmao.equipes[0].id_equipe) : null)
-                    : vencedorDeEquipes(irmao.equipes);
+                    : vencedorDeEquipes(irmao.equipes, irmao);
                 var tagPaiEsperada = mmTag(proximaLargura(meta.largura), slotPai(meta.slot), 'N');
                 if (vencedorIrmaoExistente !== null && equipeJaAvancouPorByePendente(proximaLargura(meta.largura), tagPaiEsperada, vencedorIrmaoExistente)) {
                     irmao = null;
@@ -613,7 +619,7 @@
                 var metaIrmao = mmParse(irmao.nome_jogo) || { kind: 'N' };
                 var w2 = (metaIrmao.kind === 'B')
                     ? ((irmao.equipes && irmao.equipes[0]) ? Number(irmao.equipes[0].id_equipe) : null)
-                    : vencedorDeEquipes(irmao.equipes);
+                    : vencedorDeEquipes(irmao.equipes, irmao);
                 var w2Obj = (irmao.equipes || []).find(function(e) { return Number(e.id_equipe) === Number(w2); });
                 if (w2 !== null) {
                     /* Um pai já encerrado é uma partida disputada, não um
@@ -697,7 +703,7 @@
             if (meta && jogoEncerrado(jogo.status_jogo)) {
                 venc = (ehBye)
                     ? ((jogo.equipes && jogo.equipes[0]) ? Number(jogo.equipes[0].id_equipe) : null)
-                    : vencedorDeEquipes(jogo.equipes);
+                    : vencedorDeEquipes(jogo.equipes, jogo);
             }
 
             var posicaoNaChave = slot !== null ? slot + 1 : null;
@@ -746,7 +752,7 @@
             if (meta && jogoEncerrado(j.status_jogo)) {
                 vencedoresAntes[Number(j.id_jogo)] = meta.kind === 'B'
                     ? ((j.equipes && j.equipes[0]) ? Number(j.equipes[0].id_equipe) : null)
-                    : vencedorDeEquipes(j.equipes);
+                    : vencedorDeEquipes(j.equipes, j);
             }
         });
 
@@ -765,7 +771,7 @@
                 var antes = vencedoresAntes[Number(j.id_jogo)];
                 var agora = meta.kind === 'B'
                     ? ((j.equipes && j.equipes[0]) ? Number(j.equipes[0].id_equipe) : null)
-                    : vencedorDeEquipes(j.equipes);
+                    : vencedorDeEquipes(j.equipes, j);
                 if (antes != null && agora != null && antes !== agora && meta.largura < precisaRebuildLargura) {
                     precisaRebuildLargura = meta.largura;
                 }
@@ -1185,7 +1191,7 @@
 
                 return Promise.all(escritas).then(function () {
                     var jogoAlvoAtualizado = base.filter(function (b) { return Number(b.id_jogo) === idJogoAlvo; })[0];
-                    var vencedorFinal = vencedorDeEquipes(jogoAlvoAtualizado ? jogoAlvoAtualizado.equipes : []);
+                    var vencedorFinal = vencedorDeEquipes(jogoAlvoAtualizado ? jogoAlvoAtualizado.equipes : [], jogoAlvoAtualizado);
                     if (ehFinal) {
                         return {
                             promoveu: true,
