@@ -4,8 +4,8 @@
    Intercepta o envio de formularios HTML que possuem o atributo
    data-sgi-offline (opcao "opt-in"). Quando o dispositivo esta
    offline, o formulario e salvo localmente (IndexedDB via
-   window.SGIOffline) e enviado automaticamente quando a conexao
-   voltar. Requer que o offline-core.js esteja carregado antes.
+   window.SGIOffline) e enviado quando o operador usar Reconectar e
+   Sincronizar agora. Requer que o offline-core.js esteja carregado antes.
 
    Para um formulario funcionar offline basta:
        <form action="/api/v1/..." method="POST" data-sgi-offline> ...
@@ -43,7 +43,7 @@
         window.SGIOffline.submit(url, method, payload)
             .then(function (res) {
                 if (res && res.offline) {
-                    SGI.alert('Sem conexao: dados salvos localmente. Serao enviados quando houver conexao.');
+                    SGI.alert('Sem conexão: dados salvos localmente. Use Reconectar e Sincronizar agora para enviá-los.');
                 } else {
                     SGI.alert('Dados enviados com sucesso!');
                 }

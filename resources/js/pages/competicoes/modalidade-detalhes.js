@@ -230,6 +230,7 @@ window.SGIPage.mount("competicoes/modalidade-detalhes", function (pageConfig, pa
         document.getElementById('editGeneroModalidade').value = modalidadeAtual.genero_modalidade || '';
         document.getElementById('editMaxInscritos').value = modalidadeAtual.max_inscrito_modalidade || '';
         document.getElementById('editMaxEquipes').value = modalidadeAtual.max_equipes || '';
+        document.getElementById('editContabilizaArtilharia').checked = Number(modalidadeAtual.contabiliza_artilharia ?? 1) === 1;
         document.getElementById('msgEditarModalidade').innerHTML = '';
 
         await Promise.all([
@@ -287,7 +288,8 @@ window.SGIPage.mount("competicoes/modalidade-detalhes", function (pageConfig, pa
             max_inscrito_modalidade: parseInt(document.getElementById('editMaxInscritos').value) || 0,
             max_equipes: (() => { const v = document.getElementById('editMaxEquipes').value; return v === '' ? null : parseInt(v); })(),
             tipos_modalidades_id_tipo_modalidade: parseInt(document.getElementById('editTipoModalidade').value),
-            categorias_id_categoria: parseInt(document.getElementById('editCategoriaModalidade').value)
+            categorias_id_categoria: parseInt(document.getElementById('editCategoriaModalidade').value),
+            contabiliza_artilharia: document.getElementById('editContabilizaArtilharia').checked ? 1 : 0
         };
 
         if (!dados.nome_modalidade) {

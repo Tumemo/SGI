@@ -43,13 +43,13 @@ test('feedback uses the Bootstrap Toast API and escapes message text', async ({ 
     await page.addScriptTag({ url: assetUrl('vendor/bootstrap/js/bootstrap.bundle.min.js') });
     await page.addScriptTag({ url: assetUrl('js/shared/bootstrap-feedback.js') });
 
-    await page.evaluate(() => window.SGI.showToast('<b>mensagem</b>', 'error', { delay: 50 }));
+    await page.evaluate(() => window.SGI.showToast('<b>mensagem</b>', 'error', { delay: 1200 }));
     const toast = page.locator('#sgiToastContainer .toast');
     await expect(toast).toHaveClass(/text-bg-danger/);
     await expect(toast).toContainText('<b>mensagem</b>');
     await expect(toast.locator('b')).toHaveCount(0);
     await expect(toast).toBeVisible();
-    await expect(toast).toHaveCount(0, { timeout: 1000 });
+    await expect(toast).toHaveCount(0, { timeout: 3500 });
 });
 
 test('feedback dialogs are modal, accessible, queued and safe', async ({ page }) => {
@@ -73,6 +73,7 @@ test('feedback dialogs are modal, accessible, queued and safe', async ({ page })
     await expect(modal).toContainText('<script>alert(1)</script>');
     await expect(modal.locator('script')).toHaveCount(0);
     await expect(modal.locator('.sgi-feedback-modal__message')).toHaveCSS('white-space', 'pre-wrap');
+    await expect(modal.getByRole('button', { name: 'Entendi' })).toBeFocused();
     await modal.getByRole('button', { name: 'Entendi' }).click();
     await page.evaluate(() => window.__sgiFirstDialog);
     await expect(modal).toHaveCount(0);
@@ -87,6 +88,7 @@ test('feedback dialogs are modal, accessible, queued and safe', async ({ page })
     });
     await expect(page.getByRole('dialog')).toBeVisible();
     await expect(page.getByRole('dialog').getByRole('button', { name: 'Excluir' })).toHaveClass(/btn-danger/);
+    await expect(page.getByRole('dialog').getByRole('button', { name: 'Cancelar' })).toBeFocused();
     await page.getByRole('dialog').getByRole('button', { name: 'Cancelar' }).click();
     expect(await page.evaluate(() => window.__sgiConfirmation)).toBeFalsy();
 
@@ -109,6 +111,7 @@ test('feedback dialogs are modal, accessible, queued and safe', async ({ page })
     await expect(page.locator('#sourceModal')).toBeVisible();
     await expect(page.getByRole('dialog').filter({ hasText: 'A mensagem veio do formulário.' })).toBeVisible();
     await expect(page.locator('#sourceModal')).toBeHidden();
+    await expect(page.getByRole('dialog').getByRole('button', { name: 'Entendi' })).toBeFocused();
     await page.getByRole('dialog').getByRole('button', { name: 'Entendi' }).click();
     await page.evaluate(() => window.__sgiSourceFeedback);
     await expect(page.locator('#sourceModal')).toBeVisible();
@@ -122,9 +125,11 @@ test('feedback dialogs are modal, accessible, queued and safe', async ({ page })
         window.__sgiQueuedTwo = window.SGI.alert('segunda');
     });
     await expect(page.getByRole('dialog')).toContainText('primeira');
+    await expect(page.getByRole('dialog').getByRole('button', { name: 'Entendi' })).toBeFocused();
     await page.getByRole('dialog').getByRole('button', { name: 'Entendi' }).click();
     await page.evaluate(() => window.__sgiQueuedOne);
     await expect(page.getByRole('dialog')).toContainText('segunda');
+    await expect(page.getByRole('dialog').getByRole('button', { name: 'Entendi' })).toBeFocused();
     await page.getByRole('dialog').getByRole('button', { name: 'Entendi' }).click();
     await page.evaluate(() => window.__sgiQueuedTwo);
     await expect(page.getByRole('dialog')).toHaveCount(0);

@@ -50,6 +50,11 @@ window.SGIPage.mount("eventos/dashboard", function (pageConfig, pageScope) {
         return;
     }
 
+    if (pageConfig.value1 || pageConfig.value2) {
+        const linkRelatorios = document.getElementById('linkRelatorios');
+        if (linkRelatorios) linkRelatorios.href = `${APP_BASE}/relatorios?id=${encodeURIComponent(idInterclasse)}`;
+    }
+
     const dados = await window.SGIInterclasse.getInterclasseById(idInterclasse);
     if (dados) {
         const tituloDashboard = document.getElementById('tituloDashboard');

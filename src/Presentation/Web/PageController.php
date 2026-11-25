@@ -53,6 +53,7 @@ final class PageController
         '/ocorrencias' => [0, 1, 2],
         '/perfil' => [0, 1, 2],
         '/ranking' => [0, 1],
+        '/relatorios' => [0, 1],
         '/categorias' => [0, 1],
     ];
 

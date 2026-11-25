@@ -56,17 +56,23 @@ final class PontoService
         $userId = (int) ($data['usuarios_id_usuario'] ?? $data['id_usuario'] ?? 0);
         $key = trim((string) ($data['chave_jogada'] ?? ''));
 
-        if ($userId <= 0) {
-            throw new InvalidArgumentException('Selecione o estudante responsável pela jogada para confirmar o ponto.');
-        }
         if ($gameId <= 0 || $matchId <= 0 || $teamId <= 0) {
-            throw new InvalidArgumentException('Jogo, partida, equipe e atleta são obrigatórios.');
+            throw new InvalidArgumentException('Jogo, partida e equipe são obrigatórios.');
         }
         if ($operatorId <= 0) {
             throw new InvalidArgumentException('Operador inválido.');
         }
         if ($key === '' || strlen($key) < 12 || strlen($key) > 180) {
             throw new InvalidArgumentException('A identificação da jogada é obrigatória e deve ser válida.');
+        }
+
+        $context = $this->pontos->contextoPartida($gameId, $matchId, $teamId);
+        if ($context === null) {
+            throw new InvalidArgumentException('A equipe não participa desta partida.');
+        }
+        $artilhariaAtiva = (int) ($context['contabiliza_artilharia'] ?? 1) === 1;
+        if (!$artilhariaAtiva) {
+            $userId = 0;
         }
 
         $existing = $this->pontos->buscarPorChave($key);
@@ -81,17 +87,16 @@ final class PontoService
             return $existing;
         }
 
-        $context = $this->pontos->contextoPartida($gameId, $matchId, $teamId);
-        if ($context === null) {
-            throw new InvalidArgumentException('A equipe não participa desta partida.');
-        }
         if (!in_array((string) ($context['status_jogo'] ?? ''), ['Iniciado', 'Pausado'], true)) {
             throw new InvalidArgumentException('O ponto só pode ser lançado durante uma partida em andamento.');
         }
         if ((int) ($context['individual'] ?? 0) === 1) {
             throw new InvalidArgumentException('Modalidades individuais não aceitam pontos de partida.');
         }
-        if (!$this->pontos->atletaElegivel($userId, $gameId, $teamId)) {
+        if ($artilhariaAtiva && $userId <= 0) {
+            throw new InvalidArgumentException('Selecione o estudante responsável pela jogada para confirmar o ponto.');
+        }
+        if ($artilhariaAtiva && !$this->pontos->atletaElegivel($userId, $gameId, $teamId)) {
             throw new InvalidArgumentException('O atleta não está inscrito e ativo nesta equipe para esta partida.');
         }
 

@@ -1271,13 +1271,6 @@
         }).catch(function () { /* noop */ });
     }
 
-    /* Volta de conexão: envia a fila ao PHP e limpa os derivados locais. */
-    if (typeof window.addEventListener === 'function') {
-        window.addEventListener('online', function () {
-            sincronizar();
-        });
-    }
-
     window.SGIChaveamento = {
         carregarArvore: buscarArvore,
         sincronizar: sincronizar,

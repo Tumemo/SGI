@@ -509,6 +509,7 @@ test.describe.serial('Portal do Aluno — Jornada Interativa e Regras de Negóci
         await expect(linkLogout).toBeVisible({ timeout: 10_000 });
         await linkLogout.click();
         await expect(page.getByRole('dialog')).toContainText(/Sair do SGI/i);
+        await expect(page.getByRole('dialog').getByRole('button', { name: 'Cancelar' })).toBeFocused();
         const redirectToLogin = page.waitForURL(/login/, { timeout: 15_000 });
         await page.getByRole('dialog').getByRole('button', { name: 'Sair' }).click();
         await redirectToLogin;

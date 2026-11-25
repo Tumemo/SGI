@@ -69,6 +69,10 @@ $paginaAtiva = 'dashboard';
                         <label class="form-label fw-medium" for="inputMaxEquipes">Máx. de Equipes por Turma (Opcional):</label>
                         <input type="number" class="form-control" placeholder="Ex: 3" id="inputMaxEquipes" min="1">
                     </div>
+                    <div class="form-check form-switch mb-3">
+                        <input class="form-check-input" type="checkbox" role="switch" id="inputContabilizaArtilharia" checked>
+                        <label class="form-check-label" for="inputContabilizaArtilharia">Contabilizar artilharia</label>
+                    </div>
                     <fieldset class="border rounded-3 p-3 mb-3">
                         <legend class="float-none w-auto px-2 fs-6 fw-semibold">Planejamento antecipado (opcional)</legend>
                         <div class="mb-3">

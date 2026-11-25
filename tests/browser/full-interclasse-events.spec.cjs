@@ -285,11 +285,13 @@ test('opera a edição preparada pelos dois portais de mesário, conclui jogos e
     let completed = false;
     try {
         await login(page, 'mesario', '123');
+        await page.locator('#sgi-importar-dependencias').click();
         await expect(page.locator('#sgi-offline-ok')).toContainText('Pronto para uso offline', { timeout: 120_000 });
         await expect.poll(() => page.evaluate(() => window.__SGI_SPA__ && window.__SGI_SPA__.status()), { timeout: 120_000 })
             .toMatchObject({ pronto: true, preloading: false });
         progress('mesario-a-preparado');
         await login(secondPage, secondOperator.matricula, STAFF_PASSWORD);
+        await secondPage.locator('#sgi-importar-dependencias').click();
         await expect(secondPage.locator('#sgi-offline-ok')).toContainText('Pronto para uso offline', { timeout: 120_000 });
         await expect.poll(() => secondPage.evaluate(() => window.__SGI_SPA__ && window.__SGI_SPA__.status()), { timeout: 120_000 })
             .toMatchObject({ pronto: true, preloading: false });
@@ -521,6 +523,8 @@ test('opera a edição preparada pelos dois portais de mesário, conclui jogos e
         expect(offlineQueue.online).toBe(false);
         expect(offlineQueue.pending).toBeGreaterThan(0);
         await page.context().setOffline(false);
+        await page.locator('.sgi-offline-banner-reconnect').click();
+        await page.locator('.sgi-offline-banner-btn').click();
         await expect.poll(() => page.evaluate(() => window.SGIOffline.getState().pending), { timeout: 120_000 }).toBe(0);
         await expect.poll(() => secondPage.evaluate(() => window.SGIOffline.getState().pending), { timeout: 120_000 }).toBe(0);
         const reconciledGames = await json(

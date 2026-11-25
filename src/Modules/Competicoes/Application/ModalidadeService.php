@@ -54,6 +54,7 @@ final class ModalidadeService
             'status_modalidade' => self::normalizarStatus(array_key_exists('status_modalidade', $data) ? $data['status_modalidade'] : '1'),
             'categorias_id_categoria' => $categoriaId,
             'interclasses_id_interclasse' => $interclasseId,
+            'contabiliza_artilharia' => self::normalizarArtilharia($data['contabiliza_artilharia'] ?? 1),
         ]);
     }
 
@@ -88,6 +89,9 @@ final class ModalidadeService
         }
         if (array_key_exists('genero_modalidade', $data)) {
             $updates['genero_modalidade'] = $this->normalizarGenero((string) $data['genero_modalidade']);
+        }
+        if (array_key_exists('contabiliza_artilharia', $data)) {
+            $updates['contabiliza_artilharia'] = self::normalizarArtilharia($data['contabiliza_artilharia']);
         }
         if (array_key_exists('max_inscrito_modalidade', $data)) {
             $updates['max_inscrito_modalidade'] = self::normalizarLimite($data['max_inscrito_modalidade']) ?? 0;
@@ -163,6 +167,17 @@ final class ModalidadeService
         }
 
         throw new InvalidArgumentException('Status da modalidade inválido.');
+    }
+
+    private static function normalizarArtilharia(mixed $value): int
+    {
+        if ($value === true || $value === 1 || $value === '1') {
+            return 1;
+        }
+        if ($value === false || $value === 0 || $value === '0') {
+            return 0;
+        }
+        throw new InvalidArgumentException('A configuração de artilharia deve ser ativada ou desativada.');
     }
 
     private function normalizarGenero(string $genero): string

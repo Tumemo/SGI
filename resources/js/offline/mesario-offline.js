@@ -26,13 +26,8 @@
         ? String(window.SGI_SESSION_ID) : '';
     var DB_NAME = 'sgi_pages';
     var DB_VERSION = 1;
-    // O timeout evita que uma requisição presa deixe a preparação offline
-    // bloqueada para sempre. A espera para retomar é maior que a janela de
-    // "soft offline" do offline-core (15s), para a próxima tentativa voltar
-    // a consultar a rede de verdade.
+    // O timeout evita que uma requisição presa deixe a preparação bloqueada.
     var PRELOAD_TIMEOUT_MS = 15000;
-    var PRELOAD_RETRY_DELAY_MS = 16000;
-    var PRELOAD_MAX_AUTO_RETRIES = 3;
     var PRONTO_STORAGE_KEY = 'sgi_pronto_v2_' + SESSION;
 
     var ARQ_TELA = {
@@ -71,9 +66,6 @@
         registros: {},
         pendentesInit: [],
         montando: null,
-        retryTimer: null,
-        retryAttempts: 0,
-        retryPendente: false,
         ultimaFalha: null,
         cronogramaObsoleto: false
     };
@@ -897,29 +889,11 @@
         });
     }
 
-    function limparRetentativaPreload() {
-        if (state.retryTimer) {
-            clearTimeout(state.retryTimer);
-            state.retryTimer = null;
+    function preload() {
+        if (window.SGIOffline && !window.SGIOffline.isOnline()) {
+            aviso('Use Reconectar ao servidor antes de importar os dados offline.');
+            return Promise.resolve(false);
         }
-        state.retryPendente = false;
-    }
-
-    function agendarRetentativaPreload() {
-        if (state.retryPendente || state.retryAttempts >= PRELOAD_MAX_AUTO_RETRIES || navigator.onLine === false) {
-            return false;
-        }
-        state.retryAttempts++;
-        state.retryPendente = true;
-        state.retryTimer = setTimeout(function () {
-            state.retryTimer = null;
-            state.retryPendente = false;
-            preload(true);
-        }, PRELOAD_RETRY_DELAY_MS);
-        return true;
-    }
-
-    function preload(automatico) {
         if (window.SGIOffline && typeof window.SGIOffline.checkAccess === 'function') {
             return window.SGIOffline.checkAccess(true).then(function (ok) {
                 if (!ok) {
@@ -929,19 +903,15 @@
                         : 'Servidor local indisponível. Conecte-se à rede local para preparar ou atualizar o offline.');
                     return false;
                 }
-                return iniciarPreload(automatico);
+                return iniciarPreload();
             });
         }
-        return iniciarPreload(automatico);
+        return iniciarPreload();
     }
 
-    function iniciarPreload(automatico) {
+    function iniciarPreload() {
         if (state.nivel !== 2 || !state.temCasca) return;
         if (state.preloading) return;
-        if (!automatico) {
-            limparRetentativaPreload();
-            state.retryAttempts = 0;
-        }
         if (navigator.onLine === false) {
             aviso('Conecte-se à internet para preparar os dados de uso offline.');
             return;
@@ -1086,7 +1056,6 @@
         }).then(function () {
             if (semInterclasse) return;
             if (contagem.falhas === 0 && !contagem.interrompido) {
-                state.retryAttempts = 0;
                 state.ultimaFalha = null;
                 terminarPreload(true);
                 return;
@@ -1095,10 +1064,6 @@
             var erro = contagem.primeiraFalha || criarErroPreload('rede', 'O download foi interrompido.');
             var tipo = tipoErroPreload(erro);
             state.ultimaFalha = erro;
-            if (tipo !== 'sessao' && agendarRetentativaPreload()) {
-                terminarPreload(false, 'Alguns dados não puderam ser atualizados. Nova tentativa automática em instantes.');
-                return;
-            }
             if (tipo === 'sessao') {
                 terminarPreload(false, 'Sua sessão precisa ser atualizada antes de concluir o download. Recarregue a página e entre novamente se necessário.');
                 return;
@@ -1107,11 +1072,7 @@
         }).catch(function (e) {
             if (window.console) console.error('[SGI Mesario SPA] preload', e);
             state.ultimaFalha = e;
-            if (tipoErroPreload(e) !== 'sessao' && agendarRetentativaPreload()) {
-                terminarPreload(false, 'Não foi possível concluir a preparação agora. Nova tentativa automática em instantes.');
-            } else {
-                terminarPreload(false);
-            }
+            terminarPreload(false);
         });
     }
 
@@ -1219,17 +1180,13 @@
         if (!document.getElementById(BADGE_ID)) {
             var b = document.createElement('div');
             b.id = BADGE_ID;
-            b.title = 'Pronto para uso offline nesta aba preparada (clique para sincronizar)';
+            b.title = 'Pronto para uso offline nesta aba preparada';
             b.setAttribute('role', 'status');
             b.setAttribute('aria-label', 'Pronto para uso offline nesta aba preparada');
             b.setAttribute('aria-live', 'polite');
             b.setAttribute('aria-atomic', 'true');
             b.innerHTML = '<i class="bi bi-cloud-check-fill" aria-hidden="true"></i>' +
                 '<span class="visually-hidden">Pronto para uso offline nesta aba preparada</span>';
-            b.addEventListener('click', function () {
-                if (state.preloading) return;
-                preload();
-            });
             document.body.appendChild(b);
         }
         if (!document.getElementById('sgi-aviso')) {
@@ -1302,6 +1259,10 @@
         }
 
         criarUi();
+        document.addEventListener('click', function (event) {
+            if (!event.target.closest('#sgi-importar-dependencias')) return;
+            if (!state.preloading) preload();
+        });
         window.addEventListener('sgi:cronograma-revisado', function () {
             state.cronogramaObsoleto = true;
             ocultarBadge();
@@ -1321,11 +1282,7 @@
             } catch (e) {}
         });
 
-        purgarPaginasInvalidas().then(function () {
-            verificarPronto().then(function () {
-                preload();
-            });
-        });
+        purgarPaginasInvalidas().then(verificarPronto);
     }
 
     window.__SGI_SPA__ = {

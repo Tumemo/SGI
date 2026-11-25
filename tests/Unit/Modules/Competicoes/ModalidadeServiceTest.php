@@ -28,6 +28,7 @@ final class ModalidadeServiceTest extends TestCase
         self::assertSame(1, $id);
         self::assertSame('MASC', $repository->rows[1]['genero_modalidade']);
         self::assertSame(4, $repository->rows[1]['max_equipes']);
+        self::assertSame(1, $repository->rows[1]['contabiliza_artilharia']);
     }
 
     public function testUpdatesGender(): void
@@ -48,6 +49,32 @@ final class ModalidadeServiceTest extends TestCase
         ]);
 
         self::assertSame('FEM', $repository->rows[$id]['genero_modalidade']);
+    }
+
+    public function testCreatesAndUpdatesWhetherArtilhariaIsCounted(): void
+    {
+        $repository = new InMemoryModalidadeRepository();
+        $service = new ModalidadeService($repository);
+        $payload = self::validPayload();
+        $payload['contabiliza_artilharia'] = 0;
+        $id = $service->criar($payload);
+        self::assertSame(0, $repository->rows[$id]['contabiliza_artilharia']);
+
+        $service->atualizar(['id_modalidade' => $id, 'contabiliza_artilharia' => 1]);
+        self::assertSame(1, $repository->rows[$id]['contabiliza_artilharia']);
+    }
+
+    public function testRejectsInvalidArtilhariaFlag(): void
+    {
+        $repository = new InMemoryModalidadeRepository();
+        $payload = self::validPayload();
+        $payload['contabiliza_artilharia'] = 'yes';
+        try {
+            (new ModalidadeService($repository))->criar($payload);
+            self::fail('Configuração inválida deveria ser rejeitada.');
+        } catch (InvalidArgumentException) {
+            self::assertSame([], $repository->rows);
+        }
     }
 
     public function testRejectsIncompleteCreate(): void

@@ -596,8 +596,8 @@ window.SGIPage.mount("aluno/jogos", function (pageConfig, pageScope) {
         try {
             if (retentativa) {
                 const offline = window.SGIOffline;
-                const servidorDisponivel = offline && typeof offline.checkServer === 'function'
-                    ? await offline.checkServer(true)
+                const servidorDisponivel = offline && typeof offline.reconnect === 'function'
+                    ? await offline.reconnect()
                     : false;
                 if (!servidorDisponivel) {
                     mensagemErro = 'Servidor indisponível. Verifique a conexão e tente novamente.';

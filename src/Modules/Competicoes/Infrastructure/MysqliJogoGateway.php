@@ -64,6 +64,7 @@ final class MysqliJogoGateway
                        modalidades.nome_modalidade,
                        modalidades.interclasses_id_interclasse AS id_interclasse,
                        modalidades.tipos_modalidades_id_tipo_modalidade,
+                       modalidades.contabiliza_artilharia,
                        tipos_modalidades.nome_tipo_modalidade,
                        locais.nome_local, categorias.nome_categoria,
                        GROUP_CONCAT(DISTINCT COALESCE(e.nome_equipe, t.nome_turma)
@@ -85,7 +86,7 @@ final class MysqliJogoGateway
                     INNER JOIN usuarios u ON u.id_usuario = a.usuarios_id_usuario
                     WHERE a.status_artilheiro = 'ativo' AND a.conta_no_placar = 1
                     GROUP BY a.jogos_id_jogo, a.usuarios_id_usuario, u.nome_usuario
-                ) art_top ON art_top.jogos_id_jogo = jogos.id_jogo AND art_top.rn = 1
+                ) art_top ON art_top.jogos_id_jogo = jogos.id_jogo AND art_top.rn = 1 AND modalidades.contabiliza_artilharia = 1
                 WHERE 1=1" . $filter['sql'] . $operational . ' GROUP BY jogos.id_jogo ORDER BY jogos.data_jogo ASC, jogos.inicio_jogo ASC';
         $statement = $this->prepare($sql);
         if ($filter['params'] !== []) {
@@ -128,7 +129,7 @@ final class MysqliJogoGateway
     public function find(int $id): ?array
     {
         $statement = $this->prepare(
-            'SELECT j.*, m.tipos_modalidades_id_tipo_modalidade, tm.nome_tipo_modalidade
+            'SELECT j.*, m.tipos_modalidades_id_tipo_modalidade, m.contabiliza_artilharia, tm.nome_tipo_modalidade
              FROM jogos j
              INNER JOIN modalidades m ON m.id_modalidade = j.modalidades_id_modalidade
              LEFT JOIN tipos_modalidades tm ON tm.id_tipo_modalidade = m.tipos_modalidades_id_tipo_modalidade

@@ -103,7 +103,7 @@ final class MysqliPontoRepository implements PontoRepository
                        a.registrado_em, a.anulado_em, u.nome_usuario,
                        p.resultado_partida, e.nome_equipe, e.turmas_id_turma AS id_turma
                 FROM artilheiros a
-                INNER JOIN usuarios u ON u.id_usuario = a.usuarios_id_usuario
+                LEFT JOIN usuarios u ON u.id_usuario = a.usuarios_id_usuario
                 LEFT JOIN partidas p ON p.id_partida = a.partidas_id_partida
                 LEFT JOIN equipes e ON e.id_equipe = a.equipes_id_equipe
                 WHERE a.jogos_id_jogo = ?';
@@ -126,7 +126,7 @@ final class MysqliPontoRepository implements PontoRepository
                     p.resultado_partida, p.status_partida, j.status_jogo,
                     j.exige_vinculo_ponto, j.nome_jogo,
                     j.modalidades_id_modalidade AS modalidade_id,
-                    m.tipos_modalidades_id_tipo_modalidade, tm.nome_tipo_modalidade,
+                    m.tipos_modalidades_id_tipo_modalidade, tm.nome_tipo_modalidade, m.contabiliza_artilharia,
                     CASE WHEN LOWER(TRIM(COALESCE(tm.nome_tipo_modalidade, \'\'))) IN (\'individual\', \'prova individual\', \'individualizada\')
                          THEN 1 ELSE 0 END AS individual
              FROM partidas p
@@ -170,7 +170,7 @@ final class MysqliPontoRepository implements PontoRepository
         $gameId = (int) $data['jogos_id_jogo'];
         $matchId = (int) $data['partidas_id_partida'];
         $teamId = (int) $data['equipes_id_equipe'];
-        $userId = (int) $data['usuarios_id_usuario'];
+        $userId = (int) ($data['usuarios_id_usuario'] ?? 0);
         $key = (string) $data['chave_jogada'];
         $operatorId = (int) ($data['registrado_por'] ?? 0);
         $this->assertOperator($operatorId);
@@ -326,7 +326,8 @@ final class MysqliPontoRepository implements PontoRepository
                 throw new InvalidArgumentException('Evento de ponto offline inválido.');
             }
             $teamId = (int) ($point['id_equipe'] ?? $point['equipes_id_equipe'] ?? 0);
-            $userId = (int) ($point['usuarios_id_usuario'] ?? $point['id_usuario'] ?? 0);
+            $rawUserId = $point['usuarios_id_usuario'] ?? $point['id_usuario'] ?? null;
+            $userId = $rawUserId === null ? 0 : (int) $rawUserId;
             $key = trim((string) ($point['chave_jogada'] ?? ''));
             $pointId = (int) ($point['id_ponto'] ?? $point['id_artilheiro'] ?? 0);
             $isCancellation = (string) ($point['status_artilheiro'] ?? '') === 'anulado';
@@ -343,8 +344,8 @@ final class MysqliPontoRepository implements PontoRepository
                 }
                 continue;
             }
-            if ($teamId <= 0 || $userId <= 0 || $key === '' || strlen($key) < 12 || strlen($key) > 180) {
-                throw new InvalidArgumentException('Cada ponto offline precisa indicar equipe, estudante e identificação da jogada.');
+            if ($teamId <= 0 || $key === '' || strlen($key) < 12 || strlen($key) > 180) {
+                throw new InvalidArgumentException('Cada ponto offline precisa indicar equipe e identificação da jogada.');
             }
             $existing = $this->buscarPorChave($key);
             if ($existing !== null) {
@@ -360,8 +361,13 @@ final class MysqliPontoRepository implements PontoRepository
             }
             MysqliChaveamentoRepository::garantirPartidaEquipe($this->connection, $gameId, $teamId);
             $match = $this->one('SELECT id_partida FROM partidas WHERE jogos_id_jogo = ? AND equipes_id_equipe = ? LIMIT 1 FOR UPDATE', 'ii', [$gameId, $teamId]);
-            if ($match === null || !$this->atletaElegivel($userId, $gameId, $teamId)) {
-                throw new InvalidArgumentException('O estudante não está inscrito e ativo nesta equipe para o jogo offline.');
+            $context = $match === null ? null : $this->one('SELECT m.contabiliza_artilharia FROM jogos j INNER JOIN modalidades m ON m.id_modalidade = j.modalidades_id_modalidade WHERE j.id_jogo = ? LIMIT 1 FOR UPDATE', 'i', [$gameId]);
+            $artilhariaAtiva = (int) ($context['contabiliza_artilharia'] ?? 1) === 1;
+            if ($match === null || ($artilhariaAtiva && ($userId <= 0 || !$this->atletaElegivel($userId, $gameId, $teamId)))) {
+                throw new InvalidArgumentException('O estudante precisa estar inscrito e ativo na equipe para este ponto offline.');
+            }
+            if (!$artilhariaAtiva) {
+                $userId = 0;
             }
             $anulado = (string) ($point['status_artilheiro'] ?? '') === 'anulado'
                 || (int) ($point['conta_no_placar'] ?? 1) !== 1;
@@ -381,7 +387,8 @@ final class MysqliPontoRepository implements PontoRepository
                 equipes_id_equipe, num_gol, conta_no_placar, status_artilheiro, chave_jogada, registrado_por, anulado_por, anulado_em)
              VALUES (?, ?, ?, ?, 1, 0, 'anulado', ?, ?, ?, CURRENT_TIMESTAMP)",
         );
-        $statement->bind_param('iiiisii', $userId, $gameId, $matchId, $teamId, $key, $operatorId, $operatorId);
+        $user = $userId > 0 ? $userId : null;
+        $statement->bind_param('iiiisii', $user, $gameId, $matchId, $teamId, $key, $operatorId, $operatorId);
         if (!$statement->execute()) {
             $message = $statement->error;
             $statement->close();
@@ -403,7 +410,8 @@ final class MysqliPontoRepository implements PontoRepository
                 equipes_id_equipe, num_gol, conta_no_placar, status_artilheiro, chave_jogada, registrado_por)
              VALUES (?, ?, ?, ?, 1, 1, \'ativo\', ?, ?)',
         );
-        $statement->bind_param('iiiisi', $userId, $gameId, $matchId, $teamId, $key, $operatorId);
+        $user = $userId > 0 ? $userId : null;
+        $statement->bind_param('iiiisi', $user, $gameId, $matchId, $teamId, $key, $operatorId);
         if (!$statement->execute()) {
             $message = $statement->error;
             $statement->close();
@@ -464,7 +472,7 @@ final class MysqliPontoRepository implements PontoRepository
                     p.resultado_partida, j.status_jogo, e.nome_equipe,
                     e.turmas_id_turma AS id_turma
              FROM artilheiros a
-             INNER JOIN usuarios u ON u.id_usuario = a.usuarios_id_usuario
+             LEFT JOIN usuarios u ON u.id_usuario = a.usuarios_id_usuario
              LEFT JOIN partidas p ON p.id_partida = a.partidas_id_partida
              LEFT JOIN jogos j ON j.id_jogo = a.jogos_id_jogo
              LEFT JOIN equipes e ON e.id_equipe = a.equipes_id_equipe

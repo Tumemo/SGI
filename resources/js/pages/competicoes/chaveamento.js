@@ -1197,7 +1197,7 @@ window.SGIPage.mount("competicoes/chaveamento", function (pageConfig, pageScope)
     function _badgeFonteLocal() {
         return `<div class="alert alert-info mt-3 d-flex align-items-center gap-2" >
             <i class="bi bi-wifi-off"></i> Offline: árvore avançada localmente com os resultados deste dispositivo.
-            Será sincronizada automaticamente quando a conexão voltar.
+            Use Reconectar ao servidor e Sincronizar agora para enviá-la.
         </div>`;
     }
 
@@ -1676,8 +1676,14 @@ window.SGIPage.mount("competicoes/chaveamento", function (pageConfig, pageScope)
     /* ── Polling for Real-time Updates ── */
     function iniciarPolling() {
         if (_pollingTimer) clearInterval(_pollingTimer);
+        _pollingTimer = null;
+        if (window.SGIOffline && !window.SGIOffline.isOnline()) return;
         _pollingTimer = setInterval(async () => {
             if (!_currentModalidade) return;
+            if (window.SGIOffline && !window.SGIOffline.isOnline()) {
+                pararPolling();
+                return;
+            }
             try {
                 /* Mesma camada híbrida do carregamento inicial: online consulta
                    o PHP; offline recalcula a árvore a partir do banco JS local. */
@@ -1708,19 +1714,14 @@ window.SGIPage.mount("competicoes/chaveamento", function (pageConfig, pageScope)
         }, 8000);
     }
 
-    /* Sincronização de volta ao PHP: quando a conexão retorna e a árvore exibida
-       foi calculada localmente, envia os dados pendentes do banco JS temporário
-       (a fila reproduz os POSTs originais e o servidor refaz o avanço). */
-    if (window.SGIOffline && typeof window.SGIOffline.onStateChange === 'function') {
-        window.SGIOffline.onStateChange(function (estado) {
-            if (!estado.online) return;
-            if (_fonteDadosAtual && _fonteDadosAtual !== 'remota') {
-                SGIChaveamento.sincronizar().catch(function () { /* noop */ }).then(function () {
-                    if (_currentModalidade) carregarArvore(_currentModalidade);
-                });
-            } else if (SGIOffline.hasPending()) {
-                SGIChaveamento.sincronizar();
-            }
+    /* A árvore local continua disponível até o operador sincronizar a fila. */
+    let removerObservadorOffline = null;
+    function observarEstadoOffline() {
+        if (removerObservadorOffline) removerObservadorOffline();
+        if (!window.SGIOffline || typeof window.SGIOffline.onStateChange !== 'function') return;
+        removerObservadorOffline = window.SGIOffline.onStateChange(function (estado) {
+            if (!estado.online) pararPolling();
+            else if (pageScope.active && _currentModalidade && !_pollingTimer) iniciarPolling();
         });
     }
 
@@ -1730,6 +1731,11 @@ window.SGIPage.mount("competicoes/chaveamento", function (pageConfig, pageScope)
             _pollingTimer = null;
         }
     }
+    pageScope.onDeactivate(function () {
+        pararPolling();
+        if (removerObservadorOffline) removerObservadorOffline();
+        removerObservadorOffline = null;
+    });
 
     const selectDesk = document.getElementById('selectModalidade');
     if (selectDesk) pageScope.listen(selectDesk, 'change', function() {
@@ -1822,7 +1828,10 @@ window.SGIPage.mount("competicoes/chaveamento", function (pageConfig, pageScope)
     if (formEditarJogo) pageScope.listen(formEditarJogo, 'submit', salvarEdicaoJogo);
 
     pageScope.onDeactivate(pararPolling);
-    window.SGIPage.ready(function () { if (_currentModalidade) iniciarPolling(); });
+    window.SGIPage.ready(function () {
+        observarEstadoOffline();
+        if (_currentModalidade) iniciarPolling();
+    });
     pageScope.listen(window, 'beforeunload', pararPolling);
 
 return {esc, podeEditarJogo, resolverTipoCompeticao, kvs_montarGrupos, kvs_sincronizar, kvs_montar, kvs_focus, resolverInterclasse, atualizarStats, _contarCampeoesConfirmados, atualizarTimeline, carregarModalidades, carregarCategorias, formatarNomePartida, _popularModalEdicao, editarJogo, editarJogoBracket, salvarEdicaoJogo, formatarDuracaoJogo, formatarAcrescimosJogo, renderizarLinhaJogo, carregarJogos, formatFase, computarLabelsFases, formatFaseFromNome, _badgeFonteLocal, _renderBracketMatch, _detectarCampeao, _renderModernBracket, _drawConnectors, editarJogoIndividual, carregarArvore, iniciarPolling, pararPolling, iniciarChaveamento};

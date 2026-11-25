@@ -82,6 +82,7 @@ CREATE TABLE `modalidades` (
   `tipos_modalidades_id_tipo_modalidade` int(11) NOT NULL,
   `categorias_id_categoria` int(11) NOT NULL,
   `interclasses_id_interclasse` int(11) NOT NULL,
+  `contabiliza_artilharia` tinyint(1) NOT NULL DEFAULT 1,
   PRIMARY KEY (`id_modalidade`),
   KEY `fk_modalidades_tipos_modalidades1_idx` (`tipos_modalidades_id_tipo_modalidade`),
   KEY `fk_modalidades_categorias1_idx` (`categorias_id_categoria`),
@@ -170,7 +171,7 @@ CREATE TABLE `partidas` (
 
 CREATE TABLE `artilheiros` (
   `id_artilheiro` int(11) NOT NULL AUTO_INCREMENT,
-  `usuarios_id_usuario` int(11) NOT NULL,
+  `usuarios_id_usuario` int(11) DEFAULT NULL,
   `jogos_id_jogo` int(11) NOT NULL,
   `partidas_id_partida` int(11) DEFAULT NULL,
   `equipes_id_equipe` int(11) DEFAULT NULL,

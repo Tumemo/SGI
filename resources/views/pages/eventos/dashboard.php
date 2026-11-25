@@ -44,6 +44,24 @@ $isMesario = $nivelUsuario === 2;
         </div>
         <?php endif; ?>
 
+        <?php if ($isMesario): ?>
+        <div class="d-flex flex-wrap align-items-center gap-2 mb-3" role="group" aria-label="Preparação offline">
+            <button id="sgi-importar-dependencias" type="button" class="btn btn-primary">
+                <i class="bi bi-download me-1" aria-hidden="true"></i>Importar dados para uso offline
+            </button>
+            <span class="small text-body-secondary">Inicie a preparação quando estiver conectado ao servidor.</span>
+        </div>
+        <?php endif; ?>
+
+        <?php if ($isAdmin || $isColaborador): ?>
+        <div class="d-flex justify-content-end mb-3">
+            <a id="linkRelatorios" class="btn btn-primary d-inline-flex align-items-center gap-2" href="<?= \App\Shared\Http\Url::to('relatorios') ?>">
+                <i class="bi bi-file-earmark-bar-graph" aria-hidden="true"></i>
+                <span>Relatórios</span>
+            </a>
+        </div>
+        <?php endif; ?>
+
         <?php
         $cardsDashboard = [];
         if ($isMesario) {

@@ -412,6 +412,7 @@ test.describe('Frontend — regressão visual por perfil', () => {
         const ctx = await obterContexto(request);
         await entrar(page, 'mesario');
         await page.waitForURL(/painel\?id=\d+/, { waitUntil: 'domcontentloaded' });
+        await page.locator('#sgi-importar-dependencias').click();
         await expect(page.locator('#sgi-offline-ok')).toContainText('Pronto para uso offline', { timeout: 120_000 });
         await expect.poll(() => page.evaluate(() => window.__SGI_SPA__ && window.__SGI_SPA__.status()), { timeout: 120_000 })
             .toMatchObject({ pronto: true, preloading: false });

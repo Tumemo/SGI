@@ -71,7 +71,7 @@ final class MysqliArtilheiroQueries
             INNER JOIN modalidades m ON j.modalidades_id_modalidade = m.id_modalidade
             INNER JOIN categorias c ON m.categorias_id_categoria = c.id_categoria
             INNER JOIN interclasses i ON c.interclasses_id_interclasse = i.id_interclasse
-            WHERE 1=1" . $where . "
+            WHERE m.contabiliza_artilharia = 1" . $where . "
             GROUP BY m.id_modalidade, m.nome_modalidade, c.id_categoria, c.nome_categoria,
                      u.id_usuario, u.nome_usuario, u.foto_usuario, t.id_turma,
                      t.nome_turma, t.nome_fantasia_turma
@@ -116,7 +116,7 @@ final class MysqliArtilheiroQueries
             INNER JOIN modalidades m ON j.modalidades_id_modalidade = m.id_modalidade
             INNER JOIN categorias c ON m.categorias_id_categoria = c.id_categoria
             INNER JOIN interclasses i ON c.interclasses_id_interclasse = i.id_interclasse
-            WHERE i.status_interclasse = '1'
+            WHERE i.status_interclasse = '1' AND m.contabiliza_artilharia = 1
             GROUP BY c.id_categoria, c.nome_categoria, u.id_usuario, u.nome_usuario,
                      u.foto_usuario, t.nome_turma, t.nome_fantasia_turma
             HAVING NOT EXISTS (
@@ -173,6 +173,7 @@ final class MysqliArtilheiroQueries
         // Fluxo normal da artilharia
         $filtro = \App\Shared\Database\SqlFilters::aplicarFiltrosArtilharia($filters);
         $sql = "SELECT \n                    usuarios.id_usuario,\n                    usuarios.nome_usuario, \n                    usuarios.foto_usuario,\n                    SUM(CASE WHEN artilheiros.status_artilheiro = 'ativo' AND artilheiros.conta_no_placar = 1 THEN artilheiros.num_gol ELSE 0 END) AS total_gols,\n                    COUNT(*) AS total_acoes,\n                    SUM(CASE WHEN artilheiros.status_artilheiro = 'anulado' OR artilheiros.conta_no_placar = 0 THEN 1 ELSE 0 END) AS total_anulados,\n                    modalidades.nome_modalidade,\n                    turmas.nome_turma,\n                    turmas.nome_fantasia_turma\n                FROM artilheiros\n                INNER JOIN usuarios ON artilheiros.usuarios_id_usuario = usuarios.id_usuario\n                INNER JOIN turmas ON usuarios.turmas_id_turma = turmas.id_turma\n                INNER JOIN jogos ON artilheiros.jogos_id_jogo = jogos.id_jogo\n                INNER JOIN modalidades ON jogos.modalidades_id_modalidade = modalidades.id_modalidade\n                INNER JOIN categorias ON modalidades.categorias_id_categoria = categorias.id_categoria\n                WHERE 1=1" . $filtro['sql'];
+        $sql = str_replace('WHERE 1=1', 'WHERE modalidades.contabiliza_artilharia = 1', $sql);
         $sql .= " GROUP BY usuarios.id_usuario, modalidades.id_modalidade \n                  ORDER BY total_gols DESC, total_acoes DESC";
         $stmt = $conn->prepare($sql);
         if ($stmt === false) {

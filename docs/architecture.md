@@ -90,6 +90,7 @@ ficam fora dessa lista e só recebem serviços, contratos e adaptadores de HTTP.
 - `StoragePaths` resolve uploads fora do código (`storage/uploads/*` por
   padrão) e aceita diretórios configuráveis por `SGI_*_DIR`.
 - O modo offline do mesário usa IDs temporários negativos e a fila IndexedDB. A casca atual precisa ser preparada antes da perda de conexão e não depende de Service Worker.
+- A preparação de telas/dados do mesário começa somente no botão **Importar dados para uso offline**. Após uma queda, o evento `online`, foco e visibilidade não consultam o servidor nem enviam a fila: **Reconectar ao servidor** verifica saúde e sessão; **Sincronizar agora** envia pendências em ação separada. Falhas mantêm o cliente offline e os registros no IndexedDB.
 
 `GET /api/v1/jogos` mantém a visão operacional usada pela agenda e pelo preparo
 offline; perfis de mesário recebem a edição ativa e o filtro operacional é

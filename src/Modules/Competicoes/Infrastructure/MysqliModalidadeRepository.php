@@ -35,7 +35,7 @@ final class MysqliModalidadeRepository implements ModalidadeRepository
                     modalidades.max_equipes, modalidades.status_modalidade,
                     modalidades.categorias_id_categoria, tipos_modalidades.nome_tipo_modalidade,
                     tipos_modalidades.id_tipo_modalidade, categorias.nome_categoria,
-                    modalidades.interclasses_id_interclasse, interclasses.nome_interclasse,
+                    modalidades.interclasses_id_interclasse, modalidades.contabiliza_artilharia, interclasses.nome_interclasse,
                     (SELECT COUNT(*) FROM equipes e2 WHERE e2.modalidades_id_modalidade = modalidades.id_modalidade
                       AND e2.status_equipe = \'1\') AS qtd_equipes,
                     (SELECT COUNT(*) FROM turmas t2 WHERE t2.categorias_id_categoria = modalidades.categorias_id_categoria)
@@ -128,8 +128,8 @@ final class MysqliModalidadeRepository implements ModalidadeRepository
 
             $statement = $this->connection->prepare(
                 'INSERT INTO modalidades (nome_modalidade, genero_modalidade, max_inscrito_modalidade, max_equipes,
-                    tipos_modalidades_id_tipo_modalidade, status_modalidade, categorias_id_categoria, interclasses_id_interclasse)
-                 VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+                    tipos_modalidades_id_tipo_modalidade, status_modalidade, categorias_id_categoria, interclasses_id_interclasse, contabiliza_artilharia)
+                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
             );
             if ($statement === false) {
                 throw new RuntimeException('Não foi possível criar modalidade.');
@@ -140,7 +140,8 @@ final class MysqliModalidadeRepository implements ModalidadeRepository
             $maxEquipes = $data['max_equipes'] === null ? 0 : (int) $data['max_equipes'];
             $typeId = (int) $data['tipos_modalidades_id_tipo_modalidade'];
             $status = (string) $data['status_modalidade'];
-            $statement->bind_param('ssiisiii', $name, $gender, $maxInscritos, $maxEquipes, $typeId, $status, $categoryId, $interclasseId);
+            $contabilizaArtilharia = (int) ($data['contabiliza_artilharia'] ?? 1);
+            $statement->bind_param('ssiisiiii', $name, $gender, $maxInscritos, $maxEquipes, $typeId, $status, $categoryId, $interclasseId, $contabilizaArtilharia);
             if (!$statement->execute()) {
                 $statement->close();
                 throw new RuntimeException('Não foi possível criar modalidade.');
@@ -253,7 +254,7 @@ final class MysqliModalidadeRepository implements ModalidadeRepository
         $fields = [];
         $values = [];
         $types = '';
-        foreach (['nome_modalidade' => 's', 'genero_modalidade' => 's', 'max_inscrito_modalidade' => 'i', 'max_equipes' => 'i', 'status_modalidade' => 's', 'tipos_modalidades_id_tipo_modalidade' => 'i', 'categorias_id_categoria' => 'i', 'interclasses_id_interclasse' => 'i'] as $field => $type) {
+        foreach (['nome_modalidade' => 's', 'genero_modalidade' => 's', 'max_inscrito_modalidade' => 'i', 'max_equipes' => 'i', 'status_modalidade' => 's', 'tipos_modalidades_id_tipo_modalidade' => 'i', 'categorias_id_categoria' => 'i', 'interclasses_id_interclasse' => 'i', 'contabiliza_artilharia' => 'i'] as $field => $type) {
             if (array_key_exists($field, $data)) {
                 $fields[] = $field . ' = ?';
                 $values[] = $data[$field] === null ? 0 : $data[$field];

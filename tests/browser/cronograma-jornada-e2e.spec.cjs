@@ -438,6 +438,7 @@ test.describe.serial('Fluxo único de cronograma — jornada E2E', () => {
             const mesarioPage = await mesarioContext.newPage();
             await entrarComo(mesarioPage, 'mesario', '123');
             await mesarioPage.waitForURL(/\/painel\?id=\d+/, { timeout: 20_000 });
+            await mesarioPage.locator('#sgi-importar-dependencias').click();
             await expect.poll(() => mesarioPage.evaluate(() => {
                 const estado = window.__SGI_SPA__?.status?.();
                 return Boolean(estado?.pronto) && !Boolean(estado?.preloading);
@@ -488,6 +489,8 @@ test.describe.serial('Fluxo único de cronograma — jornada E2E', () => {
             );
 
             await mesarioContext.setOffline(false);
+            await mesarioPage.locator('.sgi-offline-banner-reconnect').click();
+            await mesarioPage.locator('.sgi-offline-banner-btn').click();
             await expect.poll(() => mesarioPage.evaluate(() => window.SGIOffline.getState().pending), { timeout: 45_000 }).toBe(0);
             const jogosReconciliados = await jsonOrThrow(
                 await request.get(`api/v1/jogos?id_modalidade=${fixture.idModalidade}`),

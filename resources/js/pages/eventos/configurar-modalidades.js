@@ -253,6 +253,7 @@ window.SGIPage.mount("eventos/configurar-modalidades", function (pageConfig, pag
             max_equipes: (() => { const v = document.getElementById('inputMaxEquipes').value; return v === '' ? null : parseInt(v); })(),
             tipos_modalidades_id_tipo_modalidade: document.getElementById('inputTipoModalidade').value,
             categorias_id_categoria: document.getElementById('inputCategoriaModalidade').value,
+            contabiliza_artilharia: document.getElementById('inputContabilizaArtilharia').checked ? 1 : 0,
             ...(planejadas !== '' ? { equipes_planejadas: parseInt(planejadas, 10) } : {}),
             ...(minEquipe !== '' ? { min_inscritos_equipe: parseInt(minEquipe, 10) } : {}),
             ...(maxEquipe !== '' ? { max_inscritos_equipe: parseInt(maxEquipe, 10) } : {})

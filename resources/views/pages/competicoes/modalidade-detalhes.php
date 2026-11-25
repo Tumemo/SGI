@@ -78,6 +78,10 @@ $isAdmin = $nivelUsuario === 0;
                         <label for="editMaxEquipes" class="form-label fw-medium">Máximo de equipes por turma</label>
                         <input type="number" class="form-control" id="editMaxEquipes" min="1">
                     </div>
+                    <div class="form-check form-switch mb-3">
+                        <input class="form-check-input" type="checkbox" role="switch" id="editContabilizaArtilharia">
+                        <label class="form-check-label" for="editContabilizaArtilharia">Contabilizar artilharia</label>
+                    </div>
                     <div class="mb-3">
                         <label for="editTipoModalidade" class="form-label fw-medium">Tipo de modalidade</label>
                         <select class="form-select" id="editTipoModalidade" required>

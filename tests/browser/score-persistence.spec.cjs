@@ -149,6 +149,8 @@ test.describe('Mesário — persistência imediata do placar', () => {
 
         await context.setOffline(false);
         await expect.poll(() => page.evaluate(() => navigator.onLine)).toBe(true);
+        await page.locator('.sgi-offline-banner-reconnect').click();
+        await page.locator('.sgi-offline-banner-btn').click();
         await expect.poll(() => page.evaluate(() => window.SGIOffline.getState().pending), { timeout: 45_000 }).toBe(0);
 
         const servidor = await page.evaluate(async (id) => {

@@ -7,7 +7,7 @@
      no IndexedDB (por URL). Quando offline, a ultima resposta salva
      e devolvida ao front para a tela continuar funcionando.
    - POST/PUT/DELETE: quando offline, a requisicao entra numa fila
-     (IndexedDB). Quando a conexao volta, a fila e enviada em lote.
+     (IndexedDB). Reconexao e envio dependem da acao do operador.
    - Banner de status fixo no topo avisa "Modo offline / Sincronizando".
    - Nenhuma dependencia externa (IndexedDB puro). Nao toca no banco.
    ============================================================ */
@@ -21,8 +21,6 @@
     var STORE_GET = 'api_get_cache';
     var STORE_QUEUE = 'mutation_queue';
     var MAX_TRIES = 5;
-    var RETRY_BASE_MS = 3000;
-    var RETRY_MAX_MS = 60000;
     var REQUEST_TIMEOUT_MS = 20000;
     var HEALTH_TIMEOUT_MS = 5000;
     var MAX_IMPORT_BYTES = 2 * 1024 * 1024;
@@ -128,8 +126,6 @@
         nextRetryAt: 0
     };
     var listeners = [];
-    var retryTimer = null;
-    var retryDelay = RETRY_BASE_MS;
     var healthPromise = null;
     var coordDbPromise = null;
     var leaseGeneration = 0;
@@ -152,14 +148,12 @@
 
     function marcarSoftOffline() {
         state.softOffline = true;
-        state.softOfflineUntil = Date.now() + 15000;
+        state.online = false;
+        state.softOfflineUntil = 0;
         notify();
     }
 
     function estaSoftOffline() {
-        if (state.softOffline && Date.now() > state.softOfflineUntil) {
-            state.softOffline = false;
-        }
         return state.softOffline;
     }
 
@@ -676,13 +670,11 @@
         return idbQueueAll().then(function (q) {
             state.pending = q.length;
             state.needsReview = q.filter(function (item) { return item && item.needsReview; }).length;
-            // Uma mutação que exige revisão pode depender das anteriores. Para
-            // preservar a ordem, a retomada automática para até o usuário
-            // revisar ou pedir uma nova tentativa manual.
+            // Uma mutação que exige revisão pode depender das anteriores.
+            // O indicador permanece para o operador decidir o próximo envio.
             state.retryablePending = state.needsReview ? 0 : q.length;
             if (!state.pending) {
                 state.lastSyncError = '';
-                clearSyncRetry();
             }
             return q;
         });
@@ -803,33 +795,6 @@
         });
     }
 
-    function clearSyncRetry() {
-        if (retryTimer) {
-            clearTimeout(retryTimer);
-            retryTimer = null;
-        }
-        retryDelay = RETRY_BASE_MS;
-        state.nextRetryAt = 0;
-    }
-
-    function scheduleSyncRetry() {
-        if (retryTimer || !state.online || state.retryablePending <= 0) return;
-        var delay = retryDelay;
-        retryDelay = Math.min(RETRY_MAX_MS, retryDelay * 2);
-        state.nextRetryAt = Date.now() + delay;
-        retryTimer = setTimeout(function () {
-            retryTimer = null;
-            state.nextRetryAt = 0;
-            if (navigator.onLine === false) {
-                state.online = false;
-                notify();
-                return;
-            }
-            syncQueue();
-        }, delay);
-        notify();
-    }
-
     /* ------------------------- Fila de mutacoes ------------------------- */
     function queueMutation(method, url, body, headers) {
         method = String(method || '').toUpperCase();
@@ -923,7 +888,6 @@
         }).then(function () {
             notify();
             avisarAbas('queue-changed');
-            scheduleSyncRetry();
             return item;
         });
     }
@@ -1255,7 +1219,6 @@
             .then(function () { return refreshPending(); })
             .then(function () {
                 summary.pending = state.pending;
-                if (state.retryablePending > 0) scheduleSyncRetry();
                 if (renovacao) clearInterval(renovacao);
                 if (reservaPerdida) {
                     summary.failed += 1;
@@ -1303,7 +1266,7 @@
         }
 
         if (!isSameOrigin(url)) {
-            if (navigator.onLine === false || estaSoftOffline() || servidorIndisponivel()) {
+            if (!state.online || navigator.onLine === false || estaSoftOffline() || servidorIndisponivel()) {
                 return Promise.resolve(new Response('', { status: 200, headers: { 'Content-Type': 'text/plain' } }));
             }
             return originalFetch(input, init).catch(function () {
@@ -1315,7 +1278,7 @@
         if (method === 'GET') {
             // Não tente a rede quando o navegador já informou que está
             // desconectado ou quando a rede está inalcançável (softOffline).
-            if (navigator.onLine === false || estaSoftOffline() || servidorIndisponivel()) {
+            if (!state.online || navigator.onLine === false || estaSoftOffline() || servidorIndisponivel()) {
                 return idbGet(absUrl).then(function (cached) {
                     if (cached) {
                         return new Response(cached.text, {
@@ -1335,7 +1298,6 @@
                 });
             }
             return fetchComTimeout(input, init, REQUEST_TIMEOUT_MS).then(function (res) {
-                state.softOffline = false;
                 if (res && res.ok) {
                     var clone = res.clone();
                     // O preload só é considerado concluído depois que a
@@ -1409,7 +1371,7 @@
                 var ehNegativo = idJogoTemporario || absUrl.indexOf('id_jogo=-') > -1;
                 function enfileirar() {
                     return queueMutation(method, absUrl, body, init.headers).then(function (item) {
-                        return fakeResponse({ success: true, offline: true, queued: true, mutation_id: item.id, mensagem: 'Salvo localmente. Sera sincronizado quando houver conexao.' });
+                        return fakeResponse({ success: true, offline: true, queued: true, mutation_id: item.id, mensagem: 'Salvo localmente. Use Sincronizar agora após reconectar.' });
                     });
                 }
                 if (!state.online || navigator.onLine === false || estaSoftOffline() || servidorIndisponivel() || ehNegativo || state.pending > 0 || syncing) {
@@ -1468,6 +1430,15 @@
                 }
 
                 if (_method === 'GET') {
+                    if (!state.online || navigator.onLine === false || servidorIndisponivel()) {
+                        idbGet(absUrl).then(function (cached) {
+                            return cached || idbFindUrl(absUrl);
+                        }).then(function (cached) {
+                            if (cached) fakeXHRResponse(xhr, cached.text, cached.status || 200, cached.contentType || 'application/json');
+                            else fakeXHRResponse(xhr, '', 503, 'text/plain');
+                        }).catch(function () { fakeXHRResponse(xhr, '', 503, 'text/plain'); });
+                        return undefined;
+                    }
                     var h = function () {
                         if (xhr.readyState === 4) {
                             xhr.removeEventListener('readystatechange', h);
@@ -1505,16 +1476,20 @@
         });
     }
 
-    function fakeXHRResponse(xhr) {
-        var payload = JSON.stringify({ success: true, offline: true, queued: true, mensagem: 'Salvo localmente. Sera sincronizado quando houver conexao.' });
+    function fakeXHRResponse(xhr, body, status, contentType) {
+        var payload = body === undefined
+            ? JSON.stringify({ success: true, offline: true, queued: true, mensagem: 'Salvo localmente. Use Sincronizar agora após reconectar.' })
+            : body;
+        var codigo = status || 200;
+        var tipo = contentType || 'application/json';
         try {
             Object.defineProperty(xhr, 'readyState', { configurable: true, get: function () { return 4; } });
-            Object.defineProperty(xhr, 'status', { configurable: true, get: function () { return 200; } });
+            Object.defineProperty(xhr, 'status', { configurable: true, get: function () { return codigo; } });
             Object.defineProperty(xhr, 'responseText', { configurable: true, get: function () { return payload; } });
             Object.defineProperty(xhr, 'response', { configurable: true, get: function () { return payload; } });
-            Object.defineProperty(xhr, 'statusText', { configurable: true, get: function () { return 'OK'; } });
-            xhr.getResponseHeader = function () { return 'application/json'; };
-            xhr.getAllResponseHeaders = function () { return 'Content-Type: application/json\r\n'; };
+            Object.defineProperty(xhr, 'statusText', { configurable: true, get: function () { return codigo === 200 ? 'OK' : 'Offline'; } });
+            xhr.getResponseHeader = function () { return tipo; };
+            xhr.getAllResponseHeaders = function () { return 'Content-Type: ' + tipo + '\r\n'; };
         } catch (e) { /* noop */ }
 
         setTimeout(function () {
@@ -1600,6 +1575,7 @@
             '<span class="sgi-offline-banner-text small"></span>' +
             '</span>' +
             '<div class="sgi-offline-banner-actions d-flex align-items-center justify-content-center gap-2 flex-wrap">' +
+            '<button type="button" class="sgi-offline-banner-reconnect btn btn-sm btn-outline-light rounded-pill fw-semibold">Reconectar ao servidor</button>' +
             '<button type="button" class="sgi-offline-banner-btn btn btn-sm btn-outline-light rounded-pill fw-semibold d-none sgi-hidden">Sincronizar agora</button>' +
             '<button type="button" class="sgi-offline-banner-details-toggle btn btn-sm btn-outline-light rounded-pill fw-semibold" aria-controls="sgi-offline-banner-details" aria-expanded="false">Ver pendências</button>' +
             '<div id="sgi-offline-banner-details" class="sgi-offline-banner-details d-flex align-items-center justify-content-center gap-2 flex-wrap">' +
@@ -1622,6 +1598,16 @@
         }
 
         var btn = b.querySelector('.sgi-offline-banner-btn');
+        var reconnectBtn = b.querySelector('.sgi-offline-banner-reconnect');
+        if (reconnectBtn) {
+            reconnectBtn.addEventListener('click', function () {
+                if (reconnectBtn.disabled) return;
+                reconnectBtn.disabled = true;
+                window.SGIOffline.reconnect().then(function (ok) {
+                    notificarUsuario(ok ? 'Conexão com o servidor restabelecida.' : 'Não foi possível reconectar ao servidor.');
+                }).finally(function () { reconnectBtn.disabled = false; });
+            });
+        }
         var detailsToggle = b.querySelector('.sgi-offline-banner-details-toggle');
         if (detailsToggle) {
             detailsToggle.addEventListener('click', function () {
@@ -1638,7 +1624,10 @@
                     return;
                 }
                 btn.disabled = true;
-                window.SGIOffline.syncNow().then(function () {
+                var envio = window.SGIChaveamento && typeof window.SGIChaveamento.sincronizar === 'function'
+                    ? window.SGIChaveamento.sincronizar()
+                    : window.SGIOffline.syncNow();
+                envio.then(function () {
                     btn.disabled = false;
                 }).catch(function () {
                     btn.disabled = false;
@@ -1706,6 +1695,7 @@
         var tag = b.querySelector('.sgi-offline-banner-tag');
         var text = b.querySelector('.sgi-offline-banner-text');
         var btn = b.querySelector('.sgi-offline-banner-btn');
+        var reconnectBtn = b.querySelector('.sgi-offline-banner-reconnect');
         var exportBtn = b.querySelector('.sgi-offline-banner-export');
         var detailsToggle = b.querySelector('.sgi-offline-banner-details-toggle');
 
@@ -1780,10 +1770,17 @@
             definirTexto(btn, enviando
                 ? 'Enviando…'
                 : (sessaoExpirada ? 'Atualizar acesso' : (revisao ? 'Tentar novamente' : 'Sincronizar agora')));
-            btn.disabled = enviando;
-            var syncDisponivel = state.pending > 0;
+            btn.disabled = enviando || (!sessaoExpirada && (offline || servidorOffline));
+            var syncDisponivel = state.pending > 0 && (sessaoExpirada || (!offline && !servidorOffline));
             btn.classList.toggle('d-none', !syncDisponivel);
             btn.classList.toggle('sgi-hidden', !syncDisponivel);
+        }
+        if (reconnectBtn) {
+            var reconexaoDisponivel = offline || servidorOffline;
+            reconnectBtn.classList.toggle('btn-outline-dark', tomEscuro);
+            reconnectBtn.classList.toggle('btn-outline-light', !tomEscuro);
+            reconnectBtn.classList.toggle('d-none', !reconexaoDisponivel);
+            reconnectBtn.classList.toggle('sgi-hidden', !reconexaoDisponivel);
         }
         if (exportBtn) {
             var exportDisponivel = state.pending > 0;
@@ -1816,27 +1813,15 @@
 
     /* ------------------------- Eventos ------------------------- */
     window.addEventListener('online', function () {
-        state.online = true;
+        // O evento do navegador indica apenas rede física; a sessão SGI só
+        // volta a usar o servidor depois do clique em Reconectar.
         notify();
-        verificarAcesso(true).then(function (ok) {
-            if (ok) syncQueue();
-        });
     });
     window.addEventListener('offline', function () {
         state.online = false;
         state.server = 'indisponivel';
         state.serverError = 'O dispositivo está sem conexão com a rede local.';
         notify();
-    });
-    window.addEventListener('focus', function () {
-        if (navigator.onLine) verificarAcesso(true).then(function (ok) {
-            if (ok && state.pending > 0) syncQueue();
-        });
-    });
-    document.addEventListener('visibilitychange', function () {
-        if (document.visibilityState === 'visible' && navigator.onLine) verificarAcesso(true).then(function (ok) {
-            if (ok && state.pending > 0) syncQueue();
-        });
     });
 
     /* ------------------------- API publica ------------------------- */
@@ -1850,6 +1835,18 @@
                 var i = listeners.indexOf(cb);
                 if (i > -1) listeners.splice(i, 1);
             };
+        },
+        reconnect: function () {
+            if (navigator.onLine === false) return Promise.resolve(false);
+            return verificarAcesso(true).then(function (ok) {
+                state.online = ok;
+                if (ok) {
+                    state.softOffline = false;
+                    state.softOfflineUntil = 0;
+                }
+                notify();
+                return ok;
+            });
         },
         // A ação explícita do usuário pode tentar novamente uma entrada que
         // ficou em revisão; o envio automático nunca a descarta silenciosamente.
@@ -1866,8 +1863,7 @@
                 };
             });
         },
-        // O cliente pode solicitar o envio automático depois de persistir uma
-        // mutação, sem ignorar entradas que exigem revisão humana.
+        // Envio explícito, também usado após uma ação de placar já online.
         sync: function () { return syncQueue(false); },
         queueMutation: queueMutation,
         updatePending: function (item) {
@@ -1898,11 +1894,6 @@
         return refreshPending();
     }).then(function () {
         notify();
-        if (state.online && state.pending > 0) {
-            verificarAcesso(true).then(function (ok) {
-                if (ok) syncQueue();
-            });
-        }
     }).catch(function (e) {
         if (window.console) console.warn('SGI Offline: IndexedDB indisponivel.', e);
     });

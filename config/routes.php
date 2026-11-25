@@ -43,6 +43,25 @@ $router->post('/api/v1/login', $withDatabase(
 $router->get('/api/v1/classificacao', $withDatabase(
     static fn (mysqli $conn) => new \App\Modules\Resultados\Presentation\Http\ClassificacaoController(new \App\Modules\Resultados\Application\ClassificacaoService(new \App\Modules\Resultados\Infrastructure\MysqliClassificacaoRepository($conn))),
 ));
+$router->get('/api/v1/relatorio-final', $withDatabase(
+    static fn (mysqli $conn): \App\Modules\Resultados\Presentation\Http\RelatorioFinalController => new \App\Modules\Resultados\Presentation\Http\RelatorioFinalController(
+        new \App\Modules\Resultados\Application\RelatorioFinalService(
+            new \App\Modules\Resultados\Infrastructure\MysqliRelatorioFinalRepository($conn),
+        ),
+        new \App\Modules\Resultados\Infrastructure\DompdfRelatorioFinalRenderer(SGI_ROOT),
+    ),
+));
+$router->get('/api/v1/relatorio-final/pdf', $withDatabase(
+    static fn (mysqli $conn): array => [
+        new \App\Modules\Resultados\Presentation\Http\RelatorioFinalController(
+            new \App\Modules\Resultados\Application\RelatorioFinalService(
+                new \App\Modules\Resultados\Infrastructure\MysqliRelatorioFinalRepository($conn),
+            ),
+            new \App\Modules\Resultados\Infrastructure\DompdfRelatorioFinalRenderer(SGI_ROOT),
+        ),
+        'pdf',
+    ],
+));
 $router->add(['GET', 'POST'], '/api/v1/edicoes', $withDatabase(
     static fn (mysqli $conn) => new \App\Modules\Eventos\Presentation\Http\EdicaoController(
         new \App\Modules\Eventos\Application\EdicaoService(new \App\Modules\Eventos\Infrastructure\MysqliEdicaoRepository(

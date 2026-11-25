@@ -21,6 +21,62 @@ test.beforeEach(async ({ page }) => {
     await page.evaluate(() => window.SGIOffline.getPendingList());
 });
 
+test('retorno da rede mantém a fila e o cache offline até reconexão e envio manuais', async ({ page, context }) => {
+    let healthChecks = 0;
+    let enviados = 0;
+    let consultas = 0;
+    await page.route('**/api/v1/health', route => {
+        healthChecks++;
+        return route.fulfill({ json: { success: true, status: 'ok', service: 'sgi' } });
+    });
+    await page.route('**/api/v1/partidas', route => {
+        enviados++;
+        return route.fulfill({ json: { success: true } });
+    });
+    await page.route('**/api/v1/offline-check', route => {
+        consultas++;
+        return route.fulfill({ json: { success: true, origem: 'servidor' } });
+    });
+    await page.evaluate(() => fetch('/api/v1/offline-check').then(response => response.json()));
+    await page.evaluate(() => SGIOffline.queueMutation('PUT', '/api/v1/partidas', JSON.stringify({ id_partida: 9 }), {
+        'Content-Type': 'application/json',
+    }));
+    await context.setOffline(true);
+    await expect.poll(() => page.evaluate(() => SGIOffline.getState().online)).toBe(false);
+    await context.setOffline(false);
+    await page.evaluate(() => {
+        window.dispatchEvent(new Event('focus'));
+        document.dispatchEvent(new Event('visibilitychange'));
+    });
+    expect(await page.evaluate(() => SGIOffline.getState().online)).toBe(false);
+    expect(await page.evaluate(() => SGIOffline.getState().pending)).toBe(1);
+    expect(healthChecks).toBe(0);
+    expect(enviados).toBe(0);
+    const cache = await page.evaluate(async () => {
+        const fetchResult = await fetch('/api/v1/offline-check').then(response => response.json());
+        const xhrResult = await new Promise(resolve => {
+            const xhr = new XMLHttpRequest();
+            xhr.open('GET', '/api/v1/offline-check');
+            xhr.onload = () => resolve(JSON.parse(xhr.responseText));
+            xhr.send();
+        });
+        return { fetchResult, xhrResult };
+    });
+    expect(cache.fetchResult.origem).toBe('servidor');
+    expect(cache.xhrResult.origem).toBe('servidor');
+    expect(consultas).toBe(1);
+
+    await page.locator('.sgi-offline-banner-reconnect').click();
+    await expect.poll(() => page.evaluate(() => SGIOffline.getState().online)).toBe(true);
+    expect(healthChecks).toBe(1);
+    expect(enviados).toBe(0);
+    expect(await page.evaluate(() => SGIOffline.getState().pending)).toBe(1);
+
+    await page.locator('.sgi-offline-banner-btn').click();
+    await expect.poll(() => page.evaluate(() => SGIOffline.getState().pending)).toBe(0);
+    expect(enviados).toBe(1);
+});
+
 test('troca de senha não entra na fila nem é importada ou reenviada como mutação offline', async ({ page }) => {
     const enviados = [];
     await page.route('**/api/v1/senha', route => {
@@ -469,7 +525,11 @@ test('falha de rede mantém a mutação e o retry reutiliza a mesma identidade',
     expect(falha.fila[0].needsReview).toBe(false);
     expect(falha.fila[0].retryable).toBe(true);
 
-    const retry = await page.evaluate(() => SGIOffline.syncNow());
+    expect(await page.evaluate(() => SGIOffline.getState().online)).toBe(false);
+    const retry = await page.evaluate(async () => {
+        await SGIOffline.reconnect();
+        return SGIOffline.syncNow();
+    });
     expect(retry.synced).toBe(1);
     expect(await page.evaluate(() => SGIOffline.getPendingList())).toEqual([]);
     expect(tentativas).toHaveLength(2);
@@ -607,10 +667,12 @@ test('falha de GET entra em soft-offline e exibe o estado no banner', async ({ p
         try { await fetch('/api/consulta-offline'); } catch (_) {}
         return {
             softOffline: SGIOffline.getState().softOffline,
+            online: SGIOffline.getState().online,
             bannerOculto: document.getElementById('sgi-offline-banner').classList.contains('sgi-hidden'),
         };
     });
     expect(estado.softOffline).toBe(true);
+    expect(estado.online).toBe(false);
     expect(estado.bannerOculto).toBe(false);
 });
 

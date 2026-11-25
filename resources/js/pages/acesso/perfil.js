@@ -179,7 +179,7 @@ window.SGIPage.mount("acesso/perfil", function (pageConfig, pageScope) {
                     const resp = await fetch(API_FOTO, { method: 'DELETE' });
                     const data = await resp.json();
                     if (resp.ok && data.success === true && (data.offline === true || data.queued === true)) {
-                        mostrarToast('Remoção pendente: a foto será removida quando a conexão voltar.', 'info');
+                        mostrarToast('Remoção pendente: reconecte e sincronize para concluir.', 'info');
                         return;
                     }
                     if (resp.ok && data.success === true) {

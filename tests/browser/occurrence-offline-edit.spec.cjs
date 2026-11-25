@@ -113,6 +113,8 @@ test('busca por ID, abre a segunda ocorrência e edita a mesma ocorrência offli
 
         await context.setOffline(false);
         await expect.poll(() => page.evaluate(() => navigator.onLine)).toBe(true);
+        await page.locator('.sgi-offline-banner-reconnect').click();
+        await page.locator('.sgi-offline-banner-btn').click();
         await expect.poll(() => page.evaluate(() => window.SGIOffline.getState()), { timeout: 30_000 })
             .toMatchObject({ pending: 0 });
 
@@ -170,6 +172,8 @@ test('busca por ID, abre a segunda ocorrência e edita a mesma ocorrência offli
         expect(edicaoTemporaria.dependsOn.tempId).toBe(temporaria);
 
         await context.setOffline(false);
+        await page.locator('.sgi-offline-banner-reconnect').click();
+        await page.locator('.sgi-offline-banner-btn').click();
         await expect.poll(() => page.evaluate(() => window.SGIOffline.getState()), { timeout: 30_000 })
             .toMatchObject({ pending: 0 });
         const temporariasServidor = await page.evaluate(async (id) => {

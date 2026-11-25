@@ -838,7 +838,7 @@ window.SGIPage.mount("competicoes/placar", function (pageConfig, pageScope) {
        2) Enfileira a MESMA requisição original (POST resultados)
           na mutation queue do offline-core. O hook SGIDataLayer.onQueued
           projeta o placar e o novo status no IndexedDB local, e quando a
-          conexão voltar a fila reenvia tudo ao PHP, que refaz as validações
+          o usuário sincronizar, a fila reenvia tudo ao PHP, que refaz as validações
           e avança o chaveamento nativamente.
        3) Dispara o Bracket Engine local (SGIChaveamento.promoverVencedorLocal),
           que promove o vencedor na árvore do banco JS: cria/libera a próxima
@@ -980,7 +980,7 @@ window.SGIPage.mount("competicoes/placar", function (pageConfig, pageScope) {
                 try {
                     var r = await window.SGIChaveamento.promoverVencedorLocal(idJogo);
                     if (!r || !r.promoveu) {
-                        SGI.alert('Jogo encerrado offline! Resultado salvo neste dispositivo e será enviado ao servidor quando a conexão voltar.');
+                        SGI.alert('Jogo encerrado offline! Resultado salvo neste dispositivo. Reconecte e sincronize para enviá-lo.');
                     } else if (r.encerrado) {
                         SGI.alert('Campeão definido offline: a final foi concluída neste dispositivo. Tudo será sincronizado com o servidor.');
                     } else if (r.pai.formada) {
@@ -993,7 +993,7 @@ window.SGIPage.mount("competicoes/placar", function (pageConfig, pageScope) {
                 }
                 return true;
             }
-            SGI.alert('Jogo encerrado offline! O resultado foi salvo neste dispositivo e será enviado ao servidor automaticamente quando a conexão voltar.');
+            SGI.alert('Jogo encerrado offline! O resultado foi salvo neste dispositivo. Reconecte e sincronize para enviá-lo.');
             return true;
         } catch (_) {
             liberarLock();
@@ -2055,6 +2055,10 @@ window.SGIPage.mount("competicoes/placar", function (pageConfig, pageScope) {
     function iniciarArtilheiro(ciclo) {
         var section = document.getElementById('artilheiro-section');
         if (!section || !section.isConnected) return;
+        if (estadoJogo && Number(estadoJogo.contabiliza_artilharia ?? 1) === 0) {
+            section.classList.add('d-none');
+            return;
+        }
         section.classList.remove('d-none');
         carregarEquipesArtilheiro();
         carregarArtilheiros(ciclo);
@@ -2263,9 +2267,17 @@ window.SGIPage.mount("competicoes/placar", function (pageConfig, pageScope) {
 
     var _artilheiroEquipeAtual = null;
 
+    function artilhariaAtiva() {
+        return !estadoJogo || Number(estadoJogo.contabiliza_artilharia ?? 1) !== 0;
+    }
+
     function abrirModalArtilheiro(idEquipe) {
         if (jogoEncerrado()) {
-            SGI.alert('O jogo já foi encerrado. Não é possível registrar artilharia.');
+            SGI.alert('O jogo já foi encerrado. Não é possível registrar ponto.');
+            return;
+        }
+        if (!artilhariaAtiva()) {
+            salvarPontoSemArtilheiro(idEquipe);
             return;
         }
         _artilheiroEquipeAtual = idEquipe;
@@ -2278,6 +2290,58 @@ window.SGIPage.mount("competicoes/placar", function (pageConfig, pageScope) {
 
         var modal = bootstrap.Modal.getOrCreateInstance(document.getElementById('modalArtilheiro'));
         modal.show();
+    }
+
+    var pontosSemArtilheiroEmAndamento = Object.create(null);
+
+    async function salvarPontoSemArtilheiro(idEquipe) {
+        var partida = partidasLista.filter(function (p) { return Number(p.equipes_id_equipe) === Number(idEquipe); })[0];
+        if (!partida) { SGI.alert('Selecione uma equipe válida.'); return; }
+        if (pontosSemArtilheiroEmAndamento[String(idEquipe)]) return;
+        pontosSemArtilheiroEmAndamento[String(idEquipe)] = true;
+        var chave = 'ponto-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2);
+        var pontoLocal = {
+            id_ponto: 'local-' + chave, jogos_id_jogo: idJogo,
+            id_partida: partida.id_partida, partidas_id_partida: partida.id_partida,
+            equipes_id_equipe: Number(idEquipe), usuarios_id_usuario: null,
+            chave_jogada: chave, num_gol: 1, conta_no_placar: 1,
+            status_artilheiro: 'ativo', nome_usuario: ''
+        };
+        try {
+            var result;
+            if (Number(idJogo) < 0) result = { success: true, offline: true };
+            else {
+                var resp = await fetch(API + 'pontos', {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ jogos_id_jogo: idJogo, id_partida: partida.id_partida, equipes_id_equipe: Number(idEquipe), chave_jogada: chave })
+                });
+                result = await resp.json();
+            }
+            if (!result || result.success !== true) throw new Error(result && result.message ? result.message : 'Erro ao registrar ponto.');
+            var pendente = result.offline === true || Number(idJogo) < 0;
+            pontoLocal = Object.assign({}, pontoLocal, result.ponto || {}, {
+                id_ponto: result.id_ponto || (result.mutation_id ? 'temp_' + result.mutation_id : pontoLocal.id_ponto),
+                _pendente: pendente
+            });
+            pontosLista.push(pontoLocal);
+            partida.resultado_partida = result.placar == null
+                ? Math.max(0, parseInt(partida.resultado_partida, 10) || 0) + 1
+                : Number(result.placar);
+            if (Number(idJogo) < 0 && window.SGIDataLayer && typeof window.SGIDataLayer.upsert === 'function') {
+                await Promise.all([
+                    window.SGIDataLayer.upsert('pontos', chave, pontoLocal),
+                    window.SGIDataLayer.upsert('partidas', partida.id_partida, partida)
+                ]);
+            }
+            var texto = pendente ? 'Ponto salvo neste dispositivo, aguardando envio ao servidor.' : 'Ponto registrado para a equipe.';
+            anunciarStatusPlacar(texto);
+            if (pendente) atualizarStatusPlacarDaFila();
+            renderTudo();
+        } catch (error) {
+            SGI.alert(error.message || 'Não foi possível registrar o ponto.');
+        } finally {
+            delete pontosSemArtilheiroEmAndamento[String(idEquipe)];
+        }
     }
 
     async function salvarPonto(e) {
@@ -2390,7 +2454,9 @@ window.SGIPage.mount("competicoes/placar", function (pageConfig, pageScope) {
         });
         var ponto = pontos[pontos.length - 1];
         if (!ponto) {
-            SGI.alert('Não há ponto vinculado a um estudante para anular.');
+            SGI.alert(artilhariaAtiva()
+                ? 'Não há ponto vinculado a um estudante para anular.'
+                : 'Não há ponto para anular.');
             return;
         }
         try {

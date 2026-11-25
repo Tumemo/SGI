@@ -38,6 +38,23 @@ final class PontoServiceTest extends TestCase
         ], 2);
     }
 
+    public function testAcceptsTeamPointWithoutAthleteWhenArtilhariaIsDisabled(): void
+    {
+        $repository = new InMemoryPontoRepository();
+        $repository->artilhariaAtiva = false;
+        $service = new PontoService($repository);
+        $point = $service->registrar([
+            'jogos_id_jogo' => 10,
+            'id_partida' => 20,
+            'equipes_id_equipe' => 30,
+            'usuarios_id_usuario' => 42,
+            'chave_jogada' => 'regression-team-only-point',
+        ], 2);
+
+        self::assertNull($point['usuarios_id_usuario']);
+        self::assertSame(1, $repository->insertions);
+    }
+
     public function testRequiresAnAthleteFromTheExactTeamAndIsIdempotent(): void
     {
         $repository = new InMemoryPontoRepository();
@@ -112,6 +129,7 @@ final class InMemoryPontoRepository implements PontoRepository
     public ?int $lastAnulationOperatorId = null;
     public ?string $lastAnulationExpectedGameStatus = null;
     public bool $deleted = false;
+    public bool $artilhariaAtiva = true;
 
     public function edicaoDoJogo(int $gameId): ?int
     {
@@ -140,7 +158,7 @@ final class InMemoryPontoRepository implements PontoRepository
 
     public function contextoPartida(int $gameId, int $partidaId, int $teamId): ?array
     {
-        return ['status_jogo' => 'Iniciado', 'individual' => 0];
+        return ['status_jogo' => 'Iniciado', 'individual' => 0, 'contabiliza_artilharia' => $this->artilhariaAtiva ? 1 : 0];
     }
 
     public function atletaElegivel(int $userId, int $gameId, int $teamId): bool
@@ -161,7 +179,7 @@ final class InMemoryPontoRepository implements PontoRepository
             'jogos_id_jogo' => (int) $data['jogos_id_jogo'],
             'partidas_id_partida' => (int) $data['partidas_id_partida'],
             'equipes_id_equipe' => (int) $data['equipes_id_equipe'],
-            'usuarios_id_usuario' => (int) $data['usuarios_id_usuario'],
+            'usuarios_id_usuario' => !empty($data['usuarios_id_usuario']) ? (int) $data['usuarios_id_usuario'] : null,
             'chave_jogada' => (string) $data['chave_jogada'],
             'status_artilheiro' => 'ativo',
             'conta_no_placar' => 1,

@@ -259,7 +259,7 @@ final class ChaveamentoRules
      * Semifinais por bye não produzem perdedor e, portanto, não geram uma
      * classificação automática de terceiro lugar.
      *
-     * @param list<array{kind:string,partidas:list<array{equipes_id_equipe:int,resultado_partida:int}>}> $semifinais
+     * @param list<array{kind:string,partidas:list<array{equipes_id_equipe:int,resultado_partida:int}>,vencedor_wo_equipe_id?:int|null}> $semifinais
      */
     public static function terceiroLugarDoCampeao(?int $campeao, array $semifinais): ?int
     {

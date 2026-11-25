@@ -166,6 +166,7 @@ test('distingue estado do placar e da sincronização com ações acessíveis em
     await page.locator('#form_desktop .ipt-senha').fill('123');
     await page.locator('#form_desktop button[type="submit"]').click();
     await page.waitForURL(/\/painel\?id=\d+/, { waitUntil: 'domcontentloaded' });
+    await page.locator('#sgi-importar-dependencias').click();
     await expect(page.locator('#sgi-offline-ok')).toBeVisible({ timeout: 120_000 });
 
     // Só começamos a controlar respostas depois que a sessão real do mesário
@@ -271,6 +272,8 @@ test('distingue estado do placar e da sincronização com ações acessíveis em
     expect.soft(await banner.innerText()).toMatch(/SEM CONEXÃO.*REVISÃO/i);
     expect.soft(await banner.innerText()).toMatch(/revisão.*exporte as pendências/i);
     await context.setOffline(false);
+    await expect.poll(() => page.evaluate(() => window.SGIOffline.getState().online)).toBe(false);
+    await page.locator('.sgi-offline-banner-reconnect').click();
     await expect.poll(() => page.evaluate(() => window.SGIOffline.getState().online)).toBe(true);
     await expect(banner).toContainText('REVISÃO NECESSÁRIA');
 
@@ -351,10 +354,11 @@ test('distingue estado do placar e da sincronização com ações acessíveis em
     expect(offlineSnapshot.pending).toBe(1);
     await expect(page.locator('#sgi-offline-ok')).toBeHidden();
     expect.soft(await banner.innerText()).toMatch(/Sem conexão/i);
-    await expect(retryButton).toBeVisible();
+    await expect(retryButton).toBeHidden();
+    await expect(page.locator('.sgi-offline-banner-reconnect')).toBeVisible();
     const detailsToggle = page.getByRole('button', { name: 'Ver pendências' });
     await expect(detailsToggle).toBeVisible();
-    await expect(retryButton).toBeVisible();
+    await expect(retryButton).toBeHidden();
     await expect(exportButton).toBeHidden();
     await expect(importButton).toBeHidden();
 

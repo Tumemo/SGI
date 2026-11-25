@@ -1,5 +1,4 @@
-const { test, expect, request: playwrightRequest } = require('./fixtures.cjs');
-const { trocarSenhaInicial } = require('./agenda-helper.cjs');
+const { test, expect } = require('./fixtures.cjs');
 const {
     buscarJogoPlanejado,
     garantirCronogramaPublicado,
@@ -41,6 +40,7 @@ async function criarPartidaFixture(request) {
     let idInterclasse = Number(edicao.id_interclasse);
     const cronograma = await garantirCronogramaPublicado(request, idInterclasse);
     idInterclasse = Number(cronograma.id_interclasse || idInterclasse);
+    await garantirOperacaoLiberada(request, idInterclasse);
 
     const [equipesResponse, modalidadesResponse] = await Promise.all([
         request.get(`api/v1/equipes?id_interclasse=${idInterclasse}`),
@@ -56,6 +56,21 @@ async function criarPartidaFixture(request) {
     );
     if (!modalidade) throw new Error('Nenhuma modalidade de futsal mata-mata disponível.');
 
+    // Esta jornada verifica o fluxo legado de seleção obrigatória do atleta.
+    // Outros cenários podem deixar a modalidade com artilharia desativada;
+    // deixe explícita a configuração esperada pelo fixture.
+    if (Number(modalidade.contabiliza_artilharia ?? 1) !== 1) {
+        await jsonOrThrow(
+            await request.put('api/v1/modalidades', {
+                data: {
+                    id_modalidade: Number(modalidade.id_modalidade),
+                    contabiliza_artilharia: 1,
+                },
+            }),
+            'ativação da artilharia na modalidade do fixture',
+        );
+    }
+
     const equipesDaModalidade = equipes.filter((item) =>
         String(item.modalidades_id_modalidade) === String(modalidade.id_modalidade)
     );
@@ -66,55 +81,14 @@ async function criarPartidaFixture(request) {
     const equipe1 = equipesDaModalidade[0];
     const equipe2 = equipesDaModalidade.find((item) => String(item.id_equipe) !== String(equipe1.id_equipe)) || equipesDaModalidade[1];
 
-    // Cria um atleta efêmero pela própria API administrativa e faz a inscrição
-    // real no fluxo do portal. Assim o modal de artilharia tem dados locais
-    // suficientes para ser exercitado visualmente.
-    const identificadorAtleta = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-    const matriculaAtleta = `9${Date.now()}${String(Math.floor(Math.random() * 1000)).padStart(3, '0')}`;
-    const nomeAtleta = `Atleta E2E Offline ${identificadorAtleta}`;
-    const alunoResponse = await request.post('api/v1/usuarios?acao=criar_aluno', {
-        data: {
-            nome_usuario: nomeAtleta,
-            matricula_usuario: matriculaAtleta,
-            genero_usuario: 'MASC',
-            data_nasc_usuario: '2008-01-01',
-            turmas_id_turma: Number(equipe1.turmas_id_turma)
-        }
-    });
-    const aluno = await jsonOrThrow(alunoResponse, 'criação do atleta fixture');
-    if (aluno.status !== 'sucesso') {
-        throw new Error(`criação do atleta fixture: ${aluno.mensagem || JSON.stringify(aluno)}`);
-    }
-    const senhaAtleta = String(aluno.senha_temporaria || '');
-    if (senhaAtleta === '') throw new Error('A API não retornou a senha temporária do atleta fixture.');
-
-    const alunoApi = await playwrightRequest.newContext({
-        baseURL: process.env.SGI_BASE_URL || 'http://localhost/SGI/'
-    });
-    try {
-        const alunoLogin = await alunoApi.post('api/v1/login', {
-            data: { matricula: matriculaAtleta, senha: senhaAtleta }
-        });
-        await jsonOrThrow(alunoLogin, 'login do atleta fixture');
-        await trocarSenhaInicial(alunoApi);
-        await jsonOrThrow(await alunoApi.post('api/v1/termos', { data: {} }), 'aceite dos termos do atleta fixture');
-        const inscricao = await alunoApi.post('api/v1/inscricoes', {
-            data: {
-                id_interclasse: idInterclasse,
-                id_equipes: [Number(equipe1.id_equipe)],
-                cronograma_versao: Number(cronograma.cronograma_versao || 0),
-                versao_publicada: Number(cronograma.versao_publicada || cronograma.cronograma_versao || 0),
-            }
-        });
-        const inscricaoPayload = await jsonOrThrow(inscricao, 'inscrição do atleta fixture');
-        if (inscricaoPayload.success === false) {
-            throw new Error(`inscrição do atleta fixture: ${inscricaoPayload.message || JSON.stringify(inscricaoPayload)}`);
-        }
-    } finally {
-        await alunoApi.dispose();
-    }
-
-    await garantirOperacaoLiberada(request, idInterclasse);
+    // A operação já possui elenco mínimo preparado pelo fixture. Use um atleta
+    // dessa equipe mesmo quando outra suíte deixou as inscrições encerradas.
+    const membros = await jsonOrThrow(
+        await request.get(`api/v1/equipes?id_equipe=${Number(equipe1.id_equipe)}`),
+        'integrantes da equipe fixture',
+    );
+    const nomeAtleta = String((Array.isArray(membros) ? membros[0] : null)?.nome_usuario || '');
+    if (!nomeAtleta) throw new Error('A equipe fixture não possui atleta para a artilharia.');
     const planejado = await buscarJogoPlanejado(
         request,
         Number(modalidade.id_modalidade),
@@ -156,6 +130,9 @@ test.describe('Mesário — fluxo visual completo offline', () => {
         await expect(page).toHaveTitle(/Painel do Mesário.*\| SGI/);
         await expect(page.locator('body')).not.toContainText('Download parcial');
 
+        await expect.poll(() => page.evaluate(() => typeof window.__SGI_SPA__?.status === 'function')).toBe(true);
+        expect(await page.evaluate(() => window.__SGI_SPA__.status().preloading)).toBe(false);
+        await page.locator('#sgi-importar-dependencias').click();
         // O preload é sequencial por desenho: aguardamos o indicador verde que
         // confirma que as telas e os dados do confronto estão no IndexedDB.
         await expect(page.locator('#sgi-offline-ok')).toBeVisible({ timeout: 120_000 });
@@ -219,6 +196,9 @@ test.describe('Mesário — fluxo visual completo offline', () => {
         await page.locator('.btn-score-plus').first().click();
         await expect(page.locator('#modalArtilheiro')).toBeVisible();
         await expect(page.locator('.score-number').first()).toHaveText('0');
+        // O modal seleciona automaticamente o atleta quando há apenas um
+        // disponível. Limpe o campo para testar a validação de seleção vazia.
+        await page.locator('#selectAlunoArtilheiro').selectOption('');
         await page.locator('#btnSalvarArtilheiro').click();
         await expect(page.locator('#msgArtilheiro')).toContainText('Selecione o estudante responsável pela jogada', { timeout: 10_000 });
         await expect(page.locator('.score-number').first()).toHaveText('0');
@@ -337,9 +317,13 @@ test.describe('Mesário — fluxo visual completo offline', () => {
         expect(offlineState.online).toBe(false);
         expect(offlineState.pending).toBeGreaterThanOrEqual(6);
 
-        // Reconexão: o evento online dispara a sincronização automática.
+        // Reconexão e envio são duas ações explícitas do mesário.
         await context.setOffline(false);
         await expect.poll(() => page.evaluate(() => navigator.onLine)).toBe(true);
+        await expect.poll(() => page.evaluate(() => window.SGIOffline.getState().online)).toBe(false);
+        await page.locator('.sgi-offline-banner-reconnect').click();
+        await expect.poll(() => page.evaluate(() => window.SGIOffline.getState().pending)).toBeGreaterThan(0);
+        await page.locator('.sgi-offline-banner-btn').click();
         await expect.poll(() => page.evaluate(() => window.SGIOffline.getState().pending), { timeout: 45_000 }).toBe(0);
         await expect(page.locator('#sgi-offline-banner')).toHaveClass(/sgi-hidden/);
         await expect(page.locator('#artilheiro-cards')).toContainText(fixture.nomeAtleta, { timeout: 10_000 });

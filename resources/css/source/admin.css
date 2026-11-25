@@ -1525,3 +1525,291 @@
         height: 62px;
     }
 }
+
+/* ========================================================================== */
+/* RELATÓRIO FINAL DO INTERCLASSE                                             */
+/* ========================================================================== */
+.sgi-relatorio-page {
+    min-width: 0;
+    color: #0f172a;
+}
+
+.sgi-relatorio-secao {
+    margin-top: 1rem;
+    border: 1px solid rgba(15, 23, 42, .08);
+    border-radius: .875rem;
+}
+
+.sgi-relatorio-indicadores {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: .875rem;
+}
+
+.sgi-relatorio-indicador {
+    display: flex;
+    flex-direction: column;
+    gap: .3rem;
+    min-width: 0;
+    padding: 1.125rem;
+    border: 1px solid rgba(15, 23, 42, .08);
+    border-radius: .875rem;
+    background: #fff;
+    box-shadow: 0 .125rem .5rem rgba(15, 23, 42, .04);
+}
+
+.sgi-relatorio-indicador > span {
+    color: #475569;
+    font-size: .8125rem;
+    font-weight: 650;
+}
+
+.sgi-relatorio-indicador > strong {
+    color: #0f172a;
+    font-size: clamp(1.15rem, 2.1vw, 1.8rem);
+    line-height: 1.2;
+    overflow-wrap: anywhere;
+}
+
+.sgi-relatorio-indicador > small {
+    color: #64748b;
+    font-size: .75rem;
+    line-height: 1.4;
+}
+
+.sgi-relatorio-grafico {
+    display: flex;
+    flex-direction: column;
+    gap: .55rem;
+}
+
+.sgi-relatorio-barra-linha {
+    display: grid;
+    grid-template-columns: minmax(130px, 1fr) minmax(100px, 2fr) auto;
+    align-items: center;
+    gap: .75rem;
+    min-width: 0;
+    color: #334155;
+    font-size: .875rem;
+}
+
+.sgi-relatorio-barra-linha > span:first-child {
+    overflow-wrap: anywhere;
+}
+
+.sgi-relatorio-barra-trilho {
+    display: block;
+    height: .65rem;
+    overflow: hidden;
+    border-radius: 999px;
+    background: #e2e8f0;
+}
+
+.sgi-relatorio-barra {
+    display: block;
+    height: 100%;
+    border-radius: inherit;
+}
+
+.sgi-relatorio-barra--pontos { background: #e30613; }
+.sgi-relatorio-barra--doacoes { background: #0f766e; }
+.sgi-relatorio-barra--width-0 { width: 0%; }
+.sgi-relatorio-barra--width-10 { width: 10%; }
+.sgi-relatorio-barra--width-20 { width: 20%; }
+.sgi-relatorio-barra--width-30 { width: 30%; }
+.sgi-relatorio-barra--width-40 { width: 40%; }
+.sgi-relatorio-barra--width-50 { width: 50%; }
+.sgi-relatorio-barra--width-60 { width: 60%; }
+.sgi-relatorio-barra--width-70 { width: 70%; }
+.sgi-relatorio-barra--width-80 { width: 80%; }
+.sgi-relatorio-barra--width-90 { width: 90%; }
+.sgi-relatorio-barra--width-100 { width: 100%; }
+
+.sgi-relatorio-tabela {
+    min-width: 900px;
+    color: #0f172a;
+    font-size: .8125rem;
+}
+
+.sgi-relatorio-tabela thead th {
+    color: #475569;
+    font-size: .75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .025em;
+    white-space: nowrap;
+}
+
+.sgi-relatorio-tabela td,
+.sgi-relatorio-tabela th {
+    vertical-align: top;
+}
+
+.sgi-relatorio-lista-detalhes {
+    min-width: 180px;
+    margin: 0;
+    padding-left: 1rem;
+}
+
+.sgi-relatorio-lista-detalhes li + li { margin-top: .25rem; }
+
+.sgi-relatorio-modalidades {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: .75rem;
+}
+
+.sgi-relatorio-modalidade {
+    min-width: 0;
+    break-inside: avoid;
+}
+
+.sgi-relatorio-modalidade .sgi-relatorio-tabela { min-width: 520px; }
+
+.sgi-relatorio-artilharia + .sgi-relatorio-artilharia {
+    margin-top: 1.25rem;
+    padding-top: 1rem;
+    border-top: 1px solid #e2e8f0;
+}
+
+.sgi-relatorio-total-doacoes strong { color: #0f766e; }
+
+.sgi-relatorio-cabecalho {
+    margin-bottom: 1.25rem;
+    border-bottom: 2px solid #e30613;
+    padding-bottom: .75rem;
+}
+
+.sgi-relatorio-cabecalho h1 {
+    margin: 0 0 .25rem;
+    color: #0f172a;
+    font-size: 24pt;
+}
+
+.sgi-relatorio-cabecalho p { margin: 0; }
+.sgi-relatorio-selo { color: #e30613; font-size: 8pt; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
+.sgi-relatorio-edicao { color: #334155; font-size: 12pt; font-weight: 650; }
+.sgi-relatorio-meta, .sgi-relatorio-legenda { color: #64748b; font-size: 8pt; }
+.sgi-relatorio-pdf { color: #0f172a; font-family: Arial, sans-serif; font-size: 8pt; }
+
+.sgi-relatorio-pdf-page .sgi-relatorio-indicadores {
+    margin-bottom: 1rem;
+    grid-template-columns: repeat(4, 1fr);
+    gap: .5rem;
+}
+
+.sgi-relatorio-pdf-page .sgi-relatorio-indicador {
+    min-height: 70px;
+    padding: .5rem .65rem;
+    border: 1px solid #d8dee8;
+    border-top: 3px solid #e30613;
+    border-radius: 4px;
+    box-shadow: none;
+}
+
+.sgi-relatorio-pdf-page .sgi-relatorio-indicador > span,
+.sgi-relatorio-pdf-page .sgi-relatorio-indicador > small { font-size: 7pt; }
+.sgi-relatorio-pdf-page .sgi-relatorio-indicador > strong { font-size: 14pt; }
+
+.sgi-relatorio-pdf-page .sgi-relatorio-secao {
+    margin: 12px 0 0;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+    page-break-inside: auto;
+}
+
+.sgi-relatorio-pdf-page .sgi-relatorio-secao h2 {
+    margin: 0 0 6px;
+    border-bottom: 1px solid #d8dee8;
+    padding-bottom: 4px;
+    color: #0f172a;
+    font-size: 13pt;
+}
+
+.sgi-relatorio-pdf-page .sgi-relatorio-secao h3 { color: #0f172a; font-size: 10pt; }
+.sgi-relatorio-pdf-page .sgi-relatorio-secao h3 small { color: #64748b; font-size: 7pt; }
+.sgi-relatorio-pdf-page .sgi-relatorio-grafico { gap: 4px; }
+
+.sgi-relatorio-pdf-page .sgi-relatorio-barra-linha {
+    grid-template-columns: 1fr 2fr auto;
+    gap: 8px;
+    font-size: 7pt;
+}
+
+.sgi-relatorio-pdf-page .sgi-relatorio-barra-trilho { height: 7px; }
+
+.sgi-relatorio-pdf-page .sgi-relatorio-tabela {
+    width: 100%;
+    min-width: 0;
+    margin: 5px 0 10px;
+    border-collapse: collapse;
+    font-size: 7pt;
+}
+
+.sgi-relatorio-pdf-page .sgi-relatorio-tabela th,
+.sgi-relatorio-pdf-page .sgi-relatorio-tabela td {
+    border: 1px solid #d8dee8;
+    padding: 4px 5px;
+    vertical-align: top;
+    white-space: normal;
+}
+
+.sgi-relatorio-pdf-page .sgi-relatorio-tabela thead th { background: #f1f5f9; color: #334155; }
+.sgi-relatorio-pdf-page .sgi-relatorio-detalhe-penalidade { display: block; }
+
+.sgi-relatorio-pdf-page .sgi-relatorio-modalidade {
+    margin: 7px 0;
+    border-bottom: 1px solid #d8dee8;
+    padding: 0 0 6px;
+    background: transparent;
+}
+
+.sgi-relatorio-pdf-page .sgi-relatorio-modalidade .sgi-relatorio-tabela { width: 100%; min-width: 0; }
+
+.sgi-relatorio-pdf-page .sgi-relatorio-rodape {
+    margin-top: 20px;
+    border-top: 1px solid #d8dee8;
+    padding-top: 6px;
+    color: #64748b;
+    font-size: 7pt;
+    text-align: center;
+}
+
+@media (max-width: 767.98px) {
+    .sgi-relatorio-indicadores { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .sgi-relatorio-modalidades { grid-template-columns: minmax(0, 1fr); }
+    .sgi-relatorio-barra-linha { grid-template-columns: minmax(0, 1fr) auto; gap: .35rem .6rem; }
+    .sgi-relatorio-barra-trilho { grid-column: 1 / -1; grid-row: 2; }
+    .sgi-relatorio-tabela { min-width: 980px; }
+}
+
+@media print {
+    @page { size: A4 landscape; margin: 11mm; }
+    body.sgi-relatorio-pdf { background: #fff !important; color: #0f172a !important; font-family: Arial, sans-serif !important; font-size: 8pt !important; }
+    body.sgi-relatorio-pdf .sgi-u-h-120px,
+    body.sgi-relatorio-pdf .sgi-mobile-menu,
+    body.sgi-relatorio-pdf .sgi-mobile-menu-trigger,
+    body.sgi-relatorio-pdf .sidebar-nav,
+    body.sgi-relatorio-pdf footer,
+    body.sgi-relatorio-pdf .sgi-page-header__actions,
+    body.sgi-relatorio-pdf .sgi-skip-link { display: none !important; }
+    body.sgi-relatorio-pdf footer.sgi-relatorio-rodape { display: block !important; }
+    .sgi-relatorio-page, .sgi-relatorio-page > .container-fluid { width: 100% !important; margin: 0 !important; padding: 0 !important; }
+    .sgi-relatorio-page .sgi-relatorio-secao, .sgi-relatorio-page .sgi-relatorio-indicador { break-inside: avoid; box-shadow: none !important; }
+    .sgi-relatorio-pdf-page .sgi-relatorio-observacoes { page-break-inside: avoid; }
+    .sgi-relatorio-page .table-responsive { overflow: visible !important; }
+    .sgi-relatorio-page .sgi-relatorio-tabela { width: 100% !important; min-width: 0 !important; font-size: 7pt !important; }
+    .sgi-relatorio-pdf-page .sgi-relatorio-indicadores { display: table; width: 100%; table-layout: fixed; border-spacing: 5px 0; }
+    .sgi-relatorio-pdf-page .sgi-relatorio-indicador { display: table-cell; width: 25%; vertical-align: top; }
+    .sgi-relatorio-pdf-page .sgi-relatorio-indicador > * { display: block; }
+    .sgi-relatorio-pdf-page .sgi-relatorio-indicador > strong { margin: 4px 0; }
+    .sgi-relatorio-pdf-page .sgi-relatorio-barra-linha { display: table; width: 100%; table-layout: fixed; }
+    .sgi-relatorio-pdf-page .sgi-relatorio-barra-linha > span,
+    .sgi-relatorio-pdf-page .sgi-relatorio-barra-linha > strong { display: table-cell; vertical-align: middle; }
+    .sgi-relatorio-pdf-page .sgi-relatorio-barra-linha > span:first-child { width: 38%; }
+    .sgi-relatorio-pdf-page .sgi-relatorio-barra-linha > span:nth-child(2) { width: 48%; }
+    .sgi-relatorio-pdf-page .sgi-relatorio-barra-linha > strong { width: 14%; text-align: right; }
+    .sgi-relatorio-pdf-page .sgi-relatorio-barra { height: 7px; min-height: 7px; }
+    .sgi-relatorio-pdf-page .sgi-relatorio-modalidades { display: block; }
+}

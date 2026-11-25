@@ -34,6 +34,7 @@ return [
     '/ocorrencias' => 'resources/views/pages/disciplina/ocorrencias.php',
     '/perfil' => 'resources/views/pages/acesso/perfil.php',
     '/ranking' => 'resources/views/pages/resultados/ranking.php',
+    '/relatorios' => 'resources/views/pages/resultados/relatorio-final.php',
     '/turmas/alunos' => 'resources/views/pages/participantes/turma-alunos.php',
     '/turmas' => 'resources/views/pages/participantes/turmas.php',
 ];

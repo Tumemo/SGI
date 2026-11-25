@@ -297,10 +297,10 @@ Estas contas são preparadas pela suíte na **base isolada**, não pelo comando 
 ## Testar o modo offline manualmente
 
 1. Com a aplicação local funcionando e uma edição ativa com jogos, entre com o **mesário que você cadastrou**, em [http://127.0.0.1:8080/](http://127.0.0.1:8080/).
-2. Aguarde a mensagem **Pronto para uso offline! 🟢**. O login e o preparo inicial precisam de conexão com o servidor.
+2. Clique em **Importar dados para uso offline** no painel e aguarde o indicador **Pronto para uso offline nesta aba preparada**. O login e a preparação precisam de conexão com o servidor.
 3. Na mesma aba, abra as ferramentas do navegador (**F12**), vá a **Network/Rede** e selecione **Offline**. Isso simula a perda de acesso ao servidor local; desligar apenas o Wi-Fi não interrompe o endereço `127.0.0.1`.
 4. Opere o placar e navegue pela aplicação na aba já preparada. Experimente gols, ocorrências e conclusão de partidas de mata-mata.
-5. Desative **Offline** (selecione **No throttling/Sem limitação**) e aguarde a sincronização. Confira os resultados persistidos após a reconexão. Operações recusadas permanecem na fila para revisão.
+5. Desative **Offline** (selecione **No throttling/Sem limitação**). O sistema continua offline até você clicar em **Reconectar ao servidor** no aviso. Se quiser atualizar as telas e os dados locais, volte ao painel e clique em **Importar dados para uso offline**. Para enviar operações pendentes, clique separadamente em **Sincronizar agora**. Confira os resultados persistidos; operações recusadas permanecem na fila para revisão.
 
 O modo offline usa uma casca de navegação previamente carregada e não utiliza Service Worker. Recarregar a página, fechar a aba ou abrir outra aba sem conexão não faz parte do fluxo suportado. Não limpe os dados do site/IndexedDB enquanto houver operações pendentes. Use sempre o mesmo endereço: `localhost` e `127.0.0.1`, assim como portas diferentes, têm armazenamentos separados no navegador.
 

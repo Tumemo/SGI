@@ -126,7 +126,8 @@ test.describe('Torneio Offline e Inspeção da Árvore de Chaveamento', () => {
         await page.locator('#form_desktop button[type="submit"]').click();
         await page.waitForURL(/\/painel\?id=\d+/, { waitUntil: 'domcontentloaded' });
 
-        // 2. Aguarda pré-carregamento do SPA
+        // 2. Prepara o SPA por ação do mesário
+        await page.locator('#sgi-importar-dependencias').click();
         await expect(page.locator('#sgi-offline-ok')).toContainText('Pronto para uso offline', { timeout: 60_000 });
         await expect.poll(() => page.evaluate(() => window.__SGI_SPA__ && window.__SGI_SPA__.status()), { timeout: 60_000 })
             .toMatchObject({ pronto: true, preloading: false });

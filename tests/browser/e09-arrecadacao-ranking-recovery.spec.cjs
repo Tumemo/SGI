@@ -214,6 +214,7 @@ test('E09 replay de arrecadação após resposta perdida usa a mesma identidade 
         const feedbackFalha = page.getByRole('dialog');
         await expect(feedbackFalha).toContainText(/Não foi possível salvar a arrecadação/i);
         await feedbackFalha.getByRole('button', { name: 'Entendi' }).click();
+        await expect(feedbackFalha).toBeHidden();
         await expect(input).toHaveValue(String(quantidade));
         await salvar.click();
         const feedbackSucesso = page.getByRole('dialog');

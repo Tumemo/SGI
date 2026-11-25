@@ -103,7 +103,7 @@ final class RecoveryRehearsalTest
             "INSERT INTO interclasses (id_interclasse, nome_interclasse, ano_interclasse, regulamento_interclasse, status_interclasse, ponto_1_lugar, ponto_2_lugar, ponto_3_lugar, valor_item_arrecadacao) VALUES (1, 'Recovery 2026', '2026-01-01 00:00:00', 'synthetic.pdf', '1', 10, 7, 5, 2)",
             "INSERT INTO categorias VALUES (1, 'Categoria I', '1', 1)",
             "INSERT INTO turmas VALUES (1, 1, '6EF', 'manha', '6EF', '1', 1, 42, 10.50)",
-            "INSERT INTO modalidades VALUES (1, 'Futsal', 'MASC', NULL, 4, '1', 1, 1, 1)",
+            "INSERT INTO modalidades (id_modalidade, nome_modalidade, genero_modalidade, max_inscrito_modalidade, max_equipes, status_modalidade, tipos_modalidades_id_tipo_modalidade, categorias_id_categoria, interclasses_id_interclasse, contabiliza_artilharia) VALUES (1, 'Futsal', 'MASC', NULL, 4, '1', 1, 1, 1, 1)",
             "INSERT INTO locais VALUES (1, 'Ginásio recuperação', '1', NULL, '1', 1)",
             "INSERT INTO equipes VALUES (1, '1', 1, 1, '6EF Recovery')",
             "INSERT INTO usuarios (id_usuario, sigla_usuario, matricula_usuario, nome_usuario, senha_usuario, senha_troca_pendente, nivel_usuario, genero_usuario, data_nasc_usuario, foto_usuario, status_usuario, turmas_id_turma, interclasses_id_interclasse, chave_usuario_edicao, auth_version) VALUES (1, 'RM', 'RECOVERY-26', 'Aluno sintético', '{$hash}', 1, '3', 'MASC', '2008-01-01', '', '1', 1, 1, NULL, 1)",

@@ -39,6 +39,7 @@ require_once __DIR__ . '/Integration/HistoricoTurmaAndClassificacaoTest.php';
 require_once __DIR__ . '/Integration/FotoPerfilAndUsuariosTest.php';
 require_once __DIR__ . '/Integration/AlunosPortalTest.php';
 require_once __DIR__ . '/Integration/RankingPublicationTest.php';
+require_once __DIR__ . '/Integration/RelatorioFinalTest.php';
 require_once __DIR__ . '/Integration/TurmaScopeConsistencyTest.php';
 require_once __DIR__ . '/Integration/PublicBoundaryTest.php';
 require_once __DIR__ . '/Integration/RefactorContractsTest.php';
@@ -85,6 +86,7 @@ use SGITests\Integration\HistoricoTurmaAndClassificacaoTest;
 use SGITests\Integration\FotoPerfilAndUsuariosTest;
 use SGITests\Integration\AlunosPortalTest;
 use SGITests\Integration\RankingPublicationTest;
+use SGITests\Integration\RelatorioFinalTest;
 use SGITests\Integration\TurmaScopeConsistencyTest;
 use SGITests\Integration\PublicBoundaryTest;
 use SGITests\Integration\MataMataEdgeCasesTest;
@@ -209,6 +211,7 @@ try {
     // 11. Portal do Aluno
     $runScenario('AlunosPortalTest', static fn () => AlunosPortalTest::run());
     $runScenario('RankingPublicationTest', static fn () => RankingPublicationTest::run());
+    $runScenario('RelatorioFinalTest', static fn () => RelatorioFinalTest::run());
     $runScenario('TurmaScopeConsistencyTest', static fn () => TurmaScopeConsistencyTest::run());
 
     // 12. Casos Limites do Motor de Chaveamento

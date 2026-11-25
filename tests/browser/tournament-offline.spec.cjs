@@ -367,6 +367,7 @@ test.describe.serial('Mesário — torneio completo online e offline', () => {
         });
 
         await entrarComoMesario(page);
+        await page.locator('#sgi-importar-dependencias').click();
         await expect(page.locator('#sgi-offline-ok')).toContainText('Pronto para uso offline', { timeout: 120_000 });
         await expect.poll(() => page.evaluate(() => window.__SGI_SPA__ && window.__SGI_SPA__.status()), { timeout: 120_000 })
             .toMatchObject({ pronto: true, preloading: false });
@@ -426,6 +427,7 @@ test.describe.serial('Mesário — torneio completo online e offline', () => {
         });
 
         await entrarComoMesario(page);
+        await page.locator('#sgi-importar-dependencias').click();
         await expect(page.locator('#sgi-offline-ok')).toContainText('Pronto para uso offline', { timeout: 120_000 });
         await expect.poll(() => page.evaluate(() => window.__SGI_SPA__ && window.__SGI_SPA__.status()), { timeout: 120_000 })
             .toMatchObject({ pronto: true, preloading: false });
@@ -564,6 +566,8 @@ test.describe.serial('Mesário — torneio completo online e offline', () => {
 
         await context.setOffline(false);
         await expect.poll(() => page.evaluate(() => navigator.onLine)).toBe(true);
+        await page.locator('.sgi-offline-banner-reconnect').click();
+        await page.locator('.sgi-offline-banner-btn').click();
         await expect.poll(() => page.evaluate(() => window.SGIOffline.getState().pending), { timeout: 90_000 }).toBe(0);
         await expect(page.locator('#sgi-offline-banner')).toHaveClass(/sgi-hidden/);
 

@@ -122,7 +122,7 @@ final class PontoController
                     $point = $this->service->registrar($data, $operatorId);
                     return Response::json([
                         'success' => true,
-                        'message' => 'Ponto registrado com o estudante responsável.',
+                        'message' => empty($point['usuarios_id_usuario']) ? 'Ponto registrado para a equipe.' : 'Ponto registrado com o estudante responsável.',
                         'id' => (int) ($point['id_artilheiro'] ?? 0),
                         'id_ponto' => (int) ($point['id_artilheiro'] ?? 0),
                         'ponto' => $point,
